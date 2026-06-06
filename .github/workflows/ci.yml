@@ -40,6 +40,9 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v6
 
+      - name: Approve dependency build scripts
+        run: pnpm config set onlyBuiltDependencies --location project --json '["better-sqlite3@12.10.0","msw@2.14.6","sharp@0.34.5","unrs-resolver@1.12.2"]'
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -69,6 +72,9 @@ jobs:
           cache-dependency-path: |
             pnpm-lock.yaml
             apps/frontend/pnpm-lock.yaml
+
+      - name: Approve dependency build scripts
+        run: pnpm config set onlyBuiltDependencies --location project --json '["better-sqlite3@12.10.0","msw@2.14.6","sharp@0.34.5","unrs-resolver@1.12.2"]'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
