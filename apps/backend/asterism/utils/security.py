@@ -10,21 +10,24 @@ jwks_client = jwt.PyJWKClient(
 )
 
 
+class AuthTokenError(Exception):
+    pass
+
+
 def verify_jwks_token(token: str) -> str:
-    """Verifies the token using Better Auth's public keys."""
+    """Verifies a Better Auth JWT using the JWKS endpoint and returns the subject user id."""
     try:
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
             signing_key.key,
             algorithms=["RS256"],
-            audience=config.FRONT_END_URL,
-            issuer=config.FRONT_END_URL,
+            audience=config.JWT_AUDIENCE,
+            issuer=config.JWT_ISSUER,
         )
         user_id = payload.get("sub")
         if not user_id:
-            raise Exception("Invalid token payload")
-        return user_id
-    except jwt.ExpiredSignatureError:
-        print("Token expired")
-        raise Exception("Token expired")
+            raise AuthTokenError("Missing token subject")
+        return str(user_id)
+    except jwt.PyJWTError as exc:
+        raise AuthTokenError("Invalid token") from exc
