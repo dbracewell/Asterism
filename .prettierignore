@@ -1,0 +1,12 @@
+node_modules
+.pnpm-store
+.turbo
+.next
+out
+dist
+build
+coverage
+apps/backend/.venv
+apps/backend/__pycache__
+apps/backend/asterism/__pycache__
+apps/backend/migrations/__pycache__

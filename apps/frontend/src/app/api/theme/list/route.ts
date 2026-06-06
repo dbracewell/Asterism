@@ -17,7 +17,7 @@ export async function GET() {
       themeNames.push({ name: data.name, filename: file.replace(".json", "") });
     }
     return NextResponse.json(themeNames, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.log(error);
     return NextResponse.json([], { status: 500 });
   }

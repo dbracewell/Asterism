@@ -6,17 +6,18 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- None selected yet (must work on one and only one story at a time)
+- EPIC-1 / US-1.1 Monorepo tooling and workspace standards
 
 ---
 
 ## EPIC-1-FOUNDATIONS
 
-### [ ] US-1.1 Monorepo tooling and workspace standards
-- [ ] Confirm root scripts for `dev`, `build`, `lint`, `test`, `typecheck`.
-- [ ] Validate `turbo.json` pipelines and task dependencies.
-- [ ] Add/update shared formatting and linting config.
-- [ ] Document common monorepo commands.
+### [x] US-1.1 Monorepo tooling and workspace standards
+- [x] Confirm root scripts for `dev`, `build`, `lint`, `test`, `typecheck`.
+- [x] Validate `turbo.json` pipelines and task dependencies.
+- [x] Add/update shared formatting and linting config.
+- [x] Document common monorepo commands.
+- [x] Triage baseline lint/typecheck/build failures discovered during verification runs.
 
 ### [ ] US-1.2 Backend and frontend baseline apps boot successfully
 - [ ] Verify backend local setup/install/run steps.
