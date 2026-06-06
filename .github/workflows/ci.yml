@@ -13,8 +13,6 @@ jobs:
     name: Lint, Typecheck, Test
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      npm_config_build_from_source: "true"
 
     steps:
       - name: Checkout
@@ -45,16 +43,13 @@ jobs:
       - name: Install native build toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 make g++
+          sudo apt-get install -y build-essential python3 make g++ libsqlite3-dev
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
       - name: Install frontend workspace dependencies
         run: pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
-
-      - name: Rebuild better-sqlite3 native bindings
-        run: pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false
 
       - name: Verify better-sqlite3 loads and opens DB
         run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
@@ -67,8 +62,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: quality-gates
-    env:
-      npm_config_build_from_source: "true"
 
     steps:
       - name: Checkout
@@ -96,16 +89,13 @@ jobs:
       - name: Install native build toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 make g++
+          sudo apt-get install -y build-essential python3 make g++ libsqlite3-dev
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
       - name: Install frontend workspace dependencies
         run: pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
-
-      - name: Rebuild better-sqlite3 native bindings
-        run: pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false
 
       - name: Verify better-sqlite3 loads and opens DB
         run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
