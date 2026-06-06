@@ -5,6 +5,30 @@ export type ClientOptions = {
 };
 
 /**
+ * BootstrapAdminRequest
+ */
+export type BootstrapAdminRequest = {
+    /**
+     * Setup Token
+     */
+    setup_token: string;
+};
+
+/**
+ * BootstrapAdminResponse
+ */
+export type BootstrapAdminResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Roles
+     */
+    roles?: Array<string>;
+};
+
+/**
  * ErrorDetail
  */
 export type ErrorDetail = {
@@ -39,6 +63,20 @@ export type NewSessionResponse = {
 };
 
 /**
+ * SetupStatusResponse
+ */
+export type SetupStatusResponse = {
+    /**
+     * Requires Setup
+     */
+    requires_setup: boolean;
+    /**
+     * Is Current User Admin
+     */
+    is_current_user_admin: boolean;
+};
+
+/**
  * StreamRequest
  */
 export type StreamRequest = {
@@ -48,6 +86,28 @@ export type StreamRequest = {
      * The prompt content to stream
      */
     content: string;
+};
+
+/**
+ * UserMeResponse
+ */
+export type UserMeResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Email
+     */
+    email?: string | unknown;
+    /**
+     * Display Name
+     */
+    display_name?: string | unknown;
+    /**
+     * Roles
+     */
+    roles?: Array<string>;
 };
 
 /**
@@ -148,6 +208,144 @@ export type NewChatSessionResponses = {
 };
 
 export type NewChatSessionResponse = NewChatSessionResponses[keyof NewChatSessionResponses];
+
+export type GetCurrentUserData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/me';
+};
+
+export type GetCurrentUserErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
+
+export type GetCurrentUserResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserMeResponse;
+};
+
+export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type GetSetupStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/setup/status';
+};
+
+export type GetSetupStatusErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type GetSetupStatusError = GetSetupStatusErrors[keyof GetSetupStatusErrors];
+
+export type GetSetupStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: SetupStatusResponse;
+};
+
+export type GetSetupStatusResponse = GetSetupStatusResponses[keyof GetSetupStatusResponses];
+
+export type BootstrapAdminData = {
+    body: BootstrapAdminRequest;
+    path?: never;
+    query?: never;
+    url: '/api/setup/bootstrap-admin';
+};
+
+export type BootstrapAdminErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Forbidden
+     */
+    403: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Service Unavailable
+     */
+    503: ErrorDetail;
+};
+
+export type BootstrapAdminError = BootstrapAdminErrors[keyof BootstrapAdminErrors];
+
+export type BootstrapAdminResponses = {
+    /**
+     * Successful Response
+     */
+    200: BootstrapAdminResponse;
+};
+
+export type BootstrapAdminResponse2 = BootstrapAdminResponses[keyof BootstrapAdminResponses];
+
+export type AdminPingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/ping';
+};
+
+export type AdminPingErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Forbidden
+     */
+    403: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type AdminPingError = AdminPingErrors[keyof AdminPingErrors];
+
+export type AdminPingResponses = {
+    /**
+     * Successful Response
+     */
+    200: {
+        status?: string;
+    };
+};
+
+export type AdminPingResponse = AdminPingResponses[keyof AdminPingResponses];
 
 export type StreamChatData = {
     body: StreamRequest;

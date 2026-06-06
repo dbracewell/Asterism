@@ -84,6 +84,10 @@ class Config:
         return self._get_value("JWKS_URL", f"{self.BETTER_AUTH_URL}/api/auth/jwks")
 
     @property
+    def BOOTSTRAP_SETUP_TOKEN(self) -> str:
+        return self._get_value("BOOTSTRAP_SETUP_TOKEN", "")
+
+    @property
     def STORAGE_ROOT(self) -> Path:
         storage_root = Path(self._get_value("STORAGE_ROOT", "/storage"))
         storage_root.mkdir(exist_ok=True)

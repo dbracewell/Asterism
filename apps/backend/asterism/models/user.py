@@ -1,19 +1,28 @@
-from sqlalchemy.orm import Mapped, mapped_column
+import datetime
+from typing import TYPE_CHECKING
 
-from asterism.models.typedefs import JsonColumn
+from sqlalchemy import DateTime, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import Base
 
+if TYPE_CHECKING:
+    from .user_role import UserRole
+
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    username: Mapped[str] = mapped_column(index=True, unique=True)
-    slug: Mapped[str] = mapped_column(index=True, unique=True)
-    email: Mapped[str] = mapped_column(index=True, unique=True)
-    first_name: Mapped[str]
-    last_name: Mapped[str]
-    hashed_password: Mapped[str]
-    is_superuser: Mapped[bool] = mapped_column(default=False)
-    test_json_col: Mapped[dict] = mapped_column(JsonColumn, nullable=True)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    email: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    display_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    roles: Mapped[list["UserRole"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )

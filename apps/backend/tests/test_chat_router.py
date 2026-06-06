@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import asterism.routers.base as base_router_module
 import asterism.routers.chat as chat_router_module
-from asterism.utils.security import AuthTokenError
+from asterism.utils.security import AuthClaims, AuthTokenError
 
 
 def test_new_chat_session_returns_401_when_auth_header_missing(client):
@@ -39,7 +39,11 @@ def test_new_chat_session_returns_id_when_authorized(client, monkeypatch):
             assert user_id == "user-123"
             return SimpleNamespace(id=expected_session_id)
 
-    monkeypatch.setattr(base_router_module, "verify_jwks_token", lambda _: "user-123")
+    monkeypatch.setattr(
+        base_router_module,
+        "verify_jwks_token",
+        lambda _: AuthClaims(sub="user-123"),
+    )
     monkeypatch.setattr(chat_router_module, "ChatRepository", FakeChatRepository)
 
     response = client.post(

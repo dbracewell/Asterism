@@ -1,5 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "BOOTSTRAP_SETUP_TOKEN",
+    "FRONT_END_URL",
+    "BETTER_AUTH_URL",
+    "JWKS_URL",
+    "JWT_ISSUER",
+    "JWT_AUDIENCE"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

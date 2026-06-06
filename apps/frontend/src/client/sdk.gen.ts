@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetFileData, GetFileErrors, GetFileResponses, NewChatSessionData, NewChatSessionErrors, NewChatSessionResponses, StreamChatData, StreamChatErrors, StreamChatResponses } from './types.gen';
+import type { AdminPingData, AdminPingErrors, AdminPingResponses, BootstrapAdminData, BootstrapAdminErrors, BootstrapAdminResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetFileData, GetFileErrors, GetFileResponses, GetSetupStatusData, GetSetupStatusErrors, GetSetupStatusResponses, NewChatSessionData, NewChatSessionErrors, NewChatSessionResponses, StreamChatData, StreamChatErrors, StreamChatResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -75,6 +75,54 @@ export class ApiClient extends HeyApiClient {
         return (options?.client ?? this.client).post<NewChatSessionResponses, NewChatSessionErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/chat/',
+            ...options
+        });
+    }
+    
+    /**
+     * Get Current User
+     */
+    public getCurrentUser<ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>): RequestResult<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/auth/me',
+            ...options
+        });
+    }
+    
+    /**
+     * Get Setup Status
+     */
+    public getSetupStatus<ThrowOnError extends boolean = false>(options?: Options<GetSetupStatusData, ThrowOnError>): RequestResult<GetSetupStatusResponses, GetSetupStatusErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<GetSetupStatusResponses, GetSetupStatusErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/setup/status',
+            ...options
+        });
+    }
+    
+    /**
+     * Bootstrap Admin
+     */
+    public bootstrapAdmin<ThrowOnError extends boolean = false>(options: Options<BootstrapAdminData, ThrowOnError>): RequestResult<BootstrapAdminResponses, BootstrapAdminErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<BootstrapAdminResponses, BootstrapAdminErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/setup/bootstrap-admin',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Admin Ping
+     */
+    public adminPing<ThrowOnError extends boolean = false>(options?: Options<AdminPingData, ThrowOnError>): RequestResult<AdminPingResponses, AdminPingErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<AdminPingResponses, AdminPingErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/admin/ping',
             ...options
         });
     }

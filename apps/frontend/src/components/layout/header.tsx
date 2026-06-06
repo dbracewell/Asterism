@@ -32,6 +32,9 @@ export const Header = () => {
       </Link>
 
       <div className="flex items-center gap-2">
+        <Link href="/app/setup" className="text-xs underline">
+          Setup
+        </Link>
         <span className="text-muted-foreground text-xs">{user.email}</span>
         <Button
           variant="outline"
