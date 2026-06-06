@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- EPIC-1 / US-1.5 Frontend testing scaffold (Vitest/RTL + Playwright)
+- None selected yet (US-1.5 completed)
 
 ---
 
