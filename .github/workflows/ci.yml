@@ -51,10 +51,10 @@ jobs:
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
 
       - name: Rebuild better-sqlite3 native bindings
-        run: pnpm rebuild better-sqlite3
+        run: pnpm --filter @asterism/frontend rebuild better-sqlite3
 
-      - name: Verify better-sqlite3 loads
-        run: pnpm --filter @asterism/frontend exec node -e "require('better-sqlite3'); console.log('better-sqlite3 ok')"
+      - name: Verify better-sqlite3 loads and opens DB
+        run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
 
       - name: Run quality gates
         run: pnpm turbo run lint typecheck test --filter=@asterism/backend --filter=@asterism/frontend
@@ -99,13 +99,13 @@ jobs:
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
 
       - name: Rebuild better-sqlite3 native bindings
-        run: pnpm rebuild better-sqlite3
+        run: pnpm --filter @asterism/frontend rebuild better-sqlite3
 
-      - name: Verify better-sqlite3 loads
-        run: pnpm --filter @asterism/frontend exec node -e "require('better-sqlite3'); console.log('better-sqlite3 ok')"
+      - name: Verify better-sqlite3 loads and opens DB
+        run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
 
       - name: Install Playwright browser
         run: pnpm --filter @asterism/frontend exec playwright install --with-deps chromium
 
       - name: Run frontend e2e tests
-        run: pnpm --filter @asterism/frontend test:e2e
+        run: rm -f apps/frontend/ci-users.db && BETTER_AUTH_DB_PATH=ci-users.db pnpm --filter @asterism/frontend test:e2e
