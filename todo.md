@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- None selected yet (US-1.5 completed)
+- US-2.1 BetterAuth + JWT integration
 
 ---
 
@@ -48,11 +48,11 @@ Status legend:
 
 ## EPIC-2-AUTH-AND-USER-MODEL
 
-### [ ] US-2.1 BetterAuth + JWT integration
-- [ ] Integrate BetterAuth with JWT issuance/verification.
-- [ ] Add auth middleware/guards on backend endpoints.
-- [ ] Add frontend auth flows (sign-in/sign-out/session state).
-- [ ] Add auth integration tests.
+### [x] US-2.1 BetterAuth + JWT integration
+- [x] Integrate BetterAuth with JWT issuance/verification.
+- [x] Add auth middleware/guards on backend endpoints.
+- [x] Add frontend auth flows (sign-in/sign-out/session state).
+- [x] Add auth integration tests.
 
 ### [ ] US-2.2 User entity and role model
 - [ ] Define SQLAlchemy models for users and roles.

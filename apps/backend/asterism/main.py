@@ -8,7 +8,6 @@ from fastapi import (
     Request,
     WebSocket,
     WebSocketDisconnect,
-    WebSocketException,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -19,8 +18,9 @@ from pydantic import BaseModel, Field
 from asterism.internal.db import DBSessionDep, session_manager
 from asterism.logging import get_logger
 from asterism.routers import chat_router, file_router
+from asterism.routers.base import AuthenticatedUserId
 from asterism.routers.typedefs import ErrorDetail
-from asterism.utils.security import verify_jwks_token
+from asterism.utils.security import AuthTokenError, verify_jwks_token
 
 client = AsyncOpenAI(api_key="1234", base_url="http://localhost:1234/v1")
 
@@ -128,7 +128,11 @@ class StreamChunk(BaseModel):
         401: {"model": ErrorDetail},
     },
 )
-async def async_test(body: StreamRequest, db: DBSessionDep):
+async def async_test(
+    body: StreamRequest,
+    db: DBSessionDep,
+    _user_id: AuthenticatedUserId,
+):
     return StreamingResponse(
         data_generator([{"role": "user", "content": body.content}], db),
         media_type="application/x-ndjson",
@@ -139,8 +143,8 @@ async def async_test(body: StreamRequest, db: DBSessionDep):
 async def chat(websocket: WebSocket, chat_id: str, token: str = Query(...)):
     try:
         verify_jwks_token(token)
-    except WebSocketException as e:
-        await websocket.close(code=e.code, reason=e.reason)
+    except AuthTokenError:
+        await websocket.close(code=1008, reason="Unauthorized")
         return
 
     await websocket.accept()

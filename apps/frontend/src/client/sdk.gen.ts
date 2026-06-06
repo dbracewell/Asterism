@@ -84,6 +84,7 @@ export class ApiClient extends HeyApiClient {
      */
     public streamChat<ThrowOnError extends boolean = false>(options: Options<StreamChatData, ThrowOnError>): RequestResult<StreamChatResponses, StreamChatErrors, ThrowOnError> {
         return (options.client ?? this.client).post<StreamChatResponses, StreamChatErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/stream',
             ...options,
             headers: {

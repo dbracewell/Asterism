@@ -5,10 +5,8 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
 from asterism.config import config
-from asterism.routers.base import JwtSecurityToken
+from asterism.routers.base import AuthenticatedUserId
 from asterism.routers.typedefs import ErrorDetail
-from asterism.utils.security import verify_jwks_token
-
 
 def get_file_mime_type(file_path) -> str:
     kind = filetype.guess(file_path)
@@ -49,12 +47,7 @@ file_router = APIRouter(
         404: {"model": ErrorDetail},
     },
 )
-async def get_file(credentials: JwtSecurityToken, filename: str):
-    try:
-        user_id = verify_jwks_token(credentials.credentials)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
+async def get_file(user_id: AuthenticatedUserId, filename: str):
     filename = re.sub("%2E", ".", filename)
     filename = re.sub(r"^\.+", "", filename)
     requested_path = config.get_user_file(

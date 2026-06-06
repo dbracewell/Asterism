@@ -68,8 +68,20 @@ class Config:
         return f"{self.DB_CONNECTION}://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/lang3s"
 
     @property
+    def BETTER_AUTH_URL(self) -> str:
+        return self._get_value("BETTER_AUTH_URL", self.FRONT_END_URL)
+
+    @property
+    def JWT_ISSUER(self) -> str:
+        return self._get_value("JWT_ISSUER", self.BETTER_AUTH_URL)
+
+    @property
+    def JWT_AUDIENCE(self) -> str:
+        return self._get_value("JWT_AUDIENCE", self.BETTER_AUTH_URL)
+
+    @property
     def JWKS_URL(self) -> str:
-        return f"{self.FRONT_END_URL}/api/auth/jwks"
+        return self._get_value("JWKS_URL", f"{self.BETTER_AUTH_URL}/api/auth/jwks")
 
     @property
     def STORAGE_ROOT(self) -> Path:

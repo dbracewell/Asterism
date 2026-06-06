@@ -16,6 +16,14 @@ Required for local development:
 
 - `STORAGE_ROOT` (directory where SQLite DB + files are stored)
 
+Optional auth settings (defaults work when frontend and backend run locally):
+
+- `FRONT_END_URL` (default Better Auth base URL fallback)
+- `BETTER_AUTH_URL` (Better Auth issuer base)
+- `JWKS_URL` (explicit JWKS endpoint override)
+- `JWT_ISSUER`
+- `JWT_AUDIENCE`
+
 ## Install
 
 From repository root:

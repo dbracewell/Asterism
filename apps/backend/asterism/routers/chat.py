@@ -1,12 +1,10 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from asterism.internal.db import DBSessionDep
 from asterism.repositories.chat_repository import ChatRepository
-from asterism.routers.base import JwtSecurityToken
+from asterism.routers.base import AuthenticatedUserId
 from asterism.routers.typedefs import ErrorDetail
 from asterism.schemas.chat import NewSessionResponse
-from asterism.utils.security import verify_jwks_token
-
 chat_router = APIRouter(
     prefix="/api/chat",
     tags=["files"],
@@ -24,14 +22,9 @@ chat_router = APIRouter(
     },
 )
 async def new_session(
-    credentials: JwtSecurityToken,
+    user_id: AuthenticatedUserId,
     session: DBSessionDep,
 ) -> NewSessionResponse:
-    try:
-        user_id = verify_jwks_token(credentials.credentials)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
     repo = ChatRepository(session)
     new_session = await repo.create_new_session(user_id)
 
