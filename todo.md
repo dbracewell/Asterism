@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- EPIC-1 / US-1.3 CI quality gate baseline
+- None selected yet (US-1.3 completed)
 
 ---
 
