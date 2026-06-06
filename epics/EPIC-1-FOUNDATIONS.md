@@ -31,3 +31,22 @@ Establish a reliable monorepo foundation for backend + frontend development with
 - [ ] Ensure CI uses workspace-aware caching.
 - [ ] Fail CI on broken checks.
 - [ ] Document expected CI status checks.
+
+### US-1.4 Backend testing scaffold (pytest)
+**As a developer**, I want a pytest-based backend testing scaffold with initial passing tests so backend behavior can be validated continuously.
+
+#### Tasks
+- [ ] Add pytest and async testing dependencies/config for backend.
+- [ ] Add backend test scripts wired into monorepo tasks.
+- [ ] Add initial backend tests for existing API behavior.
+- [ ] Ensure backend tests pass locally and in CI.
+
+### US-1.5 Frontend testing scaffold (Vitest/RTL + Playwright)
+**As a developer**, I want unit/integration and end-to-end frontend testing scaffolds with initial passing tests so UI and flows are protected.
+
+#### Tasks
+- [ ] Add Vitest + React Testing Library setup and config.
+- [ ] Add Playwright setup and baseline e2e config.
+- [ ] Add initial unit/integration tests for current frontend behavior.
+- [ ] Add initial e2e smoke tests for current app flows.
+- [ ] Ensure frontend tests pass locally and in CI.
