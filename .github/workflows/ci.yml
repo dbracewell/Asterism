@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
 
+      - name: Rebuild better-sqlite3 native bindings
+        run: pnpm --filter @asterism/frontend rebuild better-sqlite3
+
       - name: Run quality gates
         run: pnpm turbo run lint typecheck test --filter=@asterism/backend --filter=@asterism/frontend
 
@@ -72,6 +75,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
+
+      - name: Rebuild better-sqlite3 native bindings
+        run: pnpm --filter @asterism/frontend rebuild better-sqlite3
 
       - name: Install Playwright browser
         run: pnpm --filter @asterism/frontend exec playwright install --with-deps chromium
