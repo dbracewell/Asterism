@@ -3,18 +3,21 @@ interface ConstellationProps {
   size?: number;
   fill?: string;
   strokeWidth?: number;
+  className?: string;
 }
 
 export default function Constellation({
   size = 200,
   fill = "var(--color-foreground)",
   strokeWidth = 8,
+  className
 }: ConstellationProps) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 300 250"
+      className={className}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
     >

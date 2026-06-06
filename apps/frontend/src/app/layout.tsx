@@ -2,7 +2,7 @@ import Providers from "@/app/providers";
 import { convertToCssVariables, ThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Montserrat } from "next/font/google";
 import { cookies } from "next/headers";
 import lightTheme from "../../public/themes/light.json";
 import "./globals.css";
@@ -12,6 +12,12 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const novaSquare = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-monsterrat",
+  weight: ["400","500","600","700"],
 });
 
 const geistMono = Geist_Mono({
@@ -54,6 +60,7 @@ export default async function RootLayout({
         geistMono.variable,
         "font-sans",
         inter.variable,
+        novaSquare.variable
       )}
       suppressHydrationWarning
     >
