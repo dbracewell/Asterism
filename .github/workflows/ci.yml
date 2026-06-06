@@ -13,6 +13,8 @@ jobs:
     name: Lint, Typecheck, Test
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      npm_config_build_from_source: "true"
 
     steps:
       - name: Checkout
@@ -40,11 +42,19 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v6
 
+      - name: Install native build toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 make g++
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
 
       - name: Rebuild better-sqlite3 native bindings
-        run: pnpm --filter @asterism/frontend rebuild better-sqlite3
+        run: pnpm rebuild better-sqlite3
+
+      - name: Verify better-sqlite3 loads
+        run: pnpm --filter @asterism/frontend exec node -e "require('better-sqlite3'); console.log('better-sqlite3 ok')"
 
       - name: Run quality gates
         run: pnpm turbo run lint typecheck test --filter=@asterism/backend --filter=@asterism/frontend
@@ -54,6 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: quality-gates
+    env:
+      npm_config_build_from_source: "true"
 
     steps:
       - name: Checkout
@@ -73,11 +85,24 @@ jobs:
             pnpm-lock.yaml
             apps/frontend/pnpm-lock.yaml
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install native build toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 make g++
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
 
       - name: Rebuild better-sqlite3 native bindings
-        run: pnpm --filter @asterism/frontend rebuild better-sqlite3
+        run: pnpm rebuild better-sqlite3
+
+      - name: Verify better-sqlite3 loads
+        run: pnpm --filter @asterism/frontend exec node -e "require('better-sqlite3'); console.log('better-sqlite3 ok')"
 
       - name: Install Playwright browser
         run: pnpm --filter @asterism/frontend exec playwright install --with-deps chromium
