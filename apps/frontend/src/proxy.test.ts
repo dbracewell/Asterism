@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getSetupRedirectPath } from "@/proxy";
+import { getSetupRedirectPath } from "@/lib/setup-routing";
 
 describe("getSetupRedirectPath", () => {
   it("redirects app routes to setup when setup is required", () => {

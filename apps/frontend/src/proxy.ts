@@ -1,22 +1,6 @@
 import { auth } from "@/lib/auth";
+import { getSetupRedirectPath } from "@/lib/setup-routing";
 import { NextRequest, NextResponse } from "next/server";
-
-export function getSetupRedirectPath(
-  pathname: string,
-  requiresSetup: boolean,
-): string | null {
-  const isSetupPath = pathname.startsWith("/app/setup");
-
-  if (requiresSetup && !isSetupPath) {
-    return "/app/setup";
-  }
-
-  if (!requiresSetup && isSetupPath) {
-    return "/app";
-  }
-
-  return null;
-}
 
 export async function proxy(request: NextRequest) {
   const requestHeaders = request.headers;
