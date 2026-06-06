@@ -23,7 +23,16 @@ Implement authentication/authorization, user model, and RBAC foundations for Adm
 - [ ] Enforce role checks for admin-only operations.
 - [ ] Add tests for role-based access behavior.
 
-### US-2.3 Protected route and API behavior
+### US-2.3 Frontend setup-gated routing
+**As a user**, I want to be taken directly to initial setup when no admin exists so I can complete setup before using the app.
+
+#### Tasks
+- [ ] Route authenticated users to `/app/setup` when admin bootstrap is required.
+- [ ] Route authenticated users to `/app` when setup is complete.
+- [ ] Remove setup navigation entry points from normal app chrome.
+- [ ] Add/update tests for setup-gated routing behavior.
+
+### US-2.4 Protected route and API behavior
 **As a developer**, I want consistent unauthorized/forbidden responses so clients can handle auth failures predictably.
 
 #### Tasks

@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- US-2.2 User entity and role model
+- US-2.3 Frontend setup-gated routing
 
 ---
 
@@ -60,7 +60,13 @@ Status legend:
 - [x] Enforce role checks for admin-only operations.
 - [x] Add tests for role-based access behavior.
 
-### [ ] US-2.3 Protected route and API behavior
+### [x] US-2.3 Frontend setup-gated routing
+- [x] Route authenticated users to `/app/setup` when admin bootstrap is required.
+- [x] Route authenticated users to `/app` when setup is complete.
+- [x] Remove setup navigation entry points from normal app chrome.
+- [x] Add/update tests for setup-gated routing behavior.
+
+### [ ] US-2.4 Protected route and API behavior
 - [ ] Standardize 401/403 API responses.
 - [ ] Protect frontend routes requiring auth.
 - [ ] Add API client handling for auth failures.
