@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- None selected yet (US-1.1 completed)
+- EPIC-1 / US-1.2 Backend and frontend baseline apps boot successfully
 
 ---
 
@@ -19,11 +19,11 @@ Status legend:
 - [x] Document common monorepo commands.
 - [x] Triage baseline lint/typecheck/build failures discovered during verification runs.
 
-### [ ] US-1.2 Backend and frontend baseline apps boot successfully
-- [ ] Verify backend local setup/install/run steps.
-- [ ] Verify frontend local setup/install/run steps.
-- [ ] Add environment variable templates and required keys.
-- [ ] Update READMEs with validated setup instructions.
+### [x] US-1.2 Backend and frontend baseline apps boot successfully
+- [x] Verify backend local setup/install/run steps.
+- [x] Verify frontend local setup/install/run steps.
+- [x] Add environment variable templates and required keys.
+- [x] Update READMEs with validated setup instructions.
 
 ### [ ] US-1.3 CI quality gate baseline
 - [ ] Add CI workflow for lint + typecheck + test.
