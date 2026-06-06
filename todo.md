@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- None selected yet (US-1.3 completed)
+- EPIC-1 / US-1.4 Backend testing scaffold (pytest)
 
 ---
 
@@ -30,6 +30,19 @@ Status legend:
 - [x] Ensure CI uses workspace-aware caching.
 - [x] Fail CI on broken checks.
 - [x] Document expected CI status checks.
+
+### [x] US-1.4 Backend testing scaffold (pytest)
+- [x] Add pytest and async testing dependencies/config for backend.
+- [x] Add backend test scripts wired into monorepo tasks.
+- [x] Add initial backend tests for existing API behavior.
+- [x] Ensure backend tests pass locally and in CI.
+
+### [ ] US-1.5 Frontend testing scaffold (Vitest/RTL + Playwright)
+- [ ] Add Vitest + React Testing Library setup and config.
+- [ ] Add Playwright setup and baseline e2e config.
+- [ ] Add initial unit/integration tests for current frontend behavior.
+- [ ] Add initial e2e smoke tests for current app flows.
+- [ ] Ensure frontend tests pass locally and in CI.
 
 ---
 
