@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- EPIC-1 / US-1.1 Monorepo tooling and workspace standards
+- None selected yet (US-1.1 completed)
 
 ---
 
