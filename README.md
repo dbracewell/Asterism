@@ -16,7 +16,7 @@ cd Asterism
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22.13+
 - pnpm 11+
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/)

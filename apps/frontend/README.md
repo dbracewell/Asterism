@@ -4,7 +4,7 @@ Next.js frontend for Asterism.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22.13+
 - pnpm 11+
 
 ## Environment
