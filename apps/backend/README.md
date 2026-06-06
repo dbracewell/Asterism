@@ -58,7 +58,7 @@ pnpm db:dryrun    # generate SQL without applying
 From repository root:
 
 ```bash
-pnpm turbo run lint --filter=backend
-pnpm turbo run typecheck --filter=backend
-pnpm turbo run test --filter=backend
+pnpm turbo run lint --filter=@asterism/backend
+pnpm turbo run typecheck --filter=@asterism/backend
+pnpm turbo run test --filter=@asterism/backend
 ```
