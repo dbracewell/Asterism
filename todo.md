@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- None selected yet (US-1.4 completed)
+- EPIC-1 / US-1.5 Frontend testing scaffold (Vitest/RTL + Playwright)
 
 ---
 
@@ -37,12 +37,12 @@ Status legend:
 - [x] Add initial backend tests for existing API behavior.
 - [x] Ensure backend tests pass locally and in CI.
 
-### [ ] US-1.5 Frontend testing scaffold (Vitest/RTL + Playwright)
-- [ ] Add Vitest + React Testing Library setup and config.
-- [ ] Add Playwright setup and baseline e2e config.
-- [ ] Add initial unit/integration tests for current frontend behavior.
-- [ ] Add initial e2e smoke tests for current app flows.
-- [ ] Ensure frontend tests pass locally and in CI.
+### [x] US-1.5 Frontend testing scaffold (Vitest/RTL + Playwright)
+- [x] Add Vitest + React Testing Library setup and config.
+- [x] Add Playwright setup and baseline e2e config.
+- [x] Add initial unit/integration tests for current frontend behavior.
+- [x] Add initial e2e smoke tests for current app flows.
+- [x] Ensure frontend tests pass locally and in CI.
 
 ---
 

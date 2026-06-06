@@ -272,9 +272,10 @@ Minimum expectations per story:
 - API schema and generated clients synchronized
 - No broken auth/permission paths
 
-Expected CI status check:
+Expected CI status checks:
 
 - `CI / Lint, Typecheck, Test` (job: `quality-gates`)
+- `CI / Frontend E2E (Playwright)` (job: `frontend-e2e`)
 
 ---
 

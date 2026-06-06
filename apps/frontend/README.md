@@ -58,9 +58,18 @@ pnpm start
 From repository root:
 
 ```bash
-pnpm turbo run lint --filter=frontend
-pnpm turbo run typecheck --filter=frontend
-pnpm turbo run test --filter=frontend
+pnpm turbo run lint --filter=@asterism/frontend
+pnpm turbo run typecheck --filter=@asterism/frontend
+pnpm turbo run test --filter=@asterism/frontend
+```
+
+## Test commands
+
+From `apps/frontend`:
+
+```bash
+pnpm test:unit   # Vitest + React Testing Library
+pnpm test:e2e    # Playwright
 ```
 
 ## API client generation
