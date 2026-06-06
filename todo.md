@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- EPIC-1 / US-1.2 Backend and frontend baseline apps boot successfully
+- None selected yet (US-1.2 completed)
 
 ---
 
