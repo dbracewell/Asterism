@@ -1,0 +1,19 @@
+{
+  "reportPrivateImportUsage": "none",
+  "enableTypeIgnoreComments": true,
+  "extraPaths": ["."],
+  "executionEnvironments": [
+    {
+      "root": ".",
+    },
+  ],
+  "include": ["asterism"],
+  "stubPath": "asterism",
+  "typeCheckingMode": "basic",
+  "reportReturnType": "warning",
+  "reportArgumentType": "warning",
+  "reportOperatorIssue": "warning",
+  "reportImportCycles": "warning",
+  "reportDuplicateImport": "warning",
+  "reportUnusedCallResult": "none",
+}

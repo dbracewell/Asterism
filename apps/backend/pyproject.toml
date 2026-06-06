@@ -1,0 +1,21 @@
+[project]
+name = "asterism-backend"
+version = "0.1.0"
+description = "Backend for Asterism, a multi-agent chat system."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "aiosqlite>=0.22.1",
+  "alembic>=1.18.4",
+  "asyncpg>=0.31.0",
+  "fastapi>=0.136.3",
+  "filetype>=1.2.0",
+  "openai>=2.38.0",
+  "pydantic>=2.13.4",
+  "pyjwt[crypto]>=2.13.0",
+  "sqlalchemy[asyncio]>=2.0.50",
+  "uvicorn[standard]>=0.48.0",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.15.15"]

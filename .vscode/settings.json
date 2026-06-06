@@ -1,0 +1,55 @@
+{
+   "files.watcherExclude": {
+      "**/routeTree.gen.ts": true
+   },
+   "search.exclude": {
+      "**/routeTree.gen.ts": true
+   },
+   "files.readonlyInclude": {
+      "**/routeTree.gen.ts": true
+   },
+   "python.defaultInterpreterPath": "${workspaceFolder}/apps/backend/.venv/bin/python",
+   "python.terminal.activateEnvironment": true,
+   "cSpell.words": [
+      "chatgator",
+      "dotenv",
+      "sessionmaker",
+      "sessionmanager",
+      "zoomable"
+   ],
+   "python-envs.pythonProjects": [
+      {
+         "path": "apps/backend",
+         "envManager": "ms-python.python:venv",
+         "packageManager": "ms-python.python:pip",
+         "extraPaths": ["${workspaceFolder}/apps/backend"]
+      }
+   ],
+   "basedpyright.analysis.autoImportCompletions": true,
+   "basedpyright.analysis.extraPaths": ["${workspaceFolder}/apps/backend"],
+   "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.venv": true,
+      "**/node_modules": true,
+      "**/.turbo": true
+   },
+   "dbcode.connections": [
+      {
+         "connectionId": "9x2zpBEPHu23gd-X9nTSv",
+         "name": "ChatGator",
+         "driver": "sqlite",
+         "connectionType": "socket",
+         "socket": "/Users/david/storage/backend.db",
+         "readOnly": false,
+         "postConnectionSqlType": "inline",
+         "driverOptions": {
+            "extensions": []
+         },
+         "idleTimeout": 0,
+         "introspection": {
+            "progressive": false
+         }
+      }
+   ]
+}

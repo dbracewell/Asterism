@@ -1,0 +1,11 @@
+{
+  "name": "@asterism/backend",
+  "private": true,
+  "scripts": {
+    "dev": "uv run uvicorn asterism.main:app --reload --port 8000",
+    "start": "uv run uvicorn asterism.main:app --host 0.0.0.0 --port 8000",
+    "db:migrate": "uv run alembic revision --autogenerate",
+    "db:push": "uv run alembic upgrade head",
+    "db:dryrun": "uv run alembic upgrade head --sql > migration_script.sql"
+  }
+}
