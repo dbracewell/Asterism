@@ -272,6 +272,10 @@ Minimum expectations per story:
 - API schema and generated clients synchronized
 - No broken auth/permission paths
 
+Expected CI status check:
+
+- `CI / Lint, Typecheck, Test` (job: `quality-gates`)
+
 ---
 
 ## 9) Documentation Expectations

@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- None selected yet (US-1.2 completed)
+- EPIC-1 / US-1.3 CI quality gate baseline
 
 ---
 
@@ -25,11 +25,11 @@ Status legend:
 - [x] Add environment variable templates and required keys.
 - [x] Update READMEs with validated setup instructions.
 
-### [ ] US-1.3 CI quality gate baseline
-- [ ] Add CI workflow for lint + typecheck + test.
-- [ ] Ensure CI uses workspace-aware caching.
-- [ ] Fail CI on broken checks.
-- [ ] Document expected CI status checks.
+### [x] US-1.3 CI quality gate baseline
+- [x] Add CI workflow for lint + typecheck + test.
+- [x] Ensure CI uses workspace-aware caching.
+- [x] Fail CI on broken checks.
+- [x] Document expected CI status checks.
 
 ---
 
