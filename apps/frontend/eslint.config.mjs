@@ -6,8 +6,14 @@ import plugin from "@tanstack/eslint-plugin-query";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  ...plugin,
+  ...plugin.configs["flat/recommended"],
   // Override default ignores of eslint-config-next.
+  {
+    files: ["src/client/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   {
     rules: {
       "import/no-cycle": "off",

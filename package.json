@@ -5,7 +5,11 @@
   "main": "index.js",
   "packageManager": "pnpm@11.4.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "pnpm turbo run dev",
+    "build": "pnpm turbo run build",
+    "lint": "pnpm turbo run lint",
+    "test": "pnpm turbo run test",
+    "typecheck": "pnpm turbo run typecheck"
   },
   "keywords": [],
   "author": "",

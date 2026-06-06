@@ -138,7 +138,7 @@ async def async_test(body: StreamRequest, db: DBSessionDep):
 @app.websocket("/ws/chat/{chat_id}")
 async def chat(websocket: WebSocket, chat_id: str, token: str = Query(...)):
     try:
-        user_id = verify_jwks_token(token)
+        verify_jwks_token(token)
     except WebSocketException as e:
         await websocket.close(code=e.code, reason=e.reason)
         return
@@ -156,7 +156,6 @@ async def chat(websocket: WebSocket, chat_id: str, token: str = Query(...)):
                 model="qwen/qwen3-4b-2507",
                 messages=[{"role": "user", "content": user_prompt}],
             )
-            finish_reason = None
             final_response = ""
             async for chunk in response:
                 if not chunk.choices:
@@ -164,9 +163,6 @@ async def chat(websocket: WebSocket, chat_id: str, token: str = Query(...)):
 
                 choice = chunk.choices[0]
                 delta = choice.delta
-                if choice.finish_reason:
-                    finish_reason = choice.finish_reason
-
                 if delta.content:
                     final_response += delta.content
                     await websocket.send_text(

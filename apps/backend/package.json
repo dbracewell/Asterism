@@ -4,6 +4,9 @@
   "scripts": {
     "dev": "uv run uvicorn asterism.main:app --reload --port 8000",
     "start": "uv run uvicorn asterism.main:app --host 0.0.0.0 --port 8000",
+    "lint": "uv run ruff check .",
+    "test": "echo \"No backend tests yet\"",
+    "typecheck": "uv run python -m compileall -q asterism",
     "db:migrate": "uv run alembic revision --autogenerate",
     "db:push": "uv run alembic upgrade head",
     "db:dryrun": "uv run alembic upgrade head --sql > migration_script.sql"

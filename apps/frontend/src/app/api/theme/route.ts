@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
   try {
     const data = await readFile(filePath, "utf-8");
     return NextResponse.json(data, { status: 200 });
-  } catch (error: any) {
-    if (error.code === "ENOENT") {
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       return NextResponse.json(
         { message: `Theme does not exist: ${themeName}` },
         { status: 404 },

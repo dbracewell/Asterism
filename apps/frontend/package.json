@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "echo \"No frontend tests yet\"",
+    "typecheck": "tsc --noEmit",
     "codegen": "openapi-ts",
     "auth:generate": "pnpm dlx auth@latest generate",
     "auth:migrate": "pnpm dlx auth@latest migrate"
