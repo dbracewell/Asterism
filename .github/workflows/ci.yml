@@ -42,17 +42,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
+      - name: Approve build scripts for native dependencies
+        run: pnpm approve-builds --all
+
       - name: Install frontend workspace dependencies
         run: pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
-      - name: Place prebuilt better-sqlite3 binary
-        run: |
-          mkdir -p node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64
-          curl -fSL -o /tmp/better-sqlite3-prebuild.tar.gz \
-            "https://github.com/WiseLibs/better-sqlite3/releases/download/v12.10.0/better-sqlite3-v12.10.0-node-v127-linux-x64.tar.gz"
-          tar -xzf /tmp/better-sqlite3-prebuild.tar.gz \
-            -C node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64/
-        shell: bash
+      - name: Approve build scripts for frontend native dependencies
+        run: pnpm approve-builds --all
 
       - name: Verify better-sqlite3 loads and opens DB
         run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
@@ -91,17 +88,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
+      - name: Approve build scripts for native dependencies
+        run: pnpm approve-builds --all
+
       - name: Install frontend workspace dependencies
         run: pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
-      - name: Place prebuilt better-sqlite3 binary
-        run: |
-          mkdir -p node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64
-          curl -fSL -o /tmp/better-sqlite3-prebuild.tar.gz \
-            "https://github.com/WiseLibs/better-sqlite3/releases/download/v12.10.0/better-sqlite3-v12.10.0-node-v127-linux-x64.tar.gz"
-          tar -xzf /tmp/better-sqlite3-prebuild.tar.gz \
-            -C node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64/
-        shell: bash
+      - name: Approve build scripts for frontend native dependencies
+        run: pnpm approve-builds --all
 
       - name: Verify better-sqlite3 loads and opens DB
         run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
