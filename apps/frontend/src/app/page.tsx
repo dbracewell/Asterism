@@ -6,9 +6,15 @@ const searchSchema = z.object({
   redirect: z.string().optional(),
 });
 
-export default async function Home(params: PageProps<"/">) {
-  const searchParams = await params.searchParams;
-  const formParams = searchSchema.parse(searchParams);
+type HomePageProps = {
+  searchParams: Promise<{
+    mode?: string;
+    redirect?: string;
+  }>;
+};
+
+export default async function Home({ searchParams }: HomePageProps) {
+  const formParams = searchSchema.parse(await searchParams);
   return (
     <div className="flex-1 flex items-center justify-center">
       <AuthForm initialView={formParams.mode} referer={formParams.redirect} />
