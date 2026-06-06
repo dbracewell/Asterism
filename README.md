@@ -63,6 +63,22 @@ pnpm --filter @asterism/frontend dev
 Frontend: http://localhost:3000  
 Backend OpenAPI: http://localhost:8000/openapi.json
 
+## Run CI checks locally
+
+From repository root:
+
+```bash
+pnpm ci:local:quality   # lint + typecheck + tests (backend + frontend)
+pnpm ci:local:e2e       # frontend Playwright e2e
+pnpm ci:local           # runs both in sequence
+```
+
+These scripts mirror the GitHub CI pipeline, including native `better-sqlite3`
+verification before test execution.
+
+`pnpm ci:local:e2e` also resets and uses a dedicated BetterAuth database at
+`apps/frontend/ci-users.db` so local e2e runs start clean.
+
 ## First-time admin access setup
 
 1. Start backend and frontend.
