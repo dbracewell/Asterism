@@ -36,6 +36,16 @@ cp apps/frontend/.env.example apps/frontend/.env
 
 Update values in both `.env` files as needed for your machine.
 
+For first-time admin setup, set `BOOTSTRAP_SETUP_TOKEN` in `apps/backend/.env`.
+Example:
+
+```bash
+BOOTSTRAP_SETUP_TOKEN=<a-strong-random-secret>
+```
+
+If deploying with Docker, pass `BOOTSTRAP_SETUP_TOKEN` as an environment variable
+or Docker secret for the backend container.
+
 ### 3) Start backend and frontend
 
 In terminal 1:
@@ -52,3 +62,17 @@ pnpm --filter @asterism/frontend dev
 
 Frontend: http://localhost:3000  
 Backend OpenAPI: http://localhost:8000/openapi.json
+
+## First-time admin access setup
+
+1. Start backend and frontend.
+2. Sign up/sign in from the frontend.
+3. Open `http://localhost:3000/app/setup`.
+4. Enter the `BOOTSTRAP_SETUP_TOKEN` value.
+5. Your current signed-in user is promoted to `admin`.
+
+Notes:
+
+- Bootstrap only works while **no admin exists**.
+- After the first admin is created, setup bootstrap is disabled.
+- Keep `BOOTSTRAP_SETUP_TOKEN` private and share it only through a trusted channel.

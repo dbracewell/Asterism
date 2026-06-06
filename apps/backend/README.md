@@ -24,6 +24,10 @@ Optional auth settings (defaults work when frontend and backend run locally):
 - `JWT_ISSUER`
 - `JWT_AUDIENCE`
 
+Admin bootstrap setting:
+
+- `BOOTSTRAP_SETUP_TOKEN` (required to perform first-time admin bootstrap when no admin exists)
+
 ## Install
 
 From repository root:

@@ -6,7 +6,7 @@ Status legend:
 - `[x]` completed
 
 ## Active Story
-- US-2.1 BetterAuth + JWT integration
+- US-2.2 User entity and role model
 
 ---
 
@@ -54,11 +54,11 @@ Status legend:
 - [x] Add frontend auth flows (sign-in/sign-out/session state).
 - [x] Add auth integration tests.
 
-### [ ] US-2.2 User entity and role model
-- [ ] Define SQLAlchemy models for users and roles.
-- [ ] Add migrations for user/role tables.
-- [ ] Enforce role checks for admin-only operations.
-- [ ] Add tests for role-based access behavior.
+### [x] US-2.2 User entity and role model
+- [x] Define SQLAlchemy models for users and roles.
+- [x] Add migrations for user/role tables.
+- [x] Enforce role checks for admin-only operations.
+- [x] Add tests for role-based access behavior.
 
 ### [ ] US-2.3 Protected route and API behavior
 - [ ] Standardize 401/403 API responses.
