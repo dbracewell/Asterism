@@ -13,7 +13,7 @@ jobs:
     name: Lint, Typecheck, Test
     runs-on: ubuntu-latest
     container:
-      image: node:22-bookworm
+      image: node:26-bookworm
       options: --user root
     timeout-minutes: 20
 
@@ -37,7 +37,7 @@ jobs:
       - name: Install native build toolchain
         run: |
           apt-get update
-          apt-get install -y build-essential python3 make g++ libsqlite3-dev
+          apt-get install -y build-essential python3 make g++
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
@@ -45,8 +45,14 @@ jobs:
       - name: Install frontend workspace dependencies
         run: pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
-      - name: Rebuild better-sqlite3 native bindings
-        run: pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false
+      - name: Place prebuilt better-sqlite3 binary
+        run: |
+          mkdir -p node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64
+          curl -fSL -o /tmp/better-sqlite3-prebuild.tar.gz \
+            "https://github.com/WiseLibs/better-sqlite3/releases/download/v12.10.0/better-sqlite3-v12.10.0-node-v127-linux-x64.tar.gz"
+          tar -xzf /tmp/better-sqlite3-prebuild.tar.gz \
+            -C node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64/
+        shell: bash
 
       - name: Verify better-sqlite3 loads and opens DB
         run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
@@ -58,7 +64,7 @@ jobs:
     name: Frontend E2E (Playwright)
     runs-on: ubuntu-latest
     container:
-      image: node:22-bookworm
+      image: node:22.13.0-bookworm
       options: --user root
     timeout-minutes: 20
     needs: quality-gates
@@ -80,7 +86,7 @@ jobs:
       - name: Install native build toolchain
         run: |
           apt-get update
-          apt-get install -y build-essential python3 make g++ libsqlite3-dev
+          apt-get install -y build-essential python3 make g++
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
@@ -88,8 +94,14 @@ jobs:
       - name: Install frontend workspace dependencies
         run: pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false
 
-      - name: Rebuild better-sqlite3 native bindings
-        run: pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false
+      - name: Place prebuilt better-sqlite3 binary
+        run: |
+          mkdir -p node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64
+          curl -fSL -o /tmp/better-sqlite3-prebuild.tar.gz \
+            "https://github.com/WiseLibs/better-sqlite3/releases/download/v12.10.0/better-sqlite3-v12.10.0-node-v127-linux-x64.tar.gz"
+          tar -xzf /tmp/better-sqlite3-prebuild.tar.gz \
+            -C node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/binding/node-v127-linux-x64/
+        shell: bash
 
       - name: Verify better-sqlite3 loads and opens DB
         run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
