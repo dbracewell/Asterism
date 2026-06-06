@@ -10,7 +10,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "pnpm exec next dev --port 3000",
+    command: "pnpm exec next dev --port 3000 --no-turbopack",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
