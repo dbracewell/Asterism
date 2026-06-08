@@ -23,25 +23,28 @@ export const useTheme = () => {
     listThemes();
   }, []);
 
-  const setTheme = useCallback(async (themeName: string) => {
-    try {
-      const response = await fetch(`/api/theme?name=${themeName}`);
-      if (response.ok) {
-        const themeData = await response.json();
-        setCurrentTheme(themeData.name);
-        Cookies.set("custom-theme-name", themeName);
-        Cookies.set("custom-theme", themeData, {
-          expires: 365,
-          path: "/",
-        });
-        router.refresh();
-      } else {
-        console.log(response.statusText);
+  const setTheme = useCallback(
+    async (themeName: string) => {
+      try {
+        const response = await fetch(`/api/theme?name=${themeName}`);
+        if (response.ok) {
+          const themeData = await response.json();
+          setCurrentTheme(themeData.name);
+          Cookies.set("custom-theme-name", themeName);
+          Cookies.set("custom-theme", themeData, {
+            expires: 365,
+            path: "/",
+          });
+          router.refresh();
+        } else {
+          console.log(response.statusText);
+        }
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+    },
+    [router],
+  );
 
   return {
     theme: currentTheme,

@@ -29,6 +29,30 @@ export type BootstrapAdminResponse = {
 };
 
 /**
+ * ChatSessionInfo
+ */
+export type ChatSessionInfo = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Title
+     */
+    title: string;
+};
+
+/**
+ * ChatSessionList
+ */
+export type ChatSessionList = {
+    /**
+     * Sessions
+     */
+    sessions: Array<ChatSessionInfo>;
+};
+
+/**
  * ErrorDetail
  */
 export type ErrorDetail = {
@@ -60,6 +84,10 @@ export type NewSessionResponse = {
      * Id
      */
     id: string;
+    /**
+     * Title
+     */
+    title: string;
 };
 
 /**
@@ -208,6 +236,35 @@ export type NewChatSessionResponses = {
 };
 
 export type NewChatSessionResponse = NewChatSessionResponses[keyof NewChatSessionResponses];
+
+export type NewChatSession2Data = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/chat/list';
+};
+
+export type NewChatSession2Errors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type NewChatSession2Error = NewChatSession2Errors[keyof NewChatSession2Errors];
+
+export type NewChatSession2Responses = {
+    /**
+     * Successful Response
+     */
+    200: ChatSessionList;
+};
+
+export type NewChatSession2Response = NewChatSession2Responses[keyof NewChatSession2Responses];
 
 export type GetCurrentUserData = {
     body?: never;

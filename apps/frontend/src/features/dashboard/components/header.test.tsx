@@ -12,19 +12,13 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: replaceMock, refresh: refreshMock }),
 }));
 
-vi.mock("@/app/app/app-provider", () => ({
-  useAppContext: () => ({
-    user: { email: "user@example.com" },
-  }),
-}));
-
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
     signOut: signOutMock,
   },
 }));
 
-import { Header } from "@/components/layout/header";
+import { Header } from "@/features/dashboard/components/header";
 
 describe("Header", () => {
   beforeEach(() => {
@@ -32,12 +26,6 @@ describe("Header", () => {
     refreshMock.mockReset();
     signOutMock.mockReset();
     signOutMock.mockResolvedValue({});
-  });
-
-  it("shows current user email", () => {
-    render(<Header />);
-
-    expect(screen.getByText("user@example.com")).toBeInTheDocument();
   });
 
   it("signs out and redirects to home", async () => {

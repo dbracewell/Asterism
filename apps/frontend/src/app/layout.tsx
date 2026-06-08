@@ -1,4 +1,5 @@
 import Providers from "@/app/providers";
+import { Toaster } from "@/components/ui/sonner";
 import { convertToCssVariables, ThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -17,7 +18,7 @@ const geistSans = Geist({
 const novaSquare = Montserrat({
   subsets: ["latin"],
   variable: "--font-monsterrat",
-  weight: ["400","500","600","700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -54,18 +55,22 @@ export default async function RootLayout({
       style={themeStyles}
       lang="en"
       className={cn(
+        "no-scrollbar",
         "h-full",
         "antialiased",
         geistSans.variable,
         geistMono.variable,
         "font-sans",
         inter.variable,
-        novaSquare.variable
+        novaSquare.variable,
       )}
       suppressHydrationWarning
     >
-      <body className="flex h-screen w-screen flex-col overflow-hidden">
-        <Providers>{children}</Providers>
+      <body className="no-scrollbar flex h-screen w-screen flex-col overflow-hidden">
+        <Providers>
+          {children}
+          <Toaster richColors closeButton position="top-right" />
+        </Providers>
       </body>
     </html>
   );

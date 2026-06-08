@@ -1,16 +1,17 @@
 "use client";
 
-import Constellation from "@/components/logo";
+import { ThemeSelector } from "@/components/settings/theme-selector";
 import { Button } from "@/components/ui/button";
-import { useAppContext } from "@/app/app/app-provider";
+import { useSidebar } from "@/components/ui/sidebar";
+import { FullLogo } from "@/features/dashboard/components/full-logo";
 import { authClient } from "@/lib/auth-client";
-import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export const Header = () => {
-  const { user } = useAppContext();
   const router = useRouter();
+  const { state } = useSidebar();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const onSignOut = async () => {
@@ -25,14 +26,20 @@ export const Header = () => {
   };
 
   return (
-    <div className="bg-sidebar sticky flex h-10 items-center justify-between overflow-clip border-b px-3 py-1 shadow-sm select-none">
-      <Link href="/app" className="group flex items-center font-monsterrat">
-        <Constellation className="opacity-50" />
-        <h1 className="text-lg font-semibold">ASTERISM</h1>
-      </Link>
-
+    <div
+      className="bg-sidebar/5 sticky top-0 z-10 flex items-center justify-between overflow-clip px-2 backdrop-blur-2xl select-none"
+      style={{ height: "var(--header-height)" }}
+    >
+      <div
+        className={cn(
+          "transition-opacity duration-200",
+          state === "expanded" ? "opacity-0" : "opacity-100",
+        )}
+      >
+        <FullLogo />
+      </div>
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground text-xs">{user.email}</span>
+        <ThemeSelector />
         <Button
           variant="outline"
           size="sm"

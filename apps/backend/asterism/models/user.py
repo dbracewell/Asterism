@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from . import Base
 
 if TYPE_CHECKING:
+    from .chat_session import ChatSession
     from .user_role import UserRole
 
 
@@ -23,6 +24,10 @@ class User(Base):
     )
 
     roles: Mapped[list["UserRole"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    chats: Mapped[list["ChatSession"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )

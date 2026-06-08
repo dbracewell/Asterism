@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import Uuid
 
@@ -10,10 +10,12 @@ from . import Base
 
 if TYPE_CHECKING:
     from .message import Message
+    from .user import User
 
 
 class ChatSession(Base):
     __tablename__ = "sessions"
+    # __table_args__ = (UniqueConstraint("user_id", "id", name="uq_user_chat_session"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -22,8 +24,7 @@ class ChatSession(Base):
         index=True,
     )
     user_id: Mapped[str] = mapped_column(
-        String,
-        nullable=False,
+        ForeignKey("users.id", ondelete="CASCADE", name="sessions_fk_user_id"),
         index=True,
     )
     title: Mapped[Optional[str]] = mapped_column(String)
@@ -37,4 +38,9 @@ class ChatSession(Base):
     messages: Mapped[list["Message"]] = relationship(
         back_populates="session",
         cascade="all, delete-orphan",
+    )
+
+    user: Mapped["User"] = relationship(
+        back_populates="chats",
+        cascade="all",
     )

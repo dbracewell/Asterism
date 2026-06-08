@@ -1,4 +1,3 @@
-// 1. Define the shape of your incoming JSON colors
 export interface ThemeColors {
   background: string;
   foreground: string;

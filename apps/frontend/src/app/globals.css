@@ -6,6 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --header-height: 40px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -120,6 +121,70 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility mask-fade-vertical {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--color-sidebar-accent) 5%,
+    var(--color-sidebar-accent) 95%,
+    transparent 100%
+  );
+}
+
+@utility mask-fade-on-scroll {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 0%,
+    black 90%,
+    transparent
+  );
+
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  animation: adjust-mask linear both;
+  animation-timeline: scroll(self);
+}
+
+@keyframes adjust-mask {
+  0% {
+    mask-image: linear-gradient(
+      to bottom,
+      black 10%,
+      black 90%,
+      transparent 100%
+    );
+  }
+  25% {
+    mask-image: linear-gradient(
+      to bottom,
+      black 10%,
+      black 90%,
+      transparent 100%
+    );
+  }
+  100% {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 10%,
+      black 90%,
+      transparent 100%
+    );
+  }
+}
+
+@utility mask-fade-bottom {
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -129,5 +194,10 @@
   }
   html {
     @apply font-sans;
+  }
+
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
   }
 }

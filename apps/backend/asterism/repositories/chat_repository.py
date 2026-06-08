@@ -1,11 +1,13 @@
+from turtle import title
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from asterism.models.chat_session import ChatSession
 from asterism.models.message import Message
+from asterism.schemas.chat import ChatSessionInfo, ChatSessionList
 
 
 class ChatRepository:
@@ -13,10 +15,26 @@ class ChatRepository:
         self.session = db_session
 
     async def create_new_session(self, user_id: str) -> ChatSession:
-        new_session = ChatSession(user_id=user_id)
+        new_session = ChatSession(user_id=user_id, title="New Chat")
         self.session.add(new_session)
         await self.session.commit()
         return new_session
+
+    async def list_chat_sessions(self, user_id: str) -> ChatSessionList:
+        stmt = (
+            select(ChatSession)
+            .where(ChatSession.user_id == user_id)
+            .order_by(desc(ChatSession.created_at))
+        )
+        result = await self.session.execute(stmt)
+        session_info = []
+        for session in result.scalars().all():
+            session_info.append(
+                ChatSessionInfo(
+                    id=session.id, title=session.title or "New Chat Session"
+                )
+            )
+        return ChatSessionList(sessions=session_info)
 
     async def get_active_branch_thread(
         self,
