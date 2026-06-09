@@ -7,7 +7,7 @@ export const useChatSessionList = () => {
   const { data, error, isLoading } = useQuery({
     queryKey: ["chat-session-list", user.id],
     queryFn: async () => {
-      const { data, error } = await api.newChatSession2();
+      const { data, error } = await api.listChatSessions();
       if (error || !data) {
         throw Error(error.detail);
       }

@@ -67,12 +67,12 @@ async def delete_folder(
     },
 )
 async def create_folder(
-    request: NewFolderRequest,
+    payload: NewFolderRequest,
     user_id: AuthenticatedUserId,
     session: DBSessionDep,
 ) -> FolderResponse:
     repo = FolderRepository(session)
-    return await repo.create_folder(user_id, request.title, request.parent_folder_id)
+    return await repo.create_folder(user_id, payload.title, payload.parent_folder_id)
 
 
 @folder_router.get(

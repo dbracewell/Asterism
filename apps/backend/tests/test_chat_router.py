@@ -1,3 +1,4 @@
+import uuid
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -35,9 +36,13 @@ def test_new_chat_session_returns_id_when_authorized(client, monkeypatch):
         def __init__(self, _session):
             pass
 
-        async def create_new_session(self, user_id: str):
+        async def create_new_session(self, user_id: str, folder_id: uuid.UUID | None):
             assert user_id == "user-123"
-            return SimpleNamespace(id=expected_session_id)
+            return SimpleNamespace(
+                id=expected_session_id,
+                title="New Chat",
+                folder_id=folder_id,
+            )
 
     monkeypatch.setattr(
         base_router_module,
@@ -49,7 +54,10 @@ def test_new_chat_session_returns_id_when_authorized(client, monkeypatch):
     response = client.post(
         "/api/chat/",
         headers={"Authorization": "Bearer valid-token"},
+        json={
+            "folder_id": None,
+        },
     )
 
     assert response.status_code == 201
-    assert response.json() == {"id": str(expected_session_id)}
+    assert response.json() == {"id": str(expected_session_id), "title": "New Chat"}

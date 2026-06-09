@@ -3,8 +3,8 @@ import os
 import shutil
 import tempfile
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 _TEST_STORAGE_ROOT = tempfile.mkdtemp(prefix="asterism-test-storage-")
 os.environ["STORAGE_ROOT"] = _TEST_STORAGE_ROOT
@@ -23,7 +23,7 @@ async def _reset_db() -> None:
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client() -> TestClient:  # type: ignore
     with TestClient(app) as test_client:
         asyncio.run(_reset_db())
         yield test_client

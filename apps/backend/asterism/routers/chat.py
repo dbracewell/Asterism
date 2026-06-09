@@ -23,12 +23,12 @@ chat_router = APIRouter(
     },
 )
 async def new_session(
-    request: NewSessionRequest,
+    payload: NewSessionRequest,
     user_id: AuthenticatedUserId,
     session: DBSessionDep,
 ) -> NewSessionResponse:
     repo = ChatRepository(session)
-    new_session = await repo.create_new_session(user_id, request.folder_id)
+    new_session = await repo.create_new_session(user_id, payload.folder_id)
 
     return NewSessionResponse(
         id=new_session.id,
@@ -39,7 +39,7 @@ async def new_session(
 @chat_router.get(
     "/list",
     status_code=status.HTTP_200_OK,
-    operation_id="newChatSession",
+    operation_id="listChatSessions",
     responses={
         200: {"model": ChatSessionList},
         401: {"model": ErrorDetail},

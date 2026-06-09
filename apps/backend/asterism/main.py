@@ -108,7 +108,7 @@ async def data_generator(messages: list, db: DBSessionDep):
 
 
 class StreamRequest(BaseModel):
-    content: str = Field(..., description="The prompt content to stream")
+    content: str = Field(description="The prompt content to stream")
 
 
 class StreamChunk(BaseModel):

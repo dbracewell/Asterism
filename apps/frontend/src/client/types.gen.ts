@@ -293,14 +293,14 @@ export type NewChatSessionResponses = {
 
 export type NewChatSessionResponse = NewChatSessionResponses[keyof NewChatSessionResponses];
 
-export type NewChatSession2Data = {
+export type ListChatSessionsData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/chat/list';
 };
 
-export type NewChatSession2Errors = {
+export type ListChatSessionsErrors = {
     /**
      * Unauthorized
      */
@@ -311,16 +311,16 @@ export type NewChatSession2Errors = {
     404: ErrorDetail;
 };
 
-export type NewChatSession2Error = NewChatSession2Errors[keyof NewChatSession2Errors];
+export type ListChatSessionsError = ListChatSessionsErrors[keyof ListChatSessionsErrors];
 
-export type NewChatSession2Responses = {
+export type ListChatSessionsResponses = {
     /**
      * Successful Response
      */
     200: ChatSessionList;
 };
 
-export type NewChatSession2Response = NewChatSession2Responses[keyof NewChatSession2Responses];
+export type ListChatSessionsResponse = ListChatSessionsResponses[keyof ListChatSessionsResponses];
 
 export type GetCurrentUserData = {
     body?: never;
