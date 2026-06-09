@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreateFolderInput } from "@/features/dashboard/components/create-folder-input";
 import { useCreateNewChatSession } from "@/features/dashboard/hooks/use-create-new-chat-session";
-import { useCreateNewFolder } from "@/features/dashboard/hooks/use-create-new-folder";
 import { useDeleteFolder } from "@/features/dashboard/hooks/use-delete-folder";
 import { cn } from "@/lib/utils";
 import {
@@ -34,10 +33,8 @@ export const FolderView = ({
   const [foldersOpen, setFoldersOpen] = useState(
     () => new Set(JSON.parse(Cookie.get("asterism-open-folders") ?? "[]")),
   );
-  const newFolder = useCreateNewFolder();
   const [isAdding, setIsAdding] = useState(false);
   const newFolderTitleRef = useRef<HTMLInputElement | null>(null);
-  const [newFolderTitle, setNewFolderTitle] = useState("");
   const hasChildren = folder.children && folder.children.length > 0;
   const hasSessions = folder.sessions && folder.sessions.length > 0;
   const pathName = usePathname();
