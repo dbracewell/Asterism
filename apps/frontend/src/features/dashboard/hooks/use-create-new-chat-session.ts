@@ -10,7 +10,7 @@ export const useCreateNewChatSession = () => {
   const router = useRouter();
 
   const mutation = useMutation({
-    mutationFn: async (folderId?: string) => {
+    mutationFn: async ({ folderId }: { folderId?: string }) => {
       const { data, error } = await api.newChatSession({
         body: { folder_id: folderId },
       });

@@ -61,7 +61,7 @@ export const NavChatSessions = ({
             </SidebarGroupLabel>
           </CollapsibleTrigger>
           <SidebarMenuAction
-            onClick={() => newChatSession.mutate()}
+            onClick={() => newChatSession.mutate({})}
             className="group-hover/folder:bg-sidebar-accent mr-2 opacity-0 group-hover/folder:opacity-100"
           >
             +

@@ -215,9 +215,12 @@ const FolderDropDown = ({
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() =>
-            createChatSession.mutate(folderId, {
-              onSuccess: () => openFolder(),
-            })
+            createChatSession.mutate(
+              { folderId },
+              {
+                onSuccess: () => openFolder(),
+              },
+            )
           }
         >
           <IconMessage2Plus /> New Chat

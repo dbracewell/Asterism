@@ -22,7 +22,7 @@ export const NavActions = () => {
           <TooltipProvider>
             <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={() => newChatSession.mutate()}
+                onClick={() => newChatSession.mutate({})}
                 size="lgText"
                 tooltip="New Chat"
               >
