@@ -36,7 +36,7 @@ export const APIDownload = ({
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [filename]);
+  }, [filename, objectUrl]);
 
   if (error) {
     return (

@@ -1,7 +1,7 @@
-import { defineConfig, globalIgnores } from "eslint/config";
+import plugin from "@tanstack/eslint-plugin-query";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
-import plugin from "@tanstack/eslint-plugin-query";
+import { defineConfig, globalIgnores } from "eslint/config";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     files: ["src/client/**/*.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      "@next/next/no-img-element": "off",
     },
   },
   {

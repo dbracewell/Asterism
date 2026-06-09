@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,7 +65,7 @@ export const APIImage = ({
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [filename]);
+  }, [filename, objectUrl]);
 
   if (error) {
     return (
@@ -114,6 +116,7 @@ export const APIImage = ({
           >
             <DownloadIcon className="h-4 w-4" />
           </Button>
+
           <img
             src={objectUrl}
             alt={alt}
