@@ -1,8 +1,6 @@
 import uuid
-from typing import cast
 
 from fastapi import APIRouter, HTTPException, status
-from starlette.status import HTTP_401_UNAUTHORIZED
 
 from asterism.internal.db import DBSessionDep
 from asterism.repositories.folder_repository import FolderRepository

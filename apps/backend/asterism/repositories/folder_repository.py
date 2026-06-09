@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import asc, inspect, select
+from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 

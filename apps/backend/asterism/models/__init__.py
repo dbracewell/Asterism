@@ -1,5 +1,4 @@
 from sqlalchemy import MetaData
-from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import declarative_base
 
 from asterism.config import config
