@@ -8,6 +8,7 @@ from . import Base
 
 if TYPE_CHECKING:
     from .chat_session import ChatSession
+    from .folder import Folder
     from .user_role import UserRole
 
 
@@ -27,7 +28,13 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    chats: Mapped[list["ChatSession"]] = relationship(
+
+    sessions: Mapped[list["ChatSession"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    folders: Mapped[list["Folder"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )

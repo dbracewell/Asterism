@@ -27,7 +27,7 @@ export const Header = () => {
 
   return (
     <div
-      className="bg-sidebar/5 sticky top-0 z-10 flex items-center justify-between overflow-clip px-2 backdrop-blur-2xl select-none"
+      className="bg-sidebar/5 absolute inset-x-0 top-0 z-10 flex items-center justify-between overflow-clip px-2 backdrop-blur-xs select-none"
       style={{ height: "var(--header-height)" }}
     >
       <div

@@ -8,6 +8,7 @@ from asterism.config import config
 from asterism.routers.base import AuthenticatedUserId
 from asterism.routers.typedefs import ErrorDetail
 
+
 def get_file_mime_type(file_path) -> str:
     kind = filetype.guess(file_path)
     if kind is None:

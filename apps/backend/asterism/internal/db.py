@@ -82,4 +82,4 @@ async def get_db_session():
         yield session
 
 
-DBSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
+type DBSessionDep = Annotated[AsyncSession, Depends(get_db_session)]

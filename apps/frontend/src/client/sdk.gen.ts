@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AdminPingData, AdminPingErrors, AdminPingResponses, BootstrapAdminData, BootstrapAdminErrors, BootstrapAdminResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetFileData, GetFileErrors, GetFileResponses, GetSetupStatusData, GetSetupStatusErrors, GetSetupStatusResponses, NewChatSession2Data, NewChatSession2Errors, NewChatSession2Responses, NewChatSessionData, NewChatSessionErrors, NewChatSessionResponses, StreamChatData, StreamChatErrors, StreamChatResponses } from './types.gen';
+import type { AdminPingData, AdminPingErrors, AdminPingResponses, BootstrapAdminData, BootstrapAdminErrors, BootstrapAdminResponses, CreateFolderData, CreateFolderErrors, CreateFolderResponses, DeleteFolderData, DeleteFolderErrors, DeleteFolderResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetFileData, GetFileErrors, GetFileResponses, GetSetupStatusData, GetSetupStatusErrors, GetSetupStatusResponses, ListFoldersData, ListFoldersErrors, ListFoldersResponses, NewChatSession2Data, NewChatSession2Errors, NewChatSession2Responses, NewChatSessionData, NewChatSessionErrors, NewChatSessionResponses, StreamChatData, StreamChatErrors, StreamChatResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -71,11 +71,15 @@ export class ApiClient extends HeyApiClient {
     /**
      * New Session
      */
-    public newChatSession<ThrowOnError extends boolean = false>(options?: Options<NewChatSessionData, ThrowOnError>): RequestResult<NewChatSessionResponses, NewChatSessionErrors, ThrowOnError> {
-        return (options?.client ?? this.client).post<NewChatSessionResponses, NewChatSessionErrors, ThrowOnError>({
+    public newChatSession<ThrowOnError extends boolean = false>(options: Options<NewChatSessionData, ThrowOnError>): RequestResult<NewChatSessionResponses, NewChatSessionErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<NewChatSessionResponses, NewChatSessionErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/chat/',
-            ...options
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
         });
     }
     
@@ -134,6 +138,43 @@ export class ApiClient extends HeyApiClient {
         return (options?.client ?? this.client).get<AdminPingResponses, AdminPingErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/admin/ping',
+            ...options
+        });
+    }
+    
+    /**
+     * Delete Folder
+     */
+    public deleteFolder<ThrowOnError extends boolean = false>(options: Options<DeleteFolderData, ThrowOnError>): RequestResult<DeleteFolderResponses, DeleteFolderErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<DeleteFolderResponses, DeleteFolderErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/folders/{folder_id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Folder
+     */
+    public createFolder<ThrowOnError extends boolean = false>(options: Options<CreateFolderData, ThrowOnError>): RequestResult<CreateFolderResponses, CreateFolderErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<CreateFolderResponses, CreateFolderErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/folders/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * List Folders
+     */
+    public listFolders<ThrowOnError extends boolean = false>(options?: Options<ListFoldersData, ThrowOnError>): RequestResult<ListFoldersResponses, ListFoldersErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<ListFoldersResponses, ListFoldersErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/folders/list',
             ...options
         });
     }

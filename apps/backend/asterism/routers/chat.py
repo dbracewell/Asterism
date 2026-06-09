@@ -4,7 +4,7 @@ from asterism.internal.db import DBSessionDep
 from asterism.repositories.chat_repository import ChatRepository
 from asterism.routers.base import AuthenticatedUserId
 from asterism.routers.typedefs import ErrorDetail
-from asterism.schemas.chat import ChatSessionList, NewSessionResponse
+from asterism.schemas.chat import ChatSessionList, NewSessionRequest, NewSessionResponse
 
 chat_router = APIRouter(
     prefix="/api/chat",
@@ -23,11 +23,12 @@ chat_router = APIRouter(
     },
 )
 async def new_session(
+    request: NewSessionRequest,
     user_id: AuthenticatedUserId,
     session: DBSessionDep,
 ) -> NewSessionResponse:
     repo = ChatRepository(session)
-    new_session = await repo.create_new_session(user_id)
+    new_session = await repo.create_new_session(user_id, request.folder_id)
 
     return NewSessionResponse(
         id=new_session.id,

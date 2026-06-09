@@ -2,21 +2,21 @@ import { useAppContext } from "@/features/dashboard/components/app-provider";
 import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
-export const useChatSessionList = () => {
+export const useFolderList = () => {
   const { user } = useAppContext();
   const { data, error, isLoading } = useQuery({
-    queryKey: ["chat-session-list", user.id],
+    queryKey: ["folder-list", user.id],
     queryFn: async () => {
-      const { data, error } = await api.newChatSession2();
+      const { data, error } = await api.listFolders();
       if (error || !data) {
         throw Error(error.detail);
       }
-      return { sessions: data };
+      return { folders: data };
     },
   });
   return {
-    sessionList: data?.sessions,
-    errorLoadingSessionList: error,
-    isSessionListLoading: isLoading,
+    folderList: data?.folders,
+    errorLoadingFolderList: error,
+    isFolderListLoading: isLoading,
   };
 };

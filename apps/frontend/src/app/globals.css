@@ -132,8 +132,8 @@
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    var(--color-sidebar-accent) 5%,
-    var(--color-sidebar-accent) 95%,
+    black 5%,
+    black 95%,
     transparent 100%
   );
 }
@@ -143,7 +143,7 @@
     to bottom,
     transparent,
     black 0%,
-    black 90%,
+    black 100%,
     transparent
   );
 
@@ -182,7 +182,7 @@
 }
 
 @utility mask-fade-bottom {
-  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
 }
 
 @layer base {

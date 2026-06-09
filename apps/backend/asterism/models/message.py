@@ -22,13 +22,22 @@ class Message(Base):
         index=True,
     )
     session_id: Mapped[str] = mapped_column(
-        ForeignKey("sessions.id", ondelete="CASCADE"),
+        ForeignKey(
+            "sessions.id",
+            ondelete="CASCADE",
+            name="message_fk_sesssion_id",
+        ),
+        index=True,
     )
     parent_message_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("messages.id")
     )
     user_id: Mapped[str] = mapped_column(
-        nullable=False,
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+            name="message_fk_users_id",
+        ),
         index=True,
     )
     role: Mapped[str] = mapped_column(String)
@@ -36,13 +45,16 @@ class Message(Base):
     token_count: Mapped[int] = mapped_column(
         nullable=False,
     )
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        server_default=func.now()
+    created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+
+    session: Mapped["ChatSession"] = relationship(
+        back_populates="messages",
+        lazy="selectin",
     )
 
-    session: Mapped["ChatSession"] = relationship(back_populates="messages")
     parent: Mapped[Optional["Message"]] = relationship(
         "Message",
         remote_side=[id],
         backref="children",
+        lazy="selectin",
     )

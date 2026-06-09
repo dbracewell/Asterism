@@ -9,13 +9,13 @@ from sqlalchemy.sql.sqltypes import Uuid
 from . import Base
 
 if TYPE_CHECKING:
+    from .folder import Folder
     from .message import Message
     from .user import User
 
 
 class ChatSession(Base):
     __tablename__ = "sessions"
-    # __table_args__ = (UniqueConstraint("user_id", "id", name="uq_user_chat_session"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -24,10 +24,22 @@ class ChatSession(Base):
         index=True,
     )
     user_id: Mapped[str] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE", name="sessions_fk_user_id"),
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+            name="sessions_fk_user_id",
+        ),
         index=True,
     )
-    title: Mapped[Optional[str]] = mapped_column(String)
+    folder_id: Mapped[Optional[str]] = mapped_column(
+        ForeignKey(
+            "folders.id",
+            ondelete="CASCADE",
+            name="sessions_fk_folder_id",
+        ),
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String)
     system_prompt: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime,
@@ -35,12 +47,18 @@ class ChatSession(Base):
         onupdate=func.now(),
     )
 
+    folder: Mapped[Optional["Folder"]] = relationship(
+        back_populates="sessions",
+        lazy="selectin",
+    )
+
     messages: Mapped[list["Message"]] = relationship(
         back_populates="session",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     user: Mapped["User"] = relationship(
-        back_populates="chats",
-        cascade="all",
+        back_populates="sessions",
+        lazy="selectin",
     )

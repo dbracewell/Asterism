@@ -45,12 +45,7 @@ export type ChatSessionInfo = {
 /**
  * ChatSessionList
  */
-export type ChatSessionList = {
-    /**
-     * Sessions
-     */
-    sessions: Array<ChatSessionInfo>;
-};
+export type ChatSessionList = Array<ChatSessionInfo>;
 
 /**
  * ErrorDetail
@@ -67,6 +62,38 @@ export type ErrorDetail = {
 };
 
 /**
+ * FolderListResponse
+ */
+export type FolderListResponse = Array<FolderResponse>;
+
+/**
+ * FolderResponse
+ */
+export type FolderResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Sessions
+     */
+    sessions?: Array<ChatSessionInfo>;
+    /**
+     * Parent Folder Id
+     */
+    parent_folder_id?: string | unknown;
+    /**
+     * Children
+     */
+    children?: Array<FolderResponse>;
+    [key: string]: unknown;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -74,6 +101,31 @@ export type HttpValidationError = {
      * Detail
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * NewFolderRequest
+ */
+export type NewFolderRequest = {
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Parent Folder Id
+     */
+    parent_folder_id?: string | unknown;
+    [key: string]: unknown;
+};
+
+/**
+ * NewSessionRequest
+ */
+export type NewSessionRequest = {
+    /**
+     * Folder Id
+     */
+    folder_id?: string | unknown;
 };
 
 /**
@@ -209,7 +261,7 @@ export type GetFileResponses = {
 export type GetFileResponse = GetFileResponses[keyof GetFileResponses];
 
 export type NewChatSessionData = {
-    body?: never;
+    body: NewSessionRequest;
     path?: never;
     query?: never;
     url: '/api/chat/';
@@ -224,6 +276,10 @@ export type NewChatSessionErrors = {
      * Not found
      */
     404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
 export type NewChatSessionError = NewChatSessionErrors[keyof NewChatSessionErrors];
@@ -403,6 +459,128 @@ export type AdminPingResponses = {
 };
 
 export type AdminPingResponse = AdminPingResponses[keyof AdminPingResponses];
+
+export type DeleteFolderData = {
+    body?: never;
+    path: {
+        /**
+         * Folder Id
+         */
+        folder_id: string;
+    };
+    query?: never;
+    url: '/api/folders/{folder_id}';
+};
+
+export type DeleteFolderErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorDetail;
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorDetail;
+};
+
+export type DeleteFolderError = DeleteFolderErrors[keyof DeleteFolderErrors];
+
+export type DeleteFolderResponses = {
+    /**
+     * Response 200 Deletefolder
+     *
+     * OK
+     */
+    200: string;
+    /**
+     * Successful Response
+     */
+    201: unknown;
+};
+
+export type DeleteFolderResponse = DeleteFolderResponses[keyof DeleteFolderResponses];
+
+export type CreateFolderData = {
+    body: NewFolderRequest;
+    path?: never;
+    query?: never;
+    url: '/api/folders/';
+};
+
+export type CreateFolderErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorDetail;
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateFolderError = CreateFolderErrors[keyof CreateFolderErrors];
+
+export type CreateFolderResponses = {
+    /**
+     * OK
+     */
+    200: FolderResponse;
+    /**
+     * Successful Response
+     */
+    201: FolderResponse;
+};
+
+export type CreateFolderResponse = CreateFolderResponses[keyof CreateFolderResponses];
+
+export type ListFoldersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/folders/list';
+};
+
+export type ListFoldersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type ListFoldersError = ListFoldersErrors[keyof ListFoldersErrors];
+
+export type ListFoldersResponses = {
+    /**
+     * Successful Response
+     */
+    200: FolderListResponse;
+};
+
+export type ListFoldersResponse = ListFoldersResponses[keyof ListFoldersResponses];
 
 export type StreamChatData = {
     body: StreamRequest;

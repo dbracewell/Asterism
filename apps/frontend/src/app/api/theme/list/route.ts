@@ -10,7 +10,6 @@ export async function GET() {
     const files = await fs.readdir(filePath);
     const themeNames: Theme[] = [];
     for (const file of files) {
-      console.log(file);
       const data = JSON.parse(
         await readFile(path.join(filePath, file), "utf-8"),
       );

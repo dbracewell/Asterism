@@ -12,9 +12,8 @@ export const DashboardLayout = async ({
   children: React.ReactNode;
 }) => {
   const headersList = await headers();
-  const jwtToken = await auth.api.getToken({ headers: headersList });
   const sessionData = await auth.api.getSession({ headers: headersList });
-  if (!jwtToken || !sessionData) {
+  if (!sessionData) {
     throw redirect("/");
   }
   const cookieStore = await cookies();
@@ -26,9 +25,9 @@ export const DashboardLayout = async ({
     cookieStore.get("asterism-sessions-open")?.value === "true";
 
   return (
-    <AppContextProvider jwtToken={jwtToken.token} user={sessionData.user}>
+    <AppContextProvider user={sessionData.user}>
       <SidebarProvider
-        className="flex min-h-0 flex-1"
+        className="relative flex min-h-0 flex-1"
         defaultOpen={defaultOpen}
       >
         <AppSidebar
@@ -36,9 +35,11 @@ export const DashboardLayout = async ({
           navFolderOpen={navFolderOpen}
           navSessionsOpen={navSessionsOpen}
         />
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           <Header />
-          <div className="flex min-h-0 flex-col p-2">{children}</div>
+          <div className="no-scrollbar mask-fade-on-scroll flex min-h-0 flex-1 flex-col overflow-y-auto pt-8">
+            <div className="flex flex-1 flex-col p-2">{children}</div>
+          </div>
         </div>
       </SidebarProvider>
     </AppContextProvider>

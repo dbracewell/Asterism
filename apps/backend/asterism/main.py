@@ -17,7 +17,14 @@ from pydantic import BaseModel, Field
 
 from asterism.internal.db import DBSessionDep, session_manager
 from asterism.logging import get_logger
-from asterism.routers import admin_router, auth_router, chat_router, file_router, setup_router
+from asterism.routers import (
+    admin_router,
+    auth_router,
+    chat_router,
+    file_router,
+    folder_router,
+    setup_router,
+)
 from asterism.routers.base import AuthenticatedUserId
 from asterism.routers.typedefs import ErrorDetail
 from asterism.utils.security import AuthTokenError, verify_jwks_token
@@ -85,6 +92,7 @@ app.include_router(chat_router)
 app.include_router(auth_router)
 app.include_router(setup_router)
 app.include_router(admin_router)
+app.include_router(folder_router)
 
 
 async def data_generator(messages: list, db: DBSessionDep):

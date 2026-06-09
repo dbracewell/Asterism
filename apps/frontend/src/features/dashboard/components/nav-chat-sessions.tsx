@@ -67,10 +67,10 @@ export const NavChatSessions = ({
             +
           </SidebarMenuAction>
         </div>
-        <CollapsibleContent>
+        <CollapsibleContent className="pt-1">
           <SidebarGroupContent>
             {isSessionListLoading && <>Loading</>}
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {sessionList?.map((session) => (
                 <SidebarMenuItem
                   key={session.id}

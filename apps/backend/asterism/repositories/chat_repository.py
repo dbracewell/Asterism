@@ -1,3 +1,4 @@
+import uuid
 from turtle import title
 from typing import List
 
@@ -14,8 +15,14 @@ class ChatRepository:
     def __init__(self, db_session: AsyncSession):
         self.session = db_session
 
-    async def create_new_session(self, user_id: str) -> ChatSession:
-        new_session = ChatSession(user_id=user_id, title="New Chat")
+    async def create_new_session(
+        self, user_id: str, folder_id: uuid.UUID | None
+    ) -> ChatSession:
+        new_session = ChatSession(
+            user_id=user_id,
+            title="New Chat",
+            folder_id=folder_id,
+        )
         self.session.add(new_session)
         await self.session.commit()
         return new_session
@@ -23,10 +30,11 @@ class ChatRepository:
     async def list_chat_sessions(self, user_id: str) -> ChatSessionList:
         stmt = (
             select(ChatSession)
-            .where(ChatSession.user_id == user_id)
+            .where(ChatSession.user_id == user_id, ChatSession.folder_id.is_(None))
             .order_by(desc(ChatSession.created_at))
         )
         result = await self.session.execute(stmt)
+        return ChatSessionList.model_validate(result.scalars().all())
         session_info = []
         for session in result.scalars().all():
             session_info.append(
@@ -34,7 +42,7 @@ class ChatRepository:
                     id=session.id, title=session.title or "New Chat Session"
                 )
             )
-        return ChatSessionList(sessions=session_info)
+        return ChatSessionList(root=session_info)
 
     async def get_active_branch_thread(
         self,

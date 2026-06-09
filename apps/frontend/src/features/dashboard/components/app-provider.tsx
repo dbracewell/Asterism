@@ -1,39 +1,26 @@
 "use client";
-import { client } from "@/client/client.gen";
 import { User } from "better-auth";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext } from "react";
 
 export type AppContextValue = {
-  jwtToken: string;
   user: User;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 type AppContextProviderProps = {
-  jwtToken: string;
   user: User;
   children: React.ReactNode;
 };
 
 export const AppContextProvider = ({
-  jwtToken,
   user,
   children,
 }: AppContextProviderProps) => {
-  const [jwtTokenState] = useState(jwtToken);
-  const [userState] = useState(user);
-
-  client.setConfig({
-    auth: jwtToken,
-    baseUrl: process.env.NEXT_PUBLIC_BACKEND_API_URL!,
-  });
-
   return (
     <AppContext.Provider
       value={{
-        jwtToken: jwtTokenState,
-        user: userState,
+        user,
       }}
     >
       {children}
