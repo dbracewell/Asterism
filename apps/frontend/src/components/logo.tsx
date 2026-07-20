@@ -7,7 +7,7 @@ interface ConstellationProps {
 
 export default function Constellation({
   size = 70,
-  fill = "var(--color-foreground)",
+  fill = "var(--color-sidebar-foreground)",
   strokeWidth = 8,
   className,
 }: ConstellationProps) {

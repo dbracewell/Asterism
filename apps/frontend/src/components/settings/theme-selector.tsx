@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -7,22 +8,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme } from "@/features/theme/components/theme-context";
+import { RotateCwIcon } from "lucide-react";
 
 export const ThemeSelector = () => {
-  const { theme, setTheme, themeList } = useTheme();
+  const { currentTheme, setTheme, allThemes, refresh } = useTheme();
   return (
-    <Select defaultValue={theme} onValueChange={(name) => setTheme(name)}>
-      <SelectTrigger>
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {themeList.map((theme) => (
-          <SelectItem key={theme.filename} value={theme.filename}>
-            {theme.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2">
+      <Select
+        defaultValue={currentTheme}
+        onValueChange={(name) => setTheme(name)}
+      >
+        <SelectTrigger className="bg-input!">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {allThemes.map((theme) => (
+            <SelectItem key={theme.filename} value={theme.filename}>
+              {theme.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button variant="ghost" size="icon-sm" onClick={refresh}>
+        <RotateCwIcon />
+      </Button>
+    </div>
   );
 };

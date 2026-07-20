@@ -7,22 +7,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { useCreateNewChatSession } from "@/features/dashboard/hooks/use-create-new-chat-session";
+import { useChatSession } from "@/hooks/use-chat-session";
 import { IconMessage2Plus } from "@tabler/icons-react";
 import { SearchIcon } from "lucide-react";
 
 export const NavActions = () => {
-  const newChatSession = useCreateNewChatSession();
+  const {createChatSession} = useChatSession({});
 
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
-          <TooltipProvider>
             <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={() => newChatSession.mutate({})}
+                onClick={() =>
+                  createChatSession.mutate({ body: { folder_id: null } })
+                }
                 size="lgText"
                 tooltip="New Chat"
               >
@@ -36,7 +36,6 @@ export const NavActions = () => {
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          </TooltipProvider>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

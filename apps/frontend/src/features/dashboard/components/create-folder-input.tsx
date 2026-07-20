@@ -1,9 +1,12 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { useCreateNewFolder } from "@/features/dashboard/hooks/use-create-new-folder";
+import { client } from "@/lib/api";
+import { folderCreateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { IconFolderPlus } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import { RefObject, useState } from "react";
+import { toast } from "sonner";
 
 export const CreateFolderInput = ({
   parent_folder_id,
@@ -14,7 +17,17 @@ export const CreateFolderInput = ({
   parent_folder_id?: string;
   onComplete: (addedFolder: boolean) => void;
 }) => {
-  const newFolder = useCreateNewFolder();
+  const createFolder = useMutation({
+    ...folderCreateMutation({
+      client: client,
+    }),
+    onSuccess: () => {
+      onComplete(true);
+    },
+    onError: () => {
+      toast.error("Error creating folder");
+    },
+  });
   const [newFolderTitle, setNewFolderTitle] = useState("");
 
   return (
@@ -33,9 +46,11 @@ export const CreateFolderInput = ({
           if (e.key === "Enter") {
             e.preventDefault();
             e.stopPropagation();
-            newFolder.mutate({
-              title: newFolderTitle,
-              parent_folder_id,
+            createFolder.mutate({
+              body: {
+                title: newFolderTitle,
+                parent_id: parent_folder_id ?? null,
+              },
             });
             setNewFolderTitle("");
             onComplete(true);

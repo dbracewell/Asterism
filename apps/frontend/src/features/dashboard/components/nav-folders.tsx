@@ -1,35 +1,29 @@
 "use client";
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-} from "@/components/ui/sidebar";
+import { SidebarMenu } from "@/components/ui/sidebar";
+import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
 import { CreateFolderInput } from "@/features/dashboard/components/create-folder-input";
 import { FolderView } from "@/features/dashboard/components/folder-view";
-import { useFolderList } from "@/features/dashboard/hooks/use-folder-list";
+import { FOLDER_OPEN_COOKIE } from "@/features/dashboard/constants";
+import { client } from "@/lib/api";
+import { folderGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
-import Cookie from "js-cookie";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 
 export const NavFolders = ({ defaultIsOpen }: { defaultIsOpen: boolean }) => {
-  const [isOpen, setIsOpen] = React.useState(defaultIsOpen);
   const [isAdding, setIsAdding] = React.useState(false);
   const newFolderTitleRef = React.useRef<HTMLInputElement | null>(null);
-  const { folderList } = useFolderList();
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    Cookie.set("asterism-folder-open", `${open}`, { path: "/", expires: 365 });
-  };
+  const {
+    data: folderList,
+    isPending,
+    error,
+  } = useQuery({
+    ...folderGetManyOptions({
+      client: client,
+    }),
+  });
 
   useEffect(() => {
     if (isAdding && newFolderTitleRef.current) {
@@ -37,50 +31,48 @@ export const NavFolders = ({ defaultIsOpen }: { defaultIsOpen: boolean }) => {
     }
   }, [isAdding]);
 
-  return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <Collapsible
-        suppressHydrationWarning
-        open={isOpen}
-        onOpenChange={handleOpenChange}
+  if (error) {
+    throw Error(`Error Code ${error.code}`);
+  }
+
+  if (isPending || folderList == null) {
+    return (
+      <CollapsibleSidebarGroup
+        label="Folders"
+        defaultIsOpen={defaultIsOpen}
+        onMenuActionClick={() => {}}
+        cookieName={FOLDER_OPEN_COOKIE}
+        className="max-h-1/2"
       >
-        <div className="group/folder flex">
-          <CollapsibleTrigger className="w-full">
-            <SidebarGroupLabel className="group-hover/folder:bg-sidebar-accent w-full flex-1 cursor-pointer select-none">
-              {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}{" "}
-              <span className="ml-2">Folders</span>
-            </SidebarGroupLabel>
-          </CollapsibleTrigger>
-          <SidebarMenuAction
-            onClick={() => {
-              handleOpenChange(true);
-              setIsAdding(true);
+        <></>
+      </CollapsibleSidebarGroup>
+    );
+  }
+
+  return (
+    <CollapsibleSidebarGroup
+      label="Folders"
+      defaultIsOpen={defaultIsOpen}
+      onMenuActionClick={() => {
+        setIsAdding(true);
+      }}
+      cookieName={FOLDER_OPEN_COOKIE}
+    >
+      <SidebarMenu className="min-h-0 gap-0.5">
+        <div className={cn("gap-1 py-1 pl-4", isAdding ? "block" : "hidden")}>
+          <CreateFolderInput
+            newFolderTitleRef={newFolderTitleRef}
+            onComplete={() => {
+              setIsAdding(false);
             }}
-            className="group-hover/folder:bg-sidebar-accent mr-2 opacity-0 group-hover/folder:opacity-100"
-          >
-            +
-          </SidebarMenuAction>
+          />
         </div>
-        <CollapsibleContent>
-          <SidebarGroupContent>
-            <SidebarMenu className="flex flex-col">
-              <div
-                className={cn("gap-1 py-1 pl-4", isAdding ? "block" : "hidden")}
-              >
-                <CreateFolderInput
-                  newFolderTitleRef={newFolderTitleRef}
-                  onComplete={() => {
-                    setIsAdding(false);
-                  }}
-                />
-              </div>
-              {folderList?.map((folder) => (
-                <FolderView folder={folder} key={folder.id} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarGroup>
+        <div className="no-scrollbar mask-fade-on-scroll overflow-y-auto">
+          {folderList.folders.map((folder) => (
+            <FolderView folder={folder} key={folder.id} />
+          ))}
+        </div>
+      </SidebarMenu>
+    </CollapsibleSidebarGroup>
   );
 };

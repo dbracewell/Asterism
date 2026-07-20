@@ -16,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useSideBarWidth } from "@/features/dashboard/hooks/use-sidebar-width";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
@@ -159,7 +160,7 @@ const Sidebar = ({
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
   const [isResizing, setIsResizing] = React.useState(false);
   const [localWidth, setLocalWidth] = React.useState(width);
-
+  const setSideBarWidth = useSideBarWidth((state) => state.setSideBarWidth);
   React.useEffect(() => setLocalWidth(width), [width]);
 
   const startResizing = React.useCallback(() => {
@@ -169,9 +170,10 @@ const Sidebar = ({
   const stopResizing = React.useCallback(() => {
     if (isResizing) {
       setIsResizing(false);
+      setSideBarWidth(localWidth);
       Cookies.set(SIDEBAR_WIDTH_COOKIE_NAME, `${localWidth}`);
     }
-  }, [isResizing, localWidth]);
+  }, [isResizing, localWidth, setSideBarWidth]);
 
   const resize = React.useCallback(
     (e: MouseEvent) => {
@@ -179,10 +181,11 @@ const Sidebar = ({
         const newWidth = Math.min(Math.max(e.clientX, 200), 500);
         if (newWidth >= 300) {
           setLocalWidth(`${newWidth}px`);
+          setSideBarWidth(`${newWidth}px`);
         }
       }
     },
-    [isResizing],
+    [isResizing, setSideBarWidth],
   );
 
   React.useEffect(() => {
@@ -391,13 +394,11 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sidebar-content"
       data-sidebar="content"
-      className={cn(
-        "no-scrollbar flex min-h-0 flex-1 flex-col gap-0 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
-        className,
-      )}
+      className={cn("group-data-[collapsible=icon]:overflow-hidden", className)}
       {...props}
     />
   );
+  //no-scrollbar flex min-h-0 flex-1 flex-col gap-0 overflow-y-auto
 }
 
 function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
@@ -491,11 +492,12 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-[calc(var(--radius-sm)+2px)] p-2 text-left text-xs ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-1! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground [&_svg]:size-6 [&_svg]:shrink-0 [&>span:last-child]:truncate",
+  "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-[calc(var(--radius-sm)+2px)] p-1 text-left text-xs ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-1 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-1! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground [&_svg]:size-6 [&_svg]:shrink-0 [&>span:last-child]:truncate",
   {
     variants: {
       variant: {
-        default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        default:
+          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full",
         outline:
           "bg-background shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--sidebar-accent)]",
         session: "min-w-0 text-base! w-full truncate",

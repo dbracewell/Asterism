@@ -1,62 +1,43 @@
+import { THEME_REFRESH_COOKIE } from "@/features/theme/constants";
 import { auth } from "@/lib/auth";
-import { getSetupRedirectPath } from "@/lib/setup-routing";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
+const publicRoutes = ["/sign-in"];
+
 export async function proxy(request: NextRequest) {
-  const requestHeaders = request.headers;
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
-  let jwtToken: Awaited<ReturnType<typeof auth.api.getToken>> | null = null;
+  let response = NextResponse.next();
 
-  try {
-    [session, jwtToken] = await Promise.all([
-      auth.api.getSession({ headers: requestHeaders }),
-      auth.api.getToken({ headers: requestHeaders }),
-    ]);
-  } catch {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  const url = new URL(request.url);
+  const page = url.pathname.split("/").pop() ?? "/";
 
-  if (!session || !jwtToken) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
-  if (!backendUrl) {
-    return NextResponse.next();
-  }
-
-  try {
-    const setupStatusResponse = await fetch(`${backendUrl}/api/setup/status`, {
-      headers: {
-        Authorization: `Bearer ${jwtToken.token}`,
-      },
-      cache: "no-store",
-    });
-
-    if (!setupStatusResponse.ok) {
-      return NextResponse.next();
-    }
-
-    const setupStatus = (await setupStatusResponse.json()) as {
-      requires_setup: boolean;
-    };
-
-    const redirectPath = getSetupRedirectPath(
-      request.nextUrl.pathname,
-      setupStatus.requires_setup,
+  if (!session && !publicRoutes.includes(page)) {
+    //Not logged in and trying to navigate to
+    // somewhere that isn't the login page
+    response = NextResponse.redirect(
+      new URL(
+        `/sign-in?redirect=${encodeURIComponent(request.url)}`,
+        request.url,
+      ),
     );
-
-    if (redirectPath) {
-      return NextResponse.redirect(new URL(redirectPath, request.url));
-    }
-  } catch {
-    return NextResponse.next();
+  } else if (session && publicRoutes.includes(page)) {
+    //Is logged and have reached an auth authRoute
+    // redirect to app
+    response = NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next();
+  if (request.cookies.get(THEME_REFRESH_COOKIE)?.value != null) {
+    response.cookies.delete(THEME_REFRESH_COOKIE);
+  }
+  return response;
 }
 
 export const config = {
-  matcher: ["/app/:path*"],
+  matcher: [
+    "/((?!api/auth|api/stream|_next|monitoring|sign-in|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+  ],
 };

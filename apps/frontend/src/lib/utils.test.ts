@@ -13,7 +13,7 @@ describe("formatURL", () => {
   });
 
   it("omits empty values and trims whitespace", () => {
-    const result = formatURL("/app", {
+    const result = formatURL("/", {
       mode: "  login  ",
       empty: "   ",
       nullable: null,
@@ -24,10 +24,10 @@ describe("formatURL", () => {
   });
 
   it("joins array values with commas", () => {
-    const result = formatURL("/app", {
+    const result = formatURL("/", {
       tags: ["alpha", "beta"],
     });
 
-    expect(result).toBe("/app/?tags=alpha%2Cbeta");
+    expect(result).toBe("/?tags=alpha%2Cbeta");
   });
 });

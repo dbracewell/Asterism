@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import React from "react";
@@ -20,13 +19,11 @@ export const Hint = ({
   hintClassName,
 }: HintProps) => {
   return (
-    <TooltipProvider delayDuration={100}>
-      <Tooltip>
-        <TooltipTrigger asChild={asChild}>{children}</TooltipTrigger>
-        <TooltipContent hideWhenDetached={true} className={hintClassName}>
-          {hint}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild={asChild}>{children}</TooltipTrigger>
+      <TooltipContent hideWhenDetached={true} className={hintClassName}>
+        {hint}
+      </TooltipContent>
+    </Tooltip>
   );
 };

@@ -1,4 +1,3 @@
-import { FolderResponse } from "@/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,9 +5,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CreateFolderInput } from "@/features/dashboard/components/create-folder-input";
-import { useCreateNewChatSession } from "@/features/dashboard/hooks/use-create-new-chat-session";
-import { useDeleteFolder } from "@/features/dashboard/hooks/use-delete-folder";
+import { useChatSession } from "@/hooks/use-chat-session";
+import { client } from "@/lib/api";
+import { FolderModel } from "@/lib/client";
+import { folderDeleteMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import {
   IconFolder,
@@ -17,20 +19,22 @@ import {
   IconMessage2Plus,
   IconTrash,
 } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import Cookie from "js-cookie";
 import { EllipsisIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export const FolderView = ({
   folder,
   depth = 0,
 }: {
-  folder: FolderResponse;
+  folder: FolderModel;
   depth?: number;
 }) => {
-  const [foldersOpen, setFoldersOpen] = useState(
+  const [foldersOpen, setFoldersOpen] = useState<Set<string>>(
     () => new Set(JSON.parse(Cookie.get("asterism-open-folders") ?? "[]")),
   );
   const [isAdding, setIsAdding] = useState(false);
@@ -51,43 +55,74 @@ export const FolderView = ({
     };
   }, [isAdding]);
 
-  const closeFolder = useCallback(() => {
+  useEffect(() => {
     if (foldersOpen.has(folder.id)) {
+      Cookie.set("asterism-open-folders", JSON.stringify([...foldersOpen]), {
+        expires: 365,
+      });
+    } else {
       Cookie.set(
         "asterism-open-folders",
         JSON.stringify([...foldersOpen].filter((f) => f !== folder.id)),
-      );
-      setFoldersOpen(
-        (prev) => new Set([...prev].filter((f) => f !== folder.id)),
+        {
+          expires: 365,
+        },
       );
     }
-  }, [foldersOpen, folder]);
+  }, [foldersOpen, folder.id]);
+
+  const closeFolder = useCallback(() => {
+    setFoldersOpen((prev) => {
+      const filtered = new Set(prev);
+      filtered.delete(folder.id);
+      return filtered;
+    });
+  }, [setFoldersOpen, folder.id]);
 
   const openFolder = useCallback(() => {
-    if (!foldersOpen.has(folder.id)) {
-      Cookie.set(
-        "asterism-open-folders",
-        JSON.stringify([...foldersOpen, folder.id]),
-      );
-      setFoldersOpen((prev) => new Set([...prev, folder.id]));
-    }
-  }, [foldersOpen, folder]);
+    setFoldersOpen((prev) => {
+      const filtered = new Set(prev);
+      if (
+        (folder.sessions && folder.sessions.length > 0) ||
+        (folder.children && folder.children.length > 0)
+      ) {
+        filtered.add(folder.id);
+      }
+      return filtered;
+    });
+  }, [setFoldersOpen, folder.id, folder.children, folder.sessions]);
 
-  const toggleFolder = () => {
+  const forceOpenFolder = useCallback(
+    (folder_id: string) => {
+      if (!foldersOpen.has(folder.id)) {
+        setFoldersOpen((prev) => new Set([...prev, folder_id]));
+        Cookie.set(
+          "asterism-open-folders",
+          JSON.stringify([...foldersOpen, folder_id]),
+          {
+            expires: 365,
+          },
+        );
+      }
+    },
+    [folder.id, foldersOpen],
+  );
+
+  const toggleFolder = useCallback(() => {
     if (foldersOpen.has(folder.id)) {
       closeFolder();
     } else {
       openFolder();
     }
-  };
+  }, [closeFolder, openFolder, foldersOpen, folder.id]);
 
   useEffect(() => {
     if (!hasChildren && !hasSessions) closeFolder();
   }, [hasChildren, hasSessions, closeFolder]);
 
-  const addSubFolder = () => {
+  const addSubFolder = useCallback(() => {
     setIsAdding(true);
-  };
+  }, []);
 
   return (
     <div
@@ -109,7 +144,7 @@ export const FolderView = ({
               onClick={() => toggleFolder()}
               className="flex h-7 flex-1 items-center gap-1 truncate text-sm"
             >
-              {(hasChildren || hasSessions) && foldersOpen.has(folder.id) ? (
+              {foldersOpen.has(folder.id) ? (
                 <IconFolderOpen className="size-4 shrink-0" />
               ) : (
                 <IconFolder className="size-4 shrink-0" />
@@ -119,7 +154,7 @@ export const FolderView = ({
             <FolderDropDown
               folderId={folder.id}
               addSubFolder={addSubFolder}
-              openFolder={openFolder}
+              openFolder={forceOpenFolder}
             />
           </div>
         </div>
@@ -134,7 +169,7 @@ export const FolderView = ({
             <CreateFolderInput
               onComplete={(v) => {
                 if (v) {
-                  openFolder();
+                  forceOpenFolder(folder.id);
                 }
                 setIsAdding(false);
               }}
@@ -161,17 +196,17 @@ export const FolderView = ({
               >
                 <div className="bg-border h-full w-px" />
                 <div className="bg-border h-px w-3 pr-2" />
-                <div className="flex h-7 w-full flex-1">
-                  <Link
-                    href={`/app/s/${session.id}`}
-                    className={cn(
-                      "hover:bg-sidebar-accent hover:text-accent-foreground flex w-full items-center rounded px-2 py-1.5 text-left",
-                      pathName.endsWith(`/s/${session.id}`) &&
-                        "bg-accent text-accent-foreground",
-                    )}
-                  >
+                <div
+                  className={cn(
+                    "group/item hover:bg-sidebar-accent text-sidebar-accent-foreground flex h-7 w-full flex-1 items-center justify-between rounded px-2 py-1.5 text-left",
+                    pathName.endsWith(`/c/${session.id}`) &&
+                      "bg-sidebar-accent text-sidebar-accent-foreground",
+                  )}
+                >
+                  <Link href={`/c/${session.id}`} className="flex-1 truncate">
                     {session.title}
                   </Link>
+                  <ChatSessionActionMenu button session_id={session.id} />
                 </div>
               </div>
             ))}
@@ -189,10 +224,23 @@ const FolderDropDown = ({
 }: {
   folderId: string;
   addSubFolder: () => void;
-  openFolder: () => void;
+  openFolder: (folder_id: string) => void;
 }) => {
-  const deleteFolder = useDeleteFolder();
-  const createChatSession = useCreateNewChatSession();
+  const deleteFolder = useMutation({
+    ...folderDeleteMutation({
+      client: client,
+    }),
+    onSuccess: async (data) => {
+      toast.success(`Successfully deleted "${data.title}" folder`);
+    },
+    onError: (error) => {
+      toast.error(error.detail ?? "Unknow Error");
+    },
+  });
+
+  const { createChatSession } = useChatSession({
+    onSuccess: () => openFolder(folderId),
+  });
   const [isOpen, setIsOpen] = useState(false);
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -215,18 +263,25 @@ const FolderDropDown = ({
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() =>
-            createChatSession.mutate(
-              { folderId },
-              {
-                onSuccess: () => openFolder(),
+            createChatSession.mutate({
+              body: {
+                folder_id: folderId,
               },
-            )
+            })
           }
         >
           <IconMessage2Plus /> New Chat
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => deleteFolder.mutate(folderId)}>
+        <DropdownMenuItem
+          onClick={() =>
+            deleteFolder.mutate({
+              path: {
+                folder_id: folderId,
+              },
+            })
+          }
+        >
           <IconTrash /> Delete
         </DropdownMenuItem>
       </DropdownMenuContent>

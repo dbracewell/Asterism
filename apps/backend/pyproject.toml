@@ -1,27 +1,43 @@
 [project]
-name = "asterism-backend"
+name = "asterism-workspace"
 version = "0.1.0"
-description = "Backend for Asterism, a multi-agent chat system."
+description = "Asterism"
+authors = [
+    { name = "David Bracewell" }
+]
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-  "aiosqlite>=0.22.1",
-  "alembic>=1.18.4",
-  "asyncpg>=0.31.0",
-  "fastapi>=0.136.3",
-  "filetype>=1.2.0",
-  "openai>=2.38.0",
-  "pydantic>=2.13.4",
-  "pyjwt[crypto]>=2.13.0",
-  "sqlalchemy[asyncio]>=2.0.50",
-  "uvicorn[standard]>=0.48.0",
-]
+
 
 [dependency-groups]
 dev = [
-  "ruff>=0.15.15",
-  "pytest>=8.4.0",
-  "pytest-asyncio>=1.1.0",
-  "httpx>=0.28.0",
-  "httpx2>=2.3.0",
+    "pytest>=8.0",
+    "ruff>=0.14.3",
+    "tach>=0.35.0",
 ]
+
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.ruff]
+target-version = "py312"
+src = ["packages/core/src", "packages/api/src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+fixable = ["ALL"]
+
+[tool.pyright]
+reportPrivateImportUsage = "none"
+enableTypeIgnoreComments = true
+include = ["packages/*/src"]
+stubPath = "packages/*/src"
+#typeCheckingMode = "basic"
+
+reportReturnType = "warning"
+reportArgumentType = "warning"
+reportOperatorIssue = "warning"
+reportImportCycles = "warning"
+reportDuplicateImport = "warning"
+reportUnusedCallResult = "none"

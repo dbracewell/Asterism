@@ -1,99 +1,80 @@
 "use client";
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useChatSessionList } from "@/features/dashboard/hooks/use-chat-session-list";
-import { useCreateNewChatSession } from "@/features/dashboard/hooks/use-create-new-chat-session";
-import Cookie from "js-cookie";
-import { ChevronDownIcon, ChevronRightIcon, EllipsisIcon } from "lucide-react";
+import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
+import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
+import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
+import { useChatSession } from "@/hooks/use-chat-session";
+import { client } from "@/lib/api";
+import { chatSessionGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React from "react";
-import { toast } from "sonner";
 
 export const NavChatSessions = ({
   defaultIsOpen,
 }: {
   defaultIsOpen: boolean;
 }) => {
-  const [isOpen, setIsOpen] = React.useState(defaultIsOpen);
-  const { sessionList, errorLoadingSessionList, isSessionListLoading } =
-    useChatSessionList();
-  const newChatSession = useCreateNewChatSession();
   const pathname = usePathname();
+  const { data, isPending, error } = useQuery({
+    ...chatSessionGetManyOptions({
+      client: client,
+    }),
+  });
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    Cookie.set("asterism-sessions-open", `${open}`, {
-      path: "/",
-      expires: 365,
-    });
-  };
+  const { createChatSession } = useChatSession({});
 
-  if (errorLoadingSessionList) {
-    toast.error(errorLoadingSessionList.message);
+  if (error) {
+    throw Error(error.detail);
+  }
+
+  if (isPending || data == null) {
+    return (
+      <CollapsibleSidebarGroup
+        label="Chats"
+        defaultIsOpen={defaultIsOpen}
+        onMenuActionClick={() => {}}
+        cookieName={SESSIONS_OPEN_COOKIE}
+      >
+        <></>
+      </CollapsibleSidebarGroup>
+    );
   }
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <Collapsible
-        open={isOpen}
-        onOpenChange={handleOpenChange}
-        className="flex min-h-0 flex-1 flex-col"
-      >
-        <div className="group/folder flex">
-          <CollapsibleTrigger className="w-full">
-            <SidebarGroupLabel className="group-hover/folder:bg-sidebar-accent w-full flex-1 cursor-pointer select-none">
-              {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}{" "}
-              <span className="ml-2">Chats</span>
-            </SidebarGroupLabel>
-          </CollapsibleTrigger>
-          <SidebarMenuAction
-            onClick={() => newChatSession.mutate({})}
-            className="group-hover/folder:bg-sidebar-accent mr-2 opacity-0 group-hover/folder:opacity-100"
+    <CollapsibleSidebarGroup
+      label="Chats"
+      defaultIsOpen={defaultIsOpen}
+      onMenuActionClick={() =>
+        createChatSession.mutate({ body: { folder_id: null } })
+      }
+      cookieName={SESSIONS_OPEN_COOKIE}
+      className="flex-1"
+    >
+      <SidebarMenu className="min-h-0 gap-0.5 select-none">
+        {data.sessions?.map((session) => (
+          <SidebarMenuItem
+            key={session.id}
+            className="group/item hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center justify-between rounded-md"
           >
-            +
-          </SidebarMenuAction>
-        </div>
-        <CollapsibleContent className="pt-1">
-          <SidebarGroupContent>
-            {isSessionListLoading && <>Loading</>}
-            <SidebarMenu className="gap-0.5">
-              {sessionList?.map((session) => (
-                <SidebarMenuItem
-                  key={session.id}
-                  className="group/item hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative rounded-md"
-                >
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname.endsWith(`/s/${session.id}`)}
-                    className="hover:bg-transparent! hover:text-inherit!"
-                  >
-                    <Link href={`/app/s/${session.id}`}>
-                      <span>{session.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  <SidebarMenuAction className="hover:bg-sidebar-accent-hover!">
-                    <EllipsisIcon />
-                  </SidebarMenuAction>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarGroup>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname.endsWith(`/c/${session.id}`)}
+              className="hover:bg-transparent! hover:text-inherit!"
+            >
+              <Link href={`/c/${session.id}`}>
+                <span>{session.title}</span>
+              </Link>
+            </SidebarMenuButton>
+            <ChatSessionActionMenu session_id={session.id} />
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </CollapsibleSidebarGroup>
   );
 };

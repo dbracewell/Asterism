@@ -1,54 +1,51 @@
 "use client";
 
-import { ThemeSelector } from "@/components/settings/theme-selector";
+import { FullLogo } from "@/components/full-logo";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import { FullLogo } from "@/features/dashboard/components/full-logo";
-import { authClient } from "@/lib/auth-client";
+import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { PanelLeftOpenIcon } from "lucide-react";
 
 export const Header = () => {
-  const router = useRouter();
-  const { state } = useSidebar();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const onSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await authClient.signOut();
-      router.replace("/");
-      router.refresh();
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  const session = useActiveChatSession((state) => state.session);
+  const { state, isMobile, toggleSidebar } = useSidebar();
 
   return (
     <div
-      className="bg-sidebar/5 absolute inset-x-0 top-0 z-10 flex items-center justify-between overflow-clip px-2 backdrop-blur-xs select-none"
+      className="bg-sidebar/5 absolute inset-0 z-20 flex items-center justify-between overflow-clip p-2 backdrop-blur-xs select-none"
       style={{ height: "var(--header-height)" }}
     >
-      <div
-        className={cn(
-          "transition-opacity duration-200",
-          state === "expanded" ? "opacity-0" : "opacity-100",
-        )}
-      >
-        <FullLogo />
-      </div>
-      <div className="flex items-center gap-2">
-        <ThemeSelector />
+      {isMobile && (
         <Button
-          variant="outline"
-          size="sm"
-          onClick={onSignOut}
-          disabled={isSigningOut}
+          variant="ghost"
+          title="Toggle sidebar"
+          size="icon-lg"
+          className="text-muted-foreground size-7! [&_>svg]:size-5!"
+          onClick={() => toggleSidebar()}
         >
-          Sign out
+          <PanelLeftOpenIcon />
         </Button>
+      )}
+      <div className="flex items-center gap-8">
+        <div
+          className={cn(
+            "transition-discreteease-linear transition-all",
+            state === "collapsed" || isMobile
+              ? "block opacity-100 duration-200 starting:opacity-0"
+              : "hidden opacity-0 duration-75",
+          )}
+        >
+          <FullLogo fill="var(--color-foreground)" />
+        </div>
+        {session && (
+          <h3 className="text-foreground transition-discrete duration-200 ease-linear">
+            {session.info.title}
+          </h3>
+        )}
       </div>
+
+      <div className="flex items-center gap-2"></div>
     </div>
   );
 };
