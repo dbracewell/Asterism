@@ -9,12 +9,26 @@ import {
 } from "@/components/ui/select";
 import { useTheme } from "@/features/theme/components/theme-context";
 
-export const FontSizeSelector = () => {
-  const { fontSize, setFontSize } = useTheme();
+interface FontSizeSelectorProps {
+  currentSize?: string;
+  onChange?: (size: string) => void;
+}
+
+export const FontSizeSelector = ({
+  currentSize,
+  onChange,
+}: FontSizeSelectorProps) => {
+  const { setFontSize } = useTheme();
+
+  const value = currentSize ?? "16px";
+
   return (
     <Select
-      defaultValue={fontSize}
-      onValueChange={(fontSize) => setFontSize(fontSize)}
+      defaultValue={value}
+      onValueChange={(size) => {
+        setFontSize(size);
+        onChange?.(size);
+      }}
     >
       <SelectTrigger className="bg-input!">
         <SelectValue />

@@ -3,6 +3,18 @@
 import * as z from 'zod';
 
 /**
+ * AppSettingResponse
+ *
+ * Single app setting response.
+ */
+export const zAppSettingResponse = z.object({
+    key: z.string(),
+    value: z.record(z.string(), z.unknown()),
+    updated_by: z.string(),
+    updated_at: z.string()
+});
+
+/**
  * ChatSessionInfo
  */
 export const zChatSessionInfo = z.object({
@@ -68,6 +80,25 @@ export const zFolderModelList = z.object({
     folders: z.array(zFolderModel)
 });
 
+export const zJsonValue = z.unknown();
+
+/**
+ * LLMProvider
+ */
+export const zLlmProvider = z.object({
+    name: z.string(),
+    base_url: z.string(),
+    api_key: z.string(),
+    models: z.array(z.string())
+});
+
+/**
+ * ApplicationSettings
+ */
+export const zApplicationSettings = z.object({
+    llm_providers: z.array(zLlmProvider).optional()
+});
+
 /**
  * MessageModel
  */
@@ -104,6 +135,45 @@ export const zNewChatSessionRequest = z.object({
 export const zNewFolderRequest = z.object({
     title: z.string(),
     parent_id: z.string().nullable()
+});
+
+/**
+ * UpdateAppSettingRequest
+ *
+ * Update a single app setting by key (admin only).
+ */
+export const zUpdateAppSettingRequest = z.object({
+    key: z.string(),
+    value: zJsonValue
+});
+
+/**
+ * UpdateUserSettingRequest
+ *
+ * Update a single user setting by key.
+ */
+export const zUpdateUserSettingRequest = z.object({
+    value: zJsonValue
+});
+
+/**
+ * UserSettingResponse
+ *
+ * Single user setting response.
+ */
+export const zUserSettingResponse = z.object({
+    key: z.string(),
+    value: zJsonValue
+});
+
+/**
+ * UserSettings
+ *
+ * Aggregated view of all user settings.
+ */
+export const zUserSettings = z.object({
+    theme: z.string().optional().default('light'),
+    font_size: z.string().optional().default('16px')
 });
 
 export const zGetFilePath = z.object({
@@ -185,3 +255,72 @@ export const zFolderGetOnePath = z.object({
  * Successful Response
  */
 export const zFolderGetOneResponse = zFolderModel;
+
+/**
+ * Successful Response
+ */
+export const zUserSettingsGetResponse = zUserSettings;
+
+/**
+ * Updates
+ */
+export const zUserSettingsBulkUpdateBody = z.record(z.string(), zJsonValue);
+
+/**
+ * Successful Response
+ */
+export const zUserSettingsBulkUpdateResponse = zUserSettings;
+
+export const zUserSettingDeletePath = z.object({
+    key: z.string()
+});
+
+export const zUserSettingUpdateBody = zUpdateUserSettingRequest;
+
+export const zUserSettingUpdatePath = z.object({
+    key: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zUserSettingUpdateResponse = zUserSettingResponse;
+
+/**
+ * Successful Response
+ */
+export const zAppSettingsGetResponse = zApplicationSettings;
+
+/**
+ * Updates
+ */
+export const zAppSettingsBulkUpdateBody = z.record(z.string(), z.record(z.string(), z.unknown()));
+
+/**
+ * Successful Response
+ */
+export const zAppSettingsBulkUpdateResponse = zApplicationSettings;
+
+export const zAppSettingDeletePath = z.object({
+    key: z.string()
+});
+
+export const zAppSettingGetPath = z.object({
+    key: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zAppSettingGetResponse = zAppSettingResponse;
+
+export const zAppSettingUpdateBody = zUpdateAppSettingRequest;
+
+export const zAppSettingUpdatePath = z.object({
+    key: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zAppSettingUpdateResponse = zAppSettingResponse;

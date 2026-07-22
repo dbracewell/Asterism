@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
 import React from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 
 export type ConnectionStatus =
   | "Connecting"
@@ -70,13 +71,14 @@ const ChatSessionProvider = ({
     React.useState<MessageModel | null>(null);
   const streamingMessageRef = React.useRef<string>("");
   const streamingThoughtRef = React.useRef<string>("");
+  const streamingDateRef = React.useRef(0);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const { sendJsonMessage, readyState } = useWebSocket(
     `ws://${process.env.NEXT_PUBLIC_BACKEND_API_URL!.replace("http://", "")}/chat/stream/${session.info.id}?token=${jwtToken}`,
     {
       shouldReconnect: () => {
-        return didUnmount.current === false;
+        return !didUnmount.current;
       },
       reconnectAttempts: 10,
       reconnectInterval: 3000,
@@ -86,14 +88,14 @@ const ChatSessionProvider = ({
         if (msgContent.type === "STREAM_START") {
           streamingMessageRef.current = "";
           streamingThoughtRef.current = "";
-
+          streamingDateRef.current = Math.floor(Date.now() / 1000);
           // Start the UI update loop (20 frames per second is plenty smooth)
           if (!flushTimerRef.current) {
             flushTimerRef.current = setInterval(() => {
               setIncomingMessage({
                 thinking: streamingThoughtRef.current,
                 content: streamingMessageRef.current,
-                created_at: Math.floor(Date.now() / 1000),
+                created_at: streamingDateRef.current,
                 id: "incoming",
                 role: "assistant",
                 active_child_id: "",
@@ -119,7 +121,6 @@ const ChatSessionProvider = ({
           const lastMessages = JSON.parse(msgContent.content) as MessageModel[];
           setMessages((prev) => [...prev.slice(0, -1), ...lastMessages]);
 
-          // Reset states and refs
           setIncomingMessage(null);
           streamingMessageRef.current = "";
           streamingThoughtRef.current = "";
@@ -130,8 +131,23 @@ const ChatSessionProvider = ({
 
   React.useEffect(() => {
     setSession(session);
-    return () => setSession(null);
+    return () => {
+      setSession(null);
+    };
   }, [session, setSession]);
+
+  useSubscribeEvent({
+    type: "chat-session:update",
+    handler: (payload) => {
+      setSession({
+        ...session,
+        info: {
+          ...session.info,
+          title: payload.title ?? session.info.title,
+        },
+      });
+    },
+  });
 
   React.useEffect(() => {
     return () => {
@@ -141,55 +157,6 @@ const ChatSessionProvider = ({
       }
     };
   }, []);
-
-  // React.useEffect(() => {
-  //   if (!lastJsonMessage) return;
-
-  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //   const msgContent = lastJsonMessage as Record<string, any>;
-
-  //   if (msgContent["type"] === "THINKING_DELTA") {
-  //     setIncomingMessage((prev) =>
-  //       prev
-  //         ? {
-  //             ...prev,
-  //             thinking: msgContent["content"].trim(),
-  //           }
-  //         : {
-  //             thinking: msgContent["content"].trim(),
-  //             content: "",
-  //             created_at: Math.floor(Date.now() / 1000),
-  //             id: "incoming",
-  //             role: "assistant",
-  //             active_child_id: "",
-  //           },
-  //     );
-  //   }
-
-  //   if (msgContent["type"] === "TEXT_DELTA") {
-  //     setIncomingMessage((prev) =>
-  //       prev
-  //         ? {
-  //             ...prev,
-  //             content: msgContent["content"],
-  //           }
-  //         : {
-  //             thinking: "",
-  //             content: msgContent["content"],
-  //             created_at: Math.floor(Date.now() / 1000),
-  //             id: "incoming",
-  //             role: "assistant",
-  //             active_child_id: "",
-  //           },
-  //     );
-  //   }
-
-  //   if (msgContent["type"] === "STREAM_END") {
-  //     const lastMessages = JSON.parse(msgContent["content"]) as MessageModel[];
-  //     setMessages((prev) => [...prev.slice(0, -1), ...lastMessages]);
-  //     setIncomingMessage(null);
-  //   }
-  // }, [setMessages, lastJsonMessage]);
 
   const addUserMessage = React.useCallback(
     (message: string) => {
@@ -236,8 +203,7 @@ const ChatSessionProvider = ({
 const ChatSessionMessageList = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
-  const [canScroll, setCanScroll] = React.useState(true);
-  const [scrollBottom, setScrollBottom] = React.useState(0);
+  const [canScroll, setCanScroll] = React.useState(false);
   const { messages, incomingMessage } = useChatSession();
 
   React.useEffect(() => {
@@ -268,7 +234,6 @@ const ChatSessionMessageList = () => {
               (e.currentTarget.scrollTop + e.currentTarget.clientHeight) >
             50;
           setCanScroll(can);
-          setScrollBottom(e.currentTarget.scrollTop);
         }}
       >
         {messages.map((message) => (

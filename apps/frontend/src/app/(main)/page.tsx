@@ -1,22 +1,13 @@
 import { WelcomeHeader } from "@/features/dashboard/components/welcome-header";
 import { IconMessageCircleStar, IconRobotFace } from "@tabler/icons-react";
 
-import { TestSSE } from "@/components/test-sse";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export default function AppPage() {
   return (
     <div className="flex flex-1 flex-col items-start gap-2 p-2 pt-12">
       <WelcomeHeader />
-      <TestSSE />
       <div className="grid w-full flex-1 grid-cols-1 items-center rounded-md md:grid-cols-2">
         <Empty>
           <EmptyHeader>

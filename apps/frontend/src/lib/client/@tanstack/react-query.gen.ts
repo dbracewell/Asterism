@@ -4,7 +4,7 @@ import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
 import { ApiClient, type Options } from '../sdk.gen';
-import type { ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse } from '../types.gen';
+import type { AppSettingDeleteData, AppSettingDeleteError, AppSettingGetData, AppSettingGetError, AppSettingGetResponse, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -213,3 +213,159 @@ export const folderGetOneOptions = (options: Options<FolderGetOneData>) => query
     },
     queryKey: folderGetOneQueryKey(options)
 });
+
+export const userSettingsGetQueryKey = (options?: Options<UserSettingsGetData>) => createQueryKey('userSettingsGet', options);
+
+/**
+ * Get all user settings
+ */
+export const userSettingsGetOptions = (options?: Options<UserSettingsGetData>) => queryOptions<UserSettingsGetResponse, UserSettingsGetError, UserSettingsGetResponse, ReturnType<typeof userSettingsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().userSettingsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: userSettingsGetQueryKey(options)
+});
+
+/**
+ * Bulk update multiple user settings
+ */
+export const userSettingsBulkUpdateMutation = (options?: Partial<Options<UserSettingsBulkUpdateData>>): UseMutationOptions<UserSettingsBulkUpdateResponse, UserSettingsBulkUpdateError, Options<UserSettingsBulkUpdateData>> => {
+    const mutationOptions: UseMutationOptions<UserSettingsBulkUpdateResponse, UserSettingsBulkUpdateError, Options<UserSettingsBulkUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().userSettingsBulkUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a single user setting by key
+ */
+export const userSettingDeleteMutation = (options?: Partial<Options<UserSettingDeleteData>>): UseMutationOptions<unknown, UserSettingDeleteError, Options<UserSettingDeleteData>> => {
+    const mutationOptions: UseMutationOptions<unknown, UserSettingDeleteError, Options<UserSettingDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().userSettingDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Update a single user setting by key
+ */
+export const userSettingUpdateMutation = (options?: Partial<Options<UserSettingUpdateData>>): UseMutationOptions<UserSettingUpdateResponse, UserSettingUpdateError, Options<UserSettingUpdateData>> => {
+    const mutationOptions: UseMutationOptions<UserSettingUpdateResponse, UserSettingUpdateError, Options<UserSettingUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().userSettingUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const appSettingsGetQueryKey = (options?: Options<AppSettingsGetData>) => createQueryKey('appSettingsGet', options);
+
+/**
+ * Get all application settings
+ */
+export const appSettingsGetOptions = (options?: Options<AppSettingsGetData>) => queryOptions<AppSettingsGetResponse, AppSettingsGetError, AppSettingsGetResponse, ReturnType<typeof appSettingsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().appSettingsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: appSettingsGetQueryKey(options)
+});
+
+/**
+ * Bulk update multiple application settings
+ */
+export const appSettingsBulkUpdateMutation = (options?: Partial<Options<AppSettingsBulkUpdateData>>): UseMutationOptions<AppSettingsBulkUpdateResponse, AppSettingsBulkUpdateError, Options<AppSettingsBulkUpdateData>> => {
+    const mutationOptions: UseMutationOptions<AppSettingsBulkUpdateResponse, AppSettingsBulkUpdateError, Options<AppSettingsBulkUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().appSettingsBulkUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a single application setting by key
+ */
+export const appSettingDeleteMutation = (options?: Partial<Options<AppSettingDeleteData>>): UseMutationOptions<unknown, AppSettingDeleteError, Options<AppSettingDeleteData>> => {
+    const mutationOptions: UseMutationOptions<unknown, AppSettingDeleteError, Options<AppSettingDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().appSettingDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const appSettingGetQueryKey = (options: Options<AppSettingGetData>) => createQueryKey('appSettingGet', options);
+
+/**
+ * Get a single application setting by key
+ */
+export const appSettingGetOptions = (options: Options<AppSettingGetData>) => queryOptions<AppSettingGetResponse, AppSettingGetError, AppSettingGetResponse, ReturnType<typeof appSettingGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().appSettingGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: appSettingGetQueryKey(options)
+});
+
+/**
+ * Update a single application setting by key
+ */
+export const appSettingUpdateMutation = (options?: Partial<Options<AppSettingUpdateData>>): UseMutationOptions<AppSettingUpdateResponse, AppSettingUpdateError, Options<AppSettingUpdateData>> => {
+    const mutationOptions: UseMutationOptions<AppSettingUpdateResponse, AppSettingUpdateError, Options<AppSettingUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().appSettingUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};

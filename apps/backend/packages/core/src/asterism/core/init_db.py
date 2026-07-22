@@ -1,10 +1,9 @@
 import asyncio
 from pathlib import Path
 
-
 from asterism.core.config import config
 from asterism.core.data import db_session_manager
-from asterism.core.models import Base
+from asterism.core.data.models import Base
 
 
 async def init_database():

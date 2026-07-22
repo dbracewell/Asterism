@@ -12,8 +12,8 @@ os.environ.setdefault("FRONT_END_URL", "http://localhost:3000")
 os.environ.setdefault("BOOTSTRAP_SETUP_TOKEN", "test-setup-token")
 
 from asterism.core.data import db_session_manager  # noqa: E402
+from asterism.core.data.models import Base  # noqa: E402
 from asterism.core.main import app  # noqa: E402
-from asterism.core.models import Base  # noqa: E402
 
 
 async def _reset_db() -> None:

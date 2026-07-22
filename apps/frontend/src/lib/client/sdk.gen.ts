@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses } from './types.gen';
-import { zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse } from './zod.gen';
+import type { AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingGetData, AppSettingGetErrors, AppSettingGetResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import { zAppSettingDeletePath, zAppSettingGetPath, zAppSettingGetResponse, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -239,6 +239,173 @@ export class ApiClient extends HeyApiClient {
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/folders/{folder_id}',
             ...options
+        });
+    }
+    
+    /**
+     * Get all user settings
+     */
+    public userSettingsGet<ThrowOnError extends boolean = false>(options?: Options<UserSettingsGetData, ThrowOnError>): RequestResult<UserSettingsGetResponses, UserSettingsGetErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<UserSettingsGetResponses, UserSettingsGetErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zUserSettingsGetResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/user',
+            ...options
+        });
+    }
+    
+    /**
+     * Bulk update multiple user settings
+     */
+    public userSettingsBulkUpdate<ThrowOnError extends boolean = false>(options: Options<UserSettingsBulkUpdateData, ThrowOnError>): RequestResult<UserSettingsBulkUpdateResponses, UserSettingsBulkUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).patch<UserSettingsBulkUpdateResponses, UserSettingsBulkUpdateErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: zUserSettingsBulkUpdateBody,
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zUserSettingsBulkUpdateResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/user',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Delete a single user setting by key
+     */
+    public userSettingDelete<ThrowOnError extends boolean = false>(options: Options<UserSettingDeleteData, ThrowOnError>): RequestResult<UserSettingDeleteResponses, UserSettingDeleteErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<UserSettingDeleteResponses, UserSettingDeleteErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: zUserSettingDeletePath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/user/{key}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update a single user setting by key
+     */
+    public userSettingUpdate<ThrowOnError extends boolean = false>(options: Options<UserSettingUpdateData, ThrowOnError>): RequestResult<UserSettingUpdateResponses, UserSettingUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).put<UserSettingUpdateResponses, UserSettingUpdateErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: zUserSettingUpdateBody,
+                path: zUserSettingUpdatePath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zUserSettingUpdateResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/user/{key}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Get all application settings
+     */
+    public appSettingsGet<ThrowOnError extends boolean = false>(options?: Options<AppSettingsGetData, ThrowOnError>): RequestResult<AppSettingsGetResponses, AppSettingsGetErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<AppSettingsGetResponses, AppSettingsGetErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zAppSettingsGetResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/app',
+            ...options
+        });
+    }
+    
+    /**
+     * Bulk update multiple application settings
+     */
+    public appSettingsBulkUpdate<ThrowOnError extends boolean = false>(options: Options<AppSettingsBulkUpdateData, ThrowOnError>): RequestResult<AppSettingsBulkUpdateResponses, AppSettingsBulkUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).patch<AppSettingsBulkUpdateResponses, AppSettingsBulkUpdateErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: zAppSettingsBulkUpdateBody,
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zAppSettingsBulkUpdateResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/app',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Delete a single application setting by key
+     */
+    public appSettingDelete<ThrowOnError extends boolean = false>(options: Options<AppSettingDeleteData, ThrowOnError>): RequestResult<AppSettingDeleteResponses, AppSettingDeleteErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<AppSettingDeleteResponses, AppSettingDeleteErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: zAppSettingDeletePath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/app/{key}',
+            ...options
+        });
+    }
+    
+    /**
+     * Get a single application setting by key
+     */
+    public appSettingGet<ThrowOnError extends boolean = false>(options: Options<AppSettingGetData, ThrowOnError>): RequestResult<AppSettingGetResponses, AppSettingGetErrors, ThrowOnError> {
+        return (options.client ?? this.client).get<AppSettingGetResponses, AppSettingGetErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: zAppSettingGetPath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zAppSettingGetResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/app/{key}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update a single application setting by key
+     */
+    public appSettingUpdate<ThrowOnError extends boolean = false>(options: Options<AppSettingUpdateData, ThrowOnError>): RequestResult<AppSettingUpdateResponses, AppSettingUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).put<AppSettingUpdateResponses, AppSettingUpdateErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: zAppSettingUpdateBody,
+                path: zAppSettingUpdatePath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zAppSettingUpdateResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/app/{key}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
         });
     }
 }

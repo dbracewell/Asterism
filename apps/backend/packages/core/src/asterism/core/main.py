@@ -13,14 +13,15 @@ from fastapi.responses import JSONResponse
 
 from asterism.core.config import config
 from asterism.core.data import db_session_manager
+from asterism.core.data.schemas import ErrorDetail
 from asterism.core.exceptions import CodedException
-from asterism.core.logging import get_logger
-from asterism.core.routers import (
+from asterism.core.log import get_logger
+from asterism.core.services.routers import (
     chat_router,
     file_router,
     folder_router,
+    settings_router,
 )
-from asterism.core.schemas import ErrorDetail
 
 logger = get_logger("AsterismMain")
 
@@ -79,7 +80,7 @@ def custom_openapi():
 app.openapi = custom_openapi  # type: ignore
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type:ignore
     allow_origins=config.CORS_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
@@ -126,3 +127,4 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 app.include_router(file_router)
 app.include_router(chat_router)
 app.include_router(folder_router)
+app.include_router(settings_router)

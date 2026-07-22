@@ -25,8 +25,6 @@ export default async function Home({ searchParams }: HomePageProps) {
   ]);
   const formParams = searchSchema.parse(resolvedSearchParams);
 
-  console.log("sessionData", sessionData);
-
   if (sessionData) {
     redirect("/");
   }

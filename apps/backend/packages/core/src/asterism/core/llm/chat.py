@@ -5,16 +5,22 @@ from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.core.data.models import (
+    ChatSessionModel,
+    ChatSessionUpdate,
+    MessageModel,
+    NewMessage,
+)
+from asterism.core.data.repositories import chat_repository
+from asterism.core.data.schemas.events import ChatSessionUpdateEvent
 from asterism.core.llm.client import LLMClient
-from asterism.core.llm.typedefs import LLMEventType, Message
-from asterism.core.models.chat_session import ChatSessionModel
-from asterism.core.models.message import MessageModel, NewMessage
-from asterism.core.repositories import chat_repository
+from asterism.core.llm.typedefs import LLMEvent, LLMEventType, Message
+from asterism.core.utils.callback import post_callback
 
 client = LLMClient(
     api_key="abc",
     llm_host="http://localhost:1234/v1",
-    model_name="gemma-4-26b-a4b-it",
+    model_name="qwen/qwen3.6-35b-a3b",
 )
 
 
@@ -24,6 +30,37 @@ async def generate(
     queue: asyncio.Queue,
     session: AsyncSession,
 ):
+    if chat_session.info.title is None or chat_session.info.title == "New Chat":
+        messages = [
+            Message.user(f"""
+You are an expert summarization system. 
+Generate a short, descriptive title for a chat session based on the user's initial prompt. 
+Keep the title between 3 to 6 words and use Title Case. 
+Output ONLY the title, with no quotation marks, punctuation, or additional text.
+User prompt: {prompt}
+"""),  # noqa: E501
+        ]
+        response = client.chat(messages=messages)
+        last_event: LLMEvent = LLMEvent.empty()
+        async for event in response:
+            last_event = event
+        title = last_event.content
+        chat_session.info.title = title or "New Chat"
+        await chat_repository.update(
+            user_id=chat_session.info.user_id,
+            session_id=chat_session.info.id,
+            update=ChatSessionUpdate(title=chat_session.info.title),
+            session=session,
+        )
+        post_callback(
+            event_type="chat-session:update",
+            payload=ChatSessionUpdateEvent(
+                session_id=chat_session.info.id,
+                title=chat_session.info.title,
+            ),
+            user_id=chat_session.info.user_id,
+        )
+
     start_time = time.perf_counter()
     messages: list[Message] = []
     for m in chat_session.messages:
@@ -32,7 +69,7 @@ async def generate(
 
     response = client.chat(messages=messages)
     thinking = ""
-    last_event = None
+    last_event: LLMEvent = LLMEvent.empty()
     async for event in response:
         last_event = event
         if event.type == LLMEventType.THINKING_COMPLETE:
@@ -69,6 +106,7 @@ async def generate(
     ai_message_model = MessageModel.model_validate(user_message.active_child)
     chat_session.messages.append(user_msg_model)
     chat_session.messages.append(ai_message_model)
+
     await queue.put(
         {
             "type": "STREAM_END",

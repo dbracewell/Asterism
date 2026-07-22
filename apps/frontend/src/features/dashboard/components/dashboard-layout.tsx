@@ -9,6 +9,8 @@ import {
   SIDBAR_WIDTH_COOKIE,
 } from "@/features/dashboard/constants";
 import { cookies } from "next/headers";
+import React from "react";
+import { ThemeCheck } from "@/features/dashboard/components/theme-check";
 
 export const DashboardLayout = async ({
   children,
@@ -16,7 +18,6 @@ export const DashboardLayout = async ({
   children: React.ReactNode;
 }) => {
   const user = await getCurrentUser();
-
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
   const sidebarWidth = cookieStore.get(SIDBAR_WIDTH_COOKIE)?.value;
@@ -26,6 +27,7 @@ export const DashboardLayout = async ({
 
   return (
     <UserProvider user={user}>
+      <ThemeCheck />
       <SidebarProvider defaultOpen={defaultOpen}>
         <AppSidebar
           sidebarWidth={sidebarWidth}

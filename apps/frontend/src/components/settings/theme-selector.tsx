@@ -11,13 +11,27 @@ import {
 import { useTheme } from "@/features/theme/components/theme-context";
 import { RotateCwIcon } from "lucide-react";
 
-export const ThemeSelector = () => {
-  const { currentTheme, setTheme, allThemes, refresh } = useTheme();
+interface ThemeSelectorProps {
+  currentTheme?: string;
+  onChange?: (theme: string) => void;
+}
+
+export const ThemeSelector = ({
+  currentTheme,
+  onChange,
+}: ThemeSelectorProps) => {
+  const { setTheme, allThemes, refresh } = useTheme();
+
+  const value = currentTheme ?? "light";
+
   return (
     <div className="flex items-center gap-2">
       <Select
-        defaultValue={currentTheme}
-        onValueChange={(name) => setTheme(name)}
+        defaultValue={value}
+        onValueChange={(name) => {
+          setTheme(name);
+          onChange?.(name);
+        }}
       >
         <SelectTrigger className="bg-input!">
           <SelectValue />

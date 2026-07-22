@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuAction } from "@/components/ui/sidebar";
-import { useChatSession } from "@/hooks/use-chat-session";
+import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
 import { cn } from "@/lib/utils";
 import { EllipsisIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -18,7 +18,7 @@ export const ChatSessionActionMenu = ({
   button?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { deleteChatSession } = useChatSession({});
+  const { deleteChatSession, isDeleting } = useChatSessionCrud();
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -45,9 +45,9 @@ export const ChatSessionActionMenu = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem
-          disabled={deleteChatSession.isPending}
+          disabled={isDeleting}
           onClick={() =>
-            deleteChatSession.mutate({
+            deleteChatSession({
               path: {
                 session_id,
               },

@@ -28,6 +28,10 @@ class Config:
         return os.environ.get(key, default)
 
     @property
+    def SYSTEM_KEY(self) -> list[str]:
+        return self._get_value("SYSTEM_KEY", "")
+
+    @property
     def CORS_ALLOWED_ORIGINS(self) -> list[str]:
         val = self._get_value("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
         return val.split(",")

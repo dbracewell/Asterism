@@ -5,6 +5,42 @@ export type ClientOptions = {
 };
 
 /**
+ * AppSettingResponse
+ *
+ * Single app setting response.
+ */
+export type AppSettingResponse = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Value
+     */
+    value: {
+        [key: string]: unknown;
+    };
+    /**
+     * Updated By
+     */
+    updated_by: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ApplicationSettings
+ */
+export type ApplicationSettings = {
+    /**
+     * Llm Providers
+     */
+    llm_providers?: Array<LlmProvider>;
+};
+
+/**
  * ChatSessionInfo
  */
 export type ChatSessionInfo = {
@@ -135,6 +171,30 @@ export type FolderModelList = {
     folders: Array<FolderModel>;
 };
 
+export type JsonValue = unknown;
+
+/**
+ * LLMProvider
+ */
+export type LlmProvider = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Base Url
+     */
+    base_url: string;
+    /**
+     * Api Key
+     */
+    api_key: string;
+    /**
+     * Models
+     */
+    models: Array<string>;
+};
+
 /**
  * MessageModel
  */
@@ -199,6 +259,57 @@ export type NewFolderRequest = {
      * Parent Id
      */
     parent_id: string | null;
+};
+
+/**
+ * UpdateAppSettingRequest
+ *
+ * Update a single app setting by key (admin only).
+ */
+export type UpdateAppSettingRequest = {
+    /**
+     * Key
+     */
+    key: string;
+    value: JsonValue;
+};
+
+/**
+ * UpdateUserSettingRequest
+ *
+ * Update a single user setting by key.
+ */
+export type UpdateUserSettingRequest = {
+    value: JsonValue;
+};
+
+/**
+ * UserSettingResponse
+ *
+ * Single user setting response.
+ */
+export type UserSettingResponse = {
+    /**
+     * Key
+     */
+    key: string;
+    value: JsonValue;
+};
+
+/**
+ * UserSettings
+ *
+ * Aggregated view of all user settings.
+ */
+export type UserSettings = {
+    /**
+     * Theme
+     */
+    theme?: string;
+    /**
+     * Font Size
+     */
+    font_size?: string;
 };
 
 export type GetFileData = {
@@ -520,3 +631,289 @@ export type FolderGetOneResponses = {
 };
 
 export type FolderGetOneResponse = FolderGetOneResponses[keyof FolderGetOneResponses];
+
+export type UserSettingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/user';
+};
+
+export type UserSettingsGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type UserSettingsGetError = UserSettingsGetErrors[keyof UserSettingsGetErrors];
+
+export type UserSettingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserSettings;
+};
+
+export type UserSettingsGetResponse = UserSettingsGetResponses[keyof UserSettingsGetResponses];
+
+export type UserSettingsBulkUpdateData = {
+    /**
+     * Updates
+     */
+    body: {
+        [key: string]: JsonValue;
+    };
+    path?: never;
+    query?: never;
+    url: '/settings/user';
+};
+
+export type UserSettingsBulkUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type UserSettingsBulkUpdateError = UserSettingsBulkUpdateErrors[keyof UserSettingsBulkUpdateErrors];
+
+export type UserSettingsBulkUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserSettings;
+};
+
+export type UserSettingsBulkUpdateResponse = UserSettingsBulkUpdateResponses[keyof UserSettingsBulkUpdateResponses];
+
+export type UserSettingDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/settings/user/{key}';
+};
+
+export type UserSettingDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type UserSettingDeleteError = UserSettingDeleteErrors[keyof UserSettingDeleteErrors];
+
+export type UserSettingDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type UserSettingUpdateData = {
+    body: UpdateUserSettingRequest;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/settings/user/{key}';
+};
+
+export type UserSettingUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type UserSettingUpdateError = UserSettingUpdateErrors[keyof UserSettingUpdateErrors];
+
+export type UserSettingUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserSettingResponse;
+};
+
+export type UserSettingUpdateResponse = UserSettingUpdateResponses[keyof UserSettingUpdateResponses];
+
+export type AppSettingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/app';
+};
+
+export type AppSettingsGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type AppSettingsGetError = AppSettingsGetErrors[keyof AppSettingsGetErrors];
+
+export type AppSettingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ApplicationSettings;
+};
+
+export type AppSettingsGetResponse = AppSettingsGetResponses[keyof AppSettingsGetResponses];
+
+export type AppSettingsBulkUpdateData = {
+    /**
+     * Updates
+     */
+    body: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    path?: never;
+    query?: never;
+    url: '/settings/app';
+};
+
+export type AppSettingsBulkUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AppSettingsBulkUpdateError = AppSettingsBulkUpdateErrors[keyof AppSettingsBulkUpdateErrors];
+
+export type AppSettingsBulkUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: ApplicationSettings;
+};
+
+export type AppSettingsBulkUpdateResponse = AppSettingsBulkUpdateResponses[keyof AppSettingsBulkUpdateResponses];
+
+export type AppSettingDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/settings/app/{key}';
+};
+
+export type AppSettingDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AppSettingDeleteError = AppSettingDeleteErrors[keyof AppSettingDeleteErrors];
+
+export type AppSettingDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type AppSettingGetData = {
+    body?: never;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/settings/app/{key}';
+};
+
+export type AppSettingGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AppSettingGetError = AppSettingGetErrors[keyof AppSettingGetErrors];
+
+export type AppSettingGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AppSettingResponse;
+};
+
+export type AppSettingGetResponse = AppSettingGetResponses[keyof AppSettingGetResponses];
+
+export type AppSettingUpdateData = {
+    body: UpdateAppSettingRequest;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/settings/app/{key}';
+};
+
+export type AppSettingUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AppSettingUpdateError = AppSettingUpdateErrors[keyof AppSettingUpdateErrors];
+
+export type AppSettingUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: AppSettingResponse;
+};
+
+export type AppSettingUpdateResponse = AppSettingUpdateResponses[keyof AppSettingUpdateResponses];

@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from asterism.core import config
 from asterism.core.utils.retries import retry_async_gen
 
+from ..component import Component
 from .helpers import format_messages_for_model
 from .typedefs import (
     AvailableTools,
@@ -193,7 +194,7 @@ class StreamingChunkProcessor:
         return events
 
 
-class LLMClient:
+class LLMClient(Component):
     def __init__(
         self,
         model_name: str,

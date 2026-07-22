@@ -3,22 +3,16 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CreateFolderInput } from "@/features/dashboard/components/create-folder-input";
-import { useChatSession } from "@/hooks/use-chat-session";
+import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
 import { client } from "@/lib/api";
 import { FolderModel } from "@/lib/client";
 import { folderDeleteMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
-import {
-  IconFolder,
-  IconFolderOpen,
-  IconFolderPlus,
-  IconMessage2Plus,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconFolder, IconFolderOpen, IconFolderPlus, IconMessage2Plus, IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import Cookie from "js-cookie";
 import { EllipsisIcon } from "lucide-react";
@@ -238,9 +232,7 @@ const FolderDropDown = ({
     },
   });
 
-  const { createChatSession } = useChatSession({
-    onSuccess: () => openFolder(folderId),
-  });
+  const { createChatSession } = useChatSessionCrud();
   const [isOpen, setIsOpen] = useState(false);
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -263,11 +255,18 @@ const FolderDropDown = ({
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() =>
-            createChatSession.mutate({
-              body: {
-                folder_id: folderId,
+            createChatSession(
+              {
+                body: {
+                  folder_id: folderId,
+                },
               },
-            })
+              {
+                onSuccess: () => {
+                  openFolder(folderId);
+                },
+              },
+            )
           }
         >
           <IconMessage2Plus /> New Chat

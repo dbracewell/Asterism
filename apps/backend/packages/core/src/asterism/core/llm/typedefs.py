@@ -257,6 +257,10 @@ class LLMEvent(Generic[T_co]):
     tool_call_delta: ToolCallDelta | None = field(default=None)
     tool_call: ToolCall | None = field(default=None)
 
+    @classmethod
+    def empty(cls) -> LLMEvent[T_co]:
+        return LLMEvent(type=LLMEventType.COMPLETE)
+
     def to_dict(self) -> dict[str, Any]:
         tool_call_delta = (
             self.tool_call_delta.__dict__ if self.tool_call_delta else None

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { getApiClient } from "@/lib/api-server";
 
 export const requireAdmin = cache(async () => {
   const user = await getCurrentUser();
@@ -20,11 +21,18 @@ export const getCurrentUser = cache(async () => {
   if (!session?.user || session.user.role == null) {
     redirect("/");
   }
+
+  const api = await getApiClient();
+  const settings = await api.userSettingsGet({
+    throwOnError: true,
+  });
+
   return {
     id: session.user.id,
     role: session.user.role,
     name: session.user.name,
     email: session.user.email,
+    settings: settings.data,
   } as User;
 });
 

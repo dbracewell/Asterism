@@ -43,7 +43,6 @@ export const auth = betterAuth({
           if (adminKey === process.env.ADMIN_PASSPHRASE!) {
             role = "admin";
           }
-          console.log(adminKey, role);
           return {
             data: {
               ...user,

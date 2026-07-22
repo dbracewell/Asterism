@@ -1,48 +1,104 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getCurrentUser } from "@/features/auth/server/actions";
-import { EventEmitter } from "events";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
+import { sseEmitter } from "@/features/sse/lib/event-emitter";
+import { checkRateLimit } from "@/features/sse/lib/rate-limiter";
 
-const globalEmitter = global as unknown as { sseEmitter: EventEmitter };
-
-if (!globalEmitter.sseEmitter) {
-  globalEmitter.sseEmitter = new EventEmitter();
+export async function OPTIONS() {
+  return NextResponse.json(
+    {},
+    {
+      headers: {
+        "Access-Control-Allow-Origin": "http://localhost:8000",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "*",
+      },
+    },
+  );
 }
 
-export const sseEmitter = globalEmitter.sseEmitter;
-
 export async function POST(req: NextRequest) {
+  const systemKey = req.headers.get("x-asterism-system-key");
+  if (!systemKey || systemKey !== process.env.SYSTEM_KEY) {
+    console.error(systemKey);
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit by client IP
+  const clientIp = req.headers.get("x-forwarded-for") ?? "unknown";
+  if (!checkRateLimit(clientIp)) {
+    return NextResponse.json(
+      { message: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
+
   const body = await req.json();
-  sseEmitter.emit("message", JSON.stringify({ eventType: "ping", data: body }));
-  return new Response("ok");
+  const { success, data } = EventMessageSchema.safeParse(body);
+  if (success) {
+    sseEmitter.emit("message", data);
+    return NextResponse.json({ message: "Event accepted" }, { status: 200 });
+  }
+  return NextResponse.json({ message: "Bad Request Body" }, { status: 400 });
 }
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
+  const myUserId = user.id;
 
   const stream = new ReadableStream({
     async start(controller) {
-      const initPayload = JSON.stringify({
-        eventType: "connected",
-        status: true,
-      });
-      controller.enqueue(new TextEncoder().encode(`data: ${initPayload}\n\n`));
+      try {
+        const connectionMessage: EventMessage = {
+          type: "connection:status",
+          payload: { status: true },
+        };
+        const initPayload = JSON.stringify(connectionMessage);
+        controller.enqueue(
+          new TextEncoder().encode(`data: ${initPayload}\n\n`),
+        );
+      } catch (error: any) {
+        console.warn(
+          "Failed to send initial connection message:",
+          error?.message ?? error,
+        );
+        controller.close();
+      }
 
-      const onMessage = (data: any) => {
+      const cleanup = () => {
+        clearInterval(heartbeat);
+        sseEmitter.off("message", onMessage);
+      };
+
+      const heartbeat = setInterval(() => {
         try {
-          const payload =
-            typeof data === "string" ? data : JSON.stringify(data);
+          controller.enqueue(new TextEncoder().encode(":\n\n"));
+        } catch {
+          // Client disconnected — cleanup will handle it
+        }
+      }, 15_000);
+
+      const onMessage = (data: EventMessage) => {
+        if (data.userId != null && data.userId !== myUserId) {
+          return;
+        }
+
+        try {
+          const payload = JSON.stringify(data);
           controller.enqueue(new TextEncoder().encode(`data: ${payload}\n\n`));
         } catch (error: any) {
-          console.error("Error processing SSE message:", error);
-          sseEmitter.off("message", onMessage);
+          console.warn("SSE client disconnected:", error?.message ?? error);
+          cleanup();
+          controller.close();
         }
       };
 
       sseEmitter.on("message", onMessage);
 
       req.signal.addEventListener("abort", () => {
-        sseEmitter.off("message", onMessage);
+        cleanup();
+        controller.close();
       });
     },
     async cancel() {},

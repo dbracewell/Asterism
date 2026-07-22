@@ -63,7 +63,6 @@ export async function getAllThemes() {
       const data = JSON.parse(
         await readFile(path.join(filePath, file), "utf-8"),
       );
-      console.log(`Loading ${file} theme`);
       const fileName = file.slice(0, -5);
       themes[fileName] = data;
       themes[fileName]["filename"] = fileName;
