@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import textwrap
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     List,
@@ -17,9 +16,7 @@ from typing import (
 from pydantic import BaseModel
 
 from asterism.core import config
-
-if TYPE_CHECKING:
-    from .typedefs import Message
+from asterism.core.data.models import LLMMessage
 
 
 def _get_type_name(annotation) -> str:
@@ -60,7 +57,7 @@ def _to_structured_format(model: Type[BaseModel]) -> str:
 
 
 def format_messages_for_model(
-    messages: list[Message],
+    messages: list[LLMMessage],
     response_model=None,
 ) -> list[dict[str, Any]]:
     # LLM Supports everything so we just need to convert to a dict normally
@@ -69,7 +66,7 @@ def format_messages_for_model(
         and config.LLM_NATIVE_TOOL_SUPPORT
         and config.LLM_SUPPORTS_STRUCTURED_OUTPUT
     ):
-        return [msg.to_dict() for msg in messages]
+        return [msg.to_api_message() for msg in messages]
 
     formatted = []
     tool_buffer = []
@@ -97,19 +94,19 @@ def format_messages_for_model(
         if msg.role == "system":
             # System prompt is supported so keep it
             if config.LLM_SUPPORTS_SYSTEM_PROMPT:
-                formatted.append(msg.to_dict())
+                formatted.append(msg.to_api_message())
             continue
 
         if msg.role == "tool":
             if config.LLM_NATIVE_TOOL_SUPPORT:
                 # Native tool calling to add it
-                formatted.append(msg.to_dict())
+                formatted.append(msg.to_api_message())
             else:
                 # Non-native tool call so we need to build
                 # up a buffer of tool results
                 tool_result = (
-                    f"**Source:** {msg.tool_calls[0].name} "
-                    f"(ID: {msg.tool_calls[0].tool_call_id})\n"
+                    f"**Source:** {msg.tool_calls[0].function.name} "
+                    f"(ID: {msg.tool_calls[0].id})\n"
                     f"**Result:** {msg.content}"
                 )
                 tool_buffer.append(tool_result)
@@ -120,17 +117,18 @@ def format_messages_for_model(
             if msg.role == "user":
                 # If this is the FIRST user message, attach the system rules
                 if not config.LLM_SUPPORTS_SYSTEM_PROMPT and found_user_prompt:
-                    content = msg.convert_content(
-                        f"SYSTEM RULES:\n{system_content}\n\nUSER TASK:\n"
+                    content = (
+                        f"SYSTEM RULES:\n{system_content}\n\nUSER TASK: {msg.content}\n"
                     )
+
                 else:
-                    content = msg.convert_content()
+                    content = msg.content
 
                 found_user_prompt = True
                 formatted.append({"role": "user", "content": content})
 
             elif msg.role == "assistant":
-                msg_copy = msg.to_dict()
+                msg_copy = msg.to_api_message()
                 msg_copy["content"] = msg_copy.get("content", "Processing...")
                 formatted.append(msg_copy)
 
@@ -142,12 +140,13 @@ def format_messages_for_model(
             )
         formatted = formatted[:-1]
         messages.append(
-            Message(
+            LLMMessage(
                 role=last_message.role,
                 content=textwrap.dedent(f"""{last_message.content}
                             Respond only in JSON. The output must strictly follow this structure:
                             {_to_structured_format(response_model)}
                             Do not include any preamble, thinking blocks, or markdown code fences."""),  # noqa: E501
+                token_count=0,
             )
         )
 

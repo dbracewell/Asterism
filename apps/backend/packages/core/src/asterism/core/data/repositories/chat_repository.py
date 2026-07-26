@@ -5,15 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.data import get_async_db_session
 from asterism.core.data.models import (
-    ChatSession,
-    ChatSessionInfo,
-    ChatSessionInfoList,
-    ChatSessionModel,
-    ChatSessionUpdate,
+    Chat,
+    ChatInfo,
+    ChatModel,
+    ChatModelList,
     Message,
     MessageModel,
-    NewMessage,
 )
+from asterism.core.data.schemas.chat import ChatUpdateRequest
+from asterism.core.data.schemas.message import (
+    NewMessage,
+    UpdateMessage,
+)
+from asterism.core.data.typedefs.enums import MessageStatus
 from asterism.core.exceptions import NotFoundException, UnauthorizedException
 
 
@@ -58,6 +62,37 @@ class ChatRepository:
             new_message.active_child = active_child
             return new_message
 
+    async def update_message(
+        self,
+        user_id: str,
+        session_id: uuid.UUID,
+        message_id: uuid.UUID,
+        payload: UpdateMessage,
+        session: AsyncSession | None = None,
+    ) -> MessageModel:
+        async with get_async_db_session(session) as session:
+            message = await session.get(Message, message_id)
+            if not message:
+                raise NotFoundException()
+            if message.user_id != user_id:
+                raise UnauthorizedException()
+            if message.session_id != session_id:
+                raise UnauthorizedException()
+
+            if payload.active_child_id is not None:
+                message.active_child_id = payload.active_child_id
+            if payload.content is not None:
+                message.content = payload.content
+            if payload.thinking is not None:
+                message.thinking = payload.thinking
+            if payload.status is not None:
+                message.status = payload.status
+
+            await session.merge(message)
+            await session.commit()
+            await session.refresh(message)
+            return MessageModel.model_validate(message)
+
     async def set_active_child(
         self,
         user_id: str,
@@ -93,31 +128,47 @@ class ChatRepository:
     async def create(
         self,
         user_id: str,
+        user_prompt: str,
         folder_id: uuid.UUID | None,
         session: AsyncSession | None = None,
-    ) -> ChatSessionModel:
+    ) -> ChatModel:
         async with get_async_db_session(session) as session:
-            new_session = ChatSession(
+            new_session = Chat(
                 user_id=user_id,
-                title="New Chat",
                 folder_id=folder_id,
             )
             session.add(new_session)
+            await session.flush()
+
+            new_message = Message(
+                session_id=new_session.id,
+                user_id=user_id,
+                status=MessageStatus.PENDING,
+                content=user_prompt,
+                role="user",
+                token_count=0,
+            )
+            session.add(new_message)
+
             await session.commit()
-            return ChatSessionModel(
-                info=ChatSessionInfo.model_validate(new_session),
-                messages=[],
+
+            await session.refresh(new_session)
+            await session.refresh(new_message)
+
+            return ChatModel(
+                info=ChatInfo.model_validate(new_session),
+                messages=[MessageModel.model_validate(new_message)],
             )
 
     async def update(
         self,
         user_id: str,
         session_id: uuid.UUID,
-        update: ChatSessionUpdate,
+        update: ChatUpdateRequest,
         session: AsyncSession | None = None,
-    ) -> ChatSessionModel:
+    ) -> ChatModel:
         async with get_async_db_session(session) as session:
-            chat_session = await session.get(ChatSession, session_id)
+            chat_session = await session.get(Chat, session_id)
             if not chat_session:
                 raise NotFoundException()
             if chat_session.user_id != user_id:
@@ -129,8 +180,8 @@ class ChatRepository:
             await session.merge(chat_session)
             await session.refresh(chat_session)
             await session.commit()
-            return ChatSessionModel(
-                info=ChatSessionInfo.model_validate(chat_session),
+            return ChatModel(
+                info=ChatInfo.model_validate(chat_session),
                 messages=[],
             )
 
@@ -139,17 +190,17 @@ class ChatRepository:
         user_id: str,
         session_id: uuid.UUID | None,
         session: AsyncSession | None = None,
-    ) -> ChatSessionModel:
+    ) -> ChatModel:
         async with get_async_db_session(session) as session:
-            chat_session = await session.get(ChatSession, session_id)
+            chat_session = await session.get(Chat, session_id)
             if not chat_session:
                 raise NotFoundException()
             if chat_session.user_id != user_id:
                 raise UnauthorizedException()
             await session.delete(chat_session)
             await session.commit()
-            return ChatSessionModel(
-                info=ChatSessionInfo.model_validate(chat_session),
+            return ChatModel(
+                info=ChatInfo.model_validate(chat_session),
                 messages=[],
             )
 
@@ -157,16 +208,16 @@ class ChatRepository:
         self,
         user_id: str,
         session: AsyncSession | None = None,
-    ) -> ChatSessionInfoList:
+    ) -> ChatModelList:
         async with get_async_db_session(session) as session:
             stmt = (
-                select(ChatSession)
-                .where(ChatSession.user_id == user_id, ChatSession.folder_id.is_(None))
-                .order_by(desc(ChatSession.created_at))
+                select(Chat)
+                .where(Chat.user_id == user_id, Chat.folder_id.is_(None))
+                .order_by(desc(Chat.created_at))
             )
             result = await session.scalars(stmt)
-            return ChatSessionInfoList(
-                sessions=[ChatSessionInfo.model_validate(r) for r in result.all()]
+            return ChatModelList(
+                chats=[ChatInfo.model_validate(r) for r in result.all()]
             )
 
     async def get_one(
@@ -174,16 +225,16 @@ class ChatRepository:
         session_id: uuid.UUID,
         user_id: str,
         session: AsyncSession | None = None,
-    ) -> ChatSessionModel:
+    ) -> ChatModel:
 
         async with get_async_db_session(session) as session:
-            chat_session = await session.get(ChatSession, session_id)
+            chat_session = await session.get(Chat, session_id)
             if not chat_session:
                 raise NotFoundException()
             if chat_session.user_id != user_id:
                 raise UnauthorizedException()
 
-            chat_session_model = ChatSessionInfo.model_validate(chat_session)
+            chat_session_model = ChatInfo.model_validate(chat_session)
 
             stmt = select(Message).where(
                 Message.session_id == session_id,
@@ -193,7 +244,7 @@ class ChatRepository:
             all_messages = result.scalars().all()
 
             if not all_messages:
-                return ChatSessionModel(
+                return ChatModel(
                     info=chat_session_model,
                     messages=[],
                 )
@@ -211,7 +262,7 @@ class ChatRepository:
 
             root_messages = children_map.get(None, [])
             if not root_messages:
-                return ChatSessionModel(
+                return ChatModel(
                     info=chat_session_model,
                     messages=[],
                 )
@@ -222,7 +273,6 @@ class ChatRepository:
             while current_node is not None:
                 parent_id = current_node.parent_message_id
                 siblings = children_map.get(parent_id, [])
-
                 thread_msg = MessageModel(
                     id=current_node.id,
                     role=current_node.role,
@@ -234,6 +284,10 @@ class ChatRepository:
                     sibling_count=len(siblings),
                     # +1 so the frontend displays "1 / 3" instead of "0 / 3"
                     current_sibling_index=siblings.index(current_node) + 1,
+                    status=current_node.status,
+                    tool_call_id=current_node.tool_call_id,
+                    tool_calls=current_node.tool_calls,
+                    token_count=current_node.token_count,
                 )
                 active_thread.append(thread_msg)
 
@@ -245,7 +299,7 @@ class ChatRepository:
                 else:
                     break
 
-            return ChatSessionModel(
+            return ChatModel(
                 info=chat_session_model,
                 messages=active_thread,
             )

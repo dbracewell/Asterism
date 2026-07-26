@@ -17,7 +17,7 @@ export const useChatSessionCrud = () => {
       client: client,
     }),
     onSuccess: (data) => {
-      router.push(`/c/${data.info.id}`);
+      router.push(`/c/${data.info.id}?new=true`);
     },
     onError: () =>
       toast.error("Failed to create chat session. Please try again."),
@@ -31,9 +31,6 @@ export const useChatSessionCrud = () => {
       if (pathName.endsWith(`/c/${variables.path.session_id}`)) {
         router.push("/");
       }
-    },
-    onSuccess: () => {
-      toast.success("Chat session deleted successfully.");
     },
     onError: () =>
       toast.error("Failed to create chat session. Please try again."),

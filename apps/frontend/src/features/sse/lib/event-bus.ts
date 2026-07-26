@@ -27,7 +27,9 @@ export class EventBus {
   emit<K extends EventType>(type: K, payload: EventPayloadMap[K]) {
     const set = this.handlers[type];
     if (!set) return;
-    for (const h of set) h(payload);
+    for (const h of set) {
+      h(payload);
+    }
   }
 
   clear(type?: EventType) {

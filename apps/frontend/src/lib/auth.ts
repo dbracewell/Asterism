@@ -9,7 +9,7 @@ export const auth = betterAuth({
     enabled: true,
     autoSignIn: true,
     minPasswordLength: 8,
-    maxPasswordLength: 16,
+    maxPasswordLength: 32,
   },
   plugins: [
     jwt({
@@ -40,8 +40,12 @@ export const auth = betterAuth({
         before: async (user, ctx) => {
           let role = "user";
           const adminKey = ctx!.query?.adminKey;
+          const install = ctx!.query?.install;
           if (adminKey === process.env.ADMIN_PASSPHRASE!) {
             role = "admin";
+          }
+          if (install && role !== "admin") {
+            throw new Error("Invalid admin key");
           }
           return {
             data: {

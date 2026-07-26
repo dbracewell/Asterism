@@ -2,14 +2,13 @@ import uuid
 
 from fastapi import APIRouter
 
-from asterism.core.data.models.folder import (
-    FolderModel,
-    FolderModelList,
+from asterism.core.data.models import FolderModel, FolderModelList
+from asterism.core.data.repositories import folder_repository
+from asterism.core.data.schemas import ErrorDetail
+from asterism.core.data.schemas.folder import (
     GetFolderRequest,
     NewFolderRequest,
 )
-from asterism.core.data.repositories import folder_repository
-from asterism.core.data.schemas import ErrorDetail
 from asterism.core.services.dependencies import AuthedUserDep, DBSessionDep
 
 folder_router = APIRouter(

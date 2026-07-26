@@ -4,12 +4,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.data import get_async_db_session
-from asterism.core.data.models import ChatSession, ChatSessionInfo
+from asterism.core.data.models import Chat, ChatInfo
 from asterism.core.data.models.folder import (
     FlatFolderModel,
     Folder,
     FolderModel,
     FolderModelList,
+)
+from asterism.core.data.schemas.folder import (
     GetFolderRequest,
     NewFolderRequest,
 )
@@ -70,15 +72,15 @@ class FolderRepository:
         session: AsyncSession,
     ):
         stmt = (
-            select(ChatSession)
+            select(Chat)
             .where(
-                ChatSession.user_id == user_id,
-                ChatSession.folder_id == folder_id,
+                Chat.user_id == user_id,
+                Chat.folder_id == folder_id,
             )
-            .order_by(ChatSession.updated_at.desc())
+            .order_by(Chat.updated_at.desc())
         )
         result = await session.scalars(stmt)
-        return [ChatSessionInfo.model_validate(r) for r in result.all()]
+        return [ChatInfo.model_validate(r) for r in result.all()]
 
     async def get_folder(
         self,

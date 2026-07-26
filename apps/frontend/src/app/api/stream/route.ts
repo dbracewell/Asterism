@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { sseEmitter } from "@/features/sse/lib/event-emitter";
 import { checkRateLimit } from "@/features/sse/lib/rate-limiter";
+import { auth } from "@/lib/auth";
 
 export async function OPTIONS() {
   return NextResponse.json(
@@ -19,8 +20,13 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: req.headers,
+  });
+
   const systemKey = req.headers.get("x-asterism-system-key");
-  if (!systemKey || systemKey !== process.env.SYSTEM_KEY) {
+
+  if (!session && (!systemKey || systemKey !== process.env.SYSTEM_KEY)) {
     console.error(systemKey);
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

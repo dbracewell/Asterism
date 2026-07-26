@@ -5,32 +5,6 @@ export type ClientOptions = {
 };
 
 /**
- * AppSettingResponse
- *
- * Single app setting response.
- */
-export type AppSettingResponse = {
-    /**
-     * Key
-     */
-    key: string;
-    /**
-     * Value
-     */
-    value: {
-        [key: string]: unknown;
-    };
-    /**
-     * Updated By
-     */
-    updated_by: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-};
-
-/**
  * ApplicationSettings
  */
 export type ApplicationSettings = {
@@ -41,9 +15,9 @@ export type ApplicationSettings = {
 };
 
 /**
- * ChatSessionInfo
+ * ChatInfo
  */
-export type ChatSessionInfo = {
+export type ChatInfo = {
     /**
      * Id
      */
@@ -53,18 +27,6 @@ export type ChatSessionInfo = {
      */
     user_id: string;
     /**
-     * Title
-     */
-    title: string;
-    /**
-     * Folder Id
-     */
-    folder_id: string | unknown;
-    /**
-     * System Prompt
-     */
-    system_prompt: string | unknown;
-    /**
      * Created At
      */
     created_at: string;
@@ -72,23 +34,21 @@ export type ChatSessionInfo = {
      * Updated At
      */
     updated_at: string;
-};
-
-/**
- * ChatSessionInfoList
- */
-export type ChatSessionInfoList = {
     /**
-     * Sessions
+     * Title
      */
-    sessions: Array<ChatSessionInfo>;
+    title?: string | null;
+    /**
+     * Folder Id
+     */
+    folder_id?: string | null;
 };
 
 /**
- * ChatSessionModel
+ * ChatModel
  */
-export type ChatSessionModel = {
-    info: ChatSessionInfo;
+export type ChatModel = {
+    info: ChatInfo;
     /**
      * Messages
      */
@@ -96,9 +56,19 @@ export type ChatSessionModel = {
 };
 
 /**
- * ChatSessionUpdate
+ * ChatModelList
  */
-export type ChatSessionUpdate = {
+export type ChatModelList = {
+    /**
+     * Chats
+     */
+    chats: Array<ChatInfo>;
+};
+
+/**
+ * ChatUpdateRequest
+ */
+export type ChatUpdateRequest = {
     /**
      * Title
      */
@@ -107,6 +77,20 @@ export type ChatSessionUpdate = {
      * Folder Id
      */
     folder_id?: unknown;
+};
+
+/**
+ * CreateUserRequest
+ */
+export type CreateUserRequest = {
+    /**
+     * User Id
+     */
+    user_id: string;
+    /**
+     * System Key
+     */
+    system_key?: string | null;
 };
 
 /**
@@ -154,7 +138,7 @@ export type FolderModel = {
     /**
      * Sessions
      */
-    sessions?: Array<ChatSessionInfo>;
+    sessions?: Array<ChatInfo>;
     /**
      * Children
      */
@@ -169,6 +153,20 @@ export type FolderModelList = {
      * Folders
      */
     folders: Array<FolderModel>;
+};
+
+/**
+ * Function
+ */
+export type Function = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Arguments
+     */
+    arguments: string;
 };
 
 export type JsonValue = unknown;
@@ -200,10 +198,6 @@ export type LlmProvider = {
  */
 export type MessageModel = {
     /**
-     * Id
-     */
-    id: string;
-    /**
      * Role
      */
     role: string;
@@ -212,9 +206,26 @@ export type MessageModel = {
      */
     content: string;
     /**
+     * Token Count
+     */
+    token_count: number;
+    /**
      * Thinking
      */
-    thinking: string;
+    thinking?: string | null;
+    /**
+     * Tool Calls
+     */
+    tool_calls?: Array<ToolCall> | null;
+    /**
+     * Tool Call Id
+     */
+    tool_call_id?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    status: MessageStatus;
     /**
      * Created At
      */
@@ -238,13 +249,22 @@ export type MessageModel = {
 };
 
 /**
- * NewChatSessionRequest
+ * MessageStatus
  */
-export type NewChatSessionRequest = {
+export type MessageStatus = 'pending' | 'completed';
+
+/**
+ * NewChatRequest
+ */
+export type NewChatRequest = {
+    /**
+     * User Prompt
+     */
+    user_prompt: string;
     /**
      * Folder Id
      */
-    folder_id: string | null;
+    folder_id?: unknown;
 };
 
 /**
@@ -262,11 +282,9 @@ export type NewFolderRequest = {
 };
 
 /**
- * UpdateAppSettingRequest
- *
- * Update a single app setting by key (admin only).
+ * Setting
  */
-export type UpdateAppSettingRequest = {
+export type Setting = {
     /**
      * Key
      */
@@ -275,31 +293,29 @@ export type UpdateAppSettingRequest = {
 };
 
 /**
- * UpdateUserSettingRequest
- *
- * Update a single user setting by key.
+ * ToolCall
  */
-export type UpdateUserSettingRequest = {
-    value: JsonValue;
+export type ToolCall = {
+    /**
+     * Id
+     */
+    id: string;
+    function: Function;
+    /**
+     * Type
+     */
+    type?: string;
 };
 
 /**
- * UserSettingResponse
- *
- * Single user setting response.
+ * UpdateSettingValue
  */
-export type UserSettingResponse = {
-    /**
-     * Key
-     */
-    key: string;
+export type UpdateSettingValue = {
     value: JsonValue;
 };
 
 /**
  * UserSettings
- *
- * Aggregated view of all user settings.
  */
 export type UserSettings = {
     /**
@@ -374,13 +390,13 @@ export type ChatSessionGetManyResponses = {
     /**
      * Successful Response
      */
-    200: ChatSessionInfoList;
+    200: ChatModelList;
 };
 
 export type ChatSessionGetManyResponse = ChatSessionGetManyResponses[keyof ChatSessionGetManyResponses];
 
 export type ChatSessionCreateData = {
-    body: NewChatSessionRequest;
+    body: NewChatRequest;
     path?: never;
     query?: never;
     url: '/chat/';
@@ -403,7 +419,7 @@ export type ChatSessionCreateResponses = {
     /**
      * Successful Response
      */
-    200: ChatSessionModel;
+    200: ChatModel;
 };
 
 export type ChatSessionCreateResponse = ChatSessionCreateResponses[keyof ChatSessionCreateResponses];
@@ -437,7 +453,7 @@ export type ChatSessionGetOneResponses = {
     /**
      * Successful Response
      */
-    200: ChatSessionModel;
+    200: ChatModel;
 };
 
 export type ChatSessionGetOneResponse = ChatSessionGetOneResponses[keyof ChatSessionGetOneResponses];
@@ -471,13 +487,13 @@ export type ChatSessionDeleteResponses = {
     /**
      * Successful Response
      */
-    200: ChatSessionModel;
+    200: ChatModel;
 };
 
 export type ChatSessionDeleteResponse = ChatSessionDeleteResponses[keyof ChatSessionDeleteResponses];
 
 export type ChatSessionUpdateData = {
-    body: ChatSessionUpdate;
+    body: ChatUpdateRequest;
     path: {
         /**
          * Session Id
@@ -505,7 +521,7 @@ export type ChatSessionUpdateResponses = {
     /**
      * Successful Response
      */
-    200: ChatSessionModel;
+    200: ChatModel;
 };
 
 export type ChatSessionUpdateResponse = ChatSessionUpdateResponses[keyof ChatSessionUpdateResponses];
@@ -724,7 +740,7 @@ export type UserSettingDeleteResponses = {
 };
 
 export type UserSettingUpdateData = {
-    body: UpdateUserSettingRequest;
+    body: UpdateSettingValue;
     path: {
         /**
          * Key
@@ -752,7 +768,7 @@ export type UserSettingUpdateResponses = {
     /**
      * Successful Response
      */
-    200: UserSettingResponse;
+    200: Setting;
 };
 
 export type UserSettingUpdateResponse = UserSettingUpdateResponses[keyof UserSettingUpdateResponses];
@@ -787,9 +803,7 @@ export type AppSettingsBulkUpdateData = {
      * Updates
      */
     body: {
-        [key: string]: {
-            [key: string]: unknown;
-        };
+        [key: string]: JsonValue;
     };
     path?: never;
     query?: never;
@@ -850,42 +864,8 @@ export type AppSettingDeleteResponses = {
     200: unknown;
 };
 
-export type AppSettingGetData = {
-    body?: never;
-    path: {
-        /**
-         * Key
-         */
-        key: string;
-    };
-    query?: never;
-    url: '/settings/app/{key}';
-};
-
-export type AppSettingGetErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type AppSettingGetError = AppSettingGetErrors[keyof AppSettingGetErrors];
-
-export type AppSettingGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: AppSettingResponse;
-};
-
-export type AppSettingGetResponse = AppSettingGetResponses[keyof AppSettingGetResponses];
-
 export type AppSettingUpdateData = {
-    body: UpdateAppSettingRequest;
+    body: UpdateSettingValue;
     path: {
         /**
          * Key
@@ -913,7 +893,70 @@ export type AppSettingUpdateResponses = {
     /**
      * Successful Response
      */
-    200: AppSettingResponse;
+    200: Setting;
 };
 
 export type AppSettingUpdateResponse = AppSettingUpdateResponses[keyof AppSettingUpdateResponses];
+
+export type UserCreateUserData = {
+    body: CreateUserRequest;
+    path?: never;
+    query?: never;
+    url: '/users/';
+};
+
+export type UserCreateUserErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type UserCreateUserError = UserCreateUserErrors[keyof UserCreateUserErrors];
+
+export type UserCreateUserResponses = {
+    /**
+     * Response Usercreateuser
+     *
+     * Successful Response
+     */
+    200: boolean;
+};
+
+export type UserCreateUserResponse = UserCreateUserResponses[keyof UserCreateUserResponses];
+
+export type UserSettingDelete2Data = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}';
+};
+
+export type UserSettingDelete2Errors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type UserSettingDelete2Error = UserSettingDelete2Errors[keyof UserSettingDelete2Errors];
+
+export type UserSettingDelete2Responses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};

@@ -11,22 +11,16 @@ else:
 Base = declarative_base(metadata=metadata_obj)
 
 # isort: off
-from .folder import Folder, FolderModel, FolderModelList, FlatFolderModel  # noqa: E402, F401
-from .message import Message, MessageModel, NewMessage  # noqa: E402, F401
-from .chat_session import (  # noqa: E402, F401
-    ChatSession,
-    ChatSessionModel,
-    ChatSessionInfoList,
-    ChatSessionInfo,
-    ChatSessionUpdate,
-    NewChatSessionRequest,
-)
+from .user import User  # noqa: E402, F401
+from .folder import Folder, FlatFolderModel, FolderModel, FolderModelList  # noqa: E402, F401
+from .message import Message, LLMMessage, MessageModel, MessageStatus, MessageModelList  # noqa: E402, F401
+from .chat import Chat, ChatInfo, ChatModel, ChatModelList  # noqa: E402, F401
 from .settings_model import UserSetting, AppSetting  # noqa: E402, F401
+from .function import Function, UserFunctions  # noqa: E402, F401
 # isort: on
 
-
-ChatSessionModel.model_rebuild()
-ChatSessionInfoList.model_rebuild()
+ChatModel.model_rebuild()
+ChatModelList.model_rebuild()
 FlatFolderModel.model_rebuild()
 FolderModel.model_rebuild()
 FolderModelList.model_rebuild()
@@ -36,15 +30,19 @@ __all__ = [
     "Folder",
     "FolderModel",
     "FolderModelList",
+    "FlatFolderModel",
     "Message",
     "MessageModel",
-    "ChatSession",
-    "ChatSessionModel",
-    "ChatSessionInfoList",
-    "ChatSessionInfo",
+    "MessageStatus",
+    "MessageModelList",
+    "LLMMessage",
+    "Chat",
+    "ChatInfo",
+    "ChatModel",
+    "ChatModelList",
     "UserSetting",
     "AppSetting",
-    "ChatSessionUpdate",
-    "NewMessage",
-    "NewChatSessionRequest",
+    "User",
+    "UserFunctions",
+    "Function",
 ]

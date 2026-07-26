@@ -14,14 +14,19 @@ from fastapi.responses import JSONResponse
 from asterism.core.config import config
 from asterism.core.data import db_session_manager
 from asterism.core.data.schemas import ErrorDetail
+from asterism.core.events.bus import event_bus
+from asterism.core.events.typedefs import Event, EventType
 from asterism.core.exceptions import CodedException
+from asterism.core.llm.tool_registory import ToolCall
 from asterism.core.log import get_logger
 from asterism.core.services.routers import (
     chat_router,
     file_router,
     folder_router,
     settings_router,
+    user_router,
 )
+from asterism.core.services.routers.function_router import function_router
 
 logger = get_logger("AsterismMain")
 
@@ -31,6 +36,11 @@ async def lifespan(app: FastAPI):
     logger.info("Asterism backend starting up...")
     db_session_manager.init()
     yield
+    await event_bus.emit(
+        Event(
+            type=EventType.SYSTEM_STOP,
+        )
+    )
     await db_session_manager.close()
     logger.info("Asterism backend shutting up...")
 
@@ -56,6 +66,9 @@ def custom_openapi():
     if "ErrorDetail" not in openapi_schema["components"]["schemas"]:
         openapi_schema["components"]["schemas"]["ErrorDetail"] = (
             ErrorDetail.model_json_schema()
+        )
+        openapi_schema["components"]["schemas"]["ToolCall"] = (
+            ToolCall.model_json_schema()
         )
 
     for path, methods in openapi_schema["paths"].items():
@@ -114,9 +127,12 @@ async def global_coded_exception_handler(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    error_message = []
+    for error in exc.errors():
+        error_message.append(f"{error['msg']}: {error['input']}")
     error_response = ErrorDetail(
         code=500,
-        detail=json.dumps(exc.errors()),
+        detail=json.dumps("\n".join(error_message)),
     )
     return JSONResponse(
         status_code=422,
@@ -128,3 +144,6 @@ app.include_router(file_router)
 app.include_router(chat_router)
 app.include_router(folder_router)
 app.include_router(settings_router)
+app.include_router(user_router)
+
+app.include_router(function_router)

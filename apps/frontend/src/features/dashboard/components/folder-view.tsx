@@ -63,7 +63,7 @@ export const FolderView = ({
         },
       );
     }
-  }, [foldersOpen, folder.id]);
+  }, [foldersOpen, folder]);
 
   const closeFolder = useCallback(() => {
     setFoldersOpen((prev) => {
@@ -71,7 +71,7 @@ export const FolderView = ({
       filtered.delete(folder.id);
       return filtered;
     });
-  }, [setFoldersOpen, folder.id]);
+  }, [setFoldersOpen, folder]);
 
   const openFolder = useCallback(() => {
     setFoldersOpen((prev) => {
@@ -84,7 +84,7 @@ export const FolderView = ({
       }
       return filtered;
     });
-  }, [setFoldersOpen, folder.id, folder.children, folder.sessions]);
+  }, [setFoldersOpen, folder]);
 
   const forceOpenFolder = useCallback(
     (folder_id: string) => {
@@ -99,7 +99,7 @@ export const FolderView = ({
         );
       }
     },
-    [folder.id, foldersOpen],
+    [folder, foldersOpen],
   );
 
   const toggleFolder = useCallback(() => {
@@ -259,6 +259,7 @@ const FolderDropDown = ({
               {
                 body: {
                   folder_id: folderId,
+                  user_prompt: "",
                 },
               },
               {

@@ -4,7 +4,7 @@ import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
 import { ApiClient, type Options } from '../sdk.gen';
-import type { AppSettingDeleteData, AppSettingDeleteError, AppSettingGetData, AppSettingGetError, AppSettingGetResponse, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
+import type { AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserSettingDelete2Data, UserSettingDelete2Error, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -335,24 +335,6 @@ export const appSettingDeleteMutation = (options?: Partial<Options<AppSettingDel
     return mutationOptions;
 };
 
-export const appSettingGetQueryKey = (options: Options<AppSettingGetData>) => createQueryKey('appSettingGet', options);
-
-/**
- * Get a single application setting by key
- */
-export const appSettingGetOptions = (options: Options<AppSettingGetData>) => queryOptions<AppSettingGetResponse, AppSettingGetError, AppSettingGetResponse, ReturnType<typeof appSettingGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await ApiClient.__registry.get().appSettingGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: appSettingGetQueryKey(options)
-});
-
 /**
  * Update a single application setting by key
  */
@@ -360,6 +342,40 @@ export const appSettingUpdateMutation = (options?: Partial<Options<AppSettingUpd
     const mutationOptions: UseMutationOptions<AppSettingUpdateResponse, AppSettingUpdateError, Options<AppSettingUpdateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ApiClient.__registry.get().appSettingUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Create User
+ */
+export const userCreateUserMutation = (options?: Partial<Options<UserCreateUserData>>): UseMutationOptions<UserCreateUserResponse, UserCreateUserError, Options<UserCreateUserData>> => {
+    const mutationOptions: UseMutationOptions<UserCreateUserResponse, UserCreateUserError, Options<UserCreateUserData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().userCreateUser({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a single user setting by key
+ */
+export const userSettingDelete2Mutation = (options?: Partial<Options<UserSettingDelete2Data>>): UseMutationOptions<unknown, UserSettingDelete2Error, Options<UserSettingDelete2Data>> => {
+    const mutationOptions: UseMutationOptions<unknown, UserSettingDelete2Error, Options<UserSettingDelete2Data>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().userSettingDelete2({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

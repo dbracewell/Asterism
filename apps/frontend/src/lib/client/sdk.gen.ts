@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingGetData, AppSettingGetErrors, AppSettingGetResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
-import { zAppSettingDeletePath, zAppSettingGetPath, zAppSettingGetResponse, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
+import type { AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserSettingDelete2Data, UserSettingDelete2Errors, UserSettingDelete2Responses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import { zAppSettingDeletePath, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zUserCreateUserBody, zUserCreateUserResponse, zUserSettingDelete2Path, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -372,23 +372,6 @@ export class ApiClient extends HeyApiClient {
     }
     
     /**
-     * Get a single application setting by key
-     */
-    public appSettingGet<ThrowOnError extends boolean = false>(options: Options<AppSettingGetData, ThrowOnError>): RequestResult<AppSettingGetResponses, AppSettingGetErrors, ThrowOnError> {
-        return (options.client ?? this.client).get<AppSettingGetResponses, AppSettingGetErrors, ThrowOnError>({
-            requestValidator: async (data) => await z.object({
-                body: z.never().optional(),
-                path: zAppSettingGetPath,
-                query: z.never().optional()
-            }).parseAsync(data),
-            responseValidator: async (data) => await zAppSettingGetResponse.parseAsync(data),
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/settings/app/{key}',
-            ...options
-        });
-    }
-    
-    /**
      * Update a single application setting by key
      */
     public appSettingUpdate<ThrowOnError extends boolean = false>(options: Options<AppSettingUpdateData, ThrowOnError>): RequestResult<AppSettingUpdateResponses, AppSettingUpdateErrors, ThrowOnError> {
@@ -406,6 +389,43 @@ export class ApiClient extends HeyApiClient {
                 'Content-Type': 'application/json',
                 ...options.headers
             }
+        });
+    }
+    
+    /**
+     * Create User
+     */
+    public userCreateUser<ThrowOnError extends boolean = false>(options: Options<UserCreateUserData, ThrowOnError>): RequestResult<UserCreateUserResponses, UserCreateUserErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<UserCreateUserResponses, UserCreateUserErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: zUserCreateUserBody,
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zUserCreateUserResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/users/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Delete a single user setting by key
+     */
+    public userSettingDelete2<ThrowOnError extends boolean = false>(options: Options<UserSettingDelete2Data, ThrowOnError>): RequestResult<UserSettingDelete2Responses, UserSettingDelete2Errors, ThrowOnError> {
+        return (options.client ?? this.client).delete<UserSettingDelete2Responses, UserSettingDelete2Errors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: zUserSettingDelete2Path,
+                query: z.never().optional()
+            }).parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/users/{user_id}',
+            ...options
         });
     }
 }

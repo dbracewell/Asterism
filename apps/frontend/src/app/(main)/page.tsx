@@ -1,45 +1,33 @@
-import { WelcomeHeader } from "@/features/dashboard/components/welcome-header";
-import { IconMessageCircleStar, IconRobotFace } from "@tabler/icons-react";
-
-import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+"use client";
+import Constellation from "@/components/logo";
+import { useUser } from "@/features/auth/components/user-context";
+import ChatInput from "@/features/chat/components/chat-input";
+import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
 
 export default function AppPage() {
+  const user = useUser();
+  const { createChatSession } = useChatSessionCrud();
   return (
-    <div className="flex flex-1 flex-col items-start gap-2 p-2 pt-12">
-      <WelcomeHeader />
-      <div className="grid w-full flex-1 grid-cols-1 items-center rounded-md md:grid-cols-2">
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <IconMessageCircleStar />
-            </EmptyMedia>
-            <EmptyTitle>No Chat Sessions Yet</EmptyTitle>
-            <EmptyDescription>
-              You haven&apos;t created any chat sessions yet. Get started by
-              starting your first session.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent className="flex-row justify-center gap-2">
-            <Button>Start chatting</Button>
-          </EmptyContent>
-        </Empty>
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <IconRobotFace />
-            </EmptyMedia>
-            <EmptyTitle>No Custom Agents Yet</EmptyTitle>
-            <EmptyDescription>
-              You haven&apos;t created any custom agents yet. Get started by
-              creating your first custom agent.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent className="flex-row justify-center gap-2">
-            <Button>Create a custom agent</Button>
-          </EmptyContent>
-        </Empty>
-      </div>
+    <div className="from-primary/5 via-primary/15 relative flex flex-1 flex-col items-center justify-center gap-6 bg-radial-[at_50%_50%] via-5% to-transparent to-60% p-2 pt-12">
+      <Constellation
+        className="repeat-[1] fill-mode-[forwards] absolute -z-10 animate-ping opacity-100 duration-500"
+        fill="var(--color-secondary)"
+        size={250}
+      />
+      <h1 className="z-1 text-4xl font-bold">
+        Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
+      </h1>
+      <ChatInput
+        disabled={false}
+        displayStatus={false}
+        onSubmit={(prompt) => {
+          createChatSession({
+            body: {
+              user_prompt: prompt,
+            },
+          });
+        }}
+      />
     </div>
   );
 }

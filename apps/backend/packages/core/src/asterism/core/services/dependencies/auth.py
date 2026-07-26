@@ -54,4 +54,19 @@ def require_auth(
     return verify_jwks_token(credentials.credentials)  # type:ignore
 
 
+def maybe_auth(
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(security),
+    ],
+) -> AuthedUser | None:
+    if not credentials:
+        return None
+    try:
+        return verify_jwks_token(credentials.credentials)  # type:ignore
+    except UnauthorizedException:
+        return None
+
+
 type AuthedUserDep = Annotated[AuthedUser, Depends(require_auth)]
+type OptionalAuthedUser = Annotated[AuthedUser | None, Depends(maybe_auth)]

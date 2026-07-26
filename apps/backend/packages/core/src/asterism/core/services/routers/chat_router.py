@@ -1,19 +1,20 @@
-import asyncio
-import json
 import uuid
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Query, WebSocket
 
-from asterism.core.data.models import (
-    ChatSessionInfoList,
-    ChatSessionModel,
-    ChatSessionUpdate,
-    NewChatSessionRequest,
-)
+from asterism.core.data.models import ChatModel, ChatModelList
 from asterism.core.data.repositories import chat_repository
 from asterism.core.data.schemas import ErrorDetail
+from asterism.core.data.schemas.chat import (
+    ChatUpdateRequest,
+    NewChatRequest,
+)
+from asterism.core.events.bus import event_bus
+from asterism.core.events.typedefs import Event, EventType
 from asterism.core.exceptions import UnauthorizedException
-from asterism.core.llm.chat import generate
+from asterism.core.llm.chat import (
+    WebSocketChatConnection,
+)
 from asterism.core.services.dependencies import (
     AuthedUserDep,
     DBSessionDep,
@@ -41,68 +42,44 @@ async def chat(
         return
 
     chat_session = await chat_repository.get_one(
-        user_id=user.id,
         session_id=chat_id,
-        session=session,
+        user_id=user.id,
     )
-
-    if not chat_session:
-        await websocket.close(code=1008, reason="Not Found")
-        return
-
-    await websocket.accept()
-    try:
-        while True:
-            raw_data = await websocket.receive_text()
-            message_data = json.loads(raw_data)
-            user_prompt = message_data.get("message", "")
-
-            queue = asyncio.Queue()
-            asyncio.create_task(
-                generate(
-                    chat_session=chat_session,
-                    prompt=user_prompt,
-                    session=session,
-                    queue=queue,
-                )
-            )
-            await websocket.send_json({"type": "STREAM_START"})
-            while True:
-                msg = await queue.get()
-                await websocket.send_json(msg)
-                if msg["type"] == "STREAM_END":
-                    break
-
-    except WebSocketDisconnect:
-        print("Chat stream disconnected for session")
-    except Exception as e:
-        print(e)
-        await websocket.send_json({"type": "error", "message": str(e)})
+    websocket = WebSocketChatConnection(
+        db_session=session,
+        websocket=websocket,
+        chat_session=chat_session,
+    )
+    await websocket.open()
 
 
 @chat_router.post(
     "/",
-    response_model=ChatSessionModel,
+    response_model=ChatModel,
     operation_id="chatSessionCreate",
 )
 async def new_session(
-    payload: NewChatSessionRequest,
+    payload: NewChatRequest,
     user: AuthedUserDep,
     db: DBSessionDep,
-) -> ChatSessionModel:
+) -> ChatModel:
     return await chat_repository.create(
-        user_id=user.id, folder_id=payload.folder_id, session=db
+        user_id=user.id,
+        user_prompt=payload.user_prompt,
+        folder_id=payload.folder_id,
+        session=db,
     )
 
 
 @chat_router.get(
     "/",
     operation_id="chatSessionGetMany",
+    response_model=ChatModelList,
 )
 async def list_sessions(
     user: AuthedUserDep,
     db: DBSessionDep,
-) -> ChatSessionInfoList:
+) -> ChatModelList:
     return await chat_repository.get_many(
         user_id=user.id,
         session=db,
@@ -117,7 +94,7 @@ async def delete_session(
     session_id: uuid.UUID,
     user: AuthedUserDep,
     db: DBSessionDep,
-) -> ChatSessionModel:
+) -> ChatModel:
     return await chat_repository.delete(
         user_id=user.id,
         session_id=session_id,
@@ -131,10 +108,10 @@ async def delete_session(
 )
 async def update_session(
     session_id: uuid.UUID,
-    update: ChatSessionUpdate,
+    update: ChatUpdateRequest,
     user: AuthedUserDep,
     db: DBSessionDep,
-) -> ChatSessionModel:
+) -> ChatModel:
     return await chat_repository.update(
         user_id=user.id,
         session_id=session_id,
@@ -151,7 +128,7 @@ async def get_session(
     session_id: uuid.UUID,
     user: AuthedUserDep,
     db: DBSessionDep,
-) -> ChatSessionModel:
+) -> ChatModel:
     return await chat_repository.get_one(
         user_id=user.id,
         session_id=session_id,

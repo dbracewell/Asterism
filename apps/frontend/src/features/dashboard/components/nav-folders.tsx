@@ -56,6 +56,7 @@ export const NavFolders = ({ defaultIsOpen }: { defaultIsOpen: boolean }) => {
       onMenuActionClick={() => {
         setIsAdding(true);
       }}
+      className="group-data-[collapsible=icon]:hidden"
       cookieName={FOLDER_OPEN_COOKIE}
     >
       <SidebarMenu className="min-h-0 gap-0.5">

@@ -30,7 +30,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   }
 
   const userCount = await getUserCount();
-  const view = userCount > 0 ? "login" : "install";
+  const view = "install"; //userCount > 0 ? "login" : "install";
 
   return (
     <div className="flex flex-1 items-center justify-center">

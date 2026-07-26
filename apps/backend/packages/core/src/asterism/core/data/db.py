@@ -74,7 +74,7 @@ class DatabaseSessionManager:
         if self._session_maker is None:
             raise Exception("DatabaseSessionManager is not initialized")
 
-        session = self._session_maker()
+        session = self._session_maker()  # type: ignore
         try:
             yield session
         except Exception:

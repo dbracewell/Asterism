@@ -15,6 +15,8 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
+import { cn } from "@/lib/utils";
+import { IconMessage2 } from "@tabler/icons-react";
 
 export const NavChatSessions = ({
   defaultIsOpen,
@@ -58,23 +60,35 @@ export const NavChatSessions = ({
     <CollapsibleSidebarGroup
       label="Chats"
       defaultIsOpen={defaultIsOpen}
-      onMenuActionClick={() => createChatSession({ body: { folder_id: null } })}
+      onMenuActionClick={() =>
+        createChatSession({ body: { user_prompt: "Hello" } })
+      }
       cookieName={SESSIONS_OPEN_COOKIE}
       className="flex-1"
     >
       <SidebarMenu className="min-h-0 gap-0.5 select-none">
-        {data.sessions?.map((session) => (
+        {data.chats?.map((session, index) => (
           <SidebarMenuItem
             key={session.id}
-            className="group/item hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center justify-between rounded-md"
+            className={cn(
+              "group/item hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center justify-between rounded-md",
+              index >= 20 && "group-data-[collapsible=icon]:hidden",
+            )}
           >
             <SidebarMenuButton
               asChild
               isActive={pathname.endsWith(`/c/${session.id}`)}
-              className="hover:bg-transparent! hover:text-inherit!"
+              className={cn(
+                "hover:bg-transparent! hover:text-inherit!",
+                session.title == null && "bg-sidebar-border animate-pulse",
+              )}
+              tooltip={session.title ?? "New Chat"}
             >
               <Link href={`/c/${session.id}`}>
-                <span>{session.title}</span>
+                <IconMessage2 className="hidden group-data-[collapsible=icon]:block" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  {session.title ?? "New Chat"}
+                </span>
               </Link>
             </SidebarMenuButton>
             <ChatSessionActionMenu session_id={session.id} />

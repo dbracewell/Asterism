@@ -3,19 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSideBarWidth } from "@/features/dashboard/hooks/use-sidebar-width";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -233,7 +223,7 @@ const Sidebar = ({
         data-side={side}
         data-slot="sidebar"
         className={cn(
-          "group peer text-sidebar-foreground bg-sidebar hidden h-full min-w-0 flex-col md:flex",
+          "group peer text-sidebar-foreground bg-sidebar hidden h-full min-w-0 flex-col border-r md:flex",
           state === "expanded" ? "pl-1" : "bg-background text-muted-foreground",
           className,
         )}
@@ -248,7 +238,7 @@ const Sidebar = ({
       {state === "expanded" && (
         <div
           className={cn(
-            "bg-sidebar h-full w-1.5 cursor-col-resize",
+            "bg-sidebar-border h-full w-0.75 cursor-col-resize",
             dragClassName,
           )}
           onMouseDown={(e) => {
@@ -407,7 +397,7 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="sidebar-group"
       data-sidebar="group"
       className={cn(
-        "relative flex w-full min-w-0 flex-col px-2 py-1",
+        "relative flex w-full min-w-0 flex-col px-0 py-1",
         className,
       )}
       {...props}

@@ -14,6 +14,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { toast } from "sonner";
+import { installApp } from "@/features/auth/server/actions";
 
 interface AuthFormProps extends React.ComponentProps<"div"> {
   view: "login" | "install";
@@ -67,26 +68,22 @@ export function AuthForm({
           },
         );
       } else {
-        await authClient.signUp.email(
-          {
+        try {
+          await installApp({
             email: email.trim(),
             password: password.trim(),
             name: name.trim(),
-            callbackURL: referer ?? "/",
-          },
-          {
-            query: {
-              adminKey: adminPassKey.trim(),
-            },
-            onRequest: () => setLoading(true),
-            onSuccess: () => {
-              toast.success("Instance setup complete");
-              window.location.href = safeRedirect ?? "/";
-            },
-            onError: (ctx) =>
-              setError(ctx.error.message || "Failed to sign up"),
-          },
-        );
+            adminKey: adminPassKey.trim(),
+          });
+          toast.success("Instance setup complete");
+          window.location.href = safeRedirect ?? "/";
+        } catch (error) {
+          if (error instanceof Error) {
+            setError(error.message || "Failed to install");
+          } else {
+            setError("Failed to install");
+          }
+        }
       }
     } catch {
       setError("An unexpected error occurred.");

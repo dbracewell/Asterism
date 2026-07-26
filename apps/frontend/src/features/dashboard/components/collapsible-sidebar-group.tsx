@@ -37,12 +37,7 @@ export const CollapsibleSidebarGroup = ({
   };
 
   return (
-    <SidebarGroup
-      className={cn(
-        "flex overflow-hidden group-data-[collapsible=icon]:hidden",
-        className,
-      )}
-    >
+    <SidebarGroup className={cn("flex overflow-hidden", className)}>
       <SidebarGroupContent className="flex min-h-0 flex-1 flex-col">
         <Collapsible
           suppressHydrationWarning

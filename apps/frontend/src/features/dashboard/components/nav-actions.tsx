@@ -7,24 +7,20 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
 import { IconMessage2Plus } from "@tabler/icons-react";
 import { SearchIcon } from "lucide-react";
+import Link from "next/link";
 
 export const NavActions = () => {
-  const { createChatSession } = useChatSessionCrud();
-
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => createChatSession({ body: { folder_id: null } })}
-              size="lgText"
-              tooltip="New Chat"
-            >
-              <IconMessage2Plus /> <span>New Chat</span>
+            <SidebarMenuButton size="lgText" tooltip="New Chat" asChild>
+              <Link href="/">
+                <IconMessage2Plus /> <span>New Chat</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
