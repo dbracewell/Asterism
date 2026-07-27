@@ -80,19 +80,27 @@ export const zFunction = z.object({
 export const zJsonValue = z.unknown();
 
 /**
+ * LLMModel
+ */
+export const zLlmModel = z.object({
+    name: z.string(),
+    is_active: z.boolean()
+});
+
+/**
  * LLMProvider
  */
 export const zLlmProvider = z.object({
     name: z.string(),
     base_url: z.string(),
     api_key: z.string(),
-    models: z.array(z.string())
+    models: z.array(zLlmModel)
 });
 
 /**
- * ApplicationSettings
+ * ApplicationSettingsModel
  */
-export const zApplicationSettings = z.object({
+export const zApplicationSettingsModel = z.object({
     llm_providers: z.array(zLlmProvider).optional()
 });
 
@@ -169,9 +177,9 @@ export const zUpdateSettingValue = z.object({
 });
 
 /**
- * UserSettings
+ * UserSettingsModel
  */
-export const zUserSettings = z.object({
+export const zUserSettingsModel = z.object({
     theme: z.string().optional().default('light'),
     font_size: z.string().optional().default('16px')
 });
@@ -259,7 +267,7 @@ export const zFolderGetOneResponse = zFolderModel;
 /**
  * Successful Response
  */
-export const zUserSettingsGetResponse = zUserSettings;
+export const zUserSettingsGetResponse = zUserSettingsModel;
 
 /**
  * Updates
@@ -269,7 +277,7 @@ export const zUserSettingsBulkUpdateBody = z.record(z.string(), zJsonValue);
 /**
  * Successful Response
  */
-export const zUserSettingsBulkUpdateResponse = zUserSettings;
+export const zUserSettingsBulkUpdateResponse = zUserSettingsModel;
 
 export const zUserSettingDeletePath = z.object({
     key: z.string()
@@ -289,7 +297,7 @@ export const zUserSettingUpdateResponse = zSetting;
 /**
  * Successful Response
  */
-export const zAppSettingsGetResponse = zApplicationSettings;
+export const zAppSettingsGetResponse = zApplicationSettingsModel;
 
 /**
  * Updates
@@ -299,7 +307,7 @@ export const zAppSettingsBulkUpdateBody = z.record(z.string(), zJsonValue);
 /**
  * Successful Response
  */
-export const zAppSettingsBulkUpdateResponse = zApplicationSettings;
+export const zAppSettingsBulkUpdateResponse = zApplicationSettingsModel;
 
 export const zAppSettingDeletePath = z.object({
     key: z.string()
@@ -325,6 +333,13 @@ export const zUserCreateUserBody = zCreateUserRequest;
  */
 export const zUserCreateUserResponse = z.boolean();
 
-export const zUserSettingDelete2Path = z.object({
+export const zUserDeletePath = z.object({
     user_id: z.string()
 });
+
+/**
+ * Response Userdelete
+ *
+ * Successful Response
+ */
+export const zUserDeleteResponse = z.boolean();

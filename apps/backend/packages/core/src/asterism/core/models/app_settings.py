@@ -29,11 +29,16 @@ class AppSetting(Base):
         return f"<{self.__class__.__name__} key={self.key}>"
 
 
+class LLMModel(BaseModel):
+    name: str
+    is_active: bool
+
+
 class LLMProvider(BaseModel):
     name: str
     base_url: str
     api_key: str
-    models: list[str]
+    models: list[LLMModel]
 
 
 class ApplicationSettingsModel(BaseModel):

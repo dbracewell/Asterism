@@ -58,7 +58,7 @@ def _to_structured_format(model: Type[BaseModel]) -> str:
 
 def format_messages_for_model(
     messages: list[LLMMessage],
-    response_model=None,
+    response_model: Type[BaseModel] | None = None,
 ) -> list[dict[str, Any]]:
     # LLM Supports everything so we just need to convert to a dict normally
     if (
@@ -101,7 +101,7 @@ def format_messages_for_model(
             if config.LLM_NATIVE_TOOL_SUPPORT:
                 # Native tool calling to add it
                 formatted.append(msg.to_api_message())
-            else:
+            elif msg.tool_calls:
                 # Non-native tool call so we need to build
                 # up a buffer of tool results
                 tool_result = (
@@ -117,9 +117,8 @@ def format_messages_for_model(
             if msg.role == "user":
                 # If this is the FIRST user message, attach the system rules
                 if not config.LLM_SUPPORTS_SYSTEM_PROMPT and found_user_prompt:
-                    content = (
-                        f"SYSTEM RULES:\n{system_content}\n\nUSER TASK: {msg.content}\n"
-                    )
+                    content = f"SYSTEM RULES:\n{system_content}\n\n"
+                    f"USER TASK: {msg.content}\n"
 
                 else:
                     content = msg.content
@@ -132,7 +131,7 @@ def format_messages_for_model(
                 msg_copy["content"] = msg_copy.get("content", "Processing...")
                 formatted.append(msg_copy)
 
-    if not config.LLM_SUPPORTS_STRUCTURED_OUTPUT:
+    if response_model is not None and not config.LLM_SUPPORTS_STRUCTURED_OUTPUT:
         last_message = formatted[-1]
         if last_message.role not in ("user", "system"):
             raise ValueError(

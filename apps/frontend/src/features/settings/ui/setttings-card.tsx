@@ -1,10 +1,10 @@
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Settings } from "@/features/settings/types/settings";
+import type { Types } from "@/features/settings/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-export const SettingsCard = ({ settings }: { settings: Settings }) => {
+export const SettingsCard = ({ settings }: { settings: Types }) => {
   const isMobile = useIsMobile();
   return (
     <Tabs

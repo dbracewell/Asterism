@@ -1,8 +1,8 @@
-import { Settings } from "@/features/settings/types/settings";
+import { Types } from "@/features/settings/types";
 import { GeneralSettings } from "@/features/settings/ui/user-settings/general-settings";
 import { Settings2Icon } from "lucide-react";
 
-export const UserSettings: Settings = [
+export const UserSettings: Types = [
   {
     type: "section",
     label: "General",

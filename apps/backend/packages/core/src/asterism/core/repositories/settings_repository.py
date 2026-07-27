@@ -17,7 +17,7 @@ from asterism.core.utils.atomic import Atomic
 
 class SettingsRepository:
     def __init__(self) -> None:
-        self.user_cache: TTLCache[str, UserSettingsModel] = TTLCache(
+        self.user_cache = TTLCache[str, UserSettingsModel](
             maxsize=100, ttl=3600
         )
         self.app_cache = Atomic[ApplicationSettingsModel | None](None)
@@ -71,7 +71,7 @@ class SettingsRepository:
         self,
         user_id: str,
         key: str,
-        value: dict,
+        value: JsonValue,
         session: AsyncSession | None = None,
     ) -> Setting:
         self.user_cache.pop(user_id, None)

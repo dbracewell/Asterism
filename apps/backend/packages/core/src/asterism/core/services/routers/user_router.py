@@ -6,7 +6,6 @@ from asterism.core.models.user import CreateUserRequest
 from asterism.core.repositories import user_repository
 from asterism.core.services.dependencies import AuthedUserDep, DBSessionDep
 from asterism.core.services.dependencies.auth import OptionalAuthedUser
-from asterism.core.services.schemas.settings import Setting
 
 user_router = APIRouter(
     prefix="/users",
@@ -24,7 +23,7 @@ async def create_user(
     payload: CreateUserRequest,
     user: OptionalAuthedUser,
     session: DBSessionDep,
-) -> Setting:
+) -> bool:
     print(user)
     can_add = (user and user.role == "admin") or (
         payload.system_key and payload.system_key == config.SYSTEM_KEY
@@ -39,14 +38,14 @@ async def create_user(
 
 @user_router.delete(
     "/{user_id}",
-    operation_id="userSettingDelete",
-    summary="Delete a single user setting by key",
+    operation_id="userDelete",
+    summary="Delete a user",
 )
-async def delete_user_setting(
+async def delete_user(
     user_id: str,
     user: AuthedUserDep,
     session: DBSessionDep,
-) -> None:
+) -> bool:
     if user.role != "admin":
         raise UnauthorizedException()
     return await user_repository.delete_user(

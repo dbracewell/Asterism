@@ -105,7 +105,9 @@ async def get_app_settings(
     session: DBSessionDep,
 ) -> ApplicationSettingsModel:
     if user.role != "admin":
-        raise UnauthorizedException("Admin access required for application settings")
+        raise UnauthorizedException(
+            "Admin access required for application settings"
+        )
     return await settings_repository.get_app_settings(session=session)
 
 
@@ -122,11 +124,12 @@ async def update_app_setting(
     session: DBSessionDep,
 ) -> Setting:
     if user.role != "admin":
-        raise UnauthorizedException("Admin access required for application settings")
+        raise UnauthorizedException(
+            "Admin access required for application settings"
+        )
     return await settings_repository.upsert_app_setting(
         key=key,
         value=value.value,
-        updated_by=user.id,
         session=session,
     )
 
@@ -142,7 +145,9 @@ async def delete_app_setting(
     session: DBSessionDep,
 ) -> None:
     if user.role != "admin":
-        raise UnauthorizedException("Admin access required for application settings")
+        raise UnauthorizedException(
+            "Admin access required for application settings"
+        )
     await settings_repository.delete_app_setting(
         key,
         session=session,
@@ -161,7 +166,9 @@ async def bulk_update_app_settings(
     session: DBSessionDep,
 ) -> ApplicationSettingsModel:
     if user.role != "admin":
-        raise UnauthorizedException("Admin access required for application settings")
+        raise UnauthorizedException(
+            "Admin access required for application settings"
+        )
     return await settings_repository.bulk_update_app_setting(
         updates=updates,
         updated_by=user.id,

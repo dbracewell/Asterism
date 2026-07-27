@@ -28,7 +28,7 @@ class Config:
         return os.environ.get(key, default)
 
     @property
-    def SYSTEM_KEY(self) -> list[str]:
+    def SYSTEM_KEY(self) -> str:
         return self._get_value("SYSTEM_KEY", "")
 
     @property
@@ -109,7 +109,9 @@ class Config:
 
     @property
     def JWKS_URL(self) -> str:
-        return self._get_value("JWKS_URL", f"{self.BETTER_AUTH_URL}/api/auth/jwks")
+        return self._get_value(
+            "JWKS_URL", f"{self.BETTER_AUTH_URL}/api/auth/jwks"
+        )
 
     @property
     def BOOTSTRAP_SETUP_TOKEN(self) -> str:

@@ -49,7 +49,7 @@ class LLMEventType(StrEnum):
 
 
 @dataclass
-class LLMEvent[T_co]:
+class LLMEvent[T_co: BaseModel]:
     type: LLMEventType
     content: str | None = field(default=None)
     finish_reason: str | None = field(default=None)
@@ -72,7 +72,9 @@ class LLMEvent[T_co]:
             "finish_reason": self.finish_reason,
             "exception": str(self.exception) if self.exception else None,
             "total_tokens": self.total_tokens,
-            "parsed": self.parsed.model_dump(mode="json") if self.parsed else None,
+            "parsed": self.parsed.model_dump(mode="json")
+            if self.parsed
+            else None,
             "tool_calls": tool_calls if self.tool_calls else None,
         }
 
@@ -86,7 +88,9 @@ class ChatCompletionParams(TypedDict):
     seed: NotRequired[int]
     stop: NotRequired[str | Sequence[str]]
     extra_body: NotRequired[dict[str, Any]]
-    tool_choice: NotRequired[Literal["required", "auto", "none"] | dict[str, Any]]
+    tool_choice: NotRequired[
+        Literal["required", "auto", "none"] | dict[str, Any]
+    ]
     max_completion_tokens: NotRequired[int]
     modalities: NotRequired[list[Literal["text", "audio"]]]
     audio: NotRequired[dict[str, Any]]
@@ -191,7 +195,9 @@ class StreamingChunkProcessor:
         tool_calls: list[ToolCall] = [
             ToolCall(
                 id=tc_dict["id"],
-                function=Function(name=tc_dict["name"], arguments=tc_dict["arguments"]),
+                function=Function(
+                    name=tc_dict["name"], arguments=tc_dict["arguments"]
+                ),
             )
             for tc_dict in self.tool_calls_dict.values()
         ]
@@ -200,7 +206,9 @@ class StreamingChunkProcessor:
         exception: Exception | None = None
         if self.full_content and self.response_model:
             try:
-                content = re.sub(r"^(```[a-z]+\n|')", "", self.full_content.strip())
+                content = re.sub(
+                    r"^(```[a-z]+\n|')", "", self.full_content.strip()
+                )
                 content = re.sub(r"(```|')$", "", content.strip()).strip()
                 parsed = self.response_model.model_validate_json(content)
             except Exception as e:

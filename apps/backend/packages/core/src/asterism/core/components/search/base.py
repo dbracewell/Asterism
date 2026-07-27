@@ -39,7 +39,7 @@ class SearchXNGComponent(WebsearchComponent):
         self.port = port
 
     def __call__(self, query: str, limit: int) -> list[SearchResult]:
-        pass
+        return []
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.host}, {self.port})"
@@ -54,10 +54,7 @@ class SearchXNGComponent(WebsearchComponent):
 
     @classmethod
     def factory(cls, parameters: SearchXNGConfig) -> Component:
-        return SearchXNGComponent(
-            host=parameters.host,
-            port=parameters.port,
-        )
+        return cls(host=parameters.host, port=parameters.port)
 
 
 class DuckDuckGoConfig(BaseModel):
@@ -71,7 +68,7 @@ class DuckDuckGoComponent(WebsearchComponent):
         self.api_key = api_key
 
     def __call__(self, query: str, limit: int) -> list[SearchResult]:
-        pass
+        return []
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.api_key})"
@@ -86,4 +83,4 @@ class DuckDuckGoComponent(WebsearchComponent):
 
     @classmethod
     def factory(cls, parameters: DuckDuckGoConfig) -> Component:
-        return DuckDuckGoComponent(api_key=parameters.api_key)
+        return cls(api_key=parameters.api_key)

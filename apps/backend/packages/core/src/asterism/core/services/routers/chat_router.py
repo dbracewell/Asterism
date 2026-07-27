@@ -40,13 +40,13 @@ async def chat(
         session_id=chat_id,
         user_id=user.id,
     )
-    websocket = WebSocketChatConnection(
+    websocket_connection = WebSocketChatConnection(
         db_session=session,
         websocket=websocket,
         chat_session=chat_session,
         user=user,
     )
-    await websocket.open()
+    await websocket_connection.open()
 
 
 @chat_router.post(

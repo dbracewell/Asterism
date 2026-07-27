@@ -74,7 +74,9 @@ class EventBus:
                 self.logger.error(e)
 
         for handler in self.handlers[event.type]:
-            asyncio.create_task(suppress_exceptions(handler(event), self.logger))
+            asyncio.create_task(
+                suppress_exceptions(handler(event), self.logger)
+            )
 
 
 event_bus: EventBus = EventBus()

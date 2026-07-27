@@ -1,4 +1,4 @@
-import { Settings } from "@/features/settings/types/settings";
+import { Types } from "@/features/settings/types";
 import { CodeExecutionSettings } from "@/features/settings/ui/admin-settings/code-execution-settings";
 import { ExportSettings } from "@/features/settings/ui/admin-settings/export-settings";
 import { GroupSettings } from "@/features/settings/ui/admin-settings/groups-settings";
@@ -17,7 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { CodeIcon, ToolboxIcon } from "lucide-react";
 
-export const AdminSettings: Settings = [
+export const AdminSettings: Types = [
   {
     type: "section",
     label: "Providers",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 from collections import defaultdict
-from typing import Any, Type
+from typing import Any, Type, cast
 
 from pydantic import BaseModel
 
@@ -31,6 +31,7 @@ class Component(abc.ABC):
 
 type ComponentFactory = Type[Component]
 
+
 class ComponentRegistry:
     def __init__(self):
         self.providers_by_type: dict[str, list[ComponentFactory]] = defaultdict(
@@ -46,7 +47,9 @@ class ComponentRegistry:
                 else cls.component_type()
             )
             self.providers_by_type[effective_type].append(cls)
-            self.providers_by_unique_id[f"{effective_type}-{cls.name().upper()}"] = cls
+            self.providers_by_unique_id[
+                f"{effective_type}-{cls.name().upper()}"
+            ] = cls
             return cls
 
         return decorator
@@ -62,14 +65,22 @@ class ComponentRegistry:
 
         factory = self.providers_by_unique_id[key]
         parameters = factory.parameters()
-        prefix = f"{component_type.component_type()}::{component_name.upper()}::"
+        prefix = (
+            f"{component_type.component_type()}::{component_name.upper()}::"
+        )
         settings = await settings_repository.get_settings(
             [f"{prefix}{field}" for field in parameters.model_fields.keys()]
         )
-        return self.providers_by_unique_id[key].factory(
-            parameters.model_validate(
-                {k.replace(prefix, "").strip(): v for k, v in settings.items()}
-            )
+        return cast(
+            R,
+            self.providers_by_unique_id[key].factory(
+                parameters.model_validate(
+                    {
+                        k.replace(prefix, "").strip(): v
+                        for k, v in settings.items()
+                    }
+                )
+            ),
         )
 
     def get_providers(
@@ -83,5 +94,3 @@ class ComponentRegistry:
 
 
 component_registry: ComponentRegistry = ComponentRegistry()
-
-

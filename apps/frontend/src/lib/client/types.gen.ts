@@ -5,9 +5,9 @@ export type ClientOptions = {
 };
 
 /**
- * ApplicationSettings
+ * ApplicationSettingsModel
  */
-export type ApplicationSettings = {
+export type ApplicationSettingsModel = {
     /**
      * Llm Providers
      */
@@ -172,6 +172,20 @@ export type Function = {
 export type JsonValue = unknown;
 
 /**
+ * LLMModel
+ */
+export type LlmModel = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+};
+
+/**
  * LLMProvider
  */
 export type LlmProvider = {
@@ -190,7 +204,7 @@ export type LlmProvider = {
     /**
      * Models
      */
-    models: Array<string>;
+    models: Array<LlmModel>;
 };
 
 /**
@@ -315,9 +329,9 @@ export type UpdateSettingValue = {
 };
 
 /**
- * UserSettings
+ * UserSettingsModel
  */
-export type UserSettings = {
+export type UserSettingsModel = {
     /**
      * Theme
      */
@@ -668,7 +682,7 @@ export type UserSettingsGetResponses = {
     /**
      * Successful Response
      */
-    200: UserSettings;
+    200: UserSettingsModel;
 };
 
 export type UserSettingsGetResponse = UserSettingsGetResponses[keyof UserSettingsGetResponses];
@@ -702,7 +716,7 @@ export type UserSettingsBulkUpdateResponses = {
     /**
      * Successful Response
      */
-    200: UserSettings;
+    200: UserSettingsModel;
 };
 
 export type UserSettingsBulkUpdateResponse = UserSettingsBulkUpdateResponses[keyof UserSettingsBulkUpdateResponses];
@@ -793,7 +807,7 @@ export type AppSettingsGetResponses = {
     /**
      * Successful Response
      */
-    200: ApplicationSettings;
+    200: ApplicationSettingsModel;
 };
 
 export type AppSettingsGetResponse = AppSettingsGetResponses[keyof AppSettingsGetResponses];
@@ -827,7 +841,7 @@ export type AppSettingsBulkUpdateResponses = {
     /**
      * Successful Response
      */
-    200: ApplicationSettings;
+    200: ApplicationSettingsModel;
 };
 
 export type AppSettingsBulkUpdateResponse = AppSettingsBulkUpdateResponses[keyof AppSettingsBulkUpdateResponses];
@@ -929,7 +943,7 @@ export type UserCreateUserResponses = {
 
 export type UserCreateUserResponse = UserCreateUserResponses[keyof UserCreateUserResponses];
 
-export type UserSettingDelete2Data = {
+export type UserDeleteData = {
     body?: never;
     path: {
         /**
@@ -941,7 +955,7 @@ export type UserSettingDelete2Data = {
     url: '/users/{user_id}';
 };
 
-export type UserSettingDelete2Errors = {
+export type UserDeleteErrors = {
     /**
      * Not found
      */
@@ -952,11 +966,15 @@ export type UserSettingDelete2Errors = {
     422: ErrorDetail;
 };
 
-export type UserSettingDelete2Error = UserSettingDelete2Errors[keyof UserSettingDelete2Errors];
+export type UserDeleteError = UserDeleteErrors[keyof UserDeleteErrors];
 
-export type UserSettingDelete2Responses = {
+export type UserDeleteResponses = {
     /**
+     * Response Userdelete
+     *
      * Successful Response
      */
-    200: unknown;
+    200: boolean;
 };
+
+export type UserDeleteResponse = UserDeleteResponses[keyof UserDeleteResponses];

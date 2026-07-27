@@ -35,7 +35,6 @@ type ScrollState = {
 export type ChatSessionContextType = {
   sessionInfo: ChatInfo;
   messages: MessageModel[];
-  incomingMessage: MessageModel | null;
   sendJsonMessage: <T = unknown>(jsonMessage: T, keep?: boolean) => void;
   addUserMessage: (message: string) => void;
   connectionStatus: ConnectionStatus;
@@ -54,6 +53,18 @@ export const useChatSession = () => {
   if (context == null) {
     throw new Error("useChatSession must be used within a useChatSession");
   }
+  return context;
+};
+
+export type ChatStreamingContextType = {
+  incomingMessage: MessageModel | null;
+};
+export const ChatStreamingContext =
+  React.createContext<ChatStreamingContextType | null>(null);
+
+export const useChatStreaming = () => {
+  const context = React.useContext(ChatStreamingContext);
+  if (context == null) throw new Error("Missing ChatStreamingProvider");
   return context;
 };
 
@@ -116,8 +127,10 @@ const ChatSessionProvider = ({
                 role: "assistant",
                 active_child_id: "",
                 status: "pending",
+                token_count: 0,
+                tool_calls: [],
               });
-            }, 50);
+            }, 100);
           }
         }
 
@@ -181,6 +194,7 @@ const ChatSessionProvider = ({
 
   React.useEffect(() => {
     return () => {
+      console.log("UNMOUNT");
       didUnmount.current = true;
       if (flushTimerRef.current) {
         clearInterval(flushTimerRef.current);
@@ -215,7 +229,6 @@ const ChatSessionProvider = ({
       sendJsonMessage,
       connectionStatus: connectionStatus[readyState],
       messages,
-      incomingMessage,
       addUserMessage,
       canScroll,
       setCanScroll,
@@ -227,7 +240,6 @@ const ChatSessionProvider = ({
       sendJsonMessage,
       readyState,
       messages,
-      incomingMessage,
       addUserMessage,
       canScroll,
       setCanScroll,
@@ -235,9 +247,18 @@ const ChatSessionProvider = ({
     ],
   );
 
+  const streamingValue = React.useMemo(
+    () => ({
+      incomingMessage,
+    }),
+    [incomingMessage],
+  );
+
   return (
     <ChatSessionContext.Provider value={contextValue}>
-      {children}
+      <ChatStreamingContext value={streamingValue}>
+        {children}
+      </ChatStreamingContext>
     </ChatSessionContext.Provider>
   );
 };
@@ -245,16 +266,9 @@ const ChatSessionProvider = ({
 const ChatSessionMessageList = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
-  const {
-    messages,
-    incomingMessage,
-    scrollState,
-    updateScrollState,
-    setCanScroll,
-    canScroll,
-  } = useChatSession();
-  const [localCanScroll, setLocalCanScroll] = React.useState(false);
-
+  const { messages, scrollState, updateScrollState, setCanScroll, canScroll } =
+    useChatSession();
+  const { incomingMessage } = useChatStreaming();
   const filtered = React.useMemo(() => {
     return messages.filter((m) => m.role !== "tool" && !m.tool_calls?.length);
   }, [messages]);
@@ -274,10 +288,6 @@ const ChatSessionMessageList = () => {
   }, [filtered, scrollState, updateScrollState]);
 
   React.useEffect(() => {
-    setCanScroll(localCanScroll);
-  }, [localCanScroll, setCanScroll]);
-
-  React.useEffect(() => {
     if (!canScroll) {
       if (containerRef.current) {
         containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -291,28 +301,38 @@ const ChatSessionMessageList = () => {
         className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col gap-3 overflow-y-auto p-2 pt-14"
         ref={containerRef}
         style={{ overflowAnchor: "auto" }}
-        onScrollCapture={() =>
-          updateScrollState({
-            ...scrollState.current,
-            userInitiatedScroll: true,
-          })
-        }
-        onScrollEnd={() =>
-          updateScrollState({
-            ...scrollState.current,
-            userInitiatedScroll: false,
-          })
-        }
+        onScrollCapture={() => {
+          if (!scrollState.current.userInitiatedScroll) {
+            updateScrollState({
+              ...scrollState.current,
+              userInitiatedScroll: true,
+            });
+          }
+        }}
+        onScrollEnd={() => {
+          if (scrollState.current.userInitiatedScroll) {
+            updateScrollState({
+              ...scrollState.current,
+              userInitiatedScroll: false,
+            });
+          }
+        }}
         onScroll={(e) => {
-          const scrollPosition =
-            e.currentTarget.scrollHeight -
-            (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
-          const can = scrollPosition > 100;
-          updateScrollState({
-            ...scrollState.current,
-            preventAutoScroll: can,
-          });
-          setLocalCanScroll(can);
+          if (scrollState.current.userInitiatedScroll) {
+            const scrollPosition =
+              e.currentTarget.scrollHeight -
+              (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
+            const can = scrollPosition > 100;
+            if (can !== scrollState.current.preventAutoScroll) {
+              updateScrollState({
+                ...scrollState.current,
+                preventAutoScroll: can,
+              });
+            }
+            if (can !== canScroll) {
+              setCanScroll(can);
+            }
+          }
         }}
       >
         {filtered.map((message) => (
@@ -384,7 +404,7 @@ const MessageItem = React.memo(
             {message.thinking ?? ""}
           </p>
         </details>
-        {!message.content.trim() && !message.thinking.trim() && (
+        {!message.content.trim() && !message.thinking?.trim() && (
           <div className="bg-input/50 h-8 w-full animate-pulse rounded-xl"></div>
         )}
         <MarkdownViewer
@@ -423,7 +443,6 @@ MessageItem.displayName = "MessageItem";
 const ChatSessionInput = () => {
   const { connectionStatus, addUserMessage, canScroll, setCanScroll } =
     useChatSession();
-
   return (
     <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">
       {canScroll && (
