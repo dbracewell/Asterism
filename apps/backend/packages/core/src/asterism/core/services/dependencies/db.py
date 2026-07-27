@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asterism.core.data import db_session_manager
+from asterism.core.db import db_session_manager
 
 
 async def get_db_session():

@@ -121,128 +121,134 @@ export default function ChatInput({
     prompt.split(/\r?\n/).length > 1 || attachedFiles.length > 0;
 
   return (
-    <div
-      className={cn(
-        "bg-input dark:bg-input text-foreground relative mx-auto flex w-full max-w-3xl flex-col content-center overflow-clip rounded-full p-2 transition-colors duration-200",
-        isMultiLine && "rounded-3xl",
-      )}
-    >
-      {displayStatus && (
-        <div
-          title={disabled ? "Disconnected" : "Connected"}
-          className={cn(
-            "absolute top-1/2 right-4 z-100 size-2 -translate-y-1/2 rounded-full",
-            isMultiLine && "top-3 right-3",
-            disabled
-              ? "border-red-900 bg-red-500"
-              : "border-green-900 bg-green-500",
-          )}
-        />
-      )}
-      {attachedFiles.length > 0 && (
-        <div className="relative mb-2 flex w-fit items-center gap-2 overflow-hidden">
-          {attachedFiles.map((file) => (
-            <Badge
-              className="group hover:bg-accent relative h-6 max-w-30 cursor-pointer overflow-hidden px-0 text-[13px] transition-colors"
-              key={file.id}
-              variant="outline"
-            >
-              <span className="flex h-full items-center gap-1.5 overflow-hidden pl-1 font-normal">
-                <div className="relative flex h-4 min-w-4 items-center justify-center">
-                  {file.preview ? (
-                    <Image
-                      alt={file.name}
-                      className="absolute inset-0 h-4 w-4 rounded border object-cover"
-                      height={16}
-                      src={file.preview}
-                      width={16}
-                    />
-                  ) : (
-                    <IconPaperclip className="opacity-60" size={12} />
-                  )}
-                </div>
-                <span className="inline truncate overflow-hidden pr-1.5">
-                  {file.name}
-                </span>
-              </span>
-              <button
-                className="text-muted-foreground focus-visible:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background absolute right-1 z-10 rounded-sm p-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2"
-                onClick={() => handleRemoveFile(file.id)}
-                type="button"
-              >
-                <IconX size={12} />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-      <form
+    <div className="mx-auto flex w-full max-w-[90%] flex-col gap-1 overflow-clip sm:max-w-3xl">
+      <div
         className={cn(
-          "relative flex w-full flex-1 items-center justify-between gap-1 overflow-clip rounded-[inherit] p-1",
-          isMultiLine && "flex-col",
+          "bg-input dark:bg-input text-foreground relative flex-col content-center overflow-clip rounded-full p-2 transition-colors",
+          isMultiLine && "rounded-3xl",
         )}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onSubmit={handleSubmit}
       >
-        {!isMultiLine && (
-          <FileUpload
-            fileInputRef={fileInputRef}
-            handleFileSelect={handleFileSelect}
-            textAreaRef={textAreaRef}
-          />
+        {attachedFiles.length > 0 && (
+          <div className="relative mb-2 flex w-fit items-center gap-2 overflow-hidden">
+            {attachedFiles.map((file) => (
+              <Badge
+                className="group hover:bg-accent relative h-6 max-w-30 cursor-pointer overflow-hidden px-0 text-[13px] transition-colors"
+                key={file.id}
+                variant="outline"
+              >
+                <span className="flex h-full items-center gap-1.5 overflow-hidden pl-1 font-normal">
+                  <div className="relative flex h-4 min-w-4 items-center justify-center">
+                    {file.preview ? (
+                      <Image
+                        alt={file.name}
+                        className="absolute inset-0 h-4 w-4 rounded border object-cover"
+                        height={16}
+                        src={file.preview}
+                        width={16}
+                      />
+                    ) : (
+                      <IconPaperclip className="opacity-60" size={12} />
+                    )}
+                  </div>
+                  <span className="inline truncate overflow-hidden pr-1.5">
+                    {file.name}
+                  </span>
+                </span>
+                <button
+                  className="text-muted-foreground focus-visible:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background absolute right-1 z-10 rounded-sm p-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2"
+                  onClick={() => handleRemoveFile(file.id)}
+                  type="button"
+                >
+                  <IconX size={12} />
+                </button>
+              </Badge>
+            ))}
+          </div>
         )}
-
-        <Textarea
+        <form
           className={cn(
-            "max-h-50 flex-1 resize-none rounded-none border-none bg-transparent! p-0! shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent!",
-            prompt.split(/\r?\n/).length == 1 && "h-6! min-h-6!",
+            "relative flex w-full flex-1 items-center justify-between gap-1 overflow-clip rounded-[inherit] p-1",
+            isMultiLine && "flex-col",
           )}
-          ref={textAreaRef}
-          onChange={handleTextareaChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Where will your curiosity lead you today?"
-          value={prompt}
-        />
-
-        <div
-          className={cn(
-            "flex items-center justify-start",
-            isMultiLine && "w-full justify-between",
-          )}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onSubmit={handleSubmit}
         >
-          {isMultiLine && (
+          {!isMultiLine && (
             <FileUpload
               fileInputRef={fileInputRef}
               handleFileSelect={handleFileSelect}
               textAreaRef={textAreaRef}
             />
           )}
-          <Button
-            aria-label="Send message"
-            className={cn("rounded-full", !prompt.trim() && "hidden")}
-            disabled={!prompt.trim()}
-            size="icon-lg"
-            type="submit"
-            variant="default"
-          >
-            <IconArrowUp size={16} />
-          </Button>
-        </div>
 
+          <Textarea
+            className={cn(
+              "max-h-50 flex-1 resize-none rounded-none border-none bg-transparent! p-0! shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent!",
+              prompt.split(/\r?\n/).length == 1 && "h-6! min-h-6!",
+            )}
+            ref={textAreaRef}
+            onChange={handleTextareaChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Where will your curiosity lead you today?"
+            value={prompt}
+          />
+
+          <div
+            className={cn(
+              "flex items-center justify-start",
+              isMultiLine && "w-full justify-between",
+            )}
+          >
+            {isMultiLine && (
+              <FileUpload
+                fileInputRef={fileInputRef}
+                handleFileSelect={handleFileSelect}
+                textAreaRef={textAreaRef}
+              />
+            )}
+            <Button
+              aria-label="Send message"
+              className={cn("rounded-full", !prompt.trim() && "hidden")}
+              disabled={!prompt.trim()}
+              size="icon-lg"
+              type="submit"
+              variant="default"
+            >
+              <IconArrowUp size={16} />
+            </Button>
+          </div>
+
+          <div
+            className={cn(
+              "border-border bg-muted text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-dashed text-sm transition-opacity duration-200",
+              isDragOver ? "opacity-100" : "opacity-0",
+            )}
+          >
+            <span className="flex w-full items-center justify-center gap-1 font-medium">
+              <IconCirclePlus className="min-w-4" size={16} />
+              Drop files here to add as attachments
+            </span>
+          </div>
+        </form>
+      </div>
+      {displayStatus && (
         <div
-          className={cn(
-            "border-border bg-muted text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-dashed text-sm transition-opacity duration-200",
-            isDragOver ? "opacity-100" : "opacity-0",
-          )}
+          className={cn("ml-auto flex items-center gap-1 px-3 pb-0.5 text-xs")}
         >
-          <span className="flex w-full items-center justify-center gap-1 font-medium">
-            <IconCirclePlus className="min-w-4" size={16} />
-            Drop files here to add as attachments
-          </span>
+          <div
+            title={disabled ? "Disconnected" : "Connected"}
+            className={cn(
+              "size-2 rounded-full pt-0.5",
+              disabled
+                ? "border-red-900 bg-red-500"
+                : "border-green-900 bg-green-500",
+            )}
+          />
+          {disabled ? "Disconnected" : "Connected"}
         </div>
-      </form>
+      )}
     </div>
   );
 }

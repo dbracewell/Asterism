@@ -1,7 +1,13 @@
 import abc
 from dataclasses import dataclass
+from typing import Type
 
-from asterism.core.component import Component, ComponentProvider, register_component
+from pydantic import BaseModel, ConfigDict
+
+from asterism.core.registries.component import (
+    Component,
+    component_registry,
+)
 
 
 @dataclass
@@ -10,25 +16,74 @@ class SearchResult:
     url: str
 
 
-class WebSearchComponent(Component, abc.ABC):
+class SearchXNGConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    host: str = "localhost"
+    port: int = 8080
+
+
+class WebsearchComponent(Component, abc.ABC):
+    @classmethod
+    def component_type(cls) -> str:
+        return "WebSearch"
+
     @abc.abstractmethod
-    def search(self, query: str, limit: int) -> list[SearchResult]: ...
+    def __call__(self, query: str, limit: int) -> list[SearchResult]:
+        pass
 
 
-class SearchXNGComponent(WebSearchComponent):
+@component_registry.register(WebsearchComponent)
+class SearchXNGComponent(WebsearchComponent):
     def __init__(self, host: str, port: int) -> None:
         self.host = host
         self.port = port
 
-    def search(self, query: str, limit: int) -> list[SearchResult]:
+    def __call__(self, query: str, limit: int) -> list[SearchResult]:
         pass
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.host}, {self.port})"
 
-@register_component(component_type="WebSearch")
-class SearchXNGProvider(ComponentProvider[WebSearchComponent]):
-    name: str = "SearchXNG"
-    host: str = "localhost"
-    port: int = 8080
+    @classmethod
+    def name(cls) -> str:
+        return "SearchXNG"
 
-    def create_component(self) -> WebSearchComponent:
-        return SearchXNGComponent(host=self.host, port=self.port)
+    @classmethod
+    def parameters(cls) -> Type[BaseModel]:
+        return SearchXNGConfig
+
+    @classmethod
+    def factory(cls, parameters: SearchXNGConfig) -> Component:
+        return SearchXNGComponent(
+            host=parameters.host,
+            port=parameters.port,
+        )
+
+
+class DuckDuckGoConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    api_key: str = ""
+
+
+@component_registry.register(WebsearchComponent)
+class DuckDuckGoComponent(WebsearchComponent):
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+
+    def __call__(self, query: str, limit: int) -> list[SearchResult]:
+        pass
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.api_key})"
+
+    @classmethod
+    def name(cls) -> str:
+        return "DuckDuckGo"
+
+    @classmethod
+    def parameters(cls) -> Type[BaseModel]:
+        return DuckDuckGoConfig
+
+    @classmethod
+    def factory(cls, parameters: DuckDuckGoConfig) -> Component:
+        return DuckDuckGoComponent(api_key=parameters.api_key)

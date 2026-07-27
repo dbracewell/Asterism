@@ -1,16 +1,15 @@
 from fastapi import APIRouter
 from pydantic import JsonValue
 
-from asterism.core.data.repositories import settings_repository
-from asterism.core.data.schemas import ErrorDetail
-from asterism.core.data.schemas.settings import (
-    ApplicationSettings,
+from asterism.core.exceptions import ErrorDetail, UnauthorizedException
+from asterism.core.models.app_settings import ApplicationSettingsModel
+from asterism.core.models.user_settings import UserSettingsModel
+from asterism.core.repositories import settings_repository
+from asterism.core.services.dependencies import AuthedUserDep, DBSessionDep
+from asterism.core.services.schemas.settings import (
     Setting,
     UpdateSettingValue,
-    UserSettings,
 )
-from asterism.core.exceptions import UnauthorizedException
-from asterism.core.services.dependencies import AuthedUserDep, DBSessionDep
 
 settings_router = APIRouter(
     prefix="/settings",
@@ -21,14 +20,14 @@ settings_router = APIRouter(
 
 @settings_router.get(
     "/user",
-    response_model=UserSettings,
+    response_model=UserSettingsModel,
     operation_id="userSettingsGet",
     summary="Get all user settings",
 )
 async def get_user_settings(
     user: AuthedUserDep,
     session: DBSessionDep,
-) -> UserSettings:
+) -> UserSettingsModel:
     return await settings_repository.get_user_settings(
         user_id=user.id,
         session=session,
@@ -74,7 +73,7 @@ async def delete_user_setting(
 
 @settings_router.patch(
     "/user",
-    response_model=UserSettings,
+    response_model=UserSettingsModel,
     operation_id="userSettingsBulkUpdate",
     summary="Bulk update multiple user settings",
 )
@@ -82,7 +81,7 @@ async def bulk_update_user_settings(
     updates: dict[str, JsonValue],
     user: AuthedUserDep,
     session: DBSessionDep,
-) -> UserSettings:
+) -> UserSettingsModel:
     return await settings_repository.bulk_upsert_user_settings(
         user_id=user.id,
         updates=updates,
@@ -97,14 +96,14 @@ async def bulk_update_user_settings(
 
 @settings_router.get(
     "/app",
-    response_model=ApplicationSettings,
+    response_model=ApplicationSettingsModel,
     operation_id="appSettingsGet",
     summary="Get all application settings",
 )
 async def get_app_settings(
     user: AuthedUserDep,
     session: DBSessionDep,
-) -> ApplicationSettings:
+) -> ApplicationSettingsModel:
     if user.role != "admin":
         raise UnauthorizedException("Admin access required for application settings")
     return await settings_repository.get_app_settings(session=session)
@@ -152,7 +151,7 @@ async def delete_app_setting(
 
 @settings_router.patch(
     "/app",
-    response_model=ApplicationSettings,
+    response_model=ApplicationSettingsModel,
     operation_id="appSettingsBulkUpdate",
     summary="Bulk update multiple application settings",
 )
@@ -160,7 +159,7 @@ async def bulk_update_app_settings(
     updates: dict[str, JsonValue],
     user: AuthedUserDep,
     session: DBSessionDep,
-) -> ApplicationSettings:
+) -> ApplicationSettingsModel:
     if user.role != "admin":
         raise UnauthorizedException("Admin access required for application settings")
     return await settings_repository.bulk_update_app_setting(

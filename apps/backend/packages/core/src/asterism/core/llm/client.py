@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import re
+from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import (
     Any,
     AsyncGenerator,
@@ -28,15 +32,49 @@ from openai.types.shared_params.response_format_json_schema import JSONSchema
 from pydantic import BaseModel
 
 from asterism.core import config
-from asterism.core.data.models import LLMMessage
+from asterism.core.models import LLMMessage
+from asterism.core.registries.tool import Function, ToolCall, tool_registry
 from asterism.core.utils.retries import retry_async_gen
 
 from .helpers import format_messages_for_model
-from .llm_event import (
-    LLMEvent,
-    LLMEventType,
-)
-from .tool_registory import Function, ToolCall, tool_registry
+
+
+class LLMEventType(StrEnum):
+    TEXT_DELTA = "TEXT_DELTA"
+    THINKING_DELTA = "THINKING_DELTA"
+    THINKING_COMPLETE = "THINKING_COMPLETE"
+    COMPLETE = "COMPLETE"
+    ERROR = "ERROR"
+    PARSE_ERROR = "PARSE_ERROR"
+
+
+@dataclass
+class LLMEvent[T_co]:
+    type: LLMEventType
+    content: str | None = field(default=None)
+    finish_reason: str | None = field(default=None)
+    exception: Exception | None = field(default=None)
+    total_tokens: int | None = field(default=None)
+    parsed: T_co | None = field(default=None)
+    tool_calls: list[ToolCall] | None = field(default=None)
+
+    @classmethod
+    def empty(cls) -> LLMEvent[T_co]:
+        return LLMEvent(type=LLMEventType.COMPLETE)
+
+    def to_dict(self) -> dict[str, Any]:
+        tool_calls = []
+        for tc in self.tool_calls or []:
+            tool_calls.append(tc.model_dump(mode="json"))
+        return {
+            "type": self.type.value,
+            "content": self.content,
+            "finish_reason": self.finish_reason,
+            "exception": str(self.exception) if self.exception else None,
+            "total_tokens": self.total_tokens,
+            "parsed": self.parsed.model_dump(mode="json") if self.parsed else None,
+            "tool_calls": tool_calls if self.tool_calls else None,
+        }
 
 
 class ChatCompletionParams(TypedDict):

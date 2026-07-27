@@ -66,7 +66,7 @@ export const NavChatSessions = ({
       cookieName={SESSIONS_OPEN_COOKIE}
       className="flex-1"
     >
-      <SidebarMenu className="min-h-0 gap-0.5 select-none">
+      <SidebarMenu className="min-h-0 w-full gap-0.5 select-none">
         {data.chats?.map((session, index) => (
           <SidebarMenuItem
             key={session.id}

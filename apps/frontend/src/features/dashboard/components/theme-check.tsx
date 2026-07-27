@@ -3,6 +3,10 @@ import { useUser } from "@/features/auth/components/user-context";
 import { useTheme } from "@/features/theme/components/theme-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import {
+  DEFAULT_FONT_SIZE,
+  DEFAULT_THEME_NAME,
+} from "@/features/theme/constants";
 
 export const ThemeCheck = () => {
   const user = useUser();
@@ -14,8 +18,8 @@ export const ThemeCheck = () => {
       user.settings.theme !== currentTheme ||
       user.settings.font_size !== fontSize
     ) {
-      setTheme(user.settings.theme);
-      setFontSize(user.settings.font_size);
+      setTheme(user.settings.theme ?? DEFAULT_THEME_NAME);
+      setFontSize(user.settings.font_size ?? DEFAULT_FONT_SIZE);
       router.refresh();
     }
   }, [

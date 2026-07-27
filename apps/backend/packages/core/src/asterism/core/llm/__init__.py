@@ -1,8 +1,7 @@
 from .client import LLMClient
-from .llm_event import LLMEvent, LLMEventType
+from .websocket import WebSocketChatConnection
 
 __all__ = [
     "LLMClient",
-    "LLMEvent",
-    "LLMEventType",
+    "WebSocketChatConnection",
 ]

@@ -5,8 +5,9 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from asterism.core import config
-from asterism.core.data.schemas import AuthedUser
 from asterism.core.exceptions import UnauthorizedException
+from asterism.core.repositories import user_repository
+from asterism.core.typedefs import AuthedUser
 
 security = HTTPBearer(auto_error=False)
 
@@ -32,18 +33,18 @@ def verify_jwks_token(token: str) -> AuthedUser:
         user_id = payload.get("id")
         if not user_id:
             raise UnauthorizedException()
-
         return AuthedUser(
             id=str(user_id),
             email=str(payload.get("email")),
             name=str(payload.get("name")),
             role=cast(Literal["user", "admin"], payload.get("role")),
+            timezone=payload.get("timezone"),
         )
     except jwt.PyJWTError as exc:
         raise UnauthorizedException() from exc
 
 
-def require_auth(
+async def require_auth(
     credentials: Annotated[
         HTTPAuthorizationCredentials | None,
         Depends(security),
@@ -51,7 +52,9 @@ def require_auth(
 ) -> AuthedUser:
     if not credentials:
         raise UnauthorizedException()
-    return verify_jwks_token(credentials.credentials)  # type:ignore
+    authed_user = verify_jwks_token(credentials.credentials)  # type:ignore
+    await user_repository.ensure_user(authed_user.id)
+    return authed_user
 
 
 def maybe_auth(

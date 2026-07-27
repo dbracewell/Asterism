@@ -2,8 +2,8 @@ import asyncio
 from pathlib import Path
 
 from asterism.core.config import config
-from asterism.core.data import db_session_manager
-from asterism.core.data.models import Base
+from asterism.core.db import db_session_manager
+from asterism.core.models import Base
 
 
 async def init_database():
@@ -22,8 +22,6 @@ async def init_database():
         await conn.run_sync(Base.metadata.create_all)
     await db_session_manager.close()
     print("Database initialization complete.")
-
-
 
 
 if __name__ == "__main__":

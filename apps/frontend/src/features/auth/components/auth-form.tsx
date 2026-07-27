@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import { installApp } from "@/features/auth/server/actions";
 
@@ -35,7 +35,7 @@ export function AuthForm({
   const [error, setError] = useState<string | null>(null);
   const safeRedirect = referer && !referer.includes("sign-in") ? referer : "/";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       setError("Email and Password Required");

@@ -1,15 +1,12 @@
 from fastapi import APIRouter
 
 from asterism.core.config import config
-from asterism.core.data.models.user import CreateUserRequest
-from asterism.core.data.repositories import user_repository
-from asterism.core.data.schemas import ErrorDetail
-from asterism.core.data.schemas.settings import (
-    Setting,
-)
-from asterism.core.exceptions import UnauthorizedException
+from asterism.core.exceptions import ErrorDetail, UnauthorizedException
+from asterism.core.models.user import CreateUserRequest
+from asterism.core.repositories import user_repository
 from asterism.core.services.dependencies import AuthedUserDep, DBSessionDep
 from asterism.core.services.dependencies.auth import OptionalAuthedUser
+from asterism.core.services.schemas.settings import Setting
 
 user_router = APIRouter(
     prefix="/users",

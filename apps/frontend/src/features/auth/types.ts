@@ -6,4 +6,5 @@ export type User = {
   email: string;
   role: "admin" | "user";
   settings: UserSettings;
+  timezone: string;
 };

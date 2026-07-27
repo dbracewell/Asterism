@@ -12,13 +12,10 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from asterism.core.config import config
-from asterism.core.data import db_session_manager
-from asterism.core.data.schemas import ErrorDetail
-from asterism.core.events.bus import event_bus
-from asterism.core.events.typedefs import Event, EventType
-from asterism.core.exceptions import CodedException
-from asterism.core.llm.tool_registory import ToolCall
-from asterism.core.log import get_logger
+from asterism.core.db import db_session_manager
+from asterism.core.events import Event, EventType, event_bus
+from asterism.core.exceptions import CodedException, ErrorDetail
+from asterism.core.registries.tool import ToolCall
 from asterism.core.services.routers import (
     chat_router,
     file_router,
@@ -27,6 +24,8 @@ from asterism.core.services.routers import (
     user_router,
 )
 from asterism.core.services.routers.function_router import function_router
+from asterism.core.services.startup import init_system
+from asterism.core.utils.log import get_logger
 
 logger = get_logger("AsterismMain")
 
@@ -34,13 +33,9 @@ logger = get_logger("AsterismMain")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Asterism backend starting up...")
-    db_session_manager.init()
+    await init_system()
     yield
-    await event_bus.emit(
-        Event(
-            type=EventType.SYSTEM_STOP,
-        )
-    )
+    event_bus.emit(Event(type=EventType.SYSTEM_STOP))
     await db_session_manager.close()
     logger.info("Asterism backend shutting up...")
 
@@ -93,7 +88,7 @@ def custom_openapi():
 app.openapi = custom_openapi  # type: ignore
 
 app.add_middleware(
-    CORSMiddleware,  # type:ignore
+    CORSMiddleware,
     allow_origins=config.CORS_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],

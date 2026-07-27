@@ -2,23 +2,18 @@ import uuid
 
 from fastapi import APIRouter, Query, WebSocket
 
-from asterism.core.data.models import ChatModel, ChatModelList
-from asterism.core.data.repositories import chat_repository
-from asterism.core.data.schemas import ErrorDetail
-from asterism.core.data.schemas.chat import (
-    ChatUpdateRequest,
-    NewChatRequest,
-)
-from asterism.core.events.bus import event_bus
-from asterism.core.events.typedefs import Event, EventType
-from asterism.core.exceptions import UnauthorizedException
-from asterism.core.llm.chat import (
-    WebSocketChatConnection,
-)
+from asterism.core.exceptions import ErrorDetail, UnauthorizedException
+from asterism.core.llm import WebSocketChatConnection
+from asterism.core.models import ChatModel, ChatModelList
+from asterism.core.repositories import chat_repository
 from asterism.core.services.dependencies import (
     AuthedUserDep,
     DBSessionDep,
     verify_jwks_token,
+)
+from asterism.core.services.schemas import (
+    ChatUpdateRequest,
+    NewChatRequest,
 )
 
 chat_router = APIRouter(
@@ -49,6 +44,7 @@ async def chat(
         db_session=session,
         websocket=websocket,
         chat_session=chat_session,
+        user=user,
     )
     await websocket.open()
 

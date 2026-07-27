@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
 from asterism.core.config import config
-from asterism.core.data.schemas import ErrorDetail
+from asterism.core.exceptions import ErrorDetail
 from asterism.core.services.dependencies import AuthedUserDep
 
 
