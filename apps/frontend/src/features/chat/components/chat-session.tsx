@@ -77,6 +77,7 @@ const ChatSessionProvider = ({
   jwtToken: string;
   children: React.ReactNode;
 }) => {
+  const [errorState, setErrorState] = React.useState<string | null>(null);
   const didUnmount = React.useRef(false);
   const streamingMessageRef = React.useRef<string>("");
   const streamingThoughtRef = React.useRef<string>("");
@@ -105,6 +106,10 @@ const ChatSessionProvider = ({
       onMessage: (event) => {
         const msgContent = JSON.parse(event.data);
 
+        if (msgContent.type === "ERROR") {
+          setErrorState(msgContent.message);
+        }
+
         if (msgContent.type === "STREAM_START") {
           streamingMessageRef.current = "";
           streamingThoughtRef.current = "";
@@ -116,7 +121,7 @@ const ChatSessionProvider = ({
               status: "completed",
             },
           ]);
-          // Start the UI update loop (20 frames per second is plenty smooth)
+
           if (!flushTimerRef.current) {
             flushTimerRef.current = setInterval(() => {
               setIncomingMessage({
@@ -182,6 +187,7 @@ const ChatSessionProvider = ({
   useSubscribeEvent({
     type: "chat-session:update",
     handler: (payload) => {
+      if (payload.session_id !== session.info.id) return;
       setSession({
         ...session,
         info: {
@@ -253,6 +259,10 @@ const ChatSessionProvider = ({
     }),
     [incomingMessage],
   );
+
+  if (errorState) {
+    throw Error(errorState);
+  }
 
   return (
     <ChatSessionContext.Provider value={contextValue}>

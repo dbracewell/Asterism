@@ -25,8 +25,7 @@ class UpdateMessage(BaseModel):
         str | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = Field(default=None)
@@ -34,8 +33,7 @@ class UpdateMessage(BaseModel):
         str | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = Field(default=None)
@@ -43,8 +41,7 @@ class UpdateMessage(BaseModel):
         uuid.UUID | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = Field(default=None)
@@ -52,8 +49,7 @@ class UpdateMessage(BaseModel):
         MessageStatus | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = Field(default=None)

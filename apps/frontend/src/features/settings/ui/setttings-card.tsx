@@ -36,14 +36,14 @@ export const SettingsCard = ({ settings }: { settings: Types }) => {
           return <Separator key={i} className="my-2" />;
         })}
       </TabsList>
-      <div className="flex min-h-0 flex-1 border-l px-4 py-2">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-l px-4 py-1">
         {settings
           .filter((s) => s.type === "section")
           .map((setting) => (
             <TabsContent
               key={setting.value}
               value={setting.value}
-              className="text-base!"
+              className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden text-base!"
             >
               {setting.settingsPane}
             </TabsContent>

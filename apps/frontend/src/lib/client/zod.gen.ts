@@ -38,6 +38,14 @@ export const zCreateUserRequest = z.object({
 });
 
 /**
+ * DraftModel
+ */
+export const zDraftModel = z.object({
+    repo_id: z.string(),
+    filename: z.string()
+});
+
+/**
  * ErrorDetail
  */
 export const zErrorDetail = z.object({
@@ -54,10 +62,7 @@ export const zFolderModel = z.object({
     title: z.string(),
     created_at: z.iso.datetime({ local: true }),
     updated_at: z.iso.datetime({ local: true }),
-    parent_id: z.union([
-        z.uuid(),
-        z.unknown()
-    ]),
+    parent_id: z.uuid().nullable(),
     sessions: z.array(zChatInfo).optional(),
     children: z.array(z.lazy((): any => zFolderModel)).optional()
 });
@@ -80,9 +85,24 @@ export const zFunction = z.object({
 export const zJsonValue = z.unknown();
 
 /**
+ * BulkUpdateSettingRequest
+ */
+export const zBulkUpdateSettingRequest = z.object({
+    values: z.record(z.string(), zJsonValue)
+});
+
+/**
  * LLMModel
  */
 export const zLlmModel = z.object({
+    provider_id: z.string(),
+    name: z.string()
+});
+
+/**
+ * LLMProviderModel
+ */
+export const zLlmProviderModel = z.object({
     name: z.string(),
     is_active: z.boolean()
 });
@@ -91,17 +111,20 @@ export const zLlmModel = z.object({
  * LLMProvider
  */
 export const zLlmProvider = z.object({
+    id: z.string(),
     name: z.string(),
     base_url: z.string(),
     api_key: z.string(),
-    models: z.array(zLlmModel)
+    models: z.array(zLlmProviderModel)
 });
 
 /**
  * ApplicationSettingsModel
  */
 export const zApplicationSettingsModel = z.object({
-    llm_providers: z.array(zLlmProvider).optional()
+    llm_providers: z.array(zLlmProvider).optional(),
+    default_model: zLlmModel.optional(),
+    draft_model: zDraftModel.optional()
 });
 
 /**
@@ -114,7 +137,7 @@ export const zMessageStatus = z.enum(['pending', 'completed']);
  */
 export const zNewChatRequest = z.object({
     user_prompt: z.string(),
-    folder_id: z.unknown().optional()
+    folder_id: z.string().nullish()
 });
 
 /**
@@ -139,7 +162,7 @@ export const zSetting = z.object({
 export const zToolCall = z.object({
     id: z.string(),
     function: zFunction,
-    type: z.string().optional().default('function')
+    type: z.literal('function').optional().default('function')
 });
 
 /**
@@ -181,7 +204,9 @@ export const zUpdateSettingValue = z.object({
  */
 export const zUserSettingsModel = z.object({
     theme: z.string().optional().default('light'),
-    font_size: z.string().optional().default('16px')
+    font_size: z.string().optional().default('16px'),
+    models: z.array(zLlmModel).optional(),
+    chat_model: zLlmModel.nullish()
 });
 
 export const zGetFilePath = z.object({
@@ -299,10 +324,7 @@ export const zUserSettingUpdateResponse = zSetting;
  */
 export const zAppSettingsGetResponse = zApplicationSettingsModel;
 
-/**
- * Updates
- */
-export const zAppSettingsBulkUpdateBody = z.record(z.string(), zJsonValue);
+export const zAppSettingsBulkUpdateBody = zBulkUpdateSettingRequest;
 
 /**
  * Successful Response

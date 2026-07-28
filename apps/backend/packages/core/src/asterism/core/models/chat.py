@@ -71,8 +71,7 @@ class ChatInfo(BaseModel):
         str | None,
         WithJsonSchema(
             {
-                "type": "string",
-                "nullable": True,
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = Field(default=None)
@@ -80,8 +79,7 @@ class ChatInfo(BaseModel):
         uuid.UUID | None,
         WithJsonSchema(
             {
-                "type": "string",
-                "nullable": True,
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = Field(default=None)

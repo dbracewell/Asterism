@@ -56,7 +56,7 @@ def custom_openapi():
         version="1.0.0",
         routes=app.routes,
     )
-    openapi_schema["openapi"] = "3.0.3"
+    # openapi_schema["openapi"] = "3.0.3"
 
     if "ErrorDetail" not in openapi_schema["components"]["schemas"]:
         openapi_schema["components"]["schemas"]["ErrorDetail"] = (

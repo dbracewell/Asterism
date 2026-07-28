@@ -27,6 +27,9 @@ class Config:
             return value
         return os.environ.get(key, default)
 
+    DEFAULT_DRAT_MODEL_REPO_ID = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+    DEFAULT_DRAFT_MODEL_FILENAME = "qwen2.5-1.5b-instruct-q4_0.gguf"
+
     @property
     def SYSTEM_KEY(self) -> str:
         return self._get_value("SYSTEM_KEY", "")
@@ -109,9 +112,7 @@ class Config:
 
     @property
     def JWKS_URL(self) -> str:
-        return self._get_value(
-            "JWKS_URL", f"{self.BETTER_AUTH_URL}/api/auth/jwks"
-        )
+        return self._get_value("JWKS_URL", f"{self.BETTER_AUTH_URL}/api/auth/jwks")
 
     @property
     def BOOTSTRAP_SETUP_TOKEN(self) -> str:

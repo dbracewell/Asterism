@@ -10,8 +10,7 @@ class NewFolderRequest(BaseModel):
         uuid.UUID | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ]

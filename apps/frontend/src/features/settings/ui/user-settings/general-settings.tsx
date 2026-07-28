@@ -1,25 +1,59 @@
-import { FontSizeSelector } from "@/components/settings/font-size-selector";
-import { ThemeSelector } from "@/components/settings/theme-selector";
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
-import { useUser } from "@/features/auth/components/user-context";
+import { useQuery } from "@tanstack/react-query";
+import { userSettingsGetOptions } from "@/lib/client/@tanstack/react-query.gen";
+import { client } from "@/lib/api";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { LlmModel } from "@/lib/client";
 
 export const GeneralSettings = () => {
+  const { data: userSettings, isLoading } = useQuery({
+    ...userSettingsGetOptions({
+      client: client,
+    }),
+  });
   const { updateSetting } = useUpdateUserSettings();
-  const user = useUser();
 
   return (
-    <div className="flex w-full max-w-60 flex-1 flex-col justify-end gap-3">
-      <div className="grid grid-cols-2 gap-x-2 gap-y-3">
-        <h2>Theme</h2>
-        <ThemeSelector
-          currentTheme={user.settings.theme}
-          onChange={(theme) => updateSetting("theme", theme)}
-        />
-        <h2>Font Size</h2>
-        <FontSizeSelector
-          currentSize={user.settings.font_size}
-          onChange={(size) => updateSetting("font_size", size)}
-        />
+    <div className="flex flex-1 flex-col gap-3 p-2">
+      {isLoading && <Spinner />}
+      <h1 className="border-b pb-2 font-bold">Chat Settings</h1>
+      <div className="flex flex-col items-center gap-2 sm:flex-row">
+        <h2>Model</h2>
+        <Select
+          defaultValue={
+            userSettings?.chat_model
+              ? `${userSettings.chat_model.provider_id}::${userSettings.chat_model.name}`
+              : undefined
+          }
+          onValueChange={(v) => {
+            const [provider_id, name] = v.split("::");
+            updateSetting("chat_model", {
+              provider_id,
+              name,
+            } as LlmModel);
+          }}
+        >
+          <SelectTrigger className="w-50">
+            <SelectValue className="truncate" />
+          </SelectTrigger>
+          <SelectContent>
+            {userSettings?.models?.map((model) => (
+              <SelectItem
+                value={`${model.provider_id}::${model.name}`}
+                key={`${model.provider_id}::${model.name}`}
+              >
+                {model.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

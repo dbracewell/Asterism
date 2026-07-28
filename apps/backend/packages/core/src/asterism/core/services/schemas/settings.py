@@ -10,3 +10,7 @@ class Setting(BaseModel):
 
 class UpdateSettingValue(BaseModel):
     value: JsonValue
+
+
+class BulkUpdateSettingRequest(BaseModel):
+    values: dict[str, JsonValue]

@@ -128,8 +128,7 @@ class LLMMessage(BaseModel):
         str | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             },
         ),
     ] = Field(default=None)
@@ -137,9 +136,13 @@ class LLMMessage(BaseModel):
         list[ToolCall] | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "array",
-                "items": {"$ref": "#/components/schemas/ToolCall"},
+                "anyOf": [
+                    {"type": "null"},
+                    {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/ToolCall"},
+                    },
+                ],
             }
         ),
     ] = Field(default=None)
@@ -147,8 +150,7 @@ class LLMMessage(BaseModel):
         str | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = Field(default=None)
@@ -207,7 +209,12 @@ class MessageModel(LLMMessage):
     status: MessageStatus
     created_at: int
     active_child_id: Annotated[
-        uuid.UUID | None, WithJsonSchema({"nullable": True, "type": "string"})
+        uuid.UUID | None,
+        WithJsonSchema(
+            {
+                "anyOf": [{"type": "string"}, {"type": "null"}],
+            }
+        ),
     ]
     has_siblings: bool = False
     sibling_count: int = 0
@@ -217,5 +224,3 @@ class MessageModel(LLMMessage):
 class MessageModelList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     messages: list[MessageModel]
-
-

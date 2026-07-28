@@ -18,8 +18,7 @@ class CreateUserRequest(BaseModel):
         str | None,
         WithJsonSchema(
             {
-                "nullable": True,
-                "type": "string",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
             }
         ),
     ] = None

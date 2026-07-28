@@ -7,6 +7,7 @@ from asterism.core.models.user_settings import UserSettingsModel
 from asterism.core.repositories import settings_repository
 from asterism.core.services.dependencies import AuthedUserDep, DBSessionDep
 from asterism.core.services.schemas.settings import (
+    BulkUpdateSettingRequest,
     Setting,
     UpdateSettingValue,
 )
@@ -105,9 +106,7 @@ async def get_app_settings(
     session: DBSessionDep,
 ) -> ApplicationSettingsModel:
     if user.role != "admin":
-        raise UnauthorizedException(
-            "Admin access required for application settings"
-        )
+        raise UnauthorizedException("Admin access required for application settings")
     return await settings_repository.get_app_settings(session=session)
 
 
@@ -124,9 +123,7 @@ async def update_app_setting(
     session: DBSessionDep,
 ) -> Setting:
     if user.role != "admin":
-        raise UnauthorizedException(
-            "Admin access required for application settings"
-        )
+        raise UnauthorizedException("Admin access required for application settings")
     return await settings_repository.upsert_app_setting(
         key=key,
         value=value.value,
@@ -145,9 +142,7 @@ async def delete_app_setting(
     session: DBSessionDep,
 ) -> None:
     if user.role != "admin":
-        raise UnauthorizedException(
-            "Admin access required for application settings"
-        )
+        raise UnauthorizedException("Admin access required for application settings")
     await settings_repository.delete_app_setting(
         key,
         session=session,
@@ -161,14 +156,12 @@ async def delete_app_setting(
     summary="Bulk update multiple application settings",
 )
 async def bulk_update_app_settings(
-    updates: dict[str, JsonValue],
+    updates: BulkUpdateSettingRequest,
     user: AuthedUserDep,
     session: DBSessionDep,
 ) -> ApplicationSettingsModel:
     if user.role != "admin":
-        raise UnauthorizedException(
-            "Admin access required for application settings"
-        )
+        raise UnauthorizedException("Admin access required for application settings")
     return await settings_repository.bulk_update_app_setting(
         updates=updates,
         updated_by=user.id,

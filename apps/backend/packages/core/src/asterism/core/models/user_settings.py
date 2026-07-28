@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from asterism.core.models.typedefs import JsonColumn
 
 from . import Base
+from .common import LLMModel
 
 
 class UserSetting(Base):
@@ -35,23 +36,7 @@ class UserSetting(Base):
 
 
 class UserSettingsModel(BaseModel):
-    theme: Annotated[
-        str,
-        WithJsonSchema(
-            {
-                "nullable": False,
-                "type": "string",
-                "default": "light",
-            }
-        ),
-    ] = Field(default="light")
-    font_size: Annotated[
-        str,
-        WithJsonSchema(
-            {
-                "nullable": False,
-                "type": "string",
-                "default": "16px",
-            }
-        ),
-    ] = Field(default="16px")
+    theme: str = Field(default="light")
+    font_size: str = Field(default="16px")
+    models: list[LLMModel] = Field(default_factory=list[LLMModel])
+    chat_model: LLMModel | None = Field(default=None)

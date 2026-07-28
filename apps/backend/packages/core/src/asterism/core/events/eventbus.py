@@ -19,6 +19,7 @@ class EventType(StrEnum):
     TOOL_CREATED = "tool_created"
     TOOL_UPDATED = "tool_updated"
     TOOL_DELETED = "tool_deleted"
+    DRAFT_MODEL_UPDATED = "draft_model_updated"
     WEBHOOK_CHAT_UPDATE = "chat-session:update"
 
 
@@ -74,9 +75,7 @@ class EventBus:
                 self.logger.error(e)
 
         for handler in self.handlers[event.type]:
-            asyncio.create_task(
-                suppress_exceptions(handler(event), self.logger)
-            )
+            asyncio.create_task(suppress_exceptions(handler(event), self.logger))
 
 
 event_bus: EventBus = EventBus()

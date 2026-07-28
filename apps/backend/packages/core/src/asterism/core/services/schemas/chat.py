@@ -11,7 +11,11 @@ class NewChatRequest(BaseModel):
     user_prompt: str
     folder_id: Annotated[
         uuid.UUID | None,
-        WithJsonSchema({"nullable": True}),
+        WithJsonSchema(
+            {
+                "anyOf": [{"type": "string"}, {"type": "null"}],
+            }
+        ),
     ] = Field(default=None)
 
 

@@ -1,10 +1,10 @@
-import { UserSettings } from "@/lib/client";
+import { UserSettingsModel } from "@/lib/client";
 
 export type User = {
   id: string;
   name: string;
   email: string;
   role: "admin" | "user";
-  settings: UserSettings;
+  settings: UserSettingsModel;
   timezone: string;
 };

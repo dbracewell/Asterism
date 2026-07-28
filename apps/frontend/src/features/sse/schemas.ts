@@ -11,6 +11,7 @@ export type EventMessage = z.infer<typeof EventMessageSchema>;
 
 export const EventPayloadSchemas = {
   "chat-session:update": z.object({
+    session_id: z.string(),
     title: z.string().nullable(),
     folder_id: z.string().nullable(),
   }),

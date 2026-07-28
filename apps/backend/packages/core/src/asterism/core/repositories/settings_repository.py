@@ -3,13 +3,15 @@ from typing import Any
 from cachetools import TTLCache
 from pydantic import JsonValue
 from sqlalchemy import select, update
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.db import get_async_db_session
 from asterism.core.models import AppSetting, UserSetting
 from asterism.core.models.app_settings import ApplicationSettingsModel
-from asterism.core.models.user_settings import UserSettingsModel
+from asterism.core.models.user_settings import LLMModel, UserSettingsModel
 from asterism.core.services.schemas.settings import (
+    BulkUpdateSettingRequest,
     Setting,
 )
 from asterism.core.utils.atomic import Atomic
@@ -17,9 +19,7 @@ from asterism.core.utils.atomic import Atomic
 
 class SettingsRepository:
     def __init__(self) -> None:
-        self.user_cache = TTLCache[str, UserSettingsModel](
-            maxsize=100, ttl=3600
-        )
+        self.user_cache = TTLCache[str, UserSettingsModel](maxsize=100, ttl=3600)
         self.app_cache = Atomic[ApplicationSettingsModel | None](None)
 
     async def get_user_settings(
@@ -30,6 +30,15 @@ class SettingsRepository:
         cached = self.user_cache.get(user_id)
         if cached:
             return cached
+
+        app_settings = await self.get_app_settings(session)
+        user_models: list[LLMModel] = []
+        for provider in app_settings.llm_providers:
+            for model in provider.models:
+                if model.is_active:
+                    user_models.append(
+                        LLMModel(provider_id=provider.id, name=model.name)
+                    )
 
         async with get_async_db_session(session) as session:
             stmt = select(UserSetting).where(UserSetting.user_id == user_id)
@@ -43,7 +52,21 @@ class SettingsRepository:
                 return UserSettingsModel()
 
             new_setting = UserSettingsModel.model_validate(combined)
+            new_setting.models = user_models
+            if new_setting.chat_model:
+                exists = next(
+                    (
+                        m
+                        for m in user_models
+                        if m.provider_id == new_setting.chat_model.provider_id
+                        and m.name == new_setting.chat_model.name
+                    ),
+                    None,
+                )
+                if not exists:
+                    new_setting.chat_model = None
             self.user_cache[user_id] = new_setting
+
             return new_setting
 
     async def bulk_upsert_user_settings(
@@ -208,21 +231,32 @@ class SettingsRepository:
     async def bulk_update_app_setting(
         self,
         updated_by: str,
-        updates: dict[str, JsonValue],
+        updates: BulkUpdateSettingRequest,
         session: AsyncSession | None = None,
     ) -> ApplicationSettingsModel:
         async with get_async_db_session(session) as session:
-            for key, value in updates.items():
+            for key, value in updates.values.items():
                 stmt = (
-                    update(AppSetting)
-                    .where(
-                        AppSetting.key == key,
+                    insert(AppSetting)
+                    .values(
+                        {
+                            "value": value,
+                            "updated_by": updated_by,
+                            "key": key,
+                        }
                     )
-                    .values({"value": value, "updated_by": updated_by})
+                    .on_conflict_do_update(
+                        index_elements=["key"],
+                        set_={
+                            "updated_by": updated_by,
+                            "value": value,
+                        },
+                    )
                 )
                 await session.execute(stmt)
             await session.commit()
             self.app_cache.value = None
+            self.user_cache.clear()
         return await self.get_app_settings(session)
 
 

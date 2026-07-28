@@ -2,10 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { userSettingsBulkUpdateMutation, userSettingUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
+import {
+  userSettingsBulkUpdateMutation,
+  userSettingUpdateMutation,
+} from "@/lib/client/@tanstack/react-query.gen";
 import { client } from "@/lib/client/client.gen";
 import { toast } from "sonner";
 import { useCallback } from "react";
+import { prettyText } from "@/lib/formatters";
 
 export function useUpdateUserSettings() {
   const router = useRouter();
@@ -14,7 +18,8 @@ export function useUpdateUserSettings() {
     ...userSettingUpdateMutation({
       client: client,
     }),
-    onSuccess: () => {},
+    onSuccess: (data) =>
+      toast.success(`Successfully updated ${prettyText(data.key)}`),
     onError: () => {
       toast.error("Failed to update setting. Please try again.");
     },

@@ -10,21 +10,26 @@ import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collaps
 import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
 import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
 import { client } from "@/lib/api";
-import { chatSessionGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
-import { useQuery } from "@tanstack/react-query";
+import {
+  chatSessionGetManyOptions,
+  chatSessionGetManyQueryKey,
+} from "@/lib/client/@tanstack/react-query.gen";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { cn } from "@/lib/utils";
 import { IconMessage2 } from "@tabler/icons-react";
+import { ChatModelList } from "@/lib/client";
 
 export const NavChatSessions = ({
   defaultIsOpen,
 }: {
   defaultIsOpen: boolean;
 }) => {
+  const queryClient = useQueryClient();
   const pathname = usePathname();
-  const { data, isPending, error, refetch } = useQuery({
+  const { data, isPending, error } = useQuery({
     ...chatSessionGetManyOptions({
       client: client,
     }),
@@ -32,8 +37,24 @@ export const NavChatSessions = ({
 
   useSubscribeEvent({
     type: "chat-session:update",
-    handler: async () => {
-      await refetch();
+    handler: async (payload) => {
+      queryClient.setQueryData(
+        chatSessionGetManyQueryKey(),
+        (prev: ChatModelList | null) => {
+          if (!prev) return;
+          return {
+            chats: prev.chats.map((chat) => {
+              if (chat.id === payload.session_id) {
+                return {
+                  ...chat,
+                  title: payload.title,
+                };
+              }
+              return chat;
+            }),
+          } as ChatModelList;
+        },
+      );
     },
   });
 
@@ -82,12 +103,12 @@ export const NavChatSessions = ({
                 "hover:bg-transparent! hover:text-inherit!",
                 session.title == null && "bg-sidebar-border animate-pulse",
               )}
-              tooltip={session.title ?? "New Chat"}
+              tooltip={session.title ?? ""}
             >
               <Link href={`/c/${session.id}`}>
                 <IconMessage2 className="hidden group-data-[collapsible=icon]:block" />
                 <span className="group-data-[collapsible=icon]:hidden">
-                  {session.title ?? "New Chat"}
+                  {session.title ?? ""}
                 </span>
               </Link>
             </SidebarMenuButton>

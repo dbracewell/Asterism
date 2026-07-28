@@ -12,6 +12,20 @@ export type ApplicationSettingsModel = {
      * Llm Providers
      */
     llm_providers?: Array<LlmProvider>;
+    default_model?: LlmModel;
+    draft_model?: DraftModel;
+};
+
+/**
+ * BulkUpdateSettingRequest
+ */
+export type BulkUpdateSettingRequest = {
+    /**
+     * Values
+     */
+    values: {
+        [key: string]: JsonValue;
+    };
 };
 
 /**
@@ -94,6 +108,20 @@ export type CreateUserRequest = {
 };
 
 /**
+ * DraftModel
+ */
+export type DraftModel = {
+    /**
+     * Repo Id
+     */
+    repo_id: string;
+    /**
+     * Filename
+     */
+    filename: string;
+};
+
+/**
  * ErrorDetail
  */
 export type ErrorDetail = {
@@ -134,7 +162,7 @@ export type FolderModel = {
     /**
      * Parent Id
      */
-    parent_id: string | unknown;
+    parent_id: string | null;
     /**
      * Sessions
      */
@@ -176,19 +204,23 @@ export type JsonValue = unknown;
  */
 export type LlmModel = {
     /**
+     * Provider Id
+     */
+    provider_id: string;
+    /**
      * Name
      */
     name: string;
-    /**
-     * Is Active
-     */
-    is_active: boolean;
 };
 
 /**
  * LLMProvider
  */
 export type LlmProvider = {
+    /**
+     * Id
+     */
+    id: string;
     /**
      * Name
      */
@@ -204,7 +236,21 @@ export type LlmProvider = {
     /**
      * Models
      */
-    models: Array<LlmModel>;
+    models: Array<LlmProviderModel>;
+};
+
+/**
+ * LLMProviderModel
+ */
+export type LlmProviderModel = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
 };
 
 /**
@@ -230,7 +276,7 @@ export type MessageModel = {
     /**
      * Tool Calls
      */
-    tool_calls?: Array<ToolCall> | null;
+    tool_calls?: null | Array<ToolCall>;
     /**
      * Tool Call Id
      */
@@ -278,7 +324,7 @@ export type NewChatRequest = {
     /**
      * Folder Id
      */
-    folder_id?: unknown;
+    folder_id?: string | null;
 };
 
 /**
@@ -318,7 +364,7 @@ export type ToolCall = {
     /**
      * Type
      */
-    type?: string;
+    type?: 'function';
 };
 
 /**
@@ -340,6 +386,11 @@ export type UserSettingsModel = {
      * Font Size
      */
     font_size?: string;
+    /**
+     * Models
+     */
+    models?: Array<LlmModel>;
+    chat_model?: LlmModel | null;
 };
 
 export type GetFileData = {
@@ -813,12 +864,7 @@ export type AppSettingsGetResponses = {
 export type AppSettingsGetResponse = AppSettingsGetResponses[keyof AppSettingsGetResponses];
 
 export type AppSettingsBulkUpdateData = {
-    /**
-     * Updates
-     */
-    body: {
-        [key: string]: JsonValue;
-    };
+    body: BulkUpdateSettingRequest;
     path?: never;
     query?: never;
     url: '/settings/app';
