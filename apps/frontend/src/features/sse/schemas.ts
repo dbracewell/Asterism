@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EventType } from "@/features/sse/types";
+import { zMessageModel } from "@/lib/client/zod.gen";
 
 export const EventMessageSchema = z.object({
   type: z.string(),
@@ -14,6 +15,11 @@ export const EventPayloadSchemas = {
     session_id: z.string(),
     title: z.string().nullable(),
     folder_id: z.string().nullable(),
+  }),
+  "chat-session:message-update": z.object({
+    incomingMessage: zMessageModel.nullish(),
+    updatedMessages: zMessageModel.array().nullish(),
+    markLastCompleted: z.boolean().nullish(),
   }),
   "connection:status": z.object({ status: z.boolean() }),
   "chat-session:scroll": z.object({

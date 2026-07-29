@@ -13,6 +13,7 @@ from asterism.core.models import (
     Message,
     MessageModel,
 )
+from asterism.core.models.common import LLMModel
 from asterism.core.models.message import MessageStatus
 from asterism.core.services.schemas import ChatUpdateRequest
 from asterism.core.services.schemas.message import (
@@ -129,6 +130,7 @@ class ChatRepository:
         self,
         user_id: str,
         user_prompt: str,
+        model: LLMModel,
         folder_id: uuid.UUID | None,
         session: AsyncSession | None = None,
     ) -> ChatModel:
@@ -147,6 +149,7 @@ class ChatRepository:
                 content=user_prompt,
                 role="user",
                 token_count=0,
+                model=model,
             )
             session.add(new_message)
 
@@ -272,23 +275,11 @@ class ChatRepository:
 
             while current_node is not None:
                 parent_id = current_node.parent_message_id
-                siblings = children_map.get(parent_id, [])
-                thread_msg = MessageModel(
-                    id=current_node.id,
-                    role=current_node.role,
-                    content=current_node.content,
-                    created_at=current_node.created_at,
-                    active_child_id=current_node.active_child_id,
-                    thinking=current_node.thinking,
-                    has_siblings=len(siblings) > 1,
-                    sibling_count=len(siblings),
-                    # +1 so the frontend displays "1 / 3" instead of "0 / 3"
-                    current_sibling_index=siblings.index(current_node) + 1,
-                    status=current_node.status,
-                    tool_call_id=current_node.tool_call_id,
-                    tool_calls=current_node.tool_calls,
-                    token_count=current_node.token_count,
-                )
+                thread_msg = MessageModel.model_validate(current_node)
+                siblings = children_map.get(parent_id, [])  # type:ignore
+                thread_msg.has_siblings = len(siblings) > 1
+                thread_msg.sibling_count = len(siblings)
+                thread_msg.current_sibling_index = siblings.index(current_node) + 1
                 active_thread.append(thread_msg)
 
                 if (

@@ -18,8 +18,10 @@ export function useUpdateUserSettings() {
     ...userSettingUpdateMutation({
       client: client,
     }),
-    onSuccess: (data) =>
-      toast.success(`Successfully updated ${prettyText(data.key)}`),
+    onSuccess: (data) => {
+      toast.success(`Successfully updated ${prettyText(data.key)}`);
+      router.refresh();
+    },
     onError: () => {
       toast.error("Failed to update setting. Please try again.");
     },

@@ -3,16 +3,21 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CreateFolderInput } from "@/features/dashboard/components/create-folder-input";
-import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
 import { client } from "@/lib/api";
 import { FolderModel } from "@/lib/client";
 import { folderDeleteMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
-import { IconFolder, IconFolderOpen, IconFolderPlus, IconMessage2Plus, IconTrash } from "@tabler/icons-react";
+import {
+  IconFolder,
+  IconFolderOpen,
+  IconFolderPlus,
+  IconMessage2Plus,
+  IconTrash,
+} from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import Cookie from "js-cookie";
 import { EllipsisIcon } from "lucide-react";
@@ -20,6 +25,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 
 export const FolderView = ({
   folder,
@@ -28,6 +34,7 @@ export const FolderView = ({
   folder: FolderModel;
   depth?: number;
 }) => {
+  const [sessions, setSessions] = useState(folder.sessions);
   const [foldersOpen, setFoldersOpen] = useState<Set<string>>(
     () => new Set(JSON.parse(Cookie.get("asterism-open-folders") ?? "[]")),
   );
@@ -36,6 +43,10 @@ export const FolderView = ({
   const hasChildren = folder.children && folder.children.length > 0;
   const hasSessions = folder.sessions && folder.sessions.length > 0;
   const pathName = usePathname();
+
+  useEffect(() => {
+    setSessions(folder.sessions);
+  }, [folder.sessions]);
 
   useEffect(() => {
     let timeOut = null;
@@ -118,6 +129,27 @@ export const FolderView = ({
     setIsAdding(true);
   }, []);
 
+  useSubscribeEvent({
+    type: "chat-session:update",
+    handler: async (payload) => {
+      const hasSession = folder.sessions?.find(
+        (s) => s.id === payload.session_id,
+      );
+      if (!hasSession) return;
+      setSessions((prev) =>
+        prev?.map((session) => {
+          if (session.id === payload.session_id) {
+            return {
+              ...session,
+              title: payload.title,
+            };
+          }
+          return session;
+        }),
+      );
+    },
+  });
+
   return (
     <div
       className="flex min-w-0 flex-col text-sm!"
@@ -160,16 +192,18 @@ export const FolderView = ({
           <div className="flex h-9 items-center">
             <div className="bg-border h-full w-px" />
             <div className="bg-border h-px w-3 pr-2" />
-            <CreateFolderInput
-              onComplete={(v) => {
-                if (v) {
-                  forceOpenFolder(folder.id);
-                }
-                setIsAdding(false);
-              }}
-              newFolderTitleRef={newFolderTitleRef}
-              parent_folder_id={folder.id}
-            />
+            <div className="pr-2">
+              <CreateFolderInput
+                onComplete={(v) => {
+                  if (v) {
+                    forceOpenFolder(folder.id);
+                  }
+                  setIsAdding(false);
+                }}
+                newFolderTitleRef={newFolderTitleRef}
+                parent_folder_id={folder.id}
+              />
+            </div>
           </div>
         </div>
 
@@ -180,9 +214,10 @@ export const FolderView = ({
             ))}
           </div>
         )}
+
         {foldersOpen.has(folder.id) && (
           <div className="flex flex-col">
-            {folder.sessions!.map((session) => (
+            {sessions?.map((session) => (
               <div
                 key={session.id}
                 className="flex h-8 items-center"
@@ -232,7 +267,6 @@ const FolderDropDown = ({
     },
   });
 
-  const { createChatSession } = useChatSessionCrud();
   const [isOpen, setIsOpen] = useState(false);
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -242,8 +276,8 @@ const FolderDropDown = ({
       >
         <button
           className={cn(
-            "hover:bg-background rounded-md p-0.5",
-            isOpen && "bg-background",
+            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md p-0.5",
+            isOpen && "bg-sidebar-accent text-sidebar-accent-foreground",
           )}
         >
           <EllipsisIcon className="size-4" />
@@ -253,24 +287,13 @@ const FolderDropDown = ({
         <DropdownMenuItem onClick={() => addSubFolder()}>
           <IconFolderPlus /> New Folder
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() =>
-            createChatSession(
-              {
-                body: {
-                  folder_id: folderId,
-                  user_prompt: "",
-                },
-              },
-              {
-                onSuccess: () => {
-                  openFolder(folderId);
-                },
-              },
-            )
-          }
-        >
-          <IconMessage2Plus /> New Chat
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/?folder_id=${folderId}`}
+            onClick={() => openFolder(folderId)}
+          >
+            <IconMessage2Plus /> New Chat
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

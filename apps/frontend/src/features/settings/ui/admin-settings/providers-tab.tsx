@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +40,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { LlmModel, LlmProviderModel } from "@/lib/client";
+import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
 const providerModelSchema = z.object({
   name: z.string().min(1, "Model name is required."),
@@ -93,7 +95,9 @@ const toDefaultModelValue = (defaultModel?: LlmModel) => {
     ? `${defaultModel.provider_id}::${defaultModel.name}`
     : undefined;
 };
+
 export const ProvidersTab = () => {
+  const router = useRouter();
   const [loadingModelsIndex, setLoadingModelsIndex] = useState<number | null>(
     null,
   );
@@ -127,14 +131,17 @@ export const ProvidersTab = () => {
     setValue,
     trigger,
   } = form;
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "llm_providers",
   });
+
   const watchedProviders = useWatch({
     control,
     name: "llm_providers",
   });
+
   const watchedDefaultModel = useWatch({
     control,
     name: "default_model",
@@ -154,17 +161,22 @@ export const ProvidersTab = () => {
     ...appSettingsBulkUpdateMutation({
       client,
     }),
-    onSuccess: () => toast.success("Settings saved"),
+    onSuccess: () => {
+      toast.success("Settings saved");
+      router.refresh();
+    },
     onError: () => toast.error("Failed to save. Please try again."),
   });
 
-  const defaultModelList = watchedProviders
-    .flatMap((p) => p.models.map((m) => [p.name, p.id, m.name, m.is_active]))
-    .filter((m) => m[3])
-    .map(([provider_name, id, name, _]) => ({
-      value: `${id}::${name}`,
-      label: `${provider_name} - ${name}`,
-    }));
+  const defaultModelList = useMemo(() => {
+    return watchedProviders
+      .flatMap((p) => p.models.map((m) => [p.name, p.id, m.name, m.is_active]))
+      .filter((m) => m[3])
+      .map(([provider_name, id, name, _]) => ({
+        value: `${id}::${name}`,
+        label: `${provider_name} - ${name}`,
+      }));
+  }, [watchedProviders]);
 
   const onSubmit = (values: ProvidersFormValues) => {
     let default_model: LlmModel | undefined = undefined;
@@ -183,12 +195,6 @@ export const ProvidersTab = () => {
           default_model,
         },
       },
-    });
-  };
-
-  const handleReset = () => {
-    reset({
-      llm_providers: appSettings?.llm_providers ?? [],
     });
   };
 
@@ -227,6 +233,10 @@ export const ProvidersTab = () => {
       setLoadingModelsIndex(null);
     }
   };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   return (
     <form
@@ -440,7 +450,11 @@ export const ProvidersTab = () => {
               control={control}
               name="default_model"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  defaultValue={toDefaultModelValue(appSettings?.default_model)}
+                >
                   <SelectTrigger>
                     <SelectValue
                       id="appsettings-default-model"
@@ -465,21 +479,13 @@ export const ProvidersTab = () => {
           </Field>
         </div>
         <div className="flex flex-1 items-center justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleReset}
-            disabled={saveProviders.isPending}
-          >
-            Reset
-          </Button>
           <Button type="submit" disabled={saveProviders.isPending}>
             {saveProviders.isPending ? (
               <LoaderCircleIcon className="animate-spin" />
             ) : (
               <SaveIcon />
             )}
-            Save providers
+            Save
           </Button>
         </div>
       </div>

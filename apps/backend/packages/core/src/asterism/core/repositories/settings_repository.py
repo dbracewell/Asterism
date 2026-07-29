@@ -49,25 +49,30 @@ class SettingsRepository:
                 combined[row.key] = row.value
 
             if not combined:
-                return UserSettingsModel()
+                return UserSettingsModel(models=user_models)
 
-            new_setting = UserSettingsModel.model_validate(combined)
-            new_setting.models = user_models
-            if new_setting.chat_model:
-                exists = next(
+            user_settings = UserSettingsModel.model_validate(combined)
+            user_settings.models = user_models
+
+            # make sure the user's default model is still valid
+            if user_settings.chat_model:
+                user_settings.chat_model = next(
                     (
                         m
                         for m in user_models
-                        if m.provider_id == new_setting.chat_model.provider_id
-                        and m.name == new_setting.chat_model.name
+                        if m.provider_id == user_settings.chat_model.provider_id
+                        and m.name == user_settings.chat_model.name
                     ),
                     None,
                 )
-                if not exists:
-                    new_setting.chat_model = None
-            self.user_cache[user_id] = new_setting
 
-            return new_setting
+            # if not set to the app default
+            if not user_settings.chat_model:
+                user_settings.chat_model = app_settings.default_model
+
+            self.user_cache[user_id] = user_settings
+
+            return user_settings
 
     async def bulk_upsert_user_settings(
         self,

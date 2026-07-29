@@ -8,7 +8,6 @@ import {
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
 import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
-import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
 import { client } from "@/lib/api";
 import {
   chatSessionGetManyOptions,
@@ -16,7 +15,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { cn } from "@/lib/utils";
 import { IconMessage2 } from "@tabler/icons-react";
@@ -58,7 +57,7 @@ export const NavChatSessions = ({
     },
   });
 
-  const { createChatSession } = useChatSessionCrud();
+  const router = useRouter();
 
   if (error) {
     throw Error(error.detail);
@@ -81,9 +80,7 @@ export const NavChatSessions = ({
     <CollapsibleSidebarGroup
       label="Chats"
       defaultIsOpen={defaultIsOpen}
-      onMenuActionClick={() =>
-        createChatSession({ body: { user_prompt: "Hello" } })
-      }
+      onMenuActionClick={() => router.push("/")}
       cookieName={SESSIONS_OPEN_COOKIE}
       className="flex-1"
     >

@@ -137,7 +137,8 @@ export const zMessageStatus = z.enum(['pending', 'completed']);
  */
 export const zNewChatRequest = z.object({
     user_prompt: z.string(),
-    folder_id: z.string().nullish()
+    model: zLlmModel,
+    folder_id: z.uuid().nullish()
 });
 
 /**
@@ -178,6 +179,7 @@ export const zMessageModel = z.object({
     id: z.uuid(),
     status: zMessageStatus,
     created_at: z.int(),
+    model: zLlmModel,
     active_child_id: z.string().nullable(),
     has_siblings: z.boolean().optional().default(false),
     sibling_count: z.int().optional().default(0),

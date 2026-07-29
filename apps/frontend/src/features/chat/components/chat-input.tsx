@@ -17,8 +17,25 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import Image from "next/image";
-import React, { RefObject, useCallback, useRef, useState } from "react";
+import React, {
+  Dispatch,
+  RefObject,
+  SetStateAction,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ClipboardPasteIcon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUser } from "@/features/auth/components/user-context";
+import { LlmModel } from "@/lib/client";
 
 interface AttachedFile {
   id: string;
@@ -27,19 +44,43 @@ interface AttachedFile {
   preview?: string;
 }
 
+const toModelValue = (model?: LlmModel | null) => {
+  if (!model) return "";
+  return `${model.provider_id}::${model.name}`;
+};
+
 const ChatInput = React.memo(
   ({
     onSubmit,
     disabled = false,
     displayStatus = true,
+    defaultModel,
+    placeholder = "",
+    setNumberOfLines,
   }: {
-    onSubmit?: (prompt: string) => void;
+    onSubmit?: ({ prompt, model }: { prompt: string; model: LlmModel }) => void;
     disabled?: boolean;
     displayStatus?: boolean;
+    placeholder?: string;
+    defaultModel?: LlmModel;
+    setNumberOfLines?: Dispatch<SetStateAction<number>>;
   }) => {
+    const user = useUser();
     const [prompt, setPrompt] = useState("");
     const [isDragOver, setIsDragOver] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+    const [model, setModel] = useState<string>(
+      toModelValue(defaultModel ?? user.settings.chat_model),
+    );
+    const availableModels = useMemo(
+      () =>
+        user.settings.models?.map((m) => ({
+          label: m.name,
+          value: toModelValue(m),
+        })),
+      [user.settings.models],
+    );
+    const numberOfLinesRef = React.useRef<number>(1);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const generateFileId = () => Math.random().toString(36).substring(7);
@@ -71,7 +112,14 @@ const ChatInput = React.memo(
     }, []);
     const submitPrompt = () => {
       if (!disabled && prompt.trim() && onSubmit) {
-        onSubmit(prompt.trim());
+        const [provider_id, name] = model.split("::");
+        onSubmit({
+          prompt: prompt.trim(),
+          model: {
+            provider_id,
+            name,
+          },
+        });
         setPrompt("");
       }
     };
@@ -87,6 +135,7 @@ const ChatInput = React.memo(
       e.preventDefault();
       setIsDragOver(false);
     };
+
     const handleDrop = (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
@@ -96,11 +145,18 @@ const ChatInput = React.memo(
         processFiles(files);
       }
     };
+
     const handleTextareaChange = (
       e: React.ChangeEvent<HTMLTextAreaElement>,
     ) => {
+      const lines = Math.min(7, e.target.value.split(/\n/).length);
+      if (numberOfLinesRef.current != lines) {
+        numberOfLinesRef.current = lines;
+        setNumberOfLines?.(numberOfLinesRef.current);
+      }
       setPrompt(e.target.value);
     };
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (disabled) {
         e.preventDefault();
@@ -109,6 +165,7 @@ const ChatInput = React.memo(
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         submitPrompt();
+      } else {
       }
     };
 
@@ -128,17 +185,9 @@ const ChatInput = React.memo(
       setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
     };
 
-    const isMultiLine =
-      prompt.split(/\r?\n/).length > 1 || attachedFiles.length > 0;
-
     return (
       <div className="mx-auto flex w-full max-w-[90%] flex-col gap-1 overflow-clip sm:max-w-3xl">
-        <div
-          className={cn(
-            "bg-input dark:bg-input text-foreground relative flex-col content-center overflow-clip rounded-full p-2 transition-colors",
-            isMultiLine && "rounded-3xl",
-          )}
-        >
+        <div className="bg-input dark:bg-input text-foreground relative flex-col content-center overflow-clip rounded-xl border transition-colors">
           {attachedFiles.length > 0 && (
             <div className="relative mb-2 flex w-fit items-center gap-2 overflow-hidden">
               {attachedFiles.map((file) => (
@@ -176,59 +225,77 @@ const ChatInput = React.memo(
               ))}
             </div>
           )}
+
           <form
-            className={cn(
-              "relative flex w-full flex-1 items-center justify-between gap-1 overflow-clip rounded-[inherit] p-1",
-              isMultiLine && "flex-col",
-            )}
+            className="flex w-full flex-1 flex-col items-center justify-between gap-1 overflow-clip rounded-[inherit] px-3 pt-3 pb-1"
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onSubmit={handleSubmit}
           >
-            {!isMultiLine && (
-              <FileUpload
-                fileInputRef={fileInputRef}
-                handleFileSelect={handleFileSelect}
-                textAreaRef={textAreaRef}
-              />
-            )}
-
             <Textarea
               className={cn(
-                "max-h-50 flex-1 resize-none rounded-none border-none bg-transparent! p-0! shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent!",
+                "max-h-35 flex-1 resize-none rounded-none border-none bg-transparent! p-0! shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent!",
                 prompt.split(/\r?\n/).length == 1 && "h-6! min-h-6!",
               )}
               ref={textAreaRef}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
-              placeholder="Where will your curiosity lead you today?"
+              placeholder={placeholder}
               value={prompt}
             />
 
-            <div
-              className={cn(
-                "flex items-center justify-start",
-                isMultiLine && "w-full justify-between",
-              )}
-            >
-              {isMultiLine && (
-                <FileUpload
-                  fileInputRef={fileInputRef}
-                  handleFileSelect={handleFileSelect}
-                  textAreaRef={textAreaRef}
-                />
-              )}
-              <Button
-                aria-label="Send message"
-                className={cn("rounded-full", !prompt.trim() && "hidden")}
-                disabled={!prompt.trim()}
-                size="icon-lg"
-                type="submit"
-                variant="default"
-              >
-                <IconArrowUp size={16} />
-              </Button>
+            <div className="flex w-full items-center justify-between">
+              <FileUpload
+                fileInputRef={fileInputRef}
+                handleFileSelect={handleFileSelect}
+                textAreaRef={textAreaRef}
+              />
+              <div className="flex flex-1 items-center justify-end gap-3">
+                {displayStatus && (
+                  <div className={cn("flex items-center gap-1 text-xs")}>
+                    <div
+                      title={disabled ? "Disconnected" : "Connected"}
+                      className={cn(
+                        "size-2 rounded-full pt-0.5",
+                        disabled
+                          ? "border-red-900 bg-red-500"
+                          : "border-green-900 bg-green-500",
+                      )}
+                    />
+                    {disabled ? "Disconnected" : "Connected"}
+                  </div>
+                )}
+                <Select value={model} onValueChange={setModel}>
+                  <SelectTrigger className="w-40 min-w-0 truncate border-0!">
+                    <span className="block w-full truncate text-left">
+                      <SelectValue placeholder="Select a model" />
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent position="popper" align="end">
+                    {availableModels?.map((model) => (
+                      <SelectItem value={model.value} key={model.value}>
+                        <span className="block w-[95%] truncate">
+                          {model.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  aria-label="Send message"
+                  className={cn(
+                    "shrink-0 rounded-full",
+                    !prompt.trim() && "hidden",
+                  )}
+                  disabled={!prompt.trim()}
+                  size="icon"
+                  type="submit"
+                  variant="default"
+                >
+                  <IconArrowUp size={16} />
+                </Button>
+              </div>
             </div>
 
             <div
@@ -244,24 +311,6 @@ const ChatInput = React.memo(
             </div>
           </form>
         </div>
-        {displayStatus && (
-          <div
-            className={cn(
-              "ml-auto flex items-center gap-1 px-3 pb-0.5 text-xs",
-            )}
-          >
-            <div
-              title={disabled ? "Disconnected" : "Connected"}
-              className={cn(
-                "size-2 rounded-full pt-0.5",
-                disabled
-                  ? "border-red-900 bg-red-500"
-                  : "border-green-900 bg-green-500",
-              )}
-            />
-            {disabled ? "Disconnected" : "Connected"}
-          </div>
-        )}
       </div>
     );
   },
@@ -291,7 +340,7 @@ const FileUpload = ({
           <Button
             aria-label="Add attachments"
             className="rounded-full"
-            size="icon-lg"
+            size="icon"
             variant="ghost"
           >
             <IconPlus />
@@ -328,5 +377,6 @@ const FileUpload = ({
     </div>
   );
 };
+ChatInput.displayName = "ChatInput";
 
 export default ChatInput;

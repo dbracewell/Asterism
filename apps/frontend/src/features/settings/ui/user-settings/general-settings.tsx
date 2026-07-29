@@ -1,8 +1,4 @@
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
-import { useQuery } from "@tanstack/react-query";
-import { userSettingsGetOptions } from "@/lib/client/@tanstack/react-query.gen";
-import { client } from "@/lib/api";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -11,18 +7,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LlmModel } from "@/lib/client";
+import { useUser } from "@/features/auth/components/user-context";
 
 export const GeneralSettings = () => {
-  const { data: userSettings, isLoading } = useQuery({
-    ...userSettingsGetOptions({
-      client: client,
-    }),
-  });
   const { updateSetting } = useUpdateUserSettings();
+  const user = useUser();
+  const userSettings = user.settings;
 
   return (
     <div className="flex flex-1 flex-col gap-3 p-2">
-      {isLoading && <Spinner />}
       <h1 className="border-b pb-2 font-bold">Chat Settings</h1>
       <div className="flex flex-col items-center gap-2 sm:flex-row">
         <h2>Model</h2>

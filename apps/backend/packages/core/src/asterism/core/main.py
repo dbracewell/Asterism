@@ -15,7 +15,6 @@ from asterism.core.config import config
 from asterism.core.db import db_session_manager
 from asterism.core.events import Event, EventType, event_bus
 from asterism.core.exceptions import CodedException, ErrorDetail
-from asterism.core.registries.tool import ToolCall
 from asterism.core.services.routers import (
     chat_router,
     file_router,
@@ -62,9 +61,6 @@ def custom_openapi():
         openapi_schema["components"]["schemas"]["ErrorDetail"] = (
             ErrorDetail.model_json_schema()
         )
-        openapi_schema["components"]["schemas"]["ToolCall"] = (
-            ToolCall.model_json_schema()
-        )
 
     for path, methods in openapi_schema["paths"].items():
         for method, operation in methods.items():
@@ -73,7 +69,9 @@ def custom_openapi():
                     "description": "Validation Error",
                     "content": {
                         "application/json": {
-                            "schema": {"$ref": "#/components/schemas/ErrorDetail"}
+                            "schema": {
+                                "$ref": "#/components/schemas/ErrorDetail",
+                            }
                         }
                     },
                 }
@@ -121,12 +119,15 @@ async def global_coded_exception_handler(
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+):
     error_message = []
     for error in exc.errors():
         error_message.append(f"{error['msg']}: {error['input']}")
     error_response = ErrorDetail(
-        code=500,
+        code=422,
         detail=json.dumps("\n".join(error_message)),
     )
     return JSONResponse(
@@ -140,5 +141,4 @@ app.include_router(chat_router)
 app.include_router(folder_router)
 app.include_router(settings_router)
 app.include_router(user_router)
-
 app.include_router(function_router)

@@ -5,43 +5,35 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/features/auth/components/user-context";
 import ChatInput from "@/features/chat/components/chat-input";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
-import { ChatInfo, ChatModel, MessageModel } from "@/lib/client";
+import { ChatInfo, ChatModel, LlmModel, MessageModel } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
 import React, { Dispatch, RefObject, SetStateAction } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
-
-export type ConnectionStatus =
-  | "Connecting"
-  | "Open"
-  | "Closing"
-  | "Closed"
-  | "Uninstantiated";
-
-const connectionStatus = {
-  [ReadyState.CONNECTING]: "Connecting",
-  [ReadyState.OPEN]: "Open",
-  [ReadyState.CLOSING]: "Closing",
-  [ReadyState.CLOSED]: "Closed",
-  [ReadyState.UNINSTANTIATED]: "Uninstantiated",
-} as Record<number, ConnectionStatus>;
-
-type ScrollState = {
-  userInitiatedScroll: boolean;
-  preventAutoScroll: boolean;
-};
+import {
+  connectionStatus,
+  type ConnectionStatus,
+  type ScrollState,
+} from "@/features/chat/types";
+import { useChatWebSocket } from "@/features/chat/lib/websocket";
 
 export type ChatSessionContextType = {
   sessionInfo: ChatInfo;
-  messages: MessageModel[];
   sendJsonMessage: <T = unknown>(jsonMessage: T, keep?: boolean) => void;
-  addUserMessage: (message: string) => void;
+  addUserMessage: ({
+    prompt,
+    model,
+  }: {
+    prompt: string;
+    model: LlmModel;
+  }) => void;
   connectionStatus: ConnectionStatus;
   scrollState: RefObject<ScrollState>;
   updateScrollState: (scrollState: ScrollState) => void;
   canScroll: boolean;
   setCanScroll: Dispatch<SetStateAction<boolean>>;
+  inputLines: number;
+  setInputLines: Dispatch<SetStateAction<number>>;
 };
 
 const ChatSessionContext = React.createContext<ChatSessionContextType | null>(
@@ -58,6 +50,7 @@ export const useChatSession = () => {
 
 export type ChatStreamingContextType = {
   incomingMessage: MessageModel | null;
+  messages: MessageModel[];
 };
 export const ChatStreamingContext =
   React.createContext<ChatStreamingContextType | null>(null);
@@ -77,16 +70,12 @@ const ChatSessionProvider = ({
   jwtToken: string;
   children: React.ReactNode;
 }) => {
-  const [errorState, setErrorState] = React.useState<string | null>(null);
-  const didUnmount = React.useRef(false);
-  const streamingMessageRef = React.useRef<string>("");
-  const streamingThoughtRef = React.useRef<string>("");
-  const streamingDateRef = React.useRef(0);
-  const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const setSession = useActiveChatSession((state) => state.setSession);
   const scrollState = React.useRef<ScrollState>({
     userInitiatedScroll: false,
     preventAutoScroll: false,
   });
+  const [numberOfLines, setNumberOfLines] = React.useState(1);
   const [canScroll, setCanScroll] = React.useState(false);
   const [messages, setMessages] = React.useState<MessageModel[]>(
     session.messages,
@@ -94,88 +83,10 @@ const ChatSessionProvider = ({
   const [incomingMessage, setIncomingMessage] =
     React.useState<MessageModel | null>(null);
 
-  const { setSession } = useActiveChatSession();
-  const { sendJsonMessage, readyState } = useWebSocket(
-    `ws://${process.env.NEXT_PUBLIC_BACKEND_API_URL!.replace("http://", "")}/chat/stream/${session.info.id}?token=${jwtToken}`,
-    {
-      shouldReconnect: () => {
-        return !didUnmount.current;
-      },
-      reconnectAttempts: 10,
-      reconnectInterval: 3000,
-      onMessage: (event) => {
-        const msgContent = JSON.parse(event.data);
-
-        if (msgContent.type === "ERROR") {
-          setErrorState(msgContent.message);
-        }
-
-        if (msgContent.type === "STREAM_START") {
-          streamingMessageRef.current = "";
-          streamingThoughtRef.current = "";
-          streamingDateRef.current = Math.floor(Date.now() / 1000);
-          setMessages((prev) => [
-            ...prev.slice(0, -1),
-            {
-              ...prev[prev.length - 1],
-              status: "completed",
-            },
-          ]);
-
-          if (!flushTimerRef.current) {
-            flushTimerRef.current = setInterval(() => {
-              setIncomingMessage({
-                thinking: streamingThoughtRef.current,
-                content: streamingMessageRef.current,
-                created_at: streamingDateRef.current,
-                id: "incoming",
-                role: "assistant",
-                active_child_id: "",
-                status: "pending",
-                token_count: 0,
-                tool_calls: [],
-              });
-            }, 100);
-          }
-        }
-
-        if (msgContent.type === "THINKING_DELTA") {
-          streamingThoughtRef.current = msgContent.content;
-        }
-
-        if (msgContent.type === "TEXT_DELTA") {
-          streamingMessageRef.current = msgContent.content;
-        }
-
-        if (
-          msgContent.type === "STREAM_END" ||
-          msgContent.type === "STREAM_PRE_TOOLS"
-        ) {
-          if (flushTimerRef.current) {
-            clearInterval(flushTimerRef.current);
-            flushTimerRef.current = null;
-          }
-
-          const lastMessages = JSON.parse(msgContent.content) as MessageModel[];
-          if (lastMessages) {
-            setMessages((prev) => {
-              const index = prev.findIndex(
-                (m) => m.id == lastMessages[0].id || m.id === "user-msg",
-              );
-              if (index >= 0) {
-                return [...prev.slice(0, index), ...lastMessages];
-              }
-              return [...prev, ...lastMessages];
-            });
-          }
-
-          setIncomingMessage(null);
-          streamingMessageRef.current = "";
-          streamingThoughtRef.current = "";
-        }
-      },
-    },
-  );
+  const { errorState, sendJsonMessage, readyState } = useChatWebSocket({
+    session,
+    jwtToken,
+  });
 
   React.useEffect(() => {
     setSession(session);
@@ -183,6 +94,41 @@ const ChatSessionProvider = ({
       setSession(null);
     };
   }, [session, setSession]);
+
+  useSubscribeEvent({
+    type: "chat-session:message-update",
+    handler: (payload) => {
+      if (payload.incomingMessage) {
+        setIncomingMessage(payload.incomingMessage);
+      } else {
+        setIncomingMessage(null);
+      }
+      if (payload.markLastCompleted) {
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          {
+            ...prev[prev.length - 1],
+            status: "completed",
+          },
+        ]);
+      }
+      if (
+        payload.updatedMessages != null &&
+        payload.updatedMessages.length > 0
+      ) {
+        const targetMessages = payload.updatedMessages;
+        setMessages((prev) => {
+          const index = prev.findIndex(
+            (m) => m.id == targetMessages[0].id || m.id === "user-msg",
+          );
+          if (index >= 0) {
+            return [...prev.slice(0, index), ...targetMessages];
+          }
+          return [...prev, ...targetMessages];
+        });
+      }
+    },
+  });
 
   useSubscribeEvent({
     type: "chat-session:update",
@@ -198,29 +144,19 @@ const ChatSessionProvider = ({
     },
   });
 
-  React.useEffect(() => {
-    return () => {
-      console.log("UNMOUNT");
-      didUnmount.current = true;
-      if (flushTimerRef.current) {
-        clearInterval(flushTimerRef.current);
-      }
-    };
-  }, []);
-
   const addUserMessage = React.useCallback(
-    (message: string) => {
+    ({ prompt, model }: { prompt: string; model: LlmModel }) => {
       setMessages((prev) => [
         ...prev,
         {
           id: "user-msg",
           role: "user",
-          content: message,
+          content: prompt,
           created_at: Date.now() / 1000,
           status: "completed",
         } as MessageModel,
       ]);
-      sendJsonMessage({ message });
+      sendJsonMessage({ message: prompt, model });
     },
     [setMessages, sendJsonMessage],
   );
@@ -234,30 +170,33 @@ const ChatSessionProvider = ({
       sessionInfo: session.info,
       sendJsonMessage,
       connectionStatus: connectionStatus[readyState],
-      messages,
       addUserMessage,
       canScroll,
       setCanScroll,
       scrollState,
       updateScrollState,
+      inputLines: numberOfLines,
+      setInputLines: setNumberOfLines,
     }),
     [
       session.info,
       sendJsonMessage,
       readyState,
-      messages,
       addUserMessage,
       canScroll,
       setCanScroll,
       updateScrollState,
+      numberOfLines,
+      setNumberOfLines,
     ],
   );
 
   const streamingValue = React.useMemo(
     () => ({
       incomingMessage,
+      messages,
     }),
-    [incomingMessage],
+    [incomingMessage, messages],
   );
 
   if (errorState) {
@@ -276,9 +215,14 @@ const ChatSessionProvider = ({
 const ChatSessionMessageList = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
-  const { messages, scrollState, updateScrollState, setCanScroll, canScroll } =
-    useChatSession();
-  const { incomingMessage } = useChatStreaming();
+  const {
+    scrollState,
+    updateScrollState,
+    setCanScroll,
+    canScroll,
+    inputLines,
+  } = useChatSession();
+  const { messages, incomingMessage } = useChatStreaming();
   const filtered = React.useMemo(() => {
     return messages.filter((m) => m.role !== "tool" && !m.tool_calls?.length);
   }, [messages]);
@@ -304,6 +248,12 @@ const ChatSessionMessageList = () => {
       }
     }
   }, [canScroll]);
+
+  React.useEffect(() => {
+    if (!bottomRef.current) return;
+    bottomRef.current.style.height = `${40 + 20 * inputLines}px`;
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [inputLines]);
 
   return (
     <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
@@ -349,16 +299,20 @@ const ChatSessionMessageList = () => {
           <MessageItem key={message.id} message={message} />
         ))}
         {filtered.length > 0 && filtered?.[0].status === "pending" && (
-          <div className="bg-input/50 h-8 w-full animate-pulse rounded-xl"></div>
+          <Loading />
         )}
         {incomingMessage && (
           <MessageItem message={incomingMessage} defaultShowThinking />
         )}
         <div
           ref={bottomRef}
-          className="size-25 shrink-0"
-          style={{ overflowAnchor: "auto" }}
-        ></div>
+          className="shrink-0"
+          style={{
+            overflowAnchor: "auto",
+            width: "100%",
+            marginBottom: `40px`,
+          }}
+        />
       </div>
     </div>
   );
@@ -414,9 +368,7 @@ const MessageItem = React.memo(
             {message.thinking ?? ""}
           </p>
         </details>
-        {!message.content.trim() && !message.thinking?.trim() && (
-          <div className="bg-input/50 h-8 w-full animate-pulse rounded-xl"></div>
-        )}
+        {!message.content.trim() && !message.thinking?.trim() && <Loading />}
         <MarkdownViewer
           content={message.content}
           className={cn(
@@ -450,9 +402,18 @@ const MessageItem = React.memo(
 );
 MessageItem.displayName = "MessageItem";
 
-const ChatSessionInput = () => {
-  const { connectionStatus, addUserMessage, canScroll, setCanScroll } =
-    useChatSession();
+const ChatSessionInput = ({ defaultModel }: { defaultModel?: LlmModel }) => {
+  const {
+    connectionStatus,
+    addUserMessage,
+    canScroll,
+    setCanScroll,
+    setInputLines,
+  } = useChatSession();
+  const user = useUser();
+  const [activeModel, setActiveModel] = React.useState<LlmModel | undefined>(
+    defaultModel ?? user.settings.chat_model ?? undefined,
+  );
   return (
     <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">
       {canScroll && (
@@ -466,11 +427,27 @@ const ChatSessionInput = () => {
       )}
       <ChatInput
         disabled={connectionStatus !== "Open"}
-        onSubmit={(msg) => addUserMessage(msg)}
+        defaultModel={activeModel}
+        setNumberOfLines={setInputLines}
+        onSubmit={(e) => {
+          addUserMessage(e);
+          setActiveModel(e.model);
+        }}
       />
     </div>
   );
 };
 ChatSessionInput.displayName = "ChatSessionInput";
+
+const Loading = () => {
+  return (
+    <div className="mt-3 flex items-center space-x-1 px-4">
+      <span className="sr-only">Processing...</span>
+      <div className="bg-primary size-2 animate-bounce rounded-full [animation-delay:-0.3s]"></div>
+      <div className="bg-primary size-2 animate-bounce rounded-full [animation-delay:-0.15s]"></div>
+      <div className="bg-primary size-2 animate-bounce rounded-full"></div>
+    </div>
+  );
+};
 
 export { ChatSessionInput, ChatSessionMessageList, ChatSessionProvider };

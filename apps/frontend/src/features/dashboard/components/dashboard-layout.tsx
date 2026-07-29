@@ -3,7 +3,11 @@ import UserProvider from "@/features/auth/components/user-context";
 import { getCurrentUser } from "@/features/auth/server/actions";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
 import { Header } from "@/features/dashboard/components/header";
-import { FOLDER_OPEN_COOKIE, SESSIONS_OPEN_COOKIE, SIDBAR_WIDTH_COOKIE } from "@/features/dashboard/constants";
+import {
+  FOLDER_OPEN_COOKIE,
+  SESSIONS_OPEN_COOKIE,
+  SIDBAR_WIDTH_COOKIE,
+} from "@/features/dashboard/constants";
 import { cookies } from "next/headers";
 import React from "react";
 import { ThemeCheck } from "@/features/dashboard/components/theme-check";

@@ -14,6 +14,7 @@ from asterism.core.models.typedefs import JSONB_COLUMN
 
 from ..registries.tool import ToolCall
 from . import Base
+from .common import LLMModel
 from .utils import now
 
 
@@ -48,6 +49,11 @@ class Message(Base):
         ),
         nullable=False,
         index=True,
+    )
+    model: Mapped[LLMModel] = mapped_column(
+        "model",
+        JSONB_COLUMN(LLMModel),
+        nullable=False,
     )
     status: Mapped[MessageStatus] = mapped_column(
         "status",
@@ -124,36 +130,9 @@ class LLMMessage(BaseModel):
     role: str
     content: str
     token_count: int
-    thinking: Annotated[
-        str | None,
-        WithJsonSchema(
-            {
-                "anyOf": [{"type": "string"}, {"type": "null"}],
-            },
-        ),
-    ] = Field(default=None)
-    tool_calls: Annotated[
-        list[ToolCall] | None,
-        WithJsonSchema(
-            {
-                "anyOf": [
-                    {"type": "null"},
-                    {
-                        "type": "array",
-                        "items": {"$ref": "#/components/schemas/ToolCall"},
-                    },
-                ],
-            }
-        ),
-    ] = Field(default=None)
-    tool_call_id: Annotated[
-        str | None,
-        WithJsonSchema(
-            {
-                "anyOf": [{"type": "string"}, {"type": "null"}],
-            }
-        ),
-    ] = Field(default=None)
+    thinking: str | None = Field(default=None)
+    tool_calls: list[ToolCall] | None = Field(default=None)
+    tool_call_id: str | None = Field(default=None)
 
     def to_api_message(self) -> dict[str, Any]:
         if self.role == "tool":
@@ -208,6 +187,7 @@ class MessageModel(LLMMessage):
     id: uuid.UUID
     status: MessageStatus
     created_at: int
+    model: LLMModel
     active_child_id: Annotated[
         uuid.UUID | None,
         WithJsonSchema(

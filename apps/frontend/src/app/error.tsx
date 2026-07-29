@@ -13,7 +13,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Folder loading error:", error);
+    console.error(error);
   }, [error]);
 
   return (

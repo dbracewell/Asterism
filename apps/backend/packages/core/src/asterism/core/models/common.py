@@ -5,6 +5,11 @@ class LLMModel(BaseModel):
     provider_id: str
     name: str
 
+    def __eq__(self, value: object, /) -> bool:
+        if isinstance(value, LLMModel):
+            return self.name == value.name and self.provider_id == value.provider_id
+        return False
+
 
 class LLMProviderModel(BaseModel):
     name: str

@@ -5,15 +5,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getApiClient } from "@/lib/api-server";
-import { InstallUserSchema, InstallUserSchemaType } from "@/features/auth/schemas";
-
-export const requireAdmin = cache(async () => {
-  const user = await getCurrentUser();
-  if (user.role !== "admin") {
-    redirect("/");
-  }
-  return user;
-});
+import {
+  InstallUserSchema,
+  InstallUserSchemaType,
+} from "@/features/auth/schemas";
 
 export const installApp = async (data: InstallUserSchemaType) => {
   const parsed = InstallUserSchema.safeParse(data);

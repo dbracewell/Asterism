@@ -5,18 +5,14 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema
 
+from asterism.core.models.common import LLMModel
+
 
 class NewChatRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_prompt: str
-    folder_id: Annotated[
-        uuid.UUID | None,
-        WithJsonSchema(
-            {
-                "anyOf": [{"type": "string"}, {"type": "null"}],
-            }
-        ),
-    ] = Field(default=None)
+    model: LLMModel
+    folder_id: uuid.UUID | None = Field(default=None)
 
 
 class ChatUpdateRequest(BaseModel):

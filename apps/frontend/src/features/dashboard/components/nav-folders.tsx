@@ -60,7 +60,9 @@ export const NavFolders = ({ defaultIsOpen }: { defaultIsOpen: boolean }) => {
       cookieName={FOLDER_OPEN_COOKIE}
     >
       <SidebarMenu className="min-h-0 gap-0.5">
-        <div className={cn("gap-1 py-1 pl-4", isAdding ? "block" : "hidden")}>
+        <div
+          className={cn("gap-1 px-2 py-1 pl-4", isAdding ? "block" : "hidden")}
+        >
           <CreateFolderInput
             newFolderTitleRef={newFolderTitleRef}
             onComplete={() => {

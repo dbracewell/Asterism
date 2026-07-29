@@ -1,8 +1,8 @@
 {
   "languages": {
     "Python": {
-      "language_servers": ["pyright", "ruff"],
-    },
+      "language_servers": ["pyright", "ruff"]
+    }
   },
   "lsp": {
     "pyright": {
@@ -10,10 +10,10 @@
         "python": {
           "pythonPath": "apps/backend/.venv/bin/python",
           "analysis": {
-            "diagnosticMode": "workspace",
-          },
-        },
-      },
-    },
-  },
+            "diagnosticMode": "workspace"
+          }
+        }
+      }
+    }
+  }
 }

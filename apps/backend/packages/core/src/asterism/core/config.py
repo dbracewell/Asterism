@@ -112,7 +112,10 @@ class Config:
 
     @property
     def JWKS_URL(self) -> str:
-        return self._get_value("JWKS_URL", f"{self.BETTER_AUTH_URL}/api/auth/jwks")
+        return self._get_value(
+            "JWKS_URL",
+            f"{self.BETTER_AUTH_URL}/api/auth/jwks",
+        )
 
     @property
     def BOOTSTRAP_SETUP_TOKEN(self) -> str:

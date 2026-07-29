@@ -14,6 +14,7 @@ from asterism.core.events import ChatUpdateEvent, Event, EventType, event_bus
 from asterism.core.llm.client import LLMClient, LLMEvent, LLMEventType
 from asterism.core.llm.draft import get_draft_model
 from asterism.core.models import ChatModel, LLMMessage, MessageModel
+from asterism.core.models.common import LLMModel
 from asterism.core.models.message import MessageStatus
 from asterism.core.registries.tool import ToolCall, ToolResult, tool_registry
 from asterism.core.repositories import chat_repository, settings_repository
@@ -73,20 +74,21 @@ class WebSocketChatConnection:
             self.queue = asyncio.Queue()
             _queue_cache[chat_session.info.id] = self.queue
 
+        self.current_model: LLMModel | None = None
         self.client: LLMClient | None = None
         self.logger = get_logger(f"CHAT_{self.chat_session.info.id}")
 
-    async def _get_client(self) -> LLMClient:
-        if self.client is None:
-            user_settings = await settings_repository.get_user_settings(self.user.id)
+    async def _get_client(self, model: LLMModel) -> LLMClient:
+        if self.client is None or self.current_model != model:
+            self.current_model = model
             app_settings = await settings_repository.get_app_settings(self.session)
-            if not user_settings.chat_model:
+            if not model:
                 raise ValueError("No Chat Model")
-            provider = app_settings.get_provider(user_settings.chat_model.provider_id)
+            provider = app_settings.get_provider(model.provider_id)
             self.client = LLMClient(
                 api_key=provider.api_key,
                 llm_host=provider.base_url,
-                model_name=user_settings.chat_model.name,
+                model_name=model.name,
             )
         return self.client  # type: ignore
 
@@ -148,7 +150,8 @@ class WebSocketChatConnection:
                 )
             ]
             messages.extend(self.chat_session.messages)
-            response = await self.generate_response(messages=messages)
+            model = self.chat_session.messages[-1].model
+            response = await self.generate_response(messages=messages, model=model)
 
             ai_message = await chat_repository.add_message(
                 user_id=self.chat_session.info.user_id,
@@ -161,6 +164,7 @@ class WebSocketChatConnection:
                     parent_message_id=self.chat_session.messages[-1].id,
                     status=MessageStatus.COMPLETED,
                     tool_calls=response.tool_calls,
+                    model=model,
                 ),
                 session=self.session,
             )
@@ -205,16 +209,20 @@ class WebSocketChatConnection:
                 }
             )
 
-            await self._process_tool_calls(ai_message_model, response.tool_calls)
+            await self._process_tool_calls(ai_message_model, response.tool_calls, model)
         except asyncio.CancelledError:
             pass
         except Exception as e:
+            import traceback
+
+            traceback.print_exc()
             await self.queue.put({"type": "ERROR", "message": str(e)})
 
     async def _process_tool_calls(
         self,
         ai_message: MessageModel,
         tool_calls: list[ToolCall] | None,
+        model: LLMModel,
     ):
         if not tool_calls:
             return
@@ -235,6 +243,7 @@ class WebSocketChatConnection:
                     status=MessageStatus.COMPLETED,
                     tool_call_id=response.tool_call_id,
                     parent_message_id=ai_message.id,
+                    model=model,
                 ),
                 session=self.session,
             )
@@ -280,13 +289,17 @@ class WebSocketChatConnection:
                 await self.process_queue()
 
             asyncio.create_task(self._generate_title())
+
             while True:
                 asyncio.create_task(self._process_messages())
                 await self.process_queue()
 
                 raw_data = await self.websocket.receive_text()
                 message_data = json.loads(raw_data)
+                if "message" not in message_data or "model" not in message_data:
+                    raise ValueError(f"websocket request missing data {message_data}")
                 user_prompt = message_data.get("message", "")
+                user_model = LLMModel(**message_data.get("model", None))
                 user_message = await chat_repository.add_message(
                     user_id=self.chat_session.info.user_id,
                     session_id=self.chat_session.info.id,
@@ -298,6 +311,7 @@ class WebSocketChatConnection:
                         if self.chat_session.messages
                         else None,
                         status=MessageStatus.PENDING,
+                        model=user_model,
                     ),
                     session=self.session,
                 )
@@ -314,15 +328,19 @@ class WebSocketChatConnection:
             await self.websocket.close()
             raise
         except Exception as e:
+            import traceback
+
+            traceback.print_exc()
             await self.websocket.send_json({"type": "ERROR", "message": str(e)})
             await self.websocket.close()
 
     async def generate_response(
         self,
         messages: list[LLMMessage],
+        model: LLMModel,
     ) -> LLMFinalResponse:
         start_time = time.perf_counter()
-        client = await self._get_client()
+        client = await self._get_client(model)
         response = client.chat(messages=messages)
         thinking = ""
         last_event: LLMEvent = LLMEvent.empty()

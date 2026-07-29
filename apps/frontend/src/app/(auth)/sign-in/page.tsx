@@ -6,13 +6,11 @@ import { redirect } from "next/navigation";
 import z from "zod";
 
 const searchSchema = z.object({
-  mode: z.enum(["login", "signup"]).optional().catch("login"),
   redirect: z.string().optional(),
 });
 
 type HomePageProps = {
   searchParams: Promise<{
-    mode?: string;
     redirect?: string;
   }>;
 };
@@ -30,7 +28,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   }
 
   const userCount = await getUserCount();
-  const view = "install"; //userCount > 0 ? "login" : "install";
+  const view = userCount > 0 ? "login" : "install";
 
   return (
     <div className="flex flex-1 items-center justify-center">

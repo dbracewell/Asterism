@@ -61,6 +61,7 @@ async def new_session(
 ) -> ChatModel:
     return await chat_repository.create(
         user_id=user.id,
+        model=payload.model,
         user_prompt=payload.user_prompt,
         folder_id=payload.folder_id,
         session=db,

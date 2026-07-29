@@ -5,11 +5,13 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, WithJsonSchema
 
+from asterism.core.models.common import LLMModel
 from asterism.core.models.message import MessageStatus
 from asterism.core.registries.tool import ToolCall
 
 
 class NewMessage(BaseModel):
+    model: LLMModel
     role: str
     content: str
     token_count: int

@@ -276,7 +276,7 @@ export type MessageModel = {
     /**
      * Tool Calls
      */
-    tool_calls?: null | Array<ToolCall>;
+    tool_calls?: Array<ToolCall> | null;
     /**
      * Tool Call Id
      */
@@ -290,6 +290,7 @@ export type MessageModel = {
      * Created At
      */
     created_at: number;
+    model: LlmModel;
     /**
      * Active Child Id
      */
@@ -321,6 +322,7 @@ export type NewChatRequest = {
      * User Prompt
      */
     user_prompt: string;
+    model: LlmModel;
     /**
      * Folder Id
      */

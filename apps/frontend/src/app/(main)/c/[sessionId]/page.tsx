@@ -38,5 +38,5 @@ export default async function ChatSessionPage(props: ChatSessionPageProps) {
   if (jwtToken == null) {
     redirect("/");
   }
-  return <SessionPage session={data} jwtToken={jwtToken.token} />;
+  return <SessionPage session={data} jwtToken={jwtToken!.token} />;
 }
