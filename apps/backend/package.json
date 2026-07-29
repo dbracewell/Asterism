@@ -2,12 +2,12 @@
   "name": "@asterism/backend",
   "private": true,
   "scripts": {
-    "dev": "PYTHONWARNINGS=\"error\" uv run --package asterism-core uvicorn asterism.core.main:app --reload --port 8000 --timeout-graceful-shutdown=2",
-    "start": "uv run --package asterism-core uvicorn asterism.core.main:app --host 0.0.0.0 --port 8000",
+    "dev": "PYTHONWARNINGS=\"error\" uv run  uvicorn asterism.main:app --reload --port 8000 --timeout-graceful-shutdown=2",
+    "start": "uv run uvicorn asterism.main:app --host 0.0.0.0 --port 8000",
     "lint": "uv run ruff check .",
     "test": "PYTHONPATH=. uv run pytest -q",
     "sync": "uv sync --all-packages",
-    "typecheck": "uv run --package asterism.core python -m compileall -q asterism",
-    "db:push": "uv run --package asterism.core python -m asterism.core.init_db"
+    "typecheck": "uv run  python -m compileall -q asterism",
+    "db:push": "uv run python -m asterism.init_db"
   }
 }

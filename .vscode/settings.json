@@ -33,5 +33,6 @@
     "**/.venv": true,
     "**/node_modules": true,
     "**/.turbo": true
-  }
+  },
+  "python.analysis.languageServerMode": "full"
 }

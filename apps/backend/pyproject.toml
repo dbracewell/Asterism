@@ -1,28 +1,47 @@
 [project]
-name = "asterism-workspace"
+name = "asterism-core"
 version = "0.1.0"
-description = "Asterism"
-authors = [
-    { name = "David Bracewell" }
-]
+description = "Backend for Asterism, a multi-agent chat system."
 readme = "README.md"
 requires-python = ">=3.13"
-
+dependencies = [
+  "aiosqlite>=0.22.1",
+  "asyncpg>=0.31.0",
+  "cachetools>=7.1.4",
+  "fastapi>=0.136.3",
+  "filetype>=1.2.0",
+  "llama-cpp-python>=0.3.34",
+  "openai>=2.38.0",
+  "pydantic>=2.13.4",
+  "pyjwt[crypto]>=2.13.0",
+  "requests>=2.34.2",
+  "sqlalchemy[asyncio]>=2.0.50",
+  "torch>=2.13.0",
+  "transformers>=5.14.1",
+  "uvicorn[standard]>=0.48.0",
+  "websocket>=0.2.1",
+]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0",
-    "ruff>=0.14.3",
-    "tach>=0.35.0",
+  "ruff>=0.15.15",
+  "pytest>=8.4.0",
+  "pytest-asyncio>=1.1.0",
+  "httpx>=0.28.0",
+  "httpx2>=2.3.0",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.uv.workspace]
-members = ["packages/*"]
+[tool.hatch.build.targets.wheel]
+packages = ["asterism"]
+
 
 [tool.ruff]
-target-version = "py312"
-src = ["packages/core/src", "packages/api/src"]
+target-version = "py313"
+src = ["asterism"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
@@ -31,8 +50,8 @@ fixable = ["ALL"]
 [tool.pyright]
 reportPrivateImportUsage = "none"
 enableTypeIgnoreComments = true
-include = ["packages/*/src"]
-stubPath = "packages/*/src"
+include = ["asterism/*"]
+stubPath = "asterism/*"
 #typeCheckingMode = "basic"
 
 reportReturnType = "warning"
