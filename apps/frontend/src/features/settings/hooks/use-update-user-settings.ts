@@ -1,15 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
 import {
   userSettingsBulkUpdateMutation,
   userSettingUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { client } from "@/lib/client/client.gen";
-import { toast } from "sonner";
-import { useCallback } from "react";
 import { prettyText } from "@/lib/formatters";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
+import { toast } from "sonner";
 
 export function useUpdateUserSettings() {
   const router = useRouter();
@@ -18,8 +18,7 @@ export function useUpdateUserSettings() {
     ...userSettingUpdateMutation({
       client: client,
     }),
-    onSuccess: (data) => {
-      toast.success(`Successfully updated ${prettyText(data.key)}`);
+    onSuccess: () => {
       router.refresh();
     },
     onError: () => {
@@ -29,15 +28,24 @@ export function useUpdateUserSettings() {
   const updateSettingFn = updateSettingMutation.mutate;
 
   const updateSetting = useCallback(
-    (key: string, value: unknown): void => {
-      updateSettingFn({
-        path: {
-          key: key,
+    (key: string, value: unknown, notify: boolean = true): void => {
+      updateSettingFn(
+        {
+          path: {
+            key: key,
+          },
+          body: {
+            value,
+          },
         },
-        body: {
-          value,
+        {
+          onSuccess(data) {
+            if (notify) {
+              toast.success(`Successfully updated ${prettyText(data.key)}`);
+            }
+          },
         },
-      });
+      );
     },
     [updateSettingFn],
   );

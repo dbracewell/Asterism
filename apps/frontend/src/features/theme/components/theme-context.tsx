@@ -11,8 +11,8 @@ import React, { createContext, useCallback, useMemo } from "react";
 
 export type ThemeData = {
   currentTheme: string;
-  allThemes: { name: string; filename: string }[];
-  currentMode: "dark" | "light";
+  currentThemeType: "light" | "dark";
+  allThemes: { name: string; filename: string; type: "light" | "dark" }[];
   fontSize: string;
   setFontSize: (fontSize: string) => void;
   setTheme: (themeFileName: string) => void;
@@ -21,8 +21,8 @@ export type ThemeData = {
 
 export const ThemeContext = createContext<ThemeData | null>({
   currentTheme: "light",
+  currentThemeType: "light",
   allThemes: [],
-  currentMode: "light",
   fontSize: "16px",
   setFontSize: () => {},
   setTheme: () => {},
@@ -41,13 +41,13 @@ export const ThemeProvider = ({
   themes,
   currentTheme,
   fontSize,
-  currentMode,
+  currentThemeType,
   children,
 }: {
   themes: Record<string, ExtendedTheme>;
   currentTheme: string;
   fontSize: string;
-  currentMode: "dark" | "light";
+  currentThemeType: "dark" | "light";
   children: React.ReactNode;
 }) => {
   const router = useRouter();
@@ -55,31 +55,23 @@ export const ThemeProvider = ({
     return Object.values(themes).map((theme) => ({
       name: theme.name,
       filename: theme.filename,
+      type: theme.type,
     }));
   }, [themes]);
 
-  const setFontSize = useCallback(
-    (fontSize: string) => {
-      try {
-        Cookies.set(FONT_SIZE_COOKIE, fontSize);
-        router.refresh();
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    [router],
-  );
+  const setFontSize = useCallback((fontSize: string) => {
+    try {
+      Cookies.set(FONT_SIZE_COOKIE, fontSize);
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
 
-  const setTheme = useCallback(
-    (themeFileName: string) => {
-      Cookies.set(THEME_NAME_COOKIE, themeFileName, {
-        expires: 365,
-        
-      });
-      router.refresh();
-    },
-    [router],
-  );
+  const setTheme = useCallback((themeFileName: string) => {
+    Cookies.set(THEME_NAME_COOKIE, themeFileName, {
+      expires: 365,
+    });
+  }, []);
 
   const refresh = useCallback(() => {
     Cookies.set(THEME_REFRESH_COOKIE, "yes");
@@ -91,7 +83,7 @@ export const ThemeProvider = ({
       value={{
         allThemes,
         currentTheme,
-        currentMode,
+        currentThemeType,
         fontSize,
         setFontSize,
         setTheme,
