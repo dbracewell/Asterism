@@ -5,8 +5,7 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from asterism import config
-from asterism.common import AuthedUser
-from asterism.exceptions import UnauthorizedException
+from asterism.common import AuthedUser, UnauthorizedException
 from asterism.repositories import user_repository
 
 security = HTTPBearer(auto_error=False)

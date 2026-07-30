@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Query, WebSocket
 
-from asterism.exceptions import ErrorDetail, UnauthorizedException
+from asterism.common import ErrorDetail, UnauthorizedException
 from asterism.llm import WebSocketChatConnection
 from asterism.repositories import chat_repository
 from asterism.schemas import (

@@ -1,5 +1,11 @@
 from .atomic import Atomic
 from .authed_user import AuthedUser
+from .exceptions import (
+    CodedException,
+    ErrorDetail,
+    NotFoundException,
+    UnauthorizedException,
+)
 from .llm_models import DraftModel, LLMModel, LLMProvider, LLMProviderModel
 from .statuses import MessageStatus
 from .tools import (
@@ -27,4 +33,8 @@ __all__ = [
     "ArgDesc",
     "Atomic",
     "AuthedUser",
+    "CodedException",
+    "ErrorDetail",
+    "NotFoundException",
+    "UnauthorizedException",
 ]

@@ -1,30 +1,45 @@
-import importlib
-import pkgutil
-
-from asterism.utils.log import get_logger
+from pathlib import Path
 
 
-def walk_modules(module: str) -> None:
-    logger = get_logger(f"WALK_MODULES: {module}")
+def _has_annotation(
+    file_path: Path,
+    target_decorators: tuple[str, ...],
+) -> bool:
+    import ast
+
+    """Scan AST of a file to check if a specific decorator exists."""
     try:
-        parent_package = importlib.import_module(module)
-    except ModuleNotFoundError:
-        logger.warning(f"Error: Parent package '{module}' not found.")
+        tree = ast.parse(file_path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute):
+                func_value = node.value
+                if isinstance(func_value, ast.Name):
+                    name = f"{func_value.id}.{node.attr}"
+                    if name in target_decorators:
+                        return True
+    except Exception:
+        pass
+    return False
+
+
+def load_decorators(directory: str, target_decorators: tuple[str, ...]) -> None:
+    from importlib.machinery import SourceFileLoader
+
+    base_path = Path(directory)
+    if not base_path.is_dir():
         return
 
-    package_path = getattr(parent_package, "__path__", None)
-    if package_path is None:
-        logger.warning(
-            f"Error: '{module}' is a module, not a package container."
-        )
-        return
-
-    prefix = f"{parent_package.__name__}."
-    for module_info in pkgutil.walk_packages(package_path, prefix):
-        if module_info.ispkg:
+    for file_path in base_path.iterdir():
+        if file_path.name.startswith("__"):
             continue
 
-        try:
-            importlib.import_module(module_info.name)
-        except Exception as e:
-            logger.warning(f"Failed to load plugin {module_info.name}: {e}")
+        if file_path.is_dir():
+            load_decorators(str(file_path), target_decorators)
+            continue
+
+        if file_path.suffix != ".py":
+            continue
+
+        if _has_annotation(file_path, target_decorators):
+            loader = SourceFileLoader(file_path.stem, str(file_path))
+            loader.load_module()

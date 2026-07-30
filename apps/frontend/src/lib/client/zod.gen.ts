@@ -11,7 +11,7 @@ export const zChatInfo = z.object({
     created_at: z.iso.datetime({ local: true }),
     updated_at: z.iso.datetime({ local: true }),
     title: z.string().nullish(),
-    folder_id: z.string().nullish()
+    folder_id: z.uuid().nullish()
 });
 
 /**
@@ -25,8 +25,8 @@ export const zChatModelList = z.object({
  * ChatUpdateRequest
  */
 export const zChatUpdateRequest = z.object({
-    title: z.unknown().optional(),
-    folder_id: z.unknown().optional()
+    title: z.string().nullish(),
+    folder_id: z.uuid().nullish()
 });
 
 /**
@@ -146,7 +146,7 @@ export const zNewChatRequest = z.object({
  */
 export const zNewFolderRequest = z.object({
     title: z.string(),
-    parent_id: z.string().nullable()
+    parent_id: z.uuid().nullish()
 });
 
 /**

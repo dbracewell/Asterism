@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import JsonValue
 
-from asterism.exceptions import ErrorDetail, UnauthorizedException
+from asterism.common import ErrorDetail, UnauthorizedException
 from asterism.repositories import settings_repository
 from asterism.schemas import ApplicationSettingsModel, UserSettingsModel
 from asterism.schemas.settings import (

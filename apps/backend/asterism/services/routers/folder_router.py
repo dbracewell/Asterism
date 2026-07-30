@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter
 
-from asterism.exceptions import ErrorDetail
+from asterism.common import ErrorDetail
 from asterism.repositories import folder_repository
 from asterism.schemas import (
     FolderModel,

@@ -7,7 +7,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useUser } from "@/features/auth/components/user-context";
+import { LlmModel } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import {
   IconArrowUp,
@@ -16,6 +25,7 @@ import {
   IconPlus,
   IconX,
 } from "@tabler/icons-react";
+import { ClipboardPasteIcon } from "lucide-react";
 import Image from "next/image";
 import React, {
   Dispatch,
@@ -26,16 +36,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ClipboardPasteIcon } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useUser } from "@/features/auth/components/user-context";
-import { LlmModel } from "@/lib/client";
 
 interface AttachedFile {
   id: string;
@@ -272,12 +272,20 @@ const ChatInput = React.memo(
                       <SelectValue placeholder="Select a model" />
                     </span>
                   </SelectTrigger>
-                  <SelectContent position="popper" align="end">
+                  <SelectContent
+                    position="popper"
+                    align="end"
+                    className="max-h-60 max-w-60 overflow-y-auto"
+                  >
                     {availableModels?.map((model) => (
-                      <SelectItem value={model.value} key={model.value}>
-                        <span className="block w-[95%] truncate">
+                      <SelectItem
+                        value={model.value}
+                        key={model.value}
+                        className="block min-w-0! truncate"
+                      >
+                        <div className="block w-[95%] truncate">
                           {model.label}
-                        </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

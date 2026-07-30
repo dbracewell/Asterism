@@ -86,11 +86,11 @@ export type ChatUpdateRequest = {
     /**
      * Title
      */
-    title?: unknown;
+    title?: string | null;
     /**
      * Folder Id
      */
-    folder_id?: unknown;
+    folder_id?: string | null;
 };
 
 /**
@@ -103,6 +103,8 @@ export type CreateUserRequest = {
     user_id: string;
     /**
      * System Key
+     *
+     * Optional system key for user creation.
      */
     system_key?: string | null;
 };
@@ -340,7 +342,7 @@ export type NewFolderRequest = {
     /**
      * Parent Id
      */
-    parent_id: string | null;
+    parent_id?: string | null;
 };
 
 /**

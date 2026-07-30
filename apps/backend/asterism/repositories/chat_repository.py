@@ -3,9 +3,8 @@ import uuid
 from sqlalchemy import desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asterism.common import LLMModel
+from asterism.common import LLMModel, NotFoundException, UnauthorizedException
 from asterism.db import get_async_db_session
-from asterism.exceptions import NotFoundException, UnauthorizedException
 from asterism.models import (
     Chat,
     Message,

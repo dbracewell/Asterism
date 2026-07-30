@@ -11,10 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
+from asterism.common import CodedException, ErrorDetail
 from asterism.config import config
 from asterism.db import db_session_manager
 from asterism.events import Event, EventType, event_bus
-from asterism.exceptions import CodedException, ErrorDetail
 from asterism.services.routers import (
     chat_router,
     file_router,
@@ -28,7 +28,7 @@ from asterism.services.routers.function_router import (
 from asterism.services.startup import init_system
 from asterism.utils.log import get_logger
 
-logger = get_logger("AsterismMain")
+logger = get_logger("Asterism")
 
 
 @asynccontextmanager

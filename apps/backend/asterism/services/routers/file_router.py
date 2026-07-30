@@ -4,8 +4,8 @@ import filetype
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
+from asterism.common import ErrorDetail
 from asterism.config import config
-from asterism.exceptions import ErrorDetail
 from asterism.services.dependencies import AuthedUserDep
 
 

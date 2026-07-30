@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter
 
+from asterism.common import ErrorDetail
 from asterism.events import Event, EventType, event_bus
-from asterism.exceptions import ErrorDetail
 
 
 async def handle_function_create(event: Event):

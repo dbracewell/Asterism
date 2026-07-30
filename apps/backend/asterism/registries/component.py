@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 from collections import defaultdict
-from typing import Any, Type, cast
+from typing import Any, Callable, Type, cast
 
 from pydantic import BaseModel
 
@@ -39,7 +39,9 @@ class ComponentRegistry:
         )
         self.providers_by_unique_id: dict[str, ComponentFactory] = {}
 
-    def register(self, component_type: type[Component] | None = None):
+    def register(
+        self, component_type: type[Component] | None = None
+    ) -> Callable[..., ComponentFactory]:
         def decorator(cls: ComponentFactory):
             effective_type = (
                 component_type.component_type()

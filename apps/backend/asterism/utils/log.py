@@ -11,7 +11,7 @@ LOGGING_CONFIG = {
             "()": "uvicorn.logging.DefaultFormatter",
             "fmt": "%(levelprefix)s %(asctime)s | %(name)s | %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S",
-            "use_colors": False,
+            "use_colors": True,
         },
     },
     "handlers": {

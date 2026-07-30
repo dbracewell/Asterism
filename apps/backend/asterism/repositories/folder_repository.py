@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.common import NotFoundException, UnauthorizedException
 from asterism.db import get_async_db_session
-from asterism.exceptions import NotFoundException, UnauthorizedException
 from asterism.models import Chat, Folder
 from asterism.schemas import (
     ChatInfo,

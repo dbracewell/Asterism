@@ -172,6 +172,7 @@ export const ProvidersTab = () => {
     return watchedProviders
       .flatMap((p) => p.models.map((m) => [p.name, p.id, m.name, m.is_active]))
       .filter((m) => m[3])
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .map(([provider_name, id, name, _]) => ({
         value: `${id}::${name}`,
         label: `${provider_name} - ${name}`,

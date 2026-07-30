@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
+from asterism.common import ErrorDetail, UnauthorizedException
 from asterism.config import config
-from asterism.exceptions import ErrorDetail, UnauthorizedException
 from asterism.repositories import user_repository
 from asterism.schemas import CreateUserRequest
 from asterism.services.dependencies import (
