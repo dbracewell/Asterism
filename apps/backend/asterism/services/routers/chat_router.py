@@ -2,9 +2,9 @@ import uuid
 
 from fastapi import APIRouter, Query, WebSocket
 
-from asterism.common import ErrorDetail, UnauthorizedException
-from asterism.llm import WebSocketChatConnection
-from asterism.repositories import chat_repository
+from asterism.common import AgentProfile, ErrorDetail, UnauthorizedException
+from asterism.llm import Agent
+from asterism.repositories import chat_repository, settings_repository
 from asterism.schemas import (
     ChatModel,
     ChatModelList,
@@ -16,6 +16,7 @@ from asterism.services.dependencies import (
     DBSessionDep,
     verify_jwks_token,
 )
+from asterism.services.websockets import AgentRunnerWebsocket
 
 chat_router = APIRouter(
     prefix="/chat",
@@ -30,7 +31,7 @@ async def chat(
     chat_id: uuid.UUID,
     session: DBSessionDep,
     token: str = Query(...),
-):
+) -> None:
     try:
         user = verify_jwks_token(token)
     except UnauthorizedException:
@@ -40,12 +41,41 @@ async def chat(
     chat_session = await chat_repository.get_one(
         session_id=chat_id,
         user_id=user.id,
+        session=session,
     )
-    websocket_connection = WebSocketChatConnection(
-        db_session=session,
-        websocket=websocket,
-        chat_session=chat_session,
+    user_settings = await settings_repository.get_user_settings(
+        user_id=user.id,
+        session=session,
+    )
+
+    if user_settings.default_model is None:
+        await websocket.send_json(
+            {"type": "ERROR", "message": "No default model"}
+        )
+        await websocket.close()
+        return
+    agent: Agent = Agent(
+        profile=AgentProfile(
+            name="Default Agent",
+            description="Description",
+            id=uuid.uuid4(),
+            max_steps=5,
+            model=user_settings.default_model,
+            tools=[
+                "get_user_name",
+                "get_current_timestamp",
+                "get_timestamp_at_timezone",
+                "web_search",
+                "web_fetch",
+            ],
+        ),
         user=user,
+    )
+
+    websocket_connection = AgentRunnerWebsocket(
+        chat_session=chat_session,
+        websocket=websocket,
+        agent=agent,
     )
     await websocket_connection.open()
 

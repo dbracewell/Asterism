@@ -8,19 +8,19 @@ import {
   THEME_REFRESH_COOKIE,
 } from "@/features/theme/constants";
 import { convertToCssVariables } from "@/features/theme/lib/utils";
-import { ExtendedTheme } from "@/features/theme/types";
+import { Theme } from "@/features/theme/types";
 import fs, { readFile } from "fs/promises";
 import { cookies } from "next/headers";
 import path from "path";
 import lightTheme from "../../../../public/themes/light.json";
 
 const globalForData = globalThis as unknown as {
-  themes: Record<string, ExtendedTheme> | null;
+  themes: Record<string, Theme> | null;
 };
 
 export async function getTheme() {
   const cookieStore = await cookies();
-  const themeNameCookie =
+  let themeNameCookie =
     cookieStore.get(THEME_NAME_COOKIE)?.value ?? DEFAULT_THEME_NAME;
   const fontSize =
     cookieStore.get(FONT_SIZE_COOKIE)?.value ?? DEFAULT_FONT_SIZE;
@@ -31,6 +31,9 @@ export async function getTheme() {
   }
 
   const allThemes = await getAllThemes();
+  if (allThemes[themeNameCookie] == null) {
+    themeNameCookie = DEFAULT_THEME_NAME;
+  }
   const currentTheme = allThemes[themeNameCookie];
   const themeStyles = convertToCssVariables(
     currentTheme.colors,
@@ -55,7 +58,7 @@ export async function getAllThemes() {
 
   try {
     const files = await fs.readdir(filePath);
-    const themes: Record<string, ExtendedTheme> = {};
+    const themes: Record<string, Theme> = {};
     for (const file of files) {
       if (!file.toLowerCase().endsWith(".json")) {
         continue;

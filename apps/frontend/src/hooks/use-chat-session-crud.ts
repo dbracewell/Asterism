@@ -4,9 +4,9 @@ import {
   chatSessionDeleteMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { toast } from "sonner";
 
 export const useChatSessionCrud = () => {
   const router = useRouter();
@@ -17,7 +17,7 @@ export const useChatSessionCrud = () => {
       client: client,
     }),
     onSuccess: (data) => {
-      router.push(`/c/${data.info.id}?new=true`);
+      router.push(`/c/${data.info.id}`);
     },
     onError: () =>
       toast.error("Failed to create chat session. Please try again."),

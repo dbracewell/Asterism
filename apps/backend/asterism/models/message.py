@@ -8,7 +8,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Integer, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from asterism.common import LLMModel, MessageStatus, ToolCall
+from asterism.common import LLMModel, MessageStatus, ToolCall, ToolResult
 from asterism.models.typedefs import JSONB_COLUMN
 
 from . import Base
@@ -78,14 +78,14 @@ class Message(Base):
         nullable=False,
         server_default="",
     )
-    tool_call_id: Mapped[Optional[str]] = mapped_column(
-        "tool_call_id",
-        String,
-        nullable=True,
-    )
     tool_calls: Mapped[Optional[list[ToolCall]]] = mapped_column(
         "tool_calls",
         JSONB_COLUMN(TypeAdapter(list[ToolCall])),
+        nullable=True,
+    )
+    tool_call_results: Mapped[Optional[list[ToolResult]]] = mapped_column(
+        "tool_call_results",
+        JSONB_COLUMN(TypeAdapter(list[ToolResult])),
         nullable=True,
     )
     token_count: Mapped[int] = mapped_column(

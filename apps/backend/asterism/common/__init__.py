@@ -1,5 +1,7 @@
+from .agent import AgentProfile
 from .atomic import Atomic
 from .authed_user import AuthedUser
+from .chat_parameters import ChatCompletionParams
 from .exceptions import (
     CodedException,
     ErrorDetail,
@@ -19,6 +21,8 @@ from .tools import (
 )
 
 __all__ = [
+    "AgentProfile",
+    "ChatCompletionParams",
     "DraftModel",
     "LLMModel",
     "LLMProvider",

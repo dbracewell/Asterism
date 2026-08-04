@@ -42,7 +42,3 @@ export type Theme = {
   type: "dark" | "light";
   colors: ThemeColors;
 };
-
-export type ExtendedTheme = Theme & {
-  filename: string;
-};

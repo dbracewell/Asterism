@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, Type
+from typing import TYPE_CHECKING, Any, Callable, Literal, Type
 
 from openai.types.chat import ChatCompletionFunctionToolParam
 from pydantic import BaseModel
 
 from .authed_user import AuthedUser
+
+if TYPE_CHECKING:
+    from asterism.llm import LLMClient
+    from asterism.schemas import ApplicationSettingsModel
 
 
 class Function(BaseModel):
@@ -27,6 +33,8 @@ class ToolContext[T: BaseModel | None]:
     args: T
     user: AuthedUser
     user_message: str
+    app_settings: ApplicationSettingsModel
+    client: LLMClient
     user_files: list[str] = field(default_factory=list)
 
 
@@ -46,16 +54,7 @@ class ArgDesc:
 
 @dataclass
 class ToolResult:
-    tool_call_id: str
     content: str
-    name: str
     raw_result: Any
     is_empty: bool
-
-    def to_message(self):
-        return {
-            "role": "tool",
-            "tool_call_id": self.tool_call_id,
-            "content": self.content,
-            "name": self.name,
-        }
+    tool_call: ToolCall

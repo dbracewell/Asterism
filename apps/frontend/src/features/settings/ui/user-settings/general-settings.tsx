@@ -1,4 +1,3 @@
-import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
 import {
   Select,
   SelectContent,
@@ -6,8 +5,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LlmModel } from "@/lib/client";
 import { useUser } from "@/features/auth/components/user-context";
+import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
+import { LlmModel } from "@/lib/client";
 
 export const GeneralSettings = () => {
   const { updateSetting } = useUpdateUserSettings();
@@ -20,11 +20,7 @@ export const GeneralSettings = () => {
       <div className="flex flex-col items-center gap-2 sm:flex-row">
         <h2>Model</h2>
         <Select
-          defaultValue={
-            userSettings?.chat_model
-              ? `${userSettings.chat_model.provider_id}::${userSettings.chat_model.name}`
-              : undefined
-          }
+          defaultValue={userSettings.default_model_id ?? undefined}
           onValueChange={(v) => {
             const [provider_id, name] = v.split("::");
             updateSetting("chat_model", {
@@ -37,11 +33,8 @@ export const GeneralSettings = () => {
             <SelectValue className="truncate" />
           </SelectTrigger>
           <SelectContent>
-            {userSettings?.models?.map((model) => (
-              <SelectItem
-                value={`${model.provider_id}::${model.name}`}
-                key={`${model.provider_id}::${model.name}`}
-              >
+            {Object.entries(userSettings.models ?? {}).map(([key, model]) => (
+              <SelectItem value={key} key={key}>
                 {model.name}
               </SelectItem>
             ))}

@@ -4,7 +4,7 @@ import {
   THEME_NAME_COOKIE,
   THEME_REFRESH_COOKIE,
 } from "@/features/theme/constants";
-import { ExtendedTheme } from "@/features/theme/types";
+import { Theme } from "@/features/theme/types";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import React, { createContext, useCallback, useMemo } from "react";
@@ -13,21 +13,16 @@ export type ThemeData = {
   currentTheme: string;
   currentThemeType: "light" | "dark";
   allThemes: { name: string; filename: string; type: "light" | "dark" }[];
+  darkThemes: { name: string; filename: string; type: "light" | "dark" }[];
+  lightThemes: { name: string; filename: string; type: "light" | "dark" }[];
   fontSize: string;
   setFontSize: (fontSize: string) => void;
   setTheme: (themeFileName: string) => void;
+  getTheme: (themeFileName: string) => Theme;
   refresh: () => void;
 };
 
-export const ThemeContext = createContext<ThemeData | null>({
-  currentTheme: "light",
-  currentThemeType: "light",
-  allThemes: [],
-  fontSize: "16px",
-  setFontSize: () => {},
-  setTheme: () => {},
-  refresh: () => {},
-});
+export const ThemeContext = createContext<ThemeData | null>(null);
 
 export const useTheme = (): ThemeData => {
   const context = React.useContext(ThemeContext);
@@ -44,13 +39,14 @@ export const ThemeProvider = ({
   currentThemeType,
   children,
 }: {
-  themes: Record<string, ExtendedTheme>;
+  themes: Record<string, Theme>;
   currentTheme: string;
   fontSize: string;
   currentThemeType: "dark" | "light";
   children: React.ReactNode;
 }) => {
   const router = useRouter();
+
   const allThemes = useMemo(() => {
     return Object.values(themes).map((theme) => ({
       name: theme.name,
@@ -59,6 +55,25 @@ export const ThemeProvider = ({
     }));
   }, [themes]);
 
+  const darkThemes = useMemo(
+    () =>
+      allThemes
+        .filter((theme) => theme.type === "dark")
+        .sort((a, b) =>
+          a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase() ? -1 : 1,
+        ),
+    [allThemes],
+  );
+  const lightThemes = useMemo(
+    () =>
+      allThemes
+        .filter((theme) => theme.type === "light")
+        .sort((a, b) =>
+          a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase() ? -1 : 1,
+        ),
+    [allThemes],
+  );
+
   const setFontSize = useCallback((fontSize: string) => {
     try {
       Cookies.set(FONT_SIZE_COOKIE, fontSize);
@@ -66,6 +81,13 @@ export const ThemeProvider = ({
       console.log(error);
     }
   }, []);
+
+  const getTheme = useCallback(
+    (themeFileName: string) => {
+      return themes[themeFileName];
+    },
+    [themes],
+  );
 
   const setTheme = useCallback((themeFileName: string) => {
     Cookies.set(THEME_NAME_COOKIE, themeFileName, {
@@ -88,6 +110,9 @@ export const ThemeProvider = ({
         setFontSize,
         setTheme,
         refresh,
+        getTheme,
+        lightThemes,
+        darkThemes,
       }}
     >
       {children}

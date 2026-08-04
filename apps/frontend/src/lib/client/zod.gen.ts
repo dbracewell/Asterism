@@ -3,6 +3,43 @@
 import * as z from 'zod';
 
 /**
+ * ChatCompletionParams
+ */
+export const zChatCompletionParams = z.object({
+    reasoning_effort: z.unknown().optional(),
+    temperature: z.number().optional(),
+    top_p: z.number().optional(),
+    frequency_penalty: z.number().optional(),
+    presence_penalty: z.number().optional(),
+    seed: z.int().optional(),
+    stop: z.union([
+        z.string(),
+        z.array(z.string())
+    ]).optional(),
+    extra_body: z.record(z.string(), z.unknown()).optional(),
+    tool_choice: z.union([
+        z.enum([
+            'required',
+            'auto',
+            'none'
+        ]),
+        z.record(z.string(), z.unknown())
+    ]).optional(),
+    max_completion_tokens: z.int().optional(),
+    modalities: z.array(z.enum(['text', 'audio'])).optional(),
+    audio: z.record(z.string(), z.unknown()).optional(),
+    prediction: z.record(z.string(), z.unknown()).optional(),
+    parallel_tool_calls: z.boolean().optional(),
+    n: z.int().optional(),
+    logit_bias: z.record(z.string(), z.int()).optional(),
+    logprobs: z.boolean().optional(),
+    top_logprobs: z.int().optional(),
+    extra_headers: z.record(z.string(), z.string()).optional(),
+    extra_query: z.record(z.string(), z.unknown()).optional(),
+    timeout: z.number().nullish()
+});
+
+/**
  * ChatInfo
  */
 export const zChatInfo = z.object({
@@ -27,6 +64,22 @@ export const zChatModelList = z.object({
 export const zChatUpdateRequest = z.object({
     title: z.string().nullish(),
     folder_id: z.uuid().nullish()
+});
+
+/**
+ * ComponentResponse
+ */
+export const zComponentResponse = z.object({
+    type: z.string(),
+    name: z.string(),
+    parameters: z.record(z.string(), z.unknown())
+});
+
+/**
+ * ComponentListResponse
+ */
+export const zComponentListResponse = z.object({
+    items: z.array(zComponentResponse)
 });
 
 /**
@@ -100,9 +153,24 @@ export const zLlmModel = z.object({
 });
 
 /**
+ * AgentProfile
+ */
+export const zAgentProfile = z.object({
+    id: z.uuid(),
+    name: z.string(),
+    description: z.string(),
+    model: zLlmModel,
+    system_prompt: z.string().nullish(),
+    max_steps: z.int().optional().default(3),
+    chat_parameters: zChatCompletionParams.optional(),
+    tools: z.array(z.string()).optional()
+});
+
+/**
  * LLMProviderModel
  */
 export const zLlmProviderModel = z.object({
+    provider_id: z.string(),
     name: z.string(),
     is_active: z.boolean()
 });
@@ -116,15 +184,6 @@ export const zLlmProvider = z.object({
     base_url: z.string(),
     api_key: z.string(),
     models: z.array(zLlmProviderModel)
-});
-
-/**
- * ApplicationSettingsModel
- */
-export const zApplicationSettingsModel = z.object({
-    llm_providers: z.array(zLlmProvider).optional(),
-    default_model: zLlmModel.optional(),
-    draft_model: zDraftModel.optional()
 });
 
 /**
@@ -167,6 +226,16 @@ export const zToolCall = z.object({
 });
 
 /**
+ * ToolResult
+ */
+export const zToolResult = z.object({
+    content: z.string(),
+    raw_result: z.unknown(),
+    is_empty: z.boolean(),
+    tool_call: zToolCall
+});
+
+/**
  * MessageModel
  */
 export const zMessageModel = z.object({
@@ -175,12 +244,12 @@ export const zMessageModel = z.object({
     token_count: z.int(),
     thinking: z.string().nullish(),
     tool_calls: z.array(zToolCall).nullish(),
-    tool_call_id: z.string().nullish(),
     id: z.uuid(),
     status: zMessageStatus,
     created_at: z.int(),
     model: zLlmModel,
-    active_child_id: z.string().nullable(),
+    tool_results: z.array(zToolResult).nullish(),
+    active_child_id: z.string().nullish(),
     has_siblings: z.boolean().optional().default(false),
     sibling_count: z.int().optional().default(0),
     current_sibling_index: z.int().optional().default(-1)
@@ -207,8 +276,28 @@ export const zUpdateSettingValue = z.object({
 export const zUserSettingsModel = z.object({
     theme: z.string().optional().default('light'),
     font_size: z.string().optional().default('16px'),
-    models: z.array(zLlmModel).optional(),
-    chat_model: zLlmModel.nullish()
+    models: z.record(z.string(), zLlmModel).optional(),
+    default_model_id: z.string().nullish(),
+    agents: z.record(z.string(), zAgentProfile).optional(),
+    default_agent_id: z.uuid().nullish()
+});
+
+/**
+ * WebSearchProvider
+ */
+export const zWebSearchProvider = z.object({
+    name: z.string(),
+    parameters: z.record(z.string(), z.string()).optional()
+});
+
+/**
+ * ApplicationSettingsModel
+ */
+export const zApplicationSettingsModel = z.object({
+    llm_providers: z.array(zLlmProvider).optional(),
+    default_model: zLlmModel.optional(),
+    draft_model: zDraftModel.optional(),
+    websearch_provider: zWebSearchProvider.nullish()
 });
 
 export const zGetFilePath = z.object({
@@ -367,3 +456,12 @@ export const zUserDeletePath = z.object({
  * Successful Response
  */
 export const zUserDeleteResponse = z.boolean();
+
+export const zComponentsByTypePath = z.object({
+    component_type: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zComponentsByTypeResponse = zComponentListResponse;

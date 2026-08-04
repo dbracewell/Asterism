@@ -27,7 +27,6 @@ async def create_user(
     user: OptionalAuthedUser,
     session: DBSessionDep,
 ) -> bool:
-    print(user)
     can_add = (user and user.role == "admin") or (
         payload.system_key and payload.system_key == config.SYSTEM_KEY
     )

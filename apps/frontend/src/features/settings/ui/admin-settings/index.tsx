@@ -4,6 +4,7 @@ import { ExportSettings } from "@/features/settings/ui/admin-settings/export-set
 import { GroupSettings } from "@/features/settings/ui/admin-settings/groups-settings";
 import { ImageGenSettings } from "@/features/settings/ui/admin-settings/image-gen-settings";
 import { ProvidersTab } from "@/features/settings/ui/admin-settings/providers-tab";
+import { ThemeEditor } from "@/features/settings/ui/admin-settings/theme-editor";
 import { ToolsSettings } from "@/features/settings/ui/admin-settings/tools-settings";
 import { UserPermissionsSettings } from "@/features/settings/ui/admin-settings/user-permissions-settings";
 import { WebSearchSettings } from "@/features/settings/ui/admin-settings/web-search";
@@ -15,16 +16,23 @@ import {
   IconUsersGroup,
   IconUserShield,
 } from "@tabler/icons-react";
-import { CodeIcon, ToolboxIcon } from "lucide-react";
+import { CodeIcon, PaletteIcon, ToolboxIcon } from "lucide-react";
 
 export const AdminSettings: Types = [
   {
     type: "section",
     label: "Providers",
     value: "providers",
+    isDefault: true,
     icon: <IconCloudCog />,
     settingsPane: <ProvidersTab />,
-    isDefault: true,
+  },
+  {
+    type: "section",
+    label: "Theme Editor",
+    value: "theme_editor",
+    icon: <PaletteIcon />,
+    settingsPane: <ThemeEditor />,
   },
   { type: "separator" },
   {

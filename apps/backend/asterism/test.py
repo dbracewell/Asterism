@@ -1,19 +1,12 @@
 import asyncio
-from pathlib import Path
 
-from asterism.registries import component_registry
-from asterism.utils.package_walker import load_decorators
+from asterism.utils.web import fetch_markdown
 
 
 async def main() -> None:
-    load_decorators(
-        str(Path(__file__).parent),
-        target_decorators=(
-            "tool_registry.tool",
-            "component_registry.register",
-        ),
-    )
-    print(component_registry.get_component_types())
+    extracted = await fetch_markdown(url="https://www.homeroomhaven.com")
+
+    print(f"'{extracted}'")
 
 
 if __name__ == "__main__":

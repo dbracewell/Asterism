@@ -6,6 +6,7 @@ from .chat import (
     ChatUpdateRequest,
     NewChatRequest,
 )
+from .components import ComponentListResponse, ComponentResponse
 from .folder import (
     FlatFolderModel,
     FolderModel,
@@ -31,6 +32,8 @@ FolderModel.model_rebuild()
 FolderModelList.model_rebuild()
 
 __all__ = [
+    "ComponentResponse",
+    "ComponentListResponse",
     "ApplicationSettingsModel",
     "UserSettingsModel",
     "LLMMessage",

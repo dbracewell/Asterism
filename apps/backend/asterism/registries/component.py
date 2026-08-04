@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import abc
 from collections import defaultdict
-from typing import Any, Callable, Type, cast
+from typing import Any, Callable, Type
 
 from pydantic import BaseModel
-
-from asterism.repositories import settings_repository
 
 
 class Component[T: BaseModel](abc.ABC):
     @abc.abstractmethod
-    def __call__(self, *args, **kwargs) -> Any: ...
+    async def __call__(self, *args, **kwargs) -> Any: ...
 
     @classmethod
     def parameters(cls) -> Type[BaseModel]: ...
@@ -40,7 +38,8 @@ class ComponentRegistry:
         self.providers_by_unique_id: dict[str, ComponentFactory] = {}
 
     def register(
-        self, component_type: type[Component] | None = None
+        self,
+        component_type: type[Component] | None = None,
     ) -> Callable[..., ComponentFactory]:
         def decorator(cls: ComponentFactory):
             effective_type = (
@@ -48,41 +47,30 @@ class ComponentRegistry:
                 if component_type
                 else cls.component_type()
             )
-            self.providers_by_type[effective_type].append(cls)
-            self.providers_by_unique_id[
-                f"{effective_type}-{cls.name().upper()}"
-            ] = cls
+            unique_key = f"{effective_type}-{cls.name().upper()}"
+            if unique_key not in self.providers_by_unique_id:
+                self.providers_by_type[effective_type].append(cls)
+                self.providers_by_unique_id[unique_key] = cls
             return cls
 
         return decorator
 
-    async def get_component[R: Component](
+    async def get_component(
         self,
-        component_type: Type[R],
+        component_type: str,
         component_name: str,
-    ) -> R:
-        key = f"{component_type.component_type()}-{component_name.upper()}"
+        parameters_dict: dict[str, Any] | None = None,
+    ) -> Component:
+        key = f"{component_type}-{component_name.upper()}"
         if key not in self.providers_by_unique_id:
             raise ValueError(f"Unknown component type: {key}")
 
         factory = self.providers_by_unique_id[key]
         parameters = factory.parameters()
-        prefix = (
-            f"{component_type.component_type()}::{component_name.upper()}::"
-        )
-        settings = await settings_repository.get_settings(
-            [f"{prefix}{field}" for field in parameters.model_fields.keys()]
-        )
-        return cast(
-            R,
-            self.providers_by_unique_id[key].factory(
-                parameters.model_validate(
-                    {
-                        k.replace(prefix, "").strip(): v
-                        for k, v in settings.items()
-                    }
-                )
-            ),
+        return self.providers_by_unique_id[key].factory(
+            parameters.model_validate(parameters_dict)
+            if parameters_dict
+            else parameters()
         )
 
     def get_providers(

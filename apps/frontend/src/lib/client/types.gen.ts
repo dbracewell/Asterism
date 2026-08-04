@@ -5,6 +5,38 @@ export type ClientOptions = {
 };
 
 /**
+ * AgentProfile
+ */
+export type AgentProfile = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    model: LlmModel;
+    /**
+     * System Prompt
+     */
+    system_prompt?: string | null;
+    /**
+     * Max Steps
+     */
+    max_steps?: number;
+    chat_parameters?: ChatCompletionParams;
+    /**
+     * Tools
+     */
+    tools?: Array<string>;
+};
+
+/**
  * ApplicationSettingsModel
  */
 export type ApplicationSettingsModel = {
@@ -14,6 +46,7 @@ export type ApplicationSettingsModel = {
     llm_providers?: Array<LlmProvider>;
     default_model?: LlmModel;
     draft_model?: DraftModel;
+    websearch_provider?: WebSearchProvider | null;
 };
 
 /**
@@ -26,6 +59,110 @@ export type BulkUpdateSettingRequest = {
     values: {
         [key: string]: JsonValue;
     };
+};
+
+/**
+ * ChatCompletionParams
+ */
+export type ChatCompletionParams = {
+    /**
+     * Reasoning Effort
+     */
+    reasoning_effort?: unknown;
+    /**
+     * Temperature
+     */
+    temperature?: number;
+    /**
+     * Top P
+     */
+    top_p?: number;
+    /**
+     * Frequency Penalty
+     */
+    frequency_penalty?: number;
+    /**
+     * Presence Penalty
+     */
+    presence_penalty?: number;
+    /**
+     * Seed
+     */
+    seed?: number;
+    /**
+     * Stop
+     */
+    stop?: string | Array<string>;
+    /**
+     * Extra Body
+     */
+    extra_body?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Tool Choice
+     */
+    tool_choice?: 'required' | 'auto' | 'none' | {
+        [key: string]: unknown;
+    };
+    /**
+     * Max Completion Tokens
+     */
+    max_completion_tokens?: number;
+    /**
+     * Modalities
+     */
+    modalities?: Array<'text' | 'audio'>;
+    /**
+     * Audio
+     */
+    audio?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Prediction
+     */
+    prediction?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Parallel Tool Calls
+     */
+    parallel_tool_calls?: boolean;
+    /**
+     * N
+     */
+    n?: number;
+    /**
+     * Logit Bias
+     */
+    logit_bias?: {
+        [key: string]: number;
+    };
+    /**
+     * Logprobs
+     */
+    logprobs?: boolean;
+    /**
+     * Top Logprobs
+     */
+    top_logprobs?: number;
+    /**
+     * Extra Headers
+     */
+    extra_headers?: {
+        [key: string]: string;
+    };
+    /**
+     * Extra Query
+     */
+    extra_query?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Timeout
+     */
+    timeout?: number | null;
 };
 
 /**
@@ -91,6 +228,36 @@ export type ChatUpdateRequest = {
      * Folder Id
      */
     folder_id?: string | null;
+};
+
+/**
+ * ComponentListResponse
+ */
+export type ComponentListResponse = {
+    /**
+     * Items
+     */
+    items: Array<ComponentResponse>;
+};
+
+/**
+ * ComponentResponse
+ */
+export type ComponentResponse = {
+    /**
+     * Type
+     */
+    type: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Parameters
+     */
+    parameters: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -246,6 +413,10 @@ export type LlmProvider = {
  */
 export type LlmProviderModel = {
     /**
+     * Provider Id
+     */
+    provider_id: string;
+    /**
      * Name
      */
     name: string;
@@ -280,10 +451,6 @@ export type MessageModel = {
      */
     tool_calls?: Array<ToolCall> | null;
     /**
-     * Tool Call Id
-     */
-    tool_call_id?: string | null;
-    /**
      * Id
      */
     id: string;
@@ -294,9 +461,13 @@ export type MessageModel = {
     created_at: number;
     model: LlmModel;
     /**
+     * Tool Results
+     */
+    tool_results?: Array<ToolResult> | null;
+    /**
      * Active Child Id
      */
-    active_child_id: string | null;
+    active_child_id?: string | null;
     /**
      * Has Siblings
      */
@@ -372,6 +543,25 @@ export type ToolCall = {
 };
 
 /**
+ * ToolResult
+ */
+export type ToolResult = {
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Raw Result
+     */
+    raw_result: unknown;
+    /**
+     * Is Empty
+     */
+    is_empty: boolean;
+    tool_call: ToolCall;
+};
+
+/**
  * UpdateSettingValue
  */
 export type UpdateSettingValue = {
@@ -393,8 +583,39 @@ export type UserSettingsModel = {
     /**
      * Models
      */
-    models?: Array<LlmModel>;
-    chat_model?: LlmModel | null;
+    models?: {
+        [key: string]: LlmModel;
+    };
+    /**
+     * Default Model Id
+     */
+    default_model_id?: string | null;
+    /**
+     * Agents
+     */
+    agents?: {
+        [key: string]: AgentProfile;
+    };
+    /**
+     * Default Agent Id
+     */
+    default_agent_id?: string | null;
+};
+
+/**
+ * WebSearchProvider
+ */
+export type WebSearchProvider = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Parameters
+     */
+    parameters?: {
+        [key: string]: string;
+    };
 };
 
 export type GetFileData = {
@@ -1028,3 +1249,37 @@ export type UserDeleteResponses = {
 };
 
 export type UserDeleteResponse = UserDeleteResponses[keyof UserDeleteResponses];
+
+export type ComponentsByTypeData = {
+    body?: never;
+    path: {
+        /**
+         * Component Type
+         */
+        component_type: string;
+    };
+    query?: never;
+    url: '/components/by_type/{component_type}';
+};
+
+export type ComponentsByTypeErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ComponentsByTypeError = ComponentsByTypeErrors[keyof ComponentsByTypeErrors];
+
+export type ComponentsByTypeResponses = {
+    /**
+     * Successful Response
+     */
+    200: ComponentListResponse;
+};
+
+export type ComponentsByTypeResponse = ComponentsByTypeResponses[keyof ComponentsByTypeResponses];

@@ -1,3 +1,6 @@
+import importlib
+import importlib.util
+import sys
 from pathlib import Path
 
 
@@ -23,7 +26,6 @@ def _has_annotation(
 
 
 def load_decorators(directory: str, target_decorators: tuple[str, ...]) -> None:
-    from importlib.machinery import SourceFileLoader
 
     base_path = Path(directory)
     if not base_path.is_dir():
@@ -41,5 +43,12 @@ def load_decorators(directory: str, target_decorators: tuple[str, ...]) -> None:
             continue
 
         if _has_annotation(file_path, target_decorators):
-            loader = SourceFileLoader(file_path.stem, str(file_path))
-            loader.load_module()
+            module_name = file_path.stem
+            path_str = str(file_path)
+            spec = importlib.util.spec_from_file_location(module_name, path_str)
+            if spec is not None and spec.loader is not None:
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[module_name] = module
+                spec.loader.exec_module(module)
+            else:
+                print(f"Failed to create module spec for {path_str}")

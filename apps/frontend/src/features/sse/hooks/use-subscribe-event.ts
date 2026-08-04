@@ -1,7 +1,7 @@
-import { EventType } from "@/features/sse/types";
-import { EventPayloadMap } from "@/features/sse/schemas";
-import { useEffect, useRef, useState } from "react";
 import { eventBus } from "@/features/sse/lib/event-bus";
+import { EventPayloadMap } from "@/features/sse/schemas";
+import { EventType } from "@/features/sse/types";
+import { useEffect, useRef, useState } from "react";
 
 export type SubscribeEventProps<T extends EventType> = {
   type: T;

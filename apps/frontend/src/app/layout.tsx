@@ -55,12 +55,12 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={cn("flex h-screen w-screen overflow-hidden", mode)}
+        className={cn("flex h-screen w-screen flex-col", mode)}
         suppressHydrationWarning
       >
         <ThemeProvider
           themes={allThemes}
-          currentMode={mode}
+          currentThemeType={mode}
           currentTheme={currentTheme.filename}
           fontSize={fontSize}
         >

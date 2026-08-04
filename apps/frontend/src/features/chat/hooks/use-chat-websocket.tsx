@@ -1,8 +1,9 @@
-import useWebSocket from "react-use-websocket";
-import { ChatModel } from "@/lib/client";
-import React, { useMemo, useState } from "react";
+import { AgentEventSchema } from "@/features/chat/schemas";
 import { eventBus } from "@/features/sse/lib/event-bus";
+import { ChatModel } from "@/lib/client";
 import { zMessageModel } from "@/lib/client/zod.gen";
+import React, { useMemo, useState } from "react";
+import useWebSocket from "react-use-websocket";
 import { z } from "zod";
 
 export const useChatWebSocket = ({
@@ -37,13 +38,28 @@ export const useChatWebSocket = ({
       reconnectAttempts: 10,
       reconnectInterval: 3000,
       onMessage: (event) => {
-        const msgContent = JSON.parse(event.data);
+        let raw_object;
+        try {
+          raw_object = JSON.parse(event.data);
+        } catch (error) {
+          console.error(error);
+          return;
+        }
+        const result = AgentEventSchema.safeParse(raw_object);
 
-        if (msgContent.type === "ERROR") {
-          setErrorState(msgContent.message);
+        if (!result.success) {
+          console.log(result.error.message);
+          return;
         }
 
-        if (msgContent.type === "STREAM_START") {
+        const msgContent = result.data;
+
+        if (msgContent.type === "error") {
+          setErrorState(msgContent.content);
+          return;
+        }
+
+        if (msgContent.type === "start") {
           streamingMessageRef.current = {
             model: { provider_id: "", name: "" },
             thinking: "",
@@ -73,34 +89,21 @@ export const useChatWebSocket = ({
           }
         }
 
-        if (msgContent.type === "THINKING_DELTA") {
+        if (msgContent.type === "delta") {
           streamingMessageRef.current = {
             ...streamingMessageRef.current!,
-            thinking: msgContent.content,
-          };
-        }
-
-        if (msgContent.type === "TEXT_DELTA") {
-          streamingMessageRef.current = {
-            ...streamingMessageRef.current!,
+            thinking: msgContent.thinking,
             content: msgContent.content,
           };
         }
 
-        if (
-          msgContent.type === "STREAM_END" ||
-          msgContent.type === "STREAM_PRE_TOOLS"
-        ) {
+        if (msgContent.type === "complete") {
           if (flushTimerRef.current) {
             clearInterval(flushTimerRef.current);
             flushTimerRef.current = null;
           }
-
-          const lastMessages = JSON.parse(msgContent.content) as z.infer<
-            typeof zMessageModel
-          >[];
           eventBus.emit("chat-session:message-update", {
-            updatedMessages: lastMessages,
+            updatedMessages: msgContent.last_messages,
             incomingMessage: null,
           });
           streamingMessageRef.current = null;

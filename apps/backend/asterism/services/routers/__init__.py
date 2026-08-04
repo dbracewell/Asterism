@@ -1,10 +1,12 @@
 from .chat_router import chat_router
+from .components_router import components_router
 from .file_router import file_router
 from .folder_router import folder_router
 from .settings_router import settings_router
 from .user_router import user_router
 
 __all__ = [
+    "components_router",
     "chat_router",
     "file_router",
     "folder_router",

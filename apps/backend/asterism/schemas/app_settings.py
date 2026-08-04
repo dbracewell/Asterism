@@ -1,11 +1,16 @@
 from pydantic import BaseModel, Field
 
 from asterism import config
-from asterism.common.llm_models import (
+from asterism.common import (
     DraftModel,
     LLMModel,
     LLMProvider,
 )
+
+
+class WebSearchProvider(BaseModel):
+    name: str
+    parameters: dict[str, str] = Field(default_factory=dict)
 
 
 class ApplicationSettingsModel(BaseModel):
@@ -19,6 +24,7 @@ class ApplicationSettingsModel(BaseModel):
             filename=config.DEFAULT_DRAFT_MODEL_FILENAME,
         )
     )
+    websearch_provider: WebSearchProvider | None = None
 
     def get_provider(self, provider_id: str):
         for provider in self.llm_providers:

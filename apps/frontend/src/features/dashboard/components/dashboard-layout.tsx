@@ -3,6 +3,8 @@ import UserProvider from "@/features/auth/components/user-context";
 import { getCurrentUser } from "@/features/auth/server/actions";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
 import { Header } from "@/features/dashboard/components/header";
+import { ThemeCheck } from "@/features/dashboard/components/theme-check";
+import { UpdateTimeZone } from "@/features/dashboard/components/update-timezone";
 import {
   FOLDER_OPEN_COOKIE,
   SESSIONS_OPEN_COOKIE,
@@ -10,8 +12,6 @@ import {
 } from "@/features/dashboard/constants";
 import { cookies } from "next/headers";
 import React from "react";
-import { ThemeCheck } from "@/features/dashboard/components/theme-check";
-import { UpdateTimeZone } from "@/features/dashboard/components/update-timezone";
 
 export const DashboardLayout = async ({
   children,
@@ -36,7 +36,7 @@ export const DashboardLayout = async ({
           navFolderOpen={navFolderOpen}
           navSessionsOpen={navSessionsOpen}
         />
-        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="relative flex min-h-0 flex-1 flex-col">
           <Header />
           <div className="flex min-h-0 flex-1 flex-col p-2">{children}</div>
         </div>

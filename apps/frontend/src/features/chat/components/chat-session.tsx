@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/features/auth/components/user-context";
 import ChatInput from "@/features/chat/components/chat-input";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
-import { ChatInfo, ChatModel, LlmModel, MessageModel } from "@/lib/client";
-import { cn } from "@/lib/utils";
-import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
-import React, { Dispatch, RefObject, SetStateAction } from "react";
-import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
+import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import {
   connectionStatus,
   type ConnectionStatus,
   type ScrollState,
 } from "@/features/chat/types";
-import { useChatWebSocket } from "@/features/chat/lib/websocket";
+import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
+import { ChatInfo, ChatModel, LlmModel, MessageModel } from "@/lib/client";
+import { cn } from "@/lib/utils";
+import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
+import React, { Dispatch, RefObject, SetStateAction } from "react";
 
 export type ChatSessionContextType = {
   sessionInfo: ChatInfo;
@@ -338,16 +338,6 @@ const MessageItem = React.memo(
 
     return (
       <div className="flex flex-col gap-1">
-        <h4
-          className={cn(
-            "px-2 text-xs",
-            message.role === "user" && "ml-auto text-right",
-          )}
-        >
-          {message.role === "user" ? user.name.split(" ")[0] : "Assistant"}{" "}
-          <br />
-          {new Date(message.created_at * 1000).toLocaleString()}
-        </h4>
         <details
           open={showThinking}
           onClick={(e) => {
@@ -380,14 +370,19 @@ const MessageItem = React.memo(
         {message.status === "completed" && (
           <div
             className={cn(
-              "flex w-fit items-center",
+              "text-muted-foreground flex w-fit items-center text-xs",
               message.role === "user" && "ml-auto",
             )}
           >
             {message.role !== "user" && (
-              <Button size="icon-sm" variant="ghost" className="rounded-full">
-                <RotateCwIcon />
-              </Button>
+              <>
+                <span className="mr-1">
+                  {new Date(message.created_at * 1000).toLocaleString()}
+                </span>
+                <Button size="icon-sm" variant="ghost" className="rounded-full">
+                  <RotateCwIcon />
+                </Button>
+              </>
             )}
             <CopyButton
               text={message.content}
@@ -412,7 +407,8 @@ const ChatSessionInput = ({ defaultModel }: { defaultModel?: LlmModel }) => {
   } = useChatSession();
   const user = useUser();
   const [activeModel, setActiveModel] = React.useState<LlmModel | undefined>(
-    defaultModel ?? user.settings.chat_model ?? undefined,
+    defaultModel ??
+      user.settings.models?.[user.settings.default_model_id ?? ""],
   );
   return (
     <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">

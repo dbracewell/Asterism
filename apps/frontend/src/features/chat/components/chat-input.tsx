@@ -70,11 +70,12 @@ const ChatInput = React.memo(
     const [isDragOver, setIsDragOver] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
     const [model, setModel] = useState<string>(
-      toModelValue(defaultModel ?? user.settings.chat_model),
+      toModelValue(defaultModel) ?? user.settings.default_model_id!,
     );
+
     const availableModels = useMemo(
       () =>
-        user.settings.models?.map((m) => ({
+        Object.values(user.settings.models ?? {}).map((m) => ({
           label: m.name,
           value: toModelValue(m),
         })),
@@ -189,10 +190,10 @@ const ChatInput = React.memo(
       <div className="mx-auto flex w-full max-w-[90%] flex-col gap-1 overflow-clip sm:max-w-3xl">
         <div className="bg-input dark:bg-input text-foreground relative flex-col content-center overflow-clip rounded-xl border transition-colors">
           {attachedFiles.length > 0 && (
-            <div className="relative mb-2 flex w-fit items-center gap-2 overflow-hidden">
+            <div className="relative flex flex-wrap items-center gap-2 overflow-hidden p-2">
               {attachedFiles.map((file) => (
                 <Badge
-                  className="group hover:bg-accent relative h-6 max-w-30 cursor-pointer overflow-hidden px-0 text-[13px] transition-colors"
+                  className="group hover:bg-accent hover:text-accent-foreground relative h-6 max-w-30 cursor-pointer overflow-hidden px-0 text-[13px] transition-colors"
                   key={file.id}
                   variant="outline"
                 >
@@ -215,7 +216,7 @@ const ChatInput = React.memo(
                     </span>
                   </span>
                   <button
-                    className="text-muted-foreground focus-visible:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background absolute right-1 z-10 rounded-sm p-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2"
+                    className="bg-destructive absolute right-1 z-10 shrink-0 rounded-full p-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                     onClick={() => handleRemoveFile(file.id)}
                     type="button"
                   >

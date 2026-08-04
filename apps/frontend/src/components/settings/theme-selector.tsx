@@ -16,17 +16,17 @@ import { RotateCwIcon } from "lucide-react";
 interface ThemeSelectorProps {
   currentTheme?: string;
   onChange?: (theme: string) => void;
+  allowRefresh?: boolean;
 }
 
 export const ThemeSelector = ({
   currentTheme,
   onChange,
+  allowRefresh = true,
 }: ThemeSelectorProps) => {
-  const { setTheme, allThemes, refresh } = useTheme();
+  const { setTheme, lightThemes, darkThemes, refresh } = useTheme();
 
   const value = currentTheme ?? "light";
-  const darkThemes = allThemes.filter((theme) => theme.type === "dark");
-  const lightThemes = allThemes.filter((theme) => theme.type === "light");
 
   return (
     <div className="flex items-center gap-2">
@@ -67,9 +67,11 @@ export const ThemeSelector = ({
           )}
         </SelectContent>
       </Select>
-      <Button variant="ghost" size="icon-sm" onClick={refresh}>
-        <RotateCwIcon />
-      </Button>
+      {allowRefresh && (
+        <Button variant="ghost" size="icon-sm" onClick={refresh}>
+          <RotateCwIcon />
+        </Button>
+      )}
     </div>
   );
 };

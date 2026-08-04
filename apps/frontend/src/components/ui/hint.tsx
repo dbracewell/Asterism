@@ -10,6 +10,7 @@ interface HintProps {
   asChild?: boolean;
   hint: string;
   hintClassName?: string;
+  hidden?: boolean;
 }
 
 export const Hint = ({
@@ -17,11 +18,16 @@ export const Hint = ({
   children,
   hint,
   hintClassName,
+  hidden = false,
 }: HintProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild={asChild}>{children}</TooltipTrigger>
-      <TooltipContent hideWhenDetached={true} className={hintClassName}>
+      <TooltipContent
+        hideWhenDetached={true}
+        className={hintClassName}
+        hidden={hidden}
+      >
         {hint}
       </TooltipContent>
     </Tooltip>

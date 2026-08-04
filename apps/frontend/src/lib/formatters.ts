@@ -1,6 +1,6 @@
 export function prettyText(text: string) {
   return text
-    .split("_")
+    .split(/[_-]+/)
     .map((word) => word[0].toLocaleUpperCase() + word.slice(1))
     .join(" ");
 }

@@ -33,44 +33,31 @@ class SettingsRepository:
         if cached:
             return cached
 
-        app_settings = await self.get_app_settings(session)
-        user_models: list[LLMModel] = []
-        for provider in app_settings.llm_providers:
-            for model in provider.models:
-                if model.is_active:
-                    user_models.append(
-                        LLMModel(provider_id=provider.id, name=model.name)
-                    )
-
         async with get_async_db_session(session) as session:
+            app_settings = await self.get_app_settings(session)
+            user_models: dict[str, LLMModel] = {}
+            for provider in app_settings.llm_providers:
+                for model in filter(lambda m: m.is_active, provider.models):
+                    user_models[model.key] = model
+
             stmt = select(UserSetting).where(UserSetting.user_id == user_id)
             result = await session.scalars(stmt)
 
-            combined = dict()
-            for row in result.all():
-                combined[row.key] = row.value
-
-            if not combined:
-                return UserSettingsModel(models=user_models)
-
+            combined: dict[str, Any] = {
+                row.key: row.value for row in result.all()
+            }
             user_settings = UserSettingsModel.model_validate(combined)
             user_settings.models = user_models
 
+            if not user_settings.default_model_id:
+                user_settings.default_model_id = app_settings.default_model.key
+
             # make sure the user's default model is still valid
-            if user_settings.chat_model:
-                user_settings.chat_model = next(
-                    (
-                        m
-                        for m in user_models
-                        if m.provider_id == user_settings.chat_model.provider_id
-                        and m.name == user_settings.chat_model.name
-                    ),
+            if not user_settings.default_model:
+                user_settings.default_model_id = next(
+                    iter(user_models.keys()),
                     None,
                 )
-
-            # if not set to the app default
-            if not user_settings.chat_model:
-                user_settings.chat_model = app_settings.default_model
 
             self.user_cache[user_id] = user_settings
 

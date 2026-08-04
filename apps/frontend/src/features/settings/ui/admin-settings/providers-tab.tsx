@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  ComputerIcon,
   LoaderCircleIcon,
   PlusIcon,
   RefreshCwIcon,
   SaveIcon,
   Trash2Icon,
 } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,24 +28,25 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  appSettingsBulkUpdateMutation,
-  appSettingsGetOptions,
-} from "@/lib/client/@tanstack/react-query.gen";
-import { client } from "@/lib/api";
-import { fetchProviderModels } from "@/features/settings/server/actions";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { LlmModel, LlmProviderModel } from "@/lib/client";
-import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
+import { fetchProviderModels } from "@/features/settings/server/actions";
+import { client } from "@/lib/api";
+import type { LlmModel, LlmProviderModel } from "@/lib/client";
+import {
+  appSettingsBulkUpdateMutation,
+  appSettingsGetOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
+import { useRouter } from "next/navigation";
 
 const providerModelSchema = z.object({
   name: z.string().min(1, "Model name is required."),
+  provider_id: z.string(),
   is_active: z.boolean(),
 });
 
@@ -169,14 +171,18 @@ export const ProvidersTab = () => {
   });
 
   const defaultModelList = useMemo(() => {
-    return watchedProviders
-      .flatMap((p) => p.models.map((m) => [p.name, p.id, m.name, m.is_active]))
-      .filter((m) => m[3])
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .map(([provider_name, id, name, _]) => ({
-        value: `${id}::${name}`,
-        label: `${provider_name} - ${name}`,
-      }));
+    return (
+      watchedProviders
+        .flatMap((p) =>
+          p.models.map((m) => [p.name, p.id, m.name, m.is_active]),
+        )
+        .filter((m) => m[3])
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .map(([provider_name, id, name, _]) => ({
+          value: `${id}::${name}`,
+          label: `${provider_name} - ${name}`,
+        }))
+    );
   }, [watchedProviders]);
 
   const onSubmit = (values: ProvidersFormValues) => {
@@ -214,8 +220,14 @@ export const ProvidersTab = () => {
 
     try {
       const provider = getValues(`llm_providers.${index}`);
-      const fetchedModels = await fetchProviderModels(provider.base_url);
-      const mergedModels = mergeModels(provider.models, fetchedModels);
+      const fetchedModels = await fetchProviderModels(
+        provider.base_url,
+        provider.id,
+      );
+      const mergedModels = mergeModels(
+        Object.values(provider.models ?? {}),
+        fetchedModels,
+      );
 
       setValue(`llm_providers.${index}.models`, mergedModels, {
         shouldDirty: true,
@@ -241,12 +253,12 @@ export const ProvidersTab = () => {
 
   return (
     <form
-      className="flex w-full flex-1 flex-col gap-4 overflow-y-auto py-2"
+      className="flex flex-1 flex-col gap-4 overflow-hidden"
       noValidate
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="relative">
-        <h1 className="border-b pb-2 font-bold">
+        <h1 className="border-b pb-2 text-base font-bold">
           OpenAI API Compatible Providers
         </h1>
         <Button
@@ -261,6 +273,7 @@ export const ProvidersTab = () => {
           <PlusIcon />
         </Button>
       </div>
+
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {isLoading && fields.length === 0 ? (
           <div className="text-muted-foreground py-4 text-sm">
@@ -269,8 +282,14 @@ export const ProvidersTab = () => {
         ) : null}
 
         {!isLoading && fields.length === 0 ? (
-          <div className="text-muted-foreground rounded border border-dashed p-4 text-sm">
-            No providers configured yet. Add one to get started.
+          <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
+            <ComputerIcon className="text-muted-foreground/50 size-10" />
+            <h4 className="w-sm text-center text-xl">
+              No providers configured yet. Add one to get started.
+            </h4>
+            <Button onClick={() => append(createEmptyProvider())}>
+              <PlusIcon /> Add Provider
+            </Button>
           </div>
         ) : null}
 
@@ -374,59 +393,67 @@ export const ProvidersTab = () => {
                     {models.length > 0 ? (
                       <div className="grid gap-2 sm:grid-cols-2">
                         {models.map((model, modelIndex) => (
-                          <Field
-                            key={`${field.id}-${model.name}`}
-                            orientation="horizontal"
-                          >
-                            <Controller
-                              control={control}
-                              name={`llm_providers.${index}.models.${modelIndex}.is_active`}
-                              render={({ field: controllerField }) => (
-                                <Checkbox
-                                  checked={controllerField.value}
-                                  onCheckedChange={(checked) => {
-                                    const isActive = checked === true;
-                                    const currentValue = `${provider?.id}::${model.name}`;
-
-                                    controllerField.onChange(isActive);
-                                    console.log(
-                                      isActive,
-                                      currentValue,
-                                      watchedDefaultModel,
-                                    );
-                                    if (
-                                      !isActive &&
-                                      watchedDefaultModel === currentValue
-                                    ) {
-                                      const nextDefault = watchedProviders
-                                        ?.flatMap((p) =>
-                                          p.models
-                                            .filter((m) => {
-                                              if (
-                                                p.id === provider?.id &&
-                                                m.name === model.name
-                                              ) {
-                                                return false;
-                                              }
-                                              return m.is_active;
-                                            })
-                                            .map((m) => `${p.id}::${m.name}`),
-                                        )
-                                        .at(0);
-                                      console.log(nextDefault);
-                                      setValue("default_model", nextDefault, {
-                                        shouldDirty: true,
-                                        shouldValidate: true,
-                                      });
-                                    }
-                                  }}
-                                />
+                          <Fragment key={`${field.id}-${model.name}`}>
+                            <Input
+                              type="hidden"
+                              {...register(
+                                `llm_providers.${index}.models.${modelIndex}.provider_id`,
                               )}
                             />
-                            <FieldLabel>
-                              <span>{model.name}</span>
-                            </FieldLabel>
-                          </Field>
+                            <Field
+                              key={`${field.id}-${model.name}`}
+                              orientation="horizontal"
+                            >
+                              <Controller
+                                control={control}
+                                name={`llm_providers.${index}.models.${modelIndex}.is_active`}
+                                render={({ field: controllerField }) => (
+                                  <Checkbox
+                                    checked={controllerField.value}
+                                    onCheckedChange={(checked) => {
+                                      const isActive = checked === true;
+                                      const currentValue = `${provider?.id}::${model.name}`;
+
+                                      controllerField.onChange(isActive);
+                                      console.log(
+                                        isActive,
+                                        currentValue,
+                                        watchedDefaultModel,
+                                      );
+                                      if (
+                                        !isActive &&
+                                        watchedDefaultModel === currentValue
+                                      ) {
+                                        const nextDefault = watchedProviders
+                                          ?.flatMap((p) =>
+                                            p.models
+                                              .filter((m) => {
+                                                if (
+                                                  p.id === provider?.id &&
+                                                  m.name === model.name
+                                                ) {
+                                                  return false;
+                                                }
+                                                return m.is_active;
+                                              })
+                                              .map((m) => `${p.id}::${m.name}`),
+                                          )
+                                          .at(0);
+                                        console.log(nextDefault);
+                                        setValue("default_model", nextDefault, {
+                                          shouldDirty: true,
+                                          shouldValidate: true,
+                                        });
+                                      }
+                                    }}
+                                  />
+                                )}
+                              />
+                              <FieldLabel>
+                                <span>{model.name}</span>
+                              </FieldLabel>
+                            </Field>
+                          </Fragment>
                         ))}
                       </div>
                     ) : (
@@ -441,7 +468,7 @@ export const ProvidersTab = () => {
           );
         })}
       </div>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <Field>
             <FieldLabel htmlFor="appsettings-default-model">

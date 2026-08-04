@@ -27,29 +27,15 @@ class ChatRepository:
         user_id: str,
         session_id: uuid.UUID,
         message: NewMessage,
-        child_message: NewMessage | None = None,
         session: AsyncSession | None = None,
-    ) -> Message:
+    ) -> MessageModel:
         async with get_async_db_session(session) as session:
             new_message = Message(
                 **message.model_dump(exclude={"active_child_id"}),
                 user_id=user_id,
                 session_id=session_id,
             )
-            active_child = None
-            if child_message:
-                active_child = Message(
-                    **child_message.model_dump(exclude={"active_child_id"}),
-                    user_id=user_id,
-                    session_id=session_id,
-                )
-                new_message.active_child = active_child
-                active_child.parent_message_id = new_message.id
-
             session.add(new_message)
-            if active_child:
-                session.add(active_child)
-
             if new_message.parent_message_id:
                 await session.flush()
                 await session.execute(
@@ -59,8 +45,7 @@ class ChatRepository:
                 )
 
             await session.commit()
-            new_message.active_child = active_child
-            return new_message
+            return MessageModel.model_validate(new_message)
 
     async def update_message(
         self,
@@ -87,6 +72,8 @@ class ChatRepository:
                 message.thinking = payload.thinking
             if payload.status is not None:
                 message.status = payload.status
+            if payload.tool_results:
+                message.tool_call_results = payload.tool_results
 
             await session.merge(message)
             await session.commit()

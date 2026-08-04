@@ -8,47 +8,55 @@ export const SettingsCard = ({ settings }: { settings: Types }) => {
   const isMobile = useIsMobile();
   return (
     <Tabs
-      orientation="vertical"
+      orientation={isMobile ? "horizontal" : "vertical"}
       defaultValue={
         settings.filter((s) => s.type === "section").find((s) => s.isDefault)
           ?.value
       }
-      className="bg-card flex min-h-0 flex-1 gap-0! rounded-md border text-base!"
+      className={"flex h-full min-h-0 flex-1 overflow-clip"}
     >
       <TabsList
-        className={cn("min-w-50 bg-transparent", isMobile && "w-9 min-w-9")}
+        className={cn(
+          "rounded-none bg-transparent!",
+          isMobile ? "h-fit! max-w-full" : "w-40",
+        )}
       >
-        {settings.map((setting, i) => {
-          if (setting.type === "section") {
+        <div
+          className={cn(
+            "bg-card flex flex-col items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-md border p-2",
+            isMobile ? "flex-row" : "w-full",
+          )}
+        >
+          {settings.map((setting, i) => {
+            if (setting.type === "section") {
+              return (
+                <TabsTrigger key={setting.value} value={setting.value}>
+                  {setting.icon}
+                  <span>{setting.label}</span>
+                </TabsTrigger>
+              );
+            }
             return (
-              <TabsTrigger
-                key={setting.value}
-                value={setting.value}
-                className="flex items-center justify-center truncate text-base!"
-              >
-                {setting.icon}
-                <span className={cn("truncate", isMobile && "hidden")}>
-                  {setting.label}
-                </span>
-              </TabsTrigger>
+              <Separator
+                key={i}
+                orientation={isMobile ? "vertical" : "horizontal"}
+                className="my-2"
+              />
             );
-          }
-          return <Separator key={i} className="my-2" />;
-        })}
+          })}
+        </div>
       </TabsList>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-l px-4 py-1">
-        {settings
-          .filter((s) => s.type === "section")
-          .map((setting) => (
-            <TabsContent
-              key={setting.value}
-              value={setting.value}
-              className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden text-base!"
-            >
-              {setting.settingsPane}
-            </TabsContent>
-          ))}
-      </div>
+      {settings
+        .filter((s) => s.type === "section")
+        .map((setting) => (
+          <TabsContent
+            key={setting.value}
+            value={setting.value}
+            className="flex max-h-full min-h-0 flex-1 flex-col p-2"
+          >
+            {setting.settingsPane}
+          </TabsContent>
+        ))}
     </Tabs>
   );
 };

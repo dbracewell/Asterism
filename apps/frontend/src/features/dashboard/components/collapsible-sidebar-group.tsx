@@ -1,5 +1,14 @@
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenuAction } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenuAction,
+} from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import Cookie from "js-cookie";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
@@ -28,7 +37,7 @@ export const CollapsibleSidebarGroup = ({
   };
 
   return (
-    <SidebarGroup className={cn("flex", className)}>
+    <SidebarGroup className={cn("flex overflow-hidden", className)}>
       <SidebarGroupContent className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
         <Collapsible
           suppressHydrationWarning
@@ -53,7 +62,7 @@ export const CollapsibleSidebarGroup = ({
               +
             </SidebarMenuAction>
           </div>
-          <CollapsibleContent className="overflow-x-hiddenoverflow-y-auto mt-1 flex min-h-0 w-full min-w-0 flex-1 flex-col">
+          <CollapsibleContent className="mt-1 flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
             {children}
           </CollapsibleContent>
         </Collapsible>

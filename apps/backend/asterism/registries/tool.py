@@ -1,12 +1,9 @@
+from __future__ import annotations
+
 import inspect
 import json
 import re
-from typing import (
-    Any,
-    Callable,
-    Type,
-    get_args,
-)
+from typing import TYPE_CHECKING, Any, Callable, Type, get_args
 
 from openai.types.chat import (
     ChatCompletionFunctionToolParam,
@@ -23,6 +20,9 @@ from asterism.common import (
 )
 from asterism.utils.retries import async_retry
 
+if TYPE_CHECKING:
+    from asterism.llm import LLMClient
+
 
 def _parse_tool_call_arguments(arguments: str | None) -> dict[str, Any]:
     if not arguments:
@@ -38,8 +38,7 @@ def _parse_tool_call_arguments(arguments: str | None) -> dict[str, Any]:
 
 
 def _parse_result(
-    tool_call_id: str,
-    function_name: str,
+    tool_call: ToolCall,
     raw_result: Any,
 ) -> ToolResult:
     is_empty = False
@@ -61,9 +60,8 @@ def _parse_result(
         is_empty = len(str(raw_result)) == 0
 
     return ToolResult(
-        tool_call_id=tool_call_id,
+        tool_call=tool_call,
         content=content,
-        name=function_name,
         raw_result=raw_result,
         is_empty=is_empty,
     )
@@ -97,6 +95,7 @@ class ToolRegistry:
         self,
         tool_call: ToolCall,
         user: AuthedUser,
+        client: LLMClient,
         user_message: str = "",
         user_files: list[str] = [],
         max_retries: int = 3,
@@ -112,7 +111,9 @@ class ToolRegistry:
                 f"Error: {last_exception}",
             ),
         )
-        async def call_tool():
+        async def call_tool() -> ToolResult:
+            from asterism.repositories import settings_repository
+
             try:
                 arguments = llm_tool.arg_validator.model_validate(
                     _parse_tool_call_arguments(tool_call.function.arguments)
@@ -125,6 +126,8 @@ class ToolRegistry:
                 user=user,
                 user_message=user_message,
                 user_files=user_files,
+                client=client,
+                app_settings=await settings_repository.get_app_settings(),
             )
 
             if llm_tool.is_async:
@@ -133,8 +136,7 @@ class ToolRegistry:
                 raw_result = llm_tool.function(ctx)
 
             return _parse_result(
-                tool_call_id=tool_call.id,
-                function_name=tool_call.function.name,
+                tool_call=tool_call,
                 raw_result=raw_result,
             )
 

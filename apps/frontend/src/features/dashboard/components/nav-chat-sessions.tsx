@@ -8,18 +8,18 @@ import {
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
 import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
+import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
+import { ChatModelList } from "@/lib/client";
 import {
   chatSessionGetManyOptions,
   chatSessionGetManyQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { cn } from "@/lib/utils";
+import { IconMessage2 } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
-import { cn } from "@/lib/utils";
-import { IconMessage2 } from "@tabler/icons-react";
-import { ChatModelList } from "@/lib/client";
 
 export const NavChatSessions = ({
   defaultIsOpen,
