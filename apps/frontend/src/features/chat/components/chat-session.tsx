@@ -18,10 +18,11 @@ import React, { Dispatch, RefObject, SetStateAction } from "react";
 
 export type ChatSessionContextType = {
   sessionInfo: ChatInfo;
-  sendJsonMessage: <T = unknown>(jsonMessage: T, keep?: boolean) => void;
   addUserMessage: ({ prompt }: { prompt: string }) => void;
   connectionStatus: ConnectionStatus;
   scrollState: RefObject<ScrollState>;
+  messageListRef: RefObject<HTMLDivElement | null>;
+  scrollToBottom: (behavior: "smooth" | "auto" | "instant") => void;
   updateScrollState: (scrollState: ScrollState) => void;
   canScroll: boolean;
   setCanScroll: Dispatch<SetStateAction<boolean>>;
@@ -55,6 +56,23 @@ export const useChatStreaming = () => {
   return context;
 };
 
+const TEMP_USER_MESSAGE_PREFIX = "user-msg:";
+const SCROLL_BOTTOM_THRESHOLD = 100;
+
+const createTempUserMessageId = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${TEMP_USER_MESSAGE_PREFIX}${crypto.randomUUID()}`;
+  }
+  return `${TEMP_USER_MESSAGE_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
+const findLastIndex = <T,>(arr: T[], predicate: (item: T) => boolean) => {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (predicate(arr[i])) return i;
+  }
+  return -1;
+};
+
 const ChatSessionProvider = ({
   session,
   jwtToken,
@@ -76,53 +94,60 @@ const ChatSessionProvider = ({
   );
   const [incomingMessage, setIncomingMessage] =
     React.useState<MessageModel | null>(null);
+  const messageListRef = React.useRef<HTMLDivElement | null>(null);
 
-  const { errorState, sendJsonMessage, readyState } = useChatWebSocket({
+  const { sendJsonMessage, readyState } = useChatWebSocket({
     session,
     jwtToken,
+    onStreamStart: (pendingMessage) => {
+      scrollState.current = {
+        userInitiatedScroll: false,
+        preventAutoScroll: false,
+      };
+      setIncomingMessage(pendingMessage);
+      setMessages((prev) => {
+        if (prev.length === 0) return prev;
+        const last = prev[prev.length - 1];
+        if (last.status === "completed") return prev;
+        return [...prev.slice(0, -1), { ...last, status: "completed" }];
+      });
+    },
+    onStreamError: (error) => {
+      throw Error(error);
+    },
+    onStreamUpdate: (nextIncomingMessage) => {
+      setIncomingMessage(nextIncomingMessage);
+    },
+    onStreamComplete: (updatedMessages) => {
+      setIncomingMessage(null);
+      if (!updatedMessages.length) return;
+      setMessages((prev) => {
+        const idMatchIndex = prev.findIndex(
+          (m) => m.id === updatedMessages[0].id,
+        );
+        const optimisticUserIndex = findLastIndex(
+          prev,
+          (m) =>
+            typeof m.id === "string" &&
+            m.id.startsWith(TEMP_USER_MESSAGE_PREFIX),
+        );
+        const index = idMatchIndex >= 0 ? idMatchIndex : optimisticUserIndex;
+        if (index >= 0) {
+          return [...prev.slice(0, index), ...updatedMessages];
+        }
+        return [...prev, ...updatedMessages];
+      });
+    },
   });
 
   React.useEffect(() => {
     setSession(session);
+    setMessages(session.messages);
+    setIncomingMessage(null);
     return () => {
       setSession(null);
     };
   }, [session, setSession]);
-
-  useSubscribeEvent({
-    type: "chat-session:message-update",
-    handler: (payload) => {
-      if (payload.incomingMessage) {
-        setIncomingMessage(payload.incomingMessage);
-      } else {
-        setIncomingMessage(null);
-      }
-      if (payload.markLastCompleted) {
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          {
-            ...prev[prev.length - 1],
-            status: "completed",
-          },
-        ]);
-      }
-      if (
-        payload.updatedMessages != null &&
-        payload.updatedMessages.length > 0
-      ) {
-        const targetMessages = payload.updatedMessages;
-        setMessages((prev) => {
-          const index = prev.findIndex(
-            (m) => m.id == targetMessages[0].id || m.id === "user-msg",
-          );
-          if (index >= 0) {
-            return [...prev.slice(0, index), ...targetMessages];
-          }
-          return [...prev, ...targetMessages];
-        });
-      }
-    },
-  });
 
   useSubscribeEvent({
     type: "chat-session:update",
@@ -143,7 +168,7 @@ const ChatSessionProvider = ({
       setMessages((prev) => [
         ...prev,
         {
-          id: "user-msg",
+          id: createTempUserMessageId(),
           role: "user",
           content: prompt,
           created_at: Date.now() / 1000,
@@ -159,10 +184,17 @@ const ChatSessionProvider = ({
     scrollState.current = newState;
   }, []);
 
+  const scrollToBottom = React.useCallback(
+    (behavior: "smooth" | "auto" | "instant") => {
+      if (!messageListRef.current) return;
+      messageListRef.current.scrollIntoView({ behavior });
+    },
+    [],
+  );
+
   const contextValue = React.useMemo(
     () => ({
       sessionInfo: session.info,
-      sendJsonMessage,
       connectionStatus: connectionStatus[readyState],
       addUserMessage,
       canScroll,
@@ -171,10 +203,11 @@ const ChatSessionProvider = ({
       updateScrollState,
       inputLines: numberOfLines,
       setInputLines: setNumberOfLines,
+      messageListRef,
+      scrollToBottom,
     }),
     [
       session.info,
-      sendJsonMessage,
       readyState,
       addUserMessage,
       canScroll,
@@ -182,6 +215,7 @@ const ChatSessionProvider = ({
       updateScrollState,
       numberOfLines,
       setNumberOfLines,
+      scrollToBottom,
     ],
   );
 
@@ -192,10 +226,6 @@ const ChatSessionProvider = ({
     }),
     [incomingMessage, messages],
   );
-
-  if (errorState) {
-    throw Error(errorState);
-  }
 
   return (
     <ChatSessionContext.Provider value={contextValue}>
@@ -208,14 +238,14 @@ const ChatSessionProvider = ({
 ChatSessionProvider.displayName = "ChatSessionProvider";
 
 const ChatSessionMessageList = () => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const bottomRef = React.useRef<HTMLDivElement>(null);
   const {
     scrollState,
     updateScrollState,
     setCanScroll,
     canScroll,
     inputLines,
+    messageListRef,
+    scrollToBottom,
   } = useChatSession();
   const { messages, incomingMessage } = useChatStreaming();
   const filtered = React.useMemo(() => {
@@ -224,8 +254,8 @@ const ChatSessionMessageList = () => {
 
   React.useEffect(() => {
     if (scrollState.current.preventAutoScroll) return;
-    bottomRef.current?.scrollIntoView({ behavior: "instant" });
-  }, [incomingMessage, scrollState]);
+    scrollToBottom("instant");
+  }, [incomingMessage, scrollState, scrollToBottom]);
 
   React.useEffect(() => {
     if (filtered.length > 0 && filtered[filtered.length - 1].role === "user") {
@@ -237,57 +267,42 @@ const ChatSessionMessageList = () => {
   }, [filtered, scrollState, updateScrollState]);
 
   React.useEffect(() => {
-    if (!canScroll) {
-      if (containerRef.current) {
-        containerRef.current.scrollTop = containerRef.current.scrollHeight;
-      }
-    }
-  }, [canScroll]);
+    if (!messageListRef.current) return;
+    messageListRef.current.style.height = `${40 + 20 * inputLines}px`;
+    messageListRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [inputLines, messageListRef]);
 
-  React.useEffect(() => {
-    if (!bottomRef.current) return;
-    bottomRef.current.style.height = `${40 + 20 * inputLines}px`;
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [inputLines]);
+  const userInitiatedScroll = React.useCallback(() => {
+    updateScrollState({
+      userInitiatedScroll: true,
+      preventAutoScroll: true,
+    });
+  }, [updateScrollState]);
 
   return (
     <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
       <div
         className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col gap-3 overflow-y-auto p-2 pt-14"
-        ref={containerRef}
         style={{ overflowAnchor: "auto" }}
-        onScrollCapture={() => {
-          if (!scrollState.current.userInitiatedScroll) {
-            updateScrollState({
-              ...scrollState.current,
-              userInitiatedScroll: true,
-            });
-          }
-        }}
-        onScrollEnd={() => {
-          if (scrollState.current.userInitiatedScroll) {
-            updateScrollState({
-              ...scrollState.current,
-              userInitiatedScroll: false,
-            });
-          }
-        }}
+        onWheel={() => userInitiatedScroll()}
+        onTouchMove={() => userInitiatedScroll()}
+        onKeyDown={() => userInitiatedScroll()}
+        onMouseDown={() => userInitiatedScroll()}
         onScroll={(e) => {
-          if (scrollState.current.userInitiatedScroll) {
-            const scrollPosition =
-              e.currentTarget.scrollHeight -
-              (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
+          const scrollPosition =
+            e.currentTarget.scrollHeight -
+            (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
+          const isScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
 
-            const can = scrollPosition > 100;
-            if (can !== scrollState.current.preventAutoScroll) {
-              updateScrollState({
-                ...scrollState.current,
-                preventAutoScroll: can,
-              });
-            }
-            if (can !== canScroll) {
-              setCanScroll(can);
-            }
+          if (scrollState.current.userInitiatedScroll) {
+            updateScrollState({
+              userInitiatedScroll: false,
+              preventAutoScroll: isScrollable,
+            });
+          }
+
+          if (isScrollable !== canScroll) {
+            setCanScroll(isScrollable);
           }
         }}
       >
@@ -301,7 +316,7 @@ const ChatSessionMessageList = () => {
           <MessageItem message={incomingMessage} defaultShowThinking />
         )}
         <div
-          ref={bottomRef}
+          ref={messageListRef}
           className="shrink-0"
           style={{
             overflowAnchor: "auto",
@@ -399,8 +414,8 @@ const ChatSessionInput = () => {
     connectionStatus,
     addUserMessage,
     canScroll,
-    setCanScroll,
     setInputLines,
+    scrollToBottom,
   } = useChatSession();
   return (
     <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">
@@ -408,7 +423,7 @@ const ChatSessionInput = () => {
         <Button
           className="mx-auto mb-5 rounded-full"
           size="icon-lg"
-          onClick={() => setCanScroll((prev) => !prev)}
+          onClick={() => scrollToBottom("smooth")}
         >
           <ArrowDownIcon />
         </Button>

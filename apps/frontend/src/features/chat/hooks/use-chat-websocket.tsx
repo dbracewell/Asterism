@@ -1,124 +1,148 @@
 import { AgentEventSchema } from "@/features/chat/schemas";
-import { eventBus } from "@/features/sse/lib/event-bus";
-import { ChatModel } from "@/lib/client";
-import { zMessageModel } from "@/lib/client/zod.gen";
-import React, { useMemo, useState } from "react";
+import { ChatModel, MessageModel } from "@/lib/client";
+import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
-import { z } from "zod";
+
+type UseChatWebSocketProps = {
+  session: ChatModel;
+  jwtToken: string;
+  onStreamStart?: (message: MessageModel) => void;
+  onStreamUpdate?: (message: MessageModel) => void;
+  onStreamComplete?: (messages: MessageModel[]) => void;
+  onStreamError?: (error: string) => void;
+};
+
+const createPendingAssistantMessage = (): MessageModel => ({
+  model_id: "",
+  thinking: "",
+  content: "",
+  created_at: Math.floor(Date.now() / 1000),
+  id: "incoming",
+  role: "assistant",
+  active_child_id: "",
+  status: "pending",
+  token_count: 0,
+  tool_calls: [],
+  has_siblings: false,
+  current_sibling_index: 1,
+  sibling_count: 1,
+});
 
 export const useChatWebSocket = ({
   session,
   jwtToken,
-}: {
-  session: ChatModel;
-  jwtToken: string;
-}) => {
+  onStreamStart,
+  onStreamUpdate,
+  onStreamComplete,
+  onStreamError,
+}: UseChatWebSocketProps) => {
   const didUnmount = React.useRef(false);
-  const streamingMessageRef = React.useRef<z.infer<
-    typeof zMessageModel
-  > | null>(null);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const [errorState, setErrorState] = useState<string | null>(null);
+  const streamingMessageRef = React.useRef<MessageModel | null>(null);
+  const onStreamStartRef = React.useRef(onStreamStart);
+  const onStreamUpdateRef = React.useRef(onStreamUpdate);
+  const onStreamCompleteRef = React.useRef(onStreamComplete);
+  const onStreamErrorRef = React.useRef(onStreamError);
+
+  React.useEffect(() => {
+    onStreamStartRef.current = onStreamStart;
+    onStreamUpdateRef.current = onStreamUpdate;
+    onStreamCompleteRef.current = onStreamComplete;
+    onStreamErrorRef.current = onStreamError;
+  }, [onStreamStart, onStreamUpdate, onStreamComplete, onStreamError]);
 
   React.useEffect(() => {
     return () => {
       didUnmount.current = true;
       if (flushTimerRef.current) {
-        clearInterval(flushTimerRef.current);
+        clearTimeout(flushTimerRef.current);
       }
     };
   }, []);
 
-  const { sendJsonMessage, readyState } = useWebSocket(
-    `ws://${process.env.NEXT_PUBLIC_BACKEND_API_URL!.replace("http://", "")}/chat/stream/${session.info.id}?token=${jwtToken}`,
-    {
-      shouldReconnect: () => {
-        return !didUnmount.current;
-      },
-      reconnectAttempts: 10,
-      reconnectInterval: 3000,
-      onMessage: (event) => {
-        let raw_object;
-        try {
-          raw_object = JSON.parse(event.data);
-        } catch (error) {
-          console.error(error);
-          return;
-        }
-        const result = AgentEventSchema.safeParse(raw_object);
+  const wsEndpoint = useMemo(() => {
+    const backendUrl = new URL(process.env.NEXT_PUBLIC_BACKEND_API_URL!);
+    const wsUrl = new URL(`/chat/stream/${session.info.id}`, backendUrl);
+    wsUrl.protocol = backendUrl.protocol === "https:" ? "wss:" : "ws:";
+    wsUrl.searchParams.set("token", jwtToken);
+    return wsUrl.toString();
+  }, [jwtToken, session.info.id]);
 
-        if (!result.success) {
-          console.log(result.error.message);
-          return;
-        }
+  const scheduleFlush = React.useCallback(() => {
+    if (flushTimerRef.current) return;
+    flushTimerRef.current = setTimeout(() => {
+      flushTimerRef.current = null;
+      if (streamingMessageRef.current != null) {
+        onStreamUpdateRef.current?.(streamingMessageRef.current);
+      }
+    }, 50);
+  }, []);
 
-        const msgContent = result.data;
-
-        if (msgContent.type === "error") {
-          setErrorState(msgContent.content);
-          return;
-        }
-
-        if (msgContent.type === "start") {
-          streamingMessageRef.current = {
-            model_id: "",
-            thinking: "",
-            content: "",
-            created_at: Math.floor(Date.now() / 1000),
-            id: "incoming",
-            role: "assistant",
-            active_child_id: "",
-            status: "pending",
-            token_count: 0,
-            tool_calls: [],
-            has_siblings: false,
-            current_sibling_index: 1,
-            sibling_count: 1,
-          };
-
-          eventBus.emit("chat-session:message-update", {
-            markLastCompleted: true,
-          });
-
-          if (!flushTimerRef.current) {
-            flushTimerRef.current = setInterval(() => {
-              eventBus.emit("chat-session:message-update", {
-                incomingMessage: streamingMessageRef.current,
-              });
-            }, 100);
-          }
-        }
-
-        if (msgContent.type === "delta") {
-          streamingMessageRef.current = {
-            ...streamingMessageRef.current!,
-            thinking: msgContent.thinking,
-            content: msgContent.content,
-            status: !!msgContent.content ? "completed" : "pending",
-          };
-        }
-
-        if (msgContent.type === "complete") {
-          if (flushTimerRef.current) {
-            clearInterval(flushTimerRef.current);
-            flushTimerRef.current = null;
-          }
-          eventBus.emit("chat-session:message-update", {
-            updatedMessages: msgContent.last_messages,
-            incomingMessage: null,
-          });
-          streamingMessageRef.current = null;
-        }
-      },
+  const { sendJsonMessage, readyState } = useWebSocket(wsEndpoint, {
+    shouldReconnect: () => {
+      return !didUnmount.current;
     },
-  );
+    reconnectAttempts: 10,
+    reconnectInterval: 3000,
+    onMessage: (event) => {
+      let raw_object;
+      try {
+        raw_object = JSON.parse(event.data);
+      } catch (error) {
+        console.error(error);
+        return;
+      }
+      const result = AgentEventSchema.safeParse(raw_object);
+
+      if (!result.success) {
+        console.log(result.error.message);
+        return;
+      }
+
+      const msgContent = result.data;
+
+      if (msgContent.type === "error") {
+        onStreamErrorRef.current?.(msgContent.content);
+        return;
+      }
+
+      if (msgContent.type === "start") {
+        const pendingMessage = createPendingAssistantMessage();
+        streamingMessageRef.current = pendingMessage;
+        onStreamStartRef.current?.(pendingMessage);
+        scheduleFlush();
+      }
+
+      if (msgContent.type === "delta") {
+        if (streamingMessageRef.current == null) {
+          streamingMessageRef.current = createPendingAssistantMessage();
+        }
+
+        streamingMessageRef.current = {
+          ...streamingMessageRef.current!,
+          thinking: msgContent.thinking,
+          content: msgContent.content,
+          status: !!msgContent.content ? "completed" : "pending",
+        };
+        onStreamUpdateRef.current?.(streamingMessageRef.current);
+      }
+
+      if (msgContent.type === "complete") {
+        if (flushTimerRef.current) {
+          clearTimeout(flushTimerRef.current);
+          flushTimerRef.current = null;
+        }
+        onStreamCompleteRef.current?.(msgContent.last_messages);
+        streamingMessageRef.current = null;
+      }
+    },
+  });
 
   return useMemo(
     () => ({
-      errorState,
       sendJsonMessage,
       readyState,
     }),
-    [errorState, readyState, sendJsonMessage],
+    [readyState, sendJsonMessage],
   );
 };
