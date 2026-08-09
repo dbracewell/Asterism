@@ -4,14 +4,14 @@ import uuid
 from typing import Optional
 
 from pydantic import TypeAdapter
+from sqlalchemy import UUID, ForeignKey, Index, Integer, String, Text, Uuid
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, Integer, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from asterism.common import LLMModel, MessageStatus, ToolCall, ToolResult
-from asterism.models.typedefs import JSONB_COLUMN
+from asterism.common import MessageStatus, ToolCall, ToolResult
 
-from . import Base
+from .base import Base
+from .typedefs import JSONB_COLUMN
 from .utils import now
 
 
@@ -42,10 +42,10 @@ class Message(Base):
         nullable=False,
         index=True,
     )
-    model: Mapped[LLMModel] = mapped_column(
-        "model",
-        JSONB_COLUMN(LLMModel),
-        nullable=False,
+    model_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        "model_id",
+        UUID,
+        nullable=True,
     )
     status: Mapped[MessageStatus] = mapped_column(
         "status",

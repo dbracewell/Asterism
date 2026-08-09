@@ -4,8 +4,8 @@ from pydantic import JsonValue
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from asterism.models import Base
-from asterism.models.typedefs import JsonColumn
+from .base import Base
+from .typedefs import JsonColumn
 
 
 class AppSetting(Base):
@@ -18,7 +18,6 @@ class AppSetting(Base):
         primary_key=True,
     )
     value: Mapped[JsonValue] = mapped_column(JsonColumn)
-    updated_by: Mapped[str] = mapped_column(String)
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime,
         server_default=func.now(),

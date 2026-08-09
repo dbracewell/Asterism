@@ -25,7 +25,7 @@ export const zChatCompletionParams = z.object({
         ]),
         z.record(z.string(), z.unknown())
     ]).optional(),
-    max_completion_tokens: z.int().optional(),
+    max_tokens: z.int().optional(),
     modalities: z.array(z.enum(['text', 'audio'])).optional(),
     audio: z.record(z.string(), z.unknown()).optional(),
     prediction: z.record(z.string(), z.unknown()).optional(),
@@ -37,6 +37,21 @@ export const zChatCompletionParams = z.object({
     extra_headers: z.record(z.string(), z.string()).optional(),
     extra_query: z.record(z.string(), z.unknown()).optional(),
     timeout: z.number().nullish()
+});
+
+/**
+ * AgentProfile
+ */
+export const zAgentProfile = z.object({
+    id: z.uuid(),
+    user_id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    model_id: z.uuid(),
+    system_prompt: z.string().nullish(),
+    max_steps: z.int().optional().default(3),
+    chat_parameters: zChatCompletionParams.optional(),
+    tools: z.array(z.string()).nullish()
 });
 
 /**
@@ -67,6 +82,14 @@ export const zChatUpdateRequest = z.object({
 });
 
 /**
+ * ComponentProviderParameters
+ */
+export const zComponentProviderParameters = z.object({
+    name: z.string(),
+    parameters: z.record(z.string(), z.string()).optional()
+});
+
+/**
  * ComponentResponse
  */
 export const zComponentResponse = z.object({
@@ -88,14 +111,6 @@ export const zComponentListResponse = z.object({
 export const zCreateUserRequest = z.object({
     user_id: z.string(),
     system_key: z.string().nullish()
-});
-
-/**
- * DraftModel
- */
-export const zDraftModel = z.object({
-    repo_id: z.string(),
-    filename: z.string()
 });
 
 /**
@@ -148,42 +163,41 @@ export const zBulkUpdateSettingRequest = z.object({
  * LLMModel
  */
 export const zLlmModel = z.object({
-    provider_id: z.string(),
-    name: z.string()
-});
-
-/**
- * AgentProfile
- */
-export const zAgentProfile = z.object({
     id: z.uuid(),
-    name: z.string(),
-    description: z.string(),
-    model: zLlmModel,
-    system_prompt: z.string().nullish(),
-    max_steps: z.int().optional().default(3),
-    chat_parameters: zChatCompletionParams.optional(),
-    tools: z.array(z.string()).optional()
-});
-
-/**
- * LLMProviderModel
- */
-export const zLlmProviderModel = z.object({
-    provider_id: z.string(),
+    provider_id: z.uuid(),
     name: z.string(),
     is_active: z.boolean()
+});
+
+/**
+ * LLMModelInfo
+ */
+export const zLlmModelInfo = z.object({
+    id: z.uuid(),
+    name: z.string(),
+    provider_id: z.uuid(),
+    provider_name: z.string()
 });
 
 /**
  * LLMProvider
  */
 export const zLlmProvider = z.object({
-    id: z.string(),
     name: z.string(),
     base_url: z.string(),
     api_key: z.string(),
-    models: z.array(zLlmProviderModel)
+    id: z.uuid(),
+    models: z.array(zLlmModel)
+});
+
+/**
+ * ApplicationSettingsModel
+ */
+export const zApplicationSettingsModel = z.object({
+    llm_providers: z.array(zLlmProvider).optional(),
+    draft_model_id: z.uuid().nullish(),
+    web_search_provider: zComponentProviderParameters.nullish(),
+    image_search_provider: zComponentProviderParameters.nullish()
 });
 
 /**
@@ -196,7 +210,6 @@ export const zMessageStatus = z.enum(['pending', 'completed']);
  */
 export const zNewChatRequest = z.object({
     user_prompt: z.string(),
-    model: zLlmModel,
     folder_id: z.uuid().nullish()
 });
 
@@ -247,9 +260,9 @@ export const zMessageModel = z.object({
     id: z.uuid(),
     status: zMessageStatus,
     created_at: z.int(),
-    model: zLlmModel,
+    model_id: z.uuid().nullish(),
     tool_results: z.array(zToolResult).nullish(),
-    active_child_id: z.string().nullish(),
+    active_child_id: z.uuid().nullish(),
     has_siblings: z.boolean().optional().default(false),
     sibling_count: z.int().optional().default(0),
     current_sibling_index: z.int().optional().default(-1)
@@ -276,28 +289,10 @@ export const zUpdateSettingValue = z.object({
 export const zUserSettingsModel = z.object({
     theme: z.string().optional().default('light'),
     font_size: z.string().optional().default('16px'),
-    models: z.record(z.string(), zLlmModel).optional(),
-    default_model_id: z.string().nullish(),
+    models: z.array(zLlmModelInfo).optional(),
+    default_model_id: z.uuid().nullish(),
     agents: z.record(z.string(), zAgentProfile).optional(),
     default_agent_id: z.uuid().nullish()
-});
-
-/**
- * WebSearchProvider
- */
-export const zWebSearchProvider = z.object({
-    name: z.string(),
-    parameters: z.record(z.string(), z.string()).optional()
-});
-
-/**
- * ApplicationSettingsModel
- */
-export const zApplicationSettingsModel = z.object({
-    llm_providers: z.array(zLlmProvider).optional(),
-    default_model: zLlmModel.optional(),
-    draft_model: zDraftModel.optional(),
-    websearch_provider: zWebSearchProvider.nullish()
 });
 
 export const zGetFilePath = z.object({

@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asterism.common import LLMModel, NotFoundException, UnauthorizedException
+from asterism.common import NotFoundException, UnauthorizedException
 from asterism.db import get_async_db_session
 from asterism.models import (
     Chat,
@@ -116,7 +116,6 @@ class ChatRepository:
         self,
         user_id: str,
         user_prompt: str,
-        model: LLMModel,
         folder_id: uuid.UUID | None,
         session: AsyncSession | None = None,
     ) -> ChatModel:
@@ -135,7 +134,6 @@ class ChatRepository:
                 content=user_prompt,
                 role="user",
                 token_count=0,
-                model=model,
             )
             session.add(new_message)
 

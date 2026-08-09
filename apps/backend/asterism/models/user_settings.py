@@ -4,9 +4,8 @@ from pydantic import JsonValue
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from asterism.models.typedefs import JsonColumn
-
-from . import Base
+from .base import Base
+from .typedefs import JsonColumn
 
 
 class UserSetting(Base):

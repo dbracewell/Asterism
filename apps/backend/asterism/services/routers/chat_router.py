@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, Query, WebSocket
 
 from asterism.common import AgentProfile, ErrorDetail, UnauthorizedException
+from asterism.common.exceptions import BadDataException
 from asterism.llm import Agent
 from asterism.repositories import chat_repository, settings_repository
 from asterism.schemas import (
@@ -54,20 +55,18 @@ async def chat(
         )
         await websocket.close()
         return
+    if not user_settings.default_model_id:
+        raise BadDataException()
+
     agent: Agent = Agent(
         profile=AgentProfile(
+            user_id=user.id,
             name="Default Agent",
             description="Description",
             id=uuid.uuid4(),
             max_steps=5,
-            model=user_settings.default_model,
-            tools=[
-                "get_user_name",
-                "get_current_timestamp",
-                "get_timestamp_at_timezone",
-                "web_search",
-                "web_fetch",
-            ],
+            model_id=user_settings.default_model_id,
+            tools=None,
         ),
         user=user,
     )
@@ -92,7 +91,6 @@ async def new_session(
 ) -> ChatModel:
     return await chat_repository.create(
         user_id=user.id,
-        model=payload.model,
         user_prompt=payload.user_prompt,
         folder_id=payload.folder_id,
         session=db,

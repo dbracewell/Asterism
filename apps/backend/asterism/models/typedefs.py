@@ -91,11 +91,11 @@ class PydanticSQLiteJSONB(TypeDecorator):
 
         return value
 
-    def bind_expression(self, bindvalue):
-        return func.jsonb(bindvalue, type_=self)
+    def bind_expression(self, bindparam):
+        return func.jsonb(bindparam, type_=self)
 
-    def column_expression(self, colexpr):
-        return func.json(colexpr, type_=self)
+    def column_expression(self, column):
+        return func.json(column, type_=self)
 
 
 class PydanticPGJSONB(TypeDecorator):

@@ -1,28 +1,45 @@
-from typing import Any
+import uuid
+from typing import Any, cast
 
 from cachetools import TTLCache
 from pydantic import JsonValue
-from sqlalchemy import select, update
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 
-from asterism.common import Atomic, LLMModel
+from asterism.common import Atomic
+from asterism.common.exceptions import NotFoundException
 from asterism.db import get_async_db_session
-from asterism.models import AppSetting, UserSetting
+from asterism.events import Event, EventType, event_bus
+from asterism.models import AppSetting, LLMModelDB, Provider, UserSetting
 from asterism.schemas import (
     ApplicationSettingsModel,
     BulkUpdateSettingRequest,
     Setting,
     UserSettingsModel,
 )
+from asterism.schemas.provider import (
+    LLMModel,
+    LLMModelInfo,
+    LLMModelWithProvider,
+    LLMProvider,
+)
+from asterism.utils.log import get_logger
+
+logger = get_logger("Settings")
 
 
 class SettingsRepository:
     def __init__(self) -> None:
-        self.user_cache = TTLCache[str, UserSettingsModel](
-            maxsize=100, ttl=3600
-        )
+        self.user_cache: TTLCache[str, UserSettingsModel] = TTLCache[
+            str, UserSettingsModel
+        ](maxsize=100, ttl=3600)
         self.app_cache = Atomic[ApplicationSettingsModel | None](None)
+
+    # ------------------------------------------------------------------
+    # User settings
+    # ------------------------------------------------------------------
 
     async def get_user_settings(
         self,
@@ -34,30 +51,17 @@ class SettingsRepository:
             return cached
 
         async with get_async_db_session(session) as session:
-            app_settings = await self.get_app_settings(session)
-            user_models: dict[str, LLMModel] = {}
-            for provider in app_settings.llm_providers:
-                for model in filter(lambda m: m.is_active, provider.models):
-                    user_models[model.key] = model
-
+            # Gather all the settings from the database for this user
+            # and construct a settings model
             stmt = select(UserSetting).where(UserSetting.user_id == user_id)
             result = await session.scalars(stmt)
+            combined: dict[str, Any] = {row.key: row.value for row in result.all()}
 
-            combined: dict[str, Any] = {
-                row.key: row.value for row in result.all()
-            }
             user_settings = UserSettingsModel.model_validate(combined)
-            user_settings.models = user_models
-
-            if not user_settings.default_model_id:
-                user_settings.default_model_id = app_settings.default_model.key
-
-            # make sure the user's default model is still valid
-            if not user_settings.default_model:
-                user_settings.default_model_id = next(
-                    iter(user_models.keys()),
-                    None,
-                )
+            user_settings.models = await self.get_user_models(
+                user_id=user_id,
+                session=session,
+            )
 
             self.user_cache[user_id] = user_settings
 
@@ -72,12 +76,20 @@ class SettingsRepository:
         async with get_async_db_session(session) as session:
             for key, value in updates.items():
                 stmt = (
-                    update(UserSetting)
-                    .where(
-                        UserSetting.user_id == user_id,
-                        UserSetting.key == key,
+                    insert(UserSetting)
+                    .values(
+                        {
+                            "user_id": user_id,
+                            "value": value,
+                            "key": key,
+                        }
                     )
-                    .values({"value": value})
+                    .on_conflict_do_update(
+                        index_elements=["user_id", "key"],
+                        set_={
+                            "value": value,
+                        },
+                    )
                 )
                 await session.execute(stmt)
             await session.commit()
@@ -96,15 +108,15 @@ class SettingsRepository:
             existing = await session.get(UserSetting, (user_id, key))
             if existing:
                 existing.value = value
-                await session.merge(existing)
-                await session.flush()
                 await session.commit()
-                return Setting(key=existing.key, value=existing.value)  # type: ignore
+                self.user_cache.pop(user_id, None)
+                return Setting(key=existing.key, value=existing.value)
+
             new_setting = UserSetting(user_id=user_id, key=key, value=value)
             session.add(new_setting)
-            await session.flush()
-            await session.refresh(new_setting)
             await session.commit()
+            await session.refresh(new_setting)
+            self.user_cache.pop(user_id, None)
             return Setting(key=new_setting.key, value=new_setting.value)
 
     async def delete_user_setting(
@@ -116,24 +128,12 @@ class SettingsRepository:
         self.user_cache.pop(user_id, None)
         async with get_async_db_session(session) as session:
             setting = await session.get(UserSetting, (user_id, key))
-            if setting:
-                await session.delete(setting)
-                await session.flush()
-                await session.commit()
+            if not setting:
+                raise NotFoundException()
 
-    async def delete_user_all_settings(
-        self,
-        user_id: str,
-        session: AsyncSession | None = None,
-    ) -> None:
-        self.user_cache.pop(user_id, None)
-        async with get_async_db_session(session) as session:
-            stmt = select(UserSetting).where(UserSetting.user_id == user_id)
-            result = await session.execute(stmt)
-            for row in result.scalars().all():
-                await session.delete(row)
-            await session.flush()
+            await session.delete(setting)
             await session.commit()
+            self.user_cache.pop(user_id, None)
 
     # ------------------------------------------------------------------
     # Application settings
@@ -155,38 +155,14 @@ class SettingsRepository:
             for row in result.all():
                 full[row.key] = row.value
 
-            if not full:
-                return ApplicationSettingsModel()
-
             new_setting = ApplicationSettingsModel.model_validate(full)
+            new_setting.llm_providers = [
+                LLMProvider.model_validate(p)
+                for p in await self.get_all_providers(session)
+            ]
+
             self.app_cache.value = new_setting
             return new_setting
-
-    async def get_app_settings_by_prefix(
-        self,
-        prefix: str,
-        session: AsyncSession | None = None,
-    ) -> list[Setting]:
-        return_settings: list[Setting] = []
-        async with get_async_db_session(session) as session:
-            stmt = select(AppSetting).where(AppSetting.key.startswith(prefix))
-            result = await session.scalars(stmt)
-            for s in result.all():
-                return_settings.append(Setting(key=s.key, value=s.value))
-        return return_settings
-
-    async def get_settings(
-        self,
-        setting_names: list[str],
-        session: AsyncSession | None = None,
-    ) -> dict[str, Any]:
-        return_settings: dict[str, Any] = {}
-        async with get_async_db_session(session) as session:
-            stmt = select(AppSetting).where(AppSetting.key.in_(setting_names))
-            result = await session.scalars(stmt)
-            for s in result.all():
-                return_settings[s.key] = s.value
-        return return_settings
 
     async def upsert_app_setting(
         self,
@@ -199,15 +175,17 @@ class SettingsRepository:
             existing = await session.get(AppSetting, key)
             if existing:
                 existing.value = value
-                existing.updated_by = "admin"
-                session.add(existing)
-                await session.flush()
                 await session.commit()
-                return Setting(key=existing.key, value=existing.value)  # type: ignore
+                self.app_cache.value = None
+                self.user_cache.clear()
+                return Setting(key=existing.key, value=existing.value)
+
             new_setting = AppSetting(key=key, value=value, updated_by="admin")
             session.add(new_setting)
             await session.commit()
             await session.refresh(new_setting)
+            self.app_cache.value = None
+            self.user_cache.clear()
             return Setting(key=new_setting.key, value=new_setting.value)
 
     async def delete_app_setting(
@@ -217,41 +195,222 @@ class SettingsRepository:
     ) -> None:
         async with get_async_db_session(session) as session:
             setting = await session.get(AppSetting, key)
-            if setting:
-                await session.delete(setting)
-                await session.flush()
-                await session.commit()
+            if not setting:
+                raise NotFoundException()
+
+            await session.delete(setting)
+            await session.flush()
+            await session.commit()
+            self.app_cache.value = None
+            self.user_cache.clear()
 
     async def bulk_update_app_setting(
         self,
-        updated_by: str,
         updates: BulkUpdateSettingRequest,
         session: AsyncSession | None = None,
     ) -> ApplicationSettingsModel:
         async with get_async_db_session(session) as session:
+            llm_providers: list[LLMProvider] | None = None
             for key, value in updates.values.items():
+                if key == "llm_providers":
+                    """Update the llm providers"""
+                    if value:
+                        llm_providers = [
+                            LLMProvider(**d)  # type: ignore
+                            for d in value  # type: ignore
+                        ]
+                    else:
+                        llm_providers = []
+                    continue
+
+                if key == "draft_model_id":
+                    """Send a signal that the draft model has been updated"""
+                    event_bus.emit(Event(type=EventType.DRAFT_MODEL_UPDATED))
+
                 stmt = (
                     insert(AppSetting)
                     .values(
                         {
                             "value": value,
-                            "updated_by": updated_by,
                             "key": key,
                         }
                     )
                     .on_conflict_do_update(
                         index_elements=["key"],
                         set_={
-                            "updated_by": updated_by,
                             "value": value,
                         },
                     )
                 )
                 await session.execute(stmt)
+
+            if llm_providers is not None:
+                await self._bulk_upsert_providers(
+                    llm_providers,
+                    session=session,
+                )
+
             await session.commit()
             self.app_cache.value = None
             self.user_cache.clear()
+
         return await self.get_app_settings(session)
+
+    # ------------------------------------------------------------------
+    # Provider & Model settings
+    # ------------------------------------------------------------------
+
+    async def get_draft_model(
+        self,
+        session: AsyncSession | None = None,
+    ) -> LLMModelWithProvider:
+        async with get_async_db_session(session) as session:
+            stmt = select(AppSetting.value).where(AppSetting.key == "draft_model_id")
+
+            value = await session.scalar(stmt)
+            if not value:
+                raise NotFoundException()
+
+            draft_model_id = uuid.UUID(cast(str, value))
+
+            stmt = (
+                select(LLMModelDB)
+                .options(joinedload(LLMModelDB.provider))
+                .where(LLMModelDB.id == draft_model_id)
+            )
+
+            result = await session.scalar(stmt)
+            if not result:
+                raise NotFoundException()
+
+            return LLMModelWithProvider.model_validate(result)
+
+    async def get_all_providers(self, session: AsyncSession) -> list[Provider]:
+        async with get_async_db_session(session) as session:
+            stmt = select(Provider).options(
+                selectinload(Provider.models),
+            )
+            result = await session.scalars(stmt)
+            return list(result.all())
+
+    async def get_user_models(
+        self,
+        user_id: str,
+        session: AsyncSession | None = None,
+    ) -> list[LLMModelInfo]:
+        async with get_async_db_session(session) as session:
+            stmt = (
+                select(LLMModelDB)
+                .where(
+                    LLMModelDB.is_active,
+                )
+                .options(joinedload(LLMModelDB.provider))
+            )
+            result = await session.scalars(stmt)
+            models: list[LLMModelInfo] = []
+            for m in result.all():
+                models.append(
+                    LLMModelInfo(
+                        id=m.id,
+                        name=m.name,
+                        provider_id=m.provider.id,
+                        provider_name=m.provider.name,
+                    )
+                )
+            return models
+
+    async def get_model_and_provider(
+        self,
+        model_id: uuid.UUID,
+        user_id: str | None = None,
+        session: AsyncSession | None = None,
+    ) -> LLMModelWithProvider:
+        async with get_async_db_session(session) as session:
+            stmt = (
+                select(LLMModelDB)
+                .where(
+                    LLMModelDB.id == model_id,
+                    LLMModelDB.is_active,
+                )
+                .options(joinedload(LLMModelDB.provider))
+            )
+            result = await session.scalar(stmt)
+            if not result:
+                raise NotFoundException()
+            return LLMModelWithProvider.model_validate(result)
+
+    async def get_model(
+        self,
+        model_id: uuid.UUID,
+        user_id: str | None = None,
+        session: AsyncSession | None = None,
+    ) -> LLMModel:
+        async with get_async_db_session(session) as session:
+            stmt = select(LLMModelDB).where(
+                LLMModelDB.id == model_id,
+                LLMModelDB.is_active,
+            )
+            result = await session.scalar(stmt)
+            if not result:
+                raise NotFoundException()
+            return LLMModel.model_validate(result)
+
+    async def _bulk_upsert_providers(
+        self,
+        update: list[LLMProvider],
+        session: AsyncSession,
+    ):
+
+        current_providers = await self.get_all_providers(session=session)
+        processed_providers = set()
+        existing_providers = {p.id: p for p in current_providers}
+        for provider in update:
+            existing_provider = existing_providers.get(provider.id, None)
+            if existing_provider:
+                processed_providers.add(provider.id)
+                existing_provider.base_url = provider.base_url
+                existing_provider.api_key = provider.api_key
+                existing_provider.name = provider.name
+                existing_provider.models = self._merge_models(
+                    provider.models,
+                    existing_provider.models,
+                )
+                await session.flush()
+            else:
+                processed_providers.add(provider.id)
+                new_provider = Provider(
+                    id=provider.id,
+                    name=provider.name,
+                    base_url=provider.base_url,
+                    api_key=provider.api_key,
+                    models=[
+                        LLMModelDB(id=m.id, name=m.name, is_active=m.is_active)
+                        for m in provider.models
+                    ],
+                )
+                session.add(new_provider)
+                await session.flush()
+
+        for delete_id in set(existing_providers.keys()).difference(processed_providers):
+            await session.execute(delete(Provider).where(Provider.id == delete_id))
+
+        event_bus.emit(Event(type=EventType.DRAFT_MODEL_UPDATED))
+
+    def _merge_models(self, new_models: list[LLMModel], existing: list[LLMModelDB]):
+        existing_models_by_name = {m.name: m for m in existing}
+        synced_models: list[LLMModelDB] = []
+        for m_data in new_models:
+            if m_data.name in existing_models_by_name:
+                existing_model = existing_models_by_name[m_data.name]
+                existing_model.is_active = m_data.is_active
+                synced_models.append(existing_model)
+            else:
+                new_model = LLMModelDB(
+                    name=m_data.name,
+                    is_active=m_data.is_active,
+                )
+                synced_models.append(new_model)
+        return synced_models
 
 
 settings_repository = SettingsRepository()

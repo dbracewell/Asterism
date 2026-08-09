@@ -1,3 +1,4 @@
+from ..common.llm import LLMMessage
 from .app_settings import ApplicationSettingsModel
 from .chat import (
     ChatInfo,
@@ -15,11 +16,17 @@ from .folder import (
     NewFolderRequest,
 )
 from .message import (
-    LLMMessage,
     MessageModel,
     MessageModelList,
     NewMessage,
     UpdateMessage,
+)
+from .provider import (
+    LLMModel,
+    LLMModelInfo,
+    LLMModelInfoList,
+    LLMProvider,
+    LLMProviderList,
 )
 from .settings import BulkUpdateSettingRequest, Setting, UpdateSettingValue
 from .user import CreateUserRequest
@@ -30,8 +37,14 @@ ChatModelList.model_rebuild()
 FlatFolderModel.model_rebuild()
 FolderModel.model_rebuild()
 FolderModelList.model_rebuild()
+ApplicationSettingsModel.model_rebuild()
 
 __all__ = [
+    "LLMProviderList",
+    "LLMProvider",
+    "LLMModel",
+    "LLMModelInfo",
+    "LLMModelInfoList",
     "ComponentResponse",
     "ComponentListResponse",
     "ApplicationSettingsModel",

@@ -3,12 +3,15 @@ from typing import cast
 
 from pydantic import BaseModel
 
-from asterism.common import ToolContext
-from asterism.components.search import WebsearchComponent
-from asterism.components.search.base import SearchResult
-from asterism.registries import component_registry, tool_registry
-from asterism.utils.search import IntentBasedRetriever
-from asterism.utils.web import fetch_markdown
+from asterism.common import ComponentType
+from asterism.components.web_search import SearchResult, WebsearchComponent
+from asterism.registries import ToolContext, component_registry, tool_registry
+from asterism.utils.log import get_logger
+
+from .fetch import fetch_markdown
+from .retrieval import SummarizingRetriever
+
+logger = get_logger("WEB_SEARCH")
 
 
 class WebSearchArgs(BaseModel):
@@ -25,15 +28,15 @@ class WebSearchArgs(BaseModel):
 async def web_search(
     ctx: ToolContext[WebSearchArgs],
 ) -> str:
-    provider = ctx.app_settings.websearch_provider
+    provider = ctx.app_settings.web_search_provider
     if not provider:
         return "No web search provider configured."
 
     try:
-        web_search: WebsearchComponent = cast(
+        web_search_component: WebsearchComponent = cast(
             WebsearchComponent,
             await component_registry.get_component(
-                "WebSearch",
+                ComponentType.WebSearch,
                 provider.name,
                 provider.parameters,
             ),
@@ -41,11 +44,12 @@ async def web_search(
     except Exception as e:
         return f"Failed to initialize web search provider: {str(e)}"
 
-    if not isinstance(web_search, WebsearchComponent):
-        return {"message": "Invalid web search provider configured."}
-
     try:
-        search_results = await web_search(ctx.args.query, ctx.args.limit)
+        search_results = await web_search_component(ctx.args.query, ctx.args.limit)
+        logger.debug(
+            f"provider={provider.name} query={ctx.args.query} "
+            f"results in {len(search_results)} results"
+        )
         return await _research(ctx, search_results)
     except Exception as e:
         return f"Web search failed: {str(e)}"
@@ -58,17 +62,21 @@ async def _research(
 
     tasks = [_safe_wrap(sr.url) for sr in search_results]
     contents = await asyncio.gather(*tasks)
-    retriever = IntentBasedRetriever(ctx)
+    retriever = SummarizingRetriever(ctx)
+    # IntentBasedRetriever(ctx)
 
     for sr, text in zip(search_results, contents):
         if isinstance(text, Exception):
             continue
         await retriever.index_document(sr.url, text)
 
-    retrieval_results = await retriever.retrieve(top_k=10)
-    return "\n\n".join(
-        f"URL: {r.id}\nCONTENT: {r.content}" for r in retrieval_results
-    )
+    retrieval_results = await retriever.retrieve(top_k=50)
+    content_blocks = ""
+    for r in retrieval_results:
+        content_blocks += f"\n\nURL: {r.id}\nCONTENT: {r.content}"
+
+    logger.info(content_blocks)
+    return content_blocks.strip()
 
 
 async def _safe_wrap(url: str) -> str | Exception:

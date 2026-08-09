@@ -174,6 +174,5 @@ async def bulk_update_app_settings(
         )
     return await settings_repository.bulk_update_app_setting(
         updates=updates,
-        updated_by=user.id,
         session=session,
     )

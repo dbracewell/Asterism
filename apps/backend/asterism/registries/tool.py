@@ -3,7 +3,8 @@ from __future__ import annotations
 import inspect
 import json
 import re
-from typing import TYPE_CHECKING, Any, Callable, Type, get_args
+from dataclasses import dataclass, field
+from typing import Any, Callable, Type, get_args
 
 from openai.types.chat import (
     ChatCompletionFunctionToolParam,
@@ -13,15 +14,12 @@ from pydantic import BaseModel
 
 from asterism.common import (
     AuthedUser,
-    LLMTool,
+    LLMClientProtocol,
     ToolCall,
-    ToolContext,
     ToolResult,
 )
+from asterism.schemas import ApplicationSettingsModel
 from asterism.utils.retries import async_retry
-
-if TYPE_CHECKING:
-    from asterism.llm import LLMClient
 
 
 def _parse_tool_call_arguments(arguments: str | None) -> dict[str, Any]:
@@ -67,6 +65,25 @@ def _parse_result(
     )
 
 
+@dataclass(frozen=True)
+class ToolContext[T: BaseModel | None]:
+    args: T
+    user: AuthedUser
+    user_message: str
+    app_settings: ApplicationSettingsModel
+    client: LLMClientProtocol
+    user_files: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class LLMTool:
+    name: str
+    is_async: bool
+    schema: ChatCompletionFunctionToolParam
+    arg_validator: Type[BaseModel]
+    function: Callable[[ToolContext[BaseModel]], Any]
+
+
 class ToolRegistry:
     def __init__(self):
         self.registry: dict[str, LLMTool] = {}
@@ -95,7 +112,7 @@ class ToolRegistry:
         self,
         tool_call: ToolCall,
         user: AuthedUser,
-        client: LLMClient,
+        client: LLMClientProtocol,
         user_message: str = "",
         user_files: list[str] = [],
         max_retries: int = 3,
@@ -179,7 +196,7 @@ class ToolRegistry:
             is_async = inspect.iscoroutinefunction(func)
             tool_desc = description or (inspect.getdoc(func) or "").strip()
             arg_validator, schema = to_json_schema(func, tool_name, tool_desc)
-            self.registry[tool_name] = LLMTool(  # type:ignore
+            self.registry[tool_name] = LLMTool(
                 name=tool_name,
                 arg_validator=arg_validator,
                 is_async=is_async,

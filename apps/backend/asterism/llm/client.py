@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
-from enum import StrEnum
 from typing import (
     Any,
     AsyncGenerator,
     Literal,
+    Optional,
     Type,
     Unpack,
     cast,
@@ -16,7 +15,6 @@ from openai import (
     APIConnectionError,
     APIError,
     AsyncOpenAI,
-    AsyncStream,
     RateLimitError,
 )
 from openai.types.chat import (
@@ -31,56 +29,15 @@ from asterism import config
 from asterism.common import (
     ChatCompletionParams,
     Function,
+    LLMClientProtocol,
+    LLMEvent,
+    LLMEventType,
+    LLMMessage,
     ToolCall,
-    ToolResult,
 )
-from asterism.schemas import LLMMessage
 from asterism.utils.retries import retry_async_gen
 
 from .helpers import format_messages_for_model
-
-
-class LLMEventType(StrEnum):
-    START = "START"
-    COMPLETE = "COMPLETE"
-    TEXT_DELTA = "TEXT_DELTA"
-    THINKING_DELTA = "THINKING_DELTA"
-    ERROR = "ERROR"
-
-
-@dataclass(frozen=True)
-class LLMEvent[T: BaseModel]:
-    type: LLMEventType
-    content: str = field(default="")
-    thinking: str = field(default="")
-    finish_reason: (
-        Literal[
-            "stop", "length", "tool_calls", "content_filter", "function_call"
-        ]
-        | None
-    ) = field(default=None)
-    exception: Exception | None = field(default=None)
-    total_tokens: int = field(default=0)
-    parsed: BaseModel | None = field(default=None)
-    tool_calls: list[ToolCall] | None = field(default=None)
-    tool_result: ToolResult | None = field(default=None)
-
-    def to_dict(self) -> dict[str, Any]:
-        tool_calls = []
-        for tc in self.tool_calls or []:
-            tool_calls.append(tc.model_dump(mode="json"))
-        return {
-            "type": self.type.value,
-            "content": self.content,
-            "thinking": self.thinking,
-            "finish_reason": self.finish_reason,
-            "exception": str(self.exception) if self.exception else None,
-            "total_tokens": self.total_tokens,
-            "parsed": self.parsed.model_dump(mode="json")
-            if self.parsed
-            else None,
-            "tool_calls": tool_calls if self.tool_calls else None,
-        }
 
 
 class StreamingChunkProcessor[T: BaseModel]:
@@ -91,16 +48,9 @@ class StreamingChunkProcessor[T: BaseModel]:
         self.response_model = response_model
         self.full_content: str = ""
         self.full_thinking: str = ""
-        self.final_finish_reason: (
-            Literal[
-                "stop",
-                "length",
-                "tool_calls",
-                "content_filter",
-                "function_call",
-            ]
-            | None
-        ) = None
+        self.final_finish_reason: Optional[
+            Literal["stop", "length", "tool_calls", "content_filter", "function_call"]
+        ] = None
         self.token_usage: dict[str, int] | None = None
         self.tool_calls_dict: dict[int, dict[str, Any]] = {}
         self.is_thinking: bool = False
@@ -121,8 +71,8 @@ class StreamingChunkProcessor[T: BaseModel]:
             if choice.finish_reason is not None:
                 self.final_finish_reason = choice.finish_reason
 
-            reasoning = getattr(delta, "reasoning_content", None)
-            if reasoning:
+            reasoning: str | None = getattr(delta, "reasoning_content", None)
+            if reasoning is not None:
                 self.is_thinking = True
                 self.full_thinking += reasoning
                 events.append(
@@ -132,9 +82,8 @@ class StreamingChunkProcessor[T: BaseModel]:
                         thinking=self.full_thinking.strip(),
                     )
                 )
-                continue
 
-            if delta.content:
+            if delta.content is not None and delta.content != "":
                 self.is_thinking = False
                 self.full_content += delta.content
                 events.append(
@@ -144,7 +93,6 @@ class StreamingChunkProcessor[T: BaseModel]:
                         thinking=self.full_thinking.strip(),
                     )
                 )
-                continue
 
             if not delta.tool_calls:
                 continue
@@ -172,14 +120,16 @@ class StreamingChunkProcessor[T: BaseModel]:
         events: list[LLMEvent] = []
 
         parsed = None
-        exception: Exception | None = None
-        if self.full_content and self.response_model:
+        if self.response_model:
             try:
-                content = re.sub(
-                    r"^(```[a-z]+\n|')", "", self.full_content.strip()
-                ).strip()
-                content = re.sub(r"(```|')$", "", content.strip()).strip()
-                parsed = self.response_model.model_validate_json(content)
+                clean_content = re.sub(
+                    r"^```(?:json)?\n?",
+                    "",
+                    self.full_content.strip(),
+                    flags=re.IGNORECASE,
+                )
+                clean_content = re.sub(r"\n?```$", "", clean_content).strip()
+                parsed = self.response_model.model_validate_json(clean_content)
             except Exception as e:
                 exception = e
                 events.append(
@@ -218,7 +168,7 @@ class StreamingChunkProcessor[T: BaseModel]:
         return events
 
 
-class LLMClient:
+class LLMClient(LLMClientProtocol):
     def __init__(
         self,
         model_name: str,
@@ -294,19 +244,48 @@ class LLMClient:
         completion_args["messages"] = format_messages_for_model(messages)
         return completion_args
 
-    async def generate(
-        self, prompt: str, **kwargs: Unpack[ChatCompletionParams]
-    ) -> str:
-        last_event = None
+    async def generate[T: BaseModel](
+        self,
+        prompt: str,
+        response_model: Type[T] | None = None,
+        **kwargs: Unpack[ChatCompletionParams],
+    ) -> str | T | None:
+        last_event: LLMEvent[T] = LLMEvent(type=LLMEventType.COMPLETE, content=prompt)
+
         async for event in self.chat(
-            messages=[LLMMessage.user(prompt)], **kwargs
+            messages=[LLMMessage.user(prompt)],
+            response_model=response_model,
+            **kwargs,
         ):
             if event.type == LLMEventType.ERROR:
                 raise Exception(f"[GENERATION ERROR: {event.content}]")
             last_event = event
-        if not last_event or not last_event.content:
-            raise Exception("[GENERATION ERROR: No Content Generate]")
+
+        if last_event.parsed:
+            return cast(T, last_event.parsed)
+
         return last_event.content
+
+    async def chat_to_completion[T: BaseModel](
+        self,
+        messages: list[LLMMessage],
+        tools: list[str] | None = None,
+        response_model: Type[T] | None = None,
+        **kwargs: Unpack[ChatCompletionParams],
+    ) -> LLMEvent[T]:
+        last_event: LLMEvent[T] = LLMEvent(type=LLMEventType.COMPLETE)
+
+        async for event in self.chat(
+            messages=messages,
+            tools=tools,
+            response_model=response_model,
+            **kwargs,
+        ):
+            if event.type == LLMEventType.ERROR:
+                raise Exception(f"[CHAT ERROR: {event.content}]")
+            last_event = event
+
+        return last_event
 
     async def chat[T: BaseModel](
         self,
@@ -335,12 +314,12 @@ class LLMClient:
         async def async_chat_impl(
             **kwargs,
         ) -> AsyncGenerator[ChatCompletionChunk, None]:
-            response = await self._client.chat.completions.create(  # type:ignore
+            response = await self._client.chat.completions.create(
                 stream=True,
                 stream_options={"include_usage": True},
                 **kwargs,
             )
-            async for chunk in cast(AsyncStream[ChatCompletionChunk], response):
+            async for chunk in response:
                 yield chunk
 
         processor = StreamingChunkProcessor(response_model=response_model)

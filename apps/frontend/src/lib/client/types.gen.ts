@@ -13,6 +13,10 @@ export type AgentProfile = {
      */
     id: string;
     /**
+     * User Id
+     */
+    user_id: string;
+    /**
      * Name
      */
     name: string;
@@ -20,7 +24,10 @@ export type AgentProfile = {
      * Description
      */
     description: string;
-    model: LlmModel;
+    /**
+     * Model Id
+     */
+    model_id: string;
     /**
      * System Prompt
      */
@@ -33,7 +40,7 @@ export type AgentProfile = {
     /**
      * Tools
      */
-    tools?: Array<string>;
+    tools?: Array<string> | null;
 };
 
 /**
@@ -44,9 +51,12 @@ export type ApplicationSettingsModel = {
      * Llm Providers
      */
     llm_providers?: Array<LlmProvider>;
-    default_model?: LlmModel;
-    draft_model?: DraftModel;
-    websearch_provider?: WebSearchProvider | null;
+    /**
+     * Draft Model Id
+     */
+    draft_model_id?: string | null;
+    web_search_provider?: ComponentProviderParameters | null;
+    image_search_provider?: ComponentProviderParameters | null;
 };
 
 /**
@@ -106,9 +116,9 @@ export type ChatCompletionParams = {
         [key: string]: unknown;
     };
     /**
-     * Max Completion Tokens
+     * Max Tokens
      */
-    max_completion_tokens?: number;
+    max_tokens?: number;
     /**
      * Modalities
      */
@@ -241,6 +251,22 @@ export type ComponentListResponse = {
 };
 
 /**
+ * ComponentProviderParameters
+ */
+export type ComponentProviderParameters = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Parameters
+     */
+    parameters?: {
+        [key: string]: string;
+    };
+};
+
+/**
  * ComponentResponse
  */
 export type ComponentResponse = {
@@ -274,20 +300,6 @@ export type CreateUserRequest = {
      * Optional system key for user creation.
      */
     system_key?: string | null;
-};
-
-/**
- * DraftModel
- */
-export type DraftModel = {
-    /**
-     * Repo Id
-     */
-    repo_id: string;
-    /**
-     * Filename
-     */
-    filename: string;
 };
 
 /**
@@ -373,6 +385,10 @@ export type JsonValue = unknown;
  */
 export type LlmModel = {
     /**
+     * Id
+     */
+    id: string;
+    /**
      * Provider Id
      */
     provider_id: string;
@@ -380,16 +396,38 @@ export type LlmModel = {
      * Name
      */
     name: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+};
+
+/**
+ * LLMModelInfo
+ */
+export type LlmModelInfo = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Provider Id
+     */
+    provider_id: string;
+    /**
+     * Provider Name
+     */
+    provider_name: string;
 };
 
 /**
  * LLMProvider
  */
 export type LlmProvider = {
-    /**
-     * Id
-     */
-    id: string;
     /**
      * Name
      */
@@ -403,27 +441,13 @@ export type LlmProvider = {
      */
     api_key: string;
     /**
+     * Id
+     */
+    id: string;
+    /**
      * Models
      */
-    models: Array<LlmProviderModel>;
-};
-
-/**
- * LLMProviderModel
- */
-export type LlmProviderModel = {
-    /**
-     * Provider Id
-     */
-    provider_id: string;
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Is Active
-     */
-    is_active: boolean;
+    models: Array<LlmModel>;
 };
 
 /**
@@ -459,7 +483,10 @@ export type MessageModel = {
      * Created At
      */
     created_at: number;
-    model: LlmModel;
+    /**
+     * Model Id
+     */
+    model_id?: string | null;
     /**
      * Tool Results
      */
@@ -495,7 +522,6 @@ export type NewChatRequest = {
      * User Prompt
      */
     user_prompt: string;
-    model: LlmModel;
     /**
      * Folder Id
      */
@@ -583,9 +609,7 @@ export type UserSettingsModel = {
     /**
      * Models
      */
-    models?: {
-        [key: string]: LlmModel;
-    };
+    models?: Array<LlmModelInfo>;
     /**
      * Default Model Id
      */
@@ -600,22 +624,6 @@ export type UserSettingsModel = {
      * Default Agent Id
      */
     default_agent_id?: string | null;
-};
-
-/**
- * WebSearchProvider
- */
-export type WebSearchProvider = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Parameters
-     */
-    parameters?: {
-        [key: string]: string;
-    };
 };
 
 export type GetFileData = {

@@ -16,10 +16,8 @@ class ChatCompletionParams(TypedDict):
     seed: NotRequired[int]
     stop: NotRequired[str | Sequence[str]]
     extra_body: NotRequired[dict[str, Any]]
-    tool_choice: NotRequired[
-        Literal["required", "auto", "none"] | dict[str, Any]
-    ]
-    max_completion_tokens: NotRequired[int]
+    tool_choice: NotRequired[Literal["required", "auto", "none"] | dict[str, Any]]
+    max_tokens: NotRequired[int]
     modalities: NotRequired[list[Literal["text", "audio"]]]
     audio: NotRequired[dict[str, Any]]
     prediction: NotRequired[dict[str, Any]]

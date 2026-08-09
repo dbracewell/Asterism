@@ -16,7 +16,7 @@ from typing import (
 from pydantic import BaseModel
 
 from asterism import config
-from asterism.schemas import LLMMessage
+from asterism.common.llm import LLMMessage
 
 
 def _get_type_name(annotation) -> str:

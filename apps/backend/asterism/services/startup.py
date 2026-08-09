@@ -19,6 +19,7 @@ async def init_system() -> None:
         target_decorators=(
             "tool_registry.tool",
             "component_registry.register",
+            "event_bus.on",
         ),
     )
     logger.info(f"{len(tool_registry.tools())} tools available.")

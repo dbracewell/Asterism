@@ -61,7 +61,7 @@ export const useChatWebSocket = ({
 
         if (msgContent.type === "start") {
           streamingMessageRef.current = {
-            model: { provider_id: "", name: "" },
+            model_id: "",
             thinking: "",
             content: "",
             created_at: Math.floor(Date.now() / 1000),
@@ -94,6 +94,7 @@ export const useChatWebSocket = ({
             ...streamingMessageRef.current!,
             thinking: msgContent.thinking,
             content: msgContent.content,
+            status: !!msgContent.content ? "completed" : "pending",
           };
         }
 

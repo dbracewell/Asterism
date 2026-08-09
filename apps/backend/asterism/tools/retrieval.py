@@ -6,11 +6,13 @@ from dataclasses import dataclass
 import bm25s
 import networkx as nx
 import Stemmer
+from pydantic import BaseModel
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from asterism.common import ToolContext
+from asterism.common import LLMMessage
 from asterism.llm.draft import get_draft_model
+from asterism.registries import ToolContext
 
 
 @dataclass
@@ -39,6 +41,11 @@ class PassageRetriever(abc.ABC):
     ) -> list[PassageRetrievalResult]: ...
 
 
+class SummarizationResult(BaseModel):
+    summary: str
+    relevance: float
+
+
 class SummarizingRetriever(PassageRetriever):
     def __init__(self, ctx: ToolContext) -> None:
         super().__init__(ctx)
@@ -60,7 +67,7 @@ class SummarizingRetriever(PassageRetriever):
         for doc_id, content in self.documents:
             document_ids.append(doc_id)
             summarization_prompt = f"""You are a research extraction assistant.
-Analyze the following source documents and extract key facts, data, and answers directly relevant to the query.
+Analyze the following source document and extract key facts, data, and answers directly relevant to the user query.
 
 User Query: "{self.ctx.user_message}"
 
@@ -72,29 +79,45 @@ Instructions:
 - Ignore navigation text, cookie warnings, or unrelated boilerplate.
 - Cite the source URL for major facts.
 - Be concise and factual. Do not make up information.
+- Provide a relevance score (0 - 100) indicating the relevance of the summary data to the query.
+
+IMPORTANT:
+
+Think step-by-step, but you MUST output the final summary in the requested JSON format after you finish thinking.
     """  # noqa: E501
             tasks.append(self._generate(summarization_prompt))
 
-        summaries: list[str] = await asyncio.gather(*tasks)
+        summaries: list[SummarizationResult | Exception] = await asyncio.gather(*tasks)
         results: list[PassageRetrievalResult] = []
         for doc_id, summary in zip(document_ids, summaries):
-            if not summary.startswith("[ERROR"):
+            if isinstance(summary, SummarizationResult) and summary.relevance >= 45.0:
                 results.append(
                     PassageRetrievalResult(
                         id=doc_id,
-                        content=summary,
-                        relevance=len(summary),
+                        content=summary.summary,
+                        relevance=summary.relevance,
                     )
                 )
         results.sort(key=lambda x: x.relevance, reverse=True)
         return results[: min(top_k, len(results))]
 
-    async def _generate(self, prompt: str) -> str:
+    async def _generate(self, prompt: str) -> SummarizationResult | Exception:
         try:
-            summary = await self.ctx.client.generate(prompt)
-            return summary
+            summary = await self.ctx.client.generate(
+                prompt,
+                response_model=SummarizationResult,
+                reasoning_effort="low",
+                max_tokens=3500,
+            )
+            print(summary or "None")
+            if isinstance(summary, SummarizationResult):
+                return summary
+            elif isinstance(summary, str):
+                return SummarizationResult(summary=summary, relevance=50)
+            else:
+                return Exception("Failed to generate summary")
         except Exception as e:
-            return f"[ERROR {e}]"
+            return e
 
 
 class BM25Retriever(PassageRetriever):
@@ -133,6 +156,7 @@ class BM25Retriever(PassageRetriever):
 
         corpus_tokens = bm25s.tokenize(
             chunks,
+            show_progress=False,
             stemmer=self.stemmer,  # type: ignore
             stopwords="en",  # Removes common words like "the", "and"
         )
@@ -146,14 +170,13 @@ class BM25Retriever(PassageRetriever):
         top_k: int = 3,
     ) -> list[PassageRetrievalResult]:
         if not self.retrievers:
-            raise RuntimeError(
-                "You must call index_document() before retrieving."
-            )
+            raise RuntimeError("You must call index_document() before retrieving.")
 
         query_tokens = bm25s.tokenize(
             self.ctx.user_message,
             stemmer=self.stemmer,  # type: ignore
             stopwords="en",
+            show_progress=False,
         )
 
         retrieval_results: list[PassageRetrievalResult] = []
@@ -164,7 +187,8 @@ class BM25Retriever(PassageRetriever):
         ):
             results, scores = retriever.retrieve(
                 query_tokens,
-                k=min(top_k * 20, len(self.chunks)),
+                k=min(top_k * 20, len(doc_chunks)),
+                show_progress=False,
             )
             for i in range(len(results[0])):
                 # results[0][i] contains the index of the original chunk
@@ -173,7 +197,7 @@ class BM25Retriever(PassageRetriever):
                 # bm25s pads results with -1 if there aren't enough matches
                 if chunk_idx == -1:
                     continue
-                chunk_text = doc_chunks[chunk_idx]
+                chunk_text: str = doc_chunks[chunk_idx]
                 retrieval_results.append(
                     PassageRetrievalResult(
                         id=doc_id,
@@ -227,16 +251,12 @@ class HeadingRetriever(PassageRetriever):
                 # Truncate long paragraphs to keep it strictly as a "lead"
                 words = clean_lead.split()
                 if len(words) > self.max_words_per_lead:
-                    clean_lead = (
-                        " ".join(words[: self.max_words_per_lead]) + "..."
-                    )
+                    clean_lead = " ".join(words[: self.max_words_per_lead]) + "..."
 
                 retrieval_results.append(
                     PassageRetrievalResult(
                         id=doc_id,
-                        content=(
-                            f"{'#' * header_level} {header_text}\n{clean_lead}"
-                        ),
+                        content=(f"{'#' * header_level} {header_text}\n{clean_lead}"),
                         relevance=score / 100,
                     )
                 )
@@ -252,9 +272,7 @@ class TextRankRetriever(PassageRetriever):
         self.documents: list[tuple[str, str]] = []
         self.num_sentences: int = num_sentences
 
-    async def index_document(
-        self, document_id: str, document_text: str
-    ) -> None:
+    async def index_document(self, document_id: str, document_text: str) -> None:
         self.documents.append((document_id, document_text))
 
     async def retrieve(
@@ -326,22 +344,21 @@ class IntentBasedRetriever(PassageRetriever):
         draft_model = get_draft_model()
         return await draft_model.invoke(
             messages=[
-                {
-                    "role": "user",
-                    "content": f"""Classify this query into one of three intents:
+                LLMMessage.user(
+                    content=f"""Classify this query into one of three intents:
     BROAD_OVERVIEW: The user wants a general summary or the latest updates.
     SPECIFIC_FACT: The user is asking for a precise detail or answer.
     AMBIGUOUS: The query is too vague to determine a specific direction.
     Query: {self.ctx.user_message}""",  # noqa: E501
-                }
+                )
             ]
         )
 
     async def _get_retriever(self) -> PassageRetriever:
         if self.retriever:
             return self.retriever
+
         intent = await self._classify_prompt()
-        print(intent)
         if "BROAD_OVERVIEW" in intent.upper():
             self.retriever = TextRankRetriever(ctx=self.ctx)
             return self.retriever

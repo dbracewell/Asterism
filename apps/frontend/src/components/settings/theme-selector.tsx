@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,20 +10,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTheme } from "@/features/theme/components/theme-context";
-import { RotateCwIcon } from "lucide-react";
 
 interface ThemeSelectorProps {
   currentTheme?: string;
   onChange?: (theme: string) => void;
-  allowRefresh?: boolean;
+  updateTheme?: boolean;
 }
 
 export const ThemeSelector = ({
   currentTheme,
   onChange,
-  allowRefresh = true,
 }: ThemeSelectorProps) => {
-  const { setTheme, lightThemes, darkThemes, refresh } = useTheme();
+  const { lightThemes, darkThemes } = useTheme();
 
   const value = currentTheme ?? "light";
 
@@ -33,11 +30,10 @@ export const ThemeSelector = ({
       <Select
         defaultValue={value}
         onValueChange={(name) => {
-          setTheme(name);
           onChange?.(name);
         }}
       >
-        <SelectTrigger className="bg-input!">
+        <SelectTrigger className="bg-input! min-w-40">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-80 overflow-y-auto" position="popper">
@@ -67,11 +63,6 @@ export const ThemeSelector = ({
           )}
         </SelectContent>
       </Select>
-      {allowRefresh && (
-        <Button variant="ghost" size="icon-sm" onClick={refresh}>
-          <RotateCwIcon />
-        </Button>
-      )}
     </div>
   );
 };

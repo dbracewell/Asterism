@@ -8,7 +8,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from websockets import State
 
-from asterism.common import LLMModel
+from asterism.common import LLMMessage
 from asterism.events import (
     ChatUpdateEvent,
     Event,
@@ -26,15 +26,14 @@ from asterism.schemas import (
     NewMessage,
     UpdateMessage,
 )
-from asterism.test import LLMMessage
 from asterism.utils.collection_utils import index_of
 from asterism.utils.log import get_logger
 
 type MessageQueue = asyncio.Queue[dict[str, Any]]
 
-_queue_cache: TTLCache[uuid.UUID, MessageQueue] = TTLCache[
-    uuid.UUID, MessageQueue
-](maxsize=1000, ttl=8600)
+_queue_cache: TTLCache[uuid.UUID, MessageQueue] = TTLCache[uuid.UUID, MessageQueue](
+    maxsize=1000, ttl=8600
+)
 
 
 def _get_or_create_queue(chat_id: uuid.UUID) -> MessageQueue:
@@ -65,7 +64,6 @@ class AgentRunnerWebsocket:
             self.chat_session.info.title is None
             or self.chat_session.info.title == "New Chat"
         ):
-            title = "New Chat"
             try:
                 draft_model = get_draft_model()
                 title = await draft_model.label_chat(
@@ -73,6 +71,7 @@ class AgentRunnerWebsocket:
                 )
             except Exception as e:
                 self.logger.error(e)
+                return
 
             self.chat_session.info.title = title
             await chat_repository.update(
@@ -100,9 +99,7 @@ class AgentRunnerWebsocket:
 
                 last_user_message_index = index_of(
                     self.chat_session.messages,
-                    lambda m: (
-                        m.role == "user" and m.status == MessageStatus.PENDING
-                    ),
+                    lambda m: m.role == "user" and m.status == MessageStatus.PENDING,
                     reverse=True,
                 )
 
@@ -111,9 +108,7 @@ class AgentRunnerWebsocket:
                     continue
 
                 parent_message_index = last_user_message_index
-                parent_message = self.chat_session.messages[
-                    parent_message_index
-                ]
+                parent_message = self.chat_session.messages[parent_message_index]
 
                 messages: list[LLMMessage] = []
                 for m in self.chat_session.messages:
@@ -142,7 +137,7 @@ class AgentRunnerWebsocket:
                                 tool_call_results=event.tool_results
                                 if event.has_tool_results()
                                 else None,
-                                model=self.agent.profile.model,
+                                model_id=self.agent.profile.model_id,
                             ),
                         )
                         parent_message = await chat_repository.update_message(
@@ -160,9 +155,7 @@ class AgentRunnerWebsocket:
                             parent_message
                         )
                         parent_message = new_message
-                        parent_message_index = (
-                            len(self.chat_session.messages) - 1
-                        )
+                        parent_message_index = len(self.chat_session.messages) - 1
 
                         if event.type == AgentEventType.COMPLETE:
                             await self.queue.put(
@@ -176,6 +169,10 @@ class AgentRunnerWebsocket:
                                     ],
                                 }
                             )
+                        else:
+                            await self.queue.put(
+                                {"type": AgentEventType.TOOL_COMPLETE.value}
+                            )
                     else:
                         await self.queue.put(event.model_dump())
 
@@ -188,23 +185,27 @@ class AgentRunnerWebsocket:
                 )
 
     async def process_queue(self) -> None:
-        seen_start = False
+        event_sequence: set[AgentEventType] = set()
+
         while True:
             msg = await self.queue.get()
-            msg_type = msg["type"]
+            msg_type = AgentEventType(msg["type"])
+            event_sequence.add(msg_type)
 
-            if msg_type == AgentEventType.START.value:
-                seen_start = True
-            elif msg_type in (
-                AgentEventType.COMPLETE.value,
-                AgentEventType.ERROR.value,
+            if msg_type == AgentEventType.TOOL_COMPLETE:
+                continue
+
+            if msg_type == AgentEventType.START:
+                await self.websocket.send_json({"type": AgentEventType.START.value})
+                continue
+
+            if msg_type in (AgentEventType.COMPLETE, AgentEventType.ERROR):
+                event_sequence.clear()
+            elif (
+                AgentEventType.START not in event_sequence
+                and AgentEventType.TOOL_COMPLETE not in event_sequence
             ):
-                seen_start = False
-            elif not seen_start:
-                await self.websocket.send_json(
-                    {"type": AgentEventType.START.value}
-                )
-                seen_start = True
+                await self.websocket.send_json({"type": AgentEventType.START.value})
 
             await self.websocket.send_json(msg)
 
@@ -236,26 +237,19 @@ class AgentRunnerWebsocket:
             self.background_tasks.append(
                 asyncio.create_task(self._heartbeat()),
             )
-            self.background_tasks.append(
-                asyncio.create_task(self._generate_title())
-            )
-            self.background_tasks.append(
-                asyncio.create_task(self._process_messages())
-            )
-            self.background_tasks.append(
-                asyncio.create_task(self.process_queue())
-            )
+            self.background_tasks.append(asyncio.create_task(self._generate_title()))
+            self.background_tasks.append(asyncio.create_task(self._process_messages()))
+            self.background_tasks.append(asyncio.create_task(self.process_queue()))
 
             while self.websocket.client_state == WebSocketState.CONNECTED:
                 message_data = await self.websocket.receive_json()
-                if "message" not in message_data or "model" not in message_data:
+                if "message" not in message_data:
                     continue
 
                 while self.queue.qsize() > 0:
                     await asyncio.sleep(1)
 
                 user_prompt = message_data.get("message", "")
-                user_model = LLMModel(**message_data.get("model", None))
                 user_message = await chat_repository.add_message(
                     user_id=self.chat_session.info.user_id,
                     session_id=self.chat_session.info.id,
@@ -267,7 +261,7 @@ class AgentRunnerWebsocket:
                         if self.chat_session.messages
                         else None,
                         status=MessageStatus.PENDING,
-                        model=user_model,
+                        model_id=self.agent.profile.model_id,
                     ),
                 )
                 self.chat_session.messages.append(

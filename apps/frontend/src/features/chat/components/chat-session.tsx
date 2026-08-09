@@ -2,7 +2,6 @@
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@/features/auth/components/user-context";
 import ChatInput from "@/features/chat/components/chat-input";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
@@ -12,7 +11,7 @@ import {
   type ScrollState,
 } from "@/features/chat/types";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
-import { ChatInfo, ChatModel, LlmModel, MessageModel } from "@/lib/client";
+import { ChatInfo, ChatModel, MessageModel } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
 import React, { Dispatch, RefObject, SetStateAction } from "react";
@@ -20,13 +19,7 @@ import React, { Dispatch, RefObject, SetStateAction } from "react";
 export type ChatSessionContextType = {
   sessionInfo: ChatInfo;
   sendJsonMessage: <T = unknown>(jsonMessage: T, keep?: boolean) => void;
-  addUserMessage: ({
-    prompt,
-    model,
-  }: {
-    prompt: string;
-    model: LlmModel;
-  }) => void;
+  addUserMessage: ({ prompt }: { prompt: string }) => void;
   connectionStatus: ConnectionStatus;
   scrollState: RefObject<ScrollState>;
   updateScrollState: (scrollState: ScrollState) => void;
@@ -52,6 +45,7 @@ export type ChatStreamingContextType = {
   incomingMessage: MessageModel | null;
   messages: MessageModel[];
 };
+
 export const ChatStreamingContext =
   React.createContext<ChatStreamingContextType | null>(null);
 
@@ -145,7 +139,7 @@ const ChatSessionProvider = ({
   });
 
   const addUserMessage = React.useCallback(
-    ({ prompt, model }: { prompt: string; model: LlmModel }) => {
+    ({ prompt }: { prompt: string }) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -156,7 +150,7 @@ const ChatSessionProvider = ({
           status: "completed",
         } as MessageModel,
       ]);
-      sendJsonMessage({ message: prompt, model });
+      sendJsonMessage({ message: prompt });
     },
     [setMessages, sendJsonMessage],
   );
@@ -211,6 +205,7 @@ const ChatSessionProvider = ({
     </ChatSessionContext.Provider>
   );
 };
+ChatSessionProvider.displayName = "ChatSessionProvider";
 
 const ChatSessionMessageList = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -224,7 +219,7 @@ const ChatSessionMessageList = () => {
   } = useChatSession();
   const { messages, incomingMessage } = useChatStreaming();
   const filtered = React.useMemo(() => {
-    return messages.filter((m) => m.role !== "tool" && !m.tool_calls?.length);
+    return messages.filter((m) => m.role !== "tool" && m.tool_calls == null);
   }, [messages]);
 
   React.useEffect(() => {
@@ -317,6 +312,7 @@ const ChatSessionMessageList = () => {
     </div>
   );
 };
+ChatSessionMessageList.displayName = "ChatSessionMessageList";
 
 const MessageItem = React.memo(
   ({
@@ -326,10 +322,8 @@ const MessageItem = React.memo(
     message: MessageModel;
     defaultShowThinking?: boolean;
   }) => {
-    const user = useUser();
     const [showThinking, setShowThinking] = React.useState(defaultShowThinking);
     const thinkingRef = React.useRef<HTMLParagraphElement>(null);
-
     React.useEffect(() => {
       if (defaultShowThinking && thinkingRef.current) {
         thinkingRef.current.scrollTop = thinkingRef.current.scrollHeight;
@@ -358,7 +352,9 @@ const MessageItem = React.memo(
             {message.thinking ?? ""}
           </p>
         </details>
-        {!message.content.trim() && !message.thinking?.trim() && <Loading />}
+        {message.role === "assistant" && message.status === "pending" && (
+          <Loading />
+        )}
         <MarkdownViewer
           content={message.content}
           className={cn(
@@ -397,7 +393,7 @@ const MessageItem = React.memo(
 );
 MessageItem.displayName = "MessageItem";
 
-const ChatSessionInput = ({ defaultModel }: { defaultModel?: LlmModel }) => {
+const ChatSessionInput = () => {
   const {
     connectionStatus,
     addUserMessage,
@@ -405,11 +401,6 @@ const ChatSessionInput = ({ defaultModel }: { defaultModel?: LlmModel }) => {
     setCanScroll,
     setInputLines,
   } = useChatSession();
-  const user = useUser();
-  const [activeModel, setActiveModel] = React.useState<LlmModel | undefined>(
-    defaultModel ??
-      user.settings.models?.[user.settings.default_model_id ?? ""],
-  );
   return (
     <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">
       {canScroll && (
@@ -423,11 +414,9 @@ const ChatSessionInput = ({ defaultModel }: { defaultModel?: LlmModel }) => {
       )}
       <ChatInput
         disabled={connectionStatus !== "Open"}
-        defaultModel={activeModel}
         setNumberOfLines={setInputLines}
-        onSubmit={(e) => {
-          addUserMessage(e);
-          setActiveModel(e.model);
+        onSubmit={({ prompt }) => {
+          addUserMessage({ prompt });
         }}
       />
     </div>

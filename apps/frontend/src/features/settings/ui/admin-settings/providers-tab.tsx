@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import {
   ComputerIcon,
   LoaderCircleIcon,
@@ -15,6 +15,8 @@ import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { HelpIcon } from "@/components/help-icon";
+import { ModelSelector } from "@/components/settings/model-selector";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -27,28 +29,16 @@ import {
   FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { fetchProviderModels } from "@/features/settings/server/actions";
 import { client } from "@/lib/api";
-import type { LlmModel, LlmProviderModel } from "@/lib/client";
+import { appSettingsBulkUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import {
-  appSettingsBulkUpdateMutation,
-  appSettingsGetOptions,
-} from "@/lib/client/@tanstack/react-query.gen";
+  ApplicationSettingsModel,
+  LlmModel,
+  LlmModelInfo,
+} from "@/lib/client/types.gen";
+import { zLlmModel } from "@/lib/client/zod.gen";
 import { useRouter } from "next/navigation";
-
-const providerModelSchema = z.object({
-  name: z.string().min(1, "Model name is required."),
-  provider_id: z.string(),
-  is_active: z.boolean(),
-});
 
 const providerSchema = z.object({
   id: z.string(),
@@ -59,15 +49,9 @@ const providerSchema = z.object({
     .min(1, "Base URL is required.")
     .transform((arg) => (arg.endsWith("/") ? arg.slice(0, -1) : arg)),
   api_key: z.string().trim().min(1, "API key is required."),
-  models: z.array(providerModelSchema),
+  models: z.array(zLlmModel),
 });
 
-const providersFormSchema = z.object({
-  llm_providers: z.array(providerSchema),
-  default_model: z.string().optional(),
-});
-
-type ProvidersFormValues = z.infer<typeof providersFormSchema>;
 type ProviderFormValue = ProvidersFormValues["llm_providers"][number];
 
 const createEmptyProvider = (): ProviderFormValue => ({
@@ -78,47 +62,42 @@ const createEmptyProvider = (): ProviderFormValue => ({
   models: [],
 });
 
-const mergeModels = (
-  currentModels: LlmProviderModel[],
-  fetchedModels: LlmProviderModel[],
-): LlmProviderModel[] => {
-  const currentByName = new Map(
-    currentModels.map((model) => [model.name, model.is_active]),
-  );
+const providersFormSchema = z.object({
+  llm_providers: z.array(providerSchema),
+  draft_model_id: z.string().optional(),
+});
 
+type ProvidersFormValues = z.infer<typeof providersFormSchema>;
+
+const mergeModels = (
+  currentModels: LlmModel[],
+  fetchedModels: LlmModel[],
+): LlmModel[] => {
+  const currentByName = new Map(
+    currentModels.map((model) => [model.name, model]),
+  );
   return fetchedModels.map((model) => ({
     ...model,
-    is_active: currentByName.get(model.name) ?? model.is_active,
+    id: currentByName.get(model.name)?.id ?? model.id,
+    is_active: currentByName.get(model.name)?.is_active ?? model.is_active,
   }));
 };
 
-const toDefaultModelValue = (defaultModel?: LlmModel) => {
-  return defaultModel?.provider_id && defaultModel.name
-    ? `${defaultModel.provider_id}::${defaultModel.name}`
-    : undefined;
-};
-
-export const ProvidersTab = () => {
+export const ProvidersTab = ({
+  appSettings,
+}: {
+  appSettings: ApplicationSettingsModel;
+}) => {
   const router = useRouter();
   const [loadingModelsIndex, setLoadingModelsIndex] = useState<number | null>(
     null,
   );
 
-  const {
-    data: appSettings,
-    isLoading,
-    isSuccess,
-  } = useQuery({
-    ...appSettingsGetOptions({
-      client,
-    }),
-  });
-
   const form = useForm<ProvidersFormValues>({
     resolver: zodResolver(providersFormSchema),
     defaultValues: {
       llm_providers: appSettings?.llm_providers ?? [],
-      default_model: toDefaultModelValue(appSettings?.default_model),
+      draft_model_id: appSettings?.draft_model_id ?? "",
     },
     mode: "onBlur",
   });
@@ -144,20 +123,46 @@ export const ProvidersTab = () => {
     name: "llm_providers",
   });
 
-  const watchedDefaultModel = useWatch({
+  const watchedDraftModel = useWatch({
     control,
-    name: "default_model",
+    name: "draft_model_id",
   });
 
   useEffect(() => {
-    if (!isSuccess || formState.isDirty) {
-      return;
-    }
     reset({
       llm_providers: appSettings?.llm_providers ?? [],
-      default_model: toDefaultModelValue(appSettings?.default_model),
+      draft_model_id: appSettings?.draft_model_id ?? "",
     });
-  }, [appSettings, formState.isDirty, isSuccess, reset]);
+  }, [appSettings, reset]);
+
+  const availableModels = useMemo(() => {
+    return watchedProviders
+      .flatMap((p) =>
+        p.models.map(
+          (m) =>
+            ({
+              ...m,
+              provider_name: p.name,
+            }) as LlmModelInfo & { is_active: boolean },
+        ),
+      )
+      .filter((m) => m.is_active);
+  }, [watchedProviders]);
+
+  const defaultModelList = useMemo(() => {
+    return watchedProviders
+      .flatMap((p) =>
+        p.models.map((m) => ({
+          ...m,
+          provider: p.name,
+        })),
+      )
+      .filter((m) => m.is_active)
+      .map((m) => ({
+        value: m.id,
+        label: `${m.provider} - ${m.name}`,
+      }));
+  }, [watchedProviders]);
 
   const saveProviders = useMutation({
     ...appSettingsBulkUpdateMutation({
@@ -170,36 +175,18 @@ export const ProvidersTab = () => {
     onError: () => toast.error("Failed to save. Please try again."),
   });
 
-  const defaultModelList = useMemo(() => {
-    return (
-      watchedProviders
-        .flatMap((p) =>
-          p.models.map((m) => [p.name, p.id, m.name, m.is_active]),
-        )
-        .filter((m) => m[3])
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        .map(([provider_name, id, name, _]) => ({
-          value: `${id}::${name}`,
-          label: `${provider_name} - ${name}`,
-        }))
-    );
-  }, [watchedProviders]);
-
   const onSubmit = (values: ProvidersFormValues) => {
-    let default_model: LlmModel | undefined = undefined;
-    if (values.default_model) {
-      const parts = values.default_model.split("::");
-      default_model = { provider_id: parts[0], name: parts[1] };
-    } else if (defaultModelList.length > 0) {
-      const parts = defaultModelList[0].value.split("::");
-      default_model = { provider_id: parts[0], name: parts[1] };
+    let draft_model_id: string | undefined = values.draft_model_id;
+
+    if (draft_model_id == null && defaultModelList.length > 0) {
+      draft_model_id = defaultModelList[0].value;
     }
 
     saveProviders.mutate({
       body: {
         values: {
           llm_providers: values.llm_providers,
-          default_model,
+          draft_model_id: draft_model_id ?? null,
         },
       },
     });
@@ -228,7 +215,6 @@ export const ProvidersTab = () => {
         Object.values(provider.models ?? {}),
         fetchedModels,
       );
-
       setValue(`llm_providers.${index}.models`, mergedModels, {
         shouldDirty: true,
         shouldValidate: true,
@@ -247,14 +233,10 @@ export const ProvidersTab = () => {
     }
   };
 
-  if (isLoading) {
-    return <Spinner />;
-  }
-
   return (
     <form
+      id="providers-form"
       className="flex flex-1 flex-col gap-4 overflow-hidden"
-      noValidate
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="relative">
@@ -266,7 +248,6 @@ export const ProvidersTab = () => {
           variant="ghost"
           size="icon"
           onClick={() => append(createEmptyProvider())}
-          disabled={isLoading && !isSuccess}
           aria-label="Add provider"
           className="absolute top-0 right-0"
         >
@@ -275,13 +256,7 @@ export const ProvidersTab = () => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        {isLoading && fields.length === 0 ? (
-          <div className="text-muted-foreground py-4 text-sm">
-            Loading providers...
-          </div>
-        ) : null}
-
-        {!isLoading && fields.length === 0 ? (
+        {fields.length === 0 ? (
           <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
             <ComputerIcon className="text-muted-foreground/50 size-10" />
             <h4 className="w-sm text-center text-xl">
@@ -412,38 +387,32 @@ export const ProvidersTab = () => {
                                     checked={controllerField.value}
                                     onCheckedChange={(checked) => {
                                       const isActive = checked === true;
-                                      const currentValue = `${provider?.id}::${model.name}`;
-
+                                      const currentValue = model.id;
                                       controllerField.onChange(isActive);
-                                      console.log(
-                                        isActive,
-                                        currentValue,
-                                        watchedDefaultModel,
-                                      );
                                       if (
                                         !isActive &&
-                                        watchedDefaultModel === currentValue
+                                        watchedDraftModel === currentValue
                                       ) {
                                         const nextDefault = watchedProviders
                                           ?.flatMap((p) =>
                                             p.models
                                               .filter((m) => {
-                                                if (
-                                                  p.id === provider?.id &&
-                                                  m.name === model.name
-                                                ) {
-                                                  return false;
-                                                }
-                                                return m.is_active;
+                                                return (
+                                                  m.id != model.id &&
+                                                  m.is_active
+                                                );
                                               })
-                                              .map((m) => `${p.id}::${m.name}`),
+                                              .map((m) => m.id),
                                           )
                                           .at(0);
-                                        console.log(nextDefault);
-                                        setValue("default_model", nextDefault, {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        });
+                                        setValue(
+                                          "draft_model_id",
+                                          nextDefault,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        );
                                       }
                                     }}
                                   />
@@ -471,37 +440,20 @@ export const ProvidersTab = () => {
       <div className="flex items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <Field>
-            <FieldLabel htmlFor="appsettings-default-model">
-              Default Model
+            <FieldLabel htmlFor="appsettings-draft-model" className="px-1">
+              Draft Model
+              <HelpIcon text="The model used for generating chat titles and other background information." />
             </FieldLabel>
             <Controller
               control={control}
-              name="default_model"
+              name="draft_model_id"
               render={({ field }) => (
-                <Select
-                  value={field.value}
+                <ModelSelector
+                  id="appsettings-draft-model"
+                  defaultModel={field.value}
+                  availableModels={availableModels}
                   onValueChange={field.onChange}
-                  defaultValue={toDefaultModelValue(appSettings?.default_model)}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      id="appsettings-default-model"
-                      className="w-full max-w-2xl"
-                      placeholder="Choose the default model"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="w-full max-w-2xl truncate">
-                    {defaultModelList.map((df) => (
-                      <SelectItem
-                        className="w-full max-w-2xl truncate"
-                        value={df.value}
-                        key={df.value}
-                      >
-                        {df.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               )}
             />
           </Field>

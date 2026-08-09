@@ -1,5 +1,5 @@
 from asterism.common import NoArgs
-from asterism.registries.tool import ToolContext, tool_registry
+from asterism.registries import ToolContext, tool_registry
 
 
 @tool_registry.tool(

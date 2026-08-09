@@ -1,22 +1,22 @@
 import { Types } from "@/features/settings/types";
+import { AgentsSettings } from "@/features/settings/ui/user-settings/agents-settings";
 import { GeneralSettings } from "@/features/settings/ui/user-settings/general-settings";
-import { PaletteIcon, Settings2Icon } from "lucide-react";
-import { AppearanceSettings } from "@/features/settings/ui/user-settings/appearance-settings";
+import { BotIcon, Settings2Icon } from "lucide-react";
 
 export const UserSettings: Types = [
   {
     type: "section",
-    label: "Appearance",
-    value: "appearance",
+    label: "General",
+    value: "general",
     isDefault: true,
-    icon: <PaletteIcon />,
-    settingsPane: <AppearanceSettings />,
+    icon: <Settings2Icon />,
+    settingsPane: <GeneralSettings />,
   },
   {
     type: "section",
-    label: "General",
-    value: "general",
-    icon: <Settings2Icon />,
-    settingsPane: <GeneralSettings />,
+    label: "Agents",
+    value: "agents",
+    icon: <BotIcon />,
+    settingsPane: <AgentsSettings />,
   },
 ];

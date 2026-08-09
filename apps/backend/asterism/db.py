@@ -33,9 +33,7 @@ class DatabaseSessionManager:
         try:
             if self._engine is None:
                 self._engine = create_async_engine(config.DB_URL)
-                event.listen(
-                    self._engine.sync_engine, "connect", set_sqlite_pragma
-                )
+                event.listen(self._engine.sync_engine, "connect", set_sqlite_pragma)
             if self._session_maker is None:
                 self._session_maker = async_sessionmaker(
                     expire_on_commit=False,
@@ -76,7 +74,7 @@ class DatabaseSessionManager:
         if self._session_maker is None:
             raise Exception("DatabaseSessionManager is not initialized")
 
-        session = self._session_maker()  # type: ignore
+        session = self._session_maker()
         try:
             yield session
         except Exception:

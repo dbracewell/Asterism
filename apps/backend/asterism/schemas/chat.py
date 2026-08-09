@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from asterism.common import LLMModel
-
 if TYPE_CHECKING:
     from .message import MessageModel
 
@@ -32,7 +30,6 @@ class ChatModelList(BaseModel):
 class NewChatRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_prompt: str
-    model: LLMModel
     folder_id: uuid.UUID | None = Field(default=None)
 
 

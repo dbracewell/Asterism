@@ -7,15 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useUser } from "@/features/auth/components/user-context";
 import { LlmModel } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import {
@@ -32,7 +24,6 @@ import React, {
   RefObject,
   SetStateAction,
   useCallback,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -44,43 +35,25 @@ interface AttachedFile {
   preview?: string;
 }
 
-const toModelValue = (model?: LlmModel | null) => {
-  if (!model) return "";
-  return `${model.provider_id}::${model.name}`;
-};
-
 const ChatInput = React.memo(
   ({
     onSubmit,
     disabled = false,
     displayStatus = true,
-    defaultModel,
     placeholder = "",
     setNumberOfLines,
   }: {
-    onSubmit?: ({ prompt, model }: { prompt: string; model: LlmModel }) => void;
+    onSubmit?: ({ prompt }: { prompt: string }) => void;
     disabled?: boolean;
     displayStatus?: boolean;
     placeholder?: string;
     defaultModel?: LlmModel;
     setNumberOfLines?: Dispatch<SetStateAction<number>>;
   }) => {
-    const user = useUser();
     const [prompt, setPrompt] = useState("");
     const [isDragOver, setIsDragOver] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-    const [model, setModel] = useState<string>(
-      toModelValue(defaultModel) ?? user.settings.default_model_id!,
-    );
 
-    const availableModels = useMemo(
-      () =>
-        Object.values(user.settings.models ?? {}).map((m) => ({
-          label: m.name,
-          value: toModelValue(m),
-        })),
-      [user.settings.models],
-    );
     const numberOfLinesRef = React.useRef<number>(1);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -113,13 +86,8 @@ const ChatInput = React.memo(
     }, []);
     const submitPrompt = () => {
       if (!disabled && prompt.trim() && onSubmit) {
-        const [provider_id, name] = model.split("::");
         onSubmit({
           prompt: prompt.trim(),
-          model: {
-            provider_id,
-            name,
-          },
         });
         setPrompt("");
       }
@@ -267,30 +235,6 @@ const ChatInput = React.memo(
                     {disabled ? "Disconnected" : "Connected"}
                   </div>
                 )}
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger className="w-40 min-w-0 truncate border-0!">
-                    <span className="block w-full truncate text-left">
-                      <SelectValue placeholder="Select a model" />
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent
-                    position="popper"
-                    align="end"
-                    className="max-h-60 max-w-60 overflow-y-auto"
-                  >
-                    {availableModels?.map((model) => (
-                      <SelectItem
-                        value={model.value}
-                        key={model.value}
-                        className="block min-w-0! truncate"
-                      >
-                        <div className="block w-[95%] truncate">
-                          {model.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Button
                   aria-label="Send message"
                   className={cn(

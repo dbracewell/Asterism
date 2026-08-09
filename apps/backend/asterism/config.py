@@ -35,6 +35,10 @@ class Config:
         return self._get_value("SYSTEM_KEY", "")
 
     @property
+    def RETRIEVAL_CHAR_BUDGET(self) -> int:
+        return int(self._get_value("RETRIEVAL_CHAR_BUDGET", "15000"))
+
+    @property
     def CORS_ALLOWED_ORIGINS(self) -> list[str]:
         val = self._get_value("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
         return val.split(",")

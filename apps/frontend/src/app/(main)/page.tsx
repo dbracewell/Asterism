@@ -23,12 +23,11 @@ export default function AppPage() {
         disabled={false}
         displayStatus={false}
         placeholder="Where will your curiosity lead you today?"
-        onSubmit={({ prompt, model }) => {
+        onSubmit={({ prompt }) => {
           createChatSession({
             body: {
               folder_id: searchParams.get("folder_id"),
               user_prompt: prompt,
-              model,
             },
           });
         }}

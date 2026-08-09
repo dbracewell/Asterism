@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy import DateTime, ForeignKey, Index, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from . import Base
+from .base import Base
 
 
 class Folder(Base):

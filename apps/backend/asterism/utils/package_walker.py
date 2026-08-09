@@ -1,4 +1,3 @@
-import importlib
 import importlib.util
 import sys
 from pathlib import Path
@@ -25,30 +24,42 @@ def _has_annotation(
     return False
 
 
-def load_decorators(directory: str, target_decorators: tuple[str, ...]) -> None:
+def _resolve_package_prefix(base_path: Path) -> str:
+    """Resolve dotted package prefix for ``base_path`` when inside a package tree."""
+    parts: list[str] = []
+    cur = base_path
 
+    while (cur / "__init__.py").exists():
+        parts.append(cur.name)
+        cur = cur.parent
+
+    return ".".join(reversed(parts))
+
+
+def load_decorators(directory: str, target_decorators: tuple[str, ...]) -> None:
     base_path = Path(directory)
     if not base_path.is_dir():
         return
 
-    for file_path in base_path.iterdir():
+    package_prefix = _resolve_package_prefix(base_path)
+
+    for file_path in base_path.rglob("*.py"):
         if file_path.name.startswith("__"):
             continue
 
-        if file_path.is_dir():
-            load_decorators(str(file_path), target_decorators)
+        if not _has_annotation(file_path, target_decorators):
             continue
 
-        if file_path.suffix != ".py":
+        rel = file_path.relative_to(base_path).with_suffix("")
+        rel_module = ".".join(rel.parts)
+        full_name = f"{package_prefix}.{rel_module}" if package_prefix else rel_module
+
+        spec = importlib.util.spec_from_file_location(full_name, str(file_path))
+        if spec is None or spec.loader is None:
+            print(f"Failed to create module spec for {file_path}")
             continue
 
-        if _has_annotation(file_path, target_decorators):
-            module_name = file_path.stem
-            path_str = str(file_path)
-            spec = importlib.util.spec_from_file_location(module_name, path_str)
-            if spec is not None and spec.loader is not None:
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                spec.loader.exec_module(module)
-            else:
-                print(f"Failed to create module spec for {path_str}")
+        module = importlib.util.module_from_spec(spec)
+        module.__package__ = full_name.rpartition(".")[0]
+        sys.modules[full_name] = module
+        spec.loader.exec_module(module)

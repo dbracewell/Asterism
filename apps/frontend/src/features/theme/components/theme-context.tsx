@@ -32,19 +32,22 @@ export const useTheme = (): ThemeData => {
   return context;
 };
 
+type ThemeProviderProps = {
+  themes: Record<string, Theme>;
+  currentTheme: string;
+  fontSize: string;
+  currentThemeType: "dark" | "light";
+  children: React.ReactNode;
+  updateAppTheme?: boolean;
+};
+
 export const ThemeProvider = ({
   themes,
   currentTheme,
   fontSize,
   currentThemeType,
   children,
-}: {
-  themes: Record<string, Theme>;
-  currentTheme: string;
-  fontSize: string;
-  currentThemeType: "dark" | "light";
-  children: React.ReactNode;
-}) => {
+}: ThemeProviderProps) => {
   const router = useRouter();
 
   const allThemes = useMemo(() => {
@@ -64,6 +67,7 @@ export const ThemeProvider = ({
         ),
     [allThemes],
   );
+
   const lightThemes = useMemo(
     () =>
       allThemes
@@ -89,11 +93,15 @@ export const ThemeProvider = ({
     [themes],
   );
 
-  const setTheme = useCallback((themeFileName: string) => {
-    Cookies.set(THEME_NAME_COOKIE, themeFileName, {
-      expires: 365,
-    });
-  }, []);
+  const setTheme = useCallback(
+    (themeFileName: string) => {
+      Cookies.set(THEME_NAME_COOKIE, themeFileName, {
+        expires: 365,
+      });
+      router.refresh();
+    },
+    [router],
+  );
 
   const refresh = useCallback(() => {
     Cookies.set(THEME_REFRESH_COOKIE, "yes");

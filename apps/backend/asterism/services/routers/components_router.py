@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from asterism.common import ErrorDetail
+from asterism.common import ComponentType, ErrorDetail
 from asterism.registries import component_registry
 from asterism.schemas import ComponentListResponse, ComponentResponse
 from asterism.services.dependencies import (
@@ -21,7 +21,7 @@ components_router = APIRouter(
     summary="Get all components of a given type",
 )
 def get_components_by_type(
-    component_type: str,
+    component_type: ComponentType,
     _: AuthedUserDep,
 ) -> ComponentListResponse:
     components = component_registry.get_providers(component_type=component_type)
@@ -29,7 +29,7 @@ def get_components_by_type(
         items=[
             ComponentResponse(
                 type=component_type,
-                name=c.name(),
+                name=c.name,
                 parameters=c.parameters().model_json_schema(),
             )
             for c in components

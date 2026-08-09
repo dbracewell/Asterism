@@ -4,8 +4,8 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 
-from asterism.common import NoArgs, ToolContext
-from asterism.registries import tool_registry
+from asterism.common import NoArgs
+from asterism.registries import ToolContext, tool_registry
 
 
 @tool_registry.tool(
@@ -21,7 +21,7 @@ async def get_current_timestamp(ctx: ToolContext[NoArgs]) -> dict[str, Any]:
 
     if ctx.user.timezone:
         try:
-            tz = ZoneInfo(ctx.user.timezone)  # type: ignore
+            tz = ZoneInfo(ctx.user.timezone)
             user_now = now.astimezone(tz)
             result["user_local_iso"] = user_now.isoformat()
             result["user_timezone"] = ctx.user.timezone

@@ -3,7 +3,7 @@ import threading
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Awaitable, Callable, Coroutine
+from typing import Any, Awaitable, Callable
 
 import requests
 from pydantic import BaseModel
@@ -30,7 +30,7 @@ class Event[T: BaseModel]:
     user_id: str | None = None
 
 
-type EventHandler = Callable[[Event], Coroutine[Awaitable[None], None, None]]
+EventHandler = Callable[[Event], Awaitable[None]]
 
 
 def post_webhook(
@@ -58,10 +58,13 @@ class EventBus:
             list[EventHandler]
         )
 
-    def on(self, event_type: EventType, handler: EventHandler) -> None:
-        self.lock.acquire()
-        self.handlers[event_type].append(handler)
-        self.lock.release()
+    def on[F: EventHandler](self, event_type: EventType) -> Callable[[F], F]:
+        def decorator(func: F) -> F:
+            with self.lock:
+                self.handlers[event_type].append(func)
+            return func
+
+        return decorator
 
     def emit[T: BaseModel](self, event: Event[T]) -> None:
         if event.type.name.startswith("WEBHOOK_"):
@@ -77,9 +80,7 @@ class EventBus:
                 self.logger.error(e)
 
         for handler in self.handlers[event.type]:
-            asyncio.create_task(
-                suppress_exceptions(handler(event), self.logger)
-            )
+            asyncio.create_task(suppress_exceptions(handler(event), self.logger))
 
 
 event_bus: EventBus = EventBus()
