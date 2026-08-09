@@ -277,6 +277,7 @@ const ChatSessionMessageList = () => {
             const scrollPosition =
               e.currentTarget.scrollHeight -
               (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
+
             const can = scrollPosition > 100;
             if (can !== scrollState.current.preventAutoScroll) {
               updateScrollState({

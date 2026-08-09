@@ -28,6 +28,10 @@ const AgentStartEvent = z.object({
   type: z.literal("start"),
 });
 
+const AgentHeartBeat = z.object({
+  type: z.literal("HEARTBEAT"),
+});
+
 const AgentErrorEvent = z.object({
   type: z.literal("error"),
   content: z.string(),
@@ -41,6 +45,7 @@ const AgentDeltaEvent = z.object({
 
 export const AgentEventSchema = z.discriminatedUnion("type", [
   AgentStartEvent,
+  AgentHeartBeat,
   AgentCompleteEvent,
   AgentErrorEvent,
   AgentDeltaEvent,
