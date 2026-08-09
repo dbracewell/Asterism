@@ -1,8 +1,4 @@
-import {
-  ChatSessionInput,
-  ChatSessionMessageList,
-  ChatSessionProvider,
-} from "@/features/chat/components/chat-session";
+import { ChatSession } from "@/features/chat/components/chat-session";
 import { ChatModel } from "@/lib/client";
 
 const SessionPage = ({
@@ -14,15 +10,7 @@ const SessionPage = ({
   jwtToken: string;
   folderId?: string;
 }) => {
-  const model = session.messages
-    ? session.messages[session.messages.length - 1].model
-    : undefined;
-  return (
-    <ChatSessionProvider session={session} jwtToken={jwtToken}>
-      <ChatSessionMessageList />
-      <ChatSessionInput defaultModel={model} />
-    </ChatSessionProvider>
-  );
+  return <ChatSession session={session} jwtToken={jwtToken} folderId={folderId} />;
 };
 
 export default SessionPage;

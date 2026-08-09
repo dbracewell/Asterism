@@ -7,7 +7,7 @@ export type ConnectionStatus =
   | "Closed"
   | "Uninstantiated";
 
-export const connectionStatus = {
+export const connectionStatusMap = {
   [ReadyState.CONNECTING]: "Connecting",
   [ReadyState.OPEN]: "Open",
   [ReadyState.CLOSING]: "Closing",

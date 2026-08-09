@@ -19,14 +19,7 @@ import {
 } from "@tabler/icons-react";
 import { ClipboardPasteIcon } from "lucide-react";
 import Image from "next/image";
-import React, {
-  Dispatch,
-  RefObject,
-  SetStateAction,
-  useCallback,
-  useRef,
-  useState,
-} from "react";
+import React, { RefObject, useCallback, useRef, useState } from "react";
 
 interface AttachedFile {
   id: string;
@@ -41,14 +34,14 @@ const ChatInput = React.memo(
     disabled = false,
     displayStatus = true,
     placeholder = "",
-    setNumberOfLines,
+    onLineNumberChange,
   }: {
     onSubmit?: ({ prompt }: { prompt: string }) => void;
     disabled?: boolean;
     displayStatus?: boolean;
     placeholder?: string;
     defaultModel?: LlmModel;
-    setNumberOfLines?: Dispatch<SetStateAction<number>>;
+    onLineNumberChange?: (lines: number) => void;
   }) => {
     const [prompt, setPrompt] = useState("");
     const [isDragOver, setIsDragOver] = useState(false);
@@ -121,7 +114,7 @@ const ChatInput = React.memo(
       const lines = Math.min(7, e.target.value.split(/\n/).length);
       if (numberOfLinesRef.current != lines) {
         numberOfLinesRef.current = lines;
-        setNumberOfLines?.(numberOfLinesRef.current);
+        onLineNumberChange?.(numberOfLinesRef.current);
       }
       setPrompt(e.target.value);
     };

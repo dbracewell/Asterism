@@ -5,59 +5,15 @@ import { Button } from "@/components/ui/button";
 import ChatInput from "@/features/chat/components/chat-input";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
-import {
-  connectionStatus,
-  type ConnectionStatus,
-  type ScrollState,
-} from "@/features/chat/types";
-import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
-import { ChatInfo, ChatModel, MessageModel } from "@/lib/client";
+import { connectionStatusMap } from "@/features/chat/types";
+import { ChatModel, MessageModel } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
-import React, { Dispatch, RefObject, SetStateAction } from "react";
-
-export type ChatSessionContextType = {
-  sessionInfo: ChatInfo;
-  addUserMessage: ({ prompt }: { prompt: string }) => void;
-  connectionStatus: ConnectionStatus;
-  scrollState: RefObject<ScrollState>;
-  messageListRef: RefObject<HTMLDivElement | null>;
-  scrollToBottom: (behavior: "smooth" | "auto" | "instant") => void;
-  updateScrollState: (scrollState: ScrollState) => void;
-  canScroll: boolean;
-  setCanScroll: Dispatch<SetStateAction<boolean>>;
-  inputLines: number;
-  setInputLines: Dispatch<SetStateAction<number>>;
-};
-
-const ChatSessionContext = React.createContext<ChatSessionContextType | null>(
-  null,
-);
-
-export const useChatSession = () => {
-  const context = React.useContext(ChatSessionContext);
-  if (context == null) {
-    throw new Error("useChatSession must be used within a useChatSession");
-  }
-  return context;
-};
-
-export type ChatStreamingContextType = {
-  incomingMessage: MessageModel | null;
-  messages: MessageModel[];
-};
-
-export const ChatStreamingContext =
-  React.createContext<ChatStreamingContextType | null>(null);
-
-export const useChatStreaming = () => {
-  const context = React.useContext(ChatStreamingContext);
-  if (context == null) throw new Error("Missing ChatStreamingProvider");
-  return context;
-};
+import React from "react";
 
 const TEMP_USER_MESSAGE_PREFIX = "user-msg:";
-const SCROLL_BOTTOM_THRESHOLD = 100;
+const SCROLL_BOTTOM_THRESHOLD = 200;
+const AUTO_SCROLL_LOCK_THRESHOLD = 16;
 
 const createTempUserMessageId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -73,37 +29,57 @@ const findLastIndex = <T,>(arr: T[], predicate: (item: T) => boolean) => {
   return -1;
 };
 
-const ChatSessionProvider = ({
+export const ChatSession = ({
   session,
   jwtToken,
-  children,
+  folderId,
 }: {
   session: ChatModel;
   jwtToken: string;
-  children: React.ReactNode;
+  folderId?: string;
 }) => {
   const setSession = useActiveChatSession((state) => state.setSession);
-  const scrollState = React.useRef<ScrollState>({
-    userInitiatedScroll: false,
-    preventAutoScroll: false,
-  });
-  const [numberOfLines, setNumberOfLines] = React.useState(1);
-  const [canScroll, setCanScroll] = React.useState(false);
+  const folderIdRef = React.useRef(folderId);
+
+  const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const [messages, setMessages] = React.useState<MessageModel[]>(
     session.messages,
   );
+  const filtered = React.useMemo(() => {
+    return messages.filter((m) => m.role !== "tool" && m.tool_calls == null);
+  }, [messages]);
+
   const [incomingMessage, setIncomingMessage] =
     React.useState<MessageModel | null>(null);
-  const messageListRef = React.useRef<HTMLDivElement | null>(null);
+
+  const preventAutoScrollRef = React.useRef(false);
+
+  const [isScrollable, setIsScrollable] = React.useState(false);
+
+  React.useEffect(() => {
+    folderIdRef.current = folderId;
+  }, [folderId]);
+
+  React.useEffect(() => {
+    if (preventAutoScrollRef.current) return;
+    messageListRef.current?.scrollIntoView({ behavior: "instant" });
+  }, [incomingMessage]);
+
+  React.useEffect(() => {
+    setSession(session);
+    setMessages(session.messages);
+    setIncomingMessage(null);
+    messageListRef.current?.scrollIntoView({ behavior: "instant" });
+    return () => {
+      setSession(null);
+    };
+  }, [session, setSession]);
 
   const { sendJsonMessage, readyState } = useChatWebSocket({
     session,
     jwtToken,
     onStreamStart: (pendingMessage) => {
-      scrollState.current = {
-        userInitiatedScroll: false,
-        preventAutoScroll: false,
-      };
+      preventAutoScrollRef.current = false;
       setIncomingMessage(pendingMessage);
       setMessages((prev) => {
         if (prev.length === 0) return prev;
@@ -140,29 +116,6 @@ const ChatSessionProvider = ({
     },
   });
 
-  React.useEffect(() => {
-    setSession(session);
-    setMessages(session.messages);
-    setIncomingMessage(null);
-    return () => {
-      setSession(null);
-    };
-  }, [session, setSession]);
-
-  useSubscribeEvent({
-    type: "chat-session:update",
-    handler: (payload) => {
-      if (payload.session_id !== session.info.id) return;
-      setSession({
-        ...session,
-        info: {
-          ...session.info,
-          title: payload.title ?? session.info.title,
-        },
-      });
-    },
-  });
-
   const addUserMessage = React.useCallback(
     ({ prompt }: { prompt: string }) => {
       setMessages((prev) => [
@@ -180,155 +133,82 @@ const ChatSessionProvider = ({
     [setMessages, sendJsonMessage],
   );
 
-  const updateScrollState = React.useCallback((newState: ScrollState) => {
-    scrollState.current = newState;
-  }, []);
-
-  const scrollToBottom = React.useCallback(
-    (behavior: "smooth" | "auto" | "instant") => {
-      if (!messageListRef.current) return;
-      messageListRef.current.scrollIntoView({ behavior });
-    },
-    [],
-  );
-
-  const contextValue = React.useMemo(
-    () => ({
-      sessionInfo: session.info,
-      connectionStatus: connectionStatus[readyState],
-      addUserMessage,
-      canScroll,
-      setCanScroll,
-      scrollState,
-      updateScrollState,
-      inputLines: numberOfLines,
-      setInputLines: setNumberOfLines,
-      messageListRef,
-      scrollToBottom,
-    }),
-    [
-      session.info,
-      readyState,
-      addUserMessage,
-      canScroll,
-      setCanScroll,
-      updateScrollState,
-      numberOfLines,
-      setNumberOfLines,
-      scrollToBottom,
-    ],
-  );
-
-  const streamingValue = React.useMemo(
-    () => ({
-      incomingMessage,
-      messages,
-    }),
-    [incomingMessage, messages],
+  const connectionStatus = React.useMemo(
+    () => connectionStatusMap[readyState],
+    [readyState],
   );
 
   return (
-    <ChatSessionContext.Provider value={contextValue}>
-      <ChatStreamingContext value={streamingValue}>
-        {children}
-      </ChatStreamingContext>
-    </ChatSessionContext.Provider>
-  );
-};
-ChatSessionProvider.displayName = "ChatSessionProvider";
-
-const ChatSessionMessageList = () => {
-  const {
-    scrollState,
-    updateScrollState,
-    setCanScroll,
-    canScroll,
-    inputLines,
-    messageListRef,
-    scrollToBottom,
-  } = useChatSession();
-  const { messages, incomingMessage } = useChatStreaming();
-  const filtered = React.useMemo(() => {
-    return messages.filter((m) => m.role !== "tool" && m.tool_calls == null);
-  }, [messages]);
-
-  React.useEffect(() => {
-    if (scrollState.current.preventAutoScroll) return;
-    scrollToBottom("instant");
-  }, [incomingMessage, scrollState, scrollToBottom]);
-
-  React.useEffect(() => {
-    if (filtered.length > 0 && filtered[filtered.length - 1].role === "user") {
-      updateScrollState({
-        userInitiatedScroll: false,
-        preventAutoScroll: false,
-      });
-    }
-  }, [filtered, scrollState, updateScrollState]);
-
-  React.useEffect(() => {
-    if (!messageListRef.current) return;
-    messageListRef.current.style.height = `${40 + 20 * inputLines}px`;
-    messageListRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [inputLines, messageListRef]);
-
-  const userInitiatedScroll = React.useCallback(() => {
-    updateScrollState({
-      userInitiatedScroll: true,
-      preventAutoScroll: true,
-    });
-  }, [updateScrollState]);
-
-  return (
-    <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
-      <div
-        className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col gap-3 overflow-y-auto p-2 pt-14"
-        style={{ overflowAnchor: "auto" }}
-        onWheel={() => userInitiatedScroll()}
-        onTouchMove={() => userInitiatedScroll()}
-        onKeyDown={() => userInitiatedScroll()}
-        onMouseDown={() => userInitiatedScroll()}
-        onScroll={(e) => {
-          const scrollPosition =
-            e.currentTarget.scrollHeight -
-            (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
-          const isScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
-
-          if (scrollState.current.userInitiatedScroll) {
-            updateScrollState({
-              userInitiatedScroll: false,
-              preventAutoScroll: isScrollable,
-            });
-          }
-
-          if (isScrollable !== canScroll) {
-            setCanScroll(isScrollable);
-          }
-        }}
-      >
-        {filtered.map((message) => (
-          <MessageItem key={message.id} message={message} />
-        ))}
-        {filtered.length > 0 && filtered?.[0].status === "pending" && (
-          <Loading />
-        )}
-        {incomingMessage && (
-          <MessageItem message={incomingMessage} defaultShowThinking />
-        )}
+    <>
+      <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
         <div
-          ref={messageListRef}
-          className="shrink-0"
-          style={{
-            overflowAnchor: "auto",
-            width: "100%",
-            marginBottom: `40px`,
+          className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col gap-3 overflow-y-auto p-2 pt-14"
+          style={{ overflowAnchor: "auto" }}
+          onScroll={(e) => {
+            const scrollPosition =
+              e.currentTarget.scrollHeight -
+              (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
+
+            preventAutoScrollRef.current =
+              scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD;
+
+            const isNowScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
+            if (isNowScrollable !== isScrollable) {
+              setIsScrollable(isNowScrollable);
+            }
+          }}
+        >
+          {filtered.map((message) => (
+            <MessageItem key={message.id} message={message} />
+          ))}
+          {filtered.length > 0 && filtered?.[0].status === "pending" && (
+            <Loading />
+          )}
+          {incomingMessage && (
+            <MessageItem message={incomingMessage} defaultShowThinking />
+          )}
+          <div
+            ref={messageListRef}
+            className="shrink-0"
+            style={{
+              overflowAnchor: "auto",
+              width: "100%",
+              marginBottom: `120px`,
+            }}
+          />
+        </div>
+      </div>
+      <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">
+        {isScrollable && (
+          <Button
+            className="mx-auto mb-5 rounded-full"
+            size="icon-lg"
+            onClick={() => {
+              preventAutoScrollRef.current = false;
+              setIsScrollable(false);
+              messageListRef.current?.scrollIntoView({ behavior: "instant" });
+            }}
+          >
+            <ArrowDownIcon />
+          </Button>
+        )}
+        <ChatInput
+          disabled={connectionStatus !== "Open"}
+          onLineNumberChange={(lines) => {
+            if (!messageListRef.current) return;
+            messageListRef.current.style.marginBottom = `${120 + 20 * lines}px`;
+            if (!isScrollable) {
+              messageListRef.current?.scrollIntoView({ behavior: "instant" });
+            }
+          }}
+          onSubmit={({ prompt }) => {
+            addUserMessage({ prompt });
           }}
         />
       </div>
-    </div>
+    </>
   );
 };
-ChatSessionMessageList.displayName = "ChatSessionMessageList";
 
 const MessageItem = React.memo(
   ({
@@ -409,37 +289,6 @@ const MessageItem = React.memo(
 );
 MessageItem.displayName = "MessageItem";
 
-const ChatSessionInput = () => {
-  const {
-    connectionStatus,
-    addUserMessage,
-    canScroll,
-    setInputLines,
-    scrollToBottom,
-  } = useChatSession();
-  return (
-    <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">
-      {canScroll && (
-        <Button
-          className="mx-auto mb-5 rounded-full"
-          size="icon-lg"
-          onClick={() => scrollToBottom("smooth")}
-        >
-          <ArrowDownIcon />
-        </Button>
-      )}
-      <ChatInput
-        disabled={connectionStatus !== "Open"}
-        setNumberOfLines={setInputLines}
-        onSubmit={({ prompt }) => {
-          addUserMessage({ prompt });
-        }}
-      />
-    </div>
-  );
-};
-ChatSessionInput.displayName = "ChatSessionInput";
-
 const Loading = () => {
   return (
     <div className="mt-3 flex items-center space-x-1 px-4">
@@ -450,5 +299,3 @@ const Loading = () => {
     </div>
   );
 };
-
-export { ChatSessionInput, ChatSessionMessageList, ChatSessionProvider };
