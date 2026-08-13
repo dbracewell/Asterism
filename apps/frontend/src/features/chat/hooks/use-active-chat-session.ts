@@ -1,12 +1,19 @@
-import { ChatModel } from "@/lib/client";
 import { create } from "zustand";
 
 interface ActiveChatSessionState {
-  session: ChatModel | null;
-  setSession: (session: ChatModel | null) => void;
+  id: string | null;
+  title: string | null;
+  setSession: ({
+    id,
+    title,
+  }: {
+    id: string | null;
+    title: string | null;
+  }) => void;
 }
 
 export const useActiveChatSession = create<ActiveChatSessionState>((set) => ({
-  session: null,
-  setSession: (session) => set({ session }),
+  id: null,
+  title: null,
+  setSession: ({ id, title }) => set({ id, title }),
 }));

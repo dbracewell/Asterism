@@ -4,8 +4,7 @@ import uuid
 
 from pydantic import BaseModel, Field
 
-from asterism.common import AgentProfile
-
+from .agent_profile import AgentProfile
 from .provider import LLMModelInfo
 
 

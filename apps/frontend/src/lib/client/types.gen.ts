@@ -9,10 +9,6 @@ export type ClientOptions = {
  */
 export type AgentProfile = {
     /**
-     * Id
-     */
-    id: string;
-    /**
      * User Id
      */
     user_id: string;
@@ -31,16 +27,20 @@ export type AgentProfile = {
     /**
      * System Prompt
      */
-    system_prompt?: string | null;
+    system_prompt: string | null;
     /**
      * Max Steps
      */
-    max_steps?: number;
+    max_steps: number;
     chat_parameters?: ChatCompletionParams;
     /**
      * Tools
      */
     tools?: Array<string> | null;
+    /**
+     * Id
+     */
+    id: string;
 };
 
 /**
@@ -173,6 +173,10 @@ export type ChatCompletionParams = {
      * Timeout
      */
     timeout?: number | null;
+    /**
+     * Thinking Budget Tokens
+     */
+    thinking_budget_tokens?: number;
 };
 
 /**
@@ -285,6 +289,11 @@ export type ComponentResponse = {
         [key: string]: unknown;
     };
 };
+
+/**
+ * ComponentType
+ */
+export type ComponentType = 'WebSearch' | 'ImageSearch' | 'ImageGenerator';
 
 /**
  * CreateUserRequest
@@ -592,6 +601,18 @@ export type ToolResult = {
  */
 export type UpdateSettingValue = {
     value: JsonValue;
+};
+
+/**
+ * UserAgents
+ */
+export type UserAgents = {
+    /**
+     * Agents
+     */
+    agents: {
+        [key: string]: AgentProfile;
+    };
 };
 
 /**
@@ -1261,10 +1282,7 @@ export type UserDeleteResponse = UserDeleteResponses[keyof UserDeleteResponses];
 export type ComponentsByTypeData = {
     body?: never;
     path: {
-        /**
-         * Component Type
-         */
-        component_type: string;
+        component_type: ComponentType;
     };
     query?: never;
     url: '/components/by_type/{component_type}';
@@ -1291,3 +1309,28 @@ export type ComponentsByTypeResponses = {
 };
 
 export type ComponentsByTypeResponse = ComponentsByTypeResponses[keyof ComponentsByTypeResponses];
+
+export type AgentsGetUserAgentsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/agents';
+};
+
+export type AgentsGetUserAgentsErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type AgentsGetUserAgentsError = AgentsGetUserAgentsErrors[keyof AgentsGetUserAgentsErrors];
+
+export type AgentsGetUserAgentsResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserAgents;
+};
+
+export type AgentsGetUserAgentsResponse = AgentsGetUserAgentsResponses[keyof AgentsGetUserAgentsResponses];

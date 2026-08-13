@@ -1,3 +1,4 @@
+from .agents_router import agents_router
 from .chat_router import chat_router
 from .components_router import components_router
 from .file_router import file_router
@@ -6,6 +7,7 @@ from .settings_router import settings_router
 from .user_router import user_router
 
 __all__ = [
+    "agents_router",
     "components_router",
     "chat_router",
     "file_router",

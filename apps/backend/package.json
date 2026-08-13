@@ -6,7 +6,7 @@
     "start": "uv run uvicorn asterism.main:app --host 0.0.0.0 --port 8000",
     "lint": "uv run ruff check .",
     "test": "PYTHONPATH=. uv run pytest -q",
-    "sync": "uv sync --all-packages",
+    "sync": "uv sync",
     "typecheck": "uv run  python -m compileall -q asterism",
     "db:push": "uv run python -m asterism.init_db"
   }

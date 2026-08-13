@@ -51,7 +51,7 @@ async def require_auth(
 ) -> AuthedUser:
     if not credentials:
         raise UnauthorizedException()
-    authed_user = verify_jwks_token(credentials.credentials)  # type:ignore
+    authed_user = verify_jwks_token(credentials.credentials)
     await user_repository.ensure_user(authed_user.id)
     return authed_user
 

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { PanelLeftOpenIcon } from "lucide-react";
 
 export const Header = () => {
-  const session = useActiveChatSession((state) => state.session);
+  const sessionTitle = useActiveChatSession((state) => state.title);
   const { state, isMobile, toggleSidebar } = useSidebar();
 
   return (
@@ -38,9 +38,9 @@ export const Header = () => {
         >
           <FullLogo fill="var(--color-foreground)" />
         </div>
-        {session && (
+        {sessionTitle && (
           <h3 className="text-foreground transition-discrete duration-200 ease-linear">
-            {session.info.title}
+            {sessionTitle}
           </h3>
         )}
       </div>

@@ -66,6 +66,8 @@ class ChatRepository:
 
             if payload.active_child_id is not None:
                 message.active_child_id = payload.active_child_id
+            elif payload.drop_active_child_id:
+                message.active_child_id = None
             if payload.content is not None:
                 message.content = payload.content
             if payload.thinking is not None:
@@ -263,9 +265,7 @@ class ChatRepository:
                 siblings = children_map.get(parent_id, [])  # type:ignore
                 thread_msg.has_siblings = len(siblings) > 1
                 thread_msg.sibling_count = len(siblings)
-                thread_msg.current_sibling_index = (
-                    siblings.index(current_node) + 1
-                )
+                thread_msg.current_sibling_index = siblings.index(current_node) + 1
                 active_thread.append(thread_msg)
 
                 if (

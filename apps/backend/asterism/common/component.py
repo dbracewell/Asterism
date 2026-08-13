@@ -10,9 +10,7 @@ from pydantic import BaseModel
 class ComponentType(StrEnum):
     WebSearch = "WebSearch"
     ImageSearch = "ImageSearch"
-    LLMClientProvider = "LLMClientProvider"
     ImageGenerator = "ImageGenerator"
-    MemoryProvider = "MemoryProvider"
 
 
 class Component[T: BaseModel](abc.ABC):

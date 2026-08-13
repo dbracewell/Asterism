@@ -3,14 +3,14 @@ from typing import cast
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from pydantic import BaseModel
 
 from asterism.common import ComponentType
+from asterism.components.base_search import SearchResult
 from asterism.components.image_search import (
     ImageSearchComponent,
-    ImageSearchResult,
 )
 from asterism.registries import ToolContext, component_registry, tool_registry
+from asterism.schemas.tools import SearchArgs
 from asterism.utils.log import get_logger
 
 from .fetch import fetch_page
@@ -18,16 +18,11 @@ from .fetch import fetch_page
 logger = get_logger("IMAGE_SEARCH")
 
 
-class ImageSearchArgs(BaseModel):
-    query: str
-    limit: int = 10
-
-
 @tool_registry.tool(
     description="Searches the web for images related to a given query",
 )
 async def image_search(
-    ctx: ToolContext[ImageSearchArgs],
+    ctx: ToolContext[SearchArgs],
 ) -> dict:
     provider = ctx.app_settings.image_search_provider
     if not provider:
@@ -53,7 +48,7 @@ async def image_search(
         return {"status": "error", "message": str(e)}
 
     try:
-        search_results = await image_search_component(ctx.args.query, ctx.args.limit)
+        search_results = await image_search_component(ctx.args)
         logger.debug(
             f"provider={provider.name} query={ctx.args.query} "
             f"results in {len(search_results)} results"
@@ -81,13 +76,13 @@ async def image_search(
 
 
 async def _gather_images(
-    search_result: ImageSearchResult,
+    search_result: SearchResult,
 ) -> list[tuple[str, str]]:
     html = await fetch_page(search_result.url)
     if not html:
         return []
 
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html.content, "html.parser")
     images: list[tuple[str, str]] = []
     for img_tag in soup.find_all("img"):
         img_url = img_tag.get("src")

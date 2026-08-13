@@ -36,22 +36,23 @@ export const zChatCompletionParams = z.object({
     top_logprobs: z.int().optional(),
     extra_headers: z.record(z.string(), z.string()).optional(),
     extra_query: z.record(z.string(), z.unknown()).optional(),
-    timeout: z.number().nullish()
+    timeout: z.number().nullish(),
+    thinking_budget_tokens: z.int().optional()
 });
 
 /**
  * AgentProfile
  */
 export const zAgentProfile = z.object({
-    id: z.uuid(),
     user_id: z.string(),
     name: z.string(),
     description: z.string(),
     model_id: z.uuid(),
-    system_prompt: z.string().nullish(),
-    max_steps: z.int().optional().default(3),
+    system_prompt: z.string().nullable(),
+    max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
-    tools: z.array(z.string()).nullish()
+    tools: z.array(z.string()).nullish(),
+    id: z.uuid()
 });
 
 /**
@@ -104,6 +105,15 @@ export const zComponentResponse = z.object({
 export const zComponentListResponse = z.object({
     items: z.array(zComponentResponse)
 });
+
+/**
+ * ComponentType
+ */
+export const zComponentType = z.enum([
+    'WebSearch',
+    'ImageSearch',
+    'ImageGenerator'
+]);
 
 /**
  * CreateUserRequest
@@ -284,6 +294,13 @@ export const zUpdateSettingValue = z.object({
 });
 
 /**
+ * UserAgents
+ */
+export const zUserAgents = z.object({
+    agents: z.record(z.string(), zAgentProfile)
+});
+
+/**
  * UserSettingsModel
  */
 export const zUserSettingsModel = z.object({
@@ -453,10 +470,15 @@ export const zUserDeletePath = z.object({
 export const zUserDeleteResponse = z.boolean();
 
 export const zComponentsByTypePath = z.object({
-    component_type: z.string()
+    component_type: zComponentType
 });
 
 /**
  * Successful Response
  */
 export const zComponentsByTypeResponse = zComponentListResponse;
+
+/**
+ * Successful Response
+ */
+export const zAgentsGetUserAgentsResponse = zUserAgents;

@@ -35,8 +35,8 @@ class Config:
         return self._get_value("SYSTEM_KEY", "")
 
     @property
-    def RETRIEVAL_CHAR_BUDGET(self) -> int:
-        return int(self._get_value("RETRIEVAL_CHAR_BUDGET", "15000"))
+    def MAX_CHARS_FOR_RETRIEVAL(self) -> int:
+        return int(self._get_value("MAX_CHARS_FOR_RETRIEVAL", "50000"))
 
     @property
     def CORS_ALLOWED_ORIGINS(self) -> list[str]:

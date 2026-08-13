@@ -1,16 +1,21 @@
 import { ChatSession } from "@/features/chat/components/chat-session";
-import { ChatModel } from "@/lib/client";
 
 const SessionPage = ({
-  session,
+  sessionId,
   jwtToken,
   folderId,
 }: {
-  session: ChatModel;
+  sessionId: string;
   jwtToken: string;
   folderId?: string;
 }) => {
-  return <ChatSession session={session} jwtToken={jwtToken} folderId={folderId} />;
+  return (
+    <ChatSession
+      sessionId={sessionId}
+      jwtToken={jwtToken}
+      folderId={folderId}
+    />
+  );
 };
 
 export default SessionPage;

@@ -30,7 +30,7 @@ const MarkdownViewer = ({
   codeFontSize?: string;
 }) => {
   const globalTheme = useTheme();
-  const syntaxTheme = globalTheme.currentMode === "dark" ? vs2015 : vs;
+  const syntaxTheme = globalTheme.currentThemeType === "dark" ? vs2015 : vs;
 
   return (
     <div className={cn("prose prose-asterism max-w-none", className)}>

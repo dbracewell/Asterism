@@ -6,10 +6,18 @@ import ChatInput from "@/features/chat/components/chat-input";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import { connectionStatusMap } from "@/features/chat/types";
+import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
+import { client } from "@/lib/api";
 import { ChatModel, MessageModel } from "@/lib/client";
+import {
+  chatSessionGetOneOptions,
+  chatSessionGetOneQueryKey,
+} from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
 import React from "react";
+import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 
 const TEMP_USER_MESSAGE_PREFIX = "user-msg:";
 const SCROLL_BOTTOM_THRESHOLD = 200;
@@ -22,121 +30,184 @@ const createTempUserMessageId = () => {
   return `${TEMP_USER_MESSAGE_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
 
-const findLastIndex = <T,>(arr: T[], predicate: (item: T) => boolean) => {
-  for (let i = arr.length - 1; i >= 0; i--) {
-    if (predicate(arr[i])) return i;
-  }
-  return -1;
-};
-
 export const ChatSession = ({
-  session,
+  sessionId,
   jwtToken,
   folderId,
 }: {
-  session: ChatModel;
+  sessionId: string;
   jwtToken: string;
   folderId?: string;
 }) => {
+  const queryClient = useQueryClient();
+  const {
+    data: session,
+    isLoading,
+    refetch,
+    error,
+  } = useQuery({
+    ...chatSessionGetOneOptions({
+      client: client,
+      path: { session_id: sessionId },
+    }),
+    staleTime: 60 * 1000,
+  });
+
+  const queryKey = chatSessionGetOneQueryKey({
+    path: { session_id: sessionId },
+  });
+
+  const sessionLoadedRef = React.useRef(false);
   const setSession = useActiveChatSession((state) => state.setSession);
   const folderIdRef = React.useRef(folderId);
-
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
-  const [messages, setMessages] = React.useState<MessageModel[]>(
-    session.messages,
-  );
-  const filtered = React.useMemo(() => {
-    return messages.filter((m) => m.role !== "tool" && m.tool_calls == null);
-  }, [messages]);
-
   const [incomingMessage, setIncomingMessage] =
     React.useState<MessageModel | null>(null);
-
+  const [isProcessing, setIsProcessing] = React.useState(false);
   const preventAutoScrollRef = React.useRef(false);
-
   const [isScrollable, setIsScrollable] = React.useState(false);
+  const [socketError, setSocketError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!sessionLoadedRef.current && session) {
+      sessionLoadedRef.current = true;
+      setSession({ id: session.info.id, title: session.info.title ?? null });
+      messageListRef.current?.scrollIntoView({ behavior: "instant" });
+      setIncomingMessage(null);
+    }
+    return () => {
+      setSession({ id: null, title: null });
+      sessionLoadedRef.current = false;
+    };
+  }, [session, setSession]);
+
+  useSubscribeEvent({
+    type: "chat-session:update",
+    handler: async (payload) => {
+      if (payload.session_id === sessionId && payload.title) {
+        setSession({ id: payload.session_id, title: payload.title });
+      }
+    },
+  });
+
+  const filtered = React.useMemo(() => {
+    return (
+      session?.messages.filter(
+        (m) => m.role !== "tool" && m.tool_calls == null,
+      ) ?? []
+    );
+  }, [session]);
 
   React.useEffect(() => {
     folderIdRef.current = folderId;
   }, [folderId]);
 
   React.useEffect(() => {
-    if (preventAutoScrollRef.current) return;
+    if (preventAutoScrollRef.current || !incomingMessage) return;
     messageListRef.current?.scrollIntoView({ behavior: "instant" });
   }, [incomingMessage]);
 
-  React.useEffect(() => {
-    setSession(session);
-    setMessages(session.messages);
-    setIncomingMessage(null);
-    messageListRef.current?.scrollIntoView({ behavior: "instant" });
-    return () => {
-      setSession(null);
-    };
-  }, [session, setSession]);
-
   const { sendJsonMessage, readyState } = useChatWebSocket({
-    session,
+    sessionId,
     jwtToken,
     onStreamStart: (pendingMessage) => {
       preventAutoScrollRef.current = false;
+      setIsProcessing(true);
       setIncomingMessage(pendingMessage);
-      setMessages((prev) => {
-        if (prev.length === 0) return prev;
-        const last = prev[prev.length - 1];
+      queryClient.setQueryData(queryKey, (prev?: ChatModel) => {
+        if (!prev || prev.messages.length === 0) return prev;
+        const last = prev.messages[prev.messages.length - 1];
         if (last.status === "completed") return prev;
-        return [...prev.slice(0, -1), { ...last, status: "completed" }];
+        return {
+          ...prev,
+          messages: [
+            ...prev.messages.slice(0, -1),
+            { ...last, status: "completed" },
+          ],
+        };
       });
     },
     onStreamError: (error) => {
-      throw Error(error);
+      setIsProcessing(false);
+      setSocketError(error);
+    },
+    onRegenerate: () => {
+      refetch();
     },
     onStreamUpdate: (nextIncomingMessage) => {
       setIncomingMessage(nextIncomingMessage);
     },
     onStreamComplete: (updatedMessages) => {
+      setIsProcessing(false);
       setIncomingMessage(null);
       if (!updatedMessages.length) return;
-      setMessages((prev) => {
-        const idMatchIndex = prev.findIndex(
-          (m) => m.id === updatedMessages[0].id,
-        );
-        const optimisticUserIndex = findLastIndex(
-          prev,
-          (m) =>
-            typeof m.id === "string" &&
-            m.id.startsWith(TEMP_USER_MESSAGE_PREFIX),
-        );
-        const index = idMatchIndex >= 0 ? idMatchIndex : optimisticUserIndex;
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.setQueryData(queryKey, (prev?: ChatModel) => {
+        if (!prev) return;
+        const index = prev.messages.findLastIndex((m) => {
+          return (
+            m.id === updatedMessages[0].id ||
+            m.id.startsWith(TEMP_USER_MESSAGE_PREFIX)
+          );
+        });
+        let new_messages: MessageModel[];
         if (index >= 0) {
-          return [...prev.slice(0, index), ...updatedMessages];
+          new_messages = [...prev.messages.slice(0, index), ...updatedMessages];
+        } else {
+          new_messages = [...prev.messages, ...updatedMessages];
         }
-        return [...prev, ...updatedMessages];
+
+        return { ...prev, messages: new_messages };
       });
     },
   });
 
   const addUserMessage = React.useCallback(
     ({ prompt }: { prompt: string }) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: createTempUserMessageId(),
-          role: "user",
-          content: prompt,
-          created_at: Date.now() / 1000,
-          status: "completed",
-        } as MessageModel,
-      ]);
+      queryClient.setQueryData(queryKey, (prev?: ChatModel) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          messages: [
+            ...prev.messages,
+            {
+              id: createTempUserMessageId(),
+              role: "user",
+              content: prompt,
+              created_at: Date.now() / 1000,
+              status: "completed",
+            } as MessageModel,
+          ],
+        };
+      });
       sendJsonMessage({ message: prompt });
     },
-    [setMessages, sendJsonMessage],
+    [sendJsonMessage, queryClient, queryKey],
   );
 
   const connectionStatus = React.useMemo(
     () => connectionStatusMap[readyState],
     [readyState],
   );
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  if (socketError) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="bg-destructive/20 border-destructive flex flex-col items-center gap-4 rounded-lg border p-10">
+          <h2 className="text-bold text-lg text-white">Unexpected Error</h2>
+          <p className="text-destructive text-sm">{socketError}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -159,11 +230,15 @@ export const ChatSession = ({
           }}
         >
           {filtered.map((message) => (
-            <MessageItem key={message.id} message={message} />
+            <MessageItem
+              key={message.id}
+              message={message}
+              sendJsonMessage={sendJsonMessage}
+            />
           ))}
-          {filtered.length > 0 && filtered?.[0].status === "pending" && (
-            <Loading />
-          )}
+          {!incomingMessage &&
+            filtered.length > 0 &&
+            filtered?.[0].status === "pending" && <Loading />}
           {incomingMessage && (
             <MessageItem message={incomingMessage} defaultShowThinking />
           )}
@@ -193,7 +268,8 @@ export const ChatSession = ({
           </Button>
         )}
         <ChatInput
-          disabled={connectionStatus !== "Open"}
+          disabled={isProcessing}
+          status={connectionStatus}
           onLineNumberChange={(lines) => {
             if (!messageListRef.current) return;
             messageListRef.current.style.marginBottom = `${120 + 20 * lines}px`;
@@ -214,9 +290,11 @@ const MessageItem = React.memo(
   ({
     message,
     defaultShowThinking = false,
+    sendJsonMessage,
   }: {
     message: MessageModel;
     defaultShowThinking?: boolean;
+    sendJsonMessage?: SendJsonMessage;
   }) => {
     const [showThinking, setShowThinking] = React.useState(defaultShowThinking);
     const thinkingRef = React.useRef<HTMLParagraphElement>(null);
@@ -271,7 +349,17 @@ const MessageItem = React.memo(
                 <span className="mr-1">
                   {new Date(message.created_at * 1000).toLocaleString()}
                 </span>
-                <Button size="icon-sm" variant="ghost" className="rounded-full">
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  className="rounded-full"
+                  onClick={() => {
+                    sendJsonMessage?.({
+                      command: "regenerate",
+                      message_id: message.id,
+                    });
+                  }}
+                >
                   <RotateCwIcon />
                 </Button>
               </>

@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Query, WebSocket
 
-from asterism.common import AgentProfile, ErrorDetail, UnauthorizedException
+from asterism.common import ErrorDetail, UnauthorizedException
 from asterism.common.exceptions import BadDataException
 from asterism.llm import Agent
 from asterism.repositories import chat_repository, settings_repository
@@ -48,29 +48,11 @@ async def chat(
         user_id=user.id,
         session=session,
     )
-
-    if user_settings.default_model is None:
-        await websocket.send_json(
-            {"type": "ERROR", "message": "No default model"}
-        )
-        await websocket.close()
-        return
-    if not user_settings.default_model_id:
+    agent_profile = user_settings.default_agent_profile
+    if agent_profile is None:
         raise BadDataException()
 
-    agent: Agent = Agent(
-        profile=AgentProfile(
-            user_id=user.id,
-            name="Default Agent",
-            description="Description",
-            id=uuid.uuid4(),
-            max_steps=5,
-            model_id=user_settings.default_model_id,
-            tools=None,
-        ),
-        user=user,
-    )
-
+    agent: Agent = Agent(profile=agent_profile, user=user)
     websocket_connection = AgentRunnerWebsocket(
         chat_session=chat_session,
         websocket=websocket,

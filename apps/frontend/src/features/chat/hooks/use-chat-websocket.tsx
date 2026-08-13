@@ -1,15 +1,16 @@
 import { AgentEventSchema } from "@/features/chat/schemas";
-import { ChatModel, MessageModel } from "@/lib/client";
+import { MessageModel } from "@/lib/client";
 import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
 type UseChatWebSocketProps = {
-  session: ChatModel;
+  sessionId: string;
   jwtToken: string;
   onStreamStart?: (message: MessageModel) => void;
   onStreamUpdate?: (message: MessageModel) => void;
   onStreamComplete?: (messages: MessageModel[]) => void;
   onStreamError?: (error: string) => void;
+  onRegenerate?: (parentId: string) => void;
 };
 
 const createPendingAssistantMessage = (): MessageModel => ({
@@ -29,12 +30,13 @@ const createPendingAssistantMessage = (): MessageModel => ({
 });
 
 export const useChatWebSocket = ({
-  session,
+  sessionId,
   jwtToken,
   onStreamStart,
   onStreamUpdate,
   onStreamComplete,
   onStreamError,
+  onRegenerate,
 }: UseChatWebSocketProps) => {
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -43,13 +45,21 @@ export const useChatWebSocket = ({
   const onStreamUpdateRef = React.useRef(onStreamUpdate);
   const onStreamCompleteRef = React.useRef(onStreamComplete);
   const onStreamErrorRef = React.useRef(onStreamError);
+  const onRegenerateRef = React.useRef(onRegenerate);
 
   React.useEffect(() => {
     onStreamStartRef.current = onStreamStart;
     onStreamUpdateRef.current = onStreamUpdate;
     onStreamCompleteRef.current = onStreamComplete;
     onStreamErrorRef.current = onStreamError;
-  }, [onStreamStart, onStreamUpdate, onStreamComplete, onStreamError]);
+    onRegenerateRef.current = onRegenerate;
+  }, [
+    onStreamStart,
+    onStreamUpdate,
+    onStreamComplete,
+    onStreamError,
+    onRegenerate,
+  ]);
 
   React.useEffect(() => {
     return () => {
@@ -62,11 +72,11 @@ export const useChatWebSocket = ({
 
   const wsEndpoint = useMemo(() => {
     const backendUrl = new URL(process.env.NEXT_PUBLIC_BACKEND_API_URL!);
-    const wsUrl = new URL(`/chat/stream/${session.info.id}`, backendUrl);
+    const wsUrl = new URL(`/chat/stream/${sessionId}`, backendUrl);
     wsUrl.protocol = backendUrl.protocol === "https:" ? "wss:" : "ws:";
     wsUrl.searchParams.set("token", jwtToken);
     return wsUrl.toString();
-  }, [jwtToken, session.info.id]);
+  }, [jwtToken, sessionId]);
 
   const scheduleFlush = React.useCallback(() => {
     if (flushTimerRef.current) return;
@@ -100,6 +110,11 @@ export const useChatWebSocket = ({
       }
 
       const msgContent = result.data;
+
+      if (msgContent.type === "regenerate") {
+        onRegenerateRef.current?.(msgContent.parent_id);
+        return;
+      }
 
       if (msgContent.type === "error") {
         onStreamErrorRef.current?.(msgContent.content);

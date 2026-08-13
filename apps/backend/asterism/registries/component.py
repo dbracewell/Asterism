@@ -56,7 +56,7 @@ class ComponentRegistry:
     def get_providers(
         self,
         component_type: ComponentType,
-    ) -> list[type[Component]]:
+    ) -> list[type[Component[Any]]]:
         return self.providers_by_type[component_type]
 
 

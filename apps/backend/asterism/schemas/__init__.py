@@ -1,4 +1,4 @@
-from ..common.llm import LLMMessage
+from .agent_profile import AgentProfile, PartialAgentProfile, UserAgents
 from .app_settings import ApplicationSettingsModel
 from .chat import (
     ChatInfo,
@@ -40,6 +40,9 @@ FolderModelList.model_rebuild()
 ApplicationSettingsModel.model_rebuild()
 
 __all__ = [
+    "UserAgents",
+    "PartialAgentProfile",
+    "AgentProfile",
     "LLMProviderList",
     "LLMProvider",
     "LLMModel",

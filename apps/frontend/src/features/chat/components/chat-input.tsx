@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import { LlmModel } from "@/lib/client";
+import { ConnectionStatus } from "@/features/chat/types";
 import { cn } from "@/lib/utils";
 import {
   IconArrowUp,
@@ -31,16 +31,15 @@ interface AttachedFile {
 const ChatInput = React.memo(
   ({
     onSubmit,
+    status,
     disabled = false,
-    displayStatus = true,
     placeholder = "",
     onLineNumberChange,
   }: {
     onSubmit?: ({ prompt }: { prompt: string }) => void;
     disabled?: boolean;
-    displayStatus?: boolean;
+    status?: ConnectionStatus;
     placeholder?: string;
-    defaultModel?: LlmModel;
     onLineNumberChange?: (lines: number) => void;
   }) => {
     const [prompt, setPrompt] = useState("");
@@ -119,15 +118,15 @@ const ChatInput = React.memo(
       setPrompt(e.target.value);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (disabled) {
+    const inDisabledState =
+      !prompt.trim() || disabled || (status && status !== "Connected");
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
         e.preventDefault();
-        return;
-      }
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        submitPrompt();
-      } else {
+        if (!inDisabledState) {
+          submitPrompt();
+        }
       }
     };
 
@@ -148,8 +147,8 @@ const ChatInput = React.memo(
     };
 
     return (
-      <div className="mx-auto flex w-full max-w-[90%] flex-col gap-1 overflow-clip sm:max-w-3xl">
-        <div className="bg-input dark:bg-input text-foreground relative flex-col content-center overflow-clip rounded-xl border transition-colors">
+      <div className="mx-auto flex w-full max-w-[80%] flex-col sm:max-w-3xl">
+        <div className="bg-input text-foreground relative flex-col content-center overflow-clip rounded-xl border">
           {attachedFiles.length > 0 && (
             <div className="relative flex flex-wrap items-center gap-2 overflow-hidden p-2">
               {attachedFiles.map((file) => (
@@ -189,7 +188,7 @@ const ChatInput = React.memo(
           )}
 
           <form
-            className="flex w-full flex-1 flex-col items-center justify-between gap-1 overflow-clip rounded-[inherit] px-3 pt-3 pb-1"
+            className="flex w-full flex-1 flex-col items-center justify-between gap-1 overflow-clip rounded-[inherit] p-1"
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -197,7 +196,7 @@ const ChatInput = React.memo(
           >
             <Textarea
               className={cn(
-                "max-h-35 flex-1 resize-none rounded-none border-none bg-transparent! p-0! shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent!",
+                "max-h-35 flex-1 resize-none rounded-none border-none bg-transparent! shadow-none focus-visible:border-transparent focus-visible:ring-0",
                 prompt.split(/\r?\n/).length == 1 && "h-6! min-h-6!",
               )}
               ref={textAreaRef}
@@ -207,37 +206,36 @@ const ChatInput = React.memo(
               value={prompt}
             />
 
-            <div className="flex w-full items-center justify-between">
+            <div className="flex w-full items-center justify-between px-1">
               <FileUpload
                 fileInputRef={fileInputRef}
                 handleFileSelect={handleFileSelect}
                 textAreaRef={textAreaRef}
               />
               <div className="flex flex-1 items-center justify-end gap-3">
-                {displayStatus && (
+                {status && (
                   <div className={cn("flex items-center gap-1 text-xs")}>
                     <div
                       title={disabled ? "Disconnected" : "Connected"}
                       className={cn(
                         "size-2 rounded-full pt-0.5",
-                        disabled
-                          ? "border-red-900 bg-red-500"
-                          : "border-green-900 bg-green-500",
+                        status === "Connected"
+                          ? "border-green-900 bg-green-500"
+                          : "border-red-900 bg-red-500",
                       )}
                     />
-                    {disabled ? "Disconnected" : "Connected"}
+                    {status}
                   </div>
                 )}
                 <Button
                   aria-label="Send message"
                   className={cn(
-                    "shrink-0 rounded-full",
+                    "shrink-0 rounded-xl",
                     !prompt.trim() && "hidden",
                   )}
-                  disabled={!prompt.trim()}
+                  disabled={inDisabledState}
                   size="icon"
                   type="submit"
-                  variant="default"
                 >
                   <IconArrowUp size={16} />
                 </Button>

@@ -2,14 +2,14 @@ import { ReadyState } from "react-use-websocket";
 
 export type ConnectionStatus =
   | "Connecting"
-  | "Open"
+  | "Connected"
   | "Closing"
   | "Closed"
   | "Uninstantiated";
 
 export const connectionStatusMap = {
   [ReadyState.CONNECTING]: "Connecting",
-  [ReadyState.OPEN]: "Open",
+  [ReadyState.OPEN]: "Connected",
   [ReadyState.CLOSING]: "Closing",
   [ReadyState.CLOSED]: "Closed",
   [ReadyState.UNINSTANTIATED]: "Uninstantiated",

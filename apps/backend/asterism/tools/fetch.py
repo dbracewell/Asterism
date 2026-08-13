@@ -5,7 +5,36 @@ from bs4 import BeautifulSoup
 from html_to_markdown import ConversionOptions, convert
 from playwright.async_api import async_playwright
 
+from asterism.common import Document
 from asterism.utils.log import get_logger
+
+logger = get_logger("FETCH")
+
+_HTML_TAGS_TO_REMOVE = [
+    "script",
+    "style",
+    "link",
+    "noscript",
+    "iframe",
+    "nav",
+    "footer",
+    "aside",
+    "header",
+    "form",
+    "input",
+    "button",
+    "select",
+    "textarea",
+]
+
+_FETCH_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"  # noqa: E501
+}
+
+
+class MarkdownExtractorException(Exception):
+    def __init__(self, message: str = "Failed to extract markdown") -> None:
+        super().__init__(message)
 
 
 async def _js_site_fetch(url: str) -> str:
@@ -27,41 +56,47 @@ async def fetch_page(
     url: str,
     timeout: float = 5.0,
     threshold_for_playwright: int = 250,
-) -> str | None:
+) -> Document:
     if not url.startswith("http"):
         url = "http://" + url
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"  # noqa: E501
-        }
-        async with httpx.AsyncClient(
+
+    async with httpx.AsyncClient(
+        timeout=timeout,
+        follow_redirects=True,
+    ) as client:
+        response = await client.get(
+            url,
+            headers=_FETCH_HEADERS,
             timeout=timeout,
-            follow_redirects=True,
-        ) as client:
-            response = await client.get(url, headers=headers)
-            if not response.is_success:
-                return None
-            html_page = response.text
-            soup = BeautifulSoup(html_page, "html.parser")
-            text = soup.prettify()
-            is_js_site = (
-                len(re.findall(r"ENABLE\s+JAVASCRIPT", text, re.IGNORECASE)) > 0
-                or len(text) < threshold_for_playwright
-            )
-            if is_js_site:
-                html_page = await _js_site_fetch(url)
-            return html_page
-    except Exception:
-        return None
+        )
+        response.raise_for_status
+
+        html_page = response.text
+        if (
+            len(re.findall(r"ENABLE\s+JAVASCRIPT", html_page, re.IGNORECASE)) > 0
+            or len(html_page) < threshold_for_playwright
+        ):
+            html_page = await _js_site_fetch(url)
+
+        soup = BeautifulSoup(html_page, "html.parser")
+        for tag in soup(_HTML_TAGS_TO_REMOVE):
+            tag.decompose()
+
+        html_page = soup.prettify()
+
+        return Document(
+            content=html_page,
+            mime_type=response.headers.get("Content-Type", "text/html"),
+            metadata={"source": url},
+        )
 
 
-def _convert_html_to_markdown(html: str) -> str | None:
-    clean_html = re.sub(
-        r'<script\b[^>]*type=["\']application/ld\+json["\'][^>]*>([\s\S]*?)<\/script>',
-        "",
-        html,
-        flags=re.IGNORECASE,
-    )
+def _convert_html_to_markdown(html: Document) -> Document:
+    soup = BeautifulSoup(html.content, "html.parser")
+    for tag in soup(_HTML_TAGS_TO_REMOVE):
+        tag.decompose()
+    clean_html = soup.prettify()
+
     extracted = convert(
         clean_html,
         options=ConversionOptions(
@@ -69,43 +104,25 @@ def _convert_html_to_markdown(html: str) -> str | None:
             capture_svg=False,
             skip_images=True,
             extract_metadata=True,
-            strip_tags=[
-                "script",
-                "style",
-                "nav",
-                "footer",
-                "header",
-                "aside",
-                "nav",
-                "header",
-            ],
         ),
     ).content
 
-    return extracted.strip() if extracted else None
+    if not extracted:
+        raise MarkdownExtractorException()
 
-
-logger = get_logger("FETCH_MARKDOWN")
+    return Document(
+        content=extracted.strip(),
+        mime_type="text/markdown",
+        metadata={"source": html.metadata.get("source", "unknown")},
+    )
 
 
 async def fetch_markdown(
     url: str,
     timeout: float = 5.0,
     threshold_for_playwright: int = 250,
-) -> str:
-    html_page = await fetch_page(
-        url,
-        timeout,
-        threshold_for_playwright,
-    )
-    if not html_page:
-        logger.error(f"Failed to fetch page {url}")
-        raise Exception(f"[Fetch Error: failed to fetch page {url}]")
-
+) -> Document:
+    html_page = await fetch_page(url, timeout, threshold_for_playwright)
     extracted = _convert_html_to_markdown(html_page)
-    if not extracted:
-        logger.error(f"Failed to convert page to markdown {url}")
-        raise Exception(f"[Fetch Error: failed to convert page to markdown {url}]")
-
     logger.debug(f"Fetched and converted page to markdown {url}")
     return extracted

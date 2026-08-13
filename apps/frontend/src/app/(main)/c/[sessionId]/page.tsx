@@ -1,5 +1,4 @@
 import SessionPage from "@/features/chat/components/session-page";
-import { getApiClient } from "@/lib/api-server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -17,26 +16,11 @@ export default async function ChatSessionPage(props: ChatSessionPageProps) {
     redirect("/");
   }
 
-  const api = await getApiClient();
-  const { data, error } = await api.chatSessionGetOne({
-    path: {
-      session_id,
-    },
-  });
-
-  if (error) {
-    console.log(error);
-    if (error.code === 404) {
-      redirect("/");
-    }
-    throw Error(`Error code: ${error}`);
-  }
-
   const jwtToken = await auth.api.getToken({
     headers: await headers(),
   });
   if (jwtToken == null) {
     redirect("/");
   }
-  return <SessionPage session={data} jwtToken={jwtToken!.token} />;
+  return <SessionPage sessionId={session_id} jwtToken={jwtToken!.token} />;
 }

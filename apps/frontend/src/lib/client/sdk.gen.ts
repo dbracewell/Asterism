@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
-import { zAppSettingDeletePath, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zComponentsByTypePath, zComponentsByTypeResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zUserCreateUserBody, zUserCreateUserResponse, zUserDeletePath, zUserDeleteResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
+import type { AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import { zAgentsGetUserAgentsResponse, zAppSettingDeletePath, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zComponentsByTypePath, zComponentsByTypeResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zUserCreateUserBody, zUserCreateUserResponse, zUserDeletePath, zUserDeleteResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -443,6 +443,23 @@ export class ApiClient extends HeyApiClient {
             responseValidator: async (data) => await zComponentsByTypeResponse.parseAsync(data),
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/components/by_type/{component_type}',
+            ...options
+        });
+    }
+    
+    /**
+     * Gets all agents defined by a user
+     */
+    public agentsGetUserAgents<ThrowOnError extends boolean = false>(options?: Options<AgentsGetUserAgentsData, ThrowOnError>): RequestResult<AgentsGetUserAgentsResponses, AgentsGetUserAgentsErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<AgentsGetUserAgentsResponses, AgentsGetUserAgentsErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zAgentsGetUserAgentsResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/agents',
             ...options
         });
     }

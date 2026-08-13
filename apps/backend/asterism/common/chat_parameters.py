@@ -29,3 +29,6 @@ class ChatCompletionParams(TypedDict):
     extra_headers: NotRequired[dict[str, str]]
     extra_query: NotRequired[dict[str, Any]]
     timeout: NotRequired[float | None]
+
+    # Extra body args
+    thinking_budget_tokens: NotRequired[int]

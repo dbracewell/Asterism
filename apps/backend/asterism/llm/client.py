@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 from typing import (
     Any,
     AsyncGenerator,
@@ -173,11 +174,11 @@ class LLMClient(LLMClientProtocol):
         self,
         model_name: str,
         api_key: str,
-        llm_host: str,
+        base_url: str,
     ) -> None:
         self.max_retries: int = 3
         self.api_key: str = api_key
-        self.base_url: str = llm_host
+        self.base_url: str = base_url
         self.model_name: str = model_name
         self._client = AsyncOpenAI(
             api_key=self.api_key,
@@ -207,7 +208,7 @@ class LLMClient(LLMClientProtocol):
         tools: list[str] | None = None,
         response_model: Type[T] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
-    ) -> dict[str, Any]:
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         from asterism.registries.tool import tool_registry
 
         completion_args: dict[str, Any] = {
@@ -215,6 +216,15 @@ class LLMClient(LLMClientProtocol):
             "tools": tool_registry.schemas(tools),
             **kwargs,
         }
+
+        if "seed" not in completion_args:
+            completion_args["seed"] = int(time.time())
+
+        extrabody_args = {"top_k": 20, "min_p": 0.0}
+        if "thinking_budget_tokens" in completion_args:
+            extrabody_args["thinking_budget_tokens"] = completion_args.pop(
+                "thinking_budget_tokens"
+            )
 
         if response_model and config.LLM_SUPPORTS_STRUCTURED_OUTPUT:
 
@@ -241,8 +251,13 @@ class LLMClient(LLMClientProtocol):
                 type="json_schema",
             )
 
-        completion_args["messages"] = format_messages_for_model(messages)
-        return completion_args
+        msg_copy = messages.copy()
+        if msg_copy[0].role == "system":
+            msg_copy[0].content = f"Time: {str(time.time())}\n{msg_copy[0].content}"
+        else:
+            msg_copy.insert(0, LLMMessage.system(f"Time: {str(time.time())}"))
+        completion_args["messages"] = format_messages_for_model(msg_copy)
+        return completion_args, extrabody_args
 
     async def generate[T: BaseModel](
         self,
@@ -298,7 +313,7 @@ class LLMClient(LLMClientProtocol):
         if not messages:
             return
 
-        completion_args = self._prepare_completion_params(
+        completion_args, extrabody_args = self._prepare_completion_params(
             messages=messages,
             response_model=response_model,
             tools=tools,
@@ -318,6 +333,7 @@ class LLMClient(LLMClientProtocol):
                 stream=True,
                 stream_options={"include_usage": True},
                 **kwargs,
+                extra_body=extrabody_args,
             )
             async for chunk in response:
                 yield chunk

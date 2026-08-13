@@ -10,8 +10,9 @@ class WebFetchArgs(BaseModel):
 
 
 @tool_registry.tool(description="Fetches a URL and converts content into Markdown.")
-async def web_fetch(ctx: ToolContext[WebFetchArgs]):
+async def web_fetch(ctx: ToolContext[WebFetchArgs]) -> str:
     try:
-        return await fetch_markdown(ctx.args.url)
+        doc = await fetch_markdown(ctx.args.url)
+        return doc.to_llm_context()
     except Exception as e:
         return f"[Fetch Error: {str(e)}]"

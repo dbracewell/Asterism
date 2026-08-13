@@ -60,7 +60,7 @@ class AgentRunnerWebsocket:
 
     async def _generate_title(self) -> None:
         if (
-            self.chat_session.info.title is None
+            not self.chat_session.info.title
             or self.chat_session.info.title == "New Chat"
         ):
             try:
@@ -69,7 +69,7 @@ class AgentRunnerWebsocket:
                     self.chat_session.messages[0].content
                 )
             except Exception as e:
-                self.logger.error(e)
+                self.logger.error(e, stack_info=True)
                 return
 
             self.chat_session.info.title = title
@@ -231,6 +231,44 @@ class AgentRunnerWebsocket:
 
             while self.websocket.client_state == WebSocketState.CONNECTED:
                 message_data = await self.websocket.receive_json()
+                if "command" in message_data:
+                    command = message_data["command"]
+                    if command == "regenerate":
+                        message_id = message_data.get("message_id")
+                        parent_message_index = index_of(
+                            self.chat_session.messages,
+                            lambda m: str(m.active_child_id) == message_id,
+                        )
+                        if parent_message_index < 0:
+                            continue
+
+                        parent_message = self.chat_session.messages[
+                            parent_message_index
+                        ]
+                        parent_message = await chat_repository.update_message(
+                            user_id=self.agent.user.id,
+                            session_id=self.chat_session.info.id,
+                            message_id=parent_message.id,
+                            payload=UpdateMessage(
+                                drop_active_child_id=True,
+                                status=MessageStatus.PENDING,
+                            ),
+                        )
+
+                        self.chat_session.messages = self.chat_session.messages[
+                            :parent_message_index
+                        ]
+                        self.chat_session.messages.append(parent_message)
+
+                        await self.websocket.send_json(
+                            {
+                                "type": "regenerate",
+                                "parent_id": str(parent_message.id),
+                            }
+                        )
+                        asyncio.create_task(self._process_messages())
+                        continue
+
                 if "message" not in message_data:
                     continue
 

@@ -16,6 +16,7 @@ from asterism.config import config
 from asterism.db import db_session_manager
 from asterism.events import Event, EventType, event_bus
 from asterism.services.routers import (
+    agents_router,
     chat_router,
     components_router,
     file_router,
@@ -146,3 +147,4 @@ app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(function_router)
 app.include_router(components_router)
+app.include_router(agents_router)

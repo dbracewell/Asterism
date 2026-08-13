@@ -60,6 +60,7 @@ class UpdateMessage(BaseModel):
             }
         ),
     ] = Field(default=None)
+    drop_active_child_id: bool = False
     active_child_id: Annotated[
         uuid.UUID | None,
         WithJsonSchema(

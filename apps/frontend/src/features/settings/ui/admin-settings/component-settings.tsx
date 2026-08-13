@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { HelpIcon } from "@/components/help-icon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -126,8 +127,7 @@ export const ComponentSettings = ({
         </Select>
         {zSchema && provider && (
           <>
-            <h4 className="mt-3 text-sm font-medium">Parameters</h4>
-            <div className="flex flex-1 flex-col gap-1">
+            <div className="flex flex-1 flex-col gap-1 pt-2">
               <ParameterForm
                 zSchema={zSchema}
                 provider={provider}
@@ -149,33 +149,35 @@ const ParameterForm = ({
   settings_key,
 }: {
   provider: ComponentResponse;
-  appProvider?: ComponentProvider | null;
+  appProvider?: ComponentProviderParameters | null;
   zSchema: z.ZodType<unknown, any, z.core.$ZodTypeInternals<any, any>>;
   settings_key: string;
 }) => {
   const router = useRouter();
+
   const form = useForm<z.infer<typeof zSchema>>({
     resolver: zodResolver(zSchema),
-    defaultValues:
-      provider.name === appProvider?.name
-        ? { ...appProvider.parameters }
-        : Object.fromEntries(
-            Object.entries(
-              provider.parameters["properties"] as Record<string, any>,
-            ).map(([name]) => [name, ""]),
-          ),
+    defaultValues: Object.fromEntries(
+      Object.entries(
+        provider.parameters["properties"] as Record<string, any>,
+      ).map(([name, value]) => [
+        name,
+        appProvider?.parameters?.[name] ?? value["default"] ?? "",
+      ]),
+    ),
   });
-  const { control, handleSubmit } = form;
 
+  const { control, handleSubmit } = form;
   useEffect(() => {
     form.reset(
-      provider.name === appProvider?.name
-        ? { ...appProvider.parameters }
-        : Object.fromEntries(
-            Object.entries(
-              provider.parameters["properties"] as Record<string, any>,
-            ).map(([name]) => [name, ""]),
-          ),
+      Object.fromEntries(
+        Object.entries(
+          provider.parameters["properties"] as Record<string, any>,
+        ).map(([name, value]) => [
+          name,
+          appProvider?.parameters?.[name] ?? value["default"] ?? "",
+        ]),
+      ),
     );
   }, [appProvider, form, provider]);
 
@@ -212,7 +214,7 @@ const ParameterForm = ({
       {form.formState.isDirty && (
         <h5 className="text-muted-foreground text-xs">* Updated</h5>
       )}
-      <FieldGroup className="flex flex-1 flex-col gap-1">
+      <FieldGroup className="flex flex-1 flex-col gap-2">
         {provider &&
           Object.entries(
             provider.parameters["properties"] as Record<string, any>,
@@ -223,13 +225,33 @@ const ParameterForm = ({
               name={name}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={name}>{info["title"]}</FieldLabel>
-                  <Input
-                    {...field}
-                    id={name}
-                    aria-invalid={fieldState.invalid}
-                    required
-                  />
+                  <FieldLabel htmlFor={name}>
+                    {info["title"]}
+                    {!!info["description"] && (
+                      <HelpIcon text={info["description"]} />
+                    )}
+                  </FieldLabel>
+                  {info["enum"] ? (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {info["enum"].map((option: string) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      {...field}
+                      id={name}
+                      aria-invalid={fieldState.invalid}
+                      required
+                    />
+                  )}
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}

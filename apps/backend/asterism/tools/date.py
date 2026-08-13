@@ -45,7 +45,7 @@ async def get_timestamp_at_timezone(
     now = datetime.datetime.now(datetime.timezone.utc)
     result: dict[str, Any] = {}
     try:
-        tz = ZoneInfo(ctx.args.timezone)  # type: ignore
+        tz = ZoneInfo(ctx.args.timezone)
         user_now = now.astimezone(tz)
         result["current_timestamp"] = user_now.isoformat()
         result["timezone"] = ctx.args.timezone

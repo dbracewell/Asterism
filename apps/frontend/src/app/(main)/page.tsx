@@ -20,8 +20,6 @@ export default function AppPage() {
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
       <ChatInput
-        disabled={false}
-        displayStatus={false}
         placeholder="Where will your curiosity lead you today?"
         onSubmit={({ prompt }) => {
           createChatSession({

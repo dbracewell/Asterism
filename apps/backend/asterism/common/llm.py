@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import abc
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import (
     Any,
     AsyncGenerator,
+    Awaitable,
     Literal,
     Optional,
+    Protocol,
     Self,
     Type,
     Unpack,
@@ -158,16 +159,14 @@ class LLMMessage(BaseModel):
         )
 
 
-class LLMClientProtocol(abc.ABC):
-    @abc.abstractmethod
-    async def generate(
+class LLMClientProtocol(Protocol):
+    def generate(
         self,
         prompt: str,
         response_model: Type[BaseModel] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
-    ) -> str | BaseModel | Exception | None: ...
+    ) -> Awaitable[str | BaseModel | Exception | None]: ...
 
-    @abc.abstractmethod
     def chat(
         self,
         messages: list[LLMMessage],
@@ -175,3 +174,11 @@ class LLMClientProtocol(abc.ABC):
         response_model: Type[BaseModel] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
     ) -> AsyncGenerator[LLMEvent[BaseModel], None]: ...
+
+    def chat_to_completion[T: BaseModel](
+        self,
+        messages: list[LLMMessage],
+        tools: list[str] | None = None,
+        response_model: Type[T] | None = None,
+        **kwargs: Unpack[ChatCompletionParams],
+    ) -> Awaitable[LLMEvent[T]]: ...

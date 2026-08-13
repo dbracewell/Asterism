@@ -15,3 +15,4 @@ files
 
 .ruff_cache
 .turbo
+.pytest_cache

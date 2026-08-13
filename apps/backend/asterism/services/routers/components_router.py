@@ -6,6 +6,7 @@ from asterism.schemas import ComponentListResponse, ComponentResponse
 from asterism.services.dependencies import (
     AuthedUserDep,
 )
+from asterism.utils.json_schema import inline_refs
 
 components_router = APIRouter(
     tags=["components"],
@@ -25,13 +26,15 @@ def get_components_by_type(
     _: AuthedUserDep,
 ) -> ComponentListResponse:
     components = component_registry.get_providers(component_type=component_type)
-    return ComponentListResponse(
-        items=[
+    items: list[ComponentResponse] = []
+    for c in components:
+        schema = c.parameters.model_json_schema()
+        extended_schema = inline_refs(schema)
+        items.append(
             ComponentResponse(
                 type=component_type,
                 name=c.name,
-                parameters=c.parameters().model_json_schema(),
+                parameters=extended_schema,
             )
-            for c in components
-        ]
-    )
+        )
+    return ComponentListResponse(items=items)

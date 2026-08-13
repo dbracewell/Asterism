@@ -8,9 +8,7 @@ from typing import AsyncGenerator
 from pydantic import BaseModel, Field
 
 from asterism.common import (
-    AgentProfile,
     AuthedUser,
-    ComponentType,
     LLMClientProtocol,
     LLMEvent,
     LLMEventType,
@@ -18,7 +16,8 @@ from asterism.common import (
     ToolCall,
     ToolResult,
 )
-from asterism.registries import component_registry
+from asterism.common.atomic import AsyncAtomic
+from asterism.schemas import AgentProfile
 from asterism.utils.log import get_logger
 
 
@@ -55,17 +54,27 @@ class Agent:
         self.max_steps = profile.max_steps
         self.user = user
         self.logger = get_logger(f"Agent-{profile.name}")
-        self._client: LLMClientProtocol | None = None
+        self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
 
     async def _get_client(self) -> LLMClientProtocol:
-        if self._client is not None:
-            return self._client
+        from asterism.llm import LLMClient
+        from asterism.repositories import settings_repository
 
-        client_provider = await component_registry.get_component(
-            ComponentType.LLMClientProvider
-        )
-        self._client = await client_provider(self.profile.model_id)
-        return self._client
+        async with self._client as (get, set):
+            client = get()
+            if client:
+                return client
+
+            model_info = await settings_repository.get_model_and_provider(
+                model_id=self.profile.model_id,
+            )
+            client = LLMClient(
+                api_key=model_info.provider.api_key,
+                base_url=model_info.provider.base_url,
+                model_name=model_info.name,
+            )
+            set(client)
+            return client
 
     async def _run_tools(
         self,
@@ -143,9 +152,9 @@ class Agent:
                             f"content={event.content[:100]} "
                             f"tools={[f'{tc.function.name}({tc.function.arguments})' for tc in event.tool_calls or []]} "  # noqa: E501
                         )
-                        tool_results: list[ToolResult] = []
+
                         if event.tool_calls:
-                            last_thinking = event.thinking
+                            tool_results: list[ToolResult] = []
                             async for response in self._run_tools(
                                 user_message=last_user_message.content,
                                 tool_calls=event.tool_calls,
@@ -157,24 +166,25 @@ class Agent:
                                 )
                                 messages.append(LLMMessage.tool_call_result(response))
                                 tool_results.append(response)
-                                yield AgentEvent(
-                                    type=AgentEventType.TOOL_COMPLETE,
-                                    content=event.content,
-                                    thinking=event.thinking or last_thinking or "",
-                                    tool_results=tool_results,
-                                    tool_calls=event.tool_calls or [],
-                                    total_tokens=event.total_tokens,
-                                )
-                        else:
                             yield AgentEvent(
-                                type=AgentEventType.COMPLETE,
+                                type=AgentEventType.TOOL_COMPLETE,
                                 content=event.content,
                                 thinking=event.thinking or last_thinking or "",
                                 tool_results=tool_results,
                                 tool_calls=event.tool_calls or [],
                                 total_tokens=event.total_tokens,
                             )
-                            last_thinking = None
+                        else:
+                            yield AgentEvent(
+                                type=AgentEventType.COMPLETE,
+                                content=event.content,
+                                thinking=event.thinking or last_thinking or "",
+                                tool_results=[],
+                                tool_calls=event.tool_calls or [],
+                                total_tokens=event.total_tokens,
+                            )
+
+                        last_thinking = None
 
                         if event.finish_reason == "stop":
                             return
