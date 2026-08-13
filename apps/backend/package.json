@@ -8,6 +8,8 @@
     "test": "PYTHONPATH=. uv run pytest -q",
     "sync": "uv sync",
     "typecheck": "uv run  python -m compileall -q asterism",
-    "db:push": "uv run python -m asterism.init_db"
+    "db:push": "uv run python -m asterism.init_db",
+    "cycles": "knot .",
+    "deps": "pydeps  --rankdir TB  asterism"
   }
 }

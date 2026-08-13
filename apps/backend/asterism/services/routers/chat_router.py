@@ -71,7 +71,7 @@ async def new_session(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> ChatModel:
-    return await chat_repository.create(
+    return await chat_repository.create_session(
         user_id=user.id,
         user_prompt=payload.user_prompt,
         folder_id=payload.folder_id,
@@ -103,7 +103,7 @@ async def delete_session(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> ChatModel:
-    return await chat_repository.delete(
+    return await chat_repository.delete_session(
         user_id=user.id,
         session_id=session_id,
         session=db,
@@ -120,10 +120,10 @@ async def update_session(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> ChatModel:
-    return await chat_repository.update(
+    return await chat_repository.update_session(
         user_id=user.id,
         session_id=session_id,
-        update=update,
+        payload=update,
         session=db,
     )
 

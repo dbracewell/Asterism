@@ -65,7 +65,7 @@ def maybe_auth(
     if not credentials:
         return None
     try:
-        return verify_jwks_token(credentials.credentials)  # type:ignore
+        return verify_jwks_token(credentials.credentials)
     except UnauthorizedException:
         return None
 

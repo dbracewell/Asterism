@@ -1,4 +1,5 @@
 import uuid
+from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,6 +23,24 @@ class PartialAgentProfile(BaseModel):
         ]
     )
     id: uuid.UUID | None = None
+
+    @classmethod
+    def create_default_agent(
+        cls,
+        user_id: str,
+        model_id: uuid.UUID,
+    ) -> Self:
+        return cls(
+            user_id=user_id,
+            model_id=model_id,
+            max_steps=5,
+            description="A default agent to answer the user's requests",
+            name="Default agent",
+            system_prompt=(
+                "You are a helpful agent here to assist "
+                "the user in their information needs."
+            ),
+        )
 
 
 class AgentProfile(PartialAgentProfile):

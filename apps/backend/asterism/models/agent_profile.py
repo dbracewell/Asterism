@@ -5,7 +5,8 @@ from sqlalchemy import ForeignKey, Integer, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.common import ChatCompletionParams
-from asterism.models.typedefs import JSONB_COLUMN
+
+from .typedefs import JSONB_COLUMN
 
 if TYPE_CHECKING:
     pass

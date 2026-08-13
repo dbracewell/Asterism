@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from asterism.common import ErrorDetail
-from asterism.repositories.agent_repository import agent_repository
+from asterism.repositories import agent_repository
 from asterism.schemas import UserAgents
 from asterism.services.dependencies import (
     AuthedUserDep,

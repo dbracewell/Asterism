@@ -20,6 +20,8 @@ from asterism.common.atomic import AsyncAtomic
 from asterism.schemas import AgentProfile
 from asterism.utils.log import get_logger
 
+from .client import LLMClient
+
 
 class AgentEventType(StrEnum):
     START = auto()
@@ -57,7 +59,6 @@ class Agent:
         self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
 
     async def _get_client(self) -> LLMClientProtocol:
-        from asterism.llm import LLMClient
         from asterism.repositories import settings_repository
 
         async with self._client as (get, set):
