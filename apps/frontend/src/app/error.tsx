@@ -1,17 +1,16 @@
-"use client"; // Error boundaries must be Client Components
+"use client";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { OctagonXIcon } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Error({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
 }) {
+  const router = useRouter();
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -24,15 +23,16 @@ export default function Error({
         </h2>
         <h3 className="text-center text-sm">{error.message}</h3>
         <div className="mt-4 flex items-center justify-center gap-2">
-          <Button size="lg" variant="ghost" onClick={() => reset()}>
+          <Button size="lg" variant="ghost" onClick={() => router.refresh()}>
             Try again
           </Button>
-          <Link
-            className={buttonVariants({ variant: "destructive", size: "lg" })}
-            href="/"
+          <Button
+            variant="destructive"
+            size="lg"
+            onClick={() => router.push("/")}
           >
             Go to App
-          </Link>
+          </Button>
         </div>
       </div>
     </div>

@@ -5,16 +5,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuAction } from "@/components/ui/sidebar";
-import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
+import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { cn } from "@/lib/utils";
 import { EllipsisIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 export const ChatSessionActionMenu = ({
-  session_id,
+  chat_id,
   button = false,
 }: {
-  session_id: string;
+  chat_id: string;
   button?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,7 +49,7 @@ export const ChatSessionActionMenu = ({
           onClick={() =>
             deleteChatSession({
               path: {
-                session_id,
+                chat_id,
               },
             })
           }

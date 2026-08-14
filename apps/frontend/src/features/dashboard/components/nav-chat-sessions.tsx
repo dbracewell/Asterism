@@ -10,7 +10,7 @@ import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collaps
 import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
-import { ChatModelList } from "@/lib/client";
+import { ChatInfoList } from "@/lib/client";
 import {
   chatSessionGetManyOptions,
   chatSessionGetManyQueryKey,
@@ -39,7 +39,7 @@ export const NavChatSessions = ({
     handler: async (payload) => {
       queryClient.setQueryData(
         chatSessionGetManyQueryKey(),
-        (prev: ChatModelList | null) => {
+        (prev: ChatInfoList | null) => {
           if (!prev) return;
           return {
             chats: prev.chats.map((chat) => {
@@ -51,7 +51,7 @@ export const NavChatSessions = ({
               }
               return chat;
             }),
-          } as ChatModelList;
+          } as ChatInfoList;
         },
       );
     },
@@ -109,7 +109,7 @@ export const NavChatSessions = ({
                 </span>
               </Link>
             </SidebarMenuButton>
-            <ChatSessionActionMenu session_id={session.id} />
+            <ChatSessionActionMenu chat_id={session.id} />
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

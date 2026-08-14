@@ -7,8 +7,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CreateFolderInput } from "@/features/dashboard/components/create-folder-input";
+import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
-import { FolderModel } from "@/lib/client";
+import { Folder } from "@/lib/client";
 import { folderDeleteMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import {
@@ -25,13 +26,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 
 export const FolderView = ({
   folder,
   depth = 0,
 }: {
-  folder: FolderModel;
+  folder: Folder;
   depth?: number;
 }) => {
   const [sessions, setSessions] = useState(folder.sessions);
@@ -235,7 +235,7 @@ export const FolderView = ({
                   <Link href={`/c/${session.id}`} className="flex-1 truncate">
                     {session.title}
                   </Link>
-                  <ChatSessionActionMenu button session_id={session.id} />
+                  <ChatSessionActionMenu button chat_id={session.id} />
                 </div>
               </div>
             ))}

@@ -1,4 +1,3 @@
-// Settings UI types (unchanged)
 import React from "react";
 
 export type SettingsSection = {

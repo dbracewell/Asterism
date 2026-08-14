@@ -1,7 +1,7 @@
-import { EventType } from "@/features/sse/types";
-import { EventPayloadMap } from "@/features/sse/schemas";
-import { useCallback } from "react";
 import { eventBus } from "@/features/sse/lib/event-bus";
+import { EventPayloadMap } from "@/features/sse/schemas";
+import { EventType } from "@/features/sse/types";
+import { useCallback } from "react";
 
 type T = EventType;
 

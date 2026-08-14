@@ -92,6 +92,23 @@ export const chatSessionCreateMutation = (options?: Partial<Options<ChatSessionC
     return mutationOptions;
 };
 
+/**
+ * Delete Session
+ */
+export const chatSessionDeleteMutation = (options?: Partial<Options<ChatSessionDeleteData>>): UseMutationOptions<ChatSessionDeleteResponse, ChatSessionDeleteError, Options<ChatSessionDeleteData>> => {
+    const mutationOptions: UseMutationOptions<ChatSessionDeleteResponse, ChatSessionDeleteError, Options<ChatSessionDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatSessionDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const chatSessionGetOneQueryKey = (options: Options<ChatSessionGetOneData>) => createQueryKey('chatSessionGetOne', options);
 
 /**
@@ -109,23 +126,6 @@ export const chatSessionGetOneOptions = (options: Options<ChatSessionGetOneData>
     },
     queryKey: chatSessionGetOneQueryKey(options)
 });
-
-/**
- * Delete Session
- */
-export const chatSessionDeleteMutation = (options?: Partial<Options<ChatSessionDeleteData>>): UseMutationOptions<ChatSessionDeleteResponse, ChatSessionDeleteError, Options<ChatSessionDeleteData>> => {
-    const mutationOptions: UseMutationOptions<ChatSessionDeleteResponse, ChatSessionDeleteError, Options<ChatSessionDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await ApiClient.__registry.get().chatSessionDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
 
 /**
  * Update Session

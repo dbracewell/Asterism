@@ -1,12 +1,12 @@
 "use client";
 import { useUser } from "@/features/auth/components/user-context";
 import { useTheme } from "@/features/theme/components/theme-context";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import {
   DEFAULT_FONT_SIZE,
   DEFAULT_THEME_NAME,
 } from "@/features/theme/constants";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export const ThemeCheck = () => {
   const user = useUser();

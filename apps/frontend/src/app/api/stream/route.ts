@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getCurrentUser } from "@/features/auth/server/actions";
-import { NextRequest, NextResponse } from "next/server";
-import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { sseEmitter } from "@/features/sse/lib/event-emitter";
 import { checkRateLimit } from "@/features/sse/lib/rate-limiter";
+import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function OPTIONS() {
   return NextResponse.json(
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
+  console.log("Received event message:", body);
   const { success, data } = EventMessageSchema.safeParse(body);
   if (success) {
     sseEmitter.emit("message", data);

@@ -7,7 +7,7 @@ import { ProvidersTab } from "@/features/settings/ui/admin-settings/providers-ta
 import { ThemeEditor } from "@/features/settings/ui/admin-settings/theme-editor";
 import { ToolsSettings } from "@/features/settings/ui/admin-settings/tools-settings";
 import { UserPermissionsSettings } from "@/features/settings/ui/admin-settings/user-permissions-settings";
-import { ApplicationSettingsModel } from "@/lib/client";
+import { ApplicationSettings } from "@/lib/client";
 import {
   IconCloudCog,
   IconDatabaseExport,
@@ -18,7 +18,7 @@ import {
 import { CodeIcon, PaletteIcon, ToolboxIcon } from "lucide-react";
 
 export const getAdminSettingsSections = (
-  appSettings: ApplicationSettingsModel,
+  appSettings: ApplicationSettings,
 ): Types => {
   return [
     {

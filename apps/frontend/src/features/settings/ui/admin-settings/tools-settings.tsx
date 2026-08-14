@@ -1,11 +1,11 @@
 import { ComponentSettings } from "@/features/settings/ui/admin-settings/component-settings";
-import { ApplicationSettingsModel } from "@/lib/client";
+import { ApplicationSettings } from "@/lib/client";
 import { useMemo } from "react";
 
 export const ToolsSettings = ({
   appSettings,
 }: {
-  appSettings: ApplicationSettingsModel;
+  appSettings: ApplicationSettings;
 }) => {
   const components = useMemo(
     () => [

@@ -44,13 +44,13 @@ export type AgentProfile = {
 };
 
 /**
- * ApplicationSettingsModel
+ * ApplicationSettings
  */
-export type ApplicationSettingsModel = {
+export type ApplicationSettings = {
     /**
      * Llm Providers
      */
-    llm_providers?: Array<LlmProvider>;
+    llm_providers?: Array<Provider>;
     /**
      * Draft Model Id
      */
@@ -69,6 +69,17 @@ export type BulkUpdateSettingRequest = {
     values: {
         [key: string]: JsonValue;
     };
+};
+
+/**
+ * Chat
+ */
+export type Chat = {
+    info: ChatInfo;
+    /**
+     * Messages
+     */
+    messages: Array<Message>;
 };
 
 /**
@@ -210,20 +221,9 @@ export type ChatInfo = {
 };
 
 /**
- * ChatModel
+ * ChatInfoList
  */
-export type ChatModel = {
-    info: ChatInfo;
-    /**
-     * Messages
-     */
-    messages: Array<MessageModel>;
-};
-
-/**
- * ChatModelList
- */
-export type ChatModelList = {
+export type ChatInfoList = {
     /**
      * Chats
      */
@@ -326,9 +326,9 @@ export type ErrorDetail = {
 };
 
 /**
- * FolderModel
+ * Folder
  */
-export type FolderModel = {
+export type Folder = {
     /**
      * Id
      */
@@ -344,11 +344,11 @@ export type FolderModel = {
     /**
      * Created At
      */
-    created_at: string;
+    created_at: number;
     /**
      * Updated At
      */
-    updated_at: string;
+    updated_at: number;
     /**
      * Parent Id
      */
@@ -360,17 +360,17 @@ export type FolderModel = {
     /**
      * Children
      */
-    children?: Array<FolderModel>;
+    children?: Array<Folder>;
 };
 
 /**
- * FolderModelList
+ * FolderList
  */
-export type FolderModelList = {
+export type FolderList = {
     /**
      * Folders
      */
-    folders: Array<FolderModel>;
+    folders: Array<Folder>;
 };
 
 /**
@@ -390,21 +390,21 @@ export type Function = {
 export type JsonValue = unknown;
 
 /**
- * LLMModel
+ * Llm
  */
-export type LlmModel = {
+export type Llm = {
     /**
      * Id
      */
     id: string;
     /**
-     * Provider Id
-     */
-    provider_id: string;
-    /**
      * Name
      */
     name: string;
+    /**
+     * Provider Id
+     */
+    provider_id: string;
     /**
      * Is Active
      */
@@ -412,9 +412,9 @@ export type LlmModel = {
 };
 
 /**
- * LLMModelInfo
+ * LlmDisplayInfo
  */
-export type LlmModelInfo = {
+export type LlmDisplayInfo = {
     /**
      * Id
      */
@@ -434,35 +434,9 @@ export type LlmModelInfo = {
 };
 
 /**
- * LLMProvider
+ * Message
  */
-export type LlmProvider = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Base Url
-     */
-    base_url: string;
-    /**
-     * Api Key
-     */
-    api_key: string;
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Models
-     */
-    models: Array<LlmModel>;
-};
-
-/**
- * MessageModel
- */
-export type MessageModel = {
+export type Message = {
     /**
      * Role
      */
@@ -552,6 +526,32 @@ export type NewFolderRequest = {
 };
 
 /**
+ * Provider
+ */
+export type Provider = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Base Url
+     */
+    base_url: string;
+    /**
+     * Api Key
+     */
+    api_key: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Models
+     */
+    models: Array<Llm>;
+};
+
+/**
  * Setting
  */
 export type Setting = {
@@ -616,9 +616,9 @@ export type UserAgents = {
 };
 
 /**
- * UserSettingsModel
+ * UserSettings
  */
-export type UserSettingsModel = {
+export type UserSettings = {
     /**
      * Theme
      */
@@ -630,7 +630,7 @@ export type UserSettingsModel = {
     /**
      * Models
      */
-    models?: Array<LlmModelInfo>;
+    models?: Array<LlmDisplayInfo>;
     /**
      * Default Model Id
      */
@@ -709,7 +709,7 @@ export type ChatSessionGetManyResponses = {
     /**
      * Successful Response
      */
-    200: ChatModelList;
+    200: ChatInfoList;
 };
 
 export type ChatSessionGetManyResponse = ChatSessionGetManyResponses[keyof ChatSessionGetManyResponses];
@@ -738,55 +738,21 @@ export type ChatSessionCreateResponses = {
     /**
      * Successful Response
      */
-    200: ChatModel;
+    200: Chat;
 };
 
 export type ChatSessionCreateResponse = ChatSessionCreateResponses[keyof ChatSessionCreateResponses];
-
-export type ChatSessionGetOneData = {
-    body?: never;
-    path: {
-        /**
-         * Session Id
-         */
-        session_id: string;
-    };
-    query?: never;
-    url: '/chat/{session_id}';
-};
-
-export type ChatSessionGetOneErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type ChatSessionGetOneError = ChatSessionGetOneErrors[keyof ChatSessionGetOneErrors];
-
-export type ChatSessionGetOneResponses = {
-    /**
-     * Successful Response
-     */
-    200: ChatModel;
-};
-
-export type ChatSessionGetOneResponse = ChatSessionGetOneResponses[keyof ChatSessionGetOneResponses];
 
 export type ChatSessionDeleteData = {
     body?: never;
     path: {
         /**
-         * Session Id
+         * Chat Id
          */
-        session_id: string;
+        chat_id: string;
     };
     query?: never;
-    url: '/chat/{session_id}';
+    url: '/chat/{chat_id}';
 };
 
 export type ChatSessionDeleteErrors = {
@@ -806,21 +772,55 @@ export type ChatSessionDeleteResponses = {
     /**
      * Successful Response
      */
-    200: ChatModel;
+    200: Chat;
 };
 
 export type ChatSessionDeleteResponse = ChatSessionDeleteResponses[keyof ChatSessionDeleteResponses];
+
+export type ChatSessionGetOneData = {
+    body?: never;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}';
+};
+
+export type ChatSessionGetOneErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatSessionGetOneError = ChatSessionGetOneErrors[keyof ChatSessionGetOneErrors];
+
+export type ChatSessionGetOneResponses = {
+    /**
+     * Successful Response
+     */
+    200: Chat;
+};
+
+export type ChatSessionGetOneResponse = ChatSessionGetOneResponses[keyof ChatSessionGetOneResponses];
 
 export type ChatSessionUpdateData = {
     body: ChatUpdateRequest;
     path: {
         /**
-         * Session Id
+         * Chat Id
          */
-        session_id: string;
+        chat_id: string;
     };
     query?: never;
-    url: '/chat/{session_id}';
+    url: '/chat/{chat_id}';
 };
 
 export type ChatSessionUpdateErrors = {
@@ -840,7 +840,7 @@ export type ChatSessionUpdateResponses = {
     /**
      * Successful Response
      */
-    200: ChatModel;
+    200: Chat;
 };
 
 export type ChatSessionUpdateResponse = ChatSessionUpdateResponses[keyof ChatSessionUpdateResponses];
@@ -865,7 +865,7 @@ export type FolderGetManyResponses = {
     /**
      * Successful Response
      */
-    200: FolderModelList;
+    200: FolderList;
 };
 
 export type FolderGetManyResponse = FolderGetManyResponses[keyof FolderGetManyResponses];
@@ -894,7 +894,7 @@ export type FolderCreateResponses = {
     /**
      * Successful Response
      */
-    200: FolderModel;
+    200: Folder;
 };
 
 export type FolderCreateResponse = FolderCreateResponses[keyof FolderCreateResponses];
@@ -928,7 +928,7 @@ export type FolderDeleteResponses = {
     /**
      * Successful Response
      */
-    200: FolderModel;
+    200: Folder;
 };
 
 export type FolderDeleteResponse = FolderDeleteResponses[keyof FolderDeleteResponses];
@@ -962,7 +962,7 @@ export type FolderGetOneResponses = {
     /**
      * Successful Response
      */
-    200: FolderModel;
+    200: Folder;
 };
 
 export type FolderGetOneResponse = FolderGetOneResponses[keyof FolderGetOneResponses];
@@ -987,7 +987,7 @@ export type UserSettingsGetResponses = {
     /**
      * Successful Response
      */
-    200: UserSettingsModel;
+    200: UserSettings;
 };
 
 export type UserSettingsGetResponse = UserSettingsGetResponses[keyof UserSettingsGetResponses];
@@ -1021,7 +1021,7 @@ export type UserSettingsBulkUpdateResponses = {
     /**
      * Successful Response
      */
-    200: UserSettingsModel;
+    200: UserSettings;
 };
 
 export type UserSettingsBulkUpdateResponse = UserSettingsBulkUpdateResponses[keyof UserSettingsBulkUpdateResponses];
@@ -1112,7 +1112,7 @@ export type AppSettingsGetResponses = {
     /**
      * Successful Response
      */
-    200: ApplicationSettingsModel;
+    200: ApplicationSettings;
 };
 
 export type AppSettingsGetResponse = AppSettingsGetResponses[keyof AppSettingsGetResponses];
@@ -1141,7 +1141,7 @@ export type AppSettingsBulkUpdateResponses = {
     /**
      * Successful Response
      */
-    200: ApplicationSettingsModel;
+    200: ApplicationSettings;
 };
 
 export type AppSettingsBulkUpdateResponse = AppSettingsBulkUpdateResponses[keyof AppSettingsBulkUpdateResponses];

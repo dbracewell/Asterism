@@ -1,7 +1,7 @@
 "use client";
 import { useUser } from "@/features/auth/components/user-context";
-import { useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
+import { useEffect } from "react";
 
 export const UpdateTimeZone = () => {
   const user = useUser();

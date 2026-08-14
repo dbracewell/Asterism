@@ -31,13 +31,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { fetchProviderModels } from "@/features/settings/server/actions";
 import { client } from "@/lib/api";
+import { ApplicationSettings, Llm, LlmDisplayInfo } from "@/lib/client";
 import { appSettingsBulkUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
-import {
-  ApplicationSettingsModel,
-  LlmModel,
-  LlmModelInfo,
-} from "@/lib/client/types.gen";
-import { zLlmModel } from "@/lib/client/zod.gen";
+import { zLlm } from "@/lib/client/zod.gen";
 import { useRouter } from "next/navigation";
 
 const providerSchema = z.object({
@@ -49,7 +45,7 @@ const providerSchema = z.object({
     .min(1, "Base URL is required.")
     .transform((arg) => (arg.endsWith("/") ? arg.slice(0, -1) : arg)),
   api_key: z.string().trim().min(1, "API key is required."),
-  models: z.array(zLlmModel),
+  models: z.array(zLlm),
 });
 
 type ProviderFormValue = ProvidersFormValues["llm_providers"][number];
@@ -69,10 +65,7 @@ const providersFormSchema = z.object({
 
 type ProvidersFormValues = z.infer<typeof providersFormSchema>;
 
-const mergeModels = (
-  currentModels: LlmModel[],
-  fetchedModels: LlmModel[],
-): LlmModel[] => {
+const mergeModels = (currentModels: Llm[], fetchedModels: Llm[]): Llm[] => {
   const currentByName = new Map(
     currentModels.map((model) => [model.name, model]),
   );
@@ -86,7 +79,7 @@ const mergeModels = (
 export const ProvidersTab = ({
   appSettings,
 }: {
-  appSettings: ApplicationSettingsModel;
+  appSettings: ApplicationSettings;
 }) => {
   const router = useRouter();
   const [loadingModelsIndex, setLoadingModelsIndex] = useState<number | null>(
@@ -143,7 +136,7 @@ export const ProvidersTab = ({
             ({
               ...m,
               provider_name: p.name,
-            }) as LlmModelInfo & { is_active: boolean },
+            }) as LlmDisplayInfo & { is_active: boolean },
         ),
       )
       .filter((m) => m.is_active);

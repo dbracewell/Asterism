@@ -19,7 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
-import { ComponentProviderParameters, ComponentResponse } from "@/lib/client";
+import {
+  ComponentProviderParameters,
+  ComponentResponse,
+  ComponentType,
+} from "@/lib/client";
 import {
   appSettingDeleteMutation,
   appSettingsBulkUpdateMutation,
@@ -37,7 +41,7 @@ import z from "zod";
 
 type ComponentSettingsProps = {
   defaultValue?: ComponentProviderParameters | null;
-  component_type: string;
+  component_type: ComponentType;
   settings_key: string;
   title: string;
 };

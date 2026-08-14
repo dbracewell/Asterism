@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+import datetime
+import uuid
+from enum import StrEnum, auto
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
+
+
+class MessageStatus(StrEnum):
+    PENDING = auto()
+    COMPLETED = auto()
+
+
+class NewMessageRequest(BaseModel):
+    model_id: uuid.UUID
+    role: str
+    content: str
+    token_count: int = Field(default=0)
+    thinking: str = Field(default="")
+    parent_message_id: uuid.UUID | None = Field(default=None)
+    status: MessageStatus = Field(default=MessageStatus.PENDING)
+    tool_calls: list[ToolCall] | None = Field(default=None)
+    tool_call_results: list[ToolResult] | None = Field(default=None)
+
+
+class Message(LLMMessage):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    status: MessageStatus
+    created_at: int
+    model_id: uuid.UUID | None = None
+    tool_results: list[ToolResult] | None = None
+    active_child_id: uuid.UUID | None = None
+    has_siblings: bool = False
+    sibling_count: int = 0
+    current_sibling_index: int = -1
+
+
+class MessageList(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    messages: list[Message]
+
+
+class UpdateMessageRequest(BaseModel):
+    content: str | None = Field(default=None)
+    thinking: str | None = Field(default=None)
+    active_child_id: uuid.UUID | None = Field(default=None)
+    status: MessageStatus | None = Field(default=None)
+    tool_results: list[ToolResult] | None = Field(default=None)
+
+
+class ChatInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    user_id: str
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    title: str | None = Field(default=None)
+    folder_id: uuid.UUID | None = Field(default=None)
+
+
+class ChatInfoList(BaseModel):
+    chats: list[ChatInfo]
+
+
+class Chat(BaseModel):
+    info: ChatInfo
+    messages: list[Message]
+
+
+class NewChatRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    user_prompt: str
+    folder_id: uuid.UUID | None = Field(default=None)
+
+
+class ChatUpdateRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    title: str | None = Field(default=None)
+    folder_id: uuid.UUID | None = Field(default=None)

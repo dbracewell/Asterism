@@ -8,7 +8,7 @@ import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import { connectionStatusMap } from "@/features/chat/types";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
-import { ChatModel, MessageModel } from "@/lib/client";
+import { Chat, Message } from "@/lib/client";
 import {
   chatSessionGetOneOptions,
   chatSessionGetOneQueryKey,
@@ -31,11 +31,11 @@ const createTempUserMessageId = () => {
 };
 
 export const ChatSession = ({
-  sessionId,
+  chatId,
   jwtToken,
   folderId,
 }: {
-  sessionId: string;
+  chatId: string;
   jwtToken: string;
   folderId?: string;
 }) => {
@@ -48,21 +48,22 @@ export const ChatSession = ({
   } = useQuery({
     ...chatSessionGetOneOptions({
       client: client,
-      path: { session_id: sessionId },
+      path: { chat_id: chatId },
     }),
     staleTime: 60 * 1000,
   });
 
   const queryKey = chatSessionGetOneQueryKey({
-    path: { session_id: sessionId },
+    path: { chat_id: chatId },
   });
 
   const sessionLoadedRef = React.useRef(false);
   const setSession = useActiveChatSession((state) => state.setSession);
   const folderIdRef = React.useRef(folderId);
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
-  const [incomingMessage, setIncomingMessage] =
-    React.useState<MessageModel | null>(null);
+  const [incomingMessage, setIncomingMessage] = React.useState<Message | null>(
+    null,
+  );
   const [isProcessing, setIsProcessing] = React.useState(false);
   const preventAutoScrollRef = React.useRef(false);
   const [isScrollable, setIsScrollable] = React.useState(false);
@@ -84,7 +85,7 @@ export const ChatSession = ({
   useSubscribeEvent({
     type: "chat-session:update",
     handler: async (payload) => {
-      if (payload.session_id === sessionId && payload.title) {
+      if (payload.session_id === chatId && payload.title) {
         setSession({ id: payload.session_id, title: payload.title });
       }
     },
@@ -108,13 +109,13 @@ export const ChatSession = ({
   }, [incomingMessage]);
 
   const { sendJsonMessage, readyState } = useChatWebSocket({
-    sessionId,
+    chatId,
     jwtToken,
     onStreamStart: (pendingMessage) => {
       preventAutoScrollRef.current = false;
       setIsProcessing(true);
       setIncomingMessage(pendingMessage);
-      queryClient.setQueryData(queryKey, (prev?: ChatModel) => {
+      queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev || prev.messages.length === 0) return prev;
         const last = prev.messages[prev.messages.length - 1];
         if (last.status === "completed") return prev;
@@ -142,7 +143,7 @@ export const ChatSession = ({
       setIncomingMessage(null);
       if (!updatedMessages.length) return;
       queryClient.invalidateQueries({ queryKey });
-      queryClient.setQueryData(queryKey, (prev?: ChatModel) => {
+      queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev) return;
         const index = prev.messages.findLastIndex((m) => {
           return (
@@ -150,7 +151,7 @@ export const ChatSession = ({
             m.id.startsWith(TEMP_USER_MESSAGE_PREFIX)
           );
         });
-        let new_messages: MessageModel[];
+        let new_messages: Message[];
         if (index >= 0) {
           new_messages = [...prev.messages.slice(0, index), ...updatedMessages];
         } else {
@@ -164,7 +165,7 @@ export const ChatSession = ({
 
   const addUserMessage = React.useCallback(
     ({ prompt }: { prompt: string }) => {
-      queryClient.setQueryData(queryKey, (prev?: ChatModel) => {
+      queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev) return prev;
         return {
           ...prev,
@@ -176,7 +177,7 @@ export const ChatSession = ({
               content: prompt,
               created_at: Date.now() / 1000,
               status: "completed",
-            } as MessageModel,
+            } as Message,
           ],
         };
       });
@@ -292,7 +293,7 @@ const MessageItem = React.memo(
     defaultShowThinking = false,
     sendJsonMessage,
   }: {
-    message: MessageModel;
+    message: Message;
     defaultShowThinking?: boolean;
     sendJsonMessage?: SendJsonMessage;
   }) => {

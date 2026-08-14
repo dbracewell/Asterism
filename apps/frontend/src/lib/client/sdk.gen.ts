@@ -116,6 +116,23 @@ export class ApiClient extends HeyApiClient {
     }
     
     /**
+     * Delete Session
+     */
+    public chatSessionDelete<ThrowOnError extends boolean = false>(options: Options<ChatSessionDeleteData, ThrowOnError>): RequestResult<ChatSessionDeleteResponses, ChatSessionDeleteErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<ChatSessionDeleteResponses, ChatSessionDeleteErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: zChatSessionDeletePath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zChatSessionDeleteResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/chat/{chat_id}',
+            ...options
+        });
+    }
+    
+    /**
      * Get Session
      */
     public chatSessionGetOne<ThrowOnError extends boolean = false>(options: Options<ChatSessionGetOneData, ThrowOnError>): RequestResult<ChatSessionGetOneResponses, ChatSessionGetOneErrors, ThrowOnError> {
@@ -127,24 +144,7 @@ export class ApiClient extends HeyApiClient {
             }).parseAsync(data),
             responseValidator: async (data) => await zChatSessionGetOneResponse.parseAsync(data),
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/chat/{session_id}',
-            ...options
-        });
-    }
-    
-    /**
-     * Delete Session
-     */
-    public chatSessionDelete<ThrowOnError extends boolean = false>(options: Options<ChatSessionDeleteData, ThrowOnError>): RequestResult<ChatSessionDeleteResponses, ChatSessionDeleteErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<ChatSessionDeleteResponses, ChatSessionDeleteErrors, ThrowOnError>({
-            requestValidator: async (data) => await z.object({
-                body: z.never().optional(),
-                path: zChatSessionDeletePath,
-                query: z.never().optional()
-            }).parseAsync(data),
-            responseValidator: async (data) => await zChatSessionDeleteResponse.parseAsync(data),
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/chat/{session_id}',
+            url: '/chat/{chat_id}',
             ...options
         });
     }
@@ -153,7 +153,7 @@ export class ApiClient extends HeyApiClient {
      * Update Session
      */
     public chatSessionUpdate<ThrowOnError extends boolean = false>(options: Options<ChatSessionUpdateData, ThrowOnError>): RequestResult<ChatSessionUpdateResponses, ChatSessionUpdateErrors, ThrowOnError> {
-        return (options.client ?? this.client).put<ChatSessionUpdateResponses, ChatSessionUpdateErrors, ThrowOnError>({
+        return (options.client ?? this.client).patch<ChatSessionUpdateResponses, ChatSessionUpdateErrors, ThrowOnError>({
             requestValidator: async (data) => await z.object({
                 body: zChatSessionUpdateBody,
                 path: zChatSessionUpdatePath,
@@ -161,7 +161,7 @@ export class ApiClient extends HeyApiClient {
             }).parseAsync(data),
             responseValidator: async (data) => await zChatSessionUpdateResponse.parseAsync(data),
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/chat/{session_id}',
+            url: '/chat/{chat_id}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',

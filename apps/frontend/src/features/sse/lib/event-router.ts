@@ -1,14 +1,14 @@
+import { eventBus } from "@/features/sse/lib/event-bus";
 import {
   EventMessageSchema,
   EventPayloadSchemas,
 } from "@/features/sse/schemas";
 import { EventType, EventTypeValues } from "@/features/sse/types";
-import { eventBus } from "@/features/sse/lib/event-bus";
 
 export const eventRouter = (msg: string) => {
   let raw: unknown;
   try {
-    raw =  typeof(msg) === "string" ? JSON.parse(msg) : msg;
+    raw = typeof msg === "string" ? JSON.parse(msg) : msg;
   } catch {
     console.error("Unable to parse JSON", msg);
     return;

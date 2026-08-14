@@ -1,11 +1,11 @@
 "use server";
 
-import { LlmModel } from "@/lib/client";
+import { Llm } from "@/lib/client";
 
 export const fetchProviderModels = async (
   base_url: string,
   provider_id: string,
-): Promise<LlmModel[]> => {
+): Promise<Llm[]> => {
   const modedUrl = base_url.endsWith("/") ? base_url.slice(0, -1) : base_url;
   const r = await fetch(`${modedUrl}/models`, {
     method: "GET",

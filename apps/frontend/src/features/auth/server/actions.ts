@@ -1,14 +1,14 @@
 "use server";
-import { User } from "@/features/auth/types";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { cache } from "react";
-import { getApiClient } from "@/lib/api-server";
 import {
   InstallUserSchema,
   InstallUserSchemaType,
 } from "@/features/auth/schemas";
+import { User } from "@/features/auth/types";
+import { getApiClient } from "@/lib/api-server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
 
 export const installApp = async (data: InstallUserSchemaType) => {
   const parsed = InstallUserSchema.safeParse(data);

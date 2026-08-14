@@ -2,7 +2,7 @@
 import Constellation from "@/components/logo";
 import { useUser } from "@/features/auth/components/user-context";
 import ChatInput from "@/features/chat/components/chat-input";
-import { useChatSessionCrud } from "@/hooks/use-chat-session-crud";
+import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { useSearchParams } from "next/navigation";
 
 export default function AppPage() {

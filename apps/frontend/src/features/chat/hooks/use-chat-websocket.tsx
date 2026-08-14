@@ -1,19 +1,19 @@
 import { AgentEventSchema } from "@/features/chat/schemas";
-import { MessageModel } from "@/lib/client";
+import { Message } from "@/lib/client";
 import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
 type UseChatWebSocketProps = {
-  sessionId: string;
+  chatId: string;
   jwtToken: string;
-  onStreamStart?: (message: MessageModel) => void;
-  onStreamUpdate?: (message: MessageModel) => void;
-  onStreamComplete?: (messages: MessageModel[]) => void;
+  onStreamStart?: (message: Message) => void;
+  onStreamUpdate?: (message: Message) => void;
+  onStreamComplete?: (messages: Message[]) => void;
   onStreamError?: (error: string) => void;
   onRegenerate?: (parentId: string) => void;
 };
 
-const createPendingAssistantMessage = (): MessageModel => ({
+const createPendingAssistantMessage = (): Message => ({
   model_id: "",
   thinking: "",
   content: "",
@@ -30,7 +30,7 @@ const createPendingAssistantMessage = (): MessageModel => ({
 });
 
 export const useChatWebSocket = ({
-  sessionId,
+  chatId,
   jwtToken,
   onStreamStart,
   onStreamUpdate,
@@ -40,7 +40,7 @@ export const useChatWebSocket = ({
 }: UseChatWebSocketProps) => {
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const streamingMessageRef = React.useRef<MessageModel | null>(null);
+  const streamingMessageRef = React.useRef<Message | null>(null);
   const onStreamStartRef = React.useRef(onStreamStart);
   const onStreamUpdateRef = React.useRef(onStreamUpdate);
   const onStreamCompleteRef = React.useRef(onStreamComplete);
@@ -72,11 +72,11 @@ export const useChatWebSocket = ({
 
   const wsEndpoint = useMemo(() => {
     const backendUrl = new URL(process.env.NEXT_PUBLIC_BACKEND_API_URL!);
-    const wsUrl = new URL(`/chat/stream/${sessionId}`, backendUrl);
+    const wsUrl = new URL(`/chat/stream/${chatId}`, backendUrl);
     wsUrl.protocol = backendUrl.protocol === "https:" ? "wss:" : "ws:";
     wsUrl.searchParams.set("token", jwtToken);
     return wsUrl.toString();
-  }, [jwtToken, sessionId]);
+  }, [jwtToken, chatId]);
 
   const scheduleFlush = React.useCallback(() => {
     if (flushTimerRef.current) return;

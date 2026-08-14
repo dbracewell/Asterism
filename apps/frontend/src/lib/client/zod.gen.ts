@@ -68,9 +68,9 @@ export const zChatInfo = z.object({
 });
 
 /**
- * ChatModelList
+ * ChatInfoList
  */
-export const zChatModelList = z.object({
+export const zChatInfoList = z.object({
     chats: z.array(zChatInfo)
 });
 
@@ -132,24 +132,24 @@ export const zErrorDetail = z.object({
 });
 
 /**
- * FolderModel
+ * Folder
  */
-export const zFolderModel = z.object({
+export const zFolder = z.object({
     id: z.uuid(),
     user_id: z.string(),
     title: z.string(),
-    created_at: z.iso.datetime({ local: true }),
-    updated_at: z.iso.datetime({ local: true }),
+    created_at: z.int(),
+    updated_at: z.int(),
     parent_id: z.uuid().nullable(),
     sessions: z.array(zChatInfo).optional(),
-    children: z.array(z.lazy((): any => zFolderModel)).optional()
+    children: z.array(z.lazy((): any => zFolder)).optional()
 });
 
 /**
- * FolderModelList
+ * FolderList
  */
-export const zFolderModelList = z.object({
-    folders: z.array(zFolderModel)
+export const zFolderList = z.object({
+    folders: z.array(zFolder)
 });
 
 /**
@@ -170,44 +170,23 @@ export const zBulkUpdateSettingRequest = z.object({
 });
 
 /**
- * LLMModel
+ * Llm
  */
-export const zLlmModel = z.object({
+export const zLlm = z.object({
     id: z.uuid(),
-    provider_id: z.uuid(),
     name: z.string(),
+    provider_id: z.uuid(),
     is_active: z.boolean()
 });
 
 /**
- * LLMModelInfo
+ * LlmDisplayInfo
  */
-export const zLlmModelInfo = z.object({
+export const zLlmDisplayInfo = z.object({
     id: z.uuid(),
     name: z.string(),
     provider_id: z.uuid(),
     provider_name: z.string()
-});
-
-/**
- * LLMProvider
- */
-export const zLlmProvider = z.object({
-    name: z.string(),
-    base_url: z.string(),
-    api_key: z.string(),
-    id: z.uuid(),
-    models: z.array(zLlmModel)
-});
-
-/**
- * ApplicationSettingsModel
- */
-export const zApplicationSettingsModel = z.object({
-    llm_providers: z.array(zLlmProvider).optional(),
-    draft_model_id: z.uuid().nullish(),
-    web_search_provider: zComponentProviderParameters.nullish(),
-    image_search_provider: zComponentProviderParameters.nullish()
 });
 
 /**
@@ -229,6 +208,27 @@ export const zNewChatRequest = z.object({
 export const zNewFolderRequest = z.object({
     title: z.string(),
     parent_id: z.uuid().nullish()
+});
+
+/**
+ * Provider
+ */
+export const zProvider = z.object({
+    name: z.string(),
+    base_url: z.string(),
+    api_key: z.string(),
+    id: z.uuid(),
+    models: z.array(zLlm)
+});
+
+/**
+ * ApplicationSettings
+ */
+export const zApplicationSettings = z.object({
+    llm_providers: z.array(zProvider).optional(),
+    draft_model_id: z.uuid().nullish(),
+    web_search_provider: zComponentProviderParameters.nullish(),
+    image_search_provider: zComponentProviderParameters.nullish()
 });
 
 /**
@@ -259,9 +259,9 @@ export const zToolResult = z.object({
 });
 
 /**
- * MessageModel
+ * Message
  */
-export const zMessageModel = z.object({
+export const zMessage = z.object({
     role: z.string(),
     content: z.string(),
     token_count: z.int(),
@@ -279,11 +279,11 @@ export const zMessageModel = z.object({
 });
 
 /**
- * ChatModel
+ * Chat
  */
-export const zChatModel = z.object({
+export const zChat = z.object({
     info: zChatInfo,
-    messages: z.array(zMessageModel)
+    messages: z.array(zMessage)
 });
 
 /**
@@ -301,12 +301,12 @@ export const zUserAgents = z.object({
 });
 
 /**
- * UserSettingsModel
+ * UserSettings
  */
-export const zUserSettingsModel = z.object({
+export const zUserSettings = z.object({
     theme: z.string().optional().default('light'),
     font_size: z.string().optional().default('16px'),
-    models: z.array(zLlmModelInfo).optional(),
+    models: z.array(zLlmDisplayInfo).optional(),
     default_model_id: z.uuid().nullish(),
     agents: z.record(z.string(), zAgentProfile).optional(),
     default_agent_id: z.uuid().nullish()
@@ -324,55 +324,55 @@ export const zGetFileResponse = z.string();
 /**
  * Successful Response
  */
-export const zChatSessionGetManyResponse = zChatModelList;
+export const zChatSessionGetManyResponse = zChatInfoList;
 
 export const zChatSessionCreateBody = zNewChatRequest;
 
 /**
  * Successful Response
  */
-export const zChatSessionCreateResponse = zChatModel;
-
-export const zChatSessionGetOnePath = z.object({
-    session_id: z.uuid()
-});
-
-/**
- * Successful Response
- */
-export const zChatSessionGetOneResponse = zChatModel;
+export const zChatSessionCreateResponse = zChat;
 
 export const zChatSessionDeletePath = z.object({
-    session_id: z.uuid()
+    chat_id: z.uuid()
 });
 
 /**
  * Successful Response
  */
-export const zChatSessionDeleteResponse = zChatModel;
+export const zChatSessionDeleteResponse = zChat;
+
+export const zChatSessionGetOnePath = z.object({
+    chat_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatSessionGetOneResponse = zChat;
 
 export const zChatSessionUpdateBody = zChatUpdateRequest;
 
 export const zChatSessionUpdatePath = z.object({
-    session_id: z.uuid()
+    chat_id: z.uuid()
 });
 
 /**
  * Successful Response
  */
-export const zChatSessionUpdateResponse = zChatModel;
+export const zChatSessionUpdateResponse = zChat;
 
 /**
  * Successful Response
  */
-export const zFolderGetManyResponse = zFolderModelList;
+export const zFolderGetManyResponse = zFolderList;
 
 export const zFolderCreateBody = zNewFolderRequest;
 
 /**
  * Successful Response
  */
-export const zFolderCreateResponse = zFolderModel;
+export const zFolderCreateResponse = zFolder;
 
 export const zFolderDeletePath = z.object({
     folder_id: z.string()
@@ -381,7 +381,7 @@ export const zFolderDeletePath = z.object({
 /**
  * Successful Response
  */
-export const zFolderDeleteResponse = zFolderModel;
+export const zFolderDeleteResponse = zFolder;
 
 export const zFolderGetOnePath = z.object({
     folder_id: z.uuid()
@@ -390,12 +390,12 @@ export const zFolderGetOnePath = z.object({
 /**
  * Successful Response
  */
-export const zFolderGetOneResponse = zFolderModel;
+export const zFolderGetOneResponse = zFolder;
 
 /**
  * Successful Response
  */
-export const zUserSettingsGetResponse = zUserSettingsModel;
+export const zUserSettingsGetResponse = zUserSettings;
 
 /**
  * Updates
@@ -405,7 +405,7 @@ export const zUserSettingsBulkUpdateBody = z.record(z.string(), zJsonValue);
 /**
  * Successful Response
  */
-export const zUserSettingsBulkUpdateResponse = zUserSettingsModel;
+export const zUserSettingsBulkUpdateResponse = zUserSettings;
 
 export const zUserSettingDeletePath = z.object({
     key: z.string()
@@ -425,14 +425,14 @@ export const zUserSettingUpdateResponse = zSetting;
 /**
  * Successful Response
  */
-export const zAppSettingsGetResponse = zApplicationSettingsModel;
+export const zAppSettingsGetResponse = zApplicationSettings;
 
 export const zAppSettingsBulkUpdateBody = zBulkUpdateSettingRequest;
 
 /**
  * Successful Response
  */
-export const zAppSettingsBulkUpdateResponse = zApplicationSettingsModel;
+export const zAppSettingsBulkUpdateResponse = zApplicationSettings;
 
 export const zAppSettingDeletePath = z.object({
     key: z.string()

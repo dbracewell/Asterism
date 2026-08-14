@@ -1,5 +1,4 @@
 import json
-from contextlib import asynccontextmanager
 
 from fastapi import (
     FastAPI,
@@ -11,36 +10,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
-from asterism.common import CodedException, ErrorDetail
-from asterism.config import config
-from asterism.db import db_session_manager
-from asterism.events import Event, EventType, event_bus
-from asterism.services.routers import (
-    agents_router,
-    chat_router,
-    components_router,
-    file_router,
-    folder_router,
-    settings_router,
-    user_router,
-)
-from asterism.services.routers.function_router import (
-    function_router,
-)
-from asterism.services.startup import init_system
-from asterism.utils.log import get_logger
+from asterism.common.log import get_logger
+from asterism.core import config
+from asterism.core.exceptions import CodedException
+from asterism.core.lifespan import lifespan
+from asterism.core.schemas import ErrorDetail
+from asterism.domains.chat.router import chat_router
+from asterism.domains.components.router import components_router
+from asterism.domains.files.router import file_router
+from asterism.domains.folders.router import folder_router
+from asterism.domains.settings.agents_router import agents_router
+from asterism.domains.settings.settings_router import settings_router
+from asterism.domains.tools.function_router import function_router
+from asterism.domains.user.router import user_router
 
 logger = get_logger("Asterism")
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Asterism backend starting up...")
-    await init_system()
-    yield
-    event_bus.emit(Event(type=EventType.SYSTEM_STOP))
-    await db_session_manager.close()
-    logger.info("Asterism backend shutting up...")
 
 
 app = FastAPI(
@@ -51,15 +35,15 @@ app = FastAPI(
 )
 
 
-def custom_openapi():
+def openapi_schema():
     if app.openapi_schema:
         return app.openapi_schema
+
     openapi_schema = get_openapi(
         title="Asterism",
         version="1.0.0",
         routes=app.routes,
     )
-    # openapi_schema["openapi"] = "3.0.3"
 
     if "ErrorDetail" not in openapi_schema["components"]["schemas"]:
         openapi_schema["components"]["schemas"]["ErrorDetail"] = (
@@ -87,11 +71,11 @@ def custom_openapi():
     return app.openapi_schema
 
 
-app.openapi = custom_openapi  # type: ignore
+app.openapi = openapi_schema  # type:ignore
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=config.CORS_ALLOWED_ORIGINS,
+    allow_origins=config.cors_allowed_origins or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -100,7 +84,7 @@ app.add_middleware(
 
 @app.exception_handler(HTTPException)
 async def global_http_exception_handler(
-    request: Request,
+    _: Request,
     exc: HTTPException,
 ):
     error_data = ErrorDetail(code=exc.status_code, detail=str(exc.detail))
@@ -112,7 +96,7 @@ async def global_http_exception_handler(
 
 @app.exception_handler(CodedException)
 async def global_coded_exception_handler(
-    request: Request,
+    _: Request,
     exc: CodedException,
 ):
     error_data = ErrorDetail(code=exc.code, detail=str(exc))
@@ -124,7 +108,7 @@ async def global_coded_exception_handler(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
-    request: Request,
+    _: Request,
     exc: RequestValidationError,
 ):
     error_message = []

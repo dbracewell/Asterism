@@ -1,5 +1,5 @@
-import { EventType } from "@/features/sse/types";
 import { EventPayloadMap } from "@/features/sse/schemas";
+import { EventType } from "@/features/sse/types";
 
 type AnyHandler = (payload: unknown) => void;
 

@@ -1,4 +1,4 @@
-import { zMessageModel } from "@/lib/client/zod.gen";
+import { zMessage } from "@/lib/client/zod.gen";
 import z from "zod";
 
 export const FunctionSchema = z.object({
@@ -21,7 +21,7 @@ export const ToolResultSchema = z.object({
 
 const AgentCompleteEvent = z.object({
   type: z.literal("complete"),
-  last_messages: zMessageModel.array(),
+  last_messages: zMessage.array(),
 });
 
 const AgentStartEvent = z.object({

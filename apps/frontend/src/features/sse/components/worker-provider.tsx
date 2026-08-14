@@ -1,10 +1,13 @@
-"use client"
+"use client";
 
-
-import { useEffect, useRef } from "react";
 import { eventRouter } from "@/features/sse/lib/event-router";
+import { useEffect, useRef } from "react";
 
-export default function WorkerProvider({ children }: { children: React.ReactNode }) {
+export default function WorkerProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const workerRef = useRef<SharedWorker | null>(null);
 
   useEffect(() => {
@@ -20,11 +23,11 @@ export default function WorkerProvider({ children }: { children: React.ReactNode
       if (type === "message") {
         try {
           const parsed = JSON.parse(data);
-            try {
-              eventRouter(parsed);
-            } catch (err) {
-              console.error(err);
-            }
+          try {
+            eventRouter(parsed);
+          } catch (err) {
+            console.error(err);
+          }
         } catch {
           console.error("Unable to parse message", type);
         }
