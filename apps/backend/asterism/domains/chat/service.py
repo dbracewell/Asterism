@@ -76,7 +76,7 @@ async def update_message(
             .values(**payload.model_dump(exclude_unset=True))
             .returning(MessageModel)
         )
-        message = await session.execute(update_stmt)
+        message = await session.scalar(update_stmt)
         await session.commit()
         return Message.model_validate(message)
 
@@ -131,9 +131,9 @@ async def update_chat(
                 ChatModel.id == chat_id,
             )
             .values(**payload.model_dump(exclude_unset=True))
-            .returning(Message)
+            .returning(ChatModel)
         )
-        chat_session = await session.execute(update_stmt)
+        chat_session = await session.scalar(update_stmt)
         await session.commit()
 
         return Chat(
