@@ -12,19 +12,19 @@ jobs:
   quality-gates:
     name: Lint, Typecheck, Test
     runs-on: ubuntu-latest
-    container:
-      image: node:22.13.0-bookworm
-      options: --user root
     timeout-minutes: 20
 
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11.4.0
 
       - name: Setup Python
         uses: actions/setup-python@v5
