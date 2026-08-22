@@ -4,9 +4,11 @@ from cachetools import TTLCache
 from sqlalchemy import delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import asterism.domains.agent.service as agents_service
 import asterism.domains.settings.service as settings_service
 from asterism.db.database import get_async_db_session
-from asterism.domains.settings.schemas import PartialAgentProfile, Provider
+from asterism.domains.agent.schemas import PartialAgentProfile
+from asterism.domains.settings.schemas import Provider
 from asterism.domains.user.models import UserModel
 
 
@@ -80,7 +82,15 @@ async def initialize_user_settings(
     if user_settings.default_model_id and user_settings.default_agent_id:
         return
 
+    # User does not have a default agent, but does have agents defined
+    # go ahead and return
+    if user_settings.default_agent_id is None and len(user_settings.agents) > 0:
+        return
+
     app_settings = await settings_service.get_app_settings(session=session)
+
+    # User does not have any agents defined so try and create
+    # a default agent if possible
 
     default_model_id = user_settings.default_model_id
     if not user_settings.default_model_id:
@@ -90,9 +100,9 @@ async def initialize_user_settings(
         # No model defined cannot do anything
         return
 
-    new_profile = await settings_service.upsert_agent_profile(
+    new_profile = await agents_service.upsert_agent_profile(
+        user_id=user_id,
         agent_profile=PartialAgentProfile.create_default_agent(
-            user_id=user_id,
             model_id=default_model_id,
         ),
         session=session,

@@ -1,47 +1,37 @@
 import uuid
 from typing import Any, cast
 
-from cachetools import TTLCache
 from pydantic import JsonValue
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from asterism.common.concurrency import AsyncAtomic
+import asterism.domains.agent.service as agent_service
 from asterism.common.log import get_logger
 from asterism.core.events import Event, EventType, event_bus
-from asterism.core.exceptions import NotFoundException, UnauthorizedException
+from asterism.core.exceptions import NotFoundException
 from asterism.db.database import get_async_db_session
 
+from .cache import settings_cache
 from .models import (
-    AgentProfileModel,
     ApplicationSettingsModel,
     LLMModel,
     ProviderModel,
     UserSettingModel,
 )
 from .schemas import (
-    AgentProfile,
     ApplicationSettings,
     BulkUpdateSettingRequest,
     Llm,
     LlmDisplayInfo,
     LlmWithProvider,
-    PartialAgentProfile,
     Provider,
     Setting,
-    UserAgents,
     UserSettings,
 )
 
 logger = get_logger("Settings")
-
-
-_user_cache: TTLCache[str, UserSettings] = TTLCache[str, UserSettings](
-    maxsize=100, ttl=3600
-)
-_app_cache = AsyncAtomic[ApplicationSettings | None](None)
 
 
 # ------------------------------------------------------------------
@@ -54,7 +44,7 @@ async def get_user_settings(
     session: AsyncSession | None = None,
 ) -> UserSettings:
 
-    cached = _user_cache.get(user_id)
+    cached = settings_cache.get_user_settings(user_id)
     if cached:
         return cached
 
@@ -68,13 +58,15 @@ async def get_user_settings(
             user_id=user_id,
             session=session,
         )
-        user_agents = await get_user_agents(
+        user_agents = await agent_service.get_user_agents(
             user_id=user_id,
             session=session,
         )
         user_settings.agents = user_agents.agents
+        if user_settings.default_agent_id not in user_agents.agents:
+            user_settings.default_agent_id = None
 
-    _user_cache[user_id] = user_settings
+    settings_cache.set_user_settings(user_id, user_settings)
     return user_settings
 
 
@@ -112,7 +104,7 @@ async def bulk_upsert_user_settings(
 
         await session.commit()
 
-    _user_cache.pop(user_id, None)
+    settings_cache.remove_user_setting(user_id)
     return await get_user_settings(user_id, session)
 
 
@@ -146,7 +138,7 @@ async def upsert_user_setting(
         )
         await session.execute(stmt)
         await session.commit()
-        _user_cache.pop(user_id, None)
+        settings_cache.remove_user_setting(user_id)
 
         return Setting(key=key, value=value)
 
@@ -163,7 +155,7 @@ async def delete_user_setting(
         )
         await session.execute(stmt)
         await session.commit()
-        _user_cache.pop(user_id, None)
+        settings_cache.remove_user_setting(user_id)
 
 
 # ------------------------------------------------------------------
@@ -174,7 +166,7 @@ async def delete_user_setting(
 async def get_app_settings(
     session: AsyncSession | None = None,
 ) -> ApplicationSettings:
-    async with _app_cache as (get, set):
+    async with settings_cache.app_settings() as (get, set):
         cached = get()
         if cached:
             return cached
@@ -201,7 +193,7 @@ async def upsert_app_setting(
         await delete_app_setting(key, session)
         return Setting(key=key, value=value)
 
-    async with _app_cache as (_, set):
+    async with settings_cache.app_settings() as (_, set):
         set(None)
 
         async with get_async_db_session(session) as session:
@@ -235,7 +227,7 @@ async def upsert_app_setting(
             )
             await session.execute(stmt)
             await session.commit()
-            _user_cache.clear()
+            settings_cache.clear_user_settings()
 
             if draft_model_updated:
                 event_bus.emit(Event(type=EventType.DRAFT_MODEL_UPDATED))
@@ -247,7 +239,7 @@ async def delete_app_setting(
     key: str,
     session: AsyncSession | None = None,
 ) -> None:
-    async with _app_cache as (_, set):
+    async with settings_cache.app_settings() as (_, set):
         async with get_async_db_session(session) as session:
             stmt = delete(ApplicationSettingsModel).where(
                 ApplicationSettingsModel.key == key
@@ -255,14 +247,14 @@ async def delete_app_setting(
             await session.execute(stmt)
             await session.commit()
             set(None)
-            _user_cache.clear()
+            settings_cache.clear_user_settings()
 
 
 async def bulk_update_app_setting(
     updates: BulkUpdateSettingRequest,
     session: AsyncSession | None = None,
 ) -> ApplicationSettings:
-    async with _app_cache as (_, set):
+    async with settings_cache.app_settings() as (_, set):
         async with get_async_db_session(session) as session:
             draft_model_updated = False
 
@@ -297,7 +289,7 @@ async def bulk_update_app_setting(
                 await session.execute(stmt)
 
             await session.commit()
-            _user_cache.clear()
+            settings_cache.clear_user_settings()
             set(None)
 
     app_settings = await get_app_settings(session)
@@ -471,60 +463,3 @@ def _merge_models(
             )
             synced_models.append(new_model)
     return synced_models
-
-
-async def get_user_agents(
-    user_id: str,
-    session: AsyncSession | None = None,
-) -> UserAgents:
-    async with get_async_db_session(session) as session:
-        stmt = select(AgentProfileModel).where(AgentProfileModel.user_id == user_id)
-        results = await session.scalars(stmt)
-
-        agents_dict: dict[uuid.UUID, AgentProfile] = {}
-        for r in results:
-            agents_dict[r.id] = AgentProfile.model_validate(r)
-
-        return UserAgents(agents=agents_dict)
-
-
-async def get_agent_profile(
-    user_id: str,
-    agent_id: uuid.UUID,
-    session: AsyncSession | None = None,
-) -> AgentProfile:
-    async with get_async_db_session(session) as session:
-        result = await session.get(AgentProfileModel, agent_id)
-        if not result:
-            raise NotFoundException(f"Agent with id {agent_id} not found")
-        if user_id != result.user_id:
-            raise UnauthorizedException()
-        return AgentProfile.model_validate(result)
-
-
-async def upsert_agent_profile(
-    agent_profile: PartialAgentProfile,
-    session: AsyncSession | None = None,
-) -> AgentProfile:
-    async with get_async_db_session(session) as session:
-        if agent_profile.id:
-            result = await session.get(AgentProfileModel, agent_profile.id)
-            if not result:
-                raise NotFoundException(f"Agent with id {agent_profile.id} not found")
-            if agent_profile.user_id != result.user_id:
-                raise UnauthorizedException()
-            result.chat_parameters = agent_profile.chat_parameters
-            result.description = agent_profile.description
-            result.name = agent_profile.name
-            result.model_id = agent_profile.model_id
-            result.max_steps = agent_profile.max_steps
-            result.system_prompt = agent_profile.system_prompt
-            result.tools = agent_profile.tools
-            await session.commit()
-            return AgentProfile.model_validate(result)
-
-        new_profile = AgentProfileModel(**agent_profile.model_dump())
-        session.add(new_profile)
-        await session.commit()
-        await session.refresh(new_profile)
-        return AgentProfile.model_validate(new_profile)

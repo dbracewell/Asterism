@@ -58,7 +58,7 @@ def verify_jwks(
     return verify_jwks_token(credentials.credentials)
 
 
-type DepenndsJwtToken = Annotated[AuthedUser, Depends(verify_jwks)]
+type DependsJwtToken = Annotated[AuthedUser, Depends(verify_jwks)]
 
 
 def optional_auth(
@@ -70,6 +70,6 @@ def optional_auth(
     if not credentials:
         return None
     try:
-        return verify_jwks_token(credentials)
+        return verify_jwks_token(credentials.credentials)
     except UnauthorizedException:
         return None

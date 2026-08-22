@@ -3,7 +3,7 @@ import { SettingsCard } from "@/features/settings/ui/setttings-card";
 import { UserSettings } from "@/features/settings/ui/user-settings";
 export const UserSettingsTab = () => {
   return (
-    <TabsContent value="user">
+    <TabsContent value="user" className="min-h-0">
       <SettingsCard settings={UserSettings} />
     </TabsContent>
   );

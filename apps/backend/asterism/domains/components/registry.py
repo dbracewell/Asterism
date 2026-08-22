@@ -21,8 +21,11 @@ class ComponentRegistry:
         return f"{component_type.value}-{name.upper()}"
 
     def register(self):
-        def decorator[T: type[Component]](cls: T):
-            unique_key = ComponentRegistry._make_key(cls.component_type, cls.name)
+        def decorator(cls: type[Component[Any]]):
+            unique_key = ComponentRegistry._make_key(
+                cls.component_type,
+                cls.name,
+            )
             if unique_key not in self.providers_by_unique_id:
                 self.providers_by_type[cls.component_type].append(cls)
                 self.providers_by_unique_id[unique_key] = cls
@@ -46,7 +49,9 @@ class ComponentRegistry:
             return self.singletons[key]
 
         if parameters_dict:
-            instance = factory(factory.parameters.model_validate(parameters_dict))
+            instance = factory(
+                factory.parameters.model_validate(parameters_dict)  # pyright: ignore[reportGeneralTypeIssues]
+            )
         else:
             instance = factory(NoArgs())
 
@@ -55,7 +60,7 @@ class ComponentRegistry:
 
         return instance
 
-    def get_providers(
+    def get_providers[T](
         self,
         component_type: ComponentType,
     ) -> list[type[Component[Any]]]:

@@ -11,7 +11,7 @@ def inline_refs(schema: dict) -> dict:
             if "$ref" in node:
                 ref_name = node["$ref"].split("/")[-1]
                 resolved_def = resolve(defs[ref_name])
-                merged = {**resolved_def}
+                merged = {**resolved_def}  # type: ignore
                 for k, v in node.items():
                     if k != "$ref":
                         merged[k] = resolve(v)
@@ -21,4 +21,4 @@ def inline_refs(schema: dict) -> dict:
             return [resolve(item) for item in node]
         return node
 
-    return resolve(schema)
+    return resolve(schema)  # type: ignore

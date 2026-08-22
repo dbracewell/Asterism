@@ -59,9 +59,7 @@ class DraftModel:
                 ),
             ],
             max_tokens=100,
-            temperature=0.3,
-            top_p=0.9,
-            thinking_budget_tokens=30,
+            thinking_budget_tokens=20,
         )
         return content.strip()
 

@@ -442,6 +442,7 @@ export const ProvidersTab = ({
               name="draft_model_id"
               render={({ field }) => (
                 <ModelSelector
+                  className="w-40! sm:w-80!"
                   id="appsettings-draft-model"
                   defaultModel={field.value}
                   availableModels={availableModels}

@@ -1,6 +1,7 @@
 from enum import StrEnum
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SearchTimeRange(StrEnum):
@@ -31,3 +32,17 @@ class SearchArgs(BaseModel):
         description="The time range (ALL, DAY, MONTH, YEAR) to limit the search to",
         title="Time Range",
     )
+
+
+class ToolInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+    description: str
+
+
+class ToolInfoList(BaseModel):
+    items: list[ToolInfo]
+
+    def model_post_init(self, __context: Any) -> None:
+        super().model_post_init(__context)
+        self.items.sort(key=lambda t: t.name)

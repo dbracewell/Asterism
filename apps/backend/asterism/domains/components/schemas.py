@@ -1,6 +1,6 @@
 import abc
 from enum import StrEnum
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel
 
@@ -22,13 +22,13 @@ class ComponentType(StrEnum):
 
 
 class Component[T: BaseModel](abc.ABC):
-    component_type: ComponentType
-    singleton: bool = False
-    name: str
-    parameters: type[T]
+    component_type: ClassVar[ComponentType]
+    singleton: ClassVar[bool] = False
+    name: ClassVar[str]
+    parameters: ClassVar[BaseModel]
 
     def __init__(self, config: T) -> None:
-        self.config = config
+        self.config:T = config
 
     @abc.abstractmethod
     async def __call__(self, *args, **kwargs) -> Any: ...

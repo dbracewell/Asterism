@@ -34,5 +34,7 @@
     "**/node_modules": true,
     "**/.turbo": true
   },
-  "python.analysis.languageServerMode": "full"
+  "python.analysis.languageServerMode": "full",
+  "python.languageServer": "None",
+  "python.analysis.typeCheckingMode": "off"
 }

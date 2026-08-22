@@ -29,7 +29,7 @@ export const AdminSettingsTab = () => {
   }
 
   return (
-    <TabsContent value="admin" className="overflow-hidden">
+    <TabsContent value="admin" className="min-h-0">
       <SettingsCard settings={adminSettingsSections} />
     </TabsContent>
   );

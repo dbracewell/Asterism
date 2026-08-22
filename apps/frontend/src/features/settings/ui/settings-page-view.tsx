@@ -10,7 +10,7 @@ export const SettingsPageView = () => {
   return (
     <Tabs
       defaultValue={"user"}
-      className="flex flex-1 flex-col overflow-hidden! pt-12"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden! pt-12"
     >
       <TabsList>
         <TabsTrigger value="user">User Settings</TabsTrigger>

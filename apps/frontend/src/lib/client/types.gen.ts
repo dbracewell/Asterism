@@ -9,10 +9,6 @@ export type ClientOptions = {
  */
 export type AgentProfile = {
     /**
-     * User Id
-     */
-    user_id: string;
-    /**
      * Name
      */
     name: string;
@@ -526,6 +522,41 @@ export type NewFolderRequest = {
 };
 
 /**
+ * PartialAgentProfile
+ */
+export type PartialAgentProfile = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * System Prompt
+     */
+    system_prompt: string | null;
+    /**
+     * Max Steps
+     */
+    max_steps: number;
+    chat_parameters?: ChatCompletionParams;
+    /**
+     * Tools
+     */
+    tools?: Array<string> | null;
+    /**
+     * Id
+     */
+    id?: string | null;
+};
+
+/**
  * Provider
  */
 export type Provider = {
@@ -575,6 +606,30 @@ export type ToolCall = {
      * Type
      */
     type?: 'function';
+};
+
+/**
+ * ToolInfo
+ */
+export type ToolInfo = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+};
+
+/**
+ * ToolInfoList
+ */
+export type ToolInfoList = {
+    /**
+     * Items
+     */
+    items: Array<ToolInfo>;
 };
 
 /**
@@ -1279,6 +1334,31 @@ export type UserDeleteResponses = {
 
 export type UserDeleteResponse = UserDeleteResponses[keyof UserDeleteResponses];
 
+export type ToolsGetManyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/tools/';
+};
+
+export type ToolsGetManyErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type ToolsGetManyError = ToolsGetManyErrors[keyof ToolsGetManyErrors];
+
+export type ToolsGetManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: ToolInfoList;
+};
+
+export type ToolsGetManyResponse = ToolsGetManyResponses[keyof ToolsGetManyResponses];
+
 export type ComponentsByTypeData = {
     body?: never;
     path: {
@@ -1334,3 +1414,66 @@ export type AgentsGetUserAgentsResponses = {
 };
 
 export type AgentsGetUserAgentsResponse = AgentsGetUserAgentsResponses[keyof AgentsGetUserAgentsResponses];
+
+export type AgentsUpsertAgentProfileData = {
+    body: PartialAgentProfile;
+    path?: never;
+    query?: never;
+    url: '/agents';
+};
+
+export type AgentsUpsertAgentProfileErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AgentsUpsertAgentProfileError = AgentsUpsertAgentProfileErrors[keyof AgentsUpsertAgentProfileErrors];
+
+export type AgentsUpsertAgentProfileResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentProfile;
+};
+
+export type AgentsUpsertAgentProfileResponse = AgentsUpsertAgentProfileResponses[keyof AgentsUpsertAgentProfileResponses];
+
+export type AgentsDeleteAgentData = {
+    body?: never;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/{agent_id}';
+};
+
+export type AgentsDeleteAgentErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AgentsDeleteAgentError = AgentsDeleteAgentErrors[keyof AgentsDeleteAgentErrors];
+
+export type AgentsDeleteAgentResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentProfile;
+};
+
+export type AgentsDeleteAgentResponse = AgentsDeleteAgentResponses[keyof AgentsDeleteAgentResponses];

@@ -20,8 +20,9 @@ from asterism.domains.llm.schemas import (
     ToolCall,
     ToolResult,
 )
-from asterism.domains.settings.schemas import AgentProfile
 from asterism.domains.tools.registry import tool_registry
+
+from .schemas import AgentProfile
 
 
 class AgentEventType(StrEnum):

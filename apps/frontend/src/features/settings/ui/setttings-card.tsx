@@ -13,7 +13,10 @@ export const SettingsCard = ({ settings }: { settings: Types }) => {
         settings.filter((s) => s.type === "section").find((s) => s.isDefault)
           ?.value
       }
-      className={"flex h-full min-h-0 flex-1 overflow-clip"}
+      className={cn(
+        "flex h-full min-h-0 flex-1 overflow-clip",
+        isMobile ? "flex-col" : "flex-row",
+      )}
     >
       <TabsList
         className={cn(
@@ -23,7 +26,7 @@ export const SettingsCard = ({ settings }: { settings: Types }) => {
       >
         <div
           className={cn(
-            "bg-card flex flex-col items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-md border p-2",
+            "bg-card flex min-h-0 flex-col items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-md border p-2",
             isMobile ? "flex-row" : "w-full",
           )}
         >
@@ -52,7 +55,7 @@ export const SettingsCard = ({ settings }: { settings: Types }) => {
           <TabsContent
             key={setting.value}
             value={setting.value}
-            className="flex max-h-full min-h-0 flex-1 flex-col p-2"
+            className="hidden max-h-full min-h-0 flex-1 flex-col p-2 data-[state=active]:flex"
           >
             {setting.settingsPane}
           </TabsContent>

@@ -35,11 +35,11 @@ export const GeneralSettings = () => {
         <h1 className="border-b pb-2 text-base font-bold">Default Model</h1>
         <div className="flex flex-col items-start gap-2">
           <ModelSelector
+            className="w-40! sm:w-80!"  
             defaultModel={userSettings.default_model_id ?? undefined}
             onValueChange={(v) => {
               updateSetting("default_model_id", v);
             }}
-            width={320}
             availableModels={Object.values(userSettings.models ?? {})}
           />
         </div>

@@ -27,7 +27,7 @@ async def init_system() -> None:
             "event_bus.on",
         ),
     )
-    logger.info(f"{len(tool_registry.tools())} tools available.")
+    logger.info(f"{len(tool_registry.tools().items)} tools available.")
     logger.info("Tools and components loaded.")
 
 

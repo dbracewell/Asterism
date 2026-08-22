@@ -61,7 +61,7 @@ async def _get_child_folders(
         FolderModel.parent_id == parent_id,
     )
     result = await session.scalars(stmt)
-    return result.all()
+    return [Folder.model_validate(f) for f in result.all()]
 
 
 async def _get_chat_sessions(
@@ -125,7 +125,9 @@ async def list_folders(
         stmt = select(FolderModel).where(FolderModel.user_id == user_id)
 
         all_folders = (await session.scalars(stmt)).unique().all()
-        flat_pydantic_folders = [FlatFolder.model_validate(f) for f in all_folders]
+        flat_pydantic_folders = [
+            FlatFolder.model_validate(f) for f in all_folders
+        ]
         tree_folders = [Folder(**f.model_dump()) for f in flat_pydantic_folders]
         folder_map = {folder.id: folder for folder in tree_folders}
         root_folders = []

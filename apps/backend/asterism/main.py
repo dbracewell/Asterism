@@ -15,13 +15,13 @@ from asterism.core import config
 from asterism.core.exceptions import CodedException
 from asterism.core.lifespan import lifespan
 from asterism.core.schemas import ErrorDetail
+from asterism.domains.agent.router import agents_router
 from asterism.domains.chat.router import chat_router
 from asterism.domains.components.router import components_router
 from asterism.domains.files.router import file_router
 from asterism.domains.folders.router import folder_router
-from asterism.domains.settings.agents_router import agents_router
 from asterism.domains.settings.settings_router import settings_router
-from asterism.domains.tools.function_router import function_router
+from asterism.domains.tools.router import tools_router
 from asterism.domains.user.router import user_router
 
 logger = get_logger("Asterism")
@@ -129,6 +129,6 @@ app.include_router(chat_router)
 app.include_router(folder_router)
 app.include_router(settings_router)
 app.include_router(user_router)
-app.include_router(function_router)
+app.include_router(tools_router)
 app.include_router(components_router)
 app.include_router(agents_router)

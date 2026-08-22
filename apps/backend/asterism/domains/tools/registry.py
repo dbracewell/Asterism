@@ -17,6 +17,7 @@ from asterism.common.retries import async_retry
 from asterism.core.schemas import AuthedUser
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
 from asterism.domains.settings.schemas import ApplicationSettings
+from asterism.domains.tools.schemas import ToolInfo, ToolInfoList
 
 
 def _parse_tool_call_arguments(arguments: str | None) -> dict[str, Any]:
@@ -76,6 +77,7 @@ class ToolContext[T: BaseModel | None]:
 class LLMTool:
     name: str
     is_async: bool
+    description: str
     schema: ChatCompletionFunctionToolParam
     arg_validator: Type[BaseModel]
     function: Callable[[ToolContext[BaseModel]], Any]
@@ -85,8 +87,13 @@ class ToolRegistry:
     def __init__(self):
         self.registry: dict[str, LLMTool] = {}
 
-    def tools(self) -> list[str]:
-        return list(self.registry.keys())
+    def tools(self) -> ToolInfoList:
+        return ToolInfoList(
+            items=[
+                ToolInfo(name=t.name, description=t.description)
+                for t in self.registry.values()
+            ]
+        )
 
     def schemas(
         self,
@@ -200,6 +207,7 @@ class ToolRegistry:
             arg_validator, schema = to_json_schema(func, tool_name, tool_desc)
             self.registry[tool_name] = LLMTool(
                 name=tool_name,
+                description=tool_desc,
                 arg_validator=arg_validator,
                 is_async=is_async,
                 schema=schema,

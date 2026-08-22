@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
-from asterism.domains.llm.schemas import ChatCompletionParams
+from asterism.domains.agent.schemas import AgentProfile
 
 
 class Llm(BaseModel):
@@ -41,52 +40,6 @@ class LlmDisplayInfo(BaseModel):
     provider_name: str
 
 
-class PartialAgentProfile(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    user_id: str
-    name: str
-    description: str
-    model_id: uuid.UUID
-    system_prompt: str | None
-    max_steps: int
-    chat_parameters: ChatCompletionParams = Field(default_factory=ChatCompletionParams)
-    tools: list[str] | None = Field(
-        default_factory=lambda: [
-            "get_user_name",
-            "get_current_timestamp",
-            "get_timestamp_at_timezone",
-        ]
-    )
-    id: uuid.UUID | None = None
-
-    @classmethod
-    def create_default_agent(
-        cls,
-        user_id: str,
-        model_id: uuid.UUID,
-    ) -> Self:
-        return cls(
-            user_id=user_id,
-            model_id=model_id,
-            max_steps=5,
-            description="A default agent to answer the user's requests",
-            name="Default agent",
-            system_prompt=(
-                "You are a helpful agent here to assist "
-                "the user in their information needs."
-            ),
-        )
-
-
-class AgentProfile(PartialAgentProfile):
-    model_config = ConfigDict(from_attributes=True)
-    id: uuid.UUID
-
-
-class UserAgents(BaseModel):
-    agents: dict[uuid.UUID, AgentProfile]
-
-
 class ComponentProviderParameters(BaseModel):
     name: str
     parameters: dict[str, str] = Field(default_factory=dict)
@@ -118,6 +71,7 @@ class UserSettings(BaseModel):
         if self.default_agent_id is None:
             return None
         return self.agents.get(self.default_agent_id)
+
 
 class ApplicationSettings(BaseModel):
     llm_providers: list[Provider] = Field(default_factory=list)

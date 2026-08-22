@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LlmModelInfo } from "@/lib/client";
+import { LlmDisplayInfo } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 
@@ -13,10 +13,9 @@ type ModelSelectorProps = {
   id?: string;
   defaultModel?: string;
   onValueChange: (model: string) => void;
-  availableModels?: LlmModelInfo[];
+  availableModels?: LlmDisplayInfo[];
   className?: string;
   align?: "center" | "start" | "end" | undefined;
-  width?: number;
 };
 
 export const ModelSelector = ({
@@ -26,7 +25,6 @@ export const ModelSelector = ({
   availableModels,
   className,
   align = "center",
-  width = 160,
 }: ModelSelectorProps) => {
   const [model, setModel] = useState(defaultModel ?? "");
   const modelOptions = useMemo(() => {
@@ -46,13 +44,7 @@ export const ModelSelector = ({
         onValueChange(v);
       }}
     >
-      <SelectTrigger
-        id={id}
-        className={cn("min-w-0 truncate", className)}
-        style={{
-          width: `${width}px`,
-        }}
-      >
+      <SelectTrigger id={id} className={cn("min-w-0 truncate", className)}>
         <span className="block w-full truncate text-left">
           <SelectValue placeholder="Select a model" />
         </span>
@@ -61,9 +53,6 @@ export const ModelSelector = ({
         position="popper"
         align={align}
         className="max-h-60 overflow-y-auto"
-        style={{
-          maxWidth: `${width}px`,
-        }}
       >
         {modelOptions.map((model) => (
           <SelectItem

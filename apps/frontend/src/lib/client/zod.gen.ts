@@ -44,7 +44,6 @@ export const zChatCompletionParams = z.object({
  * AgentProfile
  */
 export const zAgentProfile = z.object({
-    user_id: z.string(),
     name: z.string(),
     description: z.string(),
     model_id: z.uuid(),
@@ -211,6 +210,20 @@ export const zNewFolderRequest = z.object({
 });
 
 /**
+ * PartialAgentProfile
+ */
+export const zPartialAgentProfile = z.object({
+    name: z.string(),
+    description: z.string(),
+    model_id: z.uuid(),
+    system_prompt: z.string().nullable(),
+    max_steps: z.int(),
+    chat_parameters: zChatCompletionParams.optional(),
+    tools: z.array(z.string()).nullish(),
+    id: z.uuid().nullish()
+});
+
+/**
  * Provider
  */
 export const zProvider = z.object({
@@ -246,6 +259,21 @@ export const zToolCall = z.object({
     id: z.string(),
     function: zFunction,
     type: z.literal('function').optional().default('function')
+});
+
+/**
+ * ToolInfo
+ */
+export const zToolInfo = z.object({
+    name: z.string(),
+    description: z.string()
+});
+
+/**
+ * ToolInfoList
+ */
+export const zToolInfoList = z.object({
+    items: z.array(zToolInfo)
 });
 
 /**
@@ -469,6 +497,11 @@ export const zUserDeletePath = z.object({
  */
 export const zUserDeleteResponse = z.boolean();
 
+/**
+ * Successful Response
+ */
+export const zToolsGetManyResponse = zToolInfoList;
+
 export const zComponentsByTypePath = z.object({
     component_type: zComponentType
 });
@@ -482,3 +515,19 @@ export const zComponentsByTypeResponse = zComponentListResponse;
  * Successful Response
  */
 export const zAgentsGetUserAgentsResponse = zUserAgents;
+
+export const zAgentsUpsertAgentProfileBody = zPartialAgentProfile;
+
+/**
+ * Successful Response
+ */
+export const zAgentsUpsertAgentProfileResponse = zAgentProfile;
+
+export const zAgentsDeleteAgentPath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAgentsDeleteAgentResponse = zAgentProfile;
