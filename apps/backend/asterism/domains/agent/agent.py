@@ -28,6 +28,7 @@ from .schemas import AgentProfile
 class AgentEventType(StrEnum):
     START = auto()
     COMPLETE = auto()
+    TOOL_CALL = auto()
     TOOL_COMPLETE = auto()
     ERROR = auto()
     DELTA = auto()
@@ -97,14 +98,52 @@ class Agent:
         for response in responses:
             yield response
 
+    async def _build_system_prompt(self) -> str | None:
+        base_prompt = self.profile.system_prompt or ""
+
+        if "sub_agent" in (self.profile.tools or []):
+            from .service import get_user_agents
+
+            agent_profiles = await get_user_agents(self.user.id)
+            agent_info = []
+            for profile in agent_profiles.agents.values():
+                if profile.id == self.profile.id:
+                    continue
+
+                agent_info.append(
+                    f"- id: {profile.id} (name: {profile.name}) - "
+                    f"{profile.description}"
+                )
+
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "You have access to a tool called 'sub_agent' "
+                "that allows you to delegate tasks to a sub-agent. "
+                "Use this tool when you need to break down complex "
+                "tasks or when you want to delegate work to another agent."
+                "Make sure that if the sub agent generates information needed "
+                "to be seen the user that output that information in your"
+                "response. "
+                "Sub Agents:"
+                f"\n{'\n'.join(agent_info)}"
+            )
+
+        base_prompt = base_prompt.strip()
+        if base_prompt == "":
+            return None
+
+        return base_prompt
+
     async def run(
         self,
         messages: list[LLMMessage],
     ) -> AsyncGenerator[AgentEvent, None]:
-        client = await self._get_client()
+        client: LLMClientProtocol = await self._get_client()
 
-        if self.profile.system_prompt and messages[0].role != "system":
-            messages.insert(0, LLMMessage.system(self.profile.system_prompt))
+        if messages[0].role != "system":
+            system_prompt = await self._build_system_prompt()
+            if system_prompt:
+                messages.insert(0, LLMMessage.system(system_prompt))
 
         last_user_message = messages[-1]
         last_thinking: str | None = None
@@ -156,6 +195,10 @@ class Agent:
 
                         if event.tool_calls:
                             tool_results: list[ToolResult] = []
+                            yield AgentEvent(
+                                type=AgentEventType.TOOL_CALL,
+                                tool_calls=event.tool_calls or [],
+                            )
                             async for response in self._run_tools(
                                 user_message=last_user_message.content,
                                 tool_calls=event.tool_calls,
@@ -165,7 +208,9 @@ class Agent:
                                     f"{response.tool_call.function.arguments})"
                                     f"=>'{re.sub(r'\s+', ' ', response.content[:64])}...'"  # noqa: E501
                                 )
-                                messages.append(LLMMessage.tool_call_result(response))
+                                messages.append(
+                                    LLMMessage.tool_call_result(response)
+                                )
                                 tool_results.append(response)
                             yield AgentEvent(
                                 type=AgentEventType.TOOL_COMPLETE,

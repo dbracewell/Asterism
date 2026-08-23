@@ -3,7 +3,7 @@ import { LoadingButton } from "@/components/loading-button";
 import { Hint } from "@/components/ui/hint";
 import { useUser } from "@/features/auth/components/user-context";
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
-import { AgentProfileForm } from "@/features/settings/ui/user-settings/AgentProfileForm";
+import { AgentProfileForm } from "@/features/settings/ui/user-settings/agent-profile-form";
 import { client } from "@/lib/api";
 import { agentsDeleteAgentMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { AgentProfile } from "@/lib/client/types.gen";

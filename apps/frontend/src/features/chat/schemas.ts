@@ -19,6 +19,11 @@ export const ToolResultSchema = z.object({
   tool_call: ToolCallSchema,
 });
 
+const AgentToolCompleteEvent = z.object({
+  type: z.literal("tool_complete"),
+  tool_results: z.array(ToolResultSchema),
+});
+
 const AgentCompleteEvent = z.object({
   type: z.literal("complete"),
   last_messages: zMessage.array(),
@@ -55,4 +60,5 @@ export const AgentEventSchema = z.discriminatedUnion("type", [
   AgentCompleteEvent,
   AgentErrorEvent,
   AgentDeltaEvent,
+  AgentToolCompleteEvent,
 ]);

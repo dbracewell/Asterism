@@ -214,7 +214,7 @@ export const ChatSession = ({
     <>
       <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
         <div
-          className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col gap-3 overflow-y-auto p-2 pt-14"
+          className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col gap-3 overflow-y-auto p-2 pt-20"
           style={{ overflowAnchor: "auto" }}
           onScroll={(e) => {
             const scrollPosition =
@@ -335,7 +335,7 @@ const MessageItem = React.memo(
           className={cn(
             "flex w-full flex-1 flex-col",
             message.role === "user" &&
-              "bg-accent text-accent-foreground ml-auto w-fit rounded-xl p-2",
+              "bg-accent text-accent-foreground ml-auto w-fit rounded-xl px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
           )}
         />
         {message.status === "completed" && (

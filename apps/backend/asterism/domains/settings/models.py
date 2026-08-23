@@ -1,14 +1,12 @@
 import uuid
-from typing import Optional
 
 from pydantic import JsonValue
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from asterism.db.base_model import Base
 from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
-from asterism.domains.llm.schemas import ChatCompletionParams
 
 
 class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):

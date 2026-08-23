@@ -50,7 +50,13 @@ class StreamingChunkProcessor[T: BaseModel]:
         self.full_content: str = ""
         self.full_thinking: str = ""
         self.final_finish_reason: Optional[
-            Literal["stop", "length", "tool_calls", "content_filter", "function_call"]
+            Literal[
+                "stop",
+                "length",
+                "tool_calls",
+                "content_filter",
+                "function_call",
+            ]
         ] = None
         self.token_usage: dict[str, int] | None = None
         self.tool_calls_dict: dict[int, dict[str, Any]] = {}
@@ -252,7 +258,9 @@ class LLMClient(LLMClientProtocol):
 
         msg_copy = messages.copy()
         if msg_copy[0].role == "system":
-            msg_copy[0].content = f"Time: {str(time.time())}\n{msg_copy[0].content}"
+            msg_copy[
+                0
+            ].content = f"Time: {str(time.time())}\n{msg_copy[0].content}"
         else:
             msg_copy.insert(0, LLMMessage.system(f"Time: {str(time.time())}"))
         completion_args["messages"] = format_messages_for_model(msg_copy)
@@ -264,7 +272,9 @@ class LLMClient(LLMClientProtocol):
         response_model: Type[T] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
     ) -> str | T | None:
-        last_event: LLMEvent[T] = LLMEvent(type=LLMEventType.COMPLETE, content=prompt)
+        last_event: LLMEvent[T] = LLMEvent(
+            type=LLMEventType.COMPLETE, content=prompt
+        )
 
         async for event in self.chat(
             messages=[LLMMessage.user(prompt)],

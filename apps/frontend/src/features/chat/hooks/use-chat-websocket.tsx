@@ -128,6 +128,10 @@ export const useChatWebSocket = ({
         scheduleFlush();
       }
 
+      if (msgContent.type === "tool_complete") {
+        console.log(msgContent);
+      }
+
       if (msgContent.type === "delta") {
         if (streamingMessageRef.current == null) {
           streamingMessageRef.current = createPendingAssistantMessage();

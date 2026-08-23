@@ -168,7 +168,12 @@ class AgentRunnerWebsocket:
                         )
                     else:
                         await self.queue.put(
-                            {"type": AgentEventType.TOOL_COMPLETE.value}
+                            {
+                                "type": AgentEventType.TOOL_COMPLETE.value,
+                                "tool_results": [
+                                    tr.to_dict() for tr in event.tool_results
+                                ],
+                            }
                         )
                 else:
                     await self.queue.put(event.model_dump())
@@ -185,8 +190,8 @@ class AgentRunnerWebsocket:
         event_sequence: set[AgentEventType] = set()
 
         while True:
-            msg = await self.queue.get()
-            msg_type = AgentEventType(msg["type"])
+            msg: dict[str, Any] = await self.queue.get()
+            msg_type: AgentEventType = AgentEventType(msg["type"])
             event_sequence.add(msg_type)
 
             match msg_type:
@@ -198,6 +203,7 @@ class AgentRunnerWebsocket:
                     await self.websocket.send_json(msg)
                     continue
                 case AgentEventType.TOOL_COMPLETE:
+                    await self.websocket.send_json(msg)
                     continue
 
             if (
