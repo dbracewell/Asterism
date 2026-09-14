@@ -4,6 +4,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
+from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.schemas import AgentProfile
 
 
@@ -67,10 +68,17 @@ class UserSettings(BaseModel):
     default_agent_id: uuid.UUID | None = Field(default=None)
 
     @property
-    def default_agent_profile(self) -> AgentProfile | None:
-        if self.default_agent_id is None:
-            return None
-        return self.agents.get(self.default_agent_id)
+    def default_agent_profile(self) -> AgentProfile:
+        if not self.default_agent_id:
+            raise BadDataException(
+                "User does not have a default agent profile set."
+            )
+        agent: AgentProfile | None = self.agents.get(self.default_agent_id)
+        if agent is None:
+            raise BadDataException(
+                "User does not have a default agent profile set."
+            )
+        return agent
 
 
 class ApplicationSettings(BaseModel):
@@ -78,3 +86,4 @@ class ApplicationSettings(BaseModel):
     draft_model_id: uuid.UUID | None = None
     web_search_provider: ComponentProviderParameters | None = None
     image_search_provider: ComponentProviderParameters | None = None
+    active_tools: list[str]

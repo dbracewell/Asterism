@@ -2,19 +2,17 @@ from __future__ import annotations
 
 import asyncio
 import re
-from enum import StrEnum, auto
+from logging import Logger
 from typing import AsyncGenerator
-
-from pydantic import BaseModel, Field
 
 import asterism.domains.settings.service as settings_service
 from asterism.common.concurrency import AsyncAtomic
 from asterism.common.log import get_logger
+from asterism.core.config import config
 from asterism.core.schemas import AuthedUser
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import (
     LLMClientProtocol,
-    LLMEvent,
     LLMEventType,
     LLMMessage,
     ToolCall,
@@ -22,31 +20,8 @@ from asterism.domains.llm.schemas import (
 )
 from asterism.domains.tools.registry import tool_registry
 
-from .schemas import AgentProfile
-
-
-class AgentEventType(StrEnum):
-    START = auto()
-    COMPLETE = auto()
-    TOOL_CALL = auto()
-    TOOL_COMPLETE = auto()
-    ERROR = auto()
-    DELTA = auto()
-
-
-class AgentEvent(BaseModel):
-    type: AgentEventType
-    content: str = Field(default="")
-    thinking: str = Field(default="")
-    tool_calls: list[ToolCall] = Field(default_factory=list[ToolCall])
-    tool_results: list[ToolResult] = Field(default_factory=list[ToolResult])
-    total_tokens: int = Field(default=0)
-
-    def has_tool_calls(self) -> bool:
-        return len(self.tool_calls) > 0
-
-    def has_tool_results(self) -> bool:
-        return len(self.tool_results) > 0
+from .schemas import AgentEvent, AgentEventType, AgentProfile
+from .user_response_queue import ToolUseAuthorization, UserResponseQueue
 
 
 class Agent:
@@ -54,15 +29,19 @@ class Agent:
         self,
         profile: AgentProfile,
         user: AuthedUser,
+        logger: Logger | None = None,
+        allowed_tools: list[str] | None = None,
     ) -> None:
         self.profile = profile
         self.max_steps = profile.max_steps
         self.user = user
-        self.logger = get_logger(f"Agent-{profile.name}")
+        self.logger = logger or get_logger(f"Agent({self.profile.name})")
         self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
+        self.allowed_tools = (
+            allowed_tools if allowed_tools is not None else config.default_allowed_tools
+        )
 
     async def _get_client(self) -> LLMClientProtocol:
-
         async with self._client as (get, set):
             client = get()
             if client:
@@ -83,20 +62,28 @@ class Agent:
         self,
         user_message: str,
         tool_calls: list[ToolCall],
+        auths: list[ToolUseAuthorization],
     ) -> AsyncGenerator[ToolResult, None]:
-
         tasks = [
             tool_registry.invoke_tool(
-                tool_call=tc,
+                tool_call=auth.tool,
                 user=self.user,
                 client=await self._get_client(),
                 user_message=user_message or "",
             )
-            for tc in tool_calls
+            for auth in auths
+            if auth.accept
         ]
         responses: list[ToolResult] = list(await asyncio.gather(*tasks))
         for response in responses:
             yield response
+        for auth in filter(lambda x: not x.accept, auths):
+            yield ToolResult(
+                content=f"Tool '{auth.tool.id} - {auth.tool.function.name}' was not authorized for use by the user. You should not attempt to call again and should proceed with answering the user's question",  # noqa: E501
+                raw_result=None,
+                is_empty=True,
+                tool_call=auth.tool,
+            )
 
     async def _build_system_prompt(self) -> str | None:
         base_prompt = self.profile.system_prompt or ""
@@ -111,8 +98,7 @@ class Agent:
                     continue
 
                 agent_info.append(
-                    f"- id: {profile.id} (name: {profile.name}) - "
-                    f"{profile.description}"
+                    f"- id: {profile.id} (name: {profile.name}) - {profile.description}"
                 )
 
             base_prompt = (
@@ -120,9 +106,9 @@ class Agent:
                 "You have access to a tool called 'sub_agent' "
                 "that allows you to delegate tasks to a sub-agent. "
                 "Use this tool when you need to break down complex "
-                "tasks or when you want to delegate work to another agent."
+                "tasks or when you want to delegate work to another agent. "
                 "Make sure that if the sub agent generates information needed "
-                "to be seen the user that output that information in your"
+                "to be seen by the user that you output that information in your "
                 "response. "
                 "Sub Agents:"
                 f"\n{'\n'.join(agent_info)}"
@@ -146,10 +132,7 @@ class Agent:
                 messages.insert(0, LLMMessage.system(system_prompt))
 
         last_user_message = messages[-1]
-        last_thinking: str | None = None
         for step in range(self.max_steps):
-            last_event: LLMEvent | None = None
-
             # Only allow tools if there are enough
             # steps to respond to them
             tools: list[str] | None = []
@@ -161,8 +144,6 @@ class Agent:
                 tools=tools,
                 **self.profile.chat_parameters,
             ):
-                last_event = event
-
                 match event.type:
                     case LLMEventType.ERROR:
                         yield AgentEvent(
@@ -171,20 +152,19 @@ class Agent:
                         )
                         return
                     case LLMEventType.START:
-                        if not messages[-1].tool_calls:
-                            yield AgentEvent(type=AgentEventType.START)
+                        yield AgentEvent(type=AgentEventType.START)
                     case LLMEventType.TEXT_DELTA | LLMEventType.THINKING_DELTA:
                         yield AgentEvent(
                             type=AgentEventType.DELTA,
                             content=event.content,
-                            thinking=event.thinking or last_thinking or "",
+                            thinking=event.thinking,
                         )
                     case LLMEventType.COMPLETE:
                         messages.append(
                             LLMMessage.assistant(
-                                content=last_event.content or "",
-                                token_count=last_event.total_tokens or 0,
-                                tool_calls=last_event.tool_calls,
+                                content=event.content,
+                                token_count=event.total_tokens or 0,
+                                tool_calls=event.tool_calls,
                             )
                         )
                         self.logger.debug(
@@ -193,44 +173,44 @@ class Agent:
                             f"tools={[f'{tc.function.name}({tc.function.arguments})' for tc in event.tool_calls or []]} "  # noqa: E501
                         )
 
+                        tool_results: list[ToolResult] = []
                         if event.tool_calls:
-                            tool_results: list[ToolResult] = []
+                            response_queue = UserResponseQueue(
+                                tools=event.tool_calls,
+                                permissions=self.allowed_tools,
+                            )
+
                             yield AgentEvent(
                                 type=AgentEventType.TOOL_CALL,
-                                tool_calls=event.tool_calls or [],
+                                tool_calls=event.tool_calls,
+                                user_response_queue=response_queue,
                             )
+
+                            auths: list[ToolUseAuthorization] = []
+                            async for response in response_queue.wait():
+                                auths.append(response)
+
                             async for response in self._run_tools(
                                 user_message=last_user_message.content,
                                 tool_calls=event.tool_calls,
+                                auths=auths,
                             ):
                                 self.logger.debug(
                                     f"{response.tool_call.function.name}("
                                     f"{response.tool_call.function.arguments})"
                                     f"=>'{re.sub(r'\s+', ' ', response.content[:64])}...'"  # noqa: E501
                                 )
-                                messages.append(
-                                    LLMMessage.tool_call_result(response)
-                                )
+                                messages.append(LLMMessage.tool_call_result(response))
                                 tool_results.append(response)
-                            yield AgentEvent(
-                                type=AgentEventType.TOOL_COMPLETE,
-                                content=event.content,
-                                thinking=event.thinking or last_thinking or "",
-                                tool_results=tool_results,
-                                tool_calls=event.tool_calls or [],
-                                total_tokens=event.total_tokens,
-                            )
-                        else:
-                            yield AgentEvent(
-                                type=AgentEventType.COMPLETE,
-                                content=event.content,
-                                thinking=event.thinking or last_thinking or "",
-                                tool_results=[],
-                                tool_calls=event.tool_calls or [],
-                                total_tokens=event.total_tokens,
-                            )
 
-                        last_thinking = None
+                        yield AgentEvent(
+                            type=AgentEventType.COMPLETE,
+                            content=event.content,
+                            thinking=event.thinking,
+                            tool_results=tool_results,
+                            tool_calls=event.tool_calls or [],
+                            total_tokens=event.total_tokens,
+                        )
 
                         if event.finish_reason == "stop":
                             return

@@ -2,15 +2,16 @@ import asyncio
 import threading
 import uuid
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable, Coroutine
 
 import requests
 from pydantic import BaseModel, ConfigDict
 
 from asterism.common.concurrency import suppress_exceptions
 from asterism.common.log import get_logger
+from asterism.core.schemas import NoArgs
 
 from .config import config
 
@@ -22,17 +23,25 @@ class EventType(StrEnum):
     TOOL_UPDATED = "tool_updated"
     TOOL_DELETED = "tool_deleted"
     DRAFT_MODEL_UPDATED = "draft_model_updated"
+    USER_SETTING_UPDATED = "user_setting_updated"
     WEBHOOK_CHAT_UPDATE = "chat-session:update"
 
 
 @dataclass
 class Event[T: BaseModel]:
     type: EventType
-    payload: T | None = None
+    payload: T
     user_id: str | None = None
 
 
-EventHandler = Callable[[Event], Awaitable[None]]
+@dataclass
+class NoArgEvent(Event[NoArgs]):
+    type: EventType
+    payload: NoArgs = field(default_factory=NoArgs)
+    user_id: str | None = None
+
+
+type EventHandler[T: BaseModel] = Callable[[Event[T]], Coroutine[Any, Any, None]]
 
 
 class ChatUpdateEvent(BaseModel):
@@ -63,14 +72,16 @@ class EventBus:
     def __init__(self):
         self.logger = get_logger("EventBus")
         self.lock = threading.Lock()
-        self.handlers: dict[EventType, list[EventHandler]] = defaultdict(
-            list[EventHandler]
-        )
+        self.handlers: dict[EventType, dict[str, EventHandler]] = defaultdict(dict)
 
-    def on[F: EventHandler](self, event_type: EventType) -> Callable[[F], F]:
-        def decorator(func: F) -> F:
+    def on[T: BaseModel](
+        self,
+        event_type: EventType,
+    ) -> Callable[[EventHandler[T]], EventHandler[T]]:
+        def decorator(func: EventHandler[T]) -> EventHandler[T]:
             with self.lock:
-                self.handlers[event_type].append(func)
+                key = f"{func.__module__}::{func.__name__}"  # type:ignore
+                self.handlers[event_type][key] = func
             return func
 
         return decorator
@@ -88,8 +99,8 @@ class EventBus:
             except Exception as e:
                 self.logger.error(e)
 
-        for handler in self.handlers[event.type]:
-            asyncio.create_task(suppress_exceptions(handler(event), self.logger))
+        for handler in self.handlers[event.type].values():
+            asyncio.create_task(suppress_exceptions(handler, event))
 
 
 event_bus: EventBus = EventBus()

@@ -1,7 +1,8 @@
 import asyncio
-import logging
 from threading import Lock
 from typing import Any, Callable, Coroutine
+
+from asterism.common.log import DEFAULT_LOGGER
 
 type Getter[T] = Callable[[], T]
 type Setter[T] = Callable[[T], None]
@@ -16,11 +17,11 @@ async def safe_async_call[T](
         return e
 
 
-async def suppress_exceptions(coro, logger: logging.Logger):
+async def suppress_exceptions(coro: Callable[..., Coroutine], *args):
     try:
-        return await coro
+        return await coro(*args)
     except Exception as e:
-        logger.error(e, stack_info=True)
+        DEFAULT_LOGGER.error(e, stack_info=True)
 
 
 class Atomic[T]:

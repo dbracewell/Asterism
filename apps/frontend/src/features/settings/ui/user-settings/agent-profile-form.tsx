@@ -26,7 +26,7 @@ import { client } from "@/lib/api";
 import { AgentProfile } from "@/lib/client";
 import {
   agentsUpsertAgentProfileMutation,
-  toolsGetManyOptions,
+  toolsGetActiveOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
@@ -47,7 +47,7 @@ export function AgentProfileForm({
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { data: availableTools } = useQuery({
-    ...toolsGetManyOptions({
+    ...toolsGetActiveOptions({
       client: client,
     }),
   });

@@ -50,7 +50,10 @@ async def add_message(
                     MessageModel.user_id == user_id,
                     MessageModel.chat_id == chat_id,
                 )
-                .values(active_child_id=new_message.id)
+                .values(
+                    active_child_id=new_message.id,
+                    status=MessageStatus.COMPLETED,
+                )
             )
             await session.execute(stmt)
 
@@ -234,9 +237,16 @@ async def get_one(
             parent_id = current_node.parent_message_id
             thread_msg = Message.model_validate(current_node)
             siblings = children_map.get(parent_id, [])
+            node_index = siblings.index(current_node)
             thread_msg.has_siblings = len(siblings) > 1
             thread_msg.sibling_count = len(siblings)
-            thread_msg.current_sibling_index = siblings.index(current_node) + 1
+            thread_msg.current_sibling_index = node_index + 1
+            thread_msg.next_sibling_id = (
+                siblings[node_index + 1].id if node_index + 1 < len(siblings) else None
+            )
+            thread_msg.previous_sibling_id = (
+                siblings[node_index - 1].id if node_index - 1 >= 0 else None
+            )
             active_thread.append(thread_msg)
 
             if (

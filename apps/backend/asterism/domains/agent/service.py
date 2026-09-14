@@ -3,12 +3,20 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import NotFoundException, UnauthorizedException
 from asterism.db.database import get_async_db_session
-from asterism.domains.settings.cache import settings_cache
+from asterism.domains.settings import service as settings_service
 
 from .models import AgentProfileModel
 from .schemas import AgentProfile, PartialAgentProfile, UserAgents
+
+
+async def _ensure_valid_tools(profile: AgentProfile):
+    app_settings = await settings_service.get_app_settings()
+    if profile.tools:
+        profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
+    return profile
 
 
 async def get_user_agents(
@@ -21,7 +29,9 @@ async def get_user_agents(
 
         agents_dict: dict[uuid.UUID, AgentProfile] = {}
         for r in results:
-            agents_dict[r.id] = AgentProfile.model_validate(r)
+            agents_dict[r.id] = await _ensure_valid_tools(
+                AgentProfile.model_validate(r)
+            )
 
         return UserAgents(agents=agents_dict)
 
@@ -37,7 +47,7 @@ async def get_agent_profile(
             raise NotFoundException(f"Agent with id {agent_id} not found")
         if user_id != result.user_id:
             raise UnauthorizedException()
-        return AgentProfile.model_validate(result)
+        return await _ensure_valid_tools(AgentProfile.model_validate(result))
 
 
 async def delete_agent_profile(
@@ -45,6 +55,7 @@ async def delete_agent_profile(
     agent_id: uuid.UUID,
     session: AsyncSession | None = None,
 ) -> AgentProfile:
+
     async with get_async_db_session(session) as session:
         result = await session.get(AgentProfileModel, agent_id)
         if not result:
@@ -53,7 +64,12 @@ async def delete_agent_profile(
             raise UnauthorizedException()
         await session.delete(result)
         await session.commit()
-        settings_cache.remove_user_setting(user_id)
+        event_bus.emit(
+            NoArgEvent(
+                type=EventType.USER_SETTING_UPDATED,
+                user_id=user_id,
+            )
+        )
         return AgentProfile.model_validate(result)
 
 
@@ -77,12 +93,17 @@ async def upsert_agent_profile(
             result.system_prompt = agent_profile.system_prompt
             result.tools = agent_profile.tools
             await session.commit()
-            return AgentProfile.model_validate(result)
+        else:
+            result = AgentProfileModel(**agent_profile.model_dump())
+            result.user_id = user_id
+            session.add(result)
+            await session.commit()
+            await session.refresh(result)
 
-        new_profile = AgentProfileModel(**agent_profile.model_dump())
-        new_profile.user_id = user_id
-        session.add(new_profile)
-        settings_cache.remove_user_setting(user_id)
-        await session.commit()
-        await session.refresh(new_profile)
-        return AgentProfile.model_validate(new_profile)
+        event_bus.emit(
+            NoArgEvent(
+                type=EventType.USER_SETTING_UPDATED,
+                user_id=user_id,
+            )
+        )
+        return AgentProfile.model_validate(result)

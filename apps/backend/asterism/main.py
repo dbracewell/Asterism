@@ -1,5 +1,6 @@
 import json
 
+import truststore
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -24,6 +25,7 @@ from asterism.domains.settings.settings_router import settings_router
 from asterism.domains.tools.router import tools_router
 from asterism.domains.user.router import user_router
 
+truststore.inject_into_ssl()
 logger = get_logger("Asterism")
 
 

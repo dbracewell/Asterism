@@ -5,6 +5,7 @@ from pydantic import TypeAdapter
 from sqlalchemy import UUID, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from asterism.core.config import default_allowed_tools
 from asterism.db.base_model import Base
 from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
@@ -32,6 +33,12 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         "title",
         String,
         nullable=True,
+    )
+    allowed_tools: Mapped[list[str]] = mapped_column(
+        "allowed_tools",
+        JSONB_COLUMN(TypeAdapter(list[str])),
+        nullable=False,
+        default=default_allowed_tools,
     )
 
     __table_args__ = (Index("idx_chat_id_user", "id", "user_id"),)

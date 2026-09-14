@@ -2,20 +2,28 @@
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import ChatInput from "@/features/chat/components/chat-input";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
-import { connectionStatusMap } from "@/features/chat/types";
+import { connectionStatusMap, StreamingMessage } from "@/features/chat/types";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import { Chat, Message } from "@/lib/client";
 import {
   chatSessionGetOneOptions,
   chatSessionGetOneQueryKey,
+  messageUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { formatPluarl } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownIcon, RotateCwIcon } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  RotateCwIcon,
+} from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 
@@ -61,9 +69,8 @@ export const ChatSession = ({
   const setSession = useActiveChatSession((state) => state.setSession);
   const folderIdRef = React.useRef(folderId);
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
-  const [incomingMessage, setIncomingMessage] = React.useState<Message | null>(
-    null,
-  );
+  const [incomingMessage, setIncomingMessage] =
+    React.useState<StreamingMessage | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const preventAutoScrollRef = React.useRef(false);
   const [isScrollable, setIsScrollable] = React.useState(false);
@@ -91,14 +98,6 @@ export const ChatSession = ({
     },
   });
 
-  const filtered = React.useMemo(() => {
-    return (
-      session?.messages.filter(
-        (m) => m.role !== "tool" && m.tool_calls == null,
-      ) ?? []
-    );
-  }, [session]);
-
   React.useEffect(() => {
     folderIdRef.current = folderId;
   }, [folderId]);
@@ -111,9 +110,11 @@ export const ChatSession = ({
   const { sendJsonMessage, readyState } = useChatWebSocket({
     chatId,
     jwtToken,
+    onStatusChange: (isProcessing) => {
+      setIsProcessing(isProcessing);
+    },
     onStreamStart: (pendingMessage) => {
       preventAutoScrollRef.current = false;
-      setIsProcessing(true);
       setIncomingMessage(pendingMessage);
       queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev || prev.messages.length === 0) return prev;
@@ -139,7 +140,6 @@ export const ChatSession = ({
       setIncomingMessage(nextIncomingMessage);
     },
     onStreamComplete: (updatedMessages) => {
-      setIsProcessing(false);
       setIncomingMessage(null);
       if (!updatedMessages.length) return;
       queryClient.invalidateQueries({ queryKey });
@@ -181,7 +181,7 @@ export const ChatSession = ({
           ],
         };
       });
-      sendJsonMessage({ message: prompt });
+      sendJsonMessage({ type: "chat", message: prompt });
     },
     [sendJsonMessage, queryClient, queryKey],
   );
@@ -210,11 +210,15 @@ export const ChatSession = ({
     );
   }
 
+  if (session == null) {
+    return <Spinner />;
+  }
+
   return (
     <>
       <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
         <div
-          className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col gap-3 overflow-y-auto p-2 pt-20"
+          className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col overflow-y-auto p-2 pt-14"
           style={{ overflowAnchor: "auto" }}
           onScroll={(e) => {
             const scrollPosition =
@@ -230,18 +234,26 @@ export const ChatSession = ({
             }
           }}
         >
-          {filtered.map((message) => (
+          {session.messages.map((message) => (
             <MessageItem
+              chatId={chatId}
               key={message.id}
               message={message}
+              isProcessing={isProcessing}
               sendJsonMessage={sendJsonMessage}
             />
           ))}
           {!incomingMessage &&
-            filtered.length > 0 &&
-            filtered?.[0].status === "pending" && <Loading />}
+            session.messages.length > 0 &&
+            session.messages[0].status === "pending" && <Loading />}
           {incomingMessage && (
-            <MessageItem message={incomingMessage} defaultShowThinking />
+            <MessageItem
+              chatId={chatId}
+              message={incomingMessage}
+              isProcessing={isProcessing}
+              defaultShowThinking
+              sendJsonMessage={sendJsonMessage}
+            />
           )}
           <div
             ref={messageListRef}
@@ -289,13 +301,17 @@ export const ChatSession = ({
 
 const MessageItem = React.memo(
   ({
+    chatId,
+    isProcessing,
     message,
     defaultShowThinking = false,
     sendJsonMessage,
   }: {
-    message: Message;
+    chatId: string;
+    isProcessing: boolean;
+    message: StreamingMessage;
     defaultShowThinking?: boolean;
-    sendJsonMessage?: SendJsonMessage;
+    sendJsonMessage: SendJsonMessage;
   }) => {
     const [showThinking, setShowThinking] = React.useState(defaultShowThinking);
     const thinkingRef = React.useRef<HTMLParagraphElement>(null);
@@ -305,8 +321,24 @@ const MessageItem = React.memo(
       }
     }, [message.thinking, defaultShowThinking]);
 
+    const nodeIndex = message.current_sibling_index ?? 1;
+    const nodeCount = message.sibling_count ?? 1;
+    const prevSiblingId = message.previous_sibling_id ?? null;
+    const nextSiblingId = message.next_sibling_id ?? null;
+
+    const updateMessage = useMutation({
+      ...messageUpdateMutation({
+        client,
+      }),
+    });
+
     return (
-      <div className="flex flex-col gap-1">
+      <div
+        className={cn(
+          "mb-5 flex flex-col gap-1",
+          !!message.tool_calls && "mb-0!",
+        )}
+      >
         <details
           open={showThinking}
           onClick={(e) => {
@@ -318,7 +350,12 @@ const MessageItem = React.memo(
             !message.thinking && "hidden",
           )}
         >
-          <summary>Thinking</summary>
+          <summary>
+            Thinking{" "}
+            {message.tool_calls && (
+              <>({formatPluarl(message.tool_calls.length, "tool call")})</>
+            )}
+          </summary>
           <p
             ref={thinkingRef}
             className="max-h-50 overflow-y-auto whitespace-pre-wrap"
@@ -326,10 +363,33 @@ const MessageItem = React.memo(
           >
             {message.thinking ?? ""}
           </p>
+          {message.tool_calls && message.tool_calls.length > 0 && (
+            <h4 className="mt-0.5 font-bold">Tools</h4>
+          )}
+          {message.tool_calls?.map((tc) => (
+            <div key={tc.id}>
+              • {tc.function.name}{" "}
+              {tc.function.arguments !== "{}" && tc.function.arguments}
+            </div>
+          ))}
         </details>
-        {message.role === "assistant" && message.status === "pending" && (
-          <Loading />
-        )}
+        {message.needsPermission &&
+          message.needsPermission.map((t) => (
+            <div key={t.id}>
+              {t.name} {t.arguments}{" "}
+              <Button
+                onClick={() =>
+                  sendJsonMessage({
+                    type: "tool_approval",
+                    tool_id: t.id,
+                    approved: true,
+                  })
+                }
+              >
+                Approve
+              </Button>
+            </div>
+          ))}
         <MarkdownViewer
           content={message.content}
           className={cn(
@@ -338,32 +398,78 @@ const MessageItem = React.memo(
               "bg-accent text-accent-foreground ml-auto w-fit rounded-xl px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
           )}
         />
-        {message.status === "completed" && (
+        {message.role === "assistant" && message.status === "pending" && (
+          <Loading />
+        )}
+        {message.tool_calls == null && message.status === "completed" && (
           <div
             className={cn(
-              "text-muted-foreground flex w-fit items-center text-xs",
+              "text-muted-foreground flex w-fit items-center gap-1 text-xs",
               message.role === "user" && "ml-auto",
             )}
           >
             {message.role !== "user" && (
-              <>
-                <span className="mr-1">
-                  {new Date(message.created_at * 1000).toLocaleString()}
-                </span>
+              <span className="mr-1">
+                {new Date(message.created_at * 1000).toLocaleString()}
+              </span>
+            )}
+
+            {nodeCount > 1 && (
+              <div className="flex items-center px-2">
                 <Button
-                  size="icon-sm"
                   variant="ghost"
-                  className="rounded-full"
+                  size="icon-sm"
                   onClick={() => {
-                    sendJsonMessage?.({
-                      command: "regenerate",
-                      message_id: message.id,
+                    updateMessage.mutate({
+                      path: {
+                        chat_id: chatId,
+                        message_id: message.parent_message_id!,
+                      },
+                      body: {
+                        active_child_id: prevSiblingId,
+                      },
                     });
                   }}
+                  disabled={prevSiblingId == null || isProcessing}
                 >
-                  <RotateCwIcon />
+                  <ChevronLeftIcon />
                 </Button>
-              </>
+                {nodeIndex} / {nodeCount}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    updateMessage.mutate({
+                      path: {
+                        chat_id: chatId,
+                        message_id: message.parent_message_id!,
+                      },
+                      body: {
+                        active_child_id: nextSiblingId,
+                      },
+                    });
+                  }}
+                  disabled={nextSiblingId == null || isProcessing}
+                >
+                  <ChevronRightIcon />
+                </Button>
+              </div>
+            )}
+
+            {message.role !== "user" && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className="rounded-full"
+                onClick={() => {
+                  sendJsonMessage?.({
+                    type: "regenerate",
+                    parent_message_id: message.parent_message_id,
+                  });
+                }}
+              >
+                <RotateCwIcon />
+              </Button>
             )}
             <CopyButton
               text={message.content}

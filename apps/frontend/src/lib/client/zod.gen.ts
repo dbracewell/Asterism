@@ -51,7 +51,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid()
+    id: z.uuid().optional().default('4a0a8a33-ffac-4158-aa14-60134cebaba3')
 });
 
 /**
@@ -60,8 +60,9 @@ export const zAgentProfile = z.object({
 export const zChatInfo = z.object({
     id: z.uuid(),
     user_id: z.string(),
-    created_at: z.iso.datetime({ local: true }),
-    updated_at: z.iso.datetime({ local: true }),
+    created_at: z.int(),
+    updated_at: z.int(),
+    allowed_tools: z.array(z.string()).optional(),
     title: z.string().nullish(),
     folder_id: z.uuid().nullish()
 });
@@ -241,7 +242,8 @@ export const zApplicationSettings = z.object({
     llm_providers: z.array(zProvider).optional(),
     draft_model_id: z.uuid().nullish(),
     web_search_provider: zComponentProviderParameters.nullish(),
-    image_search_provider: zComponentProviderParameters.nullish()
+    image_search_provider: zComponentProviderParameters.nullish(),
+    active_tools: z.array(z.string())
 });
 
 /**
@@ -266,7 +268,8 @@ export const zToolCall = z.object({
  */
 export const zToolInfo = z.object({
     name: z.string(),
-    description: z.string()
+    description: z.string(),
+    component_type: zComponentType.nullish()
 });
 
 /**
@@ -299,11 +302,14 @@ export const zMessage = z.object({
     status: zMessageStatus,
     created_at: z.int(),
     model_id: z.uuid().nullish(),
-    tool_results: z.array(zToolResult).nullish(),
+    tool_call_results: z.array(zToolResult).nullish(),
     active_child_id: z.uuid().nullish(),
     has_siblings: z.boolean().optional().default(false),
     sibling_count: z.int().optional().default(0),
-    current_sibling_index: z.int().optional().default(-1)
+    current_sibling_index: z.int().optional().default(-1),
+    parent_message_id: z.uuid().nullish(),
+    next_sibling_id: z.uuid().nullish(),
+    previous_sibling_id: z.uuid().nullish()
 });
 
 /**
@@ -312,6 +318,17 @@ export const zMessage = z.object({
 export const zChat = z.object({
     info: zChatInfo,
     messages: z.array(zMessage)
+});
+
+/**
+ * UpdateMessageRequest
+ */
+export const zUpdateMessageRequest = z.object({
+    content: z.string().nullish(),
+    thinking: z.string().nullish(),
+    active_child_id: z.uuid().nullish(),
+    status: zMessageStatus.nullish(),
+    tool_results: z.array(zToolResult).nullish()
 });
 
 /**
@@ -389,6 +406,18 @@ export const zChatSessionUpdatePath = z.object({
  * Successful Response
  */
 export const zChatSessionUpdateResponse = zChat;
+
+export const zMessageUpdateBody = zUpdateMessageRequest;
+
+export const zMessageUpdatePath = z.object({
+    chat_id: z.uuid(),
+    message_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zMessageUpdateResponse = zMessage;
 
 /**
  * Successful Response
@@ -500,7 +529,12 @@ export const zUserDeleteResponse = z.boolean();
 /**
  * Successful Response
  */
-export const zToolsGetManyResponse = zToolInfoList;
+export const zToolsGetActiveResponse = zToolInfoList;
+
+/**
+ * Successful Response
+ */
+export const zToolsGetAllResponse = zToolInfoList;
 
 export const zComponentsByTypePath = z.object({
     component_type: zComponentType

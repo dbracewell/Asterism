@@ -4,7 +4,7 @@ import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
 import { ApiClient, type Options } from '../sdk.gen';
-import type { AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, ToolsGetManyData, ToolsGetManyError, ToolsGetManyResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
+import type { AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, MessageUpdateData, MessageUpdateError, MessageUpdateResponse, ToolsGetActiveData, ToolsGetActiveError, ToolsGetActiveResponse, ToolsGetAllData, ToolsGetAllError, ToolsGetAllResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -134,6 +134,23 @@ export const chatSessionUpdateMutation = (options?: Partial<Options<ChatSessionU
     const mutationOptions: UseMutationOptions<ChatSessionUpdateResponse, ChatSessionUpdateError, Options<ChatSessionUpdateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ApiClient.__registry.get().chatSessionUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Update Message
+ */
+export const messageUpdateMutation = (options?: Partial<Options<MessageUpdateData>>): UseMutationOptions<MessageUpdateResponse, MessageUpdateError, Options<MessageUpdateData>> => {
+    const mutationOptions: UseMutationOptions<MessageUpdateResponse, MessageUpdateError, Options<MessageUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().messageUpdate({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -386,14 +403,14 @@ export const userDeleteMutation = (options?: Partial<Options<UserDeleteData>>): 
     return mutationOptions;
 };
 
-export const toolsGetManyQueryKey = (options?: Options<ToolsGetManyData>) => createQueryKey('toolsGetMany', options);
+export const toolsGetActiveQueryKey = (options?: Options<ToolsGetActiveData>) => createQueryKey('toolsGetActive', options);
 
 /**
- * Get all tools
+ * Get all active tools
  */
-export const toolsGetManyOptions = (options?: Options<ToolsGetManyData>) => queryOptions<ToolsGetManyResponse, ToolsGetManyError, ToolsGetManyResponse, ReturnType<typeof toolsGetManyQueryKey>>({
+export const toolsGetActiveOptions = (options?: Options<ToolsGetActiveData>) => queryOptions<ToolsGetActiveResponse, ToolsGetActiveError, ToolsGetActiveResponse, ReturnType<typeof toolsGetActiveQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await ApiClient.__registry.get().toolsGetMany({
+        const { data } = await ApiClient.__registry.get().toolsGetActive({
             ...options,
             ...queryKey[0],
             signal,
@@ -401,7 +418,25 @@ export const toolsGetManyOptions = (options?: Options<ToolsGetManyData>) => quer
         });
         return data;
     },
-    queryKey: toolsGetManyQueryKey(options)
+    queryKey: toolsGetActiveQueryKey(options)
+});
+
+export const toolsGetAllQueryKey = (options?: Options<ToolsGetAllData>) => createQueryKey('toolsGetAll', options);
+
+/**
+ * Get all  tools
+ */
+export const toolsGetAllOptions = (options?: Options<ToolsGetAllData>) => queryOptions<ToolsGetAllResponse, ToolsGetAllError, ToolsGetAllResponse, ReturnType<typeof toolsGetAllQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().toolsGetAll({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: toolsGetAllQueryKey(options)
 });
 
 export const componentsByTypeQueryKey = (options: Options<ComponentsByTypeData>) => createQueryKey('componentsByType', options);

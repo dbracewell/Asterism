@@ -4,6 +4,7 @@ from typing import AsyncGenerator
 
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
@@ -24,9 +25,9 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 class DatabaseSessionManager:
     def __init__(self) -> None:
-        self._engine = None
-        self._session_maker = None
-        self._lock = threading.Lock()
+        self._engine: AsyncEngine | None = None
+        self._session_maker: async_sessionmaker[AsyncSession] | None = None
+        self._lock: threading.Lock = threading.Lock()
 
     def init(self):
         self._lock.acquire()
@@ -36,7 +37,11 @@ class DatabaseSessionManager:
 
             if self._engine is None:
                 self._engine = create_async_engine(config.db_url)
-                event.listen(self._engine.sync_engine, "connect", set_sqlite_pragma)
+                event.listen(
+                    self._engine.sync_engine,
+                    "connect",
+                    set_sqlite_pragma,
+                )
             if self._session_maker is None:
                 self._session_maker = async_sessionmaker(
                     expire_on_commit=False,
@@ -73,7 +78,7 @@ class DatabaseSessionManager:
                 raise
 
     @asynccontextmanager
-    async def session(self):
+    async def session(self) -> AsyncGenerator[AsyncSession, None]:
         if self._session_maker is None:
             raise Exception("DatabaseSessionManager is not initialized")
 

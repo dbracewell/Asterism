@@ -36,7 +36,7 @@ export type AgentProfile = {
     /**
      * Id
      */
-    id: string;
+    id?: string;
 };
 
 /**
@@ -53,6 +53,10 @@ export type ApplicationSettings = {
     draft_model_id?: string | null;
     web_search_provider?: ComponentProviderParameters | null;
     image_search_provider?: ComponentProviderParameters | null;
+    /**
+     * Active Tools
+     */
+    active_tools: Array<string>;
 };
 
 /**
@@ -201,11 +205,15 @@ export type ChatInfo = {
     /**
      * Created At
      */
-    created_at: string;
+    created_at: number;
     /**
      * Updated At
      */
-    updated_at: string;
+    updated_at: number;
+    /**
+     * Allowed Tools
+     */
+    allowed_tools?: Array<string>;
     /**
      * Title
      */
@@ -467,9 +475,9 @@ export type Message = {
      */
     model_id?: string | null;
     /**
-     * Tool Results
+     * Tool Call Results
      */
-    tool_results?: Array<ToolResult> | null;
+    tool_call_results?: Array<ToolResult> | null;
     /**
      * Active Child Id
      */
@@ -486,6 +494,18 @@ export type Message = {
      * Current Sibling Index
      */
     current_sibling_index?: number;
+    /**
+     * Parent Message Id
+     */
+    parent_message_id?: string | null;
+    /**
+     * Next Sibling Id
+     */
+    next_sibling_id?: string | null;
+    /**
+     * Previous Sibling Id
+     */
+    previous_sibling_id?: string | null;
 };
 
 /**
@@ -620,6 +640,7 @@ export type ToolInfo = {
      * Description
      */
     description: string;
+    component_type?: ComponentType | null;
 };
 
 /**
@@ -649,6 +670,29 @@ export type ToolResult = {
      */
     is_empty: boolean;
     tool_call: ToolCall;
+};
+
+/**
+ * UpdateMessageRequest
+ */
+export type UpdateMessageRequest = {
+    /**
+     * Content
+     */
+    content?: string | null;
+    /**
+     * Thinking
+     */
+    thinking?: string | null;
+    /**
+     * Active Child Id
+     */
+    active_child_id?: string | null;
+    status?: MessageStatus | null;
+    /**
+     * Tool Results
+     */
+    tool_results?: Array<ToolResult> | null;
 };
 
 /**
@@ -899,6 +943,44 @@ export type ChatSessionUpdateResponses = {
 };
 
 export type ChatSessionUpdateResponse = ChatSessionUpdateResponses[keyof ChatSessionUpdateResponses];
+
+export type MessageUpdateData = {
+    body: UpdateMessageRequest;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+        /**
+         * Message Id
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/message/{message_id}';
+};
+
+export type MessageUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type MessageUpdateError = MessageUpdateErrors[keyof MessageUpdateErrors];
+
+export type MessageUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type MessageUpdateResponse = MessageUpdateResponses[keyof MessageUpdateResponses];
 
 export type FolderGetManyData = {
     body?: never;
@@ -1334,30 +1416,55 @@ export type UserDeleteResponses = {
 
 export type UserDeleteResponse = UserDeleteResponses[keyof UserDeleteResponses];
 
-export type ToolsGetManyData = {
+export type ToolsGetActiveData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/tools/';
+    url: '/tools/active';
 };
 
-export type ToolsGetManyErrors = {
+export type ToolsGetActiveErrors = {
     /**
      * Not found
      */
     404: ErrorDetail;
 };
 
-export type ToolsGetManyError = ToolsGetManyErrors[keyof ToolsGetManyErrors];
+export type ToolsGetActiveError = ToolsGetActiveErrors[keyof ToolsGetActiveErrors];
 
-export type ToolsGetManyResponses = {
+export type ToolsGetActiveResponses = {
     /**
      * Successful Response
      */
     200: ToolInfoList;
 };
 
-export type ToolsGetManyResponse = ToolsGetManyResponses[keyof ToolsGetManyResponses];
+export type ToolsGetActiveResponse = ToolsGetActiveResponses[keyof ToolsGetActiveResponses];
+
+export type ToolsGetAllData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/tools/all';
+};
+
+export type ToolsGetAllErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type ToolsGetAllError = ToolsGetAllErrors[keyof ToolsGetAllErrors];
+
+export type ToolsGetAllResponses = {
+    /**
+     * Successful Response
+     */
+    200: ToolInfoList;
+};
+
+export type ToolsGetAllResponse = ToolsGetAllResponses[keyof ToolsGetAllResponses];
 
 export type ComponentsByTypeData = {
     body?: never;

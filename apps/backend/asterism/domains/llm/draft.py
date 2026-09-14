@@ -1,14 +1,12 @@
 # pip install transformers
 from typing import Unpack
 
-from pydantic import BaseModel
-
 import asterism.domains.settings.service as settings_service
-from asterism.common.concurrency import AsyncAtomic, Atomic
+from asterism.common.concurrency import Atomic
 from asterism.core.events import Event, EventType, event_bus
 
 from .client import LLMClient
-from .schemas import ChatCompletionParams, LLMMessage
+from .schemas import ChatCompletionParams, LLMClientProtocol, LLMMessage
 
 
 class NoModelDefinedException(Exception):
@@ -18,50 +16,32 @@ class NoModelDefinedException(Exception):
 
 class DraftModel:
     def __init__(self):
-        self.llm: AsyncAtomic[LLMClient | None] = AsyncAtomic(None)
+        self._llm_client: LLMClientProtocol | None = None
 
-    async def get_model(self) -> LLMClient:
+    async def get_model(self) -> LLMClientProtocol:
+        if self._llm_client is not None:
+            return self._llm_client
 
-        async with self.llm as (get, set):
-            client = get()
-            if client:
-                return client
+        draft_model = await settings_service.get_draft_model()
+        client = LLMClient(
+            api_key=draft_model.provider.api_key,
+            base_url=draft_model.provider.base_url,
+            model_name=draft_model.name,
+        )
+        self._llm_client = client
+        return client
 
-            draft_model = await settings_service.get_draft_model()
-            client = LLMClient(
-                api_key=draft_model.provider.api_key,
-                base_url=draft_model.provider.base_url,
-                model_name=draft_model.name,
-            )
-            set(client)
-
-            return client
-
-    async def invoke[T: BaseModel](
+    async def invoke(
         self,
         messages: list[LLMMessage],
         **kwargs: Unpack[ChatCompletionParams],
     ) -> str:
         llm = await self.get_model()
-        event = await llm.chat_to_completion(
+        event = await llm.generate(
             messages=messages,
             **kwargs,
         )
         return event.content or ""
-
-    async def label_chat(self, user_prompt: str) -> str:
-        content = await self.invoke(
-            messages=[
-                LLMMessage.user(
-                    content=f"""You are a title generation assistant. Generate a short, descriptive chat title (3 to 6 words) based on the user's text. Output strictly the title itself with no quotes, no prefixes, and no trailing punctuation. Do not repeat the user's text and do not answer the user's questions or requests. Only generate a generic title that labels the intent of the user.
-                    
-                    User Prompt: {user_prompt}""",  # noqa: E501
-                ),
-            ],
-            max_tokens=100,
-            thinking_budget_tokens=20,
-        )
-        return content.strip()
 
 
 _draft_model: Atomic[DraftModel | None] = Atomic(None)
@@ -71,7 +51,7 @@ def get_draft_model() -> DraftModel:
     global _draft_model
     with _draft_model as (get, set):
         model = get()
-        if model:
+        if model is not None:
             return model
 
         new_model = DraftModel()

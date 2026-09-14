@@ -10,6 +10,7 @@ import z from "zod";
 
 type ChatSessionPageProps = {
   params: Promise<{ chatId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export default async function ChatSessionPage(props: ChatSessionPageProps) {

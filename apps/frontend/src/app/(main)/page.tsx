@@ -1,4 +1,5 @@
 "use client";
+import { AnimatedBorder } from "@/components/animated-border";
 import Constellation from "@/components/logo";
 import { useUser } from "@/features/auth/components/user-context";
 import ChatInput from "@/features/chat/components/chat-input";
@@ -19,17 +20,19 @@ export default function AppPage() {
       <h1 className="z-1 text-4xl font-bold">
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
-      <ChatInput
-        placeholder="Where will your curiosity lead you today?"
-        onSubmit={({ prompt }) => {
-          createChatSession({
-            body: {
-              folder_id: searchParams.get("folder_id"),
-              user_prompt: prompt,
-            },
-          });
-        }}
-      />
+      <AnimatedBorder>
+        <ChatInput
+          placeholder="Where will your curiosity lead you today?"
+          onSubmit={({ prompt }) => {
+            createChatSession({
+              body: {
+                folder_id: searchParams.get("folder_id"),
+                user_prompt: prompt,
+              },
+            });
+          }}
+        />
+      </AnimatedBorder>
     </div>
   );
 }

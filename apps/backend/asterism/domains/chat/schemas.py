@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import uuid
 from enum import StrEnum, auto
 
@@ -32,11 +31,14 @@ class Message(LLMMessage):
     status: MessageStatus
     created_at: int
     model_id: uuid.UUID | None = None
-    tool_results: list[ToolResult] | None = None
+    tool_call_results: list[ToolResult] | None = None
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0
     current_sibling_index: int = -1
+    parent_message_id: uuid.UUID | None = None
+    next_sibling_id: uuid.UUID | None = None
+    previous_sibling_id: uuid.UUID | None = None
 
 
 class MessageList(BaseModel):
@@ -56,8 +58,9 @@ class ChatInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     user_id: str
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: int
+    updated_at: int
+    allowed_tools: list[str] = Field(default_factory=list)
     title: str | None = Field(default=None)
     folder_id: uuid.UUID | None = Field(default=None)
 

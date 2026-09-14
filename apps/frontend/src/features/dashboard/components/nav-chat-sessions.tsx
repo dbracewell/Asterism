@@ -60,7 +60,11 @@ export const NavChatSessions = ({
   const router = useRouter();
 
   if (error) {
-    throw Error(error.detail);
+    if ("detail" in error) {
+      throw Error(error.detail);
+    } else {
+      throw Error(JSON.stringify(error));
+    }
   }
 
   if (isPending || data == null) {

@@ -127,7 +127,7 @@ const AgentCard = ({
                 if (await confirm()) {
                   deleteAgent.mutate({
                     path: {
-                      agent_id: agent.id,
+                      agent_id: agent.id!,
                     },
                   });
                 }

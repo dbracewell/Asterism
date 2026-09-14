@@ -9,7 +9,7 @@ from asterism.db.database import db_session_manager
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.tools.registry import tool_registry
 
-from .events import Event, EventType, event_bus
+from .events import EventType, NoArgEvent, event_bus
 
 logger = get_logger("ASTERISM")
 
@@ -27,7 +27,8 @@ async def init_system() -> None:
             "event_bus.on",
         ),
     )
-    logger.info(f"{len(tool_registry.tools().items)} tools available.")
+    tools = await tool_registry.active_tools()
+    logger.info(f"{len(tools.items)} tools available.")
     logger.info("Tools and components loaded.")
 
 
@@ -36,6 +37,6 @@ async def lifespan(app: FastAPI):
     logger.info("Asterism backend starting up...")
     await init_system()
     yield
-    event_bus.emit(Event(type=EventType.SYSTEM_STOP))
+    event_bus.emit(NoArgEvent(type=EventType.SYSTEM_STOP))
     await db_session_manager.close()
     logger.info("Asterism backend shutting up...")

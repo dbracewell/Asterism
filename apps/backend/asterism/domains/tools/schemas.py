@@ -3,6 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from asterism.domains.components.schemas import ComponentType
+
 
 class SearchTimeRange(StrEnum):
     ALL = "all"
@@ -38,6 +40,7 @@ class ToolInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     name: str
     description: str
+    component_type: ComponentType | None = None
 
 
 class ToolInfoList(BaseModel):

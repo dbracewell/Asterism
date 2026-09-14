@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, ToolsGetManyData, ToolsGetManyErrors, ToolsGetManyResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
-import { zAgentsDeleteAgentPath, zAgentsDeleteAgentResponse, zAgentsGetUserAgentsResponse, zAgentsUpsertAgentProfileBody, zAgentsUpsertAgentProfileResponse, zAppSettingDeletePath, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zComponentsByTypePath, zComponentsByTypeResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zToolsGetManyResponse, zUserCreateUserBody, zUserCreateUserResponse, zUserDeletePath, zUserDeleteResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
+import type { AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import { zAgentsDeleteAgentPath, zAgentsDeleteAgentResponse, zAgentsGetUserAgentsResponse, zAgentsUpsertAgentProfileBody, zAgentsUpsertAgentProfileResponse, zAppSettingDeletePath, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zComponentsByTypePath, zComponentsByTypeResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zMessageUpdateBody, zMessageUpdatePath, zMessageUpdateResponse, zToolsGetActiveResponse, zToolsGetAllResponse, zUserCreateUserBody, zUserCreateUserResponse, zUserDeletePath, zUserDeleteResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -162,6 +162,27 @@ export class ApiClient extends HeyApiClient {
             responseValidator: async (data) => await zChatSessionUpdateResponse.parseAsync(data),
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/chat/{chat_id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Update Message
+     */
+    public messageUpdate<ThrowOnError extends boolean = false>(options: Options<MessageUpdateData, ThrowOnError>): RequestResult<MessageUpdateResponses, MessageUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).patch<MessageUpdateResponses, MessageUpdateErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: zMessageUpdateBody,
+                path: zMessageUpdatePath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zMessageUpdateResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/chat/{chat_id}/message/{message_id}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -431,18 +452,35 @@ export class ApiClient extends HeyApiClient {
     }
     
     /**
-     * Get all tools
+     * Get all active tools
      */
-    public toolsGetMany<ThrowOnError extends boolean = false>(options?: Options<ToolsGetManyData, ThrowOnError>): RequestResult<ToolsGetManyResponses, ToolsGetManyErrors, ThrowOnError> {
-        return (options?.client ?? this.client).get<ToolsGetManyResponses, ToolsGetManyErrors, ThrowOnError>({
+    public toolsGetActive<ThrowOnError extends boolean = false>(options?: Options<ToolsGetActiveData, ThrowOnError>): RequestResult<ToolsGetActiveResponses, ToolsGetActiveErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<ToolsGetActiveResponses, ToolsGetActiveErrors, ThrowOnError>({
             requestValidator: async (data) => await z.object({
                 body: z.never().optional(),
                 path: z.never().optional(),
                 query: z.never().optional()
             }).parseAsync(data),
-            responseValidator: async (data) => await zToolsGetManyResponse.parseAsync(data),
+            responseValidator: async (data) => await zToolsGetActiveResponse.parseAsync(data),
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/tools/',
+            url: '/tools/active',
+            ...options
+        });
+    }
+    
+    /**
+     * Get all  tools
+     */
+    public toolsGetAll<ThrowOnError extends boolean = false>(options?: Options<ToolsGetAllData, ThrowOnError>): RequestResult<ToolsGetAllResponses, ToolsGetAllErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<ToolsGetAllResponses, ToolsGetAllErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zToolsGetAllResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/tools/all',
             ...options
         });
     }

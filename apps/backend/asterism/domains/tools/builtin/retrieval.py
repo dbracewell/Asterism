@@ -103,19 +103,18 @@ Think step-by-step, but you MUST output the final summary in the requested JSON 
 
     async def _generate(self, prompt: str) -> SummarizationResult | Exception:
         try:
-            summary = await self.ctx.client.generate(
-                prompt,
+            last_event = await self.ctx.client.generate(
+                messages=[LLMMessage.user(content=prompt)],
                 response_model=SummarizationResult,
                 reasoning_effort="low",
                 max_tokens=3500,
             )
-
-            if isinstance(summary, SummarizationResult):
-                return summary
-            elif isinstance(summary, str):
-                return SummarizationResult(summary=summary, relevance=50)
-            else:
+            if last_event.exception:
                 return Exception("Failed to generate summary")
+            if last_event.parsed:
+                return last_event.parsed
+            else:
+                return SummarizationResult(summary=last_event.content, relevance=50)
         except Exception as e:
             return e
 

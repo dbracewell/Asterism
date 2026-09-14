@@ -19,9 +19,21 @@ export const ToolResultSchema = z.object({
   tool_call: ToolCallSchema,
 });
 
-const AgentToolCompleteEvent = z.object({
-  type: z.literal("tool_complete"),
-  tool_results: z.array(ToolResultSchema),
+const AgentToolCallEvent = z.object({
+  type: z.literal("tool_call"),
+  tool_calls: z.array(ToolCallSchema),
+});
+
+const AgentToolPermissionRequest = z.object({
+  type: z.literal("tool_permission_request"),
+  id: z.string(),
+  name: z.string(),
+  arguments: z.string(),
+});
+
+const AgentToolUpdate = z.object({
+  type: z.literal("tool_update"),
+  id: z.string(),
 });
 
 const AgentCompleteEvent = z.object({
@@ -29,12 +41,8 @@ const AgentCompleteEvent = z.object({
   last_messages: zMessage.array(),
 });
 
-const AgentStartEvent = z.object({
-  type: z.literal("start"),
-});
-
-const AgentHeartBeat = z.object({
-  type: z.literal("HEARTBEAT"),
+const GenericAgentEvent = z.object({
+  type: z.union([z.literal("start")]),
 });
 
 const AgentRegenerateEvent = z.object({
@@ -54,11 +62,12 @@ const AgentDeltaEvent = z.object({
 });
 
 export const AgentEventSchema = z.discriminatedUnion("type", [
-  AgentStartEvent,
-  AgentHeartBeat,
+  GenericAgentEvent,
+  AgentToolCallEvent,
   AgentRegenerateEvent,
   AgentCompleteEvent,
   AgentErrorEvent,
   AgentDeltaEvent,
-  AgentToolCompleteEvent,
+  AgentToolUpdate,
+  AgentToolPermissionRequest,
 ]);

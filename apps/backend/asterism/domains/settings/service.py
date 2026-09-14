@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 import asterism.domains.agent.service as agent_service
 from asterism.common.log import get_logger
-from asterism.core.events import Event, EventType, event_bus
+from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import NotFoundException
 from asterism.db.database import get_async_db_session
 
@@ -176,6 +176,9 @@ async def get_app_settings(
             result = await session.scalars(stmt)
             full: dict[str, Any] = {row.key: row.value for row in result.all()}
 
+            if "active_tools" not in full:
+                full["active_tools"] = []
+
             new_setting = ApplicationSettings.model_validate(full)
             providers = await get_all_providers(session)
             new_setting.llm_providers = [Provider.model_validate(p) for p in providers]
@@ -230,7 +233,7 @@ async def upsert_app_setting(
             settings_cache.clear_user_settings()
 
             if draft_model_updated:
-                event_bus.emit(Event(type=EventType.DRAFT_MODEL_UPDATED))
+                event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
 
             return Setting(key=key, value=value)
 
@@ -296,7 +299,7 @@ async def bulk_update_app_setting(
 
     if draft_model_updated:
         """Send a signal that the draft model has been updated"""
-        event_bus.emit(Event(type=EventType.DRAFT_MODEL_UPDATED))
+        event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
 
     return app_settings
 

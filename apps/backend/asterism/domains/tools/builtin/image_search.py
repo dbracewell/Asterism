@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
+from asterism.common.concurrency import safe_async_call
 from asterism.common.log import get_logger
 from asterism.domains.components.builtin.base_search import SearchResult
 from asterism.domains.components.builtin.image_search import ImageSearchComponent
@@ -19,6 +20,7 @@ logger = get_logger("IMAGE_SEARCH")
 
 @tool_registry.tool(
     description="Searches the web for images related to a given query",
+    component_type=ComponentType.ImageSearch,
 )
 async def image_search(
     ctx: ToolContext[SearchArgs],
@@ -52,11 +54,12 @@ async def image_search(
             f"provider={provider.name} query={ctx.args.query} "
             f"results in {len(search_results)} results"
         )
-
-        tasks = [_gather_images(sr) for sr in search_results]
+        tasks = [safe_async_call(_gather_images(sr)) for sr in search_results]
         results = await asyncio.gather(*tasks)
         return_dict = {}
         for rl in results:
+            if isinstance(rl, Exception):
+                continue
             for r in rl:
                 return_dict[r[0]] = r[1]
 
@@ -76,7 +79,7 @@ async def image_search(
 async def _gather_images(
     search_result: SearchResult,
 ) -> list[tuple[str, str]]:
-    html = await fetch_page(search_result.url)
+    html = await fetch_page(search_result.url, force_playwright=True)
     if not html:
         return []
 

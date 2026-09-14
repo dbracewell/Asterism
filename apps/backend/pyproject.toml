@@ -26,6 +26,7 @@ dependencies = [
   "sqlalchemy[asyncio]>=2.0.50",
   "torch>=2.13.0",
   "transformers>=5.14.1",
+  "truststore>=0.10.4",
   "uvicorn[standard]>=0.48.0",
   "websocket>=0.2.1",
 ]
@@ -37,6 +38,7 @@ dev = [
   "pytest-asyncio>=1.1.0",
   "httpx>=0.28.0",
   "httpx2>=2.3.0",
+  "basedpyright>=1.40.1",
 ]
 
 [build-system]
@@ -59,9 +61,7 @@ fixable = ["ALL"]
 reportPrivateImportUsage = "none"
 enableTypeIgnoreComments = true
 include = ["asterism/*"]
-stubPath = "asterism/*"
-#typeCheckingMode = "basic"
-
+typeCheckingMode = "basic"
 reportReturnType = "warning"
 reportArgumentType = "warning"
 reportOperatorIssue = "warning"

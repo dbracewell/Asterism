@@ -15,6 +15,7 @@ from pydantic import BaseModel
 import asterism.domains.settings.service as settings_service
 from asterism.common.retries import async_retry
 from asterism.core.schemas import AuthedUser
+from asterism.domains.components.schemas import ComponentType
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
 from asterism.domains.settings.schemas import ApplicationSettings
 from asterism.domains.tools.schemas import ToolInfo, ToolInfoList
@@ -81,16 +82,35 @@ class LLMTool:
     schema: ChatCompletionFunctionToolParam
     arg_validator: Type[BaseModel]
     function: Callable[[ToolContext[BaseModel]], Any]
+    component_type: ComponentType | None = None
 
 
 class ToolRegistry:
     def __init__(self):
         self.registry: dict[str, LLMTool] = {}
 
+    async def active_tools(self) -> ToolInfoList:
+        app_settings = await settings_service.get_app_settings()
+        return ToolInfoList(
+            items=[
+                ToolInfo(
+                    name=t.name,
+                    description=t.description,
+                    component_type=t.component_type,
+                )
+                for t in self.registry.values()
+                if t.name in app_settings.active_tools
+            ]
+        )
+
     def tools(self) -> ToolInfoList:
         return ToolInfoList(
             items=[
-                ToolInfo(name=t.name, description=t.description)
+                ToolInfo(
+                    name=t.name,
+                    description=t.description,
+                    component_type=t.component_type,
+                )
                 for t in self.registry.values()
             ]
         )
@@ -172,6 +192,7 @@ class ToolRegistry:
         self,
         name: str | None = None,
         description: str | None = None,
+        component_type: ComponentType | None = None,
     ) -> Callable[..., Callable[[ToolContext[BaseModel]], Any]]:
         def to_json_schema(
             func: Callable[[ToolContext[BaseModel]], Any],
@@ -212,6 +233,7 @@ class ToolRegistry:
                 is_async=is_async,
                 schema=schema,
                 function=func,
+                component_type=component_type,
             )
             return wrapper
 

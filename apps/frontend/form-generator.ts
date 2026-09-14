@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { agentProfile } from "@/features/settings/schemas";
 import * as fs from "fs";

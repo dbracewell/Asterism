@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HelpIcon } from "@/components/help-icon";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldError,
@@ -24,33 +22,34 @@ import {
   ComponentResponse,
   ComponentType,
 } from "@/lib/client";
-import {
-  appSettingDeleteMutation,
-  appSettingsBulkUpdateMutation,
-  componentsByTypeOptions,
-} from "@/lib/client/@tanstack/react-query.gen";
+import { componentsByTypeOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { LoaderCircleIcon, SaveIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import z from "zod";
 
 type ComponentSettingsProps = {
   defaultValue?: ComponentProviderParameters | null;
   component_type: ComponentType;
   settings_key: string;
-  title: string;
+  className?: string;
+  onUpdate: ({
+    name,
+    parameters,
+  }: {
+    name: string;
+    parameters: ComponentProviderParameters;
+  }) => void;
 };
 
 export const ComponentSettings = ({
   defaultValue,
   component_type,
   settings_key,
-  title,
+  className,
+  onUpdate,
 }: ComponentSettingsProps) => {
   const { data, isLoading } = useQuery({
     ...componentsByTypeOptions({
@@ -61,7 +60,6 @@ export const ComponentSettings = ({
     }),
   });
 
-  const [isActive, setIsActive] = useState(defaultValue != null);
   const [providerName, setProviderName] = useState(defaultValue?.name ?? "");
   const [provider, setProvider] = useState<ComponentResponse | null>(null);
 
@@ -75,12 +73,6 @@ export const ComponentSettings = ({
     }
   }, [providerName, setProvider, data]);
 
-  const deleteSetting = useMutation({
-    ...appSettingDeleteMutation({
-      client: client,
-    }),
-  });
-
   const zSchema = useMemo(() => {
     if (provider) {
       return z.fromJSONSchema(provider.parameters);
@@ -93,29 +85,8 @@ export const ComponentSettings = ({
   }
 
   return (
-    <div className="flex flex-col">
-      <h3 className="bg-accent text-accent-foreground flex items-center gap-2 rounded-t border border-b-0 p-2 text-sm font-bold">
-        <Checkbox
-          checked={isActive}
-          onCheckedChange={(e) => {
-            if (!e) {
-              deleteSetting.mutate({
-                path: {
-                  key: settings_key,
-                },
-              });
-            }
-            setIsActive((prev) => !prev);
-          }}
-        />
-        {title}
-      </h3>
-      <div
-        className={cn(
-          "flex flex-1 flex-col gap-2 overflow-y-auto rounded-b border p-2 py-2 pt-4",
-          !isActive && "hidden",
-        )}
-      >
+    <div className={cn("flex flex-col", className)}>
+      <div className={cn("flex flex-1 flex-col gap-2 overflow-y-auto")}>
         <Label>Select Your Provider</Label>
         <Select value={providerName} onValueChange={setProviderName}>
           <SelectTrigger className="max-w-100 min-w-40 truncate">
@@ -137,6 +108,7 @@ export const ComponentSettings = ({
                 provider={provider}
                 appProvider={defaultValue}
                 settings_key={settings_key}
+                onUpdate={onUpdate}
               />
             </div>
           </>
@@ -151,14 +123,20 @@ const ParameterForm = ({
   appProvider,
   zSchema,
   settings_key,
+  onUpdate,
 }: {
   provider: ComponentResponse;
   appProvider?: ComponentProviderParameters | null;
   zSchema: z.ZodType<unknown, any, z.core.$ZodTypeInternals<any, any>>;
   settings_key: string;
+  onUpdate: ({
+    name,
+    parameters,
+  }: {
+    name: string;
+    parameters: ComponentProviderParameters;
+  }) => void;
 }) => {
-  const router = useRouter();
-
   const form = useForm<z.infer<typeof zSchema>>({
     resolver: zodResolver(zSchema),
     defaultValues: Object.fromEntries(
@@ -185,36 +163,15 @@ const ParameterForm = ({
     );
   }, [appProvider, form, provider]);
 
-  const saveProviders = useMutation({
-    ...appSettingsBulkUpdateMutation({
-      client,
-    }),
-    onSuccess: () => {
-      toast.success("Settings saved");
-      router.refresh();
-    },
-    onError: () => toast.error("Failed to save. Please try again."),
-  });
-
-  const onSubmit = (values: z.infer<typeof zSchema>) => {
-    saveProviders.mutate({
-      body: {
-        values: {
-          [settings_key]: {
-            name: provider.name,
-            parameters: values,
-          },
-        },
-      },
-    });
+  const processChange = () => {
+    const values = zSchema.safeParse(form.getValues());
+    if (values.success) {
+      onUpdate({ name: provider.name, parameters: values.data });
+    }
   };
 
   return (
-    <form
-      id={`form-${settings_key}`}
-      className="flex flex-1 flex-col gap-2"
-      onSubmit={handleSubmit(onSubmit)}
-    >
+    <form id={`form-${settings_key}`} className="flex flex-1 flex-col gap-2">
       {form.formState.isDirty && (
         <h5 className="text-muted-foreground text-xs">* Updated</h5>
       )}
@@ -236,7 +193,13 @@ const ParameterForm = ({
                     )}
                   </FieldLabel>
                   {info["enum"] ? (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={(e) => {
+                        field.onChange(e);
+                        processChange();
+                      }}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -251,6 +214,10 @@ const ParameterForm = ({
                   ) : (
                     <Input
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        processChange();
+                      }}
                       id={name}
                       aria-invalid={fieldState.invalid}
                       required
@@ -264,16 +231,6 @@ const ParameterForm = ({
             />
           ))}
       </FieldGroup>
-      <div className="flex items-center justify-end gap-2">
-        <Button type="submit" disabled={saveProviders.isPending}>
-          {saveProviders.isPending ? (
-            <LoaderCircleIcon className="animate-spin" />
-          ) : (
-            <SaveIcon />
-          )}
-          Save
-        </Button>
-      </div>
     </form>
   );
 };

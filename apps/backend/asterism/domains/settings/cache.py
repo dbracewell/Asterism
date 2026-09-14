@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 from cachetools import TTLCache
 
 from asterism.common.concurrency import AsyncAtomic
+from asterism.common.log import DEFAULT_LOGGER
+from asterism.core.events import Event, EventType, event_bus
+from asterism.core.schemas import NoArgs
 
 from .schemas import ApplicationSettings, UserSettings
 
@@ -34,3 +37,14 @@ class SettingsCache:
 
 
 settings_cache = SettingsCache()
+
+
+@event_bus.on(EventType.USER_SETTING_UPDATED)
+async def on_user_setting_event(event: Event[NoArgs]) -> None:
+    DEFAULT_LOGGER.debug(
+        f"Received USER_SETTING_UPDATED event for user_id={event.user_id}"
+    )
+    if event.user_id:
+        settings_cache.remove_user_setting(user_id=event.user_id)
+    else:
+        settings_cache.clear_user_settings()

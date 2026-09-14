@@ -1,19 +1,28 @@
 from pathlib import Path
 
-from pydantic import computed_field, model_validator
+from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 secrets_dir = Path("/run/secrets")
+
+
+def default_allowed_tools() -> list[str]:
+    return [
+        "get_user_name",
+        "get_current_timestamp",
+        "get_timestamp_at_timezone",
+    ]
 
 
 class Config(BaseSettings):
     system_key: str = ""
     bootstrap_setup_token: str = ""
     max_chars_for_retrieval: int = 50000
-    frontend_url: str = "http://localhost:3000"
+    frontend_url: str = "https://localhost"
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
     db_url: str | None = None
+    default_allowed_tools: list[str] = Field(default_factory=default_allowed_tools)
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,3 +1,4 @@
+import ssl
 from typing import Annotated, Literal, cast
 
 import jwt
@@ -11,12 +12,19 @@ from .schemas import AuthedUser
 
 security = HTTPBearer(auto_error=False)
 
+if config.jwks_url.startswith("https://localhost") or config.jwks_url.startswith(
+    "https://127.0.0.1"
+):
+    ssl_ctx = ssl._create_unverified_context()
+else:
+    ssl_ctx = ssl.create_default_context()
 
 jwks_client = jwt.PyJWKClient(
     config.jwks_url,
     cache_keys=True,
     cache_jwk_set=True,
     lifespan=3600,
+    ssl_context=ssl_ctx,
 )
 
 
@@ -33,9 +41,11 @@ def verify_jwks_token(token: str) -> AuthedUser:
             audience=config.jwt_audience,
             issuer=config.jwt_issuer,
         )
+
         user_id = payload.get("id")
         if not user_id:
             raise UnauthorizedException()
+
         return AuthedUser(
             id=str(user_id),
             email=str(payload.get("email")),

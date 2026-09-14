@@ -1,3 +1,4 @@
+import { Message } from "@/lib/client";
 import { ReadyState } from "react-use-websocket";
 
 export type ConnectionStatus =
@@ -18,4 +19,14 @@ export const connectionStatusMap = {
 export type ScrollState = {
   userInitiatedScroll: boolean;
   preventAutoScroll: boolean;
+};
+
+export type PermissionRequest = {
+  id: string;
+  name: string;
+  arguments: string;
+};
+
+export type StreamingMessage = Message & {
+  needsPermission?: PermissionRequest[];
 };

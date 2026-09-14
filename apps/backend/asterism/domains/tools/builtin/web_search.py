@@ -18,6 +18,7 @@ logger = get_logger("WEB_SEARCH")
         "Searches the web for a given query and returns a summary of "
         "the results with links to the original page."
     ),
+    component_type=ComponentType.WebSearch,
 )
 async def web_search(
     ctx: ToolContext[SearchArgs],

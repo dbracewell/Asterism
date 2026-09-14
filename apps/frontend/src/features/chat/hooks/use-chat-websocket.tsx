@@ -1,4 +1,5 @@
 import { AgentEventSchema } from "@/features/chat/schemas";
+import { StreamingMessage } from "@/features/chat/types";
 import { Message } from "@/lib/client";
 import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
@@ -11,9 +12,10 @@ type UseChatWebSocketProps = {
   onStreamComplete?: (messages: Message[]) => void;
   onStreamError?: (error: string) => void;
   onRegenerate?: (parentId: string) => void;
+  onStatusChange?: (isProcessing: boolean) => void;
 };
 
-const createPendingAssistantMessage = (): Message => ({
+const createPendingAssistantMessage = (): StreamingMessage => ({
   model_id: "",
   thinking: "",
   content: "",
@@ -27,6 +29,7 @@ const createPendingAssistantMessage = (): Message => ({
   has_siblings: false,
   current_sibling_index: 1,
   sibling_count: 1,
+  needsPermission: [],
 });
 
 export const useChatWebSocket = ({
@@ -37,15 +40,18 @@ export const useChatWebSocket = ({
   onStreamComplete,
   onStreamError,
   onRegenerate,
+  onStatusChange,
 }: UseChatWebSocketProps) => {
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const streamingMessageRef = React.useRef<Message | null>(null);
+  const streamingMessageRef = React.useRef<StreamingMessage | null>(null);
   const onStreamStartRef = React.useRef(onStreamStart);
   const onStreamUpdateRef = React.useRef(onStreamUpdate);
   const onStreamCompleteRef = React.useRef(onStreamComplete);
   const onStreamErrorRef = React.useRef(onStreamError);
   const onRegenerateRef = React.useRef(onRegenerate);
+  const onStatusChangeRef = React.useRef(onStatusChange);
+  const statusRef = React.useRef(false);
 
   React.useEffect(() => {
     onStreamStartRef.current = onStreamStart;
@@ -53,12 +59,14 @@ export const useChatWebSocket = ({
     onStreamCompleteRef.current = onStreamComplete;
     onStreamErrorRef.current = onStreamError;
     onRegenerateRef.current = onRegenerate;
+    onStatusChangeRef.current = onStatusChange;
   }, [
     onStreamStart,
     onStreamUpdate,
     onStreamComplete,
     onStreamError,
     onRegenerate,
+    onStatusChange,
   ]);
 
   React.useEffect(() => {
@@ -72,7 +80,7 @@ export const useChatWebSocket = ({
 
   const wsEndpoint = useMemo(() => {
     const backendUrl = new URL(process.env.NEXT_PUBLIC_BACKEND_API_URL!);
-    const wsUrl = new URL(`/chat/stream/${chatId}`, backendUrl);
+    const wsUrl = new URL(`/api/py/chat/stream/${chatId}`, backendUrl);
     wsUrl.protocol = backendUrl.protocol === "https:" ? "wss:" : "ws:";
     wsUrl.searchParams.set("token", jwtToken);
     return wsUrl.toString();
@@ -94,6 +102,12 @@ export const useChatWebSocket = ({
     },
     reconnectAttempts: 10,
     reconnectInterval: 3000,
+    heartbeat: {
+      message: JSON.stringify({ type: "ping" }), // Message sent to the server
+      interval: 30000, // Send every 30 seconds
+      timeout: 10000, // Wait 10 seconds for a response
+      returnMessage: "pong", // What the server returns to verify it's alive
+    },
     onMessage: (event) => {
       let raw_object;
       try {
@@ -102,6 +116,19 @@ export const useChatWebSocket = ({
         console.error(error);
         return;
       }
+
+      if (raw_object["type"] === "pong") {
+        return;
+      }
+
+      if (raw_object["type"] === "status") {
+        if (statusRef.current !== raw_object["is_processing"]) {
+          statusRef.current = raw_object["is_processing"];
+          onStatusChangeRef.current?.(raw_object["is_processing"]);
+        }
+        return;
+      }
+
       const result = AgentEventSchema.safeParse(raw_object);
 
       if (!result.success) {
@@ -128,8 +155,52 @@ export const useChatWebSocket = ({
         scheduleFlush();
       }
 
-      if (msgContent.type === "tool_complete") {
-        console.log(msgContent);
+      if (msgContent.type === "tool_call") {
+        if (streamingMessageRef.current == null) {
+          streamingMessageRef.current = createPendingAssistantMessage();
+        }
+
+        if (streamingMessageRef.current != null) {
+          streamingMessageRef.current = {
+            ...streamingMessageRef.current!,
+            tool_calls: msgContent.tool_calls,
+          };
+          onStreamUpdateRef.current?.(streamingMessageRef.current);
+        }
+      }
+
+      if (msgContent.type === "tool_update") {
+        if (streamingMessageRef.current == null) {
+          streamingMessageRef.current = createPendingAssistantMessage();
+          return;
+        }
+        if (streamingMessageRef.current != null) {
+          streamingMessageRef.current = {
+            ...streamingMessageRef.current!,
+            needsPermission:
+              streamingMessageRef.current.needsPermission?.filter(
+                (t) => t.id !== msgContent.id,
+              ),
+          };
+          onStreamUpdateRef.current?.(streamingMessageRef.current);
+        }
+      }
+
+      if (msgContent.type === "tool_permission_request") {
+        if (streamingMessageRef.current == null) {
+          streamingMessageRef.current = createPendingAssistantMessage();
+        }
+
+        if (streamingMessageRef.current != null) {
+          streamingMessageRef.current = {
+            ...streamingMessageRef.current!,
+            needsPermission: [
+              ...(streamingMessageRef.current.needsPermission ?? []),
+              msgContent,
+            ],
+          };
+          onStreamUpdateRef.current?.(streamingMessageRef.current);
+        }
       }
 
       if (msgContent.type === "delta") {
@@ -141,7 +212,6 @@ export const useChatWebSocket = ({
           ...streamingMessageRef.current!,
           thinking: msgContent.thinking,
           content: msgContent.content,
-          status: !!msgContent.content ? "completed" : "pending",
         };
         onStreamUpdateRef.current?.(streamingMessageRef.current);
       }

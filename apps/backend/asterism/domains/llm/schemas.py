@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import StrEnum, auto
 from typing import (
     Any,
     AsyncGenerator,
@@ -29,9 +29,7 @@ class ChatCompletionParams(TypedDict):
     seed: NotRequired[int]
     stop: NotRequired[str | Sequence[str]]
     extra_body: NotRequired[dict[str, Any]]
-    tool_choice: NotRequired[
-        Literal["required", "auto", "none"] | dict[str, Any]
-    ]
+    tool_choice: NotRequired[Literal["required", "auto", "none"] | dict[str, Any]]
     max_tokens: NotRequired[int]
     modalities: NotRequired[list[Literal["text", "audio"]]]
     audio: NotRequired[dict[str, Any]]
@@ -55,11 +53,11 @@ class DraftModel(BaseModel):
 
 
 class LLMEventType(StrEnum):
-    START = "START"
-    COMPLETE = "COMPLETE"
-    TEXT_DELTA = "TEXT_DELTA"
-    THINKING_DELTA = "THINKING_DELTA"
-    ERROR = "ERROR"
+    START = auto()
+    COMPLETE = auto()
+    TEXT_DELTA = auto()
+    THINKING_DELTA = auto()
+    ERROR = auto()
 
 
 @dataclass(frozen=True)
@@ -68,13 +66,11 @@ class LLMEvent[T: BaseModel]:
     content: str = field(default="")
     thinking: str = field(default="")
     finish_reason: Optional[
-        Literal[
-            "stop", "length", "tool_calls", "content_filter", "function_call"
-        ]
+        Literal["stop", "length", "tool_calls", "content_filter", "function_call"]
     ] = None
     exception: BaseException | None = field(default=None)
     total_tokens: int = field(default=0)
-    parsed: BaseModel | None = field(default=None)
+    parsed: T | None = field(default=None)
     tool_calls: list["ToolCall"] | None = field(default=None)
     tool_result: "ToolResult | None" = field(default=None)
 
@@ -89,9 +85,7 @@ class LLMEvent[T: BaseModel]:
             "finish_reason": self.finish_reason,
             "exception": str(self.exception) if self.exception else None,
             "total_tokens": self.total_tokens,
-            "parsed": self.parsed.model_dump(mode="json")
-            if self.parsed
-            else None,
+            "parsed": self.parsed.model_dump(mode="json") if self.parsed else None,
             "tool_calls": tool_calls if self.tool_calls else None,
         }
 
@@ -198,13 +192,6 @@ class LLMMessage(BaseModel):
 
 
 class LLMClientProtocol(Protocol):
-    def generate(
-        self,
-        prompt: str,
-        response_model: Type[BaseModel] | None = None,
-        **kwargs: Unpack[ChatCompletionParams],
-    ) -> Awaitable[str | BaseModel | Exception | None]: ...
-
     def chat(
         self,
         messages: list[LLMMessage],
@@ -213,7 +200,7 @@ class LLMClientProtocol(Protocol):
         **kwargs: Unpack[ChatCompletionParams],
     ) -> AsyncGenerator[LLMEvent[BaseModel], None]: ...
 
-    def chat_to_completion[T: BaseModel](
+    def generate[T: BaseModel](
         self,
         messages: list[LLMMessage],
         tools: list[str] | None = None,
