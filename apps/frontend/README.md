@@ -53,6 +53,38 @@ pnpm build
 pnpm start
 ```
 
+## Docker builds
+
+The frontend Dockerfile uses `apps/frontend` as its build context and installs
+from the standalone `pnpm-lock.yaml` with `--frozen-lockfile`.
+`docker-pnpm-workspace.yaml` supplies pnpm 11 build-script approvals and pins
+Kysely to 0.28.17: Better Auth 1.6.14 imports migration exports absent in 0.29.
+When updating frontend dependencies, regenerate the standalone lockfile with
+that configuration as `pnpm-workspace.yaml` in an isolated directory (outside
+the root workspace). Review this pin when upgrading Better Auth.
+
+### Container database initialization
+
+The entrypoint runs `migrate-db.mjs` before starting Next.js, using the installed
+Better Auth migration API and the shared `src/lib/auth-options.ts` configuration.
+It creates missing tables and applies pending migrations on every startup without
+resetting users, including when the SQLite file already exists but is empty.
+Migration failures prevent the server from starting.
+
+`BETTER_AUTH_DB_PATH` selects the database; in Docker it defaults to
+`${STORAGE_ROOT:-/storage}/users.db`. Keep that path on a persistent volume and
+back up the database before upgrades. Do not use `reset:db` for container startup:
+that command intentionally deletes data.
+
+Regression checks against a built image:
+
+```bash
+# From repository root
+ docker run --rm --entrypoint node \
+  -v "$PWD/apps/frontend/scripts/test-db-migrations.mjs:/app/scripts/test-db-migrations.mjs:ro" \
+  asterism-frontend-build-check --test scripts/test-db-migrations.mjs
+```
+
 ## Quality commands
 
 From repository root:

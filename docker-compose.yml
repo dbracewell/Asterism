@@ -4,14 +4,12 @@ services:
       context: ./apps/backend
     environment:
       STORAGE_ROOT: /storage
-      FRONTEND_URL: ${PUBLIC_URL:-http://frontend:3000}
-      JWKS_URL: http://frontend:3000/api/auth/jwks
-      BOOTSTRAP_SETUP_TOKEN: ${BOOTSTRAP_SETUP_TOKEN:-}
-      SYSTEM_KEY: ${SYSTEM_KEY:-}
+      FRONTEND_URL: ${PUBLIC_URL:-http://localhost:3000}
+      SYSTEM_KEY: ${SYSTEM_KEY:Set SYSTEM_KEY in your environment}
     volumes:
-      - backend-data:/storage
-    expose:
-      - "8000"
+      - backend:/storage
+    ports:
+      - "127.0.0.1:8000:8000"
     healthcheck:
       test:
         [
@@ -25,23 +23,26 @@ services:
       retries: 5
       start_period: 20s
     restart: unless-stopped
+    networks:
+      - asterism-net
 
   frontend:
     build:
-      context: .
-      dockerfile: apps/frontend/Dockerfile
+      context: ./apps/frontend
       args:
         NEXT_PUBLIC_BACKEND_API_URL: ${PUBLIC_URL:-http://backend:8000}/api/py
     environment:
+      ADMIN_PASSPHRASE: ${ADMIN_PASSPHRASE:?Set ADMIN_PASSPHRASE in your environment}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in your environment}
       BETTER_AUTH_URL: ${PUBLIC_URL:-http://localhost:3000}
       BETTER_AUTH_DB_PATH: /storage/users.db
       NEXT_PUBLIC_BACKEND_API_URL: ${PUBLIC_URL:-http://backend:8000}/api/py
-      SYSTEM_KEY: ${SYSTEM_KEY:-}
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      SYSTEM_KEY: ${SYSTEM_KEY:Set SYSTEM_KEY in your environment}
     volumes:
-      - frontend-data:/storage
-    expose:
-      - "3000"
+      - frontend:/storage
+    ports:
+      - "127.0.0.1:3000:3000"
     healthcheck:
       test:
         [
@@ -55,8 +56,13 @@ services:
       retries: 5
       start_period: 20s
     restart: unless-stopped
+    networks:
+      - asterism-net
 
+
+networks:
+  asterism-net:
 
 volumes:
-  backend-data:
-  frontend-data:
+  backend:
+  frontend:
