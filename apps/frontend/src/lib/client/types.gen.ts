@@ -19,7 +19,7 @@ export type AgentProfile = {
     /**
      * Model Id
      */
-    model_id: string;
+    model_id: string | null;
     /**
      * System Prompt
      */
@@ -556,7 +556,7 @@ export type PartialAgentProfile = {
     /**
      * Model Id
      */
-    model_id: string;
+    model_id: string | null;
     /**
      * System Prompt
      */

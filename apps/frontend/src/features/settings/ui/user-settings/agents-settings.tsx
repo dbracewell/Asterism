@@ -69,6 +69,7 @@ const AgentCard = ({
     onError: () => toast.error("Failed to delete agent"),
   });
 
+
   const { updateSetting, isUpdatingUserSetting } = useUpdateUserSettings();
   const { confirm, Dialog } = useConfirmationDialog({
     title: `Delete ${agent.name}`,
@@ -81,6 +82,7 @@ const AgentCard = ({
       className={cn(
         "bg-card text-card-foreground flex h-40 w-60 flex-col gap-1 overflow-clip rounded-lg border text-sm",
         isDefaultAgent && "border-primary border",
+        agent.model_id == null && "border-destructive bg-destructive/30",
       )}
     >
       <Dialog />
@@ -141,6 +143,9 @@ const AgentCard = ({
       <p className="text-muted-foreground overflow-y-auto p-1 px-2">
         {agent.description}
       </p>
+      {agent.model_id == null && (
+        <p className="my-auto text-center text-white">No Model Defined!</p>
+      )}
     </div>
   );
 };

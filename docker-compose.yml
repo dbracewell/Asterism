@@ -1,0 +1,62 @@
+services:
+  backend:
+    build:
+      context: ./apps/backend
+    environment:
+      STORAGE_ROOT: /storage
+      FRONTEND_URL: ${PUBLIC_URL:-http://frontend:3000}
+      JWKS_URL: http://frontend:3000/api/auth/jwks
+      BOOTSTRAP_SETUP_TOKEN: ${BOOTSTRAP_SETUP_TOKEN:-}
+      SYSTEM_KEY: ${SYSTEM_KEY:-}
+    volumes:
+      - backend-data:/storage
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/openapi.json')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_API_URL: ${PUBLIC_URL:-http://backend:8000}/api/py
+    environment:
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in your environment}
+      BETTER_AUTH_URL: ${PUBLIC_URL:-http://localhost:3000}
+      BETTER_AUTH_DB_PATH: /storage/users.db
+      NEXT_PUBLIC_BACKEND_API_URL: ${PUBLIC_URL:-http://backend:8000}/api/py
+      SYSTEM_KEY: ${SYSTEM_KEY:-}
+    volumes:
+      - frontend-data:/storage
+    expose:
+      - "3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000').then(response => { if (!response.ok) process.exit(1) })",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+
+volumes:
+  backend-data:
+  frontend-data:

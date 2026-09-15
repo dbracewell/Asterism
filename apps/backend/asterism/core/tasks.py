@@ -1,11 +1,13 @@
 import asyncio
+from typing import Any
+
 
 
 class BackgroundTaskManager:
     def __init__(self):
-        self.tasks: set[asyncio.Task] = set()
+        self.tasks: set[asyncio.Task[Any]] = set()
 
-    def spawn(self, coro) -> asyncio.Task:
+    def spawn(self, coro) -> asyncio.Task[Any]:
         """Spawns a task and tracks it for graceful shutdown."""
         task = asyncio.create_task(coro)
         self.tasks.add(task)

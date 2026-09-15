@@ -18,11 +18,23 @@ class Config(BaseSettings):
     system_key: str = ""
     bootstrap_setup_token: str = ""
     max_chars_for_retrieval: int = 50000
-    frontend_url: str = "https://localhost"
+    frontend_url: str = "http://localhost:3000"
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
     db_url: str | None = None
-    default_allowed_tools: list[str] = Field(default_factory=default_allowed_tools)
+    jwt_issuer_override: str | None = Field(
+        default=None,
+        validation_alias="JWT_ISSUER",
+    )
+    jwt_audience_override: str | None = Field(
+        default=None, validation_alias="JWT_AUDIENCE"
+    )
+    jwks_url_override: str | None = Field(
+        default=None, validation_alias="JWKS_URL"
+    )
+    default_allowed_tools: list[str] = Field(
+        default_factory=default_allowed_tools
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -43,20 +55,17 @@ class Config(BaseSettings):
 
         return self
 
-    @computed_field
     @property
     def jwt_issuer(self) -> str:
-        return self.frontend_url
+        return self.jwt_issuer_override or self.frontend_url
 
-    @computed_field
     @property
     def jwt_audience(self) -> str:
-        return self.frontend_url
+        return self.jwt_audience_override or self.frontend_url
 
-    @computed_field
     @property
     def jwks_url(self) -> str:
-        return f"{self.frontend_url}/api/auth/jwks"
+        return self.jwks_url_override or f"{self.frontend_url}/api/auth/jwks"
 
     @computed_field
     @property

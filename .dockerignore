@@ -1,0 +1,17 @@
+.git
+.github
+.idea
+.vscode
+**/.env
+**/node_modules
+**/.next
+**/.venv
+**/.turbo
+**/.pytest_cache
+**/.ruff_cache
+**/__pycache__
+**/coverage
+**/playwright-report
+**/test-results
+apps/frontend/certificates
+.DS_Store

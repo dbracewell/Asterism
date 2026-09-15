@@ -46,12 +46,12 @@ export const zChatCompletionParams = z.object({
 export const zAgentProfile = z.object({
     name: z.string(),
     description: z.string(),
-    model_id: z.uuid(),
+    model_id: z.uuid().nullable(),
     system_prompt: z.string().nullable(),
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('4a0a8a33-ffac-4158-aa14-60134cebaba3')
+    id: z.uuid().optional().default('6c9a4790-c6d1-47c0-b14c-3f95b59c4961')
 });
 
 /**
@@ -216,7 +216,7 @@ export const zNewFolderRequest = z.object({
 export const zPartialAgentProfile = z.object({
     name: z.string(),
     description: z.string(),
-    model_id: z.uuid(),
+    model_id: z.uuid().nullable(),
     system_prompt: z.string().nullable(),
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),

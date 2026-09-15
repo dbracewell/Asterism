@@ -32,7 +32,9 @@ class ChatOrchestrator:
     ):
         self.chat: Chat = chat
         self.agent: Agent = agent
-        self.logger: Logger = get_logger(f"ChatSession({str(self.chat.info.id)})")
+        self.logger: Logger = get_logger(
+            f"ChatSession({str(self.chat.info.id)})"
+        )
         self.is_processing_messages: bool = False
         self.pending_approvals: dict[str, asyncio.Future] = {}
 
@@ -53,9 +55,11 @@ class ChatOrchestrator:
         return self.queue.qsize() > 0 or self.is_processing_messages
 
     async def handle_new_user_message(self, text: str) -> None:
-        parent_message_id = self.chat.messages[-1].id if self.chat.messages else None
+        parent_message_id = (
+            self.chat.messages[-1].id if self.chat.messages else None
+        )
 
-        user_message = await chat_service.add_message(
+        user_message: Message = await chat_service.add_message(
             user_id=self.user_id,
             chat_id=self.chat_id,
             message=NewMessageRequest(
@@ -64,14 +68,14 @@ class ChatOrchestrator:
                 token_count=len(text),
                 parent_message_id=parent_message_id,
                 status=MessageStatus.PENDING,
-                model_id=self.agent.profile.model_id,
+                model_id=self.agent.profile.model_id,  # type:ignore
             ),
         )
         self.chat.messages.append(Message.model_validate(user_message))
         await self.run_agent()
 
     def find_message(self, message_id: str) -> tuple[int, Message]:
-        message_index = index_of(
+        message_index: int = index_of(
             self.chat.messages,
             lambda m: str(m.id) == message_id,
         )
@@ -79,8 +83,10 @@ class ChatOrchestrator:
             raise BadDataException(f"Message not for id {message_id}")
         return message_index, self.chat.messages[message_index]
 
-    async def handle_regenerate_message(self, parent_message_index: int) -> None:
-        parent_message = self.chat.messages[parent_message_index]
+    async def handle_regenerate_message(
+        self, parent_message_index: int
+    ) -> None:
+        parent_message: Message = self.chat.messages[parent_message_index]
         parent_message = await chat_service.update_message(
             user_id=self.user_id,
             chat_id=self.chat_id,
@@ -131,7 +137,9 @@ class ChatOrchestrator:
                 )
             )
         except Exception as e:
-            self.logger.error(f"Error generating chat title {e}", stack_info=True)
+            self.logger.error(
+                f"Error generating chat title {e}", stack_info=True
+            )
 
     async def _wait_for_ui_approval(
         self,
@@ -146,7 +154,9 @@ class ChatOrchestrator:
                 is_approved = await future
                 queue.respond(tool, is_approved)
         except asyncio.TimeoutError:
-            self.logger.info(f"Tool {tool.id} timed out waiting for user approval.")
+            self.logger.info(
+                f"Tool {tool.id} timed out waiting for user approval."
+            )
             queue.respond(tool, False)
             await self.queue.put({"type": "tool_update", "id": tool.id})
         finally:
@@ -170,7 +180,9 @@ class ChatOrchestrator:
 
             last_user_message_index = index_of(
                 self.chat.messages,
-                lambda m: m.role == "user" and m.status == MessageStatus.PENDING,
+                lambda m: (
+                    m.role == "user" and m.status == MessageStatus.PENDING
+                ),
                 reverse=True,
             )
             if last_user_message_index < 0:
@@ -204,7 +216,9 @@ class ChatOrchestrator:
                                     "arguments": tool.function.arguments,
                                 }
                             )
-                            tasks.append(self._wait_for_ui_approval(tool, queue))
+                            tasks.append(
+                                self._wait_for_ui_approval(tool, queue)
+                            )
 
                         await asyncio.gather(*tasks)
                         continue
@@ -226,7 +240,7 @@ class ChatOrchestrator:
                                 tool_call_results=event.tool_results
                                 if event.has_tool_results()
                                 else None,
-                                model_id=self.agent.profile.model_id,
+                                model_id=self.agent.profile.model_id,  # type:ignore
                             ),
                         )
                         parent_message.active_child_id = new_message.id
@@ -252,7 +266,9 @@ class ChatOrchestrator:
                         await self.queue.put(event.model_dump())
 
         except Exception as e:
-            self.logger.error(f"Error processing messages: {e}", stack_info=True)
+            self.logger.error(
+                f"Error processing messages: {e}", stack_info=True
+            )
             await self.queue.put(
                 {"type": AgentEventType.ERROR.value, "content": str(e)}
             )

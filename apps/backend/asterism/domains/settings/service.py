@@ -13,7 +13,6 @@ from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import NotFoundException
 from asterism.db.database import get_async_db_session
 
-from .cache import settings_cache
 from .models import (
     ApplicationSettingsModel,
     LLMModel,
@@ -44,9 +43,9 @@ async def get_user_settings(
     session: AsyncSession | None = None,
 ) -> UserSettings:
 
-    cached = settings_cache.get_user_settings(user_id)
-    if cached:
-        return cached
+    # cached = settings_cache.get_user_settings(user_id)
+    # if cached:
+    #     return cached
 
     async with get_async_db_session(session) as session:
         stmt = select(UserSettingModel).where(UserSettingModel.user_id == user_id)
@@ -66,7 +65,7 @@ async def get_user_settings(
         if user_settings.default_agent_id not in user_agents.agents:
             user_settings.default_agent_id = None
 
-    settings_cache.set_user_settings(user_id, user_settings)
+    # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings
 
 
@@ -104,7 +103,7 @@ async def bulk_upsert_user_settings(
 
         await session.commit()
 
-    settings_cache.remove_user_setting(user_id)
+    # settings_cache.remove_user_setting(user_id)
     return await get_user_settings(user_id, session)
 
 
@@ -138,7 +137,7 @@ async def upsert_user_setting(
         )
         await session.execute(stmt)
         await session.commit()
-        settings_cache.remove_user_setting(user_id)
+        # settings_cache.remove_user_setting(user_id)
 
         return Setting(key=key, value=value)
 
@@ -155,7 +154,7 @@ async def delete_user_setting(
         )
         await session.execute(stmt)
         await session.commit()
-        settings_cache.remove_user_setting(user_id)
+        # settings_cache.remove_user_setting(user_id)
 
 
 # ------------------------------------------------------------------
@@ -166,25 +165,19 @@ async def delete_user_setting(
 async def get_app_settings(
     session: AsyncSession | None = None,
 ) -> ApplicationSettings:
-    async with settings_cache.app_settings() as (get, set):
-        cached = get()
-        if cached:
-            return cached
+    async with get_async_db_session(session) as session:
+        stmt = select(ApplicationSettingsModel)
+        result = await session.scalars(stmt)
+        full: dict[str, Any] = {row.key: row.value for row in result.all()}
 
-        async with get_async_db_session(session) as session:
-            stmt = select(ApplicationSettingsModel)
-            result = await session.scalars(stmt)
-            full: dict[str, Any] = {row.key: row.value for row in result.all()}
+        if "active_tools" not in full:
+            full["active_tools"] = []
 
-            if "active_tools" not in full:
-                full["active_tools"] = []
+        new_setting = ApplicationSettings.model_validate(full)
+        providers = await get_all_providers(session)
+        new_setting.llm_providers = [Provider.model_validate(p) for p in providers]
 
-            new_setting = ApplicationSettings.model_validate(full)
-            providers = await get_all_providers(session)
-            new_setting.llm_providers = [Provider.model_validate(p) for p in providers]
-
-            set(new_setting)
-            return new_setting
+        return new_setting
 
 
 async def upsert_app_setting(
@@ -196,19 +189,72 @@ async def upsert_app_setting(
         await delete_app_setting(key, session)
         return Setting(key=key, value=value)
 
-    async with settings_cache.app_settings() as (_, set):
-        set(None)
+    async with get_async_db_session(session) as session:
+        draft_model_updated = False
 
-        async with get_async_db_session(session) as session:
-            draft_model_updated = False
+        if key == "llm_providers":
+            llm_providers = [Provider(**d) for d in cast(list, value) or []]
+            await bulk_upsert_providers(
+                llm_providers,
+                session=session,
+            )
+            return Setting(key=key, value=value)
 
+        if key == "draft_model_id":
+            draft_model_updated = True
+
+        stmt = (
+            insert(ApplicationSettingsModel)
+            .values(
+                {
+                    "value": value,
+                    "key": key,
+                }
+            )
+            .on_conflict_do_update(
+                index_elements=["key"],
+                set_={
+                    "value": value,
+                },
+            )
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+        if draft_model_updated:
+            event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
+
+        return Setting(key=key, value=value)
+
+
+async def delete_app_setting(
+    key: str,
+    session: AsyncSession | None = None,
+) -> None:
+    async with get_async_db_session(session) as session:
+        stmt = delete(ApplicationSettingsModel).where(
+            ApplicationSettingsModel.key == key
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+
+async def bulk_update_app_setting(
+    updates: BulkUpdateSettingRequest,
+    session: AsyncSession | None = None,
+) -> ApplicationSettings:
+    async with get_async_db_session(session) as session:
+        draft_model_updated = False
+
+        for key, value in updates.values.items():
+            # Special case that the llm providers are being updated
             if key == "llm_providers":
                 llm_providers = [Provider(**d) for d in cast(list, value) or []]
                 await bulk_upsert_providers(
                     llm_providers,
                     session=session,
                 )
-                return Setting(key=key, value=value)
+                continue
 
             if key == "draft_model_id":
                 draft_model_updated = True
@@ -229,71 +275,8 @@ async def upsert_app_setting(
                 )
             )
             await session.execute(stmt)
-            await session.commit()
-            settings_cache.clear_user_settings()
 
-            if draft_model_updated:
-                event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
-
-            return Setting(key=key, value=value)
-
-
-async def delete_app_setting(
-    key: str,
-    session: AsyncSession | None = None,
-) -> None:
-    async with settings_cache.app_settings() as (_, set):
-        async with get_async_db_session(session) as session:
-            stmt = delete(ApplicationSettingsModel).where(
-                ApplicationSettingsModel.key == key
-            )
-            await session.execute(stmt)
-            await session.commit()
-            set(None)
-            settings_cache.clear_user_settings()
-
-
-async def bulk_update_app_setting(
-    updates: BulkUpdateSettingRequest,
-    session: AsyncSession | None = None,
-) -> ApplicationSettings:
-    async with settings_cache.app_settings() as (_, set):
-        async with get_async_db_session(session) as session:
-            draft_model_updated = False
-
-            for key, value in updates.values.items():
-                # Special case that the llm providers are being updated
-                if key == "llm_providers":
-                    llm_providers = [Provider(**d) for d in cast(list, value) or []]
-                    await bulk_upsert_providers(
-                        llm_providers,
-                        session=session,
-                    )
-                    continue
-
-                if key == "draft_model_id":
-                    draft_model_updated = True
-
-                stmt = (
-                    insert(ApplicationSettingsModel)
-                    .values(
-                        {
-                            "value": value,
-                            "key": key,
-                        }
-                    )
-                    .on_conflict_do_update(
-                        index_elements=["key"],
-                        set_={
-                            "value": value,
-                        },
-                    )
-                )
-                await session.execute(stmt)
-
-            await session.commit()
-            settings_cache.clear_user_settings()
-            set(None)
+        await session.commit()
 
     app_settings = await get_app_settings(session)
 

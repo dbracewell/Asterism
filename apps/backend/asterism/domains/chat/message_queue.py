@@ -9,7 +9,7 @@ type MessageQueue = asyncio.Queue[dict[str, Any]]
 
 _queue_cache: SlidingTTLCache[uuid.UUID, MessageQueue] = SlidingTTLCache[
     uuid.UUID, MessageQueue
-](maxsize=100000, ttl=8600)
+](maxsize=100000, ttl=86400)
 
 
 def get_message_queue(chat_id: uuid.UUID) -> MessageQueue:

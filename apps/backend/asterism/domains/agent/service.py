@@ -3,7 +3,6 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import NotFoundException, UnauthorizedException
 from asterism.db.database import get_async_db_session
 from asterism.domains.settings import service as settings_service
@@ -64,12 +63,6 @@ async def delete_agent_profile(
             raise UnauthorizedException()
         await session.delete(result)
         await session.commit()
-        event_bus.emit(
-            NoArgEvent(
-                type=EventType.USER_SETTING_UPDATED,
-                user_id=user_id,
-            )
-        )
         return AgentProfile.model_validate(result)
 
 
@@ -88,6 +81,10 @@ async def upsert_agent_profile(
             result.chat_parameters = agent_profile.chat_parameters
             result.description = agent_profile.description
             result.name = agent_profile.name
+            if agent_profile.model_id is None:
+                raise ValueError(
+                    "model_id cannot be None when updating an agent profile"
+                )
             result.model_id = agent_profile.model_id
             result.max_steps = agent_profile.max_steps
             result.system_prompt = agent_profile.system_prompt
@@ -100,10 +97,4 @@ async def upsert_agent_profile(
             await session.commit()
             await session.refresh(result)
 
-        event_bus.emit(
-            NoArgEvent(
-                type=EventType.USER_SETTING_UPDATED,
-                user_id=user_id,
-            )
-        )
         return AgentProfile.model_validate(result)

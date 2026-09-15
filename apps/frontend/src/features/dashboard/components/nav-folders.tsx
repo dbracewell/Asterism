@@ -32,7 +32,8 @@ export const NavFolders = ({ defaultIsOpen }: { defaultIsOpen: boolean }) => {
   }, [isAdding]);
 
   if (error) {
-    throw Error(`Error Code ${error.code}`);
+    console.log("Error fetching folders:", error);
+    throw Error(`Error Code ${JSON.stringify(error)}`);
   }
 
   if (isPending || folderList == null) {

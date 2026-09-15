@@ -3,16 +3,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Types } from "@/features/settings/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { usePathname, useRouter } from "next/navigation";
 
-export const SettingsCard = ({ settings }: { settings: Types }) => {
+export const SettingsCard = ({
+  name,
+  settings,
+  defaultTab,
+}: {
+  name: string;
+  settings: Types;
+  defaultTab?: string;
+}) => {
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const pathname = usePathname();
+
   return (
     <Tabs
       orientation={isMobile ? "horizontal" : "vertical"}
       defaultValue={
+        defaultTab ??
         settings.filter((s) => s.type === "section").find((s) => s.isDefault)
           ?.value
       }
+      onValueChange={(v) => {
+        router.replace(`${pathname}?t=${name}&setting=${v}`);
+      }}
       className={cn(
         "flex h-full min-h-0 flex-1 overflow-clip",
         isMobile ? "flex-col" : "flex-row",

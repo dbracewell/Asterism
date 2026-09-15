@@ -60,8 +60,31 @@ In terminal 2:
 pnpm --filter @asterism/frontend dev
 ```
 
-Frontend: http://localhost:3000  
-Backend OpenAPI: http://localhost:8000/openapi.json
+Frontend: <http://localhost:3000>
+
+Backend OpenAPI: <http://localhost:8000/openapi.json>
+
+## Run with Docker Compose
+
+Set a persistent Better Auth secret, then start the frontend, backend, and Caddy proxy:
+
+```bash
+export BETTER_AUTH_SECRET="$(openssl rand -base64 32)"
+# Optional: export BOOTSTRAP_SETUP_TOKEN=<strong-one-time-setup-token>
+docker compose up --build
+```
+
+The proxy serves the app at `http://localhost` and routes `/api/py/*` to the
+backend. `PUBLIC_URL` must match the externally reachable URL (including a
+non-default port, if used); for example:
+
+```bash
+PUBLIC_URL=http://localhost:8080 PORT=8080 docker compose up --build
+```
+
+The backend database/files and Better Auth database are retained in Docker
+named volumes. Stop containers with `docker compose down`; add `-v` to also
+remove that persisted data.
 
 ## Run CI checks locally
 

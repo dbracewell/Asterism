@@ -62,6 +62,7 @@ export function AgentProfileForm({
       );
       onOpenChange(false);
       router.refresh();
+      window.location.reload();
     },
     onError: () =>
       toast.error(
@@ -125,7 +126,6 @@ export function AgentProfileForm({
       Object.keys(data.chatParameters).length > 0
         ? data.chatParameters
         : undefined;
-
     upsertAgentProfile.mutate({
       body: {
         id: data?.id ?? undefined,

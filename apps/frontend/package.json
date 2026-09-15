@@ -13,8 +13,7 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "codegen": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts",
-    "auth:generate": "pnpm dlx auth@latest generate",
-    "auth:migrate": "pnpm dlx auth@latest migrate"
+    "reset:db": "node --env-file=.env reset-db.mjs"
   },
   "prettier": {
     "plugins": [

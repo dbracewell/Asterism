@@ -46,7 +46,7 @@ class PartialAgentProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
     name: str
     description: str
-    model_id: uuid.UUID
+    model_id: uuid.UUID | None
     system_prompt: str | None
     max_steps: int
     chat_parameters: ChatCompletionParams = Field(

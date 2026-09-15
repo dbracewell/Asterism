@@ -8,7 +8,7 @@ import { appSettingsGetOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-export const AdminSettingsTab = () => {
+export const AdminSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
   const { data, isLoading, error } = useQuery({
     ...appSettingsGetOptions({
       client: client,
@@ -30,7 +30,11 @@ export const AdminSettingsTab = () => {
 
   return (
     <TabsContent value="admin" className="min-h-0">
-      <SettingsCard settings={adminSettingsSections} />
+      <SettingsCard
+        settings={adminSettingsSections}
+        defaultTab={defaultTab}
+        name="admin"
+      />
     </TabsContent>
   );
 };

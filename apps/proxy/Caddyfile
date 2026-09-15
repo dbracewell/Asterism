@@ -1,8 +1,0 @@
-https://localhost {
-    handle /api/py* {
-        reverse_proxy localhost:8000
-    }
-    handle {
-        reverse_proxy localhost:3000
-    }
-}

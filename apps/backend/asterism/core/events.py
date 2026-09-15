@@ -23,7 +23,6 @@ class EventType(StrEnum):
     TOOL_UPDATED = "tool_updated"
     TOOL_DELETED = "tool_deleted"
     DRAFT_MODEL_UPDATED = "draft_model_updated"
-    USER_SETTING_UPDATED = "user_setting_updated"
     WEBHOOK_CHAT_UPDATE = "chat-session:update"
 
 

@@ -9,6 +9,7 @@ import asterism.domains.settings.service as settings_service
 from asterism.common.concurrency import AsyncAtomic
 from asterism.common.log import get_logger
 from asterism.core.config import config
+from asterism.core.exceptions import BadDataException
 from asterism.core.schemas import AuthedUser
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import (
@@ -18,6 +19,7 @@ from asterism.domains.llm.schemas import (
     ToolCall,
     ToolResult,
 )
+from asterism.domains.settings.schemas import LlmWithProvider
 from asterism.domains.tools.registry import tool_registry
 
 from .schemas import AgentEvent, AgentEventType, AgentProfile
@@ -38,17 +40,26 @@ class Agent:
         self.logger = logger or get_logger(f"Agent({self.profile.name})")
         self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
         self.allowed_tools = (
-            allowed_tools if allowed_tools is not None else config.default_allowed_tools
+            allowed_tools
+            if allowed_tools is not None
+            else config.default_allowed_tools
         )
 
     async def _get_client(self) -> LLMClientProtocol:
         async with self._client as (get, set):
-            client = get()
+            client: LLMClientProtocol | None = get()
             if client:
                 return client
 
-            model_info = await settings_service.get_model_and_provider(
-                model_id=self.profile.model_id,
+            if not self.profile.model_id:
+                raise BadDataException(
+                    "Agent profile does not have a model_id set. "
+                    "Cannot create LLM client."
+                )
+            model_info: LlmWithProvider = (
+                await settings_service.get_model_and_provider(
+                    model_id=self.profile.model_id,
+                )
             )
             client = LLMClient(
                 api_key=model_info.provider.api_key,
@@ -98,7 +109,7 @@ class Agent:
                     continue
 
                 agent_info.append(
-                    f"- id: {profile.id} (name: {profile.name}) - {profile.description}"
+                    f"- id: {profile.id} (name: {profile.name}) - {profile.description}"  # noqa: E501
                 )
 
             base_prompt = (
@@ -108,7 +119,7 @@ class Agent:
                 "Use this tool when you need to break down complex "
                 "tasks or when you want to delegate work to another agent. "
                 "Make sure that if the sub agent generates information needed "
-                "to be seen by the user that you output that information in your "
+                "to be seen by the user that you output that information in your "  # noqa: E501
                 "response. "
                 "Sub Agents:"
                 f"\n{'\n'.join(agent_info)}"
@@ -200,7 +211,9 @@ class Agent:
                                     f"{response.tool_call.function.arguments})"
                                     f"=>'{re.sub(r'\s+', ' ', response.content[:64])}...'"  # noqa: E501
                                 )
-                                messages.append(LLMMessage.tool_call_result(response))
+                                messages.append(
+                                    LLMMessage.tool_call_result(response)
+                                )
                                 tool_results.append(response)
 
                         yield AgentEvent(

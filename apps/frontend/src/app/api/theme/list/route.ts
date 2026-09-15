@@ -1,4 +1,4 @@
-import type { Theme } from "@/lib/theme";
+import type { Theme } from "@/features/theme/types";
 import * as fs from "fs/promises";
 import { readFile } from "fs/promises";
 import { NextResponse } from "next/server";
@@ -8,7 +8,7 @@ export async function GET() {
   const filePath = path.join(process.cwd(), "public", "themes");
   try {
     const files = await fs.readdir(filePath);
-    const themeNames: Theme[] = [];
+    const themeNames: Pick<Theme, "name" | "filename">[] = [];
     for (const file of files) {
       const data = JSON.parse(
         await readFile(path.join(filePath, file), "utf-8"),
