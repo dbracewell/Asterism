@@ -16,7 +16,6 @@ def default_allowed_tools() -> list[str]:
 
 class Config(BaseSettings):
     system_key: str = ""
-    bootstrap_setup_token: str = ""
     max_chars_for_retrieval: int = 50000
     frontend_url: str = "http://localhost:3000"
     cors_allowed_origins: list[str] | None = None
@@ -27,10 +26,12 @@ class Config(BaseSettings):
         validation_alias="JWT_ISSUER",
     )
     jwt_audience_override: str | None = Field(
-        default=None, validation_alias="JWT_AUDIENCE"
+        default=None,
+        validation_alias="JWT_AUDIENCE",
     )
     jwks_url_override: str | None = Field(
-        default=None, validation_alias="JWKS_URL"
+        default=None,
+        validation_alias="JWKS_URL",
     )
     default_allowed_tools: list[str] = Field(
         default_factory=default_allowed_tools
