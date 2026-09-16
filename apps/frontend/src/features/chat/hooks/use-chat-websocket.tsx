@@ -1,6 +1,7 @@
 import { AgentEventSchema } from "@/features/chat/schemas";
 import { StreamingMessage } from "@/features/chat/types";
 import { Message } from "@/lib/client";
+import { chatWebSocketUrl } from "@/lib/backend-url";
 import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
@@ -79,11 +80,8 @@ export const useChatWebSocket = ({
   }, []);
 
   const wsEndpoint = useMemo(() => {
-    const backendUrl = new URL(process.env.NEXT_PUBLIC_BACKEND_API_URL!);
-    const wsUrl = new URL(`/api/py/chat/stream/${chatId}`, backendUrl);
-    wsUrl.protocol = backendUrl.protocol === "https:" ? "wss:" : "ws:";
-    wsUrl.searchParams.set("token", jwtToken);
-    return wsUrl.toString();
+    if (typeof window === "undefined") return null;
+    return chatWebSocketUrl(window.location.origin, chatId, jwtToken);
   }, [jwtToken, chatId]);
 
   const scheduleFlush = React.useCallback(() => {

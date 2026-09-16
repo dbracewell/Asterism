@@ -56,7 +56,7 @@ def post_webhook(
     user_id: str | None = None,
 ) -> None:
     response = requests.post(
-        url=f"{config.frontend_url}/api/stream",
+        url=f"{config.frontend_internal_url}/api/stream",
         headers={"x-asterism-system-key": config.system_key},
         json={
             "type": event_type,

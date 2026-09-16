@@ -15,7 +15,7 @@ import {
   chatSessionGetOneQueryKey,
   messageUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { formatPluarl } from "@/lib/formatters";
+import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -353,7 +353,7 @@ const MessageItem = React.memo(
           <summary>
             Thinking{" "}
             {message.tool_calls && (
-              <>({formatPluarl(message.tool_calls.length, "tool call")})</>
+              <>({formatPlural(message.tool_calls.length, "tool call")})</>
             )}
           </summary>
           <p

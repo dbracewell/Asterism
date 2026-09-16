@@ -1,76 +1,46 @@
 # Asterism Backend (FastAPI)
 
-Python/FastAPI backend for Asterism.
+Requires Python 3.13+, uv, and SQLite 3.45+ for JSONB support.
 
-## Prerequisites
+## Configuration and development
 
-- Python 3.13+
-- [uv](https://docs.astral.sh/uv/)
-- pnpm (for monorepo scripts)
+Use the shared repository-root `.env.example` / `.env`; see the root README for
+initial database setup. `PUBLIC_URL` controls the public auth identity. JWT issuer
+and audience are derived from it. JWKS and webhook requests use loopback port 3000,
+not the public hostname. API traffic uses loopback port 8000.
 
-## Environment
+Storage defaults to `/storage`; set an absolute `STORAGE_ROOT` for local development.
+`DB_URL` is an optional full SQLAlchemy URL override. `SYSTEM_KEY` must match the
+frontend. No separate JWT or frontend URL environment variables are needed.
 
-Create `apps/backend/.env` from `apps/backend/.env.example`.
-
-Required for local development:
-
-- `STORAGE_ROOT` (directory where SQLite DB + files are stored)
-
-Optional auth settings (defaults work when frontend and backend run locally):
-
-- `FRONT_END_URL` (default Better Auth base URL fallback)
-- `BETTER_AUTH_URL` (Better Auth issuer base)
-- `JWKS_URL` (explicit JWKS endpoint override)
-- `JWT_ISSUER`
-- `JWT_AUDIENCE`
-
-Admin bootstrap setting:
-
-- `BOOTSTRAP_SETUP_TOKEN` (required to perform first-time admin bootstrap when no admin exists)
-
-## Install
-
-From repository root:
+From the repository root:
 
 ```bash
-pnpm install
+pnpm --filter @asterism/backend sync
+pnpm dev --filter=@asterism/backend
 ```
 
-Backend dependencies are managed with `uv` and resolved from `apps/backend/uv.lock`.
+Normally use `pnpm dev` to start both apps. The frontend proxies browser API requests
+at `http://localhost:3000/api/py`. Schema: `/api/py/openapi.json`.
 
-## Run (development)
+The root Dockerfile is the only supported container deployment. No standalone
+backend image or per-app Docker configuration is maintained.
 
-From repository root:
+## Database initialization
+
+On a fresh installation, from this directory:
 
 ```bash
-pnpm --filter @asterism/backend dev
+uv run --env-file ../../.env python -m asterism.db.init_db
 ```
 
-Or from `apps/backend`:
+**Warning:** this command resets an existing backend database. It is not an upgrade
+migration. The container calls it only when the default database file is absent.
+
+## Quality checks
+
+From the repository root:
 
 ```bash
-pnpm dev
-```
-
-Default URL: `http://localhost:8000`
-OpenAPI: `http://localhost:8000/openapi.json`
-
-## Database commands
-
-From `apps/backend`:
-
-```bash
-pnpm db:migrate   # create migration
-pnpm db:push      # apply migrations
-pnpm db:dryrun    # generate SQL without applying
-```
-
-## Quality commands
-
-From repository root:
-
-```bash
-pnpm turbo run lint --filter=@asterism/backend
-pnpm turbo run typecheck --filter=@asterism/backend
-pnpm turbo run test --filter=@asterism/backend
+pnpm turbo run lint typecheck test --filter=@asterism/backend
 ```

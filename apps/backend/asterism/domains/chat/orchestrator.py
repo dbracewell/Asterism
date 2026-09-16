@@ -109,18 +109,27 @@ class ChatOrchestrator:
 
         try:
             draft_model = get_draft_model()
-            content = await draft_model.invoke(
-                messages=[
-                    LLMMessage.user(
-                        content=f"""You are a title generation assistant. Generate a short, descriptive chat title (3 to 6 words) that captures the intent of the user's message/question. Output strictly the title itself with no quotes, no prefixes, and no trailing punctuation. Do not repeat the user's text and do not answer the user's questions or requests. Only generate a generic title that labels the intent of the user. Do not think about how to answer.
-                        
-                        User Prompt: {self.chat.messages[0].content}""",  # noqa: E501
-                    ),
-                ],
-                max_tokens=15,
-                thinking_budget_tokens=5,
-            )
-            self.chat.info.title = content.strip()
+            content = ""
+            max_tokens = 15
+            while not content.strip():
+                content = await draft_model.invoke(
+                    messages=[
+                        LLMMessage.user(
+                            content=f"""You are a title generation assistant. 
+    Generate a short, descriptive chat title (3 to 6 words) that captures the intent 
+    of the user's message/question. Output strictly the title itself with no quotes, 
+    no prefixes, and no trailing punctuation. Do not repeat the user's text and do 
+    not answer the user's questions or requests. Only generate a generic title that 
+    labels the intent of the user. Do not think about how to answer.
+                            
+                            User Prompt: {self.chat.messages[0].content}""",  # noqa: E501
+                        ),
+                    ],
+                    max_tokens=max_tokens,
+                    thinking_budget_tokens=5,
+                )
+                max_tokens += 5
+                self.chat.info.title = content.strip()
             await chat_service.update_chat(
                 user_id=self.user_id,
                 chat_id=self.chat_id,

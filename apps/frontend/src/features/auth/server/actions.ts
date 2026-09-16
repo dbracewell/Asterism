@@ -6,6 +6,7 @@ import {
 import { User } from "@/features/auth/types";
 import { getApiClient } from "@/lib/api-server";
 import { auth } from "@/lib/auth";
+import { BACKEND_API_URL } from "@/lib/backend-url";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -27,20 +28,19 @@ export const installApp = async (data: InstallUserSchemaType) => {
   } catch (error: unknown) {
     throw Error(JSON.stringify(error));
   }
-  const result = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/users/`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
-      body: JSON.stringify({
-        user_id: user.user.id,
-        system_key: process.env.SYSTEM_KEY,
-      }),
+
+  const result = await fetch(`${BACKEND_API_URL}/users/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${user.token}`,
     },
-  );
+    body: JSON.stringify({
+      user_id: user.user.id,
+      system_key: process.env.SYSTEM_KEY,
+    }),
+  });
+
   if (!result.ok) {
     const error = await result.json();
     console.log(error);

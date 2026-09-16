@@ -41,7 +41,7 @@ class DraftModel:
             messages=messages,
             **kwargs,
         )
-        return event.content or ""
+        return event.content or str(event.exception)
 
 
 _draft_model: Atomic[DraftModel | None] = Atomic(None)

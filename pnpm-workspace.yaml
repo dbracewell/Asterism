@@ -1,6 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+allowBuilds:
+  better-sqlite3: true
+  msw: true
+  sharp: true
+  unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@better-auth/core@1.6.12'
   - '@better-auth/drizzle-adapter@1.6.12'

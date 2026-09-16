@@ -9,20 +9,17 @@ export const usePublishGlobalEvent = () => {
   const user = useUser();
   return useCallback(
     async (type: T, payload: EventPayloadMap[T]) => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/stream`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type,
-            user_id: user.id,
-            payload,
-          }),
+      const response = await fetch("/api/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          type,
+          user_id: user.id,
+          payload,
+        }),
+      });
       if (response.ok) {
         return;
       }

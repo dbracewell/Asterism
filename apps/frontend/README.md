@@ -1,113 +1,78 @@
 # Asterism Frontend (Next.js 16)
 
-Next.js frontend for Asterism.
+Requires Node.js 22.13+ and pnpm 11+.
 
-## Prerequisites
+## Configuration and development
 
-- Node.js 22.13+
-- pnpm 11+
+Use `apps/frontend/.env.example` / `apps/frontend/.env` and the root README's initialization
+steps. `PUBLIC_URL` sets Better Auth's public base URL; `BETTER_AUTH_SECRET`,
+`SYSTEM_KEY`, and `ADMIN_PASSPHRASE` are persistent secrets. Auth storage defaults
+to `${STORAGE_ROOT:-/storage}/users.db`, with an optional `BETTER_AUTH_DB_PATH` override.
 
-## Environment
+Browser API, WebSocket, and SSE requests always use the current origin. No
+`NEXT_PUBLIC_*` URL settings are needed. Server-side API calls use loopback port 8000. Next.js rewrites `/api/py/*` to FastAPI for local development; nginx handles
+that path in Docker. The rewrites preserve trailing slashes so FastAPI collection
+routes do not redirect browsers to the internal backend origin and lose their
+Authorization header. After changing this routing, restart Next.js and reload
+with browser caching disabled to discard any previously cached 308 redirects.
 
-Create `apps/frontend/.env` from `apps/frontend/.env.example`.
-
-Required variables:
-
-- `BETTER_AUTH_SECRET`
-- `BETTER_AUTH_URL`
-- `BETTER_AUTH_DB_PATH`
-- `NEXT_PUBLIC_BACKEND_API_URL`
-
-## Install
-
-From repository root:
+From the repository root:
 
 ```bash
 pnpm install
+pnpm dev                         # both applications, each loading its own .env
+pnpm dev --filter=@asterism/frontend  # frontend only
 ```
 
-## Run (development)
+Next.js loads `apps/frontend/.env`; the backend loads `apps/backend/.env`.
+Root `pnpm dev` only starts Turborepo, without loading the root `.env`.
+Keep shared secrets and `PUBLIC_URL` consistent between the two app files.
+Docker continues to use the root `.env`.
+Exported environment variables take precedence. Restart existing dev servers
+after changing environment settings; `reset:db` does not update the environment
+of a running server.
 
-From repository root:
+Runtime auth and the official migration CLI use the same database path. Create
+its parent directory before local migrations (Docker creates `STORAGE_ROOT`).
+Reset is destructive; stop the app before running it.
+
+Open `http://localhost:3000`. Next.js allows only one dev process per app directory.
+
+## Docker and migrations
+
+Only the repository-root Dockerfile and Compose configuration are supported.
+Dependencies use the root workspace lockfile; the standalone frontend lockfile,
+Dockerfile, and build-approval configuration have been removed.
+
+The container runs the official `auth` CLI before Next.js, pinned to 1.6.11 to
+match Better Auth. The image includes `src/lib/auth.ts` and passes it explicitly
+with `--config`; startup requires no package downloads or custom migration script.
+Migrations create missing tables without resetting users. Migration failure prevents
+startup. Back up persistent storage before upgrades; do not use `reset:db` for
+container startup. Update the CLI alongside Better Auth when upgrading.
+
+Local migrations, from this directory:
 
 ```bash
-pnpm --filter @asterism/frontend dev
+node --env-file=.env node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth.ts --yes
+node --test scripts/test-docker-auth-migrations.mjs
 ```
 
-Or from `apps/frontend`:
+Local proxy regression check (stop local dev servers first; uses ports 8000 and
+30999 with an in-memory test database):
 
 ```bash
-pnpm dev
+node scripts/test-dev-proxy.mjs
 ```
 
-Default URL: `http://localhost:3000`
+The combined deployment smoke test is documented in the root README.
 
-> Note: Next.js allows only one `next dev` process per app directory.
+## Quality and API generation
 
-## Build and start
-
-From `apps/frontend`:
+From the repository root:
 
 ```bash
-pnpm build
-pnpm start
-```
-
-## Docker builds
-
-The frontend Dockerfile uses `apps/frontend` as its build context and installs
-from the standalone `pnpm-lock.yaml` with `--frozen-lockfile`.
-`docker-pnpm-workspace.yaml` supplies pnpm 11 build-script approvals and pins
-Kysely to 0.28.17: Better Auth 1.6.14 imports migration exports absent in 0.29.
-When updating frontend dependencies, regenerate the standalone lockfile with
-that configuration as `pnpm-workspace.yaml` in an isolated directory (outside
-the root workspace). Review this pin when upgrading Better Auth.
-
-### Container database initialization
-
-The entrypoint runs `migrate-db.mjs` before starting Next.js, using the installed
-Better Auth migration API and the shared `src/lib/auth-options.ts` configuration.
-It creates missing tables and applies pending migrations on every startup without
-resetting users, including when the SQLite file already exists but is empty.
-Migration failures prevent the server from starting.
-
-`BETTER_AUTH_DB_PATH` selects the database; in Docker it defaults to
-`${STORAGE_ROOT:-/storage}/users.db`. Keep that path on a persistent volume and
-back up the database before upgrades. Do not use `reset:db` for container startup:
-that command intentionally deletes data.
-
-Regression checks against a built image:
-
-```bash
-# From repository root
- docker run --rm --entrypoint node \
-  -v "$PWD/apps/frontend/scripts/test-db-migrations.mjs:/app/scripts/test-db-migrations.mjs:ro" \
-  asterism-frontend-build-check --test scripts/test-db-migrations.mjs
-```
-
-## Quality commands
-
-From repository root:
-
-```bash
-pnpm turbo run lint --filter=@asterism/frontend
-pnpm turbo run typecheck --filter=@asterism/frontend
-pnpm turbo run test --filter=@asterism/frontend
-```
-
-## Test commands
-
-From `apps/frontend`:
-
-```bash
-pnpm test:unit   # Vitest + React Testing Library
-pnpm test:e2e    # Playwright
-```
-
-## API client generation
-
-From `apps/frontend`:
-
-```bash
-pnpm codegen
+pnpm turbo run lint typecheck test --filter=@asterism/frontend
+pnpm --filter @asterism/frontend test:e2e
+pnpm --filter @asterism/frontend codegen
 ```

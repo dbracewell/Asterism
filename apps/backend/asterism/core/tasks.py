@@ -2,7 +2,6 @@ import asyncio
 from typing import Any
 
 
-
 class BackgroundTaskManager:
     def __init__(self):
         self.tasks: set[asyncio.Task[Any]] = set()

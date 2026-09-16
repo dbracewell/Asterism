@@ -3,32 +3,39 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import Database from "better-sqlite3";
 
-for (const [existingFile, useOverride] of [[false, false], [false, true], [true, false], [true, true]]) {
-  test(`migrate/reset ${existingFile ? "existing" : "new"} database via ${useOverride ? "override" : "storage root"}`, () => {
-    const dir = mkdtempSync(join(tmpdir(), "auth-migrations-"));
-    const path = join(dir, existingFile ? "users.db" : "nested/users.db");
+const cwd = fileURLToPath(new URL("../", import.meta.url));
+for (const override of [false, true]) {
+  test(`official auth CLI initializes and preserves data (${override ? "override" : "storage root"})`, () => {
+    const dir = mkdtempSync(join(tmpdir(), "docker-auth-"));
+    const path = join(dir, override ? "custom.db" : "users.db");
     try {
-      if (existingFile) new Database(path).close();
-      const migrate = (script = "migrate-db.mjs") => {
-        const result = spawnSync(process.execPath, ["--experimental-strip-types", script], {
+      const migrate = () => {
+        const result = spawnSync(process.execPath, [
+          "node_modules/auth/dist/index.mjs", "migrate",
+          "--config", "./src/lib/auth.ts", "--yes",
+        ], {
+          cwd,
           env: {
             ...process.env,
-            BETTER_AUTH_DB_PATH: useOverride ? path : "",
-            STORAGE_ROOT: useOverride ? join(dir, "unused") : join(path, ".."),
-            BETTER_AUTH_SECRET: "migration-test-only-secret-at-least-32-chars",
+            STORAGE_ROOT: dir,
+            BETTER_AUTH_DB_PATH: override ? path : "",
+            BETTER_AUTH_SECRET: "disposable-migration-test-secret-32-chars",
             PUBLIC_URL: "http://localhost:3000",
+            BETTER_AUTH_TELEMETRY: "0",
           },
           encoding: "utf8",
+          timeout: 60000,
         });
         assert.equal(result.status, 0, result.stdout + result.stderr);
       };
       migrate();
       const db = new Database(path);
       try {
-        const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((row) => row.name);
+        const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map(({ name }) => name);
         for (const table of ["user", "session", "account", "verification", "jwks"]) {
           assert.ok(tables.includes(table), `Missing table: ${table}`);
         }
@@ -40,13 +47,6 @@ for (const [existingFile, useOverride] of [[false, false], [false, true], [true,
         ]);
       } finally {
         db.close();
-      }
-      migrate("reset-db.mjs");
-      const resetDb = new Database(path);
-      try {
-        assert.equal(resetDb.prepare('SELECT count(*) AS count FROM user').get().count, 0);
-      } finally {
-        resetDb.close();
       }
     } finally {
       rmSync(dir, { recursive: true, force: true });

@@ -1,117 +1,143 @@
 # Asterism
 
 [![CI](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml/badge.svg)](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml)
-[![CI (main)](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml?query=branch%3Amain)
 
-Asterism is a full-stack, multi-agent AI app (inspired by Open WebUI) where agents, tools, skills, MCP servers, image generation, and memory work together to fulfill user requests.
+Asterism is a full-stack, multi-agent AI application with coordinated agents, tools,
+skills, memory, and profile-specific behavior.
 
-## Clone the repo
+## Configuration
 
-```bash
-git clone git@github.com:dbracewell/Asterism.git
-cd Asterism
-```
-
-## Run locally
-
-### Prerequisites
-
-- Node.js 22.13+
-- pnpm 11+
-- Python 3.13+
-- [uv](https://docs.astral.sh/uv/)
-
-### 1) Install dependencies
+Copy the shared example to the repository root and replace the placeholder secrets:
 
 ```bash
-pnpm install
+cp .env.example .env
+# Generate separate persistent secrets with: openssl rand -base64 32
 ```
 
-### 2) Configure environment files
+- `PUBLIC_URL`: the browser-facing origin, default `http://localhost:3000`, without
+  a trailing slash. This also sets Better Auth's base URL and JWT issuer/audience.
+- `BETTER_AUTH_SECRET`: persistent secret protecting authentication data.
+- `SYSTEM_KEY`: shared secret for internal privileged requests.
+- `ADMIN_PASSPHRASE`: passphrase for first-time administrator setup.
+- `STORAGE_ROOT`: absolute writable directory for local development. Docker Compose
+  uses its named volume at `/storage`, regardless of this local setting.
+- Optional: `BETTER_AUTH_DB_PATH` and `DB_URL` override database locations.
+- Optional: `PORT` changes the Compose host port; update `PUBLIC_URL` to match.
+
+Browsers always use same-origin `/api/py`, `/api/stream`, and chat WebSocket URLs.
+Server-side API requests use loopback port 8000. Signing-key discovery and webhooks
+use loopback port 3000. These internal ports are fixed in both development and Docker.
+There are no separate JWT issuer/audience or browser API URL settings.
+
+**Migrating older configuration:** move secrets and storage settings into the root
+`.env`, rename the old public auth/frontend URL setting to `PUBLIC_URL`, and remove
+legacy JWT, JWKS, frontend/backend URL overrides and `NEXT_PUBLIC_*` URL variables.
+Archive the old app-local `.env` files so Next.js and Python do not load stale values.
+Keep the existing secrets and database paths to preserve users and sessions.
+
+## Docker
+
+The root `Dockerfile` packages Next.js, FastAPI, and nginx in one non-root container.
+Turborepo builds the frontend; uv installs locked Python dependencies. The split
+container configuration is no longer supported.
 
 ```bash
-cp apps/backend/.env.example apps/backend/.env
-cp apps/frontend/.env.example apps/frontend/.env
+docker compose up -d --build
+docker compose logs -f
 ```
 
-Update values in both `.env` files as needed for your machine.
-
-For first-time admin setup, set `BOOTSTRAP_SETUP_TOKEN` in `apps/backend/.env`.
-Example:
+Or build and run directly:
 
 ```bash
-BOOTSTRAP_SETUP_TOKEN=<a-strong-random-secret>
+docker build -t asterism:local .
+docker run -d --name asterism --restart unless-stopped --stop-timeout 30 \
+  -p 127.0.0.1:3000:3000 --env-file .env -e STORAGE_ROOT=/storage \
+  -v asterism-storage:/storage asterism:local
 ```
 
-If deploying with Docker, pass `BOOTSTRAP_SETUP_TOKEN` as an environment variable
-or Docker secret for the backend container.
+Open <http://localhost:3000>. To use another local port, set `PORT=8080` and
+`PUBLIC_URL=http://localhost:8080` for Compose. Changing the public origin does not
+require rebuilding the image, only recreating the container.
 
-### 3) Start backend and frontend
+For remote HTTPS access, put a trusted TLS proxy in front of port 3000 and set
+`PUBLIC_URL` to its external origin. Forward Host, X-Forwarded-Proto, and WebSocket
+upgrades. Do not expose internal ports 3001 or 8000.
 
-In terminal 1:
+### Storage and lifecycle
+
+`/storage` contains `users.db`, `database.db`, and uploaded files. Auth migrations
+run on each startup using the bundled, pinned official Better Auth CLI and explicit
+`src/lib/auth.ts` configuration (no startup downloads). The backend initializer runs only when its database is absent;
+existing backend databases are not reset or automatically migrated. Bind mounts must
+be writable by UID **10001**. Back up databases before upgrades.
+
+The single `storage` volume does not automatically import older split-container
+volumes. Copy their databases/files into the new volume while services are stopped,
+retaining the auth secret and setting appropriate ownership. Never use `down -v`
+unless deleting persisted data is intentional.
+
+Health checks cover the frontend, backend OpenAPI, and auth signing keys. If a
+service exits, the container stops so its restart policy can recover. SIGTERM stops
+all services. ML/CUDA dependencies make builds and images large; allow substantial
+free Docker disk space. Optional tools requiring Playwright browsers need those
+browser binaries installed separately.
+
+Deployment smoke test (creates/removes its own container, volume, and account):
 
 ```bash
-pnpm --filter @asterism/backend dev
+python3 docker/smoke-test.py asterism:local
 ```
 
-In terminal 2:
+## Local development
+
+Requires Node.js 22.13+, pnpm 11+, Python 3.13+, uv, and Python linked against
+SQLite **3.45+** (the backend uses JSONB functions).
+
+1. Run `pnpm install` and `pnpm --filter @asterism/backend sync`.
+2. Configure the root `.env` as above, with an absolute writable `STORAGE_ROOT`.
+3. Initialize databases on a **fresh installation only**:
+
+   ```bash
+   # Create your configured STORAGE_ROOT directory first.
+   # Frontend migrations are non-destructive.
+   cd apps/frontend
+   node --env-file=../../.env node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth.ts --yes
+   cd ../backend
+   # WARNING: this backend command resets an existing database.
+   uv run --env-file ../../.env python -m asterism.db.init_db
+   cd ../..
+   ```
+
+4. Start both applications from the repository root:
+
+   ```bash
+   pnpm dev
+   ```
+
+`pnpm dev` loads the shared root `.env` and starts both apps through Turborepo.
+Open `http://localhost:3000`, not the backend port. Next.js proxies `/api/py/*`
+(including WebSocket upgrades) to FastAPI on port 8000. Docker uses nginx for the
+same routing. API schema: `http://localhost:3000/api/py/openapi.json`.
+
+To start just one workspace with the same environment:
 
 ```bash
-pnpm --filter @asterism/frontend dev
+pnpm dev --filter=@asterism/frontend
+pnpm dev --filter=@asterism/backend
 ```
 
-Frontend: <http://localhost:3000>
+## First-time administrator setup
 
-Backend OpenAPI: <http://localhost:8000/openapi.json>
+Open the app and complete the initial account setup using `ADMIN_PASSPHRASE`.
+Keep this passphrase private. The frontend and backend must use the same `SYSTEM_KEY`.
 
-## Run with Docker Compose
-
-Set a persistent Better Auth secret, then start the frontend, backend, and Caddy proxy:
+## Quality checks
 
 ```bash
-export BETTER_AUTH_SECRET="$(openssl rand -base64 32)"
-# Optional: export BOOTSTRAP_SETUP_TOKEN=<strong-one-time-setup-token>
-docker compose up --build
+pnpm turbo run lint typecheck test
+pnpm --filter @asterism/frontend test:e2e
 ```
 
-The proxy serves the app at `http://localhost` and routes `/api/py/*` to the
-backend. `PUBLIC_URL` must match the externally reachable URL (including a
-non-default port, if used); for example:
-
-```bash
-PUBLIC_URL=http://localhost:8080 PORT=8080 docker compose up --build
-```
-
-The backend database/files and Better Auth database are retained in Docker
-named volumes. Stop containers with `docker compose down`; add `-v` to also
-remove that persisted data.
-
-## Run CI checks locally
-
-From repository root:
-
-```bash
-pnpm ci:local:quality   # lint + typecheck + tests (backend + frontend)
-pnpm ci:local:e2e       # frontend Playwright e2e
-pnpm ci:local           # runs both in sequence
-```
-
-These scripts mirror the GitHub CI pipeline, including native `better-sqlite3`
-verification before test execution.
-
-`pnpm ci:local:e2e` also resets and uses a dedicated BetterAuth database at
-`apps/frontend/ci-users.db` so local e2e runs start clean.
-
-## First-time admin access setup
-
-1. Start backend and frontend.
-2. Sign up/sign in from the frontend.
-3. Open `http://localhost:3000/app/setup`.
-4. Enter the `BOOTSTRAP_SETUP_TOKEN` value.
-5. Your current signed-in user is promoted to `admin`.
-
-Notes:
-
-- Bootstrap only works while **no admin exists**.
-- After the first admin is created, setup bootstrap is disabled.
-- Keep `BOOTSTRAP_SETUP_TOKEN` private and share it only through a trusted channel.
+Existing local CI helpers are also available via `pnpm ci:local:quality` and
+`pnpm ci:local:e2e`. The E2E helper resets its dedicated test database, not production
+storage. See each application's README for focused commands.

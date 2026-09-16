@@ -1,68 +1,24 @@
 services:
-  backend:
+  asterism:
     build:
-      context: ./apps/backend
+      context: .
+      dockerfile: Dockerfile
+    image: asterism:local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      STORAGE_ROOT: /storage
-      FRONTEND_URL: ${PUBLIC_URL:-http://localhost:3000}
-      SYSTEM_KEY: ${SYSTEM_KEY:Set SYSTEM_KEY in your environment}
-    volumes:
-      - backend:/storage
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET}
+      SYSTEM_KEY: ${SYSTEM_KEY:?Set SYSTEM_KEY}
+      ADMIN_PASSPHRASE: ${ADMIN_PASSPHRASE:?Set ADMIN_PASSPHRASE}
+      
     ports:
-      - "127.0.0.1:8000:8000"
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8000/openapi.json')",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    restart: unless-stopped
-    networks:
-      - asterism-net
-
-  frontend:
-    build:
-      context: ./apps/frontend
-      args:
-        NEXT_PUBLIC_BACKEND_API_URL: ${PUBLIC_URL:-http://backend:8000}/api/py
-    environment:
-      ADMIN_PASSPHRASE: ${ADMIN_PASSPHRASE:?Set ADMIN_PASSPHRASE in your environment}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in your environment}
-      BETTER_AUTH_URL: ${PUBLIC_URL:-http://localhost:3000}
-      BETTER_AUTH_DB_PATH: /storage/users.db
-      NEXT_PUBLIC_BACKEND_API_URL: ${PUBLIC_URL:-http://backend:8000}/api/py
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
-      SYSTEM_KEY: ${SYSTEM_KEY:Set SYSTEM_KEY in your environment}
+      - "127.0.0.1:${PORT:-3000}:3000"
     volumes:
-      - frontend:/storage
-    ports:
-      - "127.0.0.1:3000:3000"
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://localhost:3000').then(response => { if (!response.ok) process.exit(1) })",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+      - storage:/storage
     restart: unless-stopped
-    networks:
-      - asterism-net
-
-
-networks:
-  asterism-net:
+    stop_grace_period: 30s
 
 volumes:
-  backend:
-  frontend:
+  storage:
+  
