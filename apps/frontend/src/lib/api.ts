@@ -1,9 +1,13 @@
 import { authClient } from "@/lib/auth-client";
+import { BACKEND_API_URL, browserApiUrl } from "@/lib/backend-url";
 import { ApiClient } from "@/lib/client";
 import { client } from "@/lib/client/client.gen";
 
 client.setConfig({
-  baseUrl: process.env.NEXT_PUBLIC_BACKEND_API_URL!,
+  baseUrl:
+    typeof window === "undefined"
+      ? BACKEND_API_URL
+      : browserApiUrl(window.location.origin),
   throwOnError: true,
 });
 

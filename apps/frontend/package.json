@@ -3,17 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "bash scripts/run next dev --port 3000",
+    "build": "bash scripts/run next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "pnpm test:unit",
-    "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test": "bash scripts/run pnpm test:unit",
+    "test:unit": "bash scripts/run vitest run",
+    "test:unit:watch": "bash scripts/run vitest",
+    "test:e2e": "bash scripts/run playwright test",
     "typecheck": "tsc --noEmit",
-    "codegen": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts",
-    "reset:db": "node --env-file=.env reset-db.mjs"
+    "codegen": "bash scripts/run NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts",
+    "reset:db": "bash scripts/reset-db ../../.env"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -29,6 +29,7 @@
     "@hookform/resolvers": "^5.5.7",
     "@tabler/icons-react": "^3.44.0",
     "@tanstack/react-query": "^5.101.0",
+    "auth": "1.6.11",
     "better-auth": "^1.6.11",
     "better-sqlite3": "^12.10.0",
     "class-variance-authority": "^0.7.1",

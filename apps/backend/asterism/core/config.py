@@ -17,22 +17,10 @@ def default_allowed_tools() -> list[str]:
 class Config(BaseSettings):
     system_key: str = ""
     max_chars_for_retrieval: int = 50000
-    frontend_url: str = "http://localhost:3000"
+    public_url: str = "http://localhost:3000"
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
     db_url: str | None = None
-    jwt_issuer_override: str | None = Field(
-        default=None,
-        validation_alias="JWT_ISSUER",
-    )
-    jwt_audience_override: str | None = Field(
-        default=None,
-        validation_alias="JWT_AUDIENCE",
-    )
-    jwks_url_override: str | None = Field(
-        default=None,
-        validation_alias="JWKS_URL",
-    )
     default_allowed_tools: list[str] = Field(
         default_factory=default_allowed_tools
     )
@@ -52,21 +40,26 @@ class Config(BaseSettings):
             self.db_url = f"sqlite+aiosqlite:///{self.storage_root}/database.db"
 
         if not self.cors_allowed_origins:
-            self.cors_allowed_origins = [self.frontend_url]
+            self.cors_allowed_origins = [self.public_url]
 
         return self
 
     @property
     def jwt_issuer(self) -> str:
-        return self.jwt_issuer_override or self.frontend_url
+        return self.public_url
 
     @property
     def jwt_audience(self) -> str:
-        return self.jwt_audience_override or self.frontend_url
+        return self.public_url
+
+    @property
+    def frontend_internal_url(self) -> str:
+        # Next.js in development, nginx in the combined container.
+        return "http://127.0.0.1:3000"
 
     @property
     def jwks_url(self) -> str:
-        return self.jwks_url_override or f"{self.frontend_url}/api/auth/jwks"
+        return f"{self.frontend_internal_url}/api/auth/jwks"
 
     @computed_field
     @property

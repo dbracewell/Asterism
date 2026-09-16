@@ -1,0 +1,6 @@
+if [ -f ../../.env ]; then
+  export $(cat ../../.env | xargs)
+else
+  export $(cat .env | xargs)
+fi
+"$@"

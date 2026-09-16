@@ -1,9 +1,0 @@
-.env
-.next
-node_modules
-.turbo
-coverage
-playwright-report
-test-results
-certificates
-.DS_Store

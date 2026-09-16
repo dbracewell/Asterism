@@ -120,7 +120,6 @@ Notes:
 ## 3.1 Backend
 
 - Language/Framework: **Python + FastAPI**
-- LLM/agent orchestration: **LangChain**
 - ORM/data mapping: **SQLAlchemy**
 
 Storage:
@@ -140,7 +139,6 @@ All storage dependencies must be implemented behind interfaces so future swaps a
 - Framework: **Next.js 16**
 - Styling: **Tailwind CSS 4**
 - Components: **shadcn/ui**
-- AI integration: **Vercel AI SDK + AI components**
 - API client generation: **Hey API** (type-safe client from backend OpenAPI)
 - Auth: **BetterAuth with JWT**
 

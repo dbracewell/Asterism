@@ -1,5 +1,6 @@
 import filetype
 
+
 def get_file_mime_type(file_path) -> str:
     kind = filetype.guess(file_path)
     if kind is None:

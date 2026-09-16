@@ -36,8 +36,10 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
+// FastAPI validates its own Bearer tokens. Do not redirect API requests to HTML
+// sign-in pages before the local development rewrite can proxy them.
 export const config = {
   matcher: [
-    "/((?!api/auth|api/stream|api/chat|_next|monitoring|sign-in|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!api/py(?:/|$)|api/auth|api/stream|api/chat|_next|monitoring|sign-in|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
   ],
 };

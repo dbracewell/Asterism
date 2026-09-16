@@ -3,6 +3,12 @@
 .idea
 .vscode
 **/.env
+**/.env.*
+!**/.env.example
+**/*.db
+**/*.db-*
+**/*.sqlite*
+**/*.tsbuildinfo
 **/node_modules
 **/.next
 **/.venv

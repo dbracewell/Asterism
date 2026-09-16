@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
+import { BACKEND_API_URL } from "@/lib/backend-url";
 import { ApiClient, ClientOptions } from "@/lib/client";
 import { createClient, createConfig } from "@/lib/client/client";
 import { headers } from "next/headers";
@@ -21,7 +22,7 @@ export const getClient = cache(async () => {
   }
   return createClient(
     createConfig<ClientOptions>({
-      baseUrl: process.env.NEXT_PUBLIC_BACKEND_API_URL!,
+      baseUrl: BACKEND_API_URL,
       headers: {
         Authorization: `Bearer ${jwtToken}`,
       },

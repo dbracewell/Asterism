@@ -1,28 +1,53 @@
 {
   "$schema": "https://v2-10-11.turborepo.dev/schema.json",
+  "globalDependencies": [
+    ".env"
+  ],
   "globalPassThroughEnv": [
-    "BOOTSTRAP_SETUP_TOKEN",
-    "FRONT_END_URL",
-    "BETTER_AUTH_URL",
-    "JWKS_URL",
-    "JWT_ISSUER",
-    "JWT_AUDIENCE"
+    "PUBLIC_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_DB_PATH",
+    "SYSTEM_KEY",
+    "ADMIN_PASSPHRASE",
+    "STORAGE_ROOT",
+    "DB_URL"
+  ],
+  "globalEnv": [
+    "PUBLIC_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_DB_PATH",
+    "SYSTEM_KEY",
+    "ADMIN_PASSPHRASE",
+    "STORAGE_ROOT",
+    "DB_URL"
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "build/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "dist/**",
+        "build/**"
+      ]
     },
     "lint": {
-      "dependsOn": ["^lint"],
+      "dependsOn": [
+        "^lint"
+      ],
       "outputs": []
     },
     "test": {
-      "dependsOn": ["^test"],
+      "dependsOn": [
+        "^test"
+      ],
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": [
+        "^typecheck"
+      ],
       "outputs": []
     },
     "dev": {
