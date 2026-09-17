@@ -59,8 +59,11 @@ jobs:
       - name: Verify better-sqlite3 loads and opens DB
         run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
 
+      - name: Verify workspace task configuration
+        run: pnpm check:workspace-tasks
+
       - name: Run quality gates
-        run: pnpm turbo run lint typecheck test --filter=@asterism/backend --filter=@asterism/frontend
+        run: pnpm lint && pnpm typecheck && pnpm test
 
   frontend-e2e:
     name: Frontend E2E (Playwright)

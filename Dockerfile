@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
   && npm install -g pnpm@11.17.0
 
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY apps/backend/package.json apps/backend/package.json
 RUN --mount=type=cache,id=asterism-pnpm,target=/pnpm/store \
@@ -17,7 +17,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN BETTER_AUTH_DB_PATH=:memory: \
   BETTER_AUTH_SECRET=build-only-placeholder-not-a-runtime-secret \
-  pnpm turbo run build --filter=@asterism/frontend --env-mode=loose
+  pnpm --filter @asterism/frontend build
 
 FROM python:3.13-slim-bookworm AS backend-build
 # Avoid compiling llama.cpp for build-host-only CPU features (notably ARM VMs).

@@ -17,7 +17,7 @@ From the repository root:
 
 ```bash
 pnpm --filter @asterism/backend sync
-pnpm dev --filter=@asterism/backend
+pnpm --filter @asterism/backend dev
 ```
 
 Normally use `pnpm dev` to start both apps. The frontend proxies browser API requests
@@ -42,5 +42,7 @@ migration. The container calls it only when the default database file is absent.
 From the repository root:
 
 ```bash
-pnpm turbo run lint typecheck test --filter=@asterism/backend
+pnpm --filter @asterism/backend lint
+pnpm --filter @asterism/backend typecheck
+pnpm --filter @asterism/backend test
 ```

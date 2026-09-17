@@ -38,7 +38,7 @@ Keep the existing secrets and database paths to preserve users and sessions.
 ## Docker
 
 The root `Dockerfile` packages Next.js, FastAPI, and nginx in one non-root container.
-Turborepo builds the frontend; uv installs locked Python dependencies. The split
+pnpm builds the frontend workspace; uv installs locked Python dependencies. The split
 container configuration is no longer supported.
 
 ```bash
@@ -114,17 +114,22 @@ SQLite **3.45+** (the backend uses JSONB functions).
    pnpm dev
    ```
 
-`pnpm dev` loads the shared root `.env` and starts both apps through Turborepo.
-Open `http://localhost:3000`, not the backend port. Next.js proxies `/api/py/*`
+`pnpm dev` currently starts both workspace development scripts through pnpm. The
+shared root environment launcher and mprocs interface are introduced separately by
+EPIC-9; until then, follow the app-specific configuration notes. Open
+`http://localhost:3000`, not the backend port. Next.js proxies `/api/py/*`
 (including WebSocket upgrades) to FastAPI on port 8000. Docker uses nginx for the
 same routing. API schema: `http://localhost:3000/api/py/openapi.json`.
 
-To start just one workspace with the same environment:
+To start one workspace using its current package-level configuration path:
 
 ```bash
-pnpm dev --filter=@asterism/frontend
-pnpm dev --filter=@asterism/backend
+pnpm --filter @asterism/frontend dev
+pnpm --filter @asterism/backend dev
 ```
+
+EPIC-9 US-9.1 will make root and focused development commands use the same root
+configuration source.
 
 ## First-time administrator setup
 
@@ -134,7 +139,9 @@ Keep this passphrase private. The frontend and backend must use the same `SYSTEM
 ## Quality checks
 
 ```bash
-pnpm turbo run lint typecheck test
+pnpm lint
+pnpm typecheck
+pnpm test
 pnpm --filter @asterism/frontend test:e2e
 ```
 

@@ -1,6 +1,5 @@
 .DS_Store
 node_modules
-.turbo
 .env
 .env.*
 !.env.example

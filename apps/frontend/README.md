@@ -20,12 +20,12 @@ From the repository root:
 
 ```bash
 pnpm install
-pnpm dev                         # both applications, each loading its own .env
-pnpm dev --filter=@asterism/frontend  # frontend only
+pnpm dev                              # both applications via pnpm
+pnpm --filter @asterism/frontend dev  # frontend only
 ```
 
 Next.js loads `apps/frontend/.env`; the backend loads `apps/backend/.env`.
-Root `pnpm dev` only starts Turborepo, without loading the root `.env`.
+Root `pnpm dev` currently starts both workspace scripts without adding another environment-loading layer.
 Keep shared secrets and `PUBLIC_URL` consistent between the two app files.
 Docker continues to use the root `.env`.
 Exported environment variables take precedence. Restart existing dev servers
@@ -72,7 +72,9 @@ The combined deployment smoke test is documented in the root README.
 From the repository root:
 
 ```bash
-pnpm turbo run lint typecheck test --filter=@asterism/frontend
+pnpm --filter @asterism/frontend lint
+pnpm --filter @asterism/frontend typecheck
+pnpm --filter @asterism/frontend test
 pnpm --filter @asterism/frontend test:e2e
 pnpm --filter @asterism/frontend codegen
 ```
