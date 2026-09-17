@@ -75,47 +75,37 @@ Agents are scoped so capability access is explicit and auditable.
 ## 3.0 Monorepo and Build Orchestration
 
 - Repository model: **Monorepo**
-- Monorepo tooling: **Turborepo**
-- Package manager: **pnpm workspaces**
+- Package manager and task runner: **pnpm workspaces**
 
 Engineering implications:
 
-- Use Turborepo pipelines for build/test/lint orchestration across apps/packages.
+- Root scripts explicitly invoke the frontend and/or backend workspace scripts.
 - Prefer shared config and reusable package boundaries over duplication.
-- Keep task outputs/cache settings correct so local and CI runs are deterministic.
+- Tasks run without a repository-level cache; local and CI commands must remain deterministic.
+- The interactive mprocs development workflow is planned in EPIC-9 but is not active yet.
 
 ### Common monorepo commands
 
 Run from repository root unless noted otherwise:
 
-- `pnpm turbo run dev` — start all development targets
-- `pnpm turbo run build` — build all configured targets
-- `pnpm turbo run lint` — run lint checks across the monorepo
-- `pnpm turbo run test` — run test targets across apps/packages
-- `pnpm turbo run typecheck` — run type-checking targets
+- `pnpm dev` — start both development targets using pnpm's temporary parallel runner
+- `pnpm build` — build the frontend (the backend is packaged by the Docker/uv flow)
+- `pnpm lint` — lint backend, then frontend
+- `pnpm test` — test backend, then frontend
+- `pnpm typecheck` — type-check backend, then frontend
 
-Common filtered runs:
+Common focused runs:
 
-- `pnpm turbo run dev --filter=frontend` — run dev for frontend only
-- `pnpm turbo run dev --filter=backend` — run dev for backend only
-- `pnpm turbo run test --filter=frontend` — run frontend tests only
-- `pnpm turbo run test --filter=backend` — run backend tests only
+- `pnpm --filter @asterism/frontend dev` — run the frontend only
+- `pnpm --filter @asterism/backend dev` — run the backend only
+- `pnpm --filter @asterism/frontend test` — test the frontend only
+- `pnpm --filter @asterism/backend test` — test the backend only
 
 Notes:
 
-- Use `--filter=<workspace>` for focused iteration on a single app/package.
-- Keep `turbo.json` pipelines in sync with workspace scripts so commands are reliable.
-
-### Troubleshooting Turborepo cache and task issues
-
-- `pnpm turbo run <task> --force` — bypass cache and force task execution.
-- `pnpm turbo run <task> --no-cache` — run without reading/writing cache for debugging.
-- Remove local cache when needed: `rm -rf .turbo`.
-- If dependencies or lockfile changed unexpectedly, run `pnpm install` again at repo root.
-- If a task is not found, verify:
-  - Workspace `package.json` contains the script
-  - `turbo.json` pipeline includes/depends on the task appropriately
-  - The `--filter` target matches the actual workspace name
+- Use `pnpm --filter <workspace> <script>` for focused iteration.
+- If dependencies or the lockfile changed unexpectedly, run `pnpm install` at the repository root.
+- If a task is not found, verify the target workspace `package.json` contains the script and the filter uses its full package name.
 
 ## 3.1 Backend
 

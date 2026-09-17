@@ -12,7 +12,6 @@
 **/node_modules
 **/.next
 **/.venv
-**/.turbo
 **/.pytest_cache
 **/.ruff_cache
 **/__pycache__
