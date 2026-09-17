@@ -75,14 +75,19 @@ async def searxng(
                     search_results.append(
                         SearchResult(
                             title=result["title"],
-                            url=result["url"],
+                            url=result["img_src"]
+                            if "img_src" in result
+                            else result["url"],
                             snippet=result.get("content"),
                             relevance_score=result.get("score", 0.0),
                         )
                     )
 
                 current_count = len(search_results)
-                if current_count < previous_count + 10 or current_count >= args.limit:
+                if (
+                    current_count < previous_count + 10
+                    or current_count >= args.limit
+                ):
                     break
 
                 await asyncio.sleep(1)

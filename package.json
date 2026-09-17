@@ -16,6 +16,7 @@
     "test:config": "node --test test/*.test.mjs",
     "test:container-config": "node docker/config-parity-test.mjs",
     "sync": "cd apps/backend && uv run sync",
+    "codegen": "cd apps/frontend && pnpm codegen",
     "reset:db": "node scripts/run-with-env.mjs --env required --scope all --profile reset -- node scripts/reset-databases.mjs",
     "ci:local:quality": "pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false && pnpm check:workspace-tasks && pnpm lint && pnpm typecheck && pnpm test",
     "ci:local:e2e": "pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false && pnpm --filter @asterism/frontend exec playwright install chromium && node scripts/run-isolated-e2e.mjs",

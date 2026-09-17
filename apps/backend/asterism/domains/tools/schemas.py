@@ -25,13 +25,13 @@ class SearchArgs(BaseModel):
         title="Limit",
     )
     search_language: str = Field(
-        default="all",
+        default="auto",
         description="The language to use to gather search results",
         title="Search Language",
     )
     time_range: SearchTimeRange = Field(
         default=SearchTimeRange.ALL,
-        description="The time range (ALL, DAY, MONTH, YEAR) to limit the search to",
+        description="The time range (ALL, DAY, MONTH, YEAR) to limit the search to",  # noqa: E501
         title="Time Range",
     )
 

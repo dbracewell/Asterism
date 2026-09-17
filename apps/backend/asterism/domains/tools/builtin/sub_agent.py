@@ -25,7 +25,11 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     if not agent_profile:
         raise ValueError(f"Agent with id {ctx.args.agent_id} not found.")
 
-    agent = Agent(profile=agent_profile, user=ctx.user)
+    agent = Agent(
+        profile=agent_profile,
+        user=ctx.user,
+        allowed_tools=agent_profile.tools,
+    )
 
     last_response: AgentEvent = AgentEvent(type=AgentEventType.COMPLETE)
     async for event in agent.run(messages=[LLMMessage.user(ctx.args.prompt)]):

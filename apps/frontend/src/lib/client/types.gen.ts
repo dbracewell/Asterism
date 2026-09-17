@@ -17,6 +17,10 @@ export type AgentProfile = {
      */
     description: string;
     /**
+     * Sub Agent
+     */
+    sub_agent: boolean;
+    /**
      * Model Id
      */
     model_id: string | null;
@@ -553,6 +557,10 @@ export type PartialAgentProfile = {
      * Description
      */
     description: string;
+    /**
+     * Sub Agent
+     */
+    sub_agent: boolean;
     /**
      * Model Id
      */

@@ -15,6 +15,11 @@ export const agentProfile = z.object({
     .describe(
       "Describes what actions the agent performs. Used to help other agents determine who to ask questions to.",
     ),
+  sub_agent: z
+    .boolean()
+    .describe(
+      "Whether this agent can be used as a sub-agent of another agent.",
+    ),
   systemPrompt: z
     .string()
     .nullable()

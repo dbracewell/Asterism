@@ -62,7 +62,6 @@ export function AgentProfileForm({
       );
       onOpenChange(false);
       router.refresh();
-      window.location.reload();
     },
     onError: () =>
       toast.error(
@@ -75,6 +74,7 @@ export function AgentProfileForm({
     defaultValues: {
       id: profile?.id ?? null,
       name: profile?.name ?? "",
+      sub_agent: profile?.sub_agent ?? false,
       description: profile?.description ?? "",
       systemPrompt: profile?.system_prompt,
       maxSteps: profile?.max_steps ?? 5,
@@ -91,6 +91,7 @@ export function AgentProfileForm({
     form.reset({
       id: profile?.id ?? null,
       name: profile?.name ?? "",
+      sub_agent: profile?.sub_agent ?? false,
       description: profile?.description ?? "",
       modelId: profile?.model_id ?? user.settings.default_model_id ?? "",
       systemPrompt: profile?.system_prompt,
@@ -129,6 +130,7 @@ export function AgentProfileForm({
     upsertAgentProfile.mutate({
       body: {
         id: data?.id ?? undefined,
+        sub_agent: data?.sub_agent ?? false,
         description: data.description,
         name: data.name,
         max_steps: data.maxSteps,
@@ -154,6 +156,7 @@ export function AgentProfileForm({
                 id: null,
                 name: "",
                 description: "",
+                sub_agent: false,
                 systemPrompt: null,
                 maxSteps: 5,
                 modelId: user.settings.default_model_id ?? "",
@@ -202,6 +205,7 @@ export function AgentProfileForm({
                         </Required>
                       </FieldLabel>
                       <Input
+                        autoComplete="off"
                         placeholder="The agent's name"
                         {...field}
                         min={3}
@@ -225,6 +229,7 @@ export function AgentProfileForm({
                         </Required>
                       </FieldLabel>
                       <Input
+                        autoComplete="off"
                         className="w-full!"
                         placeholder="Describes what actions the agent performs."
                         {...field}
@@ -291,6 +296,28 @@ export function AgentProfileForm({
                     </Field>
                   )}
                 />
+                <Controller
+                  control={form.control}
+                  name="sub_agent"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="form-agentProfile-subAgent"
+                          onCheckedChange={field.onChange}
+                          checked={field.value ?? false}
+                        />
+                        <FieldLabel htmlFor="form-agentProfile-maxSteps">
+                          <Required>
+                            Acts as Sub Agent{" "}
+                            <HelpIcon text="Can this agent be used as a sub agent?" />
+                          </Required>{" "}
+                        </FieldLabel>
+                      </div>
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
               </div>
 
               <Controller
@@ -305,6 +332,7 @@ export function AgentProfileForm({
                       System Prompt
                     </FieldLabel>
                     <Textarea
+                      autoComplete="off"
                       placeholder="The system prompt used to guide the agent's actions."
                       {...field}
                       className="h-55! resize-none!"
@@ -319,7 +347,7 @@ export function AgentProfileForm({
               />
             </div>
 
-            <Field className="mb-2 flex flex-1 flex-col">
+            <Field className="mt-3 mb-2 flex flex-1 flex-col">
               <FieldLabel>Tools</FieldLabel>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
                 {availableTools?.items.map((tool) => (

@@ -133,7 +133,9 @@ class ToolRegistry:
         return self.registry[tool_name]
 
     @staticmethod
-    def _exception_to_tool_result(ex: BaseException, tool_call: ToolCall) -> ToolResult:
+    def _exception_to_tool_result(
+        ex: BaseException, tool_call: ToolCall
+    ) -> ToolResult:
         return ToolResult(
             content=f"Tool failed with exception: {ex}",
             raw_result=ex,
@@ -154,8 +156,8 @@ class ToolRegistry:
 
         @async_retry(
             max_retries=max_retries,
-            on_exceed_attempts=lambda ex: ToolRegistry._exception_to_tool_result(
-                ex, tool_call
+            on_exceed_attempts=lambda ex: (
+                ToolRegistry._exception_to_tool_result(ex, tool_call)
             ),
         )
         async def call_tool() -> ToolResult:

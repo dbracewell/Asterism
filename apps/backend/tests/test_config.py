@@ -15,7 +15,7 @@ def test_public_url_is_the_only_jwt_identity_setting(tmp_path, monkeypatch):
 
 def test_default_public_url(tmp_path, monkeypatch):
     monkeypatch.delenv("PUBLIC_URL", raising=False)
-    settings = Config(_env_file=None, storage_root=tmp_path)
+    settings = Config(_env_file=None, storage_root=tmp_path)  # type: ignore
     assert settings.jwt_issuer == "http://localhost:3000"
     assert settings.jwt_audience == settings.jwt_issuer
 

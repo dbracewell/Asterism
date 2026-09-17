@@ -69,7 +69,6 @@ const AgentCard = ({
     onError: () => toast.error("Failed to delete agent"),
   });
 
-
   const { updateSetting, isUpdatingUserSetting } = useUpdateUserSettings();
   const { confirm, Dialog } = useConfirmationDialog({
     title: `Delete ${agent.name}`,

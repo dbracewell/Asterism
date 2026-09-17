@@ -24,6 +24,11 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         index=True,
         nullable=True,
     )
+    sub_agent: Mapped[bool] = mapped_column(
+        "sub_agent",
+        nullable=False,
+        default=False,
+    )
     name: Mapped[str] = mapped_column(
         "name",
         Text,

@@ -25,6 +25,6 @@ class SearchXNG(ImageSearchComponent[SearchXNGConfig]):
     async def __call__(self, args: SearchArgs) -> list[SearchResult]:
         return await searxng(
             args=args,
-            category="image",
+            category="images",
             config=self.config,
         )

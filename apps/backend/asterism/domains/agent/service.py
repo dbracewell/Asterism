@@ -14,7 +14,9 @@ from .schemas import AgentProfile, PartialAgentProfile, UserAgents
 async def _ensure_valid_tools(profile: AgentProfile):
     app_settings = await settings_service.get_app_settings()
     if profile.tools:
-        profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
+        profile.tools = [
+            t for t in profile.tools if t in app_settings.active_tools
+        ]
     return profile
 
 
@@ -23,7 +25,9 @@ async def get_user_agents(
     session: AsyncSession | None = None,
 ) -> UserAgents:
     async with get_async_db_session(session) as session:
-        stmt = select(AgentProfileModel).where(AgentProfileModel.user_id == user_id)
+        stmt = select(AgentProfileModel).where(
+            AgentProfileModel.user_id == user_id
+        )
         results = await session.scalars(stmt)
 
         agents_dict: dict[uuid.UUID, AgentProfile] = {}
@@ -75,12 +79,15 @@ async def upsert_agent_profile(
         if agent_profile.id:
             result = await session.get(AgentProfileModel, agent_profile.id)
             if not result:
-                raise NotFoundException(f"Agent with id {agent_profile.id} not found")
+                raise NotFoundException(
+                    f"Agent with id {agent_profile.id} not found"
+                )
             if user_id != result.user_id:
                 raise UnauthorizedException()
             result.chat_parameters = agent_profile.chat_parameters
             result.description = agent_profile.description
             result.name = agent_profile.name
+            result.sub_agent = agent_profile.sub_agent
             if agent_profile.model_id is None:
                 raise ValueError(
                     "model_id cannot be None when updating an agent profile"

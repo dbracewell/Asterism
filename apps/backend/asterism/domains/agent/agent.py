@@ -16,7 +16,6 @@ from asterism.domains.llm.schemas import (
     LLMClientProtocol,
     LLMEventType,
     LLMMessage,
-    ToolCall,
     ToolResult,
 )
 from asterism.domains.settings.schemas import LlmWithProvider
@@ -72,7 +71,6 @@ class Agent:
     async def _run_tools(
         self,
         user_message: str,
-        tool_calls: list[ToolCall],
         auths: list[ToolUseAuthorization],
     ) -> AsyncGenerator[ToolResult, None]:
         tasks = [
@@ -105,7 +103,7 @@ class Agent:
             agent_profiles = await get_user_agents(self.user.id)
             agent_info = []
             for profile in agent_profiles.agents.values():
-                if profile.id == self.profile.id:
+                if profile.id == self.profile.id or profile.sub_agent is False:
                     continue
 
                 agent_info.append(
@@ -203,7 +201,6 @@ class Agent:
 
                             async for response in self._run_tools(
                                 user_message=last_user_message.content,
-                                tool_calls=event.tool_calls,
                                 auths=auths,
                             ):
                                 self.logger.debug(

@@ -26,14 +26,18 @@ class AgentEventType(StrEnum):
 
 
 class AgentEvent(BaseModel):
-    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        from_attributes=True, arbitrary_types_allowed=True
+    )
     type: AgentEventType
     content: str = Field(default="")
     thinking: str = Field(default="")
     tool_calls: list[ToolCall] = Field(default_factory=list[ToolCall])
     tool_results: list[ToolResult] = Field(default_factory=list[ToolResult])
     total_tokens: int = Field(default=0)
-    user_response_queue: UserResponseQueue | None = Field(default=None, exclude=True)
+    user_response_queue: UserResponseQueue | None = Field(
+        default=None, exclude=True
+    )
 
     def has_tool_calls(self) -> bool:
         return len(self.tool_calls) > 0
@@ -46,6 +50,7 @@ class PartialAgentProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
     name: str
     description: str
+    sub_agent: bool
     model_id: uuid.UUID | None
     system_prompt: str | None
     max_steps: int
@@ -63,6 +68,7 @@ class PartialAgentProfile(BaseModel):
         return cls(
             model_id=model_id,
             max_steps=5,
+            sub_agent=False,
             description="A default agent to answer the user's requests",
             name="Default agent",
             system_prompt=(
