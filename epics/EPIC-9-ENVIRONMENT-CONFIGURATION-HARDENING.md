@@ -243,37 +243,30 @@ configuration cannot start an insecure or incorrectly routed deployment.
 - Synthetic secret canaries do not appear in browser-delivered bundles or diagnostics.
 - Valid environment-only and supported `/run/secrets` deployments still work.
 
-### US-9.3 — Migrate existing installations without data loss
+### US-9.3 — Migrate existing installations without data loss — Not applicable
 
-**As an existing developer/operator**, I want a clear migration and safe maintenance
-commands so that consolidation preserves users, sessions, secrets, and storage.
+**Decision:** canceled by maintainer direction because Asterism has no existing
+installations to migrate. The migration runbook and legacy-configuration fixtures would
+not provide product value. This history is retained rather than deleted.
 
-**Dependencies:** US-9.1, US-9.2, and SP-9.2.
-
-- [ ] US-9.3-T1: Publish a manual, conflict-aware migration runbook covering backups, retained secret values/DB paths, ignored legacy-file archival outside auto-loading locations, restart, and rollback.
-- [ ] US-9.3-T2: Harden reset/init scripts to load and validate configuration before selecting database targets; remove developer-specific paths and shell sourcing, use the pinned auth CLI, and require explicit destructive confirmation.
-- [ ] US-9.3-T3: Test differing old/root configurations, missing/invalid settings, external DB overrides, and confirmation cancellation using disposable data only.
-- [ ] US-9.3-T4: Reconcile root/frontend/backend READMEs and bootstrap examples with the tested single-file workflow and clearly distinguish initialization, migration, and destructive reset.
-
-**Acceptance criteria**
-
-- Migration never automatically chooses between conflicting secrets or deletes old files.
-- Existing secrets and database destinations can be retained, with a documented rollback.
-- Maintenance targets are resolved after configuration loading; invalid/ambiguous targets
-  and absent confirmation cause no deletion. Non-local DB reset behavior is explicit.
-- No initialization or reset example contains a developer-specific absolute path.
+- [-] US-9.3-T1: Not applicable; no existing installations require a migration runbook.
+- [-] US-9.3-T2: Migration scope canceled; reset/init safety moved to US-9.4-T5.
+- [-] US-9.3-T3: Legacy-installation fixtures are not applicable; reset cancellation coverage moved to US-9.4-T5.
+- [-] US-9.3-T4: Migration documentation is not applicable; fresh-install and reset documentation moved to US-9.4-T6.
 
 ### US-9.4 — Keep configuration deterministic across CI and containers
 
 **As a maintainer**, I want automated parity and isolation checks so that local
 convenience does not cause cache errors, broken deployment, or secret leakage.
 
-**Dependencies:** US-9.1–US-9.3 and SP-9.3.
+**Dependencies:** US-9.1, US-9.2, and SP-9.3.
 
 - [ ] US-9.4-T1: Verify pnpm workspace tasks inherit only the intended injected configuration, execute fresh, propagate failures, and contain no obsolete Turbo invocations.
 - [ ] US-9.4-T2: Align Docker/Compose entrypoints and build/runtime validation with the contract, retain environment-only operation, and verify dotenv exclusion from build context/layers.
 - [ ] US-9.4-T3: Add CI regressions for no-dotenv quality gates, isolated unit/E2E fixtures, root/filtered commands, special-character parity, and container auth/shared-key smoke tests.
 - [ ] US-9.4-T4: Verify runtime `PUBLIC_URL` changes without image rebuild and secret-canary absence from client artifacts/logs/layers; document deployment limitations and run all relevant quality gates.
+- [ ] US-9.4-T5: Harden reset/init scripts to validate configuration before selecting targets, remove developer-specific paths and shell sourcing, use the pinned auth CLI, require explicit destructive confirmation, and test cancellation with disposable data.
+- [ ] US-9.4-T6: Document the tested fresh-install, initialization, and destructive-reset workflows without legacy-installation migration guidance.
 
 **Acceptance criteria**
 
@@ -283,10 +276,13 @@ convenience does not cause cache errors, broken deployment, or secret leakage.
 - Docker builds without root `.env`; Compose and direct container startup accept valid
   injected settings, with documented parsing differences and `/storage` behavior.
 - Existing authentication, privileged shared-key flows, and public-origin routing remain functional.
+- Maintenance targets are resolved only after validation; invalid targets or absent
+  confirmation cause no deletion, and examples contain no developer-specific paths.
 
 ## Execution plan and definition of done
 
-Recommended sequence: **SP-9.1 → SP-9.2 → SP-9.3 → US-9.5 → US-9.1 → US-9.2 → US-9.3 → US-9.4**.
+Recommended sequence: **SP-9.1 → SP-9.2 → SP-9.3 → US-9.5 → US-9.1 → US-9.2 → US-9.4**.
+US-9.3 is retained as not applicable for planning history.
 Spikes may refine task boundaries, but do not start multiple implementation stories.
 Create a feature branch when each story starts and update `todo.md` as work proceeds.
 
