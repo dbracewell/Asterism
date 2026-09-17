@@ -304,6 +304,7 @@ export const ProvidersTab = ({
                       id={`provider-name-${index}`}
                       aria-invalid={providerErrors?.name ? true : undefined}
                       {...register(`llm_providers.${index}.name`)}
+                      autoComplete="nope"
                     />
                     <FieldError errors={[providerErrors?.name]} />
                   </FieldContent>
@@ -319,6 +320,7 @@ export const ProvidersTab = ({
                       aria-invalid={providerErrors?.base_url ? true : undefined}
                       placeholder="https://api.example.com/v1"
                       {...register(`llm_providers.${index}.base_url`)}
+                      autoComplete="nope"
                     />
                     <FieldError errors={[providerErrors?.base_url]} />
                   </FieldContent>
@@ -334,6 +336,7 @@ export const ProvidersTab = ({
                       type="password"
                       aria-invalid={providerErrors?.api_key ? true : undefined}
                       {...register(`llm_providers.${index}.api_key`)}
+                      autoComplete="nope"
                     />
                     <FieldError errors={[providerErrors?.api_key]} />
                   </FieldContent>
