@@ -5,7 +5,7 @@ Live execution checklist. Preserve completed history.
 ## EPIC-9 — Environment Configuration Hardening
 
 Plan: [EPIC-9](epics/EPIC-9-ENVIRONMENT-CONFIGURATION-HARDENING.md).
-Status: SP-9.1–SP-9.3 and US-9.1, US-9.2, US-9.4, and US-9.5 completed; US-9.3 canceled as not applicable. Epic closure in progress.
+Status: EPIC-9 completed; SP-9.1–SP-9.3 and US-9.1, US-9.2, US-9.4, and US-9.5 completed; US-9.3 canceled as not applicable.
 Order: SP-9.1 → SP-9.2 → SP-9.3 → US-9.5 → US-9.1 → US-9.2 → US-9.4.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -68,4 +68,4 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ### Epic closure
 
 - [x] Verify all spike exits and story acceptance criteria; request user completion confirmation.
-- [ ] On confirmation, complete approved merges, announce epic completion, and propose the next plan.
+- [x] On confirmation, complete approved merges, announce epic completion, and propose the next plan.
