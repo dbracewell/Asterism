@@ -5,7 +5,7 @@ Live execution checklist. Preserve completed history.
 ## EPIC-9 — Environment Configuration Hardening
 
 Plan: [EPIC-9](epics/EPIC-9-ENVIRONMENT-CONFIGURATION-HARDENING.md).
-Status: SP-9.1–SP-9.3, US-9.5, and US-9.1 completed; US-9.2 implementation complete and awaiting user confirmation.
+Status: SP-9.1–SP-9.3 and US-9.1, US-9.2, and US-9.5 completed; US-9.3 pending.
 Order: SP-9.1 → SP-9.2 → SP-9.3 → US-9.5 → US-9.1 → US-9.2 → US-9.3 → US-9.4.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -45,7 +45,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed.
   - [x] US-9.1-T4: Add parsing, precedence, command-directory, legacy-file, file-free, and signal/exit regression tests; prominently document the strict portable dotenv grammar with valid/invalid examples and explain why quotes, whitespace, `$`, escapes, interpolation, and inline comments are rejected.
   - [x] US-9.1-T5: Add a secret-free mprocs.yaml and root local-dev command using the shared loader; document installation/tested version, restart semantics, and the non-interactive fallback; test environment parity and process cleanup.
 
-- [~] US-9.2 — Fail safely on invalid configuration without leaking secrets (implementation complete; awaiting user confirmation)
+- [x] US-9.2 — Fail safely on invalid configuration without leaking secrets
   - [x] US-9.2-T1: Implement the agreed command-specific validation rules in backend and server-side frontend configuration, preserving stable variable names.
   - [x] US-9.2-T2: Add a documented configuration-check command that reports variable names and sources, never values, and performs no DB mutations.
   - [x] US-9.2-T3: Enforce server-only secret boundaries and agreed environment/file-secret precedence; prevent production startup with missing or known placeholder required secrets.
