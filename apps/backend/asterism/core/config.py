@@ -20,7 +20,9 @@ _PLACEHOLDER_PREFIXES = (
 def _file_secret(name: str) -> str:
     canonical = secrets_dir / name
     entries = (
-        {path.name for path in secrets_dir.iterdir()} if secrets_dir.exists() else set()
+        {path.name for path in secrets_dir.iterdir()}
+        if secrets_dir.exists()
+        else set()
     )
     has_canonical = name in entries
     has_legacy = name.lower() in entries
@@ -29,7 +31,9 @@ def _file_secret(name: str) -> str:
             f"Ambiguous file secret names for {name}; keep only the uppercase file"
         )
     if has_legacy:
-        raise ValueError(f"Legacy file secret name for {name}; rename it to uppercase")
+        raise ValueError(
+            f"Legacy file secret name for {name}; rename it to uppercase"
+        )
     if not has_canonical:
         return ""
     return canonical.read_text().removesuffix("\n").removesuffix("\r")
@@ -66,7 +70,9 @@ class Config(BaseSettings):
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
     db_url: str | None = None
-    default_allowed_tools: list[str] = Field(default_factory=default_allowed_tools)
+    default_allowed_tools: list[str] = Field(
+        default_factory=default_allowed_tools
+    )
     config_profile: str = Field(
         default_factory=lambda: (
             "production"
@@ -111,12 +117,17 @@ class Config(BaseSettings):
                     "without credentials, path, query, fragment, or trailing slash"
                 )
             if not self.system_key:
-                raise ConfigValidationError("SYSTEM_KEY is required (value redacted)")
+                raise ConfigValidationError(
+                    "SYSTEM_KEY is required (value redacted)"
+                )
             if self.system_key.startswith(_PLACEHOLDER_PREFIXES):
                 raise ConfigValidationError(
                     "SYSTEM_KEY uses a known placeholder (value redacted)"
                 )
-            if self.config_profile == "production" and len(self.system_key) < 32:
+            if (
+                self.config_profile == "production"
+                and len(self.system_key) < 32
+            ):
                 raise ConfigValidationError(
                     "SYSTEM_KEY does not meet the production strength "
                     "requirement (value redacted)"
