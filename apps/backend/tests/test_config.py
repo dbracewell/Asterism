@@ -1,4 +1,5 @@
-from asterism.core.config import Config
+import pytest
+from asterism.core.config import Config, ConfigValidationError
 
 
 def test_public_url_is_the_only_jwt_identity_setting(tmp_path, monkeypatch):
@@ -25,3 +26,39 @@ def test_config_does_not_load_cwd_dotenv(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     settings = Config(storage_root=tmp_path / "storage")
     assert settings.public_url == "http://localhost:3000"
+
+
+def test_runtime_validation_does_not_create_storage(tmp_path):
+    storage = tmp_path / "not-created"
+    settings = Config(
+        config_profile="development",
+        system_key="valid-system-key",
+        storage_root=storage,
+    )
+    settings.validate_runtime()
+    assert not storage.exists()
+    settings.prepare_storage()
+    assert (storage / "files").is_dir()
+
+
+def test_backend_initialization_does_not_require_runtime_secrets(tmp_path):
+    settings = Config(
+        config_profile="backend-init",
+        system_key="",
+        storage_root=tmp_path,
+    )
+    settings.validate_runtime()
+
+
+def test_secret_validation_error_is_redacted(tmp_path):
+    canary = "replace-with-secret-canary"
+    settings = Config(
+        config_profile="production",
+        system_key=canary,
+        storage_root=tmp_path,
+        public_url="https://asterism.example.com",
+    )
+    with pytest.raises(ConfigValidationError) as error:
+        settings.validate_runtime()
+    assert "SYSTEM_KEY" in str(error.value)
+    assert canary not in str(error.value)

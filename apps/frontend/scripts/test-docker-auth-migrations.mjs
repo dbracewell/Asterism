@@ -16,7 +16,7 @@ for (const override of [false, true]) {
       const migrate = () => {
         const result = spawnSync(process.execPath, [
           "node_modules/auth/dist/index.mjs", "migrate",
-          "--config", "./src/lib/auth.ts", "--yes",
+          "--config", "./src/lib/auth-cli.ts", "--yes",
         ], {
           cwd,
           env: {

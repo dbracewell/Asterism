@@ -1,12 +1,12 @@
 import { THEME_REFRESH_COOKIE } from "@/features/theme/constants";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = ["/sign-in", "/api/stream"];
 
 export async function proxy(request: NextRequest) {
-  const session = await auth.api.getSession({
+  const session = await getAuth().api.getSession({
     headers: await headers(),
   });
 

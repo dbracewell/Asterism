@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import type { Auth } from "@/lib/auth";
 import {
   adminClient,
   inferAdditionalFields,
@@ -7,5 +7,5 @@ import {
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  plugins: [jwtClient(), adminClient(), inferAdditionalFields<typeof auth>()],
+  plugins: [jwtClient(), adminClient(), inferAdditionalFields<Auth>()],
 });

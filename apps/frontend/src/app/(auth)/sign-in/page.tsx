@@ -1,6 +1,6 @@
 import { AuthForm } from "@/features/auth/components/auth-form";
 import { getUserCount } from "@/features/auth/server/actions";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import z from "zod";
@@ -19,7 +19,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   const headersList = await headers();
   const [resolvedSearchParams, sessionData] = await Promise.all([
     searchParams,
-    auth.api.getSession({ headers: headersList }),
+    getAuth().api.getSession({ headers: headersList }),
   ]);
   const formParams = searchSchema.parse(resolvedSearchParams);
 

@@ -6,24 +6,18 @@ import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  assertValidConfiguration,
+  CATALOG,
+  SECRET_NAMES,
+} from "./config-contract.mjs";
+
 export const REPOSITORY_ROOT = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "..",
 );
 
-const CONFIG_KEYS = new Set([
-  "PUBLIC_URL",
-  "BETTER_AUTH_SECRET",
-  "SYSTEM_KEY",
-  "ADMIN_PASSPHRASE",
-  "STORAGE_ROOT",
-  "BETTER_AUTH_DB_PATH",
-  "DB_URL",
-  "CORS_ALLOWED_ORIGINS",
-  "MAX_CHARS_FOR_RETRIEVAL",
-  "DEFAULT_ALLOWED_TOOLS",
-  "PORT",
-]);
+const CONFIG_KEYS = new Set(Object.keys(CATALOG));
 
 const SCOPES = {
   all: CONFIG_KEYS,
@@ -126,11 +120,18 @@ export function loadRootEnvironment({
   root = REPOSITORY_ROOT,
   mode = "required",
   environment = process.env,
+  secretsDirectory = "/run/secrets",
 } = {}) {
   if (!new Set(["required", "optional", "none"]).has(mode)) {
     throw new EnvironmentError(`Unknown environment mode: ${mode}`);
   }
-  if (mode === "none") return { loaded: false, variables: new Set() };
+  const sources = new Map();
+  for (const name of CONFIG_KEYS) {
+    if (Object.hasOwn(environment, name)) sources.set(name, "process");
+  }
+  if (mode === "none") {
+    return { loaded: false, variables: new Set(), sources };
+  }
 
   const legacyFiles = findLegacyEnvironmentFiles(root);
   if (legacyFiles.length > 0) {
@@ -141,18 +142,50 @@ export function loadRootEnvironment({
   }
 
   const path = join(root, ".env");
+  let parsed = new Map();
   if (!existsSync(path)) {
-    if (mode === "optional") return { loaded: false, variables: new Set() };
-    throw new EnvironmentError(
-      "Root .env is required. Copy .env.example to .env and configure it.",
-    );
+    if (mode === "required") {
+      throw new EnvironmentError(
+        "Root .env is required. Copy .env.example to .env and configure it.",
+      );
+    }
+  } else {
+    parsed = parsePortableEnvironment(readFileSync(path, "utf8"));
+    for (const [key, value] of parsed) {
+      if (!Object.hasOwn(environment, key)) {
+        environment[key] = value;
+        sources.set(key, "root-dotenv");
+      }
+    }
   }
 
-  const parsed = parsePortableEnvironment(readFileSync(path, "utf8"));
-  for (const [key, value] of parsed) {
-    if (!Object.hasOwn(environment, key)) environment[key] = value;
+  const secretEntries = existsSync(secretsDirectory)
+    ? new Set(readdirSync(secretsDirectory))
+    : new Set();
+  for (const name of SECRET_NAMES) {
+    const canonical = join(secretsDirectory, name);
+    const hasCanonical = secretEntries.has(name);
+    const hasLegacy = secretEntries.has(name.toLowerCase());
+    if (hasCanonical && hasLegacy) {
+      throw new EnvironmentError(
+        `Ambiguous file secret names for ${name}; keep only the canonical uppercase file`,
+      );
+    }
+    if (hasLegacy) {
+      throw new EnvironmentError(
+        `Legacy file secret name for ${name}; rename it to the canonical uppercase name`,
+      );
+    }
+    if (!Object.hasOwn(environment, name) && hasCanonical) {
+      environment[name] = readFileSync(canonical, "utf8").replace(/\r?\n$/, "");
+      sources.set(name, "file-secret");
+    }
   }
-  return { loaded: true, variables: new Set(parsed.keys()) };
+  return {
+    loaded: existsSync(path),
+    variables: new Set(parsed.keys()),
+    sources,
+  };
 }
 
 export function environmentForScope(environment, scope = "all") {
@@ -170,11 +203,13 @@ export function environmentForScope(environment, scope = "all") {
 export function parseArguments(arguments_) {
   let mode = "required";
   let scope = "all";
+  let profile;
   let index = 0;
   while (index < arguments_.length && arguments_[index] !== "--") {
     const option = arguments_[index++];
     if (option === "--env") mode = arguments_[index++];
     else if (option === "--scope") scope = arguments_[index++];
+    else if (option === "--profile") profile = arguments_[index++];
     else throw new EnvironmentError(`Unknown option: ${option}`);
   }
   if (arguments_[index] !== "--") {
@@ -183,7 +218,9 @@ export function parseArguments(arguments_) {
   const command = arguments_.slice(index + 1);
   if (command.length === 0)
     throw new EnvironmentError("No command was provided");
-  return { mode, scope, command };
+  profile ??=
+    mode === "none" ? "test" : mode === "optional" ? "build" : "development";
+  return { mode, scope, profile, command };
 }
 
 export async function runCommand(command, environment) {
@@ -224,12 +261,19 @@ export async function runCommand(command, environment) {
 
 async function main() {
   try {
-    const { mode, scope, command } = parseArguments(process.argv.slice(2));
-    loadRootEnvironment({ mode });
-    const code = await runCommand(
-      command,
-      environmentForScope(process.env, scope),
+    const { mode, scope, profile, command } = parseArguments(
+      process.argv.slice(2),
     );
+    const loaded = loadRootEnvironment({ mode });
+    assertValidConfiguration({
+      environment: process.env,
+      sources: loaded.sources,
+      profile,
+      scope,
+    });
+    const childEnvironment = environmentForScope(process.env, scope);
+    childEnvironment.ASTERISM_CONFIG_PROFILE = profile;
+    const code = await runCommand(command, childEnvironment);
     process.exitCode = code;
   } catch (error) {
     const message =

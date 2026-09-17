@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from asterism.common.log import get_logger
 from asterism.common.package_walker import load_decorators
+from asterism.core import config
 from asterism.db.database import db_session_manager
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.tools.registry import tool_registry
@@ -15,6 +16,8 @@ logger = get_logger("ASTERISM")
 
 
 async def init_system() -> None:
+    config.validate_runtime()
+    config.prepare_storage()
     get_draft_model()
     db_session_manager.init()
     logger.info("Database session manager initialized.")

@@ -1,7 +1,7 @@
 import { buttonVariants } from "@/components/ui/button";
 import { getCurrentUser } from "@/features/auth/server/actions";
 import SessionPage from "@/features/chat/components/session-page";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { OctagonAlertIcon } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -21,7 +21,7 @@ export default async function ChatSessionPage(props: ChatSessionPageProps) {
     redirect("/");
   }
 
-  const jwtToken = await auth.api.getToken({
+  const jwtToken = await getAuth().api.getToken({
     headers: await headers(),
   });
 

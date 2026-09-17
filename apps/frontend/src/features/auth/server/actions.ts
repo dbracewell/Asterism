@@ -5,7 +5,8 @@ import {
 } from "@/features/auth/schemas";
 import { User } from "@/features/auth/types";
 import { getApiClient } from "@/lib/api-server";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
+import { getFrontendServerConfig } from "@/lib/server-config";
 import { BACKEND_API_URL } from "@/lib/backend-url";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -20,7 +21,7 @@ export const installApp = async (data: InstallUserSchemaType) => {
   let user;
   try {
     const headerList = await headers();
-    user = await auth.api.signUpEmail({
+    user = await getAuth().api.signUpEmail({
       headers: headerList,
       body: { ...parsed.data },
       query: { adminKey: parsed.data.adminKey, install: true },
@@ -37,7 +38,7 @@ export const installApp = async (data: InstallUserSchemaType) => {
     },
     body: JSON.stringify({
       user_id: user.user.id,
-      system_key: process.env.SYSTEM_KEY,
+      system_key: getFrontendServerConfig().systemKey,
     }),
   });
 
@@ -50,7 +51,7 @@ export const installApp = async (data: InstallUserSchemaType) => {
 
 export const getCurrentUser = cache(async () => {
   const headersList = await headers();
-  const session = await auth.api.getSession({
+  const session = await getAuth().api.getSession({
     headers: headersList,
   });
   if (!session?.user || session.user.role == null) {
@@ -72,7 +73,7 @@ export const getCurrentUser = cache(async () => {
 });
 
 export const getUserCount = cache(async () => {
-  const context = await auth.$context;
+  const context = await getAuth().$context;
   return await context.adapter.count({
     model: "user",
     where: [],
