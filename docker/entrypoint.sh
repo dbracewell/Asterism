@@ -26,9 +26,17 @@ load_secret ADMIN_PASSPHRASE
 export PUBLIC_URL="${PUBLIC_URL:-http://localhost:3000}"
 export ASTERISM_CONFIG_PROFILE=production
 
-echo "Validating configuration and migrating authentication schema"
+echo "Validating configuration"
+node /app/scripts/config-check.mjs --profile production --scope all --env none
+cd /app/apps/backend
+env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
+    .venv/bin/python -c 'from asterism.core import config; config.validate_runtime()'
+
 cd /app/apps/frontend
-node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes
+env -u SYSTEM_KEY -u ADMIN_PASSPHRASE -u DB_URL \
+    -u MAX_CHARS_FOR_RETRIEVAL -u CORS_ALLOWED_ORIGINS \
+    -u DEFAULT_ALLOWED_TOOLS ASTERISM_CONFIG_PROFILE=auth-migrate \
+    node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes
 
 echo "STORAGE_ROOT=${STORAGE_ROOT:-/storage}"
 mkdir -p "$STORAGE_ROOT"
@@ -36,7 +44,8 @@ mkdir -p "$STORAGE_ROOT"
 cd /app/apps/backend
 # The existing initializer resets databases; run it only for a fresh local DB.
 if [[ -z "${DB_URL:-}" && ! -f "$STORAGE_ROOT/database.db" ]]; then
-    .venv/bin/python -m asterism.db.init_db
+    env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
+        .venv/bin/python -m asterism.db.init_db
 fi
 
 pids=()
@@ -51,13 +60,18 @@ shutdown() {
 }
 trap 'shutdown; exit 0' TERM INT
 
-.venv/bin/uvicorn asterism.main:app --host 127.0.0.1 --port 8000 \
+env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
+    .venv/bin/uvicorn asterism.main:app --host 127.0.0.1 --port 8000 \
     --proxy-headers --forwarded-allow-ips=127.0.0.1 &
 pids+=("$!")
 cd /app/apps/frontend
-node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3001 &
+env -u DB_URL -u MAX_CHARS_FOR_RETRIEVAL -u CORS_ALLOWED_ORIGINS \
+    -u DEFAULT_ALLOWED_TOOLS \
+    node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3001 &
 pids+=("$!")
-nginx -c /app/docker/nginx.conf -g 'daemon off;' &
+env -u BETTER_AUTH_SECRET -u SYSTEM_KEY -u ADMIN_PASSPHRASE \
+    -u BETTER_AUTH_DB_PATH -u DB_URL \
+    nginx -c /app/docker/nginx.conf -g 'daemon off;' &
 pids+=("$!")
 
 # A dead service must stop the whole container so restart policies can recover.

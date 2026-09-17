@@ -82,12 +82,8 @@ Server-side API requests use loopback port 8000. Signing-key discovery and webho
 use loopback port 3000. These internal ports are fixed in both development and Docker.
 There are no separate JWT issuer/audience or browser API URL settings.
 
-**Migrating older configuration:** move secrets and storage settings into the root
-`.env`, rename the old public auth/frontend URL setting to `PUBLIC_URL`, and remove
-legacy JWT, JWKS, frontend/backend URL overrides and `NEXT_PUBLIC_*` URL variables.
-After reconciling conflicts, move old app-local `.env*` files to a backup location
-outside the repository; the launcher reports competing paths and will not delete or
-read them. Keep the existing secrets and database paths to preserve users and sessions.
+Asterism currently has no supported legacy-installation migration path. Fresh
+installations use only the root configuration described above.
 
 ## Docker
 
@@ -111,7 +107,13 @@ docker run -d --name asterism --restart unless-stopped --stop-timeout 30 \
 
 Open <http://localhost:3000>. To use another local port, set `PORT=8080` and
 `PUBLIC_URL=http://localhost:8080` for Compose. Changing the public origin does not
-require rebuilding the image, only recreating the container.
+require rebuilding the image, only recreating the container. Image builds neither
+read `.env` nor require runtime credentials.
+
+For orchestrators with file secrets, mount canonical uppercase files at
+`/run/secrets/BETTER_AUTH_SECRET`, `/run/secrets/SYSTEM_KEY`, and
+`/run/secrets/ADMIN_PASSPHRASE`. Explicit environment values take precedence. Do not
+mount lowercase aliases.
 
 For remote HTTPS access, put a trusted TLS proxy in front of port 3000 and set
 `PUBLIC_URL` to its external origin. Forward Host, X-Forwarded-Proto, and WebSocket
@@ -125,10 +127,7 @@ run on each startup using the bundled, pinned official Better Auth CLI and expli
 existing backend databases are not reset or automatically migrated. Bind mounts must
 be writable by UID **10001**. Back up databases before upgrades.
 
-The single `storage` volume does not automatically import older split-container
-volumes. Copy their databases/files into the new volume while services are stopped,
-retaining the auth secret and setting appropriate ownership. Never use `down -v`
-unless deleting persisted data is intentional.
+Never use `docker compose down -v` unless deleting all persisted data is intentional.
 
 Health checks cover the frontend, backend OpenAPI, and auth signing keys. If a
 service exits, the container stops so its restart policy can recover. SIGTERM stops
@@ -136,11 +135,18 @@ all services. ML/CUDA dependencies make builds and images large; allow substanti
 free Docker disk space. Optional tools requiring Playwright browsers need those
 browser binaries installed separately.
 
-Deployment smoke test (creates/removes its own container, volume, and account):
+Deployment checks use only generated disposable configuration, containers, volumes,
+and accounts:
 
 ```bash
+pnpm test:container-config
 python3 docker/smoke-test.py asterism:local
 ```
+
+The parity check verifies byte-identical strict-file values in the repository loader,
+Compose, and direct Docker. The smoke test exercises both environment and canonical
+file-secret modes with two runtime origins and scans browser assets, image metadata,
+and logs for synthetic secret canaries.
 
 ## Local development
 
@@ -153,11 +159,15 @@ linked against SQLite **3.45+** (the backend uses JSONB functions).
 
    ```bash
    # Create your configured STORAGE_ROOT directory first.
-   # Frontend migrations are non-destructive.
    pnpm --filter @asterism/frontend migrate:db
-   # WARNING: this backend command resets an existing database.
-   pnpm --filter @asterism/backend reset:db
+   pnpm --filter @asterism/backend init:db
    ```
+
+   Both initialization commands preserve existing data. To intentionally delete and
+   recreate both local SQLite databases, run `pnpm reset:db`, inspect the displayed
+   absolute targets, and type `RESET`. Noninteractive execution is canceled unless
+   `pnpm reset:db -- --yes` is supplied explicitly. Reset supports only validated
+   local SQLite targets; back up any data you need first.
 
 4. Start both applications from the repository root:
 
@@ -196,9 +206,11 @@ Keep this passphrase private. The frontend and backend must use the same `SYSTEM
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm --filter @asterism/frontend test:e2e
+node scripts/run-isolated-e2e.mjs
 ```
 
 Existing local CI helpers are also available via `pnpm ci:local:quality` and
-`pnpm ci:local:e2e`. The E2E helper resets its dedicated test database, not production
-storage. See each application's README for focused commands.
+`pnpm ci:local:e2e`. Unit and E2E jobs do not load dotenv files; the E2E helper creates,
+migrates, and removes a unique temporary auth database and configuration directory.
+CI also builds the Docker frontend stage without runtime credentials. See each
+application's README for focused commands.

@@ -32,8 +32,10 @@ an mprocs pane retains its inherited environment. Docker Compose also consumes t
 root file.
 
 Runtime auth and the official migration CLI use the same database path. Create
-its parent directory before local migrations (Docker creates `STORAGE_ROOT`).
-Reset is destructive; stop the app before running it.
+its parent directory before local migrations (Docker creates `STORAGE_ROOT`). To
+intentionally recreate auth storage, stop the app, run
+`pnpm --filter @asterism/frontend reset:db`, inspect the absolute target, and type
+`RESET`. Noninteractive cancellation never deletes the selected database.
 
 Open `http://localhost:3000`. Next.js allows only one dev process per app directory.
 
@@ -74,6 +76,6 @@ From the repository root:
 pnpm --filter @asterism/frontend lint
 pnpm --filter @asterism/frontend typecheck
 pnpm --filter @asterism/frontend test
-pnpm --filter @asterism/frontend test:e2e
+node scripts/run-isolated-e2e.mjs       # isolated E2E fixture, from repo root
 pnpm --filter @asterism/frontend codegen
 ```

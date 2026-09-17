@@ -80,7 +80,11 @@ function requiredNames(profile, scope) {
     required.add("STORAGE_ROOT");
     required.add("BACKEND_STORAGE");
   } else if (profile === "reset") {
-    if (scope === "all" || scope === "frontend") required.add("AUTH_STORAGE");
+    if (scope === "all" || scope === "frontend") {
+      required.add("PUBLIC_URL");
+      required.add("BETTER_AUTH_SECRET");
+      required.add("AUTH_STORAGE");
+    }
     if (scope === "all" || scope === "backend") {
       required.add("STORAGE_ROOT");
       required.add("BACKEND_STORAGE");

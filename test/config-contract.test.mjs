@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -95,6 +96,20 @@ test("production applies URL and secret strength rules", () => {
   );
 });
 
+test("reset validates targets and frontend migration credentials", () => {
+  const root = temporaryDirectory();
+  const environment = validDevelopmentEnvironment(root);
+  delete environment.BETTER_AUTH_SECRET;
+  const result = validateConfiguration({
+    environment,
+    profile: "reset",
+    scope: "all",
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.some((issue) => issue.name === "BETTER_AUTH_SECRET"));
+  assert.equal(existsSync(join(root, "storage")), false);
+});
+
 test("build and test profiles require no runtime credentials", () => {
   for (const profile of ["build", "test", "codegen"]) {
     const result = validateConfiguration({
@@ -108,6 +123,23 @@ test("build and test profiles require no runtime credentials", () => {
       `${profile}: ${JSON.stringify(result.issues)}`,
     );
   }
+});
+
+test("CI dotenv check permits examples and rejects runtime files", () => {
+  const root = temporaryDirectory();
+  writeFileSync(join(root, ".env.example"), "EXAMPLE=value\n");
+  const command = fileURLToPath(
+    new URL("../scripts/check-no-dotenv.mjs", import.meta.url),
+  );
+  let result = spawnSync(process.execPath, [command, root], {
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  writeFileSync(join(root, ".env.local"), "SECRET=canary\n");
+  result = spawnSync(process.execPath, [command, root], { encoding: "utf8" });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /\.env\.local/);
+  assert.equal(result.stderr.includes("canary"), false);
 });
 
 test("browser artifact scanner detects and redacts secret canaries", () => {
@@ -131,6 +163,51 @@ test("browser artifact scanner detects and redacts secret canaries", () => {
   assert.equal(result.status, 1);
   assert.match(result.stderr, /SYSTEM_KEY/);
   assert.equal(result.stderr.includes(canary), false);
+});
+
+test("noninteractive root reset cancellation preserves both databases", () => {
+  const root = temporaryDirectory();
+  const authDatabase = join(root, "users.db");
+  const backendDatabase = join(root, "database.db");
+  writeFileSync(authDatabase, "auth-data");
+  writeFileSync(backendDatabase, "backend-data");
+  const result = spawnSync(
+    process.execPath,
+    [fileURLToPath(new URL("../scripts/reset-databases.mjs", import.meta.url))],
+    {
+      encoding: "utf8",
+      env: {
+        PATH: process.env.PATH,
+        STORAGE_ROOT: root,
+        BETTER_AUTH_DB_PATH: authDatabase,
+        DB_URL: `sqlite+aiosqlite:///${backendDatabase}`,
+      },
+    },
+  );
+  assert.notEqual(result.status, 0);
+  assert.equal(readFileSync(authDatabase, "utf8"), "auth-data");
+  assert.equal(readFileSync(backendDatabase, "utf8"), "backend-data");
+});
+
+test("frontend reset cancellation preserves its selected database", () => {
+  const root = temporaryDirectory();
+  const database = join(root, "users.db");
+  writeFileSync(database, "auth-data");
+  const result = spawnSync(
+    process.execPath,
+    [join(process.cwd(), "apps/frontend/scripts/reset-db.mjs")],
+    {
+      cwd: join(process.cwd(), "apps/frontend"),
+      encoding: "utf8",
+      env: {
+        PATH: process.env.PATH,
+        STORAGE_ROOT: root,
+        BETTER_AUTH_DB_PATH: database,
+      },
+    },
+  );
+  assert.notEqual(result.status, 0);
+  assert.equal(readFileSync(database, "utf8"), "auth-data");
 });
 
 test("config check reports sources and validity but not values", () => {

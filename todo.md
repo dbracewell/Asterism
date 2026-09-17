@@ -5,7 +5,7 @@ Live execution checklist. Preserve completed history.
 ## EPIC-9 — Environment Configuration Hardening
 
 Plan: [EPIC-9](epics/EPIC-9-ENVIRONMENT-CONFIGURATION-HARDENING.md).
-Status: SP-9.1–SP-9.3 and US-9.1, US-9.2, and US-9.5 completed; US-9.3 canceled as not applicable; US-9.4 pending.
+Status: SP-9.1–SP-9.3 and US-9.1, US-9.2, US-9.4, and US-9.5 completed; US-9.3 canceled as not applicable. Epic closure in progress.
 Order: SP-9.1 → SP-9.2 → SP-9.3 → US-9.5 → US-9.1 → US-9.2 → US-9.4.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -57,15 +57,15 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [-] US-9.3-T3: Legacy-installation fixtures not required; reset cancellation coverage moved to US-9.4-T5.
   - [-] US-9.3-T4: Migration documentation not required; fresh-install/reset documentation moved to US-9.4-T6.
 
-- [ ] US-9.4 — Keep configuration deterministic across CI and containers
-  - [ ] US-9.4-T1: Verify pnpm workspace tasks inherit only the intended injected configuration, execute fresh, propagate failures, and contain no obsolete Turbo invocations.
-  - [ ] US-9.4-T2: Align Docker/Compose entrypoints and build/runtime validation with the contract, retain environment-only operation, and verify dotenv exclusion from build context/layers.
-  - [ ] US-9.4-T3: Add CI regressions for no-dotenv quality gates, isolated unit/E2E fixtures, root/filtered commands, special-character parity, and container auth/shared-key smoke tests.
-  - [ ] US-9.4-T4: Verify runtime `PUBLIC_URL` changes without image rebuild and secret-canary absence from client artifacts/logs/layers; document deployment limitations and run all relevant quality gates.
-  - [ ] US-9.4-T5: Harden reset/init scripts to validate configuration before selecting targets, remove developer-specific paths and shell sourcing, use the pinned auth CLI, require explicit destructive confirmation, and test cancellation with disposable data.
-  - [ ] US-9.4-T6: Document the tested fresh-install, initialization, and destructive-reset workflows without legacy-installation migration guidance.
+- [x] US-9.4 — Keep configuration deterministic across CI and containers
+  - [x] US-9.4-T1: Verify pnpm workspace tasks inherit only the intended injected configuration, execute fresh, propagate failures, and contain no obsolete Turbo invocations.
+  - [x] US-9.4-T2: Align Docker/Compose entrypoints and build/runtime validation with the contract, retain environment-only operation, and verify dotenv exclusion from build context/layers.
+  - [x] US-9.4-T3: Add CI regressions for no-dotenv quality gates, isolated unit/E2E fixtures, root/filtered commands, special-character parity, and container auth/shared-key smoke tests.
+  - [x] US-9.4-T4: Verify runtime `PUBLIC_URL` changes without image rebuild and secret-canary absence from client artifacts/logs/layers; document deployment limitations and run all relevant quality gates.
+  - [x] US-9.4-T5: Harden reset/init scripts to validate configuration before selecting targets, remove developer-specific paths and shell sourcing, use the pinned auth CLI, require explicit destructive confirmation, and test cancellation with disposable data.
+  - [x] US-9.4-T6: Document the tested fresh-install, initialization, and destructive-reset workflows without legacy-installation migration guidance.
 
 ### Epic closure
 
-- [ ] Verify all spike exits and story acceptance criteria; request user completion confirmation.
+- [x] Verify all spike exits and story acceptance criteria; request user completion confirmation.
 - [ ] On confirmation, complete approved merges, announce epic completion, and propose the next plan.

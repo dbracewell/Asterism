@@ -8,14 +8,16 @@
     "build": "node ../../scripts/run-with-env.mjs --env optional --scope frontend --profile build -- next build",
     "start": "node ../../scripts/run-with-env.mjs --env optional --scope frontend --profile production -- next start",
     "lint": "eslint",
-    "test": "pnpm test:unit",
+    "test": "pnpm test:unit && pnpm test:migrations",
     "test:unit": "node ../../scripts/run-with-env.mjs --env none --scope frontend --profile test -- vitest run",
     "test:unit:watch": "node ../../scripts/run-with-env.mjs --env none --scope frontend --profile test -- vitest",
+    "test:migrations": "node ../../scripts/run-with-env.mjs --env none --scope frontend --profile test -- node --test scripts/test-db-migrations.mjs scripts/test-docker-auth-migrations.mjs",
     "test:e2e": "node ../../scripts/run-with-env.mjs --env none --scope frontend --profile test -- playwright test",
     "typecheck": "tsc --noEmit",
     "codegen": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile codegen -- openapi-ts",
     "migrate:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile auth-migrate -- node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes",
-    "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- bash scripts/reset-db"
+    "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- node scripts/reset-db.mjs",
+    "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- node scripts/reset-db.mjs --yes"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

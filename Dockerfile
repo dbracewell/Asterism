@@ -16,13 +16,8 @@ COPY scripts scripts
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN BETTER_AUTH_SECRET=build-only-placeholder-not-a-runtime-secret \
-  SYSTEM_KEY=build-only-placeholder-system-key \
-  ADMIN_PASSPHRASE=build-only-placeholder-admin-passphrase \
-  pnpm --filter @asterism/frontend build \
-  && test ! -e /storage/users.db \
-  && node scripts/check-client-secret-leaks.mjs \
-    apps/frontend/.next/static apps/frontend/src/lib/client
+RUN pnpm --filter @asterism/frontend build \
+  && test ! -e /storage/users.db
 
 FROM python:3.13-slim-bookworm AS backend-build
 # Avoid compiling llama.cpp for build-host-only CPU features (notably ARM VMs).
@@ -63,8 +58,10 @@ COPY --from=frontend-build /app/apps/frontend/package.json /app/apps/frontend/ne
 COPY --from=frontend-build /app/apps/frontend/src/lib/auth-core.ts ./apps/frontend/src/lib/auth-core.ts
 COPY --from=frontend-build /app/apps/frontend/src/lib/auth-cli.ts ./apps/frontend/src/lib/auth-cli.ts
 COPY --from=frontend-build /app/apps/frontend/src/lib/server-config-core.ts ./apps/frontend/src/lib/server-config-core.ts
+COPY --from=frontend-build /app/scripts/config-check.mjs \
+  /app/scripts/config-contract.mjs /app/scripts/run-with-env.mjs ./scripts/
 COPY --from=backend-build /app/apps/backend ./apps/backend
-COPY docker/ /app/docker/
+COPY docker/entrypoint.sh docker/healthcheck.py docker/nginx.conf ./docker/
 RUN chmod +x /app/docker/entrypoint.sh
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
   PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
