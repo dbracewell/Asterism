@@ -32,11 +32,15 @@ backend image or per-app Docker configuration is maintained.
 On a fresh installation, from the repository root:
 
 ```bash
-pnpm --filter @asterism/backend reset:db
+pnpm --filter @asterism/backend init:db
 ```
 
-**Warning:** this command resets an existing backend database. It is not an upgrade
-migration. The container calls it only when the default database file is absent.
+Initialization creates missing schema and defaults without deleting existing data.
+The container runs it only when the default database file is absent. To intentionally
+recreate the configured local SQLite database, run
+`pnpm --filter @asterism/backend reset:db`, verify the displayed absolute target, and
+type `RESET`. A noninteractive reset is canceled unless the internal confirmed command
+is invoked through the root `pnpm reset:db -- --yes` workflow.
 
 ## Quality checks
 

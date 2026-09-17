@@ -1,19 +1,17 @@
-import { execSync as runSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+#!/usr/bin/env node
 
-const DB_PATH =
-  process.env.BETTER_AUTH_DB_PATH ||
-  join(process.env.STORAGE_ROOT || "/storage", "users.db");
+import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
 
-mkdirSync(dirname(DB_PATH), { recursive: true });
-console.log(`Migrating database at ${DB_PATH}...`);
-
-runSync("npx auth@latest migrate --yes", {
-  stdio: "inherit",
-  env: {
-    ...process.env,
-    DATABASE_URL: `file:${DB_PATH}`,
-    BETTER_AUTH_DB_PATH: `file:${DB_PATH}`,
+const cli = resolve("node_modules/auth/dist/index.mjs");
+const result = spawnSync(
+  process.execPath,
+  [cli, "migrate", "--config", "./src/lib/auth-cli.ts", "--yes"],
+  {
+    cwd: resolve("."),
+    env: { ...process.env, ASTERISM_CONFIG_PROFILE: "auth-migrate" },
+    stdio: "inherit",
   },
-});
+);
+if (result.error) throw result.error;
+if (result.status !== 0) process.exit(result.status ?? 1);

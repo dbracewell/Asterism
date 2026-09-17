@@ -18,10 +18,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "22.13.0"
 
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Verify checkout has no runtime dotenv files
+        run: node scripts/check-no-dotenv.mjs
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -56,14 +59,34 @@ jobs:
       - name: Approve build scripts for frontend native dependencies
         run: pnpm approve-builds --all
 
-      - name: Verify better-sqlite3 loads and opens DB
-        run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
+      - name: Verify better-sqlite3 loads with a temporary database
+        run: |
+          mkdir -p "$RUNNER_TEMP/asterism-native-check"
+          pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database(process.argv[1]); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')" "$RUNNER_TEMP/asterism-native-check/verify.db"
 
       - name: Verify workspace task configuration
         run: pnpm check:workspace-tasks
 
       - name: Run quality gates
         run: pnpm lint && pnpm typecheck && pnpm test
+
+      - name: Verify synthetic secrets do not enter browser artifacts or build logs
+        run: |
+          export BETTER_AUTH_SECRET="ci-$(openssl rand -hex 24)"
+          export SYSTEM_KEY="ci-$(openssl rand -hex 24)"
+          export ADMIN_PASSPHRASE="ci-$(openssl rand -hex 24)"
+          log="$RUNNER_TEMP/asterism-build.log"
+          pnpm build 2>&1 | tee "$log"
+          node scripts/check-client-secret-leaks.mjs apps/frontend/.next/static apps/frontend/src/lib/client
+          for name in BETTER_AUTH_SECRET SYSTEM_KEY ADMIN_PASSPHRASE; do
+            if grep -Fq "${!name}" "$log"; then
+              echo "$name leaked into build output" >&2
+              exit 1
+            fi
+          done
+
+      - name: Verify Docker frontend build needs no dotenv or runtime secrets
+        run: docker build --target frontend-build -t asterism-frontend-build-check .
 
   frontend-e2e:
     name: Frontend E2E (Playwright)
@@ -78,10 +101,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify checkout has no runtime dotenv files
+        run: node scripts/check-no-dotenv.mjs
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 11.4.0
+          version: 11.17.0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -110,11 +136,17 @@ jobs:
       - name: Approve build scripts for frontend native dependencies
         run: pnpm approve-builds --all
 
-      - name: Verify better-sqlite3 loads and opens DB
-        run: pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database('ci-verify.db'); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')"
+      - name: Verify better-sqlite3 loads with a temporary database
+        run: |
+          mkdir -p "$RUNNER_TEMP/asterism-native-check"
+          pnpm --filter @asterism/frontend exec node -e "const Database=require('better-sqlite3'); const db=new Database(process.argv[1]); db.prepare('select 1').get(); db.close(); console.log('better-sqlite3 ok')" "$RUNNER_TEMP/asterism-native-check/verify.db"
 
       - name: Install Playwright browser
         run: pnpm --filter @asterism/frontend exec playwright install --with-deps chromium
 
-      - name: Run frontend e2e tests
-        run: rm -f apps/frontend/ci-users.db && BETTER_AUTH_DB_PATH=ci-users.db pnpm --filter @asterism/frontend test:e2e
+      - name: Run frontend e2e tests with isolated configuration
+        run: node scripts/run-isolated-e2e.mjs
+
+      - name: Verify E2E did not create repository databases
+        if: always()
+        run: test ! -e apps/frontend/ci-users.db

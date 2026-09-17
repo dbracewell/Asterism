@@ -9,7 +9,9 @@
     "test": "node ../../scripts/run-with-env.mjs --env none --scope backend --profile test -- uv run pytest -q",
     "sync": "uv sync",
     "typecheck": "uv run python -m compileall -q asterism",
-    "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db",
+    "init:db": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile backend-init -- uv run python -m asterism.db.init_db",
+    "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db --reset",
+    "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db --reset --yes",
     "cycles": "knot .",
     "deps": "pydeps  --rankdir TB  asterism"
   }
