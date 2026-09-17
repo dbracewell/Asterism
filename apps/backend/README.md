@@ -4,8 +4,9 @@ Requires Python 3.13+, uv, and SQLite 3.45+ for JSONB support.
 
 ## Configuration and development
 
-Use the shared repository-root `.env.example` / `.env`; see the root README for
-initial database setup. `PUBLIC_URL` controls the public auth identity. JWT issuer
+Use only the shared repository-root `.env.example` / `.env`; app-local dotenv files
+are rejected. See the root README for the strict portable syntax and initial database
+setup. `PUBLIC_URL` controls the public auth identity. JWT issuer
 and audience are derived from it. JWKS and webhook requests use loopback port 3000,
 not the public hostname. API traffic uses loopback port 8000.
 
@@ -28,10 +29,10 @@ backend image or per-app Docker configuration is maintained.
 
 ## Database initialization
 
-On a fresh installation, from this directory:
+On a fresh installation, from the repository root:
 
 ```bash
-uv run --env-file ../../.env python -m asterism.db.init_db
+pnpm --filter @asterism/backend reset:db
 ```
 
 **Warning:** this command resets an existing backend database. It is not an upgrade

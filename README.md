@@ -24,6 +24,44 @@ cp .env.example .env
 - Optional: `BETTER_AUTH_DB_PATH` and `DB_URL` override database locations.
 - Optional: `PORT` changes the Compose host port; update `PUBLIC_URL` to match.
 
+### Strict portable `.env` syntax
+
+The root `.env` is intentionally limited to syntax that produces identical bytes in
+Node.js, Docker Compose, and `docker run --env-file`:
+
+```dotenv
+# Full-line comments and blank lines are allowed.
+PUBLIC_URL=http://localhost:3000
+BETTER_AUTH_SECRET=abcDEF0123+/=_-.
+EMPTY_OPTIONAL_VALUE=
+```
+
+Each assignment must be a single unquoted `KEY=VALUE` line with no surrounding
+whitespace. Keys use letters, digits, and underscores and cannot begin with a digit.
+Values may contain additional `=` characters. LF and CRLF line endings are supported.
+
+The following are rejected before an application starts:
+
+```dotenv
+VALUE="quoted"              # quotes
+VALUE=two words             # whitespace
+VALUE=$HOME                 # interpolation or dollar characters
+VALUE=secret # comment      # inline comments
+VALUE=line\nnext            # escapes and backslashes
+export VALUE=secret         # shell syntax
+```
+
+Quotes, `$`, escapes, interpolation, multiline values, inline comments, and whitespace
+in values are forbidden because common dotenv implementations interpret them
+differently. Use whitespace-free paths and generated URL-safe/base64 secrets. If a
+value cannot use this grammar, inject it directly into the process environment instead
+of putting it in the shared file.
+
+Explicitly inherited process variables take precedence over the root file, including
+an explicitly empty value; later validation may reject an empty required setting.
+Changing `.env` requires restarting the root development launcher, not merely an
+individual mprocs pane.
+
 Browsers always use same-origin `/api/py`, `/api/stream`, and chat WebSocket URLs.
 Server-side API requests use loopback port 8000. Signing-key discovery and webhooks
 use loopback port 3000. These internal ports are fixed in both development and Docker.
@@ -32,8 +70,9 @@ There are no separate JWT issuer/audience or browser API URL settings.
 **Migrating older configuration:** move secrets and storage settings into the root
 `.env`, rename the old public auth/frontend URL setting to `PUBLIC_URL`, and remove
 legacy JWT, JWKS, frontend/backend URL overrides and `NEXT_PUBLIC_*` URL variables.
-Archive the old app-local `.env` files so Next.js and Python do not load stale values.
-Keep the existing secrets and database paths to preserve users and sessions.
+After reconciling conflicts, move old app-local `.env*` files to a backup location
+outside the repository; the launcher reports competing paths and will not delete or
+read them. Keep the existing secrets and database paths to preserve users and sessions.
 
 ## Docker
 
@@ -90,8 +129,8 @@ python3 docker/smoke-test.py asterism:local
 
 ## Local development
 
-Requires Node.js 22.13+, pnpm 11+, Python 3.13+, uv, and Python linked against
-SQLite **3.45+** (the backend uses JSONB functions).
+Requires Node.js 22.13+, pnpm 11+, Python 3.13+, uv, mprocs 0.9.6+, and Python
+linked against SQLite **3.45+** (the backend uses JSONB functions).
 
 1. Run `pnpm install` and `pnpm --filter @asterism/backend sync`.
 2. Configure the root `.env` as above, with an absolute writable `STORAGE_ROOT`.
@@ -100,12 +139,9 @@ SQLite **3.45+** (the backend uses JSONB functions).
    ```bash
    # Create your configured STORAGE_ROOT directory first.
    # Frontend migrations are non-destructive.
-   cd apps/frontend
-   node --env-file=../../.env node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth.ts --yes
-   cd ../backend
+   pnpm --filter @asterism/frontend migrate:db
    # WARNING: this backend command resets an existing database.
-   uv run --env-file ../../.env python -m asterism.db.init_db
-   cd ../..
+   pnpm --filter @asterism/backend reset:db
    ```
 
 4. Start both applications from the repository root:
@@ -114,22 +150,25 @@ SQLite **3.45+** (the backend uses JSONB functions).
    pnpm dev
    ```
 
-`pnpm dev` currently starts both workspace development scripts through pnpm. The
-shared root environment launcher and mprocs interface are introduced separately by
-EPIC-9; until then, follow the app-specific configuration notes. Open
-`http://localhost:3000`, not the backend port. Next.js proxies `/api/py/*`
+Install mprocs 0.9.6 or newer (`brew install mprocs`, or use its documented npm/cargo
+installation), then run `pnpm dev`. The root launcher validates and loads `.env` before
+mprocs starts separate frontend and backend panes. Press `q` in mprocs to stop both.
+The backend child does not receive Better Auth or administrator secrets.
+
+Open `http://localhost:3000`, not the backend port. Next.js proxies `/api/py/*`
 (including WebSocket upgrades) to FastAPI on port 8000. Docker uses nginx for the
 same routing. API schema: `http://localhost:3000/api/py/openapi.json`.
 
-To start one workspace using its current package-level configuration path:
+To run without mprocs, start one app in each of two terminals. These focused commands
+use the same root loader and configuration contract:
 
 ```bash
 pnpm --filter @asterism/frontend dev
 pnpm --filter @asterism/backend dev
 ```
 
-EPIC-9 US-9.1 will make root and focused development commands use the same root
-configuration source.
+Documented package scripts are the supported entrypoints. Raw `next`, `uvicorn`, and
+`python -m` commands must be given a complete environment by their caller.
 
 ## First-time administrator setup
 

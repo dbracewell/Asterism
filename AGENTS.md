@@ -82,13 +82,13 @@ Engineering implications:
 - Root scripts explicitly invoke the frontend and/or backend workspace scripts.
 - Prefer shared config and reusable package boundaries over duplication.
 - Tasks run without a repository-level cache; local and CI commands must remain deterministic.
-- The interactive mprocs development workflow is planned in EPIC-9 but is not active yet.
+- Interactive full-stack development uses mprocs after the root launcher loads the shared `.env`; CI and containers do not require mprocs.
 
 ### Common monorepo commands
 
 Run from repository root unless noted otherwise:
 
-- `pnpm dev` — start both development targets using pnpm's temporary parallel runner
+- `pnpm dev` — validate/load the root `.env` and start both development targets in mprocs
 - `pnpm build` — build the frontend (the backend is packaged by the Docker/uv flow)
 - `pnpm lint` — lint backend, then frontend
 - `pnpm test` — test backend, then frontend
@@ -103,6 +103,7 @@ Common focused runs:
 
 Notes:
 
+- Full-stack local development requires mprocs 0.9.6 or newer; focused workspace commands do not.
 - Use `pnpm --filter <workspace> <script>` for focused iteration.
 - If dependencies or the lockfile changed unexpectedly, run `pnpm install` at the repository root.
 - If a task is not found, verify the target workspace `package.json` contains the script and the filter uses its full package name.

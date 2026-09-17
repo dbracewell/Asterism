@@ -2,13 +2,14 @@
   "name": "@asterism/backend",
   "private": true,
   "scripts": {
-    "dev": "PYTHONWARNINGS=\"error\" uv run  uvicorn asterism.main:app --reload --port 8000 --timeout-graceful-shutdown=2 --proxy-headers --forwarded-allow-ips='*'",
-    "start": "uv run uvicorn asterism.main:app --host 0.0.0.0 --port 8000",
+    "dev": "node ../../scripts/run-with-env.mjs --env required --scope backend -- pnpm dev:raw",
+    "dev:raw": "uv run uvicorn asterism.main:app --reload --port 8000 --timeout-graceful-shutdown=2 --proxy-headers --forwarded-allow-ips='*'",
+    "start": "node ../../scripts/run-with-env.mjs --env optional --scope backend -- uv run uvicorn asterism.main:app --host 0.0.0.0 --port 8000",
     "lint": "uv run ruff check .",
-    "test": "PYTHONPATH=. uv run pytest -q",
+    "test": "node ../../scripts/run-with-env.mjs --env none --scope backend -- uv run pytest -q",
     "sync": "uv sync",
-    "typecheck": "uv run  python -m compileall -q asterism",
-    "reset:db": "uv run --env-file .env python -m asterism.db.init_db",
+    "typecheck": "uv run python -m compileall -q asterism",
+    "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope backend -- uv run python -m asterism.db.init_db",
     "cycles": "knot .",
     "deps": "pydeps  --rankdir TB  asterism"
   }

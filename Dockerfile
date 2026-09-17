@@ -11,7 +11,8 @@ COPY apps/frontend/package.json apps/frontend/package.json
 COPY apps/backend/package.json apps/backend/package.json
 RUN --mount=type=cache,id=asterism-pnpm,target=/pnpm/store \
   pnpm install --frozen-lockfile --store-dir /pnpm/store --fetch-timeout=300000 
-COPY apps/frontend apps/frontend  
+COPY apps/frontend apps/frontend
+COPY scripts/run-with-env.mjs scripts/run-with-env.mjs
 
 ENV NEXT_TELEMETRY_DISABLED=1
 

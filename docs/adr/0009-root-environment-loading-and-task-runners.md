@@ -23,9 +23,9 @@ files and dummy values.
 ## Decision
 
 1. Use a small, repository-owned **Node launcher** as the single local dotenv boundary.
-   It resolves the repository root from the launcher's own location, uses Node's
-   built-in dotenv parser, preserves inherited environment values, and starts the
-   requested command without a shell.
+   It resolves the repository root from the launcher's own location, validates and
+   parses the strict cross-runtime grammar finalized by ADR-0011, preserves inherited
+   environment values, and starts the requested command without a shell.
 2. Use **mprocs for interactive local full-stack development**. The root `dev` command
    loads configuration once and starts mprocs; a tracked, secret-free `mprocs.yaml`
    runs the frontend and backend workspace dev commands in explicit working directories.
@@ -219,9 +219,10 @@ allow framework-specific precedence and recreate drift.
 
 ### New dotenv CLI dependency
 
-Deferred. A maintained CLI could reduce launcher code, but Node 22.13 already provides
-the required parser. Add a dependency only if implementation tests show that robust
-cross-platform signal/exit handling cannot be achieved with a small launcher.
+Deferred. A maintained CLI could reduce launcher code, but none enforces ADR-0011's deliberately
+small cross-runtime grammar. Add a dependency only if implementation tests show that
+robust cross-platform signal/exit handling cannot be achieved with the repository
+launcher.
 
 ## Consequences and follow-up
 

@@ -26,7 +26,6 @@ class Config(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_file=".env",
         secrets_dir=str(secrets_dir) if secrets_dir.exists() else None,
         extra="ignore",
     )
