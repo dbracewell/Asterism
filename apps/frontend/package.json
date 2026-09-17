@@ -3,17 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bash scripts/run next dev --port 3000",
-    "build": "bash scripts/run next build",
-    "start": "next start",
+    "dev": "node ../../scripts/run-with-env.mjs --env required --scope frontend -- pnpm dev:raw",
+    "dev:raw": "next dev --port 3000",
+    "build": "node ../../scripts/run-with-env.mjs --env optional --scope frontend -- next build",
+    "start": "node ../../scripts/run-with-env.mjs --env optional --scope frontend -- next start",
     "lint": "eslint",
-    "test": "bash scripts/run pnpm test:unit",
-    "test:unit": "bash scripts/run vitest run",
-    "test:unit:watch": "bash scripts/run vitest",
-    "test:e2e": "bash scripts/run playwright test",
+    "test": "pnpm test:unit",
+    "test:unit": "node ../../scripts/run-with-env.mjs --env none --scope frontend -- vitest run",
+    "test:unit:watch": "node ../../scripts/run-with-env.mjs --env none --scope frontend -- vitest",
+    "test:e2e": "node ../../scripts/run-with-env.mjs --env none --scope frontend -- playwright test",
     "typecheck": "tsc --noEmit",
-    "codegen": "bash scripts/run NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts",
-    "reset:db": "bash scripts/reset-db ../../.env"
+    "codegen": "node ../../scripts/run-with-env.mjs --env required --scope frontend -- openapi-ts",
+    "migrate:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend -- node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth.ts --yes",
+    "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend -- bash scripts/reset-db"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -17,3 +17,11 @@ def test_default_public_url(tmp_path, monkeypatch):
     settings = Config(_env_file=None, storage_root=tmp_path)
     assert settings.jwt_issuer == "http://localhost:3000"
     assert settings.jwt_audience == settings.jwt_issuer
+
+
+def test_config_does_not_load_cwd_dotenv(tmp_path, monkeypatch):
+    monkeypatch.delenv("PUBLIC_URL", raising=False)
+    (tmp_path / ".env").write_text("PUBLIC_URL=https://stale.example\n")
+    monkeypatch.chdir(tmp_path)
+    settings = Config(storage_root=tmp_path / "storage")
+    assert settings.public_url == "http://localhost:3000"

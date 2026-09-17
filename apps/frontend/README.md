@@ -4,10 +4,12 @@ Requires Node.js 22.13+ and pnpm 11+.
 
 ## Configuration and development
 
-Use `apps/frontend/.env.example` / `apps/frontend/.env` and the root README's initialization
-steps. `PUBLIC_URL` sets Better Auth's public base URL; `BETTER_AUTH_SECRET`,
-`SYSTEM_KEY`, and `ADMIN_PASSPHRASE` are persistent secrets. Auth storage defaults
-to `${STORAGE_ROOT:-/storage}/users.db`, with an optional `BETTER_AUTH_DB_PATH` override.
+Use only the repository-root `.env.example` / `.env`; app-local dotenv files are
+rejected. The root README documents the required strict portable syntax and
+initialization steps. `PUBLIC_URL` sets Better Auth's public base URL;
+`BETTER_AUTH_SECRET`, `SYSTEM_KEY`, and `ADMIN_PASSPHRASE` are persistent secrets.
+Auth storage defaults to `${STORAGE_ROOT:-/storage}/users.db`, with an optional
+`BETTER_AUTH_DB_PATH` override.
 
 Browser API, WebSocket, and SSE requests always use the current origin. No
 `NEXT_PUBLIC_*` URL settings are needed. Server-side API calls use loopback port 8000. Next.js rewrites `/api/py/*` to FastAPI for local development; nginx handles
@@ -20,17 +22,14 @@ From the repository root:
 
 ```bash
 pnpm install
-pnpm dev                              # both applications via pnpm
+pnpm dev                              # both applications in mprocs
 pnpm --filter @asterism/frontend dev  # frontend only
 ```
 
-Next.js loads `apps/frontend/.env`; the backend loads `apps/backend/.env`.
-Root `pnpm dev` currently starts both workspace scripts without adding another environment-loading layer.
-Keep shared secrets and `PUBLIC_URL` consistent between the two app files.
-Docker continues to use the root `.env`.
-Exported environment variables take precedence. Restart existing dev servers
-after changing environment settings; `reset:db` does not update the environment
-of a running server.
+Both commands use the root launcher. Explicitly exported variables take precedence
+over the root file. Restart the root launcher after changing `.env`; restarting only
+an mprocs pane retains its inherited environment. Docker Compose also consumes the
+root file.
 
 Runtime auth and the official migration CLI use the same database path. Create
 its parent directory before local migrations (Docker creates `STORAGE_ROOT`).
@@ -51,11 +50,11 @@ Migrations create missing tables without resetting users. Migration failure prev
 startup. Back up persistent storage before upgrades; do not use `reset:db` for
 container startup. Update the CLI alongside Better Auth when upgrading.
 
-Local migrations, from this directory:
+Local migrations, from the repository root:
 
 ```bash
-node --env-file=.env node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth.ts --yes
-node --test scripts/test-docker-auth-migrations.mjs
+pnpm --filter @asterism/frontend migrate:db
+pnpm --filter @asterism/frontend exec node --test scripts/test-docker-auth-migrations.mjs
 ```
 
 Local proxy regression check (stop local dev servers first; uses ports 8000 and
