@@ -3,7 +3,8 @@ import { getCurrentUser } from "@/features/auth/server/actions";
 import { sseEmitter } from "@/features/sse/lib/event-emitter";
 import { checkRateLimit } from "@/features/sse/lib/rate-limiter";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
+import { getFrontendServerConfig } from "@/lib/server-config";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function OPTIONS() {
@@ -20,14 +21,16 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth.api.getSession({
+  const session = await getAuth().api.getSession({
     headers: req.headers,
   });
 
   const systemKey = req.headers.get("x-asterism-system-key");
 
-  if (!session && (!systemKey || systemKey !== process.env.SYSTEM_KEY)) {
-    console.error(systemKey);
+  if (
+    !session &&
+    (!systemKey || systemKey !== getFrontendServerConfig().systemKey)
+  ) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

@@ -3,6 +3,7 @@
 Uses a disposable container/volume and account; never targets an existing install.
 Checks proxy routing, auth/JWKS, persistent sign-in, and graceful shutdown.
 """
+
 import base64
 import http.cookiejar
 import json
@@ -10,13 +11,17 @@ import secrets
 import subprocess
 import sys
 import time
+import urllib.parse
 import urllib.request
 
 image = sys.argv[1] if len(sys.argv) > 1 else "asterism:local"
 name = f"asterism-smoke-{secrets.token_hex(4)}"
 volume = f"{name}-storage"
-# Deliberately unresolvable: internal requests must never use the public hostname.
-public_url = "http://asterism.invalid"
+secret_volume = f"{name}-secrets"
+# Deliberately different from the image default; internal requests must not use it.
+# Loopback HTTP is permitted by production validation for local smoke tests.
+public_url = "http://127.0.0.1:43123"
+public_host = urllib.parse.urlsplit(public_url).netloc
 
 
 def docker(*args):
@@ -36,14 +41,87 @@ def healthy():
 
 try:
     docker("volume", "create", volume)
+    docker("volume", "create", secret_volume)
+    docker(
+        "run",
+        "--rm",
+        "--user",
+        "root",
+        "--entrypoint",
+        "sh",
+        "-v",
+        f"{secret_volume}:/run/secrets",
+        "-e",
+        f"BETTER_AUTH_SECRET={secrets.token_urlsafe(32)}",
+        "-e",
+        f"SYSTEM_KEY={secrets.token_urlsafe(32)}",
+        "-e",
+        f"ADMIN_PASSPHRASE={secrets.token_urlsafe(32)}",
+        image,
+        "-c",
+        "for name in BETTER_AUTH_SECRET SYSTEM_KEY ADMIN_PASSPHRASE; do "
+        'printenv "$name" > "/run/secrets/$name"; '
+        'chmod 0444 "/run/secrets/$name"; done',
+    )
+    rejected_canary = "replace-with-rejected-container-canary"
+    rejected = subprocess.run(
+        [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            f"{volume}:/storage",
+            "-e",
+            f"PUBLIC_URL={public_url}",
+            "-e",
+            f"BETTER_AUTH_SECRET={rejected_canary}",
+            "-e",
+            f"SYSTEM_KEY={secrets.token_urlsafe(32)}",
+            "-e",
+            f"ADMIN_PASSPHRASE={secrets.token_urlsafe(32)}",
+            image,
+        ],
+        text=True,
+        capture_output=True,
+    )
+    rejected_output = rejected.stdout + rejected.stderr
+    if rejected.returncode == 0:
+        raise RuntimeError("Invalid configuration unexpectedly started")
+    if rejected_canary in rejected_output:
+        raise RuntimeError("Rejected secret was written to process output")
+    storage_entries = docker(
+        "run",
+        "--rm",
+        "--entrypoint",
+        "find",
+        "-v",
+        f"{volume}:/storage",
+        image,
+        "/storage",
+        "-mindepth",
+        "1",
+        "-print",
+    )
+    if storage_entries:
+        raise RuntimeError("Invalid configuration mutated storage")
+
     # Host port is random to avoid conflicting with an existing installation.
     docker(
-        "run", "-d", "--name", name, "--stop-timeout", "30",
-        "-p", "127.0.0.1::3000", "-v", f"{volume}:/storage",
-        "-e", f"PUBLIC_URL={public_url}",
-        "-e", f"BETTER_AUTH_SECRET={secrets.token_urlsafe(32)}",
-        "-e", f"SYSTEM_KEY={secrets.token_urlsafe(32)}",
-        "-e", f"ADMIN_PASSPHRASE={secrets.token_urlsafe(32)}", image,
+        "run",
+        "-d",
+        "--name",
+        name,
+        "--stop-timeout",
+        "30",
+        "-p",
+        "127.0.0.1::3000",
+        "-v",
+        f"{volume}:/storage",
+        "-v",
+        f"{secret_volume}:/run/secrets:ro",
+        "-e",
+        f"PUBLIC_URL={public_url}",
+        image,
     )
     healthy()
     port = docker("port", name, "3000/tcp").rsplit(":", 1)[1]
@@ -53,7 +131,7 @@ try:
     )
 
     def request(path, data=None, token=None):
-        headers = {"Origin": public_url, "Host": "asterism.invalid"}
+        headers = {"Origin": public_url, "Host": public_host}
         if data is not None:
             headers["Content-Type"] = "application/json"
         if token:
@@ -87,7 +165,12 @@ try:
     request("/api/py/settings/user", token=request("/api/auth/token")["token"])
     # Simulate one service exiting: the supervisor must stop its siblings and
     # return nonzero rather than leave a partially functional container alive.
-    docker("exec", name, "python", "-c", """
+    docker(
+        "exec",
+        name,
+        "python",
+        "-c",
+        """
 import os, signal
 from pathlib import Path
 for path in Path('/proc').glob('[0-9]*/cmdline'):
@@ -100,7 +183,8 @@ for path in Path('/proc').glob('[0-9]*/cmdline'):
         pass
 else:
     raise SystemExit('Could not locate backend process')
-""")
+""",
+    )
     for _ in range(40):
         state = json.loads(docker("inspect", name))[0]["State"]
         if not state["Running"]:
@@ -115,4 +199,8 @@ except Exception:
     raise
 finally:
     subprocess.run(["docker", "rm", "-f", name], check=False, stdout=subprocess.DEVNULL)
-    subprocess.run(["docker", "volume", "rm", volume], check=False, stdout=subprocess.DEVNULL)
+    subprocess.run(
+        ["docker", "volume", "rm", volume, secret_volume],
+        check=False,
+        stdout=subprocess.DEVNULL,
+    )

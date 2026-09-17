@@ -12,13 +12,17 @@ COPY apps/backend/package.json apps/backend/package.json
 RUN --mount=type=cache,id=asterism-pnpm,target=/pnpm/store \
   pnpm install --frozen-lockfile --store-dir /pnpm/store --fetch-timeout=300000 
 COPY apps/frontend apps/frontend
-COPY scripts/run-with-env.mjs scripts/run-with-env.mjs
+COPY scripts scripts
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN BETTER_AUTH_DB_PATH=:memory: \
-  BETTER_AUTH_SECRET=build-only-placeholder-not-a-runtime-secret \
-  pnpm --filter @asterism/frontend build
+RUN BETTER_AUTH_SECRET=build-only-placeholder-not-a-runtime-secret \
+  SYSTEM_KEY=build-only-placeholder-system-key \
+  ADMIN_PASSPHRASE=build-only-placeholder-admin-passphrase \
+  pnpm --filter @asterism/frontend build \
+  && test ! -e /storage/users.db \
+  && node scripts/check-client-secret-leaks.mjs \
+    apps/frontend/.next/static apps/frontend/src/lib/client
 
 FROM python:3.13-slim-bookworm AS backend-build
 # Avoid compiling llama.cpp for build-host-only CPU features (notably ARM VMs).
@@ -56,7 +60,9 @@ COPY --from=frontend-build --chown=asterism:asterism /app/apps/frontend/.next ./
 COPY --from=frontend-build /app/apps/frontend/public ./apps/frontend/public
 COPY --from=frontend-build /app/apps/frontend/package.json /app/apps/frontend/next.config.ts ./apps/frontend/
 # The official auth CLI needs the source configuration, not Next.js build chunks.
-COPY --from=frontend-build /app/apps/frontend/src/lib/auth.ts ./apps/frontend/src/lib/auth.ts
+COPY --from=frontend-build /app/apps/frontend/src/lib/auth-core.ts ./apps/frontend/src/lib/auth-core.ts
+COPY --from=frontend-build /app/apps/frontend/src/lib/auth-cli.ts ./apps/frontend/src/lib/auth-cli.ts
+COPY --from=frontend-build /app/apps/frontend/src/lib/server-config-core.ts ./apps/frontend/src/lib/server-config-core.ts
 COPY --from=backend-build /app/apps/backend ./apps/backend
 COPY docker/ /app/docker/
 RUN chmod +x /app/docker/entrypoint.sh

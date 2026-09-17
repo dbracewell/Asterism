@@ -62,6 +62,21 @@ an explicitly empty value; later validation may reject an empty required setting
 Changing `.env` requires restarting the root development launcher, not merely an
 individual mprocs pane.
 
+Validate development configuration without opening databases, creating storage, or
+printing values:
+
+```bash
+pnpm config:check
+```
+
+The check reports each setting's source (`process`, `root-dotenv`, `file-secret`,
+`default`, or `missing`) and status. Runtime profiles reject empty values and known
+placeholders; production additionally enforces HTTPS outside loopback and minimum
+secret strength. Canonical `/run/secrets/BETTER_AUTH_SECRET`, `SYSTEM_KEY`, and
+`ADMIN_PASSPHRASE` files are fallback sources when process/root values are absent.
+The complete variable catalog and command validation matrix are in
+[ADR-0010](docs/adr/0010-configuration-validation-secrets-and-safe-migration.md).
+
 Browsers always use same-origin `/api/py`, `/api/stream`, and chat WebSocket URLs.
 Server-side API requests use loopback port 8000. Signing-key discovery and webhooks
 use loopback port 3000. These internal ports are fixed in both development and Docker.
@@ -106,7 +121,7 @@ upgrades. Do not expose internal ports 3001 or 8000.
 
 `/storage` contains `users.db`, `database.db`, and uploaded files. Auth migrations
 run on each startup using the bundled, pinned official Better Auth CLI and explicit
-`src/lib/auth.ts` configuration (no startup downloads). The backend initializer runs only when its database is absent;
+`src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer runs only when its database is absent;
 existing backend databases are not reset or automatically migrated. Bind mounts must
 be writable by UID **10001**. Back up databases before upgrades.
 

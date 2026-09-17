@@ -44,7 +44,7 @@ Dependencies use the root workspace lockfile; the standalone frontend lockfile,
 Dockerfile, and build-approval configuration have been removed.
 
 The container runs the official `auth` CLI before Next.js, pinned to 1.6.11 to
-match Better Auth. The image includes `src/lib/auth.ts` and passes it explicitly
+match Better Auth. The image includes `src/lib/auth-cli.ts` and passes it explicitly
 with `--config`; startup requires no package downloads or custom migration script.
 Migrations create missing tables without resetting users. Migration failure prevents
 startup. Back up persistent storage before upgrades; do not use `reset:db` for

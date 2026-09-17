@@ -1,9 +1,38 @@
+import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 secrets_dir = Path("/run/secrets")
+_FULL_RUNTIME_PROFILES = {"development", "production"}
+_RUNTIME_PROFILES = _FULL_RUNTIME_PROFILES | {"backend-init", "reset"}
+_PROFILES = _RUNTIME_PROFILES | {"auth-migrate", "build", "test", "codegen"}
+_PLACEHOLDER_PREFIXES = (
+    "replace-with-",
+    "build-only-placeholder",
+    "test-only-",
+    "disposable-",
+)
+
+
+def _file_secret(name: str) -> str:
+    canonical = secrets_dir / name
+    entries = (
+        {path.name for path in secrets_dir.iterdir()} if secrets_dir.exists() else set()
+    )
+    has_canonical = name in entries
+    has_legacy = name.lower() in entries
+    if has_canonical and has_legacy:
+        raise ValueError(
+            f"Ambiguous file secret names for {name}; keep only the uppercase file"
+        )
+    if has_legacy:
+        raise ValueError(f"Legacy file secret name for {name}; rename it to uppercase")
+    if not has_canonical:
+        return ""
+    return canonical.read_text().removesuffix("\n").removesuffix("\r")
 
 
 def default_allowed_tools() -> list[str]:
@@ -14,34 +43,102 @@ def default_allowed_tools() -> list[str]:
     ]
 
 
+def _valid_origin(value: str, production: bool) -> bool:
+    parsed = urlsplit(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return False
+    if parsed.username or parsed.password or parsed.query or parsed.fragment:
+        return False
+    if parsed.path not in {"", "/"} or value.endswith("/"):
+        return False
+    loopback = parsed.hostname in {"localhost", "127.0.0.1", "::1"}
+    return not (production and parsed.scheme != "https" and not loopback)
+
+
+class ConfigValidationError(RuntimeError):
+    pass
+
+
 class Config(BaseSettings):
-    system_key: str = ""
+    system_key: str = Field(default_factory=lambda: _file_secret("SYSTEM_KEY"))
     max_chars_for_retrieval: int = 50000
     public_url: str = "http://localhost:3000"
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
     db_url: str | None = None
-    default_allowed_tools: list[str] = Field(
-        default_factory=default_allowed_tools
+    default_allowed_tools: list[str] = Field(default_factory=default_allowed_tools)
+    config_profile: str = Field(
+        default_factory=lambda: (
+            "production"
+            if os.environ.get("NODE_ENV") == "production"
+            else "development"
+        ),
+        validation_alias="ASTERISM_CONFIG_PROFILE",
+        exclude=True,
     )
 
-    model_config = SettingsConfigDict(
-        secrets_dir=str(secrets_dir) if secrets_dir.exists() else None,
-        extra="ignore",
-    )
+    model_config = SettingsConfigDict(extra="ignore", populate_by_name=True)
 
     @model_validator(mode="after")
-    def validate(self):
+    def finalize(self):
+        if (
+            self.config_profile in _RUNTIME_PROFILES
+            and not self.storage_root.is_absolute()
+        ):
+            raise ValueError("STORAGE_ROOT must be an absolute path")
         self.storage_root = self.storage_root.resolve()
-        self.storage_root.mkdir(exist_ok=True, parents=True)
-
         if not self.db_url:
             self.db_url = f"sqlite+aiosqlite:///{self.storage_root}/database.db"
-
         if not self.cors_allowed_origins:
             self.cors_allowed_origins = [self.public_url]
 
         return self
+
+    def validate_runtime(self) -> None:
+        if self.config_profile not in _PROFILES:
+            raise ConfigValidationError(
+                f"ASTERISM_CONFIG_PROFILE is unknown: {self.config_profile}"
+            )
+        if self.config_profile not in _RUNTIME_PROFILES:
+            return
+        if self.config_profile in _FULL_RUNTIME_PROFILES:
+            if not _valid_origin(
+                self.public_url,
+                production=self.config_profile == "production",
+            ):
+                raise ConfigValidationError(
+                    "PUBLIC_URL must be an absolute browser-facing origin "
+                    "without credentials, path, query, fragment, or trailing slash"
+                )
+            if not self.system_key:
+                raise ConfigValidationError("SYSTEM_KEY is required (value redacted)")
+            if self.system_key.startswith(_PLACEHOLDER_PREFIXES):
+                raise ConfigValidationError(
+                    "SYSTEM_KEY uses a known placeholder (value redacted)"
+                )
+            if self.config_profile == "production" and len(self.system_key) < 32:
+                raise ConfigValidationError(
+                    "SYSTEM_KEY does not meet the production strength "
+                    "requirement (value redacted)"
+                )
+        if not 1 <= self.max_chars_for_retrieval <= 1_000_000:
+            raise ConfigValidationError(
+                "MAX_CHARS_FOR_RETRIEVAL must be from 1 to 1000000"
+            )
+        if self.config_profile in _FULL_RUNTIME_PROFILES and any(
+            origin == "*" for origin in self.cors_allowed_origins or []
+        ):
+            raise ConfigValidationError(
+                "CORS_ALLOWED_ORIGINS cannot contain a wildcard"
+            )
+        if self.db_url and not self.db_url.startswith("sqlite+aiosqlite:////"):
+            raise ConfigValidationError(
+                "DB_URL must use SQLite with an absolute path (URL redacted)"
+            )
+
+    def prepare_storage(self) -> None:
+        self.storage_root.mkdir(exist_ok=True, parents=True)
+        self.files_root.mkdir(exist_ok=True, parents=True)
 
     @property
     def jwt_issuer(self) -> str:
@@ -63,9 +160,7 @@ class Config(BaseSettings):
     @computed_field
     @property
     def files_root(self) -> Path:
-        files_root = self.storage_root / "files"
-        files_root.mkdir(exist_ok=True)
-        return files_root
+        return self.storage_root / "files"
 
     def get_user_file(self, user_id: str, filename: str) -> Path:
         files_dir = self.files_root / user_id / filename
@@ -73,3 +168,4 @@ class Config(BaseSettings):
 
 
 config = Config()
+config.validate_runtime()

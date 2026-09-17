@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { BACKEND_API_URL } from "@/lib/backend-url";
 import { ApiClient, ClientOptions } from "@/lib/client";
 import { createClient, createConfig } from "@/lib/client/client";
@@ -14,7 +14,7 @@ export const getApiClient = cache(async () => {
 });
 
 export const getClient = cache(async () => {
-  const { token: jwtToken } = await auth.api.getToken({
+  const { token: jwtToken } = await getAuth().api.getToken({
     headers: await headers(),
   });
   if (!jwtToken) {

@@ -3,7 +3,9 @@ import { getClient } from "./api-server";
 
 const mocks = vi.hoisted(() => ({ createClient: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
-  auth: { api: { getToken: vi.fn(async () => ({ token: "test-jwt" })) } },
+  getAuth: () => ({
+    api: { getToken: vi.fn(async () => ({ token: "test-jwt" })) },
+  }),
 }));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 vi.mock("@/lib/client", () => ({ ApiClient: class {} }));

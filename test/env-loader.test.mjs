@@ -111,6 +111,53 @@ test("legacy files are reported by path and never changed", () => {
   }
 });
 
+test("file secrets are fallback-only and use canonical uppercase names", () => {
+  const root = fixture();
+  const secrets = join(root, "secrets");
+  mkdirSync(secrets);
+  writeFileSync(join(secrets, "SYSTEM_KEY"), "file-secret\n");
+  const environment = { SYSTEM_KEY: "process-secret" };
+  let result = loadRootEnvironment({
+    root,
+    mode: "optional",
+    environment,
+    secretsDirectory: secrets,
+  });
+  assert.equal(environment.SYSTEM_KEY, "process-secret");
+  assert.equal(result.sources.get("SYSTEM_KEY"), "process");
+
+  delete environment.SYSTEM_KEY;
+  result = loadRootEnvironment({
+    root,
+    mode: "optional",
+    environment,
+    secretsDirectory: secrets,
+  });
+  assert.equal(environment.SYSTEM_KEY, "file-secret");
+  assert.equal(result.sources.get("SYSTEM_KEY"), "file-secret");
+});
+
+test("legacy file-secret names fail without reading their values", () => {
+  const root = fixture();
+  const secrets = join(root, "secrets");
+  mkdirSync(secrets);
+  const canary = "legacy-file-secret-canary";
+  writeFileSync(join(secrets, "system_key"), canary);
+  assert.throws(
+    () =>
+      loadRootEnvironment({
+        root,
+        mode: "optional",
+        environment: {},
+        secretsDirectory: secrets,
+      }),
+    (error) =>
+      error instanceof EnvironmentError &&
+      error.message.includes("SYSTEM_KEY") &&
+      !error.message.includes(canary),
+  );
+});
+
 test("frontend and backend scopes remove unrelated known settings", () => {
   const environment = {
     PATH: "/bin",
@@ -133,10 +180,12 @@ test("frontend and backend scopes remove unrelated known settings", () => {
 
 function copyLauncher(root) {
   mkdirSync(join(root, "scripts"));
-  cpSync(
-    new URL("../scripts/run-with-env.mjs", import.meta.url),
-    join(root, "scripts", "run-with-env.mjs"),
-  );
+  for (const script of ["run-with-env.mjs", "config-contract.mjs"]) {
+    cpSync(
+      new URL(`../scripts/${script}`, import.meta.url),
+      join(root, "scripts", script),
+    );
+  }
   return join(root, "scripts", "run-with-env.mjs");
 }
 
@@ -152,6 +201,8 @@ test("CLI resolves the root independently of its working directory", () => {
       "required",
       "--scope",
       "all",
+      "--profile",
+      "build",
       "--",
       process.execPath,
       "-p",
