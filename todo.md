@@ -69,3 +69,61 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 - [x] Verify all spike exits and story acceptance criteria; request user completion confirmation.
 - [x] On confirmation, complete approved merges, announce epic completion, and propose the next plan.
+
+## EPIC-10 — Sub-Agent Upgrade and Tool Approval Refactor
+
+Plan: [EPIC-10](epics/EPIC-10-SUB-AGENT-AND-TOOL-APPROVAL-REFACTOR.md).
+Status: Proposed.
+Order: US-10.1 → US-10.2 → US-10.3 → US-10.4 → US-10.5 → US-10.6.
+Work on one item at a time; create a feature branch when each story starts.
+Story completion requires passing checks and user confirmation before merge.
+Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
+
+- [x] US-10.1 — Extract tool approval into a pluggable policy
+  - [x] US-10.1-T1: Define `ToolApprovalPolicy` protocol.
+  - [x] US-10.1-T2: Implement `AllowlistApprovalPolicy`.
+  - [x] US-10.1-T3: Implement `InteractiveApprovalPolicy`.
+  - [x] US-10.1-T4: Refactor `Agent.__init__` to accept optional `approval_policy`.
+  - [x] US-10.1-T5: Refactor `Agent.run()` to use `self.approval_policy.authorize(...)`.
+  - [x] US-10.1-T6: Migrate `ChatOrchestrator` to construct `Agent` with `InteractiveApprovalPolicy`.
+  - [x] US-10.1-T7: Simplify or remove `UserResponseQueue`.
+  - [x] US-10.1-T8: Add unit tests for both policies and `Agent.run()` with each.
+
+- [ ] US-10.2 — Fix sub-agent tool authorization to respect permissions
+  - [ ] US-10.2-T1: Construct sub-agent with `AllowlistApprovalPolicy` using intersection of parent and sub-agent permissions.
+  - [ ] US-10.2-T2: Remove manual auto-approve loop from `sub_agent.py`.
+  - [ ] US-10.2-T3: Test sub-agent cannot use tools outside its profile allowlist.
+  - [ ] US-10.2-T4: Test sub-agent cannot use tools outside parent allowlist.
+
+- [ ] US-10.3 — Add recursion safety to sub-agent execution
+  - [ ] US-10.3-T1: Add `call_stack` tracking to `ToolContext` or `SubAgentContext`.
+  - [ ] US-10.3-T2: Check for cycles and depth limit before creating child agent.
+  - [ ] US-10.3-T3: Return clear error on cycle detection.
+  - [ ] US-10.3-T4: Return clear error on depth exceeded.
+  - [ ] US-10.3-T5: Unit tests for no-recursion, allowed depth, cycle, and depth exceeded.
+
+- [ ] US-10.4 — Stream sub-agent events to the parent context
+  - [ ] US-10.4-T1: Define sub-agent event envelope with metadata.
+  - [ ] US-10.4-T2: Add optional `event_sink` to sub-agent tool context.
+  - [ ] US-10.4-T3: Forward `DELTA`, `THINKING`, `TOOL_CALL`, `COMPLETE` events through sink.
+  - [ ] US-10.4-T4: Handle sub-agent envelope events in `ChatOrchestrator`.
+  - [ ] US-10.4-T5: Tests for event forwarding with correct metadata.
+
+- [ ] US-10.5 — Forward context to sub-agents
+  - [ ] US-10.5-T1: Add optional `parent_context` with conversation summary and file refs.
+  - [ ] US-10.5-T2: Prepend context block to sub-agent message list.
+  - [ ] US-10.5-T3: Implement configurable context window (last N messages / M tokens).
+  - [ ] US-10.5-T4: Forward `user_files` from parent `ToolContext`.
+  - [ ] US-10.5-T5: Tests for context forwarding and file accessibility.
+
+- [ ] US-10.6 — Persist sub-agent execution traces
+  - [ ] US-10.6-T1: Design storage schema for sub-agent traces.
+  - [ ] US-10.6-T2: Persist full sub-agent message history after completion.
+  - [ ] US-10.6-T3: Include token usage, step count, elapsed time in trace.
+  - [ ] US-10.6-T4: Add query/retrieval interface for traces by parent message ID.
+  - [ ] US-10.6-T5: Tests for trace persistence, retrieval, and parent association.
+
+### Epic closure
+
+- [ ] Verify all story acceptance criteria; request user completion confirmation.
+- [ ] On confirmation, merge final branch, announce epic completion, propose next plan.

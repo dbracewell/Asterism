@@ -48,13 +48,17 @@ async def _js_site_fetch(url: str) -> tuple[str, str]:
             wait_until="networkidle",
         )
         raw_html = await page.content()
-        mime_type = response.headers.get("content-type", "text/html").split(";")[0]  # type: ignore
+        mime_type = response.headers.get("content-type", "text/html").split(
+            ";"
+        )[0]  # type: ignore
         await browser.close()
         return raw_html, mime_type
 
 
 def possible_js_page(html_page: str) -> bool:
-    enable_javascript = re.findall(r"ENABLE\s+JAVASCRIPT", html_page, re.IGNORECASE)
+    enable_javascript = re.findall(
+        r"ENABLE\s+JAVASCRIPT", html_page, re.IGNORECASE
+    )
     if len(enable_javascript) > 0:
         return True
 
@@ -89,9 +93,13 @@ async def fetch_page(
                 timeout=timeout,
             )
             response.raise_for_status
-            mime_type = response.headers.get("Content-Type", "text/html").split(";")[0]
+            mime_type = response.headers.get("Content-Type", "text/html").split(
+                ";"
+            )[0]
             html_page = response.text
-            if len(html_page) < threshold_for_playwright or possible_js_page(html_page):
+            if len(html_page) < threshold_for_playwright or possible_js_page(
+                html_page
+            ):
                 html_page, mime_type = await _js_site_fetch(url)
 
     soup = BeautifulSoup(html_page, "html.parser")
@@ -140,6 +148,5 @@ async def fetch_markdown(
 ) -> Document:
     html_page = await fetch_page(url, timeout, threshold_for_playwright)
     extracted = _convert_html_to_markdown(html_page)
-    print(extracted, flush=True)
     logger.debug(f"Fetched and converted page to markdown {url}")
     return extracted

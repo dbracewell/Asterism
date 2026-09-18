@@ -136,7 +136,9 @@ class ChatController:
             # Auto-inject START if needed
             if AgentEventType.START not in event_sequence:
                 event_sequence.add(AgentEventType.START)
-                await self.connection.send_json({"type": AgentEventType.START.value})
+                await self.connection.send_json(
+                    {"type": AgentEventType.START.value}
+                )
 
             if msg_type in (AgentEventType.COMPLETE, AgentEventType.ERROR):
                 event_sequence.clear()
@@ -149,7 +151,10 @@ class ChatController:
             while self._is_running:
                 await asyncio.sleep(0.5)
                 await self.connection.send_json(
-                    {"type": "status", "is_processing": self.orchestrator.is_active}
+                    {
+                        "type": "status",
+                        "is_processing": self.orchestrator.is_active,
+                    }
                 )
         except asyncio.CancelledError:
             pass

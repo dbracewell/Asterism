@@ -57,7 +57,6 @@ class StreamHandler[T: BaseModel]:
     ) -> AsyncGenerator[LLMEvent, None]:
 
         async for chunk in stream:
-            print(f"Received chunk: {chunk}")
             if hasattr(chunk, "usage") and chunk.usage is not None:
                 self.usage = chunk.usage
 

@@ -56,6 +56,7 @@ async def chat(
     agent: Agent = Agent(
         profile=user_settings.default_agent_profile,
         user=user,
+        session=chat_session,
         logger=get_logger(f"ChatSession({str(chat_id)})"),
         allowed_tools=chat_session.info.allowed_tools,
     )
@@ -63,7 +64,7 @@ async def chat(
     controller = ChatController(
         chat_id=chat_id,
         connection=WebSocketConnection(websocket=websocket),
-        orchestrator=ChatOrchestrator(chat=chat_session, agent=agent),
+        orchestrator=ChatOrchestrator(agent),
     )
 
     await controller.run()
