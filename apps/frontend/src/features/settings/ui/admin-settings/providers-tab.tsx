@@ -203,6 +203,7 @@ export const ProvidersTab = ({
       const fetchedModels = await fetchProviderModels(
         provider.base_url,
         provider.id,
+        provider.api_key,
       );
       const mergedModels = mergeModels(
         Object.values(provider.models ?? {}),
@@ -229,7 +230,7 @@ export const ProvidersTab = ({
   return (
     <form
       id="providers-form"
-      className="flex flex-1 flex-col gap-4 overflow-hidden"
+      className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="relative">
@@ -272,7 +273,7 @@ export const ProvidersTab = ({
               key={field.id}
               className="bg-background/30 rounded border p-4"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex min-h-0 items-start justify-between gap-3">
                 <div>
                   <FieldTitle className="text-base! font-medium!">
                     {provider?.name?.trim() || `Provider ${index + 1}`}
@@ -345,7 +346,7 @@ export const ProvidersTab = ({
                 <Field>
                   <FieldLabel>Models</FieldLabel>
                   <FieldContent className="gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 overflow-y-auto">
                       <Button
                         type="button"
                         variant="outline"
@@ -362,9 +363,11 @@ export const ProvidersTab = ({
                     </div>
 
                     {models.length > 0 ? (
-                      <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="grid max-h-40 min-h-0 items-start justify-start gap-2 overflow-y-scroll rounded border p-2 sm:grid-cols-2">
                         {models.map((model, modelIndex) => (
-                          <Fragment key={`${field.id}-${model.name}`}>
+                          <Fragment
+                            key={`${field.id}-${model.name}-${modelIndex}`}
+                          >
                             <Input
                               type="hidden"
                               {...register(

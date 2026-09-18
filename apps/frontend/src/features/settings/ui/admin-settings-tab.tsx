@@ -29,7 +29,7 @@ export const AdminSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
   }
 
   return (
-    <TabsContent value="admin" className="min-h-0">
+    <TabsContent value="admin" className="min-h-0 overflow-hidden">
       <SettingsCard
         settings={adminSettingsSections}
         defaultTab={defaultTab}

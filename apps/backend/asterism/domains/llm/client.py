@@ -52,11 +52,13 @@ class StreamHandler[T: BaseModel]:
     response_model: Type[T] | None = None
 
     async def process(
-        self, stream: AsyncGenerator[ChatCompletionChunk, None]
+        self,
+        stream: AsyncGenerator[ChatCompletionChunk, None],
     ) -> AsyncGenerator[LLMEvent, None]:
 
         async for chunk in stream:
-            if chunk.usage:
+            print(f"Received chunk: {chunk}")
+            if hasattr(chunk, "usage") and chunk.usage is not None:
                 self.usage = chunk.usage
 
             async for event in self._handle_chunk(chunk):
@@ -83,7 +85,9 @@ class StreamHandler[T: BaseModel]:
                     content=self.content,
                     exception=exception,
                     finish_reason=self.final_finish_reason,
-                    total_tokens=self.usage.completion_tokens if self.usage else 0,
+                    total_tokens=self.usage.completion_tokens
+                    if self.usage
+                    else 0,
                     type=LLMEventType.ERROR,
                 )
 
@@ -110,6 +114,9 @@ class StreamHandler[T: BaseModel]:
     async def _handle_chunk(
         self, chunk: ChatCompletionChunk
     ) -> AsyncGenerator[LLMEvent, None]:
+        if not hasattr(chunk, "choices") or not chunk.choices:
+            return
+
         for choice in chunk.choices:
             if choice.finish_reason is not None:
                 self.final_finish_reason = choice.finish_reason
@@ -204,7 +211,7 @@ class LLMClient(LLMClientProtocol):
         if "seed" not in completion_args:
             completion_args["seed"] = int(time.time())
 
-        extrabody_args = {"top_k": 20, "min_p": 0.0}
+        extrabody_args = {}
         if "thinking_budget_tokens" in completion_args:
             extrabody_args["thinking_budget_tokens"] = completion_args.pop(
                 "thinking_budget_tokens"
@@ -237,7 +244,9 @@ class LLMClient(LLMClientProtocol):
 
         msg_copy = messages.copy()
         if msg_copy[0].role == "system":
-            msg_copy[0].content = f"Time: {str(time.time())}\n{msg_copy[0].content}"
+            msg_copy[
+                0
+            ].content = f"Time: {str(time.time())}\n{msg_copy[0].content}"
         else:
             msg_copy.insert(0, LLMMessage.system(f"Time: {str(time.time())}"))
         completion_args["messages"] = format_messages_for_model(msg_copy)

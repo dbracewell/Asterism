@@ -4,7 +4,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.common.log import DEFAULT_LOGGER
-from asterism.domains.tools.schemas import SearchArgs, SearchTimeRange
+from asterism.domains.tools.schemas import SearchArgs
 
 from .base_search import SafeSearch, SearchResult
 
@@ -54,7 +54,7 @@ async def searxng(
                     "safesearch": _SEARXNG_SAFE_SEARCH_MAP[config.safe_search],
                     "language": args.search_language,
                     "time_range": args.time_range
-                    if args.time_range != SearchTimeRange.ALL
+                    if args.time_range != "all"
                     else "",
                     "categories": category,
                     "theme": "simple",

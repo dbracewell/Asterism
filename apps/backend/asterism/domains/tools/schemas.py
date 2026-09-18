@@ -1,16 +1,8 @@
-from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.components.schemas import ComponentType
-
-
-class SearchTimeRange(StrEnum):
-    ALL = "all"
-    DAY = "day"
-    MONTH = "month"
-    YEAR = "year"
 
 
 class SearchArgs(BaseModel):
@@ -29,10 +21,12 @@ class SearchArgs(BaseModel):
         description="The language to use to gather search results",
         title="Search Language",
     )
-    time_range: SearchTimeRange = Field(
-        default=SearchTimeRange.ALL,
-        description="The time range (ALL, DAY, MONTH, YEAR) to limit the search to",  # noqa: E501
-        title="Time Range",
+    time_range: Literal["past_24_hours", "past_week", "past_month", "all"] = (
+        Field(
+            default="all",
+            description="The time range (ALL, DAY, MONTH, YEAR) to limit the search to",  # noqa: E501
+            title="Time Range",
+        )
     )
 
 

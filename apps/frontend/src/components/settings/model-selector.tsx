@@ -1,13 +1,10 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+"use client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import useClickOutside from "@/hooks/use-clickoutside";
 import { LlmDisplayInfo } from "@/lib/client";
-import { cn } from "@/lib/utils";
-import { useMemo, useState } from "react";
+import { cn } from "cn";
+import { useMemo, useRef, useState } from "react";
 
 type ModelSelectorProps = {
   id?: string;
@@ -24,46 +21,73 @@ export const ModelSelector = ({
   onValueChange,
   availableModels,
   className,
-  align = "center",
 }: ModelSelectorProps) => {
-  const [model, setModel] = useState(defaultModel ?? "");
+  const divRef = useRef<HTMLDivElement>(null);
+  const [open, setIsOpen] = useState(false);
+  const [input, setInput] = useState(
+    () => availableModels?.find((m) => m.id === defaultModel)?.name ?? "",
+  );
+  const [model, setModel] = useState(
+    () => availableModels?.find((m) => m.id === defaultModel)?.name ?? "",
+  );
   const modelOptions = useMemo(() => {
     return (
-      availableModels?.map((m) => ({
-        value: m.id,
-        label: m.name,
-      })) ?? []
+      availableModels
+        ?.filter((m) => m.name.toLowerCase().includes(input.toLowerCase()))
+        .map((m) => ({
+          value: m.id,
+          label: m.name,
+        })) ?? []
     );
-  }, [availableModels]);
+  }, [availableModels, input]);
+
+  useClickOutside(divRef, () => {
+    if (model) {
+      setInput(availableModels?.find((m) => m.name === model)?.name ?? "");
+    } else {
+      setInput("");
+    }
+    setIsOpen(false);
+  });
 
   return (
-    <Select
-      value={model}
-      onValueChange={(v) => {
-        setModel(v);
-        onValueChange(v);
-      }}
+    <div
+      id={id}
+      ref={divRef}
+      className={cn("relative flex flex-col", className)}
     >
-      <SelectTrigger id={id} className={cn("min-w-0 truncate", className)}>
-        <span className="block w-full truncate text-left">
-          <SelectValue placeholder="Select a model" />
-        </span>
-      </SelectTrigger>
-      <SelectContent
-        position="popper"
-        align={align}
-        className="max-h-60 overflow-y-auto"
+      <Input
+        value={input}
+        onMouseDown={() => setIsOpen(true)}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Model..."
+        className="focus-visible:border-border border-border ring-0 outline-0 transition-all group-focus-within:rounded-b-none focus-visible:ring-0 focus-visible:outline-0"
+      />
+      <div
+        className={cn(
+          "bg-input absolute top-7 right-0 left-0 z-100 max-h-40 flex-col",
+          "items-start justify-start gap-1 overflow-y-auto rounded-b border",
+          "border-t-0 py-0.5 text-sm transition-all",
+          open ? "flex" : "hidden",
+        )}
       >
         {modelOptions.map((model) => (
-          <SelectItem
-            value={model.value}
+          <Button
+            type="button"
+            onClick={() => {
+              setModel(model.label);
+              onValueChange(model.value);
+              setInput(model.label);
+              setIsOpen(false);
+            }}
+            variant="ghost"
+            className="w-full justify-start px-2"
             key={model.value}
-            className="block min-w-0! truncate text-xs"
           >
-            <span className="block w-[92%] truncate">{model.label}</span>
-          </SelectItem>
+            {model.label}
+          </Button>
         ))}
-      </SelectContent>
-    </Select>
+      </div>
+    </div>
   );
 };

@@ -207,13 +207,16 @@ class ToolRegistry:
             if not type_arguments:
                 raise ValueError("Context is missing the generic Args type")
             args_class = type_arguments[0]
+            param_schema = args_class.model_json_schema()
+            param_schema["additionalProperties"] = False
+            param_schema["required"] = list(args_class.model_fields.keys())
             function_schema = ChatCompletionFunctionToolParam(
                 type="function",
                 function=FunctionDefinition(
                     name=func_name,
                     description=func_description,
                     strict=True,
-                    parameters=args_class.model_json_schema(),
+                    parameters=param_schema,
                 ),
             )
             return args_class, function_schema
