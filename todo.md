@@ -89,11 +89,11 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-10.1-T7: Simplify or remove `UserResponseQueue`.
   - [x] US-10.1-T8: Add unit tests for both policies and `Agent.run()` with each.
 
-- [ ] US-10.2 — Fix sub-agent tool authorization to respect permissions
-  - [ ] US-10.2-T1: Construct sub-agent with `AllowlistApprovalPolicy` using intersection of parent and sub-agent permissions.
-  - [ ] US-10.2-T2: Remove manual auto-approve loop from `sub_agent.py`.
-  - [ ] US-10.2-T3: Test sub-agent cannot use tools outside its profile allowlist.
-  - [ ] US-10.2-T4: Test sub-agent cannot use tools outside parent allowlist.
+- [x] US-10.2 — Fix sub-agent tool authorization to respect permissions
+  - [x] US-10.2-T1: Construct sub-agent with `AllowlistApprovalPolicy` using intersection of parent and sub-agent permissions.
+  - [x] US-10.2-T2: Remove manual auto-approve loop from `sub_agent.py`.
+  - [x] US-10.2-T3: Test sub-agent cannot use tools outside its profile allowlist.
+  - [x] US-10.2-T4: Test sub-agent cannot use tools outside parent allowlist.
 
 - [ ] US-10.3 — Add recursion safety to sub-agent execution
   - [ ] US-10.3-T1: Add `call_stack` tracking to `ToolContext` or `SubAgentContext`.

@@ -5,6 +5,8 @@
 Asterism is a full-stack, multi-agent AI application with coordinated agents, tools,
 skills, memory, and profile-specific behavior.
 
+Comprehensive architecture documentation and component diagrams are located in [`architecture/`](architecture/README.md).
+
 ## Configuration
 
 Copy the shared example to the repository root and replace the placeholder secrets:

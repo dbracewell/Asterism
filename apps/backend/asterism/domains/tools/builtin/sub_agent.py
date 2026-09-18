@@ -19,17 +19,25 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     """
     Hands of work to a sub agent to perform.
     """
+    from asterism.domains.agent.approval import AllowlistApprovalPolicy
     from asterism.domains.agent.service import get_agent_profile
 
     agent_profile = await get_agent_profile(ctx.user.id, ctx.args.agent_id)
     if not agent_profile:
         raise ValueError(f"Agent with id {ctx.args.agent_id} not found.")
 
+    parent_tools = set(ctx.session.info.allowed_tools or [])
+    sub_agent_profile_tools = set(agent_profile.tools or [])
+    allowed_tools = sorted(parent_tools & sub_agent_profile_tools)
+
+    sub_profile = agent_profile.model_copy(update={"tools": allowed_tools})
+
     agent = Agent(
-        profile=agent_profile,
+        profile=sub_profile,
         user=ctx.user,
         session=ctx.session,
-        allowed_tools=agent_profile.tools,
+        allowed_tools=allowed_tools,
+        approval_policy=AllowlistApprovalPolicy(),
     )
 
     last_response: AgentEvent = AgentEvent(type=AgentEventType.COMPLETE)

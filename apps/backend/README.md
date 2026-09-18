@@ -51,3 +51,14 @@ pnpm --filter @asterism/backend lint
 pnpm --filter @asterism/backend typecheck
 pnpm --filter @asterism/backend test
 ```
+
+## Architecture documentation
+
+Comprehensive system design guides and Mermaid sequence diagrams are available in the [`/architecture`](../../architecture/README.md) directory:
+
+- [System Overview](../../architecture/overview.md) — Topology, technology stack, and request lifecycle
+- [Tool Authorization & Approval](../../architecture/tool-authorization.md) — Pluggable approval policies, WebSocket human-in-the-loop, and sub-agent sandboxing
+- [Agent Runtime & Execution Loop](../../architecture/agent-runtime.md) — Multi-step loops, dynamic system prompts, and streaming deltas
+- [Chat & Real-Time WebSocket](../../architecture/chat-and-websocket.md) — Concurrency, `ChatController`, `ChatOrchestrator`, and message queues
+- [Data Model & Storage](../../architecture/data-and-storage.md) — High-concurrency SQLite WAL, JSONB columns, and the message tree
+- [Authentication & Security](../../architecture/auth-and-security.md) — BetterAuth, JWKS RS256 token verification, and tenancy

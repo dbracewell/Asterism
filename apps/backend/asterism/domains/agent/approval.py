@@ -93,7 +93,7 @@ class InteractiveApprovalPolicy:
             UserResponseQueue,
         )
 
-        queue = UserResponseQueue(tools=tools, permissions=permissions)
+        queue = UserResponseQueue(tools=tools, has_permission=permissions)
 
         # Collect tools that need external approval (pending
         # also auto-enqueues permitted tools as a side effect).

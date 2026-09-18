@@ -77,13 +77,13 @@ class ToolContext[T: BaseModel | None]:
 
 
 @dataclass(frozen=True)
-class LLMTool:
+class LLMTool[T: BaseModel]:
     name: str
     is_async: bool
     description: str
     schema: ChatCompletionFunctionToolParam
     arg_validator: Type[BaseModel]
-    function: Callable[[ToolContext[BaseModel]], Any]
+    function: Callable[[ToolContext[T]], Any]
     component_type: ComponentType | None = None
 
 
@@ -194,17 +194,17 @@ class ToolRegistry:
 
         return await call_tool()
 
-    def tool(
+    def tool[T: BaseModel](
         self,
         name: str | None = None,
         description: str | None = None,
         component_type: ComponentType | None = None,
-    ) -> Callable[..., Callable[[ToolContext[BaseModel]], Any]]:
+    ) -> Callable[..., Callable[[ToolContext[T]], Any]]:
         def to_json_schema(
-            func: Callable[[ToolContext[BaseModel]], Any],
+            func: Callable[[ToolContext[T]], Any],
             func_name: str,
             func_description: str,
-        ) -> tuple[Type[BaseModel], ChatCompletionFunctionToolParam]:
+        ) -> tuple[Type[T], ChatCompletionFunctionToolParam]:
             sig = inspect.signature(func)
             annotation = next(iter(sig.parameters.values())).annotation
             type_arguments = get_args(annotation)
@@ -226,8 +226,8 @@ class ToolRegistry:
             return args_class, function_schema
 
         def decorator(
-            func: Callable[[ToolContext[BaseModel]], Any],
-        ) -> Callable[[ToolContext[BaseModel]], Any]:
+            func: Callable[[ToolContext[T]], Any],
+        ) -> Callable[[ToolContext[T]], Any]:
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
 

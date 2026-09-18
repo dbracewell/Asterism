@@ -196,7 +196,7 @@ class TestInteractiveApprovalPolicy:
 class TestUserResponseQueue:
     def test_pending_auto_approves_permitted_tools(self):
         tools = [_make_tool_call("search"), _make_tool_call("shell")]
-        queue = UserResponseQueue(tools=tools, permissions=["search"])
+        queue = UserResponseQueue(tools=tools, has_permission=["search"])
         pending = list(queue.pending)
         # Only shell should be pending (search is auto-approved)
         assert len(pending) == 1
@@ -204,14 +204,14 @@ class TestUserResponseQueue:
 
     def test_pending_is_idempotent(self):
         tools = [_make_tool_call("search"), _make_tool_call("shell")]
-        queue = UserResponseQueue(tools=tools, permissions=["search"])
+        queue = UserResponseQueue(tools=tools, has_permission=["search"])
         # Repeated calls to pending should return the exact same pending tools
         assert [tc.function.name for tc in queue.pending] == ["shell"]
         assert [tc.function.name for tc in queue.pending] == ["shell"]
 
     def test_respond_ignores_already_processed(self):
         tool = _make_tool_call("search")
-        queue = UserResponseQueue(tools=[tool], permissions=["search"])
+        queue = UserResponseQueue(tools=[tool], has_permission=["search"])
         # tool is already auto-approved on init; respond should be a no-op
         queue.respond(tool, accept=False)
         assert queue._queue.qsize() == 1
@@ -219,7 +219,7 @@ class TestUserResponseQueue:
     @pytest.mark.asyncio
     async def test_wait_yields_all_authorizations(self):
         tools = [_make_tool_call("search"), _make_tool_call("shell")]
-        queue = UserResponseQueue(tools=tools, permissions=["search"])
+        queue = UserResponseQueue(tools=tools, has_permission=["search"])
         # Respond to the pending one
         pending = list(queue.pending)
         for tool in pending:
