@@ -8,14 +8,18 @@ __all__ = ["ToolUseAuthorization", "UserResponseQueue"]
 
 
 class UserResponseQueue:
-    def __init__(self, tools: list[ToolCall], permissions: list[str]):
+    def __init__(
+        self,
+        tools: list[ToolCall],
+        has_permission: list[str],
+    ):
         self._tools: list[ToolCall] = tools
         self._queue: asyncio.Queue[ToolUseAuthorization] = asyncio.Queue()
-        self._permissions: set[str] = set(permissions)
+        self._has_permission: set[str] = set(has_permission)
         self._responded: set[str] = set()
 
         for tc in self._tools:
-            if tc.function.name in self._permissions:
+            if tc.function.name in self._has_permission:
                 self._responded.add(tc.id)
                 self._queue.put_nowait(
                     ToolUseAuthorization(
@@ -28,7 +32,11 @@ class UserResponseQueue:
     def pending(self) -> list[ToolCall]:
         return [tc for tc in self._tools if tc.id not in self._responded]
 
-    def respond(self, tool_call: ToolCall, accept: bool) -> None:
+    def respond(
+        self,
+        tool_call: ToolCall,
+        accept: bool,
+    ) -> None:
         if tool_call.id in self._responded:
             return
 

@@ -242,12 +242,6 @@ class LLMClient(LLMClientProtocol):
             )
 
         msg_copy = messages.copy()
-        if msg_copy[0].role == "system":
-            msg_copy[
-                0
-            ].content = f"Time: {str(time.time())}\n{msg_copy[0].content}"
-        else:
-            msg_copy.insert(0, LLMMessage.system(f"Time: {str(time.time())}"))
         completion_args["messages"] = format_messages_for_model(msg_copy)
         return completion_args, extrabody_args
 

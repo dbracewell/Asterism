@@ -28,7 +28,7 @@ def _file_secret(name: str) -> str:
     has_legacy = name.lower() in entries
     if has_canonical and has_legacy:
         raise ValueError(
-            f"Ambiguous file secret names for {name}; keep only the uppercase file"
+            f"Ambiguous file secret names for {name}; keep only the uppercase file"  # noqa: E501
         )
     if has_legacy:
         raise ValueError(
@@ -44,6 +44,7 @@ def default_allowed_tools() -> list[str]:
         "get_user_name",
         "get_current_timestamp",
         "get_timestamp_at_timezone",
+        "sub_agent",
     ]
 
 
@@ -114,7 +115,7 @@ class Config(BaseSettings):
             ):
                 raise ConfigValidationError(
                     "PUBLIC_URL must be an absolute browser-facing origin "
-                    "without credentials, path, query, fragment, or trailing slash"
+                    "without credentials, path, query, fragment, or trailing slash"  # noqa: E501
                 )
             if not self.system_key:
                 raise ConfigValidationError(
