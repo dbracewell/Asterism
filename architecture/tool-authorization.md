@@ -218,6 +218,8 @@ flowchart TD
 
     SubAgentInstance -->|Only permitted tools executed| ExecApproved["Execute 'web_search'"]
     SubAgentInstance -.->|Blocked & Rejected| ExecBlocked["Blocked: 'terminal_exec', 'sql_query'"]
+    SubAgentInstance -->|"Only permitted tools executed"| ExecApproved["Execute 'web_search'"]
+    SubAgentInstance -.->|"Blocked & Rejected"| ExecBlocked["Blocked: 'terminal_exec', 'sql_query'"]
 ```
 
 ### Sandboxing Rules

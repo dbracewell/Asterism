@@ -36,20 +36,21 @@ flowchart TD
     end
 
     UI <--> Hook
-    Hook <-->|WebSocket Traffic| WSEndpoint
+    Hook <-->|"WebSocket Traffic"| WSEndpoint
     WSEndpoint --> WSConn
     WSConn <--> AcceptLoop
 
-    AcceptLoop -->|Normal Commands (chat, regenerate)| InboundQueue
-    AcceptLoop -->|High Priority Tool Approval| AgentSession
+    AcceptLoop -->|"Normal Commands (chat, regenerate)"| InboundQueue
+    AcceptLoop -->|"High Priority Tool Approval"| AgentSession
     InboundQueue --> ProcessLoop
-    ProcessLoop --> DomainOrchestrator
+    ProcessLoop --> MsgTree
+    ProcessLoop --> AgentSession
 
-    DomainOrchestrator --> OutboundQueue
+    AgentSession --> OutboundQueue
     OutboundQueue --> MsgQueueLoop
     MsgQueueLoop --> WSConn
     StatusLoop --> WSConn
-    TitleGen -.->|Webhook Chat Title Update| Frontend
+    TitleGen -.->|"Webhook Chat Title Update"| UI
 ```
 
 ---

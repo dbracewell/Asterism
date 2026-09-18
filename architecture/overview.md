@@ -54,6 +54,10 @@ flowchart TB
     NextClient -->|REST Requests| ReverseProxy
     ReverseProxy -->|Forward to localhost:8000| FastAPIApp
     WSClient <-->|WebSocket Stream| WSEndpoint
+    NextClient -->|"Auth / Session"| AuthEngine
+    NextClient -->|"REST Requests"| ReverseProxy
+    ReverseProxy -->|"Forward to localhost:8000"| FastAPIApp
+    WSClient <-->|"WebSocket Stream"| WSEndpoint
 
     FastAPIApp --> TokenVerifier
     TokenVerifier --> AuthEngine

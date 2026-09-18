@@ -70,6 +70,11 @@ flowchart TD
     WSClient <-->|Bi-directional WebSocket| WSRouter
     NextProxy -->|Forwarded REST| FastAPIApp
     StreamWebhook <---|System Key HTTP POST| EventBusCore
+    BrowserUI -->|"HTTP REST via /api/py"| NextProxy
+    BrowserUI -->|"Auth Requests"| NextAuth
+    WSClient <-->|"Bi-directional WebSocket"| WSRouter
+    NextProxy -->|"Forwarded REST"| FastAPIApp
+    EventBusCore -->|"System Key HTTP POST"| StreamWebhook
 
     FastAPIApp --> SecurityMiddleware
     SecurityMiddleware --> WSRouter
@@ -85,6 +90,9 @@ flowchart TD
     LLMClient -->|Streaming SSE / Tool calls| LLMProviders
     ToolReg -->|Fetch / Search / APIs| WebServices
     DBMgr -->|SQLAlchemy Async| SQLiteDB
+    LLMClient -->|"Streaming SSE / Tool calls"| LLMProviders
+    ToolReg -->|"Fetch / Search / APIs"| WebServices
+    DBMgr -->|"SQLAlchemy Async"| SQLiteDB
 ```
 
 ---
