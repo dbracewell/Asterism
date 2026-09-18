@@ -15,6 +15,7 @@ from pydantic import BaseModel
 import asterism.domains.settings.service as settings_service
 from asterism.common.retries import async_retry
 from asterism.core.schemas import AuthedUser
+from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
 from asterism.domains.settings.schemas import ApplicationSettings
@@ -69,6 +70,7 @@ class ToolContext[T: BaseModel | None]:
     args: T
     user: AuthedUser
     user_message: str
+    session: Chat
     app_settings: ApplicationSettings
     client: LLMClientProtocol
     user_files: list[str] = field(default_factory=list)
@@ -148,6 +150,7 @@ class ToolRegistry:
         tool_call: ToolCall,
         user: AuthedUser,
         client: LLMClientProtocol,
+        session: Chat,
         user_message: str = "",
         user_files: list[str] = [],
         max_retries: int = 3,
@@ -172,6 +175,7 @@ class ToolRegistry:
             ctx = ToolContext(
                 args=arguments,
                 user=user,
+                session=session,
                 user_message=user_message,
                 user_files=user_files,
                 client=client,

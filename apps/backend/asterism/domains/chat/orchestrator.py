@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 import uuid
 from logging import Logger
+from typing import TYPE_CHECKING
 
 import asterism.domains.chat.service as chat_service
 from asterism.common.collection_utils import index_of
@@ -9,8 +12,8 @@ from asterism.common.strings import is_none_or_empty
 from asterism.core.events import ChatUpdateEvent, Event, EventType, event_bus
 from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.agent import Agent
+from asterism.domains.agent.approval import InteractiveApprovalPolicy
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
-from asterism.domains.agent.user_response_queue import UserResponseQueue
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.schemas import (
     Chat,
@@ -23,20 +26,28 @@ from asterism.domains.chat.schemas import (
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.llm.schemas import LLMMessage, ToolCall
 
+if TYPE_CHECKING:
+    from asterism.domains.agent.user_response_queue import UserResponseQueue
+
 
 class ChatOrchestrator:
     def __init__(
         self,
-        chat: Chat,
         agent: Agent,
     ):
-        self.chat: Chat = chat
+        self.chat: Chat = agent.session
         self.agent: Agent = agent
         self.logger: Logger = get_logger(
             f"ChatSession({str(self.chat.info.id)})"
         )
         self.is_processing_messages: bool = False
         self.pending_approvals: dict[str, asyncio.Future] = {}
+
+        # Inject interactive approval into the agent so tool
+        # authorization flows through the WebSocket UI.
+        self.agent._approval_policy = InteractiveApprovalPolicy(
+            on_pending=self._handle_tool_approval,
+        )
 
     @property
     def queue(self) -> MessageQueue:
@@ -150,6 +161,29 @@ class ChatOrchestrator:
                 f"Error generating chat title {e}", stack_info=True
             )
 
+    async def _handle_tool_approval(
+        self,
+        pending_tools: list[ToolCall],
+        queue: UserResponseQueue,
+    ) -> None:
+        """
+        Callback for InteractiveApprovalPolicy. Emits WebSocket
+        permission-request messages and waits for user decisions.
+        """
+        tasks = []
+        for tool in pending_tools:
+            await self.queue.put(
+                {
+                    "type": "tool_permission_request",
+                    "id": tool.id,
+                    "name": tool.function.name,
+                    "arguments": tool.function.arguments,
+                }
+            )
+            tasks.append(self._wait_for_ui_approval(tool, queue))
+
+        await asyncio.gather(*tasks)
+
     async def _wait_for_ui_approval(
         self,
         tool: ToolCall,
@@ -209,29 +243,6 @@ class ChatOrchestrator:
 
             async for event in self.agent.run(messages=messages):
                 match event:
-                    case AgentEvent(
-                        type=AgentEventType.TOOL_CALL,
-                        user_response_queue=queue,
-                    ) if queue is not None:
-                        # Get user ok to run tools
-                        await self.queue.put(event.model_dump(mode="json"))
-                        tasks = []
-                        for tool in queue.pending:
-                            await self.queue.put(
-                                {
-                                    "type": "tool_permission_request",
-                                    "id": tool.id,
-                                    "name": tool.function.name,
-                                    "arguments": tool.function.arguments,
-                                }
-                            )
-                            tasks.append(
-                                self._wait_for_ui_approval(tool, queue)
-                            )
-
-                        await asyncio.gather(*tasks)
-                        continue
-
                     case AgentEvent(type=AgentEventType.COMPLETE):
                         new_message = await chat_service.add_message(
                             user_id=self.user_id,

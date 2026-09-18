@@ -28,6 +28,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     agent = Agent(
         profile=agent_profile,
         user=ctx.user,
+        session=ctx.session,
         allowed_tools=agent_profile.tools,
     )
 

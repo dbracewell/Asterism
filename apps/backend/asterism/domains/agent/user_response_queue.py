@@ -1,37 +1,38 @@
 import asyncio
-from dataclasses import dataclass
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
+from asterism.domains.agent.approval import ToolUseAuthorization
 from asterism.domains.llm.schemas import ToolCall
 
-
-@dataclass
-class ToolUseAuthorization:
-    tool: ToolCall
-    accept: bool
+__all__ = ["ToolUseAuthorization", "UserResponseQueue"]
 
 
 class UserResponseQueue:
     def __init__(self, tools: list[ToolCall], permissions: list[str]):
         self._tools: list[ToolCall] = tools
         self._queue: asyncio.Queue[ToolUseAuthorization] = asyncio.Queue()
-        self._processed: set[str] = set()
-        self._permissions: list[str] = permissions
+        self._permissions: set[str] = set(permissions)
+        self._responded: set[str] = set()
+
+        for tc in self._tools:
+            if tc.function.name in self._permissions:
+                self._responded.add(tc.id)
+                self._queue.put_nowait(
+                    ToolUseAuthorization(
+                        tool=tc,
+                        accept=True,
+                    )
+                )
 
     @property
-    def pending(self) -> Generator[ToolCall, None, None]:
-        for tc in self._tools:
-            if tc.id in self._processed:
-                continue
-            if tc.function.name in self._permissions:
-                self._queue.put_nowait(ToolUseAuthorization(tool=tc, accept=True))
-                continue
-            yield tc
+    def pending(self) -> list[ToolCall]:
+        return [tc for tc in self._tools if tc.id not in self._responded]
 
-    def respond(self, tool_call: ToolCall, accept: bool):
-        if tool_call.id in self._processed:
+    def respond(self, tool_call: ToolCall, accept: bool) -> None:
+        if tool_call.id in self._responded:
             return
 
+        self._responded.add(tool_call.id)
         self._queue.put_nowait(
             ToolUseAuthorization(
                 tool=tool_call,
@@ -40,7 +41,5 @@ class UserResponseQueue:
         )
 
     async def wait(self) -> AsyncGenerator[ToolUseAuthorization, None]:
-        while len(self._processed) < len(self._tools):
-            response = await self._queue.get()
-            self._processed.add(response.tool.id)
-            yield response
+        for _ in range(len(self._tools)):
+            yield await self._queue.get()

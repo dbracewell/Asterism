@@ -13,8 +13,6 @@ from asterism.domains.llm.schemas import (
     ToolResult,
 )
 
-from .user_response_queue import UserResponseQueue
-
 
 class AgentEventType(StrEnum):
     START = auto()
@@ -26,18 +24,13 @@ class AgentEventType(StrEnum):
 
 
 class AgentEvent(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True, arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(from_attributes=True)
     type: AgentEventType
     content: str = Field(default="")
     thinking: str = Field(default="")
     tool_calls: list[ToolCall] = Field(default_factory=list[ToolCall])
     tool_results: list[ToolResult] = Field(default_factory=list[ToolResult])
     total_tokens: int = Field(default=0)
-    user_response_queue: UserResponseQueue | None = Field(
-        default=None, exclude=True
-    )
 
     def has_tool_calls(self) -> bool:
         return len(self.tool_calls) > 0

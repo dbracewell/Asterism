@@ -72,12 +72,11 @@ async def searxng(
 
                 results = response.json()["results"]
                 for result in results:
+                    url = result.get("img_src", "") or result.get("url", "")
                     search_results.append(
                         SearchResult(
                             title=result["title"],
-                            url=result["img_src"]
-                            if "img_src" in result
-                            else result["url"],
+                            url=url,
                             snippet=result.get("content"),
                             relevance_score=result.get("score", 0.0),
                         )

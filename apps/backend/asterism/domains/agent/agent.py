@@ -11,6 +11,7 @@ from asterism.common.log import get_logger
 from asterism.core.config import config
 from asterism.core.exceptions import BadDataException
 from asterism.core.schemas import AuthedUser
+from asterism.domains.chat.schemas import Chat
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import (
     LLMClientProtocol,
@@ -21,8 +22,12 @@ from asterism.domains.llm.schemas import (
 from asterism.domains.settings.schemas import LlmWithProvider
 from asterism.domains.tools.registry import tool_registry
 
+from .approval import (
+    AllowlistApprovalPolicy,
+    ToolApprovalPolicy,
+    ToolUseAuthorization,
+)
 from .schemas import AgentEvent, AgentEventType, AgentProfile
-from .user_response_queue import ToolUseAuthorization, UserResponseQueue
 
 
 class Agent:
@@ -30,18 +35,24 @@ class Agent:
         self,
         profile: AgentProfile,
         user: AuthedUser,
+        session: Chat,
         logger: Logger | None = None,
         allowed_tools: list[str] | None = None,
+        approval_policy: ToolApprovalPolicy | None = None,
     ) -> None:
         self.profile = profile
         self.max_steps = profile.max_steps
         self.user = user
+        self.session = session
         self.logger = logger or get_logger(f"Agent({self.profile.name})")
         self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
         self.allowed_tools = (
             allowed_tools
             if allowed_tools is not None
             else config.default_allowed_tools
+        )
+        self._approval_policy: ToolApprovalPolicy = (
+            approval_policy or AllowlistApprovalPolicy()
         )
 
     async def _get_client(self) -> LLMClientProtocol:
@@ -77,6 +88,7 @@ class Agent:
             tool_registry.invoke_tool(
                 tool_call=auth.tool,
                 user=self.user,
+                session=self.session,
                 client=await self._get_client(),
                 user_message=user_message or "",
             )
@@ -184,20 +196,15 @@ class Agent:
 
                         tool_results: list[ToolResult] = []
                         if event.tool_calls:
-                            response_queue = UserResponseQueue(
-                                tools=event.tool_calls,
-                                permissions=self.allowed_tools,
-                            )
-
                             yield AgentEvent(
                                 type=AgentEventType.TOOL_CALL,
                                 tool_calls=event.tool_calls,
-                                user_response_queue=response_queue,
                             )
 
-                            auths: list[ToolUseAuthorization] = []
-                            async for response in response_queue.wait():
-                                auths.append(response)
+                            auths = await self._approval_policy.authorize(
+                                event.tool_calls,
+                                self.allowed_tools,
+                            )
 
                             async for response in self._run_tools(
                                 user_message=last_user_message.content,
