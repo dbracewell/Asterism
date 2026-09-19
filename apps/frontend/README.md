@@ -39,6 +39,17 @@ intentionally recreate auth storage, stop the app, run
 
 Open `http://localhost:3000`. Next.js allows only one dev process per app directory.
 
+## LLM provider administration
+
+Administrators configure providers under **Settings → Admin Settings → Providers**.
+Choose **OpenAI** for the fixed canonical API URL, or **Generic OpenAI** for an
+administrator-supplied compatible HTTP(S) URL. Model discovery is performed by
+the authenticated backend API, not directly by the browser. Context-window and
+tri-state vision values show their catalog/provider/manual/unknown provenance;
+unknown Generic OpenAI metadata can be completed manually and manual values are
+preserved on refresh. See
+[LLM Providers and Model Capabilities](../../architecture/llm-providers.md).
+
 ## Docker and migrations
 
 Only the repository-root Dockerfile and Compose configuration are supported.

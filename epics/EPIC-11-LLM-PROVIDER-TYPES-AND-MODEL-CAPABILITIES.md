@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress.** US-11.1 through US-11.3 are completed, verified, and user-confirmed; US-11.4 is next.
+**Completed.** US-11.1 through US-11.4 are completed, verified, and user-confirmed.
 
 ## Goal
 
@@ -236,11 +236,11 @@ default-model behavior.
 
 **Dependencies:** US-11.1 through US-11.3.
 
-- [ ] US-11.4-T1: Add an integration scenario covering provider creation, discovery, manual completion of unknown capabilities, save/reload, model activation, and draft/default model retention.
-- [ ] US-11.4-T2: Verify `LLMClient` construction uses the canonical OpenAI URL or normalized Generic OpenAI URL and that existing chat/draft paths still resolve active models.
-- [ ] US-11.4-T3: Add a browser E2E scenario with deterministic mocked discovery for both provider types, including Generic OpenAI metadata fallback and a discovery error.
-- [ ] US-11.4-T4: Update provider/setup and architecture documentation with type semantics, capability provenance, discovery limitations, and manual fallback behavior.
-- [ ] US-11.4-T5: Run backend/frontend lint, typecheck, tests, build, generated-client consistency checks, migration tests, and relevant Playwright coverage; record any live-provider limitations.
+- [x] US-11.4-T1: Add an integration scenario covering provider creation, discovery, manual completion of unknown capabilities, save/reload, model activation, and draft/default model retention.
+- [x] US-11.4-T2: Verify `LLMClient` construction uses the canonical OpenAI URL or normalized Generic OpenAI URL and that existing chat/draft paths still resolve active models.
+- [x] US-11.4-T3: Add a browser E2E scenario with deterministic mocked discovery for both provider types, including Generic OpenAI metadata fallback and a discovery error.
+- [x] US-11.4-T4: Update provider/setup and architecture documentation with type semantics, capability provenance, discovery limitations, and manual fallback behavior.
+- [x] US-11.4-T5: Run backend/frontend lint, typecheck, tests, build, generated-client consistency checks, migration tests, and relevant Playwright coverage; record any live-provider limitations.
 
 **Acceptance criteria**
 
@@ -248,6 +248,14 @@ default-model behavior.
 - Existing model IDs, active selections, and draft/default references remain valid after upgrade and refresh.
 - Deterministic automated coverage proves both provider workflows without requiring external credentials.
 - Documentation explains that Generic OpenAI metadata is best-effort and can require manual completion.
+
+**Verification record:** root lint, typecheck, test, and build passed; backend
+reported 89 passing tests, frontend reported 30 unit tests plus 6 migration
+tests, configuration reported 28 passing tests, and isolated Playwright reported
+6 passing scenarios. The backend OpenAPI contract did not change in US-11.4, so
+the generated client remains synchronized. Browser/provider tests use deterministic
+mocks; no live external provider was invoked because availability, credentials,
+and compatible metadata vary by installation.
 
 ## Execution plan and definition of done
 

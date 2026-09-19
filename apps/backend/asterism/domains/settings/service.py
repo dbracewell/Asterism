@@ -317,7 +317,10 @@ async def get_draft_model(
         stmt = (
             select(LLMModel)
             .options(joinedload(LLMModel.provider))
-            .where(LLMModel.id == draft_model_id)
+            .where(
+                LLMModel.id == draft_model_id,
+                LLMModel.is_active,
+            )
         )
 
         result = await session.scalar(stmt)
