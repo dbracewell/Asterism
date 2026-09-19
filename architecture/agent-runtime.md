@@ -84,7 +84,47 @@ When an agent invokes the [`sub_agent`](../apps/backend/asterism/domains/tools/b
 - **Depth Limits**: The depth of the delegation chain is bounded by `config.max_sub_agent_depth` (default: 3). If exceeded, execution aborts with an actionable error.
 - **Lineage Tracking**: The child agent is initialized with `call_stack=[*ctx.call_stack, target_id]` so further nested delegations are tracked accurately.
 - **Event Streaming**: Sub-agent execution events (`DELTA`, `TOOL_CALL`, `COMPLETE`) are wrapped in [`SubAgentEventEnvelope`](../apps/backend/asterism/domains/agent/schemas.py) and forwarded through `ctx.event_sink`. The parent `Agent.run()` stream yields them as `SUB_AGENT` events in real-time, preventing delegated work from becoming a frozen black box.
-- See [Sub-Agent Recursion Safety & Bounded Execution](tool-authorization.md#sub-agent-recursion-safety--bounded-execution) for full details.
+- **Trace Persistence**: Upon completion, the sub-agent's step count, cumulative tokens, elapsed wall-clock time, and full message exchange are persisted to `sub_agent_traces`.
+- See [Sub-Agent Recursion Safety & Bounded Execution](tool-authorization.md#sub-agent-recursion-safety--bounded-execution) for authorization details.
+
+### Sub-Agent Delegation Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / Browser
+    participant Orch as ChatOrchestrator
+    participant Parent as Parent Agent
+    participant Tool as sub_agent Tool
+    participant Child as Child Sub-Agent
+    participant DB as SQLite (sub_agent_traces)
+
+    User->>Orch: User Message
+    Orch->>Parent: run(messages)
+    Parent->>Parent: LLM emits tool_call: sub_agent(...)
+    Parent->>Tool: invoke_tool(ctx)
+    Tool->>Tool: 1. Cycle detection (target in call_stack?)
+    Tool->>Tool: 2. Depth check (len(call_stack) <= max_depth?)
+    Tool->>Tool: 3. Tool allowlist intersection (parent & child)
+    Tool->>Tool: 4. Build context window (last N msgs, files, caller notes)
+    Tool->>Child: Agent(profile, AllowlistApprovalPolicy, call_stack, user_files)
+    Tool->>Child: run([system(context), user(prompt)])
+
+    loop Child Execution Loop
+        Child-->>Tool: AgentEvent (DELTA / TOOL_CALL)
+        Tool-->>Parent: ctx.event_sink(SubAgentEventEnvelope)
+        Parent-->>Orch: yield AgentEvent(SUB_AGENT)
+        Orch-->>User: WebSocket Packet (type: "sub_agent")
+    end
+
+    Child-->>Tool: AgentEvent (COMPLETE)
+    Tool->>DB: create_sub_agent_trace(messages, metrics, tokens, elapsed_ms)
+    Tool-->>Parent: return sub_agent result content
+    Parent->>Parent: LLM synthesizes final answer incorporating sub-agent result
+    Parent-->>Orch: yield AgentEvent(COMPLETE)
+    Orch->>DB: persist assistant Message
+    Orch-->>User: WebSocket Packet (type: "complete")
+```
 
 ---
 
@@ -156,6 +196,26 @@ When an agent delegates a task via the `sub_agent` tool:
    - **Index 0**: Sub-agent's own system prompt (`_build_system_prompt()`), establishing persona and allowed capabilities.
    - **Index 1**: System context message (`--- FORWARDED PARENT CONTEXT ---`) containing recent conversation history, available user files, and caller notes.
    - **Index 2**: User message containing the delegated task prompt.
+
+---
+
+## Sub-Agent Execution Trace Persistence
+
+To provide comprehensive auditability and debugging for delegated agent workflows, Asterism records every sub-agent execution:
+
+1. **Storage Schema**: Traces are stored in the `sub_agent_traces` table ([`SubAgentTraceModel`](../apps/backend/asterism/domains/agent/models.py)), indexed by `parent_message_id`, `sub_agent_id`, and `user_id`.
+2. **Metrics & Trajectory Recorded**:
+   - `parent_message_id`: Foreign key association to the parent chat message triggering delegation.
+   - `sub_agent_id` / `sub_agent_name`: Target profile identity.
+   - `prompt`: The delegated task instructions.
+   - `caller_context`: Optional caller-supplied context or notes.
+   - `messages`: Complete serialized JSON message exchange (system prompt, forwarded parent context, user prompt, assistant reasoning, tool calls, and tool result observations).
+   - `result`: Final response content.
+   - `step_count`: Number of reasoning turns executed.
+   - `total_tokens`: Cumulative token usage across all steps.
+   - `elapsed_ms`: Wall-clock execution time in milliseconds.
+   - `depth`: Call-chain nesting level from root.
+3. **Query Interface**: Traces are queryable programmatically via [`get_sub_agent_traces_by_parent_message()`](../apps/backend/asterism/domains/agent/service.py) and via REST API endpoint `GET /agents/traces/{parent_message_id}`.
 
 ---
 

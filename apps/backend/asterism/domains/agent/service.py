@@ -7,8 +7,14 @@ from asterism.core.exceptions import NotFoundException, UnauthorizedException
 from asterism.db.database import get_async_db_session
 from asterism.domains.settings import service as settings_service
 
-from .models import AgentProfileModel
-from .schemas import AgentProfile, PartialAgentProfile, UserAgents
+from .models import AgentProfileModel, SubAgentTraceModel
+from .schemas import (
+    AgentProfile,
+    PartialAgentProfile,
+    SubAgentTrace,
+    SubAgentTraceCreate,
+    UserAgents,
+)
 
 
 async def _ensure_valid_tools(profile: AgentProfile):
@@ -105,3 +111,46 @@ async def upsert_agent_profile(
             await session.refresh(result)
 
         return AgentProfile.model_validate(result)
+
+
+async def create_sub_agent_trace(
+    trace: SubAgentTraceCreate,
+    session: AsyncSession | None = None,
+) -> SubAgentTrace:
+    async with get_async_db_session(session) as session:
+        model = SubAgentTraceModel(
+            user_id=trace.user_id,
+            parent_message_id=trace.parent_message_id,
+            sub_agent_id=trace.sub_agent_id,
+            sub_agent_name=trace.sub_agent_name,
+            prompt=trace.prompt,
+            caller_context=trace.caller_context,
+            messages=trace.messages,
+            result=trace.result,
+            step_count=trace.step_count,
+            total_tokens=trace.total_tokens,
+            elapsed_ms=trace.elapsed_ms,
+            depth=trace.depth,
+        )
+        session.add(model)
+        await session.commit()
+        await session.refresh(model)
+        return SubAgentTrace.model_validate(model)
+
+
+async def get_sub_agent_traces_by_parent_message(
+    user_id: str,
+    parent_message_id: uuid.UUID,
+    session: AsyncSession | None = None,
+) -> list[SubAgentTrace]:
+    async with get_async_db_session(session) as session:
+        stmt = (
+            select(SubAgentTraceModel)
+            .where(
+                SubAgentTraceModel.user_id == user_id,
+                SubAgentTraceModel.parent_message_id == parent_message_id,
+            )
+            .order_by(SubAgentTraceModel.created_at.asc())
+        )
+        results = await session.scalars(stmt)
+        return [SubAgentTrace.model_validate(r) for r in results]

@@ -12,9 +12,9 @@ Asterism is a full-stack, multi-agent AI application designed around **coordinat
 | ------------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | [System Overview](overview.md)                         | High-level topology, monorepo design, request lifecycle          | Full-stack data flow, Next.js reverse proxy, FastAPI                                                   |
 | [Tool Authorization & Approval](tool-authorization.md) | Deep dive into tool security, policies, and interactive approval | `ToolApprovalPolicy`, `InteractiveApprovalPolicy`, WebSockets, Sub-agent permissions, recursion safety |
-| [Agent Runtime & Execution Loop](agent-runtime.md)     | Agent lifecycle, LLM streaming, reasoning, multi-step loops      | `Agent`, `LLMClient`, `sub_agent`, call stack, prompt construction                                     |
-| [Chat & Real-Time WebSocket](chat-and-websocket.md)    | Real-time chat streaming, bidirectional messaging, queueing      | `ChatController`, `ChatOrchestrator`, `MessageQueue`                                                   |
-| [Data Model & Storage](data-and-storage.md)            | Relational schema, SQLite WAL, JSONB columns, message tree       | SQLAlchemy async, Pydantic type adapters, ER diagram                                                   |
+| [Agent Runtime & Execution Loop](agent-runtime.md)     | Agent lifecycle, LLM streaming, reasoning, multi-step loops      | `Agent`, `LLMClient`, `sub_agent`, call stack, event streaming, context windowing, execution traces    |
+| [Chat & Real-Time WebSocket](chat-and-websocket.md)    | Real-time chat streaming, bidirectional messaging, queueing      | `ChatController`, `ChatOrchestrator`, `MessageQueue`, sub-agent event packets                          |
+| [Data Model & Storage](data-and-storage.md)            | Relational schema, SQLite WAL, JSONB columns, message tree       | SQLAlchemy async, Pydantic type adapters, ER diagram, `sub_agent_traces`                               |
 | [Authentication & Security](auth-and-security.md)      | Identity federation, token verification, internal hooks          | BetterAuth, PyJWKClient, RS256, system key                                                             |
 
 ---

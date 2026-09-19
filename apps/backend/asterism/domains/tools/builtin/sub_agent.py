@@ -1,8 +1,10 @@
 import inspect
+import time
 import uuid
 
 from pydantic import BaseModel, Field
 
+from asterism.common.log import get_logger
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
@@ -124,6 +126,14 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
 
     child_call_stack = [*ctx.call_stack, target_id]
 
+    parent_msg_id = ctx.parent_message_id
+    if (
+        parent_msg_id is None
+        and ctx.session
+        and getattr(ctx.session, "messages", None)
+    ):
+        parent_msg_id = ctx.session.messages[-1].id
+
     agent = Agent(
         profile=sub_profile,
         user=ctx.user,
@@ -133,6 +143,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         call_stack=child_call_stack,
         event_sink=ctx.event_sink,
         user_files=ctx.user_files,
+        parent_message_id=parent_msg_id,
     )
 
     forwarded_types = {
@@ -147,9 +158,17 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         sub_agent_messages.append(LLMMessage.system(context_block))
     sub_agent_messages.append(LLMMessage.user(ctx.args.prompt))
 
+    start_time = time.perf_counter()
+    step_count = 0
+    total_tokens = 0
+
     last_response: AgentEvent = AgentEvent(type=AgentEventType.COMPLETE)
     async for event in agent.run(messages=sub_agent_messages):
         last_response = event
+        if event.type == AgentEventType.COMPLETE:
+            step_count += 1
+            total_tokens += event.total_tokens or 0
+
         if ctx.event_sink and event.type in forwarded_types:
             envelope = SubAgentEventEnvelope(
                 sub_agent_id=target_id,
@@ -160,6 +179,42 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             res = ctx.event_sink(envelope)
             if inspect.isawaitable(res):
                 await res
+
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+
+    try:
+        from asterism.domains.agent.schemas import SubAgentTraceCreate
+        from asterism.domains.agent.service import create_sub_agent_trace
+
+        serialized_messages = [
+            m.model_dump(mode="json")
+            for m in getattr(agent, "messages", sub_agent_messages)
+        ]
+        trace_data = SubAgentTraceCreate(
+            user_id=ctx.user.id,
+            parent_message_id=parent_msg_id,
+            sub_agent_id=target_id,
+            sub_agent_name=agent_profile.name,
+            prompt=ctx.args.prompt,
+            caller_context=ctx.args.parent_context,
+            messages=serialized_messages,
+            result=(
+                last_response.content
+                if last_response.type == AgentEventType.COMPLETE
+                else None
+            ),
+            step_count=step_count,
+            total_tokens=total_tokens,
+            elapsed_ms=elapsed_ms,
+            depth=len(ctx.call_stack),
+        )
+        await create_sub_agent_trace(trace_data)
+    except Exception as e:
+        logger = get_logger("SUB_AGENT")
+        logger.warning(
+            f"Failed to persist sub-agent execution trace: {e}",
+            exc_info=True,
+        )
 
     return (
         last_response.content

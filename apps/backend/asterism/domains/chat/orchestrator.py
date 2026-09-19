@@ -234,6 +234,7 @@ class ChatOrchestrator:
 
             parent_message_index = last_user_message_index
             parent_message = self.chat.messages[parent_message_index]
+            self.agent.parent_message_id = parent_message.id
 
             messages: list[LLMMessage] = []
             for m in self.chat.messages:

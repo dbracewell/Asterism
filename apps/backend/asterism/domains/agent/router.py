@@ -6,8 +6,18 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from .schemas import AgentProfile, PartialAgentProfile, UserAgents
-from .service import delete_agent_profile, get_user_agents, upsert_agent_profile
+from .schemas import (
+    AgentProfile,
+    PartialAgentProfile,
+    SubAgentTrace,
+    UserAgents,
+)
+from .service import (
+    delete_agent_profile,
+    get_sub_agent_traces_by_parent_message,
+    get_user_agents,
+    upsert_agent_profile,
+)
 
 agents_router = APIRouter(
     prefix="/agents",
@@ -64,5 +74,23 @@ async def delete_agent(
     return await delete_agent_profile(
         user_id=user.id,
         agent_id=agent_id,
+        session=session,
+    )
+
+
+@agents_router.get(
+    "/traces/{parent_message_id}",
+    response_model=list[SubAgentTrace],
+    operation_id="agentsGetSubAgentTraces",
+    summary="Get sub-agent execution traces for a parent message",
+)
+async def get_traces_for_parent_message(
+    parent_message_id: uuid.UUID,
+    user: AuthedUserDep,
+    session: DBSessionDep,
+) -> list[SubAgentTrace]:
+    return await get_sub_agent_traces_by_parent_message(
+        user_id=user.id,
+        parent_message_id=parent_message_id,
         session=session,
     )
