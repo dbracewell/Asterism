@@ -129,6 +129,21 @@ async def upload_files(
                 raise BadDataException(
                     f'File "{original_name}" exceeds the {config.max_upload_file_size_bytes} byte upload limit'
                 )
+            sha256 = hashlib.sha256(content).hexdigest()
+            existing = await session.scalar(
+                select(UserFileModel).where(
+                    UserFileModel.user_id == user_id,
+                    UserFileModel.filename == original_name,
+                    UserFileModel.sha256 == sha256,
+                )
+            )
+            # Reuse only an intact, same-name object. Different content retains the
+            # existing name-collision behavior, and ownership is always user-scoped.
+            if existing is not None and store.open(user_id, existing.filename).is_file():
+                if existing not in created:
+                    created.append(existing)
+                continue
+
             filename = await _deduplicated_filename(
                 session, store, user_id, original_name
             )
@@ -140,7 +155,7 @@ async def upload_files(
                 size=len(content),
                 mime_type=mime_type,
                 kind=classify_file(filename, mime_type),
-                sha256=hashlib.sha256(content).hexdigest(),
+                sha256=sha256,
                 content_status=FileContentStatus.PENDING,
             )
             store.save(user_id, filename, content)
