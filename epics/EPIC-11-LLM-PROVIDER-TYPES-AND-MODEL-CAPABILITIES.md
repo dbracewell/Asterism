@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress.** US-11.1 through US-11.3 are completed, verified, and user-confirmed; US-11.4 is implemented and verified, awaiting user confirmation.
+**Completed.** US-11.1 through US-11.4 are completed, verified, and user-confirmed.
 
 ## Goal
 

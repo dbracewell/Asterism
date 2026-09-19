@@ -140,7 +140,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-11 — LLM Provider Types and Model Capabilities
 
 Plan: [EPIC-11](epics/EPIC-11-LLM-PROVIDER-TYPES-AND-MODEL-CAPABILITIES.md).
-Status: US-11.1–US-11.3 completed and user-confirmed; US-11.4 implementation is complete and verified, awaiting user confirmation.
+Status: EPIC-11 completed; US-11.1–US-11.4 completed, verified, and user-confirmed.
 Order: US-11.1 → US-11.2 → US-11.3 → US-11.4.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -170,7 +170,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-11.3-T5: Preserve active/default/manual values through refresh and type changes.
   - [x] US-11.3-T6: Test type switching, discovery states, manual fallback, refresh, validation, and accessibility.
 
-- [~] US-11.4 — Verify the provider workflow end to end (implemented and verified; awaiting user confirmation)
+- [x] US-11.4 — Verify the provider workflow end to end (completed, verified, and user-confirmed)
   - [x] US-11.4-T1: Integrate provider creation, discovery, manual fallback, save/reload, and default retention.
   - [x] US-11.4-T2: Verify runtime clients and chat/draft lookup use the correct normalized URL and active models.
   - [x] US-11.4-T3: Add deterministic browser E2E coverage for both provider types and discovery failure.
@@ -179,5 +179,5 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 ### Epic closure
 
-- [ ] Re-verify all story acceptance criteria and request user completion confirmation.
-- [ ] On confirmation, merge the final story branch, announce epic completion, and propose the next plan.
+- [x] Re-verify all story acceptance criteria; user confirmed completion.
+- [x] Merge the final story branch, announce epic completion, and propose the next plan.
