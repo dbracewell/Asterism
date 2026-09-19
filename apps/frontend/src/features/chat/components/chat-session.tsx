@@ -4,6 +4,7 @@ import MarkdownViewer from "@/components/markdown-viewer";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import ChatInput from "@/features/chat/components/chat-input";
+import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
@@ -179,7 +180,7 @@ export const ChatSession = ({
   });
 
   const addUserMessage = React.useCallback(
-    ({ prompt }: { prompt: string }) => {
+    ({ prompt, files }: { prompt: string; files: string[] }) => {
       setSubAgentActivities([]);
       queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev) return prev;
@@ -197,7 +198,7 @@ export const ChatSession = ({
           ],
         };
       });
-      sendJsonMessage({ type: "chat", message: prompt });
+      sendJsonMessage({ type: "chat", message: prompt, files });
     },
     [sendJsonMessage, queryClient, queryKey],
   );
@@ -307,8 +308,8 @@ export const ChatSession = ({
               messageListRef.current?.scrollIntoView({ behavior: "instant" });
             }
           }}
-          onSubmit={({ prompt }) => {
-            addUserMessage({ prompt });
+          onSubmit={({ prompt, files }) => {
+            addUserMessage({ prompt, files });
           }}
         />
       </div>
@@ -415,6 +416,9 @@ const MessageItem = React.memo(
               "bg-accent text-accent-foreground ml-auto w-fit rounded-xl px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
           )}
         />
+        {message.role === "user" && message.files && (
+          <MessageAttachments files={message.files} />
+        )}
         {message.role === "assistant" && message.status === "pending" && (
           <Loading />
         )}

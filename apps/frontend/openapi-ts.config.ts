@@ -15,7 +15,11 @@ export default defineConfig({
     },
     {
       name: "@hey-api/sdk",
-      validator: true,
+      // FastAPI emits upload parts as `contentMediaType`; the Zod generator
+      // currently validates those as strings even though the generated TypeScript
+      // type correctly uses File | Blob. Keep generated schemas for app forms,
+      // but do not attach them as SDK transport validators.
+      validator: false,
       operations: {
         strategy: "single",
         containerName: "ApiClient",

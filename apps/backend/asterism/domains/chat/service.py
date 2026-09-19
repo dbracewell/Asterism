@@ -9,6 +9,8 @@ from asterism.core.exceptions import (
     UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
+from asterism.domains.files.models import UserFileModel
+from asterism.domains.files.service import ensure_file_processed
 
 from .models import (
     ChatModel,
@@ -20,6 +22,7 @@ from .schemas import (
     ChatInfoList,
     ChatUpdateRequest,
     Message,
+    MessageFileReference,
     MessageStatus,
     NewChatRequest,
     NewMessageRequest,
@@ -92,7 +95,36 @@ async def create_chat(
     if not payload.user_prompt:
         raise BadDataException("User prompt cannot be empty")
 
+    if len(payload.files) != len(set(payload.files)):
+        raise BadDataException("Attached files must not be repeated")
+
     async with get_async_db_session(session) as session:
+        files: list[MessageFileReference] = []
+        if payload.files:
+            records = list(
+                await session.scalars(
+                    select(UserFileModel).where(
+                        UserFileModel.user_id == user_id,
+                        UserFileModel.filename.in_(payload.files),
+                    )
+                )
+            )
+            found = {file.filename: file for file in records}
+            if any(filename not in found for filename in payload.files):
+                raise BadDataException("One or more attached files are unavailable")
+            for filename in payload.files:
+                file = await ensure_file_processed(file=found[filename], session=session)
+                files.append(
+                    MessageFileReference(
+                        filename=file.filename,
+                        name=file.original_name,
+                        mime_type=file.mime_type,
+                        size=file.size,
+                        kind=file.kind,
+                        status=file.content_status,
+                    )
+                )
+
         new_session = ChatModel(
             user_id=user_id,
             folder_id=payload.folder_id,
@@ -107,6 +139,7 @@ async def create_chat(
             content=payload.user_prompt,
             role="user",
             token_count=0,
+            files=files,
         )
         session.add(new_message)
 

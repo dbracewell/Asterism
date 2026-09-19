@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     turbopackFileSystemCacheForDev: false,
+    // middlewareClientMaxBodySize: "500mb",
+    proxyClientMaxBodySize: "500mb",
   },
   devIndicators: false,
 };

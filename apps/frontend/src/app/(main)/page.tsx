@@ -23,11 +23,12 @@ export default function AppPage() {
       <AnimatedBorder>
         <ChatInput
           placeholder="Where will your curiosity lead you today?"
-          onSubmit={({ prompt }) => {
+          onSubmit={({ prompt, files }) => {
             createChatSession({
               body: {
                 folder_id: searchParams.get("folder_id"),
                 user_prompt: prompt,
+                files,
               },
             });
           }}

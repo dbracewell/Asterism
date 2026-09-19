@@ -604,6 +604,10 @@ export type NewChatRequest = {
      * Folder Id
      */
     folder_id?: string | null;
+    /**
+     * Files
+     */
+    files?: Array<string>;
 };
 
 /**

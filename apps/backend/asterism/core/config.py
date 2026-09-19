@@ -19,11 +19,7 @@ _PLACEHOLDER_PREFIXES = (
 
 def _file_secret(name: str) -> str:
     canonical = secrets_dir / name
-    entries = (
-        {path.name for path in secrets_dir.iterdir()}
-        if secrets_dir.exists()
-        else set()
-    )
+    entries = {path.name for path in secrets_dir.iterdir()} if secrets_dir.exists() else set()
     has_canonical = name in entries
     has_legacy = name.lower() in entries
     if has_canonical and has_legacy:
@@ -31,9 +27,7 @@ def _file_secret(name: str) -> str:
             f"Ambiguous file secret names for {name}; keep only the uppercase file"  # noqa: E501
         )
     if has_legacy:
-        raise ValueError(
-            f"Legacy file secret name for {name}; rename it to uppercase"
-        )
+        raise ValueError(f"Legacy file secret name for {name}; rename it to uppercase")
     if not has_canonical:
         return ""
     return canonical.read_text().removesuffix("\n").removesuffix("\r")
@@ -67,8 +61,8 @@ class ConfigValidationError(RuntimeError):
 class Config(BaseSettings):
     system_key: str = Field(default_factory=lambda: _file_secret("SYSTEM_KEY"))
     max_chars_for_retrieval: int = 50000
-    max_upload_file_size_bytes: int = 20 * 1024 * 1024
-    max_process_file_size_bytes: int = 15 * 1024 * 1024
+    max_upload_file_size_bytes: int = 100 * 1024 * 1024
+    max_process_file_size_bytes: int = 100 * 1024 * 1024
     max_converted_chars: int = 100_000
     file_conversion_timeout_s: int = 60
     max_vision_image_bytes: int = 10 * 1024 * 1024
@@ -76,18 +70,12 @@ class Config(BaseSettings):
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
     db_url: str | None = None
-    default_allowed_tools: list[str] = Field(
-        default_factory=default_allowed_tools
-    )
+    default_allowed_tools: list[str] = Field(default_factory=default_allowed_tools)
     max_sub_agent_depth: int = 3
     sub_agent_context_window_messages: int = 10
     sub_agent_context_window_tokens: int = 4000
     config_profile: str = Field(
-        default_factory=lambda: (
-            "production"
-            if os.environ.get("NODE_ENV") == "production"
-            else "development"
-        ),
+        default_factory=lambda: "production" if os.environ.get("NODE_ENV") == "production" else "development",
         validation_alias="ASTERISM_CONFIG_PROFILE",
         exclude=True,
     )
@@ -96,10 +84,7 @@ class Config(BaseSettings):
 
     @model_validator(mode="after")
     def finalize(self):
-        if (
-            self.config_profile in _RUNTIME_PROFILES
-            and not self.storage_root.is_absolute()
-        ):
+        if self.config_profile in _RUNTIME_PROFILES and not self.storage_root.is_absolute():
             raise ValueError("STORAGE_ROOT must be an absolute path")
         self.storage_root = self.storage_root.resolve()
         if not self.db_url:
@@ -111,9 +96,7 @@ class Config(BaseSettings):
 
     def validate_runtime(self) -> None:
         if self.config_profile not in _PROFILES:
-            raise ConfigValidationError(
-                f"ASTERISM_CONFIG_PROFILE is unknown: {self.config_profile}"
-            )
+            raise ConfigValidationError(f"ASTERISM_CONFIG_PROFILE is unknown: {self.config_profile}")
         if self.config_profile not in _RUNTIME_PROFILES:
             return
         if self.config_profile in _FULL_RUNTIME_PROFILES:
@@ -126,51 +109,31 @@ class Config(BaseSettings):
                     "without credentials, path, query, fragment, or trailing slash"  # noqa: E501
                 )
             if not self.system_key:
-                raise ConfigValidationError(
-                    "SYSTEM_KEY is required (value redacted)"
-                )
+                raise ConfigValidationError("SYSTEM_KEY is required (value redacted)")
             if self.system_key.startswith(_PLACEHOLDER_PREFIXES):
+                raise ConfigValidationError("SYSTEM_KEY uses a known placeholder (value redacted)")
+            if self.config_profile == "production" and len(self.system_key) < 32:
                 raise ConfigValidationError(
-                    "SYSTEM_KEY uses a known placeholder (value redacted)"
-                )
-            if (
-                self.config_profile == "production"
-                and len(self.system_key) < 32
-            ):
-                raise ConfigValidationError(
-                    "SYSTEM_KEY does not meet the production strength "
-                    "requirement (value redacted)"
+                    "SYSTEM_KEY does not meet the production strength requirement (value redacted)"
                 )
         if not 1 <= self.max_chars_for_retrieval <= 1_000_000:
-            raise ConfigValidationError(
-                "MAX_CHARS_FOR_RETRIEVAL must be from 1 to 1000000"
-            )
+            raise ConfigValidationError("MAX_CHARS_FOR_RETRIEVAL must be from 1 to 1000000")
         if not 1 <= self.max_upload_file_size_bytes <= 100 * 1024 * 1024:
-            raise ConfigValidationError(
-                "MAX_UPLOAD_FILE_SIZE_BYTES must be from 1 to 104857600"
-            )
+            raise ConfigValidationError("MAX_UPLOAD_FILE_SIZE_BYTES must be from 1 to 104857600")
         if not 1 <= self.max_process_file_size_bytes <= self.max_upload_file_size_bytes:
-            raise ConfigValidationError(
-                "MAX_PROCESS_FILE_SIZE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES"
-            )
+            raise ConfigValidationError("MAX_PROCESS_FILE_SIZE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES")
         if not 1 <= self.max_converted_chars <= 1_000_000:
             raise ConfigValidationError("MAX_CONVERTED_CHARS must be from 1 to 1000000")
         if not 1 <= self.file_conversion_timeout_s <= 600:
             raise ConfigValidationError("FILE_CONVERSION_TIMEOUT_S must be from 1 to 600")
         if not 1 <= self.max_vision_image_bytes <= self.max_upload_file_size_bytes:
-            raise ConfigValidationError(
-                "MAX_VISION_IMAGE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES"
-            )
+            raise ConfigValidationError("MAX_VISION_IMAGE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
             origin == "*" for origin in self.cors_allowed_origins or []
         ):
-            raise ConfigValidationError(
-                "CORS_ALLOWED_ORIGINS cannot contain a wildcard"
-            )
+            raise ConfigValidationError("CORS_ALLOWED_ORIGINS cannot contain a wildcard")
         if self.db_url and not self.db_url.startswith("sqlite+aiosqlite:////"):
-            raise ConfigValidationError(
-                "DB_URL must use SQLite with an absolute path (URL redacted)"
-            )
+            raise ConfigValidationError("DB_URL must use SQLite with an absolute path (URL redacted)")
 
     def prepare_storage(self) -> None:
         self.storage_root.mkdir(exist_ok=True, parents=True)

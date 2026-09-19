@@ -185,7 +185,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-12 — User Files in Chat (Upload, Vision, and MarkItDown)
 
 Plan: [EPIC-12](epics/EPIC-12-USER-FILES-IN-CHAT.md).
-Status: US-12.1–US-12.3 completed, verified, and user-confirmed; US-12.4–US-12.5 pending.
+Status: US-12.1–US-12.4 completed, verified, and user-confirmed; US-12.5 pending.
 Order: US-12.1 → US-12.2 → US-12.3 → US-12.4 → US-12.5.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -210,10 +210,10 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-12.3-T3: Build multimodal agent messages: vision-gated image parts, document/text injection blocks, skip/unsupported notes; text-safe title generation and sub-agent context; populate `Agent.user_files`.
   - [x] US-12.3-T4: Tests for multimodal payload shape, tri-state vision gating, size caps, injection, history rebuild/regenerate, and WS filename validation/ownership.
 
-- [ ] US-12.4 — Attach files to chat messages in the frontend
-  - [ ] US-12.4-T1: Wire `ChatInput` attachments to the generated upload client with per-file progress/error, `files` in the WebSocket payload, and safe clear-on-success.
-  - [ ] US-12.4-T2: Render persisted message attachments: image thumbnails, document badges with download, unsupported/failed and missing-file states.
-  - [ ] US-12.4-T3: Frontend unit/integration tests for upload states, WS payload, attachment rendering, and accessibility; verify generated client usage.
+- [x] US-12.4 — Attach files to chat messages in the frontend (verified and user-confirmed)
+  - [x] US-12.4-T1: Wire `ChatInput` attachments to the generated upload client with per-file progress/error, `files` in the WebSocket payload, and safe clear-on-success.
+  - [x] US-12.4-T2: Render persisted message attachments: image thumbnails, document badges with download, unsupported/failed and missing-file states.
+  - [x] US-12.4-T3: Frontend unit/integration tests for upload states, WS payload, attachment rendering, and accessibility; verify generated client usage.
 
 - [ ] US-12.5 — Verify the file workflow end to end and document it
   - [ ] US-12.5-T1: Backend integration scenario: upload image + PDF, send message, assert vision-capable vs non-vision model inputs and cache reuse.
