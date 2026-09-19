@@ -67,6 +67,7 @@ class ConfigValidationError(RuntimeError):
 class Config(BaseSettings):
     system_key: str = Field(default_factory=lambda: _file_secret("SYSTEM_KEY"))
     max_chars_for_retrieval: int = 50000
+    max_upload_file_size_bytes: int = 20 * 1024 * 1024
     public_url: str = "http://localhost:3000"
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
@@ -139,6 +140,10 @@ class Config(BaseSettings):
         if not 1 <= self.max_chars_for_retrieval <= 1_000_000:
             raise ConfigValidationError(
                 "MAX_CHARS_FOR_RETRIEVAL must be from 1 to 1000000"
+            )
+        if not 1 <= self.max_upload_file_size_bytes <= 100 * 1024 * 1024:
+            raise ConfigValidationError(
+                "MAX_UPLOAD_FILE_SIZE_BYTES must be from 1 to 104857600"
             )
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
             origin == "*" for origin in self.cors_allowed_origins or []

@@ -64,6 +64,18 @@ export type ApplicationSettings = {
 };
 
 /**
+ * Body_fileUpload
+ */
+export type BodyFileUpload = {
+    /**
+     * Files
+     *
+     * Files to upload
+     */
+    files: Array<Blob | File>;
+};
+
+/**
  * BulkUpdateSettingRequest
  */
 export type BulkUpdateSettingRequest = {
@@ -332,6 +344,16 @@ export type ErrorDetail = {
      */
     code: number;
 };
+
+/**
+ * FileContentStatus
+ */
+export type FileContentStatus = 'pending' | 'ready' | 'unsupported' | 'failed';
+
+/**
+ * FileKind
+ */
+export type FileKind = 'image' | 'text' | 'document' | 'other';
 
 /**
  * Folder
@@ -859,6 +881,56 @@ export type UserAgents = {
 };
 
 /**
+ * UserFile
+ */
+export type UserFile = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Original Name
+     */
+    original_name: string;
+    /**
+     * Size
+     */
+    size: number;
+    /**
+     * Mime Type
+     */
+    mime_type: string;
+    kind: FileKind;
+    content_status: FileContentStatus;
+    /**
+     * Content Error
+     */
+    content_error: string | null;
+    /**
+     * Created At
+     */
+    created_at: number;
+    /**
+     * Updated At
+     */
+    updated_at: number;
+};
+
+/**
+ * UserFileList
+ */
+export type UserFileList = {
+    /**
+     * Files
+     */
+    files: Array<UserFile>;
+};
+
+/**
  * UserSettings
  */
 export type UserSettings = {
@@ -916,6 +988,110 @@ export type ProviderDiscoveryRequestWritable = {
      */
     draft_model_id?: string | null;
 };
+
+export type FileGetManyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/files/';
+};
+
+export type FileGetManyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type FileGetManyError = FileGetManyErrors[keyof FileGetManyErrors];
+
+export type FileGetManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserFileList;
+};
+
+export type FileGetManyResponse = FileGetManyResponses[keyof FileGetManyResponses];
+
+export type FileUploadData = {
+    body: BodyFileUpload;
+    path?: never;
+    query?: never;
+    url: '/files/';
+};
+
+export type FileUploadErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorDetail;
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileUploadError = FileUploadErrors[keyof FileUploadErrors];
+
+export type FileUploadResponses = {
+    /**
+     * Successful Response
+     */
+    201: UserFileList;
+};
+
+export type FileUploadResponse = FileUploadResponses[keyof FileUploadResponses];
+
+export type FileDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}';
+};
+
+export type FileDeleteErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not Found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileDeleteError = FileDeleteErrors[keyof FileDeleteErrors];
+
+export type FileDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserFile;
+};
+
+export type FileDeleteResponse = FileDeleteResponses[keyof FileDeleteResponses];
 
 export type GetFileData = {
     body?: never;

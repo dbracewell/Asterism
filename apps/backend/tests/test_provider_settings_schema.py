@@ -278,6 +278,9 @@ async def test_initialization_migrates_legacy_provider_data_once(tmp_path, monke
         model_columns = {
             row[1] for row in connection.execute("PRAGMA table_info(models)")
         }
+        user_file_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(user_files)")
+        }
         provider_rows = connection.execute(
             "SELECT id, provider_type, base_url, api_key FROM providers ORDER BY name"
         ).fetchall()
@@ -332,4 +335,8 @@ async def test_initialization_migrates_legacy_provider_data_once(tmp_path, monke
         ModelCapabilitySource.UNKNOWN.value,
     )
     assert stored_draft == (draft_value,)
-    assert migration_count == (1,)
+    assert {
+        "id", "user_id", "filename", "original_name", "size", "mime_type", "kind",
+        "sha256", "content_status", "content_error", "content_cache", "created_at", "updated_at",
+    }.issubset(user_file_columns)
+    assert migration_count == (2,)

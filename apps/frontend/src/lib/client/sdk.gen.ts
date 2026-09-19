@@ -2,10 +2,10 @@
 
 import * as z from 'zod';
 
-import type { Client, Options as Options2, RequestResult, TDataShape } from './client';
+import { type Client, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
-import { zAgentsDeleteAgentPath, zAgentsDeleteAgentResponse, zAgentsGetSubAgentTracesPath, zAgentsGetSubAgentTracesResponse, zAgentsGetUserAgentsResponse, zAgentsUpsertAgentProfileBody, zAgentsUpsertAgentProfileResponse, zAppProviderModelsDiscoverBody, zAppProviderModelsDiscoverResponse, zAppSettingDeletePath, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zComponentsByTypePath, zComponentsByTypeResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zMessageUpdateBody, zMessageUpdatePath, zMessageUpdateResponse, zToolsGetActiveResponse, zToolsGetAllResponse, zUserCreateUserBody, zUserCreateUserResponse, zUserDeletePath, zUserDeleteResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
+import type { AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FileDeleteData, FileDeleteErrors, FileDeleteResponses, FileGetManyData, FileGetManyErrors, FileGetManyResponses, FileUploadData, FileUploadErrors, FileUploadResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import { zAgentsDeleteAgentPath, zAgentsDeleteAgentResponse, zAgentsGetSubAgentTracesPath, zAgentsGetSubAgentTracesResponse, zAgentsGetUserAgentsResponse, zAgentsUpsertAgentProfileBody, zAgentsUpsertAgentProfileResponse, zAppProviderModelsDiscoverBody, zAppProviderModelsDiscoverResponse, zAppSettingDeletePath, zAppSettingsBulkUpdateBody, zAppSettingsBulkUpdateResponse, zAppSettingsGetResponse, zAppSettingUpdateBody, zAppSettingUpdatePath, zAppSettingUpdateResponse, zChatSessionCreateBody, zChatSessionCreateResponse, zChatSessionDeletePath, zChatSessionDeleteResponse, zChatSessionGetManyResponse, zChatSessionGetOnePath, zChatSessionGetOneResponse, zChatSessionUpdateBody, zChatSessionUpdatePath, zChatSessionUpdateResponse, zComponentsByTypePath, zComponentsByTypeResponse, zFileDeletePath, zFileDeleteResponse, zFileGetManyResponse, zFileUploadBody, zFileUploadResponse, zFolderCreateBody, zFolderCreateResponse, zFolderDeletePath, zFolderDeleteResponse, zFolderGetManyResponse, zFolderGetOnePath, zFolderGetOneResponse, zGetFilePath, zGetFileResponse, zMessageUpdateBody, zMessageUpdatePath, zMessageUpdateResponse, zToolsGetActiveResponse, zToolsGetAllResponse, zUserCreateUserBody, zUserCreateUserResponse, zUserDeletePath, zUserDeleteResponse, zUserSettingDeletePath, zUserSettingsBulkUpdateBody, zUserSettingsBulkUpdateResponse, zUserSettingsGetResponse, zUserSettingUpdateBody, zUserSettingUpdatePath, zUserSettingUpdateResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -23,7 +23,7 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 
 class HeyApiClient {
     protected client: Client;
-    
+
     constructor(args?: {
         client?: Client;
     }) {
@@ -33,9 +33,9 @@ class HeyApiClient {
 
 class HeyApiRegistry<T> {
     private readonly defaultKey = 'default';
-    
+
     private readonly instances: Map<string, T> = new Map();
-    
+
     get(key?: string): T {
         const instance = this.instances.get(key ?? this.defaultKey);
         if (!instance) {
@@ -43,7 +43,7 @@ class HeyApiRegistry<T> {
         }
         return instance;
     }
-    
+
     set(value: T, key?: string): void {
         this.instances.set(key ?? this.defaultKey, value);
     }
@@ -51,7 +51,7 @@ class HeyApiRegistry<T> {
 
 export class ApiClient extends HeyApiClient {
     public static readonly __registry: HeyApiRegistry<ApiClient> = new HeyApiRegistry<ApiClient>();
-    
+
     constructor(args?: {
         client?: Client;
         key?: string;
@@ -59,7 +59,63 @@ export class ApiClient extends HeyApiClient {
         super(args);
         ApiClient.__registry.set(this, args?.key);
     }
-    
+
+    /**
+     * List Files
+     */
+    public fileGetMany<ThrowOnError extends boolean = false>(options?: Options<FileGetManyData, ThrowOnError>): RequestResult<FileGetManyResponses, FileGetManyErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<FileGetManyResponses, FileGetManyErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zFileGetManyResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/files/',
+            ...options
+        });
+    }
+
+    /**
+     * Upload Files
+     */
+    public fileUpload<ThrowOnError extends boolean = false>(options: Options<FileUploadData, ThrowOnError>): RequestResult<FileUploadResponses, FileUploadErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<FileUploadResponses, FileUploadErrors, ThrowOnError>({
+            ...formDataBodySerializer,
+            requestValidator: async (data) => await z.object({
+                body: zFileUploadBody,
+                path: z.never().optional(),
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zFileUploadResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/files/',
+            ...options,
+            headers: {
+                'Content-Type': null,
+                ...options.headers
+            }
+        });
+    }
+
+    /**
+     * Delete File
+     */
+    public fileDelete<ThrowOnError extends boolean = false>(options: Options<FileDeleteData, ThrowOnError>): RequestResult<FileDeleteResponses, FileDeleteErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<FileDeleteResponses, FileDeleteErrors, ThrowOnError>({
+            requestValidator: async (data) => await z.object({
+                body: z.never().optional(),
+                path: zFileDeletePath,
+                query: z.never().optional()
+            }).parseAsync(data),
+            responseValidator: async (data) => await zFileDeleteResponse.parseAsync(data),
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/files/{filename}',
+            ...options
+        });
+    }
+
     /**
      * Get File
      */
@@ -76,7 +132,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * List Sessions
      */
@@ -93,7 +149,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * New Session
      */
@@ -114,7 +170,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Delete Session
      */
@@ -131,7 +187,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Get Session
      */
@@ -148,7 +204,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Update Session
      */
@@ -169,7 +225,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Update Message
      */
@@ -190,7 +246,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * List Folders
      */
@@ -207,7 +263,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Create Folder
      */
@@ -228,7 +284,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Delete Folder
      */
@@ -245,7 +301,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Get Folder
      */
@@ -262,7 +318,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Get all user settings
      */
@@ -279,7 +335,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Bulk update multiple user settings
      */
@@ -300,7 +356,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Delete a single user setting by key
      */
@@ -316,7 +372,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Update a single user setting by key
      */
@@ -337,7 +393,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Discover provider models and capabilities
      */
@@ -375,7 +431,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Bulk update multiple application settings
      */
@@ -396,7 +452,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Delete a single application setting by key
      */
@@ -412,7 +468,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Update a single application setting by key
      */
@@ -433,7 +489,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Create User
      */
@@ -454,7 +510,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Delete a user
      */
@@ -471,7 +527,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Get all active tools
      */
@@ -488,7 +544,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Get all  tools
      */
@@ -505,7 +561,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Get all components of a given type
      */
@@ -522,7 +578,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Gets all agents defined by a user
      */
@@ -539,7 +595,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-    
+
     /**
      * Creates or updates an agent
      */
@@ -560,7 +616,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-    
+
     /**
      * Delete an agent
      */

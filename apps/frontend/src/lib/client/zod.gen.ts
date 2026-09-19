@@ -3,6 +3,13 @@
 import * as z from 'zod';
 
 /**
+ * Body_fileUpload
+ */
+export const zBodyFileUpload = z.object({
+    files: z.array(z.string())
+});
+
+/**
  * ChatCompletionParams
  */
 export const zChatCompletionParams = z.object({
@@ -52,7 +59,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('7e27a6ab-abaa-4d5c-870d-1c6e83bb990a')
+    id: z.uuid().optional().default('3a23b5c8-8936-4f20-a51b-ccf3ffe24947')
 });
 
 /**
@@ -131,6 +138,26 @@ export const zErrorDetail = z.object({
     detail: z.string(),
     code: z.int()
 });
+
+/**
+ * FileContentStatus
+ */
+export const zFileContentStatus = z.enum([
+    'pending',
+    'ready',
+    'unsupported',
+    'failed'
+]);
+
+/**
+ * FileKind
+ */
+export const zFileKind = z.enum([
+    'image',
+    'text',
+    'document',
+    'other'
+]);
 
 /**
  * Folder
@@ -412,6 +439,29 @@ export const zUserAgents = z.object({
 });
 
 /**
+ * UserFile
+ */
+export const zUserFile = z.object({
+    id: z.uuid(),
+    filename: z.string(),
+    original_name: z.string(),
+    size: z.int().gte(0),
+    mime_type: z.string(),
+    kind: zFileKind,
+    content_status: zFileContentStatus,
+    content_error: z.string().nullable(),
+    created_at: z.int(),
+    updated_at: z.int()
+});
+
+/**
+ * UserFileList
+ */
+export const zUserFileList = z.object({
+    files: z.array(zUserFile)
+});
+
+/**
  * UserSettings
  */
 export const zUserSettings = z.object({
@@ -434,6 +484,27 @@ export const zProviderDiscoveryRequestWritable = z.object({
     existing_models: z.array(zLlm).optional(),
     draft_model_id: z.uuid().nullish()
 });
+
+/**
+ * Successful Response
+ */
+export const zFileGetManyResponse = zUserFileList;
+
+export const zFileUploadBody = zBodyFileUpload;
+
+/**
+ * Successful Response
+ */
+export const zFileUploadResponse = zUserFileList;
+
+export const zFileDeletePath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileDeleteResponse = zUserFile;
 
 export const zGetFilePath = z.object({
     filename: z.string()
