@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import re
 import uuid
 from logging import Logger
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Awaitable, Callable
 
 import asterism.domains.settings.service as settings_service
 from asterism.common.concurrency import AsyncAtomic
@@ -28,7 +29,12 @@ from .approval import (
     ToolApprovalPolicy,
     ToolUseAuthorization,
 )
-from .schemas import AgentEvent, AgentEventType, AgentProfile
+from .schemas import (
+    AgentEvent,
+    AgentEventType,
+    AgentProfile,
+    SubAgentEventEnvelope,
+)
 
 
 class Agent:
@@ -41,6 +47,8 @@ class Agent:
         allowed_tools: list[str] | None = None,
         approval_policy: ToolApprovalPolicy | None = None,
         call_stack: list[uuid.UUID] | None = None,
+        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
+        | None = None,
     ) -> None:
         self.profile = profile
         self.max_steps = profile.max_steps
@@ -56,6 +64,7 @@ class Agent:
         self._approval_policy: ToolApprovalPolicy = (
             approval_policy or AllowlistApprovalPolicy()
         )
+        self.event_sink = event_sink
         if call_stack is not None:
             self.call_stack = list(call_stack)
         elif self.profile.id is not None:
@@ -91,6 +100,8 @@ class Agent:
         self,
         user_message: str,
         auths: list[ToolUseAuthorization],
+        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
+        | None = None,
     ) -> AsyncGenerator[ToolResult, None]:
         tasks = [
             tool_registry.invoke_tool(
@@ -100,6 +111,7 @@ class Agent:
                 client=await self._get_client(),
                 user_message=user_message or "",
                 call_stack=self.call_stack,
+                event_sink=event_sink,
             )
             for auth in auths
             if auth.accept
@@ -215,10 +227,61 @@ class Agent:
                                 self.allowed_tools,
                             )
 
-                            async for response in self._run_tools(
-                                user_message=last_user_message.content,
-                                auths=auths,
+                            sub_agent_queue: asyncio.Queue[
+                                SubAgentEventEnvelope
+                            ] = asyncio.Queue()
+
+                            async def _internal_sink(
+                                envelope: SubAgentEventEnvelope,
+                            ) -> None:
+                                await sub_agent_queue.put(envelope)
+                                if self.event_sink:
+                                    res = self.event_sink(envelope)
+                                    if inspect.isawaitable(res):
+                                        await res
+
+                            async def _collect_tool_results() -> (
+                                list[ToolResult]
                             ):
+                                collected: list[ToolResult] = []
+                                async for resp in self._run_tools(
+                                    user_message=last_user_message.content,
+                                    auths=auths,
+                                    event_sink=_internal_sink,
+                                ):
+                                    collected.append(resp)
+                                return collected
+
+                            tool_task = asyncio.create_task(
+                                _collect_tool_results()
+                            )
+
+                            while not tool_task.done():
+                                get_task = asyncio.create_task(
+                                    sub_agent_queue.get()
+                                )
+                                done, _ = await asyncio.wait(
+                                    [tool_task, get_task],
+                                    return_when=asyncio.FIRST_COMPLETED,
+                                )
+                                if get_task in done:
+                                    envelope = get_task.result()
+                                    yield AgentEvent(
+                                        type=AgentEventType.SUB_AGENT,
+                                        sub_agent=envelope,
+                                    )
+                                else:
+                                    get_task.cancel()
+
+                            while not sub_agent_queue.empty():
+                                envelope = sub_agent_queue.get_nowait()
+                                yield AgentEvent(
+                                    type=AgentEventType.SUB_AGENT,
+                                    sub_agent=envelope,
+                                )
+
+                            responses = await tool_task
+                            for response in responses:
                                 self.logger.debug(
                                     f"{response.tool_call.function.name}("
                                     f"{response.tool_call.function.arguments})"

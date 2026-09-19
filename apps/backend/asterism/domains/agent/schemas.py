@@ -21,6 +21,15 @@ class AgentEventType(StrEnum):
     ERROR = auto()
     DELTA = auto()
     TOOL_PERMISSION_REQUEST = auto()
+    SUB_AGENT = auto()
+
+
+class SubAgentEventEnvelope(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    sub_agent_id: uuid.UUID
+    sub_agent_name: str
+    depth: int
+    event: AgentEvent
 
 
 class AgentEvent(BaseModel):
@@ -31,6 +40,7 @@ class AgentEvent(BaseModel):
     tool_calls: list[ToolCall] = Field(default_factory=list[ToolCall])
     tool_results: list[ToolResult] = Field(default_factory=list[ToolResult])
     total_tokens: int = Field(default=0)
+    sub_agent: SubAgentEventEnvelope | None = None
 
     def has_tool_calls(self) -> bool:
         return len(self.tool_calls) > 0

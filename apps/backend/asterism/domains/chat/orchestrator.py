@@ -282,6 +282,26 @@ class ChatOrchestrator:
                             }
                         )
 
+                    case AgentEvent(type=AgentEventType.SUB_AGENT):
+                        if event.sub_agent:
+                            await self.queue.put(
+                                {
+                                    "type": "sub_agent",
+                                    "sub_agent_id": str(
+                                        event.sub_agent.sub_agent_id
+                                    ),
+                                    "sub_agent_name": (
+                                        event.sub_agent.sub_agent_name
+                                    ),
+                                    "depth": event.sub_agent.depth,
+                                    "event": (
+                                        event.sub_agent.event.model_dump(
+                                            mode="json"
+                                        )
+                                    ),
+                                }
+                            )
+
                     case _:
                         await self.queue.put(event.model_dump())
 

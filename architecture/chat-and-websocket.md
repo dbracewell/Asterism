@@ -171,6 +171,19 @@ When a client connects to `/chat/stream/{chat_id}`, `ChatController.run()` initi
   "is_processing": true
 }
 
+// Delegated sub-agent execution event
+{
+  "type": "sub_agent",
+  "sub_agent_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "sub_agent_name": "Research Agent",
+  "depth": 1,
+  "event": {
+    "type": "delta",
+    "content": "Searching online sources...",
+    "thinking": "Looking for revenue numbers."
+  }
+}
+
 // Turn complete
 {
   "type": "complete",

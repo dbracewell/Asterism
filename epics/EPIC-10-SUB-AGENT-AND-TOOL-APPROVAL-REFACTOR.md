@@ -163,11 +163,11 @@ in the chat so that delegated work is not a frozen black box.
 
 **Dependencies:** US-10.1, US-10.2.
 
-- [ ] US-10.4-T1: Define a sub-agent event envelope that wraps `AgentEvent` with metadata: `sub_agent_id`, `sub_agent_name`, and `depth`.
-- [ ] US-10.4-T2: Add an optional `event_sink: AsyncGenerator | Callable` to the sub-agent tool context that forwards events to the parent's event stream.
-- [ ] US-10.4-T3: In `sub_agent`, forward `DELTA`, `THINKING`, `TOOL_CALL`, and `COMPLETE` events through the sink, tagged with the sub-agent envelope.
-- [ ] US-10.4-T4: In `ChatOrchestrator`, handle sub-agent envelope events by forwarding them to the WebSocket message queue with the sub-agent metadata, so the frontend can render them distinctly.
-- [ ] US-10.4-T5: Add tests verifying that sub-agent events are forwarded with correct metadata and that the parent agent's event stream includes them.
+- [x] US-10.4-T1: Define a sub-agent event envelope that wraps `AgentEvent` with metadata: `sub_agent_id`, `sub_agent_name`, and `depth`.
+- [x] US-10.4-T2: Add an optional `event_sink: AsyncGenerator | Callable` to the sub-agent tool context that forwards events to the parent's event stream.
+- [x] US-10.4-T3: In `sub_agent`, forward `DELTA`, `THINKING`, `TOOL_CALL`, and `COMPLETE` events through the sink, tagged with the sub-agent envelope.
+- [x] US-10.4-T4: In `ChatOrchestrator`, handle sub-agent envelope events by forwarding them to the WebSocket message queue with the sub-agent metadata, so the frontend can render them distinctly.
+- [x] US-10.4-T5: Add tests verifying that sub-agent events are forwarded with correct metadata and that the parent agent's event stream includes them.
 
 **Acceptance criteria**
 
