@@ -347,6 +347,10 @@ async def get_user_models(
                     name=m.name,
                     provider_id=m.provider.id,
                     provider_name=m.provider.name,
+                    context_window=m.context_window,
+                    supports_vision=m.supports_vision,
+                    context_window_source=m.context_window_source,
+                    vision_source=m.vision_source,
                 )
             )
         return models
@@ -402,6 +406,7 @@ async def bulk_upsert_providers(
 
         if existing_provider:
             processed_providers.add(provider.id)
+            existing_provider.provider_type = provider.provider_type
             existing_provider.base_url = provider.base_url
             existing_provider.api_key = provider.api_key
             existing_provider.name = provider.name
@@ -414,11 +419,20 @@ async def bulk_upsert_providers(
             processed_providers.add(provider.id)
             new_provider = ProviderModel(
                 id=provider.id,
+                provider_type=provider.provider_type,
                 name=provider.name,
                 base_url=provider.base_url,
                 api_key=provider.api_key,
                 models=[
-                    LLMModel(id=m.id, name=m.name, is_active=m.is_active)
+                    LLMModel(
+                        id=m.id,
+                        name=m.name,
+                        is_active=m.is_active,
+                        context_window=m.context_window,
+                        supports_vision=m.supports_vision,
+                        context_window_source=m.context_window_source,
+                        vision_source=m.vision_source,
+                    )
                     for m in provider.models
                 ],
             )
@@ -441,11 +455,20 @@ def _merge_models(
         if m_data.name in existing_models_by_name:
             existing_model = existing_models_by_name[m_data.name]
             existing_model.is_active = m_data.is_active
+            existing_model.context_window = m_data.context_window
+            existing_model.supports_vision = m_data.supports_vision
+            existing_model.context_window_source = m_data.context_window_source
+            existing_model.vision_source = m_data.vision_source
             synced_models.append(existing_model)
         else:
             new_model = LLMModel(
+                id=m_data.id,
                 name=m_data.name,
                 is_active=m_data.is_active,
+                context_window=m_data.context_window,
+                supports_vision=m_data.supports_vision,
+                context_window_source=m_data.context_window_source,
+                vision_source=m_data.vision_source,
             )
             synced_models.append(new_model)
     return synced_models

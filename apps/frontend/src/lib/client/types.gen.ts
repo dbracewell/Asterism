@@ -417,6 +417,16 @@ export type Llm = {
      * Is Active
      */
     is_active: boolean;
+    /**
+     * Context Window
+     */
+    context_window?: number | null;
+    /**
+     * Supports Vision
+     */
+    supports_vision?: boolean | null;
+    context_window_source?: ModelCapabilitySource;
+    vision_source?: ModelCapabilitySource;
 };
 
 /**
@@ -439,6 +449,16 @@ export type LlmDisplayInfo = {
      * Provider Name
      */
     provider_name: string;
+    /**
+     * Context Window
+     */
+    context_window?: number | null;
+    /**
+     * Supports Vision
+     */
+    supports_vision?: boolean | null;
+    context_window_source?: ModelCapabilitySource;
+    vision_source?: ModelCapabilitySource;
 };
 
 /**
@@ -516,6 +536,11 @@ export type Message = {
  * MessageStatus
  */
 export type MessageStatus = 'pending' | 'completed';
+
+/**
+ * ModelCapabilitySource
+ */
+export type ModelCapabilitySource = 'catalog' | 'provider' | 'manual' | 'unknown';
 
 /**
  * NewChatRequest
@@ -604,11 +629,17 @@ export type Provider = {
      * Id
      */
     id: string;
+    provider_type?: ProviderType;
     /**
      * Models
      */
     models: Array<Llm>;
 };
+
+/**
+ * ProviderType
+ */
+export type ProviderType = 'openai' | 'generic_openai';
 
 /**
  * Setting
@@ -619,6 +650,70 @@ export type Setting = {
      */
     key: string;
     value: JsonValue;
+};
+
+/**
+ * SubAgentTrace
+ */
+export type SubAgentTrace = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Created At
+     */
+    created_at: number;
+    /**
+     * User Id
+     */
+    user_id: string;
+    /**
+     * Parent Message Id
+     */
+    parent_message_id?: string | null;
+    /**
+     * Sub Agent Id
+     */
+    sub_agent_id: string;
+    /**
+     * Sub Agent Name
+     */
+    sub_agent_name: string;
+    /**
+     * Prompt
+     */
+    prompt: string;
+    /**
+     * Caller Context
+     */
+    caller_context?: string | null;
+    /**
+     * Messages
+     */
+    messages?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Result
+     */
+    result?: string | null;
+    /**
+     * Step Count
+     */
+    step_count?: number;
+    /**
+     * Total Tokens
+     */
+    total_tokens?: number;
+    /**
+     * Elapsed Ms
+     */
+    elapsed_ms?: number;
+    /**
+     * Depth
+     */
+    depth?: number;
 };
 
 /**
@@ -1592,3 +1687,39 @@ export type AgentsDeleteAgentResponses = {
 };
 
 export type AgentsDeleteAgentResponse = AgentsDeleteAgentResponses[keyof AgentsDeleteAgentResponses];
+
+export type AgentsGetSubAgentTracesData = {
+    body?: never;
+    path: {
+        /**
+         * Parent Message Id
+         */
+        parent_message_id: string;
+    };
+    query?: never;
+    url: '/agents/traces/{parent_message_id}';
+};
+
+export type AgentsGetSubAgentTracesErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AgentsGetSubAgentTracesError = AgentsGetSubAgentTracesErrors[keyof AgentsGetSubAgentTracesErrors];
+
+export type AgentsGetSubAgentTracesResponses = {
+    /**
+     * Response Agentsgetsubagenttraces
+     *
+     * Successful Response
+     */
+    200: Array<SubAgentTrace>;
+};
+
+export type AgentsGetSubAgentTracesResponse = AgentsGetSubAgentTracesResponses[keyof AgentsGetSubAgentTracesResponses];

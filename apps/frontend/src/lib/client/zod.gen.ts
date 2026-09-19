@@ -52,7 +52,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('3b97ce31-40b4-4a14-a8d6-b141cc151359')
+    id: z.uuid().optional().default('21dc5ce7-ef2d-4321-ba91-64d1085fb13e')
 });
 
 /**
@@ -171,13 +171,32 @@ export const zBulkUpdateSettingRequest = z.object({
 });
 
 /**
+ * MessageStatus
+ */
+export const zMessageStatus = z.enum(['pending', 'completed']);
+
+/**
+ * ModelCapabilitySource
+ */
+export const zModelCapabilitySource = z.enum([
+    'catalog',
+    'provider',
+    'manual',
+    'unknown'
+]);
+
+/**
  * Llm
  */
 export const zLlm = z.object({
     id: z.uuid(),
     name: z.string(),
     provider_id: z.uuid(),
-    is_active: z.boolean()
+    is_active: z.boolean(),
+    context_window: z.int().gt(0).nullish(),
+    supports_vision: z.boolean().nullish(),
+    context_window_source: zModelCapabilitySource.optional().default('unknown'),
+    vision_source: zModelCapabilitySource.optional().default('unknown')
 });
 
 /**
@@ -187,13 +206,12 @@ export const zLlmDisplayInfo = z.object({
     id: z.uuid(),
     name: z.string(),
     provider_id: z.uuid(),
-    provider_name: z.string()
+    provider_name: z.string(),
+    context_window: z.int().gt(0).nullish(),
+    supports_vision: z.boolean().nullish(),
+    context_window_source: zModelCapabilitySource.optional().default('unknown'),
+    vision_source: zModelCapabilitySource.optional().default('unknown')
 });
-
-/**
- * MessageStatus
- */
-export const zMessageStatus = z.enum(['pending', 'completed']);
 
 /**
  * NewChatRequest
@@ -227,6 +245,11 @@ export const zPartialAgentProfile = z.object({
 });
 
 /**
+ * ProviderType
+ */
+export const zProviderType = z.enum(['openai', 'generic_openai']);
+
+/**
  * Provider
  */
 export const zProvider = z.object({
@@ -234,6 +257,7 @@ export const zProvider = z.object({
     base_url: z.string(),
     api_key: z.string(),
     id: z.uuid(),
+    provider_type: zProviderType.optional().default('generic_openai'),
     models: z.array(zLlm)
 });
 
@@ -254,6 +278,26 @@ export const zApplicationSettings = z.object({
 export const zSetting = z.object({
     key: z.string(),
     value: zJsonValue
+});
+
+/**
+ * SubAgentTrace
+ */
+export const zSubAgentTrace = z.object({
+    id: z.uuid(),
+    created_at: z.int(),
+    user_id: z.string(),
+    parent_message_id: z.uuid().nullish(),
+    sub_agent_id: z.uuid(),
+    sub_agent_name: z.string(),
+    prompt: z.string(),
+    caller_context: z.string().nullish(),
+    messages: z.array(z.record(z.string(), z.unknown())).optional(),
+    result: z.string().nullish(),
+    step_count: z.int().optional().default(0),
+    total_tokens: z.int().optional().default(0),
+    elapsed_ms: z.int().optional().default(0),
+    depth: z.int().optional().default(0)
 });
 
 /**
@@ -567,3 +611,14 @@ export const zAgentsDeleteAgentPath = z.object({
  * Successful Response
  */
 export const zAgentsDeleteAgentResponse = zAgentProfile;
+
+export const zAgentsGetSubAgentTracesPath = z.object({
+    parent_message_id: z.uuid()
+});
+
+/**
+ * Response Agentsgetsubagenttraces
+ *
+ * Successful Response
+ */
+export const zAgentsGetSubAgentTracesResponse = z.array(zSubAgentTrace);
