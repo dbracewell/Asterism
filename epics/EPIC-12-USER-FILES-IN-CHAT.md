@@ -2,7 +2,7 @@
 
 ## Status
 
-**US-12.1–US-12.4 completed, verified, and user-confirmed.** US-12.5 is pending.
+**US-12.1–US-12.5 completed, verified, and user-confirmed.**
 
 ## Goal
 
@@ -316,10 +316,15 @@ documented.
 
 **Dependencies:** US-12.1 through US-12.4.
 
-- [ ] US-12.5-T1: Add a backend integration scenario: upload an image and a PDF, send one message, and assert a mocked vision-capable model receives an image part plus the PDF's Markdown; assert a mocked non-vision model receives the skip note instead of image bytes; assert cache reuse on the second message.
-- [ ] US-12.5-T2: Add a Playwright E2E scenario with mocked provider and file endpoints: attach + upload + send, rendered attachment chips on the persisted message, streamed assistant reply, and an upload-failure path.
-- [ ] US-12.5-T3: Update architecture documentation (data-and-storage, chat-and-websocket, llm-providers) and add ADR-0012 recording the vision + MarkItDown routing, caching, limits, and secure-by-default vision gating decisions.
-- [ ] US-12.5-T4: Run and record all quality gates (root lint/typecheck/test/build), migration re-run checks, OpenAPI ↔ generated-client consistency, and relevant Playwright coverage; record any live-provider limitations.
+- [x] US-12.5-T1: Add a backend integration scenario: upload an image and a PDF, send one message, and assert a mocked vision-capable model receives an image part plus the PDF's Markdown; assert a mocked non-vision model receives the skip note instead of image bytes; assert cache reuse on the second message.
+- [x] US-12.5-T2: Add a Playwright E2E scenario with mocked provider and file endpoints: attach + upload + send, rendered attachment chips on the persisted message, streamed assistant reply, and an upload-failure path.
+- [x] US-12.5-T3: Update architecture documentation (data-and-storage, chat-and-websocket, llm-providers) and add ADR-0012 recording the vision + MarkItDown routing, caching, limits, and secure-by-default vision gating decisions.
+- [x] US-12.5-T4: Run and record all quality gates (root lint/typecheck/test/build), migration re-run checks, OpenAPI ↔ generated-client consistency, and relevant Playwright coverage; record any live-provider limitations.
+
+### US-12.5 verification record
+
+- `SYSTEM_KEY=test-system-key-for-tests pnpm lint`, `typecheck`, `test`, and `build` pass (lint retains one pre-existing unused-variable warning in `component-settings.tsx`). Backend tests include repeatable migration coverage; frontend migration tests pass.
+- `pnpm --filter @asterism/frontend exec playwright test e2e/file-workflow.spec.ts` passes two deterministic mocked-file scenarios. The harness deliberately does not require a live provider or credentials; live-provider compatibility remains dependent on the selected OpenAI-compatible service and configured model metadata.
 
 **Acceptance criteria**
 
@@ -337,8 +342,8 @@ pass relevant lint/typecheck/tests, keep OpenAPI and the generated client
 synchronized, document changed behavior, and request user completion
 confirmation before merging into `main`.
 
-The epic is complete only after all stories meet their acceptance criteria and
-the user confirms completion.
+The epic is complete: all stories meet their acceptance criteria and the user
+confirmed completion.
 
 ## Risks to resolve, not hide
 

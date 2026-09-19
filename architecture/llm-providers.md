@@ -72,6 +72,10 @@ The runtime `LLMClient` receives the normalized persisted URL, so OpenAI always
 uses the canonical origin and Generic OpenAI uses the administrator's normalized
 compatible endpoint.
 
+## File-input capability gating
+
+Chat consumes `supports_vision` conservatively: only `true` permits an uploaded PNG, JPEG, WebP, GIF, or BMP to become an OpenAI-compatible `image_url` data part. `false` and `null` both omit bytes and add an explicit text note; unknown is therefore secure by default. Images also observe the configured vision-byte limit. Text and MarkItDown-converted documents are bounded text parts, while unsupported or failed files are disclosed by name and reason rather than silently assumed readable.
+
 ## Verification
 
 Backend tests cover catalog and generic extraction, failures and redaction,

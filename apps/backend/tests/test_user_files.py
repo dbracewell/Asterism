@@ -1,4 +1,7 @@
+import uuid
+from contextlib import asynccontextmanager
 from io import BytesIO
+from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
@@ -6,6 +9,8 @@ from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.base import Base
 from asterism.db.schema_migrations import run_schema_migrations
+from asterism.domains.chat.orchestrator import ChatOrchestrator
+from asterism.domains.chat.schemas import Chat, ChatInfo, Message, MessageFileReference, MessageStatus
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.processor import MarkItDownFileProcessor
 from asterism.domains.files.service import (
@@ -15,6 +20,7 @@ from asterism.domains.files.service import (
     list_user_files,
     upload_files,
 )
+from asterism.domains.llm.schemas import ImageUrlContentPart, text_content
 from asterism.domains.user.models import UserModel
 from openpyxl import Workbook
 from sqlalchemy import select
@@ -217,6 +223,71 @@ async def test_processing_handles_a_missing_file(file_session):
     processed = await ensure_file_processed(file=file, session=file_session)
     assert processed.content_status is FileContentStatus.FAILED
     assert processed.content_error == "File is no longer available"
+
+
+@pytest.mark.asyncio
+async def test_uploaded_image_and_document_build_vision_gated_model_input(file_session, monkeypatch):
+    """The upload → cache → chat-history path is deterministic without a provider."""
+    uploaded = await upload_files(
+        user_id="user-a",
+        uploads=[
+            _upload("photo.png", b"\x89PNG\r\n\x1a\nimage"),
+            _upload("report.pdf", b"not-a-real-pdf"),
+        ],
+        session=file_session,
+    )
+    calls = 0
+
+    async def convert(_, __):
+        nonlocal calls
+        calls += 1
+        return "# Converted PDF\nRevenue: 42"
+
+    monkeypatch.setattr(MarkItDownFileProcessor, "_convert_with_timeout", convert)
+    records = [await file_session.get(UserFileModel, metadata.id) for metadata in uploaded.files]
+    assert all(records)
+    for record in records:
+        await ensure_file_processed(file=record, session=file_session)  # type: ignore[arg-type]
+    # A second attachment reuses the persisted conversion cache.
+    await ensure_file_processed(file=records[1], session=file_session)  # type: ignore[arg-type]
+    assert calls == 1
+
+    references = [
+        MessageFileReference(filename=record.filename, name=record.original_name, mime_type=record.mime_type,
+                             size=record.size, kind=record.kind, status=record.content_status)
+        for record in records
+    ]
+    chat = Chat(
+        info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=0, updated_at=0),
+        messages=[Message(id=uuid.uuid4(), role="user", content="Analyze", token_count=1,
+                          status=MessageStatus.PENDING, created_at=0, files=references)],
+    )
+    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    orchestrator = ChatOrchestrator(agent)  # type: ignore[arg-type]
+
+    @asynccontextmanager
+    async def session_context():
+        yield file_session
+
+    monkeypatch.setattr("asterism.domains.chat.orchestrator.get_async_db_session", session_context)
+    async def model_with_vision(**_):
+        return SimpleNamespace(supports_vision=True)
+
+    monkeypatch.setattr("asterism.domains.chat.orchestrator.settings_service.get_model_and_provider", model_with_vision)
+    vision_message = (await orchestrator._build_agent_messages())[0]
+    assert any(isinstance(part, ImageUrlContentPart) for part in vision_message.content)  # type: ignore[union-attr]
+    assert "Converted PDF" in text_content(vision_message)
+
+    async def model_without_vision(**_):
+        return SimpleNamespace(supports_vision=False)
+
+    monkeypatch.setattr(
+        "asterism.domains.chat.orchestrator.settings_service.get_model_and_provider",
+        model_without_vision,
+    )
+    non_vision_message = (await orchestrator._build_agent_messages())[0]
+    assert not any(isinstance(part, ImageUrlContentPart) for part in non_vision_message.content)  # type: ignore[union-attr]
+    assert "model does not support image input" in text_content(non_vision_message)
 
 
 def test_download_rejects_traversal(tmp_path, monkeypatch):

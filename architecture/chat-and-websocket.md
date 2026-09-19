@@ -106,10 +106,11 @@ When a client connects to `/chat/stream/{chat_id}`, `ChatController.run()` initi
 ### Client to Server Messages
 
 ```typescript
-// Sending a new user prompt
+// Sending a new user prompt with already-uploaded file names
 {
   "type": "chat",
-  "message": "Can you analyze recent sales figures?"
+  "message": "Can you analyze recent sales figures?",
+  "files": ["sales.pdf", "chart.png"]
 }
 
 // Approving or rejecting a tool call
@@ -197,6 +198,10 @@ When a client connects to `/chat/stream/{chat_id}`, `ChatController.run()` initi
 ```
 
 ---
+
+## File attachments
+
+The composer uploads selected files before it sends the WebSocket command. The orchestrator validates each filename against the authenticated user's `user_files` records, processes pending files, and persists typed references on the user message. Invalid, duplicate, deleted, or cross-user names fail before the message is persisted. On history rebuild and regeneration, document/text cache is injected as text and images are included only when the resolved model explicitly supports vision.
 
 ## Related Documentation
 
