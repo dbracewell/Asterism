@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import uuid
 from logging import Logger
 from typing import TYPE_CHECKING
+
+from sqlalchemy import select
 
 import asterism.domains.chat.service as chat_service
 from asterism.common.collection_utils import index_of
 from asterism.common.log import get_logger
 from asterism.common.strings import is_none_or_empty
+from asterism.core import config
 from asterism.core.events import ChatUpdateEvent, Event, EventType, event_bus
 from asterism.core.exceptions import BadDataException
+from asterism.db.database import get_async_db_session
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
@@ -19,12 +24,22 @@ from asterism.domains.chat.schemas import (
     Chat,
     ChatUpdateRequest,
     Message,
+    MessageFileReference,
     MessageStatus,
     NewMessageRequest,
     UpdateMessageRequest,
 )
+from asterism.domains.files.models import UserFileModel
+from asterism.domains.files.service import ensure_file_processed
 from asterism.domains.llm.draft import get_draft_model
-from asterism.domains.llm.schemas import LLMMessage, ToolCall
+from asterism.domains.llm.schemas import (
+    ImageUrlContent,
+    ImageUrlContentPart,
+    LLMMessage,
+    TextContentPart,
+    ToolCall,
+)
+from asterism.domains.settings import service as settings_service
 
 if TYPE_CHECKING:
     from asterism.domains.agent.user_response_queue import UserResponseQueue
@@ -37,9 +52,7 @@ class ChatOrchestrator:
     ):
         self.chat: Chat = agent.session
         self.agent: Agent = agent
-        self.logger: Logger = get_logger(
-            f"ChatSession({str(self.chat.info.id)})"
-        )
+        self.logger: Logger = get_logger(f"ChatSession({str(self.chat.info.id)})")
         self.is_processing_messages: bool = False
         self.pending_approvals: dict[str, asyncio.Future] = {}
 
@@ -65,10 +78,9 @@ class ChatOrchestrator:
     def is_active(self) -> bool:
         return self.queue.qsize() > 0 or self.is_processing_messages
 
-    async def handle_new_user_message(self, text: str) -> None:
-        parent_message_id = (
-            self.chat.messages[-1].id if self.chat.messages else None
-        )
+    async def handle_new_user_message(self, text: str, filenames: list[str] | None = None) -> None:
+        files = await self._resolve_files(filenames or [])
+        parent_message_id = self.chat.messages[-1].id if self.chat.messages else None
 
         user_message: Message = await chat_service.add_message(
             user_id=self.user_id,
@@ -80,10 +92,45 @@ class ChatOrchestrator:
                 parent_message_id=parent_message_id,
                 status=MessageStatus.PENDING,
                 model_id=self.agent.profile.model_id,  # type:ignore
+                files=files,
             ),
         )
         self.chat.messages.append(Message.model_validate(user_message))
+        self.agent.user_files = [file.filename for file in files]
         await self.run_agent()
+
+    async def _resolve_files(self, filenames: list[str]):
+        if len(filenames) != len(set(filenames)):
+            raise BadDataException("Attached files must not be repeated")
+        if not filenames:
+            return []
+
+        async with get_async_db_session() as session:
+            records = list(
+                await session.scalars(
+                    select(UserFileModel).where(
+                        UserFileModel.user_id == self.user_id,
+                        UserFileModel.filename.in_(filenames),
+                    )
+                )
+            )
+            found = {file.filename: file for file in records}
+            if any(filename not in found for filename in filenames):
+                raise BadDataException("One or more attached files are unavailable")
+            resolved = []
+            for filename in filenames:
+                file = await ensure_file_processed(file=found[filename], session=session)
+                resolved.append(
+                    MessageFileReference(
+                        filename=file.filename,
+                        name=file.original_name,
+                        mime_type=file.mime_type,
+                        size=file.size,
+                        kind=file.kind,
+                        status=file.content_status,
+                    )
+                )
+            return resolved
 
     def find_message(self, message_id: str) -> tuple[int, Message]:
         message_index: int = index_of(
@@ -94,9 +141,7 @@ class ChatOrchestrator:
             raise BadDataException(f"Message not for id {message_id}")
         return message_index, self.chat.messages[message_index]
 
-    async def handle_regenerate_message(
-        self, parent_message_index: int
-    ) -> None:
+    async def handle_regenerate_message(self, parent_message_index: int) -> None:
         parent_message: Message = self.chat.messages[parent_message_index]
         parent_message = await chat_service.update_message(
             user_id=self.user_id,
@@ -112,10 +157,7 @@ class ChatOrchestrator:
         await self.run_agent()
 
     async def generate_chat_title(self) -> None:
-        if (
-            not is_none_or_empty(self.chat.info.title)
-            and self.chat.info.title != "New Chat"
-        ):
+        if not is_none_or_empty(self.chat.info.title) and self.chat.info.title != "New Chat":
             return
 
         try:
@@ -157,9 +199,7 @@ class ChatOrchestrator:
                 )
             )
         except Exception as e:
-            self.logger.error(
-                f"Error generating chat title {e}", stack_info=True
-            )
+            self.logger.error(f"Error generating chat title {e}", stack_info=True)
 
     async def _handle_tool_approval(
         self,
@@ -197,9 +237,7 @@ class ChatOrchestrator:
                 is_approved = await future
                 queue.respond(tool, is_approved)
         except asyncio.TimeoutError:
-            self.logger.info(
-                f"Tool {tool.id} timed out waiting for user approval."
-            )
+            self.logger.info(f"Tool {tool.id} timed out waiting for user approval.")
             queue.respond(tool, False)
             await self.queue.put({"type": "tool_update", "id": tool.id})
         finally:
@@ -213,6 +251,64 @@ class ChatOrchestrator:
     async def save_always_allow_preference(self, tool_id: str) -> None:
         pass
 
+    async def _build_agent_messages(self) -> list[LLMMessage]:
+        files_by_name: dict[str, UserFileModel] = {}
+        names = [file.filename for message in self.chat.messages for file in message.files]
+        vision_enabled = False
+        if names:
+            if self.agent.profile.model_id:
+                model = await settings_service.get_model_and_provider(model_id=self.agent.profile.model_id)
+                vision_enabled = model.supports_vision is True
+            async with get_async_db_session() as session:
+                records = await session.scalars(
+                    select(UserFileModel).where(
+                        UserFileModel.user_id == self.user_id,
+                        UserFileModel.filename.in_(names),
+                    )
+                )
+                files_by_name = {file.filename: file for file in records}
+
+        messages: list[LLMMessage] = []
+        for message in self.chat.messages:
+            if message.role != "user" or not message.files:
+                messages.append(LLMMessage(**message.model_dump()))
+            else:
+                parts: list[TextContentPart | ImageUrlContentPart] = [TextContentPart(text=message.content)]
+                for reference in message.files:
+                    file = files_by_name.get(reference.filename)
+                    if file is None:
+                        parts.append(TextContentPart(text=f'(attached file "{reference.name}" is no longer available)'))
+                    elif file.kind.value == "image":
+                        path = config.files_root / self.user_id / file.filename
+                        if vision_enabled and path.is_file() and file.size <= config.max_vision_image_bytes:
+                            encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+                            parts.append(
+                                ImageUrlContentPart(
+                                    image_url=ImageUrlContent(url=f"data:{file.mime_type};base64,{encoded}")
+                                )
+                            )
+                        elif vision_enabled:
+                            parts.append(
+                                TextContentPart(
+                                    text=f'(image "{reference.name}" not included: file is too large or unavailable)'
+                                )
+                            )
+                        else:
+                            parts.append(
+                                TextContentPart(
+                                    text=f'(image "{reference.name}" not included: model does not support image input)'
+                                )
+                            )
+                    elif file.content_cache:
+                        parts.append(TextContentPart(text=f"### Attached file: {reference.name}\n{file.content_cache}"))
+                    else:
+                        reason = file.content_error or "file type is unsupported"
+                        parts.append(TextContentPart(text=f'(attached file "{reference.name}" not included: {reason})'))
+                messages.append(LLMMessage(role="user", content=parts, token_count=message.token_count))
+            for result in message.tool_call_results or []:
+                messages.append(LLMMessage.tool_call_result(result))
+        return messages
+
     async def run_agent(self) -> None:
         try:
             self.is_processing_messages = True
@@ -223,9 +319,7 @@ class ChatOrchestrator:
 
             last_user_message_index = index_of(
                 self.chat.messages,
-                lambda m: (
-                    m.role == "user" and m.status == MessageStatus.PENDING
-                ),
+                lambda m: m.role == "user" and m.status == MessageStatus.PENDING,
                 reverse=True,
             )
             if last_user_message_index < 0:
@@ -236,11 +330,7 @@ class ChatOrchestrator:
             parent_message = self.chat.messages[parent_message_index]
             self.agent.parent_message_id = parent_message.id
 
-            messages: list[LLMMessage] = []
-            for m in self.chat.messages:
-                messages.append(LLMMessage(**m.model_dump()))
-                for tr in m.tool_call_results or []:
-                    messages.append(LLMMessage.tool_call_result(tr))
+            messages = await self._build_agent_messages()
 
             async for event in self.agent.run(messages=messages):
                 match event:
@@ -255,12 +345,8 @@ class ChatOrchestrator:
                                 status=MessageStatus.COMPLETED,
                                 token_count=event.total_tokens,
                                 parent_message_id=parent_message.id,
-                                tool_calls=event.tool_calls
-                                if event.has_tool_calls()
-                                else None,
-                                tool_call_results=event.tool_results
-                                if event.has_tool_results()
-                                else None,
+                                tool_calls=event.tool_calls if event.has_tool_calls() else None,
+                                tool_call_results=event.tool_results if event.has_tool_results() else None,
                                 model_id=self.agent.profile.model_id,  # type:ignore
                             ),
                         )
@@ -275,10 +361,7 @@ class ChatOrchestrator:
                             {
                                 "type": event.type.value,
                                 "last_messages": [
-                                    m.model_dump(mode="json")
-                                    for m in self.chat.messages[
-                                        last_user_message_index:
-                                    ]
+                                    m.model_dump(mode="json") for m in self.chat.messages[last_user_message_index:]
                                 ],
                             }
                         )
@@ -288,21 +371,11 @@ class ChatOrchestrator:
                             await self.queue.put(
                                 {
                                     "type": "sub_agent",
-                                    "execution_id": str(
-                                        event.sub_agent.execution_id
-                                    ),
-                                    "sub_agent_id": str(
-                                        event.sub_agent.sub_agent_id
-                                    ),
-                                    "sub_agent_name": (
-                                        event.sub_agent.sub_agent_name
-                                    ),
+                                    "execution_id": str(event.sub_agent.execution_id),
+                                    "sub_agent_id": str(event.sub_agent.sub_agent_id),
+                                    "sub_agent_name": (event.sub_agent.sub_agent_name),
                                     "depth": event.sub_agent.depth,
-                                    "event": (
-                                        event.sub_agent.event.model_dump(
-                                            mode="json"
-                                        )
-                                    ),
+                                    "event": (event.sub_agent.event.model_dump(mode="json")),
                                 }
                             )
 
@@ -310,11 +383,7 @@ class ChatOrchestrator:
                         await self.queue.put(event.model_dump())
 
         except Exception as e:
-            self.logger.error(
-                f"Error processing messages: {e}", stack_info=True
-            )
-            await self.queue.put(
-                {"type": AgentEventType.ERROR.value, "content": str(e)}
-            )
+            self.logger.error(f"Error processing messages: {e}", stack_info=True)
+            await self.queue.put({"type": AgentEventType.ERROR.value, "content": str(e)})
         finally:
             self.is_processing_messages = False

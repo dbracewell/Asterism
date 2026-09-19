@@ -5,12 +5,22 @@ from enum import StrEnum, auto
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
 
 
 class MessageStatus(StrEnum):
     PENDING = auto()
     COMPLETED = auto()
+
+
+class MessageFileReference(BaseModel):
+    filename: str
+    name: str
+    mime_type: str
+    size: int = Field(ge=0)
+    kind: FileKind
+    status: FileContentStatus
 
 
 class NewMessageRequest(BaseModel):
@@ -23,15 +33,19 @@ class NewMessageRequest(BaseModel):
     status: MessageStatus = Field(default=MessageStatus.PENDING)
     tool_calls: list[ToolCall] | None = Field(default=None)
     tool_call_results: list[ToolResult] | None = Field(default=None)
+    files: list[MessageFileReference] = Field(default_factory=list)
 
 
 class Message(LLMMessage):
     model_config = ConfigDict(from_attributes=True)
+    # Persisted chat content remains plain text; multimodal parts are runtime-only.
+    content: str
     id: uuid.UUID
     status: MessageStatus
     created_at: int
     model_id: uuid.UUID | None = None
     tool_call_results: list[ToolResult] | None = None
+    files: list[MessageFileReference] = Field(default_factory=list)
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0

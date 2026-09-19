@@ -59,7 +59,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('3a23b5c8-8936-4f20-a51b-ccf3ffe24947')
+    id: z.uuid().optional().default('8e74db0b-3376-419c-8f1d-73060dd8a94d')
 });
 
 /**
@@ -195,6 +195,18 @@ export const zJsonValue = z.unknown();
  */
 export const zBulkUpdateSettingRequest = z.object({
     values: z.record(z.string(), zJsonValue)
+});
+
+/**
+ * MessageFileReference
+ */
+export const zMessageFileReference = z.object({
+    filename: z.string(),
+    name: z.string(),
+    mime_type: z.string(),
+    size: z.int().gte(0),
+    kind: zFileKind,
+    status: zFileContentStatus
 });
 
 /**
@@ -396,6 +408,7 @@ export const zMessage = z.object({
     created_at: z.int(),
     model_id: z.uuid().nullish(),
     tool_call_results: z.array(zToolResult).nullish(),
+    files: z.array(zMessageFileReference).optional(),
     active_child_id: z.uuid().nullish(),
     has_siblings: z.boolean().optional().default(false),
     sibling_count: z.int().optional().default(0),

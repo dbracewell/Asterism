@@ -89,7 +89,7 @@ class ChatController:
                     case "chat":
                         current_job = asyncio.create_task(
                             self.orchestrator.handle_new_user_message(
-                                cmd.get("message", "")
+                                cmd.get("message", ""), cmd.get("files", [])
                             )
                         )
                     case "regenerate":
