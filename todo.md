@@ -185,7 +185,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-12 — User Files in Chat (Upload, Vision, and MarkItDown)
 
 Plan: [EPIC-12](epics/EPIC-12-USER-FILES-IN-CHAT.md).
-Status: US-12.1 completed, verified, and user-confirmed; US-12.2–US-12.5 pending.
+Status: US-12.1–US-12.2 completed, verified, and user-confirmed; US-12.3–US-12.5 pending.
 Order: US-12.1 → US-12.2 → US-12.3 → US-12.4 → US-12.5.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -198,11 +198,11 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-12.1-T4: Implement `GET /files` list and `DELETE /files/{filename}` with strict user scoping.
   - [x] US-12.1-T5: Tests for auth/ownership, traversal/sanitization, limits, dedupe, MIME/kind detection, delete, migration idempotency; regenerate the Hey API client.
 
-- [ ] US-12.2 — Convert files to model-readable text with MarkItDown
-  - [ ] US-12.2-T1: Add pinned `markitdown[docx,pdf,pptx,xls,xlsx]` and isolate conversion behind a `FileProcessor` interface with kind routing.
-  - [ ] US-12.2-T2: Implement direct text reading and MarkItDown conversion in a worker thread with timeout, input size cap, and output truncation.
-  - [ ] US-12.2-T3: Persist processing status/cache on `user_files` with hash invalidation and per-file non-fatal user-safe errors.
-  - [ ] US-12.2-T4: Fixture tests with real sample files plus timeout/oversize/corrupt/truncation/cache cases; assert content never appears in logs.
+- [x] US-12.2 — Convert files to model-readable text with MarkItDown
+  - [x] US-12.2-T1: Add pinned `markitdown[docx,pdf,pptx,xls,xlsx]` and isolate conversion behind a `FileProcessor` interface with kind routing.
+  - [x] US-12.2-T2: Implement direct text reading and MarkItDown conversion in a worker thread with timeout, input size cap, and output truncation.
+  - [x] US-12.2-T3: Persist processing status/cache on `user_files` with hash invalidation and per-file non-fatal user-safe errors.
+  - [x] US-12.2-T4: Fixture tests with real sample files plus timeout/oversize/corrupt/truncation/cache cases; assert content never appears in logs.
 
 - [ ] US-12.3 — Use attached files in the agent runtime (vision + document text)
   - [ ] US-12.3-T1: Extend `LLMMessage.content` to text/image content parts, update `to_api_message()`, add `text_content()` helper; prove text-only payloads unchanged.

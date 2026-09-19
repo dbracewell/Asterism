@@ -14,6 +14,7 @@ from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 
 from .models import FileContentStatus, FileKind, UserFileModel
+from .processor import MarkItDownFileProcessor
 from .schemas import UserFile, UserFileList
 from .store import LocalFileStore
 
@@ -25,7 +26,7 @@ _IMAGE_MIME_TYPES = {
     "image/bmp", "image/gif", "image/jpeg", "image/png", "image/webp",
 }
 _TEXT_EXTENSIONS = {
-    ".c", ".cpp", ".cs", ".css", ".go", ".h", ".html", ".ini", ".java",
+    ".c", ".cpp", ".cs", ".css", ".go", ".h", ".ini", ".java",
     ".js", ".json", ".jsx", ".log", ".md", ".php", ".py", ".rb", ".rs",
     ".sh", ".sql", ".toml", ".ts", ".tsx", ".txt", ".xml", ".yaml", ".yml",
 }
@@ -79,10 +80,12 @@ def classify_file(filename: str, mime_type: str) -> FileKind:
     extension = Path(filename).suffix.lower()
     if mime_type in _IMAGE_MIME_TYPES:
         return FileKind.IMAGE
-    if extension in _TEXT_EXTENSIONS or mime_type.startswith("text/"):
+    if extension in _TEXT_EXTENSIONS:
         return FileKind.TEXT
     if extension in _DOCUMENT_EXTENSIONS:
         return FileKind.DOCUMENT
+    if mime_type.startswith("text/"):
+        return FileKind.TEXT
     return FileKind.OTHER
 
 
@@ -151,6 +154,12 @@ async def upload_files(
             store.delete(user_id, filename)
         raise
     return UserFileList(files=[UserFile.model_validate(file) for file in created])
+
+
+async def ensure_file_processed(
+    *, file: UserFileModel, session: AsyncSession
+) -> UserFileModel:
+    return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)
 
 
 async def list_user_files(*, user_id: str, session: AsyncSession) -> UserFileList:
