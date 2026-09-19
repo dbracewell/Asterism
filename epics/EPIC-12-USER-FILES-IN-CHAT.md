@@ -2,7 +2,7 @@
 
 ## Status
 
-**US-12.1–US-12.5 completed, verified, and user-confirmed.**
+**US-12.1–US-12.5 completed, verified, and user-confirmed.** US-12.6 is complete and awaiting user confirmation.
 
 ## Goal
 
@@ -331,6 +331,22 @@ documented.
 - Deterministic automated coverage proves both the vision and non-vision paths without external credentials.
 - The end-to-end browser flow works with mocked backends; failure paths are visible to the user.
 - Documentation and the ADR explain kind routing, capability gating, caching, limits, and what is deliberately out of scope.
+
+### US-12.6 — Deduplicate identical uploads
+
+**As a user**, I want re-uploading the same filename and bytes to reuse my existing file so that duplicate documents do not consume storage or clutter attachments.
+
+**Dependencies:** US-12.1.
+
+- [x] US-12.6-T1: Reuse an existing `user_files` row when the authenticated user uploads a file with the same sanitized filename and SHA-256; do not write a second file or create a `name(2)` copy.
+- [x] US-12.6-T2: Add tests for repeat uploads, duplicate items in a single multipart request, same-name different-content behavior, and strict per-user isolation.
+- [x] US-12.6-T3: Document the exact deduplication key and run relevant quality gates (`tests/test_user_files.py`, Ruff).
+
+**Acceptance criteria**
+
+- Re-uploading identical bytes under the same filename returns the original metadata and leaves one database row and one file on disk.
+- Same-name files with different bytes retain the existing collision-deduplication behavior.
+- Matching hashes never deduplicate across users or different sanitized filenames.
 
 ## Execution plan and definition of done
 

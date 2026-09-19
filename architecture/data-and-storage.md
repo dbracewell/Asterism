@@ -210,7 +210,7 @@ Asterism provides type-safe JSON serialization directly into SQLite columns usin
 
 Uploaded files are owned by one user and stored through the `FileStore` interface; the current `LocalFileStore` places bytes below `{storage_root}/files/{user_id}`. Metadata, ownership, hash, classification, and bounded processing cache live in `user_files`. `messages.files` stores only typed references, so deleting a file removes its bytes and row without rewriting history; affected historical attachments render as unavailable.
 
-The upload API is authenticated and user-scoped (`POST`, `GET`, and `DELETE /files`). It sanitizes and deduplicates names, rejects configured executable extensions and oversized files, and never exposes another user's bytes or metadata. The repeatable schema migrations create `user_files` and add `messages.files` without modifying existing message content.
+The upload API is authenticated and user-scoped (`POST`, `GET`, and `DELETE /files`). It sanitizes names, rejects configured executable extensions and oversized files, and never exposes another user's bytes or metadata. An upload with the same user, sanitized filename, and SHA-256 as an intact existing object reuses that row and bytes; different bytes retain filename collision suffixing, and no deduplication crosses users or filenames. The repeatable schema migrations create `user_files` and add `messages.files` without modifying existing message content.
 
 ## Related Documentation
 

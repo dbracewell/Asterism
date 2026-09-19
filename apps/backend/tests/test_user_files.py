@@ -74,6 +74,29 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
 
 
 @pytest.mark.asyncio
+async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_session):
+    first = await upload_files(
+        user_id="user-a", uploads=[_upload("report.txt", b"same bytes")], session=file_session
+    )
+    repeated = await upload_files(
+        user_id="user-a",
+        uploads=[_upload("report.txt", b"same bytes"), _upload("report.txt", b"same bytes")],
+        session=file_session,
+    )
+    other_user = await upload_files(
+        user_id="user-b", uploads=[_upload("report.txt", b"same bytes")], session=file_session
+    )
+
+    user_files = list(
+        await file_session.scalars(select(UserFileModel).where(UserFileModel.user_id == "user-a"))
+    )
+    assert [file.id for file in repeated.files] == [first.files[0].id]
+    assert [file.filename for file in user_files] == ["report.txt"]
+    assert other_user.files[0].id != first.files[0].id
+    assert not (config.files_root / "user-a" / "report(2).txt").exists()
+
+
+@pytest.mark.asyncio
 async def test_upload_rejects_unsafe_extensions_and_size(file_session, monkeypatch):
     with pytest.raises(BadDataException, match="not allowed"):
         await upload_files(
