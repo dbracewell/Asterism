@@ -2,7 +2,7 @@
 
 ## Status
 
-**Proposed / planning only.** No stories or implementation have started.
+**Completed.** All user stories (US-10.1 through US-10.6) are implemented, tested, verified against quality gates, and merged into `main`.
 
 ## Goal
 

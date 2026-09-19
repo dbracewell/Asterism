@@ -73,7 +73,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-10 — Sub-Agent Upgrade and Tool Approval Refactor
 
 Plan: [EPIC-10](epics/EPIC-10-SUB-AGENT-AND-TOOL-APPROVAL-REFACTOR.md).
-Status: Proposed.
+Status: EPIC-10 completed; US-10.1–US-10.6 completed.
 Order: US-10.1 → US-10.2 → US-10.3 → US-10.4 → US-10.5 → US-10.6.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -125,5 +125,5 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 ### Epic closure
 
-- [ ] Verify all story acceptance criteria; request user completion confirmation.
-- [ ] On confirmation, merge final branch, announce epic completion, propose next plan.
+- [x] Verify all story acceptance criteria; request user completion confirmation.
+- [x] On confirmation, merge final branch, announce epic completion, propose next plan.
