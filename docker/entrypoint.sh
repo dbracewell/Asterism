@@ -42,11 +42,9 @@ echo "STORAGE_ROOT=${STORAGE_ROOT:-/storage}"
 mkdir -p "$STORAGE_ROOT"
 
 cd /app/apps/backend
-# The existing initializer resets databases; run it only for a fresh local DB.
-if [[ -z "${DB_URL:-}" && ! -f "$STORAGE_ROOT/database.db" ]]; then
-    env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
-        .venv/bin/python -m asterism.db.init_db
-fi
+# Initialization is non-destructive and also applies pending Asterism migrations.
+env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
+    .venv/bin/python -m asterism.db.init_db
 
 pids=()
 shutdown() {

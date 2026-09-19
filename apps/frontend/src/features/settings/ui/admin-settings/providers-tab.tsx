@@ -33,8 +33,17 @@ import { fetchProviderModels } from "@/features/settings/server/actions";
 import { client } from "@/lib/api";
 import { ApplicationSettings, Llm, LlmDisplayInfo } from "@/lib/client";
 import { appSettingsBulkUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
-import { zLlm } from "@/lib/client/zod.gen";
+import {
+  zLlm,
+  zModelCapabilitySource,
+  zProviderType,
+} from "@/lib/client/zod.gen";
 import { useRouter } from "next/navigation";
+
+const modelSchema = zLlm.extend({
+  context_window_source: zModelCapabilitySource.optional(),
+  vision_source: zModelCapabilitySource.optional(),
+});
 
 const providerSchema = z.object({
   id: z.string(),
@@ -45,7 +54,8 @@ const providerSchema = z.object({
     .min(1, "Base URL is required.")
     .transform((arg) => (arg.endsWith("/") ? arg.slice(0, -1) : arg)),
   api_key: z.string().trim().min(1, "API key is required."),
-  models: z.array(zLlm),
+  provider_type: zProviderType,
+  models: z.array(modelSchema),
 });
 
 type ProviderFormValue = ProvidersFormValues["llm_providers"][number];
@@ -55,6 +65,7 @@ const createEmptyProvider = (): ProviderFormValue => ({
   name: "",
   base_url: "",
   api_key: "",
+  provider_type: "generic_openai",
   models: [],
 });
 
@@ -89,7 +100,10 @@ export const ProvidersTab = ({
   const form = useForm<ProvidersFormValues>({
     resolver: zodResolver(providersFormSchema),
     defaultValues: {
-      llm_providers: appSettings?.llm_providers ?? [],
+      llm_providers: (appSettings?.llm_providers ?? []).map((provider) => ({
+        ...provider,
+        provider_type: provider.provider_type ?? "generic_openai",
+      })),
       draft_model_id: appSettings?.draft_model_id ?? "",
     },
     mode: "onBlur",
@@ -123,7 +137,10 @@ export const ProvidersTab = ({
 
   useEffect(() => {
     reset({
-      llm_providers: appSettings?.llm_providers ?? [],
+      llm_providers: (appSettings?.llm_providers ?? []).map((provider) => ({
+        ...provider,
+        provider_type: provider.provider_type ?? "generic_openai",
+      })),
       draft_model_id: appSettings?.draft_model_id ?? "",
     });
   }, [appSettings, reset]);

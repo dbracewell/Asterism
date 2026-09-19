@@ -2,10 +2,23 @@ from __future__ import annotations
 
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    JsonValue,
+    PositiveInt,
+    model_validator,
+)
 
 from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.schemas import AgentProfile
+
+from .provider_types import (
+    ModelCapabilitySource,
+    ProviderType,
+    normalize_provider_base_url,
+)
 
 
 class Llm(BaseModel):
@@ -14,6 +27,33 @@ class Llm(BaseModel):
     name: str
     provider_id: uuid.UUID
     is_active: bool
+    context_window: PositiveInt | None = None
+    supports_vision: bool | None = None
+    context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+    vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+
+    @model_validator(mode="after")
+    def normalize_capability_sources(self) -> "Llm":
+        self.context_window_source = self._normalized_source(
+            self.context_window,
+            self.context_window_source,
+        )
+        self.vision_source = self._normalized_source(
+            self.supports_vision,
+            self.vision_source,
+        )
+        return self
+
+    @staticmethod
+    def _normalized_source(
+        value: int | bool | None,
+        source: ModelCapabilitySource,
+    ) -> ModelCapabilitySource:
+        if value is None:
+            return ModelCapabilitySource.UNKNOWN
+        if source == ModelCapabilitySource.UNKNOWN:
+            return ModelCapabilitySource.MANUAL
+        return source
 
 
 class ProviderInfo(BaseModel):
@@ -22,6 +62,15 @@ class ProviderInfo(BaseModel):
     base_url: str
     api_key: str
     id: uuid.UUID
+    provider_type: ProviderType = ProviderType.GENERIC_OPENAI
+
+    @model_validator(mode="after")
+    def normalize_base_url(self) -> "ProviderInfo":
+        self.base_url = normalize_provider_base_url(
+            self.provider_type,
+            self.base_url,
+        )
+        return self
 
 
 class LlmWithProvider(Llm):
@@ -39,6 +88,10 @@ class LlmDisplayInfo(BaseModel):
     name: str
     provider_id: uuid.UUID
     provider_name: str
+    context_window: PositiveInt | None = None
+    supports_vision: bool | None = None
+    context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+    vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
 
 
 class ComponentProviderParameters(BaseModel):
@@ -70,14 +123,10 @@ class UserSettings(BaseModel):
     @property
     def default_agent_profile(self) -> AgentProfile:
         if not self.default_agent_id:
-            raise BadDataException(
-                "User does not have a default agent profile set."
-            )
+            raise BadDataException("User does not have a default agent profile set.")
         agent: AgentProfile | None = self.agents.get(self.default_agent_id)
         if agent is None:
-            raise BadDataException(
-                "User does not have a default agent profile set."
-            )
+            raise BadDataException("User does not have a default agent profile set.")
         return agent
 
 

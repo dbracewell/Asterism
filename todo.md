@@ -136,3 +136,48 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 - [x] Re-verify all story acceptance criteria; user confirmed completion.
 - [x] Merge the US-10.7 branch, announce epic completion, and propose the next plan.
+
+## EPIC-11 — LLM Provider Types and Model Capabilities
+
+Plan: [EPIC-11](epics/EPIC-11-LLM-PROVIDER-TYPES-AND-MODEL-CAPABILITIES.md).
+Status: US-11.1 completed and user-confirmed; US-11.2 is next.
+Order: US-11.1 → US-11.2 → US-11.3 → US-11.4.
+Work on one item at a time; create a feature branch when each story starts.
+Story completion requires passing checks and user confirmation before merge.
+Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
+
+- [x] US-11.1 — Persist provider types and model capability metadata (completed, verified, and user-confirmed)
+  - [x] US-11.1-T1: Add the provider enum, canonical OpenAI URL policy, and backend normalization.
+  - [x] US-11.1-T2: Extend persistence and API schemas with provider type, context window, tri-state vision, and per-field provenance.
+  - [x] US-11.1-T3: Add a repeatable data-preserving migration that classifies existing providers and preserves references.
+  - [x] US-11.1-T4: Update provider/model upsert, merge, and read services for the new metadata.
+  - [x] US-11.1-T5: Test fresh/existing/repeated migrations, validation, round trips, and reference preservation.
+  - [x] US-11.1-T6: Regenerate and verify the Hey API client.
+
+- [ ] US-11.2 — Discover models and capabilities through the backend
+  - [ ] US-11.2-T1: Define an admin-only typed discovery API and backend discovery interface.
+  - [ ] US-11.2-T2: Implement canonical OpenAI discovery with a versioned capability catalog.
+  - [ ] US-11.2-T3: Implement conservative Generic OpenAI model and capability extraction.
+  - [ ] US-11.2-T4: Add bounded I/O, redirect/credential protections, and redacted diagnostics.
+  - [ ] US-11.2-T5: Preserve IDs, active/default state, and manual per-field overrides during refresh.
+  - [ ] US-11.2-T6: Test catalogs, generic metadata shapes, unknown/conflicting data, failures, and refresh preservation.
+
+- [ ] US-11.3 — Configure provider type and capabilities in the admin UI
+  - [ ] US-11.3-T1: Add an accessible OpenAI / Generic OpenAI provider-type dropdown.
+  - [ ] US-11.3-T2: Implement fixed OpenAI and required editable Generic OpenAI base URL behavior.
+  - [ ] US-11.3-T3: Replace direct frontend model fetching with the generated backend discovery client.
+  - [ ] US-11.3-T4: Add editable context-window and tri-state vision fields with source/unknown indicators.
+  - [ ] US-11.3-T5: Preserve active/default/manual values through refresh and type changes.
+  - [ ] US-11.3-T6: Test type switching, discovery states, manual fallback, refresh, validation, and accessibility.
+
+- [ ] US-11.4 — Verify the provider workflow end to end
+  - [ ] US-11.4-T1: Integrate provider creation, discovery, manual fallback, save/reload, and default retention.
+  - [ ] US-11.4-T2: Verify runtime clients and chat/draft lookup use the correct normalized URL and active models.
+  - [ ] US-11.4-T3: Add deterministic browser E2E coverage for both provider types and discovery failure.
+  - [ ] US-11.4-T4: Document provider types, provenance, discovery limitations, and manual fallback.
+  - [ ] US-11.4-T5: Run and record all quality gates, migration checks, codegen consistency, and relevant Playwright coverage.
+
+### Epic closure
+
+- [ ] Re-verify all story acceptance criteria and request user completion confirmation.
+- [ ] On confirmation, merge the final story branch, announce epic completion, and propose the next plan.
