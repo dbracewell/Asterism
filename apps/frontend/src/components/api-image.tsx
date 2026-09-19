@@ -44,28 +44,25 @@ export const APIImage = ({
   useEffect(() => {
     let active = true;
 
+    let url: string | undefined;
     const fetchImage = async () => {
-      const { data } = await api.getFile({
-        path: {
-          filename: encodeURIComponent(filename).replaceAll(".", "%2E"),
-        },
-      });
-
-      if (!data) {
+      try {
+        const { data } = await api.getFile({
+          path: { filename },
+        });
+        if (!data) throw new Error("File is unavailable");
+        url = URL.createObjectURL(data);
+        if (active) setObjectUrl(url);
+      } catch {
         if (active) setError(true);
-        return;
       }
-
-      setObjectUrl(URL.createObjectURL(data));
     };
-
-    fetchImage();
-
+    void fetchImage();
     return () => {
       active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (url) URL.revokeObjectURL(url);
     };
-  }, [filename, objectUrl]);
+  }, [filename]);
 
   if (error) {
     return (

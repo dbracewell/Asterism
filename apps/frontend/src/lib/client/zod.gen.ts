@@ -257,7 +257,8 @@ export const zLlmDisplayInfo = z.object({
  */
 export const zNewChatRequest = z.object({
     user_prompt: z.string(),
-    folder_id: z.uuid().nullish()
+    folder_id: z.uuid().nullish(),
+    files: z.array(z.string()).optional()
 });
 
 /**

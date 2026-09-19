@@ -61,6 +61,16 @@ class MarkItDownFileProcessor:
             file.content_error = None
             file.content_cache = None
 
+        # A configured processing limit can be raised after an upload. Retry the
+        # deterministic size failure when the file is attached again instead of
+        # leaving it permanently unavailable until it is re-uploaded.
+        if (
+            file.content_status is FileContentStatus.FAILED
+            and file.content_error == "File is too large to process"
+            and file.size <= config.max_process_file_size_bytes
+        ):
+            file.content_status = FileContentStatus.PENDING
+            file.content_error = None
         if file.content_status is not FileContentStatus.PENDING:
             return file
         if file.kind is FileKind.IMAGE:

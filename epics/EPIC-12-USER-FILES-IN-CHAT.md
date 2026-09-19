@@ -2,7 +2,7 @@
 
 ## Status
 
-**US-12.1–US-12.3 completed, verified, and user-confirmed.** Stories US-12.4 through US-12.5 are pending.
+**US-12.1–US-12.4 completed, verified, and user-confirmed.** US-12.5 is pending.
 
 ## Goal
 
@@ -295,9 +295,9 @@ durable.
 
 **Dependencies:** US-12.3.
 
-- [ ] US-12.4-T1: Wire `ChatInput` attachments to the generated upload client: upload on submit with per-file progress/error chips, include returned filenames in the WebSocket `chat` command, and clear attachments only on full success with an actionable failure path.
-- [ ] US-12.4-T2: Render attachments on persisted user messages: image thumbnails via the file endpoint, document badges with name/size and download action, plus unsupported/failed and file-missing states.
-- [ ] US-12.4-T3: Add frontend unit/integration tests for upload success/partial failure, chip state transitions, the WebSocket payload including `files`, attachment rendering states, and keyboard/label accessibility; verify regenerated client types are consumed (no hand-written fetches).
+- [x] US-12.4-T1: Wire `ChatInput` attachments to the generated upload client: upload on submit with per-file progress/error chips, include returned filenames in the WebSocket `chat` command, and clear attachments only on full success with an actionable failure path.
+- [x] US-12.4-T2: Render attachments on persisted user messages: image thumbnails via the file endpoint, document badges with name/size and download action, plus unsupported/failed and file-missing states.
+- [x] US-12.4-T3: Add frontend unit/integration tests for upload success/partial failure, chip state transitions, the WebSocket payload including `files`, attachment rendering states, and keyboard/label accessibility; verify regenerated client types are consumed (no hand-written fetches).
 
 **Acceptance criteria**
 

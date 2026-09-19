@@ -92,6 +92,7 @@ class NewChatRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_prompt: str
     folder_id: uuid.UUID | None = Field(default=None)
+    files: list[str] = Field(default_factory=list)
 
 
 class ChatUpdateRequest(BaseModel):

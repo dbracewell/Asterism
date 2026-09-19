@@ -8,16 +8,16 @@ class CodedException(AsterismException):
         self.code = code
 
 
-class BadDataException(AsterismException):
+class BadDataException(CodedException):
     def __init__(self, message: str = "Bad Data"):
         super().__init__(400, message)
 
 
-class UnauthorizedException(AsterismException):
+class UnauthorizedException(CodedException):
     def __init__(self, message: str = "Unauthorized"):
         super().__init__(401, message)
 
 
-class NotFoundException(AsterismException):
+class NotFoundException(CodedException):
     def __init__(self, message: str = "Resource not found"):
         super().__init__(404, message)
