@@ -71,6 +71,7 @@ class Config(BaseSettings):
     max_process_file_size_bytes: int = 15 * 1024 * 1024
     max_converted_chars: int = 100_000
     file_conversion_timeout_s: int = 60
+    max_vision_image_bytes: int = 10 * 1024 * 1024
     public_url: str = "http://localhost:3000"
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
@@ -156,6 +157,10 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_CONVERTED_CHARS must be from 1 to 1000000")
         if not 1 <= self.file_conversion_timeout_s <= 600:
             raise ConfigValidationError("FILE_CONVERSION_TIMEOUT_S must be from 1 to 600")
+        if not 1 <= self.max_vision_image_bytes <= self.max_upload_file_size_bytes:
+            raise ConfigValidationError(
+                "MAX_VISION_IMAGE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES"
+            )
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
             origin == "*" for origin in self.cors_allowed_origins or []
         ):

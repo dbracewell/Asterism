@@ -2,7 +2,7 @@
 
 ## Status
 
-**US-12.1–US-12.2 completed, verified, and user-confirmed.** Stories US-12.3 through US-12.5 are pending.
+**US-12.1–US-12.3 completed, verified, and user-confirmed.** Stories US-12.4 through US-12.5 are pending.
 
 ## Goal
 
@@ -272,10 +272,10 @@ documents, gated by what the selected model actually supports.
 
 **Dependencies:** US-12.2.
 
-- [ ] US-12.3-T1: Extend `LLMMessage.content` to `str | list[ContentPart]` (discriminated `text` / `image_url` union), update `to_api_message()` to emit structured user content, and add a `text_content()` helper; prove existing text-only API payloads are unchanged.
-- [ ] US-12.3-T2: Add `Message.files` references (JSONB) with a repeatable migration and OpenAPI schemas; extend the WebSocket `chat` command with `files?: string[]` and orchestrator validation (ownership, existence, ensure-processed, persist references, actionable errors).
-- [ ] US-12.3-T3: Implement agent message construction: image data-URL parts gated on `supports_vision == true` (explicit skip notes for `false`/unknown and over-size), document/text injection blocks, unsupported/failed notes; make title generation and sub-agent context windowing text-safe; populate `Agent.user_files` from the attaching message.
-- [ ] US-12.3-T4: Add tests for multimodal payload shape (mocked client), tri-state vision gating, image size cap, document/text injection, unsupported/failed notes, multi-message history rebuild, regenerate behavior, title/sub-agent text extraction, and WS filename validation/ownership.
+- [x] US-12.3-T1: Extend `LLMMessage.content` to `str | list[ContentPart]` (discriminated `text` / `image_url` union), update `to_api_message()` to emit structured user content, and add a `text_content()` helper; prove existing text-only API payloads are unchanged.
+- [x] US-12.3-T2: Add `Message.files` references (JSONB) with a repeatable migration and OpenAPI schemas; extend the WebSocket `chat` command with `files?: string[]` and orchestrator validation (ownership, existence, ensure-processed, persist references, actionable errors).
+- [x] US-12.3-T3: Implement agent message construction: image data-URL parts gated on `supports_vision == true` (explicit skip notes for `false`/unknown and over-size), document/text injection blocks, unsupported/failed notes; make title generation and sub-agent context windowing text-safe; populate `Agent.user_files` from the attaching message.
+- [x] US-12.3-T4: Add tests for multimodal payload shape (mocked client), tri-state vision gating, image size cap, document/text injection, unsupported/failed notes, multi-message history rebuild, regenerate behavior, title/sub-agent text extraction, and WS filename validation/ownership.
 
 **Acceptance criteria**
 

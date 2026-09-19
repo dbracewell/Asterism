@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum, auto
 from typing import (
+    Annotated,
     Any,
     AsyncGenerator,
     Awaitable,
@@ -128,18 +129,53 @@ class ToolResult:
         }
 
 
+class TextContentPart(BaseModel):
+    type: Literal["text"] = "text"
+    text: str
+
+
+class ImageUrlContent(BaseModel):
+    url: str
+
+
+class ImageUrlContentPart(BaseModel):
+    type: Literal["image_url"] = "image_url"
+    image_url: ImageUrlContent
+
+
+ContentPart = Annotated[
+    TextContentPart | ImageUrlContentPart,
+    Field(discriminator="type"),
+]
+
+
+def text_content(message: "LLMMessage") -> str:
+    """Return only textual content for non-multimodal consumers."""
+    if isinstance(message.content, str):
+        return message.content
+    return "\n".join(part.text for part in message.content if isinstance(part, TextContentPart))
+
+
 class LLMMessage(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
         extra="ignore",
     )
     role: str
-    content: str
+    content: str | list[ContentPart]
     token_count: int
     thinking: str | None = Field(default=None)
     tool_calls: list[ToolCall] | None = Field(default=None)
 
     def to_api_message(self) -> dict[str, Any]:
+        if isinstance(self.content, list):
+            if self.role != "user":
+                raise RuntimeError("Only user messages may use structured content")
+            return {
+                "role": self.role,
+                "content": [part.model_dump(mode="json") for part in self.content],
+            }
+
         if self.role == "tool":
             return {
                 "role": self.role,

@@ -525,6 +525,10 @@ export type Message = {
      */
     tool_call_results?: Array<ToolResult> | null;
     /**
+     * Files
+     */
+    files?: Array<MessageFileReference>;
+    /**
      * Active Child Id
      */
     active_child_id?: string | null;
@@ -552,6 +556,30 @@ export type Message = {
      * Previous Sibling Id
      */
     previous_sibling_id?: string | null;
+};
+
+/**
+ * MessageFileReference
+ */
+export type MessageFileReference = {
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Mime Type
+     */
+    mime_type: string;
+    /**
+     * Size
+     */
+    size: number;
+    kind: FileKind;
+    status: FileContentStatus;
 };
 
 /**

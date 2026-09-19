@@ -11,7 +11,7 @@ from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
-from .schemas import MessageStatus
+from .schemas import MessageFileReference, MessageStatus
 
 
 class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
@@ -110,6 +110,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         "tool_call_results",
         JSONB_COLUMN(TypeAdapter(list[ToolResult])),
         nullable=True,
+    )
+    files: Mapped[list[MessageFileReference]] = mapped_column(
+        "files",
+        JSONB_COLUMN(TypeAdapter(list[MessageFileReference])),
+        nullable=False,
+        default=list,
     )
     token_count: Mapped[int] = mapped_column(
         "token_count",

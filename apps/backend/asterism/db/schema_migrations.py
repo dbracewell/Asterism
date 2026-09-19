@@ -11,6 +11,7 @@ Migration = Callable[[AsyncConnection], Awaitable[None]]
 _MIGRATION_TABLE = "asterism_schema_migrations"
 _PROVIDER_CAPABILITIES_MIGRATION = "20250919_01_provider_types_capabilities"
 _USER_FILES_MIGRATION = "20260401_01_user_files"
+_MESSAGE_FILES_MIGRATION = "20260401_02_message_files"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -28,6 +29,15 @@ async def _add_column_if_missing(
         return
     await connection.execute(
         text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {definition}')
+    )
+
+
+async def _migrate_message_files(connection: AsyncConnection) -> None:
+    await _add_column_if_missing(
+        connection,
+        "messages",
+        "files",
+        "JSON NOT NULL DEFAULT '[]'",
     )
 
 
@@ -109,6 +119,7 @@ async def _migrate_provider_types_and_capabilities(
 _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),
+    (_MESSAGE_FILES_MIGRATION, _migrate_message_files),
 )
 
 

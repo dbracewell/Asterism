@@ -185,7 +185,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-12 — User Files in Chat (Upload, Vision, and MarkItDown)
 
 Plan: [EPIC-12](epics/EPIC-12-USER-FILES-IN-CHAT.md).
-Status: US-12.1–US-12.2 completed, verified, and user-confirmed; US-12.3–US-12.5 pending.
+Status: US-12.1–US-12.3 completed, verified, and user-confirmed; US-12.4–US-12.5 pending.
 Order: US-12.1 → US-12.2 → US-12.3 → US-12.4 → US-12.5.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -204,11 +204,11 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-12.2-T3: Persist processing status/cache on `user_files` with hash invalidation and per-file non-fatal user-safe errors.
   - [x] US-12.2-T4: Fixture tests with real sample files plus timeout/oversize/corrupt/truncation/cache cases; assert content never appears in logs.
 
-- [ ] US-12.3 — Use attached files in the agent runtime (vision + document text)
-  - [ ] US-12.3-T1: Extend `LLMMessage.content` to text/image content parts, update `to_api_message()`, add `text_content()` helper; prove text-only payloads unchanged.
-  - [ ] US-12.3-T2: Add `Message.files` references with migration and OpenAPI schemas; extend the WebSocket `chat` command with `files` and orchestrator validation.
-  - [ ] US-12.3-T3: Build multimodal agent messages: vision-gated image parts, document/text injection blocks, skip/unsupported notes; text-safe title generation and sub-agent context; populate `Agent.user_files`.
-  - [ ] US-12.3-T4: Tests for multimodal payload shape, tri-state vision gating, size caps, injection, history rebuild/regenerate, and WS filename validation/ownership.
+- [x] US-12.3 — Use attached files in the agent runtime (vision + document text)
+  - [x] US-12.3-T1: Extend `LLMMessage.content` to text/image content parts, update `to_api_message()`, add `text_content()` helper; prove text-only payloads unchanged.
+  - [x] US-12.3-T2: Add `Message.files` references with migration and OpenAPI schemas; extend the WebSocket `chat` command with `files` and orchestrator validation.
+  - [x] US-12.3-T3: Build multimodal agent messages: vision-gated image parts, document/text injection blocks, skip/unsupported notes; text-safe title generation and sub-agent context; populate `Agent.user_files`.
+  - [x] US-12.3-T4: Tests for multimodal payload shape, tri-state vision gating, size caps, injection, history rebuild/regenerate, and WS filename validation/ownership.
 
 - [ ] US-12.4 — Attach files to chat messages in the frontend
   - [ ] US-12.4-T1: Wire `ChatInput` attachments to the generated upload client with per-file progress/error, `files` in the WebSocket payload, and safe clear-on-success.
