@@ -2,7 +2,7 @@
 
 ## Status
 
-**US-12.1 completed, verified, and user-confirmed.** Stories US-12.2 through US-12.5 are pending.
+**US-12.1–US-12.2 completed, verified, and user-confirmed.** Stories US-12.3 through US-12.5 are pending.
 
 ## Goal
 
@@ -251,10 +251,10 @@ agent can actually read PDFs, Office files, and other documents I attach.
 
 **Dependencies:** US-12.1.
 
-- [ ] US-12.2-T1: Add the pinned `markitdown[docx,pdf,pptx,xls,xlsx]` dependency and isolate conversion behind a `FileProcessor` interface in the files domain (kind routing: image/text/document/other).
-- [ ] US-12.2-T2: Implement text reading (UTF-8/BOM, decode-failure fallback) and MarkItDown conversion in a worker thread with `file_conversion_timeout_s`, `max_process_file_size_bytes`, and `max_converted_chars` truncation marker.
-- [ ] US-12.2-T3: Persist processing results on `user_files` (`content_status`, `content_error`, `content_cache`, hash invalidation); implement "ensure processed" used by the chat path with per-file, non-fatal, user-safe errors.
-- [ ] US-12.2-T4: Add fixture tests with real small sample files (pdf, docx, pptx, xlsx, html, csv, md, txt, code, image, unknown binary) plus timeout, oversized, corrupt-file, truncation, and cache-invalidation cases; assert file content never appears in logs.
+- [x] US-12.2-T1: Add the pinned `markitdown[docx,pdf,pptx,xls,xlsx]` dependency and isolate conversion behind a `FileProcessor` interface in the files domain (kind routing: image/text/document/other).
+- [x] US-12.2-T2: Implement text reading (UTF-8/BOM, decode-failure fallback) and MarkItDown conversion in a worker thread with `file_conversion_timeout_s`, `max_process_file_size_bytes`, and `max_converted_chars` truncation marker.
+- [x] US-12.2-T3: Persist processing results on `user_files` (`content_status`, `content_error`, `content_cache`, hash invalidation); implement "ensure processed" used by the chat path with per-file, non-fatal, user-safe errors.
+- [x] US-12.2-T4: Add fixture tests with real small sample files (pdf, docx, pptx, xlsx, html, csv, md, txt, code, image, unknown binary) plus timeout, oversized, corrupt-file, truncation, and cache-invalidation cases; assert file content never appears in logs.
 
 **Acceptance criteria**
 

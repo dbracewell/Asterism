@@ -68,6 +68,9 @@ class Config(BaseSettings):
     system_key: str = Field(default_factory=lambda: _file_secret("SYSTEM_KEY"))
     max_chars_for_retrieval: int = 50000
     max_upload_file_size_bytes: int = 20 * 1024 * 1024
+    max_process_file_size_bytes: int = 15 * 1024 * 1024
+    max_converted_chars: int = 100_000
+    file_conversion_timeout_s: int = 60
     public_url: str = "http://localhost:3000"
     cors_allowed_origins: list[str] | None = None
     storage_root: Path = Path("/storage")
@@ -145,6 +148,14 @@ class Config(BaseSettings):
             raise ConfigValidationError(
                 "MAX_UPLOAD_FILE_SIZE_BYTES must be from 1 to 104857600"
             )
+        if not 1 <= self.max_process_file_size_bytes <= self.max_upload_file_size_bytes:
+            raise ConfigValidationError(
+                "MAX_PROCESS_FILE_SIZE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES"
+            )
+        if not 1 <= self.max_converted_chars <= 1_000_000:
+            raise ConfigValidationError("MAX_CONVERTED_CHARS must be from 1 to 1000000")
+        if not 1 <= self.file_conversion_timeout_s <= 600:
+            raise ConfigValidationError("FILE_CONVERSION_TIMEOUT_S must be from 1 to 600")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
             origin == "*" for origin in self.cors_allowed_origins or []
         ):
