@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import re
 import time
+import uuid
 from dataclasses import dataclass, field
 from typing import (
     Any,
@@ -26,6 +28,7 @@ from openai.types.shared_params import ResponseFormatJSONSchema
 from openai.types.shared_params.response_format_json_schema import JSONSchema
 from pydantic import BaseModel
 
+from asterism.common.log import get_logger
 from asterism.common.retries import retry_async_gen
 from asterism.domains.llm.typedefs import FinishReason
 from asterism.domains.tools.registry import tool_registry
@@ -40,6 +43,69 @@ from .schemas import (
     LLMMessage,
     ToolCall,
 )
+
+logger = get_logger("LLM_CLIENT")
+_TEXT_TOOL_CALL_PATTERN = re.compile(
+    r"<tool_call>\s*(\{.*?\})\s*</tool_call>",
+    flags=re.DOTALL | re.IGNORECASE,
+)
+
+
+def extract_text_tool_calls(content: str) -> tuple[str, list[ToolCall]]:
+    """Convert OpenAI-compatible providers' textual tool-call fallback.
+
+    Some providers stream ``<tool_call>{...}</tool_call>`` in assistant text
+    instead of populating ``delta.tool_calls``. Parsed calls still pass through
+    the normal approval policy before execution.
+    """
+    calls: list[ToolCall] = []
+    parsed_spans: list[tuple[int, int]] = []
+
+    for match in _TEXT_TOOL_CALL_PATTERN.finditer(content):
+        try:
+            payload = json.loads(match.group(1))
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(payload, dict):
+            continue
+
+        name = payload.get("tool_name", payload.get("name"))
+        arguments = payload.get("arguments", {})
+        if not isinstance(name, str) or not name.strip():
+            continue
+        if isinstance(arguments, str):
+            try:
+                json.loads(arguments)
+            except json.JSONDecodeError:
+                continue
+            serialized_arguments = arguments
+        elif isinstance(arguments, dict):
+            serialized_arguments = json.dumps(arguments, separators=(",", ":"))
+        else:
+            continue
+
+        calls.append(
+            ToolCall(
+                id=f"text_tool_{uuid.uuid4().hex}",
+                function=Function(
+                    name=name.strip(),
+                    arguments=serialized_arguments,
+                ),
+            )
+        )
+        parsed_spans.append(match.span())
+
+    if not calls:
+        return content, []
+
+    clean_parts: list[str] = []
+    cursor = 0
+    for start, end in parsed_spans:
+        clean_parts.append(content[cursor:start])
+        cursor = end
+    clean_parts.append(content[cursor:])
+    clean_content = "".join(clean_parts).strip()
+    return clean_content, calls
 
 
 @dataclass
@@ -100,6 +166,16 @@ class StreamHandler[T: BaseModel]:
             )
             for tc_dict in self.tool_calls_dict.values()
         ]
+        if not tool_calls:
+            self.content, tool_calls = extract_text_tool_calls(self.content)
+            if tool_calls:
+                self.final_finish_reason = "tool_calls"
+                logger.info(
+                    "converted textual tool calls count=%d tools=%s",
+                    len(tool_calls),
+                    [call.function.name for call in tool_calls],
+                )
+
         yield LLMEvent(
             type=LLMEventType.COMPLETE,
             content=self.content,

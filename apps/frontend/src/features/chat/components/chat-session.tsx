@@ -4,9 +4,15 @@ import MarkdownViewer from "@/components/markdown-viewer";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import ChatInput from "@/features/chat/components/chat-input";
+import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
-import { connectionStatusMap, StreamingMessage } from "@/features/chat/types";
+import {
+  connectionStatusMap,
+  StreamingMessage,
+  SubAgentActivity,
+  updateSubAgentActivities,
+} from "@/features/chat/types";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import { Chat, Message } from "@/lib/client";
@@ -72,6 +78,9 @@ export const ChatSession = ({
   const [incomingMessage, setIncomingMessage] =
     React.useState<StreamingMessage | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [subAgentActivities, setSubAgentActivities] = React.useState<
+    SubAgentActivity[]
+  >([]);
   const preventAutoScrollRef = React.useRef(false);
   const [isScrollable, setIsScrollable] = React.useState(false);
   const [socketError, setSocketError] = React.useState<string | null>(null);
@@ -139,6 +148,11 @@ export const ChatSession = ({
     onStreamUpdate: (nextIncomingMessage) => {
       setIncomingMessage(nextIncomingMessage);
     },
+    onSubAgentEvent: (packet) => {
+      setSubAgentActivities((activities) =>
+        updateSubAgentActivities(activities, packet),
+      );
+    },
     onStreamComplete: (updatedMessages) => {
       setIncomingMessage(null);
       if (!updatedMessages.length) return;
@@ -165,6 +179,7 @@ export const ChatSession = ({
 
   const addUserMessage = React.useCallback(
     ({ prompt }: { prompt: string }) => {
+      setSubAgentActivities([]);
       queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev) return prev;
         return {
@@ -246,6 +261,7 @@ export const ChatSession = ({
           {!incomingMessage &&
             session.messages.length > 0 &&
             session.messages[0].status === "pending" && <Loading />}
+          <SubAgentActivityPanel activities={subAgentActivities} />
           {incomingMessage && (
             <MessageItem
               chatId={chatId}

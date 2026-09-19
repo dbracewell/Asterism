@@ -74,6 +74,7 @@ The [`LLMClient`](../apps/backend/asterism/domains/llm/client.py) abstracts Open
 
 - **Thinking / Reasoning**: Intercepts `thinking_delta` chunks for reasoning models (e.g., DeepSeek R1, Claude thinking, o-series) and streams them alongside standard text deltas.
 - **Tool Call Chunk Accumulator**: In streaming mode, tool arguments arrive in fragmented deltas (`ChoiceDeltaToolCall`). `StreamHandler` accumulates fragments by index until complete, ensuring valid JSON strings before yielding `LLMEventType.COMPLETE`.
+- **Textual Tool-Call Compatibility**: Some nominally OpenAI-compatible providers emit `<tool_call>{"tool_name": ..., "arguments": ...}</tool_call>` as assistant text instead of native `delta.tool_calls`. When no native calls are present, `StreamHandler` converts valid tagged JSON blocks into normal `ToolCall` objects, removes the protocol markup from final content, and changes the finish reason to `tool_calls`. Converted calls still pass through the normal approval policy, so hallucinated or unauthorized tool names are rejected rather than executed.
 - **Automatic Retries**: Decorates API invocations with exponential backoff for rate limits and transient connection errors ([`retry_async_gen`](../apps/backend/asterism/common/retries.py)).
 
 ### 4. Sub-Agent Delegation & Recursion Boundaries
@@ -83,7 +84,7 @@ When an agent invokes the [`sub_agent`](../apps/backend/asterism/domains/tools/b
 - **Recursion Safety**: The target agent ID is checked against `ctx.call_stack`. If an ID is already in the chain, execution aborts with a recursion cycle error.
 - **Depth Limits**: The depth of the delegation chain is bounded by `config.max_sub_agent_depth` (default: 3). If exceeded, execution aborts with an actionable error.
 - **Lineage Tracking**: The child agent is initialized with `call_stack=[*ctx.call_stack, target_id]` so further nested delegations are tracked accurately.
-- **Event Streaming**: Sub-agent execution events (`DELTA`, `TOOL_CALL`, `COMPLETE`) are wrapped in [`SubAgentEventEnvelope`](../apps/backend/asterism/domains/agent/schemas.py) and forwarded through `ctx.event_sink`. The parent `Agent.run()` stream yields them as `SUB_AGENT` events in real-time, preventing delegated work from becoming a frozen black box.
+- **Event Streaming**: Sub-agent execution events (`START`, `DELTA` including thinking, `TOOL_CALL`, `COMPLETE`, and `ERROR`) are wrapped in [`SubAgentEventEnvelope`](../apps/backend/asterism/domains/agent/schemas.py) and forwarded through `ctx.event_sink`. Every invocation has a stable `execution_id`, in addition to agent identity and depth, so concurrent or repeated calls remain distinct. The parent `Agent.run()` stream yields them as `SUB_AGENT` events in real time, and the chat renders a separate delegated-activity panel without replacing the parent answer.
 - **Trace Persistence**: Upon completion, the sub-agent's step count, cumulative tokens, elapsed wall-clock time, and full message exchange are persisted to `sub_agent_traces`.
 - See [Sub-Agent Recursion Safety & Bounded Execution](tool-authorization.md#sub-agent-recursion-safety--bounded-execution) for authorization details.
 
@@ -105,7 +106,7 @@ sequenceDiagram
     Parent->>Tool: invoke_tool(ctx)
     Tool->>Tool: 1. Cycle detection (target in call_stack?)
     Tool->>Tool: 2. Depth check (len(call_stack) <= max_depth?)
-    Tool->>Tool: 3. Tool allowlist intersection (parent & child)
+    Tool->>Tool: 3. Load active tools assigned to child profile
     Tool->>Tool: 4. Build context window (last N msgs, files, caller notes)
     Tool->>Child: Agent(profile, AllowlistApprovalPolicy, call_stack, user_files)
     Tool->>Child: run([system(context), user(prompt)])
@@ -154,7 +155,7 @@ flowchart TD
 | `TOOL_CALL`      | `tool_calls: list[ToolCall]`                              | Agent has emitted intent to call one or more tools     |
 | `COMPLETE`       | `content: str`, `tool_results: list`, `total_tokens: int` | Turn finished; assistant message persisted             |
 | `ERROR`          | `content: str`                                            | Execution failure or fatal exception                   |
-| `SUB_AGENT`      | `sub_agent: SubAgentEventEnvelope`                        | Delegated child agent activity (thinking, text, tools) |
+| `SUB_AGENT`      | `sub_agent: SubAgentEventEnvelope`                        | Correlated delegated lifecycle, thinking, text, tools, completion, and errors |
 
 ---
 
@@ -216,6 +217,9 @@ To provide comprehensive auditability and debugging for delegated agent workflow
    - `elapsed_ms`: Wall-clock execution time in milliseconds.
    - `depth`: Call-chain nesting level from root.
 3. **Query Interface**: Traces are queryable programmatically via [`get_sub_agent_traces_by_parent_message()`](../apps/backend/asterism/domains/agent/service.py) and via REST API endpoint `GET /agents/traces/{parent_message_id}`.
+4. **Runtime Diagnostics**: Python console logs record `requested`, `authorized`, `started`, per-event debug metadata, `finished`, and trace-persistence outcomes. Logs correlate on `execution_id`, agent/chat/parent-message identifiers, depth, duration, counts, and status; raw prompts and generated content are intentionally excluded.
+
+Frontend WebSocket-contract E2E coverage uses the test-only `/e2e/sub-agent` harness (unavailable outside the `test` configuration profile) to verify successful progress/final-parent rendering and delegated timeout rendering. Backend integration coverage exercises the parent tool call, child event forwarding, child result return, and parent synthesis with deterministic LLM doubles; live external-provider behavior remains dependent on configured provider availability and credentials.
 
 ---
 

@@ -81,7 +81,7 @@ def make_chat_session():
     return _create
 
 
-class TestSubAgentAuthorizationIntersection:
+class TestSubAgentProfileAuthorization:
     @pytest.mark.asyncio
     async def test_sub_agent_cannot_execute_tools_outside_profile_allowlist(
         self, test_user, make_chat_session
@@ -154,90 +154,72 @@ class TestSubAgentAuthorizationIntersection:
             result = await sub_agent(ctx)
             assert "calculator is not authorized" in result
 
-            # The sub-agent must only have been offered ['search']
-            #  (intersection)
+            # Only tools explicitly assigned to the child are offered.
             assert mock_llm.recorded_tools[0] == ["search"]
 
     @pytest.mark.asyncio
-    async def test_sub_agent_cannot_execute_tools_outside_parent_allowlist(
+    async def test_sub_agent_uses_profile_tools_not_parent_tool_list(
         self, test_user, make_chat_session
     ):
-        """
-        Parent allows: ['search']
-        Sub-agent profile allows: ['search', 'bash']
-        If sub-agent calls 'bash', it must be rejected as unauthorized.
-        """
+        """A specialist child keeps its tools after delegated authorization."""
         sub_agent_id = uuid.uuid4()
         sub_profile = AgentProfile(
             id=sub_agent_id,
-            name="Sysadmin Sub-Agent",
-            description="Performs system tasks",
+            name="Research Sub-Agent",
+            description="Searches and fetches sources",
             sub_agent=True,
             model_id=uuid.uuid4(),
-            system_prompt="You are a sysadmin.",
+            system_prompt="You are a researcher.",
             max_steps=5,
-            tools=["search", "bash"],
+            tools=["web_search", "web_fetch"],
         )
-
-        # Parent only allowed 'search'
-        session = make_chat_session(allowed_tools=["search"])
-
+        session = make_chat_session(allowed_tools=["sub_agent"])
         ctx = ToolContext(
-            args=SubAgentArgs(agent_id=sub_agent_id, prompt="Run bash command"),
+            args=SubAgentArgs(agent_id=sub_agent_id, prompt="Research this"),
             user=test_user,
-            user_message="Run bash command",
+            user_message="Research this",
             session=session,
             app_settings=MagicMock(),
             client=MagicMock(),
         )
 
-        bash_call = _make_tool_call("bash")
+        created_agent = None
+        orig_init = Agent.__init__
 
-        mock_llm = DummyLLMClient(
-            responses=[
-                [
-                    LLMEvent(
-                        type=LLMEventType.COMPLETE,
-                        content="",
-                        tool_calls=[bash_call],
-                        finish_reason="tool_calls",
-                    )
-                ],
-                [
-                    LLMEvent(
-                        type=LLMEventType.COMPLETE,
-                        content="Bash tool is unauthorized.",
-                        finish_reason="stop",
-                    )
-                ],
-            ]
-        )
+        def capture_init(self, *args, **kwargs):
+            nonlocal created_agent
+            orig_init(self, *args, **kwargs)
+            created_agent = self
 
         with (
             patch(
                 "asterism.domains.agent.service.get_agent_profile",
                 new=AsyncMock(return_value=sub_profile),
             ),
-            patch(
-                "asterism.domains.agent.agent.Agent._get_client",
-                new=AsyncMock(return_value=mock_llm),
+            patch.object(
+                Agent, "__init__", side_effect=capture_init, autospec=True
             ),
+            patch.object(Agent, "run") as mock_run,
         ):
-            result = await sub_agent(ctx)  # type:ignore
-            assert "Bash tool is unauthorized" in result
 
-            # Intersected tools must only be ['search']
-            assert mock_llm.recorded_tools[0] == ["search"]
+            async def complete(*args, **kwargs):
+                yield AgentEvent(type=AgentEventType.COMPLETE, content="Done")
+
+            mock_run.side_effect = complete
+            await sub_agent(ctx)
+
+        assert created_agent is not None
+        assert created_agent.allowed_tools == ["web_fetch", "web_search"]
+        assert created_agent.profile.tools == ["web_fetch", "web_search"]
+        assert isinstance(
+            created_agent._approval_policy, AllowlistApprovalPolicy
+        )
 
     @pytest.mark.asyncio
-    async def test_sub_agent_allowed_tools_is_strict_intersection(
+    async def test_sub_agent_allowed_tools_are_its_profile_allowlist(
         self, test_user, make_chat_session
     ):
-        """
-        Parent allows: ['search', 'calculator']
-        Sub-agent profile allows: ['calculator', 'browser']
-        Intersection: ['calculator']
-        """
+        """Parent permissions do not remove child profile capabilities."""
         sub_agent_id = uuid.uuid4()
         sub_profile = AgentProfile(
             id=sub_agent_id,
@@ -290,8 +272,8 @@ class TestSubAgentAuthorizationIntersection:
                 await sub_agent(ctx)  # type:ignore
 
         assert created_agent is not None
-        assert created_agent.allowed_tools == ["calculator"]
-        assert created_agent.profile.tools == ["calculator"]
+        assert created_agent.allowed_tools == ["browser", "calculator"]
+        assert created_agent.profile.tools == ["browser", "calculator"]
         assert isinstance(
             created_agent._approval_policy, AllowlistApprovalPolicy
         )
@@ -301,8 +283,7 @@ class TestSubAgentAuthorizationIntersection:
         self, test_user, make_chat_session
     ):
         """
-        When parent or sub-agent has empty allowed tools,
-        intersection is empty list.
+        A sub-agent with no assigned tools receives an empty allowlist.
         """
         sub_agent_id = uuid.uuid4()
         sub_profile = AgentProfile(

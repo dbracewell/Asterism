@@ -26,6 +26,7 @@ class AgentEventType(StrEnum):
 
 class SubAgentEventEnvelope(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    execution_id: uuid.UUID = Field(default_factory=uuid.uuid4)
     sub_agent_id: uuid.UUID
     sub_agent_name: str
     depth: int

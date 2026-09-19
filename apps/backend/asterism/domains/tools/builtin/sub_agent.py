@@ -93,11 +93,27 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     from asterism.domains.agent.service import get_agent_profile
 
     target_id = ctx.args.agent_id
+    execution_id = uuid.uuid4()
+    logger = get_logger("SUB_AGENT")
+    logger.info(
+        "delegation requested execution_id=%s target_agent_id=%s "
+        "parent_message_id=%s chat_id=%s depth=%d",
+        execution_id,
+        target_id,
+        ctx.parent_message_id,
+        ctx.session.info.id,
+        len(ctx.call_stack),
+    )
 
     # 1. Cycle detection: check if target agent is already in the call stack
     if target_id in ctx.call_stack:
         chain = [str(aid) for aid in ctx.call_stack] + [str(target_id)]
         chain_str = " -> ".join(chain)
+        logger.warning(
+            "delegation rejected execution_id=%s reason=cycle chain=%s",
+            execution_id,
+            chain_str,
+        )
         return (
             f"Recursion cycle detected: Agent '{target_id}' is already "
             f"in the call chain ({chain_str}). Sub-agent call aborted."
@@ -108,19 +124,86 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     # A chain length greater than max_sub_agent_depth exceeds the limit.
     if len(ctx.call_stack) > config.max_sub_agent_depth:
         chain_str = " -> ".join(str(aid) for aid in ctx.call_stack)
+        logger.warning(
+            "delegation rejected execution_id=%s reason=depth_limit "
+            "max_depth=%d chain=%s",
+            execution_id,
+            config.max_sub_agent_depth,
+            chain_str,
+        )
         return (
             f"Maximum sub-agent recursion depth of {config.max_sub_agent_depth} "  # noqa: E501
             f"exceeded (call chain: {chain_str}). Sub-agent call aborted. "
             f"Please decompose the task differently."
         )
 
-    agent_profile = await get_agent_profile(ctx.user.id, target_id)
-    if not agent_profile:
-        raise ValueError(f"Agent with id {target_id} not found.")
+    try:
+        agent_profile = await get_agent_profile(ctx.user.id, target_id)
+    except Exception:
+        logger.exception(
+            "delegation profile lookup failed execution_id=%s "
+            "target_agent_id=%s",
+            execution_id,
+            target_id,
+        )
+        error = AgentEvent(
+            type=AgentEventType.ERROR,
+            content=(
+                "Sub-agent could not be loaded. Check backend logs with "
+                f"execution ID {execution_id}."
+            ),
+        )
+        if ctx.event_sink:
+            res = ctx.event_sink(
+                SubAgentEventEnvelope(
+                    execution_id=execution_id,
+                    sub_agent_id=target_id,
+                    sub_agent_name="Unknown sub-agent",
+                    depth=len(ctx.call_stack),
+                    event=error,
+                )
+            )
+            if inspect.isawaitable(res):
+                await res
+        return error.content
 
-    parent_tools = set(ctx.session.info.allowed_tools or [])
-    sub_agent_profile_tools = set(agent_profile.tools or [])
-    allowed_tools = sorted(parent_tools & sub_agent_profile_tools)
+    if not agent_profile:
+        logger.warning(
+            "delegation rejected execution_id=%s reason=profile_not_found "
+            "target_agent_id=%s",
+            execution_id,
+            target_id,
+        )
+        content = f"Agent with id {target_id} was not found."
+        if ctx.event_sink:
+            res = ctx.event_sink(
+                SubAgentEventEnvelope(
+                    execution_id=execution_id,
+                    sub_agent_id=target_id,
+                    sub_agent_name="Unknown sub-agent",
+                    depth=len(ctx.call_stack),
+                    event=AgentEvent(
+                        type=AgentEventType.ERROR,
+                        content=content,
+                    ),
+                )
+            )
+            if inspect.isawaitable(res):
+                await res
+        return content
+
+    # Authorization to invoke `sub_agent` belongs to the parent. Once
+    # delegated, the child runs autonomously with the active tools explicitly
+    # assigned to its own profile; requiring the parent to duplicate those
+    # assignments would make specialized sub-agents ineffective.
+    allowed_tools = sorted(set(agent_profile.tools or []))
+    logger.debug(
+        "delegation authorized execution_id=%s sub_agent_name=%s "
+        "approval_mode=profile_allowlist allowed_tools=%s",
+        execution_id,
+        agent_profile.name,
+        allowed_tools,
+    )
 
     sub_profile = agent_profile.model_copy(update={"tools": allowed_tools})
 
@@ -147,9 +230,11 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     )
 
     forwarded_types = {
+        AgentEventType.START,
         AgentEventType.DELTA,
         AgentEventType.TOOL_CALL,
         AgentEventType.COMPLETE,
+        AgentEventType.ERROR,
     }
 
     context_block = _build_parent_context_block(ctx)
@@ -162,25 +247,85 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     step_count = 0
     total_tokens = 0
 
-    last_response: AgentEvent = AgentEvent(type=AgentEventType.COMPLETE)
-    async for event in agent.run(messages=sub_agent_messages):
-        last_response = event
-        if event.type == AgentEventType.COMPLETE:
-            step_count += 1
-            total_tokens += event.total_tokens or 0
+    last_response = AgentEvent(
+        type=AgentEventType.ERROR,
+        content="Sub-agent ended without producing a response.",
+    )
+    received_event = False
+    logger.info(
+        "delegation started execution_id=%s sub_agent_name=%s "
+        "context_included=%s file_count=%d",
+        execution_id,
+        agent_profile.name,
+        context_block is not None,
+        len(ctx.user_files),
+    )
+    try:
+        async for event in agent.run(messages=sub_agent_messages):
+            received_event = True
+            last_response = event
+            if event.type == AgentEventType.COMPLETE:
+                step_count += 1
+                total_tokens += event.total_tokens or 0
 
-        if ctx.event_sink and event.type in forwarded_types:
-            envelope = SubAgentEventEnvelope(
-                sub_agent_id=target_id,
-                sub_agent_name=agent_profile.name,
-                depth=len(ctx.call_stack),
-                event=event,
+            if ctx.event_sink and event.type in forwarded_types:
+                envelope = SubAgentEventEnvelope(
+                    execution_id=execution_id,
+                    sub_agent_id=target_id,
+                    sub_agent_name=agent_profile.name,
+                    depth=len(ctx.call_stack),
+                    event=event,
+                )
+                res = ctx.event_sink(envelope)
+                if inspect.isawaitable(res):
+                    await res
+        if not received_event and ctx.event_sink:
+            res = ctx.event_sink(
+                SubAgentEventEnvelope(
+                    execution_id=execution_id,
+                    sub_agent_id=target_id,
+                    sub_agent_name=agent_profile.name,
+                    depth=len(ctx.call_stack),
+                    event=last_response,
+                )
             )
-            res = ctx.event_sink(envelope)
+            if inspect.isawaitable(res):
+                await res
+    except Exception as exc:
+        last_response = AgentEvent(
+            type=AgentEventType.ERROR,
+            content=f"Sub-agent execution failed: {exc}",
+        )
+        logger.exception(
+            "delegation failed execution_id=%s sub_agent_name=%s",
+            execution_id,
+            agent_profile.name,
+        )
+        if ctx.event_sink:
+            res = ctx.event_sink(
+                SubAgentEventEnvelope(
+                    execution_id=execution_id,
+                    sub_agent_id=target_id,
+                    sub_agent_name=agent_profile.name,
+                    depth=len(ctx.call_stack),
+                    event=last_response,
+                )
+            )
             if inspect.isawaitable(res):
                 await res
 
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    logger.info(
+        "delegation finished execution_id=%s sub_agent_name=%s status=%s "
+        "elapsed_ms=%d step_count=%d total_tokens=%d result_chars=%d",
+        execution_id,
+        agent_profile.name,
+        last_response.type.value,
+        elapsed_ms,
+        step_count,
+        total_tokens,
+        len(last_response.content),
+    )
 
     try:
         from asterism.domains.agent.schemas import SubAgentTraceCreate
@@ -209,15 +354,22 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             depth=len(ctx.call_stack),
         )
         await create_sub_agent_trace(trace_data)
-    except Exception as e:
-        logger = get_logger("SUB_AGENT")
+        logger.debug(
+            "delegation trace persisted execution_id=%s parent_message_id=%s",
+            execution_id,
+            parent_msg_id,
+        )
+    except Exception:
         logger.warning(
-            f"Failed to persist sub-agent execution trace: {e}",
+            "delegation trace persistence failed execution_id=%s "
+            "parent_message_id=%s",
+            execution_id,
+            parent_msg_id,
             exc_info=True,
         )
 
-    return (
-        last_response.content
-        if last_response.type == AgentEventType.COMPLETE
-        else "Sub agent failed to complete the task."
-    )
+    if last_response.type == AgentEventType.COMPLETE:
+        return last_response.content
+    if last_response.type == AgentEventType.ERROR and last_response.content:
+        return last_response.content
+    return "Sub-agent failed to complete the task."

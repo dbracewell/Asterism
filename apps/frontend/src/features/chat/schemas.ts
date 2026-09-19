@@ -61,13 +61,50 @@ const AgentDeltaEvent = z.object({
   thinking: z.string(),
 });
 
-const AgentSubAgentEvent = z.object({
+const SubAgentStartEvent = z.object({
+  type: z.literal("start"),
+});
+
+const SubAgentDeltaEvent = z.object({
+  type: z.literal("delta"),
+  content: z.string().default(""),
+  thinking: z.string().default(""),
+});
+
+const SubAgentToolCallEvent = z.object({
+  type: z.literal("tool_call"),
+  tool_calls: z.array(ToolCallSchema).default([]),
+});
+
+const SubAgentCompleteEvent = z.object({
+  type: z.literal("complete"),
+  content: z.string().default(""),
+  thinking: z.string().default(""),
+});
+
+const SubAgentErrorEvent = z.object({
+  type: z.literal("error"),
+  content: z.string(),
+});
+
+export const SubAgentChildEventSchema = z.discriminatedUnion("type", [
+  SubAgentStartEvent,
+  SubAgentDeltaEvent,
+  SubAgentToolCallEvent,
+  SubAgentCompleteEvent,
+  SubAgentErrorEvent,
+]);
+
+export const AgentSubAgentEventSchema = z.object({
   type: z.literal("sub_agent"),
+  execution_id: z.string(),
   sub_agent_id: z.string(),
   sub_agent_name: z.string(),
   depth: z.number(),
-  event: z.record(z.string(), z.any()),
+  event: SubAgentChildEventSchema,
 });
+
+export type AgentSubAgentEvent = z.infer<typeof AgentSubAgentEventSchema>;
 
 export const AgentEventSchema = z.discriminatedUnion("type", [
   GenericAgentEvent,
@@ -78,5 +115,5 @@ export const AgentEventSchema = z.discriminatedUnion("type", [
   AgentDeltaEvent,
   AgentToolUpdate,
   AgentToolPermissionRequest,
-  AgentSubAgentEvent,
+  AgentSubAgentEventSchema,
 ]);
