@@ -47,7 +47,9 @@ def make_chat_session():
     return _create
 
 
-def _make_agent_profile(agent_id: uuid.UUID, name: str = "SubAgent") -> AgentProfile:
+def _make_agent_profile(
+    agent_id: uuid.UUID, name: str = "SubAgent"
+) -> AgentProfile:
     return AgentProfile(
         id=agent_id,
         name=name,

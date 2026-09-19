@@ -75,6 +75,8 @@ class Config(BaseSettings):
         default_factory=default_allowed_tools
     )
     max_sub_agent_depth: int = 3
+    sub_agent_context_window_messages: int = 10
+    sub_agent_context_window_tokens: int = 4000
     config_profile: str = Field(
         default_factory=lambda: (
             "production"
