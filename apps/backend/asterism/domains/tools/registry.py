@@ -77,7 +77,9 @@ class ToolContext[T: BaseModel | None]:
     client: LLMClientProtocol
     user_files: list[str] = field(default_factory=list)
     call_stack: list[uuid.UUID] = field(default_factory=list)
-    event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None
+    event_sink: (
+        Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None
+    ) = None
 
 
 @dataclass(frozen=True)

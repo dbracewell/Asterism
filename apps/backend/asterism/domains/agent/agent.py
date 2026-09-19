@@ -49,6 +49,7 @@ class Agent:
         call_stack: list[uuid.UUID] | None = None,
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
         | None = None,
+        user_files: list[str] | None = None,
     ) -> None:
         self.profile = profile
         self.max_steps = profile.max_steps
@@ -65,6 +66,7 @@ class Agent:
             approval_policy or AllowlistApprovalPolicy()
         )
         self.event_sink = event_sink
+        self.user_files = list(user_files) if user_files else []
         if call_stack is not None:
             self.call_stack = list(call_stack)
         elif self.profile.id is not None:
@@ -110,6 +112,7 @@ class Agent:
                 session=self.session,
                 client=await self._get_client(),
                 user_message=user_message or "",
+                user_files=self.user_files,
                 call_stack=self.call_stack,
                 event_sink=event_sink,
             )
@@ -168,9 +171,13 @@ class Agent:
     ) -> AsyncGenerator[AgentEvent, None]:
         client: LLMClientProtocol = await self._get_client()
 
-        if messages[0].role != "system":
-            system_prompt = await self._build_system_prompt()
-            if system_prompt:
+        messages = list(messages)
+        if not messages:
+            messages = [LLMMessage.user("")]
+
+        system_prompt = await self._build_system_prompt()
+        if system_prompt:
+            if not messages or messages[0].content != system_prompt:
                 messages.insert(0, LLMMessage.system(system_prompt))
 
         last_user_message = messages[-1]
@@ -240,9 +247,9 @@ class Agent:
                                     if inspect.isawaitable(res):
                                         await res
 
-                            async def _collect_tool_results() -> (
-                                list[ToolResult]
-                            ):
+                            async def _collect_tool_results() -> list[
+                                ToolResult
+                            ]:
                                 collected: list[ToolResult] = []
                                 async for resp in self._run_tools(
                                     user_message=last_user_message.content,

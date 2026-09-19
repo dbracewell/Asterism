@@ -109,12 +109,12 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-10.4-T4: Handle sub-agent envelope events in `ChatOrchestrator`.
   - [x] US-10.4-T5: Tests for event forwarding with correct metadata.
 
-- [ ] US-10.5 — Forward context to sub-agents
-  - [ ] US-10.5-T1: Add optional `parent_context` with conversation summary and file refs.
-  - [ ] US-10.5-T2: Prepend context block to sub-agent message list.
-  - [ ] US-10.5-T3: Implement configurable context window (last N messages / M tokens).
-  - [ ] US-10.5-T4: Forward `user_files` from parent `ToolContext`.
-  - [ ] US-10.5-T5: Tests for context forwarding and file accessibility.
+- [x] US-10.5 — Forward context to sub-agents
+  - [x] US-10.5-T1: Add optional `parent_context` with conversation summary and file refs.
+  - [x] US-10.5-T2: Prepend context block to sub-agent message list.
+  - [x] US-10.5-T3: Implement configurable context window (last N messages / M tokens).
+  - [x] US-10.5-T4: Forward `user_files` from parent `ToolContext`.
+  - [x] US-10.5-T5: Tests for context forwarding and file accessibility.
 
 - [ ] US-10.6 — Persist sub-agent execution traces
   - [ ] US-10.6-T1: Design storage schema for sub-agent traces.

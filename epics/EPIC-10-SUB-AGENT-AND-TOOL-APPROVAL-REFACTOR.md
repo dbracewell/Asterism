@@ -185,11 +185,11 @@ paste everything into the prompt.
 
 **Dependencies:** US-10.1.
 
-- [ ] US-10.5-T1: Add an optional `parent_context` parameter to the sub-agent tool args (or inject via `ToolContext`) containing: a summary/window of recent parent conversation messages and user-uploaded file references.
-- [ ] US-10.5-T2: When constructing the sub-agent's message list, prepend a system-level context block with the forwarded information, clearly delineated from the sub-agent's own system prompt.
-- [ ] US-10.5-T3: Implement a configurable context window (e.g., last N messages or last M tokens) to avoid exceeding the sub-agent's context limit.
-- [ ] US-10.5-T4: Forward `user_files` from the parent `ToolContext` to the sub-agent so file-aware tools work correctly.
-- [ ] US-10.5-T5: Add tests verifying context forwarding with various window sizes and that user files are accessible to the sub-agent's tools.
+- [x] US-10.5-T1: Add an optional `parent_context` parameter to the sub-agent tool args (or inject via `ToolContext`) containing: a summary/window of recent parent conversation messages and user-uploaded file references.
+- [x] US-10.5-T2: When constructing the sub-agent's message list, prepend a system-level context block with the forwarded information, clearly delineated from the sub-agent's own system prompt.
+- [x] US-10.5-T3: Implement a configurable context window (e.g., last N messages or last M tokens) to avoid exceeding the sub-agent's context limit.
+- [x] US-10.5-T4: Forward `user_files` from the parent `ToolContext` to the sub-agent so file-aware tools work correctly.
+- [x] US-10.5-T5: Add tests verifying context forwarding with various window sizes and that user files are accessible to the sub-agent's tools.
 
 **Acceptance criteria**
 

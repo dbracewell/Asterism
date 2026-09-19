@@ -107,13 +107,13 @@ flowchart TD
     AgentEvent -->|Queue.put| WSPacket
 ```
 
-| `AgentEventType` | Content / Fields                                          | Meaning                                            |
-| ---------------- | --------------------------------------------------------- | -------------------------------------------------- |
-| `START`          | None                                                      | Agent execution turn has started                   |
-| `DELTA`          | `content: str`, `thinking: str`                           | Incremental streaming text or reasoning tokens     |
-| `TOOL_CALL`      | `tool_calls: list[ToolCall]`                              | Agent has emitted intent to call one or more tools |
-| `COMPLETE`       | `content: str`, `tool_results: list`, `total_tokens: int` | Turn finished; assistant message persisted         |
-| `ERROR`          | `content: str`                                            | Execution failure or fatal exception               |
+| `AgentEventType` | Content / Fields                                          | Meaning                                                |
+| ---------------- | --------------------------------------------------------- | ------------------------------------------------------ |
+| `START`          | None                                                      | Agent execution turn has started                       |
+| `DELTA`          | `content: str`, `thinking: str`                           | Incremental streaming text or reasoning tokens         |
+| `TOOL_CALL`      | `tool_calls: list[ToolCall]`                              | Agent has emitted intent to call one or more tools     |
+| `COMPLETE`       | `content: str`, `tool_results: list`, `total_tokens: int` | Turn finished; assistant message persisted             |
+| `ERROR`          | `content: str`                                            | Execution failure or fatal exception                   |
 | `SUB_AGENT`      | `sub_agent: SubAgentEventEnvelope`                        | Delegated child agent activity (thinking, text, tools) |
 
 ---
@@ -138,6 +138,24 @@ When tool calls are authorized by [`ToolApprovalPolicy`](tool-authorization.md):
    ```
 2. **Standardized Context**: Tools receive [`ToolContext`](../apps/backend/asterism/domains/tools/registry.py) containing validated Pydantic arguments, authenticated user identity, active chat session, database access, app settings, and lineage `call_stack`.
 3. **Synthetic Rejection Results**: Any tool rejected by policy produces an error result informing the model the user denied access, prompting it to continue without that tool.
+
+---
+
+## Sub-Agent Context Forwarding & Windowing
+
+When an agent delegates a task via the `sub_agent` tool:
+
+1. **Context Window Extraction**: The parent conversation history from `ctx.session.messages` is bounded using configurable limits:
+   - `config.sub_agent_context_window_messages` (default: `10`): Maximum number of recent messages to include.
+   - `config.sub_agent_context_window_tokens` (default: `4000`): Maximum accumulated tokens to forward, preventing context overflow.
+2. **File and Caller Propagation**:
+   - `ctx.user_files`: List of uploaded user files is forwarded into the context block and passed into the child `Agent(user_files=...)`, ensuring tools executed by the sub-agent have access to `tool_ctx.user_files`.
+   - `args.parent_context`: Optional caller-specified notes or summaries are included under `### Caller Notes`.
+3. **Structured System-Level Delineation**:
+   The sub-agent's message list is constructed with clear separation:
+   - **Index 0**: Sub-agent's own system prompt (`_build_system_prompt()`), establishing persona and allowed capabilities.
+   - **Index 1**: System context message (`--- FORWARDED PARENT CONTEXT ---`) containing recent conversation history, available user files, and caller notes.
+   - **Index 2**: User message containing the delegated task prompt.
 
 ---
 
