@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress.** US-11.1 and US-11.2 are completed, verified, and user-confirmed; US-11.3 is next.
+**In progress.** US-11.1 through US-11.3 are completed, verified, and user-confirmed; US-11.4 is next.
 
 ## Goal
 
@@ -211,12 +211,12 @@ providers accurately.
 
 **Dependencies:** US-11.1, US-11.2.
 
-- [ ] US-11.3-T1: Add an accessible provider-type dropdown with OpenAI and Generic OpenAI options to each provider editor.
-- [ ] US-11.3-T2: For OpenAI, show the canonical URL as fixed/read-only; for Generic OpenAI, show and validate the editable required base URL. Clear stale type-specific validation when switching types.
-- [ ] US-11.3-T3: Replace the direct Next.js `/models` fetch action with the generated admin discovery client and display actionable loading/success/error states.
-- [ ] US-11.3-T4: Render context-window and tri-state vision fields for each model, identify discovered versus manual values, highlight unknown metadata, and allow administrators to enter/correct/reset values.
-- [ ] US-11.3-T5: Preserve active-state, default-model, and manual-capability choices during model refresh and provider-type form updates.
-- [ ] US-11.3-T6: Add frontend tests for type switching, base URL behavior, discovery success/failure, unknown metadata, manual edits, refresh merging, validation, and accessible keyboard/label behavior.
+- [x] US-11.3-T1: Add an accessible provider-type dropdown with OpenAI and Generic OpenAI options to each provider editor.
+- [x] US-11.3-T2: For OpenAI, show the canonical URL as fixed/read-only; for Generic OpenAI, show and validate the editable required base URL. Clear stale type-specific validation when switching types.
+- [x] US-11.3-T3: Replace the direct Next.js `/models` fetch action with the generated admin discovery client and display actionable loading/success/error states.
+- [x] US-11.3-T4: Render context-window and tri-state vision fields for each model, identify discovered versus manual values, highlight unknown metadata, and allow administrators to enter/correct/reset values.
+- [x] US-11.3-T5: Preserve active-state, default-model, and manual-capability choices during model refresh and provider-type form updates.
+- [x] US-11.3-T6: Add frontend tests for type switching, base URL behavior, discovery success/failure, unknown metadata, manual edits, refresh merging, validation, and accessible keyboard/label behavior.
 
 **Acceptance criteria**
 

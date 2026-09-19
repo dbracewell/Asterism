@@ -50,12 +50,15 @@ packages = ["asterism"]
 
 
 [tool.ruff]
+line-length = 120
 target-version = "py313"
 src = ["asterism"]
+
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 fixable = ["ALL"]
+# ignore = ["E501"]
 
 [tool.pyright]
 reportPrivateImportUsage = "none"

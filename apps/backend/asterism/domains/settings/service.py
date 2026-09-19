@@ -172,6 +172,10 @@ async def get_app_settings(
 
         if "active_tools" not in full:
             full["active_tools"] = []
+        if full.get("draft_model_id") == "":
+            # Recover settings written by older clients that represented an
+            # unselected draft model as an empty form value.
+            full["draft_model_id"] = None
 
         new_setting = ApplicationSettings.model_validate(full)
         providers = await get_all_providers(session)
@@ -185,6 +189,8 @@ async def upsert_app_setting(
     value: JsonValue,
     session: AsyncSession | None = None,
 ) -> Setting:
+    if key == "draft_model_id" and value == "":
+        value = None
     if value is None:
         await delete_app_setting(key, session)
         return Setting(key=key, value=value)
@@ -258,6 +264,8 @@ async def bulk_update_app_setting(
 
             if key == "draft_model_id":
                 draft_model_updated = True
+                if value == "":
+                    value = None
 
             stmt = (
                 insert(ApplicationSettingsModel)
