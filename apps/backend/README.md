@@ -27,6 +27,16 @@ at `http://localhost:3000/api/py`. Schema: `/api/py/openapi.json`.
 The root Dockerfile is the only supported container deployment. No standalone
 backend image or per-app Docker configuration is maintained.
 
+## LLM providers and discovery
+
+The admin-only provider discovery endpoint supports canonical OpenAI and Generic
+OpenAI-compatible providers. OpenAI always uses `https://api.openai.com/v1`;
+Generic OpenAI requires a normalized HTTP(S) base URL. Discovery uses bounded
+OpenAI SDK requests, blocks redirects, and returns nullable capability metadata
+with field-level provenance. Compatible-provider metadata is best-effort and
+unknown or conflicting values require manual administration. See
+[LLM Providers and Model Capabilities](../../architecture/llm-providers.md).
+
 ## Database initialization
 
 On a fresh installation, from the repository root:
