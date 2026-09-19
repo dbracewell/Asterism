@@ -89,7 +89,8 @@ class DummyLLMClient:
 class TestSubAgentStreaming:
     @pytest.mark.asyncio
     async def test_sub_agent_event_envelope_metadata(self):
-        """Verify SubAgentEventEnvelope carries sub_agent_id, name, depth, and event."""
+        """Verify SubAgentEventEnvelope carries sub_agent_id, name, depth,
+        and event."""
         sub_agent_id = uuid.uuid4()
         event = AgentEvent(
             type=AgentEventType.DELTA,
@@ -306,7 +307,8 @@ class TestSubAgentStreaming:
     async def test_multi_level_sub_agent_depth_forwarding(
         self, test_user, make_chat_session
     ):
-        """Verify multi-level sub-agent call (depth 2) carries depth=2 in envelope."""
+        """Verify multi-level sub-agent call (depth 2) carries depth=2
+        in envelope."""
         root_id = uuid.uuid4()
         agent_b_id = uuid.uuid4()
         agent_c_id = uuid.uuid4()
@@ -352,7 +354,8 @@ class TestSubAgentStreaming:
     async def test_chat_orchestrator_forwards_sub_agent_events_to_queue(
         self, test_user, make_chat_session
     ):
-        """Verify ChatOrchestrator forwards SUB_AGENT events to message queue."""
+        """Verify ChatOrchestrator forwards SUB_AGENT events to
+        message queue."""
         agent_id = uuid.uuid4()
         sub_id = uuid.uuid4()
         profile = _make_agent_profile(agent_id, "RootAgent")
@@ -361,13 +364,13 @@ class TestSubAgentStreaming:
         # Add a pending user message to chat session
         user_msg = Message(
             id=uuid.uuid4(),
-            chat_id=session.info.id,
+            chat_id=session.info.id,  # type:ignore
             role="user",
             content="Hello",
             token_count=5,
             status=MessageStatus.PENDING,
             created_at=0,
-            updated_at=0,
+            updated_at=0,  # type:ignore
         )
         session.messages.append(user_msg)
 

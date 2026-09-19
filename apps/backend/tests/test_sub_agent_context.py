@@ -169,7 +169,7 @@ class TestSubAgentContextForwarding:
                 user_message="Can you inspect the architecture?",
                 session=session,
                 app_settings=MagicMock(),
-                client=recording_client,
+                client=recording_client,  # type:ignore
             )
 
             result = await sub_agent(ctx)
@@ -205,7 +205,7 @@ class TestSubAgentContextForwarding:
     async def test_sub_agent_context_window_message_limit(
         self, test_user, make_chat_session, monkeypatch
     ):
-        """Verify context window limits the number of forwarded messages to N."""
+        """Verify context window limits the number of forwarded messages to N."""  # noqa: E501
         monkeypatch.setattr(config, "sub_agent_context_window_messages", 3)
         monkeypatch.setattr(config, "sub_agent_context_window_tokens", 50000)
 
@@ -242,7 +242,7 @@ class TestSubAgentContextForwarding:
     async def test_sub_agent_context_window_token_limit(
         self, test_user, make_chat_session, monkeypatch
     ):
-        """Verify context window stops when accumulated token limit is exceeded."""
+        """Verify context window stops when accumulated token limit is exceeded."""  # noqa: E501
         monkeypatch.setattr(config, "sub_agent_context_window_messages", 20)
         monkeypatch.setattr(config, "sub_agent_context_window_tokens", 25)
 
@@ -270,7 +270,8 @@ class TestSubAgentContextForwarding:
         context_block = _build_parent_context_block(ctx)
         assert context_block is not None
 
-        # Last message (4) = 10 tokens, message (3) = 10 tokens -> total 20 <= 25.
+        # Last message (4) = 10 tokens,
+        # message (3) = 10 tokens -> total 20 <= 25.
         # Message (2) = 10 tokens -> total 30 > 25, stops.
         assert "Message 4" in context_block
         assert "Message 3" in context_block
@@ -402,7 +403,7 @@ class TestSubAgentContextForwarding:
                 session=session,
                 user_files=user_files,
                 app_settings=MagicMock(),
-                client=recording_client,
+                client=recording_client,  # type:ignore
             )
 
             result = await sub_agent(ctx)
@@ -413,14 +414,14 @@ class TestSubAgentContextForwarding:
     async def test_sub_agent_caller_supplied_parent_context(
         self, test_user, make_chat_session
     ):
-        """Verify caller notes passed in SubAgentArgs.parent_context are forwarded."""
+        """Verify caller notes passed in SubAgentArgs.parent_context are forwarded."""  # noqa: E501
         session = make_chat_session(allowed_tools=["sub_agent"])
 
         ctx = ToolContext(
             args=SubAgentArgs(
                 agent_id=uuid.uuid4(),
                 prompt="Optimize query",
-                parent_context="The database has 10M rows and indexing is required.",
+                parent_context="The database has 10M rows and indexing is required.",  # noqa: E501
             ),
             user=test_user,
             user_message="Optimize query",

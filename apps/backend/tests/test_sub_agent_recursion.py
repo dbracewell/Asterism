@@ -56,7 +56,8 @@ def _make_agent_profile(
 class TestSubAgentRecursionSafety:
     @pytest.mark.asyncio
     async def test_no_recursion_depth_1(self, test_user, make_chat_session):
-        """Root agent calls sub-agent (depth 1): succeeds and propagates call stack."""
+        """Root agent calls sub-agent (depth 1): succeeds and
+        propagates call stack."""
         root_id = uuid.uuid4()
         child_id = uuid.uuid4()
         child_profile = _make_agent_profile(child_id, "ChildAgent")
@@ -96,7 +97,8 @@ class TestSubAgentRecursionSafety:
 
     @pytest.mark.asyncio
     async def test_allowed_depth_2_and_3(self, test_user, make_chat_session):
-        """Sub-agent calls at depths 2 and 3 are within limit (3) and succeed."""
+        """Sub-agent calls at depths 2 and 3 are within limit (3)
+        and succeed."""
         root_id = uuid.uuid4()
         agent_b_id = uuid.uuid4()
         agent_c_id = uuid.uuid4()
@@ -133,7 +135,7 @@ class TestSubAgentRecursionSafety:
         ):
             result = await sub_agent(ctx_depth_2)
             assert result == "Done C"
-            assert captured_agent.call_stack == [
+            assert captured_agent.call_stack == [  # type:ignore
                 root_id,
                 agent_b_id,
                 agent_c_id,
@@ -166,7 +168,7 @@ class TestSubAgentRecursionSafety:
         ):
             result = await sub_agent(ctx_depth_3)
             assert result == "Done D"
-            assert captured_agent.call_stack == [
+            assert captured_agent.call_stack == [  # type:ignore
                 root_id,
                 agent_b_id,
                 agent_c_id,
@@ -255,7 +257,8 @@ class TestSubAgentRecursionSafety:
     async def test_depth_exceeded_default_limit(
         self, test_user, make_chat_session
     ):
-        """Attempting to exceed maximum sub-agent depth (default: 3) is rejected."""
+        """Attempting to exceed maximum sub-agent depth (default: 3)
+        is rejected."""
         root_id = uuid.uuid4()
         agent_b_id = uuid.uuid4()
         agent_c_id = uuid.uuid4()

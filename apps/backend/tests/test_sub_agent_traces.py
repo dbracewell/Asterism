@@ -307,7 +307,7 @@ class TestSubAgentTraces:
                 user_message="Perform delegated calculation.",
                 session=session,
                 app_settings=MagicMock(),
-                client=recording_client,
+                client=recording_client,  # type:ignore
                 parent_message_id=parent_msg_id,
             )
 
@@ -425,7 +425,7 @@ class TestSubAgentTraces:
                 user_message="Run multi-step task",
                 session=session,
                 app_settings=MagicMock(),
-                client=recording_client,
+                client=recording_client,  # type:ignore
                 parent_message_id=parent_msg_id,
                 call_stack=[uuid.uuid4()],  # Depth 1
             )
