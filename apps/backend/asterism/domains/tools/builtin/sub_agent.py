@@ -1,8 +1,10 @@
+import inspect
 import uuid
 
 from pydantic import BaseModel
 
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
+from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.tools.registry import ToolContext, tool_registry
 
@@ -64,11 +66,28 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         allowed_tools=allowed_tools,
         approval_policy=AllowlistApprovalPolicy(),
         call_stack=child_call_stack,
+        event_sink=ctx.event_sink,
     )
+
+    forwarded_types = {
+        AgentEventType.DELTA,
+        AgentEventType.TOOL_CALL,
+        AgentEventType.COMPLETE,
+    }
 
     last_response: AgentEvent = AgentEvent(type=AgentEventType.COMPLETE)
     async for event in agent.run(messages=[LLMMessage.user(ctx.args.prompt)]):
         last_response = event
+        if ctx.event_sink and event.type in forwarded_types:
+            envelope = SubAgentEventEnvelope(
+                sub_agent_id=target_id,
+                sub_agent_name=agent_profile.name,
+                depth=len(ctx.call_stack),
+                event=event,
+            )
+            res = ctx.event_sink(envelope)
+            if inspect.isawaitable(res):
+                await res
 
     return (
         last_response.content

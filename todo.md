@@ -102,12 +102,12 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-10.3-T4: Return clear error on depth exceeded.
   - [x] US-10.3-T5: Unit tests for no-recursion, allowed depth, cycle, and depth exceeded.
 
-- [ ] US-10.4 — Stream sub-agent events to the parent context
-  - [ ] US-10.4-T1: Define sub-agent event envelope with metadata.
-  - [ ] US-10.4-T2: Add optional `event_sink` to sub-agent tool context.
-  - [ ] US-10.4-T3: Forward `DELTA`, `THINKING`, `TOOL_CALL`, `COMPLETE` events through sink.
-  - [ ] US-10.4-T4: Handle sub-agent envelope events in `ChatOrchestrator`.
-  - [ ] US-10.4-T5: Tests for event forwarding with correct metadata.
+- [x] US-10.4 — Stream sub-agent events to the parent context
+  - [x] US-10.4-T1: Define sub-agent event envelope with metadata.
+  - [x] US-10.4-T2: Add optional `event_sink` to sub-agent tool context.
+  - [x] US-10.4-T3: Forward `DELTA`, `THINKING`, `TOOL_CALL`, `COMPLETE` events through sink.
+  - [x] US-10.4-T4: Handle sub-agent envelope events in `ChatOrchestrator`.
+  - [x] US-10.4-T5: Tests for event forwarding with correct metadata.
 
 - [ ] US-10.5 — Forward context to sub-agents
   - [ ] US-10.5-T1: Add optional `parent_context` with conversation summary and file refs.

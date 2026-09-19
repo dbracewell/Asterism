@@ -61,6 +61,14 @@ const AgentDeltaEvent = z.object({
   thinking: z.string(),
 });
 
+const AgentSubAgentEvent = z.object({
+  type: z.literal("sub_agent"),
+  sub_agent_id: z.string(),
+  sub_agent_name: z.string(),
+  depth: z.number(),
+  event: z.record(z.string(), z.any()),
+});
+
 export const AgentEventSchema = z.discriminatedUnion("type", [
   GenericAgentEvent,
   AgentToolCallEvent,
@@ -70,4 +78,5 @@ export const AgentEventSchema = z.discriminatedUnion("type", [
   AgentDeltaEvent,
   AgentToolUpdate,
   AgentToolPermissionRequest,
+  AgentSubAgentEvent,
 ]);

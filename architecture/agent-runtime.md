@@ -83,6 +83,7 @@ When an agent invokes the [`sub_agent`](../apps/backend/asterism/domains/tools/b
 - **Recursion Safety**: The target agent ID is checked against `ctx.call_stack`. If an ID is already in the chain, execution aborts with a recursion cycle error.
 - **Depth Limits**: The depth of the delegation chain is bounded by `config.max_sub_agent_depth` (default: 3). If exceeded, execution aborts with an actionable error.
 - **Lineage Tracking**: The child agent is initialized with `call_stack=[*ctx.call_stack, target_id]` so further nested delegations are tracked accurately.
+- **Event Streaming**: Sub-agent execution events (`DELTA`, `TOOL_CALL`, `COMPLETE`) are wrapped in [`SubAgentEventEnvelope`](../apps/backend/asterism/domains/agent/schemas.py) and forwarded through `ctx.event_sink`. The parent `Agent.run()` stream yields them as `SUB_AGENT` events in real-time, preventing delegated work from becoming a frozen black box.
 - See [Sub-Agent Recursion Safety & Bounded Execution](tool-authorization.md#sub-agent-recursion-safety--bounded-execution) for full details.
 
 ---
@@ -101,6 +102,7 @@ flowchart TD
     LLMEvent -->|Maps TEXT_DELTA / THINKING_DELTA| AgentEvent
     LLMEvent -->|Maps COMPLETE| AgentEvent
     LLMEvent -->|Maps ERROR| AgentEvent
+    SubAgentEvent["Child Sub-Agent Event"] -->|Maps SUB_AGENT| AgentEvent
 
     AgentEvent -->|Queue.put| WSPacket
 ```
@@ -112,6 +114,7 @@ flowchart TD
 | `TOOL_CALL`      | `tool_calls: list[ToolCall]`                              | Agent has emitted intent to call one or more tools |
 | `COMPLETE`       | `content: str`, `tool_results: list`, `total_tokens: int` | Turn finished; assistant message persisted         |
 | `ERROR`          | `content: str`                                            | Execution failure or fatal exception               |
+| `SUB_AGENT`      | `sub_agent: SubAgentEventEnvelope`                        | Delegated child agent activity (thinking, text, tools) |
 
 ---
 

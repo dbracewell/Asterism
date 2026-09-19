@@ -5,7 +5,7 @@ import json
 import re
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Type, get_args
+from typing import Any, Awaitable, Callable, Type, get_args
 
 from openai.types.chat import (
     ChatCompletionFunctionToolParam,
@@ -16,6 +16,7 @@ from pydantic import BaseModel
 import asterism.domains.settings.service as settings_service
 from asterism.common.retries import async_retry
 from asterism.core.schemas import AuthedUser
+from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
@@ -76,6 +77,7 @@ class ToolContext[T: BaseModel | None]:
     client: LLMClientProtocol
     user_files: list[str] = field(default_factory=list)
     call_stack: list[uuid.UUID] = field(default_factory=list)
+    event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None
 
 
 @dataclass(frozen=True)
@@ -157,6 +159,8 @@ class ToolRegistry:
         user_files: list[str] = [],
         max_retries: int = 3,
         call_stack: list[uuid.UUID] | None = None,
+        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
+        | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
 
@@ -184,6 +188,7 @@ class ToolRegistry:
                 client=client,
                 app_settings=await settings_service.get_app_settings(),
                 call_stack=list(call_stack) if call_stack else [],
+                event_sink=event_sink,
             )
 
             if llm_tool.is_async:
