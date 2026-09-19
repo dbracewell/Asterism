@@ -637,6 +637,47 @@ export type Provider = {
 };
 
 /**
+ * ProviderDiscoveryRequest
+ */
+export type ProviderDiscoveryRequest = {
+    provider_type: ProviderType;
+    /**
+     * Base Url
+     */
+    base_url?: string;
+    /**
+     * Provider Id
+     */
+    provider_id: string;
+    /**
+     * Existing Models
+     */
+    existing_models?: Array<Llm>;
+    /**
+     * Draft Model Id
+     */
+    draft_model_id?: string | null;
+};
+
+/**
+ * ProviderDiscoveryResponse
+ */
+export type ProviderDiscoveryResponse = {
+    /**
+     * Models
+     */
+    models: Array<Llm>;
+    /**
+     * Catalog Version
+     */
+    catalog_version?: string | null;
+    /**
+     * Warnings
+     */
+    warnings?: Array<string>;
+};
+
+/**
  * ProviderType
  */
 export type ProviderType = 'openai' | 'generic_openai';
@@ -847,6 +888,33 @@ export type UserSettings = {
      * Default Agent Id
      */
     default_agent_id?: string | null;
+};
+
+/**
+ * ProviderDiscoveryRequest
+ */
+export type ProviderDiscoveryRequestWritable = {
+    provider_type: ProviderType;
+    /**
+     * Base Url
+     */
+    base_url?: string;
+    /**
+     * Api Key
+     */
+    api_key: string;
+    /**
+     * Provider Id
+     */
+    provider_id: string;
+    /**
+     * Existing Models
+     */
+    existing_models?: Array<Llm>;
+    /**
+     * Draft Model Id
+     */
+    draft_model_id?: string | null;
 };
 
 export type GetFileData = {
@@ -1331,6 +1399,43 @@ export type UserSettingUpdateResponses = {
 };
 
 export type UserSettingUpdateResponse = UserSettingUpdateResponses[keyof UserSettingUpdateResponses];
+
+export type AppProviderModelsDiscoverData = {
+    body: ProviderDiscoveryRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/settings/app/providers/discover';
+};
+
+export type AppProviderModelsDiscoverErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+    /**
+     * Provider discovery failed
+     */
+    502: ErrorDetail;
+    /**
+     * Provider discovery timed out
+     */
+    504: ErrorDetail;
+};
+
+export type AppProviderModelsDiscoverError = AppProviderModelsDiscoverErrors[keyof AppProviderModelsDiscoverErrors];
+
+export type AppProviderModelsDiscoverResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProviderDiscoveryResponse;
+};
+
+export type AppProviderModelsDiscoverResponse = AppProviderModelsDiscoverResponses[keyof AppProviderModelsDiscoverResponses];
 
 export type AppSettingsGetData = {
     body?: never;

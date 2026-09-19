@@ -140,7 +140,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-11 — LLM Provider Types and Model Capabilities
 
 Plan: [EPIC-11](epics/EPIC-11-LLM-PROVIDER-TYPES-AND-MODEL-CAPABILITIES.md).
-Status: US-11.1 completed and user-confirmed; US-11.2 is next.
+Status: US-11.1 and US-11.2 completed and user-confirmed; US-11.3 is next.
 Order: US-11.1 → US-11.2 → US-11.3 → US-11.4.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -154,13 +154,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-11.1-T5: Test fresh/existing/repeated migrations, validation, round trips, and reference preservation.
   - [x] US-11.1-T6: Regenerate and verify the Hey API client.
 
-- [ ] US-11.2 — Discover models and capabilities through the backend
-  - [ ] US-11.2-T1: Define an admin-only typed discovery API and backend discovery interface.
-  - [ ] US-11.2-T2: Implement canonical OpenAI discovery with a versioned capability catalog.
-  - [ ] US-11.2-T3: Implement conservative Generic OpenAI model and capability extraction.
-  - [ ] US-11.2-T4: Add bounded I/O, redirect/credential protections, and redacted diagnostics.
-  - [ ] US-11.2-T5: Preserve IDs, active/default state, and manual per-field overrides during refresh.
-  - [ ] US-11.2-T6: Test catalogs, generic metadata shapes, unknown/conflicting data, failures, and refresh preservation.
+- [x] US-11.2 — Discover models and capabilities through the backend (completed, verified, and user-confirmed)
+  - [x] US-11.2-T1: Define an admin-only typed discovery API and backend discovery interface.
+  - [x] US-11.2-T2: Implement canonical OpenAI discovery with a versioned capability catalog.
+  - [x] US-11.2-T3: Implement conservative Generic OpenAI model and capability extraction.
+  - [x] US-11.2-T4: Add bounded I/O, redirect/credential protections, and redacted diagnostics.
+  - [x] US-11.2-T5: Preserve IDs, active/default state, and manual per-field overrides during refresh.
+  - [x] US-11.2-T6: Test catalogs, generic metadata shapes, unknown/conflicting data, failures, and refresh preservation.
 
 - [ ] US-11.3 — Configure provider type and capabilities in the admin UI
   - [ ] US-11.3-T1: Add an accessible OpenAI / Generic OpenAI provider-type dropdown.

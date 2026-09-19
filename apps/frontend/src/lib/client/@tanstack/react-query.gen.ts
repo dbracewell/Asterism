@@ -4,7 +4,7 @@ import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
 import { ApiClient, type Options } from '../sdk.gen';
-import type { AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesError, AgentsGetSubAgentTracesResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, MessageUpdateData, MessageUpdateError, MessageUpdateResponse, ToolsGetActiveData, ToolsGetActiveError, ToolsGetActiveResponse, ToolsGetAllData, ToolsGetAllError, ToolsGetAllResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
+import type { AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesError, AgentsGetSubAgentTracesResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppProviderModelsDiscoverData, AppProviderModelsDiscoverError, AppProviderModelsDiscoverResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, MessageUpdateData, MessageUpdateError, MessageUpdateResponse, ToolsGetActiveData, ToolsGetActiveError, ToolsGetActiveResponse, ToolsGetAllData, ToolsGetAllError, ToolsGetAllResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -290,6 +290,23 @@ export const userSettingUpdateMutation = (options?: Partial<Options<UserSettingU
     const mutationOptions: UseMutationOptions<UserSettingUpdateResponse, UserSettingUpdateError, Options<UserSettingUpdateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ApiClient.__registry.get().userSettingUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Discover provider models and capabilities
+ */
+export const appProviderModelsDiscoverMutation = (options?: Partial<Options<AppProviderModelsDiscoverData>>): UseMutationOptions<AppProviderModelsDiscoverResponse, AppProviderModelsDiscoverError, Options<AppProviderModelsDiscoverData>> => {
+    const mutationOptions: UseMutationOptions<AppProviderModelsDiscoverResponse, AppProviderModelsDiscoverError, Options<AppProviderModelsDiscoverData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().appProviderModelsDiscover({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
