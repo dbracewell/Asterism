@@ -6,7 +6,7 @@ The **Agent Runtime** is the core cognitive engine of Asterism. It executes a bo
 
 ## Agent Architecture & Lifecycle
 
-The [`Agent`](../apps/backend/asterism/domains/agent/agent.py) class encapsulates a single agent session turn.
+The [`Agent`](../apps/backend/asterism/domains/agent/agent.py) class encapsulates a single agent session turn. Each agent maintains a `call_stack: list[uuid.UUID]` representing the lineage of agents from the root conversation turn down to the active agent, preventing recursion cycles during delegation.
 
 ```mermaid
 stateDiagram-v2
@@ -76,6 +76,15 @@ The [`LLMClient`](../apps/backend/asterism/domains/llm/client.py) abstracts Open
 - **Tool Call Chunk Accumulator**: In streaming mode, tool arguments arrive in fragmented deltas (`ChoiceDeltaToolCall`). `StreamHandler` accumulates fragments by index until complete, ensuring valid JSON strings before yielding `LLMEventType.COMPLETE`.
 - **Automatic Retries**: Decorates API invocations with exponential backoff for rate limits and transient connection errors ([`retry_async_gen`](../apps/backend/asterism/common/retries.py)).
 
+### 4. Sub-Agent Delegation & Recursion Boundaries
+
+When an agent invokes the [`sub_agent`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py) tool:
+
+- **Recursion Safety**: The target agent ID is checked against `ctx.call_stack`. If an ID is already in the chain, execution aborts with a recursion cycle error.
+- **Depth Limits**: The depth of the delegation chain is bounded by `config.max_sub_agent_depth` (default: 3). If exceeded, execution aborts with an actionable error.
+- **Lineage Tracking**: The child agent is initialized with `call_stack=[*ctx.call_stack, target_id]` so further nested delegations are tracked accurately.
+- See [Sub-Agent Recursion Safety & Bounded Execution](tool-authorization.md#sub-agent-recursion-safety--bounded-execution) for full details.
+
 ---
 
 ## Event Stream Model
@@ -119,11 +128,12 @@ When tool calls are authorized by [`ToolApprovalPolicy`](tool-authorization.md):
            session=self.session,
            client=await self._get_client(),
            user_message=user_message or "",
+           call_stack=self.call_stack,
        )
        for auth in auths if auth.accept
    ]
    ```
-2. **Standardized Context**: Tools receive [`ToolContext`](../apps/backend/asterism/domains/tools/registry.py) containing validated Pydantic arguments, authenticated user identity, active chat session, database access, and app settings.
+2. **Standardized Context**: Tools receive [`ToolContext`](../apps/backend/asterism/domains/tools/registry.py) containing validated Pydantic arguments, authenticated user identity, active chat session, database access, app settings, and lineage `call_stack`.
 3. **Synthetic Rejection Results**: Any tool rejected by policy produces an error result informing the model the user denied access, prompting it to continue without that tool.
 
 ---

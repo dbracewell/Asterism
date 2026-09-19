@@ -244,12 +244,68 @@ flowchart TD
 
 ---
 
+## Sub-Agent Recursion Safety & Bounded Execution
+
+To guard against runaway token spend, thread/event-loop starvation, and infinite loops caused by autonomous agent-to-agent delegation, Asterism implements runtime recursion boundaries and cycle detection.
+
+```mermaid
+flowchart TD
+    InvokeSubAgent["Tool: sub_agent(agent_id, prompt)"]
+    InspectStack["Inspect ctx.call_stack"]
+    CheckCycle{"agent_id in ctx.call_stack?"}
+    CheckDepth{"len(ctx.call_stack) > max_depth?"}
+
+    CycleError["Return Error: Recursion cycle detected (lists chain)"]
+    DepthError["Return Error: Maximum depth exceeded (lists chain & suggests decomposition)"]
+    SpawnChild["Spawn Child Agent(call_stack=[*ctx.call_stack, agent_id])"]
+
+    InvokeSubAgent --> InspectStack
+    InspectStack --> CheckCycle
+    CheckCycle -->|Yes (Cycle)| CycleError
+    CheckCycle -->|No| CheckDepth
+    CheckDepth -->|Yes (> 3)| DepthError
+    CheckDepth -->|No (<= 3)| SpawnChild
+```
+
+### 1. Call Stack Tracking
+
+Every agent execution maintains a `call_stack: list[uuid.UUID]` recording the lineage of agents from the root conversation turn down to the current child:
+
+- **Root Agent**: Initialized with `[profile.id]` when spawned by the orchestrator.
+- **Propagation**: [`Agent._run_tools`](../apps/backend/asterism/domains/agent/agent.py) forwards `self.call_stack` to [`ToolRegistry.invoke_tool`](../apps/backend/asterism/domains/tools/registry.py), which injects it into [`ToolContext.call_stack`](../apps/backend/asterism/domains/tools/registry.py).
+- **Child Extension**: When [`sub_agent`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py) delegates to a child agent, it appends the target ID: `child_call_stack = [*ctx.call_stack, target_id]`.
+
+### 2. Cycle Detection
+
+Before fetching profiles or allocating child resources, `sub_agent` verifies whether `target_id in ctx.call_stack`:
+
+- **Self-Recursion** ($A \rightarrow A$): Caught immediately because $A$ is in its own call stack.
+- **Indirect Mutual Recursion** ($A \rightarrow B \rightarrow A$): Caught when agent $B$ attempts to delegate back to $A$.
+- **Multi-Hop Cycles** ($A \rightarrow B \rightarrow C \rightarrow B$): Caught when $C$ attempts to delegate back to any ancestor in the call chain.
+
+When a cycle is detected, execution aborts and returns an actionable error string directly to the calling LLM:
+
+> _"Recursion cycle detected: Agent '{target_id}' is already in the call chain ({root_id} -> ... -> {target_id}). Sub-agent call aborted."_
+
+### 3. Configurable Depth Bounding
+
+Recursion depth is bounded by `config.max_sub_agent_depth` (default: 3).
+
+- Depth 1 ($A \rightarrow B$), Depth 2 ($A \rightarrow B \rightarrow C$), and Depth 3 ($A \rightarrow B \rightarrow C \rightarrow D$) are permitted.
+- If a sub-agent at depth 3 attempts to delegate further ($A \rightarrow B \rightarrow C \rightarrow D \rightarrow E$), `len(ctx.call_stack) > config.max_sub_agent_depth` triggers.
+- An informative error result is returned to the model explaining the limit and advising alternative task decomposition:
+  > _"Maximum sub-agent recursion depth of 3 exceeded (call chain: ...). Sub-agent call aborted. Please decompose the task differently."_
+
+---
+
 ## Key Files Reference
 
 - Protocol & Policies: [`apps/backend/asterism/domains/agent/approval.py`](../apps/backend/asterism/domains/agent/approval.py)
 - Response Queue: [`apps/backend/asterism/domains/agent/user_response_queue.py`](../apps/backend/asterism/domains/agent/user_response_queue.py)
 - Agent Loop Integration: [`apps/backend/asterism/domains/agent/agent.py`](../apps/backend/asterism/domains/agent/agent.py)
+- Tool Registry & Context: [`apps/backend/asterism/domains/tools/registry.py`](../apps/backend/asterism/domains/tools/registry.py)
 - WebSocket Orchestrator Approval Handler: [`apps/backend/asterism/domains/chat/orchestrator.py`](../apps/backend/asterism/domains/chat/orchestrator.py)
 - WebSocket Inbound Command Processor: [`apps/backend/asterism/domains/chat/controller.py`](../apps/backend/asterism/domains/chat/controller.py)
 - Frontend WebSocket Hook: [`apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx`](../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)
-- Sub-Agent Sandboxing: [`apps/backend/asterism/domains/tools/builtin/sub_agent.py`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py)
+- Sub-Agent Sandboxing & Recursion Safety: [`apps/backend/asterism/domains/tools/builtin/sub_agent.py`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py)
+- Recursion Unit Tests: [`apps/backend/tests/test_sub_agent_recursion.py`](../apps/backend/tests/test_sub_agent_recursion.py)

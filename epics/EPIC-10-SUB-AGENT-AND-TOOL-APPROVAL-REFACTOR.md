@@ -16,22 +16,22 @@ black-box fire-and-forget call into a first-class orchestration primitive.
 
 ### Tool approval is fragmented and tightly coupled
 
-| Component | Current behavior / problem |
-|---|---|
-| `Agent.run()` | Always creates a `UserResponseQueue`, yields a `TOOL_CALL` event, and blocks on `response_queue.wait()` — regardless of whether anyone is listening. |
+| Component           | Current behavior / problem                                                                                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Agent.run()`       | Always creates a `UserResponseQueue`, yields a `TOOL_CALL` event, and blocks on `response_queue.wait()` — regardless of whether anyone is listening.                                                                      |
 | `UserResponseQueue` | Mixes concerns: auto-approval of permitted tools (side effects in a `@property`), external response collection, and async coordination. `pending` is called repeatedly in `wait()`, re-triggering side effects each time. |
-| `ChatOrchestrator` | Drives interactive approval: emits WebSocket `tool_permission_request` messages, creates `asyncio.Future` per tool, awaits user decisions with a 60s timeout. This logic is not reusable outside the orchestrator. |
-| `sub_agent` tool | Manually iterates `queue.pending` and calls `respond(tool, True)` for every tool — an auto-approve hack that bypasses the agent profile's configured `allowed_tools` entirely. |
+| `ChatOrchestrator`  | Drives interactive approval: emits WebSocket `tool_permission_request` messages, creates `asyncio.Future` per tool, awaits user decisions with a 60s timeout. This logic is not reusable outside the orchestrator.        |
+| `sub_agent` tool    | Manually iterates `queue.pending` and calls `respond(tool, True)` for every tool — an auto-approve hack that bypasses the agent profile's configured `allowed_tools` entirely.                                            |
 
 ### Sub-agent is a black box
 
-| Area | Current behavior / problem |
-|---|---|
-| Streaming | All `DELTA`, `THINKING`, and `TOOL_CALL` events are swallowed. The UI appears frozen during sub-agent execution. |
-| Context | Sub-agent receives only `[LLMMessage.user(prompt)]`. No parent conversation history, user files, or profile memory. |
-| Recursion | Agent A can call sub-agent B which calls sub-agent A. No depth limit or cycle detection. |
+| Area        | Current behavior / problem                                                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Streaming   | All `DELTA`, `THINKING`, and `TOOL_CALL` events are swallowed. The UI appears frozen during sub-agent execution.                                           |
+| Context     | Sub-agent receives only `[LLMMessage.user(prompt)]`. No parent conversation history, user files, or profile memory.                                        |
+| Recursion   | Agent A can call sub-agent B which calls sub-agent A. No depth limit or cycle detection.                                                                   |
 | Persistence | Sub-agent messages (system prompt, reasoning, tool calls) are never written to the database. Only the final summary string is persisted as a `ToolResult`. |
-| Security | Auto-approve ignores the agent profile's `allowed_tools` and the session's `allowed_tools`. A sub-agent can execute any registered tool. |
+| Security    | Auto-approve ignores the agent profile's `allowed_tools` and the session's `allowed_tools`. A sub-agent can execute any registered tool.                   |
 
 ### Stubbed features
 
@@ -51,10 +51,10 @@ Protocol: ToolApprovalPolicy
 
 Implementations:
 
-| Policy | Behavior | Used by |
-|---|---|---|
-| `AllowlistApprovalPolicy` | Auto-approve tools in the allowlist, reject others. Synchronous, no external coordination. | Sub-agents, background agents, API-invoked agents |
-| `InteractiveApprovalPolicy` | Auto-approve permitted tools; for others, yield events to a callback/queue and await external decisions with timeout. | `ChatOrchestrator` (interactive chat) |
+| Policy                      | Behavior                                                                                                              | Used by                                           |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `AllowlistApprovalPolicy`   | Auto-approve tools in the allowlist, reject others. Synchronous, no external coordination.                            | Sub-agents, background agents, API-invoked agents |
+| `InteractiveApprovalPolicy` | Auto-approve permitted tools; for others, yield events to a callback/queue and await external decisions with timeout. | `ChatOrchestrator` (interactive chat)             |
 
 `Agent.__init__` accepts an optional `approval_policy: ToolApprovalPolicy`.
 If not provided, it defaults to `AllowlistApprovalPolicy(self.allowed_tools)`.
@@ -68,6 +68,7 @@ approval behavior explicit and testable.
 ## Scope / non-goals
 
 **In scope:**
+
 - Tool approval refactor (policy abstraction, implementations, migration)
 - Sub-agent event streaming / forwarding to parent
 - Sub-agent context forwarding (conversation history, user files)
@@ -77,6 +78,7 @@ approval behavior explicit and testable.
 - Tests for all new behavior
 
 **Not in scope:**
+
 - Implementing `save_always_allow_preference` (separate story)
 - Multi-agent collaboration beyond parent→child delegation
 - Memory system integration (EPIC-6)
@@ -140,11 +142,11 @@ runaway token spend.
 
 **Dependencies:** US-10.1.
 
-- [ ] US-10.3-T1: Add a `call_stack: list[uuid.UUID]` parameter to `ToolContext` (or a new `SubAgentContext`) that tracks the chain of agent IDs from root to current.
-- [ ] US-10.3-T2: In `sub_agent`, before creating the child agent, check `call_stack` for: (a) the target agent ID already present (cycle), and (b) depth exceeding a configurable maximum (default: 3).
-- [ ] US-10.3-T3: On cycle detection, return an error result to the LLM explaining the cycle and listing the agent chain.
-- [ ] US-10.3-T4: On depth exceeded, return an error result to the LLM explaining the maximum depth and suggesting the task be decomposed differently.
-- [ ] US-10.3-T5: Add unit tests for: no recursion (depth 1), allowed depth (depth 2–3), cycle detection (A→B→A), and depth exceeded.
+- [x] US-10.3-T1: Add a `call_stack: list[uuid.UUID]` parameter to `ToolContext` (or a new `SubAgentContext`) that tracks the chain of agent IDs from root to current.
+- [x] US-10.3-T2: In `sub_agent`, before creating the child agent, check `call_stack` for: (a) the target agent ID already present (cycle), and (b) depth exceeding a configurable maximum (default: 3).
+- [x] US-10.3-T3: On cycle detection, return an error result to the LLM explaining the cycle and listing the agent chain.
+- [x] US-10.3-T4: On depth exceeded, return an error result to the LLM explaining the maximum depth and suggesting the task be decomposed differently.
+- [x] US-10.3-T5: Add unit tests for: no recursion (depth 1), allowed depth (depth 2–3), cycle detection (A→B→A), and depth exceeded.
 
 **Acceptance criteria**
 
@@ -249,4 +251,3 @@ the user confirms completion. Inform the user and propose the next plan.
   of 3 should be validated against real use cases.
 - **Trace storage volume.** Sub-agent traces can be large (full message
   histories). Consider retention policies or lazy loading for the trace UI.
-

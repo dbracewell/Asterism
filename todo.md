@@ -95,12 +95,12 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-10.2-T3: Test sub-agent cannot use tools outside its profile allowlist.
   - [x] US-10.2-T4: Test sub-agent cannot use tools outside parent allowlist.
 
-- [ ] US-10.3 — Add recursion safety to sub-agent execution
-  - [ ] US-10.3-T1: Add `call_stack` tracking to `ToolContext` or `SubAgentContext`.
-  - [ ] US-10.3-T2: Check for cycles and depth limit before creating child agent.
-  - [ ] US-10.3-T3: Return clear error on cycle detection.
-  - [ ] US-10.3-T4: Return clear error on depth exceeded.
-  - [ ] US-10.3-T5: Unit tests for no-recursion, allowed depth, cycle, and depth exceeded.
+- [x] US-10.3 — Add recursion safety to sub-agent execution
+  - [x] US-10.3-T1: Add `call_stack` tracking to `ToolContext` or `SubAgentContext`.
+  - [x] US-10.3-T2: Check for cycles and depth limit before creating child agent.
+  - [x] US-10.3-T3: Return clear error on cycle detection.
+  - [x] US-10.3-T4: Return clear error on depth exceeded.
+  - [x] US-10.3-T5: Unit tests for no-recursion, allowed depth, cycle, and depth exceeded.
 
 - [ ] US-10.4 — Stream sub-agent events to the parent context
   - [ ] US-10.4-T1: Define sub-agent event envelope with metadata.

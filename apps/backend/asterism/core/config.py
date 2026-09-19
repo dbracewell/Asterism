@@ -74,6 +74,7 @@ class Config(BaseSettings):
     default_allowed_tools: list[str] = Field(
         default_factory=default_allowed_tools
     )
+    max_sub_agent_depth: int = 3
     config_profile: str = Field(
         default_factory=lambda: (
             "production"
