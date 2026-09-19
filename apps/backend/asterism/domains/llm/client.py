@@ -150,9 +150,7 @@ class StreamHandler[T: BaseModel]:
                     content=self.content,
                     exception=exception,
                     finish_reason=self.final_finish_reason,
-                    total_tokens=self.usage.completion_tokens
-                    if self.usage
-                    else 0,
+                    total_tokens=self.usage.completion_tokens if self.usage else 0,
                     type=LLMEventType.ERROR,
                 )
 
@@ -186,9 +184,7 @@ class StreamHandler[T: BaseModel]:
             tool_calls=tool_calls,
         )
 
-    async def _handle_chunk(
-        self, chunk: ChatCompletionChunk
-    ) -> AsyncGenerator[LLMEvent, None]:
+    async def _handle_chunk(self, chunk: ChatCompletionChunk) -> AsyncGenerator[LLMEvent, None]:
         if not hasattr(chunk, "choices") or not chunk.choices:
             return
 
@@ -231,9 +227,7 @@ class StreamHandler[T: BaseModel]:
                     self.tool_calls_dict[idx]["name"] = tc_chunk.function.name
 
                 if tc_chunk.function and tc_chunk.function.arguments:
-                    self.tool_calls_dict[idx]["arguments"] += (
-                        tc_chunk.function.arguments
-                    )
+                    self.tool_calls_dict[idx]["arguments"] += tc_chunk.function.arguments
 
 
 class LLMClient(LLMClientProtocol):
@@ -288,9 +282,7 @@ class LLMClient(LLMClientProtocol):
 
         extrabody_args = {}
         if "thinking_budget_tokens" in completion_args:
-            extrabody_args["thinking_budget_tokens"] = completion_args.pop(
-                "thinking_budget_tokens"
-            )
+            extrabody_args["thinking_budget_tokens"] = completion_args.pop("thinking_budget_tokens")
 
         if response_model:
 

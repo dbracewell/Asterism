@@ -500,7 +500,7 @@ export const ProvidersTab = ({
                           return (
                             <div
                               key={`${field.id}-${model.name}-${modelIndex}`}
-                              className="grid gap-3 rounded border p-3 md:grid-cols-[minmax(10rem,1fr)_minmax(9rem,12rem)_minmax(9rem,12rem)]"
+                              className="grid gap-3 rounded p-3 md:grid-cols-[minmax(10rem,1fr)_minmax(9rem,12rem)_minmax(9rem,12rem)]"
                             >
                               <Input
                                 type="hidden"
@@ -696,9 +696,9 @@ export const ProvidersTab = ({
         })}
       </div>
       <div className="flex items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Field>
-            <FieldLabel htmlFor="appsettings-draft-model" className="px-1">
+        <div className="flex flex-row items-center gap-2">
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="appsettings-draft-model">
               Draft Model
               <HelpIcon text="The model used for generating chat titles and other background information." />
             </FieldLabel>

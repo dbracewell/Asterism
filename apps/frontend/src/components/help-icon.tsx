@@ -11,7 +11,7 @@ export const HelpIcon = ({
 }) => {
   return (
     <Hint hint={text}>
-      <CircleQuestionMarkIcon className={cn("size-3", className)} />
+      <CircleQuestionMarkIcon className={cn("z-0 size-3", className)} />
     </Hint>
   );
 };
