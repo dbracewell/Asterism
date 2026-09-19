@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = ["/sign-in", "/api/stream"];
 if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
-  publicRoutes.push("/e2e/sub-agent", "/e2e/providers");
+  publicRoutes.push("/e2e/sub-agent", "/e2e/providers", "/e2e/files");
 }
 
 export async function proxy(request: NextRequest) {
