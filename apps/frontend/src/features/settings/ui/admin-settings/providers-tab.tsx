@@ -227,7 +227,7 @@ export const ProvidersTab = ({
   });
 
   const onSubmit = (values: ProvidersFormValues) => {
-    let draft_model_id: string | undefined = values.draft_model_id;
+    let draft_model_id: string | undefined = values.draft_model_id || undefined;
 
     if (draft_model_id == null && defaultModelList.length > 0) {
       draft_model_id = defaultModelList[0].value;

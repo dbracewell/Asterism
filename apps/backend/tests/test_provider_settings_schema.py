@@ -7,13 +7,23 @@ from asterism.core import config
 from asterism.db.base import Base
 from asterism.db.init_db import initialize_database
 from asterism.db.schema_migrations import run_schema_migrations
+from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.provider_types import (
     OPENAI_BASE_URL,
     ModelCapabilitySource,
     ProviderType,
 )
-from asterism.domains.settings.schemas import Llm, Provider
-from asterism.domains.settings.service import bulk_upsert_providers, get_all_providers
+from asterism.domains.settings.schemas import (
+    BulkUpdateSettingRequest,
+    Llm,
+    Provider,
+)
+from asterism.domains.settings.service import (
+    bulk_update_app_setting,
+    bulk_upsert_providers,
+    get_all_providers,
+    get_app_settings,
+)
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -157,6 +167,33 @@ async def test_provider_capabilities_round_trip_and_merge(tmp_path):
         assert merged.models[0].id == model_id
         assert merged.models[0].context_window == 64_000
         assert merged.models[0].context_window_source == ModelCapabilitySource.MANUAL
+
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_empty_draft_model_form_value_is_normalized_and_recovered(tmp_path):
+    database = tmp_path / "empty-draft.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        session.add(ApplicationSettingsModel(key="draft_model_id", value=""))
+        await session.commit()
+
+        recovered = await get_app_settings(session)
+        assert recovered.draft_model_id is None
+
+        updated = await bulk_update_app_setting(
+            BulkUpdateSettingRequest(values={"draft_model_id": ""}),
+            session,
+        )
+        assert updated.draft_model_id is None
+        stored = await session.get(ApplicationSettingsModel, "draft_model_id")
+        assert stored is not None
+        assert stored.value is None
 
     await engine.dispose()
 

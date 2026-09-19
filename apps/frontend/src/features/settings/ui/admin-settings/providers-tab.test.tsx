@@ -89,8 +89,10 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-function renderProviders() {
-  return render(<ProvidersTab appSettings={settings} />, { wrapper: Wrapper });
+function renderProviders(appSettings: ApplicationSettings = settings) {
+  return render(<ProvidersTab appSettings={appSettings} />, {
+    wrapper: Wrapper,
+  });
 }
 
 describe("provider configuration", () => {
@@ -130,6 +132,33 @@ describe("provider configuration", () => {
         base_url: "ftp://user:password@example.test/models?token=secret",
       }).success,
     ).toBe(false);
+  });
+
+  it("saves a provider without models using a null draft model", async () => {
+    const user = userEvent.setup();
+    mocks.save.mockResolvedValueOnce({});
+    renderProviders({
+      active_tools: [],
+      llm_providers: [
+        {
+          ...settings.llm_providers![0],
+          models: [],
+        },
+      ],
+      draft_model_id: null,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          values: expect.objectContaining({ draft_model_id: null }),
+        }),
+      }),
+      expect.anything(),
+    );
   });
 
   it("switches provider type accessibly and enforces the fixed OpenAI URL", async () => {
