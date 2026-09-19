@@ -1,4 +1,7 @@
-import { AgentEventSchema } from "@/features/chat/schemas";
+import {
+  AgentEventSchema,
+  AgentSubAgentEvent,
+} from "@/features/chat/schemas";
 import { StreamingMessage } from "@/features/chat/types";
 import { Message } from "@/lib/client";
 import { chatWebSocketUrl } from "@/lib/backend-url";
@@ -14,6 +17,7 @@ type UseChatWebSocketProps = {
   onStreamError?: (error: string) => void;
   onRegenerate?: (parentId: string) => void;
   onStatusChange?: (isProcessing: boolean) => void;
+  onSubAgentEvent?: (event: AgentSubAgentEvent) => void;
 };
 
 const createPendingAssistantMessage = (): StreamingMessage => ({
@@ -42,6 +46,7 @@ export const useChatWebSocket = ({
   onStreamError,
   onRegenerate,
   onStatusChange,
+  onSubAgentEvent,
 }: UseChatWebSocketProps) => {
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -52,6 +57,7 @@ export const useChatWebSocket = ({
   const onStreamErrorRef = React.useRef(onStreamError);
   const onRegenerateRef = React.useRef(onRegenerate);
   const onStatusChangeRef = React.useRef(onStatusChange);
+  const onSubAgentEventRef = React.useRef(onSubAgentEvent);
   const statusRef = React.useRef(false);
 
   React.useEffect(() => {
@@ -61,6 +67,7 @@ export const useChatWebSocket = ({
     onStreamErrorRef.current = onStreamError;
     onRegenerateRef.current = onRegenerate;
     onStatusChangeRef.current = onStatusChange;
+    onSubAgentEventRef.current = onSubAgentEvent;
   }, [
     onStreamStart,
     onStreamUpdate,
@@ -68,6 +75,7 @@ export const useChatWebSocket = ({
     onStreamError,
     onRegenerate,
     onStatusChange,
+    onSubAgentEvent,
   ]);
 
   React.useEffect(() => {
@@ -136,6 +144,11 @@ export const useChatWebSocket = ({
 
       const msgContent = result.data;
 
+      if (msgContent.type === "sub_agent") {
+        onSubAgentEventRef.current?.(msgContent);
+        return;
+      }
+
       if (msgContent.type === "regenerate") {
         onRegenerateRef.current?.(msgContent.parent_id);
         return;
@@ -161,6 +174,7 @@ export const useChatWebSocket = ({
         if (streamingMessageRef.current != null) {
           streamingMessageRef.current = {
             ...streamingMessageRef.current!,
+            content: "",
             tool_calls: msgContent.tool_calls,
           };
           onStreamUpdateRef.current?.(streamingMessageRef.current);

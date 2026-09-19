@@ -174,6 +174,7 @@ When a client connects to `/chat/stream/{chat_id}`, `ChatController.run()` initi
 // Delegated sub-agent execution event
 {
   "type": "sub_agent",
+  "execution_id": "9bda5c59-0235-4b8c-b53e-d8cb0bfbdc2c",
   "sub_agent_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "sub_agent_name": "Research Agent",
   "depth": 1,
@@ -183,6 +184,10 @@ When a client connects to `/chat/stream/{chat_id}`, `ChatController.run()` initi
     "thinking": "Looking for revenue numbers."
   }
 }
+
+// The nested event can be start, delta, tool_call, complete, or error.
+// The UI groups packets by execution_id and keeps the child result separate
+// from the final parent response.
 
 // Turn complete
 {

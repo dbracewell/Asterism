@@ -201,46 +201,31 @@ Once all authorizations are returned to `Agent._run_tools`:
 
 ## Sub-Agent Permission Sandboxing
 
-When an agent delegates a task via the `sub_agent` tool ([`sub_agent.py`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py)), permission sandboxing is strictly enforced.
+When a parent is authorized to invoke the `sub_agent` tool ([`sub_agent.py`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py)), the selected child runs autonomously with the active tools explicitly assigned to its own profile. Parent profiles do not need duplicate assignments; this allows useful specialist agents such as searchers or file processors.
 
 ```mermaid
 flowchart TD
-    ParentAllowed["Parent Allowed Tools (e.g., [web_search, fetch, sub_agent])"]
-    SubProfileAllowed["Sub-Agent Profile Tools (e.g., [web_search, terminal_exec, sql_query])"]
-
-    Intersect["Permission Intersection (&): [web_search]"]
-
+    ParentAllowed["Parent allows sub_agent delegation"]
+    SubProfileAllowed["Sub-Agent Profile Tools (e.g., [web_search, web_fetch])"]
+    Active["Admin-enabled active tools"]
+    Validated["Validated Child Profile Allowlist"]
     SubAgentInstance["Child Agent Instance (AllowlistApprovalPolicy)"]
 
-    ParentAllowed --> Intersect
-    SubProfileAllowed --> Intersect
-    Intersect --> SubAgentInstance
+    ParentAllowed --> SubAgentInstance
+    SubProfileAllowed --> Validated
+    Active --> Validated
+    Validated --> SubAgentInstance
 
-    SubAgentInstance -->|Only permitted tools executed| ExecApproved["Execute 'web_search'"]
-    SubAgentInstance -.->|Blocked & Rejected| ExecBlocked["Blocked: 'terminal_exec', 'sql_query'"]
-    SubAgentInstance -->|"Only permitted tools executed"| ExecApproved["Execute 'web_search'"]
-    SubAgentInstance -.->|"Blocked & Rejected"| ExecBlocked["Blocked: 'terminal_exec', 'sql_query'"]
+    SubAgentInstance -->|Autonomously executes assigned tool| ExecApproved["Execute web_search / web_fetch"]
+    SubAgentInstance -.->|Rejects unassigned model call| ExecBlocked["Blocked: any tool absent from child profile"]
 ```
 
 ### Sandboxing Rules
 
-1. **Permission Intersection**: The sub-agent's allowed tools are calculated as:
-   ```python
-   parent_tools = set(ctx.session.info.allowed_tools or [])
-   sub_agent_profile_tools = set(agent_profile.tools or [])
-   allowed_tools = sorted(parent_tools & sub_agent_profile_tools)
-   ```
-2. **Autonomous Policy Assignment**: The child `Agent` is created with `AllowlistApprovalPolicy`:
-   ```python
-   agent = Agent(
-       profile=sub_profile,
-       user=ctx.user,
-       session=ctx.session,
-       allowed_tools=allowed_tools,
-       approval_policy=AllowlistApprovalPolicy(),
-   )
-   ```
-3. **No Privilege Escalation**: A sub-agent cannot execute a tool that the parent lacks, and cannot prompt the user interactively (preventing nested interactive deadlocks).
+1. **Delegation Authorization**: The interactive parent must itself be allowed to invoke `sub_agent`. Selecting a child delegates authority to that child's configured capability boundary.
+2. **Child Profile Allowlist**: The child receives only tools explicitly assigned to its profile and still globally enabled by the administrator. Tools do not need to be duplicated on the parent profile.
+3. **Autonomous Policy Assignment**: The child `Agent` uses `AllowlistApprovalPolicy`; assigned tools run without nested user prompts, while unassigned or hallucinated calls are rejected.
+4. **Configuration Warning**: The Agent Profile screen warns that tools assigned to profiles marked **Acts as Sub Agent** execute autonomously. Users should assign only tools they trust that specialist to use when delegated.
 
 ---
 

@@ -1,7 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { z } from "zod";
 
 import { HelpIcon } from "@/components/help-icon";
@@ -21,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/features/auth/components/user-context";
+import { SubAgentToolWarning } from "@/features/settings/ui/user-settings/sub-agent-tool-warning";
 import { agentProfile } from "@/features/settings/schemas";
 import { client } from "@/lib/api";
 import { AgentProfile } from "@/lib/client";
@@ -87,6 +93,11 @@ export function AgentProfileForm({
     },
   });
 
+  const actsAsSubAgent = useWatch({
+    control: form.control,
+    name: "sub_agent",
+  });
+
   useEffect(() => {
     form.reset({
       id: profile?.id ?? null,
@@ -135,8 +146,7 @@ export function AgentProfileForm({
         name: data.name,
         max_steps: data.maxSteps,
         system_prompt: data.systemPrompt,
-        tools:
-          data.tools.length === 0 ? undefined : data.tools.map((t) => t.value),
+        tools: data.tools.map((t) => t.value),
         model_id: data.modelId,
         chat_parameters: cp,
       },
@@ -307,7 +317,7 @@ export function AgentProfileForm({
                           onCheckedChange={field.onChange}
                           checked={field.value ?? false}
                         />
-                        <FieldLabel htmlFor="form-agentProfile-maxSteps">
+                        <FieldLabel htmlFor="form-agentProfile-subAgent">
                           <Required>
                             Acts as Sub Agent{" "}
                             <HelpIcon text="Can this agent be used as a sub agent?" />
@@ -349,6 +359,7 @@ export function AgentProfileForm({
 
             <Field className="mt-3 mb-2 flex flex-1 flex-col">
               <FieldLabel>Tools</FieldLabel>
+              {actsAsSubAgent && <SubAgentToolWarning />}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
                 {availableTools?.items.map((tool) => (
                   <div key={tool.name} className="flex items-center gap-2">

@@ -73,8 +73,8 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-10 — Sub-Agent Upgrade and Tool Approval Refactor
 
 Plan: [EPIC-10](epics/EPIC-10-SUB-AGENT-AND-TOOL-APPROVAL-REFACTOR.md).
-Status: EPIC-10 completed; US-10.1–US-10.6 completed.
-Order: US-10.1 → US-10.2 → US-10.3 → US-10.4 → US-10.5 → US-10.6.
+Status: EPIC-10 completed; US-10.1–US-10.7 completed and verified.
+Order: US-10.1 → US-10.2 → US-10.3 → US-10.4 → US-10.5 → US-10.6 → US-10.7.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
@@ -89,7 +89,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-10.1-T7: Simplify or remove `UserResponseQueue`.
   - [x] US-10.1-T8: Add unit tests for both policies and `Agent.run()` with each.
 
-- [x] US-10.2 — Fix sub-agent tool authorization to respect permissions
+- [x] US-10.2 — Fix sub-agent tool authorization to respect permissions (parent-intersection detail superseded by US-10.7-T7)
   - [x] US-10.2-T1: Construct sub-agent with `AllowlistApprovalPolicy` using intersection of parent and sub-agent permissions.
   - [x] US-10.2-T2: Remove manual auto-approve loop from `sub_agent.py`.
   - [x] US-10.2-T3: Test sub-agent cannot use tools outside its profile allowlist.
@@ -123,7 +123,16 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-10.6-T4: Add query/retrieval interface for traces by parent message ID.
   - [x] US-10.6-T5: Tests for trace persistence, retrieval, and parent association.
 
+- [x] US-10.7 — Make delegated execution visible and verify it end to end
+  - [x] US-10.7-T1: Exercise and inspect the complete browser → WebSocket → parent agent → sub-agent → parent response path; fix dropped events, missing results, hangs, or misleading completion behavior.
+  - [x] US-10.7-T2: Add an accessible live sub-agent UI covering lifecycle, text/thinking progress, tool calls, completion, and errors.
+  - [x] US-10.7-T3: Add structured Python delegation logs with lifecycle, timing, event, and correlation data while excluding sensitive content.
+  - [x] US-10.7-T4: Add frontend unit/integration coverage for sub-agent WebSocket state and rendering, including nested and terminal states.
+  - [x] US-10.7-T5: Add Playwright delegation success and failure/timeout scenarios proving child progress and the final parent response.
+  - [x] US-10.7-T6: Run focused/full quality gates and document the verified event flow, diagnostics, and external-provider limitations.
+  - [x] US-10.7-T7: Use the active child profile allowlist instead of the parent/child intersection, warn that sub-agent tools run without approval, and add regression coverage (supersedes the US-10.2 intersection rule by user decision).
+
 ### Epic closure
 
-- [x] Verify all story acceptance criteria; request user completion confirmation.
-- [x] On confirmation, merge final branch, announce epic completion, propose next plan.
+- [x] Re-verify all story acceptance criteria; user confirmed completion.
+- [x] Merge the US-10.7 branch, announce epic completion, and propose the next plan.

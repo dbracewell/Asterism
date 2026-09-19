@@ -184,6 +184,64 @@ class TestSubAgentStreaming:
         # Event 3: COMPLETE
         assert intercepted_envelopes[2].event.type == AgentEventType.COMPLETE
         assert intercepted_envelopes[2].event.content == "Final child answer"
+        assert len({event.execution_id for event in intercepted_envelopes}) == 1
+
+    @pytest.mark.asyncio
+    async def test_sub_agent_forwards_start_and_error_as_terminal_diagnostics(
+        self, test_user, make_chat_session, caplog
+    ):
+        root_id = uuid.uuid4()
+        child_id = uuid.uuid4()
+        child_profile = _make_agent_profile(child_id, "FailingWorker")
+        session = make_chat_session(allowed_tools=["sub_agent"])
+        intercepted: list[SubAgentEventEnvelope] = []
+
+        async def capture_sink(envelope: SubAgentEventEnvelope) -> None:
+            intercepted.append(envelope)
+
+        ctx = ToolContext(
+            args=SubAgentArgs(agent_id=child_id, prompt="Sensitive task text"),
+            user=test_user,
+            user_message="Delegate task",
+            session=session,
+            app_settings=MagicMock(),
+            client=MagicMock(),
+            call_stack=[root_id],
+            event_sink=capture_sink,
+        )
+
+        async def fake_child_run(self_agent, messages):
+            yield AgentEvent(type=AgentEventType.START)
+            yield AgentEvent(
+                type=AgentEventType.ERROR,
+                content="Provider timed out",
+            )
+
+        with (
+            patch(
+                "asterism.domains.agent.service.get_agent_profile",
+                new=AsyncMock(return_value=child_profile),
+            ),
+            patch.object(Agent, "run", new=fake_child_run),
+            patch(
+                "asterism.domains.agent.service.create_sub_agent_trace",
+                new=AsyncMock(),
+            ),
+            caplog.at_level("DEBUG", logger="SUB_AGENT"),
+        ):
+            result = await sub_agent(ctx)
+
+        assert result == "Provider timed out"
+        assert [item.event.type for item in intercepted] == [
+            AgentEventType.START,
+            AgentEventType.ERROR,
+        ]
+        assert len({item.execution_id for item in intercepted}) == 1
+        assert "delegation requested" in caplog.text
+        assert "delegation started" in caplog.text
+        assert "delegation finished" in caplog.text
+        assert "status=error" in caplog.text
+        assert "Sensitive task text" not in caplog.text
 
     @pytest.mark.asyncio
     async def test_parent_agent_event_stream_includes_sub_agent_events(
@@ -427,6 +485,9 @@ class TestSubAgentStreaming:
             if isinstance(pkt, dict) and pkt.get("type") == "sub_agent"
         ]
         assert len(sub_agent_packets) == 1
+        assert sub_agent_packets[0]["execution_id"] == str(
+            envelope.execution_id
+        )
         assert sub_agent_packets[0]["sub_agent_id"] == str(sub_id)
         assert sub_agent_packets[0]["sub_agent_name"] == "SubWorker"
         assert sub_agent_packets[0]["depth"] == 1

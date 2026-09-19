@@ -2,7 +2,7 @@
 
 ## Status
 
-**Completed.** All user stories (US-10.1 through US-10.6) are implemented, tested, verified against quality gates, and merged into `main`.
+**Completed.** US-10.1 through US-10.7 are implemented, verified, user-confirmed, and merged into `main`.
 
 ## Goal
 
@@ -82,7 +82,6 @@ approval behavior explicit and testable.
 - Implementing `save_always_allow_preference` (separate story)
 - Multi-agent collaboration beyond parent→child delegation
 - Memory system integration (EPIC-6)
-- Frontend changes to sub-agent UX beyond receiving forwarded events
 - MCP server delegation to sub-agents
 
 ## User stories
@@ -114,6 +113,8 @@ without coupling to a specific approval mechanism.
 ---
 
 ### US-10.2 — Fix sub-agent tool authorization to respect permissions
+
+> **Superseded permission detail:** US-10.7-T7 replaces the parent/child intersection with the active child profile allowlist. The parent must be authorized to invoke `sub_agent`; delegated child tools then run autonomously according to the child's explicit profile assignments.
 
 **As a user**, I want sub-agents to respect the same tool restrictions as my
 primary agent so that delegated work cannot bypass my configured security
@@ -218,9 +219,40 @@ persisted to the database so that delegated work is auditable and debuggable.
 - Traces include the full message exchange, tool calls, results, and usage metrics.
 - Traces are queryable by parent message and sub-agent identity.
 
+---
+
+### US-10.7 — Make delegated execution visible and verify it end to end
+
+**As a user and developer**, I want live sub-agent progress in the chat and
+useful backend diagnostics so that slow or failed delegation is visible and
+troubleshootable rather than appearing to hang.
+
+**Dependencies:** US-10.1 through US-10.6.
+
+- [x] US-10.7-T1: Exercise and inspect the complete browser → WebSocket → parent agent → sub-agent → parent response path; identify and fix any dropped events, missing results, hangs, or misleading completion behavior.
+- [x] US-10.7-T2: Add a distinct, accessible chat UI for live sub-agent lifecycle, text/thinking progress, tool calls, completion, and errors without mixing child output into the parent answer.
+- [x] US-10.7-T3: Add structured Python debug/info logging around delegation start, authorization, child events, completion, failure, trace persistence, timing, and correlation identifiers without logging sensitive prompt contents.
+- [x] US-10.7-T4: Add frontend unit/integration coverage for sub-agent WebSocket state and rendering, including multiple/nested agents and terminal states.
+- [x] US-10.7-T5: Add Playwright end-to-end scenarios that drive a chat delegation stream and prove visible child progress, child completion, and the final parent response; include a failure/timeout diagnostic scenario.
+- [x] US-10.7-T6: Run focused and full quality gates, document the verified event flow and diagnostics, and record any external-provider limitations explicitly.
+- [x] US-10.7-T7: Replace the parent/child tool intersection with the active child profile allowlist so specialist sub-agents can use their assigned tools autonomously; add an Agent Profile warning and regression coverage. This explicitly supersedes US-10.2's parent-intersection rule by user decision.
+
+**Acceptance criteria**
+
+- The chat shows which sub-agent is active and updates its progress as events arrive.
+- Child text, thinking, tool activity, completion, and errors have clear terminal/non-terminal states and do not replace the parent response.
+- Backend logs make each delegation's lifecycle, duration, event flow, and failure point traceable by identifiers while avoiding raw prompt/content leakage.
+- A parent authorized to delegate can invoke a specialist child without duplicating the child's tools; the child can autonomously execute only its own active profile allowlist, and the profile editor warns users about that behavior.
+- Automated tests cover the real frontend event contract through Playwright and the backend delegation/event pipeline through integration tests.
+- The parent receives the child's final result and produces a visible final response without an indefinite wait.
+
+**Verification findings:** the backend emitted child packets, but the frontend parsed and then ignored `sub_agent` packets; child `START`/`ERROR` states and per-invocation correlation were absent; profile-load failures could fall into generic tool retries; the parent/child permission intersection silently removed specialist tools from delegated agents; some OpenAI-compatible providers returned tagged textual `<tool_call>` blocks instead of native tool-call deltas; and Playwright startup used unwritable/unmigrated default auth storage. These paths are fixed. Textual calls are converted into normal authorization-checked calls and removed from final assistant content. Deterministic backend integration tests verify child result return and parent synthesis, while browser E2E tests verify the WebSocket/UI contract. A live third-party model-provider smoke test still depends on the installation's configured credentials and provider availability.
+
+**Verification evidence:** `pnpm test` (59 backend, 24 frontend, 6 migration, and 28 configuration tests), `pnpm typecheck`, `pnpm lint` (one pre-existing frontend warning), `pnpm build`, and frontend Playwright (3 scenarios) pass. A live local integration using the configured `Searcher` profile and llama.cpp/Qwen model, with a parent allowed only `sub_agent`, successfully offered the child's five assigned tools, invoked `web_fetch` against the NWS Dallas endpoint, and returned the retrieved forecast URL.
+
 ## Execution plan and definition of done
 
-Recommended sequence: **US-10.1 → US-10.2 → US-10.3 → US-10.4 → US-10.5 → US-10.6**.
+Recommended sequence: **US-10.1 → US-10.2 → US-10.3 → US-10.4 → US-10.5 → US-10.6 → US-10.7**.
 
 US-10.1 is the foundation; all other stories depend on it. US-10.2 and US-10.3
 can proceed in parallel after US-10.1. US-10.4 depends on the approval refactor
