@@ -10,6 +10,7 @@ Migration = Callable[[AsyncConnection], Awaitable[None]]
 
 _MIGRATION_TABLE = "asterism_schema_migrations"
 _PROVIDER_CAPABILITIES_MIGRATION = "20250919_01_provider_types_capabilities"
+_USER_FILES_MIGRATION = "20260401_01_user_files"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -27,6 +28,33 @@ async def _add_column_if_missing(
         return
     await connection.execute(
         text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {definition}')
+    )
+
+
+async def _migrate_user_files(connection: AsyncConnection) -> None:
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS user_files ("
+            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+            "filename VARCHAR(255) NOT NULL, "
+            "original_name VARCHAR(255) NOT NULL, "
+            "size INTEGER NOT NULL, "
+            "mime_type VARCHAR(255) NOT NULL, "
+            "kind VARCHAR(16) NOT NULL CHECK (kind IN ('image', 'text', 'document', 'other')), "
+            "sha256 VARCHAR(64) NOT NULL, "
+            "content_status VARCHAR(16) NOT NULL DEFAULT 'pending' "
+            "CHECK (content_status IN ('pending', 'ready', 'unsupported', 'failed')), "
+            "content_error VARCHAR(512), content_cache TEXT, "
+            "id CHAR(32) NOT NULL PRIMARY KEY, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, "
+            "CONSTRAINT uq_user_files_user_filename UNIQUE (user_id, filename)"
+            ")"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_user_files_user_filename "
+            "ON user_files (user_id, filename)"
+        )
     )
 
 
@@ -80,6 +108,7 @@ async def _migrate_provider_types_and_capabilities(
 
 _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
+    (_USER_FILES_MIGRATION, _migrate_user_files),
 )
 
 

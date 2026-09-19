@@ -2,9 +2,10 @@ import filetype
 
 
 def get_file_mime_type(file_path) -> str:
-    kind = filetype.guess(file_path)
+    path = str(file_path)
+    kind = filetype.guess(path)
     if kind is None:
-        match file_path[-3:].lower():
+        match path[-3:].lower():
             case "png":
                 return "image/png"
             case "jpg":

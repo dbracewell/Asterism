@@ -21,6 +21,7 @@ dependencies = [
   "pydantic-settings>=2.15.0",
   "pyjwt[crypto]>=2.13.0",
   "pystemmer>=3.1.0",
+  "python-multipart>=0.0.20",
   "requests>=2.34.2",
   "scikit-learn>=1.9.0",
   "sqlalchemy[asyncio]>=2.0.50",
