@@ -156,6 +156,7 @@ export const ChatSession = ({
     onStreamComplete: (updatedMessages) => {
       setIncomingMessage(null);
       if (!updatedMessages.length) return;
+      setSubAgentActivities([]);
       queryClient.invalidateQueries({ queryKey });
       queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev) return;

@@ -34,7 +34,7 @@ export const SubAgentActivityPanel = ({
           key={activity.executionId}
           data-testid={`sub-agent-${activity.executionId}`}
           className={cn(
-            "bg-muted/60 border-border rounded-xl border px-3 py-2 text-sm",
+            "bg-muted/60 border-border overflow-auto rounded-xl border px-3 py-2 text-sm",
             activity.status === "error" && "border-destructive/60",
           )}
         >
@@ -88,10 +88,16 @@ export const SubAgentActivityPanel = ({
           )}
 
           {activity.content && (
-            <MarkdownViewer content={activity.content} className="mt-2" />
+            <MarkdownViewer
+              content={activity.content}
+              className="mt-2 text-sm"
+            />
           )}
           {activity.error && (
-            <p role="alert" className="text-destructive mt-2 whitespace-pre-wrap">
+            <p
+              role="alert"
+              className="text-destructive mt-2 whitespace-pre-wrap"
+            >
               {activity.error}
             </p>
           )}
