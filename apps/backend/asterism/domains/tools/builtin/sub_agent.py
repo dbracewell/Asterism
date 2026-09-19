@@ -19,12 +19,35 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     """
     Hands of work to a sub agent to perform.
     """
+    from asterism.core.config import config
     from asterism.domains.agent.approval import AllowlistApprovalPolicy
     from asterism.domains.agent.service import get_agent_profile
 
-    agent_profile = await get_agent_profile(ctx.user.id, ctx.args.agent_id)
+    target_id = ctx.args.agent_id
+
+    # 1. Cycle detection: check if target agent is already in the call stack
+    if target_id in ctx.call_stack:
+        chain = [str(aid) for aid in ctx.call_stack] + [str(target_id)]
+        chain_str = " -> ".join(chain)
+        return (
+            f"Recursion cycle detected: Agent '{target_id}' is already "
+            f"in the call chain ({chain_str}). Sub-agent call aborted."
+        )
+
+    # 2. Depth check: check if sub-agent depth exceeds maximum allowed
+    # Each entry in call_stack represents an agent in the chain from root.
+    # A chain length greater than max_sub_agent_depth exceeds the limit.
+    if len(ctx.call_stack) > config.max_sub_agent_depth:
+        chain_str = " -> ".join(str(aid) for aid in ctx.call_stack)
+        return (
+            f"Maximum sub-agent recursion depth of {config.max_sub_agent_depth} "
+            f"exceeded (call chain: {chain_str}). Sub-agent call aborted. "
+            f"Please decompose the task differently."
+        )
+
+    agent_profile = await get_agent_profile(ctx.user.id, target_id)
     if not agent_profile:
-        raise ValueError(f"Agent with id {ctx.args.agent_id} not found.")
+        raise ValueError(f"Agent with id {target_id} not found.")
 
     parent_tools = set(ctx.session.info.allowed_tools or [])
     sub_agent_profile_tools = set(agent_profile.tools or [])
@@ -32,12 +55,15 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
 
     sub_profile = agent_profile.model_copy(update={"tools": allowed_tools})
 
+    child_call_stack = [*ctx.call_stack, target_id]
+
     agent = Agent(
         profile=sub_profile,
         user=ctx.user,
         session=ctx.session,
         allowed_tools=allowed_tools,
         approval_policy=AllowlistApprovalPolicy(),
+        call_stack=child_call_stack,
     )
 
     last_response: AgentEvent = AgentEvent(type=AgentEventType.COMPLETE)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import uuid
 from logging import Logger
 from typing import AsyncGenerator
 
@@ -39,6 +40,7 @@ class Agent:
         logger: Logger | None = None,
         allowed_tools: list[str] | None = None,
         approval_policy: ToolApprovalPolicy | None = None,
+        call_stack: list[uuid.UUID] | None = None,
     ) -> None:
         self.profile = profile
         self.max_steps = profile.max_steps
@@ -54,6 +56,12 @@ class Agent:
         self._approval_policy: ToolApprovalPolicy = (
             approval_policy or AllowlistApprovalPolicy()
         )
+        if call_stack is not None:
+            self.call_stack = list(call_stack)
+        elif self.profile.id is not None:
+            self.call_stack = [self.profile.id]
+        else:
+            self.call_stack = []
 
     async def _get_client(self) -> LLMClientProtocol:
         async with self._client as (get, set):
@@ -91,6 +99,7 @@ class Agent:
                 session=self.session,
                 client=await self._get_client(),
                 user_message=user_message or "",
+                call_stack=self.call_stack,
             )
             for auth in auths
             if auth.accept

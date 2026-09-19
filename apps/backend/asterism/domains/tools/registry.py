@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import json
 import re
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Type, get_args
 
@@ -74,6 +75,7 @@ class ToolContext[T: BaseModel | None]:
     app_settings: ApplicationSettings
     client: LLMClientProtocol
     user_files: list[str] = field(default_factory=list)
+    call_stack: list[uuid.UUID] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -154,6 +156,7 @@ class ToolRegistry:
         user_message: str = "",
         user_files: list[str] = [],
         max_retries: int = 3,
+        call_stack: list[uuid.UUID] | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
 
@@ -180,6 +183,7 @@ class ToolRegistry:
                 user_files=user_files,
                 client=client,
                 app_settings=await settings_service.get_app_settings(),
+                call_stack=list(call_stack) if call_stack else [],
             )
 
             if llm_tool.is_async:
