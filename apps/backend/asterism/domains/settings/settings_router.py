@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import JsonValue
 
 import asterism.domains.settings.service as settings_service
@@ -6,6 +6,12 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
+from .discovery import (
+    OpenAIProviderDiscovery,
+    ProviderDiscoveryError,
+    ProviderDiscoveryRequest,
+    ProviderDiscoveryResponse,
+)
 from .schemas import (
     ApplicationSettings,
     BulkUpdateSettingRequest,
@@ -13,6 +19,8 @@ from .schemas import (
     UpdateSettingValue,
     UserSettings,
 )
+
+provider_discovery = OpenAIProviderDiscovery()
 
 settings_router = APIRouter(
     prefix="/settings",
@@ -95,6 +103,29 @@ async def bulk_update_user_settings(
 # ---------------------------------------------------------------------------
 # Application settings (admin only)
 # ---------------------------------------------------------------------------
+
+
+@settings_router.post(
+    "/app/providers/discover",
+    response_model=ProviderDiscoveryResponse,
+    operation_id="appProviderModelsDiscover",
+    summary="Discover provider models and capabilities",
+    responses={
+        502: {"description": "Provider discovery failed", "model": ErrorDetail},
+        504: {"description": "Provider discovery timed out", "model": ErrorDetail},
+    },
+)
+async def discover_provider_models(
+    request: ProviderDiscoveryRequest,
+    user: AdminUserDep,
+) -> ProviderDiscoveryResponse:
+    try:
+        return await provider_discovery.discover(request)
+    except ProviderDiscoveryError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=f"{exc.category}: {exc.detail}",
+        ) from exc
 
 
 @settings_router.get(

@@ -52,7 +52,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('21dc5ce7-ef2d-4321-ba91-64d1085fb13e')
+    id: z.uuid().optional().default('7e27a6ab-abaa-4d5c-870d-1c6e83bb990a')
 });
 
 /**
@@ -245,6 +245,15 @@ export const zPartialAgentProfile = z.object({
 });
 
 /**
+ * ProviderDiscoveryResponse
+ */
+export const zProviderDiscoveryResponse = z.object({
+    models: z.array(zLlm),
+    catalog_version: z.string().nullish(),
+    warnings: z.array(z.string()).optional()
+});
+
+/**
  * ProviderType
  */
 export const zProviderType = z.enum(['openai', 'generic_openai']);
@@ -270,6 +279,17 @@ export const zApplicationSettings = z.object({
     web_search_provider: zComponentProviderParameters.nullish(),
     image_search_provider: zComponentProviderParameters.nullish(),
     active_tools: z.array(z.string())
+});
+
+/**
+ * ProviderDiscoveryRequest
+ */
+export const zProviderDiscoveryRequest = z.object({
+    provider_type: zProviderType,
+    base_url: z.string().optional().default(''),
+    provider_id: z.uuid(),
+    existing_models: z.array(zLlm).optional(),
+    draft_model_id: z.uuid().nullish()
 });
 
 /**
@@ -403,6 +423,18 @@ export const zUserSettings = z.object({
     default_agent_id: z.uuid().nullish()
 });
 
+/**
+ * ProviderDiscoveryRequest
+ */
+export const zProviderDiscoveryRequestWritable = z.object({
+    provider_type: zProviderType,
+    base_url: z.string().optional().default(''),
+    api_key: z.string().min(1),
+    provider_id: z.uuid(),
+    existing_models: z.array(zLlm).optional(),
+    draft_model_id: z.uuid().nullish()
+});
+
 export const zGetFilePath = z.object({
     filename: z.string()
 });
@@ -524,6 +556,13 @@ export const zUserSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zUserSettingUpdateResponse = zSetting;
+
+export const zAppProviderModelsDiscoverBody = zProviderDiscoveryRequestWritable;
+
+/**
+ * Successful Response
+ */
+export const zAppProviderModelsDiscoverResponse = zProviderDiscoveryResponse;
 
 /**
  * Successful Response

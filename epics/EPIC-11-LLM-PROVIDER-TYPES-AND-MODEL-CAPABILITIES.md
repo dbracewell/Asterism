@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress.** US-11.1 is completed, verified, and user-confirmed; US-11.2 is next.
+**In progress.** US-11.1 and US-11.2 are completed, verified, and user-confirmed; US-11.3 is next.
 
 ## Goal
 
@@ -186,12 +186,12 @@ published capabilities so that setup requires less manual research and entry.
 
 **Dependencies:** US-11.1.
 
-- [ ] US-11.2-T1: Define an admin-only discovery request/response and backend provider-discovery interface, with typed results and safe error details.
-- [ ] US-11.2-T2: Implement OpenAI discovery using the canonical endpoint and a versioned backend capability catalog; leave uncatalogued fields unknown.
-- [ ] US-11.2-T3: Implement Generic OpenAI `/models` discovery and a conservative extractor for the documented context/vision metadata shapes.
-- [ ] US-11.2-T4: Add bounded timeouts/response handling, prevent cross-origin credential forwarding, and add structured redacted diagnostics.
-- [ ] US-11.2-T5: Implement merge semantics that preserve UUIDs, active state, draft selection, and manual per-field overrides while refreshing discovered values.
-- [ ] US-11.2-T6: Add unit/integration fixtures for OpenAI catalog matches, unknown OpenAI IDs, common generic response shapes, missing/conflicting metadata, auth/connectivity/timeout/malformed failures, and refresh preservation.
+- [x] US-11.2-T1: Define an admin-only discovery request/response and backend provider-discovery interface, with typed results and safe error details.
+- [x] US-11.2-T2: Implement OpenAI discovery using the canonical endpoint and a versioned backend capability catalog; leave uncatalogued fields unknown.
+- [x] US-11.2-T3: Implement Generic OpenAI `/models` discovery and a conservative extractor for the documented context/vision metadata shapes.
+- [x] US-11.2-T4: Add bounded timeouts/response handling, prevent cross-origin credential forwarding, and add structured redacted diagnostics.
+- [x] US-11.2-T5: Implement merge semantics that preserve UUIDs, active state, draft selection, and manual per-field overrides while refreshing discovered values.
+- [x] US-11.2-T6: Add unit/integration fixtures for OpenAI catalog matches, unknown OpenAI IDs, common generic response shapes, missing/conflicting metadata, auth/connectivity/timeout/malformed failures, and refresh preservation.
 
 **Acceptance criteria**
 
