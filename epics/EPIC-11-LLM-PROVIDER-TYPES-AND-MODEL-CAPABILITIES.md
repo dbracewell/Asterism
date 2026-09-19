@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress.** US-11.1 is implemented and verified; awaiting user confirmation.
+**In progress.** US-11.1 is completed, verified, and user-confirmed; US-11.2 is next.
 
 ## Goal
 

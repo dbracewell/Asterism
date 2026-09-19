@@ -140,13 +140,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-11 — LLM Provider Types and Model Capabilities
 
 Plan: [EPIC-11](epics/EPIC-11-LLM-PROVIDER-TYPES-AND-MODEL-CAPABILITIES.md).
-Status: US-11.1 implemented and verified; awaiting user confirmation.
+Status: US-11.1 completed and user-confirmed; US-11.2 is next.
 Order: US-11.1 → US-11.2 → US-11.3 → US-11.4.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
-- [~] US-11.1 — Persist provider types and model capability metadata (implemented and verified; awaiting user confirmation)
+- [x] US-11.1 — Persist provider types and model capability metadata (completed, verified, and user-confirmed)
   - [x] US-11.1-T1: Add the provider enum, canonical OpenAI URL policy, and backend normalization.
   - [x] US-11.1-T2: Extend persistence and API schemas with provider type, context window, tri-state vision, and per-field provenance.
   - [x] US-11.1-T3: Add a repeatable data-preserving migration that classifies existing providers and preserves references.
