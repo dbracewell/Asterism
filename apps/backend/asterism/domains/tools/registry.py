@@ -80,6 +80,7 @@ class ToolContext[T: BaseModel | None]:
     event_sink: (
         Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None
     ) = None
+    parent_message_id: uuid.UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -163,6 +164,7 @@ class ToolRegistry:
         call_stack: list[uuid.UUID] | None = None,
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
         | None = None,
+        parent_message_id: uuid.UUID | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
 
@@ -191,6 +193,7 @@ class ToolRegistry:
                 app_settings=await settings_service.get_app_settings(),
                 call_stack=list(call_stack) if call_stack else [],
                 event_sink=event_sink,
+                parent_message_id=parent_message_id,
             )
 
             if llm_tool.is_async:

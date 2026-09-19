@@ -1,4 +1,7 @@
-from asterism.domains.agent.models import AgentProfileModel  # noqa: F401
+from asterism.domains.agent.models import (  # noqa: F401
+    AgentProfileModel,
+    SubAgentTraceModel,
+)
 from asterism.domains.chat.models import ChatModel, MessageModel  # noqa: F401
 from asterism.domains.folders.models import FolderModel  # noqa: F401
 from asterism.domains.settings.models import (  # noqa: F401

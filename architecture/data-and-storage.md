@@ -52,6 +52,7 @@ erDiagram
     users ||--o{ folders : "organizes"
     users ||--o{ agent_profiles : "creates"
     users ||--o{ user_settings : "has"
+    users ||--o{ sub_agent_traces : "owns"
 
     folders ||--o{ folders : "parent_of"
     folders ||--o{ chats : "categorizes"
@@ -60,9 +61,11 @@ erDiagram
 
     messages ||--o| messages : "parent_of"
     messages ||--o| messages : "active_child"
+    messages ||--o{ sub_agent_traces : "triggers"
 
     providers ||--o{ models : "provides"
     models ||--o{ agent_profiles : "assigned_to"
+    agent_profiles ||--o{ sub_agent_traces : "executes"
 
     users {
         string id PK
@@ -145,6 +148,23 @@ erDiagram
         string name
         string description
         text content
+    }
+
+    sub_agent_traces {
+        uuid id PK
+        string user_id FK
+        uuid parent_message_id FK
+        uuid sub_agent_id FK
+        string sub_agent_name
+        text prompt
+        text caller_context
+        json messages
+        text result
+        int step_count
+        int total_tokens
+        int elapsed_ms
+        int depth
+        datetime created_at
     }
 ```
 

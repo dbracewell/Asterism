@@ -116,12 +116,12 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-10.5-T4: Forward `user_files` from parent `ToolContext`.
   - [x] US-10.5-T5: Tests for context forwarding and file accessibility.
 
-- [ ] US-10.6 — Persist sub-agent execution traces
-  - [ ] US-10.6-T1: Design storage schema for sub-agent traces.
-  - [ ] US-10.6-T2: Persist full sub-agent message history after completion.
-  - [ ] US-10.6-T3: Include token usage, step count, elapsed time in trace.
-  - [ ] US-10.6-T4: Add query/retrieval interface for traces by parent message ID.
-  - [ ] US-10.6-T5: Tests for trace persistence, retrieval, and parent association.
+- [x] US-10.6 — Persist sub-agent execution traces
+  - [x] US-10.6-T1: Design storage schema for sub-agent traces.
+  - [x] US-10.6-T2: Persist full sub-agent message history after completion.
+  - [x] US-10.6-T3: Include token usage, step count, elapsed time in trace.
+  - [x] US-10.6-T4: Add query/retrieval interface for traces by parent message ID.
+  - [x] US-10.6-T5: Tests for trace persistence, retrieval, and parent association.
 
 ### Epic closure
 

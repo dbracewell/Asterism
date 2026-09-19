@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from enum import StrEnum, auto
-from typing import Self
+from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -88,3 +88,37 @@ class AgentProfile(PartialAgentProfile):
 
 class UserAgents(BaseModel):
     agents: dict[uuid.UUID, AgentProfile]
+
+
+class SubAgentTrace(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: int
+    user_id: str
+    parent_message_id: uuid.UUID | None = None
+    sub_agent_id: uuid.UUID
+    sub_agent_name: str
+    prompt: str
+    caller_context: str | None = None
+    messages: list[dict[str, Any]] = Field(default_factory=list)
+    result: str | None = None
+    step_count: int = 0
+    total_tokens: int = 0
+    elapsed_ms: int = 0
+    depth: int = 0
+
+
+class SubAgentTraceCreate(BaseModel):
+    user_id: str
+    parent_message_id: uuid.UUID | None = None
+    sub_agent_id: uuid.UUID
+    sub_agent_name: str
+    prompt: str
+    caller_context: str | None = None
+    messages: list[dict[str, Any]] = Field(default_factory=list)
+    result: str | None = None
+    step_count: int = 0
+    total_tokens: int = 0
+    elapsed_ms: int = 0
+    depth: int = 0

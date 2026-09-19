@@ -206,11 +206,11 @@ persisted to the database so that delegated work is auditable and debuggable.
 
 **Dependencies:** US-10.4.
 
-- [ ] US-10.6-T1: Design a storage schema for sub-agent execution traces, linked to the parent message and the sub-agent profile. Consider: a `sub_agent_traces` table or nested message records under the parent message.
-- [ ] US-10.6-T2: After sub-agent completion, persist the full message history (system prompt, user prompt, assistant responses, tool calls/results) to the trace store.
-- [ ] US-10.6-T3: Include the sub-agent's token usage, step count, and elapsed time in the trace record.
-- [ ] US-10.6-T4: Add a query/retrieval interface for sub-agent traces by parent message ID.
-- [ ] US-10.6-T5: Add tests for trace persistence, retrieval, and association with parent messages.
+- [x] US-10.6-T1: Design a storage schema for sub-agent execution traces, linked to the parent message and the sub-agent profile. Consider: a `sub_agent_traces` table or nested message records under the parent message.
+- [x] US-10.6-T2: After sub-agent completion, persist the full message history (system prompt, user prompt, assistant responses, tool calls/results) to the trace store.
+- [x] US-10.6-T3: Include the sub-agent's token usage, step count, and elapsed time in the trace record.
+- [x] US-10.6-T4: Add a query/retrieval interface for sub-agent traces by parent message ID.
+- [x] US-10.6-T5: Add tests for trace persistence, retrieval, and association with parent messages.
 
 **Acceptance criteria**
 

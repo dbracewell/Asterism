@@ -50,6 +50,7 @@ class Agent:
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
         | None = None,
         user_files: list[str] | None = None,
+        parent_message_id: uuid.UUID | None = None,
     ) -> None:
         self.profile = profile
         self.max_steps = profile.max_steps
@@ -67,6 +68,8 @@ class Agent:
         )
         self.event_sink = event_sink
         self.user_files = list(user_files) if user_files else []
+        self.parent_message_id = parent_message_id
+        self.messages: list[LLMMessage] = []
         if call_stack is not None:
             self.call_stack = list(call_stack)
         elif self.profile.id is not None:
@@ -115,6 +118,7 @@ class Agent:
                 user_files=self.user_files,
                 call_stack=self.call_stack,
                 event_sink=event_sink,
+                parent_message_id=self.parent_message_id,
             )
             for auth in auths
             if auth.accept
@@ -174,6 +178,8 @@ class Agent:
         messages = list(messages)
         if not messages:
             messages = [LLMMessage.user("")]
+
+        self.messages = messages
 
         system_prompt = await self._build_system_prompt()
         if system_prompt:
