@@ -10,7 +10,7 @@ from asterism.domains.agent.service import (
 )
 from asterism.domains.chat.models import ChatModel
 from asterism.domains.chat.schemas import NewChatRequest
-from asterism.domains.chat.service import create_chat
+from asterism.domains.chat.service import create_chat, get_one
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.service import upsert_user_setting
 from asterism.domains.user.models import UserModel
@@ -71,6 +71,14 @@ async def test_chat_binds_default_or_explicit_owned_main_agent(chat_agent_sessio
 
     assert default_chat.info.agent_id == default.id
     assert override_chat.info.agent_id == override.id
+
+    await upsert_user_setting(
+        "user-a", "default_agent_id", str(override.id), chat_agent_session
+    )
+    persisted_default_chat = await get_one(
+        default_chat.info.id, "user-a", chat_agent_session
+    )
+    assert persisted_default_chat.info.agent_id == default.id
 
     with pytest.raises(BadDataException, match="assigned to an existing chat"):
         await delete_agent_profile("user-a", override.id, chat_agent_session)
