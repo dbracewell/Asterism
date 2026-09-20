@@ -238,6 +238,10 @@ export type ChatInfo = {
      * Folder Id
      */
     folder_id?: string | null;
+    /**
+     * Agent Id
+     */
+    agent_id?: string | null;
 };
 
 /**
@@ -600,6 +604,10 @@ export type NewChatRequest = {
      * User Prompt
      */
     user_prompt: string;
+    /**
+     * Agent Id
+     */
+    agent_id?: string | null;
     /**
      * Folder Id
      */

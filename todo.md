@@ -240,7 +240,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-13 — Main Agents and Chat Agent Selection
 
 Plan: [EPIC-13](epics/EPIC-13-MAIN-AGENTS-AND-CHAT-AGENT-SELECTION.md).
-Status: US-13.1 user-confirmed and merged. US-13.2 implemented and verified on `feat/us-13.2-chat-agent-binding`; awaiting user confirmation before merge.
+Status: Completed — US-13.1 through US-13.3 verified, user-confirmed, and merged.
 Order: US-13.1 → US-13.2 → US-13.3. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -251,21 +251,21 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-13.1-T4: Prevent deleting/converting the default main agent such that no valid global default or main agent remains.
   - [x] US-13.1-T5: Add backend/frontend tests; regenerate typed client if needed.
 
-- [x] US-13.2 — Bind a selected main agent to each chat session (implemented and verified; awaiting user confirmation)
+- [x] US-13.2 — Bind a selected main agent to each chat session (user-confirmed and merged)
   - [x] US-13.2-T1: Add nullable `agent_id` chat storage, schemas, and repeatable data-preserving migration/backfill.
   - [x] US-13.2-T2: Resolve optional create-chat `agent_id` to the default main agent; reject sub-agent, missing, and cross-user IDs.
   - [x] US-13.2-T3: Run websocket chats with the stored agent, not the mutable default; handle unassigned legacy chats safely.
   - [x] US-13.2-T4: Protect main agents assigned to chats from unsafe delete/conversion.
   - [x] US-13.2-T5: Add service/router/migration tests and regenerate the Hey API client.
 
-- [ ] US-13.3 — Let users select the main agent when starting a chat
-  - [ ] US-13.3-T1: Add an accessible main-agent selector to the new-chat composer, defaulted to the global default.
-  - [ ] US-13.3-T2: Send the selected ID through the generated create-chat client and display the selected chat agent where useful.
-  - [ ] US-13.3-T3: Handle no-main-agent, stale selection, and failure states explicitly.
-  - [ ] US-13.3-T4: Add frontend and Playwright coverage for default/override/exclusion/persistence behavior.
-  - [ ] US-13.3-T5: Run quality gates and document agent-selection and legacy-chat behavior.
+- [x] US-13.3 — Let users select the main agent when starting a chat (user-confirmed and merged)
+  - [x] US-13.3-T1: Add an accessible main-agent selector to the new-chat composer, defaulted to the global default.
+  - [x] US-13.3-T2: Send the selected ID through the generated create-chat client and display the selected chat agent where useful.
+  - [x] US-13.3-T3: Handle no-main-agent, stale selection, and failure states explicitly.
+  - [x] US-13.3-T4: Add frontend and Playwright coverage for default/override/exclusion/persistence behavior.
+  - [x] US-13.3-T5: Run quality gates and document agent-selection and legacy-chat behavior.
 
 ### Epic closure
 
-- [ ] Re-verify all story acceptance criteria; user confirms completion.
-- [ ] Merge the final story branch, announce epic completion, and propose the next plan.
+- [x] Re-verify all story acceptance criteria; user confirmed completion.
+- [x] Merge the final story branch, announce epic completion, and propose the next plan.

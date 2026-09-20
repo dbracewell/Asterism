@@ -1,8 +1,10 @@
 "use client";
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useUser } from "@/features/auth/components/user-context";
 import ChatInput from "@/features/chat/components/chat-input";
 import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
@@ -55,6 +57,7 @@ export const ChatSession = ({
   folderId?: string;
 }) => {
   const queryClient = useQueryClient();
+  const user = useUser();
   const {
     data: session,
     isLoading,
@@ -231,6 +234,8 @@ export const ChatSession = ({
     return <Spinner />;
   }
 
+  const chatAgent = user.settings.agents?.[session.info.agent_id ?? ""];
+
   return (
     <>
       <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
@@ -251,6 +256,11 @@ export const ChatSession = ({
             }
           }}
         >
+          {chatAgent && (
+            <Badge className="mb-3 w-fit" variant="secondary">
+              Agent: {chatAgent.name}
+            </Badge>
+          )}
           {session.messages.map((message) => (
             <MessageItem
               chatId={chatId}

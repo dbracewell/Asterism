@@ -72,7 +72,8 @@ export const zChatInfo = z.object({
     updated_at: z.int(),
     allowed_tools: z.array(z.string()).optional(),
     title: z.string().nullish(),
-    folder_id: z.uuid().nullish()
+    folder_id: z.uuid().nullish(),
+    agent_id: z.uuid().nullish()
 });
 
 /**
@@ -257,6 +258,7 @@ export const zLlmDisplayInfo = z.object({
  */
 export const zNewChatRequest = z.object({
     user_prompt: z.string(),
+    agent_id: z.uuid().nullish(),
     folder_id: z.uuid().nullish(),
     files: z.array(z.string()).optional()
 });

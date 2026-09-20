@@ -2,7 +2,7 @@
 
 ## Status
 
-**Awaiting user confirmation.** US-13.1 is merged. US-13.2 is implemented and verified on `feat/us-13.2-chat-agent-binding`.
+**Completed.** US-13.1 through US-13.3 are implemented, verified, user-confirmed, and merged.
 
 ## Goal
 
@@ -102,16 +102,16 @@ my global default.
 
 **Dependencies:** US-13.2.
 
-- [ ] US-13.3-T1: Add an accessible main-agent selector to the new-chat
+- [x] US-13.3-T1: Add an accessible main-agent selector to the new-chat
   composer; default it to the user's global default and exclude sub-agents.
-- [ ] US-13.3-T2: Send the selected ID through the generated create-chat client
+- [x] US-13.3-T2: Send the selected ID through the generated create-chat client
   and show the selected agent in the resulting chat view/history where useful.
-- [ ] US-13.3-T3: Handle no-main-agent, stale selection, and request-failure
+- [x] US-13.3-T3: Handle no-main-agent, stale selection, and request-failure
   states with actionable guidance and no silent fallback.
-- [ ] US-13.3-T4: Add frontend unit/integration coverage and a Playwright flow
+- [x] US-13.3-T4: Add frontend unit/integration coverage and a Playwright flow
   proving default selection, an override, sub-agent exclusion, and persistence
   across a global-default change.
-- [ ] US-13.3-T5: Run full quality gates and document the agent-selection and
+- [x] US-13.3-T5: Run full quality gates and document the agent-selection and
   legacy-chat behavior.
 
 **Acceptance criteria**
@@ -129,3 +129,9 @@ For each story, run relevant backend/frontend tests, lint, and type checks;
 regenerate the Hey API client after OpenAPI changes. Request user confirmation
 before merging each completed story. The epic completes only after all story
 acceptance criteria are met and confirmed by the user.
+
+## Completion
+
+US-13.1 through US-13.3 were user-confirmed and merged. Main and sub-agents
+are now distinct in settings; only main agents may be defaults or start chats;
+and each chat persists its selected main agent for its full lifetime.
