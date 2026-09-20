@@ -2,7 +2,7 @@
 
 ## Status
 
-**US-12.1–US-12.6 completed, verified, and user-confirmed.** US-12.7 is in progress.
+**US-12.1–US-12.7 completed, verified, and user-confirmed.** EPIC-12 is complete.
 
 ## Goal
 
