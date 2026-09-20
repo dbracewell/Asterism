@@ -21,6 +21,8 @@ export const AgentsSettings = () => {
     () => Object.values(user.settings.agents ?? []),
     [user],
   );
+  const mainAgents = agents.filter((agent) => !agent.sub_agent);
+  const subAgents = agents.filter((agent) => agent.sub_agent);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
@@ -32,19 +34,66 @@ export const AgentsSettings = () => {
         />
       </div>
 
-      <div className="flew-wrap flex flex-1 content-start items-start justify-start gap-2 overflow-y-auto">
-        {agents.map((agent) => (
-          <AgentCard
-            key={agent.id}
-            agent={agent}
-            editAgent={setEditingAgent}
-            canDelete={agents.length > 1}
-          />
-        ))}
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto">
+        <AgentSection
+          title="Main agents"
+          description="Use these agents directly in chats. Your global default is used for new chats unless you choose another main agent."
+          emptyMessage="Create a main agent to start chats."
+          agents={mainAgents}
+          editAgent={setEditingAgent}
+          canDelete={() => mainAgents.length > 1}
+        />
+        <AgentSection
+          title="Sub-agents"
+          description="These delegated workers are available only when a main agent invokes them."
+          emptyMessage="No sub-agents yet."
+          agents={subAgents}
+          editAgent={setEditingAgent}
+          canDelete={() => true}
+        />
       </div>
     </div>
   );
 };
+
+const AgentSection = ({
+  title,
+  description,
+  emptyMessage,
+  agents,
+  editAgent,
+  canDelete,
+}: {
+  title: string;
+  description: string;
+  emptyMessage: string;
+  agents: AgentProfile[];
+  editAgent: (profile: AgentProfile) => void;
+  canDelete: (agent: AgentProfile) => boolean;
+}) => (
+  <section aria-label={title} className="flex flex-col gap-2">
+    <div>
+      <h2 className="font-semibold">{title}</h2>
+      <p className="text-muted-foreground text-sm">{description}</p>
+    </div>
+    {agents.length === 0 ? (
+      <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+        {emptyMessage}
+      </p>
+    ) : (
+      <div className="flex flex-wrap gap-2">
+        {agents.map((agent) => (
+          <AgentCard
+            key={agent.id}
+            agent={agent}
+            editAgent={editAgent}
+            canDelete={canDelete(agent)}
+          />
+        ))}
+      </div>
+    )}
+  </section>
+);
 
 const AgentCard = ({
   agent,
@@ -56,7 +105,8 @@ const AgentCard = ({
   canDelete: boolean;
 }) => {
   const user = useUser();
-  const isDefaultAgent = user.settings.default_agent_id === agent.id;
+  const isDefaultAgent =
+    !agent.sub_agent && user.settings.default_agent_id === agent.id;
   const router = useRouter();
   const deleteAgent = useMutation({
     ...agentsDeleteAgentMutation({
@@ -90,24 +140,29 @@ const AgentCard = ({
           {agent.name}
         </h3>
         <div className="flex items-center gap-2">
-          {isDefaultAgent ? (
-            <Hint hint="Default agent">
-              <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md px-2">
+          {!agent.sub_agent && isDefaultAgent ? (
+            <Hint hint="Global default for new chats">
+              <div
+                aria-label="Global default for new chats"
+                className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md px-2"
+                role="img"
+              >
                 <BotIcon className="size-4 shrink-0" />
               </div>
             </Hint>
-          ) : (
-            <Hint asChild hint="Set as default agent">
+          ) : !agent.sub_agent ? (
+            <Hint asChild hint="Set as global default for new chats">
               <LoadingButton
                 variant="ghost"
                 size="sm"
+                aria-label="Set as global default for new chats"
                 isLoading={deleteAgent.isPending || isUpdatingUserSetting}
                 onClick={() => updateSetting("default_agent_id", agent.id)}
               >
                 <BotIcon />
               </LoadingButton>
             </Hint>
-          )}
+          ) : null}
           <Hint hint="Edit" asChild>
             <LoadingButton
               variant="outline"

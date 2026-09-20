@@ -10,8 +10,9 @@ from sqlalchemy.orm import joinedload, selectinload
 import asterism.domains.agent.service as agent_service
 from asterism.common.log import get_logger
 from asterism.core.events import EventType, NoArgEvent, event_bus
-from asterism.core.exceptions import NotFoundException
+from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
+from asterism.domains.agent.models import AgentProfileModel
 
 from .models import (
     ApplicationSettingsModel,
@@ -52,18 +53,23 @@ async def get_user_settings(
         result = await session.scalars(stmt)
         combined: dict[str, Any] = {row.key: row.value for row in result.all()}
 
+        # Settings are user-editable key/value rows. Normalize legacy or
+        # malformed defaults before validating the aggregate response.
+        user_agents = await agent_service.get_user_agents(
+            user_id=user_id,
+            session=session,
+        )
+        default_agent_id = _parse_default_agent_id(combined.get("default_agent_id"))
+        default_agent = user_agents.agents.get(default_agent_id)
+        if default_agent is None or default_agent.sub_agent:
+            combined.pop("default_agent_id", None)
+
         user_settings = UserSettings.model_validate(combined)
         user_settings.models = await get_user_models(
             user_id=user_id,
             session=session,
         )
-        user_agents = await agent_service.get_user_agents(
-            user_id=user_id,
-            session=session,
-        )
         user_settings.agents = user_agents.agents
-        if user_settings.default_agent_id not in user_agents.agents:
-            user_settings.default_agent_id = None
 
     # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings
@@ -75,6 +81,13 @@ async def bulk_upsert_user_settings(
     session: AsyncSession | None = None,
 ) -> UserSettings:
     async with get_async_db_session(session) as session:
+        if "default_agent_id" in updates:
+            await _validate_default_main_agent(
+                user_id,
+                updates["default_agent_id"],
+                session,
+            )
+
         for key, value in updates.items():
             if value is None:
                 stmt = delete(UserSettingModel).where(
@@ -119,6 +132,8 @@ async def upsert_user_setting(
         return Setting(key=key, value=value)
 
     async with get_async_db_session(session) as session:
+        if key == "default_agent_id":
+            await _validate_default_main_agent(user_id, value, session)
         stmt = (
             insert(UserSettingModel)
             .values(
@@ -155,6 +170,33 @@ async def delete_user_setting(
         await session.execute(stmt)
         await session.commit()
         # settings_cache.remove_user_setting(user_id)
+
+
+def _parse_default_agent_id(value: Any) -> uuid.UUID | None:
+    if isinstance(value, uuid.UUID):
+        return value
+    if not isinstance(value, str):
+        return None
+    try:
+        return uuid.UUID(value)
+    except ValueError:
+        return None
+
+
+async def _validate_default_main_agent(
+    user_id: str,
+    value: Any,
+    session: AsyncSession,
+) -> None:
+    agent_id = _parse_default_agent_id(value)
+    if agent_id is None:
+        raise BadDataException("default_agent_id must be a main agent UUID")
+
+    agent = await session.get(AgentProfileModel, agent_id)
+    if agent is None or agent.user_id != user_id:
+        raise BadDataException("default_agent_id must reference one of your main agents")
+    if agent.sub_agent:
+        raise BadDataException("A sub-agent cannot be the default agent")
 
 
 # ------------------------------------------------------------------

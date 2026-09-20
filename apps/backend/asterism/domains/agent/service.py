@@ -3,9 +3,14 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asterism.core.exceptions import NotFoundException, UnauthorizedException
+from asterism.core.exceptions import (
+    BadDataException,
+    NotFoundException,
+    UnauthorizedException,
+)
 from asterism.db.database import get_async_db_session
 from asterism.domains.settings import service as settings_service
+from asterism.domains.settings.models import UserSettingModel
 
 from .models import AgentProfileModel, SubAgentTraceModel
 from .schemas import (
@@ -17,8 +22,11 @@ from .schemas import (
 )
 
 
-async def _ensure_valid_tools(profile: AgentProfile):
-    app_settings = await settings_service.get_app_settings()
+async def _ensure_valid_tools(
+    profile: AgentProfile,
+    session: AsyncSession | None = None,
+) -> AgentProfile:
+    app_settings = await settings_service.get_app_settings(session=session)
     if profile.tools:
         profile.tools = [
             t for t in profile.tools if t in app_settings.active_tools
@@ -39,7 +47,8 @@ async def get_user_agents(
         agents_dict: dict[uuid.UUID, AgentProfile] = {}
         for r in results:
             agents_dict[r.id] = await _ensure_valid_tools(
-                AgentProfile.model_validate(r)
+                AgentProfile.model_validate(r),
+                session=session,
             )
 
         return UserAgents(agents=agents_dict)
@@ -56,7 +65,10 @@ async def get_agent_profile(
             raise NotFoundException(f"Agent with id {agent_id} not found")
         if user_id != result.user_id:
             raise UnauthorizedException()
-        return await _ensure_valid_tools(AgentProfile.model_validate(result))
+        return await _ensure_valid_tools(
+            AgentProfile.model_validate(result),
+            session=session,
+        )
 
 
 async def delete_agent_profile(
@@ -71,6 +83,8 @@ async def delete_agent_profile(
             raise NotFoundException(f"Agent with id {agent_id} not found")
         if user_id != result.user_id:
             raise UnauthorizedException()
+        if not result.sub_agent:
+            await _ensure_main_agent_can_be_removed(user_id, result.id, session)
         await session.delete(result)
         await session.commit()
         return AgentProfile.model_validate(result)
@@ -81,6 +95,11 @@ async def upsert_agent_profile(
     agent_profile: PartialAgentProfile,
     session: AsyncSession | None = None,
 ) -> AgentProfile:
+    # Interactive main agents must be able to delegate to configured workers.
+    # Keep this server-side so API clients cannot bypass the UI constraint.
+    if not agent_profile.sub_agent and "sub_agent" not in (agent_profile.tools or []):
+        agent_profile.tools = [*(agent_profile.tools or []), "sub_agent"]
+
     async with get_async_db_session(session) as session:
         if agent_profile.id:
             result = await session.get(AgentProfileModel, agent_profile.id)
@@ -90,6 +109,8 @@ async def upsert_agent_profile(
                 )
             if user_id != result.user_id:
                 raise UnauthorizedException()
+            if not result.sub_agent and agent_profile.sub_agent:
+                await _ensure_main_agent_can_be_removed(user_id, result.id, session)
             result.chat_parameters = agent_profile.chat_parameters
             result.description = agent_profile.description
             result.name = agent_profile.name
@@ -111,6 +132,38 @@ async def upsert_agent_profile(
             await session.refresh(result)
 
         return AgentProfile.model_validate(result)
+
+
+async def _ensure_main_agent_can_be_removed(
+    user_id: str,
+    agent_id: uuid.UUID,
+    session: AsyncSession,
+) -> None:
+    main_agent_ids = list(
+        await session.scalars(
+            select(AgentProfileModel.id).where(
+                AgentProfileModel.user_id == user_id,
+                AgentProfileModel.sub_agent.is_(False),
+            )
+        )
+    )
+    if len(main_agent_ids) <= 1:
+        raise BadDataException("A user must retain at least one main agent")
+
+    default_agent_id = await session.scalar(
+        select(UserSettingModel.value).where(
+            UserSettingModel.user_id == user_id,
+            UserSettingModel.key == "default_agent_id",
+        )
+    )
+    if str(default_agent_id) not in {str(id) for id in main_agent_ids}:
+        raise BadDataException(
+            "Select a valid default main agent before changing this agent"
+        )
+    if str(default_agent_id) == str(agent_id):
+        raise BadDataException(
+            "Select another default main agent before changing this agent"
+        )
 
 
 async def create_sub_agent_trace(
