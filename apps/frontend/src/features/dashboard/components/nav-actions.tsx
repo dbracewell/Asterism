@@ -25,9 +25,9 @@ export const NavActions = () => {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lgText" tooltip="Search">
-              <a href="/inbox">
+              <Link href="/search">
                 <SearchIcon /> <span>Search</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>

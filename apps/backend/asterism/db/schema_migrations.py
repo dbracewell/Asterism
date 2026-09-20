@@ -13,6 +13,7 @@ _PROVIDER_CAPABILITIES_MIGRATION = "20250919_01_provider_types_capabilities"
 _USER_FILES_MIGRATION = "20260401_01_user_files"
 _MESSAGE_FILES_MIGRATION = "20260401_02_message_files"
 _CHAT_AGENT_MIGRATION = "20260402_01_chat_agent"
+_CHAT_SEARCH_MIGRATION = "20260403_01_chat_search_fts"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -98,6 +99,78 @@ async def _migrate_chat_agent(connection: AsyncConnection) -> None:
     )
 
 
+async def _migrate_chat_search_fts(connection: AsyncConnection) -> None:
+    """Maintain user-scoped SQLite FTS indexes without indexing file metadata."""
+    await connection.execute(
+        text(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS chat_search USING fts5("
+            "chat_id UNINDEXED, user_id UNINDEXED, title, content)"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS folder_search USING fts5("
+            "folder_id UNINDEXED, user_id UNINDEXED, title)"
+        )
+    )
+    await connection.execute(text("DELETE FROM chat_search"))
+    await connection.execute(
+        text(
+            "INSERT INTO chat_search(chat_id, user_id, title, content) "
+            "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
+            "coalesce(group_concat(messages.content, ' '), '') "
+            "FROM chats LEFT JOIN messages ON messages.chat_id = chats.id "
+            "GROUP BY chats.id"
+        )
+    )
+    await connection.execute(text("DELETE FROM folder_search"))
+    await connection.execute(
+        text(
+            "INSERT INTO folder_search(folder_id, user_id, title) "
+            "SELECT id, user_id, title FROM folders"
+        )
+    )
+    for statement in (
+        "CREATE TRIGGER IF NOT EXISTS chat_search_chats_ai AFTER INSERT ON chats BEGIN "
+        "INSERT INTO chat_search(chat_id, user_id, title, content) "
+        "VALUES (new.id, new.user_id, coalesce(new.title, ''), ''); END",
+        "CREATE TRIGGER IF NOT EXISTS chat_search_chats_au AFTER UPDATE OF title ON chats BEGIN "
+        "DELETE FROM chat_search WHERE chat_id = new.id; "
+        "INSERT INTO chat_search(chat_id, user_id, title, content) "
+        "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
+        "coalesce(group_concat(messages.content, ' '), '') FROM chats "
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.id; END",
+        "CREATE TRIGGER IF NOT EXISTS chat_search_chats_ad AFTER DELETE ON chats BEGIN "
+        "DELETE FROM chat_search WHERE chat_id = old.id; END",
+        "CREATE TRIGGER IF NOT EXISTS chat_search_messages_ai AFTER INSERT ON messages BEGIN "
+        "DELETE FROM chat_search WHERE chat_id = new.chat_id; "
+        "INSERT INTO chat_search(chat_id, user_id, title, content) "
+        "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
+        "coalesce(group_concat(messages.content, ' '), '') FROM chats "
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.chat_id; END",
+        "CREATE TRIGGER IF NOT EXISTS chat_search_messages_au AFTER UPDATE OF content ON messages BEGIN "
+        "DELETE FROM chat_search WHERE chat_id = new.chat_id; "
+        "INSERT INTO chat_search(chat_id, user_id, title, content) "
+        "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
+        "coalesce(group_concat(messages.content, ' '), '') FROM chats "
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.chat_id; END",
+        "CREATE TRIGGER IF NOT EXISTS chat_search_messages_ad AFTER DELETE ON messages BEGIN "
+        "DELETE FROM chat_search WHERE chat_id = old.chat_id; "
+        "INSERT INTO chat_search(chat_id, user_id, title, content) "
+        "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
+        "coalesce(group_concat(messages.content, ' '), '') FROM chats "
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = old.chat_id; END",
+        "CREATE TRIGGER IF NOT EXISTS folder_search_ai AFTER INSERT ON folders BEGIN "
+        "INSERT INTO folder_search(folder_id, user_id, title) VALUES (new.id, new.user_id, new.title); END",
+        "CREATE TRIGGER IF NOT EXISTS folder_search_au AFTER UPDATE OF title ON folders BEGIN "
+        "DELETE FROM folder_search WHERE folder_id = new.id; "
+        "INSERT INTO folder_search(folder_id, user_id, title) VALUES (new.id, new.user_id, new.title); END",
+        "CREATE TRIGGER IF NOT EXISTS folder_search_ad AFTER DELETE ON folders BEGIN "
+        "DELETE FROM folder_search WHERE folder_id = old.id; END",
+    ):
+        await connection.execute(text(statement))
+
+
 async def _migrate_provider_types_and_capabilities(
     connection: AsyncConnection,
 ) -> None:
@@ -151,6 +224,7 @@ _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_USER_FILES_MIGRATION, _migrate_user_files),
     (_MESSAGE_FILES_MIGRATION, _migrate_message_files),
     (_CHAT_AGENT_MIGRATION, _migrate_chat_agent),
+    (_CHAT_SEARCH_MIGRATION, _migrate_chat_search_fts),
 )
 
 

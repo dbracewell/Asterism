@@ -745,6 +745,70 @@ export type ProviderDiscoveryResponse = {
 export type ProviderType = 'openai' | 'generic_openai';
 
 /**
+ * SearchMatchSource
+ */
+export type SearchMatchSource = 'title' | 'content' | 'folder_title';
+
+/**
+ * SearchResult
+ */
+export type SearchResult = {
+    kind: SearchResultKind;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Updated At
+     */
+    updated_at: number;
+    /**
+     * Folder Id
+     */
+    folder_id?: string | null;
+    match_source: SearchMatchSource;
+    /**
+     * Snippet
+     */
+    snippet?: string | null;
+    /**
+     * Path
+     */
+    path?: Array<string>;
+};
+
+/**
+ * SearchResultKind
+ */
+export type SearchResultKind = 'chat' | 'folder';
+
+/**
+ * SearchResultList
+ */
+export type SearchResultList = {
+    /**
+     * Results
+     */
+    results: Array<SearchResult>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
  * Setting
  */
 export type Setting = {
@@ -1355,6 +1419,48 @@ export type ChatSessionUpdateResponses = {
 };
 
 export type ChatSessionUpdateResponse = ChatSessionUpdateResponses[keyof ChatSessionUpdateResponses];
+
+export type ChatSearchData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Q
+         */
+        q: string;
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/chat/search';
+};
+
+export type ChatSearchErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatSearchError = ChatSearchErrors[keyof ChatSearchErrors];
+
+export type ChatSearchResponses = {
+    /**
+     * Successful Response
+     */
+    200: SearchResultList;
+};
+
+export type ChatSearchResponse = ChatSearchResponses[keyof ChatSearchResponses];
 
 export type MessageUpdateData = {
     body: UpdateMessageRequest;
