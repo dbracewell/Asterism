@@ -59,7 +59,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('5a76aa69-888b-4923-9243-06f43d926fd7')
+    id: z.uuid().optional().default('e6757cdb-03c5-42a1-8805-0a4152a9cfbc')
 });
 
 /**
@@ -213,7 +213,11 @@ export const zMessageFileReference = z.object({
 /**
  * MessageStatus
  */
-export const zMessageStatus = z.enum(['pending', 'completed']);
+export const zMessageStatus = z.enum([
+    'pending',
+    'completed',
+    'cancelled'
+]);
 
 /**
  * ModelCapabilitySource

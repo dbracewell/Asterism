@@ -311,6 +311,7 @@ export const ChatSession = ({
         <ChatInput
           disabled={isProcessing}
           status={connectionStatus}
+          onStop={() => sendJsonMessage({ type: "cancel" })}
           onLineNumberChange={(lines) => {
             if (!messageListRef.current) return;
             messageListRef.current.style.marginBottom = `${120 + 20 * lines}px`;
@@ -432,7 +433,8 @@ const MessageItem = React.memo(
         {message.role === "assistant" && message.status === "pending" && (
           <Loading />
         )}
-        {message.tool_calls == null && message.status === "completed" && (
+        {message.tool_calls == null &&
+          (message.status === "completed" || message.status === "cancelled") && (
           <div
             className={cn(
               "text-muted-foreground flex w-fit items-center gap-1 text-xs",
@@ -441,6 +443,7 @@ const MessageItem = React.memo(
           >
             {message.role !== "user" && (
               <span className="mr-1">
+                {message.status === "cancelled" && "Stopped · "}
                 {new Date(message.created_at * 1000).toLocaleString()}
               </span>
             )}

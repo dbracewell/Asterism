@@ -8,6 +8,7 @@ from asterism.common.log import get_logger
 from asterism.core.tasks import BackgroundTaskManager
 from asterism.domains.agent.schemas import AgentEventType
 from asterism.domains.chat.connection import Connection
+from asterism.domains.chat.jobs import ChatJob
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 
@@ -17,11 +18,12 @@ class ChatController:
         self,
         chat_id: uuid.UUID,
         connection: Connection,
-        orchestrator: ChatOrchestrator,
+        job: ChatJob,
     ):
         self.chat_id: uuid.UUID = chat_id
         self.connection: Connection = connection
-        self.orchestrator: ChatOrchestrator = orchestrator
+        self.job = job
+        self.orchestrator: ChatOrchestrator = job.orchestrator
         self.tasks: BackgroundTaskManager = BackgroundTaskManager()
         self.logger: Logger = get_logger(f"ChatSession({str(self.chat_id)})")
         self.inbound_commands: MessageQueue = asyncio.Queue()
@@ -41,15 +43,18 @@ class ChatController:
         self.tasks.spawn(self._status_loop())
         self.tasks.spawn(self._message_queue_processing_loop())
 
+        command_tasks: list[asyncio.Task[None]] = []
         try:
-            if self.queue.qsize() == 0:
-                task = asyncio.create_task(self.orchestrator.run_agent())
-                asyncio.shield(task)
+            # The generation task belongs to the chat job, not this socket.
+            # Disconnecting a browser must therefore only stop this controller.
+            if self.queue.qsize() == 0 and not self.job.is_active:
+                self.job.start(self.orchestrator.run_agent())
 
-            await asyncio.gather(
-                self._accept_commands_loop(),
-                self._process_commands_loop(),
-            )
+            command_tasks = [
+                asyncio.create_task(self._accept_commands_loop()),
+                asyncio.create_task(self._process_commands_loop()),
+            ]
+            await asyncio.gather(*command_tasks)
         except WebSocketDisconnect:
             self.logger.info("Chat stream disconnected")
         except asyncio.CancelledError:
@@ -62,11 +67,22 @@ class ChatController:
             )
         finally:
             self._is_running = False
+            # These are connection-owned receive/dispatch loops. Cancelling
+            # them cannot cancel a job because dispatch awaits it via shield.
+            for task in command_tasks:
+                if not task.done():
+                    task.cancel()
+            if command_tasks:
+                await asyncio.gather(*command_tasks, return_exceptions=True)
             await self.tasks.shutdown()
 
     async def _accept_commands_loop(self) -> None:
         while self._is_running:
             cmd = await self.connection.receive_json()
+            if cmd.get("type") == "cancel":
+                self.job.cancel()
+                continue
+
             if cmd.get("type") == "tool_approval":
                 tool_id = str(cmd.get("tool_id"))
                 is_approved = cmd.get("approved", False)
@@ -87,19 +103,22 @@ class ChatController:
             try:
                 match cmd.get("type"):
                     case "chat":
-                        current_job = asyncio.create_task(
+                        current_job = self.job.start(
                             self.orchestrator.handle_new_user_message(
                                 cmd.get("message", ""), cmd.get("files", [])
                             )
                         )
                     case "regenerate":
-                        current_job = asyncio.create_task(
+                        current_job = self.job.start(
                             self._regenerate(cmd.get("parent_message_id", ""))
                         )
                     case "ping":
-                        pass
+                        continue
+                    case _:
+                        continue
 
                 try:
+                    # Shield the job from cancellation when this socket exits.
                     await asyncio.shield(current_job)
                 except asyncio.CancelledError:
                     raise
@@ -153,7 +172,7 @@ class ChatController:
                 await self.connection.send_json(
                     {
                         "type": "status",
-                        "is_processing": self.orchestrator.is_active,
+                        "is_processing": self.job.is_active or self.orchestrator.is_active,
                     }
                 )
         except asyncio.CancelledError:

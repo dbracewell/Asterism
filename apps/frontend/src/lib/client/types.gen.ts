@@ -589,7 +589,7 @@ export type MessageFileReference = {
 /**
  * MessageStatus
  */
-export type MessageStatus = 'pending' | 'completed';
+export type MessageStatus = 'pending' | 'completed' | 'cancelled';
 
 /**
  * ModelCapabilitySource

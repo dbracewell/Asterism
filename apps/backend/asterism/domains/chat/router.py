@@ -12,6 +12,7 @@ from asterism.db.dependencies import DBSessionDep
 from asterism.domains.agent.agent import Agent
 from asterism.domains.chat.connection import WebSocketConnection
 from asterism.domains.chat.controller import ChatController
+from asterism.domains.chat.jobs import chat_jobs
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.user.dependencies import AuthedUserDep
 
@@ -68,10 +69,11 @@ async def chat(
         allowed_tools=chat_session.info.allowed_tools,
     )
 
+    job = chat_jobs.get_or_create(chat_id, ChatOrchestrator(agent))
     controller = ChatController(
         chat_id=chat_id,
         connection=WebSocketConnection(websocket=websocket),
-        orchestrator=ChatOrchestrator(agent),
+        job=job,
     )
 
     await controller.run()

@@ -9,6 +9,7 @@ import {
   IconArrowUp,
   IconCirclePlus,
   IconPaperclip,
+  IconPlayerStop,
   IconPlus,
   IconX,
 } from "@tabler/icons-react";
@@ -42,12 +43,14 @@ const ChatInput = React.memo(
     disabled = false,
     placeholder = "",
     onLineNumberChange,
+    onStop,
   }: {
     onSubmit?: ({ prompt, files }: { prompt: string; files: string[] }) => void;
     disabled?: boolean;
     status?: ConnectionStatus;
     placeholder?: string;
     onLineNumberChange?: (lines: number) => void;
+    onStop?: () => void;
   }) => {
     const [prompt, setPrompt] = useState("");
     const [isDragOver, setIsDragOver] = useState(false);
@@ -276,15 +279,28 @@ const ChatInput = React.memo(
                   {status}
                 </div>
 
-                <Button
-                  aria-label="Send message"
-                  className={cn("shrink-0 rounded-xl", !canSubmit && "hidden")}
-                  disabled={!canSubmit}
-                  size="icon"
-                  type="submit"
-                >
-                  <IconArrowUp size={16} />
-                </Button>
+                {disabled && onStop ? (
+                  <Button
+                    aria-label="Stop generating"
+                    className="shrink-0 rounded-xl"
+                    onClick={onStop}
+                    size="icon"
+                    type="button"
+                    variant="destructive"
+                  >
+                    <IconPlayerStop size={16} />
+                  </Button>
+                ) : (
+                  <Button
+                    aria-label="Send message"
+                    className={cn("shrink-0 rounded-xl", !canSubmit && "hidden")}
+                    disabled={!canSubmit}
+                    size="icon"
+                    type="submit"
+                  >
+                    <IconArrowUp size={16} />
+                  </Button>
+                )}
               </div>
             </div>
             <div

@@ -55,6 +55,9 @@ class ChatOrchestrator:
         self.logger: Logger = get_logger(f"ChatSession({str(self.chat.info.id)})")
         self.is_processing_messages: bool = False
         self.pending_approvals: dict[str, asyncio.Future] = {}
+        self._active_parent_id: uuid.UUID | None = None
+        self._streaming_content = ""
+        self._streaming_thinking = ""
 
         # Inject interactive approval into the agent so tool
         # authorization flows through the WebSocket UI.
@@ -131,6 +134,53 @@ class ChatOrchestrator:
                     )
                 )
             return resolved
+
+    async def cancel_active_generation(self) -> None:
+        """Finalize the active user turn so reconnecting never re-runs it."""
+        parent_id = self._active_parent_id
+        if parent_id is None:
+            return
+
+        parent_index = index_of(self.chat.messages, lambda message: message.id == parent_id)
+
+        # Retain useful streamed output rather than silently discarding it.
+        if self._streaming_content or self._streaming_thinking:
+            partial = await chat_service.add_message(
+                user_id=self.user_id,
+                chat_id=self.chat_id,
+                message=NewMessageRequest(
+                    role="assistant",
+                    content=self._streaming_content,
+                    thinking=self._streaming_thinking,
+                    status=MessageStatus.CANCELLED,
+                    token_count=0,
+                    parent_message_id=parent_id,
+                    model_id=self.agent.profile.model_id,  # type: ignore
+                ),
+            )
+            self.chat.messages.append(partial)
+
+        # add_message marks its parent complete when it attaches a child, so
+        # write the terminal user-visible cancellation state last.
+        parent = await chat_service.update_message(
+            user_id=self.user_id,
+            chat_id=self.chat_id,
+            message_id=parent_id,
+            payload=UpdateMessageRequest(status=MessageStatus.CANCELLED),
+        )
+        if parent_index >= 0:
+            self.chat.messages[parent_index] = parent
+
+        await self.queue.put(
+            {
+                "type": AgentEventType.COMPLETE.value,
+                "last_messages": [
+                    message.model_dump(mode="json")
+                    for message in self.chat.messages[parent_index:]
+                ],
+            }
+        )
+        self._active_parent_id = None
 
     def find_message(self, message_id: str) -> tuple[int, Message]:
         message_index: int = index_of(
@@ -329,6 +379,9 @@ class ChatOrchestrator:
             parent_message_index = last_user_message_index
             parent_message = self.chat.messages[parent_message_index]
             self.agent.parent_message_id = parent_message.id
+            self._active_parent_id = parent_message.id
+            self._streaming_content = ""
+            self._streaming_thinking = ""
 
             messages = await self._build_agent_messages()
 
@@ -379,11 +432,20 @@ class ChatOrchestrator:
                                 }
                             )
 
+                    case AgentEvent(type=AgentEventType.DELTA):
+                        self._streaming_content = event.content
+                        self._streaming_thinking = event.thinking
+                        await self.queue.put(event.model_dump())
+
                     case _:
                         await self.queue.put(event.model_dump())
 
+        except asyncio.CancelledError:
+            await self.cancel_active_generation()
+            raise
         except Exception as e:
             self.logger.error(f"Error processing messages: {e}", stack_info=True)
             await self.queue.put({"type": AgentEventType.ERROR.value, "content": str(e)})
         finally:
+            self._active_parent_id = None
             self.is_processing_messages = False
