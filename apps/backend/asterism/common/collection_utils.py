@@ -1,4 +1,5 @@
-from typing import Callable, Sequence
+from collections.abc import Iterator, Sequence
+from typing import Callable
 
 
 def search[T](
@@ -6,7 +7,7 @@ def search[T](
     match: Callable[[T], bool],
     reverse: bool = False,
 ) -> T | None:
-    seq = items if not reverse else reversed(items)
+    seq: Sequence[T] | Iterator[T] = items if not reverse else reversed[T](items)
     return next((item for item in seq if match(item)), None)
 
 
@@ -15,9 +16,9 @@ def index_of[T](
     match: Callable[[T], bool],
     reverse: bool = False,
 ) -> int:
-    start = 0
-    stop = len(items)
-    step = 1
+    start: int = 0
+    stop: int = len(items)
+    step: int = 1
     if reverse:
         start = len(items) - 1
         stop = -1

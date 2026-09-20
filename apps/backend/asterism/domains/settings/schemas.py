@@ -74,7 +74,7 @@ class ProviderInfo(BaseModel):
 
 
 class LlmWithProvider(Llm):
-    model_config = ConfigDict(from_attributes=True)
+    model_config: ConfigDict = ConfigDict(from_attributes=True)
     provider: ProviderInfo
 
 

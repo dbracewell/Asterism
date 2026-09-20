@@ -12,8 +12,7 @@
   "files.readonlyInclude": {
     "**/routeTree.gen.ts": true
   },
-  "python.defaultInterpreterPath": "${workspaceFolder}/apps/backend/.venv/bin/python",
-  "python.terminal.activateEnvironment": true,
+  "basedpyright.analysis.configFilePath": "${workspaceFolder}/apps/backend/pyproject.toml",
   "cSpell.words": ["dotenv", "sessionmaker", "sessionmanager", "zoomable"],
   "python-envs.pythonProjects": [
     {

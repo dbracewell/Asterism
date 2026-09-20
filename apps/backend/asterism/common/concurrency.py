@@ -1,6 +1,7 @@
 import asyncio
+from collections.abc import Coroutine
 from threading import Lock
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable
 
 from asterism.common.log import DEFAULT_LOGGER
 
@@ -17,7 +18,7 @@ async def safe_async_call[T](
         return e
 
 
-async def suppress_exceptions(coro: Callable[..., Coroutine], *args):
+async def suppress_exceptions(coro: Callable[..., Coroutine[Any, Any, Any]], *args):
     try:
         return await coro(*args)
     except Exception as e:

@@ -60,25 +60,56 @@ class ConfigValidationError(RuntimeError):
 
 class Config(BaseSettings):
     system_key: str = Field(default_factory=lambda: _file_secret("SYSTEM_KEY"))
+    """System key used for signing JWTs and other internal secrets (value redacted)."""
+
     max_chars_for_retrieval: int = 50000
+    """The maximum number of characters to retrieve from a document for context."""
+
     max_upload_file_size_bytes: int = 100 * 1024 * 1024
+    """The maximum size of a file that can be uploaded (in bytes)."""
+
     max_process_file_size_bytes: int = 100 * 1024 * 1024
+    """The maximum size of a file that can be processed (in bytes)."""
+
     max_converted_chars: int = 100_000
+    """The maximum number of characters that can be converted from a file."""
+
     file_conversion_timeout_s: int = 60
+    """The maximum time (in seconds) to wait for a file conversion to complete."""
+
     max_vision_image_bytes: int = 10 * 1024 * 1024
+    """The maximum size of an image that can be processed for vision tasks (in bytes)."""
+
     public_url: str = "http://localhost:3000"
+    """The public URL of the Asterism frontend, used for JWT issuer and audience."""
+
     cors_allowed_origins: list[str] | None = None
+    """List of allowed origins for CORS. If None, defaults to [public_url]."""
+
     storage_root: Path = Path("/storage")
+    """The root directory for storing files and other data."""
+
     db_url: str | None = None
+    """The database URL. If None, defaults to a SQLite database in storage_root."""
+
     default_allowed_tools: list[str] = Field(default_factory=default_allowed_tools)
+    """List of default allowed tools for agents."""
+
     max_sub_agent_depth: int = 3
+    """The maximum depth of sub-agent calls to prevent infinite recursion."""
+
     sub_agent_context_window_messages: int = 10
+    """The maximum number of messages to include in the context window for sub-agents."""
+
     sub_agent_context_window_tokens: int = 4000
+    """The maximum number of tokens to include in the context window for sub-agents."""
+
     config_profile: str = Field(
         default_factory=lambda: "production" if os.environ.get("NODE_ENV") == "production" else "development",
         validation_alias="ASTERISM_CONFIG_PROFILE",
         exclude=True,
     )
+    """The configuration profile, which can be one of the following: development, production, backend-init, reset, auth-migrate, build, test, codegen."""  # noqa: E501
 
     model_config = SettingsConfigDict(extra="ignore", populate_by_name=True)
 
