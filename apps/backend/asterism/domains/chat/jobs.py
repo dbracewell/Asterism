@@ -18,6 +18,7 @@ from asterism.domains.chat.orchestrator import ChatOrchestrator
 class ChatJob:
     orchestrator: ChatOrchestrator
     task: asyncio.Task[None] | None = None
+    title_task: asyncio.Task[None] | None = None
 
     @property
     def is_active(self) -> bool:
@@ -38,6 +39,11 @@ class ChatJob:
 
         self.task = asyncio.create_task(run())
         return self.task
+
+    def start_title_generation(self) -> asyncio.Task[None]:
+        if self.title_task is None:
+            self.title_task = asyncio.create_task(self.orchestrator.generate_chat_title())
+        return self.title_task
 
     def cancel(self) -> bool:
         if not self.is_active:
