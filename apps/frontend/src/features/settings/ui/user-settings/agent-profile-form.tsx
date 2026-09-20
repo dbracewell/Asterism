@@ -432,26 +432,6 @@ export function AgentProfileForm({
                       );
                     }}
                   />
-                  <Label htmlFor="thinking_budgent">
-                    Thinking Budget Tokens
-                  </Label>
-                  <Input
-                    id="thinking_budgent"
-                    type="number"
-                    value={field.value.max_tokens ?? ""}
-                    onChange={(e) => {
-                      form.setValue(
-                        "chatParameters.thinking_budget_tokens",
-                        isFinite(e.target.valueAsNumber)
-                          ? e.target.valueAsNumber
-                          : undefined,
-                        {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        },
-                      );
-                    }}
-                  />
                   <Label htmlFor="frequency_penalty">Frequency Penalty</Label>
                   <Input
                     id="frequency_penalty"

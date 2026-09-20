@@ -28,6 +28,13 @@ class FolderList(BaseModel):
     folders: list[Folder]
 
 
+class FolderChatList(BaseModel):
+    chats: list[ChatInfo]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+
+
 class NewFolderRequest(BaseModel):
     title: str
     parent_id: uuid.UUID | None = Field(default=None)

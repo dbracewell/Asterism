@@ -57,8 +57,7 @@ export const zChatCompletionParams = z.object({
     top_logprobs: z.int().optional(),
     extra_headers: z.record(z.string(), z.string()).optional(),
     extra_query: z.record(z.string(), z.unknown()).optional(),
-    timeout: z.number().nullish(),
-    thinking_budget_tokens: z.int().optional()
+    timeout: z.number().nullish()
 });
 
 /**
@@ -73,7 +72,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('ffca6cb8-ffb0-4d5b-9854-285e8bb273d1')
+    id: z.uuid().optional().default('b1f6380a-62ed-487c-ba6c-05ae33383ab6')
 });
 
 /**
@@ -87,7 +86,9 @@ export const zChatInfo = z.object({
     allowed_tools: z.array(z.string()).optional(),
     title: z.string().nullish(),
     folder_id: z.uuid().nullish(),
-    agent_id: z.uuid().nullish()
+    agent_id: z.uuid().nullish(),
+    preview: z.string().nullish(),
+    message_count: z.int().nullish()
 });
 
 /**
@@ -186,6 +187,16 @@ export const zFolder = z.object({
     parent_id: z.uuid().nullable(),
     sessions: z.array(zChatInfo).optional(),
     children: z.array(z.lazy((): any => zFolder)).optional()
+});
+
+/**
+ * FolderChatList
+ */
+export const zFolderChatList = z.object({
+    chats: z.array(zChatInfo),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1)
 });
 
 /**
@@ -677,6 +688,20 @@ export const zFolderCreateBody = zNewFolderRequest;
  * Successful Response
  */
 export const zFolderCreateResponse = zFolder;
+
+export const zFolderChatGetManyPath = z.object({
+    folder_id: z.uuid()
+});
+
+export const zFolderChatGetManyQuery = z.object({
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(20)
+});
+
+/**
+ * Successful Response
+ */
+export const zFolderChatGetManyResponse = zFolderChatList;
 
 export const zFolderDeletePath = z.object({
     folder_id: z.string()

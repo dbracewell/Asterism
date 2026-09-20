@@ -1,3 +1,4 @@
+import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +24,7 @@ import { useMutation } from "@tanstack/react-query";
 import Cookie from "js-cookie";
 import { EllipsisIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ export const FolderView = ({
   const hasChildren = folder.children && folder.children.length > 0;
   const hasSessions = folder.sessions && folder.sessions.length > 0;
   const pathName = usePathname();
+  const folderSelected = pathName.endsWith(`/folders/${folder.id}`);
 
   useEffect(() => {
     setSessions(folder.sessions);
@@ -165,18 +167,30 @@ export const FolderView = ({
           ) : (
             <div className="h-px w-3 pr-2" />
           )}
-          <div className="group/folder hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-1 items-center justify-between gap-1 rounded border-dashed pr-1.5 pl-1">
+          <div
+            className={cn(
+              "group/folder hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-1 items-center justify-between gap-1 rounded border-dashed pr-1.5 pl-1",
+              folderSelected &&
+                "bg-sidebar-accent text-sidebar-accent-foreground",
+            )}
+          >
             <button
-              onClick={() => toggleFolder()}
-              className="flex h-7 flex-1 items-center gap-1 truncate text-sm"
+              aria-label={`${foldersOpen.has(folder.id) ? "Collapse" : "Expand"} ${folder.title}`}
+              className={"flex size-7 shrink-0 items-center justify-center"}
+              onClick={toggleFolder}
             >
               {foldersOpen.has(folder.id) ? (
-                <IconFolderOpen className="size-4 shrink-0" />
+                <IconFolderOpen className="size-4" />
               ) : (
-                <IconFolder className="size-4 shrink-0" />
+                <IconFolder className="size-4" />
               )}
-              <span className="truncate">{folder.title}</span>
             </button>
+            <Link
+              className="flex h-7 min-w-0 flex-1 items-center truncate text-sm"
+              href={`/folders/${folder.id}`}
+            >
+              <span className="truncate">{folder.title}</span>
+            </Link>
             <FolderDropDown
               folderId={folder.id}
               addSubFolder={addSubFolder}
@@ -255,11 +269,19 @@ const FolderDropDown = ({
   addSubFolder: () => void;
   openFolder: (folder_id: string) => void;
 }) => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { confirm, Dialog } = useConfirmationDialog({
+    title: "Delete folder?",
+    description: "This permanently deletes the folder and its chats.",
+    confirmVariant: "destructive",
+  });
   const deleteFolder = useMutation({
     ...folderDeleteMutation({
       client: client,
     }),
     onSuccess: async (data) => {
+      if (pathname === `/folders/${folderId}`) router.push("/");
       toast.success(`Successfully deleted "${data.title}" folder`);
     },
     onError: (error) => {
@@ -288,6 +310,11 @@ const FolderDropDown = ({
           <IconFolderPlus /> New Folder
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link href={`/folders/${folderId}`}>
+            <IconFolderOpen /> Open folder
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link
             href={`/?folder_id=${folderId}`}
             onClick={() => openFolder(folderId)}
@@ -297,17 +324,20 @@ const FolderDropDown = ({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() =>
-            deleteFolder.mutate({
-              path: {
-                folder_id: folderId,
-              },
-            })
-          }
+          onClick={async () => {
+            if (await confirm()) {
+              deleteFolder.mutate({
+                path: {
+                  folder_id: folderId,
+                },
+              });
+            }
+          }}
         >
           <IconTrash /> Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
+      <Dialog />
     </DropdownMenu>
   );
 };

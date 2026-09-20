@@ -41,7 +41,12 @@ class DraftModel:
             messages=messages,
             **kwargs,
         )
-        return event.content or str(event.exception)
+        # A normal completion can legitimately have no visible text (for
+        # example, if a provider spends its generation budget on reasoning).
+        # Do not stringify its absent exception as the literal title "None".
+        if event.content:
+            return event.content
+        return str(event.exception) if event.exception else ""
 
 
 _draft_model: Atomic[DraftModel | None] = Atomic(None)

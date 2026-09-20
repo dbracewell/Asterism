@@ -1,8 +1,19 @@
 import json
 
 import pytest
-from asterism.domains.llm.client import StreamHandler, extract_text_tool_calls
-from asterism.domains.llm.schemas import LLMEventType
+from asterism.domains.llm.client import LLMClient, StreamHandler, extract_text_tool_calls
+from asterism.domains.llm.schemas import LLMEventType, LLMMessage
+
+
+def test_legacy_thinking_budget_is_not_sent_to_the_provider():
+    client = LLMClient(model_name="model", api_key="key", base_url="http://example.test")
+
+    completion_args = client._prepare_completion_params(
+        messages=[LLMMessage.user("Hello")],
+        thinking_budget_tokens=10,  # type: ignore[call-arg]
+    )
+
+    assert "thinking_budget_tokens" not in completion_args
 
 
 def test_extracts_multiple_textual_tool_calls_from_provider_output():

@@ -217,7 +217,10 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
 
 
 @pytest.mark.asyncio
-async def test_title_generation_falls_back_after_empty_provider_output(monkeypatch):
+@pytest.mark.parametrize("provider_output", [" \n ", "None", "null", "N/A"])
+async def test_title_generation_falls_back_after_invalid_provider_output(
+    monkeypatch, provider_output
+):
     chat = Chat(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
         messages=[
@@ -240,7 +243,7 @@ async def test_title_generation_falls_back_after_empty_provider_output(monkeypat
         async def invoke(self, **_kwargs):
             nonlocal invoked
             invoked += 1
-            return " \n "
+            return provider_output
 
     async def save(title: str):
         saved.append(title)

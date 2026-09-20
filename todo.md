@@ -273,7 +273,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-15 — Chat Organization and Generation Control
 
 Plan: [EPIC-15](epics/EPIC-15-CHAT-ORGANIZATION-AND-GENERATION-CONTROL.md).
-Status: US-15.1, US-15.2, and US-15.6 completed and merged; US-15.3 in progress.
+Status: US-15.1, US-15.2, US-15.6, and US-15.3 completed and merged; US-15.4 in progress.
 Order: US-15.1 → US-15.2 → US-15.6 → US-15.3 → US-15.4 → US-15.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -296,12 +296,16 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-15.6-T3: Persist and publish the final title reliably; prevent background failures from leaving a title permanently null.
   - [x] US-15.6-T4: Add tests for disconnect continuation, empty/invalid provider output, provider failure, duplicate connections, title persistence, and search/sidebar updates.
 
-- [~] US-15.3 — Select and safely delete chats from the sidebar
+- [x] US-15.3 — Select and safely delete chats from the sidebar (user-confirmed and merged)
   - [x] US-15.3-T1: Add sidebar selection mode, selected count, select-visible, and accessible keyboard controls.
   - [x] US-15.3-T2: Add atomic bulk deletion with strict ownership validation and coherent cache invalidation.
   - [x] US-15.3-T3: Require confirmation for single and bulk chat deletion; handle Escape/backdrop cancellation correctly.
   - [x] US-15.3-T4: Test confirmation, active-route navigation, partial failure, cache updates, and bulk ownership checks.
-- [ ] US-15.4 — Browse and start chats from a folder page
+- [x] US-15.4 — Browse and start chats from a folder page (user-confirmed and merged)
+  - [x] US-15.4-T1: Add an ownership-safe folder route and paginated direct-chat listing API.
+  - [x] US-15.4-T2: Render session cards with title, updated time, agent, message count, and deterministic conversation preview.
+  - [x] US-15.4-T3: Add a folder-scoped composer that starts a chat in that folder and routes to it.
+  - [x] US-15.4-T4: Test pagination, empty states, ownership, navigation, and folder assignment.
 - [ ] US-15.5 — Show estimated chat context consumption
 
 ### Epic closure

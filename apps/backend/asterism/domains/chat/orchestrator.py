@@ -174,10 +174,7 @@ class ChatOrchestrator:
         await self.queue.put(
             {
                 "type": AgentEventType.COMPLETE.value,
-                "last_messages": [
-                    message.model_dump(mode="json")
-                    for message in self.chat.messages[parent_index:]
-                ],
+                "last_messages": [message.model_dump(mode="json") for message in self.chat.messages[parent_index:]],
             }
         )
         self._active_parent_id = None
@@ -231,14 +228,32 @@ class ChatOrchestrator:
             )
         )
 
+    @staticmethod
+    def _validated_title(candidate: str) -> str:
+        title = " ".join(candidate.strip().strip('"').split())[:120]
+        # Some providers return a serialized null instead of a title. Treat it
+        # as invalid so the bounded retry sequence reaches the useful fallback.
+        if title.casefold().strip(" .!?;:'\"") in {
+            "",
+            "n/a",
+            "na",
+            "no title",
+            "none",
+            "null",
+            "undefined",
+            "untitled",
+        }:
+            return ""
+        return title
+
     async def generate_chat_title(self) -> None:
-        if not is_none_or_empty(self.chat.info.title) and self.chat.info.title != "New Chat":
+        if not is_none_or_empty(self.chat.info.title):
             return
 
         title = ""
         try:
             draft_model = get_draft_model()
-            for max_tokens in (15, 20, 25):
+            for _ in range(3):
                 try:
                     async with asyncio.timeout(15):
                         candidate = await draft_model.invoke(
@@ -252,10 +267,8 @@ no prefixes, and no trailing punctuation. Do not answer the user's request.
 User Prompt: {self._fallback_title()}""",
                                 ),
                             ],
-                            max_tokens=max_tokens,
-                            thinking_budget_tokens=5,
                         )
-                    title = " ".join(candidate.strip().strip('"').split())[:120]
+                    title = self._validated_title(candidate)
                     if title:
                         break
                 except Exception as error:

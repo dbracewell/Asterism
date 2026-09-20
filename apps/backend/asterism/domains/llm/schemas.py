@@ -46,9 +46,6 @@ class ChatCompletionParams(TypedDict):
     extra_query: NotRequired[dict[str, Any]]
     timeout: NotRequired[float | None]
 
-    # Extra body args
-    thinking_budget_tokens: NotRequired[int]
-
 
 class DraftModel(BaseModel):
     repo_id: str
