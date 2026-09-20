@@ -29,6 +29,12 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         index=True,
         nullable=True,
     )
+    agent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        "agent_id",
+        ForeignKey("agent_profiles.id", ondelete="RESTRICT"),
+        index=True,
+        nullable=True,
+    )
     title: Mapped[Optional[str]] = mapped_column(
         "title",
         String,

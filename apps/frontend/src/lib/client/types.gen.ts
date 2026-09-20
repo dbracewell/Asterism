@@ -956,14 +956,22 @@ export type UserFile = {
  * UserFileList
  */
 export type UserFileList = {
-    /** Files */
+    /**
+     * Files
+     */
     files: Array<UserFile>;
-    /** Total */
-    total: number;
-    /** Page */
-    page: number;
-    /** Page Size */
-    page_size: number;
+    /**
+     * Total
+     */
+    total?: number;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
 };
 
 /**
@@ -1029,7 +1037,13 @@ export type FileGetManyData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Page
+         */
         page?: number;
+        /**
+         * Page Size
+         */
         page_size?: number;
     };
     url: '/files/';
@@ -1044,6 +1058,10 @@ export type FileGetManyErrors = {
      * Not found
      */
     404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
 };
 
 export type FileGetManyError = FileGetManyErrors[keyof FileGetManyErrors];

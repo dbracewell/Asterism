@@ -9,8 +9,10 @@ from asterism.core.exceptions import (
     UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
+from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.service import ensure_file_processed
+from asterism.domains.settings.service import get_user_settings
 
 from .models import (
     ChatModel,
@@ -99,6 +101,11 @@ async def create_chat(
         raise BadDataException("Attached files must not be repeated")
 
     async with get_async_db_session(session) as session:
+        agent_id = await _resolve_main_agent_id(
+            user_id=user_id,
+            requested_agent_id=payload.agent_id,
+            session=session,
+        )
         files: list[MessageFileReference] = []
         if payload.files:
             records = list(
@@ -127,6 +134,7 @@ async def create_chat(
 
         new_session = ChatModel(
             user_id=user_id,
+            agent_id=agent_id,
             folder_id=payload.folder_id,
         )
         session.add(new_session)
@@ -151,6 +159,28 @@ async def create_chat(
             info=ChatInfo.model_validate(new_session),
             messages=[Message.model_validate(new_message)],
         )
+
+
+async def _resolve_main_agent_id(
+    user_id: str,
+    requested_agent_id: uuid.UUID | None,
+    session: AsyncSession,
+) -> uuid.UUID:
+    if requested_agent_id is None:
+        settings = await get_user_settings(user_id=user_id, session=session)
+        requested_agent_id = settings.default_agent_id
+
+    if requested_agent_id is None:
+        raise BadDataException("Select a default main agent before starting a chat")
+
+    agent = await get_agent_profile(
+        user_id=user_id,
+        agent_id=requested_agent_id,
+        session=session,
+    )
+    if agent.sub_agent:
+        raise BadDataException("A chat must use a main agent, not a sub-agent")
+    return agent.id
 
 
 async def update_chat(

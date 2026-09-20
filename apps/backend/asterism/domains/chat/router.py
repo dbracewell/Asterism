@@ -2,8 +2,8 @@ import uuid
 
 from fastapi import APIRouter, Query, WebSocket
 
+import asterism.domains.agent.service as agent_service
 import asterism.domains.chat.service as chat_service
-import asterism.domains.settings.service as settings_service
 from asterism.common.log import get_logger
 from asterism.core.exceptions import UnauthorizedException
 from asterism.core.schemas import ErrorDetail
@@ -44,17 +44,24 @@ async def chat(
         await websocket.close(code=1008, reason="Unauthorized")
         return
 
-    user_settings = await settings_service.get_user_settings(
-        user_id=user.id,
-        session=session,
-    )
     chat_session = await chat_service.get_one(
         chat_id=chat_id,
         user_id=user.id,
         session=session,
     )
+    if chat_session.info.agent_id is None:
+        await websocket.close(
+            code=1008,
+            reason="This legacy chat has no assigned main agent",
+        )
+        return
+
     agent: Agent = Agent(
-        profile=user_settings.default_agent_profile,
+        profile=await agent_service.get_agent_profile(
+            user_id=user.id,
+            agent_id=chat_session.info.agent_id,
+            session=session,
+        ),
         user=user,
         session=chat_session,
         logger=get_logger(f"ChatSession({str(chat_id)})"),

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Awaiting user confirmation.** US-13.1 is implemented and verified on `feat/us-13.1-main-sub-agent-settings`.
+**Awaiting user confirmation.** US-13.1 is merged. US-13.2 is implemented and verified on `feat/us-13.2-chat-agent-binding`.
 
 ## Goal
 
@@ -72,17 +72,17 @@ ongoing conversation.
 
 **Dependencies:** US-13.1.
 
-- [ ] US-13.2-T1: Add nullable `agent_id` ownership-safe chat storage, schemas,
+- [x] US-13.2-T1: Add nullable `agent_id` ownership-safe chat storage, schemas,
   and a repeatable data-preserving SQLite migration/backfill.
-- [ ] US-13.2-T2: Extend chat creation to accept an optional main-agent ID,
+- [x] US-13.2-T2: Extend chat creation to accept an optional main-agent ID,
   resolve omitted values to the user's default main agent, and reject sub-agent,
   missing, or cross-user IDs.
-- [ ] US-13.2-T3: Construct the websocket runtime agent from the chat's stored
+- [x] US-13.2-T3: Construct the websocket runtime agent from the chat's stored
   agent ID, not the current global default; return a user-safe error for legacy
   unassigned chats.
-- [ ] US-13.2-T4: Prevent deletion/conversion of a main agent that is assigned
+- [x] US-13.2-T4: Prevent deletion/conversion of a main agent that is assigned
   to a chat (or define an explicit safe reassignment flow if required).
-- [ ] US-13.2-T5: Add service/router/migration regression tests and regenerate
+- [x] US-13.2-T5: Add service/router/migration regression tests and regenerate
   the Hey API client.
 
 **Acceptance criteria**

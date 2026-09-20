@@ -59,7 +59,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('8e74db0b-3376-419c-8f1d-73060dd8a94d')
+    id: z.uuid().optional().default('5a76aa69-888b-4923-9243-06f43d926fd7')
 });
 
 /**
@@ -472,7 +472,10 @@ export const zUserFile = z.object({
  * UserFileList
  */
 export const zUserFileList = z.object({
-    files: z.array(zUserFile)
+    files: z.array(zUserFile),
+    total: z.int().gte(0).optional().default(0),
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).optional().default(50)
 });
 
 /**
@@ -497,6 +500,11 @@ export const zProviderDiscoveryRequestWritable = z.object({
     provider_id: z.uuid(),
     existing_models: z.array(zLlm).optional(),
     draft_model_id: z.uuid().nullish()
+});
+
+export const zFileGetManyQuery = z.object({
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(50)
 });
 
 /**

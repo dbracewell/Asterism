@@ -9,6 +9,7 @@ from asterism.core.exceptions import (
     UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
+from asterism.domains.chat.models import ChatModel
 from asterism.domains.settings import service as settings_service
 from asterism.domains.settings.models import UserSettingModel
 
@@ -139,6 +140,17 @@ async def _ensure_main_agent_can_be_removed(
     agent_id: uuid.UUID,
     session: AsyncSession,
 ) -> None:
+    assigned_chat_id = await session.scalar(
+        select(ChatModel.id).where(
+            ChatModel.user_id == user_id,
+            ChatModel.agent_id == agent_id,
+        ).limit(1)
+    )
+    if assigned_chat_id is not None:
+        raise BadDataException(
+            "This main agent is assigned to an existing chat and cannot be changed"
+        )
+
     main_agent_ids = list(
         await session.scalars(
             select(AgentProfileModel.id).where(
