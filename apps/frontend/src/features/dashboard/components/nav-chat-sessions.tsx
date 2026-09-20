@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -7,7 +8,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
 import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
@@ -68,7 +68,8 @@ export const NavChatSessions = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { confirm, Dialog } = useConfirmationDialog({
     title: `Delete ${selectedIds.size} chat${selectedIds.size === 1 ? "" : "s"}?`,
-    description: "This permanently deletes the selected chats and their messages.",
+    description:
+      "This permanently deletes the selected chats and their messages.",
     confirmVariant: "destructive",
   });
   const bulkDelete = useMutation({
@@ -78,11 +79,17 @@ export const NavChatSessions = ({
       if (deleted.has(pathname.split("/").at(-1) ?? "")) router.push("/");
       setSelectedIds(new Set());
       setSelectionMode(false);
-      await queryClient.invalidateQueries({ queryKey: chatSessionGetManyQueryKey() });
-      toast.success(`Deleted ${result.deleted_chat_ids.length} chat${result.deleted_chat_ids.length === 1 ? "" : "s"}`);
+      await queryClient.invalidateQueries({
+        queryKey: chatSessionGetManyQueryKey(),
+      });
+      toast.success(
+        `Deleted ${result.deleted_chat_ids.length} chat${result.deleted_chat_ids.length === 1 ? "" : "s"}`,
+      );
     },
     onError: (mutationError) =>
-      toast.error(mutationError.detail ?? "Unable to delete the selected chats."),
+      toast.error(
+        mutationError.detail ?? "Unable to delete the selected chats.",
+      ),
   });
   const toggleSelection = (chatId: string, checked: boolean) => {
     setSelectedIds((previous) => {
@@ -119,6 +126,13 @@ export const NavChatSessions = ({
       label="Chats"
       defaultIsOpen={defaultIsOpen}
       onMenuActionClick={() => router.push("/")}
+      onSecondaryMenuActionClick={() => {
+        setSelectionMode((active) => !active);
+        setSelectedIds(new Set());
+      }}
+      secondaryMenuActionLabel={
+        selectionMode ? "Exit chat selection" : "Select chats"
+      }
       cookieName={SESSIONS_OPEN_COOKIE}
       className="flex-1"
     >
@@ -128,9 +142,16 @@ export const NavChatSessions = ({
             <label className="flex items-center gap-2 text-xs">
               <Checkbox
                 aria-label="Select all visible chats"
-                checked={data.chats.length > 0 && selectedIds.size === data.chats.length}
+                checked={
+                  data.chats.length > 0 &&
+                  selectedIds.size === data.chats.length
+                }
                 onCheckedChange={(checked) =>
-                  setSelectedIds(checked ? new Set(data.chats.map((chat) => chat.id)) : new Set())
+                  setSelectedIds(
+                    checked
+                      ? new Set(data.chats.map((chat) => chat.id))
+                      : new Set(),
+                  )
                 }
               />
               {selectedIds.size} selected
@@ -149,23 +170,9 @@ export const NavChatSessions = ({
               >
                 <IconTrash />
               </Button>
-              <Button
-                onClick={() => {
-                  setSelectionMode(false);
-                  setSelectedIds(new Set());
-                }}
-                size="sm"
-                variant="ghost"
-              >
-                Cancel
-              </Button>
             </div>
           </>
-        ) : (
-          <Button onClick={() => setSelectionMode(true)} size="sm" variant="ghost">
-            Select
-          </Button>
-        )}
+        ) : null}
       </div>
       <SidebarMenu className="min-h-0 w-full gap-0.5 select-none">
         {data.chats?.map((session, index) => (
@@ -181,7 +188,9 @@ export const NavChatSessions = ({
                 aria-label={`Select ${session.title ?? "untitled chat"}`}
                 checked={selectedIds.has(session.id)}
                 className="ml-2"
-                onCheckedChange={(checked) => toggleSelection(session.id, checked === true)}
+                onCheckedChange={(checked) =>
+                  toggleSelection(session.id, checked === true)
+                }
               />
             )}
             <SidebarMenuButton

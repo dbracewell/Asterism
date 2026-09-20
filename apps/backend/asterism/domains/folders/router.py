@@ -1,13 +1,13 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 import asterism.domains.folders.service as folder_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from .schemas import Folder, FolderList, GetFolderRequest, NewFolderRequest
+from .schemas import Folder, FolderChatList, FolderList, GetFolderRequest, NewFolderRequest
 
 folder_router = APIRouter(
     prefix="/folders",
@@ -44,6 +44,27 @@ async def list_folders(
 ) -> FolderList:
     return await folder_service.list_folders(
         user.id,
+        session=db,
+    )
+
+
+@folder_router.get(
+    "/{folder_id}/chats",
+    response_model=FolderChatList,
+    operation_id="folderChatGetMany",
+)
+async def list_folder_chats(
+    folder_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+) -> FolderChatList:
+    return await folder_service.list_folder_chats(
+        user_id=user.id,
+        folder_id=folder_id,
+        page=page,
+        page_size=page_size,
         session=db,
     )
 

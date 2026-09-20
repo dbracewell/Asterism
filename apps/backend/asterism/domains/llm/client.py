@@ -269,7 +269,7 @@ class LLMClient(LLMClientProtocol):
         tools: list[str] | None = None,
         response_model: Type[T] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    ) -> dict[str, Any]:
 
         completion_args: dict[str, Any] = {
             "model": self.model_name,
@@ -280,9 +280,9 @@ class LLMClient(LLMClientProtocol):
         if "seed" not in completion_args:
             completion_args["seed"] = int(time.time())
 
-        extrabody_args = {}
-        if "thinking_budget_tokens" in completion_args:
-            extrabody_args["thinking_budget_tokens"] = completion_args.pop("thinking_budget_tokens")
+        # Profiles persisted before removal of the provider-specific thinking
+        # budget may still include it. Do not forward an unsupported argument.
+        completion_args.pop("thinking_budget_tokens", None)
 
         if response_model:
 
@@ -311,7 +311,7 @@ class LLMClient(LLMClientProtocol):
 
         msg_copy = messages.copy()
         completion_args["messages"] = format_messages_for_model(msg_copy)
-        return completion_args, extrabody_args
+        return completion_args
 
     async def generate[T: BaseModel](
         self,
@@ -345,7 +345,7 @@ class LLMClient(LLMClientProtocol):
         if len(messages) == 0:
             return
 
-        completion_args, extrabody_args = self._prepare_completion_params(
+        completion_args = self._prepare_completion_params(
             messages=messages,
             response_model=response_model,
             tools=tools,
@@ -365,7 +365,6 @@ class LLMClient(LLMClientProtocol):
                 stream=True,
                 stream_options={"include_usage": True},
                 **kwargs,
-                extra_body=extrabody_args,
             )
             async for chunk in response:
                 yield chunk

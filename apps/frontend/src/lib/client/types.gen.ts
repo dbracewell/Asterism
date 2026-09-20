@@ -220,10 +220,6 @@ export type ChatCompletionParams = {
      * Timeout
      */
     timeout?: number | null;
-    /**
-     * Thinking Budget Tokens
-     */
-    thinking_budget_tokens?: number;
 };
 
 /**
@@ -262,6 +258,14 @@ export type ChatInfo = {
      * Agent Id
      */
     agent_id?: string | null;
+    /**
+     * Preview
+     */
+    preview?: string | null;
+    /**
+     * Message Count
+     */
+    message_count?: number | null;
 };
 
 /**
@@ -415,6 +419,28 @@ export type Folder = {
      * Children
      */
     children?: Array<Folder>;
+};
+
+/**
+ * FolderChatList
+ */
+export type FolderChatList = {
+    /**
+     * Chats
+     */
+    chats: Array<ChatInfo>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
 };
 
 /**
@@ -1602,6 +1628,49 @@ export type FolderCreateResponses = {
 };
 
 export type FolderCreateResponse = FolderCreateResponses[keyof FolderCreateResponses];
+
+export type FolderChatGetManyData = {
+    body?: never;
+    path: {
+        /**
+         * Folder Id
+         */
+        folder_id: string;
+    };
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/folders/{folder_id}/chats';
+};
+
+export type FolderChatGetManyErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FolderChatGetManyError = FolderChatGetManyErrors[keyof FolderChatGetManyErrors];
+
+export type FolderChatGetManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: FolderChatList;
+};
+
+export type FolderChatGetManyResponse = FolderChatGetManyResponses[keyof FolderChatGetManyResponses];
 
 export type FolderDeleteData = {
     body?: never;

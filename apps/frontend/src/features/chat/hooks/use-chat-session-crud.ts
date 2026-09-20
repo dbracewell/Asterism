@@ -18,7 +18,13 @@ export const useChatSessionCrud = () => {
     ...chatSessionCreateMutation({
       client: client,
     }),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // The sidebar query is already mounted when a new chat is created.
+      // Refresh it before navigating so the subsequent title-update event has
+      // a cache entry to update rather than being discarded.
+      await queryClient.invalidateQueries({
+        queryKey: chatSessionGetManyQueryKey(),
+      });
       router.push(`/c/${data.info.id}`);
     },
     onError: () =>

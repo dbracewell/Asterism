@@ -79,6 +79,8 @@ class ChatInfo(BaseModel):
     title: str | None = Field(default=None)
     folder_id: uuid.UUID | None = Field(default=None)
     agent_id: uuid.UUID | None = Field(default=None)
+    preview: str | None = Field(default=None)
+    message_count: int | None = Field(default=None)
 
 
 class ChatInfoList(BaseModel):

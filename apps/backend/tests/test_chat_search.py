@@ -7,6 +7,7 @@ from asterism.domains.chat.models import ChatModel, MessageModel
 from asterism.domains.chat.schemas import MessageStatus, SearchMatchSource, SearchResultKind
 from asterism.domains.chat.service import search
 from asterism.domains.folders.models import FolderModel
+from asterism.domains.folders.service import list_folder_chats
 from asterism.domains.user.models import UserModel
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -61,6 +62,27 @@ async def test_search_finds_titles_content_and_containing_folders(search_session
     assert content_result.match_source is SearchMatchSource.CONTENT
     assert "ocean" in (content_result.snippet or "").casefold()
     assert content_result.path == ["Research", "Papers"]
+
+
+@pytest.mark.asyncio
+async def test_folder_chat_list_is_paginated_and_user_scoped(search_session):
+    folder = FolderModel(user_id="user-a", title="Work")
+    other_folder = FolderModel(user_id="user-b", title="Private")
+    search_session.add_all([folder, other_folder])
+    await search_session.flush()
+    search_session.add_all(
+        [
+            ChatModel(user_id="user-a", title="One", folder_id=folder.id),
+            ChatModel(user_id="user-a", title="Two", folder_id=folder.id),
+            ChatModel(user_id="user-b", title="Hidden", folder_id=other_folder.id),
+        ]
+    )
+    await search_session.commit()
+
+    result = await list_folder_chats("user-a", folder.id, 1, 1, search_session)
+
+    assert result.total == 2
+    assert len(result.chats) == 1
 
 
 @pytest.mark.asyncio

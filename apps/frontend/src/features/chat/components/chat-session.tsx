@@ -104,10 +104,21 @@ export const ChatSession = ({
 
   useSubscribeEvent({
     type: "chat-session:update",
-    handler: async (payload) => {
-      if (payload.session_id === chatId && payload.title) {
-        setSession({ id: payload.session_id, title: payload.title });
-      }
+    handler: (payload) => {
+      if (payload.session_id !== chatId || !payload.title) return;
+
+      // Keep the source query synchronized as well as the header store.
+      // Otherwise a later refetch can replace the just-received title with
+      // the stale null value returned when the chat was first created.
+      queryClient.setQueryData(queryKey, (previous?: Chat) =>
+        previous
+          ? {
+              ...previous,
+              info: { ...previous.info, title: payload.title },
+            }
+          : previous,
+      );
+      setSession({ id: payload.session_id, title: payload.title });
     },
   });
 
