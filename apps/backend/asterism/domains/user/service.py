@@ -82,10 +82,21 @@ async def initialize_user_settings(
     if user_settings.default_model_id and user_settings.default_agent_id:
         return
 
-    # User does not have a default agent, but does have agents defined
-    # go ahead and return
-    if user_settings.default_agent_id is None and len(user_settings.agents) > 0:
-        return
+    # Repair legacy or stale defaults using an existing main agent. Sub-agents
+    # are delegated workers and can never be a user's interactive default.
+    if user_settings.default_agent_id is None and user_settings.agents:
+        main_agent = next(
+            (agent for agent in user_settings.agents.values() if not agent.sub_agent),
+            None,
+        )
+        if main_agent is not None:
+            await settings_service.upsert_user_setting(
+                user_id=user_id,
+                key="default_agent_id",
+                value=str(main_agent.id),
+                session=session,
+            )
+            return
 
     app_settings = await settings_service.get_app_settings(session=session)
 

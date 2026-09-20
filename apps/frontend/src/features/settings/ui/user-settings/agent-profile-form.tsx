@@ -1,12 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Controller,
-  useFieldArray,
-  useForm,
-  useWatch,
-} from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { HelpIcon } from "@/components/help-icon";
@@ -26,8 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/features/auth/components/user-context";
-import { SubAgentToolWarning } from "@/features/settings/ui/user-settings/sub-agent-tool-warning";
 import { agentProfile } from "@/features/settings/schemas";
+import { SubAgentToolWarning } from "@/features/settings/ui/user-settings/sub-agent-tool-warning";
 import { client } from "@/lib/api";
 import { AgentProfile } from "@/lib/client";
 import {
@@ -146,7 +141,13 @@ export function AgentProfileForm({
         name: data.name,
         max_steps: data.maxSteps,
         system_prompt: data.systemPrompt,
-        tools: data.tools.map((t) => t.value),
+        tools: [
+          ...data.tools.map((t) => t.value),
+          ...(!data.sub_agent &&
+          !data.tools.some((t) => t.value === "sub_agent")
+            ? ["sub_agent"]
+            : []),
+        ],
         model_id: data.modelId,
         chat_parameters: cp,
       },
@@ -364,9 +365,12 @@ export function AgentProfileForm({
                 {availableTools?.items.map((tool) => (
                   <div key={tool.name} className="flex items-center gap-2">
                     <Checkbox
+                      key={tool.name}
                       checked={
+                        (!actsAsSubAgent && tool.name === "sub_agent") ||
                         toolsFields.find((t) => t.value === tool.name) != null
                       }
+                      disabled={!actsAsSubAgent && tool.name === "sub_agent"}
                       onCheckedChange={(e) => {
                         if (e) {
                           toolsAppend({ value: tool.name });
