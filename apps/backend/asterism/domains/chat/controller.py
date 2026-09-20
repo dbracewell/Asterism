@@ -39,7 +39,7 @@ class ChatController:
 
         # Start background workers
         self.tasks.spawn(self.connection.heartbeat_loop())
-        self.tasks.spawn(self.orchestrator.generate_chat_title())
+        self.job.start_title_generation()
         self.tasks.spawn(self._status_loop())
         self.tasks.spawn(self._message_queue_processing_loop())
 

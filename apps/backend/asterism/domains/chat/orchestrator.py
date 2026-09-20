@@ -206,50 +206,64 @@ class ChatOrchestrator:
         self.chat.messages.append(parent_message)
         await self.run_agent()
 
+    def _fallback_title(self) -> str:
+        prompt = next(
+            (message.content for message in self.chat.messages if message.role == "user"),
+            "New chat",
+        )
+        # A deterministic, non-empty fallback is more useful than an untitled
+        # chat and avoids exposing an unbounded provider retry to the user.
+        normalized = " ".join(str(prompt).split())
+        return normalized[:80] or "New chat"
+
+    async def _save_chat_title(self, title: str) -> None:
+        self.chat.info.title = title
+        await chat_service.update_chat(
+            user_id=self.user_id,
+            chat_id=self.chat_id,
+            payload=ChatUpdateRequest(title=title),
+        )
+        event_bus.emit(
+            Event(
+                type=EventType.WEBHOOK_CHAT_UPDATE,
+                payload=ChatUpdateEvent(session_id=self.chat_id, title=title),
+                user_id=self.user_id,
+            )
+        )
+
     async def generate_chat_title(self) -> None:
         if not is_none_or_empty(self.chat.info.title) and self.chat.info.title != "New Chat":
             return
 
+        title = ""
         try:
             draft_model = get_draft_model()
-            content = ""
-            max_tokens = 15
-            while not content.strip():
-                content = await draft_model.invoke(
-                    messages=[
-                        LLMMessage.user(
-                            content=f"""You are a title generation assistant. 
-    Generate a short, descriptive chat title (3 to 6 words) that captures the intent 
-    of the user's message/question. Output strictly the title itself with no quotes, 
-    no prefixes, and no trailing punctuation. Do not repeat the user's text and do 
-    not answer the user's questions or requests. Only generate a generic title that 
-    labels the intent of the user. Do not think about how to answer.
-                            
-                            User Prompt: {self.chat.messages[0].content}""",  # noqa: E501
-                        ),
-                    ],
-                    max_tokens=max_tokens,
-                    thinking_budget_tokens=5,
-                )
-                max_tokens += 5
-                self.chat.info.title = content.strip()
-            await chat_service.update_chat(
-                user_id=self.user_id,
-                chat_id=self.chat_id,
-                payload=ChatUpdateRequest(title=self.chat.info.title),
-            )
-            event_bus.emit(
-                Event(
-                    type=EventType.WEBHOOK_CHAT_UPDATE,
-                    payload=ChatUpdateEvent(
-                        session_id=self.chat_id,
-                        title=self.chat.info.title,
-                    ),
-                    user_id=self.user_id,
-                )
-            )
-        except Exception as e:
-            self.logger.error(f"Error generating chat title {e}", stack_info=True)
+            for max_tokens in (15, 20, 25):
+                try:
+                    async with asyncio.timeout(15):
+                        candidate = await draft_model.invoke(
+                            messages=[
+                                LLMMessage.user(
+                                    content=f"""You are a title generation assistant.
+Generate a short, descriptive chat title (3 to 6 words) that captures the intent
+of the user's message/question. Output strictly the title itself with no quotes,
+no prefixes, and no trailing punctuation. Do not answer the user's request.
+
+User Prompt: {self._fallback_title()}""",
+                                ),
+                            ],
+                            max_tokens=max_tokens,
+                            thinking_budget_tokens=5,
+                        )
+                    title = " ".join(candidate.strip().strip('"').split())[:120]
+                    if title:
+                        break
+                except Exception as error:
+                    self.logger.warning("Chat title attempt failed: %s", error)
+        except Exception as error:
+            self.logger.warning("Chat title setup failed: %s", error)
+
+        await self._save_chat_title(title or self._fallback_title())
 
     async def _handle_tool_approval(
         self,

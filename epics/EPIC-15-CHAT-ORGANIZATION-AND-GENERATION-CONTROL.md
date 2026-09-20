@@ -44,6 +44,23 @@ Make chats safer to manage and easier to find while preserving background genera
 - [ ] Add debounced accessible sidebar/global search UI using the generated client.
 - [ ] Test user isolation, escaping, pagination, title/content/folder matches, and empty/error states.
 
+### US-15.6 — Generate reliable chat titles
+
+**As a user**, I want every new chat to receive a useful title even if I navigate away immediately, so that chat history and search remain usable.
+
+**Dependencies:** US-15.1.
+
+- [ ] US-15.6-T1: Move title generation into the connection-independent chat job lifecycle and ensure it runs at most once per chat.
+- [ ] US-15.6-T2: Replace the unbounded empty-title retry with bounded retries, timeouts, validation, and a deterministic fallback title.
+- [ ] US-15.6-T3: Persist and publish the final title reliably; prevent background failures from leaving a title permanently null.
+- [ ] US-15.6-T4: Add tests for disconnect continuation, empty/invalid provider output, provider failure, duplicate connections, title persistence, and search/sidebar updates.
+
+**Acceptance criteria**
+
+- A new chat gets a non-empty title regardless of whether its initiating WebSocket remains connected.
+- Provider failures or malformed title output resolve to a deterministic fallback rather than a null title or infinite retry.
+- A title is generated once and remains stable after navigation/reconnect.
+
 ### US-15.3 — Select and safely delete chats from the sidebar
 
 - [ ] Add sidebar selection mode, selected count, select-visible, and accessible keyboard controls.
@@ -67,4 +84,4 @@ Make chats safer to manage and easier to find while preserving background genera
 
 ## Execution
 
-Order: **US-15.1 → US-15.2 → US-15.3 → US-15.4 → US-15.5**. Work on one story at a time. Regenerate the Hey API client after OpenAPI changes and request user confirmation before merging each completed story.
+Order: **US-15.1 → US-15.2 → US-15.6 → US-15.3 → US-15.4 → US-15.5**. Work on one story at a time. Regenerate the Hey API client after OpenAPI changes and request user confirmation before merging each completed story.

@@ -51,6 +51,26 @@ async def test_chat_job_is_shared_and_disconnect_safe():
 
 
 @pytest.mark.asyncio
+async def test_title_generation_is_owned_once_by_the_chat_job():
+    manager = ChatJobManager()
+    generated = 0
+
+    async def generate_chat_title():
+        nonlocal generated
+        generated += 1
+
+    orchestrator = SimpleNamespace(generate_chat_title=generate_chat_title)
+    job = manager.get_or_create(uuid.uuid4(), orchestrator)
+
+    first = job.start_title_generation()
+    second = job.start_title_generation()
+    await first
+
+    assert first is second
+    assert generated == 1
+
+
+@pytest.mark.asyncio
 async def test_controller_disconnect_does_not_cancel_the_chat_job():
     class DisconnectingConnection:
         async def accept(self):
@@ -159,6 +179,109 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
     assert added[0].content == "A partial answer"
     assert updated[0].status is MessageStatus.CANCELLED
     assert chat.messages[0].status is MessageStatus.CANCELLED
+
+
+@pytest.mark.asyncio
+async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypatch):
+    chat = Chat(
+        info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
+        messages=[
+            Message(
+                id=uuid.uuid4(),
+                role="user",
+                content="Plan my garden for spring",
+                token_count=0,
+                status=MessageStatus.PENDING,
+                created_at=1,
+            )
+        ],
+    )
+    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    orchestrator = ChatOrchestrator(agent)
+    saved: list[str] = []
+
+    def unavailable_draft_model():
+        raise RuntimeError("provider unavailable")
+
+    async def save(title: str):
+        saved.append(title)
+
+    monkeypatch.setattr(
+        "asterism.domains.chat.orchestrator.get_draft_model", unavailable_draft_model
+    )
+    monkeypatch.setattr(orchestrator, "_save_chat_title", save)
+
+    await orchestrator.generate_chat_title()
+
+    assert saved == ["Plan my garden for spring"]
+
+
+@pytest.mark.asyncio
+async def test_title_generation_falls_back_after_empty_provider_output(monkeypatch):
+    chat = Chat(
+        info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
+        messages=[
+            Message(
+                id=uuid.uuid4(),
+                role="user",
+                content="Organize my weekly tasks",
+                token_count=0,
+                status=MessageStatus.PENDING,
+                created_at=1,
+            )
+        ],
+    )
+    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    orchestrator = ChatOrchestrator(agent)
+    invoked = 0
+    saved: list[str] = []
+
+    class EmptyDraftModel:
+        async def invoke(self, **_kwargs):
+            nonlocal invoked
+            invoked += 1
+            return " \n "
+
+    async def save(title: str):
+        saved.append(title)
+
+    monkeypatch.setattr(
+        "asterism.domains.chat.orchestrator.get_draft_model", lambda: EmptyDraftModel()
+    )
+    monkeypatch.setattr(orchestrator, "_save_chat_title", save)
+
+    await orchestrator.generate_chat_title()
+
+    assert invoked == 3
+    assert saved == ["Organize my weekly tasks"]
+
+
+@pytest.mark.asyncio
+async def test_title_save_persists_and_publishes_the_title(monkeypatch):
+    chat = Chat(
+        info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
+        messages=[],
+    )
+    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    orchestrator = ChatOrchestrator(agent)
+    updates = []
+    events = []
+
+    async def update_chat(**kwargs):
+        updates.append(kwargs)
+
+    monkeypatch.setattr(
+        "asterism.domains.chat.orchestrator.chat_service.update_chat", update_chat
+    )
+    monkeypatch.setattr(
+        "asterism.domains.chat.orchestrator.event_bus.emit", events.append
+    )
+
+    await orchestrator._save_chat_title("Garden plan")
+
+    assert chat.info.title == "Garden plan"
+    assert updates[0]["payload"].title == "Garden plan"
+    assert events[0].payload.title == "Garden plan"
 
 
 @pytest.mark.asyncio
