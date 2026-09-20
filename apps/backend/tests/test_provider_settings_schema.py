@@ -339,4 +339,4 @@ async def test_initialization_migrates_legacy_provider_data_once(tmp_path, monke
         "id", "user_id", "filename", "original_name", "size", "mime_type", "kind",
         "sha256", "content_status", "content_error", "content_cache", "created_at", "updated_at",
     }.issubset(user_file_columns)
-    assert migration_count == (3,)
+    assert migration_count == (4,)

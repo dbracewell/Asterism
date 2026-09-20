@@ -77,6 +77,7 @@ class ChatInfo(BaseModel):
     allowed_tools: list[str] = Field(default_factory=list)
     title: str | None = Field(default=None)
     folder_id: uuid.UUID | None = Field(default=None)
+    agent_id: uuid.UUID | None = Field(default=None)
 
 
 class ChatInfoList(BaseModel):
@@ -91,6 +92,7 @@ class Chat(BaseModel):
 class NewChatRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_prompt: str
+    agent_id: uuid.UUID | None = Field(default=None)
     folder_id: uuid.UUID | None = Field(default=None)
     files: list[str] = Field(default_factory=list)
 

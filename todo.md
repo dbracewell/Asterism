@@ -240,23 +240,23 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-13 — Main Agents and Chat Agent Selection
 
 Plan: [EPIC-13](epics/EPIC-13-MAIN-AGENTS-AND-CHAT-AGENT-SELECTION.md).
-Status: US-13.1 implemented and verified on `feat/us-13.1-main-sub-agent-settings`; awaiting user confirmation before merge.
+Status: US-13.1 user-confirmed and merged. US-13.2 implemented and verified on `feat/us-13.2-chat-agent-binding`; awaiting user confirmation before merge.
 Order: US-13.1 → US-13.2 → US-13.3. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
-- [x] US-13.1 — Separate agent settings and protect the default main agent (implemented and verified; awaiting user confirmation)
+- [x] US-13.1 — Separate agent settings and protect the default main agent (user-confirmed and merged)
   - [x] US-13.1-T1: Partition Agent Settings into accessible Main agents and Sub-agents sections with empty states and delegated-use copy.
   - [x] US-13.1-T2: Restrict and relabel the default control to main agents as the global default for new chats; require and lock the `sub_agent` tool for every main agent.
   - [x] US-13.1-T3: Validate default-agent updates server-side: owned main agent only; reject sub-agents, missing IDs, and malformed values; sanitize stale defaults on reads.
   - [x] US-13.1-T4: Prevent deleting/converting the default main agent such that no valid global default or main agent remains.
   - [x] US-13.1-T5: Add backend/frontend tests; regenerate typed client if needed.
 
-- [ ] US-13.2 — Bind a selected main agent to each chat session
-  - [ ] US-13.2-T1: Add nullable `agent_id` chat storage, schemas, and repeatable data-preserving migration/backfill.
-  - [ ] US-13.2-T2: Resolve optional create-chat `agent_id` to the default main agent; reject sub-agent, missing, and cross-user IDs.
-  - [ ] US-13.2-T3: Run websocket chats with the stored agent, not the mutable default; handle unassigned legacy chats safely.
-  - [ ] US-13.2-T4: Protect main agents assigned to chats from unsafe delete/conversion.
-  - [ ] US-13.2-T5: Add service/router/migration tests and regenerate the Hey API client.
+- [x] US-13.2 — Bind a selected main agent to each chat session (implemented and verified; awaiting user confirmation)
+  - [x] US-13.2-T1: Add nullable `agent_id` chat storage, schemas, and repeatable data-preserving migration/backfill.
+  - [x] US-13.2-T2: Resolve optional create-chat `agent_id` to the default main agent; reject sub-agent, missing, and cross-user IDs.
+  - [x] US-13.2-T3: Run websocket chats with the stored agent, not the mutable default; handle unassigned legacy chats safely.
+  - [x] US-13.2-T4: Protect main agents assigned to chats from unsafe delete/conversion.
+  - [x] US-13.2-T5: Add service/router/migration tests and regenerate the Hey API client.
 
 - [ ] US-13.3 — Let users select the main agent when starting a chat
   - [ ] US-13.3-T1: Add an accessible main-agent selector to the new-chat composer, defaulted to the global default.

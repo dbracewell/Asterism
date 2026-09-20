@@ -12,6 +12,7 @@ _MIGRATION_TABLE = "asterism_schema_migrations"
 _PROVIDER_CAPABILITIES_MIGRATION = "20250919_01_provider_types_capabilities"
 _USER_FILES_MIGRATION = "20260401_01_user_files"
 _MESSAGE_FILES_MIGRATION = "20260401_02_message_files"
+_CHAT_AGENT_MIGRATION = "20260402_01_chat_agent"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -68,6 +69,35 @@ async def _migrate_user_files(connection: AsyncConnection) -> None:
     )
 
 
+async def _migrate_chat_agent(connection: AsyncConnection) -> None:
+    await _add_column_if_missing(
+        connection,
+        "chats",
+        "agent_id",
+        "CHAR(32)",
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_chats_agent_id ON chats (agent_id)"
+        )
+    )
+    # SQLAlchemy stores SQLite UUIDs as 32 hexadecimal characters, while the
+    # JSON setting stores their canonical dashed representation.
+    await connection.execute(
+        text(
+            "UPDATE chats SET agent_id = ("
+            "SELECT agent_profiles.id FROM user_settings "
+            "JOIN agent_profiles ON agent_profiles.user_id = chats.user_id "
+            "AND replace(json_extract(user_settings.value, '$'), '-', '') "
+            "= agent_profiles.id "
+            "WHERE user_settings.user_id = chats.user_id "
+            "AND user_settings.key = 'default_agent_id' "
+            "AND agent_profiles.sub_agent = 0"
+            ") WHERE agent_id IS NULL"
+        )
+    )
+
+
 async def _migrate_provider_types_and_capabilities(
     connection: AsyncConnection,
 ) -> None:
@@ -120,6 +150,7 @@ _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),
     (_MESSAGE_FILES_MIGRATION, _migrate_message_files),
+    (_CHAT_AGENT_MIGRATION, _migrate_chat_agent),
 )
 
 
