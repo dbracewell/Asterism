@@ -17,6 +17,8 @@ from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .schemas import (
+    BulkDeleteChatRequest,
+    BulkDeleteChatResponse,
     Chat,
     ChatInfoList,
     ChatUpdateRequest,
@@ -108,6 +110,23 @@ async def list_sessions(
 ) -> ChatInfoList:
     return await chat_service.get_many(
         user_id=user.id,
+        session=db,
+    )
+
+
+@chat_router.delete(
+    "/bulk",
+    operation_id="chatSessionBulkDelete",
+    response_model=BulkDeleteChatResponse,
+)
+async def bulk_delete_sessions(
+    payload: BulkDeleteChatRequest,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> BulkDeleteChatResponse:
+    return await chat_service.delete_chats(
+        user_id=user.id,
+        chat_ids=payload.chat_ids,
         session=db,
     )
 

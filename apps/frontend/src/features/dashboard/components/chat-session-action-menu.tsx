@@ -1,3 +1,4 @@
+import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,11 @@ export const ChatSessionActionMenu = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { deleteChatSession, isDeleting } = useChatSessionCrud();
+  const { confirm, Dialog } = useConfirmationDialog({
+    title: "Delete chat?",
+    description: "This permanently deletes this chat and its messages.",
+    confirmVariant: "destructive",
+  });
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -46,17 +52,20 @@ export const ChatSessionActionMenu = ({
       <DropdownMenuContent>
         <DropdownMenuItem
           disabled={isDeleting}
-          onClick={() =>
-            deleteChatSession({
-              path: {
-                chat_id,
-              },
-            })
-          }
+          onClick={async () => {
+            if (await confirm()) {
+              deleteChatSession({
+                path: {
+                  chat_id,
+                },
+              });
+            }
+          }}
         >
           <Trash2Icon /> Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
+      <Dialog />
     </DropdownMenu>
   );
 };

@@ -39,6 +39,9 @@ import type {
   ChatSearchData,
   ChatSearchErrors,
   ChatSearchResponses,
+  ChatSessionBulkDeleteData,
+  ChatSessionBulkDeleteErrors,
+  ChatSessionBulkDeleteResponses,
   ChatSessionCreateData,
   ChatSessionCreateErrors,
   ChatSessionCreateResponses,
@@ -276,6 +279,31 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Bulk Delete Sessions
+   */
+  public chatSessionBulkDelete<ThrowOnError extends boolean = false>(
+    options: Options<ChatSessionBulkDeleteData, ThrowOnError>,
+  ): RequestResult<
+    ChatSessionBulkDeleteResponses,
+    ChatSessionBulkDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      ChatSessionBulkDeleteResponses,
+      ChatSessionBulkDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/bulk",
       ...options,
       headers: {
         "Content-Type": "application/json",

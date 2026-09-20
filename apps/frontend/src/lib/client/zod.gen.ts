@@ -10,6 +10,20 @@ export const zBodyFileUpload = z.object({
 });
 
 /**
+ * BulkDeleteChatRequest
+ */
+export const zBulkDeleteChatRequest = z.object({
+    chat_ids: z.array(z.uuid()).min(1).max(100)
+});
+
+/**
+ * BulkDeleteChatResponse
+ */
+export const zBulkDeleteChatResponse = z.object({
+    deleted_chat_ids: z.array(z.uuid())
+});
+
+/**
  * ChatCompletionParams
  */
 export const zChatCompletionParams = z.object({
@@ -59,7 +73,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('e3ffe542-1d8f-4e7e-8489-116eee2736bd')
+    id: z.uuid().optional().default('ffca6cb8-ffb0-4d5b-9854-285e8bb273d1')
 });
 
 /**
@@ -592,6 +606,13 @@ export const zChatSessionCreateBody = zNewChatRequest;
  * Successful Response
  */
 export const zChatSessionCreateResponse = zChat;
+
+export const zChatSessionBulkDeleteBody = zBulkDeleteChatRequest;
+
+/**
+ * Successful Response
+ */
+export const zChatSessionBulkDeleteResponse = zBulkDeleteChatResponse;
 
 export const zChatSessionDeletePath = z.object({
     chat_id: z.uuid()

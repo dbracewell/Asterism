@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from asterism.core.exceptions import BadDataException, UnauthorizedException
+from asterism.core.exceptions import BadDataException, NotFoundException, UnauthorizedException
 from asterism.db.base import Base
 from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.agent.schemas import PartialAgentProfile
@@ -10,7 +10,7 @@ from asterism.domains.agent.service import (
 )
 from asterism.domains.chat.models import ChatModel
 from asterism.domains.chat.schemas import NewChatRequest
-from asterism.domains.chat.service import create_chat, get_one
+from asterism.domains.chat.service import create_chat, delete_chats, get_one
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.service import upsert_user_setting
 from asterism.domains.user.models import UserModel
@@ -107,6 +107,24 @@ async def test_chat_rejects_sub_agents_and_other_users_agents(chat_agent_session
             NewChatRequest(user_prompt="Foreign", agent_id=other.id),
             chat_agent_session,
         )
+
+
+@pytest.mark.asyncio
+async def test_bulk_delete_is_atomic_and_user_scoped(chat_agent_session):
+    owned = [ChatModel(user_id="user-a"), ChatModel(user_id="user-a")]
+    other = ChatModel(user_id="user-b")
+    chat_agent_session.add_all([*owned, other])
+    await chat_agent_session.commit()
+
+    deleted = await delete_chats(
+        "user-a", [owned[0].id, owned[1].id], chat_agent_session
+    )
+    assert set(deleted.deleted_chat_ids) == {owned[0].id, owned[1].id}
+    assert await chat_agent_session.get(ChatModel, owned[0].id) is None
+    assert await chat_agent_session.get(ChatModel, other.id) is not None
+
+    with pytest.raises(NotFoundException):
+        await delete_chats("user-a", [other.id], chat_agent_session)
 
 
 @pytest.mark.asyncio

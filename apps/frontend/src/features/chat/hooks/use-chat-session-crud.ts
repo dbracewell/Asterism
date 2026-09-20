@@ -2,8 +2,9 @@ import { client } from "@/lib/api";
 import {
   chatSessionCreateMutation,
   chatSessionDeleteMutation,
+  chatSessionGetManyQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 export const useChatSessionCrud = () => {
   const router = useRouter();
   const pathName = usePathname();
+  const queryClient = useQueryClient();
 
   const createChatSession = useMutation({
     ...chatSessionCreateMutation({
@@ -32,8 +34,10 @@ export const useChatSessionCrud = () => {
         router.push("/");
       }
     },
-    onError: () =>
-      toast.error("Failed to create chat session. Please try again."),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: chatSessionGetManyQueryKey() });
+    },
+    onError: () => toast.error("Failed to delete chat session. Please try again."),
   });
 
   return useMemo(
