@@ -75,16 +75,13 @@ class PartialAgentProfile(BaseModel):
             sub_agent=False,
             description="A default agent to answer the user's requests",
             name="Default agent",
-            system_prompt=(
-                "You are a helpful agent here to assist "
-                "the user in their information needs."
-            ),
+            system_prompt=("You are a helpful agent here to assist the user in their information needs."),
         )
 
 
 class AgentProfile(PartialAgentProfile):
     model_config = ConfigDict(from_attributes=True)
-    id: uuid.UUID = uuid.uuid4()
+    id: uuid.UUID = uuid.uuid4()  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class UserAgents(BaseModel):
