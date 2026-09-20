@@ -273,7 +273,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-15 — Chat Organization and Generation Control
 
 Plan: [EPIC-15](epics/EPIC-15-CHAT-ORGANIZATION-AND-GENERATION-CONTROL.md).
-Status: US-15.1 and US-15.2 completed and merged; US-15.6 in progress.
+Status: US-15.1, US-15.2, and US-15.6 completed and merged; US-15.3 in progress.
 Order: US-15.1 → US-15.2 → US-15.6 → US-15.3 → US-15.4 → US-15.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -290,13 +290,17 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-15.2-T2: Return typed grouped results with match reason, safe snippet, chat/folder path, and stable ordering.
   - [x] US-15.2-T3: Add debounced accessible sidebar/global search UI using the generated client.
   - [x] US-15.2-T4: Test user isolation, escaping, pagination, title/content/folder matches, and empty/error states.
-- [~] US-15.6 — Generate reliable chat titles
+- [x] US-15.6 — Generate reliable chat titles (user-confirmed and merged)
   - [x] US-15.6-T1: Move title generation into the connection-independent chat job lifecycle and ensure it runs at most once per chat.
   - [x] US-15.6-T2: Replace the unbounded empty-title retry with bounded retries, timeouts, validation, and a deterministic fallback title.
   - [x] US-15.6-T3: Persist and publish the final title reliably; prevent background failures from leaving a title permanently null.
   - [x] US-15.6-T4: Add tests for disconnect continuation, empty/invalid provider output, provider failure, duplicate connections, title persistence, and search/sidebar updates.
 
-- [ ] US-15.3 — Select and safely delete chats from the sidebar
+- [~] US-15.3 — Select and safely delete chats from the sidebar
+  - [x] US-15.3-T1: Add sidebar selection mode, selected count, select-visible, and accessible keyboard controls.
+  - [x] US-15.3-T2: Add atomic bulk deletion with strict ownership validation and coherent cache invalidation.
+  - [x] US-15.3-T3: Require confirmation for single and bulk chat deletion; handle Escape/backdrop cancellation correctly.
+  - [x] US-15.3-T4: Test confirmation, active-route navigation, partial failure, cache updates, and bulk ownership checks.
 - [ ] US-15.4 — Browse and start chats from a folder page
 - [ ] US-15.5 — Show estimated chat context consumption
 

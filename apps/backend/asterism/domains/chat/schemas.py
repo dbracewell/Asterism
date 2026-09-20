@@ -119,6 +119,14 @@ class Chat(BaseModel):
     messages: list[Message]
 
 
+class BulkDeleteChatRequest(BaseModel):
+    chat_ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
+
+
+class BulkDeleteChatResponse(BaseModel):
+    deleted_chat_ids: list[uuid.UUID]
+
+
 class NewChatRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_prompt: str

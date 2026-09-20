@@ -1,7 +1,7 @@
 import re
 import uuid
 
-from sqlalchemy import and_, desc, select, text, update
+from sqlalchemy import and_, delete, desc, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import (
@@ -21,6 +21,7 @@ from .models import (
     MessageModel,
 )
 from .schemas import (
+    BulkDeleteChatResponse,
     Chat,
     ChatInfo,
     ChatInfoList,
@@ -237,6 +238,33 @@ async def delete_chat(
             info=ChatInfo.model_validate(chat_session),
             messages=[],
         )
+
+
+async def delete_chats(
+    user_id: str,
+    chat_ids: list[uuid.UUID],
+    session: AsyncSession | None = None,
+) -> BulkDeleteChatResponse:
+    unique_ids = list(dict.fromkeys(chat_ids))
+    async with get_async_db_session(session) as session:
+        owned_ids = list(
+            await session.scalars(
+                select(ChatModel.id).where(
+                    ChatModel.user_id == user_id,
+                    ChatModel.id.in_(unique_ids),
+                )
+            )
+        )
+        if len(owned_ids) != len(unique_ids):
+            raise NotFoundException("One or more chats were not found")
+        await session.execute(
+            delete(ChatModel).where(
+                ChatModel.user_id == user_id,
+                ChatModel.id.in_(unique_ids),
+            )
+        )
+        await session.commit()
+        return BulkDeleteChatResponse(deleted_chat_ids=owned_ids)
 
 
 async def get_many(

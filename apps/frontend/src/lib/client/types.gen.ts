@@ -76,6 +76,26 @@ export type BodyFileUpload = {
 };
 
 /**
+ * BulkDeleteChatRequest
+ */
+export type BulkDeleteChatRequest = {
+    /**
+     * Chat Ids
+     */
+    chat_ids: Array<string>;
+};
+
+/**
+ * BulkDeleteChatResponse
+ */
+export type BulkDeleteChatResponse = {
+    /**
+     * Deleted Chat Ids
+     */
+    deleted_chat_ids: Array<string>;
+};
+
+/**
  * BulkUpdateSettingRequest
  */
 export type BulkUpdateSettingRequest = {
@@ -1317,6 +1337,35 @@ export type ChatSessionCreateResponses = {
 };
 
 export type ChatSessionCreateResponse = ChatSessionCreateResponses[keyof ChatSessionCreateResponses];
+
+export type ChatSessionBulkDeleteData = {
+    body: BulkDeleteChatRequest;
+    path?: never;
+    query?: never;
+    url: '/chat/bulk';
+};
+
+export type ChatSessionBulkDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatSessionBulkDeleteError = ChatSessionBulkDeleteErrors[keyof ChatSessionBulkDeleteErrors];
+
+export type ChatSessionBulkDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: BulkDeleteChatResponse;
+};
+
+export type ChatSessionBulkDeleteResponse = ChatSessionBulkDeleteResponses[keyof ChatSessionBulkDeleteResponses];
 
 export type ChatSessionDeleteData = {
     body?: never;
