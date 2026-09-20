@@ -12,6 +12,7 @@ from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
 class MessageStatus(StrEnum):
     PENDING = auto()
     COMPLETED = auto()
+    CANCELLED = auto()
 
 
 class MessageFileReference(BaseModel):

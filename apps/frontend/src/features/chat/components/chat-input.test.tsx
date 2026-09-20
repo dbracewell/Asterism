@@ -27,6 +27,16 @@ it("uploads picker files through the generated client then includes filenames in
   expect(onSubmit).toHaveBeenCalledWith({ prompt: "Please read this", files: ["stored-note.txt"] });
 });
 
+it("shows an explicit stop control while generation is active", async () => {
+  const onStop = vi.fn();
+  render(<ChatInput disabled onStop={onStop} />);
+
+  await userEvent.setup().click(screen.getByLabelText("Stop generating"));
+
+  expect(onStop).toHaveBeenCalledOnce();
+  expect(screen.queryByLabelText("Send message")).not.toBeInTheDocument();
+});
+
 it("keeps the prompt and shows a retryable error when any upload fails", async () => {
   fileUpload.mockRejectedValue(new Error("File is too large"));
   render(<ChatInput onSubmit={vi.fn()} />);
