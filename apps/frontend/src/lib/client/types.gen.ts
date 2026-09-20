@@ -956,10 +956,14 @@ export type UserFile = {
  * UserFileList
  */
 export type UserFileList = {
-    /**
-     * Files
-     */
+    /** Files */
     files: Array<UserFile>;
+    /** Total */
+    total: number;
+    /** Page */
+    page: number;
+    /** Page Size */
+    page_size: number;
 };
 
 /**
@@ -1024,7 +1028,10 @@ export type ProviderDiscoveryRequestWritable = {
 export type FileGetManyData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        page?: number;
+        page_size?: number;
+    };
     url: '/files/';
 };
 

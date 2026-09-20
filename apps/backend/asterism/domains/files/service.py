@@ -6,7 +6,7 @@ from pathlib import Path
 import filetype
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.file_utils import get_file_mime_type
@@ -177,13 +177,22 @@ async def ensure_file_processed(
     return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)
 
 
-async def list_user_files(*, user_id: str, session: AsyncSession) -> UserFileList:
+async def list_user_files(
+    *, user_id: str, session: AsyncSession, page: int = 1, page_size: int = 50
+) -> UserFileList:
+    statement = select(UserFileModel).where(UserFileModel.user_id == user_id)
+    total = await session.scalar(select(func.count()).select_from(statement.subquery()))
     result = await session.scalars(
-        select(UserFileModel)
-        .where(UserFileModel.user_id == user_id)
-        .order_by(UserFileModel.created_at.desc(), UserFileModel.filename)
+        statement.order_by(UserFileModel.created_at.desc(), UserFileModel.filename)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     )
-    return UserFileList(files=[UserFile.model_validate(file) for file in result])
+    return UserFileList(
+        files=[UserFile.model_validate(file) for file in result],
+        total=total or 0,
+        page=page,
+        page_size=page_size,
+    )
 
 
 async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFile:
