@@ -36,8 +36,6 @@
     "**/.next": true,
     ".idea": true
   },
-  "python.analysis.languageServerMode": "full",
   "python.languageServer": "None",
-  "python.analysis.typeCheckingMode": "off",
   "pendant.runtimeSource": "bundled"
 }
