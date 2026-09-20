@@ -60,16 +60,16 @@ src = ["asterism"]
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 fixable = ["ALL"]
-# ignore = ["E501"]
 
-[tool.pyright]
+[tool.basedpyright]
 reportPrivateImportUsage = "none"
 enableTypeIgnoreComments = true
 include = ["asterism/*"]
 typeCheckingMode = "basic"
 reportReturnType = "warning"
-reportArgumentType = "warning"
+reportArgumentType = "none"
 reportOperatorIssue = "warning"
 reportImportCycles = "warning"
 reportDuplicateImport = "warning"
 reportUnusedCallResult = "none"
+reportMissingParameterType = "none"

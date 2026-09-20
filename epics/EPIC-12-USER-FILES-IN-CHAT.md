@@ -2,7 +2,7 @@
 
 ## Status
 
-**US-12.1–US-12.5 completed, verified, and user-confirmed.** US-12.6 is complete and awaiting user confirmation.
+**US-12.1–US-12.7 completed, verified, and user-confirmed.** EPIC-12 is complete.
 
 ## Goal
 
@@ -347,6 +347,21 @@ documented.
 - Re-uploading identical bytes under the same filename returns the original metadata and leaves one database row and one file on disk.
 - Same-name files with different bytes retain the existing collision-deduplication behavior.
 - Matching hashes never deduplicate across users or different sanitized filenames.
+
+### US-12.7 — User file manager
+
+**As a user**, I want to browse, download, and delete my uploaded files so that I can manage files outside a chat.
+
+- [x] US-12.7-T1: Add a `/files` File Manager linked in the sidebar directly below Search.
+- [x] US-12.7-T2: Use generated file-list/delete/download clients to render user-scoped files and support deletion.
+- [x] US-12.7-T3: Provide list and icon views, with name and kind sorting.
+- [x] US-12.7-T4: Add bounded backend pagination (page/page_size, max 100) with total metadata and frontend previous/next controls; run backend tests and frontend typecheck.
+
+**Acceptance criteria**
+
+- The sidebar Files link opens a user-scoped manager with download and delete actions.
+- Users can switch list/icon view and sort by name or kind.
+- The manager requests at most 50 files per page and reports total pages.
 
 ## Execution plan and definition of done
 

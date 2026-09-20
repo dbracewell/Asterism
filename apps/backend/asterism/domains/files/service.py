@@ -6,7 +6,7 @@ from pathlib import Path
 import filetype
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.file_utils import get_file_mime_type
@@ -19,20 +19,66 @@ from .schemas import UserFile, UserFileList
 from .store import LocalFileStore
 
 _DENIED_EXTENSIONS = {
-    ".app", ".bat", ".bin", ".cmd", ".com", ".dll", ".dylib", ".exe",
-    ".jar", ".msi", ".scr", ".so",
+    ".app",
+    ".bat",
+    ".bin",
+    ".cmd",
+    ".com",
+    ".dll",
+    ".dylib",
+    ".exe",
+    ".jar",
+    ".msi",
+    ".scr",
+    ".so",
 }
 _IMAGE_MIME_TYPES = {
-    "image/bmp", "image/gif", "image/jpeg", "image/png", "image/webp",
+    "image/bmp",
+    "image/gif",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
 }
 _TEXT_EXTENSIONS = {
-    ".c", ".cpp", ".cs", ".css", ".go", ".h", ".ini", ".java",
-    ".js", ".json", ".jsx", ".log", ".md", ".php", ".py", ".rb", ".rs",
-    ".sh", ".sql", ".toml", ".ts", ".tsx", ".txt", ".xml", ".yaml", ".yml",
+    ".c",
+    ".cpp",
+    ".cs",
+    ".css",
+    ".go",
+    ".h",
+    ".ini",
+    ".java",
+    ".js",
+    ".json",
+    ".jsx",
+    ".log",
+    ".md",
+    ".php",
+    ".py",
+    ".rb",
+    ".rs",
+    ".sh",
+    ".sql",
+    ".toml",
+    ".ts",
+    ".tsx",
+    ".txt",
+    ".xml",
+    ".yaml",
+    ".yml",
 }
 _DOCUMENT_EXTENSIONS = {
-    ".csv", ".docx", ".epub", ".htm", ".html", ".md", ".pdf", ".pptx",
-    ".rst", ".xls", ".xlsx",
+    ".csv",
+    ".docx",
+    ".epub",
+    ".htm",
+    ".html",
+    ".md",
+    ".pdf",
+    ".pptx",
+    ".rst",
+    ".xls",
+    ".xlsx",
 }
 
 
@@ -96,9 +142,7 @@ def detect_mime_type(filename: str, content: bytes) -> str:
     return mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
 
-async def _deduplicated_filename(
-    session: AsyncSession, store: LocalFileStore, user_id: str, filename: str
-) -> str:
+async def _deduplicated_filename(session: AsyncSession, store: LocalFileStore, user_id: str, filename: str) -> str:
     stem, extension = Path(filename).stem, Path(filename).suffix
     candidate, counter = filename, 2
     while (
@@ -115,9 +159,7 @@ async def _deduplicated_filename(
     return candidate
 
 
-async def upload_files(
-    *, user_id: str, uploads: list[UploadFile], session: AsyncSession
-) -> UserFileList:
+async def upload_files(*, user_id: str, uploads: list[UploadFile], session: AsyncSession) -> UserFileList:
     created: list[UserFileModel] = []
     store = get_file_store()
     saved: list[str] = []
@@ -144,9 +186,7 @@ async def upload_files(
                     created.append(existing)
                 continue
 
-            filename = await _deduplicated_filename(
-                session, store, user_id, original_name
-            )
+            filename = await _deduplicated_filename(session, store, user_id, original_name)
             mime_type = detect_mime_type(filename, content)
             model = UserFileModel(
                 user_id=user_id,
@@ -171,26 +211,29 @@ async def upload_files(
     return UserFileList(files=[UserFile.model_validate(file) for file in created])
 
 
-async def ensure_file_processed(
-    *, file: UserFileModel, session: AsyncSession
-) -> UserFileModel:
-    return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)
+async def ensure_file_processed(*, file: UserFileModel, session: AsyncSession) -> UserFileModel:
+    return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)  # pyright: ignore[reportArgumentType]
 
 
-async def list_user_files(*, user_id: str, session: AsyncSession) -> UserFileList:
+async def list_user_files(*, user_id: str, session: AsyncSession, page: int = 1, page_size: int = 50) -> UserFileList:
+    statement = select(UserFileModel).where(UserFileModel.user_id == user_id)
+    total = await session.scalar(select(func.count()).select_from(statement.subquery()))
     result = await session.scalars(
-        select(UserFileModel)
-        .where(UserFileModel.user_id == user_id)
-        .order_by(UserFileModel.created_at.desc(), UserFileModel.filename)
+        statement.order_by(UserFileModel.created_at.desc(), UserFileModel.filename)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     )
-    return UserFileList(files=[UserFile.model_validate(file) for file in result])
+    return UserFileList(
+        files=[UserFile.model_validate(file) for file in result],
+        total=total or 0,
+        page=page,
+        page_size=page_size,
+    )
 
 
 async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFile:
     file = await session.scalar(
-        select(UserFileModel).where(
-            UserFileModel.user_id == user_id, UserFileModel.filename == filename
-        )
+        select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename == filename)
     )
     if file is None:
         raise NotFoundException("File not found")

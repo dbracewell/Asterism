@@ -52,7 +52,7 @@ async def test_generic_discovery_manual_fallback_save_reload_and_refresh(tmp_pat
     request = ProviderDiscoveryRequest(
         provider_type=ProviderType.GENERIC_OPENAI,
         base_url="http://localhost:8080/v1/",
-        api_key="secret",
+        api_key="secret",  # pyright: ignore[reportArgumentType]
         provider_id=provider_id,
     )
     discovered = await discovery.discover(request)

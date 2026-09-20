@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import APIRouter, File, Query, UploadFile, status
 from fastapi.responses import FileResponse
 
 import asterism.domains.files.service as file_service
@@ -38,8 +38,15 @@ async def upload_files(
     operation_id="fileGetMany",
     responses={401: {"model": ErrorDetail}},
 )
-async def list_files(user: AuthedUserDep, db: DBSessionDep) -> UserFileList:
-    return await file_service.list_user_files(user_id=user.id, session=db)
+async def list_files(
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+) -> UserFileList:
+    return await file_service.list_user_files(
+        user_id=user.id, session=db, page=page, page_size=page_size
+    )
 
 
 @file_router.delete(

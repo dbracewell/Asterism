@@ -47,31 +47,24 @@ class Agent:
         allowed_tools: list[str] | None = None,
         approval_policy: ToolApprovalPolicy | None = None,
         call_stack: list[uuid.UUID] | None = None,
-        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
-        | None = None,
+        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
         user_files: list[str] | None = None,
         parent_message_id: uuid.UUID | None = None,
     ) -> None:
-        self.profile = profile
-        self.max_steps = profile.max_steps
-        self.user = user
-        self.session = session
-        self.logger = logger or get_logger(f"Agent({self.profile.name})")
+        self.profile: AgentProfile = profile
+        self.max_steps: int = profile.max_steps
+        self.user: AuthedUser = user
+        self.session: Chat = session
+        self.logger: Logger = logger or get_logger(f"Agent({self.profile.name})")
         self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
-        self.allowed_tools = (
-            allowed_tools
-            if allowed_tools is not None
-            else config.default_allowed_tools
-        )
-        self._approval_policy: ToolApprovalPolicy = (
-            approval_policy or AllowlistApprovalPolicy()
-        )
-        self.event_sink = event_sink
-        self.user_files = list(user_files) if user_files else []
-        self.parent_message_id = parent_message_id
+        self.allowed_tools: list[str] = allowed_tools if allowed_tools is not None else config.default_allowed_tools
+        self._approval_policy: ToolApprovalPolicy = approval_policy or AllowlistApprovalPolicy()
+        self.event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = event_sink
+        self.user_files: list[str] = list(user_files) if user_files else []
+        self.parent_message_id: uuid.UUID | None = parent_message_id
         self.messages: list[LLMMessage] = []
         if call_stack is not None:
-            self.call_stack = list(call_stack)
+            self.call_stack: list[uuid.UUID] = list(call_stack)
         elif self.profile.id is not None:
             self.call_stack = [self.profile.id]
         else:
@@ -84,14 +77,9 @@ class Agent:
                 return client
 
             if not self.profile.model_id:
-                raise BadDataException(
-                    "Agent profile does not have a model_id set. "
-                    "Cannot create LLM client."
-                )
-            model_info: LlmWithProvider = (
-                await settings_service.get_model_and_provider(
-                    model_id=self.profile.model_id,
-                )
+                raise BadDataException("Agent profile does not have a model_id set. Cannot create LLM client.")
+            model_info: LlmWithProvider = await settings_service.get_model_and_provider(
+                model_id=self.profile.model_id,
             )
             client = LLMClient(
                 api_key=model_info.provider.api_key,
@@ -105,8 +93,7 @@ class Agent:
         self,
         user_message: str,
         auths: list[ToolUseAuthorization],
-        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
-        | None = None,
+        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
     ) -> AsyncGenerator[ToolResult, None]:
         tasks = [
             tool_registry.invoke_tool(
@@ -240,9 +227,7 @@ class Agent:
                                 self.allowed_tools,
                             )
 
-                            sub_agent_queue: asyncio.Queue[
-                                SubAgentEventEnvelope
-                            ] = asyncio.Queue()
+                            sub_agent_queue: asyncio.Queue[SubAgentEventEnvelope] = asyncio.Queue()
 
                             async def _internal_sink(
                                 envelope: SubAgentEventEnvelope,
@@ -253,26 +238,20 @@ class Agent:
                                     if inspect.isawaitable(res):
                                         await res
 
-                            async def _collect_tool_results() -> list[
-                                ToolResult
-                            ]:
+                            async def _collect_tool_results() -> list[ToolResult]:
                                 collected: list[ToolResult] = []
                                 async for resp in self._run_tools(
-                                    user_message=last_user_message.content,
+                                    user_message=last_user_message.content,  # pyright: ignore[reportArgumentType]
                                     auths=auths,
                                     event_sink=_internal_sink,
                                 ):
                                     collected.append(resp)
                                 return collected
 
-                            tool_task = asyncio.create_task(
-                                _collect_tool_results()
-                            )
+                            tool_task = asyncio.create_task(_collect_tool_results())
 
                             while not tool_task.done():
-                                get_task = asyncio.create_task(
-                                    sub_agent_queue.get()
-                                )
+                                get_task = asyncio.create_task(sub_agent_queue.get())
                                 done, _ = await asyncio.wait(
                                     [tool_task, get_task],
                                     return_when=asyncio.FIRST_COMPLETED,
@@ -300,9 +279,7 @@ class Agent:
                                     f"{response.tool_call.function.arguments})"
                                     f"=>'{re.sub(r'\s+', ' ', response.content[:64])}...'"  # noqa: E501
                                 )
-                                messages.append(
-                                    LLMMessage.tool_call_result(response)
-                                )
+                                messages.append(LLMMessage.tool_call_result(response))
                                 tool_results.append(response)
 
                         yield AgentEvent(

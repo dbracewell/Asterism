@@ -185,8 +185,8 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-12 — User Files in Chat (Upload, Vision, and MarkItDown)
 
 Plan: [EPIC-12](epics/EPIC-12-USER-FILES-IN-CHAT.md).
-Status: US-12.1–US-12.5 verified and user-confirmed; US-12.6 complete and awaiting user confirmation.
-Order: US-12.1 → US-12.2 → US-12.3 → US-12.4 → US-12.5.
+Status: Complete — US-12.1–US-12.7 verified and user-confirmed.
+Order: US-12.1 → US-12.2 → US-12.3 → US-12.4 → US-12.5 → US-12.6 → US-12.7.
 Work on one item at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
@@ -221,12 +221,18 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-12.5-T3: Update architecture docs and add ADR-0012 (vision + MarkItDown routing, caching, limits, secure-by-default gating).
   - [x] US-12.5-T4: Run and record all quality gates, migration re-run checks, OpenAPI/client consistency, and Playwright coverage.
 
-- [x] US-12.6 — Deduplicate identical uploads (awaiting user confirmation)
+- [x] US-12.6 — Deduplicate identical uploads (user-confirmed)
   - [x] US-12.6-T1: Reuse an existing per-user file when sanitized filename and SHA-256 match; do not create a copy.
   - [x] US-12.6-T2: Tests for repeated/batched duplicates, collision behavior, and user isolation.
   - [x] US-12.6-T3: Document deduplication semantics and run relevant quality gates (`tests/test_user_files.py`, Ruff).
 
+- [x] US-12.7 — User file manager (user-confirmed)
+  - [x] US-12.7-T1: Add `/files` and a sidebar Files link below Search.
+  - [x] US-12.7-T2: Render generated-client file list with download and delete actions.
+  - [x] US-12.7-T3: Add list/icon views and name/kind sorting.
+  - [x] US-12.7-T4: Add bounded backend pagination (page/page_size, max 100) with total metadata and frontend previous/next controls; backend tests and frontend typecheck pass.
+
 ### Epic closure
 
-- [ ] Re-verify all story acceptance criteria; user confirms completion.
-- [ ] Merge the final story branch, announce epic completion, and propose the next plan.
+- [x] Re-verify all story acceptance criteria; user confirmed completion.
+- [x] Merge the final story branch, announce epic completion, and propose the next plan.
