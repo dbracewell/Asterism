@@ -262,17 +262,20 @@ const ChatInput = React.memo(
               </>
               <div className="flex items-center gap-3">
                 <div className={cn("flex items-center gap-1 text-xs")}>
-                  <div
-                    title={disabled ? "Disconnected" : "Connected"}
-                    className={cn(
-                      "size-2 rounded-full pt-0.5",
-                      status === "Connected"
-                        ? "border-green-900 bg-green-500"
-                        : "border-red-900 bg-red-500",
-                    )}
-                  />
+                  {status && (
+                    <div
+                      title={disabled ? "Disconnected" : "Connected"}
+                      className={cn(
+                        "size-2 rounded-full pt-0.5",
+                        status === "Connected"
+                          ? "border-green-900 bg-green-500"
+                          : "border-red-900 bg-red-500",
+                      )}
+                    />
+                  )}
                   {status}
                 </div>
+
                 <Button
                   aria-label="Send message"
                   className={cn("shrink-0 rounded-xl", !canSubmit && "hidden")}
