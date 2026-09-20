@@ -22,6 +22,7 @@ from .schemas import (
     ChatUpdateRequest,
     Message,
     NewChatRequest,
+    SearchResultList,
     UpdateMessageRequest,
 )
 
@@ -143,6 +144,27 @@ async def update_session(
         user_id=user.id,
         chat_id=chat_id,
         payload=update,
+        session=db,
+    )
+
+
+@chat_router.get(
+    "/search",
+    operation_id="chatSearch",
+    response_model=SearchResultList,
+)
+async def search_chats_and_folders(
+    q: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+) -> SearchResultList:
+    return await chat_service.search(
+        user_id=user.id,
+        query=q,
+        page=page,
+        page_size=page_size,
         session=db,
     )
 

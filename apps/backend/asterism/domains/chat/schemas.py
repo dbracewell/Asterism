@@ -85,6 +85,35 @@ class ChatInfoList(BaseModel):
     chats: list[ChatInfo]
 
 
+class SearchResultKind(StrEnum):
+    CHAT = auto()
+    FOLDER = auto()
+
+
+class SearchMatchSource(StrEnum):
+    TITLE = auto()
+    CONTENT = auto()
+    FOLDER_TITLE = auto()
+
+
+class SearchResult(BaseModel):
+    kind: SearchResultKind
+    id: uuid.UUID
+    title: str
+    updated_at: int
+    folder_id: uuid.UUID | None = None
+    match_source: SearchMatchSource
+    snippet: str | None = None
+    path: list[str] = Field(default_factory=list)
+
+
+class SearchResultList(BaseModel):
+    results: list[SearchResult]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+
+
 class Chat(BaseModel):
     info: ChatInfo
     messages: list[Message]

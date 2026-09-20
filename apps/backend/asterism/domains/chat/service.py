@@ -1,6 +1,7 @@
+import re
 import uuid
 
-from sqlalchemy import desc, select, update
+from sqlalchemy import and_, desc, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import (
@@ -12,6 +13,7 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.service import ensure_file_processed
+from asterism.domains.folders.models import FolderModel
 from asterism.domains.settings.service import get_user_settings
 
 from .models import (
@@ -28,6 +30,10 @@ from .schemas import (
     MessageStatus,
     NewChatRequest,
     NewMessageRequest,
+    SearchMatchSource,
+    SearchResult,
+    SearchResultKind,
+    SearchResultList,
     UpdateMessageRequest,
 )
 
@@ -245,6 +251,182 @@ async def get_many(
         )
         result = await session.scalars(stmt)
         return ChatInfoList(chats=[ChatInfo.model_validate(r) for r in result.all()])
+
+
+def _search_terms(query: str) -> list[str]:
+    # Keyword search intentionally treats punctuation as separators and never
+    # passes user input through as SQL/FTS syntax.
+    return re.findall(r"[\w]+", query.casefold())[:10]
+
+
+def _fts_query(terms: list[str]) -> str:
+    return " AND ".join(f'"{term}"' for term in terms)
+
+
+def _snippet(content: str, terms: list[str], limit: int = 180) -> str:
+    normalized = content.replace("\n", " ").strip()
+    if not normalized:
+        return ""
+    position = min(
+        (normalized.casefold().find(term) for term in terms if term in normalized.casefold()),
+        default=0,
+    )
+    start = max(0, position - 50)
+    end = min(len(normalized), start + limit)
+    prefix = "…" if start else ""
+    suffix = "…" if end < len(normalized) else ""
+    return f"{prefix}{normalized[start:end]}{suffix}"
+
+
+async def search(
+    user_id: str,
+    query: str,
+    page: int = 1,
+    page_size: int = 20,
+    session: AsyncSession | None = None,
+) -> SearchResultList:
+    terms = _search_terms(query)
+    if not terms:
+        return SearchResultList(results=[], total=0, page=page, page_size=page_size)
+
+    async with get_async_db_session(session) as session:
+        content_conditions = [
+            MessageModel.content.ilike(f"%{term}%") for term in terms
+        ]
+        fts_query = _fts_query(terms)
+        chat_ids = [
+            uuid.UUID(value)
+            for value in (
+                await session.scalars(
+                    text(
+                        "SELECT chat_id FROM chat_search "
+                        "WHERE user_id = :user_id AND chat_search MATCH :query"
+                    ),
+                    {"user_id": user_id, "query": fts_query},
+                )
+            ).all()
+        ]
+        folder_title_ids = {
+            uuid.UUID(value)
+            for value in (
+                await session.scalars(
+                    text(
+                        "SELECT folder_id FROM folder_search "
+                        "WHERE user_id = :user_id AND folder_search MATCH :query"
+                    ),
+                    {"user_id": user_id, "query": fts_query},
+                )
+            ).all()
+        }
+        matched_chats = []
+        if chat_ids:
+            matched_chats = list(
+                await session.scalars(
+                    select(ChatModel)
+                    .where(ChatModel.user_id == user_id, ChatModel.id.in_(chat_ids))
+                    .order_by(desc(ChatModel.updated_at))
+                )
+            )
+
+        results: list[SearchResult] = []
+        matching_folder_ids: set[uuid.UUID] = set()
+        for chat in matched_chats:
+            title = chat.title or "Untitled chat"
+            title_matches = all(term in title.casefold() for term in terms)
+            if title_matches:
+                source = SearchMatchSource.TITLE
+                snippet = title
+            else:
+                content = await session.scalar(
+                    select(MessageModel.content)
+                    .where(
+                        MessageModel.chat_id == chat.id,
+                        MessageModel.user_id == user_id,
+                        and_(*content_conditions),
+                    )
+                    .order_by(MessageModel.created_at)
+                    .limit(1)
+                )
+                source = SearchMatchSource.CONTENT
+                snippet = _snippet(content or "", terms)
+            results.append(
+                SearchResult(
+                    kind=SearchResultKind.CHAT,
+                    id=chat.id,
+                    title=title,
+                    updated_at=chat.updated_at,
+                    folder_id=chat.folder_id,
+                    match_source=source,
+                    snippet=snippet,
+                )
+            )
+            if chat.folder_id:
+                matching_folder_ids.add(chat.folder_id)
+
+        folders = list(
+            await session.scalars(
+                select(FolderModel).where(FolderModel.user_id == user_id)
+            )
+        )
+        folders_by_id = {folder.id: folder for folder in folders}
+        # A match in a nested folder also makes every ancestor discoverable.
+        for folder_id in list(matching_folder_ids):
+            current = folders_by_id.get(folder_id)
+            while current:
+                matching_folder_ids.add(current.id)
+                current = folders_by_id.get(current.parent_id)
+
+        for folder in folders:
+            title_matches = folder.id in folder_title_ids
+            if not title_matches and folder.id not in matching_folder_ids:
+                continue
+            results.append(
+                SearchResult(
+                    kind=SearchResultKind.FOLDER,
+                    id=folder.id,
+                    title=folder.title,
+                    updated_at=folder.updated_at,
+                    folder_id=folder.parent_id,
+                    match_source=(
+                        SearchMatchSource.FOLDER_TITLE
+                        if title_matches
+                        else SearchMatchSource.CONTENT
+                    ),
+                    snippet=(
+                        folder.title
+                        if title_matches
+                        else "Contains a matching chat"
+                    ),
+                )
+            )
+
+        def folder_path(folder_id: uuid.UUID | None) -> list[str]:
+            path: list[str] = []
+            current = folders_by_id.get(folder_id) if folder_id else None
+            while current:
+                path.append(current.title)
+                current = folders_by_id.get(current.parent_id)
+            return list(reversed(path))
+
+        results = [
+            result.model_copy(
+                update={
+                    "path": folder_path(
+                        result.id if result.kind is SearchResultKind.FOLDER else result.folder_id
+                    )
+                }
+            )
+            for result in results
+        ]
+        results.sort(key=lambda result: result.updated_at, reverse=True)
+        total = len(results)
+        start = (page - 1) * page_size
+        return SearchResultList(
+            results=results[start : start + page_size],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
 
 async def get_one(

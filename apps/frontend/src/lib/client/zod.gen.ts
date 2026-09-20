@@ -59,7 +59,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('e6757cdb-03c5-42a1-8805-0a4152a9cfbc')
+    id: z.uuid().optional().default('e3ffe542-1d8f-4e7e-8489-116eee2736bd')
 });
 
 /**
@@ -339,6 +339,44 @@ export const zProviderDiscoveryRequest = z.object({
 });
 
 /**
+ * SearchMatchSource
+ */
+export const zSearchMatchSource = z.enum([
+    'title',
+    'content',
+    'folder_title'
+]);
+
+/**
+ * SearchResultKind
+ */
+export const zSearchResultKind = z.enum(['chat', 'folder']);
+
+/**
+ * SearchResult
+ */
+export const zSearchResult = z.object({
+    kind: zSearchResultKind,
+    id: z.uuid(),
+    title: z.string(),
+    updated_at: z.int(),
+    folder_id: z.uuid().nullish(),
+    match_source: zSearchMatchSource,
+    snippet: z.string().nullish(),
+    path: z.array(z.string()).optional()
+});
+
+/**
+ * SearchResultList
+ */
+export const zSearchResultList = z.object({
+    results: z.array(zSearchResult),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1)
+});
+
+/**
  * Setting
  */
 export const zSetting = z.object({
@@ -583,6 +621,17 @@ export const zChatSessionUpdatePath = z.object({
  * Successful Response
  */
 export const zChatSessionUpdateResponse = zChat;
+
+export const zChatSearchQuery = z.object({
+    q: z.string(),
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(20)
+});
+
+/**
+ * Successful Response
+ */
+export const zChatSearchResponse = zSearchResultList;
 
 export const zMessageUpdateBody = zUpdateMessageRequest;
 
