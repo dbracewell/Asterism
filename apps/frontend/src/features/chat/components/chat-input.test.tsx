@@ -7,7 +7,7 @@ const { fileUpload } = vi.hoisted(() => ({ fileUpload: vi.fn() }));
 vi.mock("@/lib/api", () => ({ api: { fileUpload } }));
 
 beforeEach(() => {
-  vi.spyOn(console, "error").mockImplementation(() => undefined);
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
   fileUpload.mockReset();
   vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "blob:preview"), revokeObjectURL: vi.fn() });
 });

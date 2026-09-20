@@ -66,8 +66,9 @@ const ChatInput = React.memo(({
         if (!uploaded) throw new Error("The server did not return an uploaded file.");
         return uploaded.filename;
       } catch (error) {
-        // Keep the actual response visible to the user and available to browser diagnostics.
-        console.error("File upload failed", { name: attachment.name, error });
+        // This is an expected, user-correctable state. Do not use console.error:
+        // Next.js development mode presents those as an application error overlay.
+        console.warn("File upload failed", { name: attachment.name, error });
         updateFile(attachment.id, { state: "failed", error: uploadErrorMessage(error) });
         return null;
       }

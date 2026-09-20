@@ -1,66 +1,73 @@
-# Authentication & Security Architecture
+# Authentication and Security Architecture
 
-Asterism implements a federated authentication model combining **BetterAuth** in the Next.js frontend with **JWKS-based RS256 token verification** in the FastAPI backend.
+Asterism uses Better Auth in Next.js for sessions and RS256 JWT issuance. FastAPI
+does not share a signing secret or trust a browser-supplied identity: it retrieves
+public signing keys from Better Auth's JWKS endpoint and validates each token.
 
----
-
-## Authentication Flow
+## Authentication flow
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User as User (Browser)
-    participant FrontAuth as BetterAuth (/api/auth)
-    participant FrontUI as Next.js Web App
-    participant FastAPI as FastAPI Backend
-    participant JWKS as BetterAuth JWKS Endpoint
+    actor User as Browser user
+    participant Auth as Better Auth (/api/auth)
+    participant API as FastAPI (/api/py)
+    participant JWKS as Loopback JWKS endpoint
 
-    User->>FrontAuth: Sign in with credentials
-    FrontAuth-->>User: Set session cookie & return JWT (RS256)
-
-    User->>FrontUI: Open Chat / Send Prompt
-    FrontUI->>FastAPI: WebSocket connect / HTTP request + Bearer JWT
-
-    FastAPI->>JWKS: Fetch signing keys (cached for 1 hour)
-    JWKS-->>FastAPI: Return Public JWKS
-    FastAPI->>FastAPI: Verify signature, audience, and issuer
-    FastAPI->>FastAPI: Inject AuthedUser into request context
-    FastAPI-->>FrontUI: Authorized Response / Stream
+    User->>Auth: Sign in
+    Auth-->>User: Session and RS256 JWT
+    User->>API: HTTP bearer token or WebSocket token query parameter
+    API->>JWKS: Get signing key when cache requires it
+    JWKS-->>API: Public JWKS
+    API->>API: Verify RS256 signature, issuer, audience, and id claim
+    API-->>User: User-scoped response or stream
 ```
 
----
+`PUBLIC_URL` is the sole public identity setting. It supplies FastAPI's expected
+JWT issuer and audience. The backend reaches JWKS through the fixed loopback
+frontend address (`http://127.0.0.1:3000/api/auth/jwks`), so public DNS and TLS
+termination are not part of this internal hop.
 
-## Security Layers
+## Security controls
 
-### 1. Token Verification ([`core/security.py`](../apps/backend/asterism/core/security.py))
+### JWT verification
 
-- **Cryptographic Verification**: Tokens are signed using asymmetric **RS256** keys. The backend retrieves public keys dynamically from `config.jwks_url` using `jwt.PyJWKClient`.
-- **Key Caching**: Public keys and JWKS sets are cached in-memory for 1 hour (`lifespan=3600`), minimizing network round-trips to the frontend auth service.
-- **Strict Claims Checking**: Validates `aud` (audience) and `iss` (issuer) against environment configuration derived from `PUBLIC_URL`.
+[`verify_jwks_token`](../apps/backend/asterism/core/security.py) uses
+`jwt.PyJWKClient` with a one-hour JWKS/key cache. It accepts only RS256, validates
+issuer and audience, and requires the `id` claim before constructing an
+`AuthedUser`. REST dependencies obtain the bearer token through `HTTPBearer`; the
+chat WebSocket validates its required `token` query parameter before accepting the
+connection.
 
-### 2. Tenancy & User Isolation
+### User and administrator boundaries
 
-- Every database query for user-owned assets (`chats`, `messages`, `folders`, `agent_profiles`, `user_settings`) enforces strict scoping:
-  ```python
-  stmt = select(ChatModel).where(
-      ChatModel.id == chat_id,
-      ChatModel.user_id == user.id,
-  )
-  ```
-- Attempting to access an asset owned by another user yields an immediate `401 Unauthorized` or `404 Not Found`.
+Backend services pass the authenticated user ID into queries for user-owned chats,
+messages, folders, files, agent profiles, and settings. File routes additionally
+resolve stored paths below that user's file root. Provider administration and other
+administrator operations use the user's authenticated role; provider credentials are
+write-only in API responses.
 
-### 3. Internal System Key (`x-asterism-system-key`)
+### Internal callbacks
 
-For backend-to-frontend callbacks (such as asynchronous chat title updates or push webhooks to `/api/stream`):
+The backend event bus can POST to the Next.js `/api/stream` route for events such
+as chat-title updates. This loopback callback carries
+`x-asterism-system-key`; the route accepts it only when it equals the server-side
+`SYSTEM_KEY`. The key is not a JWT signing key and must never be sent to the browser.
+The stream route can also accept an authenticated frontend session, rate-limits
+requests, and filters emitted events by user ID for SSE subscribers.
 
-- Protected by a shared high-entropy secret (`SYSTEM_KEY`).
-- Injected via HTTP header: `x-asterism-system-key`.
-- Frontend rejects unauthorized push events without the matching system key.
+### Deployment safeguards
 
----
+- The supported image exposes only port 3000. nginx routes `/api/py/` to FastAPI
+  on loopback and keeps ports 8000 and 3001 private.
+- nginx's access-log format omits query strings because chat WebSocket URLs contain
+  JWTs.
+- Runtime configuration rejects wildcard CORS origins and invalid public origins in
+  full runtime profiles. Production requires HTTPS for non-loopback public origins.
+- Secrets use the root configuration contract or canonical `/run/secrets` files;
+  see the root [README](../README.md#configuration).
 
-## Related Documentation
+## Related guides
 
-- [System Overview](README.md)
-- [Tool Authorization & Approval](tool-authorization.md)
-- [Data Model & Storage](data-and-storage.md)
+- [System overview](overview.md)
+- [Chat and WebSocket](chat-and-websocket.md)
+- [Tool authorization](tool-authorization.md)

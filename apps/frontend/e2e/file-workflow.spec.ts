@@ -30,6 +30,7 @@ test("uploads, attaches, and renders a persisted file with a mocked reply", asyn
     buffer: Buffer.from("pdf"),
   });
   await page.getByRole("textbox", { name: "Message" }).fill("Summarize this");
+  await expect(page.getByLabel("Send message")).toBeEnabled();
   await page.getByLabel("Send message").click();
   await expect(page.getByLabel("Persisted user message")).toContainText(
     "report.pdf",
@@ -56,10 +57,11 @@ test("keeps a failed upload visible and does not send the message", async ({
       mimeType: "application/pdf",
       buffer: Buffer.from("pdf"),
     });
+  await expect(page.getByLabel("Send message")).toBeEnabled();
   await page.getByLabel("Send message").click();
   await expect(
     page.getByText("large.pdf: File exceeds upload limit"),
   ).toBeVisible();
-  await expect(page.getByText("Failed")).toBeVisible();
+  await expect(page.getByText("Failed", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Assistant reply")).toHaveCount(0);
 });

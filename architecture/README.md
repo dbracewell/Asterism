@@ -1,117 +1,79 @@
 # Asterism Architecture Documentation
 
-Welcome to the **Asterism** system architecture documentation. This directory provides in-depth, human-understandable explanations and visual diagrams of how Asterism operates under the hood.
+This directory documents the architecture implemented in the Asterism monorepo.
+Asterism is a self-hosted AI chat application with a Next.js frontend, FastAPI
+backend, capability-scoped tools and sub-agents, streamed responses, and
+user-owned file attachments.
 
-Asterism is a full-stack, multi-agent AI application designed around **coordinated, capability-scoped agents** that collaborate to satisfy user intent.
+## Document index
 
----
+| Document | Scope |
+| --- | --- |
+| [System overview](overview.md) | Topology, workspace layout, request and streaming lifecycle |
+| [Authentication and security](auth-and-security.md) | Better Auth, JWT/JWKS verification, tenancy, and internal callbacks |
+| [Chat and WebSocket](chat-and-websocket.md) | Bidirectional chat protocol, queues, and controller lifecycle |
+| [Agent runtime](agent-runtime.md) | Bounded LLM loop, event stream, delegation, and traces |
+| [Tool authorization](tool-authorization.md) | Allowlist and interactive approval policies, child-agent boundaries |
+| [LLM providers](llm-providers.md) | OpenAI and OpenAI-compatible provider configuration and capabilities |
+| [Data and storage](data-and-storage.md) | SQLite schema, message tree, local file storage, and attachments |
 
-## Architecture Document Index
-
-| Document                                               | Description                                                      | Key Components & Focus                                                                                 |
-| ------------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| [System Overview](overview.md)                         | High-level topology, monorepo design, request lifecycle          | Full-stack data flow, Next.js reverse proxy, FastAPI                                                   |
-| [Tool Authorization & Approval](tool-authorization.md) | Deep dive into tool security, policies, and interactive approval | `ToolApprovalPolicy`, `InteractiveApprovalPolicy`, WebSockets, Sub-agent permissions, recursion safety |
-| [Agent Runtime & Execution Loop](agent-runtime.md)     | Agent lifecycle, LLM streaming, reasoning, multi-step loops      | `Agent`, `LLMClient`, `sub_agent`, call stack, event streaming, context windowing, execution traces    |
-| [LLM Providers and Model Capabilities](llm-providers.md) | OpenAI and compatible-provider setup, discovery, and provenance | Provider types, normalized URLs, capability metadata, refresh semantics, runtime lookup                |
-| [Chat & Real-Time WebSocket](chat-and-websocket.md)    | Real-time chat streaming, bidirectional messaging, queueing      | `ChatController`, `ChatOrchestrator`, `MessageQueue`, sub-agent event packets                          |
-| [Data Model & Storage](data-and-storage.md)            | Relational schema, SQLite WAL, JSONB columns, message tree       | SQLAlchemy async, Pydantic type adapters, ER diagram, `sub_agent_traces`                               |
-| [Authentication & Security](auth-and-security.md)      | Identity federation, token verification, internal hooks          | BetterAuth, PyJWKClient, RS256, system key                                                             |
-
----
-
-## High-Level System Topology
+## Current deployment topology
 
 ```mermaid
 flowchart TD
-    subgraph ClientLayer["Client Layer (Browser)"]
-        BrowserUI["Next.js 16 Web UI (shadcn/ui + Tailwind 4)"]
-        WSClient["WebSocket Client (react-use-websocket)"]
+    Browser[Browser]
+
+    subgraph Frontend[Next.js application / nginx public entrypoint]
+        Auth[Better Auth: /api/auth]
+        UI[React UI]
+        Stream[Event stream: /api/stream]
+        Proxy[Same-origin /api/py proxy]
     end
 
-    subgraph FrontendServer["Frontend Server (Next.js Node/Edge Runtime)"]
-        NextAuth["BetterAuth Auth Engine (/api/auth)"]
-        NextProxy["Next.js API Proxy (/api/py -> :8000)"]
-        StreamWebhook["Webhook Receiver (/api/stream)"]
+    subgraph Backend[FastAPI :8000]
+        API[REST and WebSocket routes]
+        Chat[Chat controller and orchestrator]
+        Agent[Agent runtime and tool registry]
+        DB[SQLAlchemy async session manager]
     end
 
-    subgraph BackendServer["Backend Application (FastAPI on Port 8000)"]
-        FastAPIApp["FastAPI App (root_path: /api/py)"]
-        SecurityMiddleware["JWKS Token Verifier (RS256)"]
+    SQLite[(SQLite in STORAGE_ROOT)]
+    Files[(Local files in STORAGE_ROOT/files)]
+    Providers[OpenAI or compatible provider]
 
-        subgraph ChatSubsystem["Chat & Orchestration Subsystem"]
-            WSRouter["WebSocket Stream Route (/chat/stream/{id})"]
-            Controller["ChatController (Background workers)"]
-            Orchestrator["ChatOrchestrator (State machine)"]
-            MsgQueue["MessageQueue (asyncio.Queue)"]
-        end
-
-        subgraph AgentEngine["Agent Execution Engine"]
-            AgentCore["Agent (Multi-step Loop)"]
-            ApprovalPolicy["ToolApprovalPolicy (Allowlist / Interactive)"]
-            UserQueue["UserResponseQueue"]
-            ToolReg["ToolRegistry (@tool_registry.tool)"]
-        end
-
-        subgraph IntegrationLayer["Integrations & Storage"]
-            LLMClient["LLMClient (AsyncOpenAI Provider)"]
-            DBMgr["DatabaseSessionManager (AsyncSession)"]
-            EventBusCore["EventBus (In-process + Webhook)"]
-        end
-    end
-
-    subgraph ExternalServices["External Infrastructure"]
-        SQLiteDB[("SQLite Database (WAL Mode)")]
-        LLMProviders["LLM Providers (OpenAI, Anthropic, Local)"]
-        WebServices["External APIs / Web / Search"]
-    end
-
-    BrowserUI -->|HTTP REST via /api/py| NextProxy
-    BrowserUI -->|Auth Requests| NextAuth
-    WSClient <-->|Bi-directional WebSocket| WSRouter
-    NextProxy -->|Forwarded REST| FastAPIApp
-    StreamWebhook <---|System Key HTTP POST| EventBusCore
-    BrowserUI -->|"HTTP REST via /api/py"| NextProxy
-    BrowserUI -->|"Auth Requests"| NextAuth
-    WSClient <-->|"Bi-directional WebSocket"| WSRouter
-    NextProxy -->|"Forwarded REST"| FastAPIApp
-    EventBusCore -->|"System Key HTTP POST"| StreamWebhook
-
-    FastAPIApp --> SecurityMiddleware
-    SecurityMiddleware --> WSRouter
-    WSRouter <--> Controller
-    Controller <--> MsgQueue
-    Controller <--> Orchestrator
-    Orchestrator <--> AgentCore
-    AgentCore --> ApprovalPolicy
-    ApprovalPolicy <--> UserQueue
-    AgentCore --> ToolReg
-    AgentCore --> LLMClient
-
-    LLMClient -->|Streaming SSE / Tool calls| LLMProviders
-    ToolReg -->|Fetch / Search / APIs| WebServices
-    DBMgr -->|SQLAlchemy Async| SQLiteDB
-    LLMClient -->|"Streaming SSE / Tool calls"| LLMProviders
-    ToolReg -->|"Fetch / Search / APIs"| WebServices
-    DBMgr -->|"SQLAlchemy Async"| SQLiteDB
+    Browser --> UI
+    Browser -->|session and JWT| Auth
+    Browser -->|REST and WebSocket: /api/py| Proxy
+    Proxy --> API
+    API --> Chat
+    Chat --> Agent
+    Agent --> Providers
+    API --> DB
+    DB --> SQLite
+    API --> Files
+    Backend -->|system-key callback| Stream
 ```
 
----
+## Design boundaries
 
-## Core System Principles
+- **Same-origin browser traffic:** the browser uses `/api/py` for FastAPI HTTP,
+  WebSocket, and OpenAPI traffic. Next.js supplies the local-development proxy;
+  nginx supplies the equivalent route in the combined container.
+- **Authentication boundary:** Better Auth owns sessions and signing keys. FastAPI
+  validates bearer and WebSocket JWTs against the frontend's loopback JWKS endpoint.
+- **Capability boundary:** a chat agent may invoke only its configured tools. A
+  delegated agent executes only the active tools assigned to its own profile.
+- **Persistence boundary:** SQLAlchemy manages the relational store; uploaded bytes
+  pass through the `FileStore` protocol, whose current implementation is
+  `LocalFileStore`.
+- **Provider boundary:** the runtime uses the OpenAI SDK. Supported configurations
+  are canonical OpenAI and a generic OpenAI-compatible HTTP(S) endpoint.
 
-1. **Principle of Least Privilege**: Agents can only execute tools explicitly assigned in their profile and permitted by the current chat session.
-2. **Explicit Human-in-the-Loop**: Dangerous or non-whitelisted tool calls require interactive, real-time approval through the WebSocket protocol before execution.
-3. **Pluggable Architecture**: Storage, LLM providers, and approval policies are written behind explicit Python protocols and abstract interfaces.
-4. **Resilient Local-First Design**: Optimized for single-tenant or enterprise self-hosting with high-concurrency SQLite (WAL mode, busy timeout, memory caching).
+## Code entry points
 
----
-
-## Navigating the Codebase
-
-- **Backend Entrypoint**: [`asterism.main:app`](../apps/backend/asterism/main.py)
-- **Lifecycle & Initialization**: [`asterism.core.lifespan:lifespan`](../apps/backend/asterism/core/lifespan.py)
-- **Agent Orchestration**: [`asterism.domains.agent.agent:Agent`](../apps/backend/asterism/domains/agent/agent.py)
-- **Tool Authorization Policy**: [`asterism.domains.agent.approval:ToolApprovalPolicy`](../apps/backend/asterism/domains/agent/approval.py)
-- **WebSocket Streaming Controller**: [`asterism.domains.chat.controller:ChatController`](../apps/backend/asterism/domains/chat/controller.py)
-- **Frontend WebSocket Hook**: [`useChatWebSocket`](../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)
+- Backend app: [`asterism.main:app`](../apps/backend/asterism/main.py)
+- Backend lifespan: [`asterism.core.lifespan:lifespan`](../apps/backend/asterism/core/lifespan.py)
+- Chat transport: [`ChatController`](../apps/backend/asterism/domains/chat/controller.py)
+- Agent loop: [`Agent`](../apps/backend/asterism/domains/agent/agent.py)
+- Tool registry: [`tool_registry`](../apps/backend/asterism/domains/tools/registry.py)
+- Frontend chat hook: [`useChatWebSocket`](../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)

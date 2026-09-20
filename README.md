@@ -2,10 +2,22 @@
 
 [![CI](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml/badge.svg)](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml)
 
-Asterism is a full-stack, multi-agent AI application with coordinated agents, tools,
-skills, memory, and profile-specific behavior.
+Asterism is a self-hosted, full-stack AI chat application. It combines a Next.js
+frontend with a FastAPI agent runtime, capability-scoped tools and sub-agents,
+streaming chat, administrator-managed OpenAI-compatible models, and user file
+uploads (document extraction and vision-gated images).
 
-Comprehensive architecture documentation and component diagrams are located in [`architecture/`](architecture/README.md).
+## Architecture
+
+The implementation-oriented architecture guides are in
+[`architecture/`](architecture/README.md):
+
+- [System overview](architecture/overview.md) — topology, workspace layout, and request flow
+- [Authentication and security](architecture/auth-and-security.md) — Better Auth, JWT/JWKS, tenancy, and internal callbacks
+- [Agent runtime](architecture/agent-runtime.md) and [tool authorization](architecture/tool-authorization.md) — bounded execution, delegation, and approvals
+- [Chat and WebSocket](architecture/chat-and-websocket.md) — streaming protocol and controller lifecycle
+- [Data and storage](architecture/data-and-storage.md) — SQLite, file storage, and attachments
+- [LLM providers](architecture/llm-providers.md) — supported provider modes and model capabilities
 
 ## Configuration
 

@@ -16,8 +16,8 @@ flowchart TD
     end
 
     subgraph Transport["Transport Layer"]
-        WSEndpoint["FastAPI Route: /chat/stream/{chat_id}"]
-        WSConn["WebSocketConnection (heartbeat, json framing)"]
+        WSEndpoint["FastAPI Route: /api/py/chat/stream/{chat_id}"]
+        WSConn["WebSocketConnection (JSON framing, pong heartbeat)"]
     end
 
     subgraph ControllerSubsystem["ChatController (Concurrency Coordinator)"]
@@ -62,7 +62,7 @@ flowchart TD
 [`WebSocketConnection`](../apps/backend/asterism/domains/chat/connection.py) encapsulates the raw FastAPI `WebSocket` instance.
 
 - **Message Framing**: Serializes and deserializes JSON messages safely.
-- **Heartbeat Loop**: Runs a background ping/pong cycle to detect dead or half-open connections early.
+- **Heartbeat Loop**: Sends a `pong` packet every 10 seconds while the connection is open; clients can also send a `ping` command.
 - **Clean Disconnects**: Catches `WebSocketDisconnect` and ensures underlying resources close properly without uncaught traceback spam.
 
 ### 2. `ChatController`
@@ -88,11 +88,11 @@ flowchart TD
 
 ## Concurrency and Worker Loops
 
-When a client connects to `/chat/stream/{chat_id}`, `ChatController.run()` initiates several concurrent coroutines:
+When a client connects to `/api/py/chat/stream/{chat_id}?token={jwt}`, `ChatController.run()` initiates several concurrent coroutines:
 
 | Worker / Loop                        | Interval / Trigger                | Purpose                                                                         |
 | ------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------- |
-| `connection.heartbeat_loop()`        | Periodic                          | Monitors socket vitality; closes dropped connections                            |
+| `connection.heartbeat_loop()`        | Every 10 seconds                  | Sends a `pong` heartbeat while the socket is open                               |
 | `orchestrator.generate_chat_title()` | One-off background                | Generates smart title using draft LLM                                           |
 | `_status_loop()`                     | Every 0.5s                        | Emits `{"type": "status", "is_processing": bool}` to toggle UI loading spinners |
 | `_message_queue_processing_loop()`   | Event-driven (`queue.get()`)      | Flushes outbound events (`DELTA`, `TOOL_CALL`, `COMPLETE`) to the client        |
@@ -201,10 +201,10 @@ When a client connects to `/chat/stream/{chat_id}`, `ChatController.run()` initi
 
 ## File attachments
 
-The composer uploads selected files before it sends the WebSocket command. The orchestrator validates each filename against the authenticated user's `user_files` records, processes pending files, and persists typed references on the user message. Invalid, duplicate, deleted, or cross-user names fail before the message is persisted. On history rebuild and regeneration, document/text cache is injected as text and images are included only when the resolved model explicitly supports vision.
+The composer uploads selected files before it sends the WebSocket command. The orchestrator validates each filename against the authenticated user's `user_files` records, processes pending files, and persists typed references on the user message. Invalid, duplicate, deleted, or cross-user names fail before the message is persisted. On history rebuild and regeneration, cached document/text content is injected as text; an image is encoded as an OpenAI-compatible `image_url` part only when the resolved model has `supports_vision == true` and the image is within the configured vision-byte limit. Missing, unsupported, failed, oversized, and non-vision images become explicit text notices rather than model input.
 
 ## Related Documentation
 
 - [Tool Authorization & Approval](tool-authorization.md)
 - [Agent Runtime & Execution Loop](agent-runtime.md)
-- [System Overview](README.md)
+- [System Overview](overview.md)

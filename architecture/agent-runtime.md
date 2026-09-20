@@ -227,4 +227,4 @@ Frontend WebSocket-contract E2E coverage uses the test-only `/e2e/sub-agent` har
 
 - [Tool Authorization & Approval](tool-authorization.md)
 - [Chat & Real-Time WebSocket](chat-and-websocket.md)
-- [System Overview](README.md)
+- [System Overview](overview.md)

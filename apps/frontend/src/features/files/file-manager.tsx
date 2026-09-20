@@ -159,7 +159,7 @@ export function FileManager() {
                   filename={file.filename}
                 />
                 <p className="text-muted-foreground text-xs capitalize">
-                  {file.kind} · {file.size} bytes
+                  {file.kind} · {file.size.toLocaleString()} bytes
                 </p>
               </div>
 

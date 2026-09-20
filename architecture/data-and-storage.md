@@ -53,6 +53,7 @@ erDiagram
     users ||--o{ agent_profiles : "creates"
     users ||--o{ user_settings : "has"
     users ||--o{ sub_agent_traces : "owns"
+    users ||--o{ user_files : "owns"
 
     folders ||--o{ folders : "parent_of"
     folders ||--o{ chats : "categorizes"
@@ -92,6 +93,7 @@ erDiagram
         string role
         text content
         text thinking
+        json files
         json tool_calls
         json tool_call_results
         int token_count
@@ -130,6 +132,22 @@ erDiagram
         string name
         bool is_active
         uuid provider_id FK
+    }
+
+    user_files {
+        uuid id PK
+        string user_id FK
+        string filename
+        string original_name
+        int size
+        string mime_type
+        string kind
+        string sha256
+        string content_status
+        string content_error
+        text content_cache
+        datetime created_at
+        datetime updated_at
     }
 
     user_settings {
@@ -206,14 +224,32 @@ Asterism provides type-safe JSON serialization directly into SQLite columns usin
 
 ---
 
-## User file storage
+## User file storage and model input
 
-Uploaded files are owned by one user and stored through the `FileStore` interface; the current `LocalFileStore` places bytes below `{storage_root}/files/{user_id}`. Metadata, ownership, hash, classification, and bounded processing cache live in `user_files`. `messages.files` stores only typed references, so deleting a file removes its bytes and row without rewriting history; affected historical attachments render as unavailable.
+Uploaded bytes pass through the `FileStore` protocol; `LocalFileStore` currently
+places them below `{storage_root}/files/{user_id}`. The `user_files` table records
+ownership, sanitized and original names, MIME/kind classification, SHA-256, and a
+bounded processing cache. `messages.files` stores typed snapshots/references rather
+than a relational foreign key, so deleting a file removes its bytes and row without
+rewriting history; affected historical attachments render as unavailable.
 
-The upload API is authenticated and user-scoped (`POST`, `GET`, and `DELETE /files`). It sanitizes names, rejects configured executable extensions and oversized files, and never exposes another user's bytes or metadata. An upload with the same user, sanitized filename, and SHA-256 as an intact existing object reuses that row and bytes; different bytes retain filename collision suffixing, and no deduplication crosses users or filenames. The repeatable schema migrations create `user_files` and add `messages.files` without modifying existing message content.
+The authenticated, user-scoped API provides `POST /files`, paginated `GET /files`,
+`GET /files/{filename}`, and `DELETE /files/{filename}`. Uploads sanitize names,
+reject configured executable extensions and oversized input, and never expose
+another user's bytes or metadata. An intact existing object with the same user,
+sanitized filename, and SHA-256 is reused. Different bytes receive filename collision
+suffixes; deduplication never crosses users or filenames.
+
+On first attachment, `MarkItDownFileProcessor` reads text directly where possible
+or converts supported documents in a worker thread. Processing is bounded by input
+size, timeout, and converted-character limits; its status and safe error message are
+stored on the file. Chat builds document/text cache into text parts. Image bytes are
+included only for models whose `supports_vision` capability is explicitly `true` and
+only below the configured vision limit; unknown capability is intentionally treated
+as non-vision. See [LLM providers](llm-providers.md#file-input-capability-gating).
 
 ## Related Documentation
 
-- [System Overview](README.md)
+- [System Overview](overview.md)
 - [Chat & Real-Time WebSocket](chat-and-websocket.md)
 - [Agent Runtime & Execution Loop](agent-runtime.md)
