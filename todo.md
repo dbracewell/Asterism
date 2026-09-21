@@ -317,3 +317,52 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 - [x] Re-verify all story acceptance criteria; obtain user completion confirmation.
 - [x] Merge the final story branch and announce epic completion.
+
+## EPIC-16 — Memory Lifecycle and Resource Bounds
+
+Plan: [EPIC-16](epics/EPIC-16-MEMORY-LIFECYCLE-AND-RESOURCE-BOUNDS.md).
+Status: US-16.1 complete; awaiting user confirmation before merge.
+Order: US-16.1 → US-16.2 → US-16.3 → US-16.4 → US-16.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
+Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
+
+- [x] US-16.1 — Audit process-lifetime state and define resource contracts
+  - [x] US-16.1-T1: Inventory backend/frontend application-owned globals, singleton registries, caches, maps, queues, timers, listeners, background tasks, and connection state; exclude generated/dependency internals unless Asterism controls keys or retention.
+  - [x] US-16.1-T2: Record each resource's owner, key cardinality/source, retained graph, creation path, cleanup paths, bound/TTL, and eager versus lazy expiry.
+  - [x] US-16.1-T3: Exercise completed/cancelled/deleted chats, reconnects, provider failure, WebSocket/SSE disconnect, event-handler failure, and high-cardinality model/IP input.
+  - [x] US-16.1-T4: Publish the inventory and resource contracts in an ADR-style note; obtain approval for unresolved unbounded-path follow-up tasks.
+
+- [ ] US-16.2 — Give chat jobs and outbound queues an explicit lifecycle
+  - [ ] US-16.2-T1: Define `ChatJob` lifecycle/state for active generation, title task, pending approvals, controllers, idle state, cancellation, deletion, and shutdown.
+  - [ ] US-16.2-T2: Add race-safe job retirement APIs and controller attach/detach tracking; retire idle jobs only after the last controller disconnects.
+  - [ ] US-16.2-T3: Couple chat deletion to safe runtime retirement, cancellation, queue discard, and prevention of late writes/stale recreation.
+  - [ ] US-16.2-T4: Constrain or replace the per-chat message-queue cache with explicit cleanup, bounded fallback, and defined disconnected-client backpressure.
+  - [ ] US-16.2-T5: Add lifespan shutdown cleanup that cancels/awaits active jobs and releases queues safely.
+  - [ ] US-16.2-T6: Test completion, cancellation, reconnect, duplicate connections, deletion, queue bounds, expiry fallback, and shutdown cardinality.
+
+- [ ] US-16.3 — Bound backend caches and background event work
+  - [ ] US-16.3-T1: Apply a finite cache bound/invalidation policy to token encodings and test high-cardinality model names.
+  - [ ] US-16.3-T2: Review and correct `SlidingTTLCache` lazy-expiry/size-accounting behavior where needed.
+  - [ ] US-16.3-T3: Define bounded concurrency, ownership, error handling, and shutdown for backend event-dispatch tasks.
+  - [ ] US-16.3-T4: Review component singletons and user caches; add limits/invalidation/cleanup where evidence requires it.
+  - [ ] US-16.3-T4a: Replace the chat-ID-keyed logger cache with a bounded policy or stable logger plus structured correlation; test many unique chats.
+  - [ ] US-16.3-T5: Test cache eviction/expiry, task failure/cancellation/shutdown, and safe aggregate diagnostics.
+
+- [ ] US-16.4 — Bound frontend server SSE and request-lifecycle state
+  - [ ] US-16.4-T1: Verify idempotent SSE cleanup for abort, cancellation, enqueue failure, and initialization failure.
+  - [ ] US-16.4-T1a: Remove payload-bearing SSE POST logging and make shared cleanup reachable from start failure, abort, and cancel.
+  - [ ] US-16.4-T2: Bound server-global SSE listener population and define threshold behavior with safe diagnostics.
+  - [ ] US-16.4-T3: Verify/bound high-cardinality IP rate-limit storage and its expiry/cleanup scheduling.
+  - [ ] US-16.4-T3a: Cap normalized client-IP cardinality and use lifecycle-owned cleanup or a bounded on-access policy; test high-cardinality input.
+  - [ ] US-16.4-T4: Audit client timers, WebSocket hooks, subscriptions, and global event-bus handlers through navigation/reconnect cycles.
+  - [ ] US-16.4-T5: Add frontend unit/integration coverage and an isolated connection-churn harness where needed.
+
+- [ ] US-16.5 — Verify long-run bounds and document operations
+  - [ ] US-16.5-T1: Build deterministic churn scenarios for unique chats, users/model names, reconnects, cancellation/deletion, SSE clients, and event bursts.
+  - [ ] US-16.5-T2: Assert resource counters and task/listener cardinality plateau within documented bounds after cleanup/TTL windows.
+  - [ ] US-16.5-T3: Run focused/full quality gates and regenerate the Hey API client if the contract changes.
+  - [ ] US-16.5-T4: Update architecture/operator documentation with ownership, bounds, eviction/overflow behavior, restart semantics, and safe diagnostics.
+
+### Epic closure
+
+- [ ] Re-verify story acceptance criteria and request user completion confirmation.
+- [ ] On confirmation, merge final work, announce completion, and propose the next plan.
