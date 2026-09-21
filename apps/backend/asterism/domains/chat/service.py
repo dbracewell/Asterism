@@ -231,6 +231,11 @@ async def delete_chat(
                 f"User {user_id} is not authorized to delete chat session {chat_id}"
             )
 
+        # Stop the process-local runtime before persistence deletion. This
+        # prevents a cancelled provider task from writing a late message.
+        from asterism.domains.chat.jobs import chat_jobs
+
+        await chat_jobs.retire(chat_id)
         await session.delete(chat_session)
         await session.commit()
 
@@ -257,6 +262,11 @@ async def delete_chats(
         )
         if len(owned_ids) != len(unique_ids):
             raise NotFoundException("One or more chats were not found")
+
+        from asterism.domains.chat.jobs import chat_jobs
+
+        for chat_id in owned_ids:
+            await chat_jobs.retire(chat_id)
         await session.execute(
             delete(ChatModel).where(
                 ChatModel.user_id == user_id,

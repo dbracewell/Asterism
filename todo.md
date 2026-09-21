@@ -321,7 +321,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-16 — Memory Lifecycle and Resource Bounds
 
 Plan: [EPIC-16](epics/EPIC-16-MEMORY-LIFECYCLE-AND-RESOURCE-BOUNDS.md).
-Status: US-16.1 complete; awaiting user confirmation before merge.
+Status: US-16.1 completed, confirmed, and merged; US-16.2 complete and awaiting user confirmation before merge.
 Order: US-16.1 → US-16.2 → US-16.3 → US-16.4 → US-16.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -331,13 +331,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-16.1-T3: Exercise completed/cancelled/deleted chats, reconnects, provider failure, WebSocket/SSE disconnect, event-handler failure, and high-cardinality model/IP input.
   - [x] US-16.1-T4: Publish the inventory and resource contracts in an ADR-style note; obtain approval for unresolved unbounded-path follow-up tasks.
 
-- [ ] US-16.2 — Give chat jobs and outbound queues an explicit lifecycle
-  - [ ] US-16.2-T1: Define `ChatJob` lifecycle/state for active generation, title task, pending approvals, controllers, idle state, cancellation, deletion, and shutdown.
-  - [ ] US-16.2-T2: Add race-safe job retirement APIs and controller attach/detach tracking; retire idle jobs only after the last controller disconnects.
-  - [ ] US-16.2-T3: Couple chat deletion to safe runtime retirement, cancellation, queue discard, and prevention of late writes/stale recreation.
-  - [ ] US-16.2-T4: Constrain or replace the per-chat message-queue cache with explicit cleanup, bounded fallback, and defined disconnected-client backpressure.
-  - [ ] US-16.2-T5: Add lifespan shutdown cleanup that cancels/awaits active jobs and releases queues safely.
-  - [ ] US-16.2-T6: Test completion, cancellation, reconnect, duplicate connections, deletion, queue bounds, expiry fallback, and shutdown cardinality.
+- [x] US-16.2 — Give chat jobs and outbound queues an explicit lifecycle
+  - [x] US-16.2-T1: Define `ChatJob` lifecycle/state for active generation, title task, pending approvals, controllers, idle state, cancellation, deletion, and shutdown.
+  - [x] US-16.2-T2: Add race-safe job retirement APIs and controller attach/detach tracking; retire idle jobs only after the last controller disconnects.
+  - [x] US-16.2-T3: Couple chat deletion to safe runtime retirement, cancellation, queue discard, and prevention of late writes/stale recreation.
+  - [x] US-16.2-T4: Constrain or replace the per-chat message-queue cache with explicit cleanup, bounded fallback, and defined disconnected-client backpressure.
+  - [x] US-16.2-T5: Add lifespan shutdown cleanup that cancels/awaits active jobs and releases queues safely.
+  - [x] US-16.2-T6: Test completion, cancellation, reconnect, duplicate connections, deletion, queue bounds, expiry fallback, and shutdown cardinality.
 
 - [ ] US-16.3 — Bound backend caches and background event work
   - [ ] US-16.3-T1: Apply a finite cache bound/invalidation policy to token encodings and test high-cardinality model names.

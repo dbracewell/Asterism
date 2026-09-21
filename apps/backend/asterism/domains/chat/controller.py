@@ -8,7 +8,7 @@ from asterism.common.log import get_logger
 from asterism.core.tasks import BackgroundTaskManager
 from asterism.domains.agent.schemas import AgentEventType
 from asterism.domains.chat.connection import Connection
-from asterism.domains.chat.jobs import ChatJob
+from asterism.domains.chat.jobs import ChatJob, chat_jobs
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 
@@ -23,6 +23,7 @@ class ChatController:
         self.chat_id: uuid.UUID = chat_id
         self.connection: Connection = connection
         self.job = job
+        self.manager = job.manager or chat_jobs
         self.orchestrator: ChatOrchestrator = job.orchestrator
         self.tasks: BackgroundTaskManager = BackgroundTaskManager()
         self.logger: Logger = get_logger(f"ChatSession({str(self.chat_id)})")
@@ -35,6 +36,7 @@ class ChatController:
 
     async def run(self) -> None:
         await self.connection.accept()
+        self.manager.attach(self.chat_id, self.job)
         self._is_running = True
 
         # Start background workers
@@ -73,6 +75,7 @@ class ChatController:
             if command_tasks:
                 await asyncio.gather(*command_tasks, return_exceptions=True)
             await self.tasks.shutdown()
+            await self.manager.detach(self.chat_id, self.job)
 
     async def _accept_commands_loop(self) -> None:
         while self._is_running:

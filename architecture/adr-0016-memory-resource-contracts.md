@@ -60,6 +60,25 @@ failure, and partial-message persistence. Source-path tracing additionally found
 The last four observations are intentionally not production behavior changes;
 they are the reproducible source/harness conditions for the remediation stories.
 
+## US-16.2 chat-runtime contract
+
+A `ChatJob` is created only for an attached controller and owns the generation
+and title tasks plus pending approvals. A transient controller detach leaves
+active work untouched. When the last controller detaches, the manager retires
+only an idle job: no active generation/title task and no unresolved approval.
+Retirement removes the job and eagerly drains/removes its outbound queue.
+
+Explicit cancellation retains the job until its cancellation finalization is
+complete, then follows the same idle rule. Chat deletion verifies ownership,
+cancels and awaits the runtime, removes queued packets, and only then deletes
+persistence. Backend shutdown rejects new jobs, cancels/awaits all existing
+jobs, and removes their queues; jobs are not durable across restart.
+
+Queues retain at most 256 packets per chat, with at most 1,000 cached chat
+queues and a five-minute sliding TTL fallback. On overflow, the oldest packet
+is discarded to preserve current progress; tests can inspect the queue's
+content-free dropped-packet counter. Active work is never TTL-evicted.
+
 ## Required follow-up tasks
 
 The epic already assigns job/queue cleanup to US-16.2, cache/event work to

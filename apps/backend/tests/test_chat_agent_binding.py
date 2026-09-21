@@ -128,6 +128,23 @@ async def test_bulk_delete_is_atomic_and_user_scoped(chat_agent_session):
 
 
 @pytest.mark.asyncio
+async def test_delete_retires_owned_runtime_before_persistence(chat_agent_session, monkeypatch):
+    chat = ChatModel(user_id="user-a")
+    chat_agent_session.add(chat)
+    await chat_agent_session.commit()
+    retired = []
+
+    async def retire(chat_id):
+        retired.append(chat_id)
+
+    monkeypatch.setattr("asterism.domains.chat.jobs.chat_jobs.retire", retire)
+    await delete_chats("user-a", [chat.id], chat_agent_session)
+
+    assert retired == [chat.id]
+    assert await chat_agent_session.get(ChatModel, chat.id) is None
+
+
+@pytest.mark.asyncio
 async def test_chat_agent_migration_backfills_a_valid_main_default(
     chat_agent_session,
 ):

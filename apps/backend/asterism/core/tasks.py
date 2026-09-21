@@ -14,7 +14,10 @@ class BackgroundTaskManager:
         return task
 
     async def shutdown(self) -> None:
-        """Cancels all running tasks."""
-        for task in self.tasks:
+        """Cancel and await connection-owned tasks without masking errors."""
+        tasks = list(self.tasks)
+        for task in tasks:
             if not task.done():
                 task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)

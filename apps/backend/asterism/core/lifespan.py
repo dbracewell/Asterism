@@ -7,6 +7,7 @@ from asterism.common.log import get_logger
 from asterism.common.package_walker import load_decorators
 from asterism.core import config
 from asterism.db.database import db_session_manager
+from asterism.domains.chat.jobs import chat_jobs
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.tools.registry import tool_registry
 
@@ -41,5 +42,6 @@ async def lifespan(app: FastAPI):
     await init_system()
     yield
     event_bus.emit(NoArgEvent(type=EventType.SYSTEM_STOP))
+    await chat_jobs.shutdown()
     await db_session_manager.close()
     logger.info("Asterism backend shutting up...")

@@ -1,10 +1,19 @@
 import asyncio
+import time
 import uuid
 from types import SimpleNamespace
 
 import pytest
+from asterism.common.cache import SlidingTTLCache
+from asterism.domains.chat import message_queue
 from asterism.domains.chat.controller import ChatController
 from asterism.domains.chat.jobs import ChatJobManager
+from asterism.domains.chat.message_queue import (
+    MAX_QUEUED_PACKETS,
+    discard_message_queue,
+    get_message_queue,
+    message_queue_count,
+)
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.chat.schemas import (
     Chat,
@@ -349,3 +358,108 @@ async def test_explicit_job_cancel_finalizes_the_active_generation():
     await task
     assert cancelled.is_set()
     assert not job.cancel()
+
+
+@pytest.mark.asyncio
+async def test_idle_job_and_its_queue_retire_after_last_controller_detaches():
+    manager = ChatJobManager()
+    baseline = message_queue_count()
+    chat_id = uuid.uuid4()
+    orchestrator = SimpleNamespace(pending_approvals={})
+    job = manager.get_or_create(chat_id, orchestrator)
+    manager.attach(chat_id, job)
+    queue = get_message_queue(chat_id)
+    await queue.put({"type": "delta"})
+
+    await manager.detach(chat_id, job)
+
+    assert manager.count == 0
+    assert message_queue_count() == baseline
+
+
+@pytest.mark.asyncio
+async def test_active_job_survives_disconnect_then_retires_on_completion():
+    manager = ChatJobManager()
+    chat_id = uuid.uuid4()
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    async def operation():
+        started.set()
+        await release.wait()
+
+    orchestrator = SimpleNamespace(
+        pending_approvals={},
+        cancel_active_generation=lambda: asyncio.sleep(0),
+    )
+    job = manager.get_or_create(chat_id, orchestrator)
+    manager.attach(chat_id, job)
+    task = job.start(operation())
+    await started.wait()
+
+    await manager.detach(chat_id, job)
+    assert manager.count == 1
+    assert job.is_active
+
+    release.set()
+    await task
+    await asyncio.sleep(0)
+    assert manager.count == 0
+
+
+@pytest.mark.asyncio
+async def test_retire_and_shutdown_cancel_work_and_discard_queues():
+    manager = ChatJobManager()
+    baseline = message_queue_count()
+    chat_id = uuid.uuid4()
+    cancelled = asyncio.Event()
+
+    async def operation():
+        await asyncio.Event().wait()
+
+    async def cancel_active_generation():
+        cancelled.set()
+
+    orchestrator = SimpleNamespace(
+        pending_approvals={},
+        cancel_active_generation=cancel_active_generation,
+    )
+    job = manager.get_or_create(chat_id, orchestrator)
+    job.start(operation())
+    await asyncio.sleep(0)
+    await get_message_queue(chat_id).put({"type": "delta"})
+
+    await manager.retire(chat_id)
+    assert cancelled.is_set()
+    assert manager.count == 0
+    assert message_queue_count() == baseline
+
+    second = manager.get_or_create(uuid.uuid4(), orchestrator)
+    second.start(operation())
+    await manager.shutdown()
+    assert manager.count == 0
+
+
+def test_outbound_queue_is_bounded_and_keeps_newest_packets():
+    chat_id = uuid.uuid4()
+    queue = get_message_queue(chat_id)
+    for index in range(MAX_QUEUED_PACKETS + 1):
+        queue.put_nowait({"index": index})
+
+    assert queue.qsize() == MAX_QUEUED_PACKETS
+    assert queue.dropped_packets == 1
+    assert queue.get_nowait() == {"index": 1}
+    discard_message_queue(chat_id)
+
+
+def test_queue_ttl_is_a_fallback_for_unretired_idle_queues(monkeypatch):
+    cache = SlidingTTLCache[uuid.UUID, message_queue.MessageQueue](
+        maxsize=2, ttl=0.001
+    )
+    monkeypatch.setattr(message_queue, "_queue_cache", cache)
+    chat_id = uuid.uuid4()
+    first = get_message_queue(chat_id)
+
+    time.sleep(0.01)
+    assert get_message_queue(chat_id) is not first
+    assert message_queue_count() == 1
