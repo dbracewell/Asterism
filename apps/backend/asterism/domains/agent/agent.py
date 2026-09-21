@@ -205,7 +205,6 @@ class Agent:
                         messages.append(
                             LLMMessage.assistant(
                                 content=event.content,
-                                token_count=event.total_tokens or 0,
                                 tool_calls=event.tool_calls,
                             )
                         )
@@ -288,7 +287,10 @@ class Agent:
                             thinking=event.thinking,
                             tool_results=tool_results,
                             tool_calls=event.tool_calls or [],
+                            input_tokens=event.input_tokens,
+                            output_tokens=event.output_tokens,
                             total_tokens=event.total_tokens,
+                            generation_duration_ms=event.generation_duration_ms,
                         )
 
                         if event.finish_reason == "stop":

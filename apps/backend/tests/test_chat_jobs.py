@@ -12,6 +12,7 @@ from asterism.domains.chat.schemas import (
     Message,
     MessageStatus,
 )
+from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
 
 
 @pytest.mark.asyncio
@@ -126,7 +127,6 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
         user_id="user-a",
         role="user",
         content="Tell me something",
-        token_count=0,
         status=MessageStatus.PENDING,
         created_at=1,
     )
@@ -154,7 +154,6 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
             user_id="user-a",
             role="assistant",
             content=kwargs["message"].content,
-            token_count=0,
             status=kwargs["message"].status,
             created_at=2,
         )
@@ -182,6 +181,46 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_context_estimate_handles_unknown_models_multimodal_and_reserved_output(monkeypatch):
+    chat = Chat(
+        info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
+        messages=[],
+    )
+
+    async def system_prompt():
+        return "Follow the uploaded document."
+
+    agent = SimpleNamespace(
+        session=chat,
+        profile=SimpleNamespace(tools=[], chat_parameters={"max_tokens": 100}),
+        _build_system_prompt=system_prompt,
+    )
+    orchestrator = ChatOrchestrator(agent)
+
+    async def assembled_messages():
+        return [
+            LLMMessage.user("Question about the document"),
+            LLMMessage(
+                role="user",
+                content=[
+                    TextContentPart(text="### Attached file: notes.txt\nImportant details"),
+                    ImageUrlContentPart(
+                        image_url=ImageUrlContent(url="data:image/png;base64,ignored")
+                    ),
+                ],
+            ),
+        ]
+
+    monkeypatch.setattr(orchestrator, "_build_agent_messages", assembled_messages)
+
+    usage = await orchestrator.estimate_context_usage()
+
+    assert usage.reserved_output_tokens == 100
+    assert usage.total_tokens == usage.input_tokens + 100
+    assert usage.input_tokens >= 765
+
+
+@pytest.mark.asyncio
 async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypatch):
     chat = Chat(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
@@ -190,7 +229,6 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
                 id=uuid.uuid4(),
                 role="user",
                 content="Plan my garden for spring",
-                token_count=0,
                 status=MessageStatus.PENDING,
                 created_at=1,
             )
@@ -228,7 +266,6 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
                 id=uuid.uuid4(),
                 role="user",
                 content="Organize my weekly tasks",
-                token_count=0,
                 status=MessageStatus.PENDING,
                 created_at=1,
             )

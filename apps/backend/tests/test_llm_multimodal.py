@@ -21,7 +21,6 @@ def test_user_message_serializes_text_and_image_parts():
             TextContentPart(text="describe this"),
             ImageUrlContentPart(image_url=ImageUrlContent(url="data:image/png;base64,AA==")),
         ],
-        token_count=0,
     )
 
     assert message.to_api_message() == {
@@ -38,7 +37,6 @@ def test_structured_content_is_rejected_for_non_user_messages():
     message = LLMMessage(
         role="assistant",
         content=[TextContentPart(text="not allowed")],
-        token_count=0,
     )
 
     with pytest.raises(RuntimeError, match="Only user messages"):

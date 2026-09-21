@@ -1,8 +1,26 @@
 import json
+from types import SimpleNamespace
 
 import pytest
 from asterism.domains.llm.client import LLMClient, StreamHandler, extract_text_tool_calls
 from asterism.domains.llm.schemas import LLMEventType, LLMMessage
+
+
+@pytest.mark.asyncio
+async def test_stream_usage_keeps_input_output_and_total_separate():
+    async def stream():
+        yield SimpleNamespace(
+            usage=SimpleNamespace(prompt_tokens=120, completion_tokens=30, total_tokens=150),
+            choices=[],
+        )
+
+    events = [event async for event in StreamHandler().process(stream())]
+    completed = events[-1]
+
+    assert completed.input_tokens == 120
+    assert completed.output_tokens == 30
+    assert completed.total_tokens == 150
+    assert completed.generation_duration_ms >= 0
 
 
 def test_legacy_thinking_budget_is_not_sent_to_the_provider():

@@ -8,6 +8,7 @@ from asterism.common.log import get_logger
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
+from asterism.domains.llm.token_counting import estimate_text_tokens
 from asterism.domains.tools.registry import ToolContext, tool_registry
 
 
@@ -50,9 +51,7 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
                 break
 
             msg_content = msg.content or ""
-            msg_tokens = getattr(msg, "token_count", 0) or max(
-                1, len(msg_content) // 4
-            )
+            msg_tokens = estimate_text_tokens(msg_content)
             if (
                 accumulated_tokens + msg_tokens > max_tokens
                 and selected_messages

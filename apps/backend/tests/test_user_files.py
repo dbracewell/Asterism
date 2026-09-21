@@ -282,7 +282,7 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
     ]
     chat = Chat(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=0, updated_at=0),
-        messages=[Message(id=uuid.uuid4(), role="user", content="Analyze", token_count=1,
+        messages=[Message(id=uuid.uuid4(), role="user", content="Analyze",
                           status=MessageStatus.PENDING, created_at=0, files=references)],
     )
     agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))

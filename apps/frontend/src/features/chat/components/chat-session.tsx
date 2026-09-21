@@ -246,6 +246,14 @@ export const ChatSession = ({
   }
 
   const chatAgent = user.settings.agents?.[session.info.agent_id ?? ""];
+  // The chat response is authoritative for the pinned agent model. Fall back
+  // to the already-loaded settings model metadata for chats created before
+  // that response field was available.
+  const contextWindow =
+    session.info.context_model?.context_window ??
+    user.settings.models?.find((model) => model.id === chatAgent?.model_id)
+      ?.context_window ??
+    null;
 
   return (
     <>
@@ -319,6 +327,10 @@ export const ChatSession = ({
             <ArrowDownIcon />
           </Button>
         )}
+        <ContextUsageMeter
+          usage={session.context_usage}
+          contextWindow={contextWindow}
+        />
         <ChatInput
           disabled={isProcessing}
           status={connectionStatus}
@@ -336,6 +348,52 @@ export const ChatSession = ({
         />
       </div>
     </>
+  );
+};
+
+export const ContextUsageMeter = ({
+  usage,
+  contextWindow,
+}: {
+  usage: Chat["context_usage"];
+  contextWindow: number | null;
+}) => {
+  if (!usage) return null;
+
+  if (!contextWindow) {
+    return (
+      <p className="text-muted-foreground mb-1 text-center text-xs">
+        Estimated input: {usage.input_tokens.toLocaleString()} tokens · Context window unknown
+      </p>
+    );
+  }
+
+  const percent = Math.min(100, Math.round((usage.total_tokens / contextWindow) * 100));
+  const state = percent >= 90 ? "critical" : percent >= 70 ? "warning" : "normal";
+  const color =
+    state === "critical"
+      ? "bg-destructive"
+      : state === "warning"
+        ? "bg-yellow-500"
+        : "bg-primary";
+
+  return (
+    <div className="mb-1 px-1" aria-label="Estimated context usage">
+      <div className="text-muted-foreground mb-1 flex justify-between text-xs">
+        <span>Estimated context usage</span>
+        <span>{percent}%</span>
+      </div>
+      <div
+        aria-valuemax={100}
+        aria-valuemin={0}
+        aria-valuenow={percent}
+        aria-valuetext={`${percent}% estimated context usage`}
+        className="bg-muted h-1.5 overflow-hidden rounded-full"
+        role="progressbar"
+      >
+        <div className={cn("h-full", color)} style={{ width: `${percent}%` }} />
+      </div>
+    </div>
   );
 };
 
@@ -456,6 +514,10 @@ const MessageItem = React.memo(
               <span className="mr-1">
                 {message.status === "cancelled" && "Stopped · "}
                 {new Date(message.created_at * 1000).toLocaleString()}
+                {(message.output_tokens ?? 0) > 0 &&
+                (message.generation_duration_ms ?? 0) > 0
+                  ? ` · ${((message.output_tokens ?? 0) / ((message.generation_duration_ms ?? 1) / 1000)).toFixed(1)} tok/s`
+                  : ""}
               </span>
             )}
 

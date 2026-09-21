@@ -14,7 +14,7 @@ from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.service import ensure_file_processed
 from asterism.domains.folders.models import FolderModel
-from asterism.domains.settings.service import get_user_settings
+from asterism.domains.settings.service import get_model_and_provider, get_user_settings
 
 from .models import (
     ChatModel,
@@ -23,6 +23,7 @@ from .models import (
 from .schemas import (
     BulkDeleteChatResponse,
     Chat,
+    ChatContextModel,
     ChatInfo,
     ChatInfoList,
     ChatUpdateRequest,
@@ -153,7 +154,6 @@ async def create_chat(
             status=MessageStatus.PENDING,
             content=payload.user_prompt,
             role="user",
-            token_count=0,
             files=files,
         )
         session.add(new_message)
@@ -457,6 +457,34 @@ async def search(
         )
 
 
+async def _get_context_model(
+    chat_session: ChatModel,
+    session: AsyncSession,
+) -> ChatContextModel | None:
+    if chat_session.agent_id is None:
+        return None
+
+    profile = await get_agent_profile(
+        user_id=chat_session.user_id,
+        agent_id=chat_session.agent_id,
+        session=session,
+    )
+    if profile.model_id is None:
+        return None
+
+    model = await get_model_and_provider(
+        model_id=profile.model_id,
+        user_id=chat_session.user_id,
+        session=session,
+    )
+    return ChatContextModel(
+        id=model.id,
+        name=model.name,
+        context_window=model.context_window,
+        context_window_source=model.context_window_source,
+    )
+
+
 async def get_one(
     chat_id: uuid.UUID,
     user_id: str,
@@ -471,6 +499,7 @@ async def get_one(
             raise UnauthorizedException()
 
         chat_info = ChatInfo.model_validate(chat_session)
+        chat_info.context_model = await _get_context_model(chat_session, session)
 
         stmt = select(MessageModel).where(
             MessageModel.chat_id == chat_id,

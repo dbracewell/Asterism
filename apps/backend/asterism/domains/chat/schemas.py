@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
+from asterism.domains.settings.provider_types import ModelCapabilitySource
 
 
 class MessageStatus(StrEnum):
@@ -28,7 +29,10 @@ class NewMessageRequest(BaseModel):
     model_id: uuid.UUID
     role: str
     content: str
-    token_count: int = Field(default=0)
+    input_tokens: int = Field(default=0)
+    output_tokens: int = Field(default=0)
+    total_tokens: int = Field(default=0)
+    generation_duration_ms: int = Field(default=0)
     thinking: str = Field(default="")
     parent_message_id: uuid.UUID | None = Field(default=None)
     status: MessageStatus = Field(default=MessageStatus.PENDING)
@@ -45,6 +49,10 @@ class Message(LLMMessage):
     status: MessageStatus
     created_at: int
     model_id: uuid.UUID | None = None
+    input_tokens: int = Field(default=0)
+    output_tokens: int = Field(default=0)
+    total_tokens: int = Field(default=0)
+    generation_duration_ms: int = Field(default=0)
     tool_call_results: list[ToolResult] | None = None
     files: list[MessageFileReference] = Field(default_factory=list)
     active_child_id: uuid.UUID | None = None
@@ -69,6 +77,20 @@ class UpdateMessageRequest(BaseModel):
     tool_results: list[ToolResult] | None = Field(default=None)
 
 
+class ChatContextModel(BaseModel):
+    id: uuid.UUID
+    name: str
+    context_window: int | None = None
+    context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+
+
+class ChatContextUsage(BaseModel):
+    input_tokens: int = Field(ge=0)
+    reserved_output_tokens: int | None = Field(default=None, ge=0)
+    total_tokens: int = Field(ge=0)
+    estimated: bool = True
+
+
 class ChatInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -81,6 +103,7 @@ class ChatInfo(BaseModel):
     agent_id: uuid.UUID | None = Field(default=None)
     preview: str | None = Field(default=None)
     message_count: int | None = Field(default=None)
+    context_model: ChatContextModel | None = Field(default=None)
 
 
 class ChatInfoList(BaseModel):
@@ -119,6 +142,7 @@ class SearchResultList(BaseModel):
 class Chat(BaseModel):
     info: ChatInfo
     messages: list[Message]
+    context_usage: ChatContextUsage | None = None
 
 
 class BulkDeleteChatRequest(BaseModel):

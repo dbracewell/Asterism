@@ -72,30 +72,17 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('b1f6380a-62ed-487c-ba6c-05ae33383ab6')
+    id: z.uuid().optional().default('601f9d36-2f54-47d9-9b51-674d3cce8b4c')
 });
 
 /**
- * ChatInfo
+ * ChatContextUsage
  */
-export const zChatInfo = z.object({
-    id: z.uuid(),
-    user_id: z.string(),
-    created_at: z.int(),
-    updated_at: z.int(),
-    allowed_tools: z.array(z.string()).optional(),
-    title: z.string().nullish(),
-    folder_id: z.uuid().nullish(),
-    agent_id: z.uuid().nullish(),
-    preview: z.string().nullish(),
-    message_count: z.int().nullish()
-});
-
-/**
- * ChatInfoList
- */
-export const zChatInfoList = z.object({
-    chats: z.array(zChatInfo)
+export const zChatContextUsage = z.object({
+    input_tokens: z.int().gte(0),
+    reserved_output_tokens: z.int().gte(0).nullish(),
+    total_tokens: z.int().gte(0),
+    estimated: z.boolean().optional().default(true)
 });
 
 /**
@@ -176,37 +163,6 @@ export const zFileKind = z.enum([
 ]);
 
 /**
- * Folder
- */
-export const zFolder = z.object({
-    id: z.uuid(),
-    user_id: z.string(),
-    title: z.string(),
-    created_at: z.int(),
-    updated_at: z.int(),
-    parent_id: z.uuid().nullable(),
-    sessions: z.array(zChatInfo).optional(),
-    children: z.array(z.lazy((): any => zFolder)).optional()
-});
-
-/**
- * FolderChatList
- */
-export const zFolderChatList = z.object({
-    chats: z.array(zChatInfo),
-    total: z.int().gte(0),
-    page: z.int().gte(1),
-    page_size: z.int().gte(1)
-});
-
-/**
- * FolderList
- */
-export const zFolderList = z.object({
-    folders: z.array(zFolder)
-});
-
-/**
  * Function
  */
 export const zFunction = z.object({
@@ -253,6 +209,71 @@ export const zModelCapabilitySource = z.enum([
     'manual',
     'unknown'
 ]);
+
+/**
+ * ChatContextModel
+ */
+export const zChatContextModel = z.object({
+    id: z.uuid(),
+    name: z.string(),
+    context_window: z.int().nullish(),
+    context_window_source: zModelCapabilitySource.optional().default('unknown')
+});
+
+/**
+ * ChatInfo
+ */
+export const zChatInfo = z.object({
+    id: z.uuid(),
+    user_id: z.string(),
+    created_at: z.int(),
+    updated_at: z.int(),
+    allowed_tools: z.array(z.string()).optional(),
+    title: z.string().nullish(),
+    folder_id: z.uuid().nullish(),
+    agent_id: z.uuid().nullish(),
+    preview: z.string().nullish(),
+    message_count: z.int().nullish(),
+    context_model: zChatContextModel.nullish()
+});
+
+/**
+ * ChatInfoList
+ */
+export const zChatInfoList = z.object({
+    chats: z.array(zChatInfo)
+});
+
+/**
+ * Folder
+ */
+export const zFolder = z.object({
+    id: z.uuid(),
+    user_id: z.string(),
+    title: z.string(),
+    created_at: z.int(),
+    updated_at: z.int(),
+    parent_id: z.uuid().nullable(),
+    sessions: z.array(zChatInfo).optional(),
+    children: z.array(z.lazy((): any => zFolder)).optional()
+});
+
+/**
+ * FolderChatList
+ */
+export const zFolderChatList = z.object({
+    chats: z.array(zChatInfo),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1)
+});
+
+/**
+ * FolderList
+ */
+export const zFolderList = z.object({
+    folders: z.array(zFolder)
+});
 
 /**
  * Llm
@@ -470,13 +491,16 @@ export const zToolResult = z.object({
 export const zMessage = z.object({
     role: z.string(),
     content: z.string(),
-    token_count: z.int(),
     thinking: z.string().nullish(),
     tool_calls: z.array(zToolCall).nullish(),
     id: z.uuid(),
     status: zMessageStatus,
     created_at: z.int(),
     model_id: z.uuid().nullish(),
+    input_tokens: z.int().optional().default(0),
+    output_tokens: z.int().optional().default(0),
+    total_tokens: z.int().optional().default(0),
+    generation_duration_ms: z.int().optional().default(0),
     tool_call_results: z.array(zToolResult).nullish(),
     files: z.array(zMessageFileReference).optional(),
     active_child_id: z.uuid().nullish(),
@@ -493,7 +517,8 @@ export const zMessage = z.object({
  */
 export const zChat = z.object({
     info: zChatInfo,
-    messages: z.array(zMessage)
+    messages: z.array(zMessage),
+    context_usage: zChatContextUsage.nullish()
 });
 
 /**

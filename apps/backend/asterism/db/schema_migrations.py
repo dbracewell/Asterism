@@ -14,6 +14,7 @@ _USER_FILES_MIGRATION = "20260401_01_user_files"
 _MESSAGE_FILES_MIGRATION = "20260401_02_message_files"
 _CHAT_AGENT_MIGRATION = "20260402_01_chat_agent"
 _CHAT_SEARCH_MIGRATION = "20260403_01_chat_search_fts"
+_MESSAGE_USAGE_MIGRATION = "20260404_01_message_usage"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -219,7 +220,23 @@ async def _migrate_provider_types_and_capabilities(
     )
 
 
+async def _migrate_message_usage(connection: AsyncConnection) -> None:
+    for column in (
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "generation_duration_ms",
+    ):
+        await _add_column_if_missing(
+            connection,
+            "messages",
+            column,
+            "INTEGER NOT NULL DEFAULT 0",
+        )
+
+
 _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
+    (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),
     (_MESSAGE_FILES_MIGRATION, _migrate_message_files),

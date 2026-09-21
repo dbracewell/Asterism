@@ -123,10 +123,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default=list,
     )
-    token_count: Mapped[int] = mapped_column(
-        "token_count",
-        Integer,
-        nullable=False,
+    input_tokens: Mapped[int] = mapped_column("input_tokens", Integer, nullable=False, default=0)
+    output_tokens: Mapped[int] = mapped_column("output_tokens", Integer, nullable=False, default=0)
+    total_tokens: Mapped[int] = mapped_column("total_tokens", Integer, nullable=False, default=0)
+    generation_duration_ms: Mapped[int] = mapped_column(
+        "generation_duration_ms", Integer, nullable=False, default=0
     )
 
     active_child: Mapped[Optional["MessageModel"]] = relationship(

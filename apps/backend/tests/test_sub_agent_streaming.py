@@ -425,7 +425,6 @@ class TestSubAgentStreaming:
             chat_id=session.info.id,  # type:ignore
             role="user",
             content="Hello",
-            token_count=5,
             status=MessageStatus.PENDING,
             created_at=0,
             updated_at=0,  # type:ignore

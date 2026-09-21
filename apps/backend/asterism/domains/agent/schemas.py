@@ -40,7 +40,10 @@ class AgentEvent(BaseModel):
     thinking: str = Field(default="")
     tool_calls: list[ToolCall] = Field(default_factory=list[ToolCall])
     tool_results: list[ToolResult] = Field(default_factory=list[ToolResult])
+    input_tokens: int = Field(default=0)
+    output_tokens: int = Field(default=0)
     total_tokens: int = Field(default=0)
+    generation_duration_ms: int = Field(default=0)
     sub_agent: SubAgentEventEnvelope | None = None
 
     def has_tool_calls(self) -> bool:

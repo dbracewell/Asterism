@@ -77,10 +77,11 @@ Make chats safer to manage and easier to find while preserving background genera
 
 ### US-15.5 — Show estimated chat context consumption
 
-- [ ] Expose selected-chat model context metadata through the generated API client.
-- [ ] Calculate input usage from the assembled model payload and reserved output budget; label estimates honestly.
-- [ ] Render accessible normal/warning/critical context meter states.
-- [ ] Test unknown model limits, multimodal/file/tool content, and threshold states.
+- [x] Expose selected-chat model context metadata through the generated API client.
+- [x] Calculate input usage from the assembled model payload and reserved output budget; label estimates honestly.
+- [x] Render accessible normal/warning/critical context meter states.
+- [x] Test unknown model limits, multimodal/file/tool content, and threshold states.
+- [x] Display tokens per second for each generated message using provider-reported output tokens and generation duration.
 
 ## Execution
 

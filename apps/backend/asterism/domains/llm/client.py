@@ -114,6 +114,7 @@ class StreamHandler[T: BaseModel]:
     content: str = ""
     final_finish_reason: Optional[FinishReason] = None
     usage: CompletionUsage | None = None
+    started_at: float = field(default_factory=time.monotonic)
     tool_calls_dict: dict[int, dict[str, Any]] = field(default_factory=dict)
     response_model: Type[T] | None = None
 
@@ -150,7 +151,10 @@ class StreamHandler[T: BaseModel]:
                     content=self.content,
                     exception=exception,
                     finish_reason=self.final_finish_reason,
-                    total_tokens=self.usage.completion_tokens if self.usage else 0,
+                    input_tokens=self.usage.prompt_tokens if self.usage else 0,
+                    output_tokens=self.usage.completion_tokens if self.usage else 0,
+                    total_tokens=self.usage.total_tokens if self.usage else 0,
+                    generation_duration_ms=int((time.monotonic() - self.started_at) * 1000),
                     type=LLMEventType.ERROR,
                 )
 
@@ -180,7 +184,10 @@ class StreamHandler[T: BaseModel]:
             thinking=self.thinking,
             finish_reason=self.final_finish_reason,
             parsed=parsed,
-            total_tokens=self.usage.completion_tokens if self.usage else 0,
+            input_tokens=self.usage.prompt_tokens if self.usage else 0,
+            output_tokens=self.usage.completion_tokens if self.usage else 0,
+            total_tokens=self.usage.total_tokens if self.usage else 0,
+            generation_duration_ms=int((time.monotonic() - self.started_at) * 1000),
             tool_calls=tool_calls,
         )
 
@@ -320,7 +327,7 @@ class LLMClient(LLMClientProtocol):
         response_model: Type[T] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
     ) -> LLMEvent[T]:
-        last_event: LLMEvent[T] = LLMEvent(type=LLMEventType.COMPLETE)
+        last_event: LLMEvent[T] | None = None
 
         async for event in self.chat(
             messages=messages,
@@ -330,7 +337,11 @@ class LLMClient(LLMClientProtocol):
         ):
             if event.type == LLMEventType.ERROR:
                 raise Exception(f"[CHAT ERROR: {event.content}]")
-            last_event = event
+            elif event.type == LLMEventType.COMPLETE:
+                last_event = event
+
+        if not last_event:
+            raise Exception("No completion event received from LLM.")
 
         return last_event
 
