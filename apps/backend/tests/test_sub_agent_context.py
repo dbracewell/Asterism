@@ -68,14 +68,13 @@ def _make_agent_profile(
     )
 
 
-def _make_message(role: str, content: str, token_count: int = 10) -> Message:
+def _make_message(role: str, content: str) -> Message:
     return Message(
         id=uuid.uuid4(),
         role=role,
         content=content,
         status=MessageStatus.COMPLETED,
         created_at=1000,
-        token_count=token_count,
     )
 
 
@@ -244,13 +243,10 @@ class TestSubAgentContextForwarding:
     ):
         """Verify context window stops when accumulated token limit is exceeded."""  # noqa: E501
         monkeypatch.setattr(config, "sub_agent_context_window_messages", 20)
-        monkeypatch.setattr(config, "sub_agent_context_window_tokens", 25)
+        monkeypatch.setattr(config, "sub_agent_context_window_tokens", 7)
 
-        # Message with 10 tokens each
-        messages = [
-            _make_message("user", f"Message {i}", token_count=10)
-            for i in range(5)
-        ]
+        # The tokenizer counts each short message as roughly three tokens.
+        messages = [_make_message("user", f"Message {i}") for i in range(5)]
         session = make_chat_session(
             allowed_tools=["sub_agent"], messages=messages
         )
@@ -270,9 +266,7 @@ class TestSubAgentContextForwarding:
         context_block = _build_parent_context_block(ctx)
         assert context_block is not None
 
-        # Last message (4) = 10 tokens,
-        # message (3) = 10 tokens -> total 20 <= 25.
-        # Message (2) = 10 tokens -> total 30 > 25, stops.
+        # The two latest messages fit; adding the third exceeds the budget.
         assert "Message 4" in context_block
         assert "Message 3" in context_block
         assert "Message 2" not in context_block

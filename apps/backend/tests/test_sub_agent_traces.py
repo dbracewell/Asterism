@@ -139,7 +139,6 @@ async def setup_test_db() -> tuple[
             chat_id=chat_id,
             role="user",
             content="Please delegate this task.",
-            token_count=5,
         )
         session.add(parent_msg)
 

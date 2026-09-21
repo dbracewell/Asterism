@@ -45,7 +45,6 @@ async def test_search_finds_titles_content_and_containing_folders(search_session
             chat_id=content_chat.id,
             role="user",
             content="Explain the ocean circulation patterns",
-            token_count=0,
             status=MessageStatus.COMPLETED,
         )
     )

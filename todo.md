@@ -306,7 +306,12 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-15.4-T2: Render session cards with title, updated time, agent, message count, and deterministic conversation preview.
   - [x] US-15.4-T3: Add a folder-scoped composer that starts a chat in that folder and routes to it.
   - [x] US-15.4-T4: Test pagination, empty states, ownership, navigation, and folder assignment.
-- [ ] US-15.5 — Show estimated chat context consumption
+- [x] US-15.5 — Show estimated chat context consumption
+  - [x] US-15.5-T1: Expose selected-chat model context metadata through the generated API client.
+  - [x] US-15.5-T2: Calculate input usage from the assembled model payload and reserved output budget; label estimates honestly.
+  - [x] US-15.5-T3: Render accessible normal/warning/critical context meter states.
+  - [x] US-15.5-T4: Test unknown model limits, multimodal/file/tool content, and threshold states.
+  - [x] US-15.5-T5: Display tokens per second for each generated message using provider-reported output tokens and generation duration.
 
 ### Epic closure
 

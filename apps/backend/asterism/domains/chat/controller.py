@@ -62,9 +62,7 @@ class ChatController:
             raise
         except Exception as e:
             self.logger.error(f"Controller error: {e}")
-            await self.connection.send_json(
-                {"type": AgentEventType.ERROR.value, "content": str(e)}
-            )
+            await self.connection.send_json({"type": AgentEventType.ERROR.value, "content": str(e)})
         finally:
             self._is_running = False
             # These are connection-owned receive/dispatch loops. Cancelling
@@ -88,9 +86,7 @@ class ChatController:
                 is_approved = cmd.get("approved", False)
                 self.orchestrator.resolve_tool_approval(tool_id, is_approved)
                 if cmd.get("always_allow"):
-                    self.tasks.spawn(
-                        self.orchestrator.save_always_allow_preference(tool_id)
-                    )
+                    self.tasks.spawn(self.orchestrator.save_always_allow_preference(tool_id))
 
                 await self.queue.put({"type": "tool_update", "id": tool_id})
                 continue  # Skip putting this in the sequential queue
@@ -104,14 +100,10 @@ class ChatController:
                 match cmd.get("type"):
                     case "chat":
                         current_job = self.job.start(
-                            self.orchestrator.handle_new_user_message(
-                                cmd.get("message", ""), cmd.get("files", [])
-                            )
+                            self.orchestrator.handle_new_user_message(cmd.get("message", ""), cmd.get("files", []))
                         )
                     case "regenerate":
-                        current_job = self.job.start(
-                            self._regenerate(cmd.get("parent_message_id", ""))
-                        )
+                        current_job = self.job.start(self._regenerate(cmd.get("parent_message_id", "")))
                     case "ping":
                         continue
                     case _:
@@ -127,9 +119,7 @@ class ChatController:
                 self.inbound_commands.task_done()
 
     async def _regenerate(self, parent_message_id: str) -> None:
-        parent_message_index, parent_message = self.orchestrator.find_message(
-            parent_message_id
-        )
+        parent_message_index, parent_message = self.orchestrator.find_message(parent_message_id)
         await self.connection.send_json(
             {
                 "type": "regenerate",
@@ -155,9 +145,7 @@ class ChatController:
             # Auto-inject START if needed
             if AgentEventType.START not in event_sequence:
                 event_sequence.add(AgentEventType.START)
-                await self.connection.send_json(
-                    {"type": AgentEventType.START.value}
-                )
+                await self.connection.send_json({"type": AgentEventType.START.value})
 
             if msg_type in (AgentEventType.COMPLETE, AgentEventType.ERROR):
                 event_sequence.clear()

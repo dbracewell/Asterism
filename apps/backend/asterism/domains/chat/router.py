@@ -198,11 +198,25 @@ async def get_session(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> Chat:
-    return await chat_service.get_one(
+    chat_session = await chat_service.get_one(
         user_id=user.id,
         chat_id=chat_id,
         session=db,
     )
+    if chat_session.info.agent_id is not None:
+        agent = Agent(
+            profile=await agent_service.get_agent_profile(
+                user_id=user.id,
+                agent_id=chat_session.info.agent_id,
+                session=db,
+            ),
+            user=user,
+            session=chat_session,
+            logger=get_logger(f"ChatSession({str(chat_id)})"),
+            allowed_tools=chat_session.info.allowed_tools,
+        )
+        chat_session.context_usage = await ChatOrchestrator(agent).estimate_context_usage()
+    return chat_session
 
 
 @chat_router.patch(

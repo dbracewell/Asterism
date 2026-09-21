@@ -71,7 +71,10 @@ class LLMEvent[T: BaseModel]:
         ]
     ] = None
     exception: BaseException | None = field(default=None)
+    input_tokens: int = field(default=0)
+    output_tokens: int = field(default=0)
     total_tokens: int = field(default=0)
+    generation_duration_ms: int = field(default=0)
     parsed: T | None = field(default=None)
     tool_calls: list["ToolCall"] | None = field(default=None)
     tool_result: "ToolResult | None" = field(default=None)
@@ -86,7 +89,10 @@ class LLMEvent[T: BaseModel]:
             "thinking": self.thinking,
             "finish_reason": self.finish_reason,
             "exception": str(self.exception) if self.exception else None,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
             "total_tokens": self.total_tokens,
+            "generation_duration_ms": self.generation_duration_ms,
             "parsed": self.parsed.model_dump(mode="json")
             if self.parsed
             else None,
@@ -160,7 +166,6 @@ class LLMMessage(BaseModel):
     )
     role: str
     content: str | list[ContentPart]
-    token_count: int
     thinking: str | None = Field(default=None)
     tool_calls: list[ToolCall] | None = Field(default=None)
 
@@ -198,18 +203,17 @@ class LLMMessage(BaseModel):
 
     @classmethod
     def user(cls, content: str) -> Self:
-        return cls(role="user", content=content, token_count=0)
+        return cls(role="user", content=content)
 
     @classmethod
     def system(cls, content: str) -> Self:
-        return cls(role="system", content=content, token_count=0)
+        return cls(role="system", content=content)
 
     @classmethod
     def tool_call_result(cls, tool_call_result: ToolResult):
         return cls(
             role="tool",
             content=tool_call_result.content,
-            token_count=0,
             tool_calls=[tool_call_result.tool_call],
         )
 
@@ -217,7 +221,6 @@ class LLMMessage(BaseModel):
     def assistant(
         cls,
         content: str,
-        token_count: int,
         thinking: str | None = None,
         tool_calls: list[ToolCall] | None = None,
     ) -> Self:
@@ -226,7 +229,6 @@ class LLMMessage(BaseModel):
             content=content,
             thinking=thinking,
             tool_calls=tool_calls,
-            token_count=token_count,
         )
 
 

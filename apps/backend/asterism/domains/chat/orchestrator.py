@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 import uuid
 from logging import Logger
 from typing import TYPE_CHECKING
@@ -22,6 +23,7 @@ from asterism.domains.agent.schemas import AgentEvent, AgentEventType
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.schemas import (
     Chat,
+    ChatContextUsage,
     ChatUpdateRequest,
     Message,
     MessageFileReference,
@@ -39,7 +41,9 @@ from asterism.domains.llm.schemas import (
     TextContentPart,
     ToolCall,
 )
+from asterism.domains.llm.token_counting import estimate_text_tokens
 from asterism.domains.settings import service as settings_service
+from asterism.domains.tools.registry import tool_registry
 
 if TYPE_CHECKING:
     from asterism.domains.agent.user_response_queue import UserResponseQueue
@@ -91,7 +95,6 @@ class ChatOrchestrator:
             message=NewMessageRequest(
                 role="user",
                 content=text,
-                token_count=len(text),
                 parent_message_id=parent_message_id,
                 status=MessageStatus.PENDING,
                 model_id=self.agent.profile.model_id,  # type:ignore
@@ -153,7 +156,6 @@ class ChatOrchestrator:
                     content=self._streaming_content,
                     thinking=self._streaming_thinking,
                     status=MessageStatus.CANCELLED,
-                    token_count=0,
                     parent_message_id=parent_id,
                     model_id=self.agent.profile.model_id,  # type: ignore
                 ),
@@ -381,10 +383,48 @@ User Prompt: {self._fallback_title()}""",
                     else:
                         reason = file.content_error or "file type is unsupported"
                         parts.append(TextContentPart(text=f'(attached file "{reference.name}" not included: {reason})'))
-                messages.append(LLMMessage(role="user", content=parts, token_count=message.token_count))
+                messages.append(LLMMessage(role="user", content=parts))
             for result in message.tool_call_results or []:
                 messages.append(LLMMessage.tool_call_result(result))
         return messages
+
+    async def estimate_context_usage(self) -> ChatContextUsage:
+        """Estimate the initial provider payload using the same runtime assembly.
+
+        Character-based tokenization is intentionally labelled estimated; binary
+        image payloads use a conservative fixed vision-token allowance instead.
+        """
+        messages = await self._build_agent_messages()
+        system_prompt = await self.agent._build_system_prompt()
+        if system_prompt:
+            messages.insert(0, LLMMessage.system(system_prompt))
+
+        model_name = self.chat.info.context_model.name if self.chat.info.context_model else None
+        input_tokens = 0
+        image_parts = 0
+        for message in messages:
+            if isinstance(message.content, str):
+                input_tokens += estimate_text_tokens(message.content, model_name)
+            else:
+                for part in message.content:
+                    if isinstance(part, TextContentPart):
+                        input_tokens += estimate_text_tokens(part.text, model_name)
+                    else:
+                        image_parts += 1
+            for tool_call in message.tool_calls or []:
+                input_tokens += estimate_text_tokens(tool_call.model_dump_json(), model_name)
+
+        # Tool schemas are part of the first agent request when tools are enabled.
+        input_tokens += estimate_text_tokens(
+            json.dumps(tool_registry.schemas(self.agent.profile.tools)), model_name
+        )
+        input_tokens += image_parts * 765
+        reserved_output = self.agent.profile.chat_parameters.get("max_tokens")
+        return ChatContextUsage(
+            input_tokens=input_tokens,
+            reserved_output_tokens=reserved_output,
+            total_tokens=input_tokens + (reserved_output or 0),
+        )
 
     async def run_agent(self) -> None:
         try:
@@ -423,7 +463,10 @@ User Prompt: {self._fallback_title()}""",
                                 content=event.content,
                                 thinking=event.thinking,
                                 status=MessageStatus.COMPLETED,
-                                token_count=event.total_tokens,
+                                input_tokens=event.input_tokens,
+                                output_tokens=event.output_tokens,
+                                total_tokens=event.total_tokens,
+                                generation_duration_ms=event.generation_duration_ms,
                                 parent_message_id=parent_message.id,
                                 tool_calls=event.tool_calls if event.has_tool_calls() else None,
                                 tool_call_results=event.tool_results if event.has_tool_results() else None,

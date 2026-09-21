@@ -146,7 +146,6 @@ def format_messages_for_model(
                             Respond only in JSON. The output must strictly follow this structure:
                             {_to_structured_format(response_model)}
                             Do not include any preamble, thinking blocks, or markdown code fences."""),  # noqa: E501
-                token_count=0,
             )
         )
 
