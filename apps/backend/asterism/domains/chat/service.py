@@ -217,7 +217,7 @@ async def update_chat(
 
 async def delete_chat(
     user_id: str,
-    chat_id: uuid.UUID | None,
+    chat_id: uuid.UUID,
     session: AsyncSession | None = None,
 ) -> Chat:
     async with get_async_db_session(session) as session:
@@ -227,9 +227,7 @@ async def delete_chat(
             raise NotFoundException(f"Chat with id {chat_id} not found")
 
         if chat_session.user_id != user_id:
-            raise UnauthorizedException(
-                f"User {user_id} is not authorized to delete chat session {chat_id}"
-            )
+            raise UnauthorizedException(f"User {user_id} is not authorized to delete chat session {chat_id}")
 
         # Stop the process-local runtime before persistence deletion. This
         # prevents a cancelled provider task from writing a late message.
@@ -328,18 +326,13 @@ async def search(
         return SearchResultList(results=[], total=0, page=page, page_size=page_size)
 
     async with get_async_db_session(session) as session:
-        content_conditions = [
-            MessageModel.content.ilike(f"%{term}%") for term in terms
-        ]
+        content_conditions = [MessageModel.content.ilike(f"%{term}%") for term in terms]
         fts_query = _fts_query(terms)
         chat_ids = [
             uuid.UUID(value)
             for value in (
                 await session.scalars(
-                    text(
-                        "SELECT chat_id FROM chat_search "
-                        "WHERE user_id = :user_id AND chat_search MATCH :query"
-                    ),
+                    text("SELECT chat_id FROM chat_search WHERE user_id = :user_id AND chat_search MATCH :query"),
                     {"user_id": user_id, "query": fts_query},
                 )
             ).all()
@@ -348,10 +341,7 @@ async def search(
             uuid.UUID(value)
             for value in (
                 await session.scalars(
-                    text(
-                        "SELECT folder_id FROM folder_search "
-                        "WHERE user_id = :user_id AND folder_search MATCH :query"
-                    ),
+                    text("SELECT folder_id FROM folder_search WHERE user_id = :user_id AND folder_search MATCH :query"),
                     {"user_id": user_id, "query": fts_query},
                 )
             ).all()
@@ -401,18 +391,14 @@ async def search(
             if chat.folder_id:
                 matching_folder_ids.add(chat.folder_id)
 
-        folders = list(
-            await session.scalars(
-                select(FolderModel).where(FolderModel.user_id == user_id)
-            )
-        )
+        folders = list(await session.scalars(select(FolderModel).where(FolderModel.user_id == user_id)))
         folders_by_id = {folder.id: folder for folder in folders}
         # A match in a nested folder also makes every ancestor discoverable.
         for folder_id in list(matching_folder_ids):
             current = folders_by_id.get(folder_id)
             while current:
                 matching_folder_ids.add(current.id)
-                current = folders_by_id.get(current.parent_id)
+                current = folders_by_id.get(current.parent_id)  # pyright: ignore[reportArgumentType]
 
         for folder in folders:
             title_matches = folder.id in folder_title_ids
@@ -425,16 +411,8 @@ async def search(
                     title=folder.title,
                     updated_at=folder.updated_at,
                     folder_id=folder.parent_id,
-                    match_source=(
-                        SearchMatchSource.FOLDER_TITLE
-                        if title_matches
-                        else SearchMatchSource.CONTENT
-                    ),
-                    snippet=(
-                        folder.title
-                        if title_matches
-                        else "Contains a matching chat"
-                    ),
+                    match_source=(SearchMatchSource.FOLDER_TITLE if title_matches else SearchMatchSource.CONTENT),
+                    snippet=(folder.title if title_matches else "Contains a matching chat"),
                 )
             )
 
@@ -443,16 +421,12 @@ async def search(
             current = folders_by_id.get(folder_id) if folder_id else None
             while current:
                 path.append(current.title)
-                current = folders_by_id.get(current.parent_id)
+                current = folders_by_id.get(current.parent_id)  # pyright: ignore[reportArgumentType]
             return list(reversed(path))
 
         results = [
             result.model_copy(
-                update={
-                    "path": folder_path(
-                        result.id if result.kind is SearchResultKind.FOLDER else result.folder_id
-                    )
-                }
+                update={"path": folder_path(result.id if result.kind is SearchResultKind.FOLDER else result.folder_id)}
             )
             for result in results
         ]
@@ -553,18 +527,11 @@ async def get_one(
             thread_msg.has_siblings = len(siblings) > 1
             thread_msg.sibling_count = len(siblings)
             thread_msg.current_sibling_index = node_index + 1
-            thread_msg.next_sibling_id = (
-                siblings[node_index + 1].id if node_index + 1 < len(siblings) else None
-            )
-            thread_msg.previous_sibling_id = (
-                siblings[node_index - 1].id if node_index - 1 >= 0 else None
-            )
+            thread_msg.next_sibling_id = siblings[node_index + 1].id if node_index + 1 < len(siblings) else None
+            thread_msg.previous_sibling_id = siblings[node_index - 1].id if node_index - 1 >= 0 else None
             active_thread.append(thread_msg)
 
-            if (
-                current_node.active_child_id
-                and current_node.active_child_id in message_map
-            ):
+            if current_node.active_child_id and current_node.active_child_id in message_map:
                 current_node = message_map[current_node.active_child_id]
             else:
                 break

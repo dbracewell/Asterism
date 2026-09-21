@@ -12,7 +12,6 @@ from sqlalchemy import select
 import asterism.domains.chat.service as chat_service
 from asterism.common.collection_utils import index_of
 from asterism.common.log import get_logger
-from asterism.common.strings import is_none_or_empty
 from asterism.core import config
 from asterism.core.events import ChatUpdateEvent, Event, EventType, event_bus
 from asterism.core.exceptions import BadDataException
@@ -51,6 +50,8 @@ if TYPE_CHECKING:
 
 
 class ChatOrchestrator:
+    """Manages the state of a single chat session, including the agent, message queue, and WebSocket connection."""
+
     def __init__(
         self,
         agent: Agent,
@@ -61,8 +62,8 @@ class ChatOrchestrator:
         self.is_processing_messages: bool = False
         self.pending_approvals: dict[str, asyncio.Future] = {}
         self._active_parent_id: uuid.UUID | None = None
-        self._streaming_content = ""
-        self._streaming_thinking = ""
+        self._streaming_content: str = ""
+        self._streaming_thinking: str = ""
 
         # Inject interactive approval into the agent so tool
         # authorization flows through the WebSocket UI.
@@ -240,7 +241,7 @@ class ChatOrchestrator:
         return title
 
     async def generate_chat_title(self) -> None:
-        if not is_none_or_empty(self.chat.info.title):
+        if self.chat.info.title is not None and not self.chat.info.title.isspace():
             return
 
         user_message = next((m for m in self.chat.messages if m.role == "user" and m.content.strip()), None)

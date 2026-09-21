@@ -56,7 +56,7 @@ async def chat(
     if chat_session.info.agent_id is None:
         await websocket.close(
             code=1008,
-            reason="This legacy chat has no assigned main agent",
+            reason="This chat has no assigned main agent",
         )
         return
 

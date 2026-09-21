@@ -3,6 +3,8 @@ from typing import Any
 
 
 class BackgroundTaskManager:
+    """Manages background tasks for graceful shutdown."""
+
     def __init__(self):
         self.tasks: set[asyncio.Task[Any]] = set()
 

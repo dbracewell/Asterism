@@ -84,6 +84,8 @@ class ChatJob:
 
 
 class ChatJobManager:
+    """Manages the lifecycle of chat jobs, including creation, attachment, detachment, and retirement."""
+
     def __init__(self) -> None:
         self._jobs: dict[uuid.UUID, ChatJob] = {}
         self._retirement_tasks: set[asyncio.Task[None]] = set()

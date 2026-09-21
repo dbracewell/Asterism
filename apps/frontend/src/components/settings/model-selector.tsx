@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import useClickOutside from "@/hooks/use-clickoutside";
 import { LlmDisplayInfo } from "@/lib/client";
 import { cn } from "cn";
-import { XIcon } from "lucide-react";
+import { ChevronDownIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type ModelSelectorProps = {
@@ -94,72 +94,112 @@ export const ModelSelector = ({
     <div
       id={id}
       ref={divRef}
-      className={cn("relative z-40 flex flex-col", className)}
+      className={cn("bg-background relative z-40 flex flex-col", className)}
     >
       <button
         type="button"
         className={cn(
-          "bg-input/30 focus-visible:border-border border-border flex h-8 items-center rounded-md border p-1 text-left text-base ring-0 outline-0 transition-all focus-visible:ring-0 focus-visible:outline-0",
+          "bg-input/30 focus-visible:border-border border-border flex h-8 items-center justify-between rounded-md border p-1 text-left text-xs ring-0 outline-0 transition-all focus-visible:ring-0 focus-visible:outline-0",
           distance < 100 && open ? "rounded-t-none" : open && "rounded-b-none",
         )}
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        {data.label.trim() || "Select a model..."}
+        <span className="truncate">
+          {data.label.trim() || "Select a model..."}
+        </span>{" "}
+        <ChevronDownIcon className="text-muted-foreground size-3" />
       </button>
       <div
         className={cn(
-          "bg-input absolute right-0 left-0 z-1000 h-40 flex-col text-sm",
+          "bg-input/30 absolute right-0 left-0 z-1000 flex-col text-xs",
           "items-start justify-start gap-1 border",
           "pb-0.5 text-sm transition-all",
           open ? "flex" : "hidden",
           distance < 100
-            ? "bottom-8 rounded-t border-b-0"
+            ? "bottom-7 rounded-t border-b-0"
             : "top-8 rounded-b border-t-0",
         )}
       >
-        <div className="bg-accent text-accent-foreground top-0 z-10 flex w-full items-center justify-between border-b">
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter..."
-            className={cn(
-              "focus-visible:border-border sticky top-0 z-10 w-full border-0 p-1 text-sm ring-0 outline-0 transition-all focus-visible:ring-0 focus-visible:outline-0",
-              distance < 100 && open
-                ? "rounded-t-none"
-                : open && "rounded-b-none",
-            )}
+        {distance >= 100 && (
+          <FilterInput
+            filter={filter}
+            setFilter={setFilter}
+            distance={distance}
+            open={open}
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setFilter("")}
-          >
-            <XIcon />
-          </Button>
+        )}
+        <div className="bg-background w-full">
+          <div className="bg-input/30 flex max-h-40 w-full flex-col overflow-y-auto px-0.5">
+            {modelOptions.map((model) => (
+              <Button
+                type="button"
+                onClick={() => {
+                  setData(model);
+                  onValueChange(model.value);
+                  setIsOpen(false);
+                }}
+                variant="ghost"
+                className={cn(
+                  "hover:bg-primary/10 w-full justify-between! truncate px-2 text-xs!",
+                  model.value === data.value &&
+                    "bg-primary text-primary-foreground",
+                )}
+                key={model.value}
+              >
+                <span className="truncate">{model.label}</span>{" "}
+                <span>{model.value === data.value && "✓"}</span>
+              </Button>
+            ))}
+          </div>
         </div>
-        <div className="flex max-h-36 w-full flex-col overflow-y-auto">
-          {modelOptions.map((model) => (
-            <Button
-              type="button"
-              onClick={() => {
-                setData(model);
-                onValueChange(model.value);
-                setIsOpen(false);
-              }}
-              variant="ghost"
-              className={cn(
-                "w-full justify-start truncate px-2",
-                model.value === data.value &&
-                  "bg-primary text-primary-foreground",
-              )}
-              key={model.value}
-            >
-              {model.label} {model.value === data.value && "✓"}
-            </Button>
-          ))}
-        </div>
+        {distance < 100 && (
+          <FilterInput
+            filter={filter}
+            setFilter={setFilter}
+            distance={distance}
+            open={open}
+          />
+        )}
       </div>
+    </div>
+  );
+};
+
+const FilterInput = ({
+  filter,
+  setFilter,
+  distance,
+  open,
+}: {
+  filter: string;
+  setFilter: (value: string) => void;
+  distance: number;
+  open: boolean;
+}) => {
+  return (
+    <div
+      className={cn(
+        "bg-muted text-muted-foreground top-0 z-10 flex w-full items-center justify-between border-b",
+        distance < 100 ? "border-t" : "border-b",
+      )}
+    >
+      <input
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        placeholder="Filter..."
+        className={cn(
+          "focus-visible:border-border sticky top-0 z-10 w-full border-0 p-1 text-xs! ring-0 outline-0 transition-all focus-visible:ring-0 focus-visible:outline-0",
+          distance < 100 && open ? "rounded-t-none" : open && "rounded-b-none",
+        )}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => setFilter("")}
+      >
+        <XIcon />
+      </Button>
     </div>
   );
 };

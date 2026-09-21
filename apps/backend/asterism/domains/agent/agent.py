@@ -5,10 +5,9 @@ import inspect
 import re
 import uuid
 from logging import Logger
-from typing import AsyncGenerator, Awaitable, Callable
+from typing import AsyncGenerator, Awaitable, Callable, cast
 
 import asterism.domains.settings.service as settings_service
-from asterism.common.concurrency import AsyncAtomic
 from asterism.common.log import get_logger
 from asterism.core.config import config
 from asterism.core.exceptions import BadDataException
@@ -16,6 +15,7 @@ from asterism.core.schemas import AuthedUser
 from asterism.domains.chat.schemas import Chat
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import (
+    ContentPart,
     LLMClientProtocol,
     LLMEventType,
     LLMMessage,
@@ -56,7 +56,7 @@ class Agent:
         self.user: AuthedUser = user
         self.session: Chat = session
         self.logger: Logger = logger or get_logger("Agent")
-        self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
+        self._client: LLMClientProtocol | None = None
         self.allowed_tools: list[str] = allowed_tools if allowed_tools is not None else config.default_allowed_tools
         self._approval_policy: ToolApprovalPolicy = approval_policy or AllowlistApprovalPolicy()
         self.event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = event_sink
@@ -71,23 +71,21 @@ class Agent:
             self.call_stack = []
 
     async def _get_client(self) -> LLMClientProtocol:
-        async with self._client as (get, set):
-            client: LLMClientProtocol | None = get()
-            if client:
-                return client
+        if self._client is not None:
+            return self._client
 
-            if not self.profile.model_id:
-                raise BadDataException("Agent profile does not have a model_id set. Cannot create LLM client.")
-            model_info: LlmWithProvider = await settings_service.get_model_and_provider(
-                model_id=self.profile.model_id,
-            )
-            client = LLMClient(
-                api_key=model_info.provider.api_key,
-                base_url=model_info.provider.base_url,
-                model_name=model_info.name,
-            )
-            set(client)
-            return client
+        if not self.profile.model_id:
+            raise BadDataException("Agent profile does not have a model_id set. Cannot create LLM client.")
+        model_info: LlmWithProvider = await settings_service.get_model_and_provider(
+            model_id=self.profile.model_id,
+        )
+        client = LLMClient(
+            api_key=model_info.provider.api_key,
+            base_url=model_info.provider.base_url,
+            model_name=model_info.name,
+        )
+        self._client = client
+        return client
 
     async def _run_tools(
         self,
@@ -173,7 +171,7 @@ class Agent:
             if not messages or messages[0].content != system_prompt:
                 messages.insert(0, LLMMessage.system(system_prompt))
 
-        last_user_message = messages[-1]
+        last_user_message: LLMMessage = messages[-1]
         for step in range(self.max_steps):
             # Only allow tools if there are enough
             # steps to respond to them
@@ -228,9 +226,7 @@ class Agent:
 
                             sub_agent_queue: asyncio.Queue[SubAgentEventEnvelope] = asyncio.Queue()
 
-                            async def _internal_sink(
-                                envelope: SubAgentEventEnvelope,
-                            ) -> None:
+                            async def _internal_sink(envelope: SubAgentEventEnvelope) -> None:
                                 await sub_agent_queue.put(envelope)
                                 if self.event_sink:
                                     res = self.event_sink(envelope)
@@ -239,12 +235,22 @@ class Agent:
 
                             async def _collect_tool_results() -> list[ToolResult]:
                                 collected: list[ToolResult] = []
+
+                                last_message = ""
+                                if isinstance(last_user_message.content, str):
+                                    last_message = last_user_message.content
+                                else:
+                                    parts = cast(list[ContentPart], last_user_message.content)
+                                    part = next((p for p in parts if p.type == "text"), None)
+                                    last_message = part.text if part else ""
+
                                 async for resp in self._run_tools(
-                                    user_message=last_user_message.content,  # pyright: ignore[reportArgumentType]
+                                    user_message=last_message,
                                     auths=auths,
                                     event_sink=_internal_sink,
                                 ):
                                     collected.append(resp)
+
                                 return collected
 
                             tool_task = asyncio.create_task(_collect_tool_results())

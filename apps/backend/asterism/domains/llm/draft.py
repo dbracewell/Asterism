@@ -2,7 +2,6 @@
 from typing import Unpack
 
 import asterism.domains.settings.service as settings_service
-from asterism.common.concurrency import Atomic
 from asterism.core.events import Event, EventType, event_bus
 
 from .client import LLMClient
@@ -53,22 +52,17 @@ class DraftModel:
         return ""
 
 
-_draft_model: Atomic[DraftModel | None] = Atomic(None)
+_draft_model: DraftModel | None = None
 
 
 def get_draft_model() -> DraftModel:
     global _draft_model
-    with _draft_model as (get, set):
-        model = get()
-        if model is not None:
-            return model
-
-        new_model = DraftModel()
-        set(new_model)
-        return new_model
+    if _draft_model is None:
+        _draft_model = DraftModel()
+    return _draft_model
 
 
 @event_bus.on(EventType.DRAFT_MODEL_UPDATED)
 async def _on_model_update(_: Event) -> None:
     global _draft_model
-    _draft_model.value = None
+    _draft_model = None

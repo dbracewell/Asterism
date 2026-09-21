@@ -20,15 +20,14 @@ user_router = APIRouter(
     "/",
     response_model=bool,
     operation_id="userCreateUser",
+    summary="Create a new user with a given user ID",
 )
 async def create_user(
     payload: CreateUserRequest,
     user: OptionalAuthedUser,
     session: DBSessionDep,
 ) -> bool:
-    can_add = (user and user.role == "admin") or (
-        payload.system_key and payload.system_key == config.system_key
-    )
+    can_add = (user and user.role == "admin") or (payload.system_key and payload.system_key == config.system_key)
     if not can_add:
         raise UnauthorizedException()
     return await user_service.create_user(

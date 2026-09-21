@@ -56,6 +56,14 @@ def post_webhook(
     payload: dict[str, Any],
     user_id: str | None = None,
 ) -> None:
+    """
+    Post a webhook to the frontend.
+
+    args:
+        event_type: The type of the event.
+        payload: The payload of the event.
+        user_id: The ID of the user associated with the event, if any.
+    """
     response = requests.post(
         url=f"{config.frontend_internal_url}/api/stream",
         headers={"x-asterism-system-key": config.system_key},

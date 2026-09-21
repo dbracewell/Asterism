@@ -12,8 +12,16 @@ from asterism.domains.user import service as user_service
 async def get_current_user(
     authed_user: DependsJwtToken,
     session: DBSessionDep,
-):
+) -> AuthedUser:
+    """
+    Ensure the user exists in the database and return the authenticated user.
 
+    args:
+        authed_user: The authenticated user obtained from the JWT token.
+        session: The database session for performing database operations.
+    returns:
+        The authenticated user.
+    """
     await user_service.ensure_user(
         user_id=authed_user.id,
         session=session,
@@ -26,7 +34,16 @@ type AuthedUserDep = Annotated[AuthedUser, Depends(get_current_user)]
 
 async def get_current_admin(
     authed_user: AuthedUserDep,
-):
+) -> AuthedUser:
+    """
+    Ensure the user is an admin and return the authenticated user.
+
+    args:
+        authed_user: The authenticated user obtained from the JWT token.
+    returns:
+        The authenticated user.
+    """
+
     if authed_user.role != "admin":
         raise UnauthorizedException()
     return authed_user
