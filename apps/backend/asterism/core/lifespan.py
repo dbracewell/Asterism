@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI):
     await init_system()
     yield
     event_bus.emit(NoArgEvent(type=EventType.SYSTEM_STOP))
+    await event_bus.shutdown()
     await chat_jobs.shutdown()
     await db_session_manager.close()
     logger.info("Asterism backend shutting up...")

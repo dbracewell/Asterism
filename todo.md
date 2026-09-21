@@ -321,7 +321,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-16 — Memory Lifecycle and Resource Bounds
 
 Plan: [EPIC-16](epics/EPIC-16-MEMORY-LIFECYCLE-AND-RESOURCE-BOUNDS.md).
-Status: US-16.1 completed, confirmed, and merged; US-16.2 complete and awaiting user confirmation before merge.
+Status: US-16.1 and US-16.2 completed, confirmed, and merged; US-16.3 complete and awaiting user confirmation before merge.
 Order: US-16.1 → US-16.2 → US-16.3 → US-16.4 → US-16.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -339,13 +339,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-16.2-T5: Add lifespan shutdown cleanup that cancels/awaits active jobs and releases queues safely.
   - [x] US-16.2-T6: Test completion, cancellation, reconnect, duplicate connections, deletion, queue bounds, expiry fallback, and shutdown cardinality.
 
-- [ ] US-16.3 — Bound backend caches and background event work
-  - [ ] US-16.3-T1: Apply a finite cache bound/invalidation policy to token encodings and test high-cardinality model names.
-  - [ ] US-16.3-T2: Review and correct `SlidingTTLCache` lazy-expiry/size-accounting behavior where needed.
-  - [ ] US-16.3-T3: Define bounded concurrency, ownership, error handling, and shutdown for backend event-dispatch tasks.
-  - [ ] US-16.3-T4: Review component singletons and user caches; add limits/invalidation/cleanup where evidence requires it.
-  - [ ] US-16.3-T4a: Replace the chat-ID-keyed logger cache with a bounded policy or stable logger plus structured correlation; test many unique chats.
-  - [ ] US-16.3-T5: Test cache eviction/expiry, task failure/cancellation/shutdown, and safe aggregate diagnostics.
+- [x] US-16.3 — Bound backend caches and background event work
+  - [x] US-16.3-T1: Apply a finite cache bound/invalidation policy to token encodings and test high-cardinality model names.
+  - [x] US-16.3-T2: Review and correct `SlidingTTLCache` lazy-expiry/size-accounting behavior where needed.
+  - [x] US-16.3-T3: Define bounded concurrency, ownership, error handling, and shutdown for backend event-dispatch tasks.
+  - [x] US-16.3-T4: Review component singletons and user caches; add limits/invalidation/cleanup where evidence requires it.
+  - [x] US-16.3-T4a: Replace the chat-ID-keyed logger cache with a bounded policy or stable logger plus structured correlation; test many unique chats.
+  - [x] US-16.3-T5: Test cache eviction/expiry, task failure/cancellation/shutdown, and safe aggregate diagnostics.
 
 - [ ] US-16.4 — Bound frontend server SSE and request-lifecycle state
   - [ ] US-16.4-T1: Verify idempotent SSE cleanup for abort, cancellation, enqueue failure, and initialization failure.

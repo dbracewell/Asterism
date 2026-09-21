@@ -56,7 +56,7 @@ class ChatOrchestrator:
     ):
         self.chat: Chat = agent.session
         self.agent: Agent = agent
-        self.logger: Logger = get_logger(f"ChatSession({str(self.chat.info.id)})")
+        self.logger: Logger = get_logger("ChatSession")
         self.is_processing_messages: bool = False
         self.pending_approvals: dict[str, asyncio.Future] = {}
         self._active_parent_id: uuid.UUID | None = None

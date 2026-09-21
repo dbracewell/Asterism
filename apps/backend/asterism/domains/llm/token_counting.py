@@ -5,7 +5,7 @@ from functools import lru_cache
 import tiktoken
 
 
-@lru_cache
+@lru_cache(maxsize=128)
 def _encoding(model_name: str | None) -> tiktoken.Encoding:
     if model_name:
         try:
@@ -13,6 +13,11 @@ def _encoding(model_name: str | None) -> tiktoken.Encoding:
         except KeyError:
             pass
     return tiktoken.get_encoding("cl100k_base")
+
+
+def encoding_cache_size() -> int:
+    """Return a content-free aggregate diagnostic for the bounded cache."""
+    return _encoding.cache_info().currsize
 
 
 def estimate_text_tokens(text: str, model_name: str | None = None) -> int:

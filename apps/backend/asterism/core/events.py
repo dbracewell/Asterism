@@ -9,11 +9,12 @@ from typing import Any, Callable, Coroutine
 import requests
 from pydantic import BaseModel, ConfigDict
 
-from asterism.common.concurrency import suppress_exceptions
 from asterism.common.log import get_logger
 from asterism.core.schemas import NoArgs
 
 from .config import config
+
+MAX_EVENT_HANDLER_TASKS = 100
 
 
 class EventType(StrEnum):
@@ -68,10 +69,19 @@ def post_webhook(
 
 
 class EventBus:
+    """Finite static handler registry with bounded, tracked dispatch work."""
+
     def __init__(self):
         self.logger = get_logger("EventBus")
         self.lock = threading.Lock()
         self.handlers: dict[EventType, dict[str, EventHandler]] = defaultdict(dict)
+        self._tasks: set[asyncio.Task[Any]] = set()
+        self.dropped_handler_dispatches = 0
+        self._shutting_down = False
+
+    @property
+    def pending_task_count(self) -> int:
+        return len(self._tasks)
 
     def on[T: BaseModel](
         self,
@@ -85,6 +95,26 @@ class EventBus:
 
         return decorator
 
+    def _spawn[T: BaseModel](self, handler: EventHandler[T], event: Event[T]) -> None:
+        if self._shutting_down or len(self._tasks) >= MAX_EVENT_HANDLER_TASKS:
+            self.dropped_handler_dispatches += 1
+            self.logger.warning("Event handler dispatch dropped due to lifecycle capacity")
+            return
+
+        async def run() -> None:
+            try:
+                await handler(event)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                # Event payloads can contain user data; never include an
+                # exception string or event in this process-lifetime log.
+                self.logger.exception("Event handler failed")
+
+        task = asyncio.create_task(run())
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
     def emit[T: BaseModel](self, event: Event[T]) -> None:
         if event.type.name.startswith("WEBHOOK_"):
             if event.payload is None:
@@ -95,11 +125,21 @@ class EventBus:
                     payload=event.payload.model_dump(mode="json"),
                     user_id=event.user_id,
                 )
-            except Exception as e:
-                self.logger.error(e)
+            except Exception as error:
+                self.logger.error("Event webhook delivery failed: %s", error)
 
         for handler in self.handlers[event.type].values():
-            asyncio.create_task(suppress_exceptions(handler, event))
+            self._spawn(handler, event)
+
+    async def shutdown(self) -> None:
+        self._shutting_down = True
+        tasks = list(self._tasks)
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        self._tasks.clear()
 
 
 event_bus: EventBus = EventBus()

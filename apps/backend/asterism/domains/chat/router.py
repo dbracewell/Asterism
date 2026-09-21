@@ -68,7 +68,7 @@ async def chat(
         ),
         user=user,
         session=chat_session,
-        logger=get_logger(f"ChatSession({str(chat_id)})"),
+        logger=get_logger("ChatSession"),
         allowed_tools=chat_session.info.allowed_tools,
     )
 
@@ -212,7 +212,7 @@ async def get_session(
             ),
             user=user,
             session=chat_session,
-            logger=get_logger(f"ChatSession({str(chat_id)})"),
+            logger=get_logger("ChatSession"),
             allowed_tools=chat_session.info.allowed_tools,
         )
         chat_session.context_usage = await ChatOrchestrator(agent).estimate_context_usage()

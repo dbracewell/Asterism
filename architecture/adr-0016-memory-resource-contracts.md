@@ -29,12 +29,12 @@ key or retains the object. No payloads were collected.
 | `_queue_cache` | chat UUID; `asyncio.Queue` of outbound packets | Lazy creation by controller/orchestrator; TTL cache only, no explicit removal; packets have no `maxsize` | `maxsize=100000`, 24-hour sliding TTL, but lazy expiry and unbounded packets make this inadequate. **US-16.2.** |
 | Per-controller inbound queue and worker tasks | One WebSocket; commands and heartbeat/status/message workers | Created on connect; controller cancels worker manager on exit. Command-loop tasks are separately gathered | Per connection and normally released, but task-manager shutdown only cancels and does not await. **US-16.2.** |
 | Approval queues/futures and agent tool/sub-agent tasks | One active orchestrator/turn | Created per tool call/turn; released when the turn ends or is cancelled | Bounded by the agent iteration/tool behavior, but retained indefinitely through an unretired job. **US-16.2.** |
-| `_encoding` LRU cache | Administrator-configured model name; `tiktoken.Encoding` | Lookup on context estimate; never invalidated | **Unbounded** `lru_cache`. **US-16.3.** |
-| `_user_cache` | authenticated user ID → existence boolean | Create/lookup; delete removes the entry | `TTLCache(maxsize=100, ttl=1h)`; expiry is lazy on cache operations. Finite, but cache accounting/idle expiry review belongs to **US-16.3**. |
-| `component_registry` and `tool_registry` | Decorator-discovered, code-defined component/tool names; component singletons | Startup decorator loading; no teardown | Expected finite static registry. Singleton lifetime and shutdown semantics require verification in **US-16.3**. |
-| `event_bus.handlers` | Decorator module/function names; registered at startup | Startup registration; no unregister | Expected finite static registry. `emit` creates one untracked task per handler/event, so burst concurrency and shutdown are **unbounded: US-16.3**. |
+| `_encoding` LRU cache | Administrator-configured model name; `tiktoken.Encoding` | Lookup on context estimate; LRU eviction | Bounded at 128 model names. **US-16.3 implemented.** |
+| `_user_cache` | authenticated user ID → existence boolean | Create/lookup; delete removes the entry | `TTLCache(maxsize=100, ttl=1h)`; expiry is lazy on cache operations but capacity is finite and delete eagerly invalidates. |
+| `component_registry` and `tool_registry` | Decorator-discovered, code-defined component/tool names; component singletons | Startup decorator loading; no teardown | Finite static registry: startup loads only shipped decorators, and singleton keys derive from finite component type/name pairs rather than user input. |
+| `event_bus.handlers` | Decorator module/function names; registered at startup | Startup registration; no unregister | Static finite registry. Dispatch tracks at most 100 handler tasks, drops excess work without payload logging, and cancels/awaits work at shutdown. **US-16.3 implemented.** |
 | `_draft_model` | One draft client | Lazy lookup; reset on `DRAFT_MODEL_UPDATED` | One process singleton; bounded. Provider client shutdown is reviewed with component shutdown in **US-16.3**. |
-| `__existing_loggers` | Logger name; `ChatController` uses a chat-ID-specific name | First `get_logger`; never removed | **Unbounded** for unique chats/connections. **US-16.3-T4a** adds a bounded/non-cardinality logger policy. |
+| `__existing_loggers` | Code-defined logger names | First `get_logger`; never removed | Bounded: chat and agent paths now use stable logger names rather than chat UUIDs/profile names. **US-16.3-T4a implemented.** |
 | DB/config/security/router/module constants | Process singleton or code/config-defined keys | Process shutdown/module unload | Bounded or dependency-owned; no user/request-keyed application retention found. SQLite/JWKS library caches are out of scope. |
 | SSE `sseEmitter` | Process-global EventEmitter; one listener per GET stream | Listener added after stream initialization; removed on abort/enqueue failure | Max listener warning is 50, not a hard cap. `cancel()` is empty and initialization/abort cleanup is not fully idempotent. **US-16.4.** |
 | SSE heartbeat | One interval per GET stream | Cleared by `cleanup` on selected paths | Can remain after stream cancellation because `cancel()` does nothing. **US-16.4.** |
@@ -85,8 +85,6 @@ The epic already assigns job/queue cleanup to US-16.2, cache/event work to
 US-16.3, and SSE/client lifecycle work to US-16.4. The following accepted audit
 findings make the previously broad tasks explicit:
 
-- **US-16.3-T4a:** Replace the chat-ID-keyed logger cache with a bounded policy
-  or use a stable logger name plus structured chat correlation; test many chats.
 - **US-16.4-T1a:** Remove payload-bearing SSE POST logging and make stream cleanup
   shared, idempotent, and reachable from `start` failure, abort, and `cancel`.
 - **US-16.4-T3a:** Cap normalized client-IP cardinality and replace the

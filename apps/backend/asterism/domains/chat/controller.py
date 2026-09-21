@@ -26,7 +26,7 @@ class ChatController:
         self.manager = job.manager or chat_jobs
         self.orchestrator: ChatOrchestrator = job.orchestrator
         self.tasks: BackgroundTaskManager = BackgroundTaskManager()
-        self.logger: Logger = get_logger(f"ChatSession({str(self.chat_id)})")
+        self.logger: Logger = get_logger("ChatSession")
         self.inbound_commands: MessageQueue = asyncio.Queue()
         self._is_running: bool = False
 

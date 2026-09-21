@@ -55,7 +55,7 @@ class Agent:
         self.max_steps: int = profile.max_steps
         self.user: AuthedUser = user
         self.session: Chat = session
-        self.logger: Logger = logger or get_logger(f"Agent({self.profile.name})")
+        self.logger: Logger = logger or get_logger("Agent")
         self._client: AsyncAtomic[LLMClientProtocol | None] = AsyncAtomic(None)
         self.allowed_tools: list[str] = allowed_tools if allowed_tools is not None else config.default_allowed_tools
         self._approval_policy: ToolApprovalPolicy = approval_policy or AllowlistApprovalPolicy()
