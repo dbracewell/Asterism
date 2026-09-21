@@ -35,7 +35,7 @@ Generic OpenAI requires a normalized HTTP(S) base URL. Discovery uses bounded
 OpenAI SDK requests, blocks redirects, and returns nullable capability metadata
 with field-level provenance. Compatible-provider metadata is best-effort and
 unknown or conflicting values require manual administration. See
-[LLM Providers and Model Capabilities](../../architecture/llm-providers.md).
+[LLM Providers and Model Capabilities](../../docs/architecture/llm-providers.md).
 
 ## Database initialization
 
@@ -65,11 +65,11 @@ pnpm --filter @asterism/backend test
 
 ## Architecture documentation
 
-Comprehensive system design guides and Mermaid sequence diagrams are available in the [`/architecture`](../../architecture/README.md) directory:
+Comprehensive system design guides and Mermaid sequence diagrams are available in the [`/architecture`](../../docs/architecture/README.md) directory:
 
-- [System Overview](../../architecture/overview.md) — Topology, technology stack, and request lifecycle
-- [Tool Authorization & Approval](../../architecture/tool-authorization.md) — Pluggable approval policies, WebSocket human-in-the-loop, and sub-agent sandboxing
-- [Agent Runtime & Execution Loop](../../architecture/agent-runtime.md) — Multi-step loops, dynamic system prompts, and streaming deltas
-- [Chat & Real-Time WebSocket](../../architecture/chat-and-websocket.md) — Concurrency, `ChatController`, `ChatOrchestrator`, and message queues
-- [Data Model & Storage](../../architecture/data-and-storage.md) — High-concurrency SQLite WAL, JSONB columns, and the message tree
-- [Authentication & Security](../../architecture/auth-and-security.md) — BetterAuth, JWKS RS256 token verification, and tenancy
+- [System Overview](../../docs/architecture/overview.md) — Topology, technology stack, and request lifecycle
+- [Tool Authorization & Approval](../../docs/architecture/tool-authorization.md) — Pluggable approval policies, WebSocket human-in-the-loop, and sub-agent sandboxing
+- [Agent Runtime & Execution Loop](../../docs/architecture/agent-runtime.md) — Multi-step loops, dynamic system prompts, and streaming deltas
+- [Chat & Real-Time WebSocket](../../docs/architecture/chat-and-websocket.md) — Concurrency, `ChatController`, `ChatOrchestrator`, and message queues
+- [Data Model & Storage](../../docs/architecture/data-and-storage.md) — High-concurrency SQLite WAL, JSONB columns, and the message tree
+- [Authentication & Security](../../docs/architecture/auth-and-security.md) — BetterAuth, JWKS RS256 token verification, and tenancy

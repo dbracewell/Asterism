@@ -177,7 +177,7 @@ Work is organized into **Epics → User Stories → Tasks**.
 
 ## 5.1 Epic Management
 
-- Epics live in `/epics`
+- Epics live in `/docs/epics`
 - Naming format:
   - `EPIC-<NUMBER>-<DESCRIPTION>.md`
 - Each epic contains one or more user stories and their task breakdown.
@@ -272,7 +272,7 @@ Expected CI status checks:
 
 Keep documentation updated when behavior changes:
 
-- `/epics/*.md` for planning
+- `/docs/epics/*.md` for planning
 - `/todo.md` for status
 - Backend and frontend README sections for setup/runtime updates
 - API docs/OpenAPI where contracts change
