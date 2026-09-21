@@ -21,6 +21,7 @@ from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
+from asterism.domains.chat.prompts import create_title_generation_prompt
 from asterism.domains.chat.schemas import (
     Chat,
     ChatContextUsage,
@@ -205,16 +206,6 @@ class ChatOrchestrator:
         self.chat.messages.append(parent_message)
         await self.run_agent()
 
-    def _fallback_title(self) -> str:
-        prompt = next(
-            (message.content for message in self.chat.messages if message.role == "user"),
-            "New chat",
-        )
-        # A deterministic, non-empty fallback is more useful than an untitled
-        # chat and avoids exposing an unbounded provider retry to the user.
-        normalized = " ".join(str(prompt).split())
-        return normalized[:80] or "New chat"
-
     async def _save_chat_title(self, title: str) -> None:
         self.chat.info.title = title
         await chat_service.update_chat(
@@ -252,33 +243,35 @@ class ChatOrchestrator:
         if not is_none_or_empty(self.chat.info.title):
             return
 
-        title = ""
+        user_message = next((m for m in self.chat.messages if m.role == "user" and m.content.strip()), None)
+        if user_message is None:
+            return
+
         try:
             draft_model = get_draft_model()
-            for _ in range(3):
-                try:
-                    async with asyncio.timeout(15):
-                        candidate = await draft_model.invoke(
-                            messages=[
-                                LLMMessage.user(
-                                    content=f"""You are a title generation assistant.
-Generate a short, descriptive chat title (3 to 6 words) that captures the intent
-of the user's message/question. Output strictly the title itself with no quotes,
-no prefixes, and no trailing punctuation. Do not answer the user's request.
-
-User Prompt: {self._fallback_title()}""",
-                                ),
-                            ],
-                        )
-                    title = self._validated_title(candidate)
-                    if title:
-                        break
-                except Exception as error:
-                    self.logger.warning("Chat title attempt failed: %s", error)
         except Exception as error:
             self.logger.warning("Chat title setup failed: %s", error)
+            return
 
-        await self._save_chat_title(title or self._fallback_title())
+        title = ""
+        for _ in range(3):
+            try:
+                async with asyncio.timeout(15):
+                    candidate = await draft_model.invoke(
+                        messages=[
+                            LLMMessage.user(create_title_generation_prompt(user_message.content.strip())),
+                        ],
+                    )
+                print(f"Chat title candidate: {candidate}")
+                title = self._validated_title(candidate)
+                if title:
+                    break
+            except Exception as error:
+                self.logger.warning("Chat title attempt failed: %s", error)
+
+        if not title:
+            title = " ".join(str(user_message.content).split())[:80] or "New chat"
+        await self._save_chat_title(title)
 
     async def _handle_tool_approval(
         self,
@@ -415,9 +408,7 @@ User Prompt: {self._fallback_title()}""",
                 input_tokens += estimate_text_tokens(tool_call.model_dump_json(), model_name)
 
         # Tool schemas are part of the first agent request when tools are enabled.
-        input_tokens += estimate_text_tokens(
-            json.dumps(tool_registry.schemas(self.agent.profile.tools)), model_name
-        )
+        input_tokens += estimate_text_tokens(json.dumps(tool_registry.schemas(self.agent.profile.tools)), model_name)
         input_tokens += image_parts * 765
         reserved_output = self.agent.profile.chat_parameters.get("max_tokens")
         return ChatContextUsage(
@@ -455,6 +446,19 @@ User Prompt: {self._fallback_title()}""",
             async for event in self.agent.run(messages=messages):
                 match event:
                     case AgentEvent(type=AgentEventType.COMPLETE):
+                        # An OpenAI-compatible provider can occasionally end a
+                        # stream without text or tool calls.  Treating that as
+                        # a normal completion used to persist one blank assistant
+                        # message per agent step, leaving the chat unusable.
+                        if not event.content.strip() and not event.has_tool_calls():
+                            await self.queue.put(
+                                {
+                                    "type": AgentEventType.ERROR.value,
+                                    "content": "The model returned an empty response. Please try again.",
+                                }
+                            )
+                            return
+
                         new_message = await chat_service.add_message(
                             user_id=self.user_id,
                             chat_id=self.chat_id,

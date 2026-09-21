@@ -46,10 +46,10 @@ class ChatJob:
 
     def start(self, operation: Awaitable[None]) -> asyncio.Task[None]:
         if self.retired:
-            operation.close()
+            operation.close()  # pyright: ignore[reportAttributeAccessIssue]
             raise RuntimeError("This chat job has been retired")
         if self.is_active:
-            operation.close()
+            operation.close()  # pyright: ignore[reportAttributeAccessIssue]
             raise RuntimeError("A generation is already active for this chat")
 
         async def run() -> None:
@@ -72,7 +72,7 @@ class ChatJob:
     def cancel(self) -> bool:
         if not self.is_active:
             return False
-        self.task.cancel()
+        self.task.cancel()  # pyright: ignore[reportOptionalMemberAccess]
         return True
 
     async def cancel_and_wait(self) -> None:
@@ -120,7 +120,7 @@ class ChatJobManager:
         if self._jobs.get(chat_id) is not job:
             return
         task = asyncio.create_task(self.retire_if_idle(chat_id, job))
-        self._retirement_tasks.add(task)
+        self._retirement_tasks.add(task)  # pyright: ignore[reportArgumentType]
         task.add_done_callback(self._retirement_tasks.discard)
 
     async def retire_if_idle(self, chat_id: uuid.UUID, job: ChatJob) -> bool:

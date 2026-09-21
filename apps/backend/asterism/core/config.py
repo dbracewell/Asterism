@@ -98,6 +98,9 @@ class Config(BaseSettings):
     max_sub_agent_depth: int = 3
     """The maximum depth of sub-agent calls to prevent infinite recursion."""
 
+    max_concurrent_llm_requests: int = 8
+    """Maximum concurrent streaming requests across all configured LLM providers."""
+
     sub_agent_context_window_messages: int = 10
     """The maximum number of messages to include in the context window for sub-agents."""
 
@@ -159,6 +162,8 @@ class Config(BaseSettings):
             raise ConfigValidationError("FILE_CONVERSION_TIMEOUT_S must be from 1 to 600")
         if not 1 <= self.max_vision_image_bytes <= self.max_upload_file_size_bytes:
             raise ConfigValidationError("MAX_VISION_IMAGE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES")
+        if not 1 <= self.max_concurrent_llm_requests <= 128:
+            raise ConfigValidationError("MAX_CONCURRENT_LLM_REQUESTS must be from 1 to 128")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
             origin == "*" for origin in self.cors_allowed_origins or []
         ):

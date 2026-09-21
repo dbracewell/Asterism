@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import time
 import uuid
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import (
     Any,
@@ -30,6 +32,7 @@ from pydantic import BaseModel
 
 from asterism.common.log import get_logger
 from asterism.common.retries import retry_async_gen
+from asterism.core.config import config
 from asterism.domains.llm.typedefs import FinishReason
 from asterism.domains.tools.registry import tool_registry
 
@@ -45,6 +48,25 @@ from .schemas import (
 )
 
 logger = get_logger("LLM_CLIENT")
+
+
+class LLMRequestLimiter:
+    """Process-wide cap for provider calls, held for the full response stream."""
+
+    def __init__(self, limit: int):
+        self._semaphore = asyncio.Semaphore(limit)
+
+    @asynccontextmanager
+    async def acquire(self):
+        await self._semaphore.acquire()
+        try:
+            yield
+        finally:
+            self._semaphore.release()
+
+
+llm_request_limiter = LLMRequestLimiter(config.max_concurrent_llm_requests)
+
 _TEXT_TOOL_CALL_PATTERN = re.compile(
     r"<tool_call>\s*(\{.*?\})\s*</tool_call>",
     flags=re.DOTALL | re.IGNORECASE,
@@ -372,13 +394,14 @@ class LLMClient(LLMClientProtocol):
         async def async_chat_impl(
             **kwargs,
         ) -> AsyncGenerator[ChatCompletionChunk, None]:
-            response = await self._client.chat.completions.create(
-                stream=True,
-                stream_options={"include_usage": True},
-                **kwargs,
-            )
-            async for chunk in response:
-                yield chunk
+            async with llm_request_limiter.acquire():
+                response = await self._client.chat.completions.create(
+                    stream=True,
+                    stream_options={"include_usage": True},
+                    **kwargs,
+                )
+                async for chunk in response:
+                    yield chunk
 
         handler = StreamHandler(response_model=response_model)
         async for event in handler.process(async_chat_impl(**completion_args)):

@@ -60,9 +60,12 @@ async def get_user_settings(
             session=session,
         )
         default_agent_id = _parse_default_agent_id(combined.get("default_agent_id"))
-        default_agent = user_agents.agents.get(default_agent_id)
-        if default_agent is None or default_agent.sub_agent:
+        if default_agent_id is None:
             combined.pop("default_agent_id", None)
+        else:
+            default_agent = user_agents.agents.get(default_agent_id)
+            if default_agent is None or default_agent.sub_agent:
+                combined.pop("default_agent_id", None)
 
         user_settings = UserSettings.model_validate(combined)
         user_settings.models = await get_user_models(
@@ -280,9 +283,7 @@ async def delete_app_setting(
     session: AsyncSession | None = None,
 ) -> None:
     async with get_async_db_session(session) as session:
-        stmt = delete(ApplicationSettingsModel).where(
-            ApplicationSettingsModel.key == key
-        )
+        stmt = delete(ApplicationSettingsModel).where(ApplicationSettingsModel.key == key)
         await session.execute(stmt)
         await session.commit()
 
@@ -346,9 +347,7 @@ async def get_draft_model(
     session: AsyncSession | None = None,
 ) -> LlmWithProvider:
     async with get_async_db_session(session) as session:
-        stmt = select(ApplicationSettingsModel.value).where(
-            ApplicationSettingsModel.key == "draft_model_id"
-        )
+        stmt = select(ApplicationSettingsModel.value).where(ApplicationSettingsModel.key == "draft_model_id")
 
         value = await session.scalar(stmt)
         if not value:
@@ -386,11 +385,7 @@ async def get_user_models(
     session: AsyncSession | None = None,
 ) -> list[LlmDisplayInfo]:
     async with get_async_db_session(session) as session:
-        stmt = (
-            select(LLMModel)
-            .where(LLMModel.is_active)
-            .options(joinedload(LLMModel.provider))
-        )
+        stmt = select(LLMModel).where(LLMModel.is_active).options(joinedload(LLMModel.provider))
         result = await session.scalars(stmt)
         models: list[LlmDisplayInfo] = []
         for m in result.all():
@@ -493,9 +488,7 @@ async def bulk_upsert_providers(
             await session.flush()
 
     for delete_id in set(existing_providers.keys()).difference(processed_providers):
-        await session.execute(
-            delete(ProviderModel).where(ProviderModel.id == delete_id)
-        )
+        await session.execute(delete(ProviderModel).where(ProviderModel.id == delete_id))
 
 
 def _merge_models(

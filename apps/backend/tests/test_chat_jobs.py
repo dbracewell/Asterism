@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 from asterism.common.cache import SlidingTTLCache
+from asterism.domains.agent.schemas import AgentEvent, AgentEventType
 from asterism.domains.chat import message_queue
 from asterism.domains.chat.controller import ChatController
 from asterism.domains.chat.jobs import ChatJobManager
@@ -187,6 +188,53 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
     assert added[0].content == "A partial answer"
     assert updated[0].status is MessageStatus.CANCELLED
     assert chat.messages[0].status is MessageStatus.CANCELLED
+
+
+@pytest.mark.asyncio
+async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkeypatch):
+    chat_id = uuid.uuid4()
+    chat = Chat(
+        info=ChatInfo(id=chat_id, user_id="user-a", created_at=1, updated_at=1),
+        messages=[
+            Message(
+                id=uuid.uuid4(),
+                role="user",
+                content="Tell me something",
+                status=MessageStatus.PENDING,
+                created_at=1,
+            )
+        ],
+    )
+
+    async def run(*, messages):
+        yield AgentEvent(type=AgentEventType.COMPLETE)
+
+    agent = SimpleNamespace(
+        session=chat,
+        profile=SimpleNamespace(model_id=uuid.uuid4()),
+        run=run,
+    )
+    orchestrator = ChatOrchestrator(agent)
+
+    async def assembled_messages():
+        return [LLMMessage.user("Tell me something")]
+
+    async def should_not_persist(**_kwargs):
+        raise AssertionError("empty completion must not create an assistant message")
+
+    monkeypatch.setattr(orchestrator, "_build_agent_messages", assembled_messages)
+    monkeypatch.setattr(
+        "asterism.domains.chat.orchestrator.chat_service.add_message",
+        should_not_persist,
+    )
+
+    await orchestrator.run_agent()
+
+    assert len(chat.messages) == 1
+    assert await orchestrator.queue.get() == {
+        "type": "error",
+        "content": "The model returned an empty response. Please try again.",
+    }
 
 
 @pytest.mark.asyncio

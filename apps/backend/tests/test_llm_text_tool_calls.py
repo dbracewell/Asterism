@@ -1,8 +1,14 @@
+import asyncio
 import json
 from types import SimpleNamespace
 
 import pytest
-from asterism.domains.llm.client import LLMClient, StreamHandler, extract_text_tool_calls
+from asterism.domains.llm.client import (
+    LLMClient,
+    LLMRequestLimiter,
+    StreamHandler,
+    extract_text_tool_calls,
+)
 from asterism.domains.llm.schemas import LLMEventType, LLMMessage
 
 
@@ -21,6 +27,34 @@ async def test_stream_usage_keeps_input_output_and_total_separate():
     assert completed.output_tokens == 30
     assert completed.total_tokens == 150
     assert completed.generation_duration_ms >= 0
+
+
+@pytest.mark.asyncio
+async def test_llm_request_limiter_caps_concurrent_provider_streams():
+    limiter = LLMRequestLimiter(2)
+    active = 0
+    peak = 0
+    release = asyncio.Event()
+    started = asyncio.Event()
+
+    async def request():
+        nonlocal active, peak
+        async with limiter.acquire():
+            active += 1
+            peak = max(peak, active)
+            if active == 2:
+                started.set()
+            await release.wait()
+            active -= 1
+
+    tasks = [asyncio.create_task(request()) for _ in range(3)]
+    await started.wait()
+    await asyncio.sleep(0)
+    assert peak == 2
+
+    release.set()
+    await asyncio.gather(*tasks)
+    assert peak == 2
 
 
 def test_legacy_thinking_budget_is_not_sent_to_the_provider():
