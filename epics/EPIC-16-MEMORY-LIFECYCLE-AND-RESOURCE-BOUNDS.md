@@ -7,7 +7,7 @@ shutdown behavior for in-memory state and background work. A busy application
 must not retain one object, queue, listener, task, or cache entry indefinitely per
 chat, user, model name, connection, or request.
 
-**Status: US-16.1 and US-16.2 completed and merged; US-16.3 completed and awaiting user confirmation.**
+**Status: US-16.1–US-16.3 completed and merged; US-16.4 completed and awaiting user confirmation.**
 
 ## Why now
 

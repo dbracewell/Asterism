@@ -42,6 +42,9 @@ export default function WorkerProvider({
 
     return () => {
       worker.port.postMessage("unload");
+      worker.port.onmessage = null;
+      worker.port.close();
+      workerRef.current = null;
       window.removeEventListener("beforeunload", handleUnload);
     };
   }, []);

@@ -36,9 +36,9 @@ key or retains the object. No payloads were collected.
 | `_draft_model` | One draft client | Lazy lookup; reset on `DRAFT_MODEL_UPDATED` | One process singleton; bounded. Provider client shutdown is reviewed with component shutdown in **US-16.3**. |
 | `__existing_loggers` | Code-defined logger names | First `get_logger`; never removed | Bounded: chat and agent paths now use stable logger names rather than chat UUIDs/profile names. **US-16.3-T4a implemented.** |
 | DB/config/security/router/module constants | Process singleton or code/config-defined keys | Process shutdown/module unload | Bounded or dependency-owned; no user/request-keyed application retention found. SQLite/JWKS library caches are out of scope. |
-| SSE `sseEmitter` | Process-global EventEmitter; one listener per GET stream | Listener added after stream initialization; removed on abort/enqueue failure | Max listener warning is 50, not a hard cap. `cancel()` is empty and initialization/abort cleanup is not fully idempotent. **US-16.4.** |
-| SSE heartbeat | One interval per GET stream | Cleared by `cleanup` on selected paths | Can remain after stream cancellation because `cancel()` does nothing. **US-16.4.** |
-| SSE rate-limit map and cleanup interval | forwarded-IP string → counter/window | POST creates/updates; module interval lazily removes expired entries | Map has no capacity; high-cardinality headers retain entries for up to cleanup cadence/window. Interval is process lifetime. **US-16.4.** |
+| SSE `sseEmitter` | Process-global EventEmitter; one listener per GET stream | Stream-owned idempotent cleanup runs for abort, enqueue failure, initialization failure, and `cancel()` | Hard cap of 50 listeners; new streams receive 503 at capacity. **US-16.4 implemented.** |
+| SSE heartbeat | One interval per GET stream | Shared stream cleanup clears it on all terminal paths | Bounded by the 50-stream cap. **US-16.4 implemented.** |
+| SSE rate-limit map | normalized first forwarded-IP token → counter/window | POST creates/updates; on-access expiry removes stale entries | Hard cap of 10,000 entries, 60-second window, no process-global interval; over-capacity requests are rejected. **US-16.4 implemented.** |
 | Frontend event bus | Browser singleton; finite event type → mounted handler set | Hook subscriptions unsubscribe on effect cleanup | Mount-owned and eager cleanup. Navigation/reconnect churn remains a **US-16.4** regression check. |
 | Shared worker, WebSocket hook, DOM listeners/timers | Browser component/hook instance | Effects remove listeners and clear timers; worker posts unload | No process-global request keys. Worker port closure and reconnect/unmount behavior need churn verification in **US-16.4**. |
 | Query client, theme map, server action/request caches | App singleton / filesystem theme names / request-scoped React cache | Query client is app lifetime; theme map resets on theme refresh/save; React cache follows request | Query data is governed by React Query; theme count is filesystem-admin-controlled. No unbounded request-keyed map found, but component/client cache policy is reviewed in **US-16.4**. |
@@ -81,14 +81,8 @@ content-free dropped-packet counter. Active work is never TTL-evicted.
 
 ## Required follow-up tasks
 
-The epic already assigns job/queue cleanup to US-16.2, cache/event work to
-US-16.3, and SSE/client lifecycle work to US-16.4. The following accepted audit
-findings make the previously broad tasks explicit:
-
-- **US-16.4-T1a:** Remove payload-bearing SSE POST logging and make stream cleanup
-  shared, idempotent, and reachable from `start` failure, abort, and `cancel`.
-- **US-16.4-T3a:** Cap normalized client-IP cardinality and replace the
-  module-global cleanup interval with lifecycle-owned cleanup or a bounded
-  on-access policy; test high-cardinality input.
-
-No implementation begins on these paths until the dependent story starts.
+The epic assigned job/queue cleanup to US-16.2, cache/event work to US-16.3,
+and SSE/client lifecycle work to US-16.4. All accepted audit follow-ups are now
+implemented: payload-bearing SSE POST logging was removed, stream cleanup is
+shared and idempotent, and normalized IP keys use capped on-access expiry rather
+than a process-global cleanup interval.

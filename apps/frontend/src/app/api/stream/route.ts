@@ -1,7 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getCurrentUser } from "@/features/auth/server/actions";
-import { sseEmitter } from "@/features/sse/lib/event-emitter";
-import { checkRateLimit } from "@/features/sse/lib/rate-limiter";
+import {
+  sseEmitter,
+  sseListenerCount,
+  subscribeSse,
+} from "@/features/sse/lib/event-emitter";
+import {
+  checkRateLimit,
+  clientIpKey,
+} from "@/features/sse/lib/rate-limiter";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { getAuth } from "@/lib/auth";
 import { getFrontendServerConfig } from "@/lib/server-config";
@@ -21,10 +27,7 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getAuth().api.getSession({
-    headers: req.headers,
-  });
-
+  const session = await getAuth().api.getSession({ headers: req.headers });
   const systemKey = req.headers.get("x-asterism-system-key");
 
   if (
@@ -34,18 +37,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  // Rate limit by client IP
-  const clientIp = req.headers.get("x-forwarded-for") ?? "unknown";
-  if (!checkRateLimit(clientIp)) {
+  if (!checkRateLimit(clientIpKey(req.headers.get("x-forwarded-for")))) {
     return NextResponse.json(
       { message: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } },
     );
   }
 
-  const body = await req.json();
-  console.log("Received event message:", body);
-  const { success, data } = EventMessageSchema.safeParse(body);
+  const { success, data } = EventMessageSchema.safeParse(await req.json());
   if (success) {
     sseEmitter.emit("message", data);
     return NextResponse.json({ message: "Event accepted" }, { status: 200 });
@@ -55,63 +54,67 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  const myUserId = user.id;
+  if (sseListenerCount() >= 50) {
+    return NextResponse.json({ message: "SSE capacity reached" }, { status: 503 });
+  }
 
+  let cleanup = () => {};
   const stream = new ReadableStream({
-    async start(controller) {
-      try {
-        const connectionMessage: EventMessage = {
-          type: "connection:status",
-          payload: { status: true },
-        };
-        const initPayload = JSON.stringify(connectionMessage);
-        controller.enqueue(
-          new TextEncoder().encode(`data: ${initPayload}\n\n`),
-        );
-      } catch (error: any) {
-        console.warn(
-          "Failed to send initial connection message:",
-          error?.message ?? error,
-        );
-        controller.close();
-      }
+    start(controller) {
+      let closed = false;
+      let heartbeat: ReturnType<typeof setInterval> | undefined;
+      let unsubscribe: (() => void) | null = null;
+      const abort = () => cleanup();
 
-      const cleanup = () => {
-        clearInterval(heartbeat);
-        sseEmitter.off("message", onMessage);
+      cleanup = () => {
+        if (closed) return;
+        closed = true;
+        if (heartbeat) clearInterval(heartbeat);
+        unsubscribe?.();
+        req.signal.removeEventListener("abort", abort);
+        try {
+          controller.close();
+        } catch {
+          // Closing an already-closed stream is harmless.
+        }
       };
 
-      const heartbeat = setInterval(() => {
+      const enqueue = (value: string) => {
+        if (closed) return;
         try {
-          controller.enqueue(new TextEncoder().encode(":\n\n"));
+          controller.enqueue(new TextEncoder().encode(value));
         } catch {
-          // Client disconnected — cleanup will handle it
+          cleanup();
         }
-      }, 15_000);
+      };
 
       const onMessage = (data: EventMessage) => {
-        if (data.userId != null && data.userId !== myUserId) {
-          return;
-        }
-
-        try {
-          const payload = JSON.stringify(data);
-          controller.enqueue(new TextEncoder().encode(`data: ${payload}\n\n`));
-        } catch (error: any) {
-          console.warn("SSE client disconnected:", error?.message ?? error);
-          cleanup();
-          controller.close();
+        if (data.userId == null || data.userId === user.id) {
+          enqueue(`data: ${JSON.stringify(data)}\n\n`);
         }
       };
 
-      sseEmitter.on("message", onMessage);
-
-      req.signal.addEventListener("abort", () => {
+      try {
+        unsubscribe = subscribeSse(onMessage);
+        if (!unsubscribe) {
+          cleanup();
+          return;
+        }
+        req.signal.addEventListener("abort", abort, { once: true });
+        enqueue(
+          `data: ${JSON.stringify({
+            type: "connection:status",
+            payload: { status: true },
+          } satisfies EventMessage)}\n\n`,
+        );
+        heartbeat = setInterval(() => enqueue(":\n\n"), 15_000);
+      } catch {
         cleanup();
-        controller.close();
-      });
+      }
     },
-    async cancel() {},
+    cancel() {
+      cleanup();
+    },
   });
 
   return new Response(stream, {

@@ -321,7 +321,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-16 — Memory Lifecycle and Resource Bounds
 
 Plan: [EPIC-16](epics/EPIC-16-MEMORY-LIFECYCLE-AND-RESOURCE-BOUNDS.md).
-Status: US-16.1 and US-16.2 completed, confirmed, and merged; US-16.3 complete and awaiting user confirmation before merge.
+Status: US-16.1–US-16.3 completed, confirmed, and merged; US-16.4 complete and awaiting user confirmation before merge.
 Order: US-16.1 → US-16.2 → US-16.3 → US-16.4 → US-16.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -347,14 +347,14 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-16.3-T4a: Replace the chat-ID-keyed logger cache with a bounded policy or stable logger plus structured correlation; test many unique chats.
   - [x] US-16.3-T5: Test cache eviction/expiry, task failure/cancellation/shutdown, and safe aggregate diagnostics.
 
-- [ ] US-16.4 — Bound frontend server SSE and request-lifecycle state
-  - [ ] US-16.4-T1: Verify idempotent SSE cleanup for abort, cancellation, enqueue failure, and initialization failure.
-  - [ ] US-16.4-T1a: Remove payload-bearing SSE POST logging and make shared cleanup reachable from start failure, abort, and cancel.
-  - [ ] US-16.4-T2: Bound server-global SSE listener population and define threshold behavior with safe diagnostics.
-  - [ ] US-16.4-T3: Verify/bound high-cardinality IP rate-limit storage and its expiry/cleanup scheduling.
-  - [ ] US-16.4-T3a: Cap normalized client-IP cardinality and use lifecycle-owned cleanup or a bounded on-access policy; test high-cardinality input.
-  - [ ] US-16.4-T4: Audit client timers, WebSocket hooks, subscriptions, and global event-bus handlers through navigation/reconnect cycles.
-  - [ ] US-16.4-T5: Add frontend unit/integration coverage and an isolated connection-churn harness where needed.
+- [x] US-16.4 — Bound frontend server SSE and request-lifecycle state
+  - [x] US-16.4-T1: Verify idempotent SSE cleanup for abort, cancellation, enqueue failure, and initialization failure.
+  - [x] US-16.4-T1a: Remove payload-bearing SSE POST logging and make shared cleanup reachable from start failure, abort, and cancel.
+  - [x] US-16.4-T2: Bound server-global SSE listener population and define threshold behavior with safe diagnostics.
+  - [x] US-16.4-T3: Verify/bound high-cardinality IP rate-limit storage and its expiry/cleanup scheduling.
+  - [x] US-16.4-T3a: Cap normalized client-IP cardinality and use lifecycle-owned cleanup or a bounded on-access policy; test high-cardinality input.
+  - [x] US-16.4-T4: Audit client timers, WebSocket hooks, subscriptions, and global event-bus handlers through navigation/reconnect cycles.
+  - [x] US-16.4-T5: Add frontend unit/integration coverage and an isolated connection-churn harness where needed.
 
 - [ ] US-16.5 — Verify long-run bounds and document operations
   - [ ] US-16.5-T1: Build deterministic churn scenarios for unique chats, users/model names, reconnects, cancellation/deletion, SSE clients, and event bursts.
