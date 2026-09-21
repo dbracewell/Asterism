@@ -2,6 +2,8 @@
 
 ## Goal
 
+**Status: Completed and user-confirmed.**
+
 Make chats safer to manage and easier to find while preserving background generation when a user leaves a chat. A WebSocket connection is a view onto a chat job, not the job's owner.
 
 ## Scope and decisions

@@ -315,5 +315,5 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 ### Epic closure
 
-- [ ] Re-verify all story acceptance criteria; request user completion confirmation.
-- [ ] On confirmation, merge the final story branch, announce epic completion, and propose the next plan.
+- [x] Re-verify all story acceptance criteria; obtain user completion confirmation.
+- [x] Merge the final story branch and announce epic completion.
