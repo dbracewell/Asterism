@@ -16,14 +16,14 @@ activity and persisted execution traces.
 ## Architecture
 
 The implementation-oriented architecture guides are in
-[`architecture/`](architecture/README.md):
+[`architecture/`](docs/architecture/README.md):
 
-- [System overview](architecture/overview.md) — topology, workspace layout, request flow, and chat lifecycle
-- [Authentication and security](architecture/auth-and-security.md) — Better Auth, JWT/JWKS, tenancy, and internal callbacks
-- [Agent runtime](architecture/agent-runtime.md) and [tool authorization](architecture/tool-authorization.md) — bounded execution, delegation, and approvals
-- [Chat and WebSocket](architecture/chat-and-websocket.md) — streaming protocol, reconnectable jobs, cancellation, and controller lifecycle
-- [Data and storage](architecture/data-and-storage.md) — SQLite, FTS search, file storage, and attachments
-- [LLM providers](architecture/llm-providers.md) — supported provider modes and model capabilities
+- [System overview](docs/architecture/overview.md) — topology, workspace layout, request flow, and chat lifecycle
+- [Authentication and security](docs/architecture/auth-and-security.md) — Better Auth, JWT/JWKS, tenancy, and internal callbacks
+- [Agent runtime](docs/architecture/agent-runtime.md) and [tool authorization](docs/architecture/tool-authorization.md) — bounded execution, delegation, and approvals
+- [Chat and WebSocket](docs/architecture/chat-and-websocket.md) — streaming protocol, reconnectable jobs, cancellation, and controller lifecycle
+- [Data and storage](docs/architecture/data-and-storage.md) — SQLite, FTS search, file storage, and attachments
+- [LLM providers](docs/architecture/llm-providers.md) — supported provider modes and model capabilities
 
 ## Configuration
 
