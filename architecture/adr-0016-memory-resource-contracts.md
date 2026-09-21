@@ -86,3 +86,18 @@ and SSE/client lifecycle work to US-16.4. All accepted audit follow-ups are now
 implemented: payload-bearing SSE POST logging was removed, stream cleanup is
 shared and idempotent, and normalized IP keys use capped on-access expiry rather
 than a process-global cleanup interval.
+
+## Operations
+
+A backend restart deliberately cancels in-process chat generation and does not
+resume it. Operators can investigate resource pressure using content-free
+aggregate counters: `ChatJobManager.count`, `message_queue_count()`, a queue's
+`dropped_packets`, `encoding_cache_size()`, EventBus `pending_task_count` and
+`dropped_handler_dispatches`, SSE listener count, and rate-limit entry count.
+
+Expected hard limits are 1,000 cached chat queues with 256 packets each, 128
+token encodings, 100 event-handler tasks, 50 SSE listeners, and 10,000
+rate-limit entries. Queue and event overflow discard old packets or handler
+dispatches respectively; SSE and rate-limit overflow reject the new connection
+or request. These diagnostics intentionally exclude user content, attachment
+metadata, prompts, tokens, event payloads, and secrets.

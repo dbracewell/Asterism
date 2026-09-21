@@ -97,7 +97,9 @@ test("configures OpenAI discovery and retains the draft model after reload", asy
   await page.reload();
 
   await expect(page.getByLabel("Provider Name")).toHaveValue("OpenAI");
-  await expect(page.getByPlaceholder("Model...")).toHaveValue("gpt-4o");
+  await expect(
+    page.getByRole("button", { name: "gpt-4o", exact: true }),
+  ).toBeVisible();
 });
 
 test("completes unknown Generic OpenAI capabilities manually and reloads them", async ({

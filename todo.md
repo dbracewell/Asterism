@@ -321,7 +321,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-16 — Memory Lifecycle and Resource Bounds
 
 Plan: [EPIC-16](epics/EPIC-16-MEMORY-LIFECYCLE-AND-RESOURCE-BOUNDS.md).
-Status: US-16.1–US-16.3 completed, confirmed, and merged; US-16.4 complete and awaiting user confirmation before merge.
+Status: Completed — US-16.1–US-16.5 verified and user-confirmed.
 Order: US-16.1 → US-16.2 → US-16.3 → US-16.4 → US-16.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -356,13 +356,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-16.4-T4: Audit client timers, WebSocket hooks, subscriptions, and global event-bus handlers through navigation/reconnect cycles.
   - [x] US-16.4-T5: Add frontend unit/integration coverage and an isolated connection-churn harness where needed.
 
-- [ ] US-16.5 — Verify long-run bounds and document operations
-  - [ ] US-16.5-T1: Build deterministic churn scenarios for unique chats, users/model names, reconnects, cancellation/deletion, SSE clients, and event bursts.
-  - [ ] US-16.5-T2: Assert resource counters and task/listener cardinality plateau within documented bounds after cleanup/TTL windows.
-  - [ ] US-16.5-T3: Run focused/full quality gates and regenerate the Hey API client if the contract changes.
-  - [ ] US-16.5-T4: Update architecture/operator documentation with ownership, bounds, eviction/overflow behavior, restart semantics, and safe diagnostics.
+- [x] US-16.5 — Verify long-run bounds and document operations
+  - [x] US-16.5-T1: Build deterministic churn scenarios for unique chats, users/model names, reconnects, cancellation/deletion, SSE clients, and event bursts.
+  - [x] US-16.5-T2: Assert resource counters and task/listener cardinality plateau within documented bounds after cleanup/TTL windows.
+  - [x] US-16.5-T3: Run focused/full quality gates and regenerate the Hey API client if the contract changes. Backend/frontend lint, typecheck, tests, migrations, and Playwright pass; no API contract changed.
+  - [x] US-16.5-T4: Update architecture/operator documentation with ownership, bounds, eviction/overflow behavior, restart semantics, and safe diagnostics.
 
 ### Epic closure
 
-- [ ] Re-verify story acceptance criteria and request user completion confirmation.
-- [ ] On confirmation, merge final work, announce completion, and propose the next plan.
+- [x] Re-verify story acceptance criteria and request user completion confirmation.
+- [x] On confirmation, merge final work, announce completion, and propose the next plan.
