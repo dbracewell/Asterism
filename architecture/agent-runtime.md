@@ -8,6 +8,13 @@ The **Agent Runtime** is the core cognitive engine of Asterism. It executes a bo
 
 The [`Agent`](../apps/backend/asterism/domains/agent/agent.py) class encapsulates a single agent session turn. Each agent maintains a `call_stack: list[uuid.UUID]` representing the lineage of agents from the root conversation turn down to the active agent, preventing recursion cycles during delegation.
 
+A chat is bound to one **main agent** (`sub_agent=False`) when it is created. The
+caller may choose a main agent or omit it to use the user's default main agent;
+the service rejects sub-agents and chats without a valid default. The persisted
+binding supplies the profile, model, prompt, parameters, and offered tool schemas
+for every later turn. It is not changed when the user's global default changes.
+Sub-agent profiles are delegation targets, not chat entry points.
+
 ```mermaid
 stateDiagram-v2
     [*] --> Initialize: Create Agent(profile, user, session)
@@ -53,7 +60,7 @@ stateDiagram-v2
 Agents dynamically adapt their instructions based on available capabilities:
 
 - **Base Persona**: Loaded from [`AgentProfile.system_prompt`](../apps/backend/asterism/domains/agent/schemas.py).
-- **Sub-Agent Catalog Injection**: If `sub_agent` is in the profile's allowed tools, the agent queries [`get_user_agents()`](../apps/backend/asterism/domains/agent/service.py). It gathers all profiles marked with `sub_agent=True` (excluding itself) and appends their IDs, names, and descriptions to the system prompt so the LLM knows what delegation targets exist:
+- **Sub-Agent Catalog Injection**: If `sub_agent` is in the profile's configured tools, the agent queries [`get_user_agents()`](../apps/backend/asterism/domains/agent/service.py). It gathers all profiles marked with `sub_agent=True` (excluding itself) and appends their IDs, names, and descriptions to the system prompt so the LLM knows what delegation targets exist:
   ```python
   Sub Agents:
   - id: 3fa85f64-... (name: Research Agent) - Researches external web sources
@@ -148,13 +155,13 @@ flowchart TD
     AgentEvent -->|Queue.put| WSPacket
 ```
 
-| `AgentEventType` | Content / Fields                                          | Meaning                                                |
-| ---------------- | --------------------------------------------------------- | ------------------------------------------------------ |
-| `START`          | None                                                      | Agent execution turn has started                       |
-| `DELTA`          | `content: str`, `thinking: str`                           | Incremental streaming text or reasoning tokens         |
-| `TOOL_CALL`      | `tool_calls: list[ToolCall]`                              | Agent has emitted intent to call one or more tools     |
-| `COMPLETE`       | `content: str`, `tool_results: list`, `total_tokens: int` | Turn finished; assistant message persisted             |
-| `ERROR`          | `content: str`                                            | Execution failure or fatal exception                   |
+| `AgentEventType` | Content / Fields                                          | Meaning                                                                       |
+| ---------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `START`          | None                                                      | Agent execution turn has started                                              |
+| `DELTA`          | `content: str`, `thinking: str`                           | Incremental streaming text or reasoning tokens                                |
+| `TOOL_CALL`      | `tool_calls: list[ToolCall]`                              | Agent has emitted intent to call one or more tools                            |
+| `COMPLETE`       | `content: str`, `tool_results: list`, `total_tokens: int` | Turn finished; assistant message persisted                                    |
+| `ERROR`          | `content: str`                                            | Execution failure or fatal exception                                          |
 | `SUB_AGENT`      | `sub_agent: SubAgentEventEnvelope`                        | Correlated delegated lifecycle, thinking, text, tools, completion, and errors |
 
 ---
@@ -216,7 +223,7 @@ To provide comprehensive auditability and debugging for delegated agent workflow
    - `total_tokens`: Cumulative token usage across all steps.
    - `elapsed_ms`: Wall-clock execution time in milliseconds.
    - `depth`: Call-chain nesting level from root.
-3. **Query Interface**: Traces are queryable programmatically via [`get_sub_agent_traces_by_parent_message()`](../apps/backend/asterism/domains/agent/service.py) and via REST API endpoint `GET /agents/traces/{parent_message_id}`.
+3. **Query Interface**: Traces are queryable programmatically via [`get_sub_agent_traces_by_parent_message()`](../apps/backend/asterism/domains/agent/service.py) and via REST API endpoint `GET /agents/traces/{parent_message_id}`. Results are scoped to the authenticated user.
 4. **Runtime Diagnostics**: Python console logs record `requested`, `authorized`, `started`, per-event debug metadata, `finished`, and trace-persistence outcomes. Logs correlate on `execution_id`, agent/chat/parent-message identifiers, depth, duration, counts, and status; raw prompts and generated content are intentionally excluded.
 
 Frontend WebSocket-contract E2E coverage uses the test-only `/e2e/sub-agent` harness (unavailable outside the `test` configuration profile) to verify successful progress/final-parent rendering and delegated timeout rendering. Backend integration coverage exercises the parent tool call, child event forwarding, child result return, and parent synthesis with deterministic LLM doubles; live external-provider behavior remains dependent on configured provider availability and credentials.

@@ -2,7 +2,7 @@
 
 Tool calling in AI systems introduces significant security and operational challenges:
 
-- **Security & Privilege Escalation**: Agents must never execute tools beyond their explicit allowlist. Sub-agents must never inherit permissions greater than their parent.
+- **Security & Privilege Escalation**: A chat's configured allowlist can execute immediately; any other offered tool requires an explicit per-call user decision. Sub-agents execute only their own active assigned tools and do not inherit the parent's assignments.
 - **Human-in-the-Loop Coordination**: When a tool requires explicit human approval, execution must pause without blocking the entire server or freezing the user interface.
 - **Asynchronous Protocol Crossing**: Authorization decisions span across the Python agent execution loop, an in-memory message queue, a WebSocket transport layer, and a React frontend.
 - **Timeout & Failure Safety**: Network drops or user hesitation must not leak background tasks or stall the agent indefinitely.
@@ -63,8 +63,8 @@ classDiagram
 
 - **Purpose**: Human-in-the-loop validation for interactive chat sessions.
 - **Behavior**:
-  1. Pre-approved tools (matching the agent's allowlist) are immediately marked approved.
-  2. Tools not in the allowlist are flagged as `pending`.
+  1. Pre-approved tools (matching the chat's runtime allowlist) are immediately marked approved.
+  2. Other tools offered by the profile are flagged as `pending` and can run only after the user approves that call.
   3. If pending tools exist, the policy triggers the `on_pending` callback.
   4. The caller (the chat orchestrator) broadcasts approval requests to the UI and awaits user input.
   5. The policy returns only after all tool decisions are resolved or timed out.
@@ -143,7 +143,7 @@ auths = await self._approval_policy.authorize(
 
 The [`InteractiveApprovalPolicy`](../apps/backend/asterism/domains/agent/approval.py) delegates to [`UserResponseQueue`](../apps/backend/asterism/domains/agent/user_response_queue.py):
 
-- For each tool call where `tc.function.name in permissions`, it immediately enqueues `ToolUseAuthorization(tool=tc, accept=True)` into its internal `asyncio.Queue`.
+- For each tool call where `tc.function.name in permissions`, it immediately enqueues `ToolUseAuthorization(tool=tc, accept=True)` into its internal `asyncio.Queue`. The permissions passed to an interactive chat come from the chat's stored runtime allowlist.
 - Any tools missing from permissions remain in `queue.pending`.
 
 ### 3. Asynchronous WebSocket Request & Future Registration
@@ -222,9 +222,9 @@ flowchart TD
 
 ### Sandboxing Rules
 
-1. **Delegation Authorization**: The interactive parent must itself be allowed to invoke `sub_agent`. Selecting a child delegates authority to that child's configured capability boundary.
+1. **Delegation Authorization**: `sub_agent` must be offered in the parent profile's tool schemas. It is either immediately allowed by the chat runtime allowlist or requires the user's per-call approval. Selecting a child delegates authority to that child's configured capability boundary.
 2. **Child Profile Allowlist**: The child receives only tools explicitly assigned to its profile and still globally enabled by the administrator. Tools do not need to be duplicated on the parent profile.
-3. **Autonomous Policy Assignment**: The child `Agent` uses `AllowlistApprovalPolicy`; assigned tools run without nested user prompts, while unassigned or hallucinated calls are rejected.
+3. **Autonomous Policy Assignment**: The child `Agent` uses `AllowlistApprovalPolicy`; its runtime allowlist is the child's active profile tools, so assigned tools run without nested user prompts while unassigned or hallucinated calls are rejected.
 4. **Configuration Warning**: The Agent Profile screen warns that tools assigned to profiles marked **Acts as Sub Agent** execute autonomously. Users should assign only tools they trust that specialist to use when delegated.
 
 ---

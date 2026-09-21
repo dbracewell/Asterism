@@ -28,7 +28,8 @@ flowchart TD
         InboundQueue["Inbound Commands Queue (asyncio.Queue)"]
     end
 
-    subgraph DomainOrchestrator["ChatOrchestrator (Domain State Manager)"]
+    subgraph DomainOrchestrator["Per-chat in-process ChatJob and ChatOrchestrator"]
+        Job["ChatJob (generation task owner)"]
         OutboundQueue["Chat MessageQueue (per-chat singleton)"]
         MsgTree["Message History & Branching"]
         TitleGen["Background Title Generator (Draft Model)"]
@@ -43,8 +44,9 @@ flowchart TD
     AcceptLoop -->|"Normal Commands (chat, regenerate)"| InboundQueue
     AcceptLoop -->|"High Priority Tool Approval"| AgentSession
     InboundQueue --> ProcessLoop
-    ProcessLoop --> MsgTree
-    ProcessLoop --> AgentSession
+    ProcessLoop --> Job
+    Job --> MsgTree
+    Job --> AgentSession
 
     AgentSession --> OutboundQueue
     OutboundQueue --> MsgQueueLoop
@@ -65,15 +67,25 @@ flowchart TD
 - **Heartbeat Loop**: Sends a `pong` packet every 10 seconds while the connection is open; clients can also send a `ping` command.
 - **Clean Disconnects**: Catches `WebSocketDisconnect` and ensures underlying resources close properly without uncaught traceback spam.
 
-### 2. `ChatController`
+### 2. `ChatJob` and `ChatController`
 
-[`ChatController`](../apps/backend/asterism/domains/chat/controller.py) coordinates concurrency and isolates failure domains:
+[`ChatJobManager`](../apps/backend/asterism/domains/chat/jobs.py) holds one in-process
+`ChatJob` per chat ID. The first socket creates its `ChatOrchestrator`; subsequent
+sockets attach controllers to that same job. The job owns the generation task, so a
+socket disconnect only stops its connection-owned workers and does not cancel a
+provider request. A `cancel` command explicitly cancels the job; the orchestrator
+persists the user turn as cancelled and retains any streamed assistant text as a
+cancelled partial message. Jobs are process-local: a backend restart does not
+resume an in-flight provider request.
+
+[`ChatController`](../apps/backend/asterism/domains/chat/controller.py) coordinates a connection and isolates failure domains:
 
 - **Background Worker Management**: Uses [`BackgroundTaskManager`](../apps/backend/asterism/core/tasks.py) to manage worker coroutines, ensuring clean cancellation on client disconnect.
 - **Command Prioritization**:
   - Regular commands (`chat`, `regenerate`) go to `inbound_commands` to execute sequentially.
   - Urgent commands (`tool_approval`) bypass sequential processing and immediately resolve the orchestrator's pending future, preventing deadlocks when the agent is waiting for user consent.
 - **Auto-Start Injection**: The message processor automatically tracks event sequences and injects a `START` event if the LLM fails to yield one before deltas.
+- **Reconnect behavior**: An attached controller starts generation only if the job is idle and the shared outbound queue is empty; it never creates a second run for an active chat.
 
 ### 3. `ChatOrchestrator`
 
@@ -90,14 +102,14 @@ flowchart TD
 
 When a client connects to `/api/py/chat/stream/{chat_id}?token={jwt}`, `ChatController.run()` initiates several concurrent coroutines:
 
-| Worker / Loop                        | Interval / Trigger                | Purpose                                                                         |
-| ------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------- |
-| `connection.heartbeat_loop()`        | Every 10 seconds                  | Sends a `pong` heartbeat while the socket is open                               |
-| `orchestrator.generate_chat_title()` | One-off background                | Generates smart title using draft LLM                                           |
-| `_status_loop()`                     | Every 0.5s                        | Emits `{"type": "status", "is_processing": bool}` to toggle UI loading spinners |
-| `_message_queue_processing_loop()`   | Event-driven (`queue.get()`)      | Flushes outbound events (`DELTA`, `TOOL_CALL`, `COMPLETE`) to the client        |
-| `_accept_commands_loop()`            | Event-driven (`socket.receive()`) | Ingests client commands; routes `tool_approval` immediately                     |
-| `_process_commands_loop()`           | Queue-driven (`inbound.get()`)    | Executes `handle_new_user_message` or `_regenerate` sequentially                |
+| Worker / Loop                      | Interval / Trigger                | Purpose                                                                                      |
+| ---------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `connection.heartbeat_loop()`      | Every 10 seconds                  | Sends a `pong` heartbeat while the socket is open                                            |
+| `job.start_title_generation()`     | One-off per in-process chat job   | Generates smart title using draft LLM; retries are bounded and fall back to the first prompt |
+| `_status_loop()`                   | Every 0.5s                        | Emits `{"type": "status", "is_processing": bool}` to toggle UI loading spinners              |
+| `_message_queue_processing_loop()` | Event-driven (`queue.get()`)      | Flushes outbound events (`DELTA`, `TOOL_CALL`, `COMPLETE`) to the client                     |
+| `_accept_commands_loop()`          | Event-driven (`socket.receive()`) | Ingests client commands; routes `tool_approval` immediately                                  |
+| `_process_commands_loop()`         | Queue-driven (`inbound.get()`)    | Executes `handle_new_user_message` or `_regenerate` sequentially                             |
 
 ---
 
@@ -126,6 +138,9 @@ When a client connects to `/api/py/chat/stream/{chat_id}?token={jwt}`, `ChatCont
   "type": "regenerate",
   "parent_message_id": "8cb123e4-..."
 }
+
+// Explicitly stop the active generation; disconnecting does not stop it.
+{ "type": "cancel" }
 
 // Keepalive ping
 {
@@ -202,6 +217,12 @@ When a client connects to `/api/py/chat/stream/{chat_id}?token={jwt}`, `ChatCont
 ## File attachments
 
 The composer uploads selected files before it sends the WebSocket command. The orchestrator validates each filename against the authenticated user's `user_files` records, processes pending files, and persists typed references on the user message. Invalid, duplicate, deleted, or cross-user names fail before the message is persisted. On history rebuild and regeneration, cached document/text content is injected as text; an image is encoded as an OpenAI-compatible `image_url` part only when the resolved model has `supports_vision == true` and the image is within the configured vision-byte limit. Missing, unsupported, failed, oversized, and non-vision images become explicit text notices rather than model input.
+
+The chat `GET` response also supplies an estimated context payload. It uses the same
+assembled messages, system prompt, tool schemas, text-token estimator, and a
+conservative fixed allowance per accepted image as the runtime path. Provider
+reported completion usage remains authoritative; this estimate is advisory and is
+shown with the model's configured context window when known.
 
 ## Related Documentation
 

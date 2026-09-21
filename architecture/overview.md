@@ -2,8 +2,8 @@
 
 Asterism is a pnpm workspace containing a Next.js 16 frontend and a Python 3.13+
 FastAPI backend. The browser talks to the backend only through the public,
-same-origin `/api/py` prefix; the backend handles chat, agent execution, files,
-settings, and tools.
+same-origin `/api/py` prefix; the backend handles chat jobs and execution, agent selection, files, folders and
+search, settings, and tools.
 
 ## Topology
 
@@ -23,7 +23,7 @@ flowchart TB
 
     subgraph API[FastAPI :8000, root_path /api/py]
         Security[JWKS JWT verification]
-        Chat[Chat router, controller, and orchestrator]
+        Chat[Chat router, in-process job, controller, and orchestrator]
         Runtime[Agent runtime, approvals, and tools]
         Files[File API and processor]
         Settings[Provider and model settings]
@@ -57,15 +57,15 @@ backend URL.
 
 ## Technology stack
 
-| Layer | Implementation |
-| --- | --- |
-| Web UI | Next.js 16, React 19, Tailwind CSS 4, shadcn/ui |
-| Authentication | Better Auth with RS256 JWTs and JWKS |
-| Backend | FastAPI, Uvicorn, Pydantic |
-| Persistence | SQLAlchemy async, SQLite 3.45+ in WAL mode |
-| API client | Hey API generated from FastAPI OpenAPI |
-| LLM runtime | OpenAI Python SDK for OpenAI and compatible endpoints |
-| Files | `FileStore` protocol, `LocalFileStore`, and MarkItDown conversion |
+| Layer          | Implementation                                                                  |
+| -------------- | ------------------------------------------------------------------------------- |
+| Web UI         | Next.js 16, React 19, Tailwind CSS 4, shadcn/ui                                 |
+| Authentication | Better Auth with RS256 JWTs and JWKS                                            |
+| Backend        | FastAPI, Uvicorn, Pydantic                                                      |
+| Persistence    | SQLAlchemy async, SQLite 3.45+ in WAL mode with SQLite FTS5 chat/folder indexes |
+| API client     | Hey API generated from FastAPI OpenAPI                                          |
+| LLM runtime    | OpenAI Python SDK for OpenAI and compatible endpoints                           |
+| Files          | `FileStore` protocol, `LocalFileStore`, and MarkItDown conversion               |
 
 ## Workspace layout
 
@@ -91,13 +91,19 @@ asterism/
 2. The public application forwards `/api/py` traffic to FastAPI. FastAPI verifies
    the JWT against `http://127.0.0.1:3000/api/auth/jwks`, checks issuer and
    audience derived from `PUBLIC_URL`, and scopes data access to the token's user.
-3. A chat WebSocket creates a `ChatController` and `ChatOrchestrator`. A chat
-   command persists the user message and attachment references before invoking the
-   configured `Agent`.
-4. The agent streams text, reasoning, tool-call, and delegated-agent events. Tool
-   approval decisions return through the same WebSocket; final messages and tool
-   results are persisted in SQLite.
-5. The backend uses the shared system key only for loopback callbacks to
+3. Creating a chat selects a non-sub-agent profile (the requested profile or the
+   user's default) and persists its ID on the chat. The binding is immutable, so
+   later default-agent changes do not change an existing conversation.
+4. A chat WebSocket attaches a `ChatController` to the per-chat in-process
+   `ChatJob`. The first connection creates the job's `ChatOrchestrator`; later
+   connections subscribe to that same job. A chat command persists its user
+   message and attachment references before invoking the bound `Agent`.
+5. The agent streams text, reasoning, tool-call, and delegated-agent events. Tool
+   approval decisions return through the same WebSocket; final messages, provider
+   usage, and tool results are persisted in SQLite. A user cancellation persists a
+   cancelled parent turn and any partial assistant output; a disconnect alone does
+   not cancel generation.
+6. The backend uses the shared system key only for loopback callbacks to
    `/api/stream`, such as asynchronous title updates. The frontend fans those
    callbacks out to authenticated SSE clients.
 

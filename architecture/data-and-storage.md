@@ -58,6 +58,7 @@ erDiagram
     folders ||--o{ folders : "parent_of"
     folders ||--o{ chats : "categorizes"
 
+    agent_profiles ||--o{ chats : "bound to"
     chats ||--o{ messages : "contains"
 
     messages ||--o| messages : "parent_of"
@@ -76,6 +77,7 @@ erDiagram
         uuid id PK
         string user_id FK
         uuid folder_id FK
+        uuid agent_id FK
         string title
         json allowed_tools
         datetime created_at
@@ -96,7 +98,10 @@ erDiagram
         json files
         json tool_calls
         json tool_call_results
-        int token_count
+        int input_tokens
+        int output_tokens
+        int total_tokens
+        int generation_duration_ms
         datetime created_at
     }
 
@@ -188,6 +193,30 @@ erDiagram
 
 ---
 
+## Search indexes
+
+SQLite FTS5 virtual tables, `chat_search` and `folder_search`, provide
+user-scoped keyword search over chat titles and persisted message text, and over
+folder titles. They deliberately do not index attachment metadata or extracted
+file content. Schema migration creates the indexes from existing rows and installs
+triggers that rebuild a chat document when its title or message content changes.
+The search service tokenizes input into up to ten word terms and constructs quoted
+`AND` queries rather than passing user input through as FTS syntax. Results remain
+filtered by authenticated user ID; folder results include matches from contained
+chats and their ancestor paths.
+
+## Chat binding, context, and message tree
+
+Each chat stores an `agent_id` foreign key to the main profile selected at creation.
+The service rejects sub-agent bindings and uses the user's valid default only when
+the client did not select one. Existing chats retain their binding, and a main
+agent cannot be deleted or converted to a sub-agent while a chat references it.
+
+Messages retain provider-reported `input_tokens`, `output_tokens`, `total_tokens`,
+and `generation_duration_ms`. The UI's preflight context meter is not persisted
+usage: it is an estimate assembled from the active thread, system prompt, tool
+schemas, text attachments, and accepted images.
+
 ## The Message Tree Model
 
 Asterism models conversation history as a **directed acyclic tree** rather than a flat linear list.
@@ -211,6 +240,7 @@ graph TD
 ### Tree Capabilities
 
 - **Regeneration without Data Loss**: When the user requests regeneration, the original assistant response is kept in the database with its tool calls and reasoning. The parent message's `active_child_id` is simply pointed to the newly generated child message.
+- **Cancellation without Data Loss**: Explicit cancellation marks the active user message cancelled. If output had already streamed, a cancelled assistant child retains that partial content and thinking.
 - **Branch Traversal**: Clients can inspect siblings (`has_siblings`, `sibling_count`, `current_sibling_index`) and switch branches without destroying alternate histories.
 
 ---
