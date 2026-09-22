@@ -5,6 +5,10 @@ import asterism.domains.settings.service as settings_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.knowledge.captioning import CaptionModelStatus
+from asterism.domains.knowledge.schemas import (
+    KnowledgeCaptionConfiguration,
+    KnowledgeCaptionConfigurationUpdate,
+)
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from .discovery import (
@@ -192,6 +196,43 @@ async def bulk_update_app_settings(
         updates=updates,
         session=session,
     )
+
+
+# ---------------------------------------------------------------------------
+# Image captioning (admin only)
+# ---------------------------------------------------------------------------
+
+
+@settings_router.get(
+    "/app/captioning",
+    response_model=KnowledgeCaptionConfiguration,
+    operation_id="appCaptioningGet",
+    summary="Get image captioning configuration",
+)
+async def get_captioning_configuration(
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> KnowledgeCaptionConfiguration:
+    from asterism.domains.knowledge.service import get_captioning_configuration as get_configuration
+
+    return await get_configuration(session=session)
+
+
+@settings_router.put(
+    "/app/captioning",
+    response_model=KnowledgeCaptionConfiguration,
+    operation_id="appCaptioningUpdate",
+    summary="Set image captioning mode and selected provider model",
+    responses={400: {"model": ErrorDetail}},
+)
+async def update_captioning_configuration(
+    payload: KnowledgeCaptionConfigurationUpdate,
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> KnowledgeCaptionConfiguration:
+    from asterism.domains.knowledge.service import update_captioning_configuration as update_configuration
+
+    return await update_configuration(payload=payload, session=session)
 
 
 # ---------------------------------------------------------------------------

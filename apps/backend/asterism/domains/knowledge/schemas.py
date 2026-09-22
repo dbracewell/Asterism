@@ -44,6 +44,17 @@ class KnowledgeDocumentRevisionCreate(BaseModel):
     metadata: dict[str, str] | None = Field(default=None, max_length=32)
 
 
+class KnowledgeCaptionMetadata(BaseModel):
+    status: str | None = None
+    source: str | None = None
+    model: str | None = None
+    text: str | None = Field(default=None, max_length=10_000)
+    error_code: str | None = None
+    error_reason: str | None = None
+    generated_at: int | None = None
+    accepted_at: int | None = None
+
+
 class KnowledgeDocument(BaseModel):
     id: uuid.UUID
     knowledge_base_id: uuid.UUID
@@ -57,6 +68,7 @@ class KnowledgeDocument(BaseModel):
     error: str | None
     indexed_at: int | None
     replaces_document_id: uuid.UUID | None
+    caption: KnowledgeCaptionMetadata
     metadata: dict[str, str]
     created_at: int
     updated_at: int
@@ -67,6 +79,23 @@ class KnowledgeDocumentList(BaseModel):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
     page_size: int = Field(ge=1)
+
+
+class KnowledgeCaptionUpdate(BaseModel):
+    text: str | None = Field(default=None, max_length=10_000)
+    accept: bool = False
+    clear: bool = False
+
+
+class KnowledgeCaptionConfiguration(BaseModel):
+    mode: str
+    provider_model_id: uuid.UUID | None
+    updated_at: int
+
+
+class KnowledgeCaptionConfigurationUpdate(BaseModel):
+    mode: str = Field(pattern="^(disabled|provider|local)$")
+    provider_model_id: uuid.UUID | None = None
 
 
 class KnowledgeBaseAssignmentReplace(BaseModel):

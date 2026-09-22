@@ -1,4 +1,5 @@
 import { Types } from "@/features/settings/types";
+import { CaptioningSettings } from "@/features/settings/ui/admin-settings/captioning-settings";
 import { CodeExecutionSettings } from "@/features/settings/ui/admin-settings/code-execution-settings";
 import { ExportSettings } from "@/features/settings/ui/admin-settings/export-settings";
 import { GroupSettings } from "@/features/settings/ui/admin-settings/groups-settings";
@@ -11,6 +12,7 @@ import { ApplicationSettings } from "@/lib/client";
 import {
   IconCloudCog,
   IconDatabaseExport,
+  IconPhoto,
   IconImageGeneration,
   IconUsersGroup,
   IconUserShield,
@@ -65,6 +67,13 @@ export const getAdminSettingsSections = (
       value: "image-generation",
       icon: <IconImageGeneration />,
       settingsPane: <ImageGenSettings />,
+    },
+    {
+      type: "section",
+      label: "Image Captioning",
+      value: "image-captioning",
+      icon: <IconPhoto />,
+      settingsPane: <CaptioningSettings appSettings={appSettings} />,
     },
 
     {

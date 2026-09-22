@@ -1,3 +1,7 @@
+import asyncio
+import uuid
+from contextlib import asynccontextmanager
+
 import pytest
 import pytest_asyncio
 from asterism.core import config
@@ -6,11 +10,20 @@ from asterism.db.base import Base
 from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.knowledge.audit import KnowledgeAuditEventModel
+from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
+from asterism.domains.knowledge.captioning import CaptionMode, CaptionResult
 from asterism.domains.knowledge.ingestion import ingest_document
-from asterism.domains.knowledge.models import KnowledgeDocumentModel, KnowledgeDocumentStatus
+from asterism.domains.knowledge.models import (
+    KnowledgeCaptionConfigurationModel,
+    KnowledgeCaptionStatus,
+    KnowledgeDocumentModel,
+    KnowledgeDocumentStatus,
+)
 from asterism.domains.knowledge.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseUpdate,
+    KnowledgeCaptionConfigurationUpdate,
+    KnowledgeCaptionUpdate,
     KnowledgeDocumentCreate,
     KnowledgeDocumentRevisionCreate,
     KnowledgeDocumentUpdate,
@@ -21,11 +34,14 @@ from asterism.domains.knowledge.service import (
     create_knowledge_document_revision,
     delete_knowledge_base,
     delete_knowledge_document,
+    get_captioning_configuration,
     get_knowledge_base,
     get_knowledge_document,
     list_knowledge_bases,
     list_knowledge_documents,
+    update_captioning_configuration,
     update_knowledge_base,
+    update_knowledge_document_caption,
     update_knowledge_document_metadata,
 )
 from asterism.domains.user.models import UserModel
@@ -119,6 +135,20 @@ async def test_knowledge_base_rejects_blank_and_duplicate_names(knowledge_sessio
 
 
 @pytest.mark.asyncio
+async def test_caption_configuration_is_seeded_disabled(knowledge_session):
+    configuration = await knowledge_session.get(KnowledgeCaptionConfigurationModel, 1)
+    assert configuration is not None
+    assert configuration.mode.value == "disabled"
+    assert configuration.provider_model_id is None
+
+    updated = await update_captioning_configuration(
+        payload=KnowledgeCaptionConfigurationUpdate(mode="disabled"), session=knowledge_session
+    )
+    assert updated.mode == "disabled"
+    assert (await get_captioning_configuration(session=knowledge_session)).updated_at == updated.updated_at
+
+
+@pytest.mark.asyncio
 async def test_knowledge_documents_capture_owned_immutable_file_metadata(knowledge_session):
     knowledge_base = await create_knowledge_base(
         user_id="user-a", payload=KnowledgeBaseCreate(name="Documents"), session=knowledge_session
@@ -155,6 +185,8 @@ async def test_knowledge_documents_capture_owned_immutable_file_metadata(knowled
     assert document.original_name == "Source.txt"
     assert document.content_sha256 == "a" * 64
     assert document.status == "pending"
+    assert document.caption.status is None
+    assert document.caption.text is None
     assert document.metadata == {"category": "notes"}
     replacement_file = UserFileModel(
         user_id="user-a",
@@ -314,3 +346,109 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
         vector_store=vectors,
     )
     assert len(vectors.chunks) == 1
+
+
+@pytest.mark.asyncio
+async def test_caption_job_cancel_signals_the_single_queued_revision(monkeypatch):
+    started = asyncio.Event()
+
+    async def blocked_run(*_):
+        started.set()
+        await asyncio.Event().wait()
+
+    jobs = KnowledgeCaptionJobs(lambda *_: None)  # type: ignore[arg-type]
+    monkeypatch.setattr(jobs, "_run", blocked_run)
+    document_id = uuid.uuid4()
+    assert jobs.enqueue(user_id="user-a", knowledge_base_id=uuid.uuid4(), document_id=document_id)
+    await started.wait()
+    assert jobs.cancel(str(document_id))
+    with pytest.raises(asyncio.CancelledError):
+        await jobs._tasks[str(document_id)]
+    await asyncio.sleep(0)
+    assert not jobs.cancel(str(document_id))
+
+
+@pytest.mark.asyncio
+async def test_caption_job_persists_bounded_draft_and_content_free_audit(knowledge_session, monkeypatch):
+    knowledge_base = await create_knowledge_base(
+        user_id="user-a", payload=KnowledgeBaseCreate(name="Images"), session=knowledge_session
+    )
+    file = UserFileModel(
+        user_id="user-a",
+        filename="diagram.png",
+        original_name="Diagram.png",
+        size=12,
+        mime_type="image/png",
+        kind=FileKind.IMAGE,
+        sha256="d" * 64,
+        content_status=FileContentStatus.READY,
+    )
+    knowledge_session.add(file)
+    await knowledge_session.commit()
+    document = await add_knowledge_document(
+        user_id="user-a",
+        knowledge_base_id=knowledge_base.id,
+        payload=KnowledgeDocumentCreate(file_id=file.id),
+        session=knowledge_session,
+    )
+
+    sessions = async_sessionmaker(knowledge_session.bind, expire_on_commit=False)
+
+    @asynccontextmanager
+    async def test_session():
+        async with sessions() as session:
+            yield session
+
+    monkeypatch.setattr("asterism.domains.knowledge.caption_jobs.get_async_db_session", test_session)
+
+    async def caption(*_):
+        return CaptionResult(text="  A private diagram with  arrows.  ", source=CaptionMode.LOCAL, model="smolvlm2")
+
+    jobs = KnowledgeCaptionJobs(caption)
+    assert jobs.enqueue(user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id)
+    assert not jobs.enqueue(user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id)
+    await jobs._tasks[str(document.id)]
+
+    persisted = await knowledge_session.get(KnowledgeDocumentModel, document.id)
+    assert persisted.caption_status is KnowledgeCaptionStatus.DRAFT
+    assert persisted.caption_text == "A private diagram with arrows."
+    assert persisted.caption_source.value == "local"
+    events = list(
+        await knowledge_session.scalars(
+            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.document_id == document.id)
+        )
+    )
+    assert {event.action for event in events} >= {"caption.started", "caption.local_drafted"}
+    assert all("private diagram" not in str(event.details).lower() for event in events)
+
+    class FakeEmbeddings:
+        async def embed_text(self, texts):
+            assert texts == ["A reviewed diagram"]
+            return [[0.1, 0.2]]
+
+    class FakeVectors:
+        def __init__(self):
+            self.deleted = []
+            self.added = []
+
+        async def delete_chunk(self, **kwargs):
+            self.deleted.append(kwargs)
+
+        async def add(self, chunks):
+            self.added.extend(chunks)
+
+    vectors = FakeVectors()
+    accepted = await update_knowledge_document_caption(
+        user_id="user-a",
+        knowledge_base_id=knowledge_base.id,
+        document_id=document.id,
+        payload=KnowledgeCaptionUpdate(text="A reviewed diagram", accept=True),
+        session=knowledge_session,
+        embedding_provider=FakeEmbeddings(),
+        vector_store=vectors,
+    )
+    assert accepted.caption.status == "accepted"
+    assert accepted.caption.text == "A reviewed diagram"
+    assert len(vectors.deleted) == len(vectors.added) == 1
+    assert vectors.added[0].content == "A reviewed diagram"
+    assert vectors.added[0].id == vectors.deleted[0]["chunk_id"]
