@@ -1,11 +1,11 @@
 import asyncio
-import hashlib
 from pathlib import Path
 from typing import Protocol
 
 from markitdown import MarkItDown
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.common.hashing import sha256_file
 from asterism.core import config
 
 from .models import FileContentStatus, FileKind, UserFileModel
@@ -53,7 +53,7 @@ class MarkItDownFileProcessor:
             await session.commit()
             return file
 
-        digest = await asyncio.to_thread(_sha256_file, path)
+        digest = await asyncio.to_thread(sha256_file, path)
         if digest != file.sha256:
             file.sha256 = digest
             file.size = path.stat().st_size
@@ -105,11 +105,3 @@ class MarkItDownFileProcessor:
             # Converter errors often contain document content; never surface or log them.
             file.content_status = FileContentStatus.FAILED
             file.content_error = "File could not be processed"
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as source:
-        for chunk in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()

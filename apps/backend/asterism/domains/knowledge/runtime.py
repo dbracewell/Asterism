@@ -2,6 +2,8 @@
 
 from asterism.core import config
 
+from .caption_download import CaptionModelDownloadService
+from .captioning import LocalSmolVlm2CaptionProvider
 from .embeddings import OnnxClipEmbeddingProvider
 from .jobs import KnowledgeIngestionJobs
 from .vector_store import LanceDbVectorStore
@@ -19,6 +21,22 @@ embedding_provider = OnnxClipEmbeddingProvider(
     dimension=config.knowledge_embedding_dimension,
     max_concurrency=config.max_concurrent_knowledge_embeddings,
 )
+local_caption_provider = LocalSmolVlm2CaptionProvider(
+    config.local_caption_models_root,
+    bundle_sha256=config.local_caption_model_bundle_sha256,
+    max_concurrency=config.max_concurrent_local_captions,
+)
+
+
+async def _on_caption_bundle_ready(bundle_sha256: str) -> None:
+    """Update the caption provider's bundle SHA-256 after a successful download."""
+    local_caption_provider._bundle_sha256 = bundle_sha256.lower()
+
+
+caption_model_download = CaptionModelDownloadService(
+    config.local_caption_models_root,
+    on_bundle_ready=_on_caption_bundle_ready,
+)
 
 
 async def initialize_knowledge_runtime() -> None:
@@ -28,6 +46,8 @@ async def initialize_knowledge_runtime() -> None:
 
 
 async def shutdown_knowledge_runtime() -> None:
+    await caption_model_download.shutdown()
     await knowledge_ingestion_jobs.shutdown()
+    await local_caption_provider.close()
     await embedding_provider.close()
     await vector_store.close()

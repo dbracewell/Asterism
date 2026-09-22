@@ -370,7 +370,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-17 — Knowledge Bases and Multimodal Retrieval
 
 Plan: [EPIC-17](epics/EPIC-17-KNOWLEDGE-BASES-AND-MULTIMODAL-RETRIEVAL.md).
-Status: US-17.1 through US-17.4 completed, user-confirmed, and merged; US-17.5 implementation complete and awaiting user confirmation.
+Status: Completed — all stories user-confirmed and merged.
 Order: US-17.1 → US-17.2 → US-17.3 → US-17.4 → US-17.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -402,9 +402,36 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-17.4-T4: Add safe execution/audit traces.
   - [x] US-17.4-T5: Test availability, authorization, filtering, stale bases, limits, and document injection content.
 
-- [x] US-17.5 — Build the knowledge-base and agent-assignment UI (implementation complete; awaiting user confirmation)
+- [x] US-17.5 — Build the knowledge-base and agent-assignment UI (user-confirmed and merged)
   - [x] US-17.5-T1: Add generated-client knowledge-base CRUD UI.
   - [x] US-17.5-T2: Add accessible document upload/status/retry/delete management.
   - [x] US-17.5-T3: Add zero-or-more agent assignment selector and automatic-search explanation.
   - [x] US-17.5-T4: Add frontend unit and Playwright CRUD/assignment coverage.
   - [x] US-17.5-T5: Run quality gates and document model/LanceDB operations and security boundaries.
+
+## EPIC-18 — Image Captioning for Knowledge
+
+Plan: [EPIC-18](docs/epics/EPIC-18-IMAGE-CAPTIONING-FOR-KNOWLEDGE.md).
+Status: US-18.1 complete; US-18.2 pending.
+Order: US-18.1 → US-18.2 → US-18.3. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
+Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
+
+- [x] US-18.1 — Establish captioning contracts and local runtime foundation
+  - [x] US-18.1-T1: Define caption-provider contracts, records, errors, configuration, and selection validation.
+  - [x] US-18.1-T2: Add pinned local SmolVLM2 CPU adapter with offline artifact verification and bounded concurrency.
+  - [x] US-18.1-T3: Benchmark macOS/Linux CPU resource use and caption quality; document hardware guidance.
+  - [x] US-18.1-T4: Add bounded admin-initiated model download API with progress, integrity verification, cancellation, and retry.
+  - [x] US-18.1-T5: Add provider/local lifecycle, bounds, and failure tests.
+
+- [ ] US-18.2 — Add admin configuration and revision-safe caption generation
+  - [ ] US-18.2-T1: Add migration-backed caption configuration and revision metadata.
+  - [ ] US-18.2-T2: Add admin selection API/UI for disabled, provider, and local modes with download button, progress, and readiness display.
+  - [ ] US-18.2-T3: Implement safe bounded caption jobs.
+  - [ ] US-18.2-T4: Add accepted-caption vector indexing while retaining image vectors.
+  - [ ] US-18.2-T5: Test boundaries and regenerate the API client.
+
+- [ ] US-18.3 — Build reviewable caption UI and retrieval presentation
+  - [ ] US-18.3-T1: Add image caption generate/review/edit/accept/clear UI.
+  - [ ] US-18.3-T2: Distinguish caption and visual-match retrieval excerpts.
+  - [ ] US-18.3-T3: Add backend/frontend/Playwright coverage.
+  - [ ] US-18.3-T4: Document provisioning, privacy, recovery, and operations.

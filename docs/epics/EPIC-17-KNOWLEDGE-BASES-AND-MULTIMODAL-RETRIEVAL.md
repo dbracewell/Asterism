@@ -7,7 +7,7 @@ indexed documents), assign zero or more of them to each agent, and let an agent
 search only its assigned knowledge during a chat. Retrieval must support both
 text and image document content using a local, cross-platform embedding runtime.
 
-**Status: US-17.1 through US-17.4 completed, user-confirmed, and merged; US-17.5 implementation complete and awaiting user confirmation.**
+**Status: Completed — all stories user-confirmed and merged.**
 
 ## Scope and decisions
 
