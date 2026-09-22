@@ -1,5 +1,6 @@
 """Built-in, assignment-scoped knowledge retrieval tool."""
 
+import hashlib
 import time
 import uuid
 
@@ -12,7 +13,7 @@ from asterism.domains.tools.registry import ToolContext, tool_registry
 
 from .assignments import AgentKnowledgeBaseAssignmentModel
 from .audit import record_knowledge_audit
-from .models import KnowledgeDocumentModel, KnowledgeDocumentStatus
+from .models import KnowledgeCaptionStatus, KnowledgeDocumentModel, KnowledgeDocumentStatus
 from .runtime import embedding_provider, vector_store
 
 
@@ -67,17 +68,16 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
                 # A malformed/stale vector cannot be associated with a ready
                 # document and must never become a retrieval result.
                 continue
-        ready_document_ids = set()
+        ready_documents: dict[str, KnowledgeDocumentModel] = {}
         if document_ids:
-            ready_document_ids = set(
-                await db.scalars(
-                    select(KnowledgeDocumentModel.id).where(
-                        KnowledgeDocumentModel.user_id == ctx.user.id,
-                        KnowledgeDocumentModel.id.in_(document_ids),
-                        KnowledgeDocumentModel.status == KnowledgeDocumentStatus.READY,
-                    )
+            documents = await db.scalars(
+                select(KnowledgeDocumentModel).where(
+                    KnowledgeDocumentModel.user_id == ctx.user.id,
+                    KnowledgeDocumentModel.id.in_(document_ids),
+                    KnowledgeDocumentModel.status == KnowledgeDocumentStatus.READY,
                 )
             )
+            ready_documents = {str(document.id): document for document in documents}
         db.add(
             record_knowledge_audit(
                 user_id=ctx.user.id,
@@ -91,12 +91,19 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
             )
         )
         await db.commit()
-    ready_ids = {str(document_id) for document_id in ready_document_ids}
     remaining_bytes = config.max_knowledge_result_bytes
     results = []
     for match in matches:
-        if str(match.document_id) not in ready_ids or remaining_bytes <= 0:
+        document = ready_documents.get(str(match.document_id))
+        if document is None or remaining_bytes <= 0:
             continue
+        caption_chunk_id = hashlib.sha256(f"{document.id}:{document.revision}:caption".encode()).hexdigest()
+        if match.id == caption_chunk_id and document.caption_status is KnowledgeCaptionStatus.ACCEPTED:
+            match_kind = "accepted_caption"
+        elif document.mime_type.startswith("image/"):
+            match_kind = "visual_image"
+        else:
+            match_kind = "text"
         excerpt = _bounded_excerpt(match.content, remaining_bytes)
         remaining_bytes -= len(excerpt.encode("utf-8"))
         results.append(
@@ -106,6 +113,7 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
                 "revision_id": match.revision_id,
                 "chunk_id": match.id,
                 "score": match.score,
+                "match_kind": match_kind,
                 "excerpt": excerpt,
             }
         )

@@ -235,7 +235,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('b2d625f1-f03a-425a-87fe-a4fabeb213ff'),
+    id: z.uuid().optional().default('36ba0d40-99bf-487b-8fe6-1522ee4ae55e'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -1012,6 +1012,26 @@ export const zKnowledgeDocumentUpdateMetadataPath = z.object({
  * Successful Response
  */
 export const zKnowledgeDocumentUpdateMetadataResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentGenerateCaptionPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentGenerateCaptionResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentCancelCaptionPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentCancelCaptionResponse = zKnowledgeDocument;
 
 export const zKnowledgeDocumentUpdateCaptionBody = zKnowledgeCaptionUpdate;
 

@@ -9,7 +9,7 @@ runtime. Captions supplement—not replace—the existing CLIP image embedding,
 so images remain searchable visually and their descriptions become useful
 retrieval excerpts.
 
-**Status: US-18.1 complete; US-18.2 pending.**
+**Status: US-18.1 and US-18.2 complete; US-18.3 in progress.**
 
 ## Product decisions
 
@@ -71,27 +71,27 @@ so that provider and local caption generation are safe and observable.
 - A local caption request cannot fetch remote code or model artifacts.
 - Provider selection is limited to discovered vision-capable models.
 
-### US-18.2 — Add admin configuration and revision-safe caption generation
+### US-18.2 — Add admin configuration and revision-safe caption generation (complete)
 
 **As an admin**, I want to configure captioning and as a user I want captions
 attached safely to image revisions.
 
 **Dependencies:** US-18.1.
 
-- [ ] US-18.2-T1: Add migration-backed caption configuration and image revision
+- [x] US-18.2-T1: Add migration-backed caption configuration and image revision
       caption metadata/status with ownership-safe service APIs.
-- [ ] US-18.2-T2: Add an admin configuration API/UI that selects disabled,
+- [x] US-18.2-T2: Add an admin configuration API/UI that selects disabled,
       provider model, or local SmolVLM2 mode. When local mode is selected,
       display model download status; if not yet downloaded, show a Download
       button that triggers the download API with progress feedback and
       post-download verification. Display readiness and hardware guidance
       without exposing credentials.
-- [ ] US-18.2-T3: Implement bounded caption jobs with retry/cancel behavior,
+- [x] US-18.2-T3: Implement bounded caption jobs with retry/cancel behavior,
       provider/local audit events, timeouts, and no image/caption text in
       default logs.
-- [ ] US-18.2-T4: On accept/edit/clear, atomically replace only the caption text
+- [x] US-18.2-T4: On accept/edit/clear, atomically replace only the caption text
       vector chunk while retaining the revision's image vector and provenance.
-- [ ] US-18.2-T5: Add ownership, provider-capability, failure, cancellation,
+- [x] US-18.2-T5: Add ownership, provider-capability, failure, cancellation,
       revision, and vector-cleanup tests; regenerate the Hey API client.
 
 **Acceptance criteria**

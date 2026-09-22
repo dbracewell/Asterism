@@ -12,6 +12,9 @@ const { api } = vi.hoisted(() => ({
     knowledgeDocumentIngest: vi.fn(),
     knowledgeDocumentDelete: vi.fn(),
     knowledgeDocumentReindex: vi.fn(),
+    knowledgeDocumentGenerateCaption: vi.fn(),
+    knowledgeDocumentCancelCaption: vi.fn(),
+    knowledgeDocumentUpdateCaption: vi.fn(),
   },
 }));
 
@@ -21,6 +24,29 @@ beforeEach(() => {
   vi.clearAllMocks();
   api.knowledgeDocumentGetMany.mockResolvedValue({ data: { documents: [] } });
   api.fileGetMany.mockResolvedValue({ data: { files: [] } });
+});
+
+const imageDocument = {
+  id: "document-image", original_name: "diagram.png", mime_type: "image/png", revision: 1, position: 0,
+  status: "ready", error: null, indexed_at: null, replaces_document_id: null, metadata: {}, created_at: 0, updated_at: 0,
+  caption: { status: "draft", source: "local", model: "smolvlm", text: "A draft diagram", error_code: null, error_reason: null, generated_at: 0, accepted_at: null },
+};
+
+it("generates, reviews, accepts, and clears an image caption", async () => {
+  api.knowledgeDocumentGetMany.mockResolvedValue({ data: { documents: [imageDocument] } });
+  api.knowledgeDocumentUpdateCaption.mockResolvedValue({ data: { ...imageDocument, caption: { ...imageDocument.caption, status: "accepted", text: "Reviewed diagram" } } });
+  render(<KnowledgeBaseDetail knowledgeBaseId="base-1" />);
+
+  const editor = await screen.findByLabelText("Edit caption for diagram.png");
+  fireEvent.change(editor, { target: { value: "Reviewed diagram" } });
+  fireEvent.click(screen.getByRole("button", { name: "Accept caption" }));
+  await waitFor(() => expect(api.knowledgeDocumentUpdateCaption).toHaveBeenCalledWith({
+    path: { knowledge_base_id: "base-1", document_id: "document-image" }, body: { text: "Reviewed diagram", accept: true },
+  }));
+  fireEvent.click(screen.getByRole("button", { name: "Clear caption" }));
+  await waitFor(() => expect(api.knowledgeDocumentUpdateCaption).toHaveBeenLastCalledWith({
+    path: { knowledge_base_id: "base-1", document_id: "document-image" }, body: { clear: true },
+  }));
 });
 
 it("uploads and attaches every selected file in one operation", async () => {

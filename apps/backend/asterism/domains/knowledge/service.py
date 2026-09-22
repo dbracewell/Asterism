@@ -1,5 +1,6 @@
 import hashlib
 import uuid
+from typing import Protocol
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
@@ -40,6 +41,12 @@ from .schemas import (
     KnowledgeDocumentUpdate,
 )
 from .vector_store import VectorChunk, VectorStore
+
+
+class CaptionJobQueue(Protocol):
+    def enqueue(self, *, user_id: str, knowledge_base_id: uuid.UUID, document_id: uuid.UUID) -> bool: ...
+
+    def cancel(self, document_id: str) -> bool: ...
 
 
 def _clean_name(name: str) -> str:
@@ -375,6 +382,53 @@ async def get_knowledge_document(
 
 def _caption_chunk_id(document: KnowledgeDocumentModel) -> str:
     return hashlib.sha256(f"{document.id}:{document.revision}:caption".encode()).hexdigest()
+
+
+async def request_knowledge_document_caption(
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    document_id: uuid.UUID,
+    session: AsyncSession,
+    caption_jobs: CaptionJobQueue,
+) -> KnowledgeDocument:
+    document = await _owned_document(
+        user_id=user_id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=session
+    )
+    if not document.mime_type.startswith("image/"):
+        raise BadDataException("Only image documents can be captioned")
+    if document.caption_status is KnowledgeCaptionStatus.RUNNING:
+        return _document_response(document)
+    if not caption_jobs.enqueue(user_id=user_id, knowledge_base_id=knowledge_base_id, document_id=document_id):
+        return _document_response(document)
+    document.caption_status = KnowledgeCaptionStatus.PENDING
+    document.caption_error_code = None
+    document.caption_error_reason = None
+    session.add(
+        record_knowledge_audit(
+            user_id=user_id,
+            action="caption.requested",
+            knowledge_base_id=knowledge_base_id,
+            document_id=document_id,
+        )
+    )
+    await session.commit()
+    return _document_response(document)
+
+
+async def cancel_knowledge_document_caption(
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    document_id: uuid.UUID,
+    session: AsyncSession,
+    caption_jobs: CaptionJobQueue,
+) -> KnowledgeDocument:
+    document = await _owned_document(
+        user_id=user_id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=session
+    )
+    caption_jobs.cancel(str(document_id))
+    return _document_response(document)
 
 
 async def update_knowledge_document_caption(

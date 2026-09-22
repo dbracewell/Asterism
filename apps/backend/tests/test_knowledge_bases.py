@@ -39,6 +39,7 @@ from asterism.domains.knowledge.service import (
     get_knowledge_document,
     list_knowledge_bases,
     list_knowledge_documents,
+    request_knowledge_document_caption,
     update_captioning_configuration,
     update_knowledge_base,
     update_knowledge_document_caption,
@@ -391,6 +392,25 @@ async def test_caption_job_persists_bounded_draft_and_content_free_audit(knowled
         payload=KnowledgeDocumentCreate(file_id=file.id),
         session=knowledge_session,
     )
+
+    class FakeQueue:
+        def __init__(self):
+            self.enqueued = []
+
+        def enqueue(self, **kwargs):
+            self.enqueued.append(kwargs)
+            return True
+
+        def cancel(self, _):
+            return False
+
+    queue = FakeQueue()
+    requested = await request_knowledge_document_caption(
+        user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id,
+        session=knowledge_session, caption_jobs=queue,
+    )
+    assert requested.caption.status == "pending"
+    assert queue.enqueued == [{"user_id": "user-a", "knowledge_base_id": knowledge_base.id, "document_id": document.id}]
 
     sessions = async_sessionmaker(knowledge_session.bind, expire_on_commit=False)
 
