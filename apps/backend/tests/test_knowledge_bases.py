@@ -1,3 +1,5 @@
+import asyncio
+import uuid
 from contextlib import asynccontextmanager
 
 import pytest
@@ -344,6 +346,26 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
         vector_store=vectors,
     )
     assert len(vectors.chunks) == 1
+
+
+@pytest.mark.asyncio
+async def test_caption_job_cancel_signals_the_single_queued_revision(monkeypatch):
+    started = asyncio.Event()
+
+    async def blocked_run(*_):
+        started.set()
+        await asyncio.Event().wait()
+
+    jobs = KnowledgeCaptionJobs(lambda *_: None)  # type: ignore[arg-type]
+    monkeypatch.setattr(jobs, "_run", blocked_run)
+    document_id = uuid.uuid4()
+    assert jobs.enqueue(user_id="user-a", knowledge_base_id=uuid.uuid4(), document_id=document_id)
+    await started.wait()
+    assert jobs.cancel(str(document_id))
+    with pytest.raises(asyncio.CancelledError):
+        await jobs._tasks[str(document_id)]
+    await asyncio.sleep(0)
+    assert not jobs.cancel(str(document_id))
 
 
 @pytest.mark.asyncio

@@ -428,7 +428,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-18.2-T2: Add admin selection API/UI for disabled, provider, and local modes with download button, progress, and readiness display.
   - [x] US-18.2-T3: Implement safe bounded caption jobs.
   - [x] US-18.2-T4: Add accepted-caption vector indexing while retaining image vectors.
-  - [~] US-18.2-T5: Test boundaries and regenerate the API client.
+  - [x] US-18.2-T5: Test boundaries and regenerate the API client.
 
 - [ ] US-18.3 — Build reviewable caption UI and retrieval presentation
   - [ ] US-18.3-T1: Add image caption generate/review/edit/accept/clear UI.
