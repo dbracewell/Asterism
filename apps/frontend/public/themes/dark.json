@@ -1,5 +1,6 @@
 {
   "name": "Default Dark Theme",
+  "filename": "dark",
   "type": "dark",
   "colors": {
     "background": "#14151a",
@@ -13,19 +14,19 @@
     "secondary": "#2d2f36",
     "secondary-foreground": "#fbfbfb",
     "muted": "#2d2f36",
-    "muted-foreground": "#9fa2b2",
+    "muted-foreground": "#c9cde0",
     "accent": "#2d2f36",
     "accent-foreground": "#fbfbfb",
-    "destructive": "#e9584e",
-    "border": "#2e3038",
-    "input": "#212229",
-    "ring": "#757782",
-    "sidebar": "#212229",
     "sidebar-foreground": "#fbfbfb",
     "sidebar-primary": "#487ae6",
     "sidebar-primary-foreground": "#2f3f7a",
     "sidebar-accent": "#2d2f36",
     "sidebar-accent-foreground": "#fbfbfb",
+    "destructive": "#e9584e",
+    "border": "#2e3038",
+    "input": "#212229",
+    "ring": "#757782",
+    "sidebar": "#212229",
     "sidebar-border": "#2e3038",
     "sidebar-ring": "#757782"
   }
