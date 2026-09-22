@@ -41,6 +41,10 @@ export type AgentProfile = {
      * Id
      */
     id?: string;
+    /**
+     * Knowledge Bases
+     */
+    knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
 };
 
 /**
@@ -538,6 +542,40 @@ export type KnowledgeBase = {
      * Updated At
      */
     updated_at: number;
+};
+
+/**
+ * KnowledgeBaseAssignmentList
+ */
+export type KnowledgeBaseAssignmentList = {
+    /**
+     * Knowledge Base Ids
+     */
+    knowledge_base_ids: Array<string>;
+};
+
+/**
+ * KnowledgeBaseAssignmentReplace
+ */
+export type KnowledgeBaseAssignmentReplace = {
+    /**
+     * Knowledge Base Ids
+     */
+    knowledge_base_ids?: Array<string>;
+};
+
+/**
+ * KnowledgeBaseAssignmentSummary
+ */
+export type KnowledgeBaseAssignmentSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
 };
 
 /**
@@ -3018,6 +3056,74 @@ export type AgentsUpsertAgentProfileResponses = {
 };
 
 export type AgentsUpsertAgentProfileResponse = AgentsUpsertAgentProfileResponses[keyof AgentsUpsertAgentProfileResponses];
+
+export type AgentKnowledgeBaseAssignmentsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/{agent_id}/knowledge-bases';
+};
+
+export type AgentKnowledgeBaseAssignmentsGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AgentKnowledgeBaseAssignmentsGetError = AgentKnowledgeBaseAssignmentsGetErrors[keyof AgentKnowledgeBaseAssignmentsGetErrors];
+
+export type AgentKnowledgeBaseAssignmentsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseAssignmentList;
+};
+
+export type AgentKnowledgeBaseAssignmentsGetResponse = AgentKnowledgeBaseAssignmentsGetResponses[keyof AgentKnowledgeBaseAssignmentsGetResponses];
+
+export type AgentKnowledgeBaseAssignmentsReplaceData = {
+    body: KnowledgeBaseAssignmentReplace;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/{agent_id}/knowledge-bases';
+};
+
+export type AgentKnowledgeBaseAssignmentsReplaceErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AgentKnowledgeBaseAssignmentsReplaceError = AgentKnowledgeBaseAssignmentsReplaceErrors[keyof AgentKnowledgeBaseAssignmentsReplaceErrors];
+
+export type AgentKnowledgeBaseAssignmentsReplaceResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseAssignmentList;
+};
+
+export type AgentKnowledgeBaseAssignmentsReplaceResponse = AgentKnowledgeBaseAssignmentsReplaceResponses[keyof AgentKnowledgeBaseAssignmentsReplaceResponses];
 
 export type AgentsDeleteAgentData = {
     body?: never;

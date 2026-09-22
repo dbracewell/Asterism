@@ -61,21 +61,6 @@ export const zChatCompletionParams = z.object({
 });
 
 /**
- * AgentProfile
- */
-export const zAgentProfile = z.object({
-    name: z.string(),
-    description: z.string(),
-    sub_agent: z.boolean(),
-    model_id: z.uuid().nullable(),
-    system_prompt: z.string().nullable(),
-    max_steps: z.int(),
-    chat_parameters: zChatCompletionParams.optional(),
-    tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('aff561e5-5fc8-49ea-bc87-442aedcba1c8')
-});
-
-/**
  * ChatContextUsage
  */
 export const zChatContextUsage = z.object({
@@ -190,6 +175,44 @@ export const zKnowledgeBase = z.object({
     description: z.string().nullable(),
     created_at: z.int(),
     updated_at: z.int()
+});
+
+/**
+ * KnowledgeBaseAssignmentList
+ */
+export const zKnowledgeBaseAssignmentList = z.object({
+    knowledge_base_ids: z.array(z.uuid())
+});
+
+/**
+ * KnowledgeBaseAssignmentReplace
+ */
+export const zKnowledgeBaseAssignmentReplace = z.object({
+    knowledge_base_ids: z.array(z.uuid()).max(100).optional()
+});
+
+/**
+ * KnowledgeBaseAssignmentSummary
+ */
+export const zKnowledgeBaseAssignmentSummary = z.object({
+    id: z.uuid(),
+    name: z.string()
+});
+
+/**
+ * AgentProfile
+ */
+export const zAgentProfile = z.object({
+    name: z.string(),
+    description: z.string(),
+    sub_agent: z.boolean(),
+    model_id: z.uuid().nullable(),
+    system_prompt: z.string().nullable(),
+    max_steps: z.int(),
+    chat_parameters: zChatCompletionParams.optional(),
+    tools: z.array(z.string()).nullish(),
+    id: z.uuid().optional().default('216a4797-c16d-4887-936b-a6b4e245ed96'),
+    knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
 /**
@@ -1098,6 +1121,26 @@ export const zAgentsUpsertAgentProfileBody = zPartialAgentProfile;
  * Successful Response
  */
 export const zAgentsUpsertAgentProfileResponse = zAgentProfile;
+
+export const zAgentKnowledgeBaseAssignmentsGetPath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAgentKnowledgeBaseAssignmentsGetResponse = zKnowledgeBaseAssignmentList;
+
+export const zAgentKnowledgeBaseAssignmentsReplaceBody = zKnowledgeBaseAssignmentReplace;
+
+export const zAgentKnowledgeBaseAssignmentsReplacePath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAgentKnowledgeBaseAssignmentsReplaceResponse = zKnowledgeBaseAssignmentList;
 
 export const zAgentsDeleteAgentPath = z.object({
     agent_id: z.uuid()

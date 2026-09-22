@@ -381,7 +381,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-17.1-T4: Add data-preserving relational migrations and vector schema/version rebuild plan.
   - [x] US-17.1-T5: Test adapters/providers, lifecycle, filters, deletion, bounds, and model artifact failures.
 
-- [~] US-17.2 — Manage knowledge bases and documents
+- [x] US-17.2 — Manage knowledge bases and documents (user-confirmed and merged)
   - [x] US-17.2-T1: Add ownership-safe knowledge-base CRUD APIs.
   - [x] US-17.2-T2: Add document CRUD using immutable file revisions, metadata, and indexing status.
   - [x] US-17.2-T3: Implement bounded, idempotent extract/chunk/embed/index ingestion with retry/cancel/failure/reindex behavior.
@@ -389,11 +389,11 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-17.2-T5: Add safe audit events for CRUD and ingestion transitions.
   - [x] US-17.2-T6: Test ownership, mutations, ingestion/retry/deletion, migrations; regenerated Hey API client.
 
-- [ ] US-17.3 — Assign knowledge bases to agents
-  - [ ] US-17.3-T1: Add ownership-safe agent-to-knowledge-base associations.
-  - [ ] US-17.3-T2: Add typed zero-or-more assignment APIs with validation.
-  - [ ] US-17.3-T3: Include assignment summaries in agent APIs without metadata leakage.
-  - [ ] US-17.3-T4: Test ownership, duplicate/delete races, empty/many/legacy assignments; regenerate Hey API client.
+- [~] US-17.3 — Assign knowledge bases to agents
+  - [x] US-17.3-T1: Add ownership-safe agent-to-knowledge-base associations.
+  - [x] US-17.3-T2: Add typed zero-or-more assignment APIs with validation.
+  - [x] US-17.3-T3: Include assignment summaries in agent APIs without metadata leakage.
+  - [x] US-17.3-T4: Test ownership, duplicate/delete races, empty/many/legacy assignments; regenerated Hey API client.
 
 - [ ] US-17.4 — Expose safe automatic knowledge search to the agent runtime
   - [ ] US-17.4-T1: Implement bounded, assigned-base-filtered `search_knowledge` with provenance.

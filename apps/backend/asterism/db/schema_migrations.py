@@ -21,6 +21,7 @@ _KNOWLEDGE_DOCUMENT_METADATA_MIGRATION = "20260923_02_knowledge_document_metadat
 _KNOWLEDGE_DOCUMENT_REVISIONS_MIGRATION = "20260923_03_knowledge_document_revisions"
 _KNOWLEDGE_DOCUMENT_ORDER_MIGRATION = "20260923_04_knowledge_document_order"
 _KNOWLEDGE_AUDIT_MIGRATION = "20260923_05_knowledge_audit"
+_AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION = "20260924_01_agent_knowledge_assignments"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -36,9 +37,7 @@ async def _add_column_if_missing(
 ) -> None:
     if column in await _sqlite_columns(connection, table):
         return
-    await connection.execute(
-        text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {definition}')
-    )
+    await connection.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {definition}'))
 
 
 async def _migrate_message_files(connection: AsyncConnection) -> None:
@@ -70,10 +69,7 @@ async def _migrate_user_files(connection: AsyncConnection) -> None:
         )
     )
     await connection.execute(
-        text(
-            "CREATE INDEX IF NOT EXISTS idx_user_files_user_filename "
-            "ON user_files (user_id, filename)"
-        )
+        text("CREATE INDEX IF NOT EXISTS idx_user_files_user_filename ON user_files (user_id, filename)")
     )
 
 
@@ -84,11 +80,7 @@ async def _migrate_chat_agent(connection: AsyncConnection) -> None:
         "agent_id",
         "CHAR(32)",
     )
-    await connection.execute(
-        text(
-            "CREATE INDEX IF NOT EXISTS idx_chats_agent_id ON chats (agent_id)"
-        )
-    )
+    await connection.execute(text("CREATE INDEX IF NOT EXISTS idx_chats_agent_id ON chats (agent_id)"))
     # SQLAlchemy stores SQLite UUIDs as 32 hexadecimal characters, while the
     # JSON setting stores their canonical dashed representation.
     await connection.execute(
@@ -116,8 +108,7 @@ async def _migrate_chat_search_fts(connection: AsyncConnection) -> None:
     )
     await connection.execute(
         text(
-            "CREATE VIRTUAL TABLE IF NOT EXISTS folder_search USING fts5("
-            "folder_id UNINDEXED, user_id UNINDEXED, title)"
+            "CREATE VIRTUAL TABLE IF NOT EXISTS folder_search USING fts5(folder_id UNINDEXED, user_id UNINDEXED, title)"
         )
     )
     await connection.execute(text("DELETE FROM chat_search"))
@@ -132,10 +123,7 @@ async def _migrate_chat_search_fts(connection: AsyncConnection) -> None:
     )
     await connection.execute(text("DELETE FROM folder_search"))
     await connection.execute(
-        text(
-            "INSERT INTO folder_search(folder_id, user_id, title) "
-            "SELECT id, user_id, title FROM folders"
-        )
+        text("INSERT INTO folder_search(folder_id, user_id, title) SELECT id, user_id, title FROM folders")
     )
     for statement in (
         "CREATE TRIGGER IF NOT EXISTS chat_search_chats_ai AFTER INSERT ON chats BEGIN "
@@ -185,8 +173,7 @@ async def _migrate_provider_types_and_capabilities(
         connection,
         "providers",
         "provider_type",
-        "VARCHAR(32) NOT NULL DEFAULT 'generic_openai' "
-        "CHECK (provider_type IN ('openai', 'generic_openai'))",
+        "VARCHAR(32) NOT NULL DEFAULT 'generic_openai' CHECK (provider_type IN ('openai', 'generic_openai'))",
     )
     await connection.execute(
         text(
@@ -209,8 +196,7 @@ async def _migrate_provider_types_and_capabilities(
         "BOOLEAN NULL CHECK (supports_vision IS NULL OR supports_vision IN (0, 1))",
     )
     source_definition = (
-        "VARCHAR(16) NOT NULL DEFAULT 'unknown' "
-        "CHECK ({column} IN ('catalog', 'provider', 'manual', 'unknown'))"
+        "VARCHAR(16) NOT NULL DEFAULT 'unknown' CHECK ({column} IN ('catalog', 'provider', 'manual', 'unknown'))"
     )
     await _add_column_if_missing(
         connection,
@@ -240,8 +226,7 @@ async def _migrate_knowledge_foundations(connection: AsyncConnection) -> None:
     )
     await connection.execute(
         text(
-            "CREATE INDEX IF NOT EXISTS idx_knowledge_bases_user_updated "
-            "ON knowledge_bases (user_id, updated_at DESC)"
+            "CREATE INDEX IF NOT EXISTS idx_knowledge_bases_user_updated ON knowledge_bases (user_id, updated_at DESC)"
         )
     )
     await connection.execute(
@@ -270,10 +255,7 @@ async def _migrate_knowledge_foundations(connection: AsyncConnection) -> None:
 async def _migrate_knowledge_base_crud(connection: AsyncConnection) -> None:
     """Add the owner-scoped name invariant after the foundations migration."""
     await connection.execute(
-        text(
-            "CREATE UNIQUE INDEX IF NOT EXISTS uq_knowledge_bases_user_name "
-            "ON knowledge_bases (user_id, name)"
-        )
+        text("CREATE UNIQUE INDEX IF NOT EXISTS uq_knowledge_bases_user_name ON knowledge_bases (user_id, name)")
     )
 
 
@@ -332,6 +314,28 @@ async def _migrate_knowledge_audit(connection: AsyncConnection) -> None:
     )
 
 
+async def _migrate_agent_knowledge_assignments(connection: AsyncConnection) -> None:
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS agent_knowledge_base_assignments ("
+            "id CHAR(32) NOT NULL PRIMARY KEY, "
+            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+            "agent_id CHAR(32) NOT NULL REFERENCES agent_profiles(id) ON DELETE CASCADE, "
+            "knowledge_base_id CHAR(32) NOT NULL REFERENCES knowledge_bases(id) ON DELETE CASCADE, "
+            "position INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, "
+            "CONSTRAINT uq_agent_knowledge_base_assignment UNIQUE (agent_id, knowledge_base_id), "
+            "CONSTRAINT uq_agent_knowledge_base_assignment_position UNIQUE (agent_id, position)"
+            ")"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_agent_knowledge_base_assignments_agent_position "
+            "ON agent_knowledge_base_assignments (agent_id, position)"
+        )
+    )
+
+
 async def _migrate_message_usage(connection: AsyncConnection) -> None:
     for column in (
         "input_tokens",
@@ -354,6 +358,7 @@ _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_KNOWLEDGE_DOCUMENT_REVISIONS_MIGRATION, _migrate_knowledge_document_revisions),
     (_KNOWLEDGE_DOCUMENT_ORDER_MIGRATION, _migrate_knowledge_document_order),
     (_KNOWLEDGE_AUDIT_MIGRATION, _migrate_knowledge_audit),
+    (_AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION, _migrate_agent_knowledge_assignments),
     (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),
@@ -366,10 +371,7 @@ _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
 async def run_schema_migrations(connection: AsyncConnection) -> None:
     """Apply Asterism-owned relational schema migrations exactly once."""
     if connection.dialect.name != "sqlite":
-        raise RuntimeError(
-            f"Unsupported database dialect for schema migrations: "
-            f"{connection.dialect.name}"
-        )
+        raise RuntimeError(f"Unsupported database dialect for schema migrations: {connection.dialect.name}")
 
     await connection.execute(
         text(
@@ -378,9 +380,7 @@ async def run_schema_migrations(connection: AsyncConnection) -> None:
             "applied_at INTEGER NOT NULL)"
         )
     )
-    result = await connection.execute(
-        text(f"SELECT migration_id FROM {_MIGRATION_TABLE}")
-    )
+    result = await connection.execute(text(f"SELECT migration_id FROM {_MIGRATION_TABLE}"))
     applied = {str(row[0]) for row in result.fetchall()}
 
     for migration_id, migration in _MIGRATIONS:
@@ -388,9 +388,6 @@ async def run_schema_migrations(connection: AsyncConnection) -> None:
             continue
         await migration(connection)
         await connection.execute(
-            text(
-                f"INSERT INTO {_MIGRATION_TABLE} (migration_id, applied_at) "
-                "VALUES (:migration_id, :applied_at)"
-            ),
+            text(f"INSERT INTO {_MIGRATION_TABLE} (migration_id, applied_at) VALUES (:migration_id, :applied_at)"),
             {"migration_id": migration_id, "applied_at": int(time.time())},
         )
