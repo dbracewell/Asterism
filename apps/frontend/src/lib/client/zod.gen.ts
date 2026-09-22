@@ -235,7 +235,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('7eb28513-ffef-45c3-9e42-ac34ce35901e'),
+    id: z.uuid().optional().default('b2d625f1-f03a-425a-87fe-a4fabeb213ff'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -294,6 +294,15 @@ export const zKnowledgeCaptionMetadata = z.object({
     error_reason: z.string().nullish(),
     generated_at: z.int().nullish(),
     accepted_at: z.int().nullish()
+});
+
+/**
+ * KnowledgeCaptionUpdate
+ */
+export const zKnowledgeCaptionUpdate = z.object({
+    text: z.string().max(10000).nullish(),
+    accept: z.boolean().optional().default(false),
+    clear: z.boolean().optional().default(false)
 });
 
 /**
@@ -1003,6 +1012,18 @@ export const zKnowledgeDocumentUpdateMetadataPath = z.object({
  * Successful Response
  */
 export const zKnowledgeDocumentUpdateMetadataResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentUpdateCaptionBody = zKnowledgeCaptionUpdate;
+
+export const zKnowledgeDocumentUpdateCaptionPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentUpdateCaptionResponse = zKnowledgeDocument;
 
 export const zKnowledgeDocumentIngestPath = z.object({
     knowledge_base_id: z.uuid(),

@@ -729,6 +729,24 @@ export type KnowledgeCaptionMetadata = {
 };
 
 /**
+ * KnowledgeCaptionUpdate
+ */
+export type KnowledgeCaptionUpdate = {
+    /**
+     * Text
+     */
+    text?: string | null;
+    /**
+     * Accept
+     */
+    accept?: boolean;
+    /**
+     * Clear
+     */
+    clear?: boolean;
+};
+
+/**
  * KnowledgeDocument
  */
 export type KnowledgeDocument = {
@@ -2453,6 +2471,44 @@ export type KnowledgeDocumentUpdateMetadataResponses = {
 };
 
 export type KnowledgeDocumentUpdateMetadataResponse = KnowledgeDocumentUpdateMetadataResponses[keyof KnowledgeDocumentUpdateMetadataResponses];
+
+export type KnowledgeDocumentUpdateCaptionData = {
+    body: KnowledgeCaptionUpdate;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption';
+};
+
+export type KnowledgeDocumentUpdateCaptionErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentUpdateCaptionError = KnowledgeDocumentUpdateCaptionErrors[keyof KnowledgeDocumentUpdateCaptionErrors];
+
+export type KnowledgeDocumentUpdateCaptionResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentUpdateCaptionResponse = KnowledgeDocumentUpdateCaptionResponses[keyof KnowledgeDocumentUpdateCaptionResponses];
 
 export type KnowledgeDocumentIngestData = {
     body?: never;
