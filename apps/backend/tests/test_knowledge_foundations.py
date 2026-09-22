@@ -64,7 +64,7 @@ async def test_knowledge_migration_is_idempotent(tmp_path: Path):
             ).fetchall()
         }
     await engine.dispose()
-    assert {"knowledge_bases", "knowledge_documents"} <= tables
+    assert {"knowledge_bases", "knowledge_documents", "knowledge_audit_events"} <= tables
 
 
 def test_embedding_artifact_requires_expected_checksum_and_size(tmp_path: Path):

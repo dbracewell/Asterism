@@ -16,6 +16,11 @@ _CHAT_AGENT_MIGRATION = "20260402_01_chat_agent"
 _CHAT_SEARCH_MIGRATION = "20260403_01_chat_search_fts"
 _MESSAGE_USAGE_MIGRATION = "20260404_01_message_usage"
 _KNOWLEDGE_FOUNDATIONS_MIGRATION = "20260922_01_knowledge_foundations"
+_KNOWLEDGE_BASE_CRUD_MIGRATION = "20260923_01_knowledge_base_crud"
+_KNOWLEDGE_DOCUMENT_METADATA_MIGRATION = "20260923_02_knowledge_document_metadata"
+_KNOWLEDGE_DOCUMENT_REVISIONS_MIGRATION = "20260923_03_knowledge_document_revisions"
+_KNOWLEDGE_DOCUMENT_ORDER_MIGRATION = "20260923_04_knowledge_document_order"
+_KNOWLEDGE_AUDIT_MIGRATION = "20260923_05_knowledge_audit"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -262,6 +267,71 @@ async def _migrate_knowledge_foundations(connection: AsyncConnection) -> None:
     )
 
 
+async def _migrate_knowledge_base_crud(connection: AsyncConnection) -> None:
+    """Add the owner-scoped name invariant after the foundations migration."""
+    await connection.execute(
+        text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_knowledge_bases_user_name "
+            "ON knowledge_bases (user_id, name)"
+        )
+    )
+
+
+async def _migrate_knowledge_document_metadata(connection: AsyncConnection) -> None:
+    """Persist non-content document metadata and prevent duplicate attachments."""
+    await _add_column_if_missing(
+        connection,
+        "knowledge_documents",
+        "metadata",
+        "JSON NOT NULL DEFAULT '{}'",
+    )
+    await connection.execute(
+        text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_knowledge_documents_base_file "
+            "ON knowledge_documents (knowledge_base_id, file_id)"
+        )
+    )
+
+
+async def _migrate_knowledge_document_revisions(connection: AsyncConnection) -> None:
+    await _add_column_if_missing(
+        connection,
+        "knowledge_documents",
+        "replaces_document_id",
+        "CHAR(32) REFERENCES knowledge_documents(id) ON DELETE SET NULL",
+    )
+
+
+async def _migrate_knowledge_document_order(connection: AsyncConnection) -> None:
+    await _add_column_if_missing(
+        connection,
+        "knowledge_documents",
+        "position",
+        "INTEGER NOT NULL DEFAULT 0",
+    )
+
+
+async def _migrate_knowledge_audit(connection: AsyncConnection) -> None:
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS knowledge_audit_events ("
+            "id CHAR(32) NOT NULL PRIMARY KEY, "
+            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+            "knowledge_base_id CHAR(32) REFERENCES knowledge_bases(id) ON DELETE SET NULL, "
+            "document_id CHAR(32) REFERENCES knowledge_documents(id) ON DELETE SET NULL, "
+            "action VARCHAR(64) NOT NULL, details JSON NOT NULL DEFAULT '{}', "
+            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL"
+            ")"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_knowledge_audit_events_user_created "
+            "ON knowledge_audit_events (user_id, created_at)"
+        )
+    )
+
+
 async def _migrate_message_usage(connection: AsyncConnection) -> None:
     for column in (
         "input_tokens",
@@ -279,6 +349,11 @@ async def _migrate_message_usage(connection: AsyncConnection) -> None:
 
 _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_KNOWLEDGE_FOUNDATIONS_MIGRATION, _migrate_knowledge_foundations),
+    (_KNOWLEDGE_BASE_CRUD_MIGRATION, _migrate_knowledge_base_crud),
+    (_KNOWLEDGE_DOCUMENT_METADATA_MIGRATION, _migrate_knowledge_document_metadata),
+    (_KNOWLEDGE_DOCUMENT_REVISIONS_MIGRATION, _migrate_knowledge_document_revisions),
+    (_KNOWLEDGE_DOCUMENT_ORDER_MIGRATION, _migrate_knowledge_document_order),
+    (_KNOWLEDGE_AUDIT_MIGRATION, _migrate_knowledge_audit),
     (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),

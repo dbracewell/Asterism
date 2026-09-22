@@ -95,6 +95,18 @@ class Config(BaseSettings):
     max_concurrent_knowledge_vector_operations: int = 2
     """Maximum simultaneous blocking LanceDB operations."""
 
+    max_concurrent_knowledge_ingestions: int = 2
+    """Maximum document ingestion jobs running at once."""
+
+    max_knowledge_chunks_per_document: int = 200
+    """Maximum indexed chunks produced by a document revision."""
+
+    knowledge_chunk_size_chars: int = 1_000
+    """Maximum characters in one textual knowledge chunk."""
+
+    knowledge_chunk_overlap_chars: int = 150
+    """Character overlap between adjacent textual knowledge chunks."""
+
     public_url: str = "http://localhost:3000"
     """The public URL of the Asterism frontend, used for JWT issuer and audience."""
 
@@ -189,6 +201,16 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS must be from 1 to 16")
         if not 1 <= self.max_concurrent_knowledge_vector_operations <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS must be from 1 to 16")
+        if not 1 <= self.max_concurrent_knowledge_ingestions <= 16:
+            raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_INGESTIONS must be from 1 to 16")
+        if not 1 <= self.max_knowledge_chunks_per_document <= 10_000:
+            raise ConfigValidationError("MAX_KNOWLEDGE_CHUNKS_PER_DOCUMENT must be from 1 to 10000")
+        if not 1 <= self.knowledge_chunk_size_chars <= self.max_converted_chars:
+            raise ConfigValidationError("KNOWLEDGE_CHUNK_SIZE_CHARS must be from 1 to MAX_CONVERTED_CHARS")
+        if not 0 <= self.knowledge_chunk_overlap_chars < self.knowledge_chunk_size_chars:
+            raise ConfigValidationError(
+                "KNOWLEDGE_CHUNK_OVERLAP_CHARS must be from 0 to KNOWLEDGE_CHUNK_SIZE_CHARS - 1"
+            )
         if not 1 <= self.max_concurrent_llm_requests <= 128:
             raise ConfigValidationError("MAX_CONCURRENT_LLM_REQUESTS must be from 1 to 128")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
