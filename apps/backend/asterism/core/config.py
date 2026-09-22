@@ -107,6 +107,12 @@ class Config(BaseSettings):
     knowledge_chunk_overlap_chars: int = 150
     """Character overlap between adjacent textual knowledge chunks."""
 
+    max_knowledge_query_top_k: int = 10
+    """Maximum retrieval results a knowledge search tool call may request."""
+
+    max_knowledge_result_bytes: int = 16 * 1024
+    """Maximum UTF-8 bytes returned by one knowledge search tool call."""
+
     public_url: str = "http://localhost:3000"
     """The public URL of the Asterism frontend, used for JWT issuer and audience."""
 
@@ -211,6 +217,10 @@ class Config(BaseSettings):
             raise ConfigValidationError(
                 "KNOWLEDGE_CHUNK_OVERLAP_CHARS must be from 0 to KNOWLEDGE_CHUNK_SIZE_CHARS - 1"
             )
+        if not 1 <= self.max_knowledge_query_top_k <= 100:
+            raise ConfigValidationError("MAX_KNOWLEDGE_QUERY_TOP_K must be from 1 to 100")
+        if not 1_024 <= self.max_knowledge_result_bytes <= 1_000_000:
+            raise ConfigValidationError("MAX_KNOWLEDGE_RESULT_BYTES must be from 1024 to 1000000")
         if not 1 <= self.max_concurrent_llm_requests <= 128:
             raise ConfigValidationError("MAX_CONCURRENT_LLM_REQUESTS must be from 1 to 128")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
