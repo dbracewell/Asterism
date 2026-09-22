@@ -60,6 +60,13 @@ export function CaptioningSettings({
     if (current) setDraftMode(current.mode);
   }, [current]);
   const localStatus = modelStatus.data;
+  const updateError = update.error;
+  const updateErrorMessage =
+    updateError instanceof Error
+      ? updateError.message
+      : typeof updateError === "object" && updateError && "detail" in updateError
+        ? String(updateError.detail)
+        : "The captioning configuration could not be saved.";
 
   if (configuration.isLoading) return <p>Loading image captioning settings…</p>;
   if (configuration.isError || !current) {
@@ -140,7 +147,7 @@ export function CaptioningSettings({
           )}
         </div>
       )}
-      {update.isError && <p role="alert" className="text-sm text-destructive">The captioning configuration could not be saved.</p>}
+      {update.isError && <p role="alert" className="text-sm text-destructive">{updateErrorMessage}</p>}
     </section>
   );
 }
