@@ -3,9 +3,13 @@ import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/features/auth/components/user-context";
-import ChatInput from "@/features/chat/components/chat-input";
+import {
+  ChatInput,
+  ChatInputContainer,
+} from "@/features/chat/components/chat-input";
 import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
 import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
@@ -313,7 +317,7 @@ export const ChatSession = ({
           />
         </div>
       </div>
-      <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent">
+      <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent md:max-w-full">
         {isScrollable && (
           <Button
             className="mx-auto mb-5 rounded-full"
@@ -327,27 +331,64 @@ export const ChatSession = ({
             <ArrowDownIcon />
           </Button>
         )}
-        <ContextUsageMeter
-          usage={session.context_usage}
-          contextWindow={contextWindow}
-        />
-        <ChatInput
-          disabled={isProcessing}
-          status={connectionStatus}
-          onStop={() => sendJsonMessage({ type: "cancel" })}
-          onLineNumberChange={(lines) => {
-            if (!messageListRef.current) return;
-            messageListRef.current.style.marginBottom = `${120 + 20 * lines}px`;
-            if (!isScrollable) {
-              messageListRef.current?.scrollIntoView({ behavior: "instant" });
+        <ChatInputContainer className="border-primary mx-auto w-full max-w-[80%] min-w-[80%] border">
+          <ChatInput
+            disabled={isProcessing || connectionStatus !== "Connected"}
+            isProcessing={isProcessing}
+            onStop={() => sendJsonMessage({ type: "cancel" })}
+            onSubmit={({ prompt, files }) => {
+              addUserMessage({ prompt, files });
+            }}
+            bottomComponent={
+              <div className="flex w-full items-center justify-between gap-2 p-2">
+                <ContextUsageProgress
+                  usage={session.context_usage}
+                  contextWindow={contextWindow}
+                />
+                <div className={cn("flex items-center gap-1 text-xs")}>
+                  {connectionStatus && (
+                    <div
+                      title={connectionStatus}
+                      className={cn(
+                        "size-2 rounded-full pt-0.5",
+                        connectionStatus === "Connected"
+                          ? "border-green-900 bg-green-500"
+                          : "border-red-900 bg-red-500",
+                      )}
+                    />
+                  )}
+                  {connectionStatus}
+                </div>
+              </div>
             }
-          }}
-          onSubmit={({ prompt, files }) => {
-            addUserMessage({ prompt, files });
-          }}
-        />
+          />
+        </ChatInputContainer>
       </div>
     </>
+  );
+};
+
+export const ContextUsageProgress = ({
+  usage,
+  contextWindow,
+}: {
+  usage: Chat["context_usage"];
+  contextWindow: number | null;
+}) => {
+  if (!usage || !contextWindow) return null;
+
+  const percent = Math.min(
+    100,
+    Math.round((usage.total_tokens / contextWindow) * 100),
+  );
+
+  return (
+    <div className="flex items-center gap-2">
+      <Progress value={percent} max={100} className="h-2 w-10" />
+      <span className="text-muted-foreground text-xs select-none">
+        {percent}%
+      </span>
+    </div>
   );
 };
 
@@ -363,13 +404,18 @@ export const ContextUsageMeter = ({
   if (!contextWindow) {
     return (
       <p className="text-muted-foreground mb-1 text-center text-xs">
-        Estimated input: {usage.input_tokens.toLocaleString()} tokens · Context window unknown
+        Estimated input: {usage.input_tokens.toLocaleString()} tokens · Context
+        window unknown
       </p>
     );
   }
 
-  const percent = Math.min(100, Math.round((usage.total_tokens / contextWindow) * 100));
-  const state = percent >= 90 ? "critical" : percent >= 70 ? "warning" : "normal";
+  const percent = Math.min(
+    100,
+    Math.round((usage.total_tokens / contextWindow) * 100),
+  );
+  const state =
+    percent >= 90 ? "critical" : percent >= 70 ? "warning" : "normal";
   const color =
     state === "critical"
       ? "bg-destructive"
@@ -503,88 +549,89 @@ const MessageItem = React.memo(
           <Loading />
         )}
         {message.tool_calls == null &&
-          (message.status === "completed" || message.status === "cancelled") && (
-          <div
-            className={cn(
-              "text-muted-foreground flex w-fit items-center gap-1 text-xs",
-              message.role === "user" && "ml-auto",
-            )}
-          >
-            {message.role !== "user" && (
-              <span className="mr-1">
-                {message.status === "cancelled" && "Stopped · "}
-                {new Date(message.created_at * 1000).toLocaleString()}
-                {(message.output_tokens ?? 0) > 0 &&
-                (message.generation_duration_ms ?? 0) > 0
-                  ? ` · ${((message.output_tokens ?? 0) / ((message.generation_duration_ms ?? 1) / 1000)).toFixed(1)} tok/s`
-                  : ""}
-              </span>
-            )}
+          (message.status === "completed" ||
+            message.status === "cancelled") && (
+            <div
+              className={cn(
+                "text-muted-foreground flex w-fit items-center gap-1 text-xs",
+                message.role === "user" && "ml-auto",
+              )}
+            >
+              {message.role !== "user" && (
+                <span className="mr-1">
+                  {message.status === "cancelled" && "Stopped · "}
+                  {new Date(message.created_at * 1000).toLocaleString()}
+                  {(message.output_tokens ?? 0) > 0 &&
+                  (message.generation_duration_ms ?? 0) > 0
+                    ? ` · ${((message.output_tokens ?? 0) / ((message.generation_duration_ms ?? 1) / 1000)).toFixed(1)} tok/s`
+                    : ""}
+                </span>
+              )}
 
-            {nodeCount > 1 && (
-              <div className="flex items-center px-2">
+              {nodeCount > 1 && (
+                <div className="flex items-center px-2">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => {
+                      updateMessage.mutate({
+                        path: {
+                          chat_id: chatId,
+                          message_id: message.parent_message_id!,
+                        },
+                        body: {
+                          active_child_id: prevSiblingId,
+                        },
+                      });
+                    }}
+                    disabled={prevSiblingId == null || isProcessing}
+                  >
+                    <ChevronLeftIcon />
+                  </Button>
+                  {nodeIndex} / {nodeCount}
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => {
+                      updateMessage.mutate({
+                        path: {
+                          chat_id: chatId,
+                          message_id: message.parent_message_id!,
+                        },
+                        body: {
+                          active_child_id: nextSiblingId,
+                        },
+                      });
+                    }}
+                    disabled={nextSiblingId == null || isProcessing}
+                  >
+                    <ChevronRightIcon />
+                  </Button>
+                </div>
+              )}
+
+              {message.role !== "user" && (
                 <Button
-                  variant="ghost"
                   size="icon-sm"
+                  variant="ghost"
+                  className="rounded-full"
                   onClick={() => {
-                    updateMessage.mutate({
-                      path: {
-                        chat_id: chatId,
-                        message_id: message.parent_message_id!,
-                      },
-                      body: {
-                        active_child_id: prevSiblingId,
-                      },
+                    sendJsonMessage?.({
+                      type: "regenerate",
+                      parent_message_id: message.parent_message_id,
                     });
                   }}
-                  disabled={prevSiblingId == null || isProcessing}
                 >
-                  <ChevronLeftIcon />
+                  <RotateCwIcon />
                 </Button>
-                {nodeIndex} / {nodeCount}
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => {
-                    updateMessage.mutate({
-                      path: {
-                        chat_id: chatId,
-                        message_id: message.parent_message_id!,
-                      },
-                      body: {
-                        active_child_id: nextSiblingId,
-                      },
-                    });
-                  }}
-                  disabled={nextSiblingId == null || isProcessing}
-                >
-                  <ChevronRightIcon />
-                </Button>
-              </div>
-            )}
-
-            {message.role !== "user" && (
-              <Button
+              )}
+              <CopyButton
+                text={message.content}
                 size="icon-sm"
-                variant="ghost"
                 className="rounded-full"
-                onClick={() => {
-                  sendJsonMessage?.({
-                    type: "regenerate",
-                    parent_message_id: message.parent_message_id,
-                  });
-                }}
-              >
-                <RotateCwIcon />
-              </Button>
-            )}
-            <CopyButton
-              text={message.content}
-              size="icon-sm"
-              className="rounded-full"
-            />
-          </div>
-        )}
+              />
+            </div>
+          )}
       </div>
     );
   },

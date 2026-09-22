@@ -26,6 +26,7 @@ import { Theme } from "@/features/theme/types";
 import { prettyText } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Color from "color";
 import {
   CopyPlusIcon,
   LoaderCircleIcon,
@@ -164,24 +165,40 @@ const ThemeColorsSchema = z.object({
   "muted-foreground": hexColor,
   accent: hexColor,
   "accent-foreground": hexColor,
-  destructive: hexColor,
-  border: hexColor,
-  input: hexColor,
-  ring: hexColor,
-  "chart-1": hexColor,
-  "chart-2": hexColor,
-  "chart-3": hexColor,
-  "chart-4": hexColor,
-  "chart-5": hexColor,
-  sidebar: hexColor,
   "sidebar-foreground": hexColor,
   "sidebar-primary": hexColor,
   "sidebar-primary-foreground": hexColor,
   "sidebar-accent": hexColor,
   "sidebar-accent-foreground": hexColor,
+
+  destructive: hexColor,
+  border: hexColor,
+  input: hexColor,
+  ring: hexColor,
+  sidebar: hexColor,
   "sidebar-border": hexColor,
   "sidebar-ring": hexColor,
 });
+
+const ThemeGroups = [
+  { background: "background" },
+  { background: "foreground" },
+  { background: "card", foreground: "card-foreground" },
+  { background: "popover", foreground: "popover-foreground" },
+  { background: "primary", foreground: "primary-foreground" },
+  { background: "secondary", foreground: "secondary-foreground" },
+  { background: "muted", foreground: "muted-foreground" },
+  { background: "accent", foreground: "accent-foreground" },
+  { background: "sidebar", foreground: "sidebar-foreground" },
+  { background: "sidebar-primary", foreground: "sidebar-primary-foreground" },
+  { background: "sidebar-accent", foreground: "sidebar-accent-foreground" },
+  { background: "sidebar-border" },
+  { background: "sidebar-ring" },
+  { background: "destructive" },
+  { background: "border" },
+  { background: "input" },
+  { background: "ring" },
+];
 
 const ThemeSchema = z.object({
   name: z.string().trim().min(1, "A theme name is require"),
@@ -314,27 +331,49 @@ const ThemeForm = ({
             )}
           />
           <div className="grid grid-cols-1 gap-x-4 gap-y-3 @md:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4">
-            {(Object.keys(ThemeColorsSchema.shape) as ThemeColorKey[]).map(
-              (property) => (
-                <Controller
-                  key={property}
-                  control={control}
-                  name={`colors.${property}` as ColorPath}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="form-theme-name">
-                        {prettyText(property)}
-                      </FieldLabel>
-                      <PopoverPicker
-                        field={field}
-                        isInvalid={fieldState.invalid}
-                        id={`form-theme-color-${property}`}
-                      />
-                    </Field>
+            {ThemeGroups.map((group, index) => (
+              <div key={index} className="relative flex flex-col gap-1">
+                <h3 className="text-muted-foreground text-sm font-medium">
+                  {prettyText(group.background)}
+                </h3>
+                <div className="flex items-center">
+                  <Controller
+                    key={group.background}
+                    control={control}
+                    name={`colors.${group.background}` as ColorPath}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <PopoverPicker
+                          name={
+                            group.foreground && prettyText(group.background)
+                          }
+                          field={field}
+                          isInvalid={fieldState.invalid}
+                          id={`form-theme-color-${group.background}`}
+                        />
+                      </Field>
+                    )}
+                  />
+                  {group.foreground && (
+                    <Controller
+                      key={group.foreground}
+                      control={control}
+                      name={`colors.${group.foreground}` as ColorPath}
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <PopoverPicker
+                            name={prettyText(group.foreground)}
+                            field={field}
+                            isInvalid={fieldState.invalid}
+                            id={`form-theme-color-${group.foreground}`}
+                          />
+                        </Field>
+                      )}
+                    />
                   )}
-                />
-              ),
-            )}
+                </div>
+              </div>
+            ))}
           </div>
         </FieldGroup>
       </div>
@@ -356,17 +395,37 @@ interface ColorInputProps {
   field: ControllerRenderProps<ThemeFormValues, ColorPath>;
   id: string;
   isInvalid: boolean;
+  name?: string;
 }
 
-export const PopoverPicker = ({ field, id, isInvalid }: ColorInputProps) => {
+export const PopoverPicker = ({
+  field,
+  id,
+  isInvalid,
+  name,
+}: ColorInputProps) => {
+  // A color input is temporarily invalid while the user is typing. Avoid
+  // parsing that intermediate value so the picker remains usable.
+  let textColor = "#000000";
+  try {
+    textColor = Color(field.value ?? "#FFFFFF").isLight()
+      ? "#000000"
+      : "#ffffff";
+  } catch {
+    // Use black text until a complete color value is entered.
+  }
+
   return (
     <Popover>
       <PopoverTrigger>
         <div
           className="bg-background flex h-10 w-full items-center justify-center text-xs"
-          style={{ backgroundColor: field.value }}
+          style={{
+            backgroundColor: field.value,
+            color: textColor,
+          }}
         >
-          {field.value == null && "Not Selected"}
+          {name ?? (field.value == null && "Not Selected")}
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-fit! border p-1! py-3!">
@@ -384,6 +443,36 @@ export const PopoverPicker = ({ field, id, isInvalid }: ColorInputProps) => {
               required
               className="focus-visible: focus-visible:border-border h-10 border text-base! ring-transparent! outline-transparent!"
               pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+              onKeyDown={(e) => {
+                const allowedKeys = [
+                  "Backspace",
+                  "Tab",
+                  "Enter",
+                  "Escape",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "ArrowUp",
+                  "ArrowDown",
+                  "Home",
+                  "End",
+                ];
+
+                // Allow standard shortcuts (Ctrl/Cmd + A, C, V, X)
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                  return;
+                }
+
+                // Allow navigation/control keys
+                if (allowedKeys.includes(e.key)) {
+                  return;
+                }
+
+                const isHexCharacter = /^[0-9a-fA-F]$/.test(e.key);
+                if (!isHexCharacter) {
+                  e.preventDefault();
+                }
+              }}
               onFocus={(e) => e.target.select()}
             />
             <CopyButton text={field.value} />

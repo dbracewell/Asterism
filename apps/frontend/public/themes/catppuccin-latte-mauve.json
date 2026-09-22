@@ -1,0 +1,32 @@
+{
+  "name": "Catppuccin Latte - Mauve",
+  "type": "light",
+  "colors": {
+    "background": "#eff1f5",
+    "foreground": "#4c4f69",
+    "card": "#eff1f5",
+    "card-foreground": "#4c4f69",
+    "popover": "#eff1f5",
+    "popover-foreground": "#4c4f69",
+    "primary": "#8839ef",
+    "primary-foreground": "#eff1f5",
+    "secondary": "#ccd0da",
+    "secondary-foreground": "#4c4f69",
+    "muted": "#ccd0da",
+    "muted-foreground": "#5c5f77",
+    "accent": "#ccd0da",
+    "accent-foreground": "#4c4f69",
+    "destructive": "#d20f39",
+    "border": "#bcc0cc",
+    "input": "#bcc0cc",
+    "ring": "#4c4f69",
+    "sidebar": "#ebeef3",
+    "sidebar-foreground": "#4c4f69",
+    "sidebar-primary": "#8839ef",
+    "sidebar-primary-foreground": "#eff1f5",
+    "sidebar-accent": "#eff1f5",
+    "sidebar-accent-foreground": "#4c4f69",
+    "sidebar-border": "#bcc0cc",
+    "sidebar-ring": "#bcc0cc"
+  }
+}

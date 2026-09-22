@@ -1,20 +1,18 @@
 "use client";
 import { AnimatedBorder } from "@/components/animated-border";
 import Constellation from "@/components/logo";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useUser } from "@/features/auth/components/user-context";
-import ChatInput from "@/features/chat/components/chat-input";
+import { AgentSelector } from "@/features/chat/components/agent-selector";
+import {
+  ChatInput,
+  ChatInputContainer,
+} from "@/features/chat/components/chat-input";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { AgentProfile } from "@/lib/client";
 import { BotIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import "react-circular-progressbar/dist/styles.css";
 
 export default function AppPage() {
   const user = useUser();
@@ -60,43 +58,39 @@ export default function AppPage() {
       <h1 className="z-1 text-4xl font-bold">
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
-      <AnimatedBorder>
-        <div className="flex w-full flex-col gap-2">
-          <div className="flex items-center justify-between gap-2 px-2">
-            <label
-              className="flex items-center gap-1 text-sm font-medium"
-              htmlFor="new-chat-agent"
-            >
-              <BotIcon className="size-4" /> Agent
-            </label>
-            <Select
-              disabled={mainAgents.length === 0}
-              value={selectedAgentId}
-              onValueChange={setSelectedAgentId}
-            >
-              <SelectTrigger
-                id="new-chat-agent"
-                aria-label="Main agent for new chat"
-              >
-                <SelectValue placeholder="Select a main agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {mainAgents.map((agent) => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {agentSelectionMessage && (
-            <p className="text-destructive px-2 text-sm" role="alert">
-              {agentSelectionMessage}
-            </p>
-          )}
+      <ChatInputContainer className="border-0">
+        <AnimatedBorder
+          childContainerClassName="rounded-t-none"
+          borderComponent={
+            <div className="flex flex-col gap-1 p-2">
+              <div className="bg-primary/80 text-primary-foreground border-primary/50 flex w-fit items-center justify-start gap-2 rounded-lg border p-0.5">
+                <label
+                  className="flex items-center gap-1 text-sm font-medium"
+                  htmlFor="new-chat-agent"
+                >
+                  <BotIcon className="size-4" /> Agent
+                </label>
+                <AgentSelector
+                  disabled={mainAgents.length === 0}
+                  value={selectedAgentId}
+                  onValueChange={setSelectedAgentId}
+                  agents={mainAgents}
+                  className="text-primary-foreground bg-background/5! border-0! font-bold"
+                  chevronClassName="text-primary-foreground"
+                />
+              </div>
+              {agentSelectionMessage && (
+                <p className="text-destructive px-2 text-sm" role="alert">
+                  {agentSelectionMessage}
+                </p>
+              )}
+            </div>
+          }
+        >
           <ChatInput
-            disabled={!selectedAgent}
+            className="rounded-t-none!"
             placeholder="Where will your curiosity lead you today?"
+            disabled={!selectedAgent}
             onSubmit={({ prompt, files }) => {
               if (!selectedAgent) return;
               createChatSession({
@@ -109,8 +103,8 @@ export default function AppPage() {
               });
             }}
           />
-        </div>
-      </AnimatedBorder>
+        </AnimatedBorder>
+      </ChatInputContainer>
     </div>
   );
 }

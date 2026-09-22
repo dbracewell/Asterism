@@ -2,16 +2,13 @@
 
 import { AnimatedBorder } from "@/components/animated-border";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/features/auth/components/user-context";
-import ChatInput from "@/features/chat/components/chat-input";
+import { AgentSelector } from "@/features/chat/components/agent-selector";
+import {
+  ChatInput,
+  ChatInputContainer,
+} from "@/features/chat/components/chat-input";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { client } from "@/lib/api";
 import { AgentProfile } from "@/lib/client";
@@ -71,41 +68,34 @@ export const FolderPage = ({ folderId }: { folderId: string }) => {
         <p className="text-muted-foreground text-sm">Folder</p>
         <h1 className="text-2xl font-semibold">{folder.data.title}</h1>
       </header>
-      <AnimatedBorder className="mx-auto">
-        <section
-          aria-label="Start a chat in this folder"
-          className="flex flex-col gap-2"
+      <ChatInputContainer className="border-0">
+        <AnimatedBorder
+          childContainerClassName="rounded-t-none"
+          borderComponent={
+            <div className="flex flex-col gap-1 p-2">
+              <div className="bg-primary/80 text-primary-foreground border-primary/50 flex w-fit items-center justify-start gap-2 rounded-lg border p-0.5">
+                <label
+                  className="flex items-center gap-1 text-sm font-medium"
+                  htmlFor="new-chat-agent"
+                >
+                  <BotIcon className="size-4" /> Agent
+                </label>
+                <AgentSelector
+                  disabled={mainAgents.length === 0}
+                  value={selectedAgentId}
+                  onValueChange={setSelectedAgentId}
+                  agents={mainAgents}
+                  className="text-primary-foreground bg-background/5! border-0! font-bold"
+                  chevronClassName="text-primary-foreground"
+                />
+              </div>
+            </div>
+          }
         >
-          <div className="flex items-center justify-between gap-2 px-2">
-            <label
-              className="flex items-center gap-1 text-sm font-medium"
-              htmlFor="folder-chat-agent"
-            >
-              <BotIcon className="size-4" /> Agent
-            </label>
-            <Select
-              disabled={mainAgents.length === 0}
-              onValueChange={setSelectedAgentId}
-              value={selectedAgentId}
-            >
-              <SelectTrigger
-                aria-label="Main agent for folder chat"
-                id="folder-chat-agent"
-              >
-                <SelectValue placeholder="Select a main agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {mainAgents.map((agent) => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <ChatInput
-            disabled={!selectedAgent || isCreating}
+            className="rounded-t-none!"
             placeholder={`Start a chat in ${folder.data.title}`}
+            disabled={!selectedAgent || isCreating}
             onSubmit={({ prompt, files }) => {
               if (!selectedAgent) return;
               createChatSession({
@@ -118,13 +108,8 @@ export const FolderPage = ({ folderId }: { folderId: string }) => {
               });
             }}
           />
-          {!selectedAgent && (
-            <p className="text-destructive mt-2 text-sm" role="alert">
-              Select a default main agent before starting a chat.
-            </p>
-          )}
-        </section>
-      </AnimatedBorder>
+        </AnimatedBorder>
+      </ChatInputContainer>
       <section
         aria-labelledby="folder-chats-heading"
         className="flex flex-col gap-2"
