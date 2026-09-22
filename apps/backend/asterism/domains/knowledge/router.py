@@ -12,6 +12,7 @@ from .schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
+    KnowledgeCaptionUpdate,
     KnowledgeDocument,
     KnowledgeDocumentCreate,
     KnowledgeDocumentList,
@@ -115,6 +116,31 @@ async def get_knowledge_document(
 ) -> KnowledgeDocument:
     return await knowledge_service.get_knowledge_document(
         user_id=user.id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=db
+    )
+
+
+@knowledge_router.patch(
+    "/{knowledge_base_id}/documents/{document_id}/caption",
+    response_model=KnowledgeDocument,
+    operation_id="knowledgeDocumentUpdateCaption",
+)
+async def update_knowledge_document_caption(
+    knowledge_base_id: uuid.UUID,
+    document_id: uuid.UUID,
+    payload: KnowledgeCaptionUpdate,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> KnowledgeDocument:
+    from .runtime import embedding_provider, vector_store
+
+    return await knowledge_service.update_knowledge_document_caption(
+        user_id=user.id,
+        knowledge_base_id=knowledge_base_id,
+        document_id=document_id,
+        payload=payload,
+        session=db,
+        embedding_provider=embedding_provider,
+        vector_store=vector_store,
     )
 
 

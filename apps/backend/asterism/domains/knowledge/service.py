@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 
 from sqlalchemy import delete, func, select
@@ -5,17 +6,20 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
+from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.settings.models import LLMModel
 
 from .assignments import AgentKnowledgeBaseAssignmentModel
 from .audit import record_knowledge_audit
-from .captioning import CaptioningConfiguration, CaptioningError, CaptionMode
+from .captioning import CaptioningConfiguration, CaptioningError, CaptionMode, bounded_caption
+from .embeddings import EmbeddingProvider
 from .models import (
     KnowledgeBaseModel,
     KnowledgeCaptionConfigurationModel,
     KnowledgeCaptionMode,
+    KnowledgeCaptionStatus,
     KnowledgeDocumentModel,
     KnowledgeDocumentStatus,
 )
@@ -28,12 +32,14 @@ from .schemas import (
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
+    KnowledgeCaptionUpdate,
     KnowledgeDocument,
     KnowledgeDocumentCreate,
     KnowledgeDocumentList,
     KnowledgeDocumentRevisionCreate,
     KnowledgeDocumentUpdate,
 )
+from .vector_store import VectorChunk, VectorStore
 
 
 def _clean_name(name: str) -> str:
@@ -63,9 +69,7 @@ async def _owned_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: As
     return knowledge_base
 
 
-async def get_captioning_configuration(
-    *, session: AsyncSession
-) -> KnowledgeCaptionConfiguration:
+async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCaptionConfiguration:
     configuration = await session.get(KnowledgeCaptionConfigurationModel, 1)
     if configuration is None:
         # Defensive recovery for databases created before the migration was
@@ -85,9 +89,7 @@ async def update_captioning_configuration(
 ) -> KnowledgeCaptionConfiguration:
     models = list(await session.scalars(select(LLMModel)))
     try:
-        selected = CaptioningConfiguration(
-            mode=CaptionMode(payload.mode), provider_model_id=payload.provider_model_id
-        )
+        selected = CaptioningConfiguration(mode=CaptionMode(payload.mode), provider_model_id=payload.provider_model_id)
         selected.validate(models)
     except CaptioningError as error:
         raise BadDataException(str(error)) from error
@@ -369,6 +371,95 @@ async def get_knowledge_document(
             user_id=user_id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=session
         )
     )
+
+
+def _caption_chunk_id(document: KnowledgeDocumentModel) -> str:
+    return hashlib.sha256(f"{document.id}:{document.revision}:caption".encode()).hexdigest()
+
+
+async def update_knowledge_document_caption(
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    document_id: uuid.UUID,
+    payload: KnowledgeCaptionUpdate,
+    session: AsyncSession,
+    embedding_provider: EmbeddingProvider,
+    vector_store: VectorStore,
+) -> KnowledgeDocument:
+    """Accept, edit, or clear one revision's caption without touching image vectors."""
+    document = await _owned_document(
+        user_id=user_id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=session
+    )
+    if payload.clear:
+        if payload.text is not None or payload.accept:
+            raise BadDataException("Clear caption cannot include text or acceptance")
+        next_text = None
+        next_status = KnowledgeCaptionStatus.CLEARED
+        action = "caption.cleared"
+    else:
+        next_text = bounded_caption(payload.text or document.caption_text or "", 10_000)
+        if not payload.accept:
+            raise BadDataException("Caption edits must be explicitly accepted")
+        next_status = KnowledgeCaptionStatus.ACCEPTED
+        action = "caption.accepted"
+
+    chunk_id = _caption_chunk_id(document)
+    previous_text = document.caption_text if document.caption_status is KnowledgeCaptionStatus.ACCEPTED else None
+    try:
+        await vector_store.delete_chunk(user_id=user_id, document_id=str(document.id), chunk_id=chunk_id)
+        if next_text is not None:
+            vectors = await embedding_provider.embed_text([next_text])
+            if len(vectors) != 1:
+                raise RuntimeError("Caption embedding provider returned an unexpected result")
+            await vector_store.add(
+                [
+                    VectorChunk(
+                        id=chunk_id,
+                        user_id=user_id,
+                        knowledge_base_id=str(knowledge_base_id),
+                        document_id=str(document.id),
+                        revision_id=f"{document.id}:{document.revision}",
+                        content=next_text,
+                        vector=vectors[0],
+                    )
+                ]
+            )
+    except Exception as error:
+        # Restore the prior accepted caption when its replacement could not be written.
+        if previous_text is not None:
+            try:
+                vectors = await embedding_provider.embed_text([previous_text])
+                if len(vectors) == 1:
+                    await vector_store.add(
+                        [
+                            VectorChunk(
+                                id=chunk_id,
+                                user_id=user_id,
+                                knowledge_base_id=str(knowledge_base_id),
+                                document_id=str(document.id),
+                                revision_id=f"{document.id}:{document.revision}",
+                                content=previous_text,
+                                vector=vectors[0],
+                            )
+                        ]
+                    )
+            except Exception:
+                pass
+        raise BadDataException("Caption vector could not be updated") from error
+
+    document.caption_text = next_text
+    document.caption_status = next_status
+    document.caption_accepted_at = get_unix_timestamp() if next_text is not None else None
+    document.caption_error_code = None
+    document.caption_error_reason = None
+    session.add(
+        record_knowledge_audit(
+            user_id=user_id, action=action, knowledge_base_id=knowledge_base_id, document_id=document_id
+        )
+    )
+    await session.commit()
+    return _document_response(document)
 
 
 async def update_knowledge_document_metadata(

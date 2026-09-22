@@ -81,6 +81,12 @@ class KnowledgeDocumentList(BaseModel):
     page_size: int = Field(ge=1)
 
 
+class KnowledgeCaptionUpdate(BaseModel):
+    text: str | None = Field(default=None, max_length=10_000)
+    accept: bool = False
+    clear: bool = False
+
+
 class KnowledgeCaptionConfiguration(BaseModel):
     mode: str
     provider_model_id: uuid.UUID | None

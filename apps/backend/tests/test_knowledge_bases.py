@@ -21,6 +21,7 @@ from asterism.domains.knowledge.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfigurationUpdate,
+    KnowledgeCaptionUpdate,
     KnowledgeDocumentCreate,
     KnowledgeDocumentRevisionCreate,
     KnowledgeDocumentUpdate,
@@ -38,6 +39,7 @@ from asterism.domains.knowledge.service import (
     list_knowledge_documents,
     update_captioning_configuration,
     update_knowledge_base,
+    update_knowledge_document_caption,
     update_knowledge_document_metadata,
 )
 from asterism.domains.user.models import UserModel
@@ -396,3 +398,35 @@ async def test_caption_job_persists_bounded_draft_and_content_free_audit(knowled
     )
     assert {event.action for event in events} >= {"caption.started", "caption.local_drafted"}
     assert all("private diagram" not in str(event.details).lower() for event in events)
+
+    class FakeEmbeddings:
+        async def embed_text(self, texts):
+            assert texts == ["A reviewed diagram"]
+            return [[0.1, 0.2]]
+
+    class FakeVectors:
+        def __init__(self):
+            self.deleted = []
+            self.added = []
+
+        async def delete_chunk(self, **kwargs):
+            self.deleted.append(kwargs)
+
+        async def add(self, chunks):
+            self.added.extend(chunks)
+
+    vectors = FakeVectors()
+    accepted = await update_knowledge_document_caption(
+        user_id="user-a",
+        knowledge_base_id=knowledge_base.id,
+        document_id=document.id,
+        payload=KnowledgeCaptionUpdate(text="A reviewed diagram", accept=True),
+        session=knowledge_session,
+        embedding_provider=FakeEmbeddings(),
+        vector_store=vectors,
+    )
+    assert accepted.caption.status == "accepted"
+    assert accepted.caption.text == "A reviewed diagram"
+    assert len(vectors.deleted) == len(vectors.added) == 1
+    assert vectors.added[0].content == "A reviewed diagram"
+    assert vectors.added[0].id == vectors.deleted[0]["chunk_id"]
