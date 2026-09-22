@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 import pytest
 import pytest_asyncio
 from asterism.core import config
@@ -6,9 +8,12 @@ from asterism.db.base import Base
 from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.knowledge.audit import KnowledgeAuditEventModel
+from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
+from asterism.domains.knowledge.captioning import CaptionMode, CaptionResult
 from asterism.domains.knowledge.ingestion import ingest_document
 from asterism.domains.knowledge.models import (
     KnowledgeCaptionConfigurationModel,
+    KnowledgeCaptionStatus,
     KnowledgeDocumentModel,
     KnowledgeDocumentStatus,
 )
@@ -337,3 +342,57 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
         vector_store=vectors,
     )
     assert len(vectors.chunks) == 1
+
+
+@pytest.mark.asyncio
+async def test_caption_job_persists_bounded_draft_and_content_free_audit(knowledge_session, monkeypatch):
+    knowledge_base = await create_knowledge_base(
+        user_id="user-a", payload=KnowledgeBaseCreate(name="Images"), session=knowledge_session
+    )
+    file = UserFileModel(
+        user_id="user-a",
+        filename="diagram.png",
+        original_name="Diagram.png",
+        size=12,
+        mime_type="image/png",
+        kind=FileKind.IMAGE,
+        sha256="d" * 64,
+        content_status=FileContentStatus.READY,
+    )
+    knowledge_session.add(file)
+    await knowledge_session.commit()
+    document = await add_knowledge_document(
+        user_id="user-a",
+        knowledge_base_id=knowledge_base.id,
+        payload=KnowledgeDocumentCreate(file_id=file.id),
+        session=knowledge_session,
+    )
+
+    sessions = async_sessionmaker(knowledge_session.bind, expire_on_commit=False)
+
+    @asynccontextmanager
+    async def test_session():
+        async with sessions() as session:
+            yield session
+
+    monkeypatch.setattr("asterism.domains.knowledge.caption_jobs.get_async_db_session", test_session)
+
+    async def caption(*_):
+        return CaptionResult(text="  A private diagram with  arrows.  ", source=CaptionMode.LOCAL, model="smolvlm2")
+
+    jobs = KnowledgeCaptionJobs(caption)
+    assert jobs.enqueue(user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id)
+    assert not jobs.enqueue(user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id)
+    await jobs._tasks[str(document.id)]
+
+    persisted = await knowledge_session.get(KnowledgeDocumentModel, document.id)
+    assert persisted.caption_status is KnowledgeCaptionStatus.DRAFT
+    assert persisted.caption_text == "A private diagram with arrows."
+    assert persisted.caption_source.value == "local"
+    events = list(
+        await knowledge_session.scalars(
+            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.document_id == document.id)
+        )
+    )
+    assert {event.action for event in events} >= {"caption.started", "caption.local_drafted"}
+    assert all("private diagram" not in str(event.details).lower() for event in events)
