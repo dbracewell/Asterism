@@ -7,7 +7,7 @@ indexed documents), assign zero or more of them to each agent, and let an agent
 search only its assigned knowledge during a chat. Retrieval must support both
 text and image document content using a local, cross-platform embedding runtime.
 
-**Status: US-17.1 completed, user-confirmed, and merged; US-17.2 implemented and awaiting user confirmation.**
+**Status: US-17.1 and US-17.2 completed, user-confirmed, and merged; US-17.3 implemented and awaiting user confirmation.**
 
 ## Scope and decisions
 
@@ -152,14 +152,14 @@ so that each agent has an explicit retrieval boundary.
 
 **Dependencies:** US-17.2.
 
-- [ ] US-17.3-T1: Add a relational agent-to-knowledge-base association with
+- [x] US-17.3-T1: Add a relational agent-to-knowledge-base association with
       uniqueness, ownership checks, deterministic ordering, and cascade-safe
       deletion behavior.
-- [ ] US-17.3-T2: Add typed read/replace assignment APIs that reject foreign,
+- [x] US-17.3-T2: Add typed read/replace assignment APIs that reject foreign,
       deleted, or non-ready bases and preserve zero-assignment agents.
-- [ ] US-17.3-T3: Extend agent create/read/update views with assigned knowledge
+- [x] US-17.3-T3: Extend agent create/read/update views with assigned knowledge
       summaries without leaking another user's base/document metadata.
-- [ ] US-17.3-T4: Add service/router/migration tests for cross-user assignment,
+- [x] US-17.3-T4: Add service/router/migration tests for cross-user assignment,
       duplicate IDs, delete races, zero/many assignments, and legacy agents.
       Regenerate the Hey API client.
 

@@ -1,16 +1,20 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
+from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.files.models import UserFileModel
 
+from .assignments import AgentKnowledgeBaseAssignmentModel
 from .audit import record_knowledge_audit
 from .models import KnowledgeBaseModel, KnowledgeDocumentModel, KnowledgeDocumentStatus
 from .schemas import (
     KnowledgeBase,
+    KnowledgeBaseAssignmentList,
+    KnowledgeBaseAssignmentReplace,
     KnowledgeBaseCreate,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
@@ -387,6 +391,82 @@ async def cancel_knowledge_document_ingestion(
         )
         await session.commit()
     return _document_response(document)
+
+
+async def get_agent_knowledge_base_assignments(
+    *, user_id: str, agent_id: uuid.UUID, session: AsyncSession
+) -> KnowledgeBaseAssignmentList:
+    agent = await session.scalar(
+        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id)
+    )
+    if agent is None:
+        raise NotFoundException("Agent not found")
+    assignments = await session.scalars(
+        select(AgentKnowledgeBaseAssignmentModel.knowledge_base_id)
+        .where(
+            AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
+            AgentKnowledgeBaseAssignmentModel.user_id == user_id,
+        )
+        .order_by(AgentKnowledgeBaseAssignmentModel.position)
+    )
+    return KnowledgeBaseAssignmentList(knowledge_base_ids=list(assignments))
+
+
+async def replace_agent_knowledge_base_assignments(
+    *,
+    user_id: str,
+    agent_id: uuid.UUID,
+    payload: KnowledgeBaseAssignmentReplace,
+    session: AsyncSession,
+) -> KnowledgeBaseAssignmentList:
+    agent = await session.scalar(
+        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id)
+    )
+    if agent is None:
+        raise NotFoundException("Agent not found")
+    base_ids = payload.knowledge_base_ids
+    if len(set(base_ids)) != len(base_ids):
+        raise BadDataException("Knowledge base assignments must not contain duplicates")
+    if base_ids:
+        owned_ids = set(
+            await session.scalars(
+                select(KnowledgeBaseModel.id).where(
+                    KnowledgeBaseModel.user_id == user_id,
+                    KnowledgeBaseModel.id.in_(base_ids),
+                )
+            )
+        )
+        if owned_ids != set(base_ids):
+            raise NotFoundException("Knowledge base not found")
+        ready_ids = set(
+            await session.scalars(
+                select(KnowledgeDocumentModel.knowledge_base_id)
+                .where(
+                    KnowledgeDocumentModel.user_id == user_id,
+                    KnowledgeDocumentModel.knowledge_base_id.in_(base_ids),
+                    KnowledgeDocumentModel.status == KnowledgeDocumentStatus.READY,
+                )
+                .distinct()
+            )
+        )
+        if ready_ids != set(base_ids):
+            raise BadDataException("Knowledge bases must contain a ready document before assignment")
+    await session.execute(
+        delete(AgentKnowledgeBaseAssignmentModel).where(
+            AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
+            AgentKnowledgeBaseAssignmentModel.user_id == user_id,
+        )
+    )
+    session.add_all(
+        [
+            AgentKnowledgeBaseAssignmentModel(
+                user_id=user_id, agent_id=agent_id, knowledge_base_id=base_id, position=position
+            )
+            for position, base_id in enumerate(base_ids)
+        ]
+    )
+    await session.commit()
+    return KnowledgeBaseAssignmentList(knowledge_base_ids=base_ids)
 
 
 async def delete_knowledge_document(

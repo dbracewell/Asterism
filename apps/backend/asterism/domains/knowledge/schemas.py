@@ -67,3 +67,11 @@ class KnowledgeDocumentList(BaseModel):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
     page_size: int = Field(ge=1)
+
+
+class KnowledgeBaseAssignmentReplace(BaseModel):
+    knowledge_base_ids: list[uuid.UUID] = Field(default_factory=list, max_length=100)
+
+
+class KnowledgeBaseAssignmentList(BaseModel):
+    knowledge_base_ids: list[uuid.UUID]

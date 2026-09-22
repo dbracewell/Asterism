@@ -53,6 +53,11 @@ class AgentEvent(BaseModel):
         return len(self.tool_results) > 0
 
 
+class KnowledgeBaseAssignmentSummary(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
 class PartialAgentProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="ignore")
     name: str
@@ -85,6 +90,7 @@ class PartialAgentProfile(BaseModel):
 class AgentProfile(PartialAgentProfile):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID = uuid.uuid4()  # pyright: ignore[reportIncompatibleVariableOverride]
+    knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 
 class UserAgents(BaseModel):
