@@ -8,6 +8,10 @@ from asterism.common.package_walker import load_decorators
 from asterism.core import config
 from asterism.db.database import db_session_manager
 from asterism.domains.chat.jobs import chat_jobs
+from asterism.domains.knowledge.runtime import (
+    initialize_knowledge_runtime,
+    shutdown_knowledge_runtime,
+)
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.tools.registry import tool_registry
 
@@ -22,6 +26,8 @@ async def init_system() -> None:
     get_draft_model()
     db_session_manager.init()
     logger.info("Database session manager initialized.")
+    await initialize_knowledge_runtime()
+    logger.info("Knowledge vector store initialized.")
     logger.info("Loading tools and components...")
     load_decorators(
         str(Path(__file__).parent.parent),
@@ -44,5 +50,6 @@ async def lifespan(app: FastAPI):
     event_bus.emit(NoArgEvent(type=EventType.SYSTEM_STOP))
     await event_bus.shutdown()
     await chat_jobs.shutdown()
+    await shutdown_knowledge_runtime()
     await db_session_manager.close()
     logger.info("Asterism backend shutting up...")

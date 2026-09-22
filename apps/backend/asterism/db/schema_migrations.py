@@ -15,6 +15,7 @@ _MESSAGE_FILES_MIGRATION = "20260401_02_message_files"
 _CHAT_AGENT_MIGRATION = "20260402_01_chat_agent"
 _CHAT_SEARCH_MIGRATION = "20260403_01_chat_search_fts"
 _MESSAGE_USAGE_MIGRATION = "20260404_01_message_usage"
+_KNOWLEDGE_FOUNDATIONS_MIGRATION = "20260922_01_knowledge_foundations"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -220,6 +221,47 @@ async def _migrate_provider_types_and_capabilities(
     )
 
 
+async def _migrate_knowledge_foundations(connection: AsyncConnection) -> None:
+    """Create relational metadata without coupling it to vector implementation."""
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS knowledge_bases ("
+            "id CHAR(32) NOT NULL PRIMARY KEY, "
+            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+            "name VARCHAR(255) NOT NULL, description TEXT, "
+            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL"
+            ")"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_knowledge_bases_user_updated "
+            "ON knowledge_bases (user_id, updated_at DESC)"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS knowledge_documents ("
+            "id CHAR(32) NOT NULL PRIMARY KEY, "
+            "knowledge_base_id CHAR(32) NOT NULL REFERENCES knowledge_bases(id) ON DELETE CASCADE, "
+            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+            "file_id CHAR(32) REFERENCES user_files(id) ON DELETE SET NULL, "
+            "original_name VARCHAR(255) NOT NULL, mime_type VARCHAR(255) NOT NULL, "
+            "content_sha256 VARCHAR(64) NOT NULL, revision INTEGER NOT NULL DEFAULT 1, "
+            "status VARCHAR(16) NOT NULL DEFAULT 'pending' "
+            "CHECK (status IN ('pending', 'indexing', 'ready', 'failed')), "
+            "error VARCHAR(512), indexed_at INTEGER, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL"
+            ")"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_knowledge_documents_base_status "
+            "ON knowledge_documents (knowledge_base_id, status, updated_at DESC)"
+        )
+    )
+
+
 async def _migrate_message_usage(connection: AsyncConnection) -> None:
     for column in (
         "input_tokens",
@@ -236,6 +278,7 @@ async def _migrate_message_usage(connection: AsyncConnection) -> None:
 
 
 _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
+    (_KNOWLEDGE_FOUNDATIONS_MIGRATION, _migrate_knowledge_foundations),
     (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),

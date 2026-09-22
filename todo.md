@@ -366,3 +366,45 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 - [x] Re-verify story acceptance criteria and request user completion confirmation.
 - [x] On confirmation, merge final work, announce completion, and propose the next plan.
+
+## EPIC-17 — Knowledge Bases and Multimodal Retrieval
+
+Plan: [EPIC-17](epics/EPIC-17-KNOWLEDGE-BASES-AND-MULTIMODAL-RETRIEVAL.md).
+Status: US-17.1 completed, user-confirmed, and merged.
+Order: US-17.1 → US-17.2 → US-17.3 → US-17.4 → US-17.5. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
+Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
+
+- [x] US-17.1 — Establish storage, embedding, and lifecycle foundations (user-confirmed and merged)
+  - [x] US-17.1-T1: Define vector-store/embedding-provider protocols and configuration; implement LanceDB adapter lifecycle, owner/base filtering, and vector deletion.
+  - [x] US-17.1-T2: Add pinned, local, quantized ONNX CLIP text/image embedding provider with artifact verification, bounded concurrency, and no remote code.
+  - [x] US-17.1-T3: Benchmark supported macOS/Linux targets against fixed corpus; record size, latency, memory, relevance threshold, and ADR decision. macOS/Linux arm64 pass; x86_64/Intel remain release-environment preflight targets.
+  - [x] US-17.1-T4: Add data-preserving relational migrations and vector schema/version rebuild plan.
+  - [x] US-17.1-T5: Test adapters/providers, lifecycle, filters, deletion, bounds, and model artifact failures.
+
+- [ ] US-17.2 — Manage knowledge bases and documents
+  - [ ] US-17.2-T1: Add ownership-safe knowledge-base CRUD APIs.
+  - [ ] US-17.2-T2: Add document CRUD using immutable file revisions, metadata, and indexing status.
+  - [ ] US-17.2-T3: Implement bounded, idempotent extract/chunk/embed/index ingestion with retry/cancel/failure/reindex behavior.
+  - [ ] US-17.2-T4: Safely delete vectors, document references, assignments, and pending work.
+  - [ ] US-17.2-T5: Add safe audit events for CRUD and ingestion transitions.
+  - [ ] US-17.2-T6: Test ownership, mutations, ingestion/retry/deletion, migrations; regenerate Hey API client.
+
+- [ ] US-17.3 — Assign knowledge bases to agents
+  - [ ] US-17.3-T1: Add ownership-safe agent-to-knowledge-base associations.
+  - [ ] US-17.3-T2: Add typed zero-or-more assignment APIs with validation.
+  - [ ] US-17.3-T3: Include assignment summaries in agent APIs without metadata leakage.
+  - [ ] US-17.3-T4: Test ownership, duplicate/delete races, empty/many/legacy assignments; regenerate Hey API client.
+
+- [ ] US-17.4 — Expose safe automatic knowledge search to the agent runtime
+  - [ ] US-17.4-T1: Implement bounded, assigned-base-filtered `search_knowledge` with provenance.
+  - [ ] US-17.4-T2: Offer it only to eligible assigned agents and automatically authorize only this tool.
+  - [ ] US-17.4-T3: Return bounded excerpts, stable scores, provenance, and safe no-result/failure responses.
+  - [ ] US-17.4-T4: Add safe execution/audit traces.
+  - [ ] US-17.4-T5: Test availability, authorization, filtering, stale bases, limits, and document injection content.
+
+- [ ] US-17.5 — Build the knowledge-base and agent-assignment UI
+  - [ ] US-17.5-T1: Add generated-client knowledge-base CRUD UI.
+  - [ ] US-17.5-T2: Add accessible document upload/status/retry/delete management.
+  - [ ] US-17.5-T3: Add zero-or-more agent assignment selector and automatic-search explanation.
+  - [ ] US-17.5-T4: Add frontend and Playwright coverage.
+  - [ ] US-17.5-T5: Run quality gates and document model/LanceDB operations and security boundaries.

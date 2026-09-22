@@ -16,6 +16,7 @@ responses, full-text chat search, and user-owned file attachments.
 | [Tool authorization](tool-authorization.md)         | Allowlist and interactive approval policies, child-agent boundaries                             |
 | [LLM providers](llm-providers.md)                   | OpenAI and OpenAI-compatible provider configuration and capabilities                            |
 | [Data and storage](data-and-storage.md)             | SQLite schema, FTS search, message tree, local file storage, and attachments                    |
+| [Knowledge retrieval](knowledge-retrieval.md)       | LanceDB isolation, pinned local multimodal embeddings, lifecycle, and benchmark record          |
 | [ADR-0016: Memory resource contracts](adr-0016-memory-resource-contracts.md) | Process-lifetime state inventory, ownership, bounds, and remediation plan |
 
 ## Current deployment topology
