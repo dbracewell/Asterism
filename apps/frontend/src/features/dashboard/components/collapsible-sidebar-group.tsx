@@ -49,7 +49,7 @@ export const CollapsibleSidebarGroup = ({
           onOpenChange={handleOpenChange}
           className="flex min-h-0 min-w-0 flex-1 flex-col"
         >
-          <div className="group/label hover:bg-sidebar-accent flex w-full items-center rounded-md">
+          <div className="group/label hover:bg-sidebar-accent flex w-full items-center rounded-md group-data-[collapsible=icon]:hidden">
             <CollapsibleTrigger className="flex-1">
               <SidebarGroupLabel className="flex-1 cursor-pointer select-none">
                 {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}{" "}
