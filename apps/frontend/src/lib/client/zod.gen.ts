@@ -235,7 +235,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('05e2a6b2-7d04-4d06-a809-9887d0036c2d'),
+    id: z.uuid().optional().default('7eb28513-ffef-45c3-9e42-ac34ce35901e'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -266,6 +266,37 @@ export const zKnowledgeBaseUpdate = z.object({
 });
 
 /**
+ * KnowledgeCaptionConfiguration
+ */
+export const zKnowledgeCaptionConfiguration = z.object({
+    mode: z.string(),
+    provider_model_id: z.uuid().nullable(),
+    updated_at: z.int()
+});
+
+/**
+ * KnowledgeCaptionConfigurationUpdate
+ */
+export const zKnowledgeCaptionConfigurationUpdate = z.object({
+    mode: z.string().regex(/^(disabled|provider|local)$/),
+    provider_model_id: z.uuid().nullish()
+});
+
+/**
+ * KnowledgeCaptionMetadata
+ */
+export const zKnowledgeCaptionMetadata = z.object({
+    status: z.string().nullish(),
+    source: z.string().nullish(),
+    model: z.string().nullish(),
+    text: z.string().max(10000).nullish(),
+    error_code: z.string().nullish(),
+    error_reason: z.string().nullish(),
+    generated_at: z.int().nullish(),
+    accepted_at: z.int().nullish()
+});
+
+/**
  * KnowledgeDocument
  */
 export const zKnowledgeDocument = z.object({
@@ -281,6 +312,7 @@ export const zKnowledgeDocument = z.object({
     error: z.string().nullable(),
     indexed_at: z.int().nullable(),
     replaces_document_id: z.uuid().nullable(),
+    caption: zKnowledgeCaptionMetadata,
     metadata: z.record(z.string(), z.string()),
     created_at: z.int(),
     updated_at: z.int()
@@ -1094,6 +1126,18 @@ export const zAppSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zAppSettingUpdateResponse = zSetting;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptioningGetResponse = zKnowledgeCaptionConfiguration;
+
+export const zAppCaptioningUpdateBody = zKnowledgeCaptionConfigurationUpdate;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptioningUpdateResponse = zKnowledgeCaptionConfiguration;
 
 /**
  * Successful Response

@@ -22,6 +22,7 @@ _KNOWLEDGE_DOCUMENT_REVISIONS_MIGRATION = "20260923_03_knowledge_document_revisi
 _KNOWLEDGE_DOCUMENT_ORDER_MIGRATION = "20260923_04_knowledge_document_order"
 _KNOWLEDGE_AUDIT_MIGRATION = "20260923_05_knowledge_audit"
 _AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION = "20260924_01_agent_knowledge_assignments"
+_KNOWLEDGE_CAPTIONING_MIGRATION = "20260925_01_knowledge_captioning"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -336,6 +337,39 @@ async def _migrate_agent_knowledge_assignments(connection: AsyncConnection) -> N
     )
 
 
+async def _migrate_knowledge_captioning(connection: AsyncConnection) -> None:
+    """Persist the global mode and revision-scoped derived caption metadata."""
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS knowledge_caption_configuration ("
+            "id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1), "
+            "mode VARCHAR(16) NOT NULL DEFAULT 'disabled' "
+            "CHECK (mode IN ('disabled', 'provider', 'local')), "
+            "provider_model_id CHAR(32) REFERENCES models(id) ON DELETE SET NULL, "
+            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)"
+        )
+    )
+    await connection.execute(
+        text(
+            "INSERT OR IGNORE INTO knowledge_caption_configuration "
+            "(id, mode, provider_model_id, created_at, updated_at) "
+            "VALUES (1, 'disabled', NULL, :now, :now)"
+        ),
+        {"now": int(time.time())},
+    )
+    for column, definition in (
+        ("caption_status", "VARCHAR(16)"),
+        ("caption_source", "VARCHAR(16)"),
+        ("caption_model", "VARCHAR(512)"),
+        ("caption_text", "TEXT"),
+        ("caption_error_code", "VARCHAR(64)"),
+        ("caption_error_reason", "VARCHAR(512)"),
+        ("caption_generated_at", "INTEGER"),
+        ("caption_accepted_at", "INTEGER"),
+    ):
+        await _add_column_if_missing(connection, "knowledge_documents", column, definition)
+
+
 async def _migrate_message_usage(connection: AsyncConnection) -> None:
     for column in (
         "input_tokens",
@@ -359,6 +393,7 @@ _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_KNOWLEDGE_DOCUMENT_ORDER_MIGRATION, _migrate_knowledge_document_order),
     (_KNOWLEDGE_AUDIT_MIGRATION, _migrate_knowledge_audit),
     (_AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION, _migrate_agent_knowledge_assignments),
+    (_KNOWLEDGE_CAPTIONING_MIGRATION, _migrate_knowledge_captioning),
     (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),

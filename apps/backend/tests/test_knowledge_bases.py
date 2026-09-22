@@ -7,10 +7,15 @@ from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.knowledge.audit import KnowledgeAuditEventModel
 from asterism.domains.knowledge.ingestion import ingest_document
-from asterism.domains.knowledge.models import KnowledgeDocumentModel, KnowledgeDocumentStatus
+from asterism.domains.knowledge.models import (
+    KnowledgeCaptionConfigurationModel,
+    KnowledgeDocumentModel,
+    KnowledgeDocumentStatus,
+)
 from asterism.domains.knowledge.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseUpdate,
+    KnowledgeCaptionConfigurationUpdate,
     KnowledgeDocumentCreate,
     KnowledgeDocumentRevisionCreate,
     KnowledgeDocumentUpdate,
@@ -21,10 +26,12 @@ from asterism.domains.knowledge.service import (
     create_knowledge_document_revision,
     delete_knowledge_base,
     delete_knowledge_document,
+    get_captioning_configuration,
     get_knowledge_base,
     get_knowledge_document,
     list_knowledge_bases,
     list_knowledge_documents,
+    update_captioning_configuration,
     update_knowledge_base,
     update_knowledge_document_metadata,
 )
@@ -119,6 +126,20 @@ async def test_knowledge_base_rejects_blank_and_duplicate_names(knowledge_sessio
 
 
 @pytest.mark.asyncio
+async def test_caption_configuration_is_seeded_disabled(knowledge_session):
+    configuration = await knowledge_session.get(KnowledgeCaptionConfigurationModel, 1)
+    assert configuration is not None
+    assert configuration.mode.value == "disabled"
+    assert configuration.provider_model_id is None
+
+    updated = await update_captioning_configuration(
+        payload=KnowledgeCaptionConfigurationUpdate(mode="disabled"), session=knowledge_session
+    )
+    assert updated.mode == "disabled"
+    assert (await get_captioning_configuration(session=knowledge_session)).updated_at == updated.updated_at
+
+
+@pytest.mark.asyncio
 async def test_knowledge_documents_capture_owned_immutable_file_metadata(knowledge_session):
     knowledge_base = await create_knowledge_base(
         user_id="user-a", payload=KnowledgeBaseCreate(name="Documents"), session=knowledge_session
@@ -155,6 +176,8 @@ async def test_knowledge_documents_capture_owned_immutable_file_metadata(knowled
     assert document.original_name == "Source.txt"
     assert document.content_sha256 == "a" * 64
     assert document.status == "pending"
+    assert document.caption.status is None
+    assert document.caption.text is None
     assert document.metadata == {"category": "notes"}
     replacement_file = UserFileModel(
         user_id="user-a",

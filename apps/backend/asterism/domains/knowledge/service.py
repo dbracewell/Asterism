@@ -7,10 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.files.models import UserFileModel
+from asterism.domains.settings.models import LLMModel
 
 from .assignments import AgentKnowledgeBaseAssignmentModel
 from .audit import record_knowledge_audit
-from .models import KnowledgeBaseModel, KnowledgeDocumentModel, KnowledgeDocumentStatus
+from .captioning import CaptioningConfiguration, CaptioningError, CaptionMode
+from .models import (
+    KnowledgeBaseModel,
+    KnowledgeCaptionConfigurationModel,
+    KnowledgeCaptionMode,
+    KnowledgeDocumentModel,
+    KnowledgeDocumentStatus,
+)
 from .schemas import (
     KnowledgeBase,
     KnowledgeBaseAssignmentList,
@@ -18,6 +26,8 @@ from .schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
+    KnowledgeCaptionConfiguration,
+    KnowledgeCaptionConfigurationUpdate,
     KnowledgeDocument,
     KnowledgeDocumentCreate,
     KnowledgeDocumentList,
@@ -51,6 +61,49 @@ async def _owned_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: As
         # Do not reveal whether a base owned by another user exists.
         raise NotFoundException("Knowledge base not found")
     return knowledge_base
+
+
+async def get_captioning_configuration(
+    *, session: AsyncSession
+) -> KnowledgeCaptionConfiguration:
+    configuration = await session.get(KnowledgeCaptionConfigurationModel, 1)
+    if configuration is None:
+        # Defensive recovery for databases created before the migration was
+        # applied. The singleton invariant remains database-enforced.
+        configuration = KnowledgeCaptionConfigurationModel(id=1, mode=KnowledgeCaptionMode.DISABLED)
+        session.add(configuration)
+        await session.commit()
+    return KnowledgeCaptionConfiguration(
+        mode=configuration.mode.value,
+        provider_model_id=configuration.provider_model_id,
+        updated_at=configuration.updated_at,
+    )
+
+
+async def update_captioning_configuration(
+    *, payload: KnowledgeCaptionConfigurationUpdate, session: AsyncSession
+) -> KnowledgeCaptionConfiguration:
+    models = list(await session.scalars(select(LLMModel)))
+    try:
+        selected = CaptioningConfiguration(
+            mode=CaptionMode(payload.mode), provider_model_id=payload.provider_model_id
+        )
+        selected.validate(models)
+    except CaptioningError as error:
+        raise BadDataException(str(error)) from error
+
+    configuration = await session.get(KnowledgeCaptionConfigurationModel, 1)
+    if configuration is None:
+        configuration = KnowledgeCaptionConfigurationModel(id=1)
+        session.add(configuration)
+    configuration.mode = KnowledgeCaptionMode(selected.mode.value)
+    configuration.provider_model_id = selected.provider_model_id
+    await session.commit()
+    return KnowledgeCaptionConfiguration(
+        mode=configuration.mode.value,
+        provider_model_id=configuration.provider_model_id,
+        updated_at=configuration.updated_at,
+    )
 
 
 async def create_knowledge_base(*, user_id: str, payload: KnowledgeBaseCreate, session: AsyncSession) -> KnowledgeBase:
@@ -166,6 +219,16 @@ def _document_response(document: KnowledgeDocumentModel) -> KnowledgeDocument:
         error=document.error,
         indexed_at=document.indexed_at,
         replaces_document_id=document.replaces_document_id,
+        caption={
+            "status": document.caption_status.value if document.caption_status else None,
+            "source": document.caption_source.value if document.caption_source else None,
+            "model": document.caption_model,
+            "text": document.caption_text,
+            "error_code": document.caption_error_code,
+            "error_reason": document.caption_error_reason,
+            "generated_at": document.caption_generated_at,
+            "accepted_at": document.caption_accepted_at,
+        },
         metadata=document.metadata_,
         created_at=document.created_at,
         updated_at=document.updated_at,

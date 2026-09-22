@@ -423,10 +423,10 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-18.1-T4: Add bounded admin-initiated model download API with progress, integrity verification, cancellation, and retry.
   - [x] US-18.1-T5: Add provider/local lifecycle, bounds, and failure tests.
 
-- [ ] US-18.2 — Add admin configuration and revision-safe caption generation
-  - [ ] US-18.2-T1: Add migration-backed caption configuration and revision metadata.
-  - [ ] US-18.2-T2: Add admin selection API/UI for disabled, provider, and local modes with download button, progress, and readiness display.
-  - [ ] US-18.2-T3: Implement safe bounded caption jobs.
+- [~] US-18.2 — Add admin configuration and revision-safe caption generation
+  - [x] US-18.2-T1: Add migration-backed caption configuration and revision metadata.
+  - [x] US-18.2-T2: Add admin selection API/UI for disabled, provider, and local modes with download button, progress, and readiness display.
+  - [~] US-18.2-T3: Implement safe bounded caption jobs.
   - [ ] US-18.2-T4: Add accepted-caption vector indexing while retaining image vectors.
   - [ ] US-18.2-T5: Test boundaries and regenerate the API client.
 
