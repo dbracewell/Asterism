@@ -1,6 +1,7 @@
 """Lifecycle-owned bounded background knowledge ingestion jobs."""
 
 import asyncio
+import uuid
 
 from sqlalchemy import update
 
@@ -15,13 +16,14 @@ class KnowledgeIngestionJobs:
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._tasks: dict[str, asyncio.Task[None]] = {}
 
-    def enqueue(self, *, user_id: str, knowledge_base_id: str, document_id: str) -> bool:
+    def enqueue(self, *, user_id: str, knowledge_base_id: uuid.UUID, document_id: uuid.UUID) -> bool:
         """Schedule at most one job per document. Returns False when already queued."""
-        if document_id in self._tasks:
+        document_key = str(document_id)
+        if document_key in self._tasks:
             return False
         task = asyncio.create_task(self._run(user_id, knowledge_base_id, document_id))
-        self._tasks[document_id] = task
-        task.add_done_callback(lambda _: self._tasks.pop(document_id, None))
+        self._tasks[document_key] = task
+        task.add_done_callback(lambda _: self._tasks.pop(document_key, None))
         return True
 
     def cancel(self, document_id: str) -> bool:
@@ -31,7 +33,7 @@ class KnowledgeIngestionJobs:
         task.cancel()
         return True
 
-    async def _run(self, user_id: str, knowledge_base_id: str, document_id: str) -> None:
+    async def _run(self, user_id: str, knowledge_base_id: uuid.UUID, document_id: uuid.UUID) -> None:
         async with self._semaphore:
             async with get_async_db_session() as session:
                 loaded = await load_document_for_ingestion(

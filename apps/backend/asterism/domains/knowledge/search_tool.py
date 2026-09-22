@@ -1,6 +1,7 @@
 """Built-in, assignment-scoped knowledge retrieval tool."""
 
 import time
+import uuid
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -56,15 +57,27 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
             knowledge_base_ids=[str(base_id) for base_id in base_ids],
             limit=ctx.args.top_k,
         )
-        ready_document_ids = set(
-            await db.scalars(
-                select(KnowledgeDocumentModel.id).where(
-                    KnowledgeDocumentModel.user_id == ctx.user.id,
-                    KnowledgeDocumentModel.id.in_([match.document_id for match in matches]),
-                    KnowledgeDocumentModel.status == KnowledgeDocumentStatus.READY,
+        # LanceDB stores provenance IDs as strings, whereas relational IDs are
+        # UUID columns. Convert at the adapter boundary before binding SQL.
+        document_ids: list[uuid.UUID] = []
+        for match in matches:
+            try:
+                document_ids.append(uuid.UUID(str(match.document_id)))
+            except ValueError:
+                # A malformed/stale vector cannot be associated with a ready
+                # document and must never become a retrieval result.
+                continue
+        ready_document_ids = set()
+        if document_ids:
+            ready_document_ids = set(
+                await db.scalars(
+                    select(KnowledgeDocumentModel.id).where(
+                        KnowledgeDocumentModel.user_id == ctx.user.id,
+                        KnowledgeDocumentModel.id.in_(document_ids),
+                        KnowledgeDocumentModel.status == KnowledgeDocumentStatus.READY,
+                    )
                 )
             )
-        )
         db.add(
             record_knowledge_audit(
                 user_id=ctx.user.id,

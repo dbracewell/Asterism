@@ -7,7 +7,7 @@ indexed documents), assign zero or more of them to each agent, and let an agent
 search only its assigned knowledge during a chat. Retrieval must support both
 text and image document content using a local, cross-platform embedding runtime.
 
-**Status: US-17.1 through US-17.4 completed, user-confirmed, and merged; US-17.5 in progress.**
+**Status: US-17.1 through US-17.4 completed, user-confirmed, and merged; US-17.5 implementation complete and awaiting user confirmation.**
 
 ## Scope and decisions
 
@@ -208,18 +208,18 @@ to agents without manually calling APIs.
 
 **Dependencies:** US-17.2, US-17.3.
 
-- [ ] US-17.5-T1: Add a knowledge-base list and create/edit/delete experience
+- [x] US-17.5-T1: Add a knowledge-base list and create/edit/delete experience
       using generated API clients, with loading, empty, error, confirmation, and
       ownership-safe navigation states.
-- [ ] US-17.5-T2: Add base detail document management: upload/attach, list,
+- [x] US-17.5-T2: Add base detail document management: upload/attach, list,
       status/progress, retry/reindex where supported, and destructive deletion
       confirmation. Clearly distinguish pending, ready, and failed documents.
-- [ ] US-17.5-T3: Add a multi-select knowledge-base assignment control to agent
+- [x] US-17.5-T3: Add a multi-select knowledge-base assignment control to agent
       create/edit views. It supports zero selections and explains that assignment
       enables automatic `search_knowledge` for that agent.
-- [ ] US-17.5-T4: Add frontend unit/integration and Playwright coverage for CRUD,
+- [x] US-17.5-T4: Add frontend unit/integration and Playwright coverage for CRUD,
       status, assignment, empty/error states, and agent-specific availability.
-- [ ] US-17.5-T5: Run quality gates, document local model storage/operations,
+- [x] US-17.5-T5: Run quality gates, document local model storage/operations,
       LanceDB backup/rebuild procedure, ingestion limits, and retrieval security
       boundaries.
 

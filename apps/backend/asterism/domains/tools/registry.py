@@ -145,9 +145,12 @@ class ToolRegistry:
     def _exception_to_tool_result(
         ex: BaseException, tool_call: ToolCall
     ) -> ToolResult:
+        # Tool results are persisted in JSON columns. Never retain an exception
+        # instance here: SQLAlchemy/Pydantic exceptions are not JSON serializable.
+        error = f"Tool failed with exception: {ex}"
         return ToolResult(
-            content=f"Tool failed with exception: {ex}",
-            raw_result=ex,
+            content=json.dumps({"error": error}),
+            raw_result={"error": error},
             is_empty=True,
             tool_call=tool_call,
         )
