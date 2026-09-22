@@ -312,7 +312,7 @@ export const ChatSession = ({
             style={{
               overflowAnchor: "auto",
               width: "100%",
-              marginBottom: `120px`,
+              marginBottom: `150px`,
             }}
           />
         </div>

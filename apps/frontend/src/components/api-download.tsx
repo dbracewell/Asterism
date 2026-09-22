@@ -22,9 +22,11 @@ export const APIDownload = ({
           path: { filename },
         });
         if (!data) throw new Error("File is unavailable");
-        url = URL.createObjectURL(data);
+        const blob = data instanceof Blob ? data : new Blob([data]);
+        url = URL.createObjectURL(blob);
         if (active) setObjectUrl(url);
-      } catch {
+      } catch (error) {
+        console.error("Failed to fetch file", error);
         if (active) setError(true);
       }
     };
