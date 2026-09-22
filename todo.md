@@ -431,7 +431,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-18.2-T5: Test boundaries and regenerate the API client.
 
 - [~] US-18.3 — Build reviewable caption UI and retrieval presentation
-  - [ ] US-18.3-T1: Add image caption generate/review/edit/accept/clear UI.
-  - [ ] US-18.3-T2: Distinguish caption and visual-match retrieval excerpts.
-  - [ ] US-18.3-T3: Add backend/frontend/Playwright coverage.
-  - [ ] US-18.3-T4: Document provisioning, privacy, recovery, and operations.
+  - [x] US-18.3-T1: Add image caption generate/review/edit/accept/clear UI.
+  - [x] US-18.3-T2: Distinguish caption and visual-match retrieval excerpts.
+  - [~] US-18.3-T3: Add backend/frontend/Playwright coverage.
+  - [x] US-18.3-T4: Document provisioning, privacy, recovery, and operations.

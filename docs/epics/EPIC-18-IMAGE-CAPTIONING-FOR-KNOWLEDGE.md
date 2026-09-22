@@ -107,14 +107,14 @@ knowledge produces understandable search results.
 
 **Dependencies:** US-18.2.
 
-- [ ] US-18.3-T1: Add image-document caption status, generate/retry/cancel,
+- [x] US-18.3-T1: Add image-document caption status, generate/retry/cancel,
       editable draft, accept, clear, and error states to knowledge-base detail.
-- [ ] US-18.3-T2: Clearly distinguish visual image matching from accepted caption
+- [x] US-18.3-T2: Clearly distinguish visual image matching from accepted caption
       text in bounded `search_knowledge` excerpts and provenance.
-- [ ] US-18.3-T3: Add frontend, backend, and Playwright tests for disabled,
+- [~] US-18.3-T3: Add frontend, backend, and Playwright tests for disabled,
       provider/local configuration, review/edit/accept, error, and retrieval
       flows.
-- [ ] US-18.3-T4: Document local provisioning, CPU memory/latency benchmark,
+- [x] US-18.3-T4: Document local provisioning, CPU memory/latency benchmark,
       provider privacy boundary, backup/rebuild, and operator recovery.
 
 **Acceptance criteria**
