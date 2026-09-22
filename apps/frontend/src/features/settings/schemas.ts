@@ -40,5 +40,6 @@ export const agentProfile = z.object({
       }),
     )
     .describe("The tools the agent can use"),
+  knowledgeBaseIds: z.array(z.uuid()).max(100),
   chatParameters: zChatCompletionParams,
 });

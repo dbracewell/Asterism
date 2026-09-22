@@ -58,6 +58,34 @@ then atomically switch the configured table/version and retain/remove the old
 one under an explicit operator decision. Do not mutate vectors in place or rely
 on `Base.metadata.create_all` for relational upgrades.
 
+## Operations, limits, and security
+
+Back up `STORAGE_ROOT` together with the relational database. In particular,
+preserve `knowledge/lancedb`, `models/knowledge-clip`, and uploaded source
+files; LanceDB vectors alone cannot recreate the immutable document revisions.
+To rebuild a damaged or upgraded index, stop ingestion, retain the old LanceDB
+directory as a rollback copy, create the new table/version, re-ingest the ready
+relational document revisions, validate document/chunk counts and representative
+queries, then switch the configured version atomically. Never delete the old
+index until that validation and a tested backup are complete.
+
+Defaults bound local work to two concurrent embedding, vector, and ingestion
+operations; a document produces at most 200 chunks of 1,000 characters with a
+150-character overlap. Retrieval accepts at most 10 results and returns at most
+16 KiB of excerpts. Source file conversion remains bounded by
+`MAX_PROCESS_FILE_SIZE_BYTES` (100 MiB), `MAX_CONVERTED_CHARS` (100,000), and
+`FILE_CONVERSION_TIMEOUT_S` (60 seconds). Operators may tune the documented
+configuration values only within their validated ranges and must reserve at
+least 1.25 GiB RSS per embedding worker.
+
+Knowledge bases are private to their owning user. The relational assignment is
+an explicit allowlist: only ready bases assigned to the active agent are
+searched. `search_knowledge` is offered and automatically authorized only in
+that case; it cannot be enabled by an agent tool preference or an invented tool
+name. Every LanceDB query filters both user and base IDs, and runtime traces
+record safe IDs, counts, duration, and model/index versions—not queries,
+document text, or full files.
+
 ## Benchmark record
 
 A deterministic benchmark was run on 2026-09-22 with Python 3.13 and ONNX

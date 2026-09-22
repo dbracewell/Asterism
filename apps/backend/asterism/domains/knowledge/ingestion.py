@@ -1,6 +1,8 @@
 """Bounded, idempotent ingestion of immutable knowledge document revisions."""
 
 import hashlib
+import logging
+import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import select
@@ -12,9 +14,11 @@ from asterism.domains.files.models import FileContentStatus, FileKind, UserFileM
 from asterism.domains.files.service import ensure_file_processed, get_file_store
 
 from .audit import record_knowledge_audit
-from .embeddings import EmbeddingProvider
+from .embeddings import EmbeddingProvider, EmbeddingProviderError
 from .models import KnowledgeDocumentModel, KnowledgeDocumentStatus
 from .vector_store import VectorChunk, VectorStore
+
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeIngestionError(RuntimeError):
@@ -129,11 +133,28 @@ async def ingest_document(
         if still_exists is None:
             raise KnowledgeIngestionError("The document was deleted during indexing")
     except Exception as error:
+        # Keep the full diagnostic in operator logs while recording only a safe,
+        # actionable category in user-visible document status.
+        logger.exception(
+            "Knowledge indexing failed",
+            extra={
+                "knowledge_document_id": str(document.id),
+                "knowledge_base_id": str(document.knowledge_base_id),
+                "user_id": document.user_id,
+            },
+        )
         try:
             await vector_store.delete_document(user_id=document.user_id, document_id=str(document.id))
         except Exception:
-            pass
-        message = str(error) if isinstance(error, KnowledgeIngestionError) else "Knowledge indexing failed"
+            logger.exception(
+                "Could not remove partial knowledge vectors",
+                extra={"knowledge_document_id": str(document.id)},
+            )
+        message = (
+            str(error)
+            if isinstance(error, (KnowledgeIngestionError, EmbeddingProviderError))
+            else "Knowledge indexing failed; check the server logs"
+        )
         await _set_failed(document, session, message)
         return document
 
@@ -154,7 +175,7 @@ async def ingest_document(
 
 
 async def load_document_for_ingestion(
-    *, user_id: str, knowledge_base_id: str, document_id: str, session: AsyncSession
+    *, user_id: str, knowledge_base_id: uuid.UUID, document_id: uuid.UUID, session: AsyncSession
 ) -> tuple[KnowledgeDocumentModel, UserFileModel] | None:
     document = await session.scalar(
         select(KnowledgeDocumentModel).where(

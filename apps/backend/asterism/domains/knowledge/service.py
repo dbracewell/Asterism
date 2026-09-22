@@ -363,8 +363,8 @@ async def request_knowledge_document_ingestion(
 
         knowledge_ingestion_jobs.enqueue(
             user_id=user_id,
-            knowledge_base_id=str(knowledge_base_id),
-            document_id=str(document_id),
+            knowledge_base_id=knowledge_base_id,
+            document_id=document_id,
         )
     return _document_response(document)
 

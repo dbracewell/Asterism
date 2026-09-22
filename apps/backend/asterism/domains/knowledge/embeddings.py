@@ -9,7 +9,7 @@ from typing import Protocol
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
-from transformers import CLIPImageProcessor, CLIPTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
+from transformers import CLIPImageProcessorPil, CLIPTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
 
 
 class EmbeddingProviderError(RuntimeError):
@@ -46,7 +46,7 @@ class OnnxClipEmbeddingProvider:
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._session: ort.InferenceSession | None = None
         self._tokenizer: CLIPTokenizerFast | None = None
-        self._image_processor: CLIPImageProcessor | None = None
+        self._image_processor: CLIPImageProcessorPil | None = None
 
     @property
     def dimension(self) -> int:
@@ -73,8 +73,8 @@ class OnnxClipEmbeddingProvider:
         self._verify_artifact()
         try:
             self._tokenizer = CLIPTokenizerFast.from_pretrained(self._model_root, local_files_only=True)
-            # Explicit avoids making torchvision a runtime requirement.
-            self._image_processor = CLIPImageProcessor.from_pretrained(self._model_root, local_files_only=True)
+            # Use the PIL-only processor explicitly: torchvision is intentionally not a runtime dependency.
+            self._image_processor = CLIPImageProcessorPil.from_pretrained(self._model_root, local_files_only=True)
             self._session = ort.InferenceSession(str(self.artifact_path), providers=["CPUExecutionProvider"])
         except Exception as error:
             self._session = None
@@ -84,7 +84,7 @@ class OnnxClipEmbeddingProvider:
         if self._session is None:
             await asyncio.to_thread(self._initialize_sync)
 
-    def _require_ready(self) -> tuple[ort.InferenceSession, CLIPTokenizerFast, CLIPImageProcessor]:
+    def _require_ready(self) -> tuple[ort.InferenceSession, CLIPTokenizerFast, CLIPImageProcessorPil]:
         if self._session is None or self._tokenizer is None or self._image_processor is None:
             raise EmbeddingProviderError("Knowledge embedding model is not initialized")
         return self._session, self._tokenizer, self._image_processor

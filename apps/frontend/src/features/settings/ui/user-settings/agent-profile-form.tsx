@@ -23,10 +23,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/features/auth/components/user-context";
 import { agentProfile } from "@/features/settings/schemas";
 import { SubAgentToolWarning } from "@/features/settings/ui/user-settings/sub-agent-tool-warning";
-import { client } from "@/lib/api";
+import { api, client } from "@/lib/api";
 import { AgentProfile } from "@/lib/client";
 import {
   agentsUpsertAgentProfileMutation,
+  knowledgeBaseGetManyOptions,
   toolsGetActiveOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -48,26 +49,17 @@ export function AgentProfileForm({
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { data: availableTools } = useQuery({
-    ...toolsGetActiveOptions({
-      client: client,
+    ...toolsGetActiveOptions({ client }),
+  });
+  const { data: knowledgeBases, isLoading: isLoadingKnowledgeBases } = useQuery({
+    ...knowledgeBaseGetManyOptions({
+      client,
+      query: { page: 1, page_size: 100 },
     }),
   });
 
   const upsertAgentProfile = useMutation({
-    ...agentsUpsertAgentProfileMutation({
-      client: client,
-    }),
-    onSuccess: (data) => {
-      toast.success(
-        `Successfully ${profile == null ? "created new" : "updated"} agent ${data.name}`,
-      );
-      onOpenChange(false);
-      router.refresh();
-    },
-    onError: () =>
-      toast.error(
-        `Failed to ${profile == null ? "create new" : "update"} agent`,
-      ),
+    ...agentsUpsertAgentProfileMutation({ client }),
   });
 
   const form = useForm<AgentProfileFormValues>({
@@ -84,6 +76,7 @@ export function AgentProfileForm({
         profile?.tools?.map((tool) => ({
           value: tool,
         })) ?? [],
+      knowledgeBaseIds: profile?.knowledge_bases?.map((base) => base.id) ?? [],
       chatParameters: profile?.chat_parameters ?? {},
     },
   });
@@ -106,6 +99,7 @@ export function AgentProfileForm({
         profile?.tools?.map((tool) => ({
           value: tool,
         })) ?? [],
+      knowledgeBaseIds: profile?.knowledge_bases?.map((base) => base.id) ?? [],
       chatParameters: profile?.chat_parameters ?? {},
     });
     if (profile) {
@@ -128,30 +122,45 @@ export function AgentProfileForm({
     name: "tools",
   });
 
-  function onSubmit(data: AgentProfileFormValues) {
+  async function onSubmit(data: AgentProfileFormValues) {
     const cp =
       Object.keys(data.chatParameters).length > 0
         ? data.chatParameters
         : undefined;
-    upsertAgentProfile.mutate({
-      body: {
-        id: data?.id ?? undefined,
-        sub_agent: data?.sub_agent ?? false,
-        description: data.description,
-        name: data.name,
-        max_steps: data.maxSteps,
-        system_prompt: data.systemPrompt,
-        tools: [
-          ...data.tools.map((t) => t.value),
-          ...(!data.sub_agent &&
-          !data.tools.some((t) => t.value === "sub_agent")
-            ? ["sub_agent"]
-            : []),
-        ],
-        model_id: data.modelId,
-        chat_parameters: cp,
-      },
-    });
+    try {
+      const agent = await upsertAgentProfile.mutateAsync({
+        body: {
+          id: data.id ?? undefined,
+          sub_agent: data.sub_agent,
+          description: data.description,
+          name: data.name,
+          max_steps: data.maxSteps,
+          system_prompt: data.systemPrompt,
+          tools: [
+            ...data.tools.map((t) => t.value),
+            ...(!data.sub_agent && !data.tools.some((t) => t.value === "sub_agent")
+              ? ["sub_agent"]
+              : []),
+          ],
+          model_id: data.modelId,
+          chat_parameters: cp,
+        },
+      });
+      if (!agent.id) throw new Error("The saved agent did not include an ID.");
+      await api.agentKnowledgeBaseAssignmentsReplace({
+        path: { agent_id: agent.id },
+        body: { knowledge_base_ids: data.knowledgeBaseIds },
+      });
+      toast.success(
+        `Successfully ${profile == null ? "created new" : "updated"} agent ${agent.name}`,
+      );
+      onOpenChange(false);
+      router.refresh();
+    } catch {
+      toast.error(
+        `Failed to ${profile == null ? "create new" : "update"} agent and its knowledge assignments`,
+      );
+    }
   }
 
   return (
@@ -172,6 +181,7 @@ export function AgentProfileForm({
                 maxSteps: 5,
                 modelId: user.settings.default_model_id ?? "",
                 tools: [],
+                knowledgeBaseIds: [],
                 chatParameters: {},
               });
               setIsOpen(true);
@@ -357,6 +367,45 @@ export function AgentProfileForm({
                 )}
               />
             </div>
+
+            <Field className="mt-3 mb-2 flex flex-1 flex-col">
+              <FieldLabel>Knowledge bases</FieldLabel>
+              <p className="text-muted-foreground text-sm">
+                Assigned knowledge bases enable automatic <code>search_knowledge</code> for this agent. Leave all unchecked to disable knowledge search.
+              </p>
+              {isLoadingKnowledgeBases ? (
+                <p className="text-muted-foreground text-sm">Loading knowledge bases…</p>
+              ) : knowledgeBases?.knowledge_bases.length ? (
+                <Controller
+                  control={form.control}
+                  name="knowledgeBaseIds"
+                  render={({ field }) => (
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
+                      {knowledgeBases.knowledge_bases.map((base) => (
+                        <div key={base.id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`form-agentProfile-knowledge-${base.id}`}
+                            checked={field.value.includes(base.id)}
+                            onCheckedChange={(checked) =>
+                              field.onChange(
+                                checked
+                                  ? [...field.value, base.id]
+                                  : field.value.filter((id) => id !== base.id),
+                              )
+                            }
+                          />
+                          <Label htmlFor={`form-agentProfile-knowledge-${base.id}`} className="truncate">
+                            {base.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                />
+              ) : (
+                <p className="text-muted-foreground text-sm">No knowledge bases are available. Create one from Knowledge first.</p>
+              )}
+            </Field>
 
             <Field className="mt-3 mb-2 flex flex-1 flex-col">
               <FieldLabel>Tools</FieldLabel>
