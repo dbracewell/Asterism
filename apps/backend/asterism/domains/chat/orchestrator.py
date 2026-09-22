@@ -248,27 +248,28 @@ class ChatOrchestrator:
         if user_message is None:
             return
 
+        title = ""
         try:
             draft_model = get_draft_model()
         except Exception as error:
+            # A missing/unavailable draft provider must use the same bounded
+            # fallback as failed title-generation attempts.
             self.logger.warning("Chat title setup failed: %s", error)
-            return
-
-        title = ""
-        for _ in range(3):
-            try:
-                async with asyncio.timeout(15):
-                    candidate = await draft_model.invoke(
-                        messages=[
-                            LLMMessage.user(create_title_generation_prompt(user_message.content.strip())),
-                        ],
-                    )
-                print(f"Chat title candidate: {candidate}")
-                title = self._validated_title(candidate)
-                if title:
-                    break
-            except Exception as error:
-                self.logger.warning("Chat title attempt failed: %s", error)
+        else:
+            for _ in range(3):
+                try:
+                    async with asyncio.timeout(15):
+                        candidate = await draft_model.invoke(
+                            messages=[
+                                LLMMessage.user(create_title_generation_prompt(user_message.content.strip())),
+                            ],
+                        )
+                    print(f"Chat title candidate: {candidate}")
+                    title = self._validated_title(candidate)
+                    if title:
+                        break
+                except Exception as error:
+                    self.logger.warning("Chat title attempt failed: %s", error)
 
         if not title:
             title = " ".join(str(user_message.content).split())[:80] or "New chat"

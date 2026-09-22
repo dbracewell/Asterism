@@ -80,6 +80,21 @@ class Config(BaseSettings):
     max_vision_image_bytes: int = 10 * 1024 * 1024
     """The maximum size of an image that can be processed for vision tasks (in bytes)."""
 
+    knowledge_embedding_model_sha256: str = "0898a3facfdb27f0a041e57649b4989cfd094e4a0040d6ae75ed69917dfc7328"
+    """SHA-256 of the pinned local Xenova CLIP quantized ONNX artifact."""
+
+    knowledge_embedding_model_size_bytes: int = 153_695_702
+    """Expected byte size of the pinned local knowledge embedding artifact."""
+
+    knowledge_embedding_dimension: int = 512
+    """Dimension emitted by the pinned CLIP text/image embedding model."""
+
+    max_concurrent_knowledge_embeddings: int = 2
+    """Maximum simultaneous local ONNX embedding inferences."""
+
+    max_concurrent_knowledge_vector_operations: int = 2
+    """Maximum simultaneous blocking LanceDB operations."""
+
     public_url: str = "http://localhost:3000"
     """The public URL of the Asterism frontend, used for JWT issuer and audience."""
 
@@ -162,6 +177,18 @@ class Config(BaseSettings):
             raise ConfigValidationError("FILE_CONVERSION_TIMEOUT_S must be from 1 to 600")
         if not 1 <= self.max_vision_image_bytes <= self.max_upload_file_size_bytes:
             raise ConfigValidationError("MAX_VISION_IMAGE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES")
+        if len(self.knowledge_embedding_model_sha256) != 64 or any(
+            char not in "0123456789abcdef" for char in self.knowledge_embedding_model_sha256.lower()
+        ):
+            raise ConfigValidationError("KNOWLEDGE_EMBEDDING_MODEL_SHA256 must be a SHA-256 hex digest")
+        if not 1 <= self.knowledge_embedding_model_size_bytes <= 400 * 1024 * 1024:
+            raise ConfigValidationError("KNOWLEDGE_EMBEDDING_MODEL_SIZE_BYTES must be from 1 to 419430400")
+        if not 1 <= self.knowledge_embedding_dimension <= 8192:
+            raise ConfigValidationError("KNOWLEDGE_EMBEDDING_DIMENSION must be from 1 to 8192")
+        if not 1 <= self.max_concurrent_knowledge_embeddings <= 16:
+            raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS must be from 1 to 16")
+        if not 1 <= self.max_concurrent_knowledge_vector_operations <= 16:
+            raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS must be from 1 to 16")
         if not 1 <= self.max_concurrent_llm_requests <= 128:
             raise ConfigValidationError("MAX_CONCURRENT_LLM_REQUESTS must be from 1 to 128")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
@@ -174,6 +201,8 @@ class Config(BaseSettings):
     def prepare_storage(self) -> None:
         self.storage_root.mkdir(exist_ok=True, parents=True)
         self.files_root.mkdir(exist_ok=True, parents=True)
+        self.knowledge_root.mkdir(exist_ok=True, parents=True)
+        self.knowledge_models_root.mkdir(exist_ok=True, parents=True)
 
     @property
     def jwt_issuer(self) -> str:
@@ -196,6 +225,16 @@ class Config(BaseSettings):
     @property
     def files_root(self) -> Path:
         return self.storage_root / "files"
+
+    @computed_field
+    @property
+    def knowledge_root(self) -> Path:
+        return self.storage_root / "knowledge"
+
+    @computed_field
+    @property
+    def knowledge_models_root(self) -> Path:
+        return self.storage_root / "models" / "knowledge-clip"
 
     def get_user_file(self, user_id: str, filename: str) -> Path:
         files_dir = self.files_root / user_id / filename
