@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from collections.abc import Awaitable, Callable
 
@@ -18,6 +19,19 @@ from .captioning import CaptionErrorCode, CaptioningError, CaptionResult, bounde
 from .models import KnowledgeCaptionMode, KnowledgeCaptionStatus, KnowledgeDocumentModel
 
 CaptionRunner = Callable[[KnowledgeDocumentModel, UserFileModel], Awaitable[CaptionResult]]
+logger = logging.getLogger(__name__)
+
+_SAFE_FAILURE_REASONS = {
+    CaptionErrorCode.DISABLED: "Image captioning is disabled",
+    CaptionErrorCode.INVALID_SELECTION: "Captioning configuration is invalid",
+    CaptionErrorCode.NOT_READY: "Captioning runtime is not ready",
+    CaptionErrorCode.ARTIFACT_MISSING: "Local caption model artifact is missing",
+    CaptionErrorCode.ARTIFACT_INVALID: "Local caption model artifact verification failed",
+    CaptionErrorCode.IMAGE_INVALID: "Image could not be captioned",
+    CaptionErrorCode.OUTPUT_INVALID: "Caption generation returned no usable description",
+    CaptionErrorCode.TIMEOUT: "Caption generation timed out",
+    CaptionErrorCode.PROVIDER_FAILURE: "Caption generation failed",
+}
 
 
 class KnowledgeCaptionJobs:
@@ -84,8 +98,17 @@ class KnowledgeCaptionJobs:
             except asyncio.TimeoutError:
                 await self._mark_failed(document_id, user_id, knowledge_base_id, "failed", CaptionErrorCode.TIMEOUT)
             except CaptioningError as error:
+                logger.warning(
+                    "Knowledge caption generation failed: %s",
+                    error.code.value,
+                    extra={"knowledge_document_id": str(document_id), "knowledge_base_id": str(knowledge_base_id)},
+                )
                 await self._mark_failed(document_id, user_id, knowledge_base_id, "failed", error.code)
             except Exception:
+                logger.exception(
+                    "Knowledge caption generation failed unexpectedly",
+                    extra={"knowledge_document_id": str(document_id), "knowledge_base_id": str(knowledge_base_id)},
+                )
                 await self._mark_failed(
                     document_id, user_id, knowledge_base_id, "failed", CaptionErrorCode.PROVIDER_FAILURE
                 )
@@ -122,7 +145,9 @@ class KnowledgeCaptionJobs:
             )
             document.caption_error_code = code.value
             document.caption_error_reason = (
-                "Caption generation was canceled" if action == "canceled" else "Caption generation failed"
+                "Caption generation was canceled"
+                if action == "canceled"
+                else _SAFE_FAILURE_REASONS.get(code, "Caption generation failed")
             )
             session.add(
                 record_knowledge_audit(

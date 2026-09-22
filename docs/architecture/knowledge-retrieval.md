@@ -1,10 +1,10 @@
 # Knowledge Retrieval and Image Captioning
 
 The knowledge subsystem uses separate stores for private retrieval and its
-locally provisioned model artifacts. The current captioning scope is the
-US-18.1 runtime foundation only: it does not yet persist caption configuration
-or revision metadata, run caption jobs, index caption text, or expose caption
-review UI. Those additions remain explicitly bounded to later Epic 18 stories.
+locally provisioned model artifacts. Image captioning is globally disabled by
+default. When enabled by an administrator, captions are revision-scoped draft
+metadata: users review, edit, accept, or clear them before accepted text becomes
+retrievable. Image CLIP vectors remain independently indexed throughout.
 
 | Data | Owner | Storage |
 | --- | --- | --- |
@@ -15,8 +15,8 @@ review UI. Those additions remain explicitly bounded to later Epic 18 stories.
 
 `knowledge_chunks` is one LanceDB table. Every row includes `user_id` and
 `knowledge_base_id`; every retrieval query applies both filters before the
-limit. The adapter exposes only add, filtered search, document deletion, and
-base deletion. It never exposes an unfiltered search API.
+limit. The adapter exposes only add, filtered search, document/chunk deletion,
+and base deletion. It never exposes an unfiltered search API.
 
 ## Model contract
 
@@ -54,6 +54,9 @@ local mode. A provider selection must be active and have provider/catalog-derive
 vision capability; manually asserted or unknown vision metadata is insufficient.
 The local adapter is CPU-only and never downloads a model during initialization
 or captioning. It loads with `local_files_only=True` and `trust_remote_code=False`.
+In provider mode, source image data is sent only to the exact administrator-selected
+vision-capable provider model; there is no provider fallback. Administrators should
+therefore choose a provider consistent with their data-processing requirements.
 
 Operators must review and download a specific SmolVLM2 revision out of band into
 `STORAGE_ROOT/models/captioning-smolvlm2`. No unreviewed model ID or revision is
@@ -124,11 +127,15 @@ service permits only one in-flight download, exposes safe status/progress,
 supports cancellation/retry, and validates the pinned manifest before reporting
 an existing bundle ready.
 
-`init_system` opens LanceDB; FastAPI shutdown cancels caption downloads, releases
-caption/embedding runtime references, closes the vector-store service, then
-closes the database engine. Ingestion work, document limits, retries, and rebuild
-orchestration are defined in US-17.2; no unbounded ingestion registry is
-introduced by this foundation.
+`init_system` opens LanceDB and starts bounded caption-job recovery; FastAPI
+shutdown cancels caption jobs and downloads, releases caption/embedding runtime
+references, closes the vector-store service, then closes the database engine.
+Caption jobs are one per document revision, have a strict timeout and bounded
+concurrency, and record only status/code/model identifiers in audits. They never
+log image bytes or caption text by default. A failed or canceled generation keeps
+any prior accepted text vector and the image vector intact. Ingestion work,
+document limits, retries, and rebuild orchestration are defined in US-17.2; no
+unbounded ingestion registry is introduced.
 
 For a vector schema/version migration, create a new LanceDB table/version,
 re-embed from the relational document revisions, validate counts and retrieval,
@@ -163,9 +170,11 @@ Knowledge bases are private to their owning user. The relational assignment is
 an explicit allowlist: only ready bases assigned to the active agent are
 searched. `search_knowledge` is offered and automatically authorized only in
 that case; it cannot be enabled by an agent tool preference or an invented tool
-name. Every LanceDB query filters both user and base IDs, and runtime traces
-record safe IDs, counts, duration, and model/index versions—not queries,
-document text, or full files.
+name. Every LanceDB query filters both user and base IDs. Results label their
+provenance as `visual_image`, `accepted_caption`, or `text`, so callers can
+clearly distinguish CLIP visual matches from reviewed description text. Runtime
+traces record safe IDs, counts, duration, and model/index versions—not queries,
+document text, caption text, or full files.
 
 ## Benchmark record
 

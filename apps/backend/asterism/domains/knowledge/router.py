@@ -119,6 +119,45 @@ async def get_knowledge_document(
     )
 
 
+@knowledge_router.post(
+    "/{knowledge_base_id}/documents/{document_id}/caption/generate",
+    response_model=KnowledgeDocument,
+    status_code=status.HTTP_202_ACCEPTED,
+    operation_id="knowledgeDocumentGenerateCaption",
+)
+async def generate_knowledge_document_caption(
+    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> KnowledgeDocument:
+    from .runtime import knowledge_caption_jobs
+
+    return await knowledge_service.request_knowledge_document_caption(
+        user_id=user.id,
+        knowledge_base_id=knowledge_base_id,
+        document_id=document_id,
+        session=db,
+        caption_jobs=knowledge_caption_jobs,
+    )
+
+
+@knowledge_router.post(
+    "/{knowledge_base_id}/documents/{document_id}/caption/cancel",
+    response_model=KnowledgeDocument,
+    operation_id="knowledgeDocumentCancelCaption",
+)
+async def cancel_knowledge_document_caption(
+    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> KnowledgeDocument:
+    from .runtime import knowledge_caption_jobs
+
+    return await knowledge_service.cancel_knowledge_document_caption(
+        user_id=user.id,
+        knowledge_base_id=knowledge_base_id,
+        document_id=document_id,
+        session=db,
+        caption_jobs=knowledge_caption_jobs,
+    )
+
+
 @knowledge_router.patch(
     "/{knowledge_base_id}/documents/{document_id}/caption",
     response_model=KnowledgeDocument,

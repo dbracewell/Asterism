@@ -126,6 +126,12 @@ caption_model_download = CaptionModelDownloadService(
 
 async def initialize_knowledge_runtime() -> None:
     """Create/open LanceDB and make interrupted jobs explicitly retryable."""
+    # The download service verifies an existing local bundle during construction.
+    # Restore that verified manifest hash into the provider after a process restart;
+    # otherwise a valid downloaded bundle would incorrectly look unprovisioned.
+    existing_bundle_sha256 = caption_model_download.status().bundle_sha256
+    if existing_bundle_sha256 is not None:
+        await _on_caption_bundle_ready(existing_bundle_sha256)
     await vector_store.initialize()
     await knowledge_ingestion_jobs.recover_interrupted()
     await knowledge_caption_jobs.recover_interrupted()

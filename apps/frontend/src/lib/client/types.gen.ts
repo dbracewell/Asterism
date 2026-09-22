@@ -2472,6 +2472,82 @@ export type KnowledgeDocumentUpdateMetadataResponses = {
 
 export type KnowledgeDocumentUpdateMetadataResponse = KnowledgeDocumentUpdateMetadataResponses[keyof KnowledgeDocumentUpdateMetadataResponses];
 
+export type KnowledgeDocumentGenerateCaptionData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption/generate';
+};
+
+export type KnowledgeDocumentGenerateCaptionErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentGenerateCaptionError = KnowledgeDocumentGenerateCaptionErrors[keyof KnowledgeDocumentGenerateCaptionErrors];
+
+export type KnowledgeDocumentGenerateCaptionResponses = {
+    /**
+     * Successful Response
+     */
+    202: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentGenerateCaptionResponse = KnowledgeDocumentGenerateCaptionResponses[keyof KnowledgeDocumentGenerateCaptionResponses];
+
+export type KnowledgeDocumentCancelCaptionData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption/cancel';
+};
+
+export type KnowledgeDocumentCancelCaptionErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentCancelCaptionError = KnowledgeDocumentCancelCaptionErrors[keyof KnowledgeDocumentCancelCaptionErrors];
+
+export type KnowledgeDocumentCancelCaptionResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentCancelCaptionResponse = KnowledgeDocumentCancelCaptionResponses[keyof KnowledgeDocumentCancelCaptionResponses];
+
 export type KnowledgeDocumentUpdateCaptionData = {
     body: KnowledgeCaptionUpdate;
     path: {
