@@ -5,6 +5,14 @@ from asterism.domains.agent.models import (  # noqa: F401
 from asterism.domains.chat.models import ChatModel, MessageModel  # noqa: F401
 from asterism.domains.files.models import UserFileModel  # noqa: F401
 from asterism.domains.folders.models import FolderModel  # noqa: F401
+from asterism.domains.knowledge.assignments import (  # noqa: F401
+    AgentKnowledgeBaseAssignmentModel,
+)
+from asterism.domains.knowledge.audit import KnowledgeAuditEventModel  # noqa: F401
+from asterism.domains.knowledge.models import (  # noqa: F401
+    KnowledgeBaseModel,
+    KnowledgeDocumentModel,
+)
 from asterism.domains.settings.models import (  # noqa: F401
     ApplicationSettingsModel,
     LLMModel,

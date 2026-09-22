@@ -61,21 +61,6 @@ export const zChatCompletionParams = z.object({
 });
 
 /**
- * AgentProfile
- */
-export const zAgentProfile = z.object({
-    name: z.string(),
-    description: z.string(),
-    sub_agent: z.boolean(),
-    model_id: z.uuid().nullable(),
-    system_prompt: z.string().nullable(),
-    max_steps: z.int(),
-    chat_parameters: zChatCompletionParams.optional(),
-    tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('601f9d36-2f54-47d9-9b51-674d3cce8b4c')
-});
-
-/**
  * ChatContextUsage
  */
 export const zChatContextUsage = z.object({
@@ -128,10 +113,36 @@ export const zComponentType = z.enum([
 
 /**
  * CreateUserRequest
+ *
+ * Request model for creating a new user.
  */
 export const zCreateUserRequest = z.object({
     user_id: z.string(),
     system_key: z.string().nullish()
+});
+
+/**
+ * DownloadStatus
+ */
+export const zDownloadStatus = z.enum([
+    'idle',
+    'downloading',
+    'verifying',
+    'ready',
+    'failed'
+]);
+
+/**
+ * CaptionModelStatus
+ *
+ * Admin-facing status of the local caption model download/readiness.
+ */
+export const zCaptionModelStatus = z.object({
+    status: zDownloadStatus,
+    bytes_downloaded: z.int().optional().default(0),
+    total_bytes: z.int().optional().default(0),
+    error: z.string().nullish(),
+    bundle_sha256: z.string().nullish()
 });
 
 /**
@@ -177,6 +188,135 @@ export const zJsonValue = z.unknown();
  */
 export const zBulkUpdateSettingRequest = z.object({
     values: z.record(z.string(), zJsonValue)
+});
+
+/**
+ * KnowledgeBase
+ */
+export const zKnowledgeBase = z.object({
+    id: z.uuid(),
+    name: z.string(),
+    description: z.string().nullable(),
+    created_at: z.int(),
+    updated_at: z.int()
+});
+
+/**
+ * KnowledgeBaseAssignmentList
+ */
+export const zKnowledgeBaseAssignmentList = z.object({
+    knowledge_base_ids: z.array(z.uuid())
+});
+
+/**
+ * KnowledgeBaseAssignmentReplace
+ */
+export const zKnowledgeBaseAssignmentReplace = z.object({
+    knowledge_base_ids: z.array(z.uuid()).max(100).optional()
+});
+
+/**
+ * KnowledgeBaseAssignmentSummary
+ */
+export const zKnowledgeBaseAssignmentSummary = z.object({
+    id: z.uuid(),
+    name: z.string()
+});
+
+/**
+ * AgentProfile
+ */
+export const zAgentProfile = z.object({
+    name: z.string(),
+    description: z.string(),
+    sub_agent: z.boolean(),
+    model_id: z.uuid().nullable(),
+    system_prompt: z.string().nullable(),
+    max_steps: z.int(),
+    chat_parameters: zChatCompletionParams.optional(),
+    tools: z.array(z.string()).nullish(),
+    id: z.uuid().optional().default('05e2a6b2-7d04-4d06-a809-9887d0036c2d'),
+    knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
+});
+
+/**
+ * KnowledgeBaseCreate
+ */
+export const zKnowledgeBaseCreate = z.object({
+    name: z.string().min(1).max(255),
+    description: z.string().max(10000).nullish()
+});
+
+/**
+ * KnowledgeBaseList
+ */
+export const zKnowledgeBaseList = z.object({
+    knowledge_bases: z.array(zKnowledgeBase),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1)
+});
+
+/**
+ * KnowledgeBaseUpdate
+ */
+export const zKnowledgeBaseUpdate = z.object({
+    name: z.string().min(1).max(255).nullish(),
+    description: z.string().max(10000).nullish()
+});
+
+/**
+ * KnowledgeDocument
+ */
+export const zKnowledgeDocument = z.object({
+    id: z.uuid(),
+    knowledge_base_id: z.uuid(),
+    file_id: z.uuid().nullable(),
+    original_name: z.string(),
+    mime_type: z.string(),
+    content_sha256: z.string(),
+    revision: z.int().gte(1),
+    position: z.int().gte(0),
+    status: z.string(),
+    error: z.string().nullable(),
+    indexed_at: z.int().nullable(),
+    replaces_document_id: z.uuid().nullable(),
+    metadata: z.record(z.string(), z.string()),
+    created_at: z.int(),
+    updated_at: z.int()
+});
+
+/**
+ * KnowledgeDocumentCreate
+ */
+export const zKnowledgeDocumentCreate = z.object({
+    file_id: z.uuid(),
+    metadata: z.record(z.string(), z.string()).optional()
+});
+
+/**
+ * KnowledgeDocumentList
+ */
+export const zKnowledgeDocumentList = z.object({
+    documents: z.array(zKnowledgeDocument),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1)
+});
+
+/**
+ * KnowledgeDocumentRevisionCreate
+ */
+export const zKnowledgeDocumentRevisionCreate = z.object({
+    file_id: z.uuid(),
+    metadata: z.record(z.string(), z.string()).nullish()
+});
+
+/**
+ * KnowledgeDocumentUpdate
+ */
+export const zKnowledgeDocumentUpdate = z.object({
+    metadata: z.record(z.string(), z.string())
 });
 
 /**
@@ -746,6 +886,151 @@ export const zFolderGetOnePath = z.object({
  */
 export const zFolderGetOneResponse = zFolder;
 
+export const zKnowledgeBaseGetManyQuery = z.object({
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(50)
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseGetManyResponse = zKnowledgeBaseList;
+
+export const zKnowledgeBaseCreateBody = zKnowledgeBaseCreate;
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseCreateResponse = zKnowledgeBase;
+
+export const zKnowledgeDocumentGetManyPath = z.object({
+    knowledge_base_id: z.uuid()
+});
+
+export const zKnowledgeDocumentGetManyQuery = z.object({
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(50)
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentGetManyResponse = zKnowledgeDocumentList;
+
+export const zKnowledgeDocumentCreateBody = zKnowledgeDocumentCreate;
+
+export const zKnowledgeDocumentCreatePath = z.object({
+    knowledge_base_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentCreateResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentCreateRevisionBody = zKnowledgeDocumentRevisionCreate;
+
+export const zKnowledgeDocumentCreateRevisionPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentCreateRevisionResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentDeletePath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentDeleteResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentGetOnePath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentGetOneResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentUpdateMetadataBody = zKnowledgeDocumentUpdate;
+
+export const zKnowledgeDocumentUpdateMetadataPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentUpdateMetadataResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentIngestPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentIngestResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentReindexPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentReindexResponse = zKnowledgeDocument;
+
+export const zKnowledgeDocumentCancelIngestionPath = z.object({
+    knowledge_base_id: z.uuid(),
+    document_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeDocumentCancelIngestionResponse = zKnowledgeDocument;
+
+export const zKnowledgeBaseDeletePath = z.object({
+    knowledge_base_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseDeleteResponse = zKnowledgeBase;
+
+export const zKnowledgeBaseGetOnePath = z.object({
+    knowledge_base_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseGetOneResponse = zKnowledgeBase;
+
+export const zKnowledgeBaseUpdateBody = zKnowledgeBaseUpdate;
+
+export const zKnowledgeBaseUpdatePath = z.object({
+    knowledge_base_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseUpdateResponse = zKnowledgeBase;
+
 /**
  * Successful Response
  */
@@ -810,6 +1095,21 @@ export const zAppSettingUpdatePath = z.object({
  */
 export const zAppSettingUpdateResponse = zSetting;
 
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelStatusResponse = zCaptionModelStatus;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelDownloadResponse = zCaptionModelStatus;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelCancelResponse = zCaptionModelStatus;
+
 export const zUserCreateUserBody = zCreateUserRequest;
 
 /**
@@ -860,6 +1160,26 @@ export const zAgentsUpsertAgentProfileBody = zPartialAgentProfile;
  * Successful Response
  */
 export const zAgentsUpsertAgentProfileResponse = zAgentProfile;
+
+export const zAgentKnowledgeBaseAssignmentsGetPath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAgentKnowledgeBaseAssignmentsGetResponse = zKnowledgeBaseAssignmentList;
+
+export const zAgentKnowledgeBaseAssignmentsReplaceBody = zKnowledgeBaseAssignmentReplace;
+
+export const zAgentKnowledgeBaseAssignmentsReplacePath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAgentKnowledgeBaseAssignmentsReplaceResponse = zKnowledgeBaseAssignmentList;
 
 export const zAgentsDeleteAgentPath = z.object({
     agent_id: z.uuid()

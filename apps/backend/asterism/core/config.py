@@ -95,6 +95,33 @@ class Config(BaseSettings):
     max_concurrent_knowledge_vector_operations: int = 2
     """Maximum simultaneous blocking LanceDB operations."""
 
+    max_concurrent_knowledge_ingestions: int = 2
+    """Maximum document ingestion jobs running at once."""
+
+    local_caption_model_bundle_sha256: str = ""
+    """SHA-256 of the explicitly provisioned local SmolVLM2 manifest; empty means unavailable."""
+
+    max_concurrent_local_captions: int = 1
+    """Maximum simultaneous CPU-only local image caption inferences."""
+
+    max_caption_chars: int = 2_000
+    """Maximum characters retained from a generated image caption."""
+
+    max_knowledge_chunks_per_document: int = 200
+    """Maximum indexed chunks produced by a document revision."""
+
+    knowledge_chunk_size_chars: int = 1_000
+    """Maximum characters in one textual knowledge chunk."""
+
+    knowledge_chunk_overlap_chars: int = 150
+    """Character overlap between adjacent textual knowledge chunks."""
+
+    max_knowledge_query_top_k: int = 10
+    """Maximum retrieval results a knowledge search tool call may request."""
+
+    max_knowledge_result_bytes: int = 16 * 1024
+    """Maximum UTF-8 bytes returned by one knowledge search tool call."""
+
     public_url: str = "http://localhost:3000"
     """The public URL of the Asterism frontend, used for JWT issuer and audience."""
 
@@ -189,6 +216,29 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS must be from 1 to 16")
         if not 1 <= self.max_concurrent_knowledge_vector_operations <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS must be from 1 to 16")
+        if not 1 <= self.max_concurrent_knowledge_ingestions <= 16:
+            raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_INGESTIONS must be from 1 to 16")
+        if self.local_caption_model_bundle_sha256 and (
+            len(self.local_caption_model_bundle_sha256) != 64
+            or any(char not in "0123456789abcdef" for char in self.local_caption_model_bundle_sha256.lower())
+        ):
+            raise ConfigValidationError("LOCAL_CAPTION_MODEL_BUNDLE_SHA256 must be empty or a SHA-256 hex digest")
+        if not 1 <= self.max_concurrent_local_captions <= 4:
+            raise ConfigValidationError("MAX_CONCURRENT_LOCAL_CAPTIONS must be from 1 to 4")
+        if not 1 <= self.max_caption_chars <= 10_000:
+            raise ConfigValidationError("MAX_CAPTION_CHARS must be from 1 to 10000")
+        if not 1 <= self.max_knowledge_chunks_per_document <= 10_000:
+            raise ConfigValidationError("MAX_KNOWLEDGE_CHUNKS_PER_DOCUMENT must be from 1 to 10000")
+        if not 1 <= self.knowledge_chunk_size_chars <= self.max_converted_chars:
+            raise ConfigValidationError("KNOWLEDGE_CHUNK_SIZE_CHARS must be from 1 to MAX_CONVERTED_CHARS")
+        if not 0 <= self.knowledge_chunk_overlap_chars < self.knowledge_chunk_size_chars:
+            raise ConfigValidationError(
+                "KNOWLEDGE_CHUNK_OVERLAP_CHARS must be from 0 to KNOWLEDGE_CHUNK_SIZE_CHARS - 1"
+            )
+        if not 1 <= self.max_knowledge_query_top_k <= 100:
+            raise ConfigValidationError("MAX_KNOWLEDGE_QUERY_TOP_K must be from 1 to 100")
+        if not 1_024 <= self.max_knowledge_result_bytes <= 1_000_000:
+            raise ConfigValidationError("MAX_KNOWLEDGE_RESULT_BYTES must be from 1024 to 1000000")
         if not 1 <= self.max_concurrent_llm_requests <= 128:
             raise ConfigValidationError("MAX_CONCURRENT_LLM_REQUESTS must be from 1 to 128")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(
@@ -203,6 +253,7 @@ class Config(BaseSettings):
         self.files_root.mkdir(exist_ok=True, parents=True)
         self.knowledge_root.mkdir(exist_ok=True, parents=True)
         self.knowledge_models_root.mkdir(exist_ok=True, parents=True)
+        self.local_caption_models_root.mkdir(exist_ok=True, parents=True)
 
     @property
     def jwt_issuer(self) -> str:
@@ -235,6 +286,11 @@ class Config(BaseSettings):
     @property
     def knowledge_models_root(self) -> Path:
         return self.storage_root / "models" / "knowledge-clip"
+
+    @computed_field
+    @property
+    def local_caption_models_root(self) -> Path:
+        return self.storage_root / "models" / "captioning-smolvlm2"
 
     def get_user_file(self, user_id: str, filename: str) -> Path:
         files_dir = self.files_root / user_id / filename

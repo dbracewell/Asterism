@@ -41,6 +41,10 @@ export type AgentProfile = {
      * Id
      */
     id?: string;
+    /**
+     * Knowledge Bases
+     */
+    knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
 };
 
 /**
@@ -105,6 +109,31 @@ export type BulkUpdateSettingRequest = {
     values: {
         [key: string]: JsonValue;
     };
+};
+
+/**
+ * CaptionModelStatus
+ *
+ * Admin-facing status of the local caption model download/readiness.
+ */
+export type CaptionModelStatus = {
+    status: DownloadStatus;
+    /**
+     * Bytes Downloaded
+     */
+    bytes_downloaded?: number;
+    /**
+     * Total Bytes
+     */
+    total_bytes?: number;
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Bundle Sha256
+     */
+    bundle_sha256?: string | null;
 };
 
 /**
@@ -388,6 +417,8 @@ export type ComponentType = 'WebSearch' | 'ImageSearch' | 'ImageGenerator';
 
 /**
  * CreateUserRequest
+ *
+ * Request model for creating a new user.
  */
 export type CreateUserRequest = {
     /**
@@ -401,6 +432,11 @@ export type CreateUserRequest = {
      */
     system_key?: string | null;
 };
+
+/**
+ * DownloadStatus
+ */
+export type DownloadStatus = 'idle' | 'downloading' | 'verifying' | 'ready' | 'failed';
 
 /**
  * ErrorDetail
@@ -511,6 +547,250 @@ export type Function = {
 };
 
 export type JsonValue = unknown;
+
+/**
+ * KnowledgeBase
+ */
+export type KnowledgeBase = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Created At
+     */
+    created_at: number;
+    /**
+     * Updated At
+     */
+    updated_at: number;
+};
+
+/**
+ * KnowledgeBaseAssignmentList
+ */
+export type KnowledgeBaseAssignmentList = {
+    /**
+     * Knowledge Base Ids
+     */
+    knowledge_base_ids: Array<string>;
+};
+
+/**
+ * KnowledgeBaseAssignmentReplace
+ */
+export type KnowledgeBaseAssignmentReplace = {
+    /**
+     * Knowledge Base Ids
+     */
+    knowledge_base_ids?: Array<string>;
+};
+
+/**
+ * KnowledgeBaseAssignmentSummary
+ */
+export type KnowledgeBaseAssignmentSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * KnowledgeBaseCreate
+ */
+export type KnowledgeBaseCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
+ * KnowledgeBaseList
+ */
+export type KnowledgeBaseList = {
+    /**
+     * Knowledge Bases
+     */
+    knowledge_bases: Array<KnowledgeBase>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
+ * KnowledgeBaseUpdate
+ */
+export type KnowledgeBaseUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
+ * KnowledgeDocument
+ */
+export type KnowledgeDocument = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Knowledge Base Id
+     */
+    knowledge_base_id: string;
+    /**
+     * File Id
+     */
+    file_id: string | null;
+    /**
+     * Original Name
+     */
+    original_name: string;
+    /**
+     * Mime Type
+     */
+    mime_type: string;
+    /**
+     * Content Sha256
+     */
+    content_sha256: string;
+    /**
+     * Revision
+     */
+    revision: number;
+    /**
+     * Position
+     */
+    position: number;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Error
+     */
+    error: string | null;
+    /**
+     * Indexed At
+     */
+    indexed_at: number | null;
+    /**
+     * Replaces Document Id
+     */
+    replaces_document_id: string | null;
+    /**
+     * Metadata
+     */
+    metadata: {
+        [key: string]: string;
+    };
+    /**
+     * Created At
+     */
+    created_at: number;
+    /**
+     * Updated At
+     */
+    updated_at: number;
+};
+
+/**
+ * KnowledgeDocumentCreate
+ */
+export type KnowledgeDocumentCreate = {
+    /**
+     * File Id
+     */
+    file_id: string;
+    /**
+     * Metadata
+     */
+    metadata?: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * KnowledgeDocumentList
+ */
+export type KnowledgeDocumentList = {
+    /**
+     * Documents
+     */
+    documents: Array<KnowledgeDocument>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
+ * KnowledgeDocumentRevisionCreate
+ */
+export type KnowledgeDocumentRevisionCreate = {
+    /**
+     * File Id
+     */
+    file_id: string;
+    /**
+     * Metadata
+     */
+    metadata?: {
+        [key: string]: string;
+    } | null;
+};
+
+/**
+ * KnowledgeDocumentUpdate
+ */
+export type KnowledgeDocumentUpdate = {
+    /**
+     * Metadata
+     */
+    metadata: {
+        [key: string]: string;
+    };
+};
 
 /**
  * Llm
@@ -1795,6 +2075,534 @@ export type FolderGetOneResponses = {
 
 export type FolderGetOneResponse = FolderGetOneResponses[keyof FolderGetOneResponses];
 
+export type KnowledgeBaseGetManyData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/knowledge-bases/';
+};
+
+export type KnowledgeBaseGetManyErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseGetManyError = KnowledgeBaseGetManyErrors[keyof KnowledgeBaseGetManyErrors];
+
+export type KnowledgeBaseGetManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseList;
+};
+
+export type KnowledgeBaseGetManyResponse = KnowledgeBaseGetManyResponses[keyof KnowledgeBaseGetManyResponses];
+
+export type KnowledgeBaseCreateData = {
+    body: KnowledgeBaseCreate;
+    path?: never;
+    query?: never;
+    url: '/knowledge-bases/';
+};
+
+export type KnowledgeBaseCreateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseCreateError = KnowledgeBaseCreateErrors[keyof KnowledgeBaseCreateErrors];
+
+export type KnowledgeBaseCreateResponses = {
+    /**
+     * Successful Response
+     */
+    201: KnowledgeBase;
+};
+
+export type KnowledgeBaseCreateResponse = KnowledgeBaseCreateResponses[keyof KnowledgeBaseCreateResponses];
+
+export type KnowledgeDocumentGetManyData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/knowledge-bases/{knowledge_base_id}/documents';
+};
+
+export type KnowledgeDocumentGetManyErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentGetManyError = KnowledgeDocumentGetManyErrors[keyof KnowledgeDocumentGetManyErrors];
+
+export type KnowledgeDocumentGetManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentList;
+};
+
+export type KnowledgeDocumentGetManyResponse = KnowledgeDocumentGetManyResponses[keyof KnowledgeDocumentGetManyResponses];
+
+export type KnowledgeDocumentCreateData = {
+    body: KnowledgeDocumentCreate;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents';
+};
+
+export type KnowledgeDocumentCreateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentCreateError = KnowledgeDocumentCreateErrors[keyof KnowledgeDocumentCreateErrors];
+
+export type KnowledgeDocumentCreateResponses = {
+    /**
+     * Successful Response
+     */
+    201: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentCreateResponse = KnowledgeDocumentCreateResponses[keyof KnowledgeDocumentCreateResponses];
+
+export type KnowledgeDocumentCreateRevisionData = {
+    body: KnowledgeDocumentRevisionCreate;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/revisions';
+};
+
+export type KnowledgeDocumentCreateRevisionErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentCreateRevisionError = KnowledgeDocumentCreateRevisionErrors[keyof KnowledgeDocumentCreateRevisionErrors];
+
+export type KnowledgeDocumentCreateRevisionResponses = {
+    /**
+     * Successful Response
+     */
+    201: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentCreateRevisionResponse = KnowledgeDocumentCreateRevisionResponses[keyof KnowledgeDocumentCreateRevisionResponses];
+
+export type KnowledgeDocumentDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}';
+};
+
+export type KnowledgeDocumentDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentDeleteError = KnowledgeDocumentDeleteErrors[keyof KnowledgeDocumentDeleteErrors];
+
+export type KnowledgeDocumentDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentDeleteResponse = KnowledgeDocumentDeleteResponses[keyof KnowledgeDocumentDeleteResponses];
+
+export type KnowledgeDocumentGetOneData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}';
+};
+
+export type KnowledgeDocumentGetOneErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentGetOneError = KnowledgeDocumentGetOneErrors[keyof KnowledgeDocumentGetOneErrors];
+
+export type KnowledgeDocumentGetOneResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentGetOneResponse = KnowledgeDocumentGetOneResponses[keyof KnowledgeDocumentGetOneResponses];
+
+export type KnowledgeDocumentUpdateMetadataData = {
+    body: KnowledgeDocumentUpdate;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}';
+};
+
+export type KnowledgeDocumentUpdateMetadataErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentUpdateMetadataError = KnowledgeDocumentUpdateMetadataErrors[keyof KnowledgeDocumentUpdateMetadataErrors];
+
+export type KnowledgeDocumentUpdateMetadataResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentUpdateMetadataResponse = KnowledgeDocumentUpdateMetadataResponses[keyof KnowledgeDocumentUpdateMetadataResponses];
+
+export type KnowledgeDocumentIngestData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/ingest';
+};
+
+export type KnowledgeDocumentIngestErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentIngestError = KnowledgeDocumentIngestErrors[keyof KnowledgeDocumentIngestErrors];
+
+export type KnowledgeDocumentIngestResponses = {
+    /**
+     * Successful Response
+     */
+    202: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentIngestResponse = KnowledgeDocumentIngestResponses[keyof KnowledgeDocumentIngestResponses];
+
+export type KnowledgeDocumentReindexData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/reindex';
+};
+
+export type KnowledgeDocumentReindexErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentReindexError = KnowledgeDocumentReindexErrors[keyof KnowledgeDocumentReindexErrors];
+
+export type KnowledgeDocumentReindexResponses = {
+    /**
+     * Successful Response
+     */
+    202: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentReindexResponse = KnowledgeDocumentReindexResponses[keyof KnowledgeDocumentReindexResponses];
+
+export type KnowledgeDocumentCancelIngestionData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/cancel';
+};
+
+export type KnowledgeDocumentCancelIngestionErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeDocumentCancelIngestionError = KnowledgeDocumentCancelIngestionErrors[keyof KnowledgeDocumentCancelIngestionErrors];
+
+export type KnowledgeDocumentCancelIngestionResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocument;
+};
+
+export type KnowledgeDocumentCancelIngestionResponse = KnowledgeDocumentCancelIngestionResponses[keyof KnowledgeDocumentCancelIngestionResponses];
+
+export type KnowledgeBaseDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}';
+};
+
+export type KnowledgeBaseDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseDeleteError = KnowledgeBaseDeleteErrors[keyof KnowledgeBaseDeleteErrors];
+
+export type KnowledgeBaseDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBase;
+};
+
+export type KnowledgeBaseDeleteResponse = KnowledgeBaseDeleteResponses[keyof KnowledgeBaseDeleteResponses];
+
+export type KnowledgeBaseGetOneData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}';
+};
+
+export type KnowledgeBaseGetOneErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseGetOneError = KnowledgeBaseGetOneErrors[keyof KnowledgeBaseGetOneErrors];
+
+export type KnowledgeBaseGetOneResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBase;
+};
+
+export type KnowledgeBaseGetOneResponse = KnowledgeBaseGetOneResponses[keyof KnowledgeBaseGetOneResponses];
+
+export type KnowledgeBaseUpdateData = {
+    body: KnowledgeBaseUpdate;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}';
+};
+
+export type KnowledgeBaseUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseUpdateError = KnowledgeBaseUpdateErrors[keyof KnowledgeBaseUpdateErrors];
+
+export type KnowledgeBaseUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBase;
+};
+
+export type KnowledgeBaseUpdateResponse = KnowledgeBaseUpdateResponses[keyof KnowledgeBaseUpdateResponses];
+
 export type UserSettingsGetData = {
     body?: never;
     path?: never;
@@ -2077,6 +2885,85 @@ export type AppSettingUpdateResponses = {
 
 export type AppSettingUpdateResponse = AppSettingUpdateResponses[keyof AppSettingUpdateResponses];
 
+export type AppCaptionModelStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/app/caption-model/status';
+};
+
+export type AppCaptionModelStatusErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type AppCaptionModelStatusError = AppCaptionModelStatusErrors[keyof AppCaptionModelStatusErrors];
+
+export type AppCaptionModelStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: CaptionModelStatus;
+};
+
+export type AppCaptionModelStatusResponse = AppCaptionModelStatusResponses[keyof AppCaptionModelStatusResponses];
+
+export type AppCaptionModelDownloadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/app/caption-model/download';
+};
+
+export type AppCaptionModelDownloadErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Download already in progress
+     */
+    409: ErrorDetail;
+};
+
+export type AppCaptionModelDownloadError = AppCaptionModelDownloadErrors[keyof AppCaptionModelDownloadErrors];
+
+export type AppCaptionModelDownloadResponses = {
+    /**
+     * Successful Response
+     */
+    202: CaptionModelStatus;
+};
+
+export type AppCaptionModelDownloadResponse = AppCaptionModelDownloadResponses[keyof AppCaptionModelDownloadResponses];
+
+export type AppCaptionModelCancelData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/app/caption-model/cancel';
+};
+
+export type AppCaptionModelCancelErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type AppCaptionModelCancelError = AppCaptionModelCancelErrors[keyof AppCaptionModelCancelErrors];
+
+export type AppCaptionModelCancelResponses = {
+    /**
+     * Successful Response
+     */
+    200: CaptionModelStatus;
+};
+
+export type AppCaptionModelCancelResponse = AppCaptionModelCancelResponses[keyof AppCaptionModelCancelResponses];
+
 export type UserCreateUserData = {
     body: CreateUserRequest;
     path?: never;
@@ -2278,6 +3165,74 @@ export type AgentsUpsertAgentProfileResponses = {
 };
 
 export type AgentsUpsertAgentProfileResponse = AgentsUpsertAgentProfileResponses[keyof AgentsUpsertAgentProfileResponses];
+
+export type AgentKnowledgeBaseAssignmentsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/{agent_id}/knowledge-bases';
+};
+
+export type AgentKnowledgeBaseAssignmentsGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AgentKnowledgeBaseAssignmentsGetError = AgentKnowledgeBaseAssignmentsGetErrors[keyof AgentKnowledgeBaseAssignmentsGetErrors];
+
+export type AgentKnowledgeBaseAssignmentsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseAssignmentList;
+};
+
+export type AgentKnowledgeBaseAssignmentsGetResponse = AgentKnowledgeBaseAssignmentsGetResponses[keyof AgentKnowledgeBaseAssignmentsGetResponses];
+
+export type AgentKnowledgeBaseAssignmentsReplaceData = {
+    body: KnowledgeBaseAssignmentReplace;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/{agent_id}/knowledge-bases';
+};
+
+export type AgentKnowledgeBaseAssignmentsReplaceErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AgentKnowledgeBaseAssignmentsReplaceError = AgentKnowledgeBaseAssignmentsReplaceErrors[keyof AgentKnowledgeBaseAssignmentsReplaceErrors];
+
+export type AgentKnowledgeBaseAssignmentsReplaceResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseAssignmentList;
+};
+
+export type AgentKnowledgeBaseAssignmentsReplaceResponse = AgentKnowledgeBaseAssignmentsReplaceResponses[keyof AgentKnowledgeBaseAssignmentsReplaceResponses];
 
 export type AgentsDeleteAgentData = {
     body?: never;

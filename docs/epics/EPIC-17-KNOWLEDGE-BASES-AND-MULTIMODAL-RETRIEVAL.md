@@ -7,7 +7,7 @@ indexed documents), assign zero or more of them to each agent, and let an agent
 search only its assigned knowledge during a chat. Retrieval must support both
 text and image document content using a local, cross-platform embedding runtime.
 
-**Status: US-17.1 completed, user-confirmed, and merged; US-17.2 planned.**
+**Status: Completed — all stories user-confirmed and merged.**
 
 ## Scope and decisions
 
@@ -117,23 +117,23 @@ that I control what can be searched.
 
 **Dependencies:** US-17.1.
 
-- [ ] US-17.2-T1: Add ownership-safe create, list/paginate, get, update, and
+- [x] US-17.2-T1: Add ownership-safe create, list/paginate, get, update, and
       delete APIs for knowledge bases, including validation and stable conflict/
       not-found behavior.
-- [ ] US-17.2-T2: Add document add/list/get/update-metadata/delete operations.
+- [x] US-17.2-T2: Add document add/list/get/update-metadata/delete operations.
       Reuse the file-store/upload authorization path, capture immutable file
       revision, media type, content hash, extraction/index version, and status.
-- [ ] US-17.2-T3: Implement bounded, idempotent document ingestion: extract
+- [x] US-17.2-T3: Implement bounded, idempotent document ingestion: extract
       supported text and images, chunk with stable IDs, generate embeddings,
       upsert LanceDB entries, and atomically expose a ready revision only after
       metadata/vector writes succeed. Define retry, cancellation, and partial
       failure/reindex behavior.
-- [ ] US-17.2-T4: Delete document vectors and files/references according to an
+- [x] US-17.2-T4: Delete document vectors and files/references according to an
       explicit ownership/retention rule; deleting a base must remove its vectors,
       documents, assignments, and pending work safely.
-- [ ] US-17.2-T5: Add audit events for base/document CRUD and ingestion state
+- [x] US-17.2-T5: Add audit events for base/document CRUD and ingestion state
       transitions without retaining document content in logs.
-- [ ] US-17.2-T6: Add API/service/migration tests for ownership isolation,
+- [x] US-17.2-T6: Add API/service/migration tests for ownership isolation,
       validation, concurrent mutation/ingestion, retry, deletion, and cleanup.
       Regenerate the Hey API client.
 
@@ -152,14 +152,14 @@ so that each agent has an explicit retrieval boundary.
 
 **Dependencies:** US-17.2.
 
-- [ ] US-17.3-T1: Add a relational agent-to-knowledge-base association with
+- [x] US-17.3-T1: Add a relational agent-to-knowledge-base association with
       uniqueness, ownership checks, deterministic ordering, and cascade-safe
       deletion behavior.
-- [ ] US-17.3-T2: Add typed read/replace assignment APIs that reject foreign,
+- [x] US-17.3-T2: Add typed read/replace assignment APIs that reject foreign,
       deleted, or non-ready bases and preserve zero-assignment agents.
-- [ ] US-17.3-T3: Extend agent create/read/update views with assigned knowledge
+- [x] US-17.3-T3: Extend agent create/read/update views with assigned knowledge
       summaries without leaking another user's base/document metadata.
-- [ ] US-17.3-T4: Add service/router/migration tests for cross-user assignment,
+- [x] US-17.3-T4: Add service/router/migration tests for cross-user assignment,
       duplicate IDs, delete races, zero/many assignments, and legacy agents.
       Regenerate the Hey API client.
 
@@ -176,21 +176,21 @@ an approval prompt, while unassigned agents cannot access it.
 
 **Dependencies:** US-17.3.
 
-- [ ] US-17.4-T1: Implement `search_knowledge` as a built-in runtime tool with
+- [x] US-17.4-T1: Implement `search_knowledge` as a built-in runtime tool with
       validated query and bounded `top_k`/result bytes. Resolve active agent
       assignments once per execution and query only ready assigned bases using
       owner/base filters.
-- [ ] US-17.4-T2: Dynamically include the tool schema only for agents with one
+- [x] US-17.4-T2: Dynamically include the tool schema only for agents with one
       or more eligible assigned bases. Add a dedicated automatic-authorization
       path that cannot be overridden by chat runtime tool preferences and does
       not grant any other tool.
-- [ ] US-17.4-T3: Return structured excerpts with base/document/revision/chunk
+- [x] US-17.4-T3: Return structured excerpts with base/document/revision/chunk
       provenance suitable for later citations, stable score ordering, and safe
       no-results/failure messages. Do not return full files or unbounded chunks.
-- [ ] US-17.4-T4: Add execution/audit traces containing safe identifiers, result
+- [x] US-17.4-T4: Add execution/audit traces containing safe identifiers, result
       counts, duration, and model/index versions; never log query or document
       text by default.
-- [ ] US-17.4-T5: Test offered/not-offered behavior, automatic approval,
+- [x] US-17.4-T5: Test offered/not-offered behavior, automatic approval,
       zero/many assignments, strict user/base filtering, stale/deleted base
       handling, context limits, and injection-like document content.
 
@@ -208,18 +208,18 @@ to agents without manually calling APIs.
 
 **Dependencies:** US-17.2, US-17.3.
 
-- [ ] US-17.5-T1: Add a knowledge-base list and create/edit/delete experience
+- [x] US-17.5-T1: Add a knowledge-base list and create/edit/delete experience
       using generated API clients, with loading, empty, error, confirmation, and
       ownership-safe navigation states.
-- [ ] US-17.5-T2: Add base detail document management: upload/attach, list,
+- [x] US-17.5-T2: Add base detail document management: upload/attach, list,
       status/progress, retry/reindex where supported, and destructive deletion
       confirmation. Clearly distinguish pending, ready, and failed documents.
-- [ ] US-17.5-T3: Add a multi-select knowledge-base assignment control to agent
+- [x] US-17.5-T3: Add a multi-select knowledge-base assignment control to agent
       create/edit views. It supports zero selections and explains that assignment
       enables automatic `search_knowledge` for that agent.
-- [ ] US-17.5-T4: Add frontend unit/integration and Playwright coverage for CRUD,
+- [x] US-17.5-T4: Add frontend unit/integration and Playwright coverage for CRUD,
       status, assignment, empty/error states, and agent-specific availability.
-- [ ] US-17.5-T5: Run quality gates, document local model storage/operations,
+- [x] US-17.5-T5: Run quality gates, document local model storage/operations,
       LanceDB backup/rebuild procedure, ingestion limits, and retrieval security
       boundaries.
 

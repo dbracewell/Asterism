@@ -64,7 +64,12 @@ async def test_knowledge_migration_is_idempotent(tmp_path: Path):
             ).fetchall()
         }
     await engine.dispose()
-    assert {"knowledge_bases", "knowledge_documents"} <= tables
+    assert {
+        "knowledge_bases",
+        "knowledge_documents",
+        "knowledge_audit_events",
+        "agent_knowledge_base_assignments",
+    } <= tables
 
 
 def test_embedding_artifact_requires_expected_checksum_and_size(tmp_path: Path):
@@ -89,3 +94,24 @@ def test_knowledge_configuration_rejects_oversize_model(tmp_path: Path):
     )
     with pytest.raises(ConfigValidationError, match="KNOWLEDGE_EMBEDDING_MODEL_SIZE_BYTES"):
         settings.validate_runtime()
+
+
+def test_caption_configuration_accepts_unprovisioned_local_mode_and_rejects_invalid_bundle_digest(tmp_path: Path):
+    settings = Config(
+        _env_file=None,
+        storage_root=tmp_path,
+        config_profile="development",
+        system_key="not-a-placeholder-secret",
+    )
+    settings.validate_runtime()
+    assert settings.local_caption_models_root == tmp_path / "models" / "captioning-smolvlm2"
+
+    invalid = Config(
+        _env_file=None,
+        storage_root=tmp_path,
+        config_profile="development",
+        system_key="not-a-placeholder-secret",
+        local_caption_model_bundle_sha256="not-a-digest",
+    )
+    with pytest.raises(ConfigValidationError, match="LOCAL_CAPTION_MODEL_BUNDLE_SHA256"):
+        invalid.validate_runtime()

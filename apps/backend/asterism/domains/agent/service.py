@@ -10,17 +10,44 @@ from asterism.core.exceptions import (
 )
 from asterism.db.database import get_async_db_session
 from asterism.domains.chat.models import ChatModel
+from asterism.domains.knowledge.assignments import AgentKnowledgeBaseAssignmentModel
+from asterism.domains.knowledge.models import KnowledgeBaseModel
 from asterism.domains.settings import service as settings_service
 from asterism.domains.settings.models import UserSettingModel
 
 from .models import AgentProfileModel, SubAgentTraceModel
 from .schemas import (
     AgentProfile,
+    KnowledgeBaseAssignmentSummary,
     PartialAgentProfile,
     SubAgentTrace,
     SubAgentTraceCreate,
     UserAgents,
 )
+
+
+async def _assignment_summaries(
+    *, user_id: str, agent_id: uuid.UUID, session: AsyncSession
+) -> list[KnowledgeBaseAssignmentSummary]:
+    rows = await session.execute(
+        select(KnowledgeBaseModel.id, KnowledgeBaseModel.name)
+        .join(
+            AgentKnowledgeBaseAssignmentModel,
+            AgentKnowledgeBaseAssignmentModel.knowledge_base_id == KnowledgeBaseModel.id,
+        )
+        .where(
+            AgentKnowledgeBaseAssignmentModel.user_id == user_id,
+            AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
+            KnowledgeBaseModel.user_id == user_id,
+        )
+        .order_by(AgentKnowledgeBaseAssignmentModel.position)
+    )
+    return [KnowledgeBaseAssignmentSummary(id=row.id, name=row.name) for row in rows]
+
+
+async def _with_assignment_summaries(profile: AgentProfile, *, user_id: str, session: AsyncSession) -> AgentProfile:
+    profile.knowledge_bases = await _assignment_summaries(user_id=user_id, agent_id=profile.id, session=session)
+    return profile
 
 
 async def _ensure_valid_tools(
@@ -29,9 +56,7 @@ async def _ensure_valid_tools(
 ) -> AgentProfile:
     app_settings = await settings_service.get_app_settings(session=session)
     if profile.tools:
-        profile.tools = [
-            t for t in profile.tools if t in app_settings.active_tools
-        ]
+        profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
     return profile
 
 
@@ -40,17 +65,13 @@ async def get_user_agents(
     session: AsyncSession | None = None,
 ) -> UserAgents:
     async with get_async_db_session(session) as session:
-        stmt = select(AgentProfileModel).where(
-            AgentProfileModel.user_id == user_id
-        )
+        stmt = select(AgentProfileModel).where(AgentProfileModel.user_id == user_id)
         results = await session.scalars(stmt)
 
         agents_dict: dict[uuid.UUID, AgentProfile] = {}
         for r in results:
-            agents_dict[r.id] = await _ensure_valid_tools(
-                AgentProfile.model_validate(r),
-                session=session,
-            )
+            profile = await _ensure_valid_tools(AgentProfile.model_validate(r), session=session)
+            agents_dict[r.id] = await _with_assignment_summaries(profile, user_id=user_id, session=session)
 
         return UserAgents(agents=agents_dict)
 
@@ -66,10 +87,8 @@ async def get_agent_profile(
             raise NotFoundException(f"Agent with id {agent_id} not found")
         if user_id != result.user_id:
             raise UnauthorizedException()
-        return await _ensure_valid_tools(
-            AgentProfile.model_validate(result),
-            session=session,
-        )
+        profile = await _ensure_valid_tools(AgentProfile.model_validate(result), session=session)
+        return await _with_assignment_summaries(profile, user_id=user_id, session=session)
 
 
 async def delete_agent_profile(
@@ -105,9 +124,7 @@ async def upsert_agent_profile(
         if agent_profile.id:
             result = await session.get(AgentProfileModel, agent_profile.id)
             if not result:
-                raise NotFoundException(
-                    f"Agent with id {agent_profile.id} not found"
-                )
+                raise NotFoundException(f"Agent with id {agent_profile.id} not found")
             if user_id != result.user_id:
                 raise UnauthorizedException()
             if not result.sub_agent and agent_profile.sub_agent:
@@ -117,9 +134,7 @@ async def upsert_agent_profile(
             result.name = agent_profile.name
             result.sub_agent = agent_profile.sub_agent
             if agent_profile.model_id is None:
-                raise ValueError(
-                    "model_id cannot be None when updating an agent profile"
-                )
+                raise ValueError("model_id cannot be None when updating an agent profile")
             result.model_id = agent_profile.model_id
             result.max_steps = agent_profile.max_steps
             result.system_prompt = agent_profile.system_prompt
@@ -132,7 +147,8 @@ async def upsert_agent_profile(
             await session.commit()
             await session.refresh(result)
 
-        return AgentProfile.model_validate(result)
+        profile = AgentProfile.model_validate(result)
+        return await _with_assignment_summaries(profile, user_id=user_id, session=session)
 
 
 async def _ensure_main_agent_can_be_removed(
@@ -141,15 +157,15 @@ async def _ensure_main_agent_can_be_removed(
     session: AsyncSession,
 ) -> None:
     assigned_chat_id = await session.scalar(
-        select(ChatModel.id).where(
+        select(ChatModel.id)
+        .where(
             ChatModel.user_id == user_id,
             ChatModel.agent_id == agent_id,
-        ).limit(1)
+        )
+        .limit(1)
     )
     if assigned_chat_id is not None:
-        raise BadDataException(
-            "This main agent is assigned to an existing chat and cannot be changed"
-        )
+        raise BadDataException("This main agent is assigned to an existing chat and cannot be changed")
 
     main_agent_ids = list(
         await session.scalars(
@@ -169,13 +185,9 @@ async def _ensure_main_agent_can_be_removed(
         )
     )
     if str(default_agent_id) not in {str(id) for id in main_agent_ids}:
-        raise BadDataException(
-            "Select a valid default main agent before changing this agent"
-        )
+        raise BadDataException("Select a valid default main agent before changing this agent")
     if str(default_agent_id) == str(agent_id):
-        raise BadDataException(
-            "Select another default main agent before changing this agent"
-        )
+        raise BadDataException("Select another default main agent before changing this agent")
 
 
 async def create_sub_agent_trace(
