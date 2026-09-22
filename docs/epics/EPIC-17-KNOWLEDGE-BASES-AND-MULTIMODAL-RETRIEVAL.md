@@ -7,7 +7,7 @@ indexed documents), assign zero or more of them to each agent, and let an agent
 search only its assigned knowledge during a chat. Retrieval must support both
 text and image document content using a local, cross-platform embedding runtime.
 
-**Status: US-17.1 completed, user-confirmed, and merged; US-17.2 planned.**
+**Status: US-17.1 completed, user-confirmed, and merged; US-17.2 implemented and awaiting user confirmation.**
 
 ## Scope and decisions
 
@@ -117,23 +117,23 @@ that I control what can be searched.
 
 **Dependencies:** US-17.1.
 
-- [ ] US-17.2-T1: Add ownership-safe create, list/paginate, get, update, and
+- [x] US-17.2-T1: Add ownership-safe create, list/paginate, get, update, and
       delete APIs for knowledge bases, including validation and stable conflict/
       not-found behavior.
-- [ ] US-17.2-T2: Add document add/list/get/update-metadata/delete operations.
+- [x] US-17.2-T2: Add document add/list/get/update-metadata/delete operations.
       Reuse the file-store/upload authorization path, capture immutable file
       revision, media type, content hash, extraction/index version, and status.
-- [ ] US-17.2-T3: Implement bounded, idempotent document ingestion: extract
+- [x] US-17.2-T3: Implement bounded, idempotent document ingestion: extract
       supported text and images, chunk with stable IDs, generate embeddings,
       upsert LanceDB entries, and atomically expose a ready revision only after
       metadata/vector writes succeed. Define retry, cancellation, and partial
       failure/reindex behavior.
-- [ ] US-17.2-T4: Delete document vectors and files/references according to an
+- [x] US-17.2-T4: Delete document vectors and files/references according to an
       explicit ownership/retention rule; deleting a base must remove its vectors,
       documents, assignments, and pending work safely.
-- [ ] US-17.2-T5: Add audit events for base/document CRUD and ingestion state
+- [x] US-17.2-T5: Add audit events for base/document CRUD and ingestion state
       transitions without retaining document content in logs.
-- [ ] US-17.2-T6: Add API/service/migration tests for ownership isolation,
+- [x] US-17.2-T6: Add API/service/migration tests for ownership isolation,
       validation, concurrent mutation/ingestion, retry, deletion, and cleanup.
       Regenerate the Hey API client.
 

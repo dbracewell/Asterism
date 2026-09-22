@@ -1,6 +1,6 @@
 "use client";
 
-import ChatInput from "@/features/chat/components/chat-input";
+import { ChatInput } from "@/features/chat/components/chat-input";
 import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { MessageFileReference } from "@/lib/client";
 import { useState } from "react";
@@ -16,7 +16,7 @@ export function FileE2EHarness() {
         size: 12, kind: filename.endsWith(".png") ? "image" : "document", status: "ready",
       })));
       setReply(`Mocked assistant reply: ${prompt}`);
-    }} status="Connected" />
+    }} />
     {files.length > 0 && <section aria-label="Persisted user message"><MessageAttachments files={files} /></section>}
     {reply && <section aria-label="Assistant reply">{reply}</section>}
   </main>;

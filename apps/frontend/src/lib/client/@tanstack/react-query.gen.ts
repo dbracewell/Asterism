@@ -4,7 +4,7 @@ import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutation
 
 import { client } from '../client.gen';
 import { ApiClient, type Options } from '../sdk.gen';
-import type { AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesError, AgentsGetSubAgentTracesResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppProviderModelsDiscoverData, AppProviderModelsDiscoverError, AppProviderModelsDiscoverResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSearchData, ChatSearchError, ChatSearchResponse, ChatSessionBulkDeleteData, ChatSessionBulkDeleteError, ChatSessionBulkDeleteResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FileDeleteData, FileDeleteError, FileDeleteResponse, FileGetManyData, FileGetManyError, FileGetManyResponse, FileUploadData, FileUploadError, FileUploadResponse, FolderChatGetManyData, FolderChatGetManyError, FolderChatGetManyResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, MessageUpdateData, MessageUpdateError, MessageUpdateResponse, ToolsGetActiveData, ToolsGetActiveError, ToolsGetActiveResponse, ToolsGetAllData, ToolsGetAllError, ToolsGetAllResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
+import type { AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesError, AgentsGetSubAgentTracesResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppProviderModelsDiscoverData, AppProviderModelsDiscoverError, AppProviderModelsDiscoverResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, ChatSearchData, ChatSearchError, ChatSearchResponse, ChatSessionBulkDeleteData, ChatSessionBulkDeleteError, ChatSessionBulkDeleteResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FileDeleteData, FileDeleteError, FileDeleteResponse, FileGetManyData, FileGetManyError, FileGetManyResponse, FileUploadData, FileUploadError, FileUploadResponse, FolderChatGetManyData, FolderChatGetManyError, FolderChatGetManyResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, GetFileData, GetFileError, GetFileResponse, KnowledgeBaseCreateData, KnowledgeBaseCreateError, KnowledgeBaseCreateResponse, KnowledgeBaseDeleteData, KnowledgeBaseDeleteError, KnowledgeBaseDeleteResponse, KnowledgeBaseGetManyData, KnowledgeBaseGetManyError, KnowledgeBaseGetManyResponse, KnowledgeBaseGetOneData, KnowledgeBaseGetOneError, KnowledgeBaseGetOneResponse, KnowledgeBaseUpdateData, KnowledgeBaseUpdateError, KnowledgeBaseUpdateResponse, KnowledgeDocumentCancelIngestionData, KnowledgeDocumentCancelIngestionError, KnowledgeDocumentCancelIngestionResponse, KnowledgeDocumentCreateData, KnowledgeDocumentCreateError, KnowledgeDocumentCreateResponse, KnowledgeDocumentCreateRevisionData, KnowledgeDocumentCreateRevisionError, KnowledgeDocumentCreateRevisionResponse, KnowledgeDocumentDeleteData, KnowledgeDocumentDeleteError, KnowledgeDocumentDeleteResponse, KnowledgeDocumentGetManyData, KnowledgeDocumentGetManyError, KnowledgeDocumentGetManyResponse, KnowledgeDocumentGetOneData, KnowledgeDocumentGetOneError, KnowledgeDocumentGetOneResponse, KnowledgeDocumentIngestData, KnowledgeDocumentIngestError, KnowledgeDocumentIngestResponse, KnowledgeDocumentReindexData, KnowledgeDocumentReindexError, KnowledgeDocumentReindexResponse, KnowledgeDocumentUpdateMetadataData, KnowledgeDocumentUpdateMetadataError, KnowledgeDocumentUpdateMetadataResponse, MessageUpdateData, MessageUpdateError, MessageUpdateResponse, ToolsGetActiveData, ToolsGetActiveError, ToolsGetActiveResponse, ToolsGetAllData, ToolsGetAllError, ToolsGetAllResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -446,6 +446,302 @@ export const folderGetOneOptions = (options: Options<FolderGetOneData>) => query
     queryKey: folderGetOneQueryKey(options)
 });
 
+export const knowledgeBaseGetManyQueryKey = (options?: Options<KnowledgeBaseGetManyData>) => createQueryKey('knowledgeBaseGetMany', options);
+
+/**
+ * List Knowledge Bases
+ */
+export const knowledgeBaseGetManyOptions = (options?: Options<KnowledgeBaseGetManyData>) => queryOptions<KnowledgeBaseGetManyResponse, KnowledgeBaseGetManyError, KnowledgeBaseGetManyResponse, ReturnType<typeof knowledgeBaseGetManyQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().knowledgeBaseGetMany({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: knowledgeBaseGetManyQueryKey(options)
+});
+
+export const knowledgeBaseGetManyInfiniteQueryKey = (options?: Options<KnowledgeBaseGetManyData>): QueryKey<Options<KnowledgeBaseGetManyData>> => createQueryKey('knowledgeBaseGetMany', options, true);
+
+/**
+ * List Knowledge Bases
+ */
+export const knowledgeBaseGetManyInfiniteOptions = (options?: Options<KnowledgeBaseGetManyData>) => infiniteQueryOptions<KnowledgeBaseGetManyResponse, KnowledgeBaseGetManyError, InfiniteData<KnowledgeBaseGetManyResponse>, QueryKey<Options<KnowledgeBaseGetManyData>>, number | Pick<QueryKey<Options<KnowledgeBaseGetManyData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<KnowledgeBaseGetManyData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().knowledgeBaseGetMany({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: knowledgeBaseGetManyInfiniteQueryKey(options)
+});
+
+/**
+ * Create Knowledge Base
+ */
+export const knowledgeBaseCreateMutation = (options?: Partial<Options<KnowledgeBaseCreateData>>): UseMutationOptions<KnowledgeBaseCreateResponse, KnowledgeBaseCreateError, Options<KnowledgeBaseCreateData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeBaseCreateResponse, KnowledgeBaseCreateError, Options<KnowledgeBaseCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeBaseCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const knowledgeDocumentGetManyQueryKey = (options: Options<KnowledgeDocumentGetManyData>) => createQueryKey('knowledgeDocumentGetMany', options);
+
+/**
+ * List Knowledge Documents
+ */
+export const knowledgeDocumentGetManyOptions = (options: Options<KnowledgeDocumentGetManyData>) => queryOptions<KnowledgeDocumentGetManyResponse, KnowledgeDocumentGetManyError, KnowledgeDocumentGetManyResponse, ReturnType<typeof knowledgeDocumentGetManyQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().knowledgeDocumentGetMany({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: knowledgeDocumentGetManyQueryKey(options)
+});
+
+export const knowledgeDocumentGetManyInfiniteQueryKey = (options: Options<KnowledgeDocumentGetManyData>): QueryKey<Options<KnowledgeDocumentGetManyData>> => createQueryKey('knowledgeDocumentGetMany', options, true);
+
+/**
+ * List Knowledge Documents
+ */
+export const knowledgeDocumentGetManyInfiniteOptions = (options: Options<KnowledgeDocumentGetManyData>) => infiniteQueryOptions<KnowledgeDocumentGetManyResponse, KnowledgeDocumentGetManyError, InfiniteData<KnowledgeDocumentGetManyResponse>, QueryKey<Options<KnowledgeDocumentGetManyData>>, number | Pick<QueryKey<Options<KnowledgeDocumentGetManyData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<KnowledgeDocumentGetManyData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().knowledgeDocumentGetMany({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: knowledgeDocumentGetManyInfiniteQueryKey(options)
+});
+
+/**
+ * Add Knowledge Document
+ */
+export const knowledgeDocumentCreateMutation = (options?: Partial<Options<KnowledgeDocumentCreateData>>): UseMutationOptions<KnowledgeDocumentCreateResponse, KnowledgeDocumentCreateError, Options<KnowledgeDocumentCreateData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeDocumentCreateResponse, KnowledgeDocumentCreateError, Options<KnowledgeDocumentCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeDocumentCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Create Knowledge Document Revision
+ */
+export const knowledgeDocumentCreateRevisionMutation = (options?: Partial<Options<KnowledgeDocumentCreateRevisionData>>): UseMutationOptions<KnowledgeDocumentCreateRevisionResponse, KnowledgeDocumentCreateRevisionError, Options<KnowledgeDocumentCreateRevisionData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeDocumentCreateRevisionResponse, KnowledgeDocumentCreateRevisionError, Options<KnowledgeDocumentCreateRevisionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeDocumentCreateRevision({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete Knowledge Document
+ */
+export const knowledgeDocumentDeleteMutation = (options?: Partial<Options<KnowledgeDocumentDeleteData>>): UseMutationOptions<KnowledgeDocumentDeleteResponse, KnowledgeDocumentDeleteError, Options<KnowledgeDocumentDeleteData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeDocumentDeleteResponse, KnowledgeDocumentDeleteError, Options<KnowledgeDocumentDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeDocumentDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const knowledgeDocumentGetOneQueryKey = (options: Options<KnowledgeDocumentGetOneData>) => createQueryKey('knowledgeDocumentGetOne', options);
+
+/**
+ * Get Knowledge Document
+ */
+export const knowledgeDocumentGetOneOptions = (options: Options<KnowledgeDocumentGetOneData>) => queryOptions<KnowledgeDocumentGetOneResponse, KnowledgeDocumentGetOneError, KnowledgeDocumentGetOneResponse, ReturnType<typeof knowledgeDocumentGetOneQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().knowledgeDocumentGetOne({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: knowledgeDocumentGetOneQueryKey(options)
+});
+
+/**
+ * Update Knowledge Document Metadata
+ */
+export const knowledgeDocumentUpdateMetadataMutation = (options?: Partial<Options<KnowledgeDocumentUpdateMetadataData>>): UseMutationOptions<KnowledgeDocumentUpdateMetadataResponse, KnowledgeDocumentUpdateMetadataError, Options<KnowledgeDocumentUpdateMetadataData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeDocumentUpdateMetadataResponse, KnowledgeDocumentUpdateMetadataError, Options<KnowledgeDocumentUpdateMetadataData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeDocumentUpdateMetadata({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ingest Knowledge Document
+ */
+export const knowledgeDocumentIngestMutation = (options?: Partial<Options<KnowledgeDocumentIngestData>>): UseMutationOptions<KnowledgeDocumentIngestResponse, KnowledgeDocumentIngestError, Options<KnowledgeDocumentIngestData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeDocumentIngestResponse, KnowledgeDocumentIngestError, Options<KnowledgeDocumentIngestData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeDocumentIngest({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Reindex Knowledge Document
+ */
+export const knowledgeDocumentReindexMutation = (options?: Partial<Options<KnowledgeDocumentReindexData>>): UseMutationOptions<KnowledgeDocumentReindexResponse, KnowledgeDocumentReindexError, Options<KnowledgeDocumentReindexData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeDocumentReindexResponse, KnowledgeDocumentReindexError, Options<KnowledgeDocumentReindexData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeDocumentReindex({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Cancel Knowledge Document Ingestion
+ */
+export const knowledgeDocumentCancelIngestionMutation = (options?: Partial<Options<KnowledgeDocumentCancelIngestionData>>): UseMutationOptions<KnowledgeDocumentCancelIngestionResponse, KnowledgeDocumentCancelIngestionError, Options<KnowledgeDocumentCancelIngestionData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeDocumentCancelIngestionResponse, KnowledgeDocumentCancelIngestionError, Options<KnowledgeDocumentCancelIngestionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeDocumentCancelIngestion({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete Knowledge Base
+ */
+export const knowledgeBaseDeleteMutation = (options?: Partial<Options<KnowledgeBaseDeleteData>>): UseMutationOptions<KnowledgeBaseDeleteResponse, KnowledgeBaseDeleteError, Options<KnowledgeBaseDeleteData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeBaseDeleteResponse, KnowledgeBaseDeleteError, Options<KnowledgeBaseDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeBaseDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const knowledgeBaseGetOneQueryKey = (options: Options<KnowledgeBaseGetOneData>) => createQueryKey('knowledgeBaseGetOne', options);
+
+/**
+ * Get Knowledge Base
+ */
+export const knowledgeBaseGetOneOptions = (options: Options<KnowledgeBaseGetOneData>) => queryOptions<KnowledgeBaseGetOneResponse, KnowledgeBaseGetOneError, KnowledgeBaseGetOneResponse, ReturnType<typeof knowledgeBaseGetOneQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().knowledgeBaseGetOne({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: knowledgeBaseGetOneQueryKey(options)
+});
+
+/**
+ * Update Knowledge Base
+ */
+export const knowledgeBaseUpdateMutation = (options?: Partial<Options<KnowledgeBaseUpdateData>>): UseMutationOptions<KnowledgeBaseUpdateResponse, KnowledgeBaseUpdateError, Options<KnowledgeBaseUpdateData>> => {
+    const mutationOptions: UseMutationOptions<KnowledgeBaseUpdateResponse, KnowledgeBaseUpdateError, Options<KnowledgeBaseUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().knowledgeBaseUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const userSettingsGetQueryKey = (options?: Options<UserSettingsGetData>) => createQueryKey('userSettingsGet', options);
 
 /**
@@ -602,7 +898,7 @@ export const appSettingUpdateMutation = (options?: Partial<Options<AppSettingUpd
 };
 
 /**
- * Create User
+ * Create a new user with a given user ID
  */
 export const userCreateUserMutation = (options?: Partial<Options<UserCreateUserData>>): UseMutationOptions<UserCreateUserResponse, UserCreateUserError, Options<UserCreateUserData>> => {
     const mutationOptions: UseMutationOptions<UserCreateUserResponse, UserCreateUserError, Options<UserCreateUserData>> = {
