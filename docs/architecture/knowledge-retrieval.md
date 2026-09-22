@@ -1,12 +1,17 @@
-# Knowledge Retrieval Storage and Embedding Foundation
+# Knowledge Retrieval and Image Captioning
 
-EPIC-17 uses separate stores for private knowledge retrieval:
+The knowledge subsystem uses separate stores for private retrieval and its
+locally provisioned model artifacts. The current captioning scope is the
+US-18.1 runtime foundation only: it does not yet persist caption configuration
+or revision metadata, run caption jobs, index caption text, or expose caption
+review UI. Those additions remain explicitly bounded to later Epic 18 stories.
 
 | Data | Owner | Storage |
 | --- | --- | --- |
-| Knowledge-base/document metadata, state, and later agent assignments | Relational database | SQLite through the existing SQLAlchemy/migration path |
+| Knowledge-base/document metadata, state, and agent assignments | Relational database | SQLite through the existing SQLAlchemy/migration path |
 | Chunk content, provenance IDs, and vectors | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb` |
 | Pinned local embedding model and tokenizer/processor assets | Operator | `STORAGE_ROOT/models/knowledge-clip` |
+| Pinned local caption bundle and its integrity manifest | Admin or operator | `STORAGE_ROOT/models/captioning-smolvlm2` |
 
 `knowledge_chunks` is one LanceDB table. Every row includes `user_id` and
 `knowledge_base_id`; every retrieval query applies both filters before the
@@ -112,10 +117,18 @@ one unless the deployment is independently benchmarked.
 `MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS` and
 `MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS` both default to 2 and are validated
 between 1 and 16. Blocking ONNX and LanceDB calls run in worker threads behind
-those semaphores. `init_system` opens LanceDB; FastAPI shutdown drops runtime
-references and closes the vector-store service before the database engine closes.
-Ingestion work, document limits, retries, and rebuild orchestration are defined
-in US-17.2; no unbounded ingestion registry is introduced by this foundation.
+those semaphores. `MAX_CONCURRENT_LOCAL_CAPTIONS` defaults to 1 and is validated
+from 1 through 4; its CPU-only provider has a separate semaphore. The caption
+bundle is never fetched during initialization or inference. The admin download
+service permits only one in-flight download, exposes safe status/progress,
+supports cancellation/retry, and validates the pinned manifest before reporting
+an existing bundle ready.
+
+`init_system` opens LanceDB; FastAPI shutdown cancels caption downloads, releases
+caption/embedding runtime references, closes the vector-store service, then
+closes the database engine. Ingestion work, document limits, retries, and rebuild
+orchestration are defined in US-17.2; no unbounded ingestion registry is
+introduced by this foundation.
 
 For a vector schema/version migration, create a new LanceDB table/version,
 re-embed from the relational document revisions, validate counts and retrieval,
@@ -126,8 +139,11 @@ on `Base.metadata.create_all` for relational upgrades.
 ## Operations, limits, and security
 
 Back up `STORAGE_ROOT` together with the relational database. In particular,
-preserve `knowledge/lancedb`, `models/knowledge-clip`, and uploaded source
-files; LanceDB vectors alone cannot recreate the immutable document revisions.
+preserve `knowledge/lancedb`, `models/knowledge-clip`,
+`models/captioning-smolvlm2`, and uploaded source files; LanceDB vectors alone
+cannot recreate the immutable document revisions. The caption bundle is
+reprovisionable from its pinned revision, but preserve its manifest/checksum so
+an operator can verify the restored bundle before enabling local mode.
 To rebuild a damaged or upgraded index, stop ingestion, retain the old LanceDB
 directory as a rollback copy, create the new table/version, re-ingest the ready
 relational document revisions, validate document/chunk counts and representative
