@@ -1,7 +1,6 @@
 """Local, pinned multimodal embedding providers without model remote code."""
 
 import asyncio
-import hashlib
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol
@@ -10,6 +9,8 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 from transformers import CLIPImageProcessorPil, CLIPTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
+
+from asterism.common.hashing import sha256_file
 
 
 class EmbeddingProviderError(RuntimeError):
@@ -62,11 +63,7 @@ class OnnxClipEmbeddingProvider:
             raise EmbeddingProviderError(f"Knowledge embedding artifact is missing: {path}")
         if path.stat().st_size != self._artifact_size_bytes:
             raise EmbeddingProviderError("Knowledge embedding artifact has an unexpected size")
-        digest = hashlib.sha256()
-        with path.open("rb") as artifact:
-            for block in iter(lambda: artifact.read(1024 * 1024), b""):
-                digest.update(block)
-        if digest.hexdigest() != self._artifact_sha256:
+        if sha256_file(path) != self._artifact_sha256:
             raise EmbeddingProviderError("Knowledge embedding artifact checksum verification failed")
 
     def _initialize_sync(self) -> None:

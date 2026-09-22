@@ -4,6 +4,7 @@ from pydantic import JsonValue
 import asterism.domains.settings.service as settings_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
+from asterism.domains.knowledge.captioning import CaptionModelStatus
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from .discovery import (
@@ -191,3 +192,80 @@ async def bulk_update_app_settings(
         updates=updates,
         session=session,
     )
+
+
+# ---------------------------------------------------------------------------
+# Local caption model download (admin only)
+# ---------------------------------------------------------------------------
+
+
+@settings_router.get(
+    "/app/caption-model/status",
+    response_model=dict,
+    response_model=CaptionModelStatus,
+    operation_id="appCaptionModelStatus",
+    summary="Get local caption model download/readiness status",
+)
+async def get_caption_model_status(
+    user: AdminUserDep,
+) -> dict:
+) -> CaptionModelStatus:
+    from asterism.domains.knowledge.runtime import caption_model_download
+
+    status = caption_model_download.status()
+    return _caption_model_status_dict(status)
+    return caption_model_download.status()
+
+
+@settings_router.post(
+    "/app/caption-model/download",
+    response_model=dict,
+    response_model=CaptionModelStatus,
+    operation_id="appCaptionModelDownload",
+    summary="Start downloading the local caption model",
+    status_code=202,
+    responses={
+        409: {"description": "Download already in progress", "model": ErrorDetail},
+    },
+)
+async def start_caption_model_download(
+    user: AdminUserDep,
+) -> dict:
+) -> CaptionModelStatus:
+    from asterism.domains.knowledge.runtime import caption_model_download
+
+    try:
+        status = await caption_model_download.start_download()
+        return await caption_model_download.start_download()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _caption_model_status_dict(status)
+
+
+@settings_router.post(
+    "/app/caption-model/cancel",
+    response_model=dict,
+    response_model=CaptionModelStatus,
+    operation_id="appCaptionModelCancel",
+    summary="Cancel an active local caption model download",
+)
+async def cancel_caption_model_download(
+    user: AdminUserDep,
+) -> dict:
+) -> CaptionModelStatus:
+    from asterism.domains.knowledge.runtime import caption_model_download
+
+    status = await caption_model_download.cancel_download()
+    return _caption_model_status_dict(status)
+
+
+def _caption_model_status_dict(status: object) -> dict:
+    """Convert a CaptionModelStatus to a plain dict for the JSON response."""
+    from dataclasses import asdict
+
+    from asterism.domains.knowledge.captioning import CaptionModelStatus
+
+    if isinstance(status, CaptionModelStatus):
+        return asdict(status)
+    return {}
+    return await caption_model_download.cancel_download()

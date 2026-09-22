@@ -42,6 +42,56 @@ Startup creates/opens LanceDB but does not load the model. The model is checked
 for its exact configured size and SHA-256 only on first embedding request; a
 missing/corrupt model fails that operation without making a network request.
 
+## Local image-captioning provisioning and benchmark
+
+Image captioning is disabled unless an administrator selects a provider model or
+local mode. A provider selection must be active and have provider/catalog-derived
+vision capability; manually asserted or unknown vision metadata is insufficient.
+The local adapter is CPU-only and never downloads a model during initialization
+or captioning. It loads with `local_files_only=True` and `trust_remote_code=False`.
+
+Operators must review and download a specific SmolVLM2 revision out of band into
+`STORAGE_ROOT/models/captioning-smolvlm2`. No unreviewed model ID or revision is
+implicitly selected by Asterism. After downloading, generate the manifest and set
+its emitted checksum in `LOCAL_CAPTION_MODEL_BUNDLE_SHA256`:
+For local mode, Asterism supports two provisioning paths:
+
+1. **Admin-initiated download:** An administrator triggers `POST /api/py/settings/app/caption-model/download`
+   from the configuration UI. A background task downloads the pinned, reviewed
+   SmolVLM2 revision (`HuggingFaceTB/SmolVLM2-256M-Video-Instruct`), builds the
+   integrity manifest, and activates the local runtime once verified.
+2. **Manual operator provisioning:** Operators may download the bundle out of band into
+   `STORAGE_ROOT/models/captioning-smolvlm2` and generate the manifest:
+
+```bash
+cd apps/backend
+uv run python scripts/provision_local_caption_bundle.py \
+  --model-root /storage/models/captioning-smolvlm2 \
+  --model-id HuggingFaceTB/SmolVLM2-256M-Instruct --revision <reviewed-revision>
+  --model-id HuggingFaceTB/SmolVLM2-256M-Video-Instruct --revision <reviewed-revision>
+```
+
+The manifest hashes every regular bundle file. Missing, modified, external, or
+malformed artifacts leave local captioning unavailable with a safe readiness
+error; no request makes a network call. Keep the model bundle backed up alongside
+error; caption requests never make a network call. Keep the model bundle backed up alongside
+knowledge files and the relational database.
+
+Before enabling local mode in production, benchmark every supported CPU target:
+
+```bash
+uv run python scripts/benchmark_local_captioning.py \
+  --model-root /storage/models/captioning-smolvlm2 \
+  --bundle-sha256 <manifest-sha256> --concurrency 1 \
+  --output caption-benchmark-$(uname -s)-$(uname -m).json
+```
+
+The record includes disk size, cold initialization/caption latency, warm latency,
+concurrent elapsed time, peak RSS, and generated fixture captions for manual
+quality review. Record macOS and Linux results before approving a deployment.
+Until those measurements exist, run one local caption at a time and reserve at
+least 4 GiB process RSS; do not enable local mode on memory-constrained hosts.
+
 ## Bounds and lifecycle
 
 `MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS` and

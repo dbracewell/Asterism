@@ -417,14 +417,15 @@ Order: US-18.1 → US-18.2 → US-18.3. Work on one item at a time; create a fea
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
 - [~] US-18.1 — Establish captioning contracts and local runtime foundation
-  - [ ] US-18.1-T1: Define caption-provider contracts, records, errors, configuration, and selection validation.
-  - [ ] US-18.1-T2: Add pinned local SmolVLM2 CPU adapter with offline artifact verification and bounded concurrency.
+  - [x] US-18.1-T1: Define caption-provider contracts, records, errors, configuration, and selection validation.
+  - [x] US-18.1-T2: Add pinned local SmolVLM2 CPU adapter with offline artifact verification and bounded concurrency.
   - [ ] US-18.1-T3: Benchmark macOS/Linux CPU resource use and caption quality; document hardware guidance.
-  - [ ] US-18.1-T4: Add provider/local lifecycle, bounds, and failure tests.
+  - [x] US-18.1-T4: Add bounded admin-initiated model download API with progress, integrity verification, cancellation, and retry.
+  - [x] US-18.1-T5: Add provider/local lifecycle, bounds, and failure tests.
 
 - [ ] US-18.2 — Add admin configuration and revision-safe caption generation
   - [ ] US-18.2-T1: Add migration-backed caption configuration and revision metadata.
-  - [ ] US-18.2-T2: Add admin selection API/UI for disabled, provider, and local modes.
+  - [ ] US-18.2-T2: Add admin selection API/UI for disabled, provider, and local modes with download button, progress, and readiness display.
   - [ ] US-18.2-T3: Implement safe bounded caption jobs.
   - [ ] US-18.2-T4: Add accepted-caption vector indexing while retaining image vectors.
   - [ ] US-18.2-T5: Test boundaries and regenerate the API client.

@@ -98,6 +98,15 @@ class Config(BaseSettings):
     max_concurrent_knowledge_ingestions: int = 2
     """Maximum document ingestion jobs running at once."""
 
+    local_caption_model_bundle_sha256: str = ""
+    """SHA-256 of the explicitly provisioned local SmolVLM2 manifest; empty means unavailable."""
+
+    max_concurrent_local_captions: int = 1
+    """Maximum simultaneous CPU-only local image caption inferences."""
+
+    max_caption_chars: int = 2_000
+    """Maximum characters retained from a generated image caption."""
+
     max_knowledge_chunks_per_document: int = 200
     """Maximum indexed chunks produced by a document revision."""
 
@@ -209,6 +218,15 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS must be from 1 to 16")
         if not 1 <= self.max_concurrent_knowledge_ingestions <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_INGESTIONS must be from 1 to 16")
+        if self.local_caption_model_bundle_sha256 and (
+            len(self.local_caption_model_bundle_sha256) != 64
+            or any(char not in "0123456789abcdef" for char in self.local_caption_model_bundle_sha256.lower())
+        ):
+            raise ConfigValidationError("LOCAL_CAPTION_MODEL_BUNDLE_SHA256 must be empty or a SHA-256 hex digest")
+        if not 1 <= self.max_concurrent_local_captions <= 4:
+            raise ConfigValidationError("MAX_CONCURRENT_LOCAL_CAPTIONS must be from 1 to 4")
+        if not 1 <= self.max_caption_chars <= 10_000:
+            raise ConfigValidationError("MAX_CAPTION_CHARS must be from 1 to 10000")
         if not 1 <= self.max_knowledge_chunks_per_document <= 10_000:
             raise ConfigValidationError("MAX_KNOWLEDGE_CHUNKS_PER_DOCUMENT must be from 1 to 10000")
         if not 1 <= self.knowledge_chunk_size_chars <= self.max_converted_chars:
@@ -235,6 +253,7 @@ class Config(BaseSettings):
         self.files_root.mkdir(exist_ok=True, parents=True)
         self.knowledge_root.mkdir(exist_ok=True, parents=True)
         self.knowledge_models_root.mkdir(exist_ok=True, parents=True)
+        self.local_caption_models_root.mkdir(exist_ok=True, parents=True)
 
     @property
     def jwt_issuer(self) -> str:
@@ -267,6 +286,11 @@ class Config(BaseSettings):
     @property
     def knowledge_models_root(self) -> Path:
         return self.storage_root / "models" / "knowledge-clip"
+
+    @computed_field
+    @property
+    def local_caption_models_root(self) -> Path:
+        return self.storage_root / "models" / "captioning-smolvlm2"
 
     def get_user_file(self, user_id: str, filename: str) -> Path:
         files_dir = self.files_root / user_id / filename
