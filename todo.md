@@ -433,5 +433,5 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 - [~] US-18.3 — Build reviewable caption UI and retrieval presentation
   - [x] US-18.3-T1: Add image caption generate/review/edit/accept/clear UI.
   - [x] US-18.3-T2: Distinguish caption and visual-match retrieval excerpts.
-  - [~] US-18.3-T3: Add backend/frontend/Playwright coverage.
+  - [x] US-18.3-T3: Add backend/frontend/Playwright coverage.
   - [x] US-18.3-T4: Document provisioning, privacy, recovery, and operations.

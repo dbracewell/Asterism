@@ -111,7 +111,7 @@ knowledge produces understandable search results.
       editable draft, accept, clear, and error states to knowledge-base detail.
 - [x] US-18.3-T2: Clearly distinguish visual image matching from accepted caption
       text in bounded `search_knowledge` excerpts and provenance.
-- [~] US-18.3-T3: Add frontend, backend, and Playwright tests for disabled,
+- [x] US-18.3-T3: Add frontend, backend, and Playwright tests for disabled,
       provider/local configuration, review/edit/accept, error, and retrieval
       flows.
 - [x] US-18.3-T4: Document local provisioning, CPU memory/latency benchmark,
