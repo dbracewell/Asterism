@@ -9,7 +9,7 @@ runtime. Captions supplement—not replace—the existing CLIP image embedding,
 so images remain searchable visually and their descriptions become useful
 retrieval excerpts.
 
-**Status: US-18.1 and US-18.2 complete; US-18.3 in progress.**
+**Status: Complete — US-18.1 through US-18.3 verified and user-confirmed.**
 
 ## Product decisions
 
@@ -100,7 +100,7 @@ attached safely to image revisions.
 - A failed caption never replaces an accepted caption or image vector.
 - Provider images are sent only to the admin-selected vision model.
 
-### US-18.3 — Build reviewable caption UI and retrieval presentation
+### US-18.3 — Build reviewable caption UI and retrieval presentation (complete)
 
 **As a user**, I want to generate and review image descriptions so that image
 knowledge produces understandable search results.

@@ -412,7 +412,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-18 — Image Captioning for Knowledge
 
 Plan: [EPIC-18](docs/epics/EPIC-18-IMAGE-CAPTIONING-FOR-KNOWLEDGE.md).
-Status: US-18.1 and US-18.2 complete and merged; US-18.3 in progress.
+Status: Completed — US-18.1 through US-18.3 verified and user-confirmed; US-18.3 ready to merge.
 Order: US-18.1 → US-18.2 → US-18.3. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -430,8 +430,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-18.2-T4: Add accepted-caption vector indexing while retaining image vectors.
   - [x] US-18.2-T5: Test boundaries and regenerate the API client.
 
-- [~] US-18.3 — Build reviewable caption UI and retrieval presentation
+- [x] US-18.3 — Build reviewable caption UI and retrieval presentation (user-confirmed; ready to merge)
   - [x] US-18.3-T1: Add image caption generate/review/edit/accept/clear UI.
   - [x] US-18.3-T2: Distinguish caption and visual-match retrieval excerpts.
   - [x] US-18.3-T3: Add backend/frontend/Playwright coverage.
   - [x] US-18.3-T4: Document provisioning, privacy, recovery, and operations.
+
+### Epic closure
+
+- [x] Re-verify all story acceptance criteria; user confirmed completion.
+- [x] Merge the final story branch and announce epic completion.
