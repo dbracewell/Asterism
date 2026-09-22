@@ -7,7 +7,7 @@ indexed documents), assign zero or more of them to each agent, and let an agent
 search only its assigned knowledge during a chat. Retrieval must support both
 text and image document content using a local, cross-platform embedding runtime.
 
-**Status: US-17.1 and US-17.2 completed, user-confirmed, and merged; US-17.3 implemented and awaiting user confirmation.**
+**Status: US-17.1 through US-17.4 completed, user-confirmed, and merged; US-17.5 in progress.**
 
 ## Scope and decisions
 
@@ -176,21 +176,21 @@ an approval prompt, while unassigned agents cannot access it.
 
 **Dependencies:** US-17.3.
 
-- [ ] US-17.4-T1: Implement `search_knowledge` as a built-in runtime tool with
+- [x] US-17.4-T1: Implement `search_knowledge` as a built-in runtime tool with
       validated query and bounded `top_k`/result bytes. Resolve active agent
       assignments once per execution and query only ready assigned bases using
       owner/base filters.
-- [ ] US-17.4-T2: Dynamically include the tool schema only for agents with one
+- [x] US-17.4-T2: Dynamically include the tool schema only for agents with one
       or more eligible assigned bases. Add a dedicated automatic-authorization
       path that cannot be overridden by chat runtime tool preferences and does
       not grant any other tool.
-- [ ] US-17.4-T3: Return structured excerpts with base/document/revision/chunk
+- [x] US-17.4-T3: Return structured excerpts with base/document/revision/chunk
       provenance suitable for later citations, stable score ordering, and safe
       no-results/failure messages. Do not return full files or unbounded chunks.
-- [ ] US-17.4-T4: Add execution/audit traces containing safe identifiers, result
+- [x] US-17.4-T4: Add execution/audit traces containing safe identifiers, result
       counts, duration, and model/index versions; never log query or document
       text by default.
-- [ ] US-17.4-T5: Test offered/not-offered behavior, automatic approval,
+- [x] US-17.4-T5: Test offered/not-offered behavior, automatic approval,
       zero/many assignments, strict user/base filtering, stale/deleted base
       handling, context limits, and injection-like document content.
 

@@ -57,7 +57,12 @@ class Agent:
         self.session: Chat = session
         self.logger: Logger = logger or get_logger("Agent")
         self._client: LLMClientProtocol | None = None
-        self.allowed_tools: list[str] = allowed_tools if allowed_tools is not None else config.default_allowed_tools
+        self._knowledge_search_enabled = bool(profile.knowledge_bases)
+        configured_tools = allowed_tools if allowed_tools is not None else config.default_allowed_tools
+        self.allowed_tools: list[str] = [
+            *configured_tools,
+            *(["search_knowledge"] if self._knowledge_search_enabled else []),
+        ]
         self._approval_policy: ToolApprovalPolicy = approval_policy or AllowlistApprovalPolicy()
         self.event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = event_sink
         self.user_files: list[str] = list(user_files) if user_files else []
@@ -177,7 +182,10 @@ class Agent:
             # steps to respond to them
             tools: list[str] | None = []
             if step + 1 < self.max_steps:
-                tools = self.profile.tools
+                tools = [
+                    *(self.profile.tools or []),
+                    *(["search_knowledge"] if self._knowledge_search_enabled else []),
+                ]
 
             async for event in client.chat(
                 messages=messages,

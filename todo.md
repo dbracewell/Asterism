@@ -389,18 +389,18 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-17.2-T5: Add safe audit events for CRUD and ingestion transitions.
   - [x] US-17.2-T6: Test ownership, mutations, ingestion/retry/deletion, migrations; regenerated Hey API client.
 
-- [~] US-17.3 — Assign knowledge bases to agents
+- [x] US-17.3 — Assign knowledge bases to agents (user-confirmed and merged)
   - [x] US-17.3-T1: Add ownership-safe agent-to-knowledge-base associations.
   - [x] US-17.3-T2: Add typed zero-or-more assignment APIs with validation.
   - [x] US-17.3-T3: Include assignment summaries in agent APIs without metadata leakage.
   - [x] US-17.3-T4: Test ownership, duplicate/delete races, empty/many/legacy assignments; regenerated Hey API client.
 
-- [ ] US-17.4 — Expose safe automatic knowledge search to the agent runtime
-  - [ ] US-17.4-T1: Implement bounded, assigned-base-filtered `search_knowledge` with provenance.
-  - [ ] US-17.4-T2: Offer it only to eligible assigned agents and automatically authorize only this tool.
-  - [ ] US-17.4-T3: Return bounded excerpts, stable scores, provenance, and safe no-result/failure responses.
-  - [ ] US-17.4-T4: Add safe execution/audit traces.
-  - [ ] US-17.4-T5: Test availability, authorization, filtering, stale bases, limits, and document injection content.
+- [~] US-17.4 — Expose safe automatic knowledge search to the agent runtime
+  - [x] US-17.4-T1: Implement bounded, assigned-base-filtered `search_knowledge` with provenance.
+  - [x] US-17.4-T2: Offer it only to eligible assigned agents and automatically authorize only this tool.
+  - [x] US-17.4-T3: Return bounded excerpts, stable scores, provenance, and safe no-result/failure responses.
+  - [x] US-17.4-T4: Add safe execution/audit traces.
+  - [x] US-17.4-T5: Test availability, authorization, filtering, stale bases, limits, and document injection content.
 
 - [ ] US-17.5 — Build the knowledge-base and agent-assignment UI
   - [ ] US-17.5-T1: Add generated-client knowledge-base CRUD UI.
