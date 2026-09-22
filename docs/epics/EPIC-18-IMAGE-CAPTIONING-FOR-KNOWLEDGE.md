@@ -9,7 +9,7 @@ runtime. Captions supplement—not replace—the existing CLIP image embedding,
 so images remain searchable visually and their descriptions become useful
 retrieval excerpts.
 
-**Status: US-18.1 in progress.**
+**Status: US-18.1 complete; US-18.2 pending.**
 
 ## Product decisions
 
@@ -41,7 +41,7 @@ retrieval excerpts.
 
 ## User stories
 
-### US-18.1 — Establish captioning contracts and local runtime foundation (in progress)
+### US-18.1 — Establish captioning contracts and local runtime foundation (complete)
 
 **As an operator**, I want a replaceable, bounded image-captioning foundation
 so that provider and local caption generation are safe and observable.
@@ -52,10 +52,9 @@ so that provider and local caption generation are safe and observable.
 - [x] US-18.1-T2: Add a pinned local SmolVLM2 adapter with integrity checks,
       CPU-only execution, no remote code, bounded concurrency, and clear
       readiness failures.
-- [ ] US-18.1-T3: Benchmark local SmolVLM2 on supported macOS/Linux CPU targets
+- [x] US-18.1-T3: Benchmark local SmolVLM2 on supported macOS/Linux CPU targets
       for artifact size, cold/warm latency, peak RSS, caption quality, and
       concurrency; record the deployment threshold and hardware guidance.
-- [ ] US-18.1-T4: Add a bounded admin-initiated model download API that fetches
 - [x] US-18.1-T4: Add a bounded admin-initiated model download API that fetches
       the pinned SmolVLM2 revision to the local cache with progress reporting,
       integrity verification on completion, cancellation support, and safe

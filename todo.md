@@ -412,14 +412,14 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-18 — Image Captioning for Knowledge
 
 Plan: [EPIC-18](docs/epics/EPIC-18-IMAGE-CAPTIONING-FOR-KNOWLEDGE.md).
-Status: US-18.1 in progress.
+Status: US-18.1 complete; US-18.2 pending.
 Order: US-18.1 → US-18.2 → US-18.3. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
-- [~] US-18.1 — Establish captioning contracts and local runtime foundation
+- [x] US-18.1 — Establish captioning contracts and local runtime foundation
   - [x] US-18.1-T1: Define caption-provider contracts, records, errors, configuration, and selection validation.
   - [x] US-18.1-T2: Add pinned local SmolVLM2 CPU adapter with offline artifact verification and bounded concurrency.
-  - [ ] US-18.1-T3: Benchmark macOS/Linux CPU resource use and caption quality; document hardware guidance.
+  - [x] US-18.1-T3: Benchmark macOS/Linux CPU resource use and caption quality; document hardware guidance.
   - [x] US-18.1-T4: Add bounded admin-initiated model download API with progress, integrity verification, cancellation, and retry.
   - [x] US-18.1-T5: Add provider/local lifecycle, bounds, and failure tests.
 

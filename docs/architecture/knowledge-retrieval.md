@@ -52,9 +52,7 @@ or captioning. It loads with `local_files_only=True` and `trust_remote_code=Fals
 
 Operators must review and download a specific SmolVLM2 revision out of band into
 `STORAGE_ROOT/models/captioning-smolvlm2`. No unreviewed model ID or revision is
-implicitly selected by Asterism. After downloading, generate the manifest and set
-its emitted checksum in `LOCAL_CAPTION_MODEL_BUNDLE_SHA256`:
-For local mode, Asterism supports two provisioning paths:
+implicitly selected by Asterism. For local mode, Asterism supports two provisioning paths:
 
 1. **Admin-initiated download:** An administrator triggers `POST /api/py/settings/app/caption-model/download`
    from the configuration UI. A background task downloads the pinned, reviewed
@@ -67,15 +65,15 @@ For local mode, Asterism supports two provisioning paths:
 cd apps/backend
 uv run python scripts/provision_local_caption_bundle.py \
   --model-root /storage/models/captioning-smolvlm2 \
-  --model-id HuggingFaceTB/SmolVLM2-256M-Instruct --revision <reviewed-revision>
-  --model-id HuggingFaceTB/SmolVLM2-256M-Video-Instruct --revision <reviewed-revision>
+  --model-id HuggingFaceTB/SmolVLM2-256M-Video-Instruct \
+  --revision 067788b187b95ebe7b2e040b3e4299e342e5b8fd
 ```
 
-The manifest hashes every regular bundle file. Missing, modified, external, or
-malformed artifacts leave local captioning unavailable with a safe readiness
-error; no request makes a network call. Keep the model bundle backed up alongside
-error; caption requests never make a network call. Keep the model bundle backed up alongside
-knowledge files and the relational database.
+The manifest hashes every regular bundle file. Set its emitted checksum in
+`LOCAL_CAPTION_MODEL_BUNDLE_SHA256` for manual provisioning. Missing, modified,
+external, or malformed artifacts leave local captioning unavailable with a safe
+readiness error; caption requests never make a network call. Keep the model
+bundle backed up alongside knowledge files and the relational database.
 
 Before enabling local mode in production, benchmark every supported CPU target:
 
@@ -88,9 +86,26 @@ uv run python scripts/benchmark_local_captioning.py \
 
 The record includes disk size, cold initialization/caption latency, warm latency,
 concurrent elapsed time, peak RSS, and generated fixture captions for manual
-quality review. Record macOS and Linux results before approving a deployment.
-Until those measurements exist, run one local caption at a time and reserve at
-least 4 GiB process RSS; do not enable local mode on memory-constrained hosts.
+quality review.
+
+### SmolVLM2 CPU benchmark record
+
+The pinned bundle was benchmarked on 2026-09-22 with Python 3.13, Torch 2.13,
+Transformers 5.14.1, `torchvision` 0.28, and `num2words` 0.5.14. The fixture is
+a generated 224px red square. Its returned caption accurately identifies the
+red, otherwise-empty image. Each value is one run; the Linux container shares
+the Apple M5 Max host but is a separate Linux arm64 runtime.
+
+| Target | Bundle | Initialize | Cold caption | Warm caption | 2 concurrent captions | Peak RSS (1 / 2) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| macOS arm64, Apple M5 Max | 983 MiB | 2.66 s | 3.98 s | 3.78 s | 6.56 s | 2.53 / 3.72 GiB |
+| Linux arm64, Docker/Colima on same host | 983 MiB | 2.65 s | 11.94 s | 11.86 s | 26.66 s | 2.56 / 3.38 GiB |
+
+**Deployment threshold:** local mode defaults to one concurrent caption and
+requires at least 4 GiB process RSS headroom. Do not enable it on
+memory-constrained hosts. Two concurrent captions do not improve throughput on
+the measured targets and increase RSS substantially, so retain the default of
+one unless the deployment is independently benchmarked.
 
 ## Bounds and lifecycle
 

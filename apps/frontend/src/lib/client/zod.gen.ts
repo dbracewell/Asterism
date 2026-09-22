@@ -122,6 +122,30 @@ export const zCreateUserRequest = z.object({
 });
 
 /**
+ * DownloadStatus
+ */
+export const zDownloadStatus = z.enum([
+    'idle',
+    'downloading',
+    'verifying',
+    'ready',
+    'failed'
+]);
+
+/**
+ * CaptionModelStatus
+ *
+ * Admin-facing status of the local caption model download/readiness.
+ */
+export const zCaptionModelStatus = z.object({
+    status: zDownloadStatus,
+    bytes_downloaded: z.int().optional().default(0),
+    total_bytes: z.int().optional().default(0),
+    error: z.string().nullish(),
+    bundle_sha256: z.string().nullish()
+});
+
+/**
  * ErrorDetail
  */
 export const zErrorDetail = z.object({
@@ -211,7 +235,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('216a4797-c16d-4887-936b-a6b4e245ed96'),
+    id: z.uuid().optional().default('05e2a6b2-7d04-4d06-a809-9887d0036c2d'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -1070,6 +1094,21 @@ export const zAppSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zAppSettingUpdateResponse = zSetting;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelStatusResponse = zCaptionModelStatus;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelDownloadResponse = zCaptionModelStatus;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelCancelResponse = zCaptionModelStatus;
 
 export const zUserCreateUserBody = zCreateUserRequest;
 
