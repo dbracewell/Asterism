@@ -4,6 +4,7 @@ import type { Types } from "@/features/settings/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export const SettingsCard = ({
   name,
@@ -17,17 +18,32 @@ export const SettingsCard = ({
   const isMobile = useIsMobile();
   const router = useRouter();
   const pathname = usePathname();
+  const defaultSection = settings
+    .filter((setting) => setting.type === "section")
+    .find((setting) => setting.isDefault)?.value;
+  const requestedSection = settings.some(
+    (setting) => setting.type === "section" && setting.value === defaultTab,
+  )
+    ? defaultTab
+    : defaultSection;
+  const [activeSection, setActiveSection] = useState(requestedSection);
+
+  useEffect(() => {
+    setActiveSection(requestedSection);
+  }, [requestedSection]);
+
+  const selectedSetting = settings.find(
+    (setting) =>
+      setting.type === "section" && setting.value === activeSection,
+  );
 
   return (
     <Tabs
       orientation={isMobile ? "horizontal" : "vertical"}
-      defaultValue={
-        defaultTab ??
-        settings.filter((s) => s.type === "section").find((s) => s.isDefault)
-          ?.value
-      }
-      onValueChange={(v) => {
-        router.replace(`${pathname}?t=${name}&setting=${v}`);
+      value={activeSection}
+      onValueChange={(value) => {
+        setActiveSection(value);
+        router.replace(`${pathname}?t=${name}&setting=${value}`);
       }}
       className={cn(
         "flex h-full min-h-0 flex-1 overflow-clip",
@@ -65,17 +81,14 @@ export const SettingsCard = ({
           })}
         </div>
       </TabsList>
-      {settings
-        .filter((s) => s.type === "section")
-        .map((setting) => (
-          <TabsContent
-            key={setting.value}
-            value={setting.value}
-            className="hidden max-h-full min-h-0 flex-1 flex-col p-2 data-[state=active]:flex"
-          >
-            {setting.settingsPane}
-          </TabsContent>
-        ))}
+      {selectedSetting?.type === "section" && (
+        <TabsContent
+          value={selectedSetting.value}
+          className="flex max-h-full min-h-0 flex-1 flex-col p-2"
+        >
+          {selectedSetting.settingsPane}
+        </TabsContent>
+      )}
     </Tabs>
   );
 };
