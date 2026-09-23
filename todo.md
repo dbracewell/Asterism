@@ -444,7 +444,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-19 — Admin Settings Performance and Contract Split
 
 Plan: [EPIC-19](docs/epics/EPIC-19-ADMIN-SETTINGS-PERFORMANCE-AND-CONTRACT-SPLIT.md).
-Status: US-19.1 and US-19.2 completed and confirmed; US-19.3 next.
+Status: US-19.1 through US-19.3 completed and confirmed; US-19.4 next.
 Order: US-19.1 → US-19.2 → US-19.3 → US-19.4. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -460,11 +460,11 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-19.2-T3: Test selection, direct links, and no admin work on User Settings visits.
   - [x] US-19.2-T4: Profiled cold/warm navigation and documented the 30-second focused prefetch policy.
 
-- [ ] US-19.3 — Code-split admin pane implementations
-  - [ ] US-19.3-T1: Measure settings bundle and identify pane-only dependencies.
-  - [ ] US-19.3-T2: Dynamically import selected admin panes with accessible loading/error states.
-  - [ ] US-19.3-T3: Verify client/server boundaries and unchanged theme/provider writes.
-  - [ ] US-19.3-T4: Add regression coverage and record bundle/request metrics.
+- [x] US-19.3 — Code-split admin pane implementations
+  - [x] US-19.3-T1: Measured the settings bundle and identified Theme Editor/color-picker and tool-form pane-only dependencies.
+  - [x] US-19.3-T2: Dynamically import selected admin panes with accessible loading/error states.
+  - [x] US-19.3-T3: Verified client/server boundaries and unchanged theme/provider write implementations.
+  - [x] US-19.3-T4: Added regression coverage and recorded production bundle/request metrics.
 
 - [ ] US-19.4 — Replace the aggregate application-settings read contract
   - [ ] US-19.4-T1: Inventory aggregate consumers/fields and define typed focused read contracts, authorization, loading, size, and deprecation plans.
