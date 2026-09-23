@@ -2,18 +2,13 @@
 import { Spinner } from "@/components/ui/spinner";
 import { TabsContent } from "@/components/ui/tabs";
 import { getAdminSettingsSections } from "@/features/settings/ui/admin-settings";
+import { adminSettingsQueryOptions } from "@/features/settings/ui/admin-settings-query";
 import { SettingsCard } from "@/features/settings/ui/setttings-card";
-import { client } from "@/lib/api";
-import { appSettingsGetOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 export const AdminSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
-  const { data, isLoading, error } = useQuery({
-    ...appSettingsGetOptions({
-      client: client,
-    }),
-  });
+  const { data, isLoading, error } = useQuery(adminSettingsQueryOptions());
 
   const adminSettingsSections = useMemo(
     () => (data ? getAdminSettingsSections(data) : []),
@@ -25,7 +20,13 @@ export const AdminSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
   }
 
   if (error || data == null) {
-    throw error;
+    return (
+      <TabsContent value="admin" className="min-h-0 overflow-hidden">
+        <p role="alert" className="text-destructive">
+          Admin settings could not be loaded.
+        </p>
+      </TabsContent>
+    );
   }
 
   return (
