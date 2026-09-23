@@ -26,7 +26,7 @@ vi.mock("@/features/settings/ui/user-settings-tab", () => ({
 }));
 
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
-  appSettingsGetOptions: mocks.adminSettingsGet,
+  appProviderSettingsGetOptions: mocks.adminSettingsGet,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -50,7 +50,7 @@ describe("SettingsPageView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.adminSettingsGet.mockReturnValue({
-      queryKey: ["appSettingsGet"],
+      queryKey: ["appProviderSettingsGet"],
       queryFn: vi.fn().mockResolvedValue({}),
     });
     mocks.role = "admin";

@@ -27,7 +27,9 @@ from .schemas import (
     LlmDisplayInfo,
     LlmWithProvider,
     Provider,
+    ProviderSettings,
     Setting,
+    ToolSettings,
     UserSettings,
 )
 
@@ -205,6 +207,99 @@ async def _validate_default_main_agent(
 # ------------------------------------------------------------------
 # Application settings
 # ------------------------------------------------------------------
+
+
+_TOOL_SETTINGS_KEYS = (
+    "active_tools",
+    "web_search_provider",
+    "image_search_provider",
+)
+
+
+async def get_provider_settings(
+    session: AsyncSession | None = None,
+) -> ProviderSettings:
+    async with get_async_db_session(session) as session:
+        providers_stmt = select(ProviderModel).options(
+            selectinload(ProviderModel.models),
+        )
+        providers = list((await session.scalars(providers_stmt)).all())
+        draft_model_id = await session.scalar(
+            select(ApplicationSettingsModel.value).where(
+                ApplicationSettingsModel.key == "draft_model_id",
+            )
+        )
+
+        return ProviderSettings(
+            llm_providers=[Provider.model_validate(provider) for provider in providers],
+            draft_model_id=None if draft_model_id == "" else draft_model_id,
+        )
+
+
+async def get_tool_settings(
+    session: AsyncSession | None = None,
+) -> ToolSettings:
+    async with get_async_db_session(session) as session:
+        stmt = select(ApplicationSettingsModel).where(
+            ApplicationSettingsModel.key.in_(_TOOL_SETTINGS_KEYS),
+        )
+        settings = {row.key: row.value for row in (await session.scalars(stmt)).all()}
+        return ToolSettings.model_validate(settings)
+
+
+async def update_provider_settings(
+    settings: ProviderSettings,
+    session: AsyncSession | None = None,
+) -> ProviderSettings:
+    async with get_async_db_session(session) as session:
+        await bulk_upsert_providers(settings.llm_providers, session=session)
+        stmt = (
+            insert(ApplicationSettingsModel)
+            .values(
+                {
+                    "key": "draft_model_id",
+                    "value": str(settings.draft_model_id) if settings.draft_model_id else None,
+                }
+            )
+            .on_conflict_do_update(
+                index_elements=["key"],
+                set_={"value": str(settings.draft_model_id) if settings.draft_model_id else None},
+            )
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+    event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
+    return await get_provider_settings(session)
+
+
+async def update_tool_settings(
+    settings: ToolSettings,
+    session: AsyncSession | None = None,
+) -> ToolSettings:
+    values = {
+        "active_tools": settings.active_tools,
+        "web_search_provider": settings.web_search_provider.model_dump()
+        if settings.web_search_provider
+        else None,
+        "image_search_provider": settings.image_search_provider.model_dump()
+        if settings.image_search_provider
+        else None,
+    }
+    async with get_async_db_session(session) as session:
+        for key, value in values.items():
+            stmt = (
+                insert(ApplicationSettingsModel)
+                .values({"key": key, "value": value})
+                .on_conflict_do_update(
+                    index_elements=["key"],
+                    set_={"value": value},
+                )
+            )
+            await session.execute(stmt)
+        await session.commit()
+
+    return await get_tool_settings(session)
 
 
 async def get_app_settings(

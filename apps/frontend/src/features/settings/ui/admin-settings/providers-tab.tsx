@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ComputerIcon,
   LoaderCircleIcon,
@@ -19,6 +19,7 @@ import { HelpIcon } from "@/components/help-icon";
 import { ModelSelector } from "@/components/settings/model-selector";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Field,
   FieldContent,
@@ -37,17 +38,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { client } from "@/lib/api";
-import { ApplicationSettings, LlmDisplayInfo } from "@/lib/client";
+import { LlmDisplayInfo, ProviderSettings } from "@/lib/client";
 import {
   appProviderModelsDiscoverMutation,
-  appSettingsBulkUpdateMutation,
+  appProviderSettingsGetOptions,
+  appProviderSettingsGetQueryKey,
+  appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import {
   zLlm,
   zModelCapabilitySource,
   zProviderType,
 } from "@/lib/client/zod.gen";
-import { useRouter } from "next/navigation";
 
 const modelSchema = zLlm.extend({
   context_window_source: zModelCapabilitySource.optional(),
@@ -124,12 +126,12 @@ const providersFormSchema = z.object({
 
 type ProvidersFormValues = z.infer<typeof providersFormSchema>;
 
-export const ProvidersTab = ({
+const ProvidersForm = ({
   appSettings,
 }: {
-  appSettings: ApplicationSettings;
+  appSettings: ProviderSettings;
 }) => {
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const [loadingModelsIndex, setLoadingModelsIndex] = useState<number | null>(
     null,
   );
@@ -216,12 +218,14 @@ export const ProvidersTab = ({
   });
 
   const saveProviders = useMutation({
-    ...appSettingsBulkUpdateMutation({
+    ...appProviderSettingsUpdateMutation({
       client,
     }),
     onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appProviderSettingsGetQueryKey({ client }),
+      });
       toast.success("Settings saved");
-      router.refresh();
     },
     onError: () => toast.error("Failed to save. Please try again."),
   });
@@ -235,16 +239,14 @@ export const ProvidersTab = ({
 
     saveProviders.mutate({
       body: {
-        values: {
-          llm_providers: values.llm_providers.map((provider) => ({
-            ...provider,
-            base_url:
-              provider.provider_type === "openai"
-                ? OPENAI_BASE_URL
-                : provider.base_url.replace(/\/+$/, ""),
-          })),
-          draft_model_id: draft_model_id ?? null,
-        },
+        llm_providers: values.llm_providers.map((provider) => ({
+          ...provider,
+          base_url:
+            provider.provider_type === "openai"
+              ? OPENAI_BASE_URL
+              : provider.base_url.replace(/\/+$/, ""),
+        })),
+        draft_model_id: draft_model_id ?? null,
       },
     });
   };
@@ -730,4 +732,25 @@ export const ProvidersTab = ({
       </div>
     </form>
   );
+};
+
+export const ProvidersTab = ({
+  appSettings,
+}: {
+  appSettings?: ProviderSettings;
+}) => {
+  const providerSettings = useQuery({
+    ...appProviderSettingsGetOptions({ client }),
+    enabled: appSettings === undefined,
+  });
+  const settings = appSettings ?? providerSettings.data;
+
+  if (appSettings === undefined && providerSettings.isLoading) {
+    return <Spinner />;
+  }
+  if (providerSettings.isError || settings == null) {
+    return <p role="alert">Provider settings could not be loaded.</p>;
+  }
+
+  return <ProvidersForm appSettings={settings} />;
 };

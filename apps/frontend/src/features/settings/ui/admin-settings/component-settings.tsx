@@ -149,7 +149,7 @@ const ParameterForm = ({
     ),
   });
 
-  const { control, handleSubmit } = form;
+  const { control } = form;
   useEffect(() => {
     form.reset(
       Object.fromEntries(

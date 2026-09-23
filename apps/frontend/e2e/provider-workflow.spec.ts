@@ -1,14 +1,11 @@
-import { ApplicationSettings } from "@/lib/client";
+import { ProviderSettings } from "@/lib/client";
 import { expect, Page, test } from "@playwright/test";
 
 const modelId = "10000000-0000-4000-8000-000000000001";
 
-const emptySettings = (): ApplicationSettings => ({
+const emptySettings = (): ProviderSettings => ({
   llm_providers: [],
   draft_model_id: null,
-  web_search_provider: null,
-  image_search_provider: null,
-  active_tools: [],
 });
 
 async function routeProviderApi(page: Page) {
@@ -17,16 +14,13 @@ async function routeProviderApi(page: Page) {
   await page.route("**/api/auth/**", (route) =>
     route.fulfill({ status: 200, json: { token: "e2e-token" } }),
   );
-  await page.route("**/api/py/settings/app", async (route) => {
+  await page.route("**/api/py/settings/app/providers", async (route) => {
     if (route.request().method() === "GET") {
       await route.fulfill({ status: 200, json: settings });
       return;
     }
     const request = route.request().postDataJSON();
-    settings = {
-      ...settings,
-      ...request.values,
-    };
+    settings = request;
     await route.fulfill({ status: 200, json: settings });
   });
 

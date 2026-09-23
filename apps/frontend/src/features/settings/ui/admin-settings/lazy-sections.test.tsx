@@ -1,4 +1,3 @@
-import type { ApplicationSettings } from "@/lib/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,8 +18,6 @@ vi.mock("next/dynamic", () => ({
 
 import { getLazyAdminSettingsSections } from "./lazy-sections";
 
-const appSettings = {} as ApplicationSettings;
-
 describe("getLazyAdminSettingsSections", () => {
   beforeEach(() => {
     mocks.rendered.mockClear();
@@ -31,7 +28,7 @@ describe("getLazyAdminSettingsSections", () => {
   });
 
   it("renders only the selected lazy pane implementation", () => {
-    const sections = getLazyAdminSettingsSections(appSettings);
+    const sections = getLazyAdminSettingsSections();
     const providers = sections.find(
       (section) => section.type === "section" && section.value === "providers",
     );

@@ -2,30 +2,28 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { ComponentRegistry } from "@/features/settings/types";
 import { ComponentSettings } from "@/features/settings/ui/admin-settings/component-settings";
 import { client } from "@/lib/api";
 import { arraysEqual } from "@/lib/arrays";
+import { ComponentProviderParameters, ComponentType, ToolSettings } from "@/lib/client";
 import {
-  ApplicationSettings,
-  ComponentProviderParameters,
-  ComponentType,
-} from "@/lib/client";
-import {
-  appSettingsBulkUpdateMutation,
+  appToolSettingsGetOptions,
+  appToolSettingsGetQueryKey,
+  appToolSettingsUpdateMutation,
   toolsGetAllOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-export const ToolsSettings = ({
+const ToolsSettingsForm = ({
   appSettings,
 }: {
-  appSettings: ApplicationSettings;
+  appSettings: ToolSettings;
 }) => {
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState("");
   const [filterActive, setFilterActive] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -35,31 +33,33 @@ export const ToolsSettings = ({
     }),
   });
   const saveSettings = useMutation({
-    ...appSettingsBulkUpdateMutation({
+    ...appToolSettingsUpdateMutation({
       client,
     }),
     onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: appToolSettingsGetQueryKey({ client }),
+      });
       toast.success("Settings saved");
-      router.refresh();
     },
     onError: () => toast.error("Failed to save. Please try again."),
   });
 
   const [toolSettings, setToolSettings] = useState(() => ({
-    activeTools: appSettings.active_tools,
+    activeTools: appSettings.active_tools ?? [],
     components: {
       WebSearch: appSettings.web_search_provider ?? undefined,
-      ImageGenerator: appSettings.image_search_provider ?? undefined,
+      ImageSearch: appSettings.image_search_provider ?? undefined,
     } as Record<ComponentType, ComponentProviderParameters>,
   }));
 
   useEffect(() => {
     setIsDirty(false);
     setToolSettings({
-      activeTools: appSettings.active_tools,
+      activeTools: appSettings.active_tools ?? [],
       components: {
         WebSearch: appSettings.web_search_provider ?? undefined,
-        ImageGenerator: appSettings.image_search_provider ?? undefined,
+        ImageSearch: appSettings.image_search_provider ?? undefined,
       } as Record<ComponentType, ComponentProviderParameters>,
     });
   }, [appSettings]);
@@ -109,12 +109,13 @@ export const ToolsSettings = ({
         />
         <div className="flex items-center gap-1">
           <Checkbox
+            id="active-tools-filter"
             name="active_tools"
             checked={filterActive}
             onCheckedChange={(e) => setFilterActive(!!e)}
           />
           <Label
-            htmlFor="active_tools"
+            htmlFor="active-tools-filter"
             className="text-muted-foreground text-sm font-medium"
           >
             Only Active Tools
@@ -133,12 +134,13 @@ export const ToolsSettings = ({
             >
               <div className="bg-accent text-accent-foreground flex items-center gap-2 p-2 text-sm font-bold">
                 <Checkbox
+                  id={`tool-${tool.name}`}
                   name={tool.name}
                   checked={toolSettings.activeTools.includes(tool.name)}
                   onCheckedChange={(e) => {
                     if (!!e) {
                       setIsDirty(
-                        !arraysEqual(appSettings.active_tools, [
+                        !arraysEqual(appSettings.active_tools ?? [], [
                           ...toolSettings.activeTools,
                           tool.name,
                         ]),
@@ -153,7 +155,7 @@ export const ToolsSettings = ({
                     } else {
                       setIsDirty(
                         !arraysEqual(
-                          appSettings.active_tools,
+                          appSettings.active_tools ?? [],
                           toolSettings.activeTools.filter(
                             (t) => t !== tool.name,
                           ),
@@ -168,7 +170,7 @@ export const ToolsSettings = ({
                     }
                   }}
                 />
-                <Label htmlFor={tool.name}>{tool.name}</Label>
+                <Label htmlFor={`tool-${tool.name}`}>{tool.name}</Label>
               </div>
               <p className="text-muted-foreground px-2 py-1 text-xs">
                 {tool.description}
@@ -205,11 +207,9 @@ export const ToolsSettings = ({
           onClick={() => {
             saveSettings.mutate({
               body: {
-                values: {
-                  active_tools: toolSettings.activeTools,
-                  web_search_provider: toolSettings.components.WebSearch,
-                  image_search_provider: toolSettings.components.ImageSearch,
-                },
+                active_tools: toolSettings.activeTools,
+                web_search_provider: toolSettings.components.WebSearch,
+                image_search_provider: toolSettings.components.ImageSearch,
               },
             });
           }}
@@ -219,4 +219,25 @@ export const ToolsSettings = ({
       </div>
     </div>
   );
+};
+
+export const ToolsSettings = ({
+  appSettings,
+}: {
+  appSettings?: ToolSettings;
+}) => {
+  const toolSettingsQuery = useQuery({
+    ...appToolSettingsGetOptions({ client }),
+    enabled: appSettings === undefined,
+  });
+  const settings = appSettings ?? toolSettingsQuery.data;
+
+  if (appSettings === undefined && toolSettingsQuery.isLoading) {
+    return <Spinner />;
+  }
+  if (toolSettingsQuery.isError || settings == null) {
+    return <p role="alert">Tool settings could not be loaded.</p>;
+  }
+
+  return <ToolsSettingsForm appSettings={settings} />;
 };

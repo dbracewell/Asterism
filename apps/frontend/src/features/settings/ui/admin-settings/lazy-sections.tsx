@@ -5,7 +5,6 @@ import {
   AdminPaneErrorBoundary,
   AdminPaneLoading,
 } from "@/features/settings/ui/admin-settings/admin-pane-state";
-import type { ApplicationSettings } from "@/lib/client";
 import {
   IconCloudCog,
   IconDatabaseExport,
@@ -88,9 +87,7 @@ const pane = (paneLabel: string, children: ReactNode) => (
   </AdminPaneErrorBoundary>
 );
 
-export const getLazyAdminSettingsSections = (
-  appSettings: ApplicationSettings,
-): Types => [
+export const getLazyAdminSettingsSections = (): Types => [
   {
     type: "section",
     label: "Providers",
@@ -99,7 +96,7 @@ export const getLazyAdminSettingsSections = (
     icon: <IconCloudCog />,
     settingsPane: pane(
       "Providers",
-      <ProvidersTab appSettings={appSettings} />,
+      <ProvidersTab />,
     ),
   },
   {
@@ -132,7 +129,7 @@ export const getLazyAdminSettingsSections = (
     icon: <ToolboxIcon />,
     settingsPane: pane(
       "Tools",
-      <ToolsSettings appSettings={appSettings} />,
+      <ToolsSettings />,
     ),
   },
   {
@@ -149,7 +146,7 @@ export const getLazyAdminSettingsSections = (
     icon: <IconPhoto />,
     settingsPane: pane(
       "Image Captioning",
-      <CaptioningSettings appSettings={appSettings} />,
+      <CaptioningSettings />,
     ),
   },
   {

@@ -2,21 +2,26 @@
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import {
   appCaptioningGetOptions,
+  appCaptioningGetQueryKey,
   appCaptioningUpdateMutation,
   appCaptionModelCancelMutation,
   appCaptionModelDownloadMutation,
+  appCaptionModelStatusQueryKey,
   appCaptionModelStatusOptions,
+  appProviderSettingsGetOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { ApplicationSettings } from "@/lib/client";
+import { ProviderSettings } from "@/lib/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { client } from "@/lib/api";
 
-export function CaptioningSettings({
+function CaptioningSettingsPane({
   appSettings,
 }: {
-  appSettings: ApplicationSettings;
+  appSettings: ProviderSettings;
 }) {
   const queryClient = useQueryClient();
   const configuration = useQuery(appCaptioningGetOptions());
@@ -28,8 +33,10 @@ export function CaptioningSettings({
         : false,
   });
   const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ["appCaptioningGet"] });
-    void queryClient.invalidateQueries({ queryKey: ["appCaptionModelStatus"] });
+    void queryClient.invalidateQueries({ queryKey: appCaptioningGetQueryKey() });
+    void queryClient.invalidateQueries({
+      queryKey: appCaptionModelStatusQueryKey(),
+    });
   };
   const update = useMutation({
     ...appCaptioningUpdateMutation(),
@@ -150,4 +157,25 @@ export function CaptioningSettings({
       {update.isError && <p role="alert" className="text-sm text-destructive">{updateErrorMessage}</p>}
     </section>
   );
+}
+
+export function CaptioningSettings({
+  appSettings,
+}: {
+  appSettings?: ProviderSettings;
+}) {
+  const providerSettings = useQuery({
+    ...appProviderSettingsGetOptions({ client }),
+    enabled: appSettings === undefined,
+  });
+  const settings = appSettings ?? providerSettings.data;
+
+  if (appSettings === undefined && providerSettings.isLoading) {
+    return <Spinner />;
+  }
+  if (providerSettings.isError || settings == null) {
+    return <p role="alert">Provider settings could not be loaded.</p>;
+  }
+
+  return <CaptioningSettingsPane appSettings={settings} />;
 }

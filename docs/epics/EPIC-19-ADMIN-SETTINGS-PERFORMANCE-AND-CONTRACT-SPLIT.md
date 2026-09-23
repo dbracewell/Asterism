@@ -8,7 +8,8 @@ small, ownership-safe admin read models. Each screen must receive all and only
 the data it needs, while writes remain correct and cache invalidation stays
 coherent.
 
-**Status: In progress — US-19.1 through US-19.3 complete; US-19.4 active.**
+**Status: Implementation complete — US-19.1 through US-19.3 confirmed; US-19.4
+awaiting user confirmation before merge.**
 
 ## Product and architecture decisions
 
@@ -158,20 +159,20 @@ inconsistent writes.
       field; define typed resource read schemas, endpoint ownership,
       authorization, query loading plans, response-size expectations, and a
       deprecation/migration plan for the aggregate endpoint.
-- [ ] US-19.4-T2: Implement focused provider-settings and tool-settings reads
+- [x] US-19.4-T2: Implement focused provider-settings and tool-settings reads
       using explicit SQLAlchemy loading strategies, preserving provider/model
       associations, active tools, component selections, and admin-only access.
-- [ ] US-19.4-T3: Align writes and TanStack Query invalidation with the resource
+- [x] US-19.4-T3: Align writes and TanStack Query invalidation with the resource
       contracts; ensure a successful mutation refreshes every affected view and
       no pane observes stale or partially assembled data.
-- [ ] US-19.4-T4: Regenerate the Hey API client and migrate frontend consumers
+- [x] US-19.4-T4: Regenerate the Hey API client and migrate frontend consumers
       one resource at a time; remove the aggregate client use only after all
       consumers have equivalent replacements.
-- [ ] US-19.4-T5: Add backend integration tests for authorization, empty/large
+- [x] US-19.4-T5: Add backend integration tests for authorization, empty/large
       provider/model sets, exact field/value preservation, association
       correctness, mutation/read round trips, and query-count bounds; add
       frontend integration tests for cache invalidation and error states.
-- [ ] US-19.4-T6: Document endpoint contracts, aggregate-endpoint status, and
+- [x] US-19.4-T6: Document endpoint contracts, aggregate-endpoint status, and
       measured payload/latency improvements; run full quality gates.
 
 **Acceptance criteria**
@@ -206,6 +207,27 @@ available with equivalent admin authorization, is documented as deprecated,
 and is removed only after generated-client search and E2E migration prove zero
 consumers. Empty datasets return schema defaults rather than partial objects;
 large provider/model collections retain stable associations without N+1 loads.
+
+## US-19.4 completion evidence
+
+Provider, captioning, provider E2E harness, admin prefetch, and tools
+consumers now use focused provider/tool settings contracts. A generated-client
+excluded search for aggregate read/mutation helpers in `apps/frontend/src` and
+`apps/frontend/e2e` returned no consumers. The aggregate `GET /settings/app`
+endpoint remains deprecated and admin-authorized for temporary compatibility.
+
+Writes now use `PUT /settings/app/providers` and `PUT /settings/app/tools`.
+Successful provider, tool, and captioning mutations invalidate generated
+TanStack Query keys for the affected focused resources. The tools form also
+preserves the `ImageSearch` component selection across active-tool saves.
+
+Verification run:
+
+- `./node_modules/.bin/vitest run src/features/settings/ui/admin-settings/tools-settings.test.tsx src/features/settings/ui/admin-settings/providers-tab.test.tsx src/features/settings/ui/admin-settings/captioning-settings.test.tsx --reporter=verbose --pool=forks`
+- `node ../../scripts/run-with-env.mjs --env none --scope backend --profile test -- uv run pytest -q tests/test_provider_settings_schema.py`
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint`
 
 ## Execution
 

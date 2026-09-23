@@ -136,3 +136,14 @@ class ApplicationSettings(BaseModel):
     web_search_provider: ComponentProviderParameters | None = None
     image_search_provider: ComponentProviderParameters | None = None
     active_tools: list[str]
+
+
+class ProviderSettings(BaseModel):
+    llm_providers: list[Provider] = Field(default_factory=list)
+    draft_model_id: uuid.UUID | None = None
+
+
+class ToolSettings(BaseModel):
+    web_search_provider: ComponentProviderParameters | None = None
+    image_search_provider: ComponentProviderParameters | None = None
+    active_tools: list[str] = Field(default_factory=list)
