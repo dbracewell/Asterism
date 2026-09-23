@@ -267,6 +267,7 @@ export const ChatInput = ({
             </p>
           ))}
         <Textarea
+          aria-label="Message"
           ref={textareaRef}
           value={prompt}
           onChange={(event) => {

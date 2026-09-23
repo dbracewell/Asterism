@@ -130,10 +130,16 @@ All storage dependencies must be implemented behind interfaces so future swaps a
 - Framework: **Next.js 16**
 - Styling: **Tailwind CSS 4**
 - Components: **shadcn/ui**
+- Server-state management: **TanStack Query** with the generated Hey API client
 - API client generation: **Hey API** (type-safe client from backend OpenAPI)
 - Auth: **BetterAuth with JWT**
 
-Frontend must consume generated API clients, not hand-written fetch calls for core backend APIs.
+Frontend UI rules:
+
+- Prefer existing shadcn/ui components over raw HTML elements for interactive UI and common patterns (forms, inputs, dialogs, menus, tables, alerts, etc.).
+- If a required shadcn/ui component is not installed, ask the user to approve/install it rather than recreating it with raw HTML.
+- Consume core backend APIs through generated Hey API clients and TanStack Query hooks.
+- Do not implement API data loading, caching, or mutation flows with `useEffect`, `useCallback`, or bespoke loader hooks when TanStack Query can handle them.
 
 ## 3.3 Orchestration and Memory
 

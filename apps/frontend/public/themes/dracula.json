@@ -5,7 +5,7 @@
   "colors": {
     "background": "#282a36",
     "foreground": "#f8f8f2",
-    "card": "#282a36",
+    "card": "#21222c",
     "card-foreground": "#f8f8f2",
     "popover": "#282a36",
     "popover-foreground": "#f8f8f2",

@@ -42,7 +42,9 @@ it("uploads picker files through the generated client then includes filenames in
 
 it("shows an explicit stop control while generation is active", async () => {
   const onStop = vi.fn();
-  render(<ChatInput disabled onStop={onStop} onSubmit={() => {}} />);
+  render(
+    <ChatInput disabled isProcessing onStop={onStop} onSubmit={() => {}} />,
+  );
 
   await userEvent.setup().click(screen.getByLabelText("Stop generating"));
 

@@ -36,5 +36,9 @@
     ".idea": true
   },
   "python.languageServer": "None",
-  "pendant.runtimeSource": "bundled"
+  "pendant.runtimeSource": "bundled",
+  "pendant.showThinking": true,
+  "pendant.thinkingDisplayMode": "collapseWhenDone",
+  "pendant.notifications.agentFinished": true,
+  "pendant.diagnostics.enabled": false
 }

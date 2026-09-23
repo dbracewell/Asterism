@@ -59,7 +59,18 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("folder_id=folder-1"),
 }));
 vi.mock("@/components/animated-border", () => ({
-  AnimatedBorder: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AnimatedBorder: ({
+    borderComponent,
+    children,
+  }: {
+    borderComponent?: React.ReactNode;
+    children: React.ReactNode;
+  }) => (
+    <>
+      {borderComponent}
+      {children}
+    </>
+  ),
 }));
 vi.mock("@/components/logo", () => ({ default: () => null }));
 vi.mock("@/components/ui/select", () => ({
@@ -72,9 +83,10 @@ vi.mock("@/components/ui/select", () => ({
   SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => <option value={value}>{children}</option>,
 }));
 vi.mock("@/features/chat/components/chat-input", () => ({
-  default: ({ onSubmit, disabled }: { onSubmit: (payload: { prompt: string; files: string[] }) => void; disabled?: boolean }) => (
+  ChatInput: ({ onSubmit, disabled }: { onSubmit: (payload: { prompt: string; files: string[] }) => void; disabled?: boolean }) => (
     <button disabled={disabled} onClick={() => onSubmit({ prompt: "Hello", files: [] })}>Start chat</button>
   ),
+  ChatInputContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 const initialSettings = structuredClone(mocks.user.settings);

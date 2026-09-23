@@ -28,8 +28,11 @@ vi.mock("@/features/chat/hooks/use-chat-session-crud", () => ({
     isCreating: false,
   }),
 }));
+vi.mock("@/features/chat/components/agent-selector", () => ({
+  AgentSelector: () => null,
+}));
 vi.mock("@/features/chat/components/chat-input", () => ({
-  default: ({
+  ChatInput: ({
     onSubmit,
   }: {
     onSubmit: (value: { prompt: string; files: string[] }) => void;
@@ -38,6 +41,7 @@ vi.mock("@/features/chat/components/chat-input", () => ({
       Start folder chat
     </button>
   ),
+  ChatInputContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
