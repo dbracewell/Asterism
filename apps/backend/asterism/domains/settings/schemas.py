@@ -83,6 +83,13 @@ class Provider(ProviderInfo):
     models: list["Llm"]
 
 
+class ProviderSummary(ProviderInfo):
+    """Provider configuration returned by the Providers settings landing page."""
+
+    model_count: int = 0
+    active_model_count: int = 0
+
+
 class LlmDisplayInfo(BaseModel):
     id: uuid.UUID
     name: str
@@ -139,8 +146,35 @@ class ApplicationSettings(BaseModel):
 
 
 class ProviderSettings(BaseModel):
-    llm_providers: list[Provider] = Field(default_factory=list)
+    llm_providers: list[ProviderSummary] = Field(default_factory=list)
     draft_model_id: uuid.UUID | None = None
+    draft_model: LlmDisplayInfo | None = None
+
+
+class ProviderModelsPage(BaseModel):
+    models: list[Llm] = Field(default_factory=list)
+    next_cursor: str | None = None
+    total: int = 0
+
+
+class ProviderModelUpdate(BaseModel):
+    is_active: bool
+    context_window: PositiveInt | None = None
+    supports_vision: bool | None = None
+    context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+    vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+
+    @model_validator(mode="after")
+    def normalize_capability_sources(self) -> "ProviderModelUpdate":
+        self.context_window_source = Llm._normalized_source(
+            self.context_window,
+            self.context_window_source,
+        )
+        self.vision_source = Llm._normalized_source(
+            self.supports_vision,
+            self.vision_source,
+        )
+        return self
 
 
 class ToolSettings(BaseModel):

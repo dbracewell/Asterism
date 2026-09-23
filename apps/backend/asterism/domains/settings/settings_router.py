@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+import uuid
+
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import JsonValue
 
 import asterism.domains.settings.service as settings_service
@@ -20,7 +22,12 @@ from .discovery import (
 from .schemas import (
     ApplicationSettings,
     BulkUpdateSettingRequest,
+    Llm,
+    LlmDisplayInfo,
+    ProviderModelsPage,
+    ProviderModelUpdate,
     ProviderSettings,
+    ProviderSummary,
     Setting,
     ToolSettings,
     UpdateSettingValue,
@@ -163,6 +170,101 @@ async def update_provider_settings(
         settings=settings,
         session=session,
     )
+
+
+@settings_router.get(
+    "/app/providers/{provider_id}/models",
+    response_model=ProviderModelsPage,
+    operation_id="appProviderModelsList",
+    summary="Search a provider's models",
+)
+async def list_provider_models(
+    provider_id: uuid.UUID,
+    user: AdminUserDep,
+    session: DBSessionDep,
+    query: str = Query(default="", max_length=100),
+    cursor: uuid.UUID | None = None,
+    limit: int = Query(default=50, ge=1, le=50),
+) -> ProviderModelsPage:
+    return await settings_service.get_provider_models(
+        provider_id=provider_id,
+        query=query,
+        cursor=cursor,
+        limit=limit,
+        session=session,
+    )
+
+
+@settings_router.put(
+    "/app/providers/{provider_id}/models/{model_id}",
+    response_model=Llm,
+    operation_id="appProviderModelUpdate",
+    summary="Update one provider model",
+)
+async def update_provider_model(
+    provider_id: uuid.UUID,
+    model_id: uuid.UUID,
+    update: ProviderModelUpdate,
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> Llm:
+    return await settings_service.update_provider_model(
+        provider_id=provider_id,
+        model_id=model_id,
+        update=update,
+        session=session,
+    )
+
+
+@settings_router.post(
+    "/app/providers/{provider_id}/models/discover",
+    response_model=ProviderSummary,
+    operation_id="appProviderModelsDiscoverAndSync",
+    summary="Discover and synchronize a provider's model catalog",
+    responses={
+        502: {"description": "Provider discovery failed", "model": ErrorDetail},
+        504: {"description": "Provider discovery timed out", "model": ErrorDetail},
+    },
+)
+async def discover_and_sync_provider_models(
+    provider_id: uuid.UUID,
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> ProviderSummary:
+    provider = await settings_service.get_provider_for_discovery(provider_id, session)
+    try:
+        discovery = await provider_discovery.discover(
+            ProviderDiscoveryRequest(
+                provider_type=provider.provider_type,
+                base_url=provider.base_url,
+                api_key=provider.api_key,
+                provider_id=provider.id,
+                existing_models=provider.models,
+            )
+        )
+    except ProviderDiscoveryError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=f"{exc.category}: {exc.detail}",
+        ) from exc
+    return await settings_service.replace_provider_models(
+        provider_id,
+        discovery.models,
+        session,
+    )
+
+
+@settings_router.get(
+    "/app/providers/captioning-models",
+    response_model=list[LlmDisplayInfo],
+    operation_id="appCaptioningProviderModelsGet",
+    summary="Get active discovered vision models for captioning",
+)
+async def get_captioning_provider_models(
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> list[LlmDisplayInfo]:
+    return await settings_service.get_captioning_models(session=session)
 
 
 @settings_router.get(

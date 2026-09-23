@@ -2,10 +2,10 @@ import uuid
 from typing import Any, cast
 
 from pydantic import JsonValue
-from sqlalchemy import delete, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, noload, selectinload
 
 import asterism.domains.agent.service as agent_service
 from asterism.common.log import get_logger
@@ -27,7 +27,10 @@ from .schemas import (
     LlmDisplayInfo,
     LlmWithProvider,
     Provider,
+    ProviderModelsPage,
+    ProviderModelUpdate,
     ProviderSettings,
+    ProviderSummary,
     Setting,
     ToolSettings,
     UserSettings,
@@ -220,19 +223,66 @@ async def get_provider_settings(
     session: AsyncSession | None = None,
 ) -> ProviderSettings:
     async with get_async_db_session(session) as session:
-        providers_stmt = select(ProviderModel).options(
-            selectinload(ProviderModel.models),
+        model_count = (
+            select(func.count(LLMModel.id))
+            .where(LLMModel.provider_id == ProviderModel.id)
+            .scalar_subquery()
         )
-        providers = list((await session.scalars(providers_stmt)).all())
+        active_model_count = (
+            select(func.count(LLMModel.id))
+            .where(LLMModel.provider_id == ProviderModel.id, LLMModel.is_active)
+            .scalar_subquery()
+        )
+        providers_stmt = select(
+            ProviderModel,
+            model_count.label("model_count"),
+            active_model_count.label("active_model_count"),
+        ).options(noload(ProviderModel.models))
+        providers = list((await session.execute(providers_stmt)).all())
         draft_model_id = await session.scalar(
             select(ApplicationSettingsModel.value).where(
                 ApplicationSettingsModel.key == "draft_model_id",
             )
         )
 
+        draft_model = None
+        if draft_model_id:
+            try:
+                parsed_draft_model_id = uuid.UUID(str(draft_model_id))
+            except (TypeError, ValueError):
+                parsed_draft_model_id = None
+            draft_row = await session.scalar(
+                select(LLMModel)
+                .where(LLMModel.id == parsed_draft_model_id)
+                .options(joinedload(LLMModel.provider))
+            ) if parsed_draft_model_id is not None else None
+            if draft_row is not None:
+                draft_model = LlmDisplayInfo(
+                    id=draft_row.id,
+                    name=draft_row.name,
+                    provider_id=draft_row.provider_id,
+                    provider_name=draft_row.provider.name,
+                    context_window=draft_row.context_window,
+                    supports_vision=draft_row.supports_vision,
+                    context_window_source=draft_row.context_window_source,
+                    vision_source=draft_row.vision_source,
+                )
+
         return ProviderSettings(
-            llm_providers=[Provider.model_validate(provider) for provider in providers],
+            llm_providers=[
+                ProviderSummary(
+                    id=provider.id,
+                    name=provider.name,
+                    base_url=provider.base_url,
+                    api_key=provider.api_key,
+                    provider_type=provider.provider_type,
+                    model_count=count,
+                    active_model_count=active_count,
+                )
+                for provider, count, active_count in providers
+            ],
             draft_model_id=None if draft_model_id == "" else draft_model_id,
+            draft_model=draft_model,
         )
 
 
@@ -252,7 +302,43 @@ async def update_provider_settings(
     session: AsyncSession | None = None,
 ) -> ProviderSettings:
     async with get_async_db_session(session) as session:
-        await bulk_upsert_providers(settings.llm_providers, session=session)
+        existing_providers = {
+            provider.id: provider
+            for provider in (
+                await session.scalars(select(ProviderModel).options(noload(ProviderModel.models)))
+            ).all()
+        }
+        incoming_ids = {provider.id for provider in settings.llm_providers}
+        for deleted_id in set(existing_providers).difference(incoming_ids):
+            await session.execute(delete(ProviderModel).where(ProviderModel.id == deleted_id))
+
+        for provider in settings.llm_providers:
+            existing = existing_providers.get(provider.id)
+            if existing is None:
+                session.add(
+                    ProviderModel(
+                        id=provider.id,
+                        provider_type=provider.provider_type,
+                        name=provider.name,
+                        base_url=provider.base_url,
+                        api_key=provider.api_key,
+                    )
+                )
+            else:
+                existing.provider_type = provider.provider_type
+                existing.name = provider.name
+                existing.base_url = provider.base_url
+                existing.api_key = provider.api_key
+
+        if settings.draft_model_id is not None:
+            draft_model = await session.scalar(
+                select(LLMModel).where(
+                    LLMModel.id == settings.draft_model_id,
+                    LLMModel.is_active,
+                )
+            )
+            if draft_model is None:
+                raise BadDataException("draft_model_id must reference an active model")
         stmt = (
             insert(ApplicationSettingsModel)
             .values(
@@ -271,6 +357,185 @@ async def update_provider_settings(
 
     event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
     return await get_provider_settings(session)
+
+
+async def get_provider_models(
+    provider_id: uuid.UUID,
+    query: str = "",
+    cursor: uuid.UUID | None = None,
+    limit: int = 50,
+    session: AsyncSession | None = None,
+) -> ProviderModelsPage:
+    async with get_async_db_session(session) as session:
+        exists = await session.scalar(
+            select(ProviderModel.id).where(ProviderModel.id == provider_id)
+        )
+        if exists is None:
+            raise NotFoundException(f"Provider id {provider_id} not found in database")
+
+        normalized_name = func.lower(LLMModel.name)
+        base_filters = [LLMModel.provider_id == provider_id]
+        if query.strip():
+            escaped_query = query.strip().lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            base_filters.append(normalized_name.like(f"%{escaped_query}%", escape="\\"))
+
+        filters = [*base_filters]
+
+        if cursor is not None:
+            cursor_model = await session.scalar(
+                select(LLMModel).where(
+                    LLMModel.id == cursor,
+                    LLMModel.provider_id == provider_id,
+                )
+            )
+            if cursor_model is None:
+                raise BadDataException("cursor must reference a model in this provider")
+            cursor_name = cursor_model.name.lower()
+            filters.append(
+                or_(
+                    normalized_name > cursor_name,
+                    and_(normalized_name == cursor_name, LLMModel.id > cursor),
+                )
+            )
+
+        rows = list(
+            (
+                await session.scalars(
+                    select(LLMModel)
+                    .where(*filters)
+                    .order_by(normalized_name, LLMModel.id)
+                    .limit(limit + 1)
+                )
+            ).all()
+        )
+        page_models = rows[:limit]
+        total = await session.scalar(select(func.count(LLMModel.id)).where(*base_filters))
+        return ProviderModelsPage(
+            models=[Llm.model_validate(model) for model in page_models],
+            next_cursor=str(rows[limit].id) if len(rows) > limit else None,
+            total=total or 0,
+        )
+
+
+async def update_provider_model(
+    provider_id: uuid.UUID,
+    model_id: uuid.UUID,
+    update: ProviderModelUpdate,
+    session: AsyncSession | None = None,
+) -> Llm:
+    async with get_async_db_session(session) as session:
+        model = await session.scalar(
+            select(LLMModel).where(
+                LLMModel.id == model_id,
+                LLMModel.provider_id == provider_id,
+            )
+        )
+        if model is None:
+            raise NotFoundException(f"Model id {model_id} not found in provider")
+
+        model.is_active = update.is_active
+        model.context_window = update.context_window
+        model.supports_vision = update.supports_vision
+        model.context_window_source = update.context_window_source
+        model.vision_source = update.vision_source
+        await session.flush()
+
+        draft_model_id = await session.scalar(
+            select(ApplicationSettingsModel.value).where(
+                ApplicationSettingsModel.key == "draft_model_id",
+            )
+        )
+        if not model.is_active and str(model.id) == str(draft_model_id):
+            replacement = await session.scalar(
+                select(LLMModel.id)
+                .where(LLMModel.is_active)
+                .order_by(func.lower(LLMModel.name), LLMModel.id)
+                .limit(1)
+            )
+            await session.execute(
+                insert(ApplicationSettingsModel)
+                .values({"key": "draft_model_id", "value": str(replacement) if replacement else None})
+                .on_conflict_do_update(
+                    index_elements=["key"],
+                    set_={"value": str(replacement) if replacement else None},
+                )
+            )
+        await session.commit()
+        result = Llm.model_validate(model)
+
+    event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
+    return result
+
+
+async def get_provider_for_discovery(
+    provider_id: uuid.UUID,
+    session: AsyncSession | None = None,
+) -> Provider:
+    async with get_async_db_session(session) as session:
+        provider = await session.scalar(
+            select(ProviderModel)
+            .where(ProviderModel.id == provider_id)
+            .options(selectinload(ProviderModel.models))
+        )
+        if provider is None:
+            raise NotFoundException(f"Provider id {provider_id} not found in database")
+        return Provider.model_validate(provider)
+
+
+async def replace_provider_models(
+    provider_id: uuid.UUID,
+    models: list[Llm],
+    session: AsyncSession | None = None,
+) -> ProviderSummary:
+    async with get_async_db_session(session) as session:
+        provider = await session.scalar(
+            select(ProviderModel)
+            .where(ProviderModel.id == provider_id)
+            .options(selectinload(ProviderModel.models))
+        )
+        if provider is None:
+            raise NotFoundException(f"Provider id {provider_id} not found in database")
+        provider.models = _merge_models(models, provider.models)
+        await session.commit()
+
+    settings = await get_provider_settings(session)
+    summary = next((item for item in settings.llm_providers if item.id == provider_id), None)
+    if summary is None:
+        raise NotFoundException(f"Provider id {provider_id} not found in database")
+    return summary
+
+
+async def get_captioning_models(
+    session: AsyncSession | None = None,
+) -> list[LlmDisplayInfo]:
+    async with get_async_db_session(session) as session:
+        rows = list(
+            (
+                await session.scalars(
+                    select(LLMModel)
+                    .where(
+                        LLMModel.is_active,
+                        LLMModel.supports_vision,
+                        LLMModel.vision_source.in_(("catalog", "provider")),
+                    )
+                    .options(joinedload(LLMModel.provider))
+                    .order_by(func.lower(LLMModel.name), LLMModel.id)
+                )
+            ).all()
+        )
+        return [
+            LlmDisplayInfo(
+                id=model.id,
+                name=model.name,
+                provider_id=model.provider_id,
+                provider_name=model.provider.name,
+                context_window=model.context_window,
+                supports_vision=model.supports_vision,
+                context_window_source=model.context_window_source,
+                vision_source=model.vision_source,
+            )
+            for model in rows
+        ]
 
 
 async def update_tool_settings(

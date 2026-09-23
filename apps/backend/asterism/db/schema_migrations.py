@@ -23,6 +23,7 @@ _KNOWLEDGE_DOCUMENT_ORDER_MIGRATION = "20260923_04_knowledge_document_order"
 _KNOWLEDGE_AUDIT_MIGRATION = "20260923_05_knowledge_audit"
 _AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION = "20260924_01_agent_knowledge_assignments"
 _KNOWLEDGE_CAPTIONING_MIGRATION = "20260925_01_knowledge_captioning"
+_PROVIDER_MODEL_BROWSER_MIGRATION = "20260926_01_provider_model_browser"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -71,6 +72,15 @@ async def _migrate_user_files(connection: AsyncConnection) -> None:
     )
     await connection.execute(
         text("CREATE INDEX IF NOT EXISTS idx_user_files_user_filename ON user_files (user_id, filename)")
+    )
+
+
+async def _migrate_provider_model_browser(connection: AsyncConnection) -> None:
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS ix_models_provider_name_id "
+            "ON models (provider_id, name, id)"
+        )
     )
 
 
@@ -394,6 +404,7 @@ _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_KNOWLEDGE_AUDIT_MIGRATION, _migrate_knowledge_audit),
     (_AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION, _migrate_agent_knowledge_assignments),
     (_KNOWLEDGE_CAPTIONING_MIGRATION, _migrate_knowledge_captioning),
+    (_PROVIDER_MODEL_BROWSER_MIGRATION, _migrate_provider_model_browser),
     (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),
     (_USER_FILES_MIGRATION, _migrate_user_files),

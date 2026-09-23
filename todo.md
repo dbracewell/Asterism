@@ -478,3 +478,14 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 - [x] Re-verified all story acceptance criteria; user confirmed completion.
 - [x] Merged the final story branch and announced epic completion.
+
+## EPIC-20 — Provider Model Browser
+
+Plan: [EPIC-20](docs/epics/EPIC-20-PROVIDER-MODEL-BROWSER.md).
+Status: US-20.1 implemented and verified; awaiting user confirmation before merge.
+
+- [x] US-20.1 — Browse large provider model catalogs without blocking settings (implemented and verified; awaiting user confirmation)
+  - [x] Define summary, paginated-search, and focused model-update contracts.
+  - [x] Implement bounded backend queries and data-preserving provider writes.
+  - [x] Replace eager model form rendering with on-demand searchable pages.
+  - [x] Regenerate the client; add backend/frontend regression coverage and run quality gates.
