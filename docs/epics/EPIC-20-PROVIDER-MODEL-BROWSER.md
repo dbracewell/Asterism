@@ -45,4 +45,4 @@ in small pages so that a large provider does not block the Providers tab.
   model search/control DOM until its catalog is opened, then requests and
   displays only the first 50-model page.
 
-**Status: Implemented and verified; awaiting user confirmation before merge.**
+**Status: Complete — user-confirmed and merged into `main`.**
