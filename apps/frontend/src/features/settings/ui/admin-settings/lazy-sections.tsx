@@ -40,9 +40,9 @@ const GroupSettings = dynamic(
 );
 const UserPermissionsSettings = dynamic(
   () =>
-    import(
-      "@/features/settings/ui/admin-settings/user-permissions-settings"
-    ).then((module) => module.UserPermissionsSettings),
+    import("@/features/settings/ui/admin-settings/user-permissions-settings").then(
+      (module) => module.UserPermissionsSettings,
+    ),
   { loading: AdminPaneLoading },
 );
 const ToolsSettings = dynamic(
@@ -68,9 +68,9 @@ const CaptioningSettings = dynamic(
 );
 const CodeExecutionSettings = dynamic(
   () =>
-    import(
-      "@/features/settings/ui/admin-settings/code-execution-settings"
-    ).then((module) => module.CodeExecutionSettings),
+    import("@/features/settings/ui/admin-settings/code-execution-settings").then(
+      (module) => module.CodeExecutionSettings,
+    ),
   { loading: AdminPaneLoading },
 );
 const ExportSettings = dynamic(
@@ -94,10 +94,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "providers",
     isDefault: true,
     icon: <IconCloudCog />,
-    settingsPane: pane(
-      "Providers",
-      <ProvidersTab />,
-    ),
+    settingsPane: pane("Providers", <ProvidersTab />),
   },
   {
     type: "section",
@@ -127,10 +124,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Tools",
     value: "tools",
     icon: <ToolboxIcon />,
-    settingsPane: pane(
-      "Tools",
-      <ToolsSettings />,
-    ),
+    settingsPane: pane("Tools", <ToolsSettings />),
   },
   {
     type: "section",
@@ -144,10 +138,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Image Captioning",
     value: "image-captioning",
     icon: <IconPhoto />,
-    settingsPane: pane(
-      "Image Captioning",
-      <CaptioningSettings />,
-    ),
+    settingsPane: pane("Image Captioning", <CaptioningSettings />),
   },
   {
     type: "section",
