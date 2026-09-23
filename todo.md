@@ -444,7 +444,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-19 — Admin Settings Performance and Contract Split
 
 Plan: [EPIC-19](docs/epics/EPIC-19-ADMIN-SETTINGS-PERFORMANCE-AND-CONTRACT-SPLIT.md).
-Status: US-19.1 through US-19.3 completed and confirmed; US-19.4 implementation complete and awaiting user confirmation before merge.
+Status: Complete. US-19.1 through US-19.4 are completed, confirmed, and merged into `main`.
 Order: US-19.1 → US-19.2 → US-19.3 → US-19.4. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -466,7 +466,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-19.3-T3: Verified client/server boundaries and unchanged theme/provider write implementations.
   - [x] US-19.3-T4: Added regression coverage and recorded production bundle/request metrics.
 
-- [~] US-19.4 — Replace the aggregate application-settings read contract
+- [x] US-19.4 — Replace the aggregate application-settings read contract
   - [x] US-19.4-T1: Inventoried aggregate consumers/fields and defined typed focused read contracts, authorization, loading, size, and deprecation plans.
   - [x] US-19.4-T2: Implement focused provider-settings and tool-settings reads with explicit SQLAlchemy loading and association preservation.
   - [x] US-19.4-T3: Align writes and TanStack Query invalidation with focused resources.
@@ -476,5 +476,5 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 ### Epic closure
 
-- [ ] Re-verify all story acceptance criteria and request user completion confirmation.
-- [ ] On confirmation, merge the final story branch, announce completion, and propose the next plan.
+- [x] Re-verified all story acceptance criteria; user confirmed completion.
+- [x] Merged the final story branch and announced epic completion.

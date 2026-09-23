@@ -8,8 +8,8 @@ small, ownership-safe admin read models. Each screen must receive all and only
 the data it needs, while writes remain correct and cache invalidation stays
 coherent.
 
-**Status: Implementation complete — US-19.1 through US-19.3 confirmed; US-19.4
-awaiting user confirmation before merge.**
+**Status: Complete — US-19.1 through US-19.4 are confirmed and merged into
+`main`.**
 
 ## Product and architecture decisions
 
@@ -147,7 +147,7 @@ Tool/component forms and every other non-selected pane likewise remain behind
 their own dynamic import. Production build/type validation passed without
 changing the pane implementation modules or their write paths.
 
-### US-19.4 — Replace the aggregate application-settings read contract (in progress)
+### US-19.4 — Replace the aggregate application-settings read contract
 
 **As an operator**, I want each admin pane to use a focused, correct backend
 contract so that performance improvements do not lose settings or introduce
