@@ -8,7 +8,7 @@ small, ownership-safe admin read models. Each screen must receive all and only
 the data it needs, while writes remain correct and cache invalidation stays
 coherent.
 
-**Status: In progress — US-19.1 and US-19.2 complete; US-19.3 next.**
+**Status: In progress — US-19.1 and US-19.2 complete; US-19.3 awaiting completion confirmation.**
 
 ## Product and architecture decisions
 
@@ -104,7 +104,7 @@ navigation reuse that completed request without mounting the admin subtree or
 prefetching every pane. Direct admin deep links still perform one required read.
 Mutations continue to invalidate queries through the application QueryClient.
 
-### US-19.3 — Code-split admin pane implementations
+### US-19.3 — Code-split admin pane implementations (awaiting confirmation)
 
 **As an administrator**, I want initial Admin Settings JavaScript limited to
 what I am viewing so that heavy editors do not delay the default Providers
@@ -112,19 +112,39 @@ screen.
 
 **Dependencies:** US-19.1 and US-19.2.
 
-- [ ] US-19.3-T1: Measure the settings route bundle and identify pane-only
+- [x] US-19.3-T1: Measure the settings route bundle and identify pane-only
       dependencies, including Theme Editor/color picker and tool configuration
       forms.
-- [ ] US-19.3-T2: Dynamically import selected admin panes with loading and
+- [x] US-19.3-T2: Dynamically import selected admin panes with loading and
       error boundaries that preserve accessibility and deep-link behavior.
-- [ ] US-19.3-T3: Verify client/server boundaries and avoid changing theme or
+- [x] US-19.3-T3: Verify client/server boundaries and avoid changing theme or
       provider write behavior.
-- [ ] US-19.3-T4: Add regression coverage and record bundle/request metrics.
+- [x] US-19.3-T4: Add regression coverage and record bundle/request metrics.
 
 **Acceptance criteria**
 
 - Default Admin Settings does not download code unique to unvisited heavy panes.
 - A selected lazy pane has a clear loading/failure state and functions normally.
+
+**Bundle and request evidence**
+
+Production-build browser captures compare the post-US-19.2 baseline with this
+story on a cold default Admin Settings visit:
+
+| Metric | Baseline | Code-split |
+| --- | ---: | ---: |
+| Initial JavaScript chunks | 22 | 25 |
+| Initial JavaScript transfer (uncompressed build bytes) | 1,431,483 | 1,378,142 |
+| Application-settings reads | 1 | 1 |
+
+Code splitting reduced initial JavaScript by 53,341 bytes (3.7%) despite the
+expected increase in chunk count. The Theme Editor's `color` and
+`react-colorful` implementation chunk (50,135 bytes) was absent from the
+default Providers visit. Selecting Theme Editor loaded two chunks on demand,
+including that implementation chunk, and displayed the editor normally.
+Tool/component forms and every other non-selected pane likewise remain behind
+their own dynamic import. Production build/type validation passed without
+changing the pane implementation modules or their write paths.
 
 ### US-19.4 — Replace the aggregate application-settings read contract
 

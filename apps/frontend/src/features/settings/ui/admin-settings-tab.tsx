@@ -1,7 +1,7 @@
 "use client";
 import { Spinner } from "@/components/ui/spinner";
 import { TabsContent } from "@/components/ui/tabs";
-import { getAdminSettingsSections } from "@/features/settings/ui/admin-settings";
+import { getLazyAdminSettingsSections } from "@/features/settings/ui/admin-settings/lazy-sections";
 import { adminSettingsQueryOptions } from "@/features/settings/ui/admin-settings-query";
 import { SettingsCard } from "@/features/settings/ui/setttings-card";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ export const AdminSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
   const { data, isLoading, error } = useQuery(adminSettingsQueryOptions());
 
   const adminSettingsSections = useMemo(
-    () => (data ? getAdminSettingsSections(data) : []),
+    () => (data ? getLazyAdminSettingsSections(data) : []),
     [data],
   );
 
