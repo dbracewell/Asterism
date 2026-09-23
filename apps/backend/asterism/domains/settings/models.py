@@ -1,7 +1,7 @@
 import uuid
 
 from pydantic import JsonValue
-from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from asterism.db.base_model import Base
@@ -62,6 +62,7 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
             "context_window IS NULL OR context_window > 0",
             name="ck_models_context_window_positive",
         ),
+        Index("ix_models_provider_name_id", "provider_id", "name", "id"),
     )
 
     name: Mapped[str] = mapped_column(

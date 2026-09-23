@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import {
   appCaptioningGetOptions,
   appCaptioningGetQueryKey,
@@ -11,20 +10,18 @@ import {
   appCaptionModelDownloadMutation,
   appCaptionModelStatusQueryKey,
   appCaptionModelStatusOptions,
-  appProviderSettingsGetOptions,
+  appCaptioningProviderModelsGetOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { ProviderSettings } from "@/lib/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { client } from "@/lib/api";
 
-function CaptioningSettingsPane({
-  appSettings,
-}: {
-  appSettings: ProviderSettings;
-}) {
+function CaptioningSettingsPane() {
   const queryClient = useQueryClient();
   const configuration = useQuery(appCaptioningGetOptions());
+  const visionModelsQuery = useQuery(
+    appCaptioningProviderModelsGetOptions({ client }),
+  );
   const modelStatus = useQuery({
     ...appCaptionModelStatusOptions(),
     refetchInterval: (query) =>
@@ -33,7 +30,9 @@ function CaptioningSettingsPane({
         : false,
   });
   const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: appCaptioningGetQueryKey() });
+    void queryClient.invalidateQueries({
+      queryKey: appCaptioningGetQueryKey(),
+    });
     void queryClient.invalidateQueries({
       queryKey: appCaptionModelStatusQueryKey(),
     });
@@ -51,16 +50,7 @@ function CaptioningSettingsPane({
     onSuccess: invalidate,
   });
 
-  const visionModels = (appSettings.llm_providers ?? []).flatMap((provider) =>
-    provider.models
-      .filter(
-        (model) =>
-          model.is_active &&
-          model.supports_vision === true &&
-          ["catalog", "provider"].includes(model.vision_source ?? ""),
-      )
-      .map((model) => ({ ...model, providerName: provider.name })),
-  );
+  const visionModels = visionModelsQuery.data ?? [];
   const current = configuration.data;
   const [draftMode, setDraftMode] = useState<string>("disabled");
   useEffect(() => {
@@ -71,7 +61,9 @@ function CaptioningSettingsPane({
   const updateErrorMessage =
     updateError instanceof Error
       ? updateError.message
-      : typeof updateError === "object" && updateError && "detail" in updateError
+      : typeof updateError === "object" &&
+          updateError &&
+          "detail" in updateError
         ? String(updateError.detail)
         : "The captioning configuration could not be saved.";
 
@@ -86,8 +78,9 @@ function CaptioningSettingsPane({
         <h2 id="captioning-heading" className="text-lg font-semibold">
           Image captioning
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Captions are draft metadata for image knowledge revisions. Provider mode sends images only to the selected vision model.
+        <p className="text-muted-foreground text-sm">
+          Captions are draft metadata for image knowledge revisions. Provider
+          mode sends images only to the selected vision model.
         </p>
       </div>
       <fieldset className="space-y-2" disabled={update.isPending}>
@@ -104,7 +97,8 @@ function CaptioningSettingsPane({
               checked={draftMode === mode}
               onChange={() => {
                 setDraftMode(mode);
-                if (mode !== "provider") update.mutate({ body: { mode, provider_model_id: null } });
+                if (mode !== "provider")
+                  update.mutate({ body: { mode, provider_model_id: null } });
               }}
             />
             {label}
@@ -117,21 +111,26 @@ function CaptioningSettingsPane({
           <Label htmlFor="caption-provider-model">Vision model</Label>
           <select
             id="caption-provider-model"
-            className="w-full rounded-md border bg-background p-2"
+            className="bg-background w-full rounded-md border p-2"
             value={current.provider_model_id ?? ""}
             onChange={(event) =>
-              update.mutate({ body: { mode: "provider", provider_model_id: event.target.value || null } })
+              update.mutate({
+                body: {
+                  mode: "provider",
+                  provider_model_id: event.target.value || null,
+                },
+              })
             }
           >
             <option value="">Select a discovered vision model</option>
             {visionModels.map((model) => (
               <option key={model.id} value={model.id}>
-                {model.providerName} — {model.name}
+                {model.provider_name} — {model.name}
               </option>
             ))}
           </select>
           {visionModels.length === 0 && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-destructive text-sm">
               No active discovered vision-capable models are available.
             </p>
           )}
@@ -142,40 +141,48 @@ function CaptioningSettingsPane({
         <div className="space-y-2 rounded-md border p-4">
           <p className="text-sm">
             Model status: <strong>{localStatus?.status ?? "unknown"}</strong>
-            {localStatus?.total_bytes ? ` (${localStatus.bytes_downloaded} / ${localStatus.total_bytes} bytes)` : ""}
+            {localStatus?.total_bytes
+              ? ` (${localStatus.bytes_downloaded} / ${localStatus.total_bytes} bytes)`
+              : ""}
           </p>
-          {localStatus?.error && <p role="alert" className="text-sm text-destructive">{localStatus.error}</p>}
-          {localStatus?.status === "downloading" || localStatus?.status === "verifying" ? (
-            <Button variant="outline" onClick={() => cancel.mutate({})} disabled={cancel.isPending}>Cancel download</Button>
+          {localStatus?.error && (
+            <p role="alert" className="text-destructive text-sm">
+              {localStatus.error}
+            </p>
+          )}
+          {localStatus?.status === "downloading" ||
+          localStatus?.status === "verifying" ? (
+            <Button
+              variant="outline"
+              onClick={() => cancel.mutate({})}
+              disabled={cancel.isPending}
+            >
+              Cancel download
+            </Button>
           ) : localStatus?.status !== "ready" ? (
-            <Button onClick={() => download.mutate({})} disabled={download.isPending}>Download model</Button>
+            <Button
+              onClick={() => download.mutate({})}
+              disabled={download.isPending}
+            >
+              Download model
+            </Button>
           ) : (
-            <p className="text-sm text-muted-foreground">The verified local model is ready. CPU inference is bounded to one concurrent caption by default.</p>
+            <p className="text-muted-foreground text-sm">
+              The verified local model is ready. CPU inference is bounded to one
+              concurrent caption by default.
+            </p>
           )}
         </div>
       )}
-      {update.isError && <p role="alert" className="text-sm text-destructive">{updateErrorMessage}</p>}
+      {update.isError && (
+        <p role="alert" className="text-destructive text-sm">
+          {updateErrorMessage}
+        </p>
+      )}
     </section>
   );
 }
 
-export function CaptioningSettings({
-  appSettings,
-}: {
-  appSettings?: ProviderSettings;
-}) {
-  const providerSettings = useQuery({
-    ...appProviderSettingsGetOptions({ client }),
-    enabled: appSettings === undefined,
-  });
-  const settings = appSettings ?? providerSettings.data;
-
-  if (appSettings === undefined && providerSettings.isLoading) {
-    return <Spinner />;
-  }
-  if (providerSettings.isError || settings == null) {
-    return <p role="alert">Provider settings could not be loaded.</p>;
-  }
-
-  return <CaptioningSettingsPane appSettings={settings} />;
+export function CaptioningSettings() {
+  return <CaptioningSettingsPane />;
 }

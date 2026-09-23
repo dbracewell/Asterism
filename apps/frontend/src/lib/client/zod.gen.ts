@@ -235,7 +235,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('9db56238-ec65-40f2-8866-7d970982ea7c'),
+    id: z.uuid().optional().default('7a01a692-cf9e-4f6e-84e8-cf3729a1b2ee'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -527,6 +527,26 @@ export const zProviderDiscoveryResponse = z.object({
 });
 
 /**
+ * ProviderModelUpdate
+ */
+export const zProviderModelUpdate = z.object({
+    is_active: z.boolean(),
+    context_window: z.int().gt(0).nullish(),
+    supports_vision: z.boolean().nullish(),
+    context_window_source: zModelCapabilitySource.optional().default('unknown'),
+    vision_source: zModelCapabilitySource.optional().default('unknown')
+});
+
+/**
+ * ProviderModelsPage
+ */
+export const zProviderModelsPage = z.object({
+    models: z.array(zLlm).optional(),
+    next_cursor: z.string().nullish(),
+    total: z.int().optional().default(0)
+});
+
+/**
  * ProviderType
  */
 export const zProviderType = z.enum(['openai', 'generic_openai']);
@@ -566,11 +586,27 @@ export const zProviderDiscoveryRequest = z.object({
 });
 
 /**
+ * ProviderSummary
+ *
+ * Provider configuration returned by the Providers settings landing page.
+ */
+export const zProviderSummary = z.object({
+    name: z.string(),
+    base_url: z.string(),
+    api_key: z.string(),
+    id: z.uuid(),
+    provider_type: zProviderType.optional().default('generic_openai'),
+    model_count: z.int().optional().default(0),
+    active_model_count: z.int().optional().default(0)
+});
+
+/**
  * ProviderSettings
  */
 export const zProviderSettings = z.object({
-    llm_providers: z.array(zProvider).optional(),
-    draft_model_id: z.uuid().nullish()
+    llm_providers: z.array(zProviderSummary).optional(),
+    draft_model_id: z.uuid().nullish(),
+    draft_model: zLlmDisplayInfo.nullish()
 });
 
 /**
@@ -1169,6 +1205,49 @@ export const zAppProviderSettingsUpdateBody = zProviderSettings;
  * Successful Response
  */
 export const zAppProviderSettingsUpdateResponse = zProviderSettings;
+
+export const zAppProviderModelsListPath = z.object({
+    provider_id: z.uuid()
+});
+
+export const zAppProviderModelsListQuery = z.object({
+    query: z.string().max(100).optional().default(''),
+    cursor: z.uuid().nullish(),
+    limit: z.int().gte(1).lte(50).optional().default(50)
+});
+
+/**
+ * Successful Response
+ */
+export const zAppProviderModelsListResponse = zProviderModelsPage;
+
+export const zAppProviderModelUpdateBody = zProviderModelUpdate;
+
+export const zAppProviderModelUpdatePath = z.object({
+    provider_id: z.uuid(),
+    model_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAppProviderModelUpdateResponse = zLlm;
+
+export const zAppProviderModelsDiscoverAndSyncPath = z.object({
+    provider_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAppProviderModelsDiscoverAndSyncResponse = zProviderSummary;
+
+/**
+ * Response Appcaptioningprovidermodelsget
+ *
+ * Successful Response
+ */
+export const zAppCaptioningProviderModelsGetResponse = z.array(zLlmDisplayInfo);
 
 /**
  * Successful Response

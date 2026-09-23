@@ -19,6 +19,7 @@ from asterism.domains.settings.schemas import (
     Llm,
     Provider,
     ProviderSettings,
+    ProviderSummary,
     ToolSettings,
 )
 from asterism.domains.settings.service import (
@@ -251,8 +252,19 @@ async def test_focused_provider_and_tool_settings_preserve_owned_values(tmp_path
 
         provider_settings = await get_provider_settings(session)
         assert provider_settings.draft_model_id == model_id
-        assert provider_settings.llm_providers == [provider]
-        assert provider_settings.llm_providers[0].models[0].provider_id == provider_id
+        assert provider_settings.llm_providers == [
+            ProviderSummary(
+                id=provider_id,
+                provider_type=ProviderType.GENERIC_OPENAI,
+                name="Local",
+                base_url="http://localhost:8080/v1",
+                api_key="secret",
+                model_count=1,
+                active_model_count=1,
+            )
+        ]
+        assert provider_settings.draft_model is not None
+        assert provider_settings.draft_model.provider_id == provider_id
 
         tool_settings = await get_tool_settings(session)
         assert tool_settings.active_tools == ["web_search"]
@@ -297,26 +309,17 @@ async def test_focused_settings_writes_return_the_persisted_resources(tmp_path):
         await connection.run_sync(Base.metadata.create_all)
 
     provider_id = uuid.uuid4()
-    model_id = uuid.uuid4()
     provider_settings = ProviderSettings(
         llm_providers=[
-            Provider(
+            ProviderSummary(
                 id=provider_id,
                 provider_type=ProviderType.GENERIC_OPENAI,
                 name="Local",
                 base_url="http://localhost:8080/v1",
                 api_key="secret",
-                models=[
-                    Llm(
-                        id=model_id,
-                        provider_id=provider_id,
-                        name="local-model",
-                        is_active=True,
-                    )
-                ],
             )
         ],
-        draft_model_id=model_id,
+        draft_model_id=None,
     )
     tool_settings = ToolSettings(
         active_tools=["web_search"],
@@ -328,7 +331,9 @@ async def test_focused_settings_writes_return_the_persisted_resources(tmp_path):
 
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
-        assert await update_provider_settings(provider_settings, session) == provider_settings
+        persisted_provider_settings = await update_provider_settings(provider_settings, session)
+        assert persisted_provider_settings.llm_providers[0].name == "Local"
+        assert persisted_provider_settings.llm_providers[0].model_count == 0
         assert await update_tool_settings(tool_settings, session) == tool_settings
 
         assert await get_provider_settings(session) == provider_settings
@@ -478,4 +483,4 @@ async def test_initialization_migrates_legacy_provider_data_once(tmp_path, monke
         "id", "user_id", "filename", "original_name", "size", "mime_type", "kind",
         "sha256", "content_status", "content_error", "content_cache", "created_at", "updated_at",
     }.issubset(user_file_columns)
-    assert migration_count == (14,)
+    assert migration_count == (15,)

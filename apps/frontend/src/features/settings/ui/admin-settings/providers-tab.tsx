@@ -3,20 +3,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ComputerIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   LoaderCircleIcon,
   PlusIcon,
   RefreshCwIcon,
   SaveIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { HelpIcon } from "@/components/help-icon";
-import { ModelSelector } from "@/components/settings/model-selector";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/spinner";
@@ -38,23 +37,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { client } from "@/lib/api";
-import { LlmDisplayInfo, ProviderSettings } from "@/lib/client";
+import { Llm, ProviderSettings, ProviderSummary } from "@/lib/client";
 import {
-  appProviderModelsDiscoverMutation,
+  appProviderModelsDiscoverAndSyncMutation,
+  appProviderModelsListOptions,
+  appProviderModelUpdateMutation,
   appProviderSettingsGetOptions,
   appProviderSettingsGetQueryKey,
   appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import {
-  zLlm,
-  zModelCapabilitySource,
-  zProviderType,
-} from "@/lib/client/zod.gen";
-
-const modelSchema = zLlm.extend({
-  context_window_source: zModelCapabilitySource.optional(),
-  vision_source: zModelCapabilitySource.optional(),
-});
+import { zProviderType } from "@/lib/client/zod.gen";
 
 export const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
@@ -62,92 +54,320 @@ export const providerSchema = z
   .object({
     id: z.string(),
     name: z.string().trim().min(1, "Provider name is required."),
-    base_url: z.string().trim(),
+    base_url: z
+      .string()
+      .trim()
+      .url("Base URL must be an absolute HTTP(S) URL."),
     api_key: z.string().trim().min(1, "API key is required."),
     provider_type: zProviderType,
-    models: z.array(modelSchema),
   })
   .superRefine((provider, context) => {
-    if (provider.provider_type === "openai") {
-      if (provider.base_url !== OPENAI_BASE_URL) {
-        context.addIssue({
-          code: "custom",
-          path: ["base_url"],
-          message: "OpenAI uses Asterism's fixed API URL.",
-        });
-      }
-      return;
-    }
-
-    if (!provider.base_url) {
+    if (
+      provider.provider_type === "openai" &&
+      provider.base_url !== OPENAI_BASE_URL
+    ) {
       context.addIssue({
         code: "custom",
         path: ["base_url"],
-        message: "Base URL is required.",
-      });
-      return;
-    }
-    try {
-      const url = new URL(provider.base_url);
-      if (
-        !["http:", "https:"].includes(url.protocol) ||
-        url.username ||
-        url.password ||
-        url.search ||
-        url.hash
-      ) {
-        throw new Error("unsafe URL");
-      }
-    } catch {
-      context.addIssue({
-        code: "custom",
-        path: ["base_url"],
-        message:
-          "Base URL must be an absolute HTTP(S) URL without credentials, query, or fragment.",
+        message: "OpenAI uses Asterism's fixed API URL.",
       });
     }
   });
-
-type ProviderFormValue = ProvidersFormValues["llm_providers"][number];
-
-const createEmptyProvider = (): ProviderFormValue => ({
+const formSchema = z.object({
+  llm_providers: z.array(providerSchema),
+  draft_model_id: z.string().nullable().optional(),
+});
+type Values = z.infer<typeof formSchema>;
+type FormProvider = Values["llm_providers"][number];
+const emptyProvider = (): FormProvider => ({
   id: self.crypto.randomUUID(),
   name: "",
   base_url: "",
   api_key: "",
   provider_type: "generic_openai",
-  models: [],
 });
 
-const providersFormSchema = z.object({
-  llm_providers: z.array(providerSchema),
-  draft_model_id: z.string().optional(),
-});
-
-type ProvidersFormValues = z.infer<typeof providersFormSchema>;
-
-const ProvidersForm = ({
-  appSettings,
+function ModelRow({
+  model,
+  providerId,
+  isDraft,
+  onSetDraft,
 }: {
-  appSettings: ProviderSettings;
-}) => {
+  model: Llm;
+  providerId: string;
+  isDraft: boolean;
+  onSetDraft: (id: string) => void;
+}) {
   const queryClient = useQueryClient();
-  const [loadingModelsIndex, setLoadingModelsIndex] = useState<number | null>(
-    null,
+  const [isActive, setIsActive] = useState(model.is_active);
+  const [contextWindow, setContextWindow] = useState(
+    model.context_window?.toString() ?? "",
   );
+  const [vision, setVision] = useState(
+    model.supports_vision == null ? "unknown" : String(model.supports_vision),
+  );
+  const update = useMutation({
+    ...appProviderModelUpdateMutation({ client }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["appProviderModelsList"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: appProviderSettingsGetQueryKey({ client }),
+      });
+      toast.success(`Saved ${model.name}`);
+    },
+    onError: () => toast.error(`Could not save ${model.name}.`),
+  });
+  useEffect(() => {
+    setIsActive(model.is_active);
+    setContextWindow(model.context_window?.toString() ?? "");
+    setVision(
+      model.supports_vision == null ? "unknown" : String(model.supports_vision),
+    );
+  }, [model]);
+  const save = () => {
+    const context = contextWindow.trim() ? Number(contextWindow) : null;
+    if (context != null && (!Number.isInteger(context) || context < 1)) {
+      toast.error("Context window must be a positive whole number.");
+      return;
+    }
+    const supportsVision = vision === "unknown" ? null : vision === "true";
+    update.mutate({
+      path: { provider_id: providerId, model_id: model.id },
+      body: {
+        is_active: isActive,
+        context_window: context,
+        supports_vision: supportsVision,
+        context_window_source:
+          context == null
+            ? "unknown"
+            : ["catalog", "provider"].includes(
+                  model.context_window_source ?? "",
+                )
+              ? model.context_window_source
+              : "manual",
+        vision_source:
+          supportsVision == null
+            ? "unknown"
+            : ["catalog", "provider"].includes(model.vision_source ?? "")
+              ? model.vision_source
+              : "manual",
+      },
+    });
+  };
+  return (
+    <div className="grid gap-3 rounded border p-3 lg:grid-cols-[minmax(14rem,1fr)_10rem_10rem_auto]">
+      <div className="flex min-w-0 items-center gap-2">
+        <Checkbox
+          id={`model-${model.id}-active`}
+          checked={isActive}
+          onCheckedChange={(value) => setIsActive(value === true)}
+        />
+        <FieldLabel
+          htmlFor={`model-${model.id}-active`}
+          className="min-w-0 truncate"
+          title={model.name}
+        >
+          {model.name}
+        </FieldLabel>
+      </div>
+      <Field>
+        <FieldLabel htmlFor={`model-${model.id}-context`}>
+          Context window
+        </FieldLabel>
+        <Input
+          id={`model-${model.id}-context`}
+          type="number"
+          min={1}
+          value={contextWindow}
+          onChange={(event) => setContextWindow(event.target.value)}
+          placeholder="Unknown"
+        />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`model-${model.id}-vision`}>
+          Vision input
+        </FieldLabel>
+        <Select value={vision} onValueChange={setVision}>
+          <SelectTrigger id={`model-${model.id}-vision`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unknown">Unknown</SelectItem>
+            <SelectItem value="true">Supported</SelectItem>
+            <SelectItem value="false">Not supported</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
+      <div className="flex items-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={save}
+          disabled={update.isPending}
+        >
+          {update.isPending ? (
+            <LoaderCircleIcon className="animate-spin" />
+          ) : (
+            <SaveIcon />
+          )}
+          Save
+        </Button>
+        <Button
+          type="button"
+          variant={isDraft ? "secondary" : "ghost"}
+          onClick={() => onSetDraft(model.id)}
+          disabled={!isActive || isDraft}
+        >
+          {isDraft ? "Draft model" : "Set draft"}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
-  const form = useForm<ProvidersFormValues>({
-    resolver: zodResolver(providersFormSchema),
+function ModelCatalog({
+  provider,
+  draftModelId,
+  onSetDraft,
+  onRefresh,
+}: {
+  provider: ProviderSummary;
+  draftModelId?: string | null;
+  onSetDraft: (id: string) => void;
+  onRefresh: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [query, setQuery] = useState("");
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [previousCursors, setPreviousCursors] = useState<Array<string | null>>(
+    [],
+  );
+  const catalog = useQuery({
+    ...appProviderModelsListOptions({
+      client,
+      path: { provider_id: provider.id },
+      query: { query, cursor: cursor ?? undefined, limit: 50 },
+    }),
+    enabled: expanded,
+  });
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setQuery(searchInput.trim());
+      setCursor(null);
+      setPreviousCursors([]);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
+  const models = catalog.data?.models ?? [];
+  return (
+    <div className="bg-muted/20 mt-3 rounded border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? (
+            <ChevronUpIcon />
+          ) : (
+            `Browse ${(provider.model_count ?? 0).toLocaleString()} models`
+          )}
+          {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => onRefresh(provider.id)}
+        >
+          <RefreshCwIcon />
+          Refresh catalog
+        </Button>
+        <span className="text-muted-foreground text-sm">
+          {(provider.active_model_count ?? 0).toLocaleString()} active
+        </span>
+      </div>
+      {expanded && (
+        <div className="mt-3 space-y-3">
+          <Input
+            aria-label={`Search ${provider.name} models`}
+            placeholder="Search models"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+          />
+          {catalog.isLoading ? (
+            <div className="flex justify-center p-4">
+              <Spinner size={28} />
+            </div>
+          ) : catalog.isError ? (
+            <p role="alert">Models could not be loaded.</p>
+          ) : (
+            <>
+              <p className="text-muted-foreground text-sm">
+                {(catalog.data?.total ?? 0).toLocaleString()} matching models ·
+                50 per page
+              </p>
+              <div className="grid gap-2">
+                {models.map((model) => (
+                  <ModelRow
+                    key={model.id}
+                    model={model}
+                    providerId={provider.id}
+                    isDraft={draftModelId === model.id}
+                    onSetDraft={onSetDraft}
+                  />
+                ))}
+              </div>
+              {models.length === 0 && (
+                <p className="text-muted-foreground text-sm">
+                  No matching models.
+                </p>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={previousCursors.length === 0}
+                  onClick={() => {
+                    const previous = previousCursors.at(-1) ?? null;
+                    setPreviousCursors((items) => items.slice(0, -1));
+                    setCursor(previous);
+                  }}
+                >
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!catalog.data?.next_cursor}
+                  onClick={() => {
+                    setPreviousCursors((items) => [...items, cursor]);
+                    setCursor(catalog.data?.next_cursor ?? null);
+                  }}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
+  const queryClient = useQueryClient();
+  const form = useForm<Values>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      llm_providers: (appSettings?.llm_providers ?? []).map((provider) => ({
-        ...provider,
-        provider_type: provider.provider_type ?? "generic_openai",
-      })),
-      draft_model_id: appSettings?.draft_model_id ?? "",
+      llm_providers: appSettings.llm_providers ?? [],
+      draft_model_id: appSettings.draft_model_id ?? null,
     },
     mode: "onBlur",
   });
-
   const {
     control,
     formState,
@@ -155,158 +375,74 @@ const ProvidersForm = ({
     handleSubmit,
     register,
     reset,
-    setValue,
     trigger,
   } = form;
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: "llm_providers",
+    keyName: "fieldKey",
   });
-
-  const watchedProviders = useWatch({
-    control,
-    name: "llm_providers",
-  });
-
-  const watchedDraftModel = useWatch({
-    control,
-    name: "draft_model_id",
-  });
-
-  useEffect(() => {
-    reset({
-      llm_providers: (appSettings?.llm_providers ?? []).map((provider) => ({
-        ...provider,
-        provider_type: provider.provider_type ?? "generic_openai",
-      })),
-      draft_model_id: appSettings?.draft_model_id ?? "",
-    });
-  }, [appSettings, reset]);
-
-  const availableModels = useMemo(() => {
-    return watchedProviders
-      .flatMap((p) =>
-        p.models.map(
-          (m) =>
-            ({
-              ...m,
-              provider_name: p.name,
-            }) as LlmDisplayInfo & { is_active: boolean },
-        ),
-      )
-      .filter((m) => m.is_active);
-  }, [watchedProviders]);
-
-  const defaultModelList = useMemo(() => {
-    return watchedProviders
-      .flatMap((p) =>
-        p.models.map((m) => ({
-          ...m,
-          provider: p.name,
-        })),
-      )
-      .filter((m) => m.is_active)
-      .map((m) => ({
-        value: m.id,
-        label: `${m.provider} - ${m.name}`,
-      }));
-  }, [watchedProviders]);
-
-  const discoverModels = useMutation({
-    ...appProviderModelsDiscoverMutation({ client }),
-  });
-
   const saveProviders = useMutation({
-    ...appProviderSettingsUpdateMutation({
-      client,
-    }),
+    ...appProviderSettingsUpdateMutation({ client }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({
+        queryKey: appProviderSettingsGetQueryKey({ client }),
+      }),
+  });
+  const refreshCatalog = useMutation({
+    ...appProviderModelsDiscoverAndSyncMutation({ client }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: appProviderSettingsGetQueryKey({ client }),
       });
-      toast.success("Settings saved");
+      void queryClient.invalidateQueries({
+        queryKey: ["appProviderModelsList"],
+      });
+      toast.success("Model catalog refreshed.");
     },
-    onError: () => toast.error("Failed to save. Please try again."),
-  });
-
-  const onSubmit = (values: ProvidersFormValues) => {
-    let draft_model_id: string | undefined = values.draft_model_id || undefined;
-
-    if (draft_model_id == null && defaultModelList.length > 0) {
-      draft_model_id = defaultModelList[0].value;
-    }
-
-    saveProviders.mutate({
-      body: {
-        llm_providers: values.llm_providers.map((provider) => ({
-          ...provider,
-          base_url:
-            provider.provider_type === "openai"
-              ? OPENAI_BASE_URL
-              : provider.base_url.replace(/\/+$/, ""),
-        })),
-        draft_model_id: draft_model_id ?? null,
-      },
-    });
-  };
-
-  const handleLoadModels = async (index: number) => {
-    const isProviderValid = await trigger([
-      `llm_providers.${index}.name`,
-      `llm_providers.${index}.provider_type`,
-      `llm_providers.${index}.base_url`,
-      `llm_providers.${index}.api_key`,
-    ]);
-
-    if (!isProviderValid) {
-      return;
-    }
-
-    setLoadingModelsIndex(index);
-
-    try {
-      const provider = getValues(`llm_providers.${index}`);
-      const discovery = await discoverModels.mutateAsync({
-        body: {
-          provider_type: provider.provider_type,
-          base_url: provider.base_url,
-          api_key: provider.api_key,
-          provider_id: provider.id,
-          existing_models: Object.values(provider.models ?? {}),
-          draft_model_id: watchedDraftModel || null,
-        },
-      });
-      setValue(`llm_providers.${index}.models`, discovery.models, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-      toast.success(
-        `Loaded ${discovery.models.length} models for ${provider.name}.`,
-      );
-      if ((discovery.warnings?.length ?? 0) > 0) {
-        toast.warning(
-          `${discovery.warnings?.length} capability fields need manual review.`,
-        );
-      }
-    } catch (error) {
+    onError: () =>
       toast.error(
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error && "detail" in error
-            ? String(error.detail)
-            : "Failed to load provider models. Please try again.",
-      );
-    } finally {
-      setLoadingModelsIndex(null);
+        "Model discovery failed. Check the provider connection and try again.",
+      ),
+  });
+  useEffect(() => {
+    reset({
+      llm_providers: appSettings.llm_providers ?? [],
+      draft_model_id: appSettings.draft_model_id ?? null,
+    });
+  }, [appSettings, reset]);
+  const save = async (values: Values, message?: string) => {
+    try {
+      await saveProviders.mutateAsync({ body: values });
+      if (message) toast.success(message);
+    } catch {
+      toast.error("Failed to save provider settings.");
+      throw new Error("Provider settings save failed");
     }
   };
-
+  const refresh = async (providerId: string) => {
+    if (!(await trigger())) return;
+    try {
+      await save(getValues());
+      await refreshCatalog.mutateAsync({ path: { provider_id: providerId } });
+    } catch {
+      /* mutations report errors */
+    }
+  };
+  const setDraft = async (modelId: string) => {
+    try {
+      await save(
+        { ...getValues(), draft_model_id: modelId },
+        "Draft model updated.",
+      );
+    } catch {
+      /* save reports errors */
+    }
+  };
   return (
     <form
-      id="providers-form"
       className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit((values) => void save(values, "Settings saved."))}
     >
       <div className="relative">
         <h1 className="border-b pb-2 text-base font-bold">
@@ -316,44 +452,38 @@ const ProvidersForm = ({
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => append(createEmptyProvider())}
+          onClick={() => append(emptyProvider())}
           aria-label="Add provider"
           className="absolute top-0 right-0"
         >
           <PlusIcon />
         </Button>
       </div>
-
+      {appSettings.draft_model ? (
+        <p className="text-muted-foreground text-sm">
+          Draft model: {appSettings.draft_model.provider_name} —{" "}
+          {appSettings.draft_model.name}
+        </p>
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          Choose an active model below to use as the draft model.
+        </p>
+      )}
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        {fields.length === 0 ? (
-          <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
-            <ComputerIcon className="text-muted-foreground/50 size-10" />
-            <h4 className="w-sm text-center text-xl">
-              No providers configured yet. Add one to get started.
-            </h4>
-            <Button onClick={() => append(createEmptyProvider())}>
-              <PlusIcon /> Add Provider
-            </Button>
-          </div>
-        ) : null}
-
         {fields.map((field, index) => {
-          const providerErrors = formState.errors.llm_providers?.[index];
-          const provider = watchedProviders?.[index];
-          const models = provider?.models ?? [];
-          const isLoadingModels = loadingModelsIndex === index;
-
+          const errors = formState.errors.llm_providers?.[index];
+          const provider = appSettings.llm_providers?.find(
+            (item) => item.id === field.id,
+          ) ?? { ...field, model_count: 0, active_model_count: 0 };
           return (
             <FieldSet
-              key={field.id}
+              key={field.fieldKey}
               className="bg-background/30 rounded border p-4"
             >
-              <div className="flex min-h-0 items-start justify-between gap-3">
-                <div>
-                  <FieldTitle className="text-base! font-medium!">
-                    {provider?.name?.trim() || `Provider ${index + 1}`}
-                  </FieldTitle>
-                </div>
+              <div className="flex items-start justify-between gap-3">
+                <FieldTitle className="text-base! font-medium!">
+                  {field.name.trim() || `Provider ${index + 1}`}
+                </FieldTitle>
                 <Button
                   type="button"
                   variant="ghost"
@@ -364,11 +494,9 @@ const ProvidersForm = ({
                   <Trash2Icon />
                 </Button>
               </div>
-
               <FieldGroup>
                 <Input
                   type="hidden"
-                  id={`provider-id-${index}`}
                   {...register(`llm_providers.${index}.id`)}
                 />
                 <Field>
@@ -376,51 +504,38 @@ const ProvidersForm = ({
                     Provider Type
                   </FieldLabel>
                   <FieldContent>
-                    <Controller
-                      control={control}
-                      name={`llm_providers.${index}.provider_type`}
-                      render={({ field: controllerField }) => (
-                        <Select
-                          value={controllerField.value}
-                          onValueChange={(value) => {
-                            const providerType = value as
-                              | "openai"
-                              | "generic_openai";
-                            controllerField.onChange(providerType);
-                            setValue(
-                              `llm_providers.${index}.base_url`,
-                              providerType === "openai"
-                                ? OPENAI_BASE_URL
-                                : getValues(
-                                      `llm_providers.${index}.base_url`,
-                                    ) === OPENAI_BASE_URL
-                                  ? ""
-                                  : getValues(
-                                      `llm_providers.${index}.base_url`,
-                                    ),
-                              { shouldDirty: true, shouldValidate: true },
-                            );
-                          }}
-                        >
-                          <SelectTrigger
-                            id={`provider-type-${index}`}
-                            className="w-full"
-                            aria-label={`Provider type for provider ${index + 1}`}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="openai">OpenAI</SelectItem>
-                            <SelectItem value="generic_openai">
-                              Generic OpenAI
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <Select
+                      value={form.getValues(
+                        `llm_providers.${index}.provider_type`,
                       )}
-                    />
+                      onValueChange={(value) => {
+                        form.setValue(
+                          `llm_providers.${index}.provider_type`,
+                          value as FormProvider["provider_type"],
+                          { shouldDirty: true, shouldValidate: true },
+                        );
+                        form.setValue(
+                          `llm_providers.${index}.base_url`,
+                          value === "openai" ? OPENAI_BASE_URL : "",
+                          { shouldDirty: true, shouldValidate: true },
+                        );
+                      }}
+                    >
+                      <SelectTrigger
+                        id={`provider-type-${index}`}
+                        aria-label={`Provider type for provider ${index + 1}`}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="generic_openai">
+                          Generic OpenAI
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FieldContent>
                 </Field>
-
                 <Field>
                   <FieldLabel htmlFor={`provider-name-${index}`}>
                     Provider Name
@@ -428,14 +543,11 @@ const ProvidersForm = ({
                   <FieldContent>
                     <Input
                       id={`provider-name-${index}`}
-                      aria-invalid={providerErrors?.name ? true : undefined}
                       {...register(`llm_providers.${index}.name`)}
-                      autoComplete="nope"
                     />
-                    <FieldError errors={[providerErrors?.name]} />
+                    <FieldError errors={[errors?.name]} />
                   </FieldContent>
                 </Field>
-
                 <Field>
                   <FieldLabel htmlFor={`provider-base-url-${index}`}>
                     Base URL
@@ -443,19 +555,12 @@ const ProvidersForm = ({
                   <FieldContent>
                     <Input
                       id={`provider-base-url-${index}`}
-                      aria-invalid={providerErrors?.base_url ? true : undefined}
                       placeholder="https://api.example.com/v1"
-                      readOnly={provider?.provider_type === "openai"}
-                      aria-readonly={
-                        provider?.provider_type === "openai" ? true : undefined
-                      }
                       {...register(`llm_providers.${index}.base_url`)}
-                      autoComplete="nope"
                     />
-                    <FieldError errors={[providerErrors?.base_url]} />
+                    <FieldError errors={[errors?.base_url]} />
                   </FieldContent>
                 </Field>
-
                 <Field>
                   <FieldLabel htmlFor={`provider-api-key-${index}`}>
                     API Key
@@ -464,293 +569,49 @@ const ProvidersForm = ({
                     <Input
                       id={`provider-api-key-${index}`}
                       type="password"
-                      aria-invalid={providerErrors?.api_key ? true : undefined}
                       {...register(`llm_providers.${index}.api_key`)}
-                      autoComplete="nope"
                     />
-                    <FieldError errors={[providerErrors?.api_key]} />
-                  </FieldContent>
-                </Field>
-
-                <Field>
-                  <FieldLabel>Models</FieldLabel>
-                  <FieldContent className="gap-2">
-                    <div className="flex flex-wrap items-center gap-2 overflow-y-auto">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => void handleLoadModels(index)}
-                        disabled={isLoadingModels}
-                      >
-                        {isLoadingModels ? (
-                          <LoaderCircleIcon className="animate-spin" />
-                        ) : (
-                          <RefreshCwIcon />
-                        )}
-                        Load models
-                      </Button>
-                    </div>
-
-                    {models.length > 0 ? (
-                      <div className="grid max-h-96 min-h-0 gap-3 overflow-y-auto rounded border p-2">
-                        {models.map((model, modelIndex) => {
-                          const modelErrors =
-                            providerErrors?.models?.[modelIndex];
-                          const contextSource =
-                            model.context_window_source ?? "unknown";
-                          const visionSource = model.vision_source ?? "unknown";
-                          return (
-                            <div
-                              key={`${field.id}-${model.name}-${modelIndex}`}
-                              className="grid gap-3 rounded p-3 md:grid-cols-[minmax(10rem,1fr)_minmax(9rem,12rem)_minmax(9rem,12rem)]"
-                            >
-                              <Input
-                                type="hidden"
-                                {...register(
-                                  `llm_providers.${index}.models.${modelIndex}.id`,
-                                )}
-                              />
-                              <Input
-                                type="hidden"
-                                {...register(
-                                  `llm_providers.${index}.models.${modelIndex}.name`,
-                                )}
-                              />
-                              <Input
-                                type="hidden"
-                                {...register(
-                                  `llm_providers.${index}.models.${modelIndex}.provider_id`,
-                                )}
-                              />
-                              <div className="flex items-center gap-2">
-                                <Controller
-                                  control={control}
-                                  name={`llm_providers.${index}.models.${modelIndex}.is_active`}
-                                  render={({ field: controllerField }) => (
-                                    <Checkbox
-                                      id={`provider-${index}-model-${modelIndex}-active`}
-                                      checked={controllerField.value}
-                                      onCheckedChange={(checked) => {
-                                        const isActive = checked === true;
-                                        controllerField.onChange(isActive);
-                                        if (
-                                          !isActive &&
-                                          watchedDraftModel === model.id
-                                        ) {
-                                          const nextDefault = watchedProviders
-                                            ?.flatMap((item) =>
-                                              item.models
-                                                .filter(
-                                                  (candidate) =>
-                                                    candidate.id !== model.id &&
-                                                    candidate.is_active,
-                                                )
-                                                .map(
-                                                  (candidate) => candidate.id,
-                                                ),
-                                            )
-                                            .at(0);
-                                          setValue(
-                                            "draft_model_id",
-                                            nextDefault,
-                                            {
-                                              shouldDirty: true,
-                                              shouldValidate: true,
-                                            },
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  )}
-                                />
-                                <FieldLabel
-                                  htmlFor={`provider-${index}-model-${modelIndex}-active`}
-                                >
-                                  {model.name}
-                                </FieldLabel>
-                              </div>
-
-                              <Field>
-                                <FieldLabel
-                                  htmlFor={`provider-${index}-model-${modelIndex}-context`}
-                                >
-                                  Context window
-                                </FieldLabel>
-                                <Controller
-                                  control={control}
-                                  name={`llm_providers.${index}.models.${modelIndex}.context_window`}
-                                  render={({ field: controllerField }) => (
-                                    <Input
-                                      id={`provider-${index}-model-${modelIndex}-context`}
-                                      type="number"
-                                      min={1}
-                                      step={1}
-                                      value={controllerField.value ?? ""}
-                                      aria-invalid={
-                                        modelErrors?.context_window
-                                          ? true
-                                          : undefined
-                                      }
-                                      placeholder="Unknown"
-                                      onChange={(event) => {
-                                        const value = event.target.value;
-                                        controllerField.onChange(
-                                          value === "" ? null : Number(value),
-                                        );
-                                        setValue(
-                                          `llm_providers.${index}.models.${modelIndex}.context_window_source`,
-                                          value === "" ? "unknown" : "manual",
-                                          { shouldDirty: true },
-                                        );
-                                      }}
-                                    />
-                                  )}
-                                />
-                                <span
-                                  className={
-                                    contextSource === "unknown"
-                                      ? "text-xs text-amber-700 dark:text-amber-400"
-                                      : "text-muted-foreground text-xs"
-                                  }
-                                >
-                                  Source: {contextSource}
-                                </span>
-                                <FieldError
-                                  errors={[modelErrors?.context_window]}
-                                />
-                              </Field>
-
-                              <Field>
-                                <FieldLabel
-                                  htmlFor={`provider-${index}-model-${modelIndex}-vision`}
-                                >
-                                  Vision input
-                                </FieldLabel>
-                                <Controller
-                                  control={control}
-                                  name={`llm_providers.${index}.models.${modelIndex}.supports_vision`}
-                                  render={({ field: controllerField }) => (
-                                    <Select
-                                      value={
-                                        controllerField.value == null
-                                          ? "unknown"
-                                          : String(controllerField.value)
-                                      }
-                                      onValueChange={(value) => {
-                                        controllerField.onChange(
-                                          value === "unknown"
-                                            ? null
-                                            : value === "true",
-                                        );
-                                        setValue(
-                                          `llm_providers.${index}.models.${modelIndex}.vision_source`,
-                                          value === "unknown"
-                                            ? "unknown"
-                                            : "manual",
-                                          { shouldDirty: true },
-                                        );
-                                      }}
-                                    >
-                                      <SelectTrigger
-                                        id={`provider-${index}-model-${modelIndex}-vision`}
-                                        className="w-full"
-                                      >
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="unknown">
-                                          Unknown
-                                        </SelectItem>
-                                        <SelectItem value="true">
-                                          Supported
-                                        </SelectItem>
-                                        <SelectItem value="false">
-                                          Not supported
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  )}
-                                />
-                                <span
-                                  className={
-                                    visionSource === "unknown"
-                                      ? "text-xs text-amber-700 dark:text-amber-400"
-                                      : "text-muted-foreground text-xs"
-                                  }
-                                >
-                                  Source: {visionSource}
-                                </span>
-                              </Field>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-muted-foreground text-sm">
-                        No models loaded yet.
-                      </div>
-                    )}
+                    <FieldError errors={[errors?.api_key]} />
                   </FieldContent>
                 </Field>
               </FieldGroup>
+              <ModelCatalog
+                provider={provider}
+                draftModelId={appSettings.draft_model_id}
+                onSetDraft={setDraft}
+                onRefresh={refresh}
+              />
             </FieldSet>
           );
         })}
       </div>
-      <div className="flex items-end justify-between gap-2">
-        <div className="flex flex-row items-center gap-2">
-          <Field orientation="horizontal">
-            <FieldLabel htmlFor="appsettings-draft-model">
-              Draft Model
-              <HelpIcon text="The model used for generating chat titles and other background information." />
-            </FieldLabel>
-            <Controller
-              control={control}
-              name="draft_model_id"
-              render={({ field }) => (
-                <ModelSelector
-                  className="w-40! sm:w-80!"
-                  id="appsettings-draft-model"
-                  defaultModel={field.value}
-                  availableModels={availableModels}
-                  onValueChange={field.onChange}
-                />
-              )}
-            />
-          </Field>
-        </div>
-        <div className="flex flex-1 items-center justify-end gap-2">
-          <Button type="submit" disabled={saveProviders.isPending}>
-            {saveProviders.isPending ? (
-              <LoaderCircleIcon className="animate-spin" />
-            ) : (
-              <SaveIcon />
-            )}
-            Save
-          </Button>
-        </div>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={saveProviders.isPending}>
+          {saveProviders.isPending ? (
+            <LoaderCircleIcon className="animate-spin" />
+          ) : (
+            <SaveIcon />
+          )}
+          Save
+        </Button>
       </div>
     </form>
   );
-};
+}
 
-export const ProvidersTab = ({
+export function ProvidersTab({
   appSettings,
 }: {
   appSettings?: ProviderSettings;
-}) => {
+}) {
   const providerSettings = useQuery({
     ...appProviderSettingsGetOptions({ client }),
     enabled: appSettings === undefined,
   });
   const settings = appSettings ?? providerSettings.data;
-
-  if (appSettings === undefined && providerSettings.isLoading) {
+  if (appSettings === undefined && providerSettings.isLoading)
     return <Spinner />;
-  }
-  if (providerSettings.isError || settings == null) {
+  if (providerSettings.isError || settings == null)
     return <p role="alert">Provider settings could not be loaded.</p>;
-  }
-
   return <ProvidersForm appSettings={settings} />;
-};
+}

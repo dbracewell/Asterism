@@ -73,7 +73,7 @@ export const getAdminSettingsSections = (
       label: "Image Captioning",
       value: "image-captioning",
       icon: <IconPhoto />,
-      settingsPane: <CaptioningSettings appSettings={appSettings} />,
+      settingsPane: <CaptioningSettings />,
     },
 
     {
