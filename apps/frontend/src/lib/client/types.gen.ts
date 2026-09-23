@@ -1210,6 +1210,20 @@ export type ProviderDiscoveryResponse = {
 };
 
 /**
+ * ProviderSettings
+ */
+export type ProviderSettings = {
+    /**
+     * Llm Providers
+     */
+    llm_providers?: Array<Provider>;
+    /**
+     * Draft Model Id
+     */
+    draft_model_id?: string | null;
+};
+
+/**
  * ProviderType
  */
 export type ProviderType = 'openai' | 'generic_openai';
@@ -1410,6 +1424,18 @@ export type ToolResult = {
      */
     is_empty: boolean;
     tool_call: ToolCall;
+};
+
+/**
+ * ToolSettings
+ */
+export type ToolSettings = {
+    web_search_provider?: ComponentProviderParameters | null;
+    image_search_provider?: ComponentProviderParameters | null;
+    /**
+     * Active Tools
+     */
+    active_tools?: Array<string>;
 };
 
 /**
@@ -2967,6 +2993,114 @@ export type AppProviderModelsDiscoverResponses = {
 };
 
 export type AppProviderModelsDiscoverResponse = AppProviderModelsDiscoverResponses[keyof AppProviderModelsDiscoverResponses];
+
+export type AppProviderSettingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/app/providers';
+};
+
+export type AppProviderSettingsGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type AppProviderSettingsGetError = AppProviderSettingsGetErrors[keyof AppProviderSettingsGetErrors];
+
+export type AppProviderSettingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProviderSettings;
+};
+
+export type AppProviderSettingsGetResponse = AppProviderSettingsGetResponses[keyof AppProviderSettingsGetResponses];
+
+export type AppProviderSettingsUpdateData = {
+    body: ProviderSettings;
+    path?: never;
+    query?: never;
+    url: '/settings/app/providers';
+};
+
+export type AppProviderSettingsUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AppProviderSettingsUpdateError = AppProviderSettingsUpdateErrors[keyof AppProviderSettingsUpdateErrors];
+
+export type AppProviderSettingsUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProviderSettings;
+};
+
+export type AppProviderSettingsUpdateResponse = AppProviderSettingsUpdateResponses[keyof AppProviderSettingsUpdateResponses];
+
+export type AppToolSettingsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/app/tools';
+};
+
+export type AppToolSettingsGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type AppToolSettingsGetError = AppToolSettingsGetErrors[keyof AppToolSettingsGetErrors];
+
+export type AppToolSettingsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ToolSettings;
+};
+
+export type AppToolSettingsGetResponse = AppToolSettingsGetResponses[keyof AppToolSettingsGetResponses];
+
+export type AppToolSettingsUpdateData = {
+    body: ToolSettings;
+    path?: never;
+    query?: never;
+    url: '/settings/app/tools';
+};
+
+export type AppToolSettingsUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AppToolSettingsUpdateError = AppToolSettingsUpdateErrors[keyof AppToolSettingsUpdateErrors];
+
+export type AppToolSettingsUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: ToolSettings;
+};
+
+export type AppToolSettingsUpdateResponse = AppToolSettingsUpdateResponses[keyof AppToolSettingsUpdateResponses];
 
 export type AppSettingsGetData = {
     body?: never;

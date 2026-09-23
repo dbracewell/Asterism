@@ -20,7 +20,9 @@ from .discovery import (
 from .schemas import (
     ApplicationSettings,
     BulkUpdateSettingRequest,
+    ProviderSettings,
     Setting,
+    ToolSettings,
     UpdateSettingValue,
     UserSettings,
 )
@@ -134,10 +136,71 @@ async def discover_provider_models(
 
 
 @settings_router.get(
+    "/app/providers",
+    response_model=ProviderSettings,
+    operation_id="appProviderSettingsGet",
+    summary="Get provider settings",
+)
+async def get_provider_settings(
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> ProviderSettings:
+    return await settings_service.get_provider_settings(session=session)
+
+
+@settings_router.put(
+    "/app/providers",
+    response_model=ProviderSettings,
+    operation_id="appProviderSettingsUpdate",
+    summary="Replace provider settings",
+)
+async def update_provider_settings(
+    settings: ProviderSettings,
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> ProviderSettings:
+    return await settings_service.update_provider_settings(
+        settings=settings,
+        session=session,
+    )
+
+
+@settings_router.get(
+    "/app/tools",
+    response_model=ToolSettings,
+    operation_id="appToolSettingsGet",
+    summary="Get tool settings",
+)
+async def get_tool_settings(
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> ToolSettings:
+    return await settings_service.get_tool_settings(session=session)
+
+
+@settings_router.put(
+    "/app/tools",
+    response_model=ToolSettings,
+    operation_id="appToolSettingsUpdate",
+    summary="Replace tool settings",
+)
+async def update_tool_settings(
+    settings: ToolSettings,
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> ToolSettings:
+    return await settings_service.update_tool_settings(
+        settings=settings,
+        session=session,
+    )
+
+
+@settings_router.get(
     "/app",
     response_model=ApplicationSettings,
     operation_id="appSettingsGet",
     summary="Get all application settings",
+    deprecated=True,
 )
 async def get_app_settings(
     user: AdminUserDep,

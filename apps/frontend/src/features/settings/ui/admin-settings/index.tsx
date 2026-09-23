@@ -12,8 +12,8 @@ import { ApplicationSettings } from "@/lib/client";
 import {
   IconCloudCog,
   IconDatabaseExport,
-  IconPhoto,
   IconImageGeneration,
+  IconPhoto,
   IconUsersGroup,
   IconUserShield,
 } from "@tabler/icons-react";

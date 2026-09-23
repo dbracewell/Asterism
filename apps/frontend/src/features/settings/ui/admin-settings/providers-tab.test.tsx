@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ApplicationSettings } from "@/lib/client";
+import { ProviderSettings } from "@/lib/client";
 import { OPENAI_BASE_URL, providerSchema, ProvidersTab } from "./providers-tab";
 
 const mocks = vi.hoisted(() => ({
@@ -31,7 +31,11 @@ vi.mock("sonner", () => ({
 
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appProviderModelsDiscoverMutation: () => ({ mutationFn: mocks.discover }),
-  appSettingsBulkUpdateMutation: () => ({ mutationFn: mocks.save }),
+  appProviderSettingsGetOptions: () => ({
+    queryKey: ["appProviderSettingsGet"],
+    queryFn: () => Promise.resolve(settings),
+  }),
+  appProviderSettingsUpdateMutation: () => ({ mutationFn: mocks.save }),
 }));
 
 beforeEach(() => {
@@ -51,8 +55,7 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
-const settings: ApplicationSettings = {
-  active_tools: [],
+const settings: ProviderSettings = {
   draft_model_id: "10000000-0000-4000-8000-000000000001",
   llm_providers: [
     {
@@ -89,7 +92,7 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-function renderProviders(appSettings: ApplicationSettings = settings) {
+function renderProviders(appSettings: ProviderSettings = settings) {
   return render(<ProvidersTab appSettings={appSettings} />, {
     wrapper: Wrapper,
   });
@@ -138,7 +141,6 @@ describe("provider configuration", () => {
     const user = userEvent.setup();
     mocks.save.mockResolvedValueOnce({});
     renderProviders({
-      active_tools: [],
       llm_providers: [
         {
           ...settings.llm_providers![0],
@@ -154,7 +156,7 @@ describe("provider configuration", () => {
     expect(mocks.save).toHaveBeenCalledWith(
       expect.objectContaining({
         body: expect.objectContaining({
-          values: expect.objectContaining({ draft_model_id: null }),
+          draft_model_id: null,
         }),
       }),
       expect.anything(),

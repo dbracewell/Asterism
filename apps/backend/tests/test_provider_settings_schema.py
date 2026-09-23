@@ -15,14 +15,21 @@ from asterism.domains.settings.provider_types import (
 )
 from asterism.domains.settings.schemas import (
     BulkUpdateSettingRequest,
+    ComponentProviderParameters,
     Llm,
     Provider,
+    ProviderSettings,
+    ToolSettings,
 )
 from asterism.domains.settings.service import (
     bulk_update_app_setting,
     bulk_upsert_providers,
     get_all_providers,
     get_app_settings,
+    get_provider_settings,
+    get_tool_settings,
+    update_provider_settings,
+    update_tool_settings,
 )
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -198,6 +205,138 @@ async def test_empty_draft_model_form_value_is_normalized_and_recovered(tmp_path
     await engine.dispose()
 
 
+@pytest.mark.asyncio
+async def test_focused_provider_and_tool_settings_preserve_owned_values(tmp_path):
+    database = tmp_path / "focused-settings.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    provider_id = uuid.uuid4()
+    model_id = uuid.uuid4()
+    provider = Provider(
+        id=provider_id,
+        provider_type=ProviderType.GENERIC_OPENAI,
+        name="Local",
+        base_url="http://localhost:8080/v1",
+        api_key="secret",
+        models=[
+            Llm(
+                id=model_id,
+                provider_id=provider_id,
+                name="local-model",
+                is_active=True,
+            )
+        ],
+    )
+
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        await bulk_upsert_providers([provider], session)
+        session.add_all(
+            [
+                ApplicationSettingsModel(key="draft_model_id", value=str(model_id)),
+                ApplicationSettingsModel(key="active_tools", value=["web_search"]),
+                ApplicationSettingsModel(
+                    key="web_search_provider",
+                    value={"name": "SearXNG", "parameters": {"base_url": "http://search"}},
+                ),
+                ApplicationSettingsModel(
+                    key="image_search_provider",
+                    value={"name": "Tavily", "parameters": {"api_key": "secret"}},
+                ),
+            ]
+        )
+        await session.commit()
+
+        provider_settings = await get_provider_settings(session)
+        assert provider_settings.draft_model_id == model_id
+        assert provider_settings.llm_providers == [provider]
+        assert provider_settings.llm_providers[0].models[0].provider_id == provider_id
+
+        tool_settings = await get_tool_settings(session)
+        assert tool_settings.active_tools == ["web_search"]
+        assert tool_settings.web_search_provider == ComponentProviderParameters(
+            name="SearXNG",
+            parameters={"base_url": "http://search"},
+        )
+        assert tool_settings.image_search_provider == ComponentProviderParameters(
+            name="Tavily",
+            parameters={"api_key": "secret"},
+        )
+
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_focused_settings_return_defaults_for_empty_database(tmp_path):
+    database = tmp_path / "empty-focused-settings.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        provider_settings = await get_provider_settings(session)
+        tool_settings = await get_tool_settings(session)
+
+        assert provider_settings.llm_providers == []
+        assert provider_settings.draft_model_id is None
+        assert tool_settings.active_tools == []
+        assert tool_settings.web_search_provider is None
+        assert tool_settings.image_search_provider is None
+
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_focused_settings_writes_return_the_persisted_resources(tmp_path):
+    database = tmp_path / "focused-settings-write.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    provider_id = uuid.uuid4()
+    model_id = uuid.uuid4()
+    provider_settings = ProviderSettings(
+        llm_providers=[
+            Provider(
+                id=provider_id,
+                provider_type=ProviderType.GENERIC_OPENAI,
+                name="Local",
+                base_url="http://localhost:8080/v1",
+                api_key="secret",
+                models=[
+                    Llm(
+                        id=model_id,
+                        provider_id=provider_id,
+                        name="local-model",
+                        is_active=True,
+                    )
+                ],
+            )
+        ],
+        draft_model_id=model_id,
+    )
+    tool_settings = ToolSettings(
+        active_tools=["web_search"],
+        web_search_provider=ComponentProviderParameters(
+            name="SearXNG",
+            parameters={"base_url": "http://search"},
+        ),
+    )
+
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        assert await update_provider_settings(provider_settings, session) == provider_settings
+        assert await update_tool_settings(tool_settings, session) == tool_settings
+
+        assert await get_provider_settings(session) == provider_settings
+        assert await get_tool_settings(session) == tool_settings
+
+    await engine.dispose()
+
+
 def _create_legacy_provider_schema(database):
     provider_id = uuid.uuid4()
     generic_provider_id = uuid.uuid4()
@@ -339,4 +478,4 @@ async def test_initialization_migrates_legacy_provider_data_once(tmp_path, monke
         "id", "user_id", "filename", "original_name", "size", "mime_type", "kind",
         "sha256", "content_status", "content_error", "content_cache", "created_at", "updated_at",
     }.issubset(user_file_columns)
-    assert migration_count == (13,)
+    assert migration_count == (14,)

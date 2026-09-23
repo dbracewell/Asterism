@@ -235,7 +235,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('36ba0d40-99bf-487b-8fe6-1522ee4ae55e'),
+    id: z.uuid().optional().default('9db56238-ec65-40f2-8866-7d970982ea7c'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -566,6 +566,14 @@ export const zProviderDiscoveryRequest = z.object({
 });
 
 /**
+ * ProviderSettings
+ */
+export const zProviderSettings = z.object({
+    llm_providers: z.array(zProvider).optional(),
+    draft_model_id: z.uuid().nullish()
+});
+
+/**
  * SearchMatchSource
  */
 export const zSearchMatchSource = z.enum([
@@ -700,6 +708,15 @@ export const zChat = z.object({
     info: zChatInfo,
     messages: z.array(zMessage),
     context_usage: zChatContextUsage.nullish()
+});
+
+/**
+ * ToolSettings
+ */
+export const zToolSettings = z.object({
+    web_search_provider: zComponentProviderParameters.nullish(),
+    image_search_provider: zComponentProviderParameters.nullish(),
+    active_tools: z.array(z.string()).optional()
 });
 
 /**
@@ -1140,6 +1157,30 @@ export const zAppProviderModelsDiscoverBody = zProviderDiscoveryRequestWritable;
  * Successful Response
  */
 export const zAppProviderModelsDiscoverResponse = zProviderDiscoveryResponse;
+
+/**
+ * Successful Response
+ */
+export const zAppProviderSettingsGetResponse = zProviderSettings;
+
+export const zAppProviderSettingsUpdateBody = zProviderSettings;
+
+/**
+ * Successful Response
+ */
+export const zAppProviderSettingsUpdateResponse = zProviderSettings;
+
+/**
+ * Successful Response
+ */
+export const zAppToolSettingsGetResponse = zToolSettings;
+
+export const zAppToolSettingsUpdateBody = zToolSettings;
+
+/**
+ * Successful Response
+ */
+export const zAppToolSettingsUpdateResponse = zToolSettings;
 
 /**
  * Successful Response

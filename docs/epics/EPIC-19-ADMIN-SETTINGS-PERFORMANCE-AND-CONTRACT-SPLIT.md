@@ -8,7 +8,8 @@ small, ownership-safe admin read models. Each screen must receive all and only
 the data it needs, while writes remain correct and cache invalidation stays
 coherent.
 
-**Status: In progress — US-19.1 through US-19.3 complete; US-19.4 next.**
+**Status: Implementation complete — US-19.1 through US-19.3 confirmed; US-19.4
+awaiting user confirmation before merge.**
 
 ## Product and architecture decisions
 
@@ -146,7 +147,7 @@ Tool/component forms and every other non-selected pane likewise remain behind
 their own dynamic import. Production build/type validation passed without
 changing the pane implementation modules or their write paths.
 
-### US-19.4 — Replace the aggregate application-settings read contract
+### US-19.4 — Replace the aggregate application-settings read contract (in progress)
 
 **As an operator**, I want each admin pane to use a focused, correct backend
 contract so that performance improvements do not lose settings or introduce
@@ -154,24 +155,24 @@ inconsistent writes.
 
 **Dependencies:** US-19.1 through US-19.3.
 
-- [ ] US-19.4-T1: Inventory all `GET /settings/app` consumers and each returned
+- [x] US-19.4-T1: Inventory all `GET /settings/app` consumers and each returned
       field; define typed resource read schemas, endpoint ownership,
       authorization, query loading plans, response-size expectations, and a
       deprecation/migration plan for the aggregate endpoint.
-- [ ] US-19.4-T2: Implement focused provider-settings and tool-settings reads
+- [x] US-19.4-T2: Implement focused provider-settings and tool-settings reads
       using explicit SQLAlchemy loading strategies, preserving provider/model
       associations, active tools, component selections, and admin-only access.
-- [ ] US-19.4-T3: Align writes and TanStack Query invalidation with the resource
+- [x] US-19.4-T3: Align writes and TanStack Query invalidation with the resource
       contracts; ensure a successful mutation refreshes every affected view and
       no pane observes stale or partially assembled data.
-- [ ] US-19.4-T4: Regenerate the Hey API client and migrate frontend consumers
+- [x] US-19.4-T4: Regenerate the Hey API client and migrate frontend consumers
       one resource at a time; remove the aggregate client use only after all
       consumers have equivalent replacements.
-- [ ] US-19.4-T5: Add backend integration tests for authorization, empty/large
+- [x] US-19.4-T5: Add backend integration tests for authorization, empty/large
       provider/model sets, exact field/value preservation, association
       correctness, mutation/read round trips, and query-count bounds; add
       frontend integration tests for cache invalidation and error states.
-- [ ] US-19.4-T6: Document endpoint contracts, aggregate-endpoint status, and
+- [x] US-19.4-T6: Document endpoint contracts, aggregate-endpoint status, and
       measured payload/latency improvements; run full quality gates.
 
 **Acceptance criteria**
@@ -182,6 +183,51 @@ inconsistent writes.
   and writes.
 - No frontend consumer depends on `GET /settings/app` once its replacement is
   available; removal occurs only after inventory-backed migration verification.
+
+**Contract inventory and migration plan**
+
+| Consumer | Aggregate fields used | Replacement |
+| --- | --- | --- |
+| Providers pane | `llm_providers`, `draft_model_id` | `GET /settings/app/providers` → `ProviderSettings` |
+| Image Captioning pane | `llm_providers` for active discovered vision models | Provider settings read plus the existing captioning configuration/status contracts |
+| Tools pane | `active_tools`, `web_search_provider`, `image_search_provider` | `GET /settings/app/tools` → `ToolSettings` |
+| Admin hover/focus prefetch | Entire aggregate | Prefetch provider settings only |
+| Provider E2E harness | Entire aggregate | Provider settings read |
+
+Both focused endpoints remain admin-only through `AdminUserDep`. Provider reads
+select providers with an explicit `selectinload(ProviderModel.models)` and read
+only `draft_model_id`; expected size is O(providers + models) with a bounded
+query count independent of row count. Tool reads select only the three owned
+application-setting keys and return a constant-size response. Typed schemas
+preserve every current provider/model field and component parameter value.
+
+Writes migrate pane-by-pane to focused provider/tool mutations and invalidate
+the matching focused query keys. `GET /settings/app` remains temporarily
+available with equivalent admin authorization, is documented as deprecated,
+and is removed only after generated-client search and E2E migration prove zero
+consumers. Empty datasets return schema defaults rather than partial objects;
+large provider/model collections retain stable associations without N+1 loads.
+
+## US-19.4 completion evidence
+
+Provider, captioning, provider E2E harness, admin prefetch, and tools
+consumers now use focused provider/tool settings contracts. A generated-client
+excluded search for aggregate read/mutation helpers in `apps/frontend/src` and
+`apps/frontend/e2e` returned no consumers. The aggregate `GET /settings/app`
+endpoint remains deprecated and admin-authorized for temporary compatibility.
+
+Writes now use `PUT /settings/app/providers` and `PUT /settings/app/tools`.
+Successful provider, tool, and captioning mutations invalidate generated
+TanStack Query keys for the affected focused resources. The tools form also
+preserves the `ImageSearch` component selection across active-tool saves.
+
+Verification run:
+
+- `./node_modules/.bin/vitest run src/features/settings/ui/admin-settings/tools-settings.test.tsx src/features/settings/ui/admin-settings/providers-tab.test.tsx src/features/settings/ui/admin-settings/captioning-settings.test.tsx --reporter=verbose --pool=forks`
+- `node ../../scripts/run-with-env.mjs --env none --scope backend --profile test -- uv run pytest -q tests/test_provider_settings_schema.py`
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint`
 
 ## Execution
 

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApplicationSettings } from "@/lib/client";
+import { ProviderSettings } from "@/lib/client";
 import { CaptioningSettings } from "./captioning-settings";
 
 const mocks = vi.hoisted(() => ({
@@ -16,6 +16,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  appProviderSettingsGetOptions: () => ({
+    queryKey: ["appProviderSettingsGet"],
+    queryFn: () => Promise.resolve(settings),
+  }),
   appCaptioningGetOptions: () => ({
     queryKey: ["appCaptioningGet"],
     queryFn: mocks.getConfiguration,
@@ -29,8 +33,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appCaptionModelCancelMutation: () => ({ mutationFn: mocks.cancel }),
 }));
 
-const settings: ApplicationSettings = {
-  active_tools: [],
+const settings: ProviderSettings = {
   llm_providers: [
     {
       id: "20000000-0000-4000-8000-000000000001",
