@@ -8,7 +8,7 @@ small, ownership-safe admin read models. Each screen must receive all and only
 the data it needs, while writes remain correct and cache invalidation stays
 coherent.
 
-**Status: In progress — US-19.1 and US-19.2 complete; US-19.3 awaiting completion confirmation.**
+**Status: In progress — US-19.1 through US-19.3 complete; US-19.4 next.**
 
 ## Product and architecture decisions
 
@@ -104,7 +104,7 @@ navigation reuse that completed request without mounting the admin subtree or
 prefetching every pane. Direct admin deep links still perform one required read.
 Mutations continue to invalidate queries through the application QueryClient.
 
-### US-19.3 — Code-split admin pane implementations (awaiting confirmation)
+### US-19.3 — Code-split admin pane implementations (completed)
 
 **As an administrator**, I want initial Admin Settings JavaScript limited to
 what I am viewing so that heavy editors do not delay the default Providers

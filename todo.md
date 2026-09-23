@@ -444,7 +444,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-19 — Admin Settings Performance and Contract Split
 
 Plan: [EPIC-19](docs/epics/EPIC-19-ADMIN-SETTINGS-PERFORMANCE-AND-CONTRACT-SPLIT.md).
-Status: US-19.1 and US-19.2 completed and confirmed; US-19.3 implementation complete and awaiting user confirmation.
+Status: US-19.1 through US-19.3 completed and confirmed; US-19.4 next.
 Order: US-19.1 → US-19.2 → US-19.3 → US-19.4. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -460,7 +460,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-19.2-T3: Test selection, direct links, and no admin work on User Settings visits.
   - [x] US-19.2-T4: Profiled cold/warm navigation and documented the 30-second focused prefetch policy.
 
-- [~] US-19.3 — Code-split admin pane implementations
+- [x] US-19.3 — Code-split admin pane implementations
   - [x] US-19.3-T1: Measured the settings bundle and identified Theme Editor/color-picker and tool-form pane-only dependencies.
   - [x] US-19.3-T2: Dynamically import selected admin panes with accessible loading/error states.
   - [x] US-19.3-T3: Verified client/server boundaries and unchanged theme/provider write implementations.
