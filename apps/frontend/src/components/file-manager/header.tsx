@@ -125,7 +125,7 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
               aria-label="Toggle Search"
               onClick={() => setShowSearch((prev) => !prev)}
               size="icon-lg"
-              variant={showSearch ? "link" : "ghost"}
+              variant={showSearch || !!query?.trim() ? "link" : "ghost"}
             >
               <SearchIcon />
             </Button>

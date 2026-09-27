@@ -88,6 +88,9 @@ async def test_knowledge_base_crud_is_owner_scoped_and_paginated(knowledge_sessi
     second = await create_knowledge_base(
         user_id="user-a", payload=KnowledgeBaseCreate(name="Archive"), session=knowledge_session
     )
+    first.created_at = 1
+    second.created_at = 2
+    await knowledge_session.commit()
     await create_knowledge_base(
         user_id="user-b", payload=KnowledgeBaseCreate(name="Private"), session=knowledge_session
     )
@@ -97,6 +100,21 @@ async def test_knowledge_base_crud_is_owner_scoped_and_paginated(knowledge_sessi
     listing = await list_knowledge_bases(user_id="user-a", session=knowledge_session, page=1, page_size=1)
     assert listing.total == 2
     assert len(listing.knowledge_bases) == 1
+
+    searched = await list_knowledge_bases(
+        user_id="user-a", session=knowledge_session, page=1, page_size=50, query="product"
+    )
+    assert [base.id for base in searched.knowledge_bases] == [first.id]
+
+    by_name = await list_knowledge_bases(
+        user_id="user-a", session=knowledge_session, page=1, page_size=50, sort_by="name"
+    )
+    assert [base.name for base in by_name.knowledge_bases] == ["Archive", "Product Notes"]
+
+    by_created = await list_knowledge_bases(
+        user_id="user-a", session=knowledge_session, page=1, page_size=50, sort_by="created"
+    )
+    assert [base.name for base in by_created.knowledge_bases] == ["Archive", "Product Notes"]
 
     updated = await update_knowledge_base(
         user_id="user-a",
@@ -406,8 +424,11 @@ async def test_caption_job_persists_bounded_draft_and_content_free_audit(knowled
 
     queue = FakeQueue()
     requested = await request_knowledge_document_caption(
-        user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id,
-        session=knowledge_session, caption_jobs=queue,
+        user_id="user-a",
+        knowledge_base_id=knowledge_base.id,
+        document_id=document.id,
+        session=knowledge_session,
+        caption_jobs=queue,
     )
     assert requested.caption.status == "pending"
     assert queue.enqueued == [{"user_id": "user-a", "knowledge_base_id": knowledge_base.id, "document_id": document.id}]

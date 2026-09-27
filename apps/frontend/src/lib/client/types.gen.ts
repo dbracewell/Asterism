@@ -2457,6 +2457,14 @@ export type KnowledgeBaseGetManyData = {
          * Page Size
          */
         page_size?: number;
+        /**
+         * Sort By
+         */
+        sort_by?: 'name' | 'created';
+        /**
+         * Query
+         */
+        query?: string | null;
     };
     url: '/knowledge-bases/';
 };

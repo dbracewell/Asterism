@@ -11,7 +11,7 @@ export const Footer = () => {
 
       {!!query?.trim() && (
         <p className="max-w-100 truncate font-bold">
-          <h4 className="inline">Search:</h4> {query}
+          <span className="inline">Search:</span> {query}
         </p>
       )}
       <div className="flex flex-1 items-center justify-end gap-2">

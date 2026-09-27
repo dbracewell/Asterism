@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from typing import Protocol
+from typing import Literal, Protocol
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
@@ -137,14 +137,31 @@ async def create_knowledge_base(*, user_id: str, payload: KnowledgeBaseCreate, s
     return KnowledgeBase.model_validate(knowledge_base)
 
 
-async def list_knowledge_bases(*, user_id: str, session: AsyncSession, page: int, page_size: int) -> KnowledgeBaseList:
-    statement = select(KnowledgeBaseModel).where(KnowledgeBaseModel.user_id == user_id)
-    total = await session.scalar(select(func.count()).select_from(statement.subquery()))
-    records = await session.scalars(
-        statement.order_by(KnowledgeBaseModel.updated_at.desc(), KnowledgeBaseModel.name)
-        .offset((page - 1) * page_size)
-        .limit(page_size)
+async def list_knowledge_bases(
+    *,
+    user_id: str,
+    session: AsyncSession,
+    page: int,
+    page_size: int,
+    sort_by: Literal["name", "created"] = "name",
+    query: str | None = None,
+) -> KnowledgeBaseList:
+    search = query.strip() if query else None
+    statement = select(KnowledgeBaseModel).where(
+        KnowledgeBaseModel.user_id == user_id,
+        (
+            KnowledgeBaseModel.name.ilike(f"%{search}%") | KnowledgeBaseModel.description.ilike(f"%{search}%")
+            if search
+            else True
+        ),
     )
+    total = await session.scalar(select(func.count()).select_from(statement.subquery()))
+    order_by = (
+        (KnowledgeBaseModel.created_at.desc(), KnowledgeBaseModel.name)
+        if sort_by == "created"
+        else (KnowledgeBaseModel.name, KnowledgeBaseModel.created_at.desc())
+    )
+    records = await session.scalars(statement.order_by(*order_by).offset((page - 1) * page_size).limit(page_size))
     return KnowledgeBaseList(
         knowledge_bases=[KnowledgeBase.model_validate(record) for record in records],
         total=total or 0,

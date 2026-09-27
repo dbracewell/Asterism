@@ -38,6 +38,7 @@ test("manages a knowledge base through the generated API client", async ({ page 
 
   await page.goto("/e2e/knowledge");
   await expect(page.getByRole("link", { name: "Research" })).toHaveAttribute("href", `/knowledge/${base.id}`);
+  await page.getByRole("button", { name: "Create knowledge base" }).click();
   await page.getByLabel("Name").fill("Manual");
   await page.getByRole("button", { name: "Create knowledge base" }).click();
   await expect(page.getByLabel("Name")).toHaveValue("");

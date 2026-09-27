@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Query, status
 
@@ -44,8 +45,19 @@ async def list_knowledge_bases(
     db: DBSessionDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
+    sort_by: Literal["name", "created"] = Query(default="name"),
+    query: str | None = Query(
+        default=None, description="Search query to filter knowledge bases by name or description"
+    ),
 ) -> KnowledgeBaseList:
-    return await knowledge_service.list_knowledge_bases(user_id=user.id, session=db, page=page, page_size=page_size)
+    return await knowledge_service.list_knowledge_bases(
+        user_id=user.id,
+        session=db,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        query=query,
+    )
 
 
 @knowledge_router.post(

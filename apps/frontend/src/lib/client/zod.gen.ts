@@ -1058,7 +1058,9 @@ export const zFolderGetOneResponse = zFolder;
 
 export const zKnowledgeBaseGetManyQuery = z.object({
     page: z.int().gte(1).optional().default(1),
-    page_size: z.int().gte(1).lte(100).optional().default(50)
+    page_size: z.int().gte(1).lte(100).optional().default(50),
+    sort_by: z.enum(['name', 'created']).optional().default('name'),
+    query: z.string().nullable().optional()
 });
 
 /**

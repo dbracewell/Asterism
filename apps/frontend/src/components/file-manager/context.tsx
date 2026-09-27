@@ -109,6 +109,7 @@ export const FileManagerProvider = ({
     onSuccess: () => {
       setSelectedFiles([]);
       setLastClicked(-1);
+      setPage(1);
     },
   });
 
