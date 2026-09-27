@@ -89,6 +89,7 @@ function SidebarProvider({
     },
     [setOpenProp, open, router],
   );
+
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
   }, [isMobile, setOpen, setOpenMobile]);
@@ -273,8 +274,10 @@ function SidebarTrigger({
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
-      size="icon-sm"
-      className={cn(className)}
+      className={cn("size-8! [&_svg:not([class*='size-'])]:size-6!", className)}
+      onTouchEnd={() => {
+        toggleSidebar();
+      }}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();

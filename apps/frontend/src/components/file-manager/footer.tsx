@@ -4,19 +4,16 @@ import { Button } from "@/components/ui/button";
 import { formatPlural } from "@/lib/formatters";
 
 export const Footer = () => {
-  const { page, setPage, total } = useFileManager();
+  const { page, setPage, total, query } = useFileManager();
   return (
-    <div className="bg-muted flex items-center gap-2 border-t px-4 py-2 text-xs">
-      <p className="text-muted-foreground text-sm">
-        {formatPlural(total, "file", "total files")}
-      </p>
-      <div className="hidden flex-col gap-1 px-4 py-0.5 lg:flex">
-        <p className="text-muted-foreground text-xs">
-          <span>Shift + click to select range of files</span>
-          <span className="mx-1">·</span>
-          <span>Ctrl/Cmd + click to select multiple files</span>
+    <div className="bg-muted text-muted-foreground flex items-center gap-2 rounded-none border-t px-4 py-2 text-xs">
+      <p>{formatPlural(total, "file", "total files")}</p>
+
+      {!!query?.trim() && (
+        <p className="max-w-100 truncate font-bold">
+          <h4 className="inline">Search:</h4> {query}
         </p>
-      </div>
+      )}
       <div className="flex flex-1 items-center justify-end gap-2">
         <p className="text-muted-foreground text-sm">
           Page {Math.ceil(total / PAGE_SIZE) > 0 ? page : 0} of{" "}

@@ -13,10 +13,11 @@ import {
   IconSquareOff,
 } from "@tabler/icons-react";
 import { Grid2X2, List, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSearch, setShowSearch] = useState(false);
   const {
     view,
     setView,
@@ -35,8 +36,8 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
   } = useFileManager();
 
   return (
-    <div className="flex min-h-0 flex-col">
-      <div className="my-2 flex flex-wrap items-center border-b py-2 pr-0.5">
+    <div className="flex min-h-0 flex-col gap-2">
+      <div className="flex flex-wrap items-center border-b py-2 pr-0.5">
         <div className="flex flex-col gap-0.5 border-l px-2">
           <div className="text-muted-foreground text-center text-xs">View</div>
           <div className="flex items-center gap-1">
@@ -115,7 +116,23 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-0.5 border-x px-2">
+        <div className="flex flex-col justify-start gap-0.5 border-l px-2">
+          <div className="text-muted-foreground text-center text-xs">
+            Search
+          </div>
+          <div className="flex items-center justify-center gap-1">
+            <Button
+              aria-label="Toggle Search"
+              onClick={() => setShowSearch((prev) => !prev)}
+              size="icon-lg"
+              variant={showSearch ? "link" : "ghost"}
+            >
+              <SearchIcon />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-0.5 border-l px-2">
           <div className="text-muted-foreground text-center text-xs">
             Selection
           </div>
@@ -179,7 +196,7 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
         </div>
 
         {allowFileUpload && (
-          <div className="flex flex-col gap-0.5 border-x px-2">
+          <div className="flex flex-col gap-0.5 border-l px-2">
             <div className="text-muted-foreground text-center text-xs">
               Upload
             </div>
@@ -211,28 +228,35 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
           </div>
         )}
       </div>
-      <div className="flex flex-1 items-center gap-1 border-b px-4 pb-2">
-        <InputGroup>
-          <InputGroupInput
-            value={query ?? ""}
-            aria-label="Search files"
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            disabled={files.length === 0 && !query?.trim()}
-            placeholder="Search files..."
-          />
-          <InputGroupAddon align="inline-start">
-            <SearchIcon className="text-muted-foreground" />
-          </InputGroupAddon>
-          <InputGroupAddon align="inline-end">
-            <Button variant="ghost" size="icon" onClick={() => setQuery(null)}>
-              <XIcon />
-            </Button>
-          </InputGroupAddon>
-        </InputGroup>
-      </div>
+
+      {showSearch && (
+        <div className="flex flex-1 items-center gap-1 border-b px-4 pb-2">
+          <InputGroup>
+            <InputGroupInput
+              value={query ?? ""}
+              aria-label="Search files"
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              disabled={files.length === 0 && !query?.trim()}
+              placeholder="Search files..."
+            />
+            <InputGroupAddon align="inline-start">
+              <SearchIcon className="text-muted-foreground" />
+            </InputGroupAddon>
+            <InputGroupAddon align="inline-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setQuery(null)}
+              >
+                <XIcon />
+              </Button>
+            </InputGroupAddon>
+          </InputGroup>
+        </div>
+      )}
     </div>
   );
 };

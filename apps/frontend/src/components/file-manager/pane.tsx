@@ -38,7 +38,7 @@ export const FileManagerPane = ({
     >
       <div
         className={cn(
-          "border-border bg-muted/40 text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-dashed text-sm",
+          "border-border bg-muted/40 text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center border border-dashed text-sm",
           isUploading || isDeleting ? "opacity-100" : "opacity-0",
         )}
       >
@@ -46,7 +46,7 @@ export const FileManagerPane = ({
       </div>
       <div
         className={cn(
-          "border-border bg-muted/40 text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-dashed text-sm",
+          "border-border bg-muted/40 text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center border border-dashed text-sm",
           isDragOver ? "opacity-100" : "opacity-0",
         )}
       >

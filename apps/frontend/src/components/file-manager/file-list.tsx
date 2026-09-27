@@ -25,9 +25,9 @@ export const FileList = () => {
         <div className="bg-card flex min-h-0 w-full min-w-0 flex-1 flex-col">
           <div
             className={cn(
-              "min-h-0 w-full min-w-0 gap-3 overflow-y-auto px-4 py-2",
+              "min-h-0 w-full min-w-0 gap-1 overflow-y-auto px-4 py-2",
               view === "grid"
-                ? "grid grid-cols-2 grid-rows-[fit-content(200px)] sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                ? "grid grid-cols-2 grid-rows-[fit-content(200px)] gap-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
                 : "flex flex-col",
             )}
           >
@@ -57,9 +57,10 @@ export const FileList = () => {
                   }
                 }}
                 className={cn(
-                  "flex items-center gap-1 rounded-lg p-2 select-none",
-                  view === "grid" &&
-                    "bg-background text-foreground flex-col border",
+                  "hover:bg-accent/50 hover:text-accent-foreground flex items-center gap-1 rounded-lg p-2 select-none focus:outline-none",
+                  view === "grid"
+                    ? "bg-background text-foreground flex-col border"
+                    : index % 2 === 1 && "bg-background text-foreground",
                   selectedFiles.includes(file.filename) &&
                     "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground",
                 )}
