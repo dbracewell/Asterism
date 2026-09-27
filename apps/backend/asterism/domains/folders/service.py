@@ -117,9 +117,7 @@ async def list_folder_chats(
             info = ChatInfo.model_validate(chat)
             info.preview = preview
             info.message_count = await session.scalar(
-                select(func.count()).select_from(MessageModel).where(
-                    MessageModel.chat_id == chat.id
-                )
+                select(func.count()).select_from(MessageModel).where(MessageModel.chat_id == chat.id)
             )
             chat_infos.append(info)
         return FolderChatList(
@@ -174,9 +172,7 @@ async def list_folders(
         stmt = select(FolderModel).where(FolderModel.user_id == user_id)
 
         all_folders = (await session.scalars(stmt)).unique().all()
-        flat_pydantic_folders = [
-            FlatFolder.model_validate(f) for f in all_folders
-        ]
+        flat_pydantic_folders = [FlatFolder.model_validate(f) for f in all_folders]
         tree_folders = [Folder(**f.model_dump()) for f in flat_pydantic_folders]
         folder_map = {folder.id: folder for folder in tree_folders}
         root_folders = []

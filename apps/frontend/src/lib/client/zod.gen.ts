@@ -235,7 +235,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('7a01a692-cf9e-4f6e-84e8-cf3729a1b2ee'),
+    id: z.uuid().optional().default('b6018c41-7a6a-4ab9-b98b-152e9753e36d'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -278,7 +278,11 @@ export const zKnowledgeCaptionConfiguration = z.object({
  * KnowledgeCaptionConfigurationUpdate
  */
 export const zKnowledgeCaptionConfigurationUpdate = z.object({
-    mode: z.string().regex(/^(disabled|provider|local)$/),
+    mode: z.enum([
+        'disabled',
+        'provider',
+        'local'
+    ]),
     provider_model_id: z.uuid().nullish()
 });
 
@@ -557,7 +561,6 @@ export const zProviderType = z.enum(['openai', 'generic_openai']);
 export const zProvider = z.object({
     name: z.string(),
     base_url: z.string(),
-    api_key: z.string(),
     id: z.uuid(),
     provider_type: zProviderType.optional().default('generic_openai'),
     models: z.array(zLlm)
@@ -593,7 +596,6 @@ export const zProviderDiscoveryRequest = z.object({
 export const zProviderSummary = z.object({
     name: z.string(),
     base_url: z.string(),
-    api_key: z.string(),
     id: z.uuid(),
     provider_type: zProviderType.optional().default('generic_openai'),
     model_count: z.int().optional().default(0),
@@ -793,7 +795,8 @@ export const zUserFile = z.object({
     content_status: zFileContentStatus,
     content_error: z.string().nullable(),
     created_at: z.int(),
-    updated_at: z.int()
+    updated_at: z.int(),
+    thumbnail: z.string().nullable()
 });
 
 /**
@@ -819,6 +822,29 @@ export const zUserSettings = z.object({
 });
 
 /**
+ * Provider
+ */
+export const zProviderWritable = z.object({
+    name: z.string(),
+    base_url: z.string(),
+    api_key: z.string(),
+    id: z.uuid(),
+    provider_type: zProviderType.optional().default('generic_openai'),
+    models: z.array(zLlm)
+});
+
+/**
+ * ApplicationSettings
+ */
+export const zApplicationSettingsWritable = z.object({
+    llm_providers: z.array(zProviderWritable).optional(),
+    draft_model_id: z.uuid().nullish(),
+    web_search_provider: zComponentProviderParameters.nullish(),
+    image_search_provider: zComponentProviderParameters.nullish(),
+    active_tools: z.array(z.string())
+});
+
+/**
  * ProviderDiscoveryRequest
  */
 export const zProviderDiscoveryRequestWritable = z.object({
@@ -830,9 +856,50 @@ export const zProviderDiscoveryRequestWritable = z.object({
     draft_model_id: z.uuid().nullish()
 });
 
+/**
+ * ProviderSummary
+ *
+ * Provider configuration returned by the Providers settings landing page.
+ */
+export const zProviderSummaryWritable = z.object({
+    name: z.string(),
+    base_url: z.string(),
+    api_key: z.string(),
+    id: z.uuid(),
+    provider_type: zProviderType.optional().default('generic_openai'),
+    model_count: z.int().optional().default(0),
+    active_model_count: z.int().optional().default(0)
+});
+
+/**
+ * ProviderSettings
+ */
+export const zProviderSettingsWritable = z.object({
+    llm_providers: z.array(zProviderSummaryWritable).optional(),
+    draft_model_id: z.uuid().nullish(),
+    draft_model: zLlmDisplayInfo.nullish()
+});
+
+/**
+ * Filenames
+ */
+export const zFilesDeleteManyBody = z.array(z.string());
+
+/**
+ * Successful Response
+ */
+export const zFilesDeleteManyResponse = zUserFileList;
+
 export const zFileGetManyQuery = z.object({
     page: z.int().gte(1).optional().default(1),
-    page_size: z.int().gte(1).lte(100).optional().default(50)
+    page_size: z.int().gte(1).lte(100).optional().default(50),
+    sort_by: z.enum([
+        'name',
+        'kind',
+        'date',
+        'size'
+    ]).optional().default('name'),
+    query: z.string().nullish()
 });
 
 /**
@@ -846,6 +913,15 @@ export const zFileUploadBody = zBodyFileUpload;
  * Successful Response
  */
 export const zFileUploadResponse = zUserFileList;
+
+export const zFileGetFileInfoPath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileGetFileInfoResponse = zUserFile;
 
 export const zFileDeletePath = z.object({
     filename: z.string()
@@ -1199,7 +1275,7 @@ export const zAppProviderModelsDiscoverResponse = zProviderDiscoveryResponse;
  */
 export const zAppProviderSettingsGetResponse = zProviderSettings;
 
-export const zAppProviderSettingsUpdateBody = zProviderSettings;
+export const zAppProviderSettingsUpdateBody = zProviderSettingsWritable;
 
 /**
  * Successful Response
@@ -1273,6 +1349,18 @@ export const zAppSettingsBulkUpdateBody = zBulkUpdateSettingRequest;
  */
 export const zAppSettingsBulkUpdateResponse = zApplicationSettings;
 
+/**
+ * Successful Response
+ */
+export const zAppCaptioningGetResponse = zKnowledgeCaptionConfiguration;
+
+export const zAppCaptioningUpdateBody = zKnowledgeCaptionConfigurationUpdate;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptioningUpdateResponse = zKnowledgeCaptionConfiguration;
+
 export const zAppSettingDeletePath = z.object({
     key: z.string()
 });
@@ -1287,18 +1375,6 @@ export const zAppSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zAppSettingUpdateResponse = zSetting;
-
-/**
- * Successful Response
- */
-export const zAppCaptioningGetResponse = zKnowledgeCaptionConfiguration;
-
-export const zAppCaptioningUpdateBody = zKnowledgeCaptionConfigurationUpdate;
-
-/**
- * Successful Response
- */
-export const zAppCaptioningUpdateResponse = zKnowledgeCaptionConfiguration;
 
 /**
  * Successful Response
@@ -1386,15 +1462,6 @@ export const zAgentKnowledgeBaseAssignmentsReplacePath = z.object({
  */
 export const zAgentKnowledgeBaseAssignmentsReplaceResponse = zKnowledgeBaseAssignmentList;
 
-export const zAgentsDeleteAgentPath = z.object({
-    agent_id: z.uuid()
-});
-
-/**
- * Successful Response
- */
-export const zAgentsDeleteAgentResponse = zAgentProfile;
-
 export const zAgentsGetSubAgentTracesPath = z.object({
     parent_message_id: z.uuid()
 });
@@ -1405,3 +1472,12 @@ export const zAgentsGetSubAgentTracesPath = z.object({
  * Successful Response
  */
 export const zAgentsGetSubAgentTracesResponse = z.array(zSubAgentTrace);
+
+export const zAgentsDeleteAgentPath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zAgentsDeleteAgentResponse = zAgentProfile;

@@ -57,6 +57,8 @@ async def _ensure_valid_tools(
     app_settings = await settings_service.get_app_settings(session=session)
     if profile.tools:
         profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
+        if profile.knowledge_bases:
+            profile.tools.append("search_knowledge")
     return profile
 
 

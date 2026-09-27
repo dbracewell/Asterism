@@ -92,24 +92,6 @@ async def replace_knowledge_base_assignments(
     )
 
 
-@agents_router.delete(
-    "/{agent_id}",
-    response_model=AgentProfile,
-    operation_id="agentsDeleteAgent",
-    summary="Delete an agent",
-)
-async def delete_agent(
-    agent_id: uuid.UUID,
-    user: AuthedUserDep,
-    session: DBSessionDep,
-) -> AgentProfile:
-    return await delete_agent_profile(
-        user_id=user.id,
-        agent_id=agent_id,
-        session=session,
-    )
-
-
 @agents_router.get(
     "/traces/{parent_message_id}",
     response_model=list[SubAgentTrace],
@@ -124,5 +106,23 @@ async def get_traces_for_parent_message(
     return await get_sub_agent_traces_by_parent_message(
         user_id=user.id,
         parent_message_id=parent_message_id,
+        session=session,
+    )
+
+
+@agents_router.delete(
+    "/{agent_id}",
+    response_model=AgentProfile,
+    operation_id="agentsDeleteAgent",
+    summary="Delete an agent",
+)
+async def delete_agent(
+    agent_id: uuid.UUID,
+    user: AuthedUserDep,
+    session: DBSessionDep,
+) -> AgentProfile:
+    return await delete_agent_profile(
+        user_id=user.id,
+        agent_id=agent_id,
         session=session,
     )

@@ -13,6 +13,7 @@ from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.models import AgentProfileModel
+from asterism.domains.settings.provider_types import ModelCapabilitySource
 
 from .models import (
     ApplicationSettingsModel,
@@ -27,6 +28,7 @@ from .schemas import (
     LlmDisplayInfo,
     LlmWithProvider,
     Provider,
+    ProviderInfo,
     ProviderModelsPage,
     ProviderModelUpdate,
     ProviderSettings,
@@ -37,6 +39,16 @@ from .schemas import (
 )
 
 logger = get_logger("Settings")
+
+_REDACTED_API_KEY = "**********"
+
+
+def _provider_api_key(provider: ProviderInfo, existing_api_key: str | None = None) -> str:
+    """Unwrap a submitted API key without replacing an existing redacted key."""
+    api_key = provider.api_key.get_secret_value()
+    if existing_api_key is not None and api_key == _REDACTED_API_KEY:
+        return existing_api_key
+    return api_key
 
 
 # ------------------------------------------------------------------
@@ -223,11 +235,7 @@ async def get_provider_settings(
     session: AsyncSession | None = None,
 ) -> ProviderSettings:
     async with get_async_db_session(session) as session:
-        model_count = (
-            select(func.count(LLMModel.id))
-            .where(LLMModel.provider_id == ProviderModel.id)
-            .scalar_subquery()
-        )
+        model_count = select(func.count(LLMModel.id)).where(LLMModel.provider_id == ProviderModel.id).scalar_subquery()
         active_model_count = (
             select(func.count(LLMModel.id))
             .where(LLMModel.provider_id == ProviderModel.id, LLMModel.is_active)
@@ -251,11 +259,13 @@ async def get_provider_settings(
                 parsed_draft_model_id = uuid.UUID(str(draft_model_id))
             except (TypeError, ValueError):
                 parsed_draft_model_id = None
-            draft_row = await session.scalar(
-                select(LLMModel)
-                .where(LLMModel.id == parsed_draft_model_id)
-                .options(joinedload(LLMModel.provider))
-            ) if parsed_draft_model_id is not None else None
+            draft_row = (
+                await session.scalar(
+                    select(LLMModel).where(LLMModel.id == parsed_draft_model_id).options(joinedload(LLMModel.provider))
+                )
+                if parsed_draft_model_id is not None
+                else None
+            )
             if draft_row is not None:
                 draft_model = LlmDisplayInfo(
                     id=draft_row.id,
@@ -304,11 +314,14 @@ async def update_provider_settings(
     async with get_async_db_session(session) as session:
         existing_providers = {
             provider.id: provider
-            for provider in (
-                await session.scalars(select(ProviderModel).options(noload(ProviderModel.models)))
-            ).all()
+            for provider in (await session.scalars(select(ProviderModel).options(noload(ProviderModel.models)))).all()
         }
         incoming_ids = {provider.id for provider in settings.llm_providers}
+        draft_model_id = settings.draft_model_id
+        if draft_model_id is not None:
+            draft_provider_id = await session.scalar(select(LLMModel.provider_id).where(LLMModel.id == draft_model_id))
+            if draft_provider_id is not None and draft_provider_id not in incoming_ids:
+                draft_model_id = None
         for deleted_id in set(existing_providers).difference(incoming_ids):
             await session.execute(delete(ProviderModel).where(ProviderModel.id == deleted_id))
 
@@ -321,19 +334,19 @@ async def update_provider_settings(
                         provider_type=provider.provider_type,
                         name=provider.name,
                         base_url=provider.base_url,
-                        api_key=provider.api_key,
+                        api_key=_provider_api_key(provider),
                     )
                 )
             else:
                 existing.provider_type = provider.provider_type
                 existing.name = provider.name
                 existing.base_url = provider.base_url
-                existing.api_key = provider.api_key
+                existing.api_key = _provider_api_key(provider, existing.api_key)
 
-        if settings.draft_model_id is not None:
+        if draft_model_id is not None:
             draft_model = await session.scalar(
                 select(LLMModel).where(
-                    LLMModel.id == settings.draft_model_id,
+                    LLMModel.id == draft_model_id,
                     LLMModel.is_active,
                 )
             )
@@ -344,12 +357,12 @@ async def update_provider_settings(
             .values(
                 {
                     "key": "draft_model_id",
-                    "value": str(settings.draft_model_id) if settings.draft_model_id else None,
+                    "value": str(draft_model_id) if draft_model_id else None,
                 }
             )
             .on_conflict_do_update(
                 index_elements=["key"],
-                set_={"value": str(settings.draft_model_id) if settings.draft_model_id else None},
+                set_={"value": str(draft_model_id) if draft_model_id else None},
             )
         )
         await session.execute(stmt)
@@ -367,9 +380,7 @@ async def get_provider_models(
     session: AsyncSession | None = None,
 ) -> ProviderModelsPage:
     async with get_async_db_session(session) as session:
-        exists = await session.scalar(
-            select(ProviderModel.id).where(ProviderModel.id == provider_id)
-        )
+        exists = await session.scalar(select(ProviderModel.id).where(ProviderModel.id == provider_id))
         if exists is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
 
@@ -401,10 +412,7 @@ async def get_provider_models(
         rows = list(
             (
                 await session.scalars(
-                    select(LLMModel)
-                    .where(*filters)
-                    .order_by(normalized_name, LLMModel.id)
-                    .limit(limit + 1)
+                    select(LLMModel).where(*filters).order_by(normalized_name, LLMModel.id).limit(limit + 1)
                 )
             ).all()
         )
@@ -447,10 +455,7 @@ async def update_provider_model(
         )
         if not model.is_active and str(model.id) == str(draft_model_id):
             replacement = await session.scalar(
-                select(LLMModel.id)
-                .where(LLMModel.is_active)
-                .order_by(func.lower(LLMModel.name), LLMModel.id)
-                .limit(1)
+                select(LLMModel.id).where(LLMModel.is_active).order_by(func.lower(LLMModel.name), LLMModel.id).limit(1)
             )
             await session.execute(
                 insert(ApplicationSettingsModel)
@@ -473,9 +478,7 @@ async def get_provider_for_discovery(
 ) -> Provider:
     async with get_async_db_session(session) as session:
         provider = await session.scalar(
-            select(ProviderModel)
-            .where(ProviderModel.id == provider_id)
-            .options(selectinload(ProviderModel.models))
+            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models))
         )
         if provider is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
@@ -489,9 +492,7 @@ async def replace_provider_models(
 ) -> ProviderSummary:
     async with get_async_db_session(session) as session:
         provider = await session.scalar(
-            select(ProviderModel)
-            .where(ProviderModel.id == provider_id)
-            .options(selectinload(ProviderModel.models))
+            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models))
         )
         if provider is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
@@ -514,9 +515,15 @@ async def get_captioning_models(
                 await session.scalars(
                     select(LLMModel)
                     .where(
-                        LLMModel.is_active,
-                        LLMModel.supports_vision,
-                        LLMModel.vision_source.in_(("catalog", "provider")),
+                        LLMModel.is_active.is_(True),
+                        LLMModel.supports_vision.is_(True),
+                        LLMModel.vision_source.in_(
+                            [
+                                ModelCapabilitySource.CATALOG,
+                                ModelCapabilitySource.PROVIDER,
+                                ModelCapabilitySource.MANUAL,
+                            ]
+                        ),
                     )
                     .options(joinedload(LLMModel.provider))
                     .order_by(func.lower(LLMModel.name), LLMModel.id)
@@ -544,9 +551,7 @@ async def update_tool_settings(
 ) -> ToolSettings:
     values = {
         "active_tools": settings.active_tools,
-        "web_search_provider": settings.web_search_provider.model_dump()
-        if settings.web_search_provider
-        else None,
+        "web_search_provider": settings.web_search_provider.model_dump() if settings.web_search_provider else None,
         "image_search_provider": settings.image_search_provider.model_dump()
         if settings.image_search_provider
         else None,
@@ -816,7 +821,10 @@ async def bulk_upsert_providers(
             processed_providers.add(provider.id)
             existing_provider.provider_type = provider.provider_type
             existing_provider.base_url = provider.base_url
-            existing_provider.api_key = provider.api_key
+            existing_provider.api_key = _provider_api_key(
+                provider,
+                existing_provider.api_key,
+            )
             existing_provider.name = provider.name
             existing_provider.models = _merge_models(
                 provider.models,
@@ -830,7 +838,7 @@ async def bulk_upsert_providers(
                 provider_type=provider.provider_type,
                 name=provider.name,
                 base_url=provider.base_url,
-                api_key=provider.api_key,
+                api_key=_provider_api_key(provider),
                 models=[
                     LLMModel(
                         id=m.id,

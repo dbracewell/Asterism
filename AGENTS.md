@@ -130,7 +130,7 @@ All storage dependencies must be implemented behind interfaces so future swaps a
 - Framework: **Next.js 16**
 - Styling: **Tailwind CSS 4**
 - Components: **shadcn/ui**
-- Server-state management: **TanStack Query** with the generated Hey API client
+- Server-state management: **TanStack Query** with the generated Hey API client (We invalidate all queries automatically using mutationCache so need to invalidate on single mutations)
 - API client generation: **Hey API** (type-safe client from backend OpenAPI)
 - Auth: **BetterAuth with JWT**
 

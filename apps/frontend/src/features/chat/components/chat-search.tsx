@@ -28,7 +28,7 @@ export const ChatSearch = () => {
   useEffect(() => setPage(1), [deferredQuery]);
 
   return (
-    <main className="container mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 p-4 pt-16">
+    <section className="container mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 p-4 pt-16">
       <div>
         <h1 className="text-2xl font-semibold">Search</h1>
         <p className="text-muted-foreground text-sm">
@@ -132,6 +132,6 @@ export const ChatSearch = () => {
           </div>
         </div>
       )}
-    </main>
+    </section>
   );
 };

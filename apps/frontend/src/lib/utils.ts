@@ -1,3 +1,4 @@
+import { ErrorDetail } from "@/lib/client";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -25,3 +26,12 @@ export const formatURL = (
   });
   return `${path}/?${paramBuilder.toString()}`;
 };
+
+export function isErrorDetail(err: unknown): err is ErrorDetail {
+  return (
+    err != null &&
+    typeof err === "object" &&
+    "code" in (err as object) &&
+    "detail" in (err as object)
+  );
+}

@@ -444,8 +444,8 @@ class ChatOrchestrator:
             self._streaming_thinking = ""
 
             messages = await self._build_agent_messages()
-
             async for event in self.agent.run(messages=messages):
+                print(f"Agent event: {event}")
                 match event:
                     case AgentEvent(type=AgentEventType.COMPLETE):
                         # An OpenAI-compatible provider can occasionally end a

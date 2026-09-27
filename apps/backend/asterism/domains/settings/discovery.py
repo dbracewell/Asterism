@@ -36,7 +36,8 @@ class ProviderDiscoveryRequest(BaseModel):
     provider_type: ProviderType
     base_url: str = ""
     api_key: SecretStr = Field(
-        min_length=1, json_schema_extra={"writeOnly": True}
+        min_length=1,
+        json_schema_extra={"writeOnly": True},
     )
     provider_id: uuid.UUID
     existing_models: list[Llm] = Field(default_factory=list)
@@ -44,9 +45,7 @@ class ProviderDiscoveryRequest(BaseModel):
 
     @model_validator(mode="after")
     def normalize_base_url(self) -> "ProviderDiscoveryRequest":
-        self.base_url = normalize_provider_base_url(
-            self.provider_type, self.base_url
-        )
+        self.base_url = normalize_provider_base_url(self.provider_type, self.base_url)
         return self
 
 
@@ -101,9 +100,7 @@ async def _limit_response_size(response: httpx.Response) -> None:
                 raise _DiscoveryResponseTooLarge
         except ValueError:
             pass
-    response.stream = _SizeLimitedStream(
-        cast(httpx.AsyncByteStream, response.stream)
-    )
+    response.stream = _SizeLimitedStream(cast(httpx.AsyncByteStream, response.stream))
 
 
 class OpenAIProviderDiscovery:
@@ -164,59 +161,34 @@ class OpenAIProviderDiscovery:
 
             if request.provider_type == ProviderType.OPENAI:
                 capabilities = get_openai_capabilities(model_id)
-                context_window = (
-                    capabilities.context_window
-                    if capabilities is not None
-                    else None
-                )
-                supports_vision = (
-                    capabilities.supports_vision
-                    if capabilities is not None
-                    else None
-                )
+                context_window = capabilities.context_window if capabilities is not None else None
+                supports_vision = capabilities.supports_vision if capabilities is not None else None
                 context_source = (
-                    ModelCapabilitySource.CATALOG
-                    if context_window is not None
-                    else ModelCapabilitySource.UNKNOWN
+                    ModelCapabilitySource.CATALOG if context_window is not None else ModelCapabilitySource.UNKNOWN
                 )
                 vision_source = (
-                    ModelCapabilitySource.CATALOG
-                    if supports_vision is not None
-                    else ModelCapabilitySource.UNKNOWN
+                    ModelCapabilitySource.CATALOG if supports_vision is not None else ModelCapabilitySource.UNKNOWN
                 )
             else:
-                context_window, context_conflict = _extract_context_window(
-                    raw_model
-                )
+                context_window, context_conflict = _extract_context_window(raw_model)
                 supports_vision, vision_conflict = _extract_vision(raw_model)
                 context_source = (
-                    ModelCapabilitySource.PROVIDER
-                    if context_window is not None
-                    else ModelCapabilitySource.UNKNOWN
+                    ModelCapabilitySource.PROVIDER if context_window is not None else ModelCapabilitySource.UNKNOWN
                 )
                 vision_source = (
-                    ModelCapabilitySource.PROVIDER
-                    if supports_vision is not None
-                    else ModelCapabilitySource.UNKNOWN
+                    ModelCapabilitySource.PROVIDER if supports_vision is not None else ModelCapabilitySource.UNKNOWN
                 )
                 if context_conflict:
-                    warnings.append(
-                        f"{model_id}: conflicting context-window metadata; "
-                        "left unknown."
-                    )
+                    warnings.append(f"{model_id}: conflicting context-window metadata; left unknown.")
                 if vision_conflict:
-                    warnings.append(
-                        f"{model_id}: conflicting vision metadata; left unknown."
-                    )
+                    warnings.append(f"{model_id}: conflicting vision metadata; left unknown.")
 
             if context_window is None and not any(
-                warning.startswith(f"{model_id}: conflicting context")
-                for warning in warnings
+                warning.startswith(f"{model_id}: conflicting context") for warning in warnings
             ):
                 warnings.append(f"{model_id}: context window is unknown.")
             if supports_vision is None and not any(
-                warning.startswith(f"{model_id}: conflicting vision")
-                for warning in warnings
+                warning.startswith(f"{model_id}: conflicting vision") for warning in warnings
             ):
                 warnings.append(f"{model_id}: vision support is unknown.")
 
@@ -225,7 +197,7 @@ class OpenAIProviderDiscovery:
                     id=uuid.uuid4(),
                     provider_id=request.provider_id,
                     name=model_id,
-                    is_active=True,
+                    is_active=False,
                     context_window=context_window,
                     supports_vision=supports_vision,
                     context_window_source=context_source,
@@ -238,11 +210,7 @@ class OpenAIProviderDiscovery:
             discovered,
             draft_model_id=request.draft_model_id,
         )
-        catalog_version = (
-            OPENAI_MODEL_CATALOG_VERSION
-            if request.provider_type == ProviderType.OPENAI
-            else None
-        )
+        catalog_version = OPENAI_MODEL_CATALOG_VERSION if request.provider_type == ProviderType.OPENAI else None
         logger.info(
             "Provider discovery succeeded",
             extra={
@@ -324,9 +292,7 @@ class OpenAIProviderDiscovery:
         finally:
             await client.close()
 
-        if not isinstance(models, list) or not all(
-            isinstance(item, dict) for item in models
-        ):
+        if not isinstance(models, list) or not all(isinstance(item, dict) for item in models):
             raise ProviderDiscoveryError(
                 502,
                 "malformed_response",
@@ -380,8 +346,7 @@ def _extract_vision(model: dict[str, object]) -> tuple[bool | None, bool]:
         modality_sources.append(architecture.get("input_modalities"))
     for modalities in modality_sources:
         if isinstance(modalities, list) and any(
-            isinstance(item, str) and item.lower() in {"image", "images"}
-            for item in modalities
+            isinstance(item, str) and item.lower() in {"image", "images"} for item in modalities
         ):
             values.add(True)
 
@@ -414,20 +379,14 @@ def merge_discovered_models(
         if existing.context_window_source == ModelCapabilitySource.MANUAL:
             result.context_window = existing.context_window
             result.context_window_source = ModelCapabilitySource.MANUAL
-        elif (
-            discovered.context_window is None
-            and existing.context_window is not None
-        ):
+        elif discovered.context_window is None and existing.context_window is not None:
             result.context_window = existing.context_window
             result.context_window_source = existing.context_window_source
 
         if existing.vision_source == ModelCapabilitySource.MANUAL:
             result.supports_vision = existing.supports_vision
             result.vision_source = ModelCapabilitySource.MANUAL
-        elif (
-            discovered.supports_vision is None
-            and existing.supports_vision is not None
-        ):
+        elif discovered.supports_vision is None and existing.supports_vision is not None:
             result.supports_vision = existing.supports_vision
             result.vision_source = existing.vision_source
         merged.append(result)

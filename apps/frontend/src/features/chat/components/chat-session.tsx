@@ -250,9 +250,6 @@ export const ChatSession = ({
   }
 
   const chatAgent = user.settings.agents?.[session.info.agent_id ?? ""];
-  // The chat response is authoritative for the pinned agent model. Fall back
-  // to the already-loaded settings model metadata for chats created before
-  // that response field was available.
   const contextWindow =
     session.info.context_model?.context_window ??
     user.settings.models?.find((model) => model.id === chatAgent?.model_id)
@@ -261,62 +258,60 @@ export const ChatSession = ({
 
   return (
     <>
-      <div className="flex h-screen min-h-0 flex-1 flex-col items-center justify-end overflow-hidden">
-        <div
-          className="no-scrollbar bg-background absolute top-0 left-1/2 container flex h-screen w-full max-w-[90%] -translate-x-1/2 flex-col overflow-y-auto p-2 pt-14"
-          style={{ overflowAnchor: "auto" }}
-          onScroll={(e) => {
-            const scrollPosition =
-              e.currentTarget.scrollHeight -
-              (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
+      <section
+        className="no-scrollbar bg-background relative container mx-auto flex w-full max-w-[90%] flex-col overflow-y-auto p-2 py-10"
+        style={{ overflowAnchor: "auto" }}
+        onScroll={(e) => {
+          const scrollPosition =
+            e.currentTarget.scrollHeight -
+            (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
 
-            preventAutoScrollRef.current =
-              scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD;
+          preventAutoScrollRef.current =
+            scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD;
 
-            const isNowScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
-            if (isNowScrollable !== isScrollable) {
-              setIsScrollable(isNowScrollable);
-            }
-          }}
-        >
-          {chatAgent && (
-            <Badge className="mb-3 w-fit" variant="secondary">
-              Agent: {chatAgent.name}
-            </Badge>
-          )}
-          {session.messages.map((message) => (
-            <MessageItem
-              chatId={chatId}
-              key={message.id}
-              message={message}
-              isProcessing={isProcessing}
-              sendJsonMessage={sendJsonMessage}
-            />
-          ))}
-          {!incomingMessage &&
-            session.messages.length > 0 &&
-            session.messages[0].status === "pending" && <Loading />}
-          <SubAgentActivityPanel activities={subAgentActivities} />
-          {incomingMessage && (
-            <MessageItem
-              chatId={chatId}
-              message={incomingMessage}
-              isProcessing={isProcessing}
-              defaultShowThinking
-              sendJsonMessage={sendJsonMessage}
-            />
-          )}
-          <div
-            ref={messageListRef}
-            className="shrink-0"
-            style={{
-              overflowAnchor: "auto",
-              width: "100%",
-              marginBottom: `150px`,
-            }}
+          const isNowScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
+          if (isNowScrollable !== isScrollable) {
+            setIsScrollable(isNowScrollable);
+          }
+        }}
+      >
+        {chatAgent && (
+          <Badge className="mb-3 w-fit" variant="secondary">
+            Agent: {chatAgent.name}
+          </Badge>
+        )}
+        {session.messages.map((message) => (
+          <MessageItem
+            chatId={chatId}
+            key={message.id}
+            message={message}
+            isProcessing={isProcessing}
+            sendJsonMessage={sendJsonMessage}
           />
-        </div>
-      </div>
+        ))}
+        {!incomingMessage &&
+          session.messages.length > 0 &&
+          session.messages[0].status === "pending" && <Loading />}
+        <SubAgentActivityPanel activities={subAgentActivities} />
+        {incomingMessage && (
+          <MessageItem
+            chatId={chatId}
+            message={incomingMessage}
+            isProcessing={isProcessing}
+            defaultShowThinking
+            sendJsonMessage={sendJsonMessage}
+          />
+        )}
+        <div
+          ref={messageListRef}
+          className="shrink-0"
+          style={{
+            overflowAnchor: "auto",
+            width: "100%",
+            marginBottom: `150px`,
+          }}
+        />
+      </section>
       <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent md:max-w-full">
         {isScrollable && (
           <Button

@@ -1,6 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { getCurrentUser } from "@/features/auth/server/actions";
-import SessionPage from "@/features/chat/components/session-page";
+import { ChatSession } from "@/features/chat/components/chat-session";
 import { getAuth } from "@/lib/auth";
 import { OctagonAlertIcon } from "lucide-react";
 import { headers } from "next/headers";
@@ -33,7 +33,7 @@ export default async function ChatSessionPage(props: ChatSessionPageProps) {
 
   if (user.settings.default_agent_id == null) {
     return (
-      <div className="flex flex-1 items-center justify-center pt-16">
+      <div className="flex flex-1 items-center justify-center">
         <div className="bg-destructive border-destructive flex flex-col items-center gap-6 rounded-xl border-2 p-20 text-center text-white/80 shadow-lg">
           <h2 className="flex items-center gap-3 text-xl font-bold">
             <OctagonAlertIcon className="size-20" /> You do not have a default
@@ -54,5 +54,5 @@ export default async function ChatSessionPage(props: ChatSessionPageProps) {
     );
   }
 
-  return <SessionPage chatId={chatId} jwtToken={jwtToken!.token} />;
+  return <ChatSession chatId={chatId} jwtToken={jwtToken.token} />;
 }

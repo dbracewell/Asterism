@@ -16,10 +16,8 @@ from typing import (
 )
 
 from openai import (
-    APIConnectionError,
     APIError,
     AsyncOpenAI,
-    RateLimitError,
 )
 from openai.types import CompletionUsage
 from openai.types.chat import (
@@ -28,7 +26,7 @@ from openai.types.chat import (
 from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 from openai.types.shared_params import ResponseFormatJSONSchema
 from openai.types.shared_params.response_format_json_schema import JSONSchema
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
 from asterism.common.log import get_logger
 from asterism.common.retries import retry_async_gen
@@ -142,10 +140,24 @@ class StreamHandler[T: BaseModel]:
 
     async def process(
         self,
-        stream: AsyncGenerator[ChatCompletionChunk, None],
+        stream: AsyncGenerator[ChatCompletionChunk | BaseException | None, None],
     ) -> AsyncGenerator[LLMEvent, None]:
 
         async for chunk in stream:
+            if not chunk:
+                yield LLMEvent(
+                    type=LLMEventType.ERROR,
+                    content="Received empty chunk from LLM stream.",
+                    exception=ValueError("Empty chunk received."),
+                )
+                return
+            if isinstance(chunk, BaseException):
+                yield LLMEvent(
+                    type=LLMEventType.ERROR,
+                    content=str(chunk),
+                    exception=chunk,
+                )
+                return
             if hasattr(chunk, "usage") and chunk.usage is not None:
                 self.usage = chunk.usage
 
@@ -263,33 +275,17 @@ class LLMClient(LLMClientProtocol):
     def __init__(
         self,
         model_name: str,
-        api_key: str,
+        api_key: SecretStr,
         base_url: str,
     ) -> None:
         self.max_retries: int = 3
-        self.api_key: str = api_key
+        self.api_key: SecretStr = api_key
         self.base_url: str = base_url
         self.model_name: str = model_name
         self._client = AsyncOpenAI(
-            api_key=self.api_key,
+            api_key=self.api_key.get_secret_value(),
             base_url=self.base_url,
             timeout=120.0,
-        )
-
-    @staticmethod
-    def _error_to_event(e: BaseException) -> LLMEvent:
-        text: str = str(e)
-        if isinstance(e, APIError):
-            text = "API Error: " + text
-        elif isinstance(e, APIConnectionError):
-            text = "API Connection Error: " + text
-        elif isinstance(e, RateLimitError):
-            text = "Rate Limit Error: " + text
-
-        return LLMEvent(
-            type=LLMEventType.ERROR,
-            content=text,
-            exception=e,
         )
 
     def _prepare_completion_params[T: BaseModel](
@@ -308,10 +304,6 @@ class LLMClient(LLMClientProtocol):
 
         if "seed" not in completion_args:
             completion_args["seed"] = int(time.time())
-
-        # Profiles persisted before removal of the provider-specific thinking
-        # budget may still include it. Do not forward an unsupported argument.
-        completion_args.pop("thinking_budget_tokens", None)
 
         if response_model:
 
@@ -386,22 +378,19 @@ class LLMClient(LLMClientProtocol):
         )
 
         @retry_async_gen(
-            on_exceed_attempts=lambda e: self._error_to_event(e),
+            on_exceed_attempts=lambda e: e,
             no_retry=(APIError,),
             max_retries=self.max_retries,
             delay_base=3,
         )
-        async def async_chat_impl(
-            **kwargs,
-        ) -> AsyncGenerator[ChatCompletionChunk, None]:
-            async with llm_request_limiter.acquire():
-                response = await self._client.chat.completions.create(
-                    stream=True,
-                    stream_options={"include_usage": True},
-                    **kwargs,
-                )
-                async for chunk in response:
-                    yield chunk
+        async def async_chat_impl(**kwargs):
+            response = await self._client.chat.completions.create(
+                stream=True,
+                stream_options={"include_usage": True},
+                **kwargs,
+            )
+            async for chunk in response:
+                yield chunk
 
         handler = StreamHandler(response_model=response_model)
         async for event in handler.process(async_chat_impl(**completion_args)):

@@ -134,12 +134,18 @@ class CaptioningConfiguration:
             return
         if self.provider_model_id is None:
             raise CaptioningError(CaptionErrorCode.INVALID_SELECTION, "Provider captioning requires a model")
+
         selected = next((model for model in models if model.id == self.provider_model_id), None)
         if (
             selected is None
             or not selected.is_active
             or selected.supports_vision is not True
-            or selected.vision_source not in {ModelCapabilitySource.CATALOG, ModelCapabilitySource.PROVIDER}
+            or selected.vision_source
+            not in {
+                ModelCapabilitySource.CATALOG,
+                ModelCapabilitySource.PROVIDER,
+                ModelCapabilitySource.MANUAL,
+            }
         ):
             raise CaptioningError(
                 CaptionErrorCode.INVALID_SELECTION,

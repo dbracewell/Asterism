@@ -1,5 +1,5 @@
-import { FileManager } from "@/features/files/file-manager";
+import { FileManager } from "@/components/file-manager";
 
 export default function FilesPage() {
-  return <FileManager />;
+  return <FileManager allowFileUpload={true} />;
 }

@@ -1,41 +1,49 @@
 import { api } from "@/lib/api";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export const APIDownload = ({
   filename,
   className,
+  linkText,
 }: {
   filename: string;
   className?: string;
+  linkText?: string;
 }) => {
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let active = true;
+  const handleClick = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-    let url: string | undefined;
-    const fetchFile = async () => {
-      try {
-        const { data } = await api.getFile({
-          path: { filename },
-        });
-        if (!data) throw new Error("File is unavailable");
-        const blob = data instanceof Blob ? data : new Blob([data]);
-        url = URL.createObjectURL(blob);
-        if (active) setObjectUrl(url);
-      } catch (error) {
-        console.error("Failed to fetch file", error);
-        if (active) setError(true);
-      }
-    };
-    void fetchFile();
-    return () => {
-      active = false;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [filename]);
+    if (loading || error) return;
+
+    setLoading(true);
+    let objectUrl: string | null = null;
+    try {
+      const { data } = await api.getFile({
+        path: { filename },
+      });
+      if (!data) throw new Error("File is unavailable");
+      const blob = data instanceof Blob ? data : new Blob([data]);
+      objectUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (fetchError) {
+      console.error("Failed to fetch file", fetchError);
+      setError(true);
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setLoading(false);
+    }
+  };
 
   if (error) {
     return (
@@ -45,17 +53,9 @@ export const APIDownload = ({
     );
   }
 
-  if (!objectUrl) {
-    return (
-      <a href="#" className={className} download={filename}>
-        {filename}
-      </a>
-    );
-  }
-
   return (
-    <a href={objectUrl} className={className} download={filename}>
-      {filename}
+    <a href="#" className={className} onClick={handleClick} aria-busy={loading}>
+      {loading ? "Loading…" : (linkText ?? filename)}
     </a>
   );
 };

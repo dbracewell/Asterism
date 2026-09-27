@@ -447,7 +447,7 @@ function KnowledgeDocumentCard({
   };
 
   return (
-    <Card className="shrink-0">
+    <Card className="shrink-0 border">
       <CardHeader>
         <CardTitle>{document.original_name}</CardTitle>
         <CardDescription>

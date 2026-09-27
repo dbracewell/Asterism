@@ -33,6 +33,7 @@ from .schemas import (
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
+    KnowledgeCaptionMetadata,
     KnowledgeCaptionUpdate,
     KnowledgeDocument,
     KnowledgeDocumentCreate,
@@ -92,12 +93,17 @@ async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCap
 
 
 async def update_captioning_configuration(
-    *, payload: KnowledgeCaptionConfigurationUpdate, session: AsyncSession
+    *,
+    payload: KnowledgeCaptionConfigurationUpdate,
+    session: AsyncSession,
 ) -> KnowledgeCaptionConfiguration:
     models = list(await session.scalars(select(LLMModel)))
     try:
-        selected = CaptioningConfiguration(mode=CaptionMode(payload.mode), provider_model_id=payload.provider_model_id)
-        selected.validate(models)
+        selected = CaptioningConfiguration(
+            mode=CaptionMode(payload.mode),
+            provider_model_id=payload.provider_model_id,
+        )
+        selected.validate(models)  # pyright: ignore[reportArgumentType]
     except CaptioningError as error:
         raise BadDataException(str(error)) from error
 
@@ -228,16 +234,18 @@ def _document_response(document: KnowledgeDocumentModel) -> KnowledgeDocument:
         error=document.error,
         indexed_at=document.indexed_at,
         replaces_document_id=document.replaces_document_id,
-        caption={
-            "status": document.caption_status.value if document.caption_status else None,
-            "source": document.caption_source.value if document.caption_source else None,
-            "model": document.caption_model,
-            "text": document.caption_text,
-            "error_code": document.caption_error_code,
-            "error_reason": document.caption_error_reason,
-            "generated_at": document.caption_generated_at,
-            "accepted_at": document.caption_accepted_at,
-        },
+        caption=KnowledgeCaptionMetadata.model_validate(
+            {
+                "status": document.caption_status.value if document.caption_status else None,
+                "source": document.caption_source.value if document.caption_source else None,
+                "model": document.caption_model,
+                "text": document.caption_text,
+                "error_code": document.caption_error_code,
+                "error_reason": document.caption_error_reason,
+                "generated_at": document.caption_generated_at,
+                "accepted_at": document.caption_accepted_at,
+            }
+        ),
         metadata=document.metadata_,
         created_at=document.created_at,
         updated_at=document.updated_at,

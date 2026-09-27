@@ -85,7 +85,7 @@ export const FolderPage = ({ folderId }: { folderId: string }) => {
                   value={selectedAgentId}
                   onValueChange={setSelectedAgentId}
                   agents={mainAgents}
-                  className="text-primary-foreground bg-background/5! border-0! font-bold"
+                  className="text-primary-foreground border-0! bg-transparent! font-bold"
                   chevronClassName="text-primary-foreground"
                 />
               </div>

@@ -11,6 +11,8 @@ interface HintProps {
   hint: string;
   hintClassName?: string;
   hidden?: boolean;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
 }
 
 export const Hint = ({
@@ -19,6 +21,8 @@ export const Hint = ({
   hint,
   hintClassName,
   hidden = false,
+  align = "center",
+  side = "top",
 }: HintProps) => {
   return (
     <Tooltip>
@@ -27,6 +31,8 @@ export const Hint = ({
         hideWhenDetached={true}
         className={hintClassName}
         hidden={hidden}
+        align={align}
+        side={side}
       >
         {hint}
       </TooltipContent>

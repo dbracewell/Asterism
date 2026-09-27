@@ -247,6 +247,7 @@ async def discover_and_sync_provider_models(
             status_code=exc.status_code,
             detail=f"{exc.category}: {exc.detail}",
         ) from exc
+
     return await settings_service.replace_provider_models(
         provider_id,
         discovery.models,
@@ -311,41 +312,6 @@ async def get_app_settings(
     return await settings_service.get_app_settings(session=session)
 
 
-@settings_router.put(
-    "/app/{key}",
-    response_model=Setting,
-    operation_id="appSettingUpdate",
-    summary="Update a single application setting by key",
-)
-async def update_app_setting(
-    key: str,
-    value: UpdateSettingValue,
-    user: AdminUserDep,
-    session: DBSessionDep,
-) -> Setting:
-    return await settings_service.upsert_app_setting(
-        key=key,
-        value=value.value,
-        session=session,
-    )
-
-
-@settings_router.delete(
-    "/app/{key}",
-    operation_id="appSettingDelete",
-    summary="Delete a single application setting by key",
-)
-async def delete_app_setting(
-    key: str,
-    user: AdminUserDep,
-    session: DBSessionDep,
-) -> None:
-    await settings_service.delete_app_setting(
-        key,
-        session=session,
-    )
-
-
 @settings_router.patch(
     "/app",
     response_model=ApplicationSettings,
@@ -398,6 +364,41 @@ async def update_captioning_configuration(
     from asterism.domains.knowledge.service import update_captioning_configuration as update_configuration
 
     return await update_configuration(payload=payload, session=session)
+
+
+@settings_router.put(
+    "/app/{key}",
+    response_model=Setting,
+    operation_id="appSettingUpdate",
+    summary="Update a single application setting by key",
+)
+async def update_app_setting(
+    key: str,
+    value: UpdateSettingValue,
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> Setting:
+    return await settings_service.upsert_app_setting(
+        key=key,
+        value=value.value,
+        session=session,
+    )
+
+
+@settings_router.delete(
+    "/app/{key}",
+    operation_id="appSettingDelete",
+    summary="Delete a single application setting by key",
+)
+async def delete_app_setting(
+    key: str,
+    user: AdminUserDep,
+    session: DBSessionDep,
+) -> None:
+    await settings_service.delete_app_setting(
+        key,
+        session=session,
+    )
 
 
 # ---------------------------------------------------------------------------

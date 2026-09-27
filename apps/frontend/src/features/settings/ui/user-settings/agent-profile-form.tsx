@@ -48,19 +48,19 @@ export function AgentProfileForm({
   const user = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const { data: availableTools } = useQuery({
-    ...toolsGetActiveOptions({ client }),
-  });
-  const { data: knowledgeBases, isLoading: isLoadingKnowledgeBases } = useQuery({
-    ...knowledgeBaseGetManyOptions({
-      client,
-      query: { page: 1, page_size: 100 },
-    }),
-  });
+  const { data: availableTools } = useQuery(toolsGetActiveOptions({ client }));
+  const { data: knowledgeBases, isLoading: isLoadingKnowledgeBases } = useQuery(
+    {
+      ...knowledgeBaseGetManyOptions({
+        client,
+        query: { page: 1, page_size: 100 },
+      }),
+    },
+  );
 
-  const upsertAgentProfile = useMutation({
-    ...agentsUpsertAgentProfileMutation({ client }),
-  });
+  const upsertAgentProfile = useMutation(
+    agentsUpsertAgentProfileMutation({ client }),
+  );
 
   const form = useForm<AgentProfileFormValues>({
     resolver: zodResolver(agentProfile),
@@ -138,7 +138,8 @@ export function AgentProfileForm({
           system_prompt: data.systemPrompt,
           tools: [
             ...data.tools.map((t) => t.value),
-            ...(!data.sub_agent && !data.tools.some((t) => t.value === "sub_agent")
+            ...(!data.sub_agent &&
+            !data.tools.some((t) => t.value === "sub_agent")
               ? ["sub_agent"]
               : []),
           ],
@@ -371,10 +372,14 @@ export function AgentProfileForm({
             <Field className="mt-3 mb-2 flex flex-1 flex-col">
               <FieldLabel>Knowledge bases</FieldLabel>
               <p className="text-muted-foreground text-sm">
-                Assigned knowledge bases enable automatic <code>search_knowledge</code> for this agent. Leave all unchecked to disable knowledge search.
+                Assigned knowledge bases enable automatic{" "}
+                <code>search_knowledge</code> for this agent. Leave all
+                unchecked to disable knowledge search.
               </p>
               {isLoadingKnowledgeBases ? (
-                <p className="text-muted-foreground text-sm">Loading knowledge bases…</p>
+                <p className="text-muted-foreground text-sm">
+                  Loading knowledge bases…
+                </p>
               ) : knowledgeBases?.knowledge_bases.length ? (
                 <Controller
                   control={form.control}
@@ -394,7 +399,10 @@ export function AgentProfileForm({
                               )
                             }
                           />
-                          <Label htmlFor={`form-agentProfile-knowledge-${base.id}`} className="truncate">
+                          <Label
+                            htmlFor={`form-agentProfile-knowledge-${base.id}`}
+                            className="truncate"
+                          >
                             {base.name}
                           </Label>
                         </div>
@@ -403,7 +411,10 @@ export function AgentProfileForm({
                   )}
                 />
               ) : (
-                <p className="text-muted-foreground text-sm">No knowledge bases are available. Create one from Knowledge first.</p>
+                <p className="text-muted-foreground text-sm">
+                  No knowledge bases are available. Create one from Knowledge
+                  first.
+                </p>
               )}
             </Field>
 

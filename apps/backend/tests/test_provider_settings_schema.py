@@ -334,10 +334,67 @@ async def test_focused_settings_writes_return_the_persisted_resources(tmp_path):
         persisted_provider_settings = await update_provider_settings(provider_settings, session)
         assert persisted_provider_settings.llm_providers[0].name == "Local"
         assert persisted_provider_settings.llm_providers[0].model_count == 0
+
+        # API keys are redacted in JSON responses. Submitting that redacted
+        # value while removing another provider must retain the stored key.
+        redacted_update = ProviderSettings.model_validate(
+            provider_settings.model_dump(mode="json"),
+        )
+        persisted_provider_settings = await update_provider_settings(
+            redacted_update,
+            session,
+        )
+        assert (
+            persisted_provider_settings.llm_providers[0]
+            .api_key.get_secret_value()
+            == "secret"
+        )
         assert await update_tool_settings(tool_settings, session) == tool_settings
 
         assert await get_provider_settings(session) == provider_settings
         assert await get_tool_settings(session) == tool_settings
+
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_removing_a_provider_clears_its_draft_model(tmp_path):
+    database = tmp_path / "remove-draft-provider.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    provider_id = uuid.uuid4()
+    model_id = uuid.uuid4()
+    provider = Provider(
+        id=provider_id,
+        provider_type=ProviderType.GENERIC_OPENAI,
+        name="Local",
+        base_url="http://localhost:8080/v1",
+        api_key="secret",
+        models=[
+            Llm(
+                id=model_id,
+                provider_id=provider_id,
+                name="local-model",
+                is_active=True,
+            )
+        ],
+    )
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        await bulk_upsert_providers([provider], session)
+        session.add(ApplicationSettingsModel(key="draft_model_id", value=str(model_id)))
+        await session.commit()
+
+        removal = (await get_provider_settings(session)).model_copy(
+            update={"llm_providers": []},
+        )
+        persisted = await update_provider_settings(removal, session)
+
+        assert persisted.llm_providers == []
+        assert persisted.draft_model_id is None
+        assert persisted.draft_model is None
 
     await engine.dispose()
 

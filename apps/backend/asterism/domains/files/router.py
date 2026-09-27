@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Query, UploadFile, status
 from fastapi.responses import FileResponse
@@ -43,9 +43,56 @@ async def list_files(
     db: DBSessionDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
+    sort_by: Literal["name", "kind", "date", "size"] = Query(default="name", regex="^(name|kind|date|size)$"),
+    query: str | None = Query(default=None, description="Search query to filter files by name"),
 ) -> UserFileList:
     return await file_service.list_user_files(
-        user_id=user.id, session=db, page=page, page_size=page_size
+        user_id=user.id, session=db, page=page, page_size=page_size, sort_by=sort_by, query=query
+    )
+
+
+@file_router.delete(
+    "/",
+    response_model=UserFileList,
+    status_code=status.HTTP_200_OK,
+    operation_id="filesDeleteMany",
+    responses={
+        200: {"model": UserFileList},
+    },
+)
+async def delete_man_files(
+    user: AuthedUserDep,
+    filenames: list[str],
+    session: DBSessionDep,
+) -> UserFileList:
+    return await file_service.delete_user_files(
+        user_id=user.id,
+        filenames=filenames,
+        session=session,
+    )
+
+
+@file_router.get(
+    "/info/{filename}",
+    response_model=UserFile,
+    status_code=status.HTTP_200_OK,
+    operation_id="fileGetFileInfo",
+    responses={
+        200: {"model": UserFile},
+        401: {"model": ErrorDetail},
+        400: {"model": ErrorDetail},
+        404: {"model": ErrorDetail},
+    },
+)
+async def get_file_info(
+    user: AuthedUserDep,
+    filename: str,
+    session: DBSessionDep,
+) -> UserFile:
+    return await file_service.get_user_file_info(
+        user_id=user.id,
+        filename=filename,
+        session=session,
     )
 
 
@@ -55,12 +102,8 @@ async def list_files(
     operation_id="fileDelete",
     responses={401: {"model": ErrorDetail}, 404: {"model": ErrorDetail}},
 )
-async def delete_file(
-    filename: str, user: AuthedUserDep, db: DBSessionDep
-) -> UserFile:
-    return await file_service.delete_user_file(
-        user_id=user.id, filename=filename, session=db
-    )
+async def delete_file(filename: str, user: AuthedUserDep, db: DBSessionDep) -> UserFile:
+    return await file_service.delete_user_file(user_id=user.id, filename=filename, session=db)
 
 
 @file_router.get(

@@ -1,8 +1,7 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import UserProvider from "@/features/auth/components/user-context";
 import { getCurrentUser } from "@/features/auth/server/actions";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
-import { Header } from "@/features/dashboard/components/header";
 import { ThemeCheck } from "@/features/dashboard/components/theme-check";
 import { UpdateTimeZone } from "@/features/dashboard/components/update-timezone";
 import {
@@ -36,12 +35,9 @@ export const DashboardLayout = async ({
           navFolderOpen={navFolderOpen}
           navSessionsOpen={navSessionsOpen}
         />
-        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-          <Header />
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col p-2">
-            {children}
-          </div>
-        </div>
+        <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {children}
+        </SidebarInset>
       </SidebarProvider>
     </UserProvider>
   );

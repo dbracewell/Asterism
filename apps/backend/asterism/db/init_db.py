@@ -75,9 +75,7 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
 
 
 def arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Initialize the backend database without deleting existing data."
-    )
+    parser = argparse.ArgumentParser(description="Initialize the backend database without deleting existing data.")
     parser.add_argument(
         "--reset",
         action="store_true",

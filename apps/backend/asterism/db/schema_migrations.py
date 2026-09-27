@@ -65,6 +65,7 @@ async def _migrate_user_files(connection: AsyncConnection) -> None:
             "content_status VARCHAR(16) NOT NULL DEFAULT 'pending' "
             "CHECK (content_status IN ('pending', 'ready', 'unsupported', 'failed')), "
             "content_error VARCHAR(512), content_cache TEXT, "
+            "thumbnail TEXT, "
             "id CHAR(32) NOT NULL PRIMARY KEY, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, "
             "CONSTRAINT uq_user_files_user_filename UNIQUE (user_id, filename)"
             ")"
@@ -77,10 +78,7 @@ async def _migrate_user_files(connection: AsyncConnection) -> None:
 
 async def _migrate_provider_model_browser(connection: AsyncConnection) -> None:
     await connection.execute(
-        text(
-            "CREATE INDEX IF NOT EXISTS ix_models_provider_name_id "
-            "ON models (provider_id, name, id)"
-        )
+        text("CREATE INDEX IF NOT EXISTS ix_models_provider_name_id ON models (provider_id, name, id)")
     )
 
 

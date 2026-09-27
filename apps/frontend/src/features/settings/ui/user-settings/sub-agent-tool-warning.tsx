@@ -3,7 +3,7 @@ import { TriangleAlertIcon } from "lucide-react";
 export const SubAgentToolWarning = () => (
   <div
     role="note"
-    className="border-amber-500/40 bg-amber-500/10 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm"
+    className="text-foreground flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
   >
     <TriangleAlertIcon
       aria-hidden="true"

@@ -1,22 +1,19 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@/features/auth/components/user-context";
 import { adminSettingsQueryOptions } from "@/features/settings/ui/admin-settings-query";
 import { AdminSettingsTab } from "@/features/settings/ui/admin-settings-tab";
 import { UserSettingsTab } from "@/features/settings/ui/user-settings-tab";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const SettingsPageView = () => {
   const user = useUser();
-  const searchParams = useSearchParams();
-  const tab = searchParams.get("t");
-  const setting = searchParams.get("setting") ?? undefined;
+  const { getSearchParams, setSearchParams } = useReadWriteSearchParams();
+  const [tab, setting] = getSearchParams(["t", "setting"]);
   const activeTab = tab === "admin" && user.role === "admin" ? "admin" : "user";
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const pathname = usePathname();
   const prefetchAdminSettings = () => {
     void queryClient.prefetchQuery(adminSettingsQueryOptions());
   };
@@ -25,7 +22,7 @@ export const SettingsPageView = () => {
     <Tabs
       value={activeTab}
       onValueChange={(value) => {
-        router.replace(`${pathname}?t=${value}`);
+        setSearchParams({ t: value, setting: undefined });
       }}
       className="flex min-h-0 flex-1 flex-col overflow-hidden! pt-12"
     >

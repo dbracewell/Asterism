@@ -10,8 +10,11 @@ import {
 import { IconMessage2Plus } from "@tabler/icons-react";
 import { DatabaseIcon, FilesIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export const NavActions = () => {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup>
       <SidebarGroupContent>
@@ -24,21 +27,36 @@ export const NavActions = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lgText" tooltip="Search">
+            <SidebarMenuButton
+              asChild
+              size="lgText"
+              tooltip="Search"
+              isActive={pathname === "/search"}
+            >
               <Link href="/search">
                 <SearchIcon /> <span>Search</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lgText" tooltip="Knowledge bases">
+            <SidebarMenuButton
+              asChild
+              size="lgText"
+              tooltip="Knowledge bases"
+              isActive={pathname === "/knowledge"}
+            >
               <Link href="/knowledge">
                 <DatabaseIcon /> <span>Knowledge</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lgText" tooltip="Files">
+            <SidebarMenuButton
+              asChild
+              size="lgText"
+              tooltip="Files"
+              isActive={pathname === "/files"}
+            >
               <Link href="/files">
                 <FilesIcon /> <span>Files</span>
               </Link>

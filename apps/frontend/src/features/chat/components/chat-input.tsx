@@ -58,7 +58,7 @@ export const ChatInputContainer = ({
   return (
     <div
       className={cn(
-        "bg-background mx-auto flex w-full max-w-[80%] flex-col overflow-clip rounded-xl border",
+        "bg-background mx-auto flex w-full max-w-[80%] flex-col overflow-clip rounded-[10px] border",
         className,
       )}
     >

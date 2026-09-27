@@ -30,9 +30,7 @@ class ChatCompletionParams(TypedDict):
     seed: NotRequired[int]
     stop: NotRequired[str | Sequence[str]]
     extra_body: NotRequired[dict[str, Any]]
-    tool_choice: NotRequired[
-        Literal["required", "auto", "none"] | dict[str, Any]
-    ]
+    tool_choice: NotRequired[Literal["required", "auto", "none"] | dict[str, Any]]
     max_tokens: NotRequired[int]
     modalities: NotRequired[list[Literal["text", "audio"]]]
     audio: NotRequired[dict[str, Any]]
@@ -65,11 +63,7 @@ class LLMEvent[T: BaseModel]:
     type: LLMEventType
     content: str = field(default="")
     thinking: str = field(default="")
-    finish_reason: Optional[
-        Literal[
-            "stop", "length", "tool_calls", "content_filter", "function_call"
-        ]
-    ] = None
+    finish_reason: Optional[Literal["stop", "length", "tool_calls", "content_filter", "function_call"]] = None
     exception: BaseException | None = field(default=None)
     input_tokens: int = field(default=0)
     output_tokens: int = field(default=0)
@@ -93,9 +87,7 @@ class LLMEvent[T: BaseModel]:
             "output_tokens": self.output_tokens,
             "total_tokens": self.total_tokens,
             "generation_duration_ms": self.generation_duration_ms,
-            "parsed": self.parsed.model_dump(mode="json")
-            if self.parsed
-            else None,
+            "parsed": self.parsed.model_dump(mode="json") if self.parsed else None,
             "tool_calls": tool_calls if self.tool_calls else None,
         }
 
@@ -191,9 +183,7 @@ class LLMMessage(BaseModel):
             if self.content:
                 data["content"] = self.content
             if self.tool_calls:
-                data["tool_calls"] = [
-                    tc.model_dump(mode="json") for tc in self.tool_calls
-                ]
+                data["tool_calls"] = [tc.model_dump(mode="json") for tc in self.tool_calls]
             return data
 
         if not self.content:

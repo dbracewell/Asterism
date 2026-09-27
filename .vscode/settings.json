@@ -40,5 +40,6 @@
   "pendant.showThinking": true,
   "pendant.thinkingDisplayMode": "collapseWhenDone",
   "pendant.notifications.agentFinished": true,
-  "pendant.diagnostics.enabled": false
+  "pendant.diagnostics.enabled": false,
+  "pendant.chat.promptSuggestionsEnabled": true
 }

@@ -18,6 +18,7 @@ class UserFile(BaseModel):
     content_error: str | None
     created_at: int
     updated_at: int
+    thumbnail: str | None
 
 
 class UserFileList(BaseModel):

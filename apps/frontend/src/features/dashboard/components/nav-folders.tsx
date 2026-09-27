@@ -7,7 +7,7 @@ import { FolderView } from "@/features/dashboard/components/folder-view";
 import { FOLDER_OPEN_COOKIE } from "@/features/dashboard/constants";
 import { client } from "@/lib/api";
 import { folderGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
-import { cn } from "@/lib/utils";
+import { cn, isErrorDetail } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 
@@ -31,9 +31,8 @@ export const NavFolders = ({ defaultIsOpen }: { defaultIsOpen: boolean }) => {
     }
   }, [isAdding]);
 
-  if (error) {
-    console.log("Error fetching folders:", error);
-    throw Error(`Error Code ${JSON.stringify(error)}`);
+  if (isErrorDetail(error)) {
+    throw Error(error.detail);
   }
 
   if (isPending || folderList == null) {

@@ -1,5 +1,6 @@
 import asyncio
 import functools
+from collections.abc import AsyncGenerator
 from typing import Callable, Type
 
 
@@ -15,9 +16,7 @@ def async_retry[T](
 
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            last_exception: Exception = ValueError(
-                "No exception raised during retries, but exceeded max retries."
-            )
+            last_exception: Exception = ValueError("No exception raised during retries, but exceeded max retries.")
 
             for attempt in range(max_retries + 1):
                 try:
@@ -36,21 +35,27 @@ def async_retry[T](
     return decorator
 
 
-def retry_async_gen[T](
+type ExceptionTypes = tuple[type[Exception], ...] | type[Exception]
+
+
+def retry_async_gen[**P, T, X](
     on_exceed_attempts: Callable[[BaseException], T],
-    no_retry: tuple[Type[Exception]] | None = None,
+    no_retry: ExceptionTypes | None = None,
     max_retries=3,
     delay_base=2.0,
-):
+) -> Callable[
+    [Callable[P, AsyncGenerator[X, None]]],
+    Callable[P, AsyncGenerator[X | T, None]],
+]:
     must_raise = no_retry or ()
 
-    def decorator(func):
+    def decorator(
+        func: Callable[P, AsyncGenerator[X, None]],
+    ) -> Callable[P, AsyncGenerator[X | T, None]]:
 
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
-            last_exception: Exception = ValueError(
-                "No exception raised during retries, but exceeded max retries."
-            )
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> AsyncGenerator[X | T, None]:
+            last_exception: Exception = ValueError("No exception raised during retries, but exceeded max retries.")
 
             for attempt in range(max_retries + 1):
                 try:

@@ -10,6 +10,7 @@ import {
   RefreshCwIcon,
   SaveIcon,
   Trash2Icon,
+  XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -18,7 +19,6 @@ import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Field,
   FieldContent,
@@ -30,12 +30,20 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { client } from "@/lib/api";
 import { Llm, ProviderSettings, ProviderSummary } from "@/lib/client";
 import {
@@ -47,6 +55,7 @@ import {
   appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { zProviderType } from "@/lib/client/zod.gen";
+import { usePathname, useRouter } from "next/navigation";
 
 export const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
@@ -54,10 +63,7 @@ export const providerSchema = z
   .object({
     id: z.string(),
     name: z.string().trim().min(1, "Provider name is required."),
-    base_url: z
-      .string()
-      .trim()
-      .url("Base URL must be an absolute HTTP(S) URL."),
+    base_url: z.url("Base URL must be an absolute HTTP(S) URL."),
     api_key: z.string().trim().min(1, "API key is required."),
     provider_type: zProviderType,
   })
@@ -73,12 +79,16 @@ export const providerSchema = z
       });
     }
   });
+
 const formSchema = z.object({
   llm_providers: z.array(providerSchema),
   draft_model_id: z.string().nullable().optional(),
 });
+
 type Values = z.infer<typeof formSchema>;
+
 type FormProvider = Values["llm_providers"][number];
+
 const emptyProvider = (): FormProvider => ({
   id: self.crypto.randomUUID(),
   name: "",
@@ -99,6 +109,8 @@ function ModelRow({
   onSetDraft: (id: string) => void;
 }) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
   const [isActive, setIsActive] = useState(model.is_active);
   const [contextWindow, setContextWindow] = useState(
     model.context_window?.toString() ?? "",
@@ -109,6 +121,9 @@ function ModelRow({
   const update = useMutation({
     ...appProviderModelUpdateMutation({ client }),
     onSuccess: () => {
+      router.replace(
+        `${pathname}?t=admin&setting=providers&provider=${providerId}&cursor=${model.id}`,
+      );
       void queryClient.invalidateQueries({
         queryKey: ["appProviderModelsList"],
       });
@@ -119,6 +134,7 @@ function ModelRow({
     },
     onError: () => toast.error(`Could not save ${model.name}.`),
   });
+
   useEffect(() => {
     setIsActive(model.is_active);
     setContextWindow(model.context_window?.toString() ?? "");
@@ -126,6 +142,7 @@ function ModelRow({
       model.supports_vision == null ? "unknown" : String(model.supports_vision),
     );
   }, [model]);
+
   const save = () => {
     const context = contextWindow.trim() ? Number(contextWindow) : null;
     if (context != null && (!Number.isInteger(context) || context < 1)) {
@@ -156,6 +173,7 @@ function ModelRow({
       },
     });
   };
+
   return (
     <div className="grid gap-3 rounded border p-3 lg:grid-cols-[minmax(14rem,1fr)_10rem_10rem_auto]">
       <div className="flex min-w-0 items-center gap-2">
@@ -238,13 +256,19 @@ function ModelCatalog({
   onSetDraft: (id: string) => void;
   onRefresh: (id: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const { getSearchParam, setSearchParams } = useReadWriteSearchParams();
+  const searchProviderId = getSearchParam("provider");
+  const queryClient = useQueryClient();
+  const [expanded, setExpanded] = useState(provider.id === searchProviderId);
   const [searchInput, setSearchInput] = useState("");
+  const [isUpdatingAll, setIsUpdatingAll] = useState(false);
+  const [models, setModels] = useState<Llm[]>([]);
   const [query, setQuery] = useState("");
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(getSearchParam("cursor"));
   const [previousCursors, setPreviousCursors] = useState<Array<string | null>>(
     [],
   );
+
   const catalog = useQuery({
     ...appProviderModelsListOptions({
       client,
@@ -253,6 +277,20 @@ function ModelCatalog({
     }),
     enabled: expanded,
   });
+
+  const updateModel = useMutation({
+    ...appProviderModelUpdateMutation({ client }),
+    onSuccess: () => {
+      setSearchParams({ provider: provider.id, cursor: cursor ?? undefined });
+    },
+  });
+
+  useEffect(() => {
+    if (catalog.data?.models) {
+      setModels(catalog.data.models);
+    }
+  }, [catalog.data?.models]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setQuery(searchInput.trim());
@@ -261,7 +299,56 @@ function ModelCatalog({
     }, 250);
     return () => window.clearTimeout(timer);
   }, [searchInput]);
-  const models = catalog.data?.models ?? [];
+
+  const setAllModelsActive = async (isActive: boolean) => {
+    const changedModels = models.filter(
+      (model) => model.is_active !== isActive,
+    );
+    if (changedModels.length === 0 || isUpdatingAll) return;
+
+    setIsUpdatingAll(true);
+    setModels((currentModels) =>
+      currentModels.map((model) => ({ ...model, is_active: isActive })),
+    );
+    try {
+      const results = await Promise.allSettled(
+        changedModels.map((model) =>
+          updateModel.mutateAsync({
+            path: { provider_id: provider.id, model_id: model.id },
+            body: {
+              is_active: isActive,
+              context_window: model.context_window,
+              supports_vision: model.supports_vision,
+              context_window_source: model.context_window_source,
+              vision_source: model.vision_source,
+            },
+          }),
+        ),
+      );
+      if (results.some((result) => result.status === "rejected")) {
+        throw new Error("One or more model updates failed.");
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["appProviderModelsList"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: appProviderSettingsGetQueryKey({ client }),
+        }),
+      ]);
+      toast.success(
+        `${isActive ? "Selected" : "Unselected"} ${changedModels.length} models.`,
+      );
+    } catch {
+      await queryClient.invalidateQueries({
+        queryKey: ["appProviderModelsList"],
+      });
+      toast.error("Could not update all displayed models.");
+    } finally {
+      setIsUpdatingAll(false);
+    }
+  };
+
   return (
     <div className="bg-muted/20 mt-3 rounded border p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -270,11 +357,9 @@ function ModelCatalog({
           variant="outline"
           onClick={() => setExpanded(!expanded)}
         >
-          {expanded ? (
-            <ChevronUpIcon />
-          ) : (
-            `Browse ${(provider.model_count ?? 0).toLocaleString()} models`
-          )}
+          {expanded
+            ? `Hide models`
+            : `Browse ${(provider.model_count ?? 0).toLocaleString()} models`}
           {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
         </Button>
         <Button
@@ -289,14 +374,47 @@ function ModelCatalog({
           {(provider.active_model_count ?? 0).toLocaleString()} active
         </span>
       </div>
+      <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => void setAllModelsActive(true)}
+          disabled={models.length === 0 || isUpdatingAll}
+          title="Select all models displayed on this page"
+        >
+          Select All
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => void setAllModelsActive(false)}
+          disabled={models.length === 0 || isUpdatingAll}
+          title="Unselect all models displayed on this page"
+        >
+          Unselect All
+        </Button>
+      </div>
       {expanded && (
         <div className="mt-3 space-y-3">
-          <Input
-            aria-label={`Search ${provider.name} models`}
-            placeholder="Search models"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-          />
+          <InputGroup>
+            <InputGroupInput
+              aria-label={`Search ${provider.name} models`}
+              placeholder="Search models"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+            />
+            {searchInput && (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  aria-label={`Clear ${provider.name} model search`}
+                  size="icon-xs"
+                  onClick={() => setSearchInput("")}
+                >
+                  <XIcon />
+                </InputGroupButton>
+              </InputGroupAddon>
+            )}
+          </InputGroup>
           {catalog.isLoading ? (
             <div className="flex justify-center p-4">
               <Spinner size={28} />
@@ -375,13 +493,16 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
     handleSubmit,
     register,
     reset,
+    setValue,
     trigger,
   } = form;
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "llm_providers",
     keyName: "fieldKey",
   });
+
   const saveProviders = useMutation({
     ...appProviderSettingsUpdateMutation({ client }),
     onSuccess: () =>
@@ -389,6 +510,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
         queryKey: appProviderSettingsGetQueryKey({ client }),
       }),
   });
+
   const refreshCatalog = useMutation({
     ...appProviderModelsDiscoverAndSyncMutation({ client }),
     onSuccess: () => {
@@ -411,6 +533,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
       draft_model_id: appSettings.draft_model_id ?? null,
     });
   }, [appSettings, reset]);
+
   const save = async (values: Values, message?: string) => {
     try {
       await saveProviders.mutateAsync({ body: values });
@@ -420,6 +543,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
       throw new Error("Provider settings save failed");
     }
   };
+
   const refresh = async (providerId: string) => {
     if (!(await trigger())) return;
     try {
@@ -438,6 +562,13 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
     } catch {
       /* save reports errors */
     }
+  };
+  const deleteProvider = (index: number) => {
+    const providerId = getValues(`llm_providers.${index}.id`);
+    if (appSettings.draft_model?.provider_id === providerId) {
+      setValue("draft_model_id", null, { shouldDirty: true });
+    }
+    remove(index);
   };
   return (
     <form
@@ -488,7 +619,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => remove(index)}
+                  onClick={() => deleteProvider(index)}
                   aria-label={`Delete provider ${index + 1}`}
                 >
                   <Trash2Icon />
@@ -608,10 +739,16 @@ export function ProvidersTab({
     ...appProviderSettingsGetOptions({ client }),
     enabled: appSettings === undefined,
   });
+
   const settings = appSettings ?? providerSettings.data;
-  if (appSettings === undefined && providerSettings.isLoading)
+
+  if (appSettings === undefined && providerSettings.isLoading) {
     return <Spinner />;
-  if (providerSettings.isError || settings == null)
+  }
+
+  if (providerSettings.isError || settings == null) {
     return <p role="alert">Provider settings could not be loaded.</p>;
+  }
+
   return <ProvidersForm appSettings={settings} />;
 }

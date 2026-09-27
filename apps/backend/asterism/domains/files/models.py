@@ -28,9 +28,7 @@ def _enum_values(enum_type: type[enum.Enum]) -> list[str]:
 class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "user_files"
 
-    user_id: Mapped[str] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     original_name: Mapped[str] = mapped_column(String(255), nullable=False)
     size: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -53,6 +51,7 @@ class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     )
     content_error: Mapped[str | None] = mapped_column(String(512), nullable=True)
     content_cache: Mapped[str | None] = mapped_column(Text, nullable=True)
+    thumbnail: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("user_id", "filename", name="uq_user_files_user_filename"),

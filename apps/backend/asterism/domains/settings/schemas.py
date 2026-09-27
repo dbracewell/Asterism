@@ -8,6 +8,7 @@ from pydantic import (
     Field,
     JsonValue,
     PositiveInt,
+    SecretStr,
     model_validator,
 )
 
@@ -60,7 +61,7 @@ class ProviderInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     name: str
     base_url: str
-    api_key: str
+    api_key: SecretStr
     id: uuid.UUID
     provider_type: ProviderType = ProviderType.GENERIC_OPENAI
 

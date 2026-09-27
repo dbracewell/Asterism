@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetErrors, AgentKnowledgeBaseAssignmentsGetResponses, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceErrors, AgentKnowledgeBaseAssignmentsReplaceResponses, AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppCaptioningGetData, AppCaptioningGetErrors, AppCaptioningGetResponses, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetErrors, AppCaptioningProviderModelsGetResponses, AppCaptioningUpdateData, AppCaptioningUpdateErrors, AppCaptioningUpdateResponses, AppCaptionModelCancelData, AppCaptionModelCancelErrors, AppCaptionModelCancelResponses, AppCaptionModelDownloadData, AppCaptionModelDownloadErrors, AppCaptionModelDownloadResponses, AppCaptionModelStatusData, AppCaptionModelStatusErrors, AppCaptionModelStatusResponses, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncErrors, AppProviderModelsDiscoverAndSyncResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppProviderModelsListData, AppProviderModelsListErrors, AppProviderModelsListResponses, AppProviderModelUpdateData, AppProviderModelUpdateErrors, AppProviderModelUpdateResponses, AppProviderSettingsGetData, AppProviderSettingsGetErrors, AppProviderSettingsGetResponses, AppProviderSettingsUpdateData, AppProviderSettingsUpdateErrors, AppProviderSettingsUpdateResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, AppToolSettingsGetData, AppToolSettingsGetErrors, AppToolSettingsGetResponses, AppToolSettingsUpdateData, AppToolSettingsUpdateErrors, AppToolSettingsUpdateResponses, ChatSearchData, ChatSearchErrors, ChatSearchResponses, ChatSessionBulkDeleteData, ChatSessionBulkDeleteErrors, ChatSessionBulkDeleteResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FileDeleteData, FileDeleteErrors, FileDeleteResponses, FileGetManyData, FileGetManyErrors, FileGetManyResponses, FileUploadData, FileUploadErrors, FileUploadResponses, FolderChatGetManyData, FolderChatGetManyErrors, FolderChatGetManyResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, KnowledgeBaseCreateData, KnowledgeBaseCreateErrors, KnowledgeBaseCreateResponses, KnowledgeBaseDeleteData, KnowledgeBaseDeleteErrors, KnowledgeBaseDeleteResponses, KnowledgeBaseGetManyData, KnowledgeBaseGetManyErrors, KnowledgeBaseGetManyResponses, KnowledgeBaseGetOneData, KnowledgeBaseGetOneErrors, KnowledgeBaseGetOneResponses, KnowledgeBaseUpdateData, KnowledgeBaseUpdateErrors, KnowledgeBaseUpdateResponses, KnowledgeDocumentCancelCaptionData, KnowledgeDocumentCancelCaptionErrors, KnowledgeDocumentCancelCaptionResponses, KnowledgeDocumentCancelIngestionData, KnowledgeDocumentCancelIngestionErrors, KnowledgeDocumentCancelIngestionResponses, KnowledgeDocumentCreateData, KnowledgeDocumentCreateErrors, KnowledgeDocumentCreateResponses, KnowledgeDocumentCreateRevisionData, KnowledgeDocumentCreateRevisionErrors, KnowledgeDocumentCreateRevisionResponses, KnowledgeDocumentDeleteData, KnowledgeDocumentDeleteErrors, KnowledgeDocumentDeleteResponses, KnowledgeDocumentGenerateCaptionData, KnowledgeDocumentGenerateCaptionErrors, KnowledgeDocumentGenerateCaptionResponses, KnowledgeDocumentGetManyData, KnowledgeDocumentGetManyErrors, KnowledgeDocumentGetManyResponses, KnowledgeDocumentGetOneData, KnowledgeDocumentGetOneErrors, KnowledgeDocumentGetOneResponses, KnowledgeDocumentIngestData, KnowledgeDocumentIngestErrors, KnowledgeDocumentIngestResponses, KnowledgeDocumentReindexData, KnowledgeDocumentReindexErrors, KnowledgeDocumentReindexResponses, KnowledgeDocumentUpdateCaptionData, KnowledgeDocumentUpdateCaptionErrors, KnowledgeDocumentUpdateCaptionResponses, KnowledgeDocumentUpdateMetadataData, KnowledgeDocumentUpdateMetadataErrors, KnowledgeDocumentUpdateMetadataResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetErrors, AgentKnowledgeBaseAssignmentsGetResponses, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceErrors, AgentKnowledgeBaseAssignmentsReplaceResponses, AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppCaptioningGetData, AppCaptioningGetErrors, AppCaptioningGetResponses, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetErrors, AppCaptioningProviderModelsGetResponses, AppCaptioningUpdateData, AppCaptioningUpdateErrors, AppCaptioningUpdateResponses, AppCaptionModelCancelData, AppCaptionModelCancelErrors, AppCaptionModelCancelResponses, AppCaptionModelDownloadData, AppCaptionModelDownloadErrors, AppCaptionModelDownloadResponses, AppCaptionModelStatusData, AppCaptionModelStatusErrors, AppCaptionModelStatusResponses, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncErrors, AppProviderModelsDiscoverAndSyncResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppProviderModelsListData, AppProviderModelsListErrors, AppProviderModelsListResponses, AppProviderModelUpdateData, AppProviderModelUpdateErrors, AppProviderModelUpdateResponses, AppProviderSettingsGetData, AppProviderSettingsGetErrors, AppProviderSettingsGetResponses, AppProviderSettingsUpdateData, AppProviderSettingsUpdateErrors, AppProviderSettingsUpdateResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, AppToolSettingsGetData, AppToolSettingsGetErrors, AppToolSettingsGetResponses, AppToolSettingsUpdateData, AppToolSettingsUpdateErrors, AppToolSettingsUpdateResponses, ChatSearchData, ChatSearchErrors, ChatSearchResponses, ChatSessionBulkDeleteData, ChatSessionBulkDeleteErrors, ChatSessionBulkDeleteResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FileDeleteData, FileDeleteErrors, FileDeleteResponses, FileGetFileInfoData, FileGetFileInfoErrors, FileGetFileInfoResponses, FileGetManyData, FileGetManyErrors, FileGetManyResponses, FilesDeleteManyData, FilesDeleteManyErrors, FilesDeleteManyResponses, FileUploadData, FileUploadErrors, FileUploadResponses, FolderChatGetManyData, FolderChatGetManyErrors, FolderChatGetManyResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, KnowledgeBaseCreateData, KnowledgeBaseCreateErrors, KnowledgeBaseCreateResponses, KnowledgeBaseDeleteData, KnowledgeBaseDeleteErrors, KnowledgeBaseDeleteResponses, KnowledgeBaseGetManyData, KnowledgeBaseGetManyErrors, KnowledgeBaseGetManyResponses, KnowledgeBaseGetOneData, KnowledgeBaseGetOneErrors, KnowledgeBaseGetOneResponses, KnowledgeBaseUpdateData, KnowledgeBaseUpdateErrors, KnowledgeBaseUpdateResponses, KnowledgeDocumentCancelCaptionData, KnowledgeDocumentCancelCaptionErrors, KnowledgeDocumentCancelCaptionResponses, KnowledgeDocumentCancelIngestionData, KnowledgeDocumentCancelIngestionErrors, KnowledgeDocumentCancelIngestionResponses, KnowledgeDocumentCreateData, KnowledgeDocumentCreateErrors, KnowledgeDocumentCreateResponses, KnowledgeDocumentCreateRevisionData, KnowledgeDocumentCreateRevisionErrors, KnowledgeDocumentCreateRevisionResponses, KnowledgeDocumentDeleteData, KnowledgeDocumentDeleteErrors, KnowledgeDocumentDeleteResponses, KnowledgeDocumentGenerateCaptionData, KnowledgeDocumentGenerateCaptionErrors, KnowledgeDocumentGenerateCaptionResponses, KnowledgeDocumentGetManyData, KnowledgeDocumentGetManyErrors, KnowledgeDocumentGetManyResponses, KnowledgeDocumentGetOneData, KnowledgeDocumentGetOneErrors, KnowledgeDocumentGetOneResponses, KnowledgeDocumentIngestData, KnowledgeDocumentIngestErrors, KnowledgeDocumentIngestResponses, KnowledgeDocumentReindexData, KnowledgeDocumentReindexErrors, KnowledgeDocumentReindexResponses, KnowledgeDocumentUpdateCaptionData, KnowledgeDocumentUpdateCaptionErrors, KnowledgeDocumentUpdateCaptionResponses, KnowledgeDocumentUpdateMetadataData, KnowledgeDocumentUpdateMetadataErrors, KnowledgeDocumentUpdateMetadataResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -20,7 +20,7 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 
 class HeyApiClient {
     protected client: Client;
-
+    
     constructor(args?: {
         client?: Client;
     }) {
@@ -30,9 +30,9 @@ class HeyApiClient {
 
 class HeyApiRegistry<T> {
     private readonly defaultKey = 'default';
-
+    
     private readonly instances: Map<string, T> = new Map();
-
+    
     get(key?: string): T {
         const instance = this.instances.get(key ?? this.defaultKey);
         if (!instance) {
@@ -40,7 +40,7 @@ class HeyApiRegistry<T> {
         }
         return instance;
     }
-
+    
     set(value: T, key?: string): void {
         this.instances.set(key ?? this.defaultKey, value);
     }
@@ -48,7 +48,7 @@ class HeyApiRegistry<T> {
 
 export class ApiClient extends HeyApiClient {
     public static readonly __registry: HeyApiRegistry<ApiClient> = new HeyApiRegistry<ApiClient>();
-
+    
     constructor(args?: {
         client?: Client;
         key?: string;
@@ -56,7 +56,22 @@ export class ApiClient extends HeyApiClient {
         super(args);
         ApiClient.__registry.set(this, args?.key);
     }
-
+    
+    /**
+     * Delete Man Files
+     */
+    public filesDeleteMany<ThrowOnError extends boolean = false>(options: Options<FilesDeleteManyData, ThrowOnError>): RequestResult<FilesDeleteManyResponses, FilesDeleteManyErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<FilesDeleteManyResponses, FilesDeleteManyErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/files/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
     /**
      * List Files
      */
@@ -67,7 +82,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Upload Files
      */
@@ -83,7 +98,18 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
+    /**
+     * Get File Info
+     */
+    public fileGetFileInfo<ThrowOnError extends boolean = false>(options: Options<FileGetFileInfoData, ThrowOnError>): RequestResult<FileGetFileInfoResponses, FileGetFileInfoErrors, ThrowOnError> {
+        return (options.client ?? this.client).get<FileGetFileInfoResponses, FileGetFileInfoErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/files/info/{filename}',
+            ...options
+        });
+    }
+    
     /**
      * Delete File
      */
@@ -94,7 +120,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get File
      */
@@ -105,7 +131,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * List Sessions
      */
@@ -116,7 +142,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * New Session
      */
@@ -131,7 +157,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Bulk Delete Sessions
      */
@@ -146,7 +172,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Delete Session
      */
@@ -157,7 +183,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get Session
      */
@@ -168,7 +194,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update Session
      */
@@ -183,7 +209,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Search Chats And Folders
      */
@@ -194,7 +220,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update Message
      */
@@ -209,7 +235,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * List Folders
      */
@@ -220,7 +246,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Create Folder
      */
@@ -235,7 +261,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * List Folder Chats
      */
@@ -246,7 +272,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Delete Folder
      */
@@ -257,7 +283,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get Folder
      */
@@ -268,7 +294,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * List Knowledge Bases
      */
@@ -279,7 +305,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Create Knowledge Base
      */
@@ -294,7 +320,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * List Knowledge Documents
      */
@@ -305,7 +331,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Add Knowledge Document
      */
@@ -320,7 +346,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Create Knowledge Document Revision
      */
@@ -335,7 +361,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Delete Knowledge Document
      */
@@ -346,7 +372,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get Knowledge Document
      */
@@ -357,7 +383,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update Knowledge Document Metadata
      */
@@ -372,7 +398,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Generate Knowledge Document Caption
      */
@@ -383,7 +409,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Cancel Knowledge Document Caption
      */
@@ -394,7 +420,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update Knowledge Document Caption
      */
@@ -409,7 +435,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Ingest Knowledge Document
      */
@@ -420,7 +446,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Reindex Knowledge Document
      */
@@ -431,7 +457,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Cancel Knowledge Document Ingestion
      */
@@ -442,7 +468,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Delete Knowledge Base
      */
@@ -453,7 +479,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get Knowledge Base
      */
@@ -464,7 +490,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update Knowledge Base
      */
@@ -479,7 +505,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Get all user settings
      */
@@ -490,7 +516,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Bulk update multiple user settings
      */
@@ -505,7 +531,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Delete a single user setting by key
      */
@@ -516,7 +542,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update a single user setting by key
      */
@@ -531,7 +557,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Discover provider models and capabilities
      */
@@ -546,7 +572,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Get provider settings
      */
@@ -557,7 +583,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Replace provider settings
      */
@@ -572,7 +598,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Search a provider's models
      */
@@ -583,7 +609,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update one provider model
      */
@@ -598,7 +624,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Discover and synchronize a provider's model catalog
      */
@@ -609,7 +635,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get active discovered vision models for captioning
      */
@@ -620,7 +646,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get tool settings
      */
@@ -631,7 +657,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Replace tool settings
      */
@@ -646,7 +672,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Get all application settings
      *
@@ -659,7 +685,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Bulk update multiple application settings
      */
@@ -674,33 +700,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
-    /**
-     * Delete a single application setting by key
-     */
-    public appSettingDelete<ThrowOnError extends boolean = false>(options: Options<AppSettingDeleteData, ThrowOnError>): RequestResult<AppSettingDeleteResponses, AppSettingDeleteErrors, ThrowOnError> {
-        return (options.client ?? this.client).delete<AppSettingDeleteResponses, AppSettingDeleteErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/settings/app/{key}',
-            ...options
-        });
-    }
-
-    /**
-     * Update a single application setting by key
-     */
-    public appSettingUpdate<ThrowOnError extends boolean = false>(options: Options<AppSettingUpdateData, ThrowOnError>): RequestResult<AppSettingUpdateResponses, AppSettingUpdateErrors, ThrowOnError> {
-        return (options.client ?? this.client).put<AppSettingUpdateResponses, AppSettingUpdateErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/settings/app/{key}',
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-    }
-
+    
     /**
      * Get image captioning configuration
      */
@@ -711,7 +711,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Set image captioning mode and selected provider model
      */
@@ -726,7 +726,33 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
+    /**
+     * Delete a single application setting by key
+     */
+    public appSettingDelete<ThrowOnError extends boolean = false>(options: Options<AppSettingDeleteData, ThrowOnError>): RequestResult<AppSettingDeleteResponses, AppSettingDeleteErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<AppSettingDeleteResponses, AppSettingDeleteErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/app/{key}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update a single application setting by key
+     */
+    public appSettingUpdate<ThrowOnError extends boolean = false>(options: Options<AppSettingUpdateData, ThrowOnError>): RequestResult<AppSettingUpdateResponses, AppSettingUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).put<AppSettingUpdateResponses, AppSettingUpdateErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/app/{key}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
     /**
      * Get local caption model download/readiness status
      */
@@ -737,7 +763,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Start downloading the local caption model
      */
@@ -748,7 +774,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Cancel an active local caption model download
      */
@@ -759,7 +785,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Create a new user with a given user ID
      */
@@ -774,7 +800,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Delete a user
      */
@@ -785,7 +811,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get all active tools
      */
@@ -796,7 +822,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get all  tools
      */
@@ -807,7 +833,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Get all components of a given type
      */
@@ -818,7 +844,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Gets all agents defined by a user
      */
@@ -829,7 +855,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Creates or updates an agent
      */
@@ -844,7 +870,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
+    
     /**
      * Get Knowledge Base Assignments
      */
@@ -855,7 +881,7 @@ export class ApiClient extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Replace Knowledge Base Assignments
      */
@@ -870,18 +896,7 @@ export class ApiClient extends HeyApiClient {
             }
         });
     }
-
-    /**
-     * Delete an agent
-     */
-    public agentsDeleteAgent<ThrowOnError extends boolean = false>(options: Options<AgentsDeleteAgentData, ThrowOnError>): RequestResult<AgentsDeleteAgentResponses, AgentsDeleteAgentErrors, ThrowOnError> {
-        return (options.client ?? this.client).delete<AgentsDeleteAgentResponses, AgentsDeleteAgentErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/agents/{agent_id}',
-            ...options
-        });
-    }
-
+    
     /**
      * Get sub-agent execution traces for a parent message
      */
@@ -889,6 +904,17 @@ export class ApiClient extends HeyApiClient {
         return (options.client ?? this.client).get<AgentsGetSubAgentTracesResponses, AgentsGetSubAgentTracesErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/agents/traces/{parent_message_id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Delete an agent
+     */
+    public agentsDeleteAgent<ThrowOnError extends boolean = false>(options: Options<AgentsDeleteAgentData, ThrowOnError>): RequestResult<AgentsDeleteAgentResponses, AgentsDeleteAgentErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<AgentsDeleteAgentResponses, AgentsDeleteAgentErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/agents/{agent_id}',
             ...options
         });
     }

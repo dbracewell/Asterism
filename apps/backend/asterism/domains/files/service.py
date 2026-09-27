@@ -1,17 +1,22 @@
+import base64
 import hashlib
+import io
 import mimetypes
 import re
 from pathlib import Path
+from typing import Literal
 
 import filetype
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from PIL.TiffImagePlugin import ImageOps
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.file_utils import get_file_mime_type
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
+from asterism.db.database import get_async_db_session
 
 from .models import FileContentStatus, FileKind, UserFileModel
 from .processor import MarkItDownFileProcessor
@@ -109,6 +114,24 @@ def get_user_file(user_id: str, filename: str) -> FileResponse:
     )
 
 
+async def get_user_file_info(
+    user_id: str,
+    filename: str,
+    session: AsyncSession | None = None,
+) -> UserFile:
+    filename = _legacy_filename(filename)
+    async with get_async_db_session(session) as session:
+        statement = select(UserFileModel).where(
+            UserFileModel.user_id == user_id,
+            UserFileModel.filename == filename,
+        )
+        file = await session.scalar(statement)
+        if file is None:
+            raise NotFoundException("Access to file is denied")
+
+        return UserFile.model_validate(file)
+
+
 def sanitize_filename(name: str) -> str:
     if not name or any(ord(character) < 32 for character in name):
         raise BadDataException("Filename is malformed")
@@ -188,6 +211,27 @@ async def upload_files(*, user_id: str, uploads: list[UploadFile], session: Asyn
 
             filename = await _deduplicated_filename(session, store, user_id, original_name)
             mime_type = detect_mime_type(filename, content)
+
+            thumbnail: str | None = None
+            if classify_file(filename, mime_type) == FileKind.IMAGE:
+                from PIL import Image
+
+                with Image.open(io.BytesIO(content)) as img:
+                    img = ImageOps.exif_transpose(img)
+                    img = img.convert("RGB")
+                    orig_w, orig_h = img.size
+                    target_w = 128
+                    target_h = 128
+                    if orig_w > orig_h:
+                        target_h = int(orig_h * (target_w / orig_w))
+                    else:
+                        target_w = int(orig_w * (target_h / orig_h))
+                    thumbnail_img = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
+                    buffered = io.BytesIO()
+                    thumbnail_img.save(buffered, format="jpeg")
+                    encoded_img = base64.b64encode(buffered.getvalue()).decode("utf-8")
+                    thumbnail = f"data:image/jpeg;base64,{encoded_img}"
+
             model = UserFileModel(
                 user_id=user_id,
                 filename=filename,
@@ -197,6 +241,7 @@ async def upload_files(*, user_id: str, uploads: list[UploadFile], session: Asyn
                 kind=classify_file(filename, mime_type),
                 sha256=sha256,
                 content_status=FileContentStatus.PENDING,
+                thumbnail=thumbnail,
             )
             store.save(user_id, filename, content)
             saved.append(filename)
@@ -215,8 +260,28 @@ async def ensure_file_processed(*, file: UserFileModel, session: AsyncSession) -
     return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)  # pyright: ignore[reportArgumentType]
 
 
-async def list_user_files(*, user_id: str, session: AsyncSession, page: int = 1, page_size: int = 50) -> UserFileList:
-    statement = select(UserFileModel).where(UserFileModel.user_id == user_id)
+async def list_user_files(
+    *,
+    user_id: str,
+    session: AsyncSession,
+    page: int = 1,
+    page_size: int = 50,
+    sort_by: Literal["name", "kind", "date", "size"] = "name",
+    query: str | None = None,
+) -> UserFileList:
+    order_by_column = UserFileModel.kind
+    if sort_by == "name":
+        order_by_column = UserFileModel.filename
+    if sort_by == "date":
+        order_by_column = UserFileModel.created_at
+    if sort_by == "size":
+        order_by_column = UserFileModel.size.desc()
+
+    statement = (
+        select(UserFileModel)
+        .where(UserFileModel.user_id == user_id, UserFileModel.filename.ilike(f"%{query}%") if query else True)  # pyright: ignore[reportArgumentType]
+        .order_by(order_by_column)
+    )
     total = await session.scalar(select(func.count()).select_from(statement.subquery()))
     result = await session.scalars(
         statement.order_by(UserFileModel.created_at.desc(), UserFileModel.filename)
@@ -242,3 +307,39 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     await session.commit()
     get_file_store().delete(user_id, filename)
     return response
+
+
+async def delete_user_files(
+    *,
+    user_id: str,
+    filenames: list[str],
+    session: AsyncSession,
+) -> UserFileList:
+    deleted_files: list[UserFile] = []
+    store = get_file_store()
+
+    try:
+        async with get_async_db_session(session) as session:
+            for filename in filenames:
+                file = await session.scalar(
+                    select(UserFileModel).where(
+                        UserFileModel.user_id == user_id,
+                        UserFileModel.filename == filename,
+                    )
+                )
+                if file is not None:
+                    deleted_files.append(UserFile.model_validate(file))
+                    await session.delete(file)
+            await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+
+    for file in deleted_files:
+        try:
+            store.delete(user_id, file.filename)
+        except Exception:
+            # If the file is missing from the store, we still want to return a successful response.
+            pass
+
+    return UserFileList(files=deleted_files)

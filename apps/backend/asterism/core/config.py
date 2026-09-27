@@ -39,6 +39,7 @@ def default_allowed_tools() -> list[str]:
         "get_current_timestamp",
         "get_timestamp_at_timezone",
         "sub_agent",
+        "search_knowledge",
     ]
 
 

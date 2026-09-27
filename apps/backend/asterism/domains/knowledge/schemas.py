@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -94,7 +95,7 @@ class KnowledgeCaptionConfiguration(BaseModel):
 
 
 class KnowledgeCaptionConfigurationUpdate(BaseModel):
-    mode: str = Field(pattern="^(disabled|provider|local)$")
+    mode: Literal["disabled", "provider", "local"]
     provider_model_id: uuid.UUID | None = None
 
 

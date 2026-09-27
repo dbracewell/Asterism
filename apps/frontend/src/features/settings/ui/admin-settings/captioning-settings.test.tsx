@@ -14,6 +14,13 @@ const mocks = vi.hoisted(() => ({
   cancel: vi.fn(),
 }));
 
+Object.defineProperties(HTMLElement.prototype, {
+  hasPointerCapture: { value: () => false },
+  releasePointerCapture: { value: () => undefined },
+  scrollIntoView: { value: () => undefined },
+  setPointerCapture: { value: () => undefined },
+});
+
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appCaptioningProviderModelsGetOptions: () => ({
     queryKey: ["appCaptioningProviderModelsGet"],
@@ -33,10 +40,12 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["appCaptioningGet"],
     queryFn: mocks.getConfiguration,
   }),
+  appCaptioningGetQueryKey: () => ["appCaptioningGet"],
   appCaptionModelStatusOptions: () => ({
     queryKey: ["appCaptionModelStatus"],
     queryFn: mocks.getModelStatus,
   }),
+  appCaptionModelStatusQueryKey: () => ["appCaptionModelStatus"],
   appCaptioningUpdateMutation: () => ({ mutationFn: mocks.update }),
   appCaptionModelDownloadMutation: () => ({ mutationFn: mocks.download }),
   appCaptionModelCancelMutation: () => ({ mutationFn: mocks.cancel }),
@@ -114,11 +123,12 @@ describe("captioning settings", () => {
 
     await user.click(screen.getByLabelText("Configured vision provider"));
     const select = screen.getByLabelText("Vision model");
-    expect(
-      screen.getByRole("option", { name: "Vision provider — vision-model" }),
-    ).toBeVisible();
-
-    await user.selectOptions(select, "10000000-0000-4000-8000-000000000001");
+    await user.click(select);
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Vision provider — vision-model",
+      }),
+    );
     await waitFor(() =>
       expect(mocks.update.mock.calls[0]?.[0]).toEqual({
         body: {

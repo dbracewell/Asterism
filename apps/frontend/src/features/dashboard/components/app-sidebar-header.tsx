@@ -1,9 +1,12 @@
 "use client";
 
 import { FullLogo } from "@/components/full-logo";
+import Constellation from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
 import { SidebarHeader, useSidebar } from "@/components/ui/sidebar";
-import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { PanelLeftCloseIcon } from "lucide-react";
 
 export const AppSidebarHeader = () => {
   const { state, toggleSidebar, isMobile } = useSidebar();
@@ -13,15 +16,29 @@ export const AppSidebarHeader = () => {
       className="overflow-clip"
     >
       {(state === "expanded" || isMobile) && <FullLogo />}
-      <Button
-        variant="ghost"
-        title="Toggle sidebar"
-        size="icon-lg"
-        className="text-muted-foreground size-7! [&_>svg]:size-5!"
-        onClick={() => toggleSidebar()}
+      <Hint
+        asChild
+        hidden={state === "expanded"}
+        hint={"Expand sidebar"}
+        align="end"
+        side="right"
       >
-        {state === "expanded" ? <PanelLeftCloseIcon /> : <PanelLeftOpenIcon />}
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className={cn(
+            "text-muted-foreground size-6! [&_>svg]:size-5!",
+            state !== "expanded" && "size-8! [&_>svg]:size-7!",
+          )}
+          onClick={() => toggleSidebar()}
+        >
+          {state === "expanded" ? (
+            <PanelLeftCloseIcon />
+          ) : (
+            <Constellation size={64} />
+          )}
+        </Button>
+      </Hint>
     </SidebarHeader>
   );
 };

@@ -7,11 +7,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { api } from "@/lib/api";
+import { client } from "@/lib/api";
+import { fileGetFileInfoOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 import { DownloadIcon, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export const APIImage = ({
   filename,
@@ -28,41 +29,9 @@ export const APIImage = ({
   zoomable?: boolean;
   className?: string;
 }) => {
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [error, setError] = useState(false);
-
-  const handleDownload = () => {
-    if (!objectUrl) return;
-    const link = document.createElement("a");
-    link.href = objectUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  useEffect(() => {
-    let active = true;
-
-    let url: string | undefined;
-    const fetchImage = async () => {
-      try {
-        const { data } = await api.getFile({
-          path: { filename },
-        });
-        if (!data) throw new Error("File is unavailable");
-        url = URL.createObjectURL(data);
-        if (active) setObjectUrl(url);
-      } catch {
-        if (active) setError(true);
-      }
-    };
-    void fetchImage();
-    return () => {
-      active = false;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [filename]);
+  const { data, isLoading, error } = useQuery(
+    fileGetFileInfoOptions({ client, path: { filename } }),
+  );
 
   if (error) {
     return (
@@ -72,7 +41,7 @@ export const APIImage = ({
     );
   }
 
-  if (!objectUrl) {
+  if (isLoading || !data) {
     return (
       <div
         className="flex animate-pulse items-center justify-center rounded-lg bg-gray-100"
@@ -86,13 +55,21 @@ export const APIImage = ({
     );
   }
 
+  if (!data.thumbnail) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500">
+        No thumbnail available for this image
+      </div>
+    );
+  }
+
   if (zoomable) {
     return (
       <Dialog>
         <DialogTrigger asChild>
           <button className="border-border focus-visible:ring-ring overflow-hidden rounded-md border text-white focus-visible:ring-2 focus-visible:outline-none">
             <img
-              src={objectUrl}
+              src={data.thumbnail}
               alt={alt}
               style={{
                 width,
@@ -107,7 +84,7 @@ export const APIImage = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleDownload}
+            // onClick={handleDownload}
             title="Download Image"
             className="absolute top-2 right-20"
           >
@@ -115,7 +92,7 @@ export const APIImage = ({
           </Button>
 
           <img
-            src={objectUrl}
+            src={data.thumbnail}
             alt={alt}
             className="max-h-[95vh] max-w-full rounded-md object-contain"
           />
@@ -126,7 +103,7 @@ export const APIImage = ({
 
   return (
     <img
-      src={objectUrl}
+      src={data.thumbnail}
       alt={alt}
       style={{
         width,
