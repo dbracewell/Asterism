@@ -30,14 +30,14 @@ class Model:
 
 def test_captioning_is_disabled_by_default_and_provider_needs_active_vision_model():
     CaptioningConfiguration().validate([])
-    vision = Model(active=True, vision=True)
-    CaptioningConfiguration(mode=CaptionMode.PROVIDER, provider_model_id=vision.id).validate([vision])
+    for source in (ModelCapabilitySource.PROVIDER, ModelCapabilitySource.MANUAL):
+        vision = Model(active=True, vision=True, source=source)
+        CaptioningConfiguration(mode=CaptionMode.PROVIDER, provider_model_id=vision.id).validate([vision])
 
     for model in (
         Model(active=False, vision=True),
         Model(active=True, vision=False),
         Model(active=True, vision=None),
-        Model(active=True, vision=True, source=ModelCapabilitySource.MANUAL),
     ):
         with pytest.raises(CaptioningError, match="vision-capable") as error:
             CaptioningConfiguration(mode=CaptionMode.PROVIDER, provider_model_id=model.id).validate([model])

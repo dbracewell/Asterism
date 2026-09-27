@@ -58,6 +58,7 @@ async def test_generic_discovery_manual_fallback_save_reload_and_refresh(tmp_pat
     discovered = await discovery.discover(request)
     model = discovered.models[0].model_copy(
         update={
+            "is_active": True,
             "context_window": 32_768,
             "supports_vision": False,
             "context_window_source": ModelCapabilitySource.MANUAL,

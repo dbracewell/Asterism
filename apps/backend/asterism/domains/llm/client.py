@@ -275,11 +275,11 @@ class LLMClient(LLMClientProtocol):
     def __init__(
         self,
         model_name: str,
-        api_key: SecretStr,
+        api_key: SecretStr | str,
         base_url: str,
     ) -> None:
         self.max_retries: int = 3
-        self.api_key: SecretStr = api_key
+        self.api_key = api_key if isinstance(api_key, SecretStr) else SecretStr(api_key)
         self.base_url: str = base_url
         self.model_name: str = model_name
         self._client = AsyncOpenAI(
@@ -301,6 +301,9 @@ class LLMClient(LLMClientProtocol):
             "tools": tool_registry.schemas(tools),
             **kwargs,
         }
+        # Kept out of ChatCompletionParams, but discard it defensively while
+        # callers migrate from the former provider-specific option.
+        completion_args.pop("thinking_budget_tokens", None)
 
         if "seed" not in completion_args:
             completion_args["seed"] = int(time.time())
