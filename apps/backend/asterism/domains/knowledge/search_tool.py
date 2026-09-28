@@ -15,6 +15,7 @@ from .models import (
     FileKnowledgeArtifactModel,
     FileKnowledgeArtifactStatus,
     KnowledgeBaseFileModel,
+    KnowledgeBaseModel,
 )
 from .runtime import embedding_provider, vector_store
 
@@ -55,7 +56,12 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
             return {"results": [], "message": "No assigned knowledge bases are available."}
         memberships = list(
             await db.scalars(
-                select(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.knowledge_base_id.in_(base_ids))
+                select(KnowledgeBaseFileModel)
+                .join(KnowledgeBaseModel, KnowledgeBaseModel.id == KnowledgeBaseFileModel.knowledge_base_id)
+                .where(
+                    KnowledgeBaseFileModel.knowledge_base_id.in_(base_ids),
+                    KnowledgeBaseModel.user_id == ctx.user.id,
+                )
             )
         )
         # Resolve authorization before querying the vector store.  A file that
@@ -64,6 +70,8 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
         base_by_file = {str(membership.file_id): str(membership.knowledge_base_id) for membership in memberships}
         if not base_by_file:
             return {"results": [], "message": "Assigned knowledge bases have no files."}
+        if len(base_by_file) > config.max_knowledge_allowed_files:
+            return {"results": [], "message": "Assigned knowledge bases exceed the searchable file limit."}
         query_vector = (await embedding_provider.embed_text([ctx.args.query]))[0]
         matches = await vector_store.search(
             query_vector,

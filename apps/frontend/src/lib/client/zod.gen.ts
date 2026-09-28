@@ -154,6 +154,13 @@ export const zErrorDetail = z.object({
 });
 
 /**
+ * FileCaptionEdit
+ */
+export const zFileCaptionEdit = z.object({
+    text: z.string().min(1).max(10000)
+});
+
+/**
  * FileContentStatus
  */
 export const zFileContentStatus = z.enum([
@@ -235,7 +242,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('b8c49f03-5e09-4fff-a4d2-6d994603a123'),
+    id: z.uuid().optional().default('94ccd61a-7864-4a12-bbe7-f3a3973418d3'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -279,6 +286,13 @@ export const zKnowledgeBaseFileList = z.object({
 });
 
 /**
+ * KnowledgeBaseFileReorder
+ */
+export const zKnowledgeBaseFileReorder = z.object({
+    membership_ids: z.array(z.uuid()).min(1).max(10000)
+});
+
+/**
  * KnowledgeBaseList
  */
 export const zKnowledgeBaseList = z.object({
@@ -315,6 +329,86 @@ export const zKnowledgeCaptionConfigurationUpdate = z.object({
         'local'
     ]),
     provider_model_id: z.uuid().nullish()
+});
+
+/**
+ * KnowledgeCaptionMetadata
+ */
+export const zKnowledgeCaptionMetadata = z.object({
+    status: z.string().nullish(),
+    source: z.string().nullish(),
+    model: z.string().nullish(),
+    text: z.string().max(10000).nullish(),
+    error_code: z.string().nullish(),
+    error_reason: z.string().nullish(),
+    generated_at: z.int().nullish(),
+    accepted_at: z.int().nullish()
+});
+
+/**
+ * FileKnowledgeArtifact
+ *
+ * A versioned, file-owned generation of extracted knowledge.
+ */
+export const zFileKnowledgeArtifact = z.object({
+    id: z.uuid(),
+    file_id: z.uuid(),
+    generation: z.int().gte(1),
+    processing_profile_generation: z.int().gte(1),
+    processing_profile_identity: z.string().length(64),
+    contract_version: z.int().gte(1),
+    status: z.enum([
+        'pending',
+        'processing',
+        'ready',
+        'failed',
+        'canceled'
+    ]),
+    is_current: z.boolean(),
+    extracted_content: z.string().nullish(),
+    chunk_count: z.int().gte(0),
+    text_embeddings_ready: z.boolean(),
+    visual_embedding_ready: z.boolean(),
+    caption: zKnowledgeCaptionMetadata,
+    error_code: z.string().nullish(),
+    error_reason: z.string().nullish(),
+    started_at: z.int().nullish(),
+    completed_at: z.int().nullish(),
+    created_at: z.int(),
+    updated_at: z.int()
+});
+
+/**
+ * KnowledgeProcessingProfile
+ *
+ * The globally active processing policy recorded by every artifact.
+ */
+export const zKnowledgeProcessingProfile = z.object({
+    generation: z.int().gte(1),
+    identity: z.string().length(64),
+    extraction_policy: z.string().min(1).max(128),
+    chunking_policy: z.string().min(1).max(128),
+    embedding_model: z.string().min(1).max(512),
+    captioning_policy: z.string().min(1).max(512),
+    updated_at: z.int()
+});
+
+/**
+ * KnowledgeProcessingProfileUpdate
+ */
+export const zKnowledgeProcessingProfileUpdate = z.object({
+    extraction_policy: z.string().min(1).max(128),
+    chunking_policy: z.string().min(1).max(128),
+    embedding_model: z.string().min(1).max(512),
+    captioning_policy: z.string().min(1).max(512)
+});
+
+/**
+ * KnowledgeReprocessSummary
+ */
+export const zKnowledgeReprocessSummary = z.object({
+    profile: zKnowledgeProcessingProfile,
+    queued_file_count: z.int().gte(0)
 });
 
 /**
@@ -894,6 +988,62 @@ export const zGetFilePath = z.object({
  */
 export const zGetFileResponse = z.string();
 
+export const zFileKnowledgeGetStatusPath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileKnowledgeGetStatusResponse = zFileKnowledgeArtifact;
+
+export const zFileKnowledgeRetryPath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileKnowledgeRetryResponse = zFileKnowledgeArtifact;
+
+export const zFileKnowledgeCancelPath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileKnowledgeCancelResponse = zFileKnowledgeArtifact;
+
+export const zFileCaptionRegeneratePath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileCaptionRegenerateResponse = zFileKnowledgeArtifact;
+
+export const zFileCaptionClearPath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileCaptionClearResponse = zFileKnowledgeArtifact;
+
+export const zFileCaptionEditBody = zFileCaptionEdit;
+
+export const zFileCaptionEditPath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zFileCaptionEditResponse = zFileKnowledgeArtifact;
+
 /**
  * Successful Response
  */
@@ -1053,6 +1203,27 @@ export const zKnowledgeBaseFileCreatePath = z.object({
  */
 export const zKnowledgeBaseFileCreateResponse = zKnowledgeBaseFile;
 
+export const zKnowledgeBaseFileReorderBody = zKnowledgeBaseFileReorder;
+
+export const zKnowledgeBaseFileReorderPath = z.object({
+    knowledge_base_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseFileReorderResponse = zKnowledgeBaseFileList;
+
+export const zKnowledgeBaseFileDeletePath = z.object({
+    knowledge_base_id: z.uuid(),
+    membership_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseFileDeleteResponse = zKnowledgeBaseFile;
+
 export const zKnowledgeBaseDeletePath = z.object({
     knowledge_base_id: z.uuid()
 });
@@ -1209,6 +1380,13 @@ export const zAppCaptioningUpdateBody = zKnowledgeCaptionConfigurationUpdate;
  * Successful Response
  */
 export const zAppCaptioningUpdateResponse = zKnowledgeCaptionConfiguration;
+
+export const zAppKnowledgeProcessingProfileUpdateBody = zKnowledgeProcessingProfileUpdate;
+
+/**
+ * Successful Response
+ */
+export const zAppKnowledgeProcessingProfileUpdateResponse = zKnowledgeReprocessSummary;
 
 export const zAppSettingDeletePath = z.object({
     key: z.string()

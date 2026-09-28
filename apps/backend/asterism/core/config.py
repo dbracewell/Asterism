@@ -118,6 +118,7 @@ class Config(BaseSettings):
     """Character overlap between adjacent textual knowledge chunks."""
 
     max_knowledge_query_top_k: int = 10
+    max_knowledge_allowed_files: int = 1_000
     """Maximum retrieval results a knowledge search tool call may request."""
 
     max_knowledge_result_bytes: int = 16 * 1024
@@ -238,6 +239,8 @@ class Config(BaseSettings):
             )
         if not 1 <= self.max_knowledge_query_top_k <= 100:
             raise ConfigValidationError("MAX_KNOWLEDGE_QUERY_TOP_K must be from 1 to 100")
+        if not 1 <= self.max_knowledge_allowed_files <= 10_000:
+            raise ConfigValidationError("MAX_KNOWLEDGE_ALLOWED_FILES must be from 1 to 10000")
         if not 1_024 <= self.max_knowledge_result_bytes <= 1_000_000:
             raise ConfigValidationError("MAX_KNOWLEDGE_RESULT_BYTES must be from 1024 to 1000000")
         if not 1 <= self.max_concurrent_llm_requests <= 128:

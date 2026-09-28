@@ -2,6 +2,7 @@
 import { APIDownload } from "@/components/api-download";
 import { APIImage } from "@/components/api-image";
 import { useFileManager } from "@/components/file-manager/context";
+import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
 import { formatFileSize } from "@/lib/formatters";
 import { cn } from "cn";
 import { FileIcon } from "lucide-react";
@@ -119,6 +120,7 @@ export const FileList = () => {
                   <span className="text-muted-foreground block w-full truncate text-xs capitalize">
                     {file.kind} · {formatFileSize(file.size, 2, false)}
                   </span>
+                  <KnowledgeStatus filename={file.filename} isImage={file.kind === "image"} />
                 </div>
               </article>
             ))}

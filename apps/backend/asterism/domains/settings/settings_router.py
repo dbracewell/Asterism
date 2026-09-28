@@ -10,6 +10,8 @@ from asterism.domains.knowledge.captioning import CaptionModelStatus
 from asterism.domains.knowledge.schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
+    KnowledgeProcessingProfileUpdate,
+    KnowledgeReprocessSummary,
 )
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
@@ -364,6 +366,19 @@ async def update_captioning_configuration(
     from asterism.domains.knowledge.service import update_captioning_configuration as update_configuration
 
     return await update_configuration(payload=payload, session=session)
+
+
+@settings_router.put(
+    "/app/knowledge-processing-profile",
+    response_model=KnowledgeReprocessSummary,
+    operation_id="appKnowledgeProcessingProfileUpdate",
+)
+async def update_knowledge_processing_profile(
+    payload: KnowledgeProcessingProfileUpdate, user: AdminUserDep, session: DBSessionDep
+) -> KnowledgeReprocessSummary:
+    from asterism.domains.knowledge.service import update_processing_profile_and_reprocess
+
+    return await update_processing_profile_and_reprocess(payload=payload, session=session)
 
 
 @settings_router.put(

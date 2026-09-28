@@ -163,6 +163,7 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
             </Hint>
             <Hint hint="Delete selected files" side="top" asChild>
               <Button
+                aria-label="Delete selected files"
                 variant="destructive"
                 size="icon-lg"
                 disabled={

@@ -1,6 +1,7 @@
 """Bounded background caption jobs owned by file-artifact generations."""
 
 import asyncio
+import hashlib
 import uuid
 from collections.abc import Awaitable, Callable
 
@@ -17,6 +18,7 @@ from .models import (
     KnowledgeCaptionMode,
     KnowledgeCaptionStatus,
 )
+from .vector_store import VectorChunk
 
 CaptionRunner = Callable[[FileKnowledgeArtifactModel, UserFileModel], Awaitable[CaptionResult]]
 
@@ -67,6 +69,26 @@ class KnowledgeCaptionJobs:
                     artifact.caption_error_code = CaptionErrorCode.PROVIDER_FAILURE.value
                     artifact.caption_error_reason = "Caption generation failed"
                 else:
+                    from .runtime import embedding_provider, vector_store
+
+                    caption_vector = await embedding_provider.embed_text([result.text])
+                    if len(caption_vector) != 1:
+                        raise RuntimeError("Caption embedding provider returned an unexpected result")
+                    chunk_id = hashlib.sha256(f"{artifact.file_id}:{artifact.generation}:caption".encode()).hexdigest()
+                    await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
+                    await vector_store.add(
+                        [
+                            VectorChunk(
+                                id=chunk_id,
+                                user_id=user_id,
+                                file_id=str(file_id),
+                                artifact_generation=artifact.generation,
+                                chunk_ordinal=artifact.chunk_count,
+                                content=result.text,
+                                vector=caption_vector[0],
+                            )
+                        ]
+                    )
                     artifact.caption_status = KnowledgeCaptionStatus.DRAFT
                     artifact.caption_source = KnowledgeCaptionMode(result.source.value)
                     artifact.caption_model = result.model[:512]

@@ -8,66 +8,140 @@ const base = {
   updated_at: 0,
 };
 
-const imageDocument = {
+const imageFile = {
   id: "20000000-0000-4000-8000-000000000001",
+  filename: "diagram.png",
   original_name: "diagram.png",
+  size: 12,
   mime_type: "image/png",
-  revision: 1,
-  position: 0,
-  status: "ready",
-  error: null,
-  indexed_at: null,
-  replaces_document_id: null,
-  metadata: {},
+  kind: "image",
+  content_status: "ready",
+  content_error: null,
   created_at: 0,
   updated_at: 0,
-  caption: { status: "draft", source: "local", model: "smolvlm2", text: "A draft diagram", error_code: null, error_reason: null, generated_at: 0, accepted_at: null },
 };
 
-test("manages a knowledge base through the generated API client", async ({ page }) => {
-  await page.route("**/api/py/knowledge-bases/**", async (route) => {
+const reportFile = {
+  ...imageFile,
+  id: "20000000-0000-4000-8000-000000000002",
+  filename: "report.pdf",
+  original_name: "report.pdf",
+  mime_type: "application/pdf",
+  kind: "document",
+};
+
+test("lists knowledge bases through the generated API client", async ({
+  page,
+}) => {
+  await page.route(/\/api\/py\/knowledge-bases\/?(?:\?.*)?$/, async (route) => {
     const method = route.request().method();
     if (method === "GET") {
-      await route.fulfill({ json: { knowledge_bases: [base], total: 1, page: 1, page_size: 100 } });
+      await route.fulfill({
+        json: { knowledge_bases: [base], total: 1, page: 1, page_size: 100 },
+      });
     } else if (method === "POST") {
       await route.fulfill({ status: 201, json: { ...base, name: "Manual" } });
-    } else {
-      await route.fulfill({ json: base });
     }
   });
+  await page.route(new RegExp(`/api/py/knowledge-bases/${base.id}$`), (route) =>
+    route.fulfill({ json: base }),
+  );
 
   await page.goto("/e2e/knowledge");
-  await expect(page.getByRole("link", { name: "Research" })).toHaveAttribute("href", `/knowledge/${base.id}`);
-  await page.getByRole("button", { name: "Create knowledge base" }).click();
-  await page.getByLabel("Name").fill("Manual");
-  await page.getByRole("button", { name: "Create knowledge base" }).click();
-  await expect(page.getByLabel("Name")).toHaveValue("");
-
-  await page.getByRole("button", { name: "Edit" }).click();
-  await page.getByLabel("Name").fill("Updated research");
-  await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByRole("link", { name: "Research" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Research" })).toHaveAttribute(
+    "href",
+    `/knowledge/${base.id}`,
+  );
 });
 
-test("reviews an image caption without exposing its provider request", async ({ page }) => {
-  await page.route(`**/api/py/knowledge-bases/${base.id}/documents**`, async (route) => {
-    const url = route.request().url();
-    if (route.request().method() === "GET") {
-      await route.fulfill({ json: { documents: [imageDocument], total: 1, page: 1, page_size: 100 } });
-    } else if (url.endsWith("/caption")) {
-      await route.fulfill({ json: { ...imageDocument, caption: { ...imageDocument.caption, status: "accepted", text: "Reviewed diagram" } } });
-    } else if (url.endsWith("/generate")) {
-      await route.fulfill({ status: 202, json: { ...imageDocument, caption: { ...imageDocument.caption, status: "pending" } } });
-    } else {
-      await route.fulfill({ json: imageDocument });
-    }
-  });
-  await page.route("**/api/py/files/**", (route) => route.fulfill({ json: { files: [], total: 0, page: 1, page_size: 100 } }));
+test("curates a library file without making a second processed copy", async ({
+  page,
+}) => {
+  let memberships: Array<{ id: string; file_id: string; position: number }> = [
+    {
+      id: "30000000-0000-4000-8000-000000000002",
+      file_id: reportFile.id,
+      position: 0,
+    },
+  ];
+  await page.route(
+    `**/api/py/knowledge-bases/${base.id}/files**`,
+    async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          json: {
+            files: memberships,
+            total: memberships.length,
+            page: 1,
+            page_size: 100,
+          },
+        });
+        return;
+      }
+      if (route.request().method() === "POST") {
+        const membership = {
+          id: "30000000-0000-4000-8000-000000000001",
+          file_id: imageFile.id,
+          position: memberships.length,
+        };
+        memberships = [...memberships, membership];
+        await route.fulfill({ status: 201, json: membership });
+        return;
+      }
+      if (route.request().method() === "PUT") {
+        const { membership_ids: membershipIds } = route
+          .request()
+          .postDataJSON();
+        memberships = membershipIds.map((id: string, position: number) => ({
+          ...memberships.find((membership) => membership.id === id)!,
+          position,
+        }));
+        await route.fulfill({
+          json: {
+            files: memberships,
+            total: memberships.length,
+            page: 1,
+            page_size: 100,
+          },
+        });
+        return;
+      }
+      const membershipId = route.request().url().split("/").pop();
+      const removed = memberships.find(
+        (membership) => membership.id === membershipId,
+      )!;
+      memberships = memberships.filter(
+        (membership) => membership.id !== membershipId,
+      );
+      await route.fulfill({ json: removed });
+    },
+  );
+  await page.route("**/api/py/files?**", (route) =>
+    route.fulfill({
+      json: {
+        files: [imageFile, reportFile],
+        total: 2,
+        page: 1,
+        page_size: 100,
+      },
+    }),
+  );
 
   await page.goto("/e2e/knowledge-captions");
-  await expect(page.getByRole("region", { name: "Caption for diagram.png" })).toBeVisible();
-  await page.getByLabel("Edit caption for diagram.png").fill("Reviewed diagram");
-  await page.getByRole("button", { name: "Accept caption" }).click();
-  await expect(page.getByRole("button", { name: "Regenerate caption" })).toBeVisible();
-  await page.getByRole("button", { name: "Clear caption" }).click();
+  await page.getByLabel("Uploaded file").selectOption(imageFile.id);
+  await page.getByRole("button", { name: "Add existing file" }).click();
+  await expect(page.getByText("diagram.png")).toBeVisible();
+  await expect(
+    page.getByText("Manage processing, captions, and deletion in Files."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Move diagram.png up" }).click();
+  await expect(
+    page.getByRole("button", { name: "Move diagram.png up" }),
+  ).toBeDisabled();
+  await page
+    .getByRole("article")
+    .filter({ hasText: "diagram.png" })
+    .getByRole("button", { name: "Remove from collection" })
+    .click();
+  await expect(page.getByText("report.pdf")).toBeVisible();
 });

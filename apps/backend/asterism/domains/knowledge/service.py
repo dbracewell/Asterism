@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from typing import Literal
 
@@ -30,10 +31,14 @@ from .schemas import (
     KnowledgeBaseFile,
     KnowledgeBaseFileCreate,
     KnowledgeBaseFileList,
+    KnowledgeBaseFileReorder,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
+    KnowledgeProcessingProfile,
+    KnowledgeProcessingProfileUpdate,
+    KnowledgeReprocessSummary,
 )
 
 
@@ -64,9 +69,7 @@ async def _owned_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: As
     return knowledge_base
 
 
-async def ensure_file_knowledge_artifact(
-    *, file: UserFileModel, session: AsyncSession
-) -> FileKnowledgeArtifactModel:
+async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncSession) -> FileKnowledgeArtifactModel:
     """Create the one pending canonical artifact for a newly eligible file.
 
     A pending replacement is deliberately *not* current: retrieval can retain
@@ -105,6 +108,40 @@ async def ensure_file_knowledge_artifact(
     )
     session.add(artifact)
     return artifact
+
+
+async def update_processing_profile_and_reprocess(
+    *, payload: KnowledgeProcessingProfileUpdate, session: AsyncSession
+) -> KnowledgeReprocessSummary:
+    """Create one pending replacement generation per file under a new policy."""
+    profile = await session.get(KnowledgeProcessingProfileModel, 1)
+    if profile is None:
+        raise RuntimeError("Knowledge processing profile is not initialized")
+    identity = hashlib.sha256(
+        "\x1f".join(
+            (payload.extraction_policy, payload.chunking_policy, payload.embedding_model, payload.captioning_policy)
+        ).encode()
+    ).hexdigest()
+    if identity == profile.identity:
+        return KnowledgeReprocessSummary(
+            profile=KnowledgeProcessingProfile.model_validate(profile), queued_file_count=0
+        )
+    profile.generation += 1
+    profile.identity = identity
+    profile.extraction_policy = payload.extraction_policy
+    profile.chunking_policy = payload.chunking_policy
+    profile.embedding_model = payload.embedding_model
+    profile.captioning_policy = payload.captioning_policy
+    files = list(await session.scalars(select(UserFileModel)))
+    replacements = [await ensure_file_knowledge_artifact(file=file, session=session) for file in files]
+    await session.commit()
+    from .runtime import knowledge_ingestion_jobs
+
+    for file, artifact in zip(files, replacements, strict=True):
+        knowledge_ingestion_jobs.enqueue(user_id=file.user_id, file_id=file.id, artifact_id=artifact.id)
+    return KnowledgeReprocessSummary(
+        profile=KnowledgeProcessingProfile.model_validate(profile), queued_file_count=len(replacements)
+    )
 
 
 async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCaptionConfiguration:
@@ -300,6 +337,52 @@ async def list_knowledge_base_files(
         total=total or 0,
         page=page,
         page_size=page_size,
+    )
+
+
+async def remove_knowledge_base_file(
+    *, user_id: str, knowledge_base_id: uuid.UUID, membership_id: uuid.UUID, session: AsyncSession
+) -> KnowledgeBaseFile:
+    await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
+    membership = await session.scalar(
+        select(KnowledgeBaseFileModel).where(
+            KnowledgeBaseFileModel.id == membership_id, KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id
+        )
+    )
+    if membership is None:
+        raise NotFoundException("Knowledge base file membership not found")
+    response = KnowledgeBaseFile.model_validate(membership)
+    await session.delete(membership)
+    await session.commit()
+    return response
+
+
+async def reorder_knowledge_base_files(
+    *, user_id: str, knowledge_base_id: uuid.UUID, payload: KnowledgeBaseFileReorder, session: AsyncSession
+) -> KnowledgeBaseFileList:
+    await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
+    memberships = list(
+        await session.scalars(
+            select(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id)
+        )
+    )
+    if len(payload.membership_ids) != len(memberships) or set(payload.membership_ids) != {
+        item.id for item in memberships
+    }:
+        raise BadDataException("Reorder must include every membership exactly once")
+    by_id = {item.id: item for item in memberships}
+    for position, membership_id in enumerate(payload.membership_ids, start=1):
+        by_id[membership_id].position = -position
+    await session.flush()
+    for position, membership_id in enumerate(payload.membership_ids, start=1):
+        by_id[membership_id].position = position
+    await session.commit()
+    ordered = [by_id[membership_id] for membership_id in payload.membership_ids]
+    return KnowledgeBaseFileList(
+        files=[KnowledgeBaseFile.model_validate(item) for item in ordered],
+        total=len(ordered),
+        page=1,
+        page_size=len(ordered),
     )
 
 

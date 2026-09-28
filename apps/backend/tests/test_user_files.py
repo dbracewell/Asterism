@@ -14,10 +14,13 @@ from asterism.domains.chat.schemas import Chat, ChatInfo, Message, MessageFileRe
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.processor import MarkItDownFileProcessor
 from asterism.domains.files.service import (
+    cancel_file_knowledge_processing,
     delete_user_file,
     ensure_file_processed,
+    get_file_knowledge_status,
     get_user_file,
     list_user_files,
+    retry_file_knowledge_processing,
     upload_files,
 )
 from asterism.domains.knowledge.models import (
@@ -197,6 +200,38 @@ async def test_delete_file_cancels_artifacts_and_removes_memberships_vectors_and
         is None
     )
     assert not (config.files_root / "user-a" / file.filename).exists()
+
+
+@pytest.mark.asyncio
+async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_session, monkeypatch):
+    class FakeJobs:
+        def __init__(self):
+            self.cancelled: list[str] = []
+            self.enqueued: list[str] = []
+
+        def enqueue(self, *, artifact_id, **_):
+            self.enqueued.append(str(artifact_id))
+            return True
+
+        def cancel(self, artifact_id: str):
+            self.cancelled.append(artifact_id)
+            return True
+
+    jobs = FakeJobs()
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", jobs)
+    uploaded = await upload_files(
+        user_id="user-a", uploads=[_upload("retry.txt", b"retry me")], session=file_session
+    )
+    file = uploaded.files[0]
+    status = await get_file_knowledge_status(user_id="user-a", filename=file.filename, session=file_session)
+    assert status.status == "pending"
+
+    canceled = await cancel_file_knowledge_processing(user_id="user-a", filename=file.filename, session=file_session)
+    assert canceled.status == "canceled"
+    retried = await retry_file_knowledge_processing(user_id="user-a", filename=file.filename, session=file_session)
+    assert (retried.id, retried.generation, retried.status) == (status.id, 1, "pending")
+    assert jobs.cancelled == [str(status.id)]
+    assert jobs.enqueued == [str(status.id), str(status.id)]
 
 
 @pytest.mark.asyncio
