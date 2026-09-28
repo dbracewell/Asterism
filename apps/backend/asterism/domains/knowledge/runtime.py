@@ -8,7 +8,7 @@ from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.service import get_file_store
-from asterism.domains.knowledge.models import KnowledgeDocumentModel
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 from asterism.domains.knowledge.schemas import KnowledgeCaptionConfiguration
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
@@ -98,14 +98,14 @@ async def _provider_caption_document(
     )
 
 
-async def _caption_document(document: KnowledgeDocumentModel, file: UserFileModel) -> CaptionResult:
+async def _caption_file_artifact(artifact: FileKnowledgeArtifactModel, file: UserFileModel) -> CaptionResult:
     """Generate a caption without logging source image bytes or caption text."""
     if file.kind is not FileKind.IMAGE:
-        logger.error(f"Document {document.id} is not an image and cannot be captioned")
+        logger.error(f"File artifact {artifact.id} is not an image and cannot be captioned")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Only image documents can be captioned")
 
     try:
-        image_path = get_file_store().open(document.user_id, file.filename)
+        image_path = get_file_store().open(artifact.user_id, file.filename)
     except ValueError as error:
         logger.error(f"Image file ({file.id}) is unavailable: {error}")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Image file is unavailable") from error
@@ -118,11 +118,11 @@ async def _caption_document(document: KnowledgeDocumentModel, file: UserFileMode
         configuration = await get_captioning_configuration(session=session)
 
     if configuration.mode == CaptionMode.DISABLED:
-        logger.warning(f"Attempted to caption document {document.id} but captioning is disabled")
+        logger.warning(f"Attempted to caption file artifact {artifact.id} but captioning is disabled")
         raise CaptioningError(CaptionErrorCode.DISABLED, "Image captioning is disabled")
 
     request = CaptionRequest(
-        revision_id=document.id,
+        revision_id=artifact.id,
         image_path=image_path,
         max_image_bytes=config.max_vision_image_bytes,
         max_caption_chars=config.max_caption_chars,
@@ -132,14 +132,14 @@ async def _caption_document(document: KnowledgeDocumentModel, file: UserFileMode
         return await local_caption_provider.caption(request)
 
     if configuration.provider_model_id is None:
-        logger.warning(f"Attempted to caption document {document.id} but no provider model is selected")
+        logger.warning(f"Attempted to caption file artifact {artifact.id} but no provider model is selected")
         raise CaptioningError(CaptionErrorCode.INVALID_SELECTION, "No caption provider model is selected")
 
     return await _provider_caption_document(configuration, file, image_path)
 
 
 knowledge_caption_jobs = KnowledgeCaptionJobs(
-    _caption_document,
+    _caption_file_artifact,
     max_concurrency=config.max_concurrent_local_captions,
 )
 

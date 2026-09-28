@@ -1,8 +1,6 @@
 """Built-in, assignment-scoped knowledge retrieval tool."""
 
-import hashlib
 import time
-import uuid
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -13,7 +11,11 @@ from asterism.domains.tools.registry import ToolContext, tool_registry
 
 from .assignments import AgentKnowledgeBaseAssignmentModel
 from .audit import record_knowledge_audit
-from .models import KnowledgeCaptionStatus, KnowledgeDocumentModel, KnowledgeDocumentStatus
+from .models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeArtifactStatus,
+    KnowledgeBaseFileModel,
+)
 from .runtime import embedding_provider, vector_store
 
 
@@ -51,33 +53,35 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
         )
         if not base_ids:
             return {"results": [], "message": "No assigned knowledge bases are available."}
+        memberships = list(
+            await db.scalars(
+                select(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.knowledge_base_id.in_(base_ids))
+            )
+        )
+        # Resolve authorization before querying the vector store.  A file that
+        # belongs to more than one assigned base has one canonical vector but
+        # retains a deterministic collection provenance for this response.
+        base_by_file = {str(membership.file_id): str(membership.knowledge_base_id) for membership in memberships}
+        if not base_by_file:
+            return {"results": [], "message": "Assigned knowledge bases have no files."}
         query_vector = (await embedding_provider.embed_text([ctx.args.query]))[0]
         matches = await vector_store.search(
             query_vector,
             user_id=ctx.user.id,
-            knowledge_base_ids=[str(base_id) for base_id in base_ids],
+            allowed_file_ids=list(base_by_file),
             limit=ctx.args.top_k,
         )
-        # LanceDB stores provenance IDs as strings, whereas relational IDs are
-        # UUID columns. Convert at the adapter boundary before binding SQL.
-        document_ids: list[uuid.UUID] = []
-        for match in matches:
-            try:
-                document_ids.append(uuid.UUID(str(match.document_id)))
-            except ValueError:
-                # A malformed/stale vector cannot be associated with a ready
-                # document and must never become a retrieval result.
-                continue
-        ready_documents: dict[str, KnowledgeDocumentModel] = {}
-        if document_ids:
-            documents = await db.scalars(
-                select(KnowledgeDocumentModel).where(
-                    KnowledgeDocumentModel.user_id == ctx.user.id,
-                    KnowledgeDocumentModel.id.in_(document_ids),
-                    KnowledgeDocumentModel.status == KnowledgeDocumentStatus.READY,
+        ready_artifacts = {
+            (str(artifact.file_id), artifact.generation): artifact
+            for artifact in await db.scalars(
+                select(FileKnowledgeArtifactModel).where(
+                    FileKnowledgeArtifactModel.user_id == ctx.user.id,
+                    FileKnowledgeArtifactModel.file_id.in_([membership.file_id for membership in memberships]),
+                    FileKnowledgeArtifactModel.is_current.is_(True),
+                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
                 )
             )
-            ready_documents = {str(document.id): document for document in documents}
+        }
         db.add(
             record_knowledge_audit(
                 user_id=ctx.user.id,
@@ -94,23 +98,17 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
     remaining_bytes = config.max_knowledge_result_bytes
     results = []
     for match in matches:
-        document = ready_documents.get(str(match.document_id))
-        if document is None or remaining_bytes <= 0:
+        artifact = ready_artifacts.get((match.file_id, match.artifact_generation))
+        if artifact is None or remaining_bytes <= 0:
             continue
-        caption_chunk_id = hashlib.sha256(f"{document.id}:{document.revision}:caption".encode()).hexdigest()
-        if match.id == caption_chunk_id and document.caption_status is KnowledgeCaptionStatus.ACCEPTED:
-            match_kind = "accepted_caption"
-        elif document.mime_type.startswith("image/"):
-            match_kind = "visual_image"
-        else:
-            match_kind = "text"
+        match_kind = "caption" if artifact.caption_text and match.content == artifact.caption_text else "text"
         excerpt = _bounded_excerpt(match.content, remaining_bytes)
         remaining_bytes -= len(excerpt.encode("utf-8"))
         results.append(
             {
-                "knowledge_base_id": match.knowledge_base_id,
-                "document_id": match.document_id,
-                "revision_id": match.revision_id,
+                "knowledge_base_id": base_by_file[match.file_id],
+                "file_id": match.file_id,
+                "artifact_generation": match.artifact_generation,
                 "chunk_id": match.id,
                 "score": match.score,
                 "match_kind": match_kind,

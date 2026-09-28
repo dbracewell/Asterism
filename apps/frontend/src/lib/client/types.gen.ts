@@ -623,6 +623,70 @@ export type KnowledgeBaseCreate = {
 };
 
 /**
+ * KnowledgeBaseFile
+ *
+ * A knowledge base's reference to a file already owned by the user.
+ */
+export type KnowledgeBaseFile = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Knowledge Base Id
+     */
+    knowledge_base_id: string;
+    /**
+     * File Id
+     */
+    file_id: string;
+    /**
+     * Position
+     */
+    position: number;
+    /**
+     * Created At
+     */
+    created_at: number;
+    /**
+     * Updated At
+     */
+    updated_at: number;
+};
+
+/**
+ * KnowledgeBaseFileCreate
+ */
+export type KnowledgeBaseFileCreate = {
+    /**
+     * File Id
+     */
+    file_id: string;
+};
+
+/**
+ * KnowledgeBaseFileList
+ */
+export type KnowledgeBaseFileList = {
+    /**
+     * Files
+     */
+    files: Array<KnowledgeBaseFile>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
  * KnowledgeBaseList
  */
 export type KnowledgeBaseList = {
@@ -688,197 +752,6 @@ export type KnowledgeCaptionConfigurationUpdate = {
      * Provider Model Id
      */
     provider_model_id?: string | null;
-};
-
-/**
- * KnowledgeCaptionMetadata
- */
-export type KnowledgeCaptionMetadata = {
-    /**
-     * Status
-     */
-    status?: string | null;
-    /**
-     * Source
-     */
-    source?: string | null;
-    /**
-     * Model
-     */
-    model?: string | null;
-    /**
-     * Text
-     */
-    text?: string | null;
-    /**
-     * Error Code
-     */
-    error_code?: string | null;
-    /**
-     * Error Reason
-     */
-    error_reason?: string | null;
-    /**
-     * Generated At
-     */
-    generated_at?: number | null;
-    /**
-     * Accepted At
-     */
-    accepted_at?: number | null;
-};
-
-/**
- * KnowledgeCaptionUpdate
- */
-export type KnowledgeCaptionUpdate = {
-    /**
-     * Text
-     */
-    text?: string | null;
-    /**
-     * Accept
-     */
-    accept?: boolean;
-    /**
-     * Clear
-     */
-    clear?: boolean;
-};
-
-/**
- * KnowledgeDocument
- */
-export type KnowledgeDocument = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Knowledge Base Id
-     */
-    knowledge_base_id: string;
-    /**
-     * File Id
-     */
-    file_id: string | null;
-    /**
-     * Original Name
-     */
-    original_name: string;
-    /**
-     * Mime Type
-     */
-    mime_type: string;
-    /**
-     * Content Sha256
-     */
-    content_sha256: string;
-    /**
-     * Revision
-     */
-    revision: number;
-    /**
-     * Position
-     */
-    position: number;
-    /**
-     * Status
-     */
-    status: string;
-    /**
-     * Error
-     */
-    error: string | null;
-    /**
-     * Indexed At
-     */
-    indexed_at: number | null;
-    /**
-     * Replaces Document Id
-     */
-    replaces_document_id: string | null;
-    caption: KnowledgeCaptionMetadata;
-    /**
-     * Metadata
-     */
-    metadata: {
-        [key: string]: string;
-    };
-    /**
-     * Created At
-     */
-    created_at: number;
-    /**
-     * Updated At
-     */
-    updated_at: number;
-};
-
-/**
- * KnowledgeDocumentCreate
- */
-export type KnowledgeDocumentCreate = {
-    /**
-     * File Id
-     */
-    file_id: string;
-    /**
-     * Metadata
-     */
-    metadata?: {
-        [key: string]: string;
-    };
-};
-
-/**
- * KnowledgeDocumentList
- */
-export type KnowledgeDocumentList = {
-    /**
-     * Documents
-     */
-    documents: Array<KnowledgeDocument>;
-    /**
-     * Total
-     */
-    total: number;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
-};
-
-/**
- * KnowledgeDocumentRevisionCreate
- */
-export type KnowledgeDocumentRevisionCreate = {
-    /**
-     * File Id
-     */
-    file_id: string;
-    /**
-     * Metadata
-     */
-    metadata?: {
-        [key: string]: string;
-    } | null;
-};
-
-/**
- * KnowledgeDocumentUpdate
- */
-export type KnowledgeDocumentUpdate = {
-    /**
-     * Metadata
-     */
-    metadata: {
-        [key: string]: string;
-    };
 };
 
 /**
@@ -1776,15 +1649,7 @@ export type FilesDeleteManyData = {
 
 export type FilesDeleteManyErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorDetail;
-    /**
-     * Unauthorized
-     */
-    401: ErrorDetail;
-    /**
-     * Not Found
+     * Not found
      */
     404: ErrorDetail;
     /**
@@ -2463,6 +2328,8 @@ export type KnowledgeBaseGetManyData = {
         sort_by?: 'name' | 'created';
         /**
          * Query
+         *
+         * Search knowledge bases by name or description
          */
         query?: string | null;
     };
@@ -2504,10 +2371,6 @@ export type KnowledgeBaseCreateErrors = {
      */
     404: ErrorDetail;
     /**
-     * Conflict
-     */
-    409: ErrorDetail;
-    /**
      * Validation Error
      */
     422: ErrorDetail;
@@ -2524,7 +2387,7 @@ export type KnowledgeBaseCreateResponses = {
 
 export type KnowledgeBaseCreateResponse = KnowledgeBaseCreateResponses[keyof KnowledgeBaseCreateResponses];
 
-export type KnowledgeDocumentGetManyData = {
+export type KnowledgeBaseFileGetManyData = {
     body?: never;
     path: {
         /**
@@ -2542,10 +2405,10 @@ export type KnowledgeDocumentGetManyData = {
          */
         page_size?: number;
     };
-    url: '/knowledge-bases/{knowledge_base_id}/documents';
+    url: '/knowledge-bases/{knowledge_base_id}/files';
 };
 
-export type KnowledgeDocumentGetManyErrors = {
+export type KnowledgeBaseFileGetManyErrors = {
     /**
      * Not found
      */
@@ -2556,19 +2419,19 @@ export type KnowledgeDocumentGetManyErrors = {
     422: ErrorDetail;
 };
 
-export type KnowledgeDocumentGetManyError = KnowledgeDocumentGetManyErrors[keyof KnowledgeDocumentGetManyErrors];
+export type KnowledgeBaseFileGetManyError = KnowledgeBaseFileGetManyErrors[keyof KnowledgeBaseFileGetManyErrors];
 
-export type KnowledgeDocumentGetManyResponses = {
+export type KnowledgeBaseFileGetManyResponses = {
     /**
      * Successful Response
      */
-    200: KnowledgeDocumentList;
+    200: KnowledgeBaseFileList;
 };
 
-export type KnowledgeDocumentGetManyResponse = KnowledgeDocumentGetManyResponses[keyof KnowledgeDocumentGetManyResponses];
+export type KnowledgeBaseFileGetManyResponse = KnowledgeBaseFileGetManyResponses[keyof KnowledgeBaseFileGetManyResponses];
 
-export type KnowledgeDocumentCreateData = {
-    body: KnowledgeDocumentCreate;
+export type KnowledgeBaseFileCreateData = {
+    body: KnowledgeBaseFileCreate;
     path: {
         /**
          * Knowledge Base Id
@@ -2576,10 +2439,10 @@ export type KnowledgeDocumentCreateData = {
         knowledge_base_id: string;
     };
     query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents';
+    url: '/knowledge-bases/{knowledge_base_id}/files';
 };
 
-export type KnowledgeDocumentCreateErrors = {
+export type KnowledgeBaseFileCreateErrors = {
     /**
      * Not found
      */
@@ -2594,400 +2457,16 @@ export type KnowledgeDocumentCreateErrors = {
     422: ErrorDetail;
 };
 
-export type KnowledgeDocumentCreateError = KnowledgeDocumentCreateErrors[keyof KnowledgeDocumentCreateErrors];
+export type KnowledgeBaseFileCreateError = KnowledgeBaseFileCreateErrors[keyof KnowledgeBaseFileCreateErrors];
 
-export type KnowledgeDocumentCreateResponses = {
+export type KnowledgeBaseFileCreateResponses = {
     /**
      * Successful Response
      */
-    201: KnowledgeDocument;
+    201: KnowledgeBaseFile;
 };
 
-export type KnowledgeDocumentCreateResponse = KnowledgeDocumentCreateResponses[keyof KnowledgeDocumentCreateResponses];
-
-export type KnowledgeDocumentCreateRevisionData = {
-    body: KnowledgeDocumentRevisionCreate;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/revisions';
-};
-
-export type KnowledgeDocumentCreateRevisionErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Conflict
-     */
-    409: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentCreateRevisionError = KnowledgeDocumentCreateRevisionErrors[keyof KnowledgeDocumentCreateRevisionErrors];
-
-export type KnowledgeDocumentCreateRevisionResponses = {
-    /**
-     * Successful Response
-     */
-    201: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentCreateRevisionResponse = KnowledgeDocumentCreateRevisionResponses[keyof KnowledgeDocumentCreateRevisionResponses];
-
-export type KnowledgeDocumentDeleteData = {
-    body?: never;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}';
-};
-
-export type KnowledgeDocumentDeleteErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentDeleteError = KnowledgeDocumentDeleteErrors[keyof KnowledgeDocumentDeleteErrors];
-
-export type KnowledgeDocumentDeleteResponses = {
-    /**
-     * Successful Response
-     */
-    200: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentDeleteResponse = KnowledgeDocumentDeleteResponses[keyof KnowledgeDocumentDeleteResponses];
-
-export type KnowledgeDocumentGetOneData = {
-    body?: never;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}';
-};
-
-export type KnowledgeDocumentGetOneErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentGetOneError = KnowledgeDocumentGetOneErrors[keyof KnowledgeDocumentGetOneErrors];
-
-export type KnowledgeDocumentGetOneResponses = {
-    /**
-     * Successful Response
-     */
-    200: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentGetOneResponse = KnowledgeDocumentGetOneResponses[keyof KnowledgeDocumentGetOneResponses];
-
-export type KnowledgeDocumentUpdateMetadataData = {
-    body: KnowledgeDocumentUpdate;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}';
-};
-
-export type KnowledgeDocumentUpdateMetadataErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentUpdateMetadataError = KnowledgeDocumentUpdateMetadataErrors[keyof KnowledgeDocumentUpdateMetadataErrors];
-
-export type KnowledgeDocumentUpdateMetadataResponses = {
-    /**
-     * Successful Response
-     */
-    200: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentUpdateMetadataResponse = KnowledgeDocumentUpdateMetadataResponses[keyof KnowledgeDocumentUpdateMetadataResponses];
-
-export type KnowledgeDocumentGenerateCaptionData = {
-    body?: never;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption/generate';
-};
-
-export type KnowledgeDocumentGenerateCaptionErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentGenerateCaptionError = KnowledgeDocumentGenerateCaptionErrors[keyof KnowledgeDocumentGenerateCaptionErrors];
-
-export type KnowledgeDocumentGenerateCaptionResponses = {
-    /**
-     * Successful Response
-     */
-    202: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentGenerateCaptionResponse = KnowledgeDocumentGenerateCaptionResponses[keyof KnowledgeDocumentGenerateCaptionResponses];
-
-export type KnowledgeDocumentCancelCaptionData = {
-    body?: never;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption/cancel';
-};
-
-export type KnowledgeDocumentCancelCaptionErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentCancelCaptionError = KnowledgeDocumentCancelCaptionErrors[keyof KnowledgeDocumentCancelCaptionErrors];
-
-export type KnowledgeDocumentCancelCaptionResponses = {
-    /**
-     * Successful Response
-     */
-    200: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentCancelCaptionResponse = KnowledgeDocumentCancelCaptionResponses[keyof KnowledgeDocumentCancelCaptionResponses];
-
-export type KnowledgeDocumentUpdateCaptionData = {
-    body: KnowledgeCaptionUpdate;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption';
-};
-
-export type KnowledgeDocumentUpdateCaptionErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentUpdateCaptionError = KnowledgeDocumentUpdateCaptionErrors[keyof KnowledgeDocumentUpdateCaptionErrors];
-
-export type KnowledgeDocumentUpdateCaptionResponses = {
-    /**
-     * Successful Response
-     */
-    200: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentUpdateCaptionResponse = KnowledgeDocumentUpdateCaptionResponses[keyof KnowledgeDocumentUpdateCaptionResponses];
-
-export type KnowledgeDocumentIngestData = {
-    body?: never;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/ingest';
-};
-
-export type KnowledgeDocumentIngestErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentIngestError = KnowledgeDocumentIngestErrors[keyof KnowledgeDocumentIngestErrors];
-
-export type KnowledgeDocumentIngestResponses = {
-    /**
-     * Successful Response
-     */
-    202: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentIngestResponse = KnowledgeDocumentIngestResponses[keyof KnowledgeDocumentIngestResponses];
-
-export type KnowledgeDocumentReindexData = {
-    body?: never;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/reindex';
-};
-
-export type KnowledgeDocumentReindexErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentReindexError = KnowledgeDocumentReindexErrors[keyof KnowledgeDocumentReindexErrors];
-
-export type KnowledgeDocumentReindexResponses = {
-    /**
-     * Successful Response
-     */
-    202: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentReindexResponse = KnowledgeDocumentReindexResponses[keyof KnowledgeDocumentReindexResponses];
-
-export type KnowledgeDocumentCancelIngestionData = {
-    body?: never;
-    path: {
-        /**
-         * Knowledge Base Id
-         */
-        knowledge_base_id: string;
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/cancel';
-};
-
-export type KnowledgeDocumentCancelIngestionErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type KnowledgeDocumentCancelIngestionError = KnowledgeDocumentCancelIngestionErrors[keyof KnowledgeDocumentCancelIngestionErrors];
-
-export type KnowledgeDocumentCancelIngestionResponses = {
-    /**
-     * Successful Response
-     */
-    200: KnowledgeDocument;
-};
-
-export type KnowledgeDocumentCancelIngestionResponse = KnowledgeDocumentCancelIngestionResponses[keyof KnowledgeDocumentCancelIngestionResponses];
+export type KnowledgeBaseFileCreateResponse = KnowledgeBaseFileCreateResponses[keyof KnowledgeBaseFileCreateResponses];
 
 export type KnowledgeBaseDeleteData = {
     body?: never;
@@ -3074,10 +2553,6 @@ export type KnowledgeBaseUpdateErrors = {
      * Not found
      */
     404: ErrorDetail;
-    /**
-     * Conflict
-     */
-    409: ErrorDetail;
     /**
      * Validation Error
      */

@@ -51,7 +51,7 @@ export function KnowledgeBaseManager() {
 
   const { Dialog, confirm } = useConfirmationDialog({
     description:
-      "Are you sure you want to delete this knowledge base and its indexed documents? This action cannot be undone.",
+      "Are you sure you want to delete this knowledge base and its file memberships? Library files and their derived knowledge remain available.",
     title: "Delete knowledge base",
     confirmVariant: "destructive",
   });

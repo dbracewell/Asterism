@@ -95,7 +95,7 @@ class CaptionResult:
 
 @dataclass(frozen=True)
 class CaptionRevisionRecord:
-    """Derived caption state for one immutable knowledge document revision."""
+    """Derived caption state for one immutable file-artifact generation."""
 
     revision_id: UUID
     status: CaptionStatus

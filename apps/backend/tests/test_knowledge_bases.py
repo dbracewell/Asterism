@@ -1,6 +1,5 @@
 import asyncio
 import uuid
-from contextlib import asynccontextmanager
 
 import pytest
 import pytest_asyncio
@@ -11,39 +10,28 @@ from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.knowledge.audit import KnowledgeAuditEventModel
 from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
-from asterism.domains.knowledge.captioning import CaptionMode, CaptionResult
-from asterism.domains.knowledge.ingestion import ingest_document
+from asterism.domains.knowledge.ingestion import ingest_file_artifact
 from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactStatus,
+    KnowledgeBaseFileModel,
     KnowledgeCaptionConfigurationModel,
-    KnowledgeCaptionStatus,
-    KnowledgeDocumentModel,
-    KnowledgeDocumentStatus,
 )
 from asterism.domains.knowledge.schemas import (
     KnowledgeBaseCreate,
+    KnowledgeBaseFileCreate,
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfigurationUpdate,
-    KnowledgeCaptionUpdate,
-    KnowledgeDocumentCreate,
-    KnowledgeDocumentRevisionCreate,
-    KnowledgeDocumentUpdate,
 )
 from asterism.domains.knowledge.service import (
-    add_knowledge_document,
+    add_knowledge_base_file,
     create_knowledge_base,
-    create_knowledge_document_revision,
     delete_knowledge_base,
-    delete_knowledge_document,
     get_captioning_configuration,
     get_knowledge_base,
-    get_knowledge_document,
+    list_knowledge_base_files,
     list_knowledge_bases,
-    list_knowledge_documents,
-    request_knowledge_document_caption,
     update_captioning_configuration,
     update_knowledge_base,
-    update_knowledge_document_caption,
-    update_knowledge_document_metadata,
 )
 from asterism.domains.user.models import UserModel
 from sqlalchemy import select
@@ -58,10 +46,10 @@ async def knowledge_session(tmp_path, monkeypatch):
         await run_schema_migrations(connection)
 
     class FakeVectorStore:
-        async def delete_document(self, **_):
+        async def delete_file(self, **_):
             pass
 
-        async def delete_knowledge_base(self, **_):
+        async def delete_file_generation(self, **_):
             pass
 
     class FakeJobs:
@@ -76,6 +64,84 @@ async def knowledge_session(tmp_path, monkeypatch):
         await session.commit()
         yield session
     await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_file_memberships_are_owned_ordered_references(knowledge_session):
+    base = await create_knowledge_base(
+        user_id="user-a", payload=KnowledgeBaseCreate(name="References"), session=knowledge_session
+    )
+    owned = UserFileModel(
+        user_id="user-a",
+        filename="first.txt",
+        original_name="first.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="a" * 64,
+    )
+    second = UserFileModel(
+        user_id="user-a",
+        filename="second.txt",
+        original_name="second.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="b" * 64,
+    )
+    foreign = UserFileModel(
+        user_id="user-b",
+        filename="private.txt",
+        original_name="private.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="c" * 64,
+    )
+    knowledge_session.add_all([owned, second, foreign])
+    await knowledge_session.commit()
+    foreign_file_id = foreign.id
+
+    first_membership = await add_knowledge_base_file(
+        user_id="user-a",
+        knowledge_base_id=base.id,
+        payload=KnowledgeBaseFileCreate(file_id=owned.id),
+        session=knowledge_session,
+    )
+    second_membership = await add_knowledge_base_file(
+        user_id="user-a",
+        knowledge_base_id=base.id,
+        payload=KnowledgeBaseFileCreate(file_id=second.id),
+        session=knowledge_session,
+    )
+    assert (first_membership.file_id, first_membership.position) == (owned.id, 1)
+    assert (second_membership.file_id, second_membership.position) == (second.id, 2)
+    listing = await list_knowledge_base_files(
+        user_id="user-a", knowledge_base_id=base.id, session=knowledge_session, page=1, page_size=50
+    )
+    assert [entry.file_id for entry in listing.files] == [owned.id, second.id]
+    assert await knowledge_session.get(KnowledgeBaseFileModel, first_membership.id)
+    attachment_events = list(
+        await knowledge_session.scalars(
+            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.action == "base.file_attached")
+        )
+    )
+    assert [event.file_id for event in attachment_events] == [owned.id, second.id]
+
+    with pytest.raises(CodedException, match="already attached"):
+        await add_knowledge_base_file(
+            user_id="user-a",
+            knowledge_base_id=base.id,
+            payload=KnowledgeBaseFileCreate(file_id=owned.id),
+            session=knowledge_session,
+        )
+    with pytest.raises(NotFoundException, match="File not found"):
+        await add_knowledge_base_file(
+            user_id="user-a",
+            knowledge_base_id=base.id,
+            payload=KnowledgeBaseFileCreate(file_id=foreign_file_id),
+            session=knowledge_session,
+        )
 
 
 @pytest.mark.asyncio
@@ -168,7 +234,7 @@ async def test_caption_configuration_is_seeded_disabled(knowledge_session):
 
 
 @pytest.mark.asyncio
-async def test_knowledge_documents_capture_owned_immutable_file_metadata(knowledge_session):
+async def test_file_memberships_reuse_owned_file_metadata(knowledge_session):
     knowledge_base = await create_knowledge_base(
         user_id="user-a", payload=KnowledgeBaseCreate(name="Documents"), session=knowledge_session
     )
@@ -195,79 +261,20 @@ async def test_knowledge_documents_capture_owned_immutable_file_metadata(knowled
     knowledge_session.add_all([file, foreign_file])
     await knowledge_session.commit()
 
-    document = await add_knowledge_document(
+    membership = await add_knowledge_base_file(
         user_id="user-a",
         knowledge_base_id=knowledge_base.id,
-        payload=KnowledgeDocumentCreate(file_id=file.id, metadata={"category": "notes"}),
+        payload=KnowledgeBaseFileCreate(file_id=file.id),
         session=knowledge_session,
     )
-    assert document.original_name == "Source.txt"
-    assert document.content_sha256 == "a" * 64
-    assert document.status == "pending"
-    assert document.caption.status is None
-    assert document.caption.text is None
-    assert document.metadata == {"category": "notes"}
-    replacement_file = UserFileModel(
-        user_id="user-a",
-        filename="source-v2.txt",
-        original_name="Source v2.txt",
-        size=8,
-        mime_type="text/plain",
-        kind=FileKind.TEXT,
-        sha256="c" * 64,
-        content_status=FileContentStatus.READY,
-    )
-    knowledge_session.add(replacement_file)
-    await knowledge_session.commit()
-    revision = await create_knowledge_document_revision(
-        user_id="user-a",
-        knowledge_base_id=knowledge_base.id,
-        document_id=document.id,
-        payload=KnowledgeDocumentRevisionCreate(file_id=replacement_file.id),
-        session=knowledge_session,
-    )
-    assert revision.revision == 2
-    assert revision.replaces_document_id == document.id
-    assert revision.metadata == {"category": "notes"}
-    assert revision.content_sha256 == "c" * 64
-
-    listing = await list_knowledge_documents(
-        user_id="user-a", knowledge_base_id=knowledge_base.id, session=knowledge_session, page=1, page_size=50
-    )
-    assert [item.id for item in listing.documents] == [document.id, revision.id]
-    updated = await update_knowledge_document_metadata(
-        user_id="user-a",
-        knowledge_base_id=knowledge_base.id,
-        document_id=document.id,
-        payload=KnowledgeDocumentUpdate(metadata={"category": "reference"}),
-        session=knowledge_session,
-    )
-    assert updated.metadata == {"category": "reference"}
-
+    assert membership.file_id == file.id
     with pytest.raises(NotFoundException):
-        await add_knowledge_document(
+        await add_knowledge_base_file(
             user_id="user-a",
             knowledge_base_id=knowledge_base.id,
-            payload=KnowledgeDocumentCreate(file_id=foreign_file.id),
+            payload=KnowledgeBaseFileCreate(file_id=foreign_file.id),
             session=knowledge_session,
         )
-    with pytest.raises(CodedException) as error:
-        await add_knowledge_document(
-            user_id="user-a",
-            knowledge_base_id=knowledge_base.id,
-            payload=KnowledgeDocumentCreate(file_id=file.id),
-            session=knowledge_session,
-        )
-    assert error.value.code == 409
-    with pytest.raises(NotFoundException):
-        await get_knowledge_document(
-            user_id="user-b", knowledge_base_id=knowledge_base.id, document_id=document.id, session=knowledge_session
-        )
-
-    deleted = await delete_knowledge_document(
-        user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id, session=knowledge_session
-    )
-    assert deleted.id == document.id
 
 
 @pytest.mark.asyncio
@@ -275,7 +282,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     knowledge_session, tmp_path, monkeypatch
 ):
     monkeypatch.setattr(config, "storage_root", tmp_path)
-    knowledge_base = await create_knowledge_base(
+    await create_knowledge_base(
         user_id="user-a", payload=KnowledgeBaseCreate(name="Indexed"), session=knowledge_session
     )
     file = UserFileModel(
@@ -293,14 +300,10 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     path = config.files_root / "user-a"
     path.mkdir(parents=True)
     (path / file.filename).write_text("hello world", encoding="utf-8")
-    response = await add_knowledge_document(
-        user_id="user-a",
-        knowledge_base_id=knowledge_base.id,
-        payload=KnowledgeDocumentCreate(file_id=file.id),
-        session=knowledge_session,
-    )
-    document = await knowledge_session.get(KnowledgeDocumentModel, response.id)
-    assert document is not None
+    from asterism.domains.knowledge.service import ensure_file_knowledge_artifact
+
+    artifact = await ensure_file_knowledge_artifact(file=file, session=knowledge_session)
+    await knowledge_session.commit()
 
     class FakeEmbeddings:
         dimension = 2
@@ -330,35 +333,32 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
         async def search(self, *args, **kwargs):
             return []
 
-        async def delete_document(self, **kwargs):
-            self.chunks.clear()
-
-        async def delete_knowledge_base(self, **kwargs):
+        async def delete_file_generation(self, **kwargs):
             self.chunks.clear()
 
         async def close(self):
             pass
 
     vectors = FakeVectors()
-    indexed = await ingest_document(
-        document=document,
+    indexed = await ingest_file_artifact(
+        artifact=artifact,
         file=file,
         session=knowledge_session,
         embedding_provider=FakeEmbeddings(),
         vector_store=vectors,
     )
-    assert indexed.status is KnowledgeDocumentStatus.READY
+    assert indexed.status is FileKnowledgeArtifactStatus.READY
     assert len(vectors.chunks) == 1
     events = list(
         await knowledge_session.scalars(
-            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.document_id == document.id)
+            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.file_id == file.id)
         )
     )
-    assert {event.action for event in events} >= {"document.indexing_started", "document.indexing_ready"}
+    assert {event.action for event in events} >= {"file.processing_started", "file.processing_ready"}
     assert all("hello" not in str(event.details).lower() for event in events)
     # A ready immutable revision is a no-op rather than generating duplicate chunks.
-    await ingest_document(
-        document=indexed,
+    await ingest_file_artifact(
+        artifact=indexed,
         file=file,
         session=knowledge_session,
         embedding_provider=FakeEmbeddings(),
@@ -371,125 +371,18 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
 async def test_caption_job_cancel_signals_the_single_queued_revision(monkeypatch):
     started = asyncio.Event()
 
-    async def blocked_run(*_):
+    async def blocked_run(**_):
         started.set()
         await asyncio.Event().wait()
 
     jobs = KnowledgeCaptionJobs(lambda *_: None)  # type: ignore[arg-type]
     monkeypatch.setattr(jobs, "_run", blocked_run)
-    document_id = uuid.uuid4()
-    assert jobs.enqueue(user_id="user-a", knowledge_base_id=uuid.uuid4(), document_id=document_id)
+    artifact_id = uuid.uuid4()
+    file_id = uuid.uuid4()
+    assert jobs.enqueue(user_id="user-a", file_id=file_id, artifact_id=artifact_id)
     await started.wait()
-    assert jobs.cancel(str(document_id))
+    assert jobs.cancel(str(artifact_id))
     with pytest.raises(asyncio.CancelledError):
-        await jobs._tasks[str(document_id)]
+        await jobs._tasks[str(artifact_id)]
     await asyncio.sleep(0)
-    assert not jobs.cancel(str(document_id))
-
-
-@pytest.mark.asyncio
-async def test_caption_job_persists_bounded_draft_and_content_free_audit(knowledge_session, monkeypatch):
-    knowledge_base = await create_knowledge_base(
-        user_id="user-a", payload=KnowledgeBaseCreate(name="Images"), session=knowledge_session
-    )
-    file = UserFileModel(
-        user_id="user-a",
-        filename="diagram.png",
-        original_name="Diagram.png",
-        size=12,
-        mime_type="image/png",
-        kind=FileKind.IMAGE,
-        sha256="d" * 64,
-        content_status=FileContentStatus.READY,
-    )
-    knowledge_session.add(file)
-    await knowledge_session.commit()
-    document = await add_knowledge_document(
-        user_id="user-a",
-        knowledge_base_id=knowledge_base.id,
-        payload=KnowledgeDocumentCreate(file_id=file.id),
-        session=knowledge_session,
-    )
-
-    class FakeQueue:
-        def __init__(self):
-            self.enqueued = []
-
-        def enqueue(self, **kwargs):
-            self.enqueued.append(kwargs)
-            return True
-
-        def cancel(self, _):
-            return False
-
-    queue = FakeQueue()
-    requested = await request_knowledge_document_caption(
-        user_id="user-a",
-        knowledge_base_id=knowledge_base.id,
-        document_id=document.id,
-        session=knowledge_session,
-        caption_jobs=queue,
-    )
-    assert requested.caption.status == "pending"
-    assert queue.enqueued == [{"user_id": "user-a", "knowledge_base_id": knowledge_base.id, "document_id": document.id}]
-
-    sessions = async_sessionmaker(knowledge_session.bind, expire_on_commit=False)
-
-    @asynccontextmanager
-    async def test_session():
-        async with sessions() as session:
-            yield session
-
-    monkeypatch.setattr("asterism.domains.knowledge.caption_jobs.get_async_db_session", test_session)
-
-    async def caption(*_):
-        return CaptionResult(text="  A private diagram with  arrows.  ", source=CaptionMode.LOCAL, model="smolvlm2")
-
-    jobs = KnowledgeCaptionJobs(caption)
-    assert jobs.enqueue(user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id)
-    assert not jobs.enqueue(user_id="user-a", knowledge_base_id=knowledge_base.id, document_id=document.id)
-    await jobs._tasks[str(document.id)]
-
-    persisted = await knowledge_session.get(KnowledgeDocumentModel, document.id)
-    assert persisted.caption_status is KnowledgeCaptionStatus.DRAFT
-    assert persisted.caption_text == "A private diagram with arrows."
-    assert persisted.caption_source.value == "local"
-    events = list(
-        await knowledge_session.scalars(
-            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.document_id == document.id)
-        )
-    )
-    assert {event.action for event in events} >= {"caption.started", "caption.local_drafted"}
-    assert all("private diagram" not in str(event.details).lower() for event in events)
-
-    class FakeEmbeddings:
-        async def embed_text(self, texts):
-            assert texts == ["A reviewed diagram"]
-            return [[0.1, 0.2]]
-
-    class FakeVectors:
-        def __init__(self):
-            self.deleted = []
-            self.added = []
-
-        async def delete_chunk(self, **kwargs):
-            self.deleted.append(kwargs)
-
-        async def add(self, chunks):
-            self.added.extend(chunks)
-
-    vectors = FakeVectors()
-    accepted = await update_knowledge_document_caption(
-        user_id="user-a",
-        knowledge_base_id=knowledge_base.id,
-        document_id=document.id,
-        payload=KnowledgeCaptionUpdate(text="A reviewed diagram", accept=True),
-        session=knowledge_session,
-        embedding_provider=FakeEmbeddings(),
-        vector_store=vectors,
-    )
-    assert accepted.caption.status == "accepted"
-    assert accepted.caption.text == "A reviewed diagram"
-    assert len(vectors.deleted) == len(vectors.added) == 1
-    assert vectors.added[0].content == "A reviewed diagram"
-    assert vectors.added[0].id == vectors.deleted[0]["chunk_id"]
+    assert not jobs.cancel(str(artifact_id))

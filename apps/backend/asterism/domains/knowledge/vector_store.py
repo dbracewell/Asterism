@@ -18,9 +18,9 @@ class VectorStoreError(RuntimeError):
 class VectorChunk:
     id: str
     user_id: str
-    knowledge_base_id: str
-    document_id: str
-    revision_id: str
+    file_id: str
+    artifact_generation: int
+    chunk_ordinal: int
     content: str
     vector: list[float]
 
@@ -29,9 +29,9 @@ class VectorChunk:
 class VectorSearchResult:
     id: str
     user_id: str
-    knowledge_base_id: str
-    document_id: str
-    revision_id: str
+    file_id: str
+    artifact_generation: int
+    chunk_ordinal: int
     content: str
     score: float
 
@@ -46,21 +46,19 @@ class VectorStore(Protocol):
         query: Sequence[float],
         *,
         user_id: str,
-        knowledge_base_ids: Sequence[str],
+        allowed_file_ids: Sequence[str],
         limit: int,
     ) -> list[VectorSearchResult]: ...
 
-    async def delete_document(self, *, user_id: str, document_id: str) -> None: ...
+    async def delete_file_generation(self, *, user_id: str, file_id: str, artifact_generation: int) -> None: ...
 
-    async def delete_chunk(self, *, user_id: str, document_id: str, chunk_id: str) -> None: ...
-
-    async def delete_knowledge_base(self, *, user_id: str, knowledge_base_id: str) -> None: ...
+    async def delete_file(self, *, user_id: str, file_id: str) -> None: ...
 
     async def close(self) -> None: ...
 
 
 class LanceDbVectorStore:
-    """Single-table LanceDB store; every query is constrained by owner and base."""
+    """Single-table LanceDB store; every query is constrained by owner and file IDs."""
 
     TABLE_NAME = "knowledge_chunks"
 
@@ -81,9 +79,9 @@ class LanceDbVectorStore:
             [
                 pa.field("id", pa.string(), nullable=False),
                 pa.field("user_id", pa.string(), nullable=False),
-                pa.field("knowledge_base_id", pa.string(), nullable=False),
-                pa.field("document_id", pa.string(), nullable=False),
-                pa.field("revision_id", pa.string(), nullable=False),
+                pa.field("file_id", pa.string(), nullable=False),
+                pa.field("artifact_generation", pa.int32(), nullable=False),
+                pa.field("chunk_ordinal", pa.int32(), nullable=False),
                 pa.field("content", pa.string(), nullable=False),
                 pa.field("vector", pa.list_(pa.float32(), self._dimension), nullable=False),
             ]
@@ -116,8 +114,10 @@ class LanceDbVectorStore:
         for chunk in chunks:
             if len(chunk.vector) != self._dimension:
                 raise ValueError("Knowledge vector has an unexpected dimension")
-            if not all((chunk.id, chunk.user_id, chunk.knowledge_base_id, chunk.document_id, chunk.revision_id)):
+            if not all((chunk.id, chunk.user_id, chunk.file_id)):
                 raise ValueError("Knowledge vector chunk identifiers must be non-empty")
+            if chunk.artifact_generation < 1 or chunk.chunk_ordinal < 0:
+                raise ValueError("Knowledge vector chunk provenance is invalid")
 
     async def add(self, chunks: Sequence[VectorChunk]) -> None:
         if not chunks:
@@ -136,25 +136,28 @@ class LanceDbVectorStore:
         query: Sequence[float],
         *,
         user_id: str,
-        knowledge_base_ids: Sequence[str],
+        allowed_file_ids: Sequence[str],
         limit: int,
     ) -> list[VectorSearchResult]:
         if len(query) != self._dimension:
             raise ValueError("Knowledge query vector has an unexpected dimension")
-        if not user_id or not knowledge_base_ids:
+        # An empty allowed set is deliberately a no-op.  In particular, this
+        # method has no unfiltered-search mode that callers could accidentally
+        # use before resolving authorization and collection membership.
+        if not user_id or not allowed_file_ids:
             return []
         if limit < 1:
             raise ValueError("Knowledge search limit must be positive")
         await self.initialize()
         table = self._require_table()
         owner_filter = f"user_id = {self._quote(user_id)}"
-        base_filter = "knowledge_base_id IN (" + ", ".join(self._quote(base) for base in knowledge_base_ids) + ")"
+        file_filter = "file_id IN (" + ", ".join(self._quote(file_id) for file_id in allowed_file_ids) + ")"
         try:
             async with self._semaphore:
                 rows = await asyncio.to_thread(
                     lambda: (
                         table.search(list(query))
-                        .where(f"{owner_filter} AND {base_filter}", prefilter=True)
+                        .where(f"{owner_filter} AND {file_filter}", prefilter=True)
                         .limit(limit)
                         .to_list()
                     )
@@ -165,9 +168,9 @@ class LanceDbVectorStore:
             VectorSearchResult(
                 id=str(row["id"]),
                 user_id=str(row["user_id"]),
-                knowledge_base_id=str(row["knowledge_base_id"]),
-                document_id=str(row["document_id"]),
-                revision_id=str(row["revision_id"]),
+                file_id=str(row["file_id"]),
+                artifact_generation=int(row["artifact_generation"]),
+                chunk_ordinal=int(row["chunk_ordinal"]),
                 content=str(row["content"]),
                 score=float(row["_distance"]),
             )
@@ -183,17 +186,14 @@ class LanceDbVectorStore:
         except Exception as error:
             raise VectorStoreError("Knowledge vectors could not be deleted") from error
 
-    async def delete_document(self, *, user_id: str, document_id: str) -> None:
-        await self._delete(f"user_id = {self._quote(user_id)} AND document_id = {self._quote(document_id)}")
-
-    async def delete_chunk(self, *, user_id: str, document_id: str, chunk_id: str) -> None:
+    async def delete_file_generation(self, *, user_id: str, file_id: str, artifact_generation: int) -> None:
         await self._delete(
-            f"user_id = {self._quote(user_id)} AND document_id = {self._quote(document_id)} "
-            f"AND id = {self._quote(chunk_id)}"
+            f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)} "
+            f"AND artifact_generation = {artifact_generation}"
         )
 
-    async def delete_knowledge_base(self, *, user_id: str, knowledge_base_id: str) -> None:
-        await self._delete(f"user_id = {self._quote(user_id)} AND knowledge_base_id = {self._quote(knowledge_base_id)}")
+    async def delete_file(self, *, user_id: str, file_id: str) -> None:
+        await self._delete(f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)}")
 
     async def close(self) -> None:
         self._table = None

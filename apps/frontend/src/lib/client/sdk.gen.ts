@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetErrors, AgentKnowledgeBaseAssignmentsGetResponses, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceErrors, AgentKnowledgeBaseAssignmentsReplaceResponses, AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppCaptioningGetData, AppCaptioningGetErrors, AppCaptioningGetResponses, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetErrors, AppCaptioningProviderModelsGetResponses, AppCaptioningUpdateData, AppCaptioningUpdateErrors, AppCaptioningUpdateResponses, AppCaptionModelCancelData, AppCaptionModelCancelErrors, AppCaptionModelCancelResponses, AppCaptionModelDownloadData, AppCaptionModelDownloadErrors, AppCaptionModelDownloadResponses, AppCaptionModelStatusData, AppCaptionModelStatusErrors, AppCaptionModelStatusResponses, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncErrors, AppProviderModelsDiscoverAndSyncResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppProviderModelsListData, AppProviderModelsListErrors, AppProviderModelsListResponses, AppProviderModelUpdateData, AppProviderModelUpdateErrors, AppProviderModelUpdateResponses, AppProviderSettingsGetData, AppProviderSettingsGetErrors, AppProviderSettingsGetResponses, AppProviderSettingsUpdateData, AppProviderSettingsUpdateErrors, AppProviderSettingsUpdateResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, AppToolSettingsGetData, AppToolSettingsGetErrors, AppToolSettingsGetResponses, AppToolSettingsUpdateData, AppToolSettingsUpdateErrors, AppToolSettingsUpdateResponses, ChatSearchData, ChatSearchErrors, ChatSearchResponses, ChatSessionBulkDeleteData, ChatSessionBulkDeleteErrors, ChatSessionBulkDeleteResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FileDeleteData, FileDeleteErrors, FileDeleteResponses, FileGetFileInfoData, FileGetFileInfoErrors, FileGetFileInfoResponses, FileGetManyData, FileGetManyErrors, FileGetManyResponses, FilesDeleteManyData, FilesDeleteManyErrors, FilesDeleteManyResponses, FileUploadData, FileUploadErrors, FileUploadResponses, FolderChatGetManyData, FolderChatGetManyErrors, FolderChatGetManyResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, KnowledgeBaseCreateData, KnowledgeBaseCreateErrors, KnowledgeBaseCreateResponses, KnowledgeBaseDeleteData, KnowledgeBaseDeleteErrors, KnowledgeBaseDeleteResponses, KnowledgeBaseGetManyData, KnowledgeBaseGetManyErrors, KnowledgeBaseGetManyResponses, KnowledgeBaseGetOneData, KnowledgeBaseGetOneErrors, KnowledgeBaseGetOneResponses, KnowledgeBaseUpdateData, KnowledgeBaseUpdateErrors, KnowledgeBaseUpdateResponses, KnowledgeDocumentCancelCaptionData, KnowledgeDocumentCancelCaptionErrors, KnowledgeDocumentCancelCaptionResponses, KnowledgeDocumentCancelIngestionData, KnowledgeDocumentCancelIngestionErrors, KnowledgeDocumentCancelIngestionResponses, KnowledgeDocumentCreateData, KnowledgeDocumentCreateErrors, KnowledgeDocumentCreateResponses, KnowledgeDocumentCreateRevisionData, KnowledgeDocumentCreateRevisionErrors, KnowledgeDocumentCreateRevisionResponses, KnowledgeDocumentDeleteData, KnowledgeDocumentDeleteErrors, KnowledgeDocumentDeleteResponses, KnowledgeDocumentGenerateCaptionData, KnowledgeDocumentGenerateCaptionErrors, KnowledgeDocumentGenerateCaptionResponses, KnowledgeDocumentGetManyData, KnowledgeDocumentGetManyErrors, KnowledgeDocumentGetManyResponses, KnowledgeDocumentGetOneData, KnowledgeDocumentGetOneErrors, KnowledgeDocumentGetOneResponses, KnowledgeDocumentIngestData, KnowledgeDocumentIngestErrors, KnowledgeDocumentIngestResponses, KnowledgeDocumentReindexData, KnowledgeDocumentReindexErrors, KnowledgeDocumentReindexResponses, KnowledgeDocumentUpdateCaptionData, KnowledgeDocumentUpdateCaptionErrors, KnowledgeDocumentUpdateCaptionResponses, KnowledgeDocumentUpdateMetadataData, KnowledgeDocumentUpdateMetadataErrors, KnowledgeDocumentUpdateMetadataResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetErrors, AgentKnowledgeBaseAssignmentsGetResponses, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceErrors, AgentKnowledgeBaseAssignmentsReplaceResponses, AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppCaptioningGetData, AppCaptioningGetErrors, AppCaptioningGetResponses, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetErrors, AppCaptioningProviderModelsGetResponses, AppCaptioningUpdateData, AppCaptioningUpdateErrors, AppCaptioningUpdateResponses, AppCaptionModelCancelData, AppCaptionModelCancelErrors, AppCaptionModelCancelResponses, AppCaptionModelDownloadData, AppCaptionModelDownloadErrors, AppCaptionModelDownloadResponses, AppCaptionModelStatusData, AppCaptionModelStatusErrors, AppCaptionModelStatusResponses, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncErrors, AppProviderModelsDiscoverAndSyncResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppProviderModelsListData, AppProviderModelsListErrors, AppProviderModelsListResponses, AppProviderModelUpdateData, AppProviderModelUpdateErrors, AppProviderModelUpdateResponses, AppProviderSettingsGetData, AppProviderSettingsGetErrors, AppProviderSettingsGetResponses, AppProviderSettingsUpdateData, AppProviderSettingsUpdateErrors, AppProviderSettingsUpdateResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, AppToolSettingsGetData, AppToolSettingsGetErrors, AppToolSettingsGetResponses, AppToolSettingsUpdateData, AppToolSettingsUpdateErrors, AppToolSettingsUpdateResponses, ChatSearchData, ChatSearchErrors, ChatSearchResponses, ChatSessionBulkDeleteData, ChatSessionBulkDeleteErrors, ChatSessionBulkDeleteResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FileDeleteData, FileDeleteErrors, FileDeleteResponses, FileGetFileInfoData, FileGetFileInfoErrors, FileGetFileInfoResponses, FileGetManyData, FileGetManyErrors, FileGetManyResponses, FilesDeleteManyData, FilesDeleteManyErrors, FilesDeleteManyResponses, FileUploadData, FileUploadErrors, FileUploadResponses, FolderChatGetManyData, FolderChatGetManyErrors, FolderChatGetManyResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, GetFileData, GetFileErrors, GetFileResponses, KnowledgeBaseCreateData, KnowledgeBaseCreateErrors, KnowledgeBaseCreateResponses, KnowledgeBaseDeleteData, KnowledgeBaseDeleteErrors, KnowledgeBaseDeleteResponses, KnowledgeBaseFileCreateData, KnowledgeBaseFileCreateErrors, KnowledgeBaseFileCreateResponses, KnowledgeBaseFileGetManyData, KnowledgeBaseFileGetManyErrors, KnowledgeBaseFileGetManyResponses, KnowledgeBaseGetManyData, KnowledgeBaseGetManyErrors, KnowledgeBaseGetManyResponses, KnowledgeBaseGetOneData, KnowledgeBaseGetOneErrors, KnowledgeBaseGetOneResponses, KnowledgeBaseUpdateData, KnowledgeBaseUpdateErrors, KnowledgeBaseUpdateResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -322,150 +322,28 @@ export class ApiClient extends HeyApiClient {
     }
     
     /**
-     * List Knowledge Documents
+     * List Knowledge Base Files
      */
-    public knowledgeDocumentGetMany<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentGetManyData, ThrowOnError>): RequestResult<KnowledgeDocumentGetManyResponses, KnowledgeDocumentGetManyErrors, ThrowOnError> {
-        return (options.client ?? this.client).get<KnowledgeDocumentGetManyResponses, KnowledgeDocumentGetManyErrors, ThrowOnError>({
+    public knowledgeBaseFileGetMany<ThrowOnError extends boolean = false>(options: Options<KnowledgeBaseFileGetManyData, ThrowOnError>): RequestResult<KnowledgeBaseFileGetManyResponses, KnowledgeBaseFileGetManyErrors, ThrowOnError> {
+        return (options.client ?? this.client).get<KnowledgeBaseFileGetManyResponses, KnowledgeBaseFileGetManyErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents',
+            url: '/knowledge-bases/{knowledge_base_id}/files',
             ...options
         });
     }
     
     /**
-     * Add Knowledge Document
+     * Add Knowledge Base File
      */
-    public knowledgeDocumentCreate<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentCreateData, ThrowOnError>): RequestResult<KnowledgeDocumentCreateResponses, KnowledgeDocumentCreateErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<KnowledgeDocumentCreateResponses, KnowledgeDocumentCreateErrors, ThrowOnError>({
+    public knowledgeBaseFileCreate<ThrowOnError extends boolean = false>(options: Options<KnowledgeBaseFileCreateData, ThrowOnError>): RequestResult<KnowledgeBaseFileCreateResponses, KnowledgeBaseFileCreateErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<KnowledgeBaseFileCreateResponses, KnowledgeBaseFileCreateErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents',
+            url: '/knowledge-bases/{knowledge_base_id}/files',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers
             }
-        });
-    }
-    
-    /**
-     * Create Knowledge Document Revision
-     */
-    public knowledgeDocumentCreateRevision<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentCreateRevisionData, ThrowOnError>): RequestResult<KnowledgeDocumentCreateRevisionResponses, KnowledgeDocumentCreateRevisionErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<KnowledgeDocumentCreateRevisionResponses, KnowledgeDocumentCreateRevisionErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/revisions',
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-    }
-    
-    /**
-     * Delete Knowledge Document
-     */
-    public knowledgeDocumentDelete<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentDeleteData, ThrowOnError>): RequestResult<KnowledgeDocumentDeleteResponses, KnowledgeDocumentDeleteErrors, ThrowOnError> {
-        return (options.client ?? this.client).delete<KnowledgeDocumentDeleteResponses, KnowledgeDocumentDeleteErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}',
-            ...options
-        });
-    }
-    
-    /**
-     * Get Knowledge Document
-     */
-    public knowledgeDocumentGetOne<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentGetOneData, ThrowOnError>): RequestResult<KnowledgeDocumentGetOneResponses, KnowledgeDocumentGetOneErrors, ThrowOnError> {
-        return (options.client ?? this.client).get<KnowledgeDocumentGetOneResponses, KnowledgeDocumentGetOneErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}',
-            ...options
-        });
-    }
-    
-    /**
-     * Update Knowledge Document Metadata
-     */
-    public knowledgeDocumentUpdateMetadata<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentUpdateMetadataData, ThrowOnError>): RequestResult<KnowledgeDocumentUpdateMetadataResponses, KnowledgeDocumentUpdateMetadataErrors, ThrowOnError> {
-        return (options.client ?? this.client).patch<KnowledgeDocumentUpdateMetadataResponses, KnowledgeDocumentUpdateMetadataErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}',
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-    }
-    
-    /**
-     * Generate Knowledge Document Caption
-     */
-    public knowledgeDocumentGenerateCaption<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentGenerateCaptionData, ThrowOnError>): RequestResult<KnowledgeDocumentGenerateCaptionResponses, KnowledgeDocumentGenerateCaptionErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<KnowledgeDocumentGenerateCaptionResponses, KnowledgeDocumentGenerateCaptionErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption/generate',
-            ...options
-        });
-    }
-    
-    /**
-     * Cancel Knowledge Document Caption
-     */
-    public knowledgeDocumentCancelCaption<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentCancelCaptionData, ThrowOnError>): RequestResult<KnowledgeDocumentCancelCaptionResponses, KnowledgeDocumentCancelCaptionErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<KnowledgeDocumentCancelCaptionResponses, KnowledgeDocumentCancelCaptionErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption/cancel',
-            ...options
-        });
-    }
-    
-    /**
-     * Update Knowledge Document Caption
-     */
-    public knowledgeDocumentUpdateCaption<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentUpdateCaptionData, ThrowOnError>): RequestResult<KnowledgeDocumentUpdateCaptionResponses, KnowledgeDocumentUpdateCaptionErrors, ThrowOnError> {
-        return (options.client ?? this.client).patch<KnowledgeDocumentUpdateCaptionResponses, KnowledgeDocumentUpdateCaptionErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/caption',
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-    }
-    
-    /**
-     * Ingest Knowledge Document
-     */
-    public knowledgeDocumentIngest<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentIngestData, ThrowOnError>): RequestResult<KnowledgeDocumentIngestResponses, KnowledgeDocumentIngestErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<KnowledgeDocumentIngestResponses, KnowledgeDocumentIngestErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/ingest',
-            ...options
-        });
-    }
-    
-    /**
-     * Reindex Knowledge Document
-     */
-    public knowledgeDocumentReindex<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentReindexData, ThrowOnError>): RequestResult<KnowledgeDocumentReindexResponses, KnowledgeDocumentReindexErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<KnowledgeDocumentReindexResponses, KnowledgeDocumentReindexErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/reindex',
-            ...options
-        });
-    }
-    
-    /**
-     * Cancel Knowledge Document Ingestion
-     */
-    public knowledgeDocumentCancelIngestion<ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentCancelIngestionData, ThrowOnError>): RequestResult<KnowledgeDocumentCancelIngestionResponses, KnowledgeDocumentCancelIngestionErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<KnowledgeDocumentCancelIngestionResponses, KnowledgeDocumentCancelIngestionErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/knowledge-bases/{knowledge_base_id}/documents/{document_id}/cancel',
-            ...options
         });
     }
     
