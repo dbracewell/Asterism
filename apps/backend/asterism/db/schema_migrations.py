@@ -18,9 +18,6 @@ _CHAT_SEARCH_MIGRATION = "20260403_01_chat_search_fts"
 _MESSAGE_USAGE_MIGRATION = "20260404_01_message_usage"
 _KNOWLEDGE_FOUNDATIONS_MIGRATION = "20260922_01_knowledge_foundations"
 _KNOWLEDGE_BASE_CRUD_MIGRATION = "20260923_01_knowledge_base_crud"
-_KNOWLEDGE_DOCUMENT_METADATA_MIGRATION = "20260923_02_knowledge_document_metadata"
-_KNOWLEDGE_DOCUMENT_REVISIONS_MIGRATION = "20260923_03_knowledge_document_revisions"
-_KNOWLEDGE_DOCUMENT_ORDER_MIGRATION = "20260923_04_knowledge_document_order"
 _KNOWLEDGE_AUDIT_MIGRATION = "20260923_05_knowledge_audit"
 _AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION = "20260924_01_agent_knowledge_assignments"
 _KNOWLEDGE_CAPTIONING_MIGRATION = "20260925_01_knowledge_captioning"
@@ -242,67 +239,10 @@ async def _migrate_knowledge_foundations(connection: AsyncConnection) -> None:
             "CREATE INDEX IF NOT EXISTS idx_knowledge_bases_user_updated ON knowledge_bases (user_id, updated_at DESC)"
         )
     )
-    await connection.execute(
-        text(
-            "CREATE TABLE IF NOT EXISTS knowledge_documents ("
-            "id CHAR(32) NOT NULL PRIMARY KEY, "
-            "knowledge_base_id CHAR(32) NOT NULL REFERENCES knowledge_bases(id) ON DELETE CASCADE, "
-            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
-            "file_id CHAR(32) REFERENCES user_files(id) ON DELETE SET NULL, "
-            "original_name VARCHAR(255) NOT NULL, mime_type VARCHAR(255) NOT NULL, "
-            "content_sha256 VARCHAR(64) NOT NULL, revision INTEGER NOT NULL DEFAULT 1, "
-            "status VARCHAR(16) NOT NULL DEFAULT 'pending' "
-            "CHECK (status IN ('pending', 'indexing', 'ready', 'failed')), "
-            "error VARCHAR(512), indexed_at INTEGER, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL"
-            ")"
-        )
-    )
-    await connection.execute(
-        text(
-            "CREATE INDEX IF NOT EXISTS idx_knowledge_documents_base_status "
-            "ON knowledge_documents (knowledge_base_id, status, updated_at DESC)"
-        )
-    )
-
-
 async def _migrate_knowledge_base_crud(connection: AsyncConnection) -> None:
     """Add the owner-scoped name invariant after the foundations migration."""
     await connection.execute(
         text("CREATE UNIQUE INDEX IF NOT EXISTS uq_knowledge_bases_user_name ON knowledge_bases (user_id, name)")
-    )
-
-
-async def _migrate_knowledge_document_metadata(connection: AsyncConnection) -> None:
-    """Persist non-content document metadata and prevent duplicate attachments."""
-    await _add_column_if_missing(
-        connection,
-        "knowledge_documents",
-        "metadata",
-        "JSON NOT NULL DEFAULT '{}'",
-    )
-    await connection.execute(
-        text(
-            "CREATE UNIQUE INDEX IF NOT EXISTS uq_knowledge_documents_base_file "
-            "ON knowledge_documents (knowledge_base_id, file_id)"
-        )
-    )
-
-
-async def _migrate_knowledge_document_revisions(connection: AsyncConnection) -> None:
-    await _add_column_if_missing(
-        connection,
-        "knowledge_documents",
-        "replaces_document_id",
-        "CHAR(32) REFERENCES knowledge_documents(id) ON DELETE SET NULL",
-    )
-
-
-async def _migrate_knowledge_document_order(connection: AsyncConnection) -> None:
-    await _add_column_if_missing(
-        connection,
-        "knowledge_documents",
-        "position",
-        "INTEGER NOT NULL DEFAULT 0",
     )
 
 
@@ -313,7 +253,6 @@ async def _migrate_knowledge_audit(connection: AsyncConnection) -> None:
             "id CHAR(32) NOT NULL PRIMARY KEY, "
             "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
             "knowledge_base_id CHAR(32) REFERENCES knowledge_bases(id) ON DELETE SET NULL, "
-            "document_id CHAR(32) REFERENCES knowledge_documents(id) ON DELETE SET NULL, "
             "action VARCHAR(64) NOT NULL, details JSON NOT NULL DEFAULT '{}', "
             "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL"
             ")"
@@ -350,7 +289,7 @@ async def _migrate_agent_knowledge_assignments(connection: AsyncConnection) -> N
 
 
 async def _migrate_knowledge_captioning(connection: AsyncConnection) -> None:
-    """Persist the global mode and revision-scoped derived caption metadata."""
+    """Persist the global captioning configuration for file artifacts."""
     await connection.execute(
         text(
             "CREATE TABLE IF NOT EXISTS knowledge_caption_configuration ("
@@ -369,19 +308,6 @@ async def _migrate_knowledge_captioning(connection: AsyncConnection) -> None:
         ),
         {"now": int(time.time())},
     )
-    for column, definition in (
-        ("caption_status", "VARCHAR(16)"),
-        ("caption_source", "VARCHAR(16)"),
-        ("caption_model", "VARCHAR(512)"),
-        ("caption_text", "TEXT"),
-        ("caption_error_code", "VARCHAR(64)"),
-        ("caption_error_reason", "VARCHAR(512)"),
-        ("caption_generated_at", "INTEGER"),
-        ("caption_accepted_at", "INTEGER"),
-    ):
-        await _add_column_if_missing(connection, "knowledge_documents", column, definition)
-
-
 async def _migrate_file_knowledge_artifacts(connection: AsyncConnection) -> None:
     """Create the canonical, file-owned artifact contract before its cutover."""
     extraction_policy = "text-extraction-v1"
@@ -505,9 +431,6 @@ async def _migrate_message_usage(connection: AsyncConnection) -> None:
 _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_KNOWLEDGE_FOUNDATIONS_MIGRATION, _migrate_knowledge_foundations),
     (_KNOWLEDGE_BASE_CRUD_MIGRATION, _migrate_knowledge_base_crud),
-    (_KNOWLEDGE_DOCUMENT_METADATA_MIGRATION, _migrate_knowledge_document_metadata),
-    (_KNOWLEDGE_DOCUMENT_REVISIONS_MIGRATION, _migrate_knowledge_document_revisions),
-    (_KNOWLEDGE_DOCUMENT_ORDER_MIGRATION, _migrate_knowledge_document_order),
     (_KNOWLEDGE_AUDIT_MIGRATION, _migrate_knowledge_audit),
     (_AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION, _migrate_agent_knowledge_assignments),
     (_KNOWLEDGE_CAPTIONING_MIGRATION, _migrate_knowledge_captioning),

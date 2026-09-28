@@ -68,18 +68,18 @@ I use the file in several knowledge bases.
       processing-profile identity covering extracted content, chunking, visual
       embedding, text embeddings, canonical caption state, safe failure state,
       and timestamps.
-- [~] US-21.1-T2: Replace `KnowledgeDocumentModel` with a minimal
+- [x] US-21.1-T2: Replace `KnowledgeDocumentModel` with a minimal
       `KnowledgeBaseFileModel` membership and move canonical artifact metadata
       to user-file-owned storage. Remove per-base file metadata, ingestion
       state, caption fields, and obsolete APIs rather than preserving a legacy
       compatibility layer.
-- [ ] US-21.1-T3: Change the vector-store record/protocol/schema to use
+- [x] US-21.1-T3: Change the vector-store record/protocol/schema to use
       `user_id`, `file_id`, artifact generation, and chunk provenance—not
       `knowledge_base_id`; support a mandatory filtered allowed-file search.
-- [ ] US-21.1-T4: Create clean-install database/vector initialization and
+- [x] US-21.1-T4: Create clean-install database/vector initialization and
       deterministic development/test reset coverage. Update generated OpenAPI
       clients after the contract replacement.
-- [ ] US-21.1-T5: Add schema/service/vector tests for per-user isolation,
+- [x] US-21.1-T5: Add schema/service/vector tests for per-user isolation,
       membership uniqueness/order, file deletion cleanup, and the invariant
       that a file has at most one current artifact generation.
 

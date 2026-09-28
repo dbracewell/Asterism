@@ -20,7 +20,12 @@ from asterism.domains.files.service import (
     list_user_files,
     upload_files,
 )
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeArtifactStatus,
+    KnowledgeBaseFileModel,
+    KnowledgeBaseModel,
+)
 from asterism.domains.llm.schemas import ImageUrlContentPart, text_content
 from asterism.domains.user.models import UserModel
 from openpyxl import Workbook
@@ -136,6 +141,62 @@ async def test_delete_is_user_scoped_and_download_remains_available(file_session
     assert deleted.filename == filename
     assert not (config.files_root / "user-a" / filename).exists()
     assert await file_session.scalar(select(UserFileModel.id)) is None
+
+
+@pytest.mark.asyncio
+async def test_delete_file_cancels_artifacts_and_removes_memberships_vectors_and_bytes(file_session, monkeypatch):
+    class FakeJobs:
+        def __init__(self):
+            self.cancelled: list[str] = []
+
+        def enqueue(self, **_):
+            return True
+
+        def cancel(self, artifact_id: str):
+            self.cancelled.append(artifact_id)
+            return True
+
+    class FakeVectors:
+        def __init__(self):
+            self.deleted: list[tuple[str, str]] = []
+
+        async def delete_file(self, *, user_id: str, file_id: str):
+            self.deleted.append((user_id, file_id))
+
+    jobs = FakeJobs()
+    vectors = FakeVectors()
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", jobs)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.vector_store", vectors)
+
+    uploaded = await upload_files(
+        user_id="user-a", uploads=[_upload("knowledge.txt", b"private knowledge")], session=file_session
+    )
+    file = uploaded.files[0]
+    artifact = await file_session.scalar(
+        select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id)
+    )
+    assert artifact is not None
+    base = KnowledgeBaseModel(user_id="user-a", name="References")
+    file_session.add(base)
+    await file_session.flush()
+    file_session.add(KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=file.id, position=1))
+    await file_session.commit()
+
+    await delete_user_file(user_id="user-a", filename=file.filename, session=file_session)
+
+    assert jobs.cancelled == [str(artifact.id)]
+    assert vectors.deleted == [("user-a", str(file.id))]
+    assert (
+        await file_session.scalar(
+            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id)
+        )
+        is None
+    )
+    assert (
+        await file_session.scalar(select(KnowledgeBaseFileModel.id).where(KnowledgeBaseFileModel.file_id == file.id))
+        is None
+    )
+    assert not (config.files_root / "user-a" / file.filename).exists()
 
 
 @pytest.mark.asyncio

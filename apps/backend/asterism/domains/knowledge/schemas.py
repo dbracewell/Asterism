@@ -93,20 +93,6 @@ class KnowledgeBaseFileList(BaseModel):
     page_size: int = Field(ge=1)
 
 
-class KnowledgeDocumentCreate(BaseModel):
-    file_id: uuid.UUID
-    metadata: dict[str, str] = Field(default_factory=dict, max_length=32)
-
-
-class KnowledgeDocumentUpdate(BaseModel):
-    metadata: dict[str, str] = Field(max_length=32)
-
-
-class KnowledgeDocumentRevisionCreate(BaseModel):
-    file_id: uuid.UUID
-    metadata: dict[str, str] | None = Field(default=None, max_length=32)
-
-
 class KnowledgeCaptionMetadata(BaseModel):
     status: str | None = None
     source: str | None = None
@@ -116,32 +102,6 @@ class KnowledgeCaptionMetadata(BaseModel):
     error_reason: str | None = None
     generated_at: int | None = None
     accepted_at: int | None = None
-
-
-class KnowledgeDocument(BaseModel):
-    id: uuid.UUID
-    knowledge_base_id: uuid.UUID
-    file_id: uuid.UUID | None
-    original_name: str
-    mime_type: str
-    content_sha256: str
-    revision: int = Field(ge=1)
-    position: int = Field(ge=0)
-    status: str
-    error: str | None
-    indexed_at: int | None
-    replaces_document_id: uuid.UUID | None
-    caption: KnowledgeCaptionMetadata
-    metadata: dict[str, str]
-    created_at: int
-    updated_at: int
-
-
-class KnowledgeDocumentList(BaseModel):
-    documents: list[KnowledgeDocument]
-    total: int = Field(ge=0)
-    page: int = Field(ge=1)
-    page_size: int = Field(ge=1)
 
 
 class KnowledgeCaptionUpdate(BaseModel):

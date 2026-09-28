@@ -499,10 +499,10 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 - [~] US-21.1 — Establish canonical file knowledge artifacts
   - [x] US-21.1-T1: Define the file artifact and processing-profile contracts.
-  - [~] US-21.1-T2: Replace per-base documents with file memberships and file-owned artifacts.
-  - [ ] US-21.1-T3: Make vector rows file-keyed and require owner/allowed-file filtering.
-  - [ ] US-21.1-T4: Establish deterministic clean-install/reset behavior and regenerate the API client.
-  - [ ] US-21.1-T5: Test isolation, membership, cleanup, and one-current-generation invariants.
+  - [x] US-21.1-T2: Replace per-base documents with file memberships and file-owned artifacts.
+  - [x] US-21.1-T3: Make vector rows file-keyed and require owner/allowed-file filtering.
+  - [x] US-21.1-T4: Establish deterministic clean-install/reset behavior and regenerate the API client.
+  - [x] US-21.1-T5: Test isolation, membership, cleanup, and one-current-generation invariants.
 
 - [ ] US-21.2 — Process user files automatically and reprocess globally
   - [ ] US-21.2-T1: Queue idempotent bounded processing on file upload.

@@ -71,13 +71,13 @@ async def test_knowledge_migration_is_idempotent(tmp_path: Path):
     await engine.dispose()
     assert {
         "knowledge_bases",
-        "knowledge_documents",
         "knowledge_audit_events",
         "agent_knowledge_base_assignments",
         "knowledge_processing_profile",
         "file_knowledge_artifacts",
         "knowledge_base_files",
     } <= tables
+    assert "knowledge_documents" not in tables
 
 
 @pytest.mark.asyncio

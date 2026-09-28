@@ -3,6 +3,7 @@ import hashlib
 import io
 import mimetypes
 import re
+import uuid
 from pathlib import Path
 from typing import Literal
 
@@ -10,7 +11,7 @@ import filetype
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from PIL.TiffImagePlugin import ImageOps
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.file_utils import get_file_mime_type
@@ -320,16 +321,9 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     )
     if file is None:
         raise NotFoundException("File not found")
-    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
-    from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs, vector_store
+    from asterism.domains.knowledge.runtime import vector_store
 
-    artifact_ids = list(
-        await session.scalars(
-            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id)
-        )
-    )
-    for artifact_id in artifact_ids:
-        knowledge_ingestion_jobs.cancel(str(artifact_id))
+    await _remove_file_knowledge_records(file_id=file.id, session=session)
     response = UserFile.model_validate(file)
     file_id = file.id
     await session.delete(file)
@@ -342,6 +336,27 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
         pass
     get_file_store().delete(user_id, filename)
     return response
+
+
+async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSession) -> None:
+    """Cancel and remove file-owned knowledge state before deleting its source.
+
+    This explicit cleanup is required even though production databases enforce
+    foreign keys: deterministic test/development SQLite connections may not
+    enable cascade actions.
+    """
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeBaseFileModel
+    from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs
+
+    artifact_ids = list(
+        await session.scalars(
+            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file_id)
+        )
+    )
+    for artifact_id in artifact_ids:
+        knowledge_ingestion_jobs.cancel(str(artifact_id))
+    await session.execute(delete(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.file_id == file_id))
+    await session.execute(delete(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file_id))
 
 
 async def delete_user_files(
@@ -363,16 +378,7 @@ async def delete_user_files(
                     )
                 )
                 if file is not None:
-                    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
-                    from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs
-
-                    artifact_ids = list(
-                        await session.scalars(
-                            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id)
-                        )
-                    )
-                    for artifact_id in artifact_ids:
-                        knowledge_ingestion_jobs.cancel(str(artifact_id))
+                    await _remove_file_knowledge_records(file_id=file.id, session=session)
                     deleted_files.append(UserFile.model_validate(file))
                     await session.delete(file)
             await session.commit()

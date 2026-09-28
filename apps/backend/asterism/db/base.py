@@ -13,7 +13,6 @@ from asterism.domains.knowledge.models import (  # noqa: F401
     FileKnowledgeArtifactModel,
     KnowledgeBaseFileModel,
     KnowledgeBaseModel,
-    KnowledgeDocumentModel,
     KnowledgeProcessingProfileModel,
 )
 from asterism.domains.settings.models import (  # noqa: F401

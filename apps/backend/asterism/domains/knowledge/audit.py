@@ -16,9 +16,6 @@ class KnowledgeAuditEventModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     knowledge_base_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("knowledge_bases.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    document_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("knowledge_documents.id", ondelete="SET NULL"), nullable=True, index=True
-    )
     file_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("user_files.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -33,7 +30,6 @@ def record_knowledge_audit(
     user_id: str,
     action: str,
     knowledge_base_id: uuid.UUID | None = None,
-    document_id: uuid.UUID | None = None,
     file_id: uuid.UUID | None = None,
     details: dict[str, str | int] | None = None,
 ) -> KnowledgeAuditEventModel:
@@ -41,7 +37,6 @@ def record_knowledge_audit(
     return KnowledgeAuditEventModel(
         user_id=user_id,
         knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
         file_id=file_id,
         action=action,
         details=details or {},
