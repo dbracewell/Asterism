@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from contextlib import asynccontextmanager
 
 import pytest
 import pytest_asyncio
@@ -11,6 +12,7 @@ from asterism.domains.files.models import FileContentStatus, FileKind, UserFileM
 from asterism.domains.knowledge.audit import KnowledgeAuditEventModel
 from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
 from asterism.domains.knowledge.ingestion import ingest_file_artifact
+from asterism.domains.knowledge.jobs import KnowledgeIngestionJobs
 from asterism.domains.knowledge.models import (
     FileKnowledgeArtifactStatus,
     KnowledgeBaseFileModel,
@@ -19,8 +21,10 @@ from asterism.domains.knowledge.models import (
 from asterism.domains.knowledge.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseFileCreate,
+    KnowledgeBaseFileReorder,
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfigurationUpdate,
+    KnowledgeProcessingProfileUpdate,
 )
 from asterism.domains.knowledge.service import (
     add_knowledge_base_file,
@@ -30,8 +34,11 @@ from asterism.domains.knowledge.service import (
     get_knowledge_base,
     list_knowledge_base_files,
     list_knowledge_bases,
+    remove_knowledge_base_file,
+    reorder_knowledge_base_files,
     update_captioning_configuration,
     update_knowledge_base,
+    update_processing_profile_and_reprocess,
 )
 from asterism.domains.user.models import UserModel
 from sqlalchemy import select
@@ -120,7 +127,18 @@ async def test_file_memberships_are_owned_ordered_references(knowledge_session):
         user_id="user-a", knowledge_base_id=base.id, session=knowledge_session, page=1, page_size=50
     )
     assert [entry.file_id for entry in listing.files] == [owned.id, second.id]
-    assert await knowledge_session.get(KnowledgeBaseFileModel, first_membership.id)
+    reordered = await reorder_knowledge_base_files(
+        user_id="user-a",
+        knowledge_base_id=base.id,
+        payload=KnowledgeBaseFileReorder(membership_ids=[second_membership.id, first_membership.id]),
+        session=knowledge_session,
+    )
+    assert [item.file_id for item in reordered.files] == [second.id, owned.id]
+    await remove_knowledge_base_file(
+        user_id="user-a", knowledge_base_id=base.id, membership_id=first_membership.id, session=knowledge_session
+    )
+    assert await knowledge_session.get(UserFileModel, owned.id) is not None
+    assert await knowledge_session.get(KnowledgeBaseFileModel, first_membership.id) is None
     attachment_events = list(
         await knowledge_session.scalars(
             select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.action == "base.file_attached")
@@ -128,13 +146,13 @@ async def test_file_memberships_are_owned_ordered_references(knowledge_session):
     )
     assert [event.file_id for event in attachment_events] == [owned.id, second.id]
 
-    with pytest.raises(CodedException, match="already attached"):
-        await add_knowledge_base_file(
-            user_id="user-a",
-            knowledge_base_id=base.id,
-            payload=KnowledgeBaseFileCreate(file_id=owned.id),
-            session=knowledge_session,
-        )
+    reattached = await add_knowledge_base_file(
+        user_id="user-a",
+        knowledge_base_id=base.id,
+        payload=KnowledgeBaseFileCreate(file_id=owned.id),
+        session=knowledge_session,
+    )
+    assert reattached.file_id == owned.id
     with pytest.raises(NotFoundException, match="File not found"):
         await add_knowledge_base_file(
             user_id="user-a",
@@ -231,6 +249,90 @@ async def test_caption_configuration_is_seeded_disabled(knowledge_session):
     )
     assert updated.mode == "disabled"
     assert (await get_captioning_configuration(session=knowledge_session)).updated_at == updated.updated_at
+
+
+@pytest.mark.asyncio
+async def test_profile_change_queues_replacements_without_retiring_ready_generations(knowledge_session, monkeypatch):
+    class FakeJobs:
+        def __init__(self):
+            self.enqueued: list[uuid.UUID] = []
+
+        def enqueue(self, *, artifact_id, **_):
+            self.enqueued.append(artifact_id)
+            return True
+
+    jobs = FakeJobs()
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", jobs)
+    file = UserFileModel(
+        user_id="user-a",
+        filename="profile.txt",
+        original_name="profile.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="d" * 64,
+    )
+    knowledge_session.add(file)
+    await knowledge_session.flush()
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+
+    ready = FileKnowledgeArtifactModel(
+        user_id="user-a",
+        file_id=file.id,
+        generation=1,
+        processing_profile_generation=1,
+        processing_profile_identity="a" * 64,
+        status=FileKnowledgeArtifactStatus.READY,
+        is_current=True,
+    )
+    knowledge_session.add(ready)
+    await knowledge_session.commit()
+    result = await update_processing_profile_and_reprocess(
+        payload=KnowledgeProcessingProfileUpdate(
+            extraction_policy="extract-v2",
+            chunking_policy="chunk-v2",
+            embedding_model="embed-v2",
+            captioning_policy="caption-v2",
+        ),
+        session=knowledge_session,
+    )
+    artifacts = list(
+        await knowledge_session.scalars(
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id)
+        )
+    )
+    assert result.queued_file_count == 1
+    assert {(item.generation, item.status, item.is_current) for item in artifacts} == {
+        (1, FileKnowledgeArtifactStatus.READY, True),
+        (2, FileKnowledgeArtifactStatus.PENDING, False),
+    }
+    assert jobs.enqueued == [next(item.id for item in artifacts if item.generation == 2)]
+
+    class FailingEmbeddings:
+        async def embed_text(self, _):
+            raise RuntimeError("provider unavailable")
+
+        async def embed_image(self, _):
+            raise RuntimeError("provider unavailable")
+
+    class FakeVectors:
+        async def delete_file_generation(self, **_):
+            pass
+
+        async def add(self, _):
+            raise AssertionError("failed embeddings must not write vectors")
+
+    replacement = next(item for item in artifacts if item.generation == 2)
+    failed = await ingest_file_artifact(
+        artifact=replacement,
+        file=file,
+        session=knowledge_session,
+        embedding_provider=FailingEmbeddings(),
+        vector_store=FakeVectors(),
+    )
+    assert failed.status is FileKnowledgeArtifactStatus.FAILED
+    await knowledge_session.refresh(ready)
+    assert ready.is_current
 
 
 @pytest.mark.asyncio
@@ -386,3 +488,40 @@ async def test_caption_job_cancel_signals_the_single_queued_revision(monkeypatch
         await jobs._tasks[str(artifact_id)]
     await asyncio.sleep(0)
     assert not jobs.cancel(str(artifact_id))
+
+
+@pytest.mark.asyncio
+async def test_restart_recovery_makes_processing_artifact_retryable(knowledge_session, monkeypatch):
+    file = UserFileModel(
+        user_id="user-a",
+        filename="restart.txt",
+        original_name="restart.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="e" * 64,
+    )
+    knowledge_session.add(file)
+    await knowledge_session.flush()
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+
+    artifact = FileKnowledgeArtifactModel(
+        user_id="user-a",
+        file_id=file.id,
+        generation=1,
+        processing_profile_generation=1,
+        processing_profile_identity="a" * 64,
+        status=FileKnowledgeArtifactStatus.PROCESSING,
+    )
+    knowledge_session.add(artifact)
+    await knowledge_session.commit()
+
+    @asynccontextmanager
+    async def session_factory():
+        yield knowledge_session
+
+    monkeypatch.setattr("asterism.domains.knowledge.jobs.get_async_db_session", session_factory)
+    await KnowledgeIngestionJobs(max_concurrency=1).recover_interrupted()
+    await knowledge_session.refresh(artifact)
+    assert artifact.status is FileKnowledgeArtifactStatus.PENDING
+    assert artifact.error_code == "interrupted"

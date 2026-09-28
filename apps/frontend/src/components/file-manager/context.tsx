@@ -1,3 +1,4 @@
+import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { client } from "@/lib/api";
 import { ErrorDetail, UserFile } from "@/lib/client";
 import {
@@ -68,6 +69,13 @@ export const FileManagerProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const { confirm: confirmDelete, Dialog: DeleteConfirmation } =
+    useConfirmationDialog({
+      title: "Delete selected files?",
+      description:
+        "This permanently removes the selected files, every knowledge-base membership, and all derived extractions, captions, and vectors.",
+      confirmVariant: "destructive",
+    });
   const [view, setView] = useState<View>("list");
   const [lastClicked, setLastClicked] = useState(-1);
   const [sort, setSort] = useState<Sort>("name");
@@ -113,12 +121,12 @@ export const FileManagerProvider = ({
     },
   });
 
-  const deleteSelectedFiles = useCallback(() => {
-    if (!selectedFiles) return;
+  const deleteSelectedFiles = useCallback(async () => {
+    if (selectedFiles.length === 0 || !(await confirmDelete())) return;
     deleteFileMutation({
       body: selectedFiles,
     });
-  }, [deleteFileMutation, selectedFiles]);
+  }, [confirmDelete, deleteFileMutation, selectedFiles]);
 
   const { data, error } = useQuery({
     ...fileGetManyOptions({
@@ -221,9 +229,12 @@ export const FileManagerProvider = ({
   );
 
   return (
-    <FileManagerContext.Provider value={{ ...ctx }}>
-      {children}
-    </FileManagerContext.Provider>
+    <>
+      <FileManagerContext.Provider value={{ ...ctx }}>
+        {children}
+      </FileManagerContext.Provider>
+      <DeleteConfirmation />
+    </>
   );
 };
 

@@ -34,6 +34,8 @@ class KnowledgeBaseList(BaseModel):
 class KnowledgeProcessingProfile(BaseModel):
     """The globally active processing policy recorded by every artifact."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     generation: int = Field(ge=1)
     identity: str = Field(min_length=64, max_length=64)
     extraction_policy: str = Field(min_length=1, max_length=128)
@@ -41,6 +43,18 @@ class KnowledgeProcessingProfile(BaseModel):
     embedding_model: str = Field(min_length=1, max_length=512)
     captioning_policy: str = Field(min_length=1, max_length=512)
     updated_at: int
+
+
+class KnowledgeProcessingProfileUpdate(BaseModel):
+    extraction_policy: str = Field(min_length=1, max_length=128)
+    chunking_policy: str = Field(min_length=1, max_length=128)
+    embedding_model: str = Field(min_length=1, max_length=512)
+    captioning_policy: str = Field(min_length=1, max_length=512)
+
+
+class KnowledgeReprocessSummary(BaseModel):
+    profile: KnowledgeProcessingProfile
+    queued_file_count: int = Field(ge=0)
 
 
 class FileKnowledgeArtifact(BaseModel):
@@ -91,6 +105,10 @@ class KnowledgeBaseFileList(BaseModel):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
     page_size: int = Field(ge=1)
+
+
+class KnowledgeBaseFileReorder(BaseModel):
+    membership_ids: list[uuid.UUID] = Field(min_length=1, max_length=10_000)
 
 
 class KnowledgeCaptionMetadata(BaseModel):

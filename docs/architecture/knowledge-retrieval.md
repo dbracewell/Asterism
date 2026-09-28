@@ -8,15 +8,16 @@ retrievable. Image CLIP vectors remain independently indexed throughout.
 
 | Data | Owner | Storage |
 | --- | --- | --- |
-| Knowledge-base/document metadata, state, and agent assignments | Relational database | SQLite through the existing SQLAlchemy/migration path |
+| File artifacts, ordered knowledge-base memberships, and agent assignments | Relational database | SQLite through the existing SQLAlchemy/migration path |
 | Chunk content, provenance IDs, and vectors | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb` |
 | Pinned local embedding model and tokenizer/processor assets | Operator | `STORAGE_ROOT/models/knowledge-clip` |
 | Pinned local caption bundle and its integrity manifest | Admin or operator | `STORAGE_ROOT/models/captioning-smolvlm2` |
 
-`knowledge_chunks` is one LanceDB table. Every row includes `user_id` and
-`knowledge_base_id`; every retrieval query applies both filters before the
-limit. The adapter exposes only add, filtered search, document/chunk deletion,
-and base deletion. It never exposes an unfiltered search API.
+`knowledge_chunks` is one LanceDB table. Every row includes `user_id`, `file_id`,
+and artifact generation provenance. Retrieval resolves an agent's assigned
+knowledge-base memberships to allowed file IDs before it queries LanceDB; the
+adapter exposes only owner- and allowed-file-filtered search, file/chunk
+deletion, and no unfiltered search API.
 
 ## Model contract
 
@@ -130,7 +131,7 @@ an existing bundle ready.
 `init_system` opens LanceDB and starts bounded caption-job recovery; FastAPI
 shutdown cancels caption jobs and downloads, releases caption/embedding runtime
 references, closes the vector-store service, then closes the database engine.
-Caption jobs are one per document revision, have a strict timeout and bounded
+Caption jobs are one per file artifact generation, have a strict timeout and bounded
 concurrency, and record only status/code/model identifiers in audits. They never
 log image bytes or caption text by default. A failed or canceled generation keeps
 any prior accepted text vector and the image vector intact. Ingestion work,
@@ -138,7 +139,7 @@ document limits, retries, and rebuild orchestration are defined in US-17.2; no
 unbounded ingestion registry is introduced.
 
 For a vector schema/version migration, create a new LanceDB table/version,
-re-embed from the relational document revisions, validate counts and retrieval,
+re-embed from the relational file artifacts, validate counts and retrieval,
 then atomically switch the configured table/version and retain/remove the old
 one under an explicit operator decision. Do not mutate vectors in place or rely
 on `Base.metadata.create_all` for relational upgrades.
@@ -148,17 +149,17 @@ on `Base.metadata.create_all` for relational upgrades.
 Back up `STORAGE_ROOT` together with the relational database. In particular,
 preserve `knowledge/lancedb`, `models/knowledge-clip`,
 `models/captioning-smolvlm2`, and uploaded source files; LanceDB vectors alone
-cannot recreate the immutable document revisions. The caption bundle is
+cannot recreate the immutable source files and their relational artifact records. The caption bundle is
 reprovisionable from its pinned revision, but preserve its manifest/checksum so
 an operator can verify the restored bundle before enabling local mode.
 To rebuild a damaged or upgraded index, stop ingestion, retain the old LanceDB
 directory as a rollback copy, create the new table/version, re-ingest the ready
-relational document revisions, validate document/chunk counts and representative
+relational file artifacts, validate file/chunk counts and representative
 queries, then switch the configured version atomically. Never delete the old
 index until that validation and a tested backup are complete.
 
 Defaults bound local work to two concurrent embedding, vector, and ingestion
-operations; a document produces at most 200 chunks of 1,000 characters with a
+operations; a file artifact produces at most 200 chunks of 1,000 characters with a
 150-character overlap. Retrieval accepts at most 10 results and returns at most
 16 KiB of excerpts. Source file conversion remains bounded by
 `MAX_PROCESS_FILE_SIZE_BYTES` (100 MiB), `MAX_CONVERTED_CHARS` (100,000), and
@@ -166,11 +167,12 @@ operations; a document produces at most 200 chunks of 1,000 characters with a
 configuration values only within their validated ranges and must reserve at
 least 1.25 GiB RSS per embedding worker.
 
-Knowledge bases are private to their owning user. The relational assignment is
-an explicit allowlist: only ready bases assigned to the active agent are
-searched. `search_knowledge` is offered and automatically authorized only in
-that case; it cannot be enabled by an agent tool preference or an invented tool
-name. Every LanceDB query filters both user and base IDs. Results label their
+Knowledge bases are private ordered collections owned by their user. The relational
+assignment is an explicit allowlist: only ready file artifacts whose memberships
+belong to bases assigned to the active agent are searched. `search_knowledge` is
+offered and automatically authorized only in that case; it cannot be enabled by an
+agent tool preference or an invented tool name. Every LanceDB query filters the
+owner and resolved allowed file IDs. Results label their
 provenance as `visual_image`, `accepted_caption`, or `text`, so callers can
 clearly distinguish CLIP visual matches from reviewed description text. Runtime
 traces record safe IDs, counts, duration, and model/index versions—not queries,
@@ -194,3 +196,14 @@ process RSS is substantially larger than its artifact; operators must reserve
 at least 1.25 GiB per embedding worker process until a deployment-specific
 measurement proves a lower safe bound. Linux x86_64 and macOS Intel remain
 release-environment preflight targets, not an untested alternative runtime.
+
+## File-centric processing
+
+`UserFile` is the immutable source revision. `FileKnowledgeArtifact` owns each
+derived generation, including extraction, chunks, embeddings, and canonical
+image captions. A `knowledge_base_files` row is only an ordered collection
+membership. Retrieval resolves assigned memberships before searching and sends
+both owner and allowed file IDs to LanceDB; it never searches globally then
+filters in application code. Removing a membership preserves the file and its
+artifacts; deleting a file cancels work and removes memberships, artifacts,
+vectors, and source bytes.

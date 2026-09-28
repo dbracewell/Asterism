@@ -22,6 +22,12 @@ export default defineConfig({
       ...process.env,
       ASTERISM_CONFIG_PROFILE: "test",
       PUBLIC_URL: "http://localhost:3100",
+      // Keep `pnpm exec playwright test` usable outside the isolated CI runner.
+      // The runner supplies a unique value; this fallback is confined to the
+      // ephemeral E2E auth database under test-results.
+      BETTER_AUTH_SECRET:
+        process.env.BETTER_AUTH_SECRET ??
+        "e2e-playwright-local-auth-secret-6b3f29c17ea840df",
       STORAGE_ROOT: testStorageRoot,
       BETTER_AUTH_DB_PATH: resolve(testStorageRoot, "users.db"),
     },

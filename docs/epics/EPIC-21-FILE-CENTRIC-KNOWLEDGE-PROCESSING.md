@@ -8,7 +8,7 @@ an explicit ordered collection of a user's files. Adding one file to multiple
 knowledge bases must not repeat extraction, captioning, chunking, or embedding
 work.
 
-**Status: US-21.1 in progress on `story/021-01-canonical-file-knowledge-artifacts`.**
+**Status: US-21.4 implemented on `story/021-04-file-manager-knowledge-ui`; awaiting user completion confirmation.**
 
 ## Product decisions
 
@@ -98,19 +98,19 @@ single model-policy change to reprocess every eligible file consistently.
 
 **Dependencies:** US-21.1.
 
-- [ ] US-21.2-T1: Trigger idempotent, bounded file-knowledge processing after
+- [x] US-21.2-T1: Trigger idempotent, bounded file-knowledge processing after
       upload and reuse the existing content-extraction cache when valid.
-- [ ] US-21.2-T2: Generate chunks and text/image embeddings once per file under
+- [x] US-21.2-T2: Generate chunks and text/image embeddings once per file under
       the active processing profile; generate image captions under the global
       captioning configuration with existing provider/local safety boundaries.
-- [ ] US-21.2-T3: Implement file-level status, retry, cancellation, restart
+- [x] US-21.2-T3: Implement file-level status, retry, cancellation, restart
       recovery, and safe errors. A partial/failed generation must never replace
       the last complete generation.
-- [ ] US-21.2-T4: Add an explicit admin reprocess operation for a changed
+- [x] US-21.2-T4: Add an explicit admin reprocess operation for a changed
       processing profile. It snapshots the target generation, reports aggregate
       progress/failures, bounds concurrency, preserves search availability, and
       retires the previous generation only after successful replacement.
-- [ ] US-21.2-T5: Test duplicate upload reuse, concurrent processing, restart,
+- [x] US-21.2-T5: Test duplicate upload reuse, concurrent processing, restart,
       provider/local caption behavior, profile-wide reprocessing, failure
       rollback, and source/derived-content deletion.
 
@@ -128,21 +128,21 @@ search only files in their assigned bases.
 
 **Dependencies:** US-21.1, US-21.2.
 
-- [ ] US-21.3-T1: Replace document attachment APIs with ownership-safe add,
+- [x] US-21.3-T1: Replace document attachment APIs with ownership-safe add,
       list, reorder, and remove file-membership APIs. Adding an already-ready
       file must not enqueue processing; removing it must not delete the file or
       its artifacts.
-- [ ] US-21.3-T2: Update `search_knowledge` to resolve assigned bases to an
+- [x] US-21.3-T2: Update `search_knowledge` to resolve assigned bases to an
       allowed file-ID set and query the file-keyed vector store with mandatory
       user/file filters, bounded IDs/results/context, and stable provenance.
-- [ ] US-21.3-T3: Define no-ready-file, empty-membership, deleted-file,
+- [x] US-21.3-T3: Define no-ready-file, empty-membership, deleted-file,
       reprocessing-generation, and large-membership behavior. Benchmark and
       document the selected filtered-search strategy before raising collection
       limits.
-- [ ] US-21.3-T4: Make deleting a membership remove only that relationship;
+- [x] US-21.3-T4: Make deleting a membership remove only that relationship;
       make deleting a file cancel its work, remove all memberships/artifacts/
       vectors/source bytes, and prevent late jobs from restoring them.
-- [ ] US-21.3-T5: Add API/runtime tests for zero/many memberships, one file in
+- [x] US-21.3-T5: Add API/runtime tests for zero/many memberships, one file in
       multiple bases, cross-user isolation, assigned-base boundaries, deletion
       races, and result provenance.
 
@@ -160,19 +160,19 @@ base memberships in one understandable interface.
 
 **Dependencies:** US-21.1, US-21.2, US-21.3.
 
-- [ ] US-21.4-T1: Add generated-client file-manager views for knowledge status,
+- [x] US-21.4-T1: Add generated-client file-manager views for knowledge status,
       current processing profile/generation, retry/reprocess availability, and
       safe failure explanations.
-- [ ] US-21.4-T2: Move caption view/edit/regenerate/clear actions to individual
+- [x] US-21.4-T2: Move caption view/edit/regenerate/clear actions to individual
       image files; label captions as canonical and show the external-provider
       disclosure whenever applicable.
-- [ ] US-21.4-T3: Change knowledge-base detail to attach existing library files,
+- [x] US-21.4-T3: Change knowledge-base detail to attach existing library files,
       upload into the library then attach, list membership status, reorder, and
       remove membership without offering duplicate processing controls.
-- [ ] US-21.4-T4: Add accessible confirmation and impact copy for file deletion
+- [x] US-21.4-T4: Add accessible confirmation and impact copy for file deletion
       (all memberships and derived knowledge are removed) and clear copy for
       membership removal (the file remains in the library).
-- [ ] US-21.4-T5: Add frontend integration and Playwright coverage for upload
+- [x] US-21.4-T5: Add frontend integration and Playwright coverage for upload
       processing, caption edits reflected across bases, multiple memberships,
       retry/failure, removal versus deletion, provider disclosure, and agent
       retrieval availability. Run all relevant quality gates and update the

@@ -453,6 +453,16 @@ export type ErrorDetail = {
 };
 
 /**
+ * FileCaptionEdit
+ */
+export type FileCaptionEdit = {
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
  * FileContentStatus
  */
 export type FileContentStatus = 'pending' | 'ready' | 'unsupported' | 'failed';
@@ -461,6 +471,87 @@ export type FileContentStatus = 'pending' | 'ready' | 'unsupported' | 'failed';
  * FileKind
  */
 export type FileKind = 'image' | 'text' | 'document' | 'other';
+
+/**
+ * FileKnowledgeArtifact
+ *
+ * A versioned, file-owned generation of extracted knowledge.
+ */
+export type FileKnowledgeArtifact = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * File Id
+     */
+    file_id: string;
+    /**
+     * Generation
+     */
+    generation: number;
+    /**
+     * Processing Profile Generation
+     */
+    processing_profile_generation: number;
+    /**
+     * Processing Profile Identity
+     */
+    processing_profile_identity: string;
+    /**
+     * Contract Version
+     */
+    contract_version: number;
+    /**
+     * Status
+     */
+    status: 'pending' | 'processing' | 'ready' | 'failed' | 'canceled';
+    /**
+     * Is Current
+     */
+    is_current: boolean;
+    /**
+     * Extracted Content
+     */
+    extracted_content?: string | null;
+    /**
+     * Chunk Count
+     */
+    chunk_count: number;
+    /**
+     * Text Embeddings Ready
+     */
+    text_embeddings_ready: boolean;
+    /**
+     * Visual Embedding Ready
+     */
+    visual_embedding_ready: boolean;
+    caption: KnowledgeCaptionMetadata;
+    /**
+     * Error Code
+     */
+    error_code?: string | null;
+    /**
+     * Error Reason
+     */
+    error_reason?: string | null;
+    /**
+     * Started At
+     */
+    started_at?: number | null;
+    /**
+     * Completed At
+     */
+    completed_at?: number | null;
+    /**
+     * Created At
+     */
+    created_at: number;
+    /**
+     * Updated At
+     */
+    updated_at: number;
+};
 
 /**
  * Folder
@@ -687,6 +778,16 @@ export type KnowledgeBaseFileList = {
 };
 
 /**
+ * KnowledgeBaseFileReorder
+ */
+export type KnowledgeBaseFileReorder = {
+    /**
+     * Membership Ids
+     */
+    membership_ids: Array<string>;
+};
+
+/**
  * KnowledgeBaseList
  */
 export type KnowledgeBaseList = {
@@ -752,6 +853,113 @@ export type KnowledgeCaptionConfigurationUpdate = {
      * Provider Model Id
      */
     provider_model_id?: string | null;
+};
+
+/**
+ * KnowledgeCaptionMetadata
+ */
+export type KnowledgeCaptionMetadata = {
+    /**
+     * Status
+     */
+    status?: string | null;
+    /**
+     * Source
+     */
+    source?: string | null;
+    /**
+     * Model
+     */
+    model?: string | null;
+    /**
+     * Text
+     */
+    text?: string | null;
+    /**
+     * Error Code
+     */
+    error_code?: string | null;
+    /**
+     * Error Reason
+     */
+    error_reason?: string | null;
+    /**
+     * Generated At
+     */
+    generated_at?: number | null;
+    /**
+     * Accepted At
+     */
+    accepted_at?: number | null;
+};
+
+/**
+ * KnowledgeProcessingProfile
+ *
+ * The globally active processing policy recorded by every artifact.
+ */
+export type KnowledgeProcessingProfile = {
+    /**
+     * Generation
+     */
+    generation: number;
+    /**
+     * Identity
+     */
+    identity: string;
+    /**
+     * Extraction Policy
+     */
+    extraction_policy: string;
+    /**
+     * Chunking Policy
+     */
+    chunking_policy: string;
+    /**
+     * Embedding Model
+     */
+    embedding_model: string;
+    /**
+     * Captioning Policy
+     */
+    captioning_policy: string;
+    /**
+     * Updated At
+     */
+    updated_at: number;
+};
+
+/**
+ * KnowledgeProcessingProfileUpdate
+ */
+export type KnowledgeProcessingProfileUpdate = {
+    /**
+     * Extraction Policy
+     */
+    extraction_policy: string;
+    /**
+     * Chunking Policy
+     */
+    chunking_policy: string;
+    /**
+     * Embedding Model
+     */
+    embedding_model: string;
+    /**
+     * Captioning Policy
+     */
+    captioning_policy: string;
+};
+
+/**
+ * KnowledgeReprocessSummary
+ */
+export type KnowledgeReprocessSummary = {
+    profile: KnowledgeProcessingProfile;
+    /**
+     * Queued File Count
+     */
+    queued_file_count: number;
 };
 
 /**
@@ -1880,6 +2088,210 @@ export type GetFileResponses = {
 
 export type GetFileResponse = GetFileResponses[keyof GetFileResponses];
 
+export type FileKnowledgeGetStatusData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}/knowledge';
+};
+
+export type FileKnowledgeGetStatusErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileKnowledgeGetStatusError = FileKnowledgeGetStatusErrors[keyof FileKnowledgeGetStatusErrors];
+
+export type FileKnowledgeGetStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileKnowledgeArtifact;
+};
+
+export type FileKnowledgeGetStatusResponse = FileKnowledgeGetStatusResponses[keyof FileKnowledgeGetStatusResponses];
+
+export type FileKnowledgeRetryData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}/knowledge/retry';
+};
+
+export type FileKnowledgeRetryErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileKnowledgeRetryError = FileKnowledgeRetryErrors[keyof FileKnowledgeRetryErrors];
+
+export type FileKnowledgeRetryResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileKnowledgeArtifact;
+};
+
+export type FileKnowledgeRetryResponse = FileKnowledgeRetryResponses[keyof FileKnowledgeRetryResponses];
+
+export type FileKnowledgeCancelData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}/knowledge/cancel';
+};
+
+export type FileKnowledgeCancelErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileKnowledgeCancelError = FileKnowledgeCancelErrors[keyof FileKnowledgeCancelErrors];
+
+export type FileKnowledgeCancelResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileKnowledgeArtifact;
+};
+
+export type FileKnowledgeCancelResponse = FileKnowledgeCancelResponses[keyof FileKnowledgeCancelResponses];
+
+export type FileCaptionRegenerateData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}/knowledge/caption/regenerate';
+};
+
+export type FileCaptionRegenerateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileCaptionRegenerateError = FileCaptionRegenerateErrors[keyof FileCaptionRegenerateErrors];
+
+export type FileCaptionRegenerateResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileKnowledgeArtifact;
+};
+
+export type FileCaptionRegenerateResponse = FileCaptionRegenerateResponses[keyof FileCaptionRegenerateResponses];
+
+export type FileCaptionClearData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}/knowledge/caption';
+};
+
+export type FileCaptionClearErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileCaptionClearError = FileCaptionClearErrors[keyof FileCaptionClearErrors];
+
+export type FileCaptionClearResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileKnowledgeArtifact;
+};
+
+export type FileCaptionClearResponse = FileCaptionClearResponses[keyof FileCaptionClearResponses];
+
+export type FileCaptionEditData = {
+    body: FileCaptionEdit;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}/knowledge/caption';
+};
+
+export type FileCaptionEditErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileCaptionEditError = FileCaptionEditErrors[keyof FileCaptionEditErrors];
+
+export type FileCaptionEditResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileKnowledgeArtifact;
+};
+
+export type FileCaptionEditResponse = FileCaptionEditResponses[keyof FileCaptionEditResponses];
+
 export type ChatSessionGetManyData = {
     body?: never;
     path?: never;
@@ -2467,6 +2879,78 @@ export type KnowledgeBaseFileCreateResponses = {
 };
 
 export type KnowledgeBaseFileCreateResponse = KnowledgeBaseFileCreateResponses[keyof KnowledgeBaseFileCreateResponses];
+
+export type KnowledgeBaseFileReorderData = {
+    body: KnowledgeBaseFileReorder;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/files/order';
+};
+
+export type KnowledgeBaseFileReorderErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseFileReorderError = KnowledgeBaseFileReorderErrors[keyof KnowledgeBaseFileReorderErrors];
+
+export type KnowledgeBaseFileReorderResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseFileList;
+};
+
+export type KnowledgeBaseFileReorderResponse = KnowledgeBaseFileReorderResponses[keyof KnowledgeBaseFileReorderResponses];
+
+export type KnowledgeBaseFileDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+        /**
+         * Membership Id
+         */
+        membership_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/files/{membership_id}';
+};
+
+export type KnowledgeBaseFileDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseFileDeleteError = KnowledgeBaseFileDeleteErrors[keyof KnowledgeBaseFileDeleteErrors];
+
+export type KnowledgeBaseFileDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseFile;
+};
+
+export type KnowledgeBaseFileDeleteResponse = KnowledgeBaseFileDeleteResponses[keyof KnowledgeBaseFileDeleteResponses];
 
 export type KnowledgeBaseDeleteData = {
     body?: never;
@@ -3105,6 +3589,35 @@ export type AppCaptioningUpdateResponses = {
 };
 
 export type AppCaptioningUpdateResponse = AppCaptioningUpdateResponses[keyof AppCaptioningUpdateResponses];
+
+export type AppKnowledgeProcessingProfileUpdateData = {
+    body: KnowledgeProcessingProfileUpdate;
+    path?: never;
+    query?: never;
+    url: '/settings/app/knowledge-processing-profile';
+};
+
+export type AppKnowledgeProcessingProfileUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type AppKnowledgeProcessingProfileUpdateError = AppKnowledgeProcessingProfileUpdateErrors[keyof AppKnowledgeProcessingProfileUpdateErrors];
+
+export type AppKnowledgeProcessingProfileUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeReprocessSummary;
+};
+
+export type AppKnowledgeProcessingProfileUpdateResponse = AppKnowledgeProcessingProfileUpdateResponses[keyof AppKnowledgeProcessingProfileUpdateResponses];
 
 export type AppSettingDeleteData = {
     body?: never;

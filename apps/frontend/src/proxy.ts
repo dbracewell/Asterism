@@ -9,6 +9,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/sub-agent",
     "/e2e/providers",
     "/e2e/files",
+    "/e2e/file-manager",
     "/e2e/new-chat-agent",
     "/e2e/knowledge",
     "/e2e/knowledge-captions",

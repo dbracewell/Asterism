@@ -6,9 +6,10 @@ from fastapi.responses import FileResponse
 import asterism.domains.files.service as file_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
+from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from .schemas import UserFile, UserFileList
+from .schemas import FileCaptionEdit, UserFile, UserFileList
 
 file_router = APIRouter(
     tags=["files"],
@@ -104,6 +105,52 @@ async def get_file_info(
 )
 async def delete_file(filename: str, user: AuthedUserDep, db: DBSessionDep) -> UserFile:
     return await file_service.delete_user_file(user_id=user.id, filename=filename, session=db)
+
+
+@file_router.get("/{filename}/knowledge", response_model=FileKnowledgeArtifact, operation_id="fileKnowledgeGetStatus")
+async def get_file_knowledge_status(filename: str, user: AuthedUserDep, db: DBSessionDep) -> FileKnowledgeArtifact:
+    return await file_service.get_file_knowledge_status(user_id=user.id, filename=filename, session=db)
+
+
+@file_router.post(
+    "/{filename}/knowledge/retry", response_model=FileKnowledgeArtifact, operation_id="fileKnowledgeRetry"
+)
+async def retry_file_knowledge_processing(
+    filename: str, user: AuthedUserDep, db: DBSessionDep
+) -> FileKnowledgeArtifact:
+    return await file_service.retry_file_knowledge_processing(user_id=user.id, filename=filename, session=db)
+
+
+@file_router.post(
+    "/{filename}/knowledge/cancel", response_model=FileKnowledgeArtifact, operation_id="fileKnowledgeCancel"
+)
+async def cancel_file_knowledge_processing(
+    filename: str, user: AuthedUserDep, db: DBSessionDep
+) -> FileKnowledgeArtifact:
+    return await file_service.cancel_file_knowledge_processing(user_id=user.id, filename=filename, session=db)
+
+
+@file_router.post(
+    "/{filename}/knowledge/caption/regenerate",
+    response_model=FileKnowledgeArtifact,
+    operation_id="fileCaptionRegenerate",
+)
+async def regenerate_file_caption(filename: str, user: AuthedUserDep, db: DBSessionDep) -> FileKnowledgeArtifact:
+    return await file_service.regenerate_file_caption(user_id=user.id, filename=filename, session=db)
+
+
+@file_router.delete(
+    "/{filename}/knowledge/caption", response_model=FileKnowledgeArtifact, operation_id="fileCaptionClear"
+)
+async def clear_file_caption(filename: str, user: AuthedUserDep, db: DBSessionDep) -> FileKnowledgeArtifact:
+    return await file_service.clear_file_caption(user_id=user.id, filename=filename, session=db)
+
+
+@file_router.put("/{filename}/knowledge/caption", response_model=FileKnowledgeArtifact, operation_id="fileCaptionEdit")
+async def edit_file_caption(
+    filename: str, payload: FileCaptionEdit, user: AuthedUserDep, db: DBSessionDep
+) -> FileKnowledgeArtifact:
+    return await file_service.edit_file_caption(user_id=user.id, filename=filename, text=payload.text, session=db)
 
 
 @file_router.get(

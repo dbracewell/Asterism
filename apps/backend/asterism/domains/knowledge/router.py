@@ -14,6 +14,7 @@ from .schemas import (
     KnowledgeBaseFile,
     KnowledgeBaseFileCreate,
     KnowledgeBaseFileList,
+    KnowledgeBaseFileReorder,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
 )
@@ -73,6 +74,30 @@ async def list_knowledge_base_files(
 ) -> KnowledgeBaseFileList:
     return await knowledge_service.list_knowledge_base_files(
         user_id=user.id, knowledge_base_id=knowledge_base_id, session=db, page=page, page_size=page_size
+    )
+
+
+@knowledge_router.put(
+    "/{knowledge_base_id}/files/order", response_model=KnowledgeBaseFileList, operation_id="knowledgeBaseFileReorder"
+)
+async def reorder_knowledge_base_files(
+    knowledge_base_id: uuid.UUID, payload: KnowledgeBaseFileReorder, user: AuthedUserDep, db: DBSessionDep
+) -> KnowledgeBaseFileList:
+    return await knowledge_service.reorder_knowledge_base_files(
+        user_id=user.id, knowledge_base_id=knowledge_base_id, payload=payload, session=db
+    )
+
+
+@knowledge_router.delete(
+    "/{knowledge_base_id}/files/{membership_id}",
+    response_model=KnowledgeBaseFile,
+    operation_id="knowledgeBaseFileDelete",
+)
+async def remove_knowledge_base_file(
+    knowledge_base_id: uuid.UUID, membership_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> KnowledgeBaseFile:
+    return await knowledge_service.remove_knowledge_base_file(
+        user_id=user.id, knowledge_base_id=knowledge_base_id, membership_id=membership_id, session=db
     )
 
 

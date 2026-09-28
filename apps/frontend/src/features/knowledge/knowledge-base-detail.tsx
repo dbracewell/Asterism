@@ -13,7 +13,9 @@ import {
   fileGetManyOptions,
   fileUploadMutation,
   knowledgeBaseFileCreateMutation,
+  knowledgeBaseFileDeleteMutation,
   knowledgeBaseFileGetManyOptions,
+  knowledgeBaseFileReorderMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { type ChangeEvent, useRef, useState } from "react";
@@ -37,6 +39,8 @@ export function KnowledgeBaseDetail({
     fileGetManyOptions({ client, query: { page: 1, page_size: 100 } }),
   );
   const attach = useMutation(knowledgeBaseFileCreateMutation({ client }));
+  const remove = useMutation(knowledgeBaseFileDeleteMutation({ client }));
+  const reorder = useMutation(knowledgeBaseFileReorderMutation({ client }));
   const upload = useMutation(fileUploadMutation({ client }));
   const files = library.data?.files ?? [];
   const fileNames = new Map(files.map((file) => [file.id, file]));
@@ -58,6 +62,23 @@ export function KnowledgeBaseDetail({
             "Unable to add this file. It may already be in this collection.",
           ),
       },
+    );
+  };
+  const moveMembership = (index: number, direction: -1 | 1) => {
+    const current = memberships.data?.files ?? [];
+    const destination = index + direction;
+    if (destination < 0 || destination >= current.length) return;
+    const membershipIds = current.map((membership) => membership.id);
+    [membershipIds[index], membershipIds[destination]] = [
+      membershipIds[destination],
+      membershipIds[index],
+    ];
+    reorder.mutate(
+      {
+        path: { knowledge_base_id: knowledgeBaseId },
+        body: { membership_ids: membershipIds },
+      },
+      { onSuccess: () => void memberships.refetch() },
     );
   };
   const uploadAndAdd = (event: ChangeEvent<HTMLInputElement>) => {
@@ -153,7 +174,7 @@ export function KnowledgeBaseDetail({
         </p>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-          {(memberships.data?.files ?? []).map((membership) => {
+          {(memberships.data?.files ?? []).map((membership, index, items) => {
             const file = fileNames.get(membership.file_id);
             return (
               <Card key={membership.id} className="shrink-0 border">
@@ -166,7 +187,52 @@ export function KnowledgeBaseDetail({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-muted-foreground text-sm">
-                  Manage processing, captions, and deletion in Files.
+                  <p>Manage processing, captions, and deletion in Files.</p>
+                  <p className="mt-2">
+                    Removing this reference keeps the library file and its
+                    derived knowledge.
+                  </p>
+                  <Button
+                    className="mt-3"
+                    size="sm"
+                    variant="outline"
+                    disabled={remove.isPending}
+                    onClick={() =>
+                      remove.mutate(
+                        {
+                          path: {
+                            knowledge_base_id: knowledgeBaseId,
+                            membership_id: membership.id,
+                          },
+                        },
+                        { onSuccess: () => void memberships.refetch() },
+                      )
+                    }
+                  >
+                    Remove from collection
+                  </Button>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      aria-label={`Move ${file?.original_name ?? "file"} up`}
+                      disabled={index === 0 || reorder.isPending}
+                      onClick={() => moveMembership(index, -1)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Move up
+                    </Button>
+                    <Button
+                      aria-label={`Move ${file?.original_name ?? "file"} down`}
+                      disabled={index === items.length - 1 || reorder.isPending}
+                      onClick={() => moveMembership(index, 1)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Move down
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );

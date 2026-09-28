@@ -315,6 +315,149 @@ async def list_user_files(
     )
 
 
+async def get_file_knowledge_status(*, user_id: str, filename: str, session: AsyncSession):
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+    from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    artifact = await session.scalar(
+        select(FileKnowledgeArtifactModel)
+        .where(FileKnowledgeArtifactModel.file_id == file.id)
+        .order_by(FileKnowledgeArtifactModel.generation.desc())
+    )
+    if artifact is None:
+        raise NotFoundException("Knowledge processing record not found")
+    return FileKnowledgeArtifact.model_validate(artifact)
+
+
+async def retry_file_knowledge_processing(*, user_id: str, filename: str, session: AsyncSession):
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+    from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs
+    from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    artifact = await session.scalar(
+        select(FileKnowledgeArtifactModel)
+        .where(FileKnowledgeArtifactModel.file_id == file.id)
+        .order_by(FileKnowledgeArtifactModel.generation.desc())
+    )
+    if artifact is None:
+        raise NotFoundException("Knowledge processing record not found")
+    if artifact.status is FileKnowledgeArtifactStatus.READY:
+        return FileKnowledgeArtifact.model_validate(artifact)
+    artifact.status = FileKnowledgeArtifactStatus.PENDING
+    artifact.error_code = None
+    artifact.error_reason = None
+    artifact.started_at = None
+    artifact.completed_at = None
+    await session.commit()
+    knowledge_ingestion_jobs.enqueue(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
+    return FileKnowledgeArtifact.model_validate(artifact)
+
+
+async def cancel_file_knowledge_processing(*, user_id: str, filename: str, session: AsyncSession):
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+    from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs
+    from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    artifact = await session.scalar(
+        select(FileKnowledgeArtifactModel)
+        .where(FileKnowledgeArtifactModel.file_id == file.id)
+        .order_by(FileKnowledgeArtifactModel.generation.desc())
+    )
+    if artifact is None:
+        raise NotFoundException("Knowledge processing record not found")
+    if artifact.status in {FileKnowledgeArtifactStatus.PENDING, FileKnowledgeArtifactStatus.PROCESSING}:
+        knowledge_ingestion_jobs.cancel(str(artifact.id))
+        artifact.status = FileKnowledgeArtifactStatus.CANCELED
+        artifact.error_code = "canceled"
+        artifact.error_reason = "Processing canceled by user"
+        await session.commit()
+    return FileKnowledgeArtifact.model_validate(artifact)
+
+
+async def regenerate_file_caption(*, user_id: str, filename: str, session: AsyncSession):
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeCaptionStatus
+    from asterism.domains.knowledge.runtime import knowledge_caption_jobs
+    from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    if file.kind is not FileKind.IMAGE:
+        raise BadDataException("Only image files can be captioned")
+    artifact = await session.scalar(
+        select(FileKnowledgeArtifactModel).where(
+            FileKnowledgeArtifactModel.file_id == file.id, FileKnowledgeArtifactModel.is_current.is_(True)
+        )
+    )
+    if artifact is None:
+        raise NotFoundException("Knowledge processing record not found")
+    artifact.caption_status = KnowledgeCaptionStatus.PENDING
+    artifact.caption_error_code = None
+    artifact.caption_error_reason = None
+    await session.commit()
+    knowledge_caption_jobs.enqueue(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
+    return FileKnowledgeArtifact.model_validate(artifact)
+
+
+async def clear_file_caption(*, user_id: str, filename: str, session: AsyncSession):
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeCaptionStatus
+    from asterism.domains.knowledge.runtime import vector_store
+    from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    artifact = await session.scalar(
+        select(FileKnowledgeArtifactModel).where(
+            FileKnowledgeArtifactModel.file_id == file.id, FileKnowledgeArtifactModel.is_current.is_(True)
+        )
+    )
+    if artifact is None:
+        raise NotFoundException("Knowledge processing record not found")
+    chunk_id = hashlib.sha256(f"{artifact.file_id}:{artifact.generation}:caption".encode()).hexdigest()
+    await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
+    artifact.caption_text = None
+    artifact.caption_status = KnowledgeCaptionStatus.CLEARED
+    artifact.caption_error_code = None
+    artifact.caption_error_reason = None
+    await session.commit()
+    return FileKnowledgeArtifact.model_validate(artifact)
+
+
+async def edit_file_caption(*, user_id: str, filename: str, text: str, session: AsyncSession):
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeCaptionStatus
+    from asterism.domains.knowledge.runtime import embedding_provider, vector_store
+    from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+    from asterism.domains.knowledge.vector_store import VectorChunk
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    artifact = await session.scalar(
+        select(FileKnowledgeArtifactModel).where(
+            FileKnowledgeArtifactModel.file_id == file.id, FileKnowledgeArtifactModel.is_current.is_(True)
+        )
+    )
+    if artifact is None:
+        raise NotFoundException("Knowledge processing record not found")
+    chunk_id = hashlib.sha256(f"{artifact.file_id}:{artifact.generation}:caption".encode()).hexdigest()
+    vector = (await embedding_provider.embed_text([text]))[0]
+    await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
+    await vector_store.add(
+        [VectorChunk(chunk_id, user_id, str(file.id), artifact.generation, artifact.chunk_count, text, vector)]
+    )
+    artifact.caption_text = text
+    artifact.caption_status = KnowledgeCaptionStatus.ACCEPTED
+    await session.commit()
+    return FileKnowledgeArtifact.model_validate(artifact)
+
+
+async def _owned_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFileModel:
+    file = await session.scalar(
+        select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename == filename)
+    )
+    if file is None:
+        raise NotFoundException("File not found")
+    return file
+
+
 async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFile:
     file = await session.scalar(
         select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename == filename)

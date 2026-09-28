@@ -54,6 +54,8 @@ class VectorStore(Protocol):
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None: ...
 
+    async def delete_chunk(self, *, user_id: str, chunk_id: str) -> None: ...
+
     async def close(self) -> None: ...
 
 
@@ -194,6 +196,9 @@ class LanceDbVectorStore:
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None:
         await self._delete(f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)}")
+
+    async def delete_chunk(self, *, user_id: str, chunk_id: str) -> None:
+        await self._delete(f"user_id = {self._quote(user_id)} AND id = {self._quote(chunk_id)}")
 
     async def close(self) -> None:
         self._table = None

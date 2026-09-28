@@ -17,6 +17,9 @@ from .embeddings import EmbeddingProvider, EmbeddingProviderError
 from .models import (
     FileKnowledgeArtifactModel,
     FileKnowledgeArtifactStatus,
+    KnowledgeCaptionConfigurationModel,
+    KnowledgeCaptionMode,
+    KnowledgeCaptionStatus,
 )
 from .vector_store import VectorChunk, VectorStore
 
@@ -62,6 +65,8 @@ async def ingest_file_artifact(
     """
     if artifact.status is FileKnowledgeArtifactStatus.READY:
         return artifact
+    if artifact.status is FileKnowledgeArtifactStatus.CANCELED:
+        return artifact
     artifact.status = FileKnowledgeArtifactStatus.PROCESSING
     artifact.error_code = None
     artifact.error_reason = None
@@ -103,14 +108,22 @@ async def ingest_file_artifact(
             artifact_generation=artifact.generation,
         )
         await vector_store.add(chunks)
-        still_exists = await session.scalar(
-            select(FileKnowledgeArtifactModel.id).where(
+        current_status = await session.scalar(
+            select(FileKnowledgeArtifactModel.status).where(
                 FileKnowledgeArtifactModel.id == artifact.id,
                 FileKnowledgeArtifactModel.file_id == processed.id,
             )
         )
-        if still_exists is None:
+        if current_status is None:
             raise KnowledgeIngestionError("The file was deleted during processing")
+        if current_status is FileKnowledgeArtifactStatus.CANCELED:
+            await vector_store.delete_file_generation(
+                user_id=processed.user_id,
+                file_id=str(processed.id),
+                artifact_generation=artifact.generation,
+            )
+            await session.refresh(artifact)
+            return artifact
     except Exception as error:
         try:
             await vector_store.delete_file_generation(
@@ -142,6 +155,17 @@ async def ingest_file_artifact(
     artifact.text_embeddings_ready = processed.kind is not FileKind.IMAGE
     artifact.visual_embedding_ready = visual_ready
     artifact.completed_at = get_unix_timestamp()
+    caption_requested = False
+    if processed.kind is FileKind.IMAGE:
+        caption_configuration = await session.get(KnowledgeCaptionConfigurationModel, 1)
+        caption_requested = (
+            caption_configuration is not None and caption_configuration.mode is not KnowledgeCaptionMode.DISABLED
+        )
+        artifact.caption_status = KnowledgeCaptionStatus.PENDING if caption_requested else None
     session.add(record_knowledge_audit(user_id=file.user_id, action="file.processing_ready", file_id=file.id))
     await session.commit()
+    if caption_requested:
+        from .runtime import knowledge_caption_jobs
+
+        knowledge_caption_jobs.enqueue(user_id=file.user_id, file_id=file.id, artifact_id=artifact.id)
     return artifact
