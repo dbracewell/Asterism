@@ -11,14 +11,11 @@ from asterism.domains.user.dependencies import AuthedUserDep
 from .schemas import (
     KnowledgeBase,
     KnowledgeBaseCreate,
+    KnowledgeBaseFile,
+    KnowledgeBaseFileCreate,
+    KnowledgeBaseFileList,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
-    KnowledgeCaptionUpdate,
-    KnowledgeDocument,
-    KnowledgeDocumentCreate,
-    KnowledgeDocumentList,
-    KnowledgeDocumentRevisionCreate,
-    KnowledgeDocumentUpdate,
 )
 
 knowledge_router = APIRouter(
@@ -29,11 +26,7 @@ knowledge_router = APIRouter(
 
 
 @knowledge_router.post(
-    "/",
-    response_model=KnowledgeBase,
-    status_code=status.HTTP_201_CREATED,
-    operation_id="knowledgeBaseCreate",
-    responses={409: {"model": ErrorDetail}},
+    "/", response_model=KnowledgeBase, status_code=status.HTTP_201_CREATED, operation_id="knowledgeBaseCreate"
 )
 async def create_knowledge_base(payload: KnowledgeBaseCreate, user: AuthedUserDep, db: DBSessionDep) -> KnowledgeBase:
     return await knowledge_service.create_knowledge_base(user_id=user.id, payload=payload, session=db)
@@ -46,235 +39,40 @@ async def list_knowledge_bases(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort_by: Literal["name", "created"] = Query(default="name"),
-    query: str | None = Query(
-        default=None, description="Search query to filter knowledge bases by name or description"
-    ),
+    query: str | None = Query(default=None, description="Search knowledge bases by name or description"),
 ) -> KnowledgeBaseList:
     return await knowledge_service.list_knowledge_bases(
-        user_id=user.id,
-        session=db,
-        page=page,
-        page_size=page_size,
-        sort_by=sort_by,
-        query=query,
+        user_id=user.id, session=db, page=page, page_size=page_size, sort_by=sort_by, query=query
     )
 
 
 @knowledge_router.post(
-    "/{knowledge_base_id}/documents",
-    response_model=KnowledgeDocument,
+    "/{knowledge_base_id}/files",
+    response_model=KnowledgeBaseFile,
     status_code=status.HTTP_201_CREATED,
-    operation_id="knowledgeDocumentCreate",
+    operation_id="knowledgeBaseFileCreate",
     responses={409: {"model": ErrorDetail}},
 )
-async def add_knowledge_document(
-    knowledge_base_id: uuid.UUID,
-    payload: KnowledgeDocumentCreate,
-    user: AuthedUserDep,
-    db: DBSessionDep,
-) -> KnowledgeDocument:
-    return await knowledge_service.add_knowledge_document(
+async def add_knowledge_base_file(
+    knowledge_base_id: uuid.UUID, payload: KnowledgeBaseFileCreate, user: AuthedUserDep, db: DBSessionDep
+) -> KnowledgeBaseFile:
+    return await knowledge_service.add_knowledge_base_file(
         user_id=user.id, knowledge_base_id=knowledge_base_id, payload=payload, session=db
     )
 
 
-@knowledge_router.post(
-    "/{knowledge_base_id}/documents/{document_id}/revisions",
-    response_model=KnowledgeDocument,
-    status_code=status.HTTP_201_CREATED,
-    operation_id="knowledgeDocumentCreateRevision",
-    responses={409: {"model": ErrorDetail}},
-)
-async def create_knowledge_document_revision(
-    knowledge_base_id: uuid.UUID,
-    document_id: uuid.UUID,
-    payload: KnowledgeDocumentRevisionCreate,
-    user: AuthedUserDep,
-    db: DBSessionDep,
-) -> KnowledgeDocument:
-    return await knowledge_service.create_knowledge_document_revision(
-        user_id=user.id,
-        knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
-        payload=payload,
-        session=db,
-    )
-
-
 @knowledge_router.get(
-    "/{knowledge_base_id}/documents",
-    response_model=KnowledgeDocumentList,
-    operation_id="knowledgeDocumentGetMany",
+    "/{knowledge_base_id}/files", response_model=KnowledgeBaseFileList, operation_id="knowledgeBaseFileGetMany"
 )
-async def list_knowledge_documents(
+async def list_knowledge_base_files(
     knowledge_base_id: uuid.UUID,
     user: AuthedUserDep,
     db: DBSessionDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
-) -> KnowledgeDocumentList:
-    return await knowledge_service.list_knowledge_documents(
+) -> KnowledgeBaseFileList:
+    return await knowledge_service.list_knowledge_base_files(
         user_id=user.id, knowledge_base_id=knowledge_base_id, session=db, page=page, page_size=page_size
-    )
-
-
-@knowledge_router.get(
-    "/{knowledge_base_id}/documents/{document_id}",
-    response_model=KnowledgeDocument,
-    operation_id="knowledgeDocumentGetOne",
-)
-async def get_knowledge_document(
-    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
-) -> KnowledgeDocument:
-    return await knowledge_service.get_knowledge_document(
-        user_id=user.id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=db
-    )
-
-
-@knowledge_router.post(
-    "/{knowledge_base_id}/documents/{document_id}/caption/generate",
-    response_model=KnowledgeDocument,
-    status_code=status.HTTP_202_ACCEPTED,
-    operation_id="knowledgeDocumentGenerateCaption",
-)
-async def generate_knowledge_document_caption(
-    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
-) -> KnowledgeDocument:
-    from .runtime import knowledge_caption_jobs
-
-    return await knowledge_service.request_knowledge_document_caption(
-        user_id=user.id,
-        knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
-        session=db,
-        caption_jobs=knowledge_caption_jobs,
-    )
-
-
-@knowledge_router.post(
-    "/{knowledge_base_id}/documents/{document_id}/caption/cancel",
-    response_model=KnowledgeDocument,
-    operation_id="knowledgeDocumentCancelCaption",
-)
-async def cancel_knowledge_document_caption(
-    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
-) -> KnowledgeDocument:
-    from .runtime import knowledge_caption_jobs
-
-    return await knowledge_service.cancel_knowledge_document_caption(
-        user_id=user.id,
-        knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
-        session=db,
-        caption_jobs=knowledge_caption_jobs,
-    )
-
-
-@knowledge_router.patch(
-    "/{knowledge_base_id}/documents/{document_id}/caption",
-    response_model=KnowledgeDocument,
-    operation_id="knowledgeDocumentUpdateCaption",
-)
-async def update_knowledge_document_caption(
-    knowledge_base_id: uuid.UUID,
-    document_id: uuid.UUID,
-    payload: KnowledgeCaptionUpdate,
-    user: AuthedUserDep,
-    db: DBSessionDep,
-) -> KnowledgeDocument:
-    from .runtime import embedding_provider, vector_store
-
-    return await knowledge_service.update_knowledge_document_caption(
-        user_id=user.id,
-        knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
-        payload=payload,
-        session=db,
-        embedding_provider=embedding_provider,
-        vector_store=vector_store,
-    )
-
-
-@knowledge_router.patch(
-    "/{knowledge_base_id}/documents/{document_id}",
-    response_model=KnowledgeDocument,
-    operation_id="knowledgeDocumentUpdateMetadata",
-)
-async def update_knowledge_document_metadata(
-    knowledge_base_id: uuid.UUID,
-    document_id: uuid.UUID,
-    payload: KnowledgeDocumentUpdate,
-    user: AuthedUserDep,
-    db: DBSessionDep,
-) -> KnowledgeDocument:
-    return await knowledge_service.update_knowledge_document_metadata(
-        user_id=user.id,
-        knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
-        payload=payload,
-        session=db,
-    )
-
-
-@knowledge_router.post(
-    "/{knowledge_base_id}/documents/{document_id}/ingest",
-    response_model=KnowledgeDocument,
-    status_code=status.HTTP_202_ACCEPTED,
-    operation_id="knowledgeDocumentIngest",
-)
-async def ingest_knowledge_document(
-    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
-) -> KnowledgeDocument:
-    return await knowledge_service.request_knowledge_document_ingestion(
-        user_id=user.id,
-        knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
-        reindex=False,
-        session=db,
-    )
-
-
-@knowledge_router.post(
-    "/{knowledge_base_id}/documents/{document_id}/reindex",
-    response_model=KnowledgeDocument,
-    status_code=status.HTTP_202_ACCEPTED,
-    operation_id="knowledgeDocumentReindex",
-)
-async def reindex_knowledge_document(
-    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
-) -> KnowledgeDocument:
-    return await knowledge_service.request_knowledge_document_ingestion(
-        user_id=user.id,
-        knowledge_base_id=knowledge_base_id,
-        document_id=document_id,
-        reindex=True,
-        session=db,
-    )
-
-
-@knowledge_router.post(
-    "/{knowledge_base_id}/documents/{document_id}/cancel",
-    response_model=KnowledgeDocument,
-    operation_id="knowledgeDocumentCancelIngestion",
-)
-async def cancel_knowledge_document_ingestion(
-    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
-) -> KnowledgeDocument:
-    return await knowledge_service.cancel_knowledge_document_ingestion(
-        user_id=user.id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=db
-    )
-
-
-@knowledge_router.delete(
-    "/{knowledge_base_id}/documents/{document_id}",
-    response_model=KnowledgeDocument,
-    operation_id="knowledgeDocumentDelete",
-)
-async def delete_knowledge_document(
-    knowledge_base_id: uuid.UUID, document_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
-) -> KnowledgeDocument:
-    return await knowledge_service.delete_knowledge_document(
-        user_id=user.id, knowledge_base_id=knowledge_base_id, document_id=document_id, session=db
     )
 
 
@@ -283,17 +81,9 @@ async def get_knowledge_base(knowledge_base_id: uuid.UUID, user: AuthedUserDep, 
     return await knowledge_service.get_knowledge_base(user_id=user.id, knowledge_base_id=knowledge_base_id, session=db)
 
 
-@knowledge_router.patch(
-    "/{knowledge_base_id}",
-    response_model=KnowledgeBase,
-    operation_id="knowledgeBaseUpdate",
-    responses={409: {"model": ErrorDetail}},
-)
+@knowledge_router.patch("/{knowledge_base_id}", response_model=KnowledgeBase, operation_id="knowledgeBaseUpdate")
 async def update_knowledge_base(
-    knowledge_base_id: uuid.UUID,
-    payload: KnowledgeBaseUpdate,
-    user: AuthedUserDep,
-    db: DBSessionDep,
+    knowledge_base_id: uuid.UUID, payload: KnowledgeBaseUpdate, user: AuthedUserDep, db: DBSessionDep
 ) -> KnowledgeBase:
     return await knowledge_service.update_knowledge_base(
         user_id=user.id, knowledge_base_id=knowledge_base_id, payload=payload, session=db

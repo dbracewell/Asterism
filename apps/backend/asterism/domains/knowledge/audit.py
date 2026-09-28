@@ -19,6 +19,9 @@ class KnowledgeAuditEventModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     document_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("knowledge_documents.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    file_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("user_files.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     action: Mapped[str] = mapped_column(String(64), nullable=False)
     details: Mapped[dict[str, str | int]] = mapped_column(JSON, nullable=False, default=dict)
 
@@ -31,6 +34,7 @@ def record_knowledge_audit(
     action: str,
     knowledge_base_id: uuid.UUID | None = None,
     document_id: uuid.UUID | None = None,
+    file_id: uuid.UUID | None = None,
     details: dict[str, str | int] | None = None,
 ) -> KnowledgeAuditEventModel:
     """Create a metadata-only audit row; callers must never pass document text."""
@@ -38,6 +42,7 @@ def record_knowledge_audit(
         user_id=user_id,
         knowledge_base_id=knowledge_base_id,
         document_id=document_id,
+        file_id=file_id,
         action=action,
         details=details or {},
     )

@@ -45,10 +45,6 @@ beforeEach(() => {
   api.knowledgeBaseCreate.mockResolvedValue({ data: {} });
   api.knowledgeBaseUpdate.mockResolvedValue({ data: {} });
   api.knowledgeBaseDelete.mockResolvedValue({ data: {} });
-  vi.stubGlobal(
-    "confirm",
-    vi.fn(() => true),
-  );
 });
 
 it("uses server-side pagination, sorting, and search", async () => {
@@ -150,6 +146,13 @@ it("creates, edits, and deletes a knowledge base through the generated client", 
   );
 
   await user.click(screen.getByRole("button", { name: "Delete Research" }));
+  expect(screen.getByRole("heading", { name: "Delete knowledge base" })).toBeVisible();
+  expect(api.knowledgeBaseDelete).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(api.knowledgeBaseDelete).not.toHaveBeenCalled();
+
+  await user.click(screen.getByRole("button", { name: "Delete Research" }));
+  await user.click(screen.getByRole("button", { name: "Confirm" }));
   await waitFor(() =>
     expect(api.knowledgeBaseDelete).toHaveBeenCalledWith(
       expect.objectContaining({

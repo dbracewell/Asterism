@@ -2,7 +2,7 @@ import hashlib
 import uuid
 from typing import Literal, Protocol
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, true
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,18 +17,25 @@ from .audit import record_knowledge_audit
 from .captioning import CaptioningConfiguration, CaptioningError, CaptionMode, bounded_caption
 from .embeddings import EmbeddingProvider
 from .models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeArtifactStatus,
+    KnowledgeBaseFileModel,
     KnowledgeBaseModel,
     KnowledgeCaptionConfigurationModel,
     KnowledgeCaptionMode,
     KnowledgeCaptionStatus,
     KnowledgeDocumentModel,
     KnowledgeDocumentStatus,
+    KnowledgeProcessingProfileModel,
 )
 from .schemas import (
     KnowledgeBase,
     KnowledgeBaseAssignmentList,
     KnowledgeBaseAssignmentReplace,
     KnowledgeBaseCreate,
+    KnowledgeBaseFile,
+    KnowledgeBaseFileCreate,
+    KnowledgeBaseFileList,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfiguration,
@@ -75,6 +82,49 @@ async def _owned_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: As
         # Do not reveal whether a base owned by another user exists.
         raise NotFoundException("Knowledge base not found")
     return knowledge_base
+
+
+async def ensure_file_knowledge_artifact(
+    *, file: UserFileModel, session: AsyncSession
+) -> FileKnowledgeArtifactModel:
+    """Create the one pending canonical artifact for a newly eligible file.
+
+    A pending replacement is deliberately *not* current: retrieval can retain
+    an older ready generation until processing succeeds.
+    """
+    active_profile_generation = (
+        select(KnowledgeProcessingProfileModel.generation)
+        .where(KnowledgeProcessingProfileModel.id == 1)
+        .scalar_subquery()
+    )
+    existing = await session.scalar(
+        select(FileKnowledgeArtifactModel).where(
+            FileKnowledgeArtifactModel.file_id == file.id,
+            FileKnowledgeArtifactModel.processing_profile_generation == active_profile_generation,
+        )
+    )
+    if existing is not None:
+        return existing
+    profile = await session.get(KnowledgeProcessingProfileModel, 1)
+    if profile is None:
+        raise RuntimeError("Knowledge processing profile is not initialized")
+    generation = (
+        await session.scalar(
+            select(func.max(FileKnowledgeArtifactModel.generation)).where(FileKnowledgeArtifactModel.file_id == file.id)
+        )
+        or 0
+    ) + 1
+    artifact = FileKnowledgeArtifactModel(
+        user_id=file.user_id,
+        file_id=file.id,
+        generation=generation,
+        processing_profile_generation=profile.generation,
+        processing_profile_identity=profile.identity,
+        status=FileKnowledgeArtifactStatus.PENDING,
+        is_current=False,
+    )
+    session.add(artifact)
+    return artifact
 
 
 async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCaptionConfiguration:
@@ -152,7 +202,7 @@ async def list_knowledge_bases(
         (
             KnowledgeBaseModel.name.ilike(f"%{search}%") | KnowledgeBaseModel.description.ilike(f"%{search}%")
             if search
-            else True
+            else true()
         ),
     )
     total = await session.scalar(select(func.count()).select_from(statement.subquery()))
@@ -210,7 +260,7 @@ async def delete_knowledge_base(*, user_id: str, knowledge_base_id: uuid.UUID, s
     )
     # Source files are user-owned reusable uploads. Removing a base removes only
     # its document references and vectors, never the underlying user file.
-    from .runtime import knowledge_ingestion_jobs, vector_store
+    from .runtime import knowledge_ingestion_jobs
 
     for document_id in document_ids:
         knowledge_ingestion_jobs.cancel(str(document_id))
@@ -224,7 +274,6 @@ async def delete_knowledge_base(*, user_id: str, knowledge_base_id: uuid.UUID, s
     )
     await session.delete(knowledge_base)
     await session.commit()
-    await vector_store.delete_knowledge_base(user_id=user_id, knowledge_base_id=str(knowledge_base_id))
     return response
 
 
@@ -235,6 +284,66 @@ async def _next_document_position(*, knowledge_base_id: uuid.UUID, session: Asyn
         )
     )
     return (highest or 0) + 1
+
+
+async def _next_file_position(*, knowledge_base_id: uuid.UUID, session: AsyncSession) -> int:
+    highest = await session.scalar(
+        select(func.max(KnowledgeBaseFileModel.position)).where(
+            KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id
+        )
+    )
+    return (highest or 0) + 1
+
+
+async def add_knowledge_base_file(
+    *, user_id: str, knowledge_base_id: uuid.UUID, payload: KnowledgeBaseFileCreate, session: AsyncSession
+) -> KnowledgeBaseFile:
+    """Attach an owned library file without creating or queuing any artifact."""
+    await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
+    file = await session.scalar(
+        select(UserFileModel.id).where(UserFileModel.id == payload.file_id, UserFileModel.user_id == user_id)
+    )
+    if file is None:
+        raise NotFoundException("File not found")
+    membership = KnowledgeBaseFileModel(
+        knowledge_base_id=knowledge_base_id,
+        file_id=payload.file_id,
+        position=await _next_file_position(knowledge_base_id=knowledge_base_id, session=session),
+    )
+    session.add(membership)
+    session.add(
+        record_knowledge_audit(
+            user_id=user_id,
+            action="base.file_attached",
+            knowledge_base_id=knowledge_base_id,
+            file_id=payload.file_id,
+        )
+    )
+    try:
+        await session.commit()
+    except IntegrityError as error:
+        await session.rollback()
+        raise CodedException(409, "This file is already attached to the knowledge base") from error
+    return KnowledgeBaseFile.model_validate(membership)
+
+
+async def list_knowledge_base_files(
+    *, user_id: str, knowledge_base_id: uuid.UUID, session: AsyncSession, page: int, page_size: int
+) -> KnowledgeBaseFileList:
+    await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
+    statement = select(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id)
+    total = await session.scalar(select(func.count()).select_from(statement.subquery()))
+    records = await session.scalars(
+        statement.order_by(KnowledgeBaseFileModel.position, KnowledgeBaseFileModel.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return KnowledgeBaseFileList(
+        files=[KnowledgeBaseFile.model_validate(record) for record in records],
+        total=total or 0,
+        page=page,
+        page_size=page_size,
+    )
 
 
 def _document_response(document: KnowledgeDocumentModel) -> KnowledgeDocument:
@@ -486,7 +595,11 @@ async def update_knowledge_document_caption(
     chunk_id = _caption_chunk_id(document)
     previous_text = document.caption_text if document.caption_status is KnowledgeCaptionStatus.ACCEPTED else None
     try:
-        await vector_store.delete_chunk(user_id=user_id, document_id=str(document.id), chunk_id=chunk_id)
+        await vector_store.delete_file_generation(
+            user_id=user_id,
+            file_id=str(document.file_id),
+            artifact_generation=document.revision,
+        )
         if next_text is not None:
             vectors = await embedding_provider.embed_text([next_text])
             if len(vectors) != 1:
@@ -496,9 +609,9 @@ async def update_knowledge_document_caption(
                     VectorChunk(
                         id=chunk_id,
                         user_id=user_id,
-                        knowledge_base_id=str(knowledge_base_id),
-                        document_id=str(document.id),
-                        revision_id=f"{document.id}:{document.revision}",
+                        file_id=str(document.file_id),
+                        artifact_generation=document.revision,
+                        chunk_ordinal=0,
                         content=next_text,
                         vector=vectors[0],
                     )
@@ -515,9 +628,9 @@ async def update_knowledge_document_caption(
                             VectorChunk(
                                 id=chunk_id,
                                 user_id=user_id,
-                                knowledge_base_id=str(knowledge_base_id),
-                                document_id=str(document.id),
-                                revision_id=f"{document.id}:{document.revision}",
+                                file_id=str(document.file_id),
+                                artifact_generation=document.revision,
+                                chunk_ordinal=0,
                                 content=previous_text,
                                 vector=vectors[0],
                             )
@@ -673,11 +786,16 @@ async def replace_agent_knowledge_base_assignments(
             raise NotFoundException("Knowledge base not found")
         ready_ids = set(
             await session.scalars(
-                select(KnowledgeDocumentModel.knowledge_base_id)
+                select(KnowledgeBaseFileModel.knowledge_base_id)
+                .join(
+                    FileKnowledgeArtifactModel,
+                    FileKnowledgeArtifactModel.file_id == KnowledgeBaseFileModel.file_id,
+                )
                 .where(
-                    KnowledgeDocumentModel.user_id == user_id,
-                    KnowledgeDocumentModel.knowledge_base_id.in_(base_ids),
-                    KnowledgeDocumentModel.status == KnowledgeDocumentStatus.READY,
+                    KnowledgeBaseFileModel.knowledge_base_id.in_(base_ids),
+                    FileKnowledgeArtifactModel.user_id == user_id,
+                    FileKnowledgeArtifactModel.is_current.is_(True),
+                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
                 )
                 .distinct()
             )
@@ -723,5 +841,6 @@ async def delete_knowledge_document(
     )
     await session.delete(document)
     await session.commit()
-    await vector_store.delete_document(user_id=user_id, document_id=str(document_id))
+    if document.file_id is not None:
+        await vector_store.delete_file(user_id=user_id, file_id=str(document.file_id))
     return response

@@ -184,6 +184,7 @@ async def _deduplicated_filename(session: AsyncSession, store: LocalFileStore, u
 
 async def upload_files(*, user_id: str, uploads: list[UploadFile], session: AsyncSession) -> UserFileList:
     created: list[UserFileModel] = []
+    artifacts = []
     store = get_file_store()
     saved: list[str] = []
     try:
@@ -252,7 +253,19 @@ async def upload_files(*, user_id: str, uploads: list[UploadFile], session: Asyn
             saved.append(filename)
             session.add(model)
             created.append(model)
+        # Canonical knowledge state is created with the file, before any
+        # collection references it. Processing is queued separately so an
+        # upload transaction remains bounded and atomic.
+        from asterism.domains.knowledge.service import ensure_file_knowledge_artifact
+
+        for file in created:
+            artifacts.append(await ensure_file_knowledge_artifact(file=file, session=session))
         await session.commit()
+        from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs
+
+        for file, artifact in zip(created, artifacts, strict=True):
+            if artifact.status.value in {"pending", "failed"}:
+                knowledge_ingestion_jobs.enqueue(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
     except Exception:
         await session.rollback()
         for filename in saved:
@@ -307,9 +320,26 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     )
     if file is None:
         raise NotFoundException("File not found")
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+    from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs, vector_store
+
+    artifact_ids = list(
+        await session.scalars(
+            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id)
+        )
+    )
+    for artifact_id in artifact_ids:
+        knowledge_ingestion_jobs.cancel(str(artifact_id))
     response = UserFile.model_validate(file)
+    file_id = file.id
     await session.delete(file)
     await session.commit()
+    try:
+        await vector_store.delete_file(user_id=user_id, file_id=str(file_id))
+    except Exception:
+        # Database/source deletion remains authoritative; a restarted worker
+        # cannot restore vectors because its file/artifact row is gone.
+        pass
     get_file_store().delete(user_id, filename)
     return response
 
@@ -333,6 +363,16 @@ async def delete_user_files(
                     )
                 )
                 if file is not None:
+                    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+                    from asterism.domains.knowledge.runtime import knowledge_ingestion_jobs
+
+                    artifact_ids = list(
+                        await session.scalars(
+                            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id)
+                        )
+                    )
+                    for artifact_id in artifact_ids:
+                        knowledge_ingestion_jobs.cancel(str(artifact_id))
                     deleted_files.append(UserFile.model_validate(file))
                     await session.delete(file)
             await session.commit()
@@ -346,5 +386,14 @@ async def delete_user_files(
         except Exception:
             # If the file is missing from the store, we still want to return a successful response.
             pass
+
+    if deleted_files:
+        from asterism.domains.knowledge.runtime import vector_store
+
+        for file in deleted_files:
+            try:
+                await vector_store.delete_file(user_id=user_id, file_id=str(file.id))
+            except Exception:
+                pass
 
     return UserFileList(files=deleted_files)

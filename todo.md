@@ -489,3 +489,38 @@ Status: US-20.1 completed, user-confirmed, and merged into `main`.
   - [x] Implement bounded backend queries and data-preserving provider writes.
   - [x] Replace eager model form rendering with on-demand searchable pages.
   - [x] Regenerate the client; add backend/frontend regression coverage and run quality gates.
+
+## EPIC-21 — File-Centric Knowledge Processing
+
+Plan: [EPIC-21](docs/epics/EPIC-21-FILE-CENTRIC-KNOWLEDGE-PROCESSING.md).
+Status: US-21.1 in progress on `story/021-01-canonical-file-knowledge-artifacts`.
+Order: US-21.1 → US-21.2 → US-21.3 → US-21.4. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
+Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
+
+- [~] US-21.1 — Establish canonical file knowledge artifacts
+  - [x] US-21.1-T1: Define the file artifact and processing-profile contracts.
+  - [~] US-21.1-T2: Replace per-base documents with file memberships and file-owned artifacts.
+  - [ ] US-21.1-T3: Make vector rows file-keyed and require owner/allowed-file filtering.
+  - [ ] US-21.1-T4: Establish deterministic clean-install/reset behavior and regenerate the API client.
+  - [ ] US-21.1-T5: Test isolation, membership, cleanup, and one-current-generation invariants.
+
+- [ ] US-21.2 — Process user files automatically and reprocess globally
+  - [ ] US-21.2-T1: Queue idempotent bounded processing on file upload.
+  - [ ] US-21.2-T2: Generate canonical extraction, chunks, embeddings, and captions once per file.
+  - [ ] US-21.2-T3: Implement file-level lifecycle, retry, cancellation, and recovery.
+  - [ ] US-21.2-T4: Add explicit global profile-change reprocessing with progress and safe retirement.
+  - [ ] US-21.2-T5: Test reuse, concurrency, recovery, reprocessing, and cleanup.
+
+- [ ] US-21.3 — Use file memberships for secure knowledge retrieval
+  - [ ] US-21.3-T1: Provide ownership-safe file-membership APIs.
+  - [ ] US-21.3-T2: Resolve assigned bases to allowed file IDs before filtered retrieval.
+  - [ ] US-21.3-T3: Define and benchmark large-membership/reprocessing behavior.
+  - [ ] US-21.3-T4: Separate membership-removal and file-deletion lifecycles.
+  - [ ] US-21.3-T5: Test multi-base reuse, authorization, deletion races, and provenance.
+
+- [ ] US-21.4 — Make the file manager the processing and caption workspace
+  - [ ] US-21.4-T1: Show canonical knowledge processing state in the file manager.
+  - [ ] US-21.4-T2: Move caption management to image files with provider disclosure.
+  - [ ] US-21.4-T3: Make knowledge-base pages attach and curate existing files.
+  - [ ] US-21.4-T4: Explain file-deletion versus membership-removal impacts.
+  - [ ] US-21.4-T5: Add E2E coverage, run quality gates, and update architecture docs.

@@ -20,6 +20,7 @@ from asterism.domains.files.service import (
     list_user_files,
     upload_files,
 )
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
 from asterism.domains.llm.schemas import ImageUrlContentPart, text_content
 from asterism.domains.user.models import UserModel
 from openpyxl import Workbook
@@ -69,6 +70,14 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
     ]
     assert uploaded.files[0].mime_type == "text/plain"
     assert uploaded.files[2].mime_type == "image/png"
+    artifacts = list(
+        await file_session.scalars(
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.user_id == "user-a")
+        )
+    )
+    assert {(artifact.file_id, artifact.status, artifact.is_current) for artifact in artifacts} == {
+        (file.id, FileKnowledgeArtifactStatus.PENDING, False) for file in uploaded.files
+    }
     assert (config.files_root / "user-a" / "report.txt").read_bytes() == b"first"
     assert (await list_user_files(user_id="user-b", session=file_session)).files == []
 

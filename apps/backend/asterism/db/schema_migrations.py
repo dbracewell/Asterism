@@ -1,3 +1,4 @@
+import hashlib
 import time
 from collections.abc import Awaitable, Callable
 
@@ -24,6 +25,9 @@ _KNOWLEDGE_AUDIT_MIGRATION = "20260923_05_knowledge_audit"
 _AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION = "20260924_01_agent_knowledge_assignments"
 _KNOWLEDGE_CAPTIONING_MIGRATION = "20260925_01_knowledge_captioning"
 _PROVIDER_MODEL_BROWSER_MIGRATION = "20260926_01_provider_model_browser"
+_FILE_KNOWLEDGE_ARTIFACTS_MIGRATION = "20260927_01_file_knowledge_artifacts"
+_KNOWLEDGE_BASE_FILES_MIGRATION = "20260927_02_knowledge_base_files"
+_KNOWLEDGE_AUDIT_FILE_MIGRATION = "20260927_03_knowledge_audit_file"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -378,6 +382,111 @@ async def _migrate_knowledge_captioning(connection: AsyncConnection) -> None:
         await _add_column_if_missing(connection, "knowledge_documents", column, definition)
 
 
+async def _migrate_file_knowledge_artifacts(connection: AsyncConnection) -> None:
+    """Create the canonical, file-owned artifact contract before its cutover."""
+    extraction_policy = "text-extraction-v1"
+    chunking_policy = "bounded-chunking-v1"
+    embedding_model = "onnx-clip-v1"
+    captioning_policy = "captioning-configuration-v1"
+    identity = hashlib.sha256(
+        "\x1f".join((extraction_policy, chunking_policy, embedding_model, captioning_policy)).encode()
+    ).hexdigest()
+    now = int(time.time())
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS knowledge_processing_profile ("
+            "id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1), "
+            "generation INTEGER NOT NULL, identity VARCHAR(64) NOT NULL, "
+            "extraction_policy VARCHAR(128) NOT NULL, chunking_policy VARCHAR(128) NOT NULL, "
+            "embedding_model VARCHAR(512) NOT NULL, captioning_policy VARCHAR(512) NOT NULL, "
+            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)"
+        )
+    )
+    await connection.execute(
+        text(
+            "INSERT OR IGNORE INTO knowledge_processing_profile "
+            "(id, generation, identity, extraction_policy, chunking_policy, embedding_model, captioning_policy, "
+            "created_at, updated_at) VALUES "
+            "(1, 1, :identity, :extraction_policy, :chunking_policy, :embedding_model, :captioning_policy, :now, :now)"
+        ),
+        {
+            "identity": identity,
+            "extraction_policy": extraction_policy,
+            "chunking_policy": chunking_policy,
+            "embedding_model": embedding_model,
+            "captioning_policy": captioning_policy,
+            "now": now,
+        },
+    )
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS file_knowledge_artifacts ("
+            "id CHAR(32) NOT NULL PRIMARY KEY, "
+            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+            "file_id CHAR(32) NOT NULL REFERENCES user_files(id) ON DELETE CASCADE, "
+            "generation INTEGER NOT NULL, processing_profile_generation INTEGER NOT NULL, "
+            "processing_profile_identity VARCHAR(64) NOT NULL, contract_version INTEGER NOT NULL DEFAULT 1, "
+            "status VARCHAR(16) NOT NULL DEFAULT 'pending' "
+            "CHECK (status IN ('pending', 'processing', 'ready', 'failed', 'canceled')), "
+            "is_current BOOLEAN NOT NULL DEFAULT 0, extracted_content TEXT, chunk_count INTEGER NOT NULL DEFAULT 0, "
+            "text_embeddings_ready BOOLEAN NOT NULL DEFAULT 0, visual_embedding_ready BOOLEAN NOT NULL DEFAULT 0, "
+            "caption_status VARCHAR(16), caption_source VARCHAR(16), caption_model VARCHAR(512), caption_text TEXT, "
+            "caption_error_code VARCHAR(64), caption_error_reason VARCHAR(512), "
+            "error_code VARCHAR(64), error_reason VARCHAR(512), started_at INTEGER, completed_at INTEGER, "
+            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, "
+            "CONSTRAINT uq_file_knowledge_artifacts_file_generation UNIQUE (file_id, generation)"
+            ")"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_file_knowledge_artifacts_user_file_status "
+            "ON file_knowledge_artifacts (user_id, file_id, status, updated_at DESC)"
+        )
+    )
+    await connection.execute(
+        text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_file_knowledge_artifacts_one_current "
+            "ON file_knowledge_artifacts (file_id) WHERE is_current = 1"
+        )
+    )
+
+
+async def _migrate_knowledge_base_files(connection: AsyncConnection) -> None:
+    """Introduce file memberships without copying user-file or artifact data."""
+    await connection.execute(
+        text(
+            "CREATE TABLE IF NOT EXISTS knowledge_base_files ("
+            "id CHAR(32) NOT NULL PRIMARY KEY, "
+            "knowledge_base_id CHAR(32) NOT NULL REFERENCES knowledge_bases(id) ON DELETE CASCADE, "
+            "file_id CHAR(32) NOT NULL REFERENCES user_files(id) ON DELETE CASCADE, "
+            "position INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, "
+            "CONSTRAINT uq_knowledge_base_files_base_file UNIQUE (knowledge_base_id, file_id), "
+            "CONSTRAINT uq_knowledge_base_files_base_position UNIQUE (knowledge_base_id, position)"
+            ")"
+        )
+    )
+
+
+async def _migrate_knowledge_audit_file(connection: AsyncConnection) -> None:
+    """Give content-free audit records a canonical file reference."""
+    await _add_column_if_missing(
+        connection,
+        "knowledge_audit_events",
+        "file_id",
+        "CHAR(32) REFERENCES user_files(id) ON DELETE SET NULL",
+    )
+    await connection.execute(
+        text("CREATE INDEX IF NOT EXISTS idx_knowledge_audit_events_file ON knowledge_audit_events (file_id)")
+    )
+    await connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS idx_knowledge_base_files_base_position "
+            "ON knowledge_base_files (knowledge_base_id, position)"
+        )
+    )
+
+
 async def _migrate_message_usage(connection: AsyncConnection) -> None:
     for column in (
         "input_tokens",
@@ -402,6 +511,9 @@ _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_KNOWLEDGE_AUDIT_MIGRATION, _migrate_knowledge_audit),
     (_AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION, _migrate_agent_knowledge_assignments),
     (_KNOWLEDGE_CAPTIONING_MIGRATION, _migrate_knowledge_captioning),
+    (_FILE_KNOWLEDGE_ARTIFACTS_MIGRATION, _migrate_file_knowledge_artifacts),
+    (_KNOWLEDGE_BASE_FILES_MIGRATION, _migrate_knowledge_base_files),
+    (_KNOWLEDGE_AUDIT_FILE_MIGRATION, _migrate_knowledge_audit_file),
     (_PROVIDER_MODEL_BROWSER_MIGRATION, _migrate_provider_model_browser),
     (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),

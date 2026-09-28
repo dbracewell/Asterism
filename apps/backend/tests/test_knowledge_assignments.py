@@ -5,10 +5,12 @@ from asterism.db.base import Base
 from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.service import get_agent_profile
+from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeArtifactStatus,
+    KnowledgeBaseFileModel,
     KnowledgeBaseModel,
-    KnowledgeDocumentModel,
-    KnowledgeDocumentStatus,
 )
 from asterism.domains.knowledge.schemas import KnowledgeBaseAssignmentReplace
 from asterism.domains.knowledge.service import (
@@ -37,18 +39,30 @@ async def _ready_base(session, user_id: str, name: str) -> KnowledgeBaseModel:
     base = KnowledgeBaseModel(user_id=user_id, name=name)
     session.add(base)
     await session.flush()
-    session.add(
-        KnowledgeDocumentModel(
-            user_id=user_id,
-            knowledge_base_id=base.id,
-            original_name="ready.txt",
-            mime_type="text/plain",
-            content_sha256="a" * 64,
-            revision=1,
-            position=1,
-            status=KnowledgeDocumentStatus.READY,
-            metadata_={},
-        )
+    file = UserFileModel(
+        user_id=user_id,
+        filename=f"{name.lower()}.txt",
+        original_name="ready.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256=("a" * 64),
+    )
+    session.add(file)
+    await session.flush()
+    session.add_all(
+        [
+            KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=file.id, position=1),
+            FileKnowledgeArtifactModel(
+                user_id=user_id,
+                file_id=file.id,
+                generation=1,
+                processing_profile_generation=1,
+                processing_profile_identity="a" * 64,
+                status=FileKnowledgeArtifactStatus.READY,
+                is_current=True,
+            ),
+        ]
     )
     await session.commit()
     return base
