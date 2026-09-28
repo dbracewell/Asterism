@@ -8,7 +8,7 @@ an explicit ordered collection of a user's files. Adding one file to multiple
 knowledge bases must not repeat extraction, captioning, chunking, or embedding
 work.
 
-**Status: US-21.4 implemented on `story/021-04-file-manager-knowledge-ui`; awaiting user completion confirmation.**
+**Status: Completed — all stories verified, user-confirmed, and merged to `main`.**
 
 ## Product decisions
 

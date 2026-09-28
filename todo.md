@@ -493,7 +493,7 @@ Status: US-20.1 completed, user-confirmed, and merged into `main`.
 ## EPIC-21 — File-Centric Knowledge Processing
 
 Plan: [EPIC-21](docs/epics/EPIC-21-FILE-CENTRIC-KNOWLEDGE-PROCESSING.md).
-Status: US-21.4 implemented on `story/021-04-file-manager-knowledge-ui`; awaiting user completion confirmation.
+Status: Completed — all stories verified, user-confirmed, and merged to `main`.
 Order: US-21.1 → US-21.2 → US-21.3 → US-21.4. Work on one item at a time; create a feature branch when each story starts. Story completion requires passing checks and user confirmation before merge.
 Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` canceled/not applicable.
 
@@ -518,9 +518,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-21.3-T4: Separate membership-removal and file-deletion lifecycles.
   - [x] US-21.3-T5: Test multi-base reuse, authorization, deletion races, and provenance.
 
-- [x] US-21.4 — Make the file manager the processing and caption workspace (awaiting user confirmation)
+- [x] US-21.4 — Make the file manager the processing and caption workspace
   - [x] US-21.4-T1: Show canonical knowledge processing state in the file manager.
   - [x] US-21.4-T2: Move caption management to image files with provider disclosure.
   - [x] US-21.4-T3: Make knowledge-base pages attach and curate existing files.
   - [x] US-21.4-T4: Explain file-deletion versus membership-removal impacts.
   - [x] US-21.4-T5: Add E2E coverage, run quality gates, and update architecture docs.
+
+### Epic closure
+
+- [x] All EPIC-21 stories verified, user-confirmed, and merged to `main`.
