@@ -26,6 +26,7 @@ flowchart TB
         Chat[Chat router, in-process job, controller, and orchestrator]
         Runtime[Agent runtime, approvals, and tools]
         Files[File API and processor]
+        Knowledge[File knowledge artifacts, captions, and retrieval]
         Settings[Provider and model settings]
         Database[SQLAlchemy async]
     end
@@ -41,8 +42,13 @@ flowchart TB
     Security --> Chat
     Chat --> Runtime
     Chat --> Files
+    Runtime --> Knowledge
     Runtime --> LLM
     Files --> Disk
+    Files --> Knowledge
+    Knowledge --> Disk
+    Knowledge --> LLM
+    Knowledge --> Database
     Chat --> Database
     Files --> Database
     Settings --> Database
@@ -66,6 +72,7 @@ backend URL.
 | API client     | Hey API generated from FastAPI OpenAPI                                          |
 | LLM runtime    | OpenAI Python SDK for OpenAI and compatible endpoints                           |
 | Files          | `FileStore` protocol, `LocalFileStore`, and MarkItDown conversion               |
+| Knowledge      | File-owned artifacts, LanceDB, pinned local CLIP, and optional image captioning |
 
 ## Workspace layout
 
@@ -75,11 +82,11 @@ asterism/
 │   ├── backend/                 # FastAPI package, migrations, and pytest tests
 │   │   └── asterism/domains/    # agent, chat, files, settings, tools, and user domains
 │   └── frontend/                # Next.js application, generated API client, and Playwright tests
-├── architecture/                # This implementation documentation
+├── docs/architecture/           # This implementation documentation
 ├── docs/adr/                    # Architecture decision records
 ├── docker/                      # Combined-container configuration and smoke checks
 ├── scripts/                     # Root environment and workspace helpers
-├── epics/                       # Product plans
+├── docs/epics/                  # Product plans
 └── todo.md                      # Execution history
 ```
 
@@ -106,6 +113,23 @@ asterism/
 6. The backend uses the shared system key only for loopback callbacks to
    `/api/stream`, such as asynchronous title updates. The frontend fans those
    callbacks out to authenticated SSE clients.
+
+## Knowledge lifecycle
+
+1. A user upload creates an immutable library file and a pending, file-owned
+   artifact generation. A bounded background job converts text or embeds an
+   image, writes file/generation-keyed vectors, and promotes the generation only
+   after the vector write succeeds.
+2. A knowledge base stores an ordered reference to a library file. Adding the
+   same file to another base does not reprocess it. Removing the reference does
+   not delete the file; deleting the file removes all memberships, artifacts,
+   vectors, and source bytes.
+3. An agent's assigned bases resolve to allowed file IDs before `search_knowledge`
+   queries LanceDB. The query is filtered by both user and file IDs at the
+   storage boundary, so unassigned files are never searched.
+4. For image files, the platform-wide captioning setting may queue a canonical
+   caption. The File Manager exposes caption and processing actions; a
+   processing-profile update queues replacement generations for the library.
 
 ## Related guides
 

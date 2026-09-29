@@ -5,6 +5,11 @@ maintenance, and isolated tests. Run commands from the repository root unless no
 otherwise. Use the corresponding pnpm command when one is available; package scripts
 provide the intended configuration profile and environment scope.
 
+API-client generation is intentionally a workspace command rather than a script in
+this directory: after a FastAPI contract change, use `pnpm --filter
+@asterism/frontend codegen` against the current backend schema. The generated client
+is used by file, knowledge-base, processing-profile, and captioning UI flows.
+
 ## Script reference
 
 ### `check-client-secret-leaks.mjs`

@@ -48,7 +48,22 @@ the authenticated backend API, not directly by the browser. Context-window and
 tri-state vision values show their catalog/provider/manual/unknown provenance;
 unknown Generic OpenAI metadata can be completed manually and manual values are
 preserved on refresh. See
-[LLM Providers and Model Capabilities](../../architecture/llm-providers.md).
+[LLM Providers and Model Capabilities](../../docs/architecture/llm-providers.md).
+
+## Files and knowledge bases
+
+**Files** is the user-facing source of truth for upload processing and image
+captions. Eligible uploads are processed in the background; the screen displays
+the current artifact status and lets a user retry failed work or edit, clear, or
+regenerate a canonical image caption. Caption regeneration warns that a selected
+external provider may receive the image.
+
+**Knowledge** manages ordered collections of existing library files. Adding a
+file only creates a membership, so processing and captions are shared across all
+collections that contain it. Removing a membership leaves the file intact;
+deleting the file from Files removes its memberships and derived knowledge.
+Agent-profile knowledge-base assignments enable the scoped `search_knowledge`
+tool. The generated client is the source for these REST contracts.
 
 ## Docker and migrations
 
@@ -90,3 +105,5 @@ pnpm --filter @asterism/frontend test
 node scripts/run-isolated-e2e.mjs       # isolated E2E fixture, from repo root
 pnpm --filter @asterism/frontend codegen
 ```
+
+The correct architecture links are under [`docs/architecture`](../../docs/architecture/README.md).

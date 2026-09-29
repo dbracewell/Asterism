@@ -37,6 +37,23 @@ with field-level provenance. Compatible-provider metadata is best-effort and
 unknown or conflicting values require manual administration. See
 [LLM Providers and Model Capabilities](../../docs/architecture/llm-providers.md).
 
+## File knowledge processing
+
+An uploaded eligible `UserFile` receives a canonical, versioned
+`FileKnowledgeArtifact` and is processed independently of knowledge-base
+membership. Knowledge bases are ordered file collections; they neither own
+vectors nor trigger repeat extraction. Retrieval first resolves the active
+agent's assigned bases to allowed file IDs, then supplies both that set and the
+authenticated owner to LanceDB.
+
+The File API exposes artifact status plus retry/cancel processing and image
+caption edit, clear, and regeneration actions. An administrator can update the
+single processing profile at `PUT /api/py/settings/app/knowledge-processing-profile`;
+the change creates replacement generations and queues the eligible library.
+Only a completed generation becomes current, so a failed replacement does not
+replace a usable artifact. See [Knowledge retrieval](../../docs/architecture/knowledge-retrieval.md)
+for lifecycle, provider-disclosure, and operational details.
+
 ## Database initialization
 
 On a fresh installation, from the repository root:

@@ -1,10 +1,12 @@
 # Knowledge Retrieval and Image Captioning
 
 The knowledge subsystem uses separate stores for private retrieval and its
-locally provisioned model artifacts. Image captioning is globally disabled by
-default. When enabled by an administrator, captions are revision-scoped draft
-metadata: users review, edit, accept, or clear them before accepted text becomes
-retrievable. Image CLIP vectors remain independently indexed throughout.
+locally provisioned model artifacts. Every eligible uploaded file has a
+file-owned artifact generation independent of knowledge-base membership. Image
+captioning is globally disabled by default. When an administrator enables it,
+generated captions are canonical file metadata and are indexed as draft text;
+users can edit, regenerate, or clear that shared caption in the File Manager.
+Image CLIP vectors remain independently indexed throughout.
 
 | Data | Owner | Storage |
 | --- | --- | --- |
@@ -128,15 +130,16 @@ service permits only one in-flight download, exposes safe status/progress,
 supports cancellation/retry, and validates the pinned manifest before reporting
 an existing bundle ready.
 
-`init_system` opens LanceDB and starts bounded caption-job recovery; FastAPI
+`init_system` opens LanceDB and starts bounded ingestion and caption-job recovery; FastAPI
 shutdown cancels caption jobs and downloads, releases caption/embedding runtime
 references, closes the vector-store service, then closes the database engine.
 Caption jobs are one per file artifact generation, have a strict timeout and bounded
-concurrency, and record only status/code/model identifiers in audits. They never
-log image bytes or caption text by default. A failed or canceled generation keeps
-any prior accepted text vector and the image vector intact. Ingestion work,
-document limits, retries, and rebuild orchestration are defined in US-17.2; no
-unbounded ingestion registry is introduced.
+concurrency. Their status, source/model identity, and safe error reason remain on
+the file artifact; ordinary structured logs omit image bytes and caption text. A
+failed or canceled replacement keeps the prior current artifact available.
+Ingestion jobs are likewise bounded and idempotent; their processing status and
+safe error reason are available from the File Manager, which offers retry and
+cancellation.
 
 For a vector schema/version migration, create a new LanceDB table/version,
 re-embed from the relational file artifacts, validate counts and retrieval,
@@ -172,9 +175,9 @@ assignment is an explicit allowlist: only ready file artifacts whose memberships
 belong to bases assigned to the active agent are searched. `search_knowledge` is
 offered and automatically authorized only in that case; it cannot be enabled by an
 agent tool preference or an invented tool name. Every LanceDB query filters the
-owner and resolved allowed file IDs. Results label their
-provenance as `visual_image`, `accepted_caption`, or `text`, so callers can
-clearly distinguish CLIP visual matches from reviewed description text. Runtime
+owner and resolved allowed file IDs. Results label their provenance as `caption`
+or `text`; image artifacts contribute a visual embedding and captions contribute
+indexed text when present. Runtime
 traces record safe IDs, counts, duration, and model/index versions—not queries,
 document text, caption text, or full files.
 
@@ -206,4 +209,7 @@ membership. Retrieval resolves assigned memberships before searching and sends
 both owner and allowed file IDs to LanceDB; it never searches globally then
 filters in application code. Removing a membership preserves the file and its
 artifacts; deleting a file cancels work and removes memberships, artifacts,
-vectors, and source bytes.
+vectors, and source bytes. An administrator updates one global processing
+profile; a profile identity change creates and queues replacement generations for
+the full eligible library, while a ready previous generation remains searchable
+until its replacement is complete.

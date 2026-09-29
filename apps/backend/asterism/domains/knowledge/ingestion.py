@@ -12,12 +12,10 @@ from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.service import ensure_file_processed, get_file_store
 
-from .audit import record_knowledge_audit
 from .embeddings import EmbeddingProvider, EmbeddingProviderError
 from .models import (
     FileKnowledgeArtifactModel,
     FileKnowledgeArtifactStatus,
-    KnowledgeCaptionConfigurationModel,
     KnowledgeCaptionMode,
     KnowledgeCaptionStatus,
 )
@@ -71,9 +69,6 @@ async def ingest_file_artifact(
     artifact.error_code = None
     artifact.error_reason = None
     artifact.started_at = get_unix_timestamp()
-    session.add(
-        record_knowledge_audit(user_id=file.user_id, action="file.processing_started", file_id=file.id)
-    )
     await session.commit()
     try:
         processed = await ensure_file_processed(file=file, session=session)
@@ -139,7 +134,6 @@ async def ingest_file_artifact(
             else "Knowledge processing failed; check the server logs"
         )
         artifact.completed_at = None
-        session.add(record_knowledge_audit(user_id=file.user_id, action="file.processing_failed", file_id=file.id))
         await session.commit()
         return artifact
 
@@ -157,12 +151,11 @@ async def ingest_file_artifact(
     artifact.completed_at = get_unix_timestamp()
     caption_requested = False
     if processed.kind is FileKind.IMAGE:
-        caption_configuration = await session.get(KnowledgeCaptionConfigurationModel, 1)
-        caption_requested = (
-            caption_configuration is not None and caption_configuration.mode is not KnowledgeCaptionMode.DISABLED
-        )
+        from .service import get_captioning_configuration
+
+        caption_configuration = await get_captioning_configuration(session=session)
+        caption_requested = caption_configuration.mode != KnowledgeCaptionMode.DISABLED.value
         artifact.caption_status = KnowledgeCaptionStatus.PENDING if caption_requested else None
-    session.add(record_knowledge_audit(user_id=file.user_id, action="file.processing_ready", file_id=file.id))
     await session.commit()
     if caption_requested:
         from .runtime import knowledge_caption_jobs

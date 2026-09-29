@@ -11,7 +11,6 @@ from asterism.db.database import get_async_db_session
 from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.files.models import UserFileModel
 
-from .audit import record_knowledge_audit
 from .captioning import CaptionErrorCode, CaptionResult
 from .models import (
     FileKnowledgeArtifactModel,
@@ -96,7 +95,6 @@ class KnowledgeCaptionJobs:
                     artifact.caption_error_code = None
                     artifact.caption_error_reason = None
                 artifact.completed_at = get_unix_timestamp()
-                session.add(record_knowledge_audit(user_id=user_id, action="file.caption_completed", file_id=file_id))
                 await session.commit()
 
     async def recover_interrupted(self) -> None:
