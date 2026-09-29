@@ -320,7 +320,10 @@ export const ChatInput = ({
           )}
           disabled={isDisabled}
           aria-label="Send message"
-          onClick={submitPrompt}
+          onClick={(event) => {
+            event.preventDefault();
+            void submitPrompt();
+          }}
         >
           <IconArrowUp size={16} />
         </button>
