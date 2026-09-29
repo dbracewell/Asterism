@@ -71,13 +71,14 @@ async def test_knowledge_migration_is_idempotent(tmp_path: Path):
     await engine.dispose()
     assert {
         "knowledge_bases",
-        "knowledge_audit_events",
         "agent_knowledge_base_assignments",
-        "knowledge_processing_profile",
         "file_knowledge_artifacts",
         "knowledge_base_files",
     } <= tables
     assert "knowledge_documents" not in tables
+    assert "knowledge_audit_events" not in tables
+    assert "knowledge_caption_configuration" not in tables
+    assert "knowledge_processing_profile" not in tables
 
 
 @pytest.mark.asyncio
@@ -86,11 +87,6 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
         await run_schema_migrations(connection)
-        profile = (
-            await connection.execute(text("SELECT generation, identity FROM knowledge_processing_profile WHERE id = 1"))
-        ).one()
-        assert profile.generation == 1
-        assert len(profile.identity) == 64
         await connection.execute(text("INSERT INTO users (id) VALUES ('user-a')"))
     from sqlalchemy.ext.asyncio import async_sessionmaker
 

@@ -15,9 +15,7 @@ _TRUNCATION_MARKER = "\n… [content truncated]"
 
 
 class FileProcessor(Protocol):
-    async def ensure_processed(
-        self, file: UserFileModel, session: AsyncSession
-    ) -> UserFileModel: ...
+    async def ensure_processed(self, file: UserFileModel, session: AsyncSession) -> UserFileModel: ...
 
 
 class MarkItDownFileProcessor:
@@ -43,7 +41,9 @@ class MarkItDownFileProcessor:
         )
 
     async def ensure_processed(
-        self, file: UserFileModel, session: AsyncSession
+        self,
+        file: UserFileModel,
+        session: AsyncSession,
     ) -> UserFileModel:
         path = self.store.open(file.user_id, file.filename)
         if not path.is_file():

@@ -16,8 +16,9 @@ responses, full-text chat search, and user-owned file attachments.
 | [Tool authorization](tool-authorization.md)         | Allowlist and interactive approval policies, child-agent boundaries                             |
 | [LLM providers](llm-providers.md)                   | OpenAI and OpenAI-compatible provider configuration and capabilities                            |
 | [Data and storage](data-and-storage.md)             | SQLite schema, FTS search, message tree, local file storage, and attachments                    |
-| [Knowledge retrieval](knowledge-retrieval.md)       | Private LanceDB retrieval, multimodal embeddings, local captioning, provisioning, and benchmarks |
-| [ADR-0016: Memory resource contracts](adr-0016-memory-resource-contracts.md) | Process-lifetime state inventory, ownership, bounds, and remediation plan |
+| [Knowledge retrieval](knowledge-retrieval.md)       | File-owned processing, scoped LanceDB retrieval, and image captioning                           |
+| [File knowledge processing](file-knowledge-processing.md) | Upload-to-artifact pipeline, embeddings, captions, jobs, and lifecycle guarantees          |
+| [ADR-0016: Memory resource contracts](../adr/adr-0016-memory-resource-contracts.md) | Process-lifetime state inventory, ownership, bounds, and remediation plan |
 
 ## Current deployment topology
 
@@ -36,6 +37,7 @@ flowchart TD
         API[REST and WebSocket routes]
         Chat[Chat job, controller, and orchestrator]
         Agent[Agent runtime and tool registry]
+        Knowledge[File processing, captions, and retrieval]
         DB[SQLAlchemy async session manager]
     end
 
@@ -50,6 +52,9 @@ flowchart TD
     API --> Chat
     Chat --> Agent
     Agent --> Providers
+    Agent --> Knowledge
+    Knowledge --> Providers
+    Knowledge --> DB
     API --> DB
     DB --> SQLite
     API --> Files
@@ -70,17 +75,20 @@ flowchart TD
 - **Persistence boundary:** SQLAlchemy manages the relational store; uploaded bytes
   pass through the `FileStore` protocol, whose current implementation is
   `LocalFileStore`.
+- **Knowledge boundary:** each source file owns its processed generations;
+  knowledge bases are ordered memberships and agent assignments are the retrieval
+  allowlist. LanceDB accepts only owner- and allowed-file-filtered searches.
 - **Provider boundary:** the runtime uses the OpenAI SDK. Supported configurations
-  are canonical OpenAI and a generic OpenAI-compatible HTTP(S) endpoint.
-  Captioning is disabled by default; its future provider mode is restricted to
-  the admin-selected discovered vision model, while local mode is restricted to
-  a pinned, manifest-verified offline bundle.
+  are canonical OpenAI and a generic OpenAI-compatible HTTP(S) endpoint. Captioning
+  is disabled by default; when enabled it uses either the admin-selected discovered
+  vision model or a pinned, manifest-verified local bundle.
 
 ## Code entry points
 
-- Backend app: [`asterism.main:app`](../apps/backend/asterism/main.py)
-- Backend lifespan: [`asterism.core.lifespan:lifespan`](../apps/backend/asterism/core/lifespan.py)
-- Chat jobs and transport: [`ChatJobManager`](../apps/backend/asterism/domains/chat/jobs.py) and [`ChatController`](../apps/backend/asterism/domains/chat/controller.py)
-- Agent loop: [`Agent`](../apps/backend/asterism/domains/agent/agent.py)
-- Tool registry: [`tool_registry`](../apps/backend/asterism/domains/tools/registry.py)
-- Frontend chat hook: [`useChatWebSocket`](../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)
+- Backend app: [`asterism.main:app`](../../apps/backend/asterism/main.py)
+- Backend lifespan: [`asterism.core.lifespan:lifespan`](../../apps/backend/asterism/core/lifespan.py)
+- Chat jobs and transport: [`ChatJobManager`](../../apps/backend/asterism/domains/chat/jobs.py) and [`ChatController`](../../apps/backend/asterism/domains/chat/controller.py)
+- Agent loop: [`Agent`](../../apps/backend/asterism/domains/agent/agent.py)
+- Knowledge runtime: [`runtime.py`](../../apps/backend/asterism/domains/knowledge/runtime.py)
+- Tool registry: [`tool_registry`](../../apps/backend/asterism/domains/tools/registry.py)
+- Frontend chat hook: [`useChatWebSocket`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)

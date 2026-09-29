@@ -1,7 +1,9 @@
 import hashlib
+import json
 import uuid
 from typing import Literal
 
+from pydantic import ValidationError
 from sqlalchemy import delete, func, select, true
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,19 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.files.models import UserFileModel
-from asterism.domains.settings.models import LLMModel
+from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
 
 from .assignments import AgentKnowledgeBaseAssignmentModel
-from .audit import record_knowledge_audit
 from .captioning import CaptioningConfiguration, CaptioningError, CaptionMode
 from .models import (
     FileKnowledgeArtifactModel,
     FileKnowledgeArtifactStatus,
     KnowledgeBaseFileModel,
     KnowledgeBaseModel,
-    KnowledgeCaptionConfigurationModel,
-    KnowledgeCaptionMode,
-    KnowledgeProcessingProfileModel,
 )
 from .schemas import (
     KnowledgeBase,
@@ -36,10 +34,97 @@ from .schemas import (
     KnowledgeBaseUpdate,
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
+    KnowledgeProcessingCaptioningConfiguration,
+    KnowledgeProcessingConfiguration,
     KnowledgeProcessingProfile,
     KnowledgeProcessingProfileUpdate,
     KnowledgeReprocessSummary,
 )
+
+KNOWLEDGE_PROCESSING_SETTING_KEY = "knowledge.processing"
+
+
+def _processing_identity(
+    *,
+    extraction_policy: str,
+    chunking_policy: str,
+    embedding_model: str,
+    captioning_policy: str,
+    captioning: KnowledgeProcessingCaptioningConfiguration,
+) -> str:
+    """Fingerprint every input that can change a derived knowledge artifact."""
+    content = {
+        "extraction_policy": extraction_policy,
+        "chunking_policy": chunking_policy,
+        "embedding_model": embedding_model,
+        "captioning_policy": captioning_policy,
+        "captioning": captioning.model_dump(mode="json"),
+    }
+    return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _default_processing_configuration() -> KnowledgeProcessingConfiguration:
+    captioning = KnowledgeProcessingCaptioningConfiguration()
+    return KnowledgeProcessingConfiguration(
+        identity=_processing_identity(
+            extraction_policy="text-extraction-v1",
+            chunking_policy="bounded-chunking-v1",
+            embedding_model="onnx-clip-v1",
+            captioning_policy="captioning-configuration-v1",
+            captioning=captioning,
+        ),
+        extraction_policy="text-extraction-v1",
+        chunking_policy="bounded-chunking-v1",
+        embedding_model="onnx-clip-v1",
+        captioning_policy="captioning-configuration-v1",
+        captioning=captioning,
+    )
+
+
+async def _load_processing_configuration(
+    *, session: AsyncSession
+) -> tuple[ApplicationSettingsModel | None, KnowledgeProcessingConfiguration]:
+    """Read the versioned setting, falling back safely for missing or invalid values."""
+    setting = await session.get(ApplicationSettingsModel, KNOWLEDGE_PROCESSING_SETTING_KEY)
+    if setting is None:
+        return None, _default_processing_configuration()
+    try:
+        return setting, KnowledgeProcessingConfiguration.model_validate(setting.value)
+    except ValidationError:
+        # Do not make retrieval or file processing unavailable because a manual
+        # settings edit is malformed. A subsequent administrator update heals it.
+        return setting, _default_processing_configuration()
+
+
+def _profile_from_configuration(
+    configuration: KnowledgeProcessingConfiguration, *, updated_at: int
+) -> KnowledgeProcessingProfile:
+    return KnowledgeProcessingProfile(
+        generation=configuration.generation,
+        identity=configuration.identity,
+        extraction_policy=configuration.extraction_policy,
+        chunking_policy=configuration.chunking_policy,
+        embedding_model=configuration.embedding_model,
+        captioning_policy=configuration.captioning_policy,
+        updated_at=updated_at,
+    )
+
+
+def _save_processing_configuration(
+    *,
+    setting: ApplicationSettingsModel | None,
+    configuration: KnowledgeProcessingConfiguration,
+    session: AsyncSession,
+) -> ApplicationSettingsModel:
+    if setting is None:
+        setting = ApplicationSettingsModel(
+            key=KNOWLEDGE_PROCESSING_SETTING_KEY,
+            value=configuration.model_dump(mode="json"),
+        )
+        session.add(setting)
+    else:
+        setting.value = configuration.model_dump(mode="json")
+    return setting
 
 
 def _clean_name(name: str) -> str:
@@ -75,22 +160,15 @@ async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncS
     A pending replacement is deliberately *not* current: retrieval can retain
     an older ready generation until processing succeeds.
     """
-    active_profile_generation = (
-        select(KnowledgeProcessingProfileModel.generation)
-        .where(KnowledgeProcessingProfileModel.id == 1)
-        .scalar_subquery()
-    )
+    _, configuration = await _load_processing_configuration(session=session)
     existing = await session.scalar(
         select(FileKnowledgeArtifactModel).where(
             FileKnowledgeArtifactModel.file_id == file.id,
-            FileKnowledgeArtifactModel.processing_profile_generation == active_profile_generation,
+            FileKnowledgeArtifactModel.processing_profile_generation == configuration.generation,
         )
     )
     if existing is not None:
         return existing
-    profile = await session.get(KnowledgeProcessingProfileModel, 1)
-    if profile is None:
-        raise RuntimeError("Knowledge processing profile is not initialized")
     generation = (
         await session.scalar(
             select(func.max(FileKnowledgeArtifactModel.generation)).where(FileKnowledgeArtifactModel.file_id == file.id)
@@ -101,8 +179,8 @@ async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncS
         user_id=file.user_id,
         file_id=file.id,
         generation=generation,
-        processing_profile_generation=profile.generation,
-        processing_profile_identity=profile.identity,
+        processing_profile_generation=configuration.generation,
+        processing_profile_identity=configuration.identity,
         status=FileKnowledgeArtifactStatus.PENDING,
         is_current=False,
     )
@@ -114,24 +192,29 @@ async def update_processing_profile_and_reprocess(
     *, payload: KnowledgeProcessingProfileUpdate, session: AsyncSession
 ) -> KnowledgeReprocessSummary:
     """Create one pending replacement generation per file under a new policy."""
-    profile = await session.get(KnowledgeProcessingProfileModel, 1)
-    if profile is None:
-        raise RuntimeError("Knowledge processing profile is not initialized")
-    identity = hashlib.sha256(
-        "\x1f".join(
-            (payload.extraction_policy, payload.chunking_policy, payload.embedding_model, payload.captioning_policy)
-        ).encode()
-    ).hexdigest()
-    if identity == profile.identity:
+    setting, current = await _load_processing_configuration(session=session)
+    candidate = current.model_copy(
+        update={
+            "extraction_policy": payload.extraction_policy,
+            "chunking_policy": payload.chunking_policy,
+            "embedding_model": payload.embedding_model,
+            "captioning_policy": payload.captioning_policy,
+        }
+    )
+    identity = _processing_identity(
+        extraction_policy=candidate.extraction_policy,
+        chunking_policy=candidate.chunking_policy,
+        embedding_model=candidate.embedding_model,
+        captioning_policy=candidate.captioning_policy,
+        captioning=candidate.captioning,
+    )
+    if identity == current.identity:
         return KnowledgeReprocessSummary(
-            profile=KnowledgeProcessingProfile.model_validate(profile), queued_file_count=0
+            profile=_profile_from_configuration(current, updated_at=setting.updated_at if setting else 0),
+            queued_file_count=0,
         )
-    profile.generation += 1
-    profile.identity = identity
-    profile.extraction_policy = payload.extraction_policy
-    profile.chunking_policy = payload.chunking_policy
-    profile.embedding_model = payload.embedding_model
-    profile.captioning_policy = payload.captioning_policy
+    candidate = candidate.model_copy(update={"generation": current.generation + 1, "identity": identity})
+    setting = _save_processing_configuration(setting=setting, configuration=candidate, session=session)
     files = list(await session.scalars(select(UserFileModel)))
     replacements = [await ensure_file_knowledge_artifact(file=file, session=session) for file in files]
     await session.commit()
@@ -140,22 +223,17 @@ async def update_processing_profile_and_reprocess(
     for file, artifact in zip(files, replacements, strict=True):
         knowledge_ingestion_jobs.enqueue(user_id=file.user_id, file_id=file.id, artifact_id=artifact.id)
     return KnowledgeReprocessSummary(
-        profile=KnowledgeProcessingProfile.model_validate(profile), queued_file_count=len(replacements)
+        profile=_profile_from_configuration(candidate, updated_at=setting.updated_at),
+        queued_file_count=len(replacements),
     )
 
 
 async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCaptionConfiguration:
-    configuration = await session.get(KnowledgeCaptionConfigurationModel, 1)
-    if configuration is None:
-        # Defensive recovery for databases created before the migration was
-        # applied. The singleton invariant remains database-enforced.
-        configuration = KnowledgeCaptionConfigurationModel(id=1, mode=KnowledgeCaptionMode.DISABLED)
-        session.add(configuration)
-        await session.commit()
+    setting, configuration = await _load_processing_configuration(session=session)
     return KnowledgeCaptionConfiguration(
-        mode=configuration.mode.value,
-        provider_model_id=configuration.provider_model_id,
-        updated_at=configuration.updated_at,
+        mode=configuration.captioning.mode,
+        provider_model_id=configuration.captioning.provider_model_id,
+        updated_at=setting.updated_at if setting else 0,
     )
 
 
@@ -174,17 +252,23 @@ async def update_captioning_configuration(
     except CaptioningError as error:
         raise BadDataException(str(error)) from error
 
-    configuration = await session.get(KnowledgeCaptionConfigurationModel, 1)
-    if configuration is None:
-        configuration = KnowledgeCaptionConfigurationModel(id=1)
-        session.add(configuration)
-    configuration.mode = KnowledgeCaptionMode(selected.mode.value)
-    configuration.provider_model_id = selected.provider_model_id
+    setting, configuration = await _load_processing_configuration(session=session)
+    updated_configuration = configuration.model_copy(
+        update={
+            "captioning": KnowledgeProcessingCaptioningConfiguration(
+                mode=selected.mode.value,
+                provider_model_id=selected.provider_model_id,
+            )
+        }
+    )
+    setting = _save_processing_configuration(
+        setting=setting, configuration=updated_configuration, session=session
+    )
     await session.commit()
     return KnowledgeCaptionConfiguration(
-        mode=configuration.mode.value,
-        provider_model_id=configuration.provider_model_id,
-        updated_at=configuration.updated_at,
+        mode=updated_configuration.captioning.mode,
+        provider_model_id=updated_configuration.captioning.provider_model_id,
+        updated_at=setting.updated_at,
     )
 
 
@@ -195,7 +279,6 @@ async def create_knowledge_base(*, user_id: str, payload: KnowledgeBaseCreate, s
         description=_clean_description(payload.description),
     )
     session.add(knowledge_base)
-    session.add(record_knowledge_audit(user_id=user_id, action="base.created"))
     try:
         await session.commit()
     except IntegrityError as error:
@@ -256,7 +339,6 @@ async def update_knowledge_base(
         knowledge_base.name = _clean_name(payload.name or "")
     if "description" in changes:
         knowledge_base.description = _clean_description(payload.description)
-    session.add(record_knowledge_audit(user_id=user_id, action="base.updated", knowledge_base_id=knowledge_base_id))
     try:
         await session.commit()
     except IntegrityError as error:
@@ -268,13 +350,6 @@ async def update_knowledge_base(
 async def delete_knowledge_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: AsyncSession) -> KnowledgeBase:
     knowledge_base = await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
     response = KnowledgeBase.model_validate(knowledge_base)
-    session.add(
-        record_knowledge_audit(
-            user_id=user_id,
-            action="base.deleted",
-            details={"knowledge_base_id": str(knowledge_base_id)},
-        )
-    )
     await session.delete(knowledge_base)
     await session.commit()
     return response
@@ -305,14 +380,6 @@ async def add_knowledge_base_file(
         position=await _next_file_position(knowledge_base_id=knowledge_base_id, session=session),
     )
     session.add(membership)
-    session.add(
-        record_knowledge_audit(
-            user_id=user_id,
-            action="base.file_attached",
-            knowledge_base_id=knowledge_base_id,
-            file_id=payload.file_id,
-        )
-    )
     try:
         await session.commit()
     except IntegrityError as error:

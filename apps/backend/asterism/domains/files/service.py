@@ -166,7 +166,12 @@ def detect_mime_type(filename: str, content: bytes) -> str:
     return mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
 
-async def _deduplicated_filename(session: AsyncSession, store: LocalFileStore, user_id: str, filename: str) -> str:
+async def _deduplicated_filename(
+    session: AsyncSession,
+    store: LocalFileStore,
+    user_id: str,
+    filename: str,
+) -> str:
     stem, extension = Path(filename).stem, Path(filename).suffix
     candidate, counter = filename, 2
     while (
@@ -183,7 +188,12 @@ async def _deduplicated_filename(session: AsyncSession, store: LocalFileStore, u
     return candidate
 
 
-async def upload_files(*, user_id: str, uploads: list[UploadFile], session: AsyncSession) -> UserFileList:
+async def upload_files(
+    *,
+    user_id: str,
+    uploads: list[UploadFile],
+    session: AsyncSession,
+) -> UserFileList:
     created: list[UserFileModel] = []
     artifacts = []
     store = get_file_store()

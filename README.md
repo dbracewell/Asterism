@@ -5,7 +5,9 @@
 Asterism is a self-hosted, full-stack AI chat application. It combines a Next.js
 frontend with a FastAPI agent runtime, main-agent and delegated-worker profiles,
 capability-scoped tools, streaming chat, administrator-managed OpenAI-compatible
-models, and user file uploads (document extraction and vision-gated images).
+models, and a file library. Every eligible upload is processed once into a
+file-owned knowledge artifact; private knowledge bases curate ordered references
+to those files for individual agents rather than duplicating processing.
 
 Chats are pinned to the selected main agent at creation time. They support
 branching/regeneration, cancellation with retained partial output, reconnection to
@@ -23,6 +25,7 @@ The implementation-oriented architecture guides are in
 - [Agent runtime](docs/architecture/agent-runtime.md) and [tool authorization](docs/architecture/tool-authorization.md) — bounded execution, delegation, and approvals
 - [Chat and WebSocket](docs/architecture/chat-and-websocket.md) — streaming protocol, reconnectable jobs, cancellation, and controller lifecycle
 - [Data and storage](docs/architecture/data-and-storage.md) — SQLite, FTS search, file storage, and attachments
+- [Knowledge retrieval](docs/architecture/knowledge-retrieval.md) — file-owned processing, private retrieval, and captioning
 - [LLM providers](docs/architecture/llm-providers.md) — supported provider modes and model capabilities
 
 ## Configuration
@@ -219,6 +222,30 @@ Documented package scripts are the supported entrypoints. Raw `next`, `uvicorn`,
 
 Open the app and complete the initial account setup using `ADMIN_PASSPHRASE`.
 Keep this passphrase private. The frontend and backend must use the same `SYSTEM_KEY`.
+
+## Files, knowledge bases, and captions
+
+The **Files** screen is the canonical workspace for uploaded files and their
+derived knowledge. Uploading an eligible file queues bounded extraction or image
+embedding automatically. Its status is `pending`, `processing`, `ready`,
+`failed`, or `canceled`; failed and canceled work can be retried from Files.
+
+Create knowledge bases from **Knowledge**, then add existing library files or
+upload and add files there. A membership is only a reference: the same file can
+be used by several bases without duplicate extraction, embedding, or captioning.
+Removing a membership preserves the library file and its derived data. Deleting
+a file permanently removes its memberships, source bytes, artifacts, and vectors.
+
+Assign knowledge bases to an agent in its profile. That assignment enables the
+agent's `search_knowledge` tool and restricts every retrieval query to the
+assigned bases' ready files.
+
+Image captions are canonical file metadata, managed in **Files**. Administrators
+choose disabled, a configured vision provider, or a reviewed local caption model
+under **Settings → Admin Settings → Image captioning**. Regeneration with an
+external provider sends the image to that selected provider; users can edit,
+clear, or regenerate the resulting caption. Changing the platform-wide knowledge
+processing profile queues a replacement generation for every eligible file.
 
 ## Quality checks
 

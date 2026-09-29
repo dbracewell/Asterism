@@ -54,6 +54,8 @@ erDiagram
     users ||--o{ user_settings : "has"
     users ||--o{ sub_agent_traces : "owns"
     users ||--o{ user_files : "owns"
+    users ||--o{ knowledge_bases : "owns"
+    users ||--o{ file_knowledge_artifacts : "owns"
 
     folders ||--o{ folders : "parent_of"
     folders ||--o{ chats : "categorizes"
@@ -68,6 +70,11 @@ erDiagram
     providers ||--o{ models : "provides"
     models ||--o{ agent_profiles : "assigned_to"
     agent_profiles ||--o{ sub_agent_traces : "executes"
+    agent_profiles ||--o{ agent_knowledge_base_assignments : "is assigned"
+    knowledge_bases ||--o{ knowledge_base_files : "contains"
+    user_files ||--o{ knowledge_base_files : "is referenced by"
+    user_files ||--o{ file_knowledge_artifacts : "produces"
+    knowledge_bases ||--o{ agent_knowledge_base_assignments : "is assigned"
 
     users {
         string id PK
@@ -153,6 +160,41 @@ erDiagram
         text content_cache
         datetime created_at
         datetime updated_at
+    }
+
+    knowledge_bases {
+        uuid id PK
+        string user_id FK
+        string name
+        string description
+    }
+
+    knowledge_base_files {
+        uuid id PK
+        uuid knowledge_base_id FK
+        uuid file_id FK
+        int position
+    }
+
+    file_knowledge_artifacts {
+        uuid id PK
+        string user_id FK
+        uuid file_id FK
+        int generation
+        int processing_profile_generation
+        string status
+        bool is_current
+        int chunk_count
+        string caption_status
+        text caption_text
+    }
+
+    agent_knowledge_base_assignments {
+        uuid id PK
+        string user_id FK
+        uuid agent_id FK
+        uuid knowledge_base_id FK
+        int position
     }
 
     user_settings {
@@ -277,6 +319,24 @@ stored on the file. Chat builds document/text cache into text parts. Image bytes
 included only for models whose `supports_vision` capability is explicitly `true` and
 only below the configured vision limit; unknown capability is intentionally treated
 as non-vision. See [LLM providers](llm-providers.md#file-input-capability-gating).
+
+## File-owned knowledge artifacts
+
+`file_knowledge_artifacts` holds the versioned derived state for an immutable
+`user_files` revision: extraction cache, chunk/embedding readiness, canonical
+caption metadata, safe error state, and whether the generation is current. The
+database permits one current generation per file. A pending replacement cannot
+displace a ready generation; it becomes current only after processing and its
+vector writes complete.
+
+`knowledge_base_files` is deliberately a small ordered membership table. It has
+no processing state, vectors, or caption fields, so one library file can appear
+in multiple private bases without repeat work. Agent assignments point to bases,
+and retrieval resolves those memberships to allowed file IDs before issuing its
+LanceDB query. File deletion explicitly cancels work and removes memberships and
+artifacts before source bytes; membership deletion removes only the relationship.
+See [Knowledge retrieval](knowledge-retrieval.md) for runtime and operator
+behavior.
 
 ## Related Documentation
 

@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.expression import true
 
@@ -39,43 +39,6 @@ def _enum_values(enum_type: type[enum.Enum]) -> list[str]:
     return [member.value for member in enum_type]
 
 
-class KnowledgeCaptionConfigurationModel(Base, TimestampMixin):
-    """The single administrator-controlled captioning configuration."""
-
-    __tablename__ = "knowledge_caption_configuration"
-    __table_args__ = (CheckConstraint("id = 1", name="ck_knowledge_caption_configuration_singleton"),)
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
-    mode: Mapped[KnowledgeCaptionMode] = mapped_column(
-        Enum(KnowledgeCaptionMode, values_callable=_enum_values, native_enum=False, create_constraint=True),
-        nullable=False,
-        default=KnowledgeCaptionMode.DISABLED,
-    )
-    provider_model_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("models.id", ondelete="SET NULL"), nullable=True
-    )
-
-
-class KnowledgeProcessingProfileModel(Base, TimestampMixin):
-    """The one active, operator-controlled file-processing policy.
-
-    ``identity`` is a deterministic fingerprint of the pinned policy inputs.
-    Artifacts retain both this value and ``generation`` so a profile update can
-    build a replacement generation without changing a source file.
-    """
-
-    __tablename__ = "knowledge_processing_profile"
-    __table_args__ = (CheckConstraint("id = 1", name="ck_knowledge_processing_profile_singleton"),)
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
-    generation: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    identity: Mapped[str] = mapped_column(String(64), nullable=False)
-    extraction_policy: Mapped[str] = mapped_column(String(128), nullable=False)
-    chunking_policy: Mapped[str] = mapped_column(String(128), nullable=False)
-    embedding_model: Mapped[str] = mapped_column(String(512), nullable=False)
-    captioning_policy: Mapped[str] = mapped_column(String(512), nullable=False)
-
-
 class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     """Canonical derived knowledge for one user-owned source-file revision.
 
@@ -86,7 +49,11 @@ class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
 
     __tablename__ = "file_knowledge_artifacts"
 
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     file_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("user_files.id", ondelete="CASCADE"), nullable=False, index=True
     )

@@ -9,15 +9,10 @@ from asterism.core.exceptions import BadDataException, CodedException, NotFoundE
 from asterism.db.base import Base
 from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
-from asterism.domains.knowledge.audit import KnowledgeAuditEventModel
 from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
 from asterism.domains.knowledge.ingestion import ingest_file_artifact
 from asterism.domains.knowledge.jobs import KnowledgeIngestionJobs
-from asterism.domains.knowledge.models import (
-    FileKnowledgeArtifactStatus,
-    KnowledgeBaseFileModel,
-    KnowledgeCaptionConfigurationModel,
-)
+from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus, KnowledgeBaseFileModel
 from asterism.domains.knowledge.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseFileCreate,
@@ -40,6 +35,7 @@ from asterism.domains.knowledge.service import (
     update_knowledge_base,
     update_processing_profile_and_reprocess,
 )
+from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.user.models import UserModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -139,13 +135,6 @@ async def test_file_memberships_are_owned_ordered_references(knowledge_session):
     )
     assert await knowledge_session.get(UserFileModel, owned.id) is not None
     assert await knowledge_session.get(KnowledgeBaseFileModel, first_membership.id) is None
-    attachment_events = list(
-        await knowledge_session.scalars(
-            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.action == "base.file_attached")
-        )
-    )
-    assert [event.file_id for event in attachment_events] == [owned.id, second.id]
-
     reattached = await add_knowledge_base_file(
         user_id="user-a",
         knowledge_base_id=base.id,
@@ -239,16 +228,46 @@ async def test_knowledge_base_rejects_blank_and_duplicate_names(knowledge_sessio
 
 @pytest.mark.asyncio
 async def test_caption_configuration_is_seeded_disabled(knowledge_session):
-    configuration = await knowledge_session.get(KnowledgeCaptionConfigurationModel, 1)
-    assert configuration is not None
-    assert configuration.mode.value == "disabled"
+    configuration = await get_captioning_configuration(session=knowledge_session)
+    assert configuration.mode == "disabled"
     assert configuration.provider_model_id is None
+    assert await knowledge_session.get(ApplicationSettingsModel, "knowledge.processing") is None
 
     updated = await update_captioning_configuration(
         payload=KnowledgeCaptionConfigurationUpdate(mode="disabled"), session=knowledge_session
     )
     assert updated.mode == "disabled"
     assert (await get_captioning_configuration(session=knowledge_session)).updated_at == updated.updated_at
+    setting = await knowledge_session.get(ApplicationSettingsModel, "knowledge.processing")
+    assert setting is not None
+    assert setting.value["captioning"] == {"mode": "disabled", "provider_model_id": None}
+
+
+@pytest.mark.asyncio
+async def test_malformed_processing_setting_falls_back_and_is_healed_by_an_update(knowledge_session):
+    knowledge_session.add(
+        ApplicationSettingsModel(key="knowledge.processing", value={"schema_version": "not-a-version"})
+    )
+    await knowledge_session.commit()
+
+    default = await get_captioning_configuration(session=knowledge_session)
+    assert default.mode == "disabled"
+    assert default.provider_model_id is None
+
+    result = await update_processing_profile_and_reprocess(
+        payload=KnowledgeProcessingProfileUpdate(
+            extraction_policy="extract-v2",
+            chunking_policy="chunk-v2",
+            embedding_model="embed-v2",
+            captioning_policy="caption-v2",
+        ),
+        session=knowledge_session,
+    )
+    setting = await knowledge_session.get(ApplicationSettingsModel, "knowledge.processing")
+    assert setting is not None
+    assert setting.value["schema_version"] == 1
+    assert setting.value["generation"] == 2
+    assert setting.value["identity"] == result.profile.identity
 
 
 @pytest.mark.asyncio
@@ -451,13 +470,6 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     )
     assert indexed.status is FileKnowledgeArtifactStatus.READY
     assert len(vectors.chunks) == 1
-    events = list(
-        await knowledge_session.scalars(
-            select(KnowledgeAuditEventModel).where(KnowledgeAuditEventModel.file_id == file.id)
-        )
-    )
-    assert {event.action for event in events} >= {"file.processing_started", "file.processing_ready"}
-    assert all("hello" not in str(event.details).lower() for event in events)
     # A ready immutable revision is a no-op rather than generating duplicate chunks.
     await ingest_file_artifact(
         artifact=indexed,

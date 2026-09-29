@@ -46,7 +46,10 @@ class KnowledgeIngestionJobs:
                         )
                     )
                     file = await session.scalar(
-                        select(UserFileModel).where(UserFileModel.id == file_id, UserFileModel.user_id == user_id)
+                        select(UserFileModel).where(
+                            UserFileModel.id == file_id,
+                            UserFileModel.user_id == user_id,
+                        )
                     )
                     if artifact is None or file is None:
                         return

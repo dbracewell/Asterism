@@ -1,4 +1,3 @@
-import hashlib
 import time
 from collections.abc import Awaitable, Callable
 
@@ -18,13 +17,10 @@ _CHAT_SEARCH_MIGRATION = "20260403_01_chat_search_fts"
 _MESSAGE_USAGE_MIGRATION = "20260404_01_message_usage"
 _KNOWLEDGE_FOUNDATIONS_MIGRATION = "20260922_01_knowledge_foundations"
 _KNOWLEDGE_BASE_CRUD_MIGRATION = "20260923_01_knowledge_base_crud"
-_KNOWLEDGE_AUDIT_MIGRATION = "20260923_05_knowledge_audit"
 _AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION = "20260924_01_agent_knowledge_assignments"
-_KNOWLEDGE_CAPTIONING_MIGRATION = "20260925_01_knowledge_captioning"
 _PROVIDER_MODEL_BROWSER_MIGRATION = "20260926_01_provider_model_browser"
 _FILE_KNOWLEDGE_ARTIFACTS_MIGRATION = "20260927_01_file_knowledge_artifacts"
 _KNOWLEDGE_BASE_FILES_MIGRATION = "20260927_02_knowledge_base_files"
-_KNOWLEDGE_AUDIT_FILE_MIGRATION = "20260927_03_knowledge_audit_file"
 
 
 async def _sqlite_columns(connection: AsyncConnection, table: str) -> set[str]:
@@ -246,26 +242,6 @@ async def _migrate_knowledge_base_crud(connection: AsyncConnection) -> None:
     )
 
 
-async def _migrate_knowledge_audit(connection: AsyncConnection) -> None:
-    await connection.execute(
-        text(
-            "CREATE TABLE IF NOT EXISTS knowledge_audit_events ("
-            "id CHAR(32) NOT NULL PRIMARY KEY, "
-            "user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
-            "knowledge_base_id CHAR(32) REFERENCES knowledge_bases(id) ON DELETE SET NULL, "
-            "action VARCHAR(64) NOT NULL, details JSON NOT NULL DEFAULT '{}', "
-            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL"
-            ")"
-        )
-    )
-    await connection.execute(
-        text(
-            "CREATE INDEX IF NOT EXISTS idx_knowledge_audit_events_user_created "
-            "ON knowledge_audit_events (user_id, created_at)"
-        )
-    )
-
-
 async def _migrate_agent_knowledge_assignments(connection: AsyncConnection) -> None:
     await connection.execute(
         text(
@@ -288,62 +264,8 @@ async def _migrate_agent_knowledge_assignments(connection: AsyncConnection) -> N
     )
 
 
-async def _migrate_knowledge_captioning(connection: AsyncConnection) -> None:
-    """Persist the global captioning configuration for file artifacts."""
-    await connection.execute(
-        text(
-            "CREATE TABLE IF NOT EXISTS knowledge_caption_configuration ("
-            "id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1), "
-            "mode VARCHAR(16) NOT NULL DEFAULT 'disabled' "
-            "CHECK (mode IN ('disabled', 'provider', 'local')), "
-            "provider_model_id CHAR(32) REFERENCES models(id) ON DELETE SET NULL, "
-            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)"
-        )
-    )
-    await connection.execute(
-        text(
-            "INSERT OR IGNORE INTO knowledge_caption_configuration "
-            "(id, mode, provider_model_id, created_at, updated_at) "
-            "VALUES (1, 'disabled', NULL, :now, :now)"
-        ),
-        {"now": int(time.time())},
-    )
 async def _migrate_file_knowledge_artifacts(connection: AsyncConnection) -> None:
     """Create the canonical, file-owned artifact contract before its cutover."""
-    extraction_policy = "text-extraction-v1"
-    chunking_policy = "bounded-chunking-v1"
-    embedding_model = "onnx-clip-v1"
-    captioning_policy = "captioning-configuration-v1"
-    identity = hashlib.sha256(
-        "\x1f".join((extraction_policy, chunking_policy, embedding_model, captioning_policy)).encode()
-    ).hexdigest()
-    now = int(time.time())
-    await connection.execute(
-        text(
-            "CREATE TABLE IF NOT EXISTS knowledge_processing_profile ("
-            "id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1), "
-            "generation INTEGER NOT NULL, identity VARCHAR(64) NOT NULL, "
-            "extraction_policy VARCHAR(128) NOT NULL, chunking_policy VARCHAR(128) NOT NULL, "
-            "embedding_model VARCHAR(512) NOT NULL, captioning_policy VARCHAR(512) NOT NULL, "
-            "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)"
-        )
-    )
-    await connection.execute(
-        text(
-            "INSERT OR IGNORE INTO knowledge_processing_profile "
-            "(id, generation, identity, extraction_policy, chunking_policy, embedding_model, captioning_policy, "
-            "created_at, updated_at) VALUES "
-            "(1, 1, :identity, :extraction_policy, :chunking_policy, :embedding_model, :captioning_policy, :now, :now)"
-        ),
-        {
-            "identity": identity,
-            "extraction_policy": extraction_policy,
-            "chunking_policy": chunking_policy,
-            "embedding_model": embedding_model,
-            "captioning_policy": captioning_policy,
-            "now": now,
-        },
-    )
     await connection.execute(
         text(
             "CREATE TABLE IF NOT EXISTS file_knowledge_artifacts ("
@@ -392,19 +314,6 @@ async def _migrate_knowledge_base_files(connection: AsyncConnection) -> None:
             ")"
         )
     )
-
-
-async def _migrate_knowledge_audit_file(connection: AsyncConnection) -> None:
-    """Give content-free audit records a canonical file reference."""
-    await _add_column_if_missing(
-        connection,
-        "knowledge_audit_events",
-        "file_id",
-        "CHAR(32) REFERENCES user_files(id) ON DELETE SET NULL",
-    )
-    await connection.execute(
-        text("CREATE INDEX IF NOT EXISTS idx_knowledge_audit_events_file ON knowledge_audit_events (file_id)")
-    )
     await connection.execute(
         text(
             "CREATE INDEX IF NOT EXISTS idx_knowledge_base_files_base_position "
@@ -431,12 +340,9 @@ async def _migrate_message_usage(connection: AsyncConnection) -> None:
 _MIGRATIONS: tuple[tuple[str, Migration], ...] = (
     (_KNOWLEDGE_FOUNDATIONS_MIGRATION, _migrate_knowledge_foundations),
     (_KNOWLEDGE_BASE_CRUD_MIGRATION, _migrate_knowledge_base_crud),
-    (_KNOWLEDGE_AUDIT_MIGRATION, _migrate_knowledge_audit),
     (_AGENT_KNOWLEDGE_ASSIGNMENTS_MIGRATION, _migrate_agent_knowledge_assignments),
-    (_KNOWLEDGE_CAPTIONING_MIGRATION, _migrate_knowledge_captioning),
     (_FILE_KNOWLEDGE_ARTIFACTS_MIGRATION, _migrate_file_knowledge_artifacts),
     (_KNOWLEDGE_BASE_FILES_MIGRATION, _migrate_knowledge_base_files),
-    (_KNOWLEDGE_AUDIT_FILE_MIGRATION, _migrate_knowledge_audit_file),
     (_PROVIDER_MODEL_BROWSER_MIGRATION, _migrate_provider_model_browser),
     (_MESSAGE_USAGE_MIGRATION, _migrate_message_usage),
     (_PROVIDER_CAPABILITIES_MIGRATION, _migrate_provider_types_and_capabilities),

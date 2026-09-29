@@ -1,7 +1,5 @@
 """Built-in, assignment-scoped knowledge retrieval tool."""
 
-import time
-
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -10,7 +8,6 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.tools.registry import ToolContext, tool_registry
 
 from .assignments import AgentKnowledgeBaseAssignmentModel
-from .audit import record_knowledge_audit
 from .models import (
     FileKnowledgeArtifactModel,
     FileKnowledgeArtifactStatus,
@@ -40,7 +37,6 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
     agent_id = ctx.session.info.agent_id
     if agent_id is None:
         return {"results": [], "message": "Knowledge search is unavailable for this chat."}
-    started_at = time.monotonic()
     async with get_async_db_session() as db:
         base_ids = list(
             await db.scalars(
@@ -90,19 +86,6 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
                 )
             )
         }
-        db.add(
-            record_knowledge_audit(
-                user_id=ctx.user.id,
-                action="search.executed",
-                details={
-                    "agent_id": str(agent_id),
-                    "assigned_base_count": len(base_ids),
-                    "result_count": len(matches),
-                    "duration_ms": int((time.monotonic() - started_at) * 1_000),
-                },
-            )
-        )
-        await db.commit()
     remaining_bytes = config.max_knowledge_result_bytes
     results = []
     for match in matches:

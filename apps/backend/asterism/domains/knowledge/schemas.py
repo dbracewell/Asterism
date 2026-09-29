@@ -1,7 +1,7 @@
 import uuid
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class KnowledgeBaseCreate(BaseModel):
@@ -50,6 +50,44 @@ class KnowledgeProcessingProfileUpdate(BaseModel):
     chunking_policy: str = Field(min_length=1, max_length=128)
     embedding_model: str = Field(min_length=1, max_length=512)
     captioning_policy: str = Field(min_length=1, max_length=512)
+
+    @field_validator("extraction_policy", "chunking_policy", "embedding_model", "captioning_policy")
+    @classmethod
+    def normalize_policy_identifier(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Policy identifier is required")
+        return normalized
+
+
+class KnowledgeProcessingCaptioningConfiguration(BaseModel):
+    """Captioning selection persisted within the knowledge-processing setting."""
+
+    mode: Literal["disabled", "provider", "local"] = "disabled"
+    provider_model_id: uuid.UUID | None = None
+
+
+class KnowledgeProcessingConfiguration(BaseModel):
+    """Versioned, persisted value for the ``knowledge.processing`` app setting."""
+
+    schema_version: Literal[1] = 1
+    generation: int = Field(default=1, ge=1)
+    identity: str = Field(min_length=64, max_length=64)
+    extraction_policy: str = Field(min_length=1, max_length=128)
+    chunking_policy: str = Field(min_length=1, max_length=128)
+    embedding_model: str = Field(min_length=1, max_length=512)
+    captioning_policy: str = Field(min_length=1, max_length=512)
+    captioning: KnowledgeProcessingCaptioningConfiguration = Field(
+        default_factory=KnowledgeProcessingCaptioningConfiguration
+    )
+
+    @field_validator("extraction_policy", "chunking_policy", "embedding_model", "captioning_policy")
+    @classmethod
+    def normalize_policy_identifier(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Policy identifier is required")
+        return normalized
 
 
 class KnowledgeReprocessSummary(BaseModel):

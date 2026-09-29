@@ -64,7 +64,7 @@ requests, and filters emitted events by user ID for SSE subscribers.
 - Runtime configuration rejects wildcard CORS origins and invalid public origins in
   full runtime profiles. Production requires HTTPS for non-loopback public origins.
 - Secrets use the root configuration contract or canonical `/run/secrets` files;
-  see the root [README](../README.md#configuration).
+  see the root [README](../../README.md#configuration).
 
 ## Related guides
 
