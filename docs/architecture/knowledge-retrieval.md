@@ -215,7 +215,7 @@ membership. Retrieval resolves assigned memberships before searching and sends
 both owner and allowed file IDs to LanceDB; it never searches globally then
 filters in application code. Removing a membership preserves the file and its
 artifacts; deleting a file cancels work and removes memberships, artifacts,
-vectors, and source bytes. An administrator updates one global processing
-profile; a profile identity change creates and queues replacement generations for
-the full eligible library, while a ready previous generation remains searchable
+vectors, and source bytes. An administrator updates the one global
+`knowledge.processing` policy; a policy identity change creates and queues
+replacement generations for the full eligible library, while a ready previous generation remains searchable
 until its replacement is complete.

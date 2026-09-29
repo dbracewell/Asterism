@@ -56,7 +56,10 @@ preserved on refresh. See
 captions. Eligible uploads are processed in the background; the screen displays
 the current artifact status and lets a user retry failed work or edit, clear, or
 regenerate a canonical image caption. Caption regeneration warns that a selected
-external provider may receive the image.
+external provider may receive the image. Administrators configure captioning as
+part of the single versioned `knowledge.processing` policy under **Settings →
+Admin Settings → Image Captioning**. A policy change creates replacement file
+generations while existing ready generations remain searchable.
 
 **Knowledge** manages ordered collections of existing library files. Adding a
 file only creates a membership, so processing and captions are shared across all

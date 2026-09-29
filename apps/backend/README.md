@@ -47,12 +47,13 @@ agent's assigned bases to allowed file IDs, then supplies both that set and the
 authenticated owner to LanceDB.
 
 The File API exposes artifact status plus retry/cancel processing and image
-caption edit, clear, and regeneration actions. An administrator can update the
-single processing profile at `PUT /api/py/settings/app/knowledge-processing-profile`;
-the change creates replacement generations and queues the eligible library.
-Only a completed generation becomes current, so a failed replacement does not
-replace a usable artifact. See [Knowledge retrieval](../../docs/architecture/knowledge-retrieval.md)
-for lifecycle, provider-disclosure, and operational details.
+caption edit, clear, and regeneration actions. The versioned
+`knowledge.processing` application setting is the canonical platform-wide policy;
+typed processing and captioning endpoints both transition that one value and queue
+replacement generations for the eligible library. Only a completed generation
+becomes current, so a failed replacement does not replace a usable artifact. See
+[Knowledge retrieval](../../docs/architecture/knowledge-retrieval.md) for lifecycle,
+automatic embedding provisioning, provider disclosure, and operational details.
 
 ## Database initialization
 

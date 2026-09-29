@@ -240,12 +240,14 @@ Assign knowledge bases to an agent in its profile. That assignment enables the
 agent's `search_knowledge` tool and restricts every retrieval query to the
 assigned bases' ready files.
 
-Image captions are canonical file metadata, managed in **Files**. Administrators
-choose disabled, a configured vision provider, or a reviewed local caption model
-under **Settings → Admin Settings → Image captioning**. Regeneration with an
-external provider sends the image to that selected provider; users can edit,
-clear, or regenerate the resulting caption. Changing the platform-wide knowledge
-processing profile queues a replacement generation for every eligible file.
+Image captions are canonical file metadata, managed in **Files**. The versioned
+`knowledge.processing` application setting is the one platform-wide processing
+policy: it includes extraction, chunking, embeddings, and captioning. Under
+**Settings → Admin Settings → Image Captioning**, administrators choose disabled,
+a configured vision provider, or a reviewed local caption model. Selecting an
+external provider sends source images to that provider; every policy change queues
+replacement generations for eligible files while current ready generations remain
+searchable until replacement succeeds.
 
 ## Quality checks
 

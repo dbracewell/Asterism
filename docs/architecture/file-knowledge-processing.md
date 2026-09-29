@@ -13,7 +13,7 @@ references a file and never initiates duplicate work.
 | **Knowledge artifact** | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: extraction result, chunk count, embedding readiness, canonical caption state, timestamps, and safe errors. This is the canonical meaning of *artifact* in this guide. | `FileKnowledgeArtifactModel` / `file_knowledge_artifacts` |
 | **Artifact generation** | A monotonic version of a file's knowledge artifact. Reprocessing creates a new generation instead of modifying a usable one in place. | `FileKnowledgeArtifactModel.generation` and `VectorChunk.artifact_generation` |
 | **Current artifact** | The one ready artifact generation selected for a source file. A replacement becomes current only after its vectors are written successfully. | `FileKnowledgeArtifactModel.is_current`, protected by a partial unique index |
-| **Processing profile** | The single platform-wide extraction, chunking, embedding, and caption policy. Users cannot select a different model or policy per file or knowledge base. | Versioned `knowledge.processing` value in `ApplicationSettingsModel` |
+| **Processing policy** | The single platform-wide extraction, chunking, embedding, and caption policy. Users cannot select a different model or policy per file or knowledge base. | Versioned `knowledge.processing` value in `ApplicationSettingsModel` |
 | **Profile generation / identity** | The profile's revision number and deterministic fingerprint, copied into each artifact to show which policy produced it. A changed identity queues a replacement artifact for each eligible library file. | `processing_profile_generation`, `processing_profile_identity` |
 | **Content cache** | Bounded converted text used as the input to chunking. It is source-file conversion state, distinct from the artifact's indexed vector rows. | `UserFileModel.content_cache`, produced by `MarkItDownFileProcessor` |
 | **Chunk** | One bounded text excerpt, or the display content associated with a visual image embedding. A chunk has stable provenance within an artifact generation. | `VectorChunk` and a LanceDB `knowledge_chunks` row |
@@ -187,6 +187,11 @@ one global configuration:
   vision-capable provider model, creates an `LLMClient`, and sends the image as a
   data URL with a concise retrieval-caption prompt. This is the point at which an
   external provider receives image bytes.
+
+Provider and model administration rejects removal or eligibility changes that
+would orphan the selected caption provider. Administrators must first select
+local or disabled captioning, which transitions `knowledge.processing` and
+queues replacement generations before the provider or model can be removed.
 
 `KnowledgeCaptionJobs` bounds concurrent captions, embeds a successful caption,
 and stores it as `draft` canonical metadata. The caption vector uses the next

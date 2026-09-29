@@ -183,16 +183,16 @@ external-provider disclosure are predictable.
 
 **Dependencies:** US-22.1, US-22.2, US-22.3.
 
-- [ ] US-22.4-T1: Update processing and captioning administration UI to display
+- [x] US-22.4-T1: Update processing and captioning administration UI to display
       one policy, its resulting generation effect, and external-provider image
       disclosure before save.
-- [ ] US-22.4-T2: Add frontend integration coverage for disabled/local/provider
+- [x] US-22.4-T2: Add frontend integration coverage for disabled/local/provider
       selections, validation errors, profile transition feedback, and selected
       provider/model removal behavior.
-- [ ] US-22.4-T3: Update OpenAPI-generated client artifacts, architecture
+- [x] US-22.4-T3: Update OpenAPI-generated client artifacts, architecture
       guides, root/app READMEs, and the terminology guide to remove singleton
       table references and explain the setting-to-profile transition.
-- [ ] US-22.4-T4: Run focused backend/frontend tests, database reset/init,
+- [x] US-22.4-T4: Run focused backend/frontend tests, database reset/init,
       generated-client checks, and relevant full quality gates.
 
 **Acceptance criteria**

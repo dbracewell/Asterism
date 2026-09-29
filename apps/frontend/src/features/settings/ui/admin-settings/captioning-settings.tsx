@@ -64,24 +64,25 @@ function CaptioningSettingsPane() {
         ? String(updateError.detail)
         : "The captioning configuration could not be saved.";
 
-  if (configuration.isLoading) return <p>Loading image captioning settings…</p>;
+  if (configuration.isLoading) return <p>Loading knowledge processing settings…</p>;
   if (configuration.isError || !current) {
-    return <p role="alert">Image captioning settings could not be loaded.</p>;
+    return <p role="alert">Knowledge processing settings could not be loaded.</p>;
   }
 
   return (
     <section
       className="flex min-h-0 flex-1 flex-col space-y-5"
-      aria-labelledby="captioning-heading"
+      aria-labelledby="knowledge-processing-heading"
     >
       <div>
-        <h2 id="captioning-heading" className="text-lg font-semibold">
-          Image captioning
+        <h2 id="knowledge-processing-heading" className="text-lg font-semibold">
+          Knowledge processing
         </h2>
         <p className="text-muted-foreground text-sm">
-          Captions provide extra context for images in your conversations. You
-          can choose to disable captioning, use a configured vision provider, or
-          run a local model on the server.
+          Image captioning is one part of the platform-wide knowledge-processing
+          policy. Changing its mode or provider creates replacement knowledge
+          generations for eligible files; current ready generations remain
+          searchable until each replacement succeeds.
         </p>
       </div>
 
@@ -141,6 +142,11 @@ function CaptioningSettingsPane() {
 
       {draftMode === "provider" && (
         <div className="space-y-2">
+          <p className="rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
+            Selecting a provider sends source images to that provider for caption
+            generation. Save only if this external processing is appropriate for
+            your files.
+          </p>
           <Label htmlFor="caption-provider-model">Vision model</Label>
           <Select
             value={current.provider_model_id ?? ""}

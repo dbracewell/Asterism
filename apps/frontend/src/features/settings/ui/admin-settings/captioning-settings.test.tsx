@@ -114,7 +114,7 @@ describe("captioning settings", () => {
   it("shows local provisioning status and starts a download only on admin action", async () => {
     const user = userEvent.setup();
     renderSettings();
-    await screen.findByRole("heading", { name: "Image captioning" });
+    await screen.findByRole("heading", { name: "Knowledge processing" });
 
     await user.click(screen.getByLabelText("Local SmolVLM2 (CPU)"));
     await waitFor(() =>
@@ -143,9 +143,12 @@ describe("captioning settings", () => {
   it("offers only discovered active vision models for provider captioning", async () => {
     const user = userEvent.setup();
     renderSettings();
-    await screen.findByRole("heading", { name: "Image captioning" });
+    await screen.findByRole("heading", { name: "Knowledge processing" });
 
     await user.click(screen.getByLabelText("Configured vision provider"));
+    expect(
+      screen.getByText(/Selecting a provider sends source images/),
+    ).toBeVisible();
     const select = screen.getByLabelText("Vision model");
     await user.click(select);
     await user.click(
@@ -161,5 +164,18 @@ describe("captioning settings", () => {
         },
       }),
     );
+  });
+
+  it("shows a policy-transition validation error without hiding the current policy", async () => {
+    mocks.update.mockRejectedValue({ detail: "Captioning requires an active discovered vision-capable model" });
+    const user = userEvent.setup();
+    renderSettings();
+    await screen.findByRole("heading", { name: "Knowledge processing" });
+
+    await user.click(screen.getByLabelText("Local SmolVLM2 (CPU)"));
+    expect(
+      await screen.findByText("Captioning requires an active discovered vision-capable model"),
+    ).toBeVisible();
+    expect(screen.getByText(/Image captioning is one part/)).toBeVisible();
   });
 });

@@ -532,7 +532,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-22 — Configuration-Owned Knowledge Processing
 
 Plan: [EPIC-22](docs/epics/EPIC-22-CONFIGURATION-OWNED-KNOWLEDGE-PROCESSING.md).
-Status: US-22.3 ready for user confirmation.
+Status: US-22.4 ready for user confirmation.
 Order: US-22.1 → US-22.2 → US-22.3 → US-22.4.
 Work on one story at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -561,11 +561,11 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-22.3-T5: Add typed API/UI status without a manual installation requirement.
   - [x] US-22.3-T6: Test fresh startup, concurrency, recovery, integrity, offline failure, and post-ready processing.
 
-- [ ] US-22.4 — Align administration, operations, and documentation
-  - [ ] US-22.4-T1: Explain one policy's processing-generation impact, embedding provisioning, and provider disclosure in the UI.
-  - [ ] US-22.4-T2: Add frontend integration coverage for captioning configuration, embedding readiness, and removal behavior.
-  - [ ] US-22.4-T3: Update API artifacts and documentation for the application-setting and embedding-provisioning boundaries.
-  - [ ] US-22.4-T4: Run focused/full checks, reset/init, and code-generation verification.
+- [x] US-22.4 — Align administration, operations, and documentation
+  - [x] US-22.4-T1: Explain one policy's processing-generation impact, embedding provisioning, and provider disclosure in the UI.
+  - [x] US-22.4-T2: Add frontend integration coverage for captioning configuration, embedding readiness, and removal behavior.
+  - [x] US-22.4-T3: Update API artifacts and documentation for the application-setting and embedding-provisioning boundaries.
+  - [x] US-22.4-T4: Run focused/full checks, reset/init, and code-generation verification.
 
 ### Epic closure
 
