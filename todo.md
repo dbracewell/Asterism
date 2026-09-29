@@ -532,7 +532,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-22 — Configuration-Owned Knowledge Processing
 
 Plan: [EPIC-22](docs/epics/EPIC-22-CONFIGURATION-OWNED-KNOWLEDGE-PROCESSING.md).
-Status: US-22.4 ready for user confirmation.
+Status: EPIC-22 complete.
 Order: US-22.1 → US-22.2 → US-22.3 → US-22.4.
 Work on one story at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -569,5 +569,5 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 ### Epic closure
 
-- [ ] Verify story acceptance criteria and request user completion confirmation.
-- [ ] On confirmation, merge approved story branches, announce completion, and propose the next plan.
+- [x] Verify story acceptance criteria and request user completion confirmation.
+- [x] On confirmation, merge approved story branches, announce completion, and propose the next plan.
