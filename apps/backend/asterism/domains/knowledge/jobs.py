@@ -82,6 +82,19 @@ class KnowledgeIngestionJobs:
             )
             await session.commit()
 
+    async def resume_pending(self) -> None:
+        """Enqueue durable pending generations after a dependency becomes ready."""
+        async with get_async_db_session() as session:
+            artifacts = list(
+                await session.scalars(
+                    select(FileKnowledgeArtifactModel).where(
+                        FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.PENDING
+                    )
+                )
+            )
+            for artifact in artifacts:
+                self.enqueue(user_id=artifact.user_id, file_id=artifact.file_id, artifact_id=artifact.id)
+
     async def shutdown(self) -> None:
         tasks = list(self._tasks.values())
         for task in tasks:

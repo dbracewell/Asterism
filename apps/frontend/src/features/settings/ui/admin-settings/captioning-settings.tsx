@@ -17,6 +17,7 @@ import {
   appCaptionModelCancelMutation,
   appCaptionModelDownloadMutation,
   appCaptionModelStatusOptions,
+  appKnowledgeEmbeddingStatusOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -28,6 +29,13 @@ function CaptioningSettingsPane() {
   );
   const modelStatus = useQuery({
     ...appCaptionModelStatusOptions({ client }),
+    refetchInterval: (query) =>
+      ["downloading", "verifying"].includes(query.state.data?.status ?? "")
+        ? 1000
+        : false,
+  });
+  const embeddingStatus = useQuery({
+    ...appKnowledgeEmbeddingStatusOptions({ client }),
     refetchInterval: (query) =>
       ["downloading", "verifying"].includes(query.state.data?.status ?? "")
         ? 1000
@@ -75,6 +83,31 @@ function CaptioningSettingsPane() {
           can choose to disable captioning, use a configured vision provider, or
           run a local model on the server.
         </p>
+      </div>
+
+      <div className="space-y-2 rounded-md border p-4">
+        <h3 className="font-medium">Knowledge embeddings</h3>
+        <p className="text-sm">
+          Model status: <strong>{embeddingStatus.data?.status ?? "unknown"}</strong>
+          {embeddingStatus.data?.total_bytes
+            ? ` (${embeddingStatus.data.bytes_downloaded} / ${embeddingStatus.data.total_bytes} bytes)`
+            : ""}
+        </p>
+        {embeddingStatus.data?.error ? (
+          <p role="alert" className="text-destructive text-sm">
+            {embeddingStatus.data.error}
+          </p>
+        ) : embeddingStatus.data?.status === "ready" ? (
+          <p className="text-muted-foreground text-sm">
+            The reviewed local embedding bundle is ready for file processing.
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Asterism provisions the reviewed local embedding bundle automatically.
+            Files uploaded while it is preparing remain queued and are processed
+            when the bundle is ready.
+          </p>
+        )}
       </div>
 
       <fieldset className="space-y-2" disabled={update.isPending}>

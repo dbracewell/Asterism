@@ -9,6 +9,7 @@ import { CaptioningSettings } from "./captioning-settings";
 const mocks = vi.hoisted(() => ({
   getConfiguration: vi.fn(),
   getModelStatus: vi.fn(),
+  getEmbeddingStatus: vi.fn(),
   update: vi.fn(),
   download: vi.fn(),
   cancel: vi.fn(),
@@ -46,6 +47,10 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryFn: mocks.getModelStatus,
   }),
   appCaptionModelStatusQueryKey: () => ["appCaptionModelStatus"],
+  appKnowledgeEmbeddingStatusOptions: () => ({
+    queryKey: ["appKnowledgeEmbeddingStatus"],
+    queryFn: mocks.getEmbeddingStatus,
+  }),
   appCaptioningUpdateMutation: () => ({ mutationFn: mocks.update }),
   appCaptionModelDownloadMutation: () => ({ mutationFn: mocks.download }),
   appCaptionModelCancelMutation: () => ({ mutationFn: mocks.cancel }),
@@ -85,6 +90,15 @@ describe("captioning settings", () => {
       bytes_downloaded: 0,
       total_bytes: 0,
     });
+    mocks.getEmbeddingStatus.mockResolvedValue({
+      status: "downloading",
+      bytes_downloaded: 123,
+      total_bytes: 456,
+      model_id: "Xenova/clip-vit-base-patch32",
+      revision: "dcb5f6119fdbb94f1053e98bd74da0ac582ed2a7",
+      error: null,
+      bundle_sha256: null,
+    });
     mocks.update.mockResolvedValue({
       mode: "local",
       provider_model_id: null,
@@ -114,6 +128,16 @@ describe("captioning settings", () => {
 
     await user.click(screen.getByRole("button", { name: "Download model" }));
     expect(mocks.download.mock.calls[0]?.[0]).toEqual({});
+  });
+
+  it("shows automatic embedding provisioning without a manual install control", async () => {
+    renderSettings();
+    await screen.findByRole("heading", { name: "Knowledge embeddings" });
+    expect(screen.getByText(/Model status:/)).toHaveTextContent("downloading");
+    expect(
+      screen.getByText(/Files uploaded while it is preparing remain queued/),
+    ).toBeVisible();
+    expect(screen.queryByRole("button", { name: /embedding/i })).toBeNull();
   });
 
   it("offers only discovered active vision models for provider captioning", async () => {

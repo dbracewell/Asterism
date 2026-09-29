@@ -532,7 +532,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-22 — Configuration-Owned Knowledge Processing
 
 Plan: [EPIC-22](docs/epics/EPIC-22-CONFIGURATION-OWNED-KNOWLEDGE-PROCESSING.md).
-Status: US-22.3 ready.
+Status: US-22.3 ready for user confirmation.
 Order: US-22.1 → US-22.2 → US-22.3 → US-22.4.
 Work on one story at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -553,13 +553,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-22.2-T4: Select and implement explicit selected-provider/model removal behavior.
   - [x] US-22.2-T5: Test transitions, no-ops, deletion behavior, recovery, and retrieval isolation.
 
-- [ ] US-22.3 — Provision the required embedding bundle automatically
-  - [ ] US-22.3-T1: Define the pinned reviewed bundle, exact required files, integrity checks, and download allowlist.
-  - [ ] US-22.3-T2: Implement bounded staged download, verification, atomic promotion, status, retry, and cancellation.
-  - [ ] US-22.3-T3: Start provisioning automatically when runtime detects a missing/invalid bundle.
-  - [ ] US-22.3-T4: Keep uploads recoverable while provisioning, then process them automatically after readiness.
-  - [ ] US-22.3-T5: Add typed API/UI status without a manual installation requirement.
-  - [ ] US-22.3-T6: Test fresh startup, concurrency, recovery, integrity, offline failure, and post-ready processing.
+- [x] US-22.3 — Provision the required embedding bundle automatically
+  - [x] US-22.3-T1: Define the pinned reviewed bundle, exact required files, integrity checks, and download allowlist.
+  - [x] US-22.3-T2: Implement bounded staged download, verification, atomic promotion, status, retry, and cancellation.
+  - [x] US-22.3-T3: Start provisioning automatically when runtime detects a missing/invalid bundle.
+  - [x] US-22.3-T4: Keep uploads recoverable while provisioning, then process them automatically after readiness.
+  - [x] US-22.3-T5: Add typed API/UI status without a manual installation requirement.
+  - [x] US-22.3-T6: Test fresh startup, concurrency, recovery, integrity, offline failure, and post-ready processing.
 
 - [ ] US-22.4 — Align administration, operations, and documentation
   - [ ] US-22.4-T1: Explain one policy's processing-generation impact, embedding provisioning, and provider disclosure in the UI.

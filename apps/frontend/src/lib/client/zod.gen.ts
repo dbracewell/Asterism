@@ -146,6 +146,27 @@ export const zCaptionModelStatus = z.object({
 });
 
 /**
+ * EmbeddingModelStatus
+ *
+ * Safe, admin-readable provisioning state; never exposes bundle bytes.
+ */
+export const zEmbeddingModelStatus = z.object({
+    status: z.enum([
+        'idle',
+        'downloading',
+        'verifying',
+        'ready',
+        'failed'
+    ]),
+    model_id: z.string().optional().default('Xenova/clip-vit-base-patch32'),
+    revision: z.string().optional().default('dcb5f6119fdbb94f1053e98bd74da0ac582ed2a7'),
+    bytes_downloaded: z.int().optional().default(0),
+    total_bytes: z.int().optional().default(0),
+    error: z.string().nullish(),
+    bundle_sha256: z.string().nullish()
+});
+
+/**
  * ErrorDetail
  */
 export const zErrorDetail = z.object({
@@ -242,7 +263,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('94ccd61a-7864-4a12-bbe7-f3a3973418d3'),
+    id: z.uuid().optional().default('adfcd88b-8ae0-4db8-92a5-6a7bd888a442'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -1402,6 +1423,11 @@ export const zAppSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zAppSettingUpdateResponse = zSetting;
+
+/**
+ * Successful Response
+ */
+export const zAppKnowledgeEmbeddingStatusResponse = zEmbeddingModelStatus;
 
 /**
  * Successful Response

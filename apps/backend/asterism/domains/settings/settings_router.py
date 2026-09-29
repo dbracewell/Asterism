@@ -7,6 +7,7 @@ import asterism.domains.settings.service as settings_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.knowledge.captioning import CaptionModelStatus
+from asterism.domains.knowledge.embedding_download import EmbeddingModelStatus
 from asterism.domains.knowledge.schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
@@ -419,6 +420,18 @@ async def delete_app_setting(
 # ---------------------------------------------------------------------------
 # Local caption model download (admin only)
 # ---------------------------------------------------------------------------
+
+
+@settings_router.get(
+    "/app/knowledge-embedding/status",
+    response_model=EmbeddingModelStatus,
+    operation_id="appKnowledgeEmbeddingStatus",
+    summary="Get automatic knowledge embedding bundle readiness",
+)
+async def get_knowledge_embedding_status(user: AdminUserDep) -> EmbeddingModelStatus:
+    from asterism.domains.knowledge.runtime import embedding_model_download
+
+    return embedding_model_download.status()
 
 
 @settings_router.get(

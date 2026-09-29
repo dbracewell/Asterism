@@ -1,7 +1,7 @@
 """Local, pinned multimodal embedding providers without model remote code."""
 
 import asyncio
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Protocol
 
@@ -11,6 +11,8 @@ from PIL import Image
 from transformers import CLIPImageProcessorPil, CLIPTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
 
 from asterism.common.hashing import sha256_file
+
+from .embedding_download import EmbeddingBundleNotReadyError
 
 
 class EmbeddingProviderError(RuntimeError):
@@ -39,11 +41,13 @@ class OnnxClipEmbeddingProvider:
         artifact_size_bytes: int,
         dimension: int = 512,
         max_concurrency: int = 2,
+        bundle_is_ready: Callable[[], bool] | None = None,
     ) -> None:
         self._model_root = model_root.resolve()
         self._artifact_sha256 = artifact_sha256.lower()
         self._artifact_size_bytes = artifact_size_bytes
         self._dimension = dimension
+        self._bundle_is_ready = bundle_is_ready
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._session: ort.InferenceSession | None = None
         self._tokenizer: CLIPTokenizerFast | None = None
@@ -58,6 +62,8 @@ class OnnxClipEmbeddingProvider:
         return self._model_root / self.MODEL_FILENAME
 
     def _verify_artifact(self) -> None:
+        if self._bundle_is_ready is not None and not self._bundle_is_ready():
+            raise EmbeddingBundleNotReadyError("Knowledge embedding bundle is still provisioning")
         path = self.artifact_path
         if not path.is_file():
             raise EmbeddingProviderError(f"Knowledge embedding artifact is missing: {path}")

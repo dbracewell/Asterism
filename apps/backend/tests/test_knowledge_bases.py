@@ -10,6 +10,7 @@ from asterism.db.base import Base
 from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
+from asterism.domains.knowledge.embedding_download import EmbeddingBundleNotReadyError
 from asterism.domains.knowledge.ingestion import ingest_file_artifact
 from asterism.domains.knowledge.jobs import KnowledgeIngestionJobs
 from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus, KnowledgeBaseFileModel
@@ -596,3 +597,61 @@ async def test_restart_recovery_makes_processing_artifact_retryable(knowledge_se
     await knowledge_session.refresh(artifact)
     assert artifact.status is FileKnowledgeArtifactStatus.PENDING
     assert artifact.error_code == "interrupted"
+
+
+@pytest.mark.asyncio
+async def test_embedding_provisioning_wait_leaves_artifact_pending(knowledge_session, monkeypatch):
+    file = UserFileModel(
+        user_id="user-a",
+        filename="waiting.txt",
+        original_name="waiting.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="f" * 64,
+        content_status=FileContentStatus.READY,
+        content_cache="queued until the embedding bundle is ready",
+    )
+    knowledge_session.add(file)
+    await knowledge_session.flush()
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+
+    artifact = FileKnowledgeArtifactModel(
+        user_id="user-a",
+        file_id=file.id,
+        generation=1,
+        processing_profile_generation=1,
+        processing_profile_identity="b" * 64,
+        status=FileKnowledgeArtifactStatus.PENDING,
+    )
+    knowledge_session.add(artifact)
+    await knowledge_session.commit()
+
+    async def already_processed(*, file, session):
+        return file
+
+    monkeypatch.setattr("asterism.domains.knowledge.ingestion.ensure_file_processed", already_processed)
+
+    class WaitingEmbeddings:
+        async def embed_text(self, _):
+            raise EmbeddingBundleNotReadyError("provisioning")
+
+        async def embed_image(self, _):
+            raise EmbeddingBundleNotReadyError("provisioning")
+
+    class Vectors:
+        async def delete_file_generation(self, **_):
+            raise AssertionError("no vectors exist while provisioning")
+
+        async def add(self, _):
+            raise AssertionError("no vectors are added while provisioning")
+
+    result = await ingest_file_artifact(
+        artifact=artifact,
+        file=file,
+        session=knowledge_session,
+        embedding_provider=WaitingEmbeddings(),
+        vector_store=Vectors(),
+    )
+    assert result.status is FileKnowledgeArtifactStatus.PENDING
+    assert result.error_code == "embedding_bundle_pending"

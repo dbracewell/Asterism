@@ -145,25 +145,25 @@ model installation.
 
 **Dependencies:** US-22.1, US-22.2.
 
-- [ ] US-22.3-T1: Define the reviewed embedding bundle manifest: pinned model
+- [x] US-22.3-T1: Define the reviewed embedding bundle manifest: pinned model
       ID/revision, exact required tokenizer/processor/ONNX files, expected ONNX
       size and SHA-256, and an explicit download allowlist.
-- [ ] US-22.3-T2: Implement an `EmbeddingModelDownloadService` with one active
+- [x] US-22.3-T2: Implement an `EmbeddingModelDownloadService` with one active
       download, safe status/progress, retry/cancel, temporary staging, full
       integrity verification, and atomic promotion into
       `STORAGE_ROOT/models/knowledge-clip`.
-- [ ] US-22.3-T3: Have `initialize_knowledge_runtime()` detect a missing or
+- [x] US-22.3-T3: Have `initialize_knowledge_runtime()` detect a missing or
       invalid bundle and begin provisioning automatically without blocking app
       startup. Do not use `trust_remote_code` or download arbitrary artifacts.
-- [ ] US-22.3-T4: Coordinate `KnowledgeIngestionJobs` and
+- [x] US-22.3-T4: Coordinate `KnowledgeIngestionJobs` and
       `OnnxClipEmbeddingProvider` so files awaiting an embedding bundle remain
       recoverable/queued and are processed after readiness rather than being
       marked terminally failed for an expected provisioning wait.
-- [ ] US-22.3-T5: Add admin-readable status and diagnostics through typed API
+- [x] US-22.3-T5: Add admin-readable status and diagnostics through typed API
       and UI, modeled on caption bundle status but without an end-user manual
       installation step. Expose only progress, reviewed identity, and safe
       errors—not model bytes, credentials, or file content.
-- [ ] US-22.3-T6: Test cold start/download, concurrent upload while downloading,
+- [x] US-22.3-T6: Test cold start/download, concurrent upload while downloading,
       cancellation/retry, restart recovery, corrupted/partial bundles, manifest
       verification, offline failure, and automatic processing after readiness.
 

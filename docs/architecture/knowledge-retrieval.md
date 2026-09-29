@@ -23,8 +23,9 @@ deletion, and no unfiltered search API.
 
 ## Model contract
 
-The pinned initial provider is `Xenova/clip-vit-base-patch32` revision selected
-by the repository's `onnx/model_quantized.onnx` SHA-256:
+The pinned initial provider is `Xenova/clip-vit-base-patch32` at reviewed
+revision `dcb5f6119fdbb94f1053e98bd74da0ac582ed2a7`, selected by the
+repository's `onnx/model_quantized.onnx` SHA-256:
 
 ```text
 0898a3facfdb27f0a041e57649b4989cfd094e4a0040d6ae75ed69917dfc7328
@@ -38,17 +39,22 @@ CLIP graph requires both modality inputs, so it supplies deterministic blank
 images for text embedding and empty text for image embedding; only the requested
 output (`text_embeds` or `image_embeds`) is retained.
 
-To provision an offline runtime, download these files from the reviewed model
-revision into `STORAGE_ROOT/models/knowledge-clip`, renaming the selected ONNX
-artifact to `model.onnx`:
+At startup, Asterism automatically provisions the reviewed bundle when it is
+missing or invalid. It downloads only the following allowlisted files from that
+exact revision into a temporary sibling directory, verifies every required file
+and the exact ONNX size/SHA-256, writes a manifest of file digests, then atomically
+promotes the bundle to `STORAGE_ROOT/models/knowledge-clip`. The selected ONNX
+artifact is renamed to `model.onnx`:
 
 - `onnx/model_quantized.onnx` → `model.onnx`
 - `config.json`, `preprocessor_config.json`, `tokenizer.json`, `tokenizer_config.json`
 - `special_tokens_map.json`, `vocab.json`, `merges.txt`
 
-Startup creates/opens LanceDB but does not load the model. The model is checked
-for its exact configured size and SHA-256 only on first embedding request; a
-missing/corrupt model fails that operation without making a network request.
+Startup creates/opens LanceDB without blocking on the model download. Files that
+arrive while provisioning is in progress remain pending and are automatically
+resumed only after the verified bundle is promoted. The admin settings page exposes
+safe readiness/progress diagnostics; there is no manual embedding-model install
+step. A failed provisioning attempt remains retryable on a later runtime start.
 
 ## Local image-captioning provisioning and benchmark
 

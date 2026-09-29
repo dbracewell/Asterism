@@ -26,6 +26,7 @@ from .captioning import (
     LocalSmolVlm2CaptionProvider,
     bounded_caption,
 )
+from .embedding_download import EmbeddingModelDownloadService
 from .embeddings import OnnxClipEmbeddingProvider
 from .jobs import KnowledgeIngestionJobs
 from .service import get_captioning_configuration
@@ -39,14 +40,6 @@ vector_store = LanceDbVectorStore(
 
 knowledge_ingestion_jobs = KnowledgeIngestionJobs(config.max_concurrent_knowledge_ingestions)
 
-embedding_provider = OnnxClipEmbeddingProvider(
-    config.knowledge_models_root,
-    artifact_sha256=config.knowledge_embedding_model_sha256,
-    artifact_size_bytes=config.knowledge_embedding_model_size_bytes,
-    dimension=config.knowledge_embedding_dimension,
-    max_concurrency=config.max_concurrent_knowledge_embeddings,
-)
-
 local_caption_provider = LocalSmolVlm2CaptionProvider(
     config.local_caption_models_root,
     bundle_sha256=config.local_caption_model_bundle_sha256,
@@ -54,6 +47,28 @@ local_caption_provider = LocalSmolVlm2CaptionProvider(
 )
 
 logger = get_logger("KNOWLEDGE-RUNTIME")
+
+
+async def _on_embedding_bundle_ready(_: str) -> None:
+    """Resume durable pending work only after a verified bundle is promoted."""
+    await knowledge_ingestion_jobs.resume_pending()
+
+
+embedding_model_download = EmbeddingModelDownloadService(
+    config.knowledge_models_root,
+    artifact_sha256=config.knowledge_embedding_model_sha256,
+    artifact_size_bytes=config.knowledge_embedding_model_size_bytes,
+    on_bundle_ready=_on_embedding_bundle_ready,
+)
+
+embedding_provider = OnnxClipEmbeddingProvider(
+    config.knowledge_models_root,
+    artifact_sha256=config.knowledge_embedding_model_sha256,
+    artifact_size_bytes=config.knowledge_embedding_model_size_bytes,
+    dimension=config.knowledge_embedding_dimension,
+    max_concurrency=config.max_concurrent_knowledge_embeddings,
+    bundle_is_ready=embedding_model_download.is_ready,
+)
 
 
 async def _provider_caption_document(
@@ -166,9 +181,14 @@ async def initialize_knowledge_runtime() -> None:
     await vector_store.initialize()
     await knowledge_ingestion_jobs.recover_interrupted()
     await knowledge_caption_jobs.recover_interrupted()
+    if embedding_model_download.is_ready():
+        await knowledge_ingestion_jobs.resume_pending()
+    else:
+        await embedding_model_download.start_download()
 
 
 async def shutdown_knowledge_runtime() -> None:
+    await embedding_model_download.shutdown()
     await caption_model_download.shutdown()
     await knowledge_caption_jobs.shutdown()
     await knowledge_ingestion_jobs.shutdown()

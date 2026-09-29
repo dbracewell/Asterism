@@ -12,6 +12,7 @@ from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.service import ensure_file_processed, get_file_store
 
+from .embedding_download import EmbeddingBundleNotReadyError
 from .embeddings import EmbeddingProvider, EmbeddingProviderError
 from .models import (
     FileKnowledgeArtifactModel,
@@ -119,6 +120,15 @@ async def ingest_file_artifact(
             )
             await session.refresh(artifact)
             return artifact
+    except EmbeddingBundleNotReadyError:
+        # Provisioning is an expected, recoverable startup state.  Leave this
+        # immutable generation pending so the ready callback can enqueue it.
+        artifact.status = FileKnowledgeArtifactStatus.PENDING
+        artifact.error_code = "embedding_bundle_pending"
+        artifact.error_reason = "Knowledge embedding bundle is provisioning"
+        artifact.started_at = None
+        await session.commit()
+        return artifact
     except Exception as error:
         try:
             await vector_store.delete_file_generation(
