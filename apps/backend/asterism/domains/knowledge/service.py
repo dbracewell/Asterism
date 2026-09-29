@@ -188,32 +188,42 @@ async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncS
     return artifact
 
 
-async def update_processing_profile_and_reprocess(
-    *, payload: KnowledgeProcessingProfileUpdate, session: AsyncSession
-) -> KnowledgeReprocessSummary:
-    """Create one pending replacement generation per file under a new policy."""
-    setting, current = await _load_processing_configuration(session=session)
-    candidate = current.model_copy(
-        update={
-            "extraction_policy": payload.extraction_policy,
-            "chunking_policy": payload.chunking_policy,
-            "embedding_model": payload.embedding_model,
-            "captioning_policy": payload.captioning_policy,
-        }
-    )
+def _with_resolved_identity(configuration: KnowledgeProcessingConfiguration) -> KnowledgeProcessingConfiguration:
+    """Return a policy whose identity covers every processing-relevant input."""
     identity = _processing_identity(
-        extraction_policy=candidate.extraction_policy,
-        chunking_policy=candidate.chunking_policy,
-        embedding_model=candidate.embedding_model,
-        captioning_policy=candidate.captioning_policy,
-        captioning=candidate.captioning,
+        extraction_policy=configuration.extraction_policy,
+        chunking_policy=configuration.chunking_policy,
+        embedding_model=configuration.embedding_model,
+        captioning_policy=configuration.captioning_policy,
+        captioning=configuration.captioning,
     )
-    if identity == current.identity:
+    return configuration.model_copy(update={"identity": identity})
+
+
+async def _transition_processing_configuration(
+    *,
+    candidate: KnowledgeProcessingConfiguration,
+    session: AsyncSession,
+) -> KnowledgeReprocessSummary:
+    """Atomically persist a changed policy, then schedule durable replacements.
+
+    Scheduling deliberately happens only after commit.  If scheduling is
+    interrupted, the persisted pending generations are restart-recoverable and
+    a ready current generation remains available for retrieval.
+    """
+    setting, current = await _load_processing_configuration(session=session)
+    candidate = _with_resolved_identity(candidate)
+    if candidate.identity == current.identity:
+        # An explicit write of the default policy heals the previously missing
+        # setting without creating needless artifact generations.
+        if setting is None:
+            setting = _save_processing_configuration(setting=None, configuration=candidate, session=session)
+            await session.commit()
         return KnowledgeReprocessSummary(
             profile=_profile_from_configuration(current, updated_at=setting.updated_at if setting else 0),
             queued_file_count=0,
         )
-    candidate = candidate.model_copy(update={"generation": current.generation + 1, "identity": identity})
+    candidate = candidate.model_copy(update={"generation": current.generation + 1})
     setting = _save_processing_configuration(setting=setting, configuration=candidate, session=session)
     files = list(await session.scalars(select(UserFileModel)))
     replacements = [await ensure_file_knowledge_artifact(file=file, session=session) for file in files]
@@ -228,6 +238,24 @@ async def update_processing_profile_and_reprocess(
     )
 
 
+async def update_processing_profile_and_reprocess(
+    *, payload: KnowledgeProcessingProfileUpdate, session: AsyncSession
+) -> KnowledgeReprocessSummary:
+    """Apply a processing-policy edit through the one transition path."""
+    _, current = await _load_processing_configuration(session=session)
+    return await _transition_processing_configuration(
+        candidate=current.model_copy(
+            update={
+                "extraction_policy": payload.extraction_policy,
+                "chunking_policy": payload.chunking_policy,
+                "embedding_model": payload.embedding_model,
+                "captioning_policy": payload.captioning_policy,
+            }
+        ),
+        session=session,
+    )
+
+
 async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCaptionConfiguration:
     setting, configuration = await _load_processing_configuration(session=session)
     return KnowledgeCaptionConfiguration(
@@ -235,6 +263,20 @@ async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCap
         provider_model_id=configuration.captioning.provider_model_id,
         updated_at=setting.updated_at if setting else 0,
     )
+
+
+async def ensure_captioning_selection_is_valid(*, session: AsyncSession) -> None:
+    """Reject a provider/model edit that would orphan the selected captioner."""
+    _, configuration = await _load_processing_configuration(session=session)
+    try:
+        CaptioningConfiguration(
+            mode=CaptionMode(configuration.captioning.mode),
+            provider_model_id=configuration.captioning.provider_model_id,
+        ).validate(list(await session.scalars(select(LLMModel).join(LLMModel.provider))))
+    except CaptioningError as error:
+        raise BadDataException(
+            "Cannot remove or make ineligible the provider model selected for image captioning"
+        ) from error
 
 
 async def update_captioning_configuration(
@@ -252,7 +294,7 @@ async def update_captioning_configuration(
     except CaptioningError as error:
         raise BadDataException(str(error)) from error
 
-    setting, configuration = await _load_processing_configuration(session=session)
+    _, configuration = await _load_processing_configuration(session=session)
     updated_configuration = configuration.model_copy(
         update={
             "captioning": KnowledgeProcessingCaptioningConfiguration(
@@ -261,14 +303,14 @@ async def update_captioning_configuration(
             )
         }
     )
-    setting = _save_processing_configuration(
-        setting=setting, configuration=updated_configuration, session=session
+    transition = await _transition_processing_configuration(
+        candidate=updated_configuration,
+        session=session,
     )
-    await session.commit()
     return KnowledgeCaptionConfiguration(
         mode=updated_configuration.captioning.mode,
         provider_model_id=updated_configuration.captioning.provider_model_id,
-        updated_at=setting.updated_at,
+        updated_at=transition.profile.updated_at,
     )
 
 

@@ -110,18 +110,18 @@ exact policy that produced them.
 
 **Dependencies:** US-22.1.
 
-- [ ] US-22.2-T1: Define one resolved policy representation and deterministic
+- [x] US-22.2-T1: Define one resolved policy representation and deterministic
       fingerprint, including extraction/chunking/embedding inputs plus
       disabled/local/provider captioning and selected model identity.
-- [ ] US-22.2-T2: Implement one transaction-oriented transition/reprocessing
+- [x] US-22.2-T2: Implement one transaction-oriented transition/reprocessing
       service used by every processing and captioning configuration update.
-- [ ] US-22.2-T3: Queue replacement file-artifact generations only after the
+- [x] US-22.2-T3: Queue replacement file-artifact generations only after the
       configuration/profile transaction commits; preserve a ready prior
       generation when replacement work fails or is canceled.
-- [ ] US-22.2-T4: Select, implement, and document provider/model-removal
+- [x] US-22.2-T4: Select, implement, and document provider/model-removal
       behavior: reject removal while selected, or atomically disable captioning
       and transition the processing profile.
-- [ ] US-22.2-T5: Test no-op updates, mode changes, provider-model changes,
+- [x] US-22.2-T5: Test no-op updates, mode changes, provider-model changes,
       local/disabled transitions, provider/model removal, queue failures,
       restart recovery, and old-generation retrieval isolation.
 
@@ -131,6 +131,11 @@ exact policy that produced them.
   eligible file once.
 - The artifact profile identity accurately records the resolved policy.
 - No stored configuration can reference a deleted or ineligible provider model.
+
+**Provider/model removal behavior:** removal or an eligibility change is rejected
+while the provider model is selected for captioning. The administrator must first
+choose local or disabled captioning (which transitions the processing policy and
+queues replacements) before removing the provider/model.
 
 ### US-22.3 — Provision the required embedding bundle automatically
 

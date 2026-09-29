@@ -343,6 +343,14 @@ async def update_provider_settings(
                 existing.base_url = provider.base_url
                 existing.api_key = _provider_api_key(provider, existing.api_key)
 
+        # A provider-settings replacement may remove a provider (and its
+        # cascade-owned models).  The selected captioner is part of the global
+        # processing policy, so reject that edit rather than leaving a stored
+        # policy pointing at a missing or ineligible model.
+        from asterism.domains.knowledge.service import ensure_captioning_selection_is_valid
+
+        await ensure_captioning_selection_is_valid(session=session)
+
         if draft_model_id is not None:
             draft_model = await session.scalar(
                 select(LLMModel).where(
@@ -448,6 +456,10 @@ async def update_provider_model(
         model.vision_source = update.vision_source
         await session.flush()
 
+        from asterism.domains.knowledge.service import ensure_captioning_selection_is_valid
+
+        await ensure_captioning_selection_is_valid(session=session)
+
         draft_model_id = await session.scalar(
             select(ApplicationSettingsModel.value).where(
                 ApplicationSettingsModel.key == "draft_model_id",
@@ -497,6 +509,10 @@ async def replace_provider_models(
         if provider is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
         provider.models = _merge_models(models, provider.models)
+
+        from asterism.domains.knowledge.service import ensure_captioning_selection_is_valid
+
+        await ensure_captioning_selection_is_valid(session=session)
         await session.commit()
 
     settings = await get_provider_settings(session)

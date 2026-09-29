@@ -355,6 +355,65 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
 
 
 @pytest.mark.asyncio
+async def test_captioning_policy_change_uses_the_same_generation_transition(knowledge_session, monkeypatch):
+    class FakeJobs:
+        def __init__(self):
+            self.enqueued: list[uuid.UUID] = []
+
+        def enqueue(self, *, artifact_id, **_):
+            self.enqueued.append(artifact_id)
+            return True
+
+    jobs = FakeJobs()
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", jobs)
+    file = UserFileModel(
+        user_id="user-a",
+        filename="caption-transition.png",
+        original_name="caption-transition.png",
+        size=1,
+        mime_type="image/png",
+        kind=FileKind.IMAGE,
+        sha256="e" * 64,
+    )
+    knowledge_session.add(file)
+    await knowledge_session.flush()
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+
+    ready = FileKnowledgeArtifactModel(
+        user_id=file.user_id,
+        file_id=file.id,
+        generation=1,
+        processing_profile_generation=1,
+        processing_profile_identity="a" * 64,
+        status=FileKnowledgeArtifactStatus.READY,
+        is_current=True,
+    )
+    knowledge_session.add(ready)
+    await knowledge_session.commit()
+
+    updated = await update_captioning_configuration(
+        payload=KnowledgeCaptionConfigurationUpdate(mode="local"), session=knowledge_session
+    )
+    artifacts = list(
+        await knowledge_session.scalars(
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id)
+        )
+    )
+    replacement = next(item for item in artifacts if item.generation == 2)
+    assert updated.mode == "local"
+    assert replacement.processing_profile_generation == 2
+    assert replacement.is_current is False
+    assert ready.is_current is True
+    assert jobs.enqueued == [replacement.id]
+
+    no_op = await update_captioning_configuration(
+        payload=KnowledgeCaptionConfigurationUpdate(mode="local"), session=knowledge_session
+    )
+    assert no_op.updated_at == updated.updated_at
+    assert len(list(await knowledge_session.scalars(select(FileKnowledgeArtifactModel)))) == 2
+
+
+@pytest.mark.asyncio
 async def test_file_memberships_reuse_owned_file_metadata(knowledge_session):
     knowledge_base = await create_knowledge_base(
         user_id="user-a", payload=KnowledgeBaseCreate(name="Documents"), session=knowledge_session

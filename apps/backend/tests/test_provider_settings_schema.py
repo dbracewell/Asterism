@@ -4,9 +4,12 @@ import uuid
 
 import pytest
 from asterism.core import config
+from asterism.core.exceptions import BadDataException
 from asterism.db.base import Base
 from asterism.db.init_db import initialize_database
 from asterism.db.schema_migrations import run_schema_migrations
+from asterism.domains.knowledge.schemas import KnowledgeCaptionConfigurationUpdate
+from asterism.domains.knowledge.service import update_captioning_configuration
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.provider_types import (
     OPENAI_BASE_URL,
@@ -395,6 +398,50 @@ async def test_removing_a_provider_clears_its_draft_model(tmp_path):
         assert persisted.llm_providers == []
         assert persisted.draft_model_id is None
         assert persisted.draft_model is None
+
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_removing_the_selected_captioning_provider_is_rejected(tmp_path):
+    database = tmp_path / "selected-caption-provider.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    provider_id = uuid.uuid4()
+    model_id = uuid.uuid4()
+    provider = Provider(
+        id=provider_id,
+        provider_type=ProviderType.GENERIC_OPENAI,
+        name="Vision",
+        base_url="http://localhost:8080/v1",
+        api_key="secret",
+        models=[
+            Llm(
+                id=model_id,
+                provider_id=provider_id,
+                name="vision-model",
+                is_active=True,
+                supports_vision=True,
+                vision_source=ModelCapabilitySource.MANUAL,
+            )
+        ],
+    )
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        await bulk_upsert_providers([provider], session)
+        await session.commit()
+        await update_captioning_configuration(
+            payload=KnowledgeCaptionConfigurationUpdate(mode="provider", provider_model_id=model_id),
+            session=session,
+        )
+
+        with pytest.raises(BadDataException, match="selected for image captioning"):
+            await update_provider_settings(ProviderSettings(llm_providers=[]), session)
+        await session.rollback()
+
+        assert (await get_provider_settings(session)).llm_providers[0].id == provider_id
 
     await engine.dispose()
 
