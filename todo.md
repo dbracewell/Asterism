@@ -532,7 +532,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-22 — Configuration-Owned Knowledge Processing
 
 Plan: [EPIC-22](docs/epics/EPIC-22-CONFIGURATION-OWNED-KNOWLEDGE-PROCESSING.md).
-Status: US-22.2 in progress.
+Status: US-22.3 ready.
 Order: US-22.1 → US-22.2 → US-22.3 → US-22.4.
 Work on one story at a time; create a feature branch when each story starts.
 Story completion requires passing checks and user confirmation before merge.
@@ -546,7 +546,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] US-22.1-T5: Test default/invalid settings, policy normalization, and captioning configuration states; synchronize generated artifacts if required.
   - [x] US-22.1-T6: Remove `KnowledgeAuditEventModel`, event writes, schema migrations, and audit-only tests; retain artifact state and logs for diagnostics.
 
-- [~] US-22.2 — Transition and reprocess from one policy
+- [x] US-22.2 — Transition and reprocess from one policy
   - [x] US-22.2-T1: Define resolved full-policy fingerprint inputs.
   - [x] US-22.2-T2: Centralize atomic configuration transitions and whole-library reprocessing.
   - [x] US-22.2-T3: Preserve ready prior generations until replacements succeed.
