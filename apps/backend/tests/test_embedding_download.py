@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from asterism.core import config
 from asterism.domains.knowledge.embedding_download import (
     MANIFEST_FILENAME,
     PINNED_MODEL_ID,
@@ -36,6 +37,11 @@ def _service(root: Path, **kwargs) -> EmbeddingModelDownloadService:
         artifact_size_bytes=len(b"reviewed-onnx"),
         **kwargs,
     )
+
+
+def test_configured_artifact_matches_reviewed_pinned_revision():
+    assert config.knowledge_embedding_model_size_bytes == 152_998_734
+    assert config.knowledge_embedding_model_sha256 == "90d3b30b11fc99c781a147df7cb3b8dff38b02b2d838b3b28392e7dfb34920b9"
 
 
 def test_existing_verified_embedding_bundle_is_ready(tmp_path: Path):

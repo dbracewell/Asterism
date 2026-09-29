@@ -242,8 +242,17 @@ class EmbeddingModelDownloadService:
             logger.exception("Knowledge embedding bundle provisioning failed")
             raise error
 
-    def _clear_task(self, _: asyncio.Task[str]) -> None:
+    def _clear_task(self, task: asyncio.Task[str]) -> None:
         self._state.task = None
+        if task.cancelled():
+            return
+        # The status object is the caller-facing failure channel. Retrieve the
+        # exception here so a failed automatic startup task never becomes an
+        # unhandled asyncio task exception.
+        try:
+            task.result()
+        except Exception:
+            return
 
 
 type OnBundleReady = Callable[[str], Coroutine[Any, Any, None]]

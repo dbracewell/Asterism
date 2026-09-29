@@ -28,10 +28,10 @@ revision `dcb5f6119fdbb94f1053e98bd74da0ac582ed2a7`, selected by the
 repository's `onnx/model_quantized.onnx` SHA-256:
 
 ```text
-0898a3facfdb27f0a041e57649b4989cfd094e4a0040d6ae75ed69917dfc7328
+90d3b30b11fc99c781a147df7cb3b8dff38b02b2d838b3b28392e7dfb34920b9
 ```
 
-The artifact is exactly 153,695,702 bytes (about 147 MiB), produces normalized
+The artifact is exactly 152,998,734 bytes (about 146 MiB), produces normalized
 512-dimensional image and text vectors, and is executed with CPU ONNX Runtime.
 The provider accepts no model-defined Python code and loads tokenizer/processor
 assets only from the local directory (`local_files_only=True`). Its combined

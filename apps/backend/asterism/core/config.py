@@ -81,10 +81,10 @@ class Config(BaseSettings):
     max_vision_image_bytes: int = 10 * 1024 * 1024
     """The maximum size of an image that can be processed for vision tasks (in bytes)."""
 
-    knowledge_embedding_model_sha256: str = "0898a3facfdb27f0a041e57649b4989cfd094e4a0040d6ae75ed69917dfc7328"
+    knowledge_embedding_model_sha256: str = "90d3b30b11fc99c781a147df7cb3b8dff38b02b2d838b3b28392e7dfb34920b9"
     """SHA-256 of the pinned local Xenova CLIP quantized ONNX artifact."""
 
-    knowledge_embedding_model_size_bytes: int = 153_695_702
+    knowledge_embedding_model_size_bytes: int = 152_998_734
     """Expected byte size of the pinned local knowledge embedding artifact."""
 
     knowledge_embedding_dimension: int = 512

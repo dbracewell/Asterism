@@ -42,7 +42,7 @@ text and image document content using a local, cross-platform embedding runtime.
 The initial local model candidate is **`Xenova/clip-vit-base-patch32`**, using
 its published `onnx/model_quantized.onnx` artifact with CPU `onnxruntime`.
 It is a CLIP text-and-image model in one embedding space and exposes a
-153,695,702-byte quantized ONNX artifact (about 147 MiB), well below the 400 MB
+152,998,734-byte quantized ONNX artifact (about 146 MiB), well below the 400 MB
 model-artifact budget. The original PyTorch artifact is 605,247,071 bytes and
 is explicitly not the deployment artifact. ONNX Runtime has supported macOS and
 Linux CPU distributions; CoreML acceleration is optional and must not be
