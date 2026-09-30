@@ -8,11 +8,11 @@ from sqlalchemy.engine import make_url
 
 from asterism.common.log import DEFAULT_LOGGER
 from asterism.core import config
+from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.settings.models import ApplicationSettingsModel
 
 from .base import Base
 from .database import db_session_manager, get_async_db_session
-from .schema_migrations import run_schema_migrations
 
 
 def sqlite_database_path() -> Path:
@@ -57,8 +57,8 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
     async with db_session_manager.connect() as conn:
         DEFAULT_LOGGER.info("Creating missing database tables and functions...")
         await conn.run_sync(Base.metadata.create_all)
-        DEFAULT_LOGGER.info("Applying database schema migrations...")
-        await run_schema_migrations(conn)
+        DEFAULT_LOGGER.info("Installing SQLite full-text search indexes...")
+        await initialize_search_index(conn)
     async with get_async_db_session() as session:
         if await session.get(ApplicationSettingsModel, "active_tools") is None:
             await session.execute(
@@ -66,8 +66,8 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
                     {
                         "key": "active_tools",
                         "value": config.default_allowed_tools,
-                    }
-                )
+                    },
+                ),
             )
             await session.commit()
     await db_session_manager.close()

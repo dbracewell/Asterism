@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  ComputerIcon,
   LoaderCircleIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -108,28 +109,24 @@ function ModelRow({
   isDraft: boolean;
   onSetDraft: (id: string) => void;
 }) {
-  const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
   const [isActive, setIsActive] = useState(model.is_active);
   const [contextWindow, setContextWindow] = useState(
     model.context_window?.toString() ?? "",
   );
+
   const [vision, setVision] = useState(
     model.supports_vision == null ? "unknown" : String(model.supports_vision),
   );
+
   const update = useMutation({
     ...appProviderModelUpdateMutation({ client }),
     onSuccess: () => {
+      router.refresh();
       router.replace(
         `${pathname}?t=admin&setting=providers&provider=${providerId}&cursor=${model.id}`,
       );
-      void queryClient.invalidateQueries({
-        queryKey: ["appProviderModelsList"],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: appProviderSettingsGetQueryKey({ client }),
-      });
       toast.success(`Saved ${model.name}`);
     },
     onError: () => toast.error(`Could not save ${model.name}.`),
@@ -477,7 +474,7 @@ function ModelCatalog({
 }
 
 function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
-  const queryClient = useQueryClient();
+  const router = useRouter();
   const form = useForm<Values>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -505,21 +502,13 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
 
   const saveProviders = useMutation({
     ...appProviderSettingsUpdateMutation({ client }),
-    onSuccess: () =>
-      void queryClient.invalidateQueries({
-        queryKey: appProviderSettingsGetQueryKey({ client }),
-      }),
+    onSuccess: () => router.refresh(),
   });
 
   const refreshCatalog = useMutation({
     ...appProviderModelsDiscoverAndSyncMutation({ client }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: appProviderSettingsGetQueryKey({ client }),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["appProviderModelsList"],
-      });
+      router.refresh();
       toast.success("Model catalog refreshed.");
     },
     onError: () =>
@@ -553,6 +542,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
       /* mutations report errors */
     }
   };
+
   const setDraft = async (modelId: string) => {
     try {
       await save(
@@ -563,6 +553,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
       /* save reports errors */
     }
   };
+
   const deleteProvider = (index: number) => {
     const providerId = getValues(`llm_providers.${index}.id`);
     if (appSettings.draft_model?.provider_id === providerId) {
@@ -570,6 +561,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
     }
     remove(index);
   };
+
   return (
     <form
       className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
@@ -601,6 +593,17 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
         </p>
       )}
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        {fields.length === 0 ? (
+          <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
+            <ComputerIcon className="text-muted-foreground/50 size-10" />
+            <h4 className="w-sm text-center text-xl">
+              No providers configured yet. Add one to get started.
+            </h4>
+            <Button onClick={() => append(emptyProvider())}>
+              <PlusIcon /> Add Provider
+            </Button>
+          </div>
+        ) : null}
         {fields.map((field, index) => {
           const errors = formState.errors.llm_providers?.[index];
           const provider = appSettings.llm_providers?.find(

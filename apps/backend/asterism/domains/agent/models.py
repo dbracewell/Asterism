@@ -39,7 +39,7 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         Text,
         nullable=False,
     )
-    system_prompt: Mapped[Optional[str]] = mapped_column(
+    system_prompt: Mapped[str | None] = mapped_column(
         "system_prompt",
         Text,
         nullable=True,
@@ -56,7 +56,7 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         nullable=False,
         default=dict,
     )
-    tools: Mapped[Optional[list[str]]] = mapped_column(
+    tools: Mapped[list[str] | None] = mapped_column(
         "tools",
         JSONB_COLUMN(),
         nullable=True,
@@ -94,7 +94,7 @@ class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         Text,
         nullable=False,
     )
-    caller_context: Mapped[Optional[str]] = mapped_column(
+    caller_context: Mapped[str | None] = mapped_column(
         "caller_context",
         Text,
         nullable=True,
@@ -105,7 +105,7 @@ class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default=list,
     )
-    result: Mapped[Optional[str]] = mapped_column(
+    result: Mapped[str | None] = mapped_column(
         "result",
         Text,
         nullable=True,

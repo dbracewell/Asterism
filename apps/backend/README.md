@@ -63,10 +63,10 @@ On a fresh installation, from the repository root:
 pnpm --filter @asterism/backend init:db
 ```
 
-Initialization creates missing schema, applies pending data-preserving Asterism
-schema migrations, and creates defaults without deleting existing data. It is safe
-to run repeatedly, and the container runs it on every startup before launching the
-backend. To intentionally recreate the configured local SQLite database, run
+Initialization creates missing model tables, installs SQLite FTS5 search indexes
+and triggers, and creates defaults. It can be run repeatedly on the current schema;
+it does not upgrade older schemas. The container runs it on every startup before
+launching the backend. To intentionally recreate the configured local SQLite database, run
 `pnpm --filter @asterism/backend reset:db`, verify the displayed absolute target, and
 type `RESET`. A noninteractive reset is canceled unless the internal confirmed command
 is invoked through the root `pnpm reset:db -- --yes` workflow.

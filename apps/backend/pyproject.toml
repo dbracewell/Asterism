@@ -65,14 +65,15 @@ src = ["asterism"]
 
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["E", "F", "I", "COM812"]
 fixable = ["ALL"]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = false
 
 [tool.basedpyright]
 include = ["asterism"]
 typeCheckingMode = "standard"
-
-[tool.basedpyright.analysis]
 reportPrivateImportUsage = "none"
 enableTypeIgnoreComments = true
 reportReturnType = "warning"

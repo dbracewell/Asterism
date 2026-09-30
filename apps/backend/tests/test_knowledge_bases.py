@@ -7,7 +7,6 @@ import pytest_asyncio
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.db.base import Base
-from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
 from asterism.domains.knowledge.embedding_download import EmbeddingBundleNotReadyError
@@ -47,7 +46,6 @@ async def knowledge_session(tmp_path, monkeypatch):
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'knowledge-bases.db'}")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
-        await run_schema_migrations(connection)
 
     class FakeVectorStore:
         async def delete_file(self, **_):

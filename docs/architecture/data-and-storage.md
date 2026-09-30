@@ -240,8 +240,8 @@ erDiagram
 SQLite FTS5 virtual tables, `chat_search` and `folder_search`, provide
 user-scoped keyword search over chat titles and persisted message text, and over
 folder titles. They deliberately do not index attachment metadata or extracted
-file content. Schema migration creates the indexes from existing rows and installs
-triggers that rebuild a chat document when its title or message content changes.
+file content. Database initialization installs the indexes and triggers that
+rebuild a chat document when its title or message content changes.
 The search service tokenizes input into up to ten word terms and constructs quoted
 `AND` queries rather than passing user input through as FTS syntax. Results remain
 filtered by authenticated user ID; folder results include matches from contained

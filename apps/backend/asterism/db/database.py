@@ -2,7 +2,7 @@ import threading
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from sqlalchemy import event
+from sqlalchemy import event, make_url
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -37,11 +37,13 @@ class DatabaseSessionManager:
 
             if self._engine is None:
                 self._engine = create_async_engine(config.db_url)
-                event.listen(
-                    self._engine.sync_engine,
-                    "connect",
-                    set_sqlite_pragma,
-                )
+                url = make_url(config.db_url or "")
+                if url.drivername.startswith("sqlite"):
+                    event.listen(
+                        self._engine.sync_engine,
+                        "connect",
+                        set_sqlite_pragma,
+                    )
             if self._session_maker is None:
                 self._session_maker = async_sessionmaker(
                     expire_on_commit=False,

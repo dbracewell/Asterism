@@ -55,7 +55,9 @@ class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
     file_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("user_files.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("user_files.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     generation: Mapped[int] = mapped_column(Integer, nullable=False)
     processing_profile_generation: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -133,10 +135,14 @@ class KnowledgeBaseFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "knowledge_base_files"
 
     knowledge_base_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("knowledge_bases.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("knowledge_bases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     file_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("user_files.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("user_files.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 

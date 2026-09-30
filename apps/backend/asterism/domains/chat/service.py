@@ -38,6 +38,7 @@ from .schemas import (
     SearchResultList,
     UpdateMessageRequest,
 )
+from .search_index import search_index_for
 
 
 async def add_message(
@@ -121,8 +122,8 @@ async def create_chat(
                     select(UserFileModel).where(
                         UserFileModel.user_id == user_id,
                         UserFileModel.filename.in_(payload.files),
-                    )
-                )
+                    ),
+                ),
             )
             found = {file.filename: file for file in records}
             if any(filename not in found for filename in payload.files):
@@ -137,7 +138,7 @@ async def create_chat(
                         size=file.size,
                         kind=file.kind,
                         status=file.content_status,
-                    )
+                    ),
                 )
 
         new_session = ChatModel(
@@ -255,8 +256,8 @@ async def delete_chats(
                 select(ChatModel.id).where(
                     ChatModel.user_id == user_id,
                     ChatModel.id.in_(unique_ids),
-                )
-            )
+                ),
+            ),
         )
         if len(owned_ids) != len(unique_ids):
             raise NotFoundException("One or more chats were not found")
@@ -269,7 +270,7 @@ async def delete_chats(
             delete(ChatModel).where(
                 ChatModel.user_id == user_id,
                 ChatModel.id.in_(unique_ids),
-            )
+            ),
         )
         await session.commit()
         return BulkDeleteChatResponse(deleted_chat_ids=owned_ids)
@@ -293,10 +294,6 @@ def _search_terms(query: str) -> list[str]:
     # Keyword search intentionally treats punctuation as separators and never
     # passes user input through as SQL/FTS syntax.
     return re.findall(r"[\w]+", query.casefold())[:10]
-
-
-def _fts_query(terms: list[str]) -> str:
-    return " AND ".join(f'"{term}"' for term in terms)
 
 
 def _snippet(content: str, terms: list[str], limit: int = 180) -> str:
@@ -327,33 +324,17 @@ async def search(
 
     async with get_async_db_session(session) as session:
         content_conditions = [MessageModel.content.ilike(f"%{term}%") for term in terms]
-        fts_query = _fts_query(terms)
-        chat_ids = [
-            uuid.UUID(value)
-            for value in (
-                await session.scalars(
-                    text("SELECT chat_id FROM chat_search WHERE user_id = :user_id AND chat_search MATCH :query"),
-                    {"user_id": user_id, "query": fts_query},
-                )
-            ).all()
-        ]
-        folder_title_ids = {
-            uuid.UUID(value)
-            for value in (
-                await session.scalars(
-                    text("SELECT folder_id FROM folder_search WHERE user_id = :user_id AND folder_search MATCH :query"),
-                    {"user_id": user_id, "query": fts_query},
-                )
-            ).all()
-        }
+        search_index = search_index_for(session)
+        chat_ids = await search_index.find_chat_ids(user_id, terms)
+        folder_title_ids = await search_index.find_folder_ids(user_id, terms)
         matched_chats = []
         if chat_ids:
             matched_chats = list(
                 await session.scalars(
                     select(ChatModel)
                     .where(ChatModel.user_id == user_id, ChatModel.id.in_(chat_ids))
-                    .order_by(desc(ChatModel.updated_at))
-                )
+                    .order_by(desc(ChatModel.updated_at)),
+                ),
             )
 
         results: list[SearchResult] = []
@@ -373,7 +354,7 @@ async def search(
                         and_(*content_conditions),
                     )
                     .order_by(MessageModel.created_at)
-                    .limit(1)
+                    .limit(1),
                 )
                 source = SearchMatchSource.CONTENT
                 snippet = _snippet(content or "", terms)
@@ -386,7 +367,7 @@ async def search(
                     folder_id=chat.folder_id,
                     match_source=source,
                     snippet=snippet,
-                )
+                ),
             )
             if chat.folder_id:
                 matching_folder_ids.add(chat.folder_id)
@@ -413,7 +394,7 @@ async def search(
                     folder_id=folder.parent_id,
                     match_source=(SearchMatchSource.FOLDER_TITLE if title_matches else SearchMatchSource.CONTENT),
                     snippet=(folder.title if title_matches else "Contains a matching chat"),
-                )
+                ),
             )
 
         def folder_path(folder_id: uuid.UUID | None) -> list[str]:
@@ -426,7 +407,7 @@ async def search(
 
         results = [
             result.model_copy(
-                update={"path": folder_path(result.id if result.kind is SearchResultKind.FOLDER else result.folder_id)}
+                update={"path": folder_path(result.id if result.kind is SearchResultKind.FOLDER else result.folder_id)},
             )
             for result in results
         ]

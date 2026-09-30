@@ -45,7 +45,8 @@ class PydanticSQLiteJSONB(TypeDecorator):
                 pass
 
         if isinstance(self._model_type, type) and issubclass(
-            self._model_type, BaseModel
+            self._model_type,
+            BaseModel,
         ):
             return self._model_type.model_validate(value)
         if isinstance(self._model_type, TypeAdapter):
@@ -65,7 +66,9 @@ class PydanticPGJSONB(TypeDecorator):
     cache_ok = True
 
     def __init__(
-        self, model_type: type[BaseModel] | TypeAdapter | None = None, **kwargs
+        self,
+        model_type: type[BaseModel] | TypeAdapter | None = None,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self._model_type = model_type
@@ -93,7 +96,8 @@ class PydanticPGJSONB(TypeDecorator):
             value = json.loads(value)
 
         if isinstance(self._model_type, type) and issubclass(
-            self._model_type, BaseModel
+            self._model_type,
+            BaseModel,
         ):
             return self._model_type.model_validate(value)
         if isinstance(self._model_type, TypeAdapter):

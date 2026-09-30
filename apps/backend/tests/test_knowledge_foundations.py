@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from asterism.core.config import Config, ConfigValidationError
 from asterism.db.base import Base
-from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.knowledge.embeddings import EmbeddingProviderError, OnnxClipEmbeddingProvider
 from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
@@ -56,12 +55,10 @@ async def test_lancedb_rejects_wrong_dimension(tmp_path: Path):
 
 
 @pytest.mark.asyncio
-async def test_knowledge_migration_is_idempotent(tmp_path: Path):
+async def test_knowledge_schema_is_created_from_models(tmp_path: Path):
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'knowledge.db'}")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
-        await run_schema_migrations(connection)
-        await run_schema_migrations(connection)
         tables = {
             row[0]
             for row in (
@@ -86,7 +83,6 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'artifacts.db'}")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
-        await run_schema_migrations(connection)
         await connection.execute(text("INSERT INTO users (id) VALUES ('user-a')"))
     from sqlalchemy.ext.asyncio import async_sessionmaker
 

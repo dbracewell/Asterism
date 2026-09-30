@@ -8,7 +8,6 @@ import pytest_asyncio
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.base import Base
-from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.chat.schemas import Chat, ChatInfo, Message, MessageFileReference, MessageStatus
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
@@ -48,8 +47,6 @@ async def file_session(tmp_path, monkeypatch):
     engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
-        await run_schema_migrations(connection)
-        await run_schema_migrations(connection)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
         session.add_all([UserModel(id="user-a"), UserModel(id="user-b")])

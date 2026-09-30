@@ -12,17 +12,37 @@ class AgentKnowledgeBaseAssignmentModel(Base, UuidPrimaryKeyMixin, TimestampMixi
 
     __tablename__ = "agent_knowledge_base_assignments"
 
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     agent_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("agent_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("agent_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     knowledge_base_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("knowledge_bases.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("knowledge_bases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint("agent_id", "knowledge_base_id", name="uq_agent_knowledge_base_assignment"),
-        UniqueConstraint("agent_id", "position", name="uq_agent_knowledge_base_assignment_position"),
-        Index("idx_agent_knowledge_base_assignments_agent_position", "agent_id", "position"),
+        UniqueConstraint(
+            "agent_id",
+            "knowledge_base_id",
+            name="uq_agent_knowledge_base_assignment",
+        ),
+        UniqueConstraint(
+            "agent_id",
+            "position",
+            name="uq_agent_knowledge_base_assignment_position",
+        ),
+        Index(
+            "idx_agent_knowledge_base_assignments_agent_position",
+            "agent_id",
+            "position",
+        ),
     )

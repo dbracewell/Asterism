@@ -2,7 +2,6 @@ import pytest
 import pytest_asyncio
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.base import Base
-from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.files.models import FileKind, UserFileModel
@@ -26,7 +25,6 @@ async def assignment_session(tmp_path):
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'assignments.db'}")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
-        await run_schema_migrations(connection)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
         session.add_all([UserModel(id="user-a"), UserModel(id="user-b")])

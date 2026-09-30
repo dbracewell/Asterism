@@ -2,7 +2,7 @@
 import pytest
 import pytest_asyncio
 from asterism.db.base import Base
-from asterism.db.schema_migrations import run_schema_migrations
+from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.chat.models import ChatModel, MessageModel
 from asterism.domains.chat.schemas import MessageStatus, SearchMatchSource, SearchResultKind
 from asterism.domains.chat.service import search
@@ -17,7 +17,7 @@ async def search_session(tmp_path):
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'search.db'}")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
-        await run_schema_migrations(connection)
+        await initialize_search_index(connection)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
         session.add_all([UserModel(id="user-a"), UserModel(id="user-b")])

@@ -2,7 +2,6 @@ import pytest
 import pytest_asyncio
 from asterism.core.exceptions import BadDataException, NotFoundException, UnauthorizedException
 from asterism.db.base import Base
-from asterism.db.schema_migrations import run_schema_migrations
 from asterism.domains.agent.schemas import PartialAgentProfile
 from asterism.domains.agent.service import (
     delete_agent_profile,
@@ -142,22 +141,3 @@ async def test_delete_retires_owned_runtime_before_persistence(chat_agent_sessio
 
     assert retired == [chat.id]
     assert await chat_agent_session.get(ChatModel, chat.id) is None
-
-
-@pytest.mark.asyncio
-async def test_chat_agent_migration_backfills_a_valid_main_default(
-    chat_agent_session,
-):
-    main = await upsert_agent_profile("user-a", profile("Main"), chat_agent_session)
-    await upsert_user_setting(
-        "user-a", "default_agent_id", str(main.id), chat_agent_session
-    )
-    legacy_chat = ChatModel(user_id="user-a", agent_id=None)
-    chat_agent_session.add(legacy_chat)
-    await chat_agent_session.commit()
-
-    async with chat_agent_session.bind.begin() as connection:  # type: ignore[union-attr]
-        await run_schema_migrations(connection)
-    await chat_agent_session.refresh(legacy_chat)
-
-    assert legacy_chat.agent_id == main.id
