@@ -12,18 +12,15 @@ class FolderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "folders"
 
     user_id: Mapped[str] = mapped_column(
-        "user_id",
         ForeignKey("users.id", ondelete="CASCADE"),
         index=True,
         nullable=False,
     )
     title: Mapped[str] = mapped_column(
-        "title",
         String,
         nullable=False,
     )
     parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        "parent_id",
         ForeignKey(
             "folders.id",
             ondelete="CASCADE",

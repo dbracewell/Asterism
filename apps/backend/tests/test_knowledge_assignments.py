@@ -60,7 +60,7 @@ async def _ready_base(session, user_id: str, name: str) -> KnowledgeBaseModel:
                 status=FileKnowledgeArtifactStatus.READY,
                 is_current=True,
             ),
-        ]
+        ],
     )
     await session.commit()
     return base

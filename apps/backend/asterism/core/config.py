@@ -24,7 +24,7 @@ def _file_secret(name: str) -> str:
     has_legacy = name.lower() in entries
     if has_canonical and has_legacy:
         raise ValueError(
-            f"Ambiguous file secret names for {name}; keep only the uppercase file"  # noqa: E501
+            f"Ambiguous file secret names for {name}; keep only the uppercase file",  # noqa: E501
         )
     if has_legacy:
         raise ValueError(f"Legacy file secret name for {name}; rename it to uppercase")
@@ -78,16 +78,13 @@ class Config(BaseSettings):
     file_conversion_timeout_s: int = 60
     """The maximum time (in seconds) to wait for a file conversion to complete."""
 
+    max_concurrent_extractions: int = 4
+    """Maximum simultaneous document extraction jobs."""
+
     max_vision_image_bytes: int = 10 * 1024 * 1024
     """The maximum size of an image that can be processed for vision tasks (in bytes)."""
 
-    knowledge_embedding_model_sha256: str = "90d3b30b11fc99c781a147df7cb3b8dff38b02b2d838b3b28392e7dfb34920b9"
-    """SHA-256 of the pinned local Xenova CLIP quantized ONNX artifact."""
-
-    knowledge_embedding_model_size_bytes: int = 152_998_734
-    """Expected byte size of the pinned local knowledge embedding artifact."""
-
-    knowledge_embedding_dimension: int = 512
+    embedding_dimension: int = 512
     """Dimension emitted by the pinned CLIP text/image embedding model."""
 
     max_concurrent_knowledge_embeddings: int = 2
@@ -118,6 +115,8 @@ class Config(BaseSettings):
     """Character overlap between adjacent textual knowledge chunks."""
 
     max_knowledge_query_top_k: int = 10
+    """Maximum retrieval results a knowledge search tool call may request."""
+
     max_knowledge_allowed_files: int = 1_000
     """Maximum retrieval results a knowledge search tool call may request."""
 
@@ -184,7 +183,7 @@ class Config(BaseSettings):
             ):
                 raise ConfigValidationError(
                     "PUBLIC_URL must be an absolute browser-facing origin "
-                    "without credentials, path, query, fragment, or trailing slash"  # noqa: E501
+                    "without credentials, path, query, fragment, or trailing slash",  # noqa: E501
                 )
             if not self.system_key:
                 raise ConfigValidationError("SYSTEM_KEY is required (value redacted)")
@@ -192,7 +191,7 @@ class Config(BaseSettings):
                 raise ConfigValidationError("SYSTEM_KEY uses a known placeholder (value redacted)")
             if self.config_profile == "production" and len(self.system_key) < 32:
                 raise ConfigValidationError(
-                    "SYSTEM_KEY does not meet the production strength requirement (value redacted)"
+                    "SYSTEM_KEY does not meet the production strength requirement (value redacted)",
                 )
         if not 1 <= self.max_chars_for_retrieval <= 1_000_000:
             raise ConfigValidationError("MAX_CHARS_FOR_RETRIEVAL must be from 1 to 1000000")
@@ -206,13 +205,7 @@ class Config(BaseSettings):
             raise ConfigValidationError("FILE_CONVERSION_TIMEOUT_S must be from 1 to 600")
         if not 1 <= self.max_vision_image_bytes <= self.max_upload_file_size_bytes:
             raise ConfigValidationError("MAX_VISION_IMAGE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES")
-        if len(self.knowledge_embedding_model_sha256) != 64 or any(
-            char not in "0123456789abcdef" for char in self.knowledge_embedding_model_sha256.lower()
-        ):
-            raise ConfigValidationError("KNOWLEDGE_EMBEDDING_MODEL_SHA256 must be a SHA-256 hex digest")
-        if not 1 <= self.knowledge_embedding_model_size_bytes <= 400 * 1024 * 1024:
-            raise ConfigValidationError("KNOWLEDGE_EMBEDDING_MODEL_SIZE_BYTES must be from 1 to 419430400")
-        if not 1 <= self.knowledge_embedding_dimension <= 8192:
+        if not 1 <= self.embedding_dimension <= 8192:
             raise ConfigValidationError("KNOWLEDGE_EMBEDDING_DIMENSION must be from 1 to 8192")
         if not 1 <= self.max_concurrent_knowledge_embeddings <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS must be from 1 to 16")
@@ -235,7 +228,7 @@ class Config(BaseSettings):
             raise ConfigValidationError("KNOWLEDGE_CHUNK_SIZE_CHARS must be from 1 to MAX_CONVERTED_CHARS")
         if not 0 <= self.knowledge_chunk_overlap_chars < self.knowledge_chunk_size_chars:
             raise ConfigValidationError(
-                "KNOWLEDGE_CHUNK_OVERLAP_CHARS must be from 0 to KNOWLEDGE_CHUNK_SIZE_CHARS - 1"
+                "KNOWLEDGE_CHUNK_OVERLAP_CHARS must be from 0 to KNOWLEDGE_CHUNK_SIZE_CHARS - 1",
             )
         if not 1 <= self.max_knowledge_query_top_k <= 100:
             raise ConfigValidationError("MAX_KNOWLEDGE_QUERY_TOP_K must be from 1 to 100")

@@ -111,7 +111,7 @@ def extract_text_tool_calls(content: str) -> tuple[str, list[ToolCall]]:
                     name=name.strip(),
                     arguments=serialized_arguments,
                 ),
-            )
+            ),
         )
         parsed_spans.append(match.span())
 

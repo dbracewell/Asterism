@@ -84,7 +84,7 @@ def make_chat_session():
 class TestSubAgentProfileAuthorization:
     @pytest.mark.asyncio
     async def test_sub_agent_cannot_execute_tools_outside_profile_allowlist(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         Parent allows: ['search', 'calculator', 'bash']
@@ -104,7 +104,7 @@ class TestSubAgentProfileAuthorization:
         )
 
         session = make_chat_session(
-            allowed_tools=["search", "calculator", "bash"]
+            allowed_tools=["search", "calculator", "bash"],
         )
 
         ctx = ToolContext(
@@ -126,7 +126,7 @@ class TestSubAgentProfileAuthorization:
                         content="",
                         tool_calls=[calc_call],
                         finish_reason="tool_calls",
-                    )
+                    ),
                 ],
                 [
                     LLMEvent(
@@ -136,9 +136,9 @@ class TestSubAgentProfileAuthorization:
                             "calculator is not authorized."
                         ),
                         finish_reason="stop",
-                    )
+                    ),
                 ],
-            ]
+            ],
         )
 
         with (
@@ -159,7 +159,7 @@ class TestSubAgentProfileAuthorization:
 
     @pytest.mark.asyncio
     async def test_sub_agent_uses_profile_tools_not_parent_tool_list(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """A specialist child keeps its tools after delegated authorization."""
         sub_agent_id = uuid.uuid4()
@@ -197,7 +197,7 @@ class TestSubAgentProfileAuthorization:
                 new=AsyncMock(return_value=sub_profile),
             ),
             patch.object(
-                Agent, "__init__", side_effect=capture_init, autospec=True
+                Agent, "__init__", side_effect=capture_init, autospec=True,
             ),
             patch.object(Agent, "run") as mock_run,
         ):
@@ -212,12 +212,12 @@ class TestSubAgentProfileAuthorization:
         assert created_agent.allowed_tools == ["web_fetch", "web_search"]
         assert created_agent.profile.tools == ["web_fetch", "web_search"]
         assert isinstance(
-            created_agent._approval_policy, AllowlistApprovalPolicy
+            created_agent._approval_policy, AllowlistApprovalPolicy,
         )
 
     @pytest.mark.asyncio
     async def test_sub_agent_allowed_tools_are_its_profile_allowlist(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """Parent permissions do not remove child profile capabilities."""
         sub_agent_id = uuid.uuid4()
@@ -258,14 +258,14 @@ class TestSubAgentProfileAuthorization:
                 new=AsyncMock(return_value=sub_profile),
             ),
             patch.object(
-                Agent, "__init__", side_effect=capture_init, autospec=True
+                Agent, "__init__", side_effect=capture_init, autospec=True,
             ),
         ):
             with patch.object(Agent, "run") as mock_run:
 
                 async def empty_gen(*args, **kwargs):
                     yield AgentEvent(
-                        type=AgentEventType.COMPLETE, content="Done"
+                        type=AgentEventType.COMPLETE, content="Done",
                     )
 
                 mock_run.side_effect = empty_gen
@@ -275,12 +275,12 @@ class TestSubAgentProfileAuthorization:
         assert created_agent.allowed_tools == ["browser", "calculator"]
         assert created_agent.profile.tools == ["browser", "calculator"]
         assert isinstance(
-            created_agent._approval_policy, AllowlistApprovalPolicy
+            created_agent._approval_policy, AllowlistApprovalPolicy,
         )
 
     @pytest.mark.asyncio
     async def test_sub_agent_with_empty_tools(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         A sub-agent with no assigned tools receives an empty allowlist.
@@ -322,14 +322,14 @@ class TestSubAgentProfileAuthorization:
                 new=AsyncMock(return_value=sub_profile),
             ),
             patch.object(
-                Agent, "__init__", side_effect=capture_init, autospec=True
+                Agent, "__init__", side_effect=capture_init, autospec=True,
             ),
         ):
             with patch.object(Agent, "run") as mock_run:
 
                 async def empty_gen(*args, **kwargs):
                     yield AgentEvent(
-                        type=AgentEventType.COMPLETE, content="Done"
+                        type=AgentEventType.COMPLETE, content="Done",
                     )
 
                 mock_run.side_effect = empty_gen

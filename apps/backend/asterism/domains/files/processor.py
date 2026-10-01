@@ -15,7 +15,18 @@ _TRUNCATION_MARKER = "\n… [content truncated]"
 
 
 class FileProcessor(Protocol):
-    async def ensure_processed(self, file: UserFileModel, session: AsyncSession) -> UserFileModel: ...
+    """
+    A file processor is responsible for ensuring that a persisted user file has been processed and its content is
+    available for use. The processor may perform operations such as converting the file to a different format,
+    extracting text content, or generating previews. The processor should handle any necessary error handling and
+    update the file's content status accordingly.
+    """
+
+    async def ensure_processed(
+        self,
+        file: UserFileModel,
+        session: AsyncSession,
+    ) -> UserFileModel: ...
 
 
 class MarkItDownFileProcessor:

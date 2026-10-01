@@ -79,7 +79,7 @@ class InteractiveApprovalPolicy:
     def __init__(
         self,
         on_pending: Callable[
-            [list[ToolCall], UserResponseQueue], Awaitable[None]
+            [list[ToolCall], UserResponseQueue], Awaitable[None],
         ],
     ) -> None:
         self._on_pending = on_pending

@@ -43,7 +43,7 @@ async def test_initialization_preserves_existing_database(tmp_path, monkeypatch)
     await initialize_database()
     with sqlite3.connect(database) as connection:
         assert connection.execute(
-            "SELECT value FROM preservation_canary"
+            "SELECT value FROM preservation_canary",
         ).fetchone() == ("kept",)
 
 

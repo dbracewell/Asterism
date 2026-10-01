@@ -48,7 +48,7 @@ def make_chat_session():
 
 
 def _make_agent_profile(
-    agent_id: uuid.UUID, name: str = "SubAgent"
+    agent_id: uuid.UUID, name: str = "SubAgent",
 ) -> AgentProfile:
     return AgentProfile(
         id=agent_id,
@@ -113,7 +113,7 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_sub_agent_forwards_events_to_event_sink(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """Verify sub_agent forwards DELTA, TOOL_CALL, and COMPLETE to sink."""
         root_id = uuid.uuid4()
@@ -188,7 +188,7 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_sub_agent_forwards_start_and_error_as_terminal_diagnostics(
-        self, test_user, make_chat_session, caplog
+        self, test_user, make_chat_session, caplog,
     ):
         root_id = uuid.uuid4()
         child_id = uuid.uuid4()
@@ -245,7 +245,7 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_parent_agent_event_stream_includes_sub_agent_events(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """Verify parent agent.run() yields SUB_AGENT events when child runs."""
         parent_id = uuid.uuid4()
@@ -271,16 +271,16 @@ class TestSubAgentStreaming:
                         content="",
                         tool_calls=[sub_call],
                         finish_reason="tool_calls",
-                    )
+                    ),
                 ],
                 [
                     LLMEvent(
                         type=LLMEventType.COMPLETE,
                         content="Parent synthesis of sub-agent answer.",
                         finish_reason="stop",
-                    )
+                    ),
                 ],
-            ]
+            ],
         )
 
         parent_agent = Agent(
@@ -316,13 +316,13 @@ class TestSubAgentStreaming:
             patch(
                 "asterism.domains.agent.service.get_user_agents",
                 new=AsyncMock(
-                    return_value=MagicMock(agents={child_id: child_profile})
+                    return_value=MagicMock(agents={child_id: child_profile}),
                 ),
             ),
             patch(
                 "asterism.domains.settings.service.get_app_settings",
                 new=AsyncMock(
-                    return_value=MagicMock(active_tools=["sub_agent"])
+                    return_value=MagicMock(active_tools=["sub_agent"]),
                 ),
             ),
             patch.object(
@@ -333,7 +333,7 @@ class TestSubAgentStreaming:
             patch.object(Agent, "run", new=conditional_agent_run),
         ):
             async for evt in parent_agent.run(
-                messages=[LLMMessage.user("Delegate to sub-agent")]
+                messages=[LLMMessage.user("Delegate to sub-agent")],
             ):
                 parent_events.append(evt)
 
@@ -363,7 +363,7 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_multi_level_sub_agent_depth_forwarding(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """Verify multi-level sub-agent call (depth 2) carries depth=2
         in envelope."""
@@ -410,7 +410,7 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_chat_orchestrator_forwards_sub_agent_events_to_queue(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """Verify ChatOrchestrator forwards SUB_AGENT events to
         message queue."""
@@ -485,7 +485,7 @@ class TestSubAgentStreaming:
         ]
         assert len(sub_agent_packets) == 1
         assert sub_agent_packets[0]["execution_id"] == str(
-            envelope.execution_id
+            envelope.execution_id,
         )
         assert sub_agent_packets[0]["sub_agent_id"] == str(sub_id)
         assert sub_agent_packets[0]["sub_agent_name"] == "SubWorker"

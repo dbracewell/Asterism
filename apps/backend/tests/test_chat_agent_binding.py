@@ -28,7 +28,7 @@ async def chat_agent_session(tmp_path):
                 UserModel(id="user-a"),
                 UserModel(id="user-b"),
                 ApplicationSettingsModel(key="active_tools", value=["sub_agent"]),
-            ]
+            ],
         )
         await session.commit()
         yield session
@@ -50,17 +50,17 @@ def profile(name: str, *, sub_agent: bool = False) -> PartialAgentProfile:
 @pytest.mark.asyncio
 async def test_chat_binds_default_or_explicit_owned_main_agent(chat_agent_session):
     default = await upsert_agent_profile(
-        "user-a", profile("Default"), chat_agent_session
+        "user-a", profile("Default"), chat_agent_session,
     )
     override = await upsert_agent_profile(
-        "user-a", profile("Override"), chat_agent_session
+        "user-a", profile("Override"), chat_agent_session,
     )
     await upsert_user_setting(
-        "user-a", "default_agent_id", str(default.id), chat_agent_session
+        "user-a", "default_agent_id", str(default.id), chat_agent_session,
     )
 
     default_chat = await create_chat(
-        "user-a", NewChatRequest(user_prompt="Default"), chat_agent_session
+        "user-a", NewChatRequest(user_prompt="Default"), chat_agent_session,
     )
     override_chat = await create_chat(
         "user-a",
@@ -72,10 +72,10 @@ async def test_chat_binds_default_or_explicit_owned_main_agent(chat_agent_sessio
     assert override_chat.info.agent_id == override.id
 
     await upsert_user_setting(
-        "user-a", "default_agent_id", str(override.id), chat_agent_session
+        "user-a", "default_agent_id", str(override.id), chat_agent_session,
     )
     persisted_default_chat = await get_one(
-        default_chat.info.id, "user-a", chat_agent_session
+        default_chat.info.id, "user-a", chat_agent_session,
     )
     assert persisted_default_chat.info.agent_id == default.id
 
@@ -87,11 +87,11 @@ async def test_chat_binds_default_or_explicit_owned_main_agent(chat_agent_sessio
 async def test_chat_rejects_sub_agents_and_other_users_agents(chat_agent_session):
     main = await upsert_agent_profile("user-a", profile("Main"), chat_agent_session)
     sub = await upsert_agent_profile(
-        "user-a", profile("Worker", sub_agent=True), chat_agent_session
+        "user-a", profile("Worker", sub_agent=True), chat_agent_session,
     )
     other = await upsert_agent_profile("user-b", profile("Other"), chat_agent_session)
     await upsert_user_setting(
-        "user-a", "default_agent_id", str(main.id), chat_agent_session
+        "user-a", "default_agent_id", str(main.id), chat_agent_session,
     )
 
     with pytest.raises(BadDataException, match="main agent"):
@@ -116,7 +116,7 @@ async def test_bulk_delete_is_atomic_and_user_scoped(chat_agent_session):
     await chat_agent_session.commit()
 
     deleted = await delete_chats(
-        "user-a", [owned[0].id, owned[1].id], chat_agent_session
+        "user-a", [owned[0].id, owned[1].id], chat_agent_session,
     )
     assert set(deleted.deleted_chat_ids) == {owned[0].id, owned[1].id}
     assert await chat_agent_session.get(ChatModel, owned[0].id) is None

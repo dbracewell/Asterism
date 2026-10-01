@@ -62,7 +62,7 @@ class Brave(WebsearchComponent[BraveSearchConfig]):
                             url=result["url"],
                             snippet=result.get("description"),
                             relevance_score=1 / index,
-                        )
+                        ),
                     )
 
                 await asyncio.sleep(1)

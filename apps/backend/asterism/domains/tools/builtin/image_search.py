@@ -39,22 +39,22 @@ async def image_search(
     except Exception as e:
         logger.error(
             f"Image search failed for provider={provider.name} "
-            f"query={ctx.args.query}: {str(e)}"
+            f"query={ctx.args.query}: {str(e)}",
         )
         return {"status": "error", "message": str(e)}
 
     try:
         search_results: list[SearchResult] = await image_search_component(
-            ctx.args
+            ctx.args,
         )
         logger.debug(
             f"provider={provider.name} query={ctx.args.query} "
-            f"results in {len(search_results)} results"
+            f"results in {len(search_results)} results",
         )
         return {r.url: r.title for r in search_results}
     except Exception as e:
         logger.error(
             f"Image search failed for provider={provider.name} "
-            f"query={ctx.args.query}: {str(e)}"
+            f"query={ctx.args.query}: {str(e)}",
         )
         return {"status": "error", "message": str(e)}

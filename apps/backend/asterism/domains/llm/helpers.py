@@ -86,7 +86,7 @@ def format_messages_for_model(
                 {
                     "role": "user",
                     "content": f"### SYSTEM OBSERVATIONS\n{combined_content}",
-                }
+                },
             )
             tool_buffer.clear()
 
@@ -136,7 +136,7 @@ def format_messages_for_model(
         last_message = formatted[-1]
         if last_message.role not in ("user", "system"):
             raise ValueError(
-                "Cannot set response format for a non system or user message"
+                "Cannot set response format for a non system or user message",
             )
         formatted = formatted[:-1]
         messages.append(
@@ -146,7 +146,7 @@ def format_messages_for_model(
                             Respond only in JSON. The output must strictly follow this structure:
                             {_to_structured_format(response_model)}
                             Do not include any preamble, thinking blocks, or markdown code fences."""),  # noqa: E501
-            )
+            ),
         )
 
     flush_tool_buffer()

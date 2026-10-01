@@ -10,14 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.domains.agent.models import AgentProfileModel
+from asterism.domains.extraction.captioning import CaptioningConfiguration, CaptioningError, CaptionMode
+from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
+from asterism.domains.extraction.runtime import start_file_ingestion_job
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
 
-from .assignments import AgentKnowledgeBaseAssignmentModel
-from .captioning import CaptioningConfiguration, CaptioningError, CaptionMode
 from .models import (
-    FileKnowledgeArtifactModel,
-    FileKnowledgeArtifactStatus,
+    AgentKnowledgeBaseAssignmentModel,
     KnowledgeBaseFileModel,
     KnowledgeBaseModel,
 )
@@ -82,7 +82,8 @@ def _default_processing_configuration() -> KnowledgeProcessingConfiguration:
 
 
 async def _load_processing_configuration(
-    *, session: AsyncSession
+    *,
+    session: AsyncSession,
 ) -> tuple[ApplicationSettingsModel | None, KnowledgeProcessingConfiguration]:
     """Read the versioned setting, falling back safely for missing or invalid values."""
     setting = await session.get(ApplicationSettingsModel, KNOWLEDGE_PROCESSING_SETTING_KEY)
@@ -97,7 +98,9 @@ async def _load_processing_configuration(
 
 
 def _profile_from_configuration(
-    configuration: KnowledgeProcessingConfiguration, *, updated_at: int
+    configuration: KnowledgeProcessingConfiguration,
+    *,
+    updated_at: int,
 ) -> KnowledgeProcessingProfile:
     return KnowledgeProcessingProfile(
         generation=configuration.generation,
@@ -146,7 +149,7 @@ async def _owned_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: As
         select(KnowledgeBaseModel).where(
             KnowledgeBaseModel.id == knowledge_base_id,
             KnowledgeBaseModel.user_id == user_id,
-        )
+        ),
     )
     if knowledge_base is None:
         # Do not reveal whether a base owned by another user exists.
@@ -154,7 +157,7 @@ async def _owned_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: As
     return knowledge_base
 
 
-async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncSession) -> FileKnowledgeArtifactModel:
+async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncSession) -> FileExtractionModel:
     """Create the one pending canonical artifact for a newly eligible file.
 
     A pending replacement is deliberately *not* current: retrieval can retain
@@ -162,20 +165,22 @@ async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncS
     """
     _, configuration = await _load_processing_configuration(session=session)
     existing = await session.scalar(
-        select(FileKnowledgeArtifactModel).where(
-            FileKnowledgeArtifactModel.file_id == file.id,
-            FileKnowledgeArtifactModel.processing_profile_generation == configuration.generation,
-        )
+        select(FileExtractionModel).where(
+            FileExtractionModel.file_id == file.id,
+            FileExtractionModel.processing_profile_generation == configuration.generation,
+        ),
     )
     if existing is not None:
         return existing
     generation = (
         await session.scalar(
-            select(func.max(FileKnowledgeArtifactModel.generation)).where(FileKnowledgeArtifactModel.file_id == file.id)
+            select(func.max(FileExtractionModel.generation)).where(
+                FileExtractionModel.file_id == file.id,
+            ),
         )
         or 0
     ) + 1
-    artifact = FileKnowledgeArtifactModel(
+    artifact = FileExtractionModel(
         user_id=file.user_id,
         file_id=file.id,
         generation=generation,
@@ -228,10 +233,9 @@ async def _transition_processing_configuration(
     files = list(await session.scalars(select(UserFileModel)))
     replacements = [await ensure_file_knowledge_artifact(file=file, session=session) for file in files]
     await session.commit()
-    from .runtime import knowledge_ingestion_jobs
 
     for file, artifact in zip(files, replacements, strict=True):
-        knowledge_ingestion_jobs.enqueue(user_id=file.user_id, file_id=file.id, artifact_id=artifact.id)
+        start_file_ingestion_job(user_id=file.user_id, file_id=file.id, artifact_id=artifact.id)
     return KnowledgeReprocessSummary(
         profile=_profile_from_configuration(candidate, updated_at=setting.updated_at),
         queued_file_count=len(replacements),
@@ -239,7 +243,9 @@ async def _transition_processing_configuration(
 
 
 async def update_processing_profile_and_reprocess(
-    *, payload: KnowledgeProcessingProfileUpdate, session: AsyncSession
+    *,
+    payload: KnowledgeProcessingProfileUpdate,
+    session: AsyncSession,
 ) -> KnowledgeReprocessSummary:
     """Apply a processing-policy edit through the one transition path."""
     _, current = await _load_processing_configuration(session=session)
@@ -250,7 +256,7 @@ async def update_processing_profile_and_reprocess(
                 "chunking_policy": payload.chunking_policy,
                 "embedding_model": payload.embedding_model,
                 "captioning_policy": payload.captioning_policy,
-            }
+            },
         ),
         session=session,
     )
@@ -275,7 +281,7 @@ async def ensure_captioning_selection_is_valid(*, session: AsyncSession) -> None
         ).validate(list(await session.scalars(select(LLMModel).join(LLMModel.provider))))
     except CaptioningError as error:
         raise BadDataException(
-            "Cannot remove or make ineligible the provider model selected for image captioning"
+            "Cannot remove or make ineligible the provider model selected for image captioning",
         ) from error
 
 
@@ -300,8 +306,8 @@ async def update_captioning_configuration(
             "captioning": KnowledgeProcessingCaptioningConfiguration(
                 mode=selected.mode.value,
                 provider_model_id=selected.provider_model_id,
-            )
-        }
+            ),
+        },
     )
     transition = await _transition_processing_configuration(
         candidate=updated_configuration,
@@ -364,7 +370,7 @@ async def list_knowledge_bases(
 
 async def get_knowledge_base(*, user_id: str, knowledge_base_id: uuid.UUID, session: AsyncSession) -> KnowledgeBase:
     return KnowledgeBase.model_validate(
-        await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
+        await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session),
     )
 
 
@@ -400,19 +406,23 @@ async def delete_knowledge_base(*, user_id: str, knowledge_base_id: uuid.UUID, s
 async def _next_file_position(*, knowledge_base_id: uuid.UUID, session: AsyncSession) -> int:
     highest = await session.scalar(
         select(func.max(KnowledgeBaseFileModel.position)).where(
-            KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id
-        )
+            KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
+        ),
     )
     return (highest or 0) + 1
 
 
 async def add_knowledge_base_file(
-    *, user_id: str, knowledge_base_id: uuid.UUID, payload: KnowledgeBaseFileCreate, session: AsyncSession
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    payload: KnowledgeBaseFileCreate,
+    session: AsyncSession,
 ) -> KnowledgeBaseFile:
     """Attach an owned library file without creating or queuing any artifact."""
     await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
     file = await session.scalar(
-        select(UserFileModel.id).where(UserFileModel.id == payload.file_id, UserFileModel.user_id == user_id)
+        select(UserFileModel.id).where(UserFileModel.id == payload.file_id, UserFileModel.user_id == user_id),
     )
     if file is None:
         raise NotFoundException("File not found")
@@ -431,7 +441,12 @@ async def add_knowledge_base_file(
 
 
 async def list_knowledge_base_files(
-    *, user_id: str, knowledge_base_id: uuid.UUID, session: AsyncSession, page: int, page_size: int
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    session: AsyncSession,
+    page: int,
+    page_size: int,
 ) -> KnowledgeBaseFileList:
     await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
     statement = select(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id)
@@ -439,7 +454,7 @@ async def list_knowledge_base_files(
     records = await session.scalars(
         statement.order_by(KnowledgeBaseFileModel.position, KnowledgeBaseFileModel.id)
         .offset((page - 1) * page_size)
-        .limit(page_size)
+        .limit(page_size),
     )
     return KnowledgeBaseFileList(
         files=[KnowledgeBaseFile.model_validate(record) for record in records],
@@ -450,13 +465,18 @@ async def list_knowledge_base_files(
 
 
 async def remove_knowledge_base_file(
-    *, user_id: str, knowledge_base_id: uuid.UUID, membership_id: uuid.UUID, session: AsyncSession
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    membership_id: uuid.UUID,
+    session: AsyncSession,
 ) -> KnowledgeBaseFile:
     await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
     membership = await session.scalar(
         select(KnowledgeBaseFileModel).where(
-            KnowledgeBaseFileModel.id == membership_id, KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id
-        )
+            KnowledgeBaseFileModel.id == membership_id,
+            KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
+        ),
     )
     if membership is None:
         raise NotFoundException("Knowledge base file membership not found")
@@ -467,13 +487,17 @@ async def remove_knowledge_base_file(
 
 
 async def reorder_knowledge_base_files(
-    *, user_id: str, knowledge_base_id: uuid.UUID, payload: KnowledgeBaseFileReorder, session: AsyncSession
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    payload: KnowledgeBaseFileReorder,
+    session: AsyncSession,
 ) -> KnowledgeBaseFileList:
     await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
     memberships = list(
         await session.scalars(
-            select(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id)
-        )
+            select(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id),
+        ),
     )
     if len(payload.membership_ids) != len(memberships) or set(payload.membership_ids) != {
         item.id for item in memberships
@@ -496,10 +520,13 @@ async def reorder_knowledge_base_files(
 
 
 async def get_agent_knowledge_base_assignments(
-    *, user_id: str, agent_id: uuid.UUID, session: AsyncSession
+    *,
+    user_id: str,
+    agent_id: uuid.UUID,
+    session: AsyncSession,
 ) -> KnowledgeBaseAssignmentList:
     agent = await session.scalar(
-        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id)
+        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id),
     )
     if agent is None:
         raise NotFoundException("Agent not found")
@@ -509,7 +536,7 @@ async def get_agent_knowledge_base_assignments(
             AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
             AgentKnowledgeBaseAssignmentModel.user_id == user_id,
         )
-        .order_by(AgentKnowledgeBaseAssignmentModel.position)
+        .order_by(AgentKnowledgeBaseAssignmentModel.position),
     )
     return KnowledgeBaseAssignmentList(knowledge_base_ids=list(assignments))
 
@@ -522,7 +549,7 @@ async def replace_agent_knowledge_base_assignments(
     session: AsyncSession,
 ) -> KnowledgeBaseAssignmentList:
     agent = await session.scalar(
-        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id)
+        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id),
     )
     if agent is None:
         raise NotFoundException("Agent not found")
@@ -535,8 +562,8 @@ async def replace_agent_knowledge_base_assignments(
                 select(KnowledgeBaseModel.id).where(
                     KnowledgeBaseModel.user_id == user_id,
                     KnowledgeBaseModel.id.in_(base_ids),
-                )
-            )
+                ),
+            ),
         )
         if owned_ids != set(base_ids):
             raise NotFoundException("Knowledge base not found")
@@ -544,17 +571,17 @@ async def replace_agent_knowledge_base_assignments(
             await session.scalars(
                 select(KnowledgeBaseFileModel.knowledge_base_id)
                 .join(
-                    FileKnowledgeArtifactModel,
-                    FileKnowledgeArtifactModel.file_id == KnowledgeBaseFileModel.file_id,
+                    FileExtractionModel,
+                    FileExtractionModel.file_id == KnowledgeBaseFileModel.file_id,
                 )
                 .where(
                     KnowledgeBaseFileModel.knowledge_base_id.in_(base_ids),
-                    FileKnowledgeArtifactModel.user_id == user_id,
-                    FileKnowledgeArtifactModel.is_current.is_(True),
-                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
+                    FileExtractionModel.user_id == user_id,
+                    FileExtractionModel.is_current.is_(True),
+                    FileExtractionModel.status == FileKnowledgeArtifactStatus.READY,
                 )
-                .distinct()
-            )
+                .distinct(),
+            ),
         )
         if ready_ids != set(base_ids):
             raise BadDataException("Knowledge bases must contain a ready document before assignment")
@@ -562,15 +589,18 @@ async def replace_agent_knowledge_base_assignments(
         delete(AgentKnowledgeBaseAssignmentModel).where(
             AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
             AgentKnowledgeBaseAssignmentModel.user_id == user_id,
-        )
+        ),
     )
     session.add_all(
         [
             AgentKnowledgeBaseAssignmentModel(
-                user_id=user_id, agent_id=agent_id, knowledge_base_id=base_id, position=position
+                user_id=user_id,
+                agent_id=agent_id,
+                knowledge_base_id=base_id,
+                position=position,
             )
             for position, base_id in enumerate(base_ids)
-        ]
+        ],
     )
     await session.commit()
     return KnowledgeBaseAssignmentList(knowledge_base_ids=base_ids)

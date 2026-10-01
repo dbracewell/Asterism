@@ -25,7 +25,7 @@ class UserResponseQueue:
                     ToolUseAuthorization(
                         tool=tc,
                         accept=True,
-                    )
+                    ),
                 )
 
     @property
@@ -45,7 +45,7 @@ class UserResponseQueue:
             ToolUseAuthorization(
                 tool=tool_call,
                 accept=accept,
-            )
+            ),
         )
 
     async def wait(self) -> AsyncGenerator[ToolUseAuthorization, None]:

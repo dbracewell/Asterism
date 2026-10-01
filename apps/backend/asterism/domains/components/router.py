@@ -34,6 +34,6 @@ def get_components_by_type(
                 type=component_type,
                 name=c.name,
                 parameters=extended_schema,
-            )
+            ),
         )
     return ComponentListResponse(items=items)

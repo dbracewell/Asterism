@@ -2,9 +2,9 @@
 import pytest
 import pytest_asyncio
 from asterism.db.base import Base
-from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.chat.models import ChatModel, MessageModel
 from asterism.domains.chat.schemas import MessageStatus, SearchMatchSource, SearchResultKind
+from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.chat.service import search
 from asterism.domains.folders.models import FolderModel
 from asterism.domains.folders.service import list_folder_chats
@@ -46,7 +46,7 @@ async def test_search_finds_titles_content_and_containing_folders(search_session
             role="user",
             content="Explain the ocean circulation patterns",
             status=MessageStatus.COMPLETED,
-        )
+        ),
     )
     await search_session.commit()
 
@@ -74,7 +74,7 @@ async def test_folder_chat_list_is_paginated_and_user_scoped(search_session):
             ChatModel(user_id="user-a", title="One", folder_id=folder.id),
             ChatModel(user_id="user-a", title="Two", folder_id=folder.id),
             ChatModel(user_id="user-b", title="Hidden", folder_id=other_folder.id),
-        ]
+        ],
     )
     await search_session.commit()
 

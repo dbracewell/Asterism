@@ -45,7 +45,7 @@ def _discovery(handler):
             timeout=httpx.Timeout(1),
             follow_redirects=False,
             event_hooks={"response": [_limit_response_size]},
-        )
+        ),
     )
 
 
@@ -61,7 +61,7 @@ async def test_openai_uses_canonical_origin_and_versioned_catalog():
                     {"id": "gpt-4o-2024-11-20"},
                     {"id": "o3-mini"},
                     {"id": "future-x"},
-                ]
+                ],
             },
         )
 
@@ -69,7 +69,7 @@ async def test_openai_uses_canonical_origin_and_versioned_catalog():
         _request(
             provider_type=ProviderType.OPENAI,
             base_url="https://attacker.example/redirect",
-        )
+        ),
     )
 
     assert response.catalog_version == OPENAI_MODEL_CATALOG_VERSION
@@ -145,8 +145,8 @@ async def test_conflicting_generic_metadata_returns_warnings_and_unknown_values(
                         "max_model_len": 8192,
                         "supports_vision": False,
                         "capabilities": {"vision": True},
-                    }
-                ]
+                    },
+                ],
             },
         )
 

@@ -68,7 +68,7 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
     )
 
     assert [file.filename for file in uploaded.files] == [
-        "report.txt", "report(2).txt", "photo.png"
+        "report.txt", "report(2).txt", "photo.png",
     ]
     assert [file.kind for file in uploaded.files] == [
         FileKind.TEXT, FileKind.TEXT, FileKind.IMAGE,
@@ -77,8 +77,8 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
     assert uploaded.files[2].mime_type == "image/png"
     artifacts = list(
         await file_session.scalars(
-            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.user_id == "user-a")
-        )
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.user_id == "user-a"),
+        ),
     )
     assert {(artifact.file_id, artifact.status, artifact.is_current) for artifact in artifacts} == {
         (file.id, FileKnowledgeArtifactStatus.PENDING, False) for file in uploaded.files
@@ -90,7 +90,7 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
 @pytest.mark.asyncio
 async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_session):
     first = await upload_files(
-        user_id="user-a", uploads=[_upload("report.txt", b"same bytes")], session=file_session
+        user_id="user-a", uploads=[_upload("report.txt", b"same bytes")], session=file_session,
     )
     repeated = await upload_files(
         user_id="user-a",
@@ -98,11 +98,11 @@ async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_sessi
         session=file_session,
     )
     other_user = await upload_files(
-        user_id="user-b", uploads=[_upload("report.txt", b"same bytes")], session=file_session
+        user_id="user-b", uploads=[_upload("report.txt", b"same bytes")], session=file_session,
     )
 
     user_files = list(
-        await file_session.scalars(select(UserFileModel).where(UserFileModel.user_id == "user-a"))
+        await file_session.scalars(select(UserFileModel).where(UserFileModel.user_id == "user-a")),
     )
     assert [file.id for file in repeated.files] == [first.files[0].id]
     assert [file.filename for file in user_files] == ["report.txt"]
@@ -114,13 +114,13 @@ async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_sessi
 async def test_upload_rejects_unsafe_extensions_and_size(file_session, monkeypatch):
     with pytest.raises(BadDataException, match="not allowed"):
         await upload_files(
-            user_id="user-a", uploads=[_upload("bad.exe", b"x")], session=file_session
+            user_id="user-a", uploads=[_upload("bad.exe", b"x")], session=file_session,
         )
 
     monkeypatch.setattr(config, "max_upload_file_size_bytes", 3)
     with pytest.raises(BadDataException, match="exceeds"):
         await upload_files(
-            user_id="user-a", uploads=[_upload("large.txt", b"four")], session=file_session
+            user_id="user-a", uploads=[_upload("large.txt", b"four")], session=file_session,
         )
     assert not (config.files_root / "user-a" / "large.txt").exists()
 
@@ -128,7 +128,7 @@ async def test_upload_rejects_unsafe_extensions_and_size(file_session, monkeypat
 @pytest.mark.asyncio
 async def test_delete_is_user_scoped_and_download_remains_available(file_session):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("keep.txt", b"content")], session=file_session
+        user_id="user-a", uploads=[_upload("keep.txt", b"content")], session=file_session,
     )
     filename = uploaded.files[0].filename
 
@@ -169,11 +169,11 @@ async def test_delete_file_cancels_artifacts_and_removes_memberships_vectors_and
     monkeypatch.setattr("asterism.domains.knowledge.runtime.vector_store", vectors)
 
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("knowledge.txt", b"private knowledge")], session=file_session
+        user_id="user-a", uploads=[_upload("knowledge.txt", b"private knowledge")], session=file_session,
     )
     file = uploaded.files[0]
     artifact = await file_session.scalar(
-        select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id)
+        select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id),
     )
     assert artifact is not None
     base = KnowledgeBaseModel(user_id="user-a", name="References")
@@ -188,7 +188,7 @@ async def test_delete_file_cancels_artifacts_and_removes_memberships_vectors_and
     assert vectors.deleted == [("user-a", str(file.id))]
     assert (
         await file_session.scalar(
-            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id)
+            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id),
         )
         is None
     )
@@ -217,7 +217,7 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
     jobs = FakeJobs()
     monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", jobs)
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("retry.txt", b"retry me")], session=file_session
+        user_id="user-a", uploads=[_upload("retry.txt", b"retry me")], session=file_session,
     )
     file = uploaded.files[0]
     status = await get_file_knowledge_status(user_id="user-a", filename=file.filename, session=file_session)
@@ -234,7 +234,7 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
 @pytest.mark.asyncio
 async def test_processing_reads_text_caches_and_invalidates(file_session):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("note.txt", b"hello\nworld")], session=file_session
+        user_id="user-a", uploads=[_upload("note.txt", b"hello\nworld")], session=file_session,
     )
     file = await file_session.get(UserFileModel, uploaded.files[0].id)
     assert file is not None
@@ -310,10 +310,10 @@ async def test_processing_converts_a_spreadsheet_document(file_session):
 
 @pytest.mark.asyncio
 async def test_processing_truncates_content_and_contains_converter_failures(
-    file_session, monkeypatch
+    file_session, monkeypatch,
 ):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("note.txt", b"abcdef")], session=file_session
+        user_id="user-a", uploads=[_upload("note.txt", b"abcdef")], session=file_session,
     )
     monkeypatch.setattr(config, "max_converted_chars", 4)
     file = await file_session.get(UserFileModel, uploaded.files[0].id)
@@ -322,7 +322,7 @@ async def test_processing_truncates_content_and_contains_converter_failures(
     assert processed.content_cache == "abcd\n… [content truncated]"
 
     document = await upload_files(
-        user_id="user-a", uploads=[_upload("broken.pdf", b"not really a PDF")], session=file_session
+        user_id="user-a", uploads=[_upload("broken.pdf", b"not really a PDF")], session=file_session,
     )
 
     async def timeout(_, __):
@@ -339,7 +339,7 @@ async def test_processing_truncates_content_and_contains_converter_failures(
 @pytest.mark.asyncio
 async def test_processing_handles_a_missing_file(file_session):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("missing.txt", b"content")], session=file_session
+        user_id="user-a", uploads=[_upload("missing.txt", b"content")], session=file_session,
     )
     file = await file_session.get(UserFileModel, uploaded.files[0].id)
     assert file is not None

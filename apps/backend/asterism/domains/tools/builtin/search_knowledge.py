@@ -5,16 +5,14 @@ from sqlalchemy import select
 
 from asterism.core import config
 from asterism.db.database import get_async_db_session
-from asterism.domains.tools.registry import ToolContext, tool_registry
-
-from .assignments import AgentKnowledgeBaseAssignmentModel
-from .models import (
-    FileKnowledgeArtifactModel,
-    FileKnowledgeArtifactStatus,
+from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
+from asterism.domains.extraction.runtime import embedding_provider, vector_store
+from asterism.domains.knowledge.models import (
+    AgentKnowledgeBaseAssignmentModel,
     KnowledgeBaseFileModel,
     KnowledgeBaseModel,
 )
-from .runtime import embedding_provider, vector_store
+from asterism.domains.tools.registry import ToolContext, tool_registry
 
 
 class SearchKnowledgeArgs(BaseModel):
@@ -45,8 +43,8 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
                     AgentKnowledgeBaseAssignmentModel.user_id == ctx.user.id,
                     AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
                 )
-                .order_by(AgentKnowledgeBaseAssignmentModel.position)
-            )
+                .order_by(AgentKnowledgeBaseAssignmentModel.position),
+            ),
         )
         if not base_ids:
             return {"results": [], "message": "No assigned knowledge bases are available."}
@@ -57,8 +55,8 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
                 .where(
                     KnowledgeBaseFileModel.knowledge_base_id.in_(base_ids),
                     KnowledgeBaseModel.user_id == ctx.user.id,
-                )
-            )
+                ),
+            ),
         )
         # Resolve authorization before querying the vector store.  A file that
         # belongs to more than one assigned base has one canonical vector but
@@ -78,12 +76,12 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
         ready_artifacts = {
             (str(artifact.file_id), artifact.generation): artifact
             for artifact in await db.scalars(
-                select(FileKnowledgeArtifactModel).where(
-                    FileKnowledgeArtifactModel.user_id == ctx.user.id,
-                    FileKnowledgeArtifactModel.file_id.in_([membership.file_id for membership in memberships]),
-                    FileKnowledgeArtifactModel.is_current.is_(True),
-                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
-                )
+                select(FileExtractionModel).where(
+                    FileExtractionModel.user_id == ctx.user.id,
+                    FileExtractionModel.file_id.in_([membership.file_id for membership in memberships]),
+                    FileExtractionModel.is_current.is_(True),
+                    FileExtractionModel.status == FileKnowledgeArtifactStatus.READY,
+                ),
             )
         }
     remaining_bytes = config.max_knowledge_result_bytes
@@ -104,6 +102,6 @@ async def search_knowledge(ctx: ToolContext[SearchKnowledgeArgs]) -> dict[str, o
                 "score": match.score,
                 "match_kind": match_kind,
                 "excerpt": excerpt,
-            }
+            },
         )
     return {"results": results, "count": len(results)}

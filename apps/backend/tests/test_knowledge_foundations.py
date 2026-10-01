@@ -22,7 +22,7 @@ async def test_lancedb_filters_by_owner_and_allowed_file_and_deletes(tmp_path: P
             VectorChunk("one", "user-a", "file-a", 1, 0, "private", [1.0, 0.0]),
             VectorChunk("two", "user-a", "file-b", 1, 0, "other file", [0.9, 0.1]),
             VectorChunk("three", "user-b", "file-a", 1, 0, "other user", [1.0, 0.0]),
-        ]
+        ],
     )
 
     results = await store.search(
@@ -119,14 +119,14 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     status=FileKnowledgeArtifactStatus.PROCESSING,
                     is_current=False,
                 ),
-            ]
+            ],
         )
         await session.commit()
         artifact = await session.scalar(
             select(FileKnowledgeArtifactModel).where(
                 FileKnowledgeArtifactModel.file_id == user_file.id,
                 FileKnowledgeArtifactModel.generation == 1,
-            )
+            ),
         )
         assert artifact is not None
         assert FileKnowledgeArtifact.model_validate(artifact).caption.model_dump() == {

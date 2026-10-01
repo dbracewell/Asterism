@@ -31,10 +31,10 @@ def verify_file(
     if actual_size_bytes != expected_size_bytes:
         if error_provider:
             raise error_provider(
-                f"File size mismatch for {path}: expected {expected_size_bytes} bytes, got {actual_size_bytes} bytes"
+                f"File size mismatch for {path}: expected {expected_size_bytes} bytes, got {actual_size_bytes} bytes",
             )
         raise ValueError(
-            f"File size mismatch for {path}: expected {expected_size_bytes} bytes, got {actual_size_bytes} bytes"
+            f"File size mismatch for {path}: expected {expected_size_bytes} bytes, got {actual_size_bytes} bytes",
         )
     actual_sha256 = sha256_file(path)
     if actual_sha256.lower() != expected_sha256.lower():

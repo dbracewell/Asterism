@@ -7,7 +7,6 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, noload, selectinload
 
-import asterism.domains.agent.service as agent_service
 from asterism.common.log import get_logger
 from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, NotFoundException
@@ -60,7 +59,7 @@ async def get_user_settings(
     user_id: str,
     session: AsyncSession | None = None,
 ) -> UserSettings:
-
+    import asterism.domains.agent.service as agent_service
     # cached = settings_cache.get_user_settings(user_id)
     # if cached:
     #     return cached
@@ -122,7 +121,7 @@ async def bulk_upsert_user_settings(
                             "user_id": user_id,
                             "value": value,
                             "key": key,
-                        }
+                        },
                     )
                     .on_conflict_do_update(
                         index_elements=["user_id", "key"],
@@ -161,7 +160,7 @@ async def upsert_user_setting(
                     "user_id": user_id,
                     "value": value,
                     "key": key,
-                }
+                },
             )
             .on_conflict_do_update(
                 index_elements=["user_id", "key"],
@@ -250,7 +249,7 @@ async def get_provider_settings(
         draft_model_id = await session.scalar(
             select(ApplicationSettingsModel.value).where(
                 ApplicationSettingsModel.key == "draft_model_id",
-            )
+            ),
         )
 
         draft_model = None
@@ -261,7 +260,7 @@ async def get_provider_settings(
                 parsed_draft_model_id = None
             draft_row = (
                 await session.scalar(
-                    select(LLMModel).where(LLMModel.id == parsed_draft_model_id).options(joinedload(LLMModel.provider))
+                    select(LLMModel).where(LLMModel.id == parsed_draft_model_id).options(joinedload(LLMModel.provider)),
                 )
                 if parsed_draft_model_id is not None
                 else None
@@ -335,7 +334,7 @@ async def update_provider_settings(
                         name=provider.name,
                         base_url=provider.base_url,
                         api_key=_provider_api_key(provider),
-                    )
+                    ),
                 )
             else:
                 existing.provider_type = provider.provider_type
@@ -347,7 +346,7 @@ async def update_provider_settings(
         # cascade-owned models).  The selected captioner is part of the global
         # processing policy, so reject that edit rather than leaving a stored
         # policy pointing at a missing or ineligible model.
-        from asterism.domains.knowledge.service import ensure_captioning_selection_is_valid
+        from asterism.domains.knowledge_base.service import ensure_captioning_selection_is_valid
 
         await ensure_captioning_selection_is_valid(session=session)
 
@@ -356,7 +355,7 @@ async def update_provider_settings(
                 select(LLMModel).where(
                     LLMModel.id == draft_model_id,
                     LLMModel.is_active,
-                )
+                ),
             )
             if draft_model is None:
                 raise BadDataException("draft_model_id must reference an active model")
@@ -366,7 +365,7 @@ async def update_provider_settings(
                 {
                     "key": "draft_model_id",
                     "value": str(draft_model_id) if draft_model_id else None,
-                }
+                },
             )
             .on_conflict_do_update(
                 index_elements=["key"],
@@ -405,7 +404,7 @@ async def get_provider_models(
                 select(LLMModel).where(
                     LLMModel.id == cursor,
                     LLMModel.provider_id == provider_id,
-                )
+                ),
             )
             if cursor_model is None:
                 raise BadDataException("cursor must reference a model in this provider")
@@ -414,15 +413,15 @@ async def get_provider_models(
                 or_(
                     normalized_name > cursor_name,
                     and_(normalized_name == cursor_name, LLMModel.id > cursor),
-                )
+                ),
             )
 
         rows = list(
             (
                 await session.scalars(
-                    select(LLMModel).where(*filters).order_by(normalized_name, LLMModel.id).limit(limit + 1)
+                    select(LLMModel).where(*filters).order_by(normalized_name, LLMModel.id).limit(limit + 1),
                 )
-            ).all()
+            ).all(),
         )
         page_models = rows[:limit]
         total = await session.scalar(select(func.count(LLMModel.id)).where(*base_filters))
@@ -444,7 +443,7 @@ async def update_provider_model(
             select(LLMModel).where(
                 LLMModel.id == model_id,
                 LLMModel.provider_id == provider_id,
-            )
+            ),
         )
         if model is None:
             raise NotFoundException(f"Model id {model_id} not found in provider")
@@ -456,18 +455,18 @@ async def update_provider_model(
         model.vision_source = update.vision_source
         await session.flush()
 
-        from asterism.domains.knowledge.service import ensure_captioning_selection_is_valid
+        from asterism.domains.knowledge_base.service import ensure_captioning_selection_is_valid
 
         await ensure_captioning_selection_is_valid(session=session)
 
         draft_model_id = await session.scalar(
             select(ApplicationSettingsModel.value).where(
                 ApplicationSettingsModel.key == "draft_model_id",
-            )
+            ),
         )
         if not model.is_active and str(model.id) == str(draft_model_id):
             replacement = await session.scalar(
-                select(LLMModel.id).where(LLMModel.is_active).order_by(func.lower(LLMModel.name), LLMModel.id).limit(1)
+                select(LLMModel.id).where(LLMModel.is_active).order_by(func.lower(LLMModel.name), LLMModel.id).limit(1),
             )
             await session.execute(
                 insert(ApplicationSettingsModel)
@@ -475,7 +474,7 @@ async def update_provider_model(
                 .on_conflict_do_update(
                     index_elements=["key"],
                     set_={"value": str(replacement) if replacement else None},
-                )
+                ),
             )
         await session.commit()
         result = Llm.model_validate(model)
@@ -490,7 +489,7 @@ async def get_provider_for_discovery(
 ) -> Provider:
     async with get_async_db_session(session) as session:
         provider = await session.scalar(
-            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models))
+            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models)),
         )
         if provider is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
@@ -504,13 +503,13 @@ async def replace_provider_models(
 ) -> ProviderSummary:
     async with get_async_db_session(session) as session:
         provider = await session.scalar(
-            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models))
+            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models)),
         )
         if provider is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
         provider.models = _merge_models(models, provider.models)
 
-        from asterism.domains.knowledge.service import ensure_captioning_selection_is_valid
+        from asterism.domains.knowledge_base.service import ensure_captioning_selection_is_valid
 
         await ensure_captioning_selection_is_valid(session=session)
         await session.commit()
@@ -538,13 +537,13 @@ async def get_captioning_models(
                                 ModelCapabilitySource.CATALOG,
                                 ModelCapabilitySource.PROVIDER,
                                 ModelCapabilitySource.MANUAL,
-                            ]
+                            ],
                         ),
                     )
                     .options(joinedload(LLMModel.provider))
-                    .order_by(func.lower(LLMModel.name), LLMModel.id)
+                    .order_by(func.lower(LLMModel.name), LLMModel.id),
                 )
-            ).all()
+            ).all(),
         )
         return [
             LlmDisplayInfo(
@@ -641,7 +640,7 @@ async def upsert_app_setting(
                 {
                     "value": value,
                     "key": key,
-                }
+                },
             )
             .on_conflict_do_update(
                 index_elements=["key"],
@@ -697,7 +696,7 @@ async def bulk_update_app_setting(
                     {
                         "value": value,
                         "key": key,
-                    }
+                    },
                 )
                 .on_conflict_do_update(
                     index_elements=["key"],
@@ -780,7 +779,7 @@ async def get_user_models(
                     supports_vision=m.supports_vision,
                     context_window_source=m.context_window_source,
                     vision_source=m.vision_source,
-                )
+                ),
             )
         return models
 

@@ -96,7 +96,7 @@ Think step-by-step, but you MUST output the final summary in the requested JSON 
                         id=doc_id,
                         content=summary.summary,
                         relevance=summary.relevance,
-                    )
+                    ),
                 )
         results.sort(key=lambda x: x.relevance, reverse=True)
         return results[: min(top_k, len(results))]
@@ -202,7 +202,7 @@ class BM25Retriever(PassageRetriever):
                         id=doc_id,
                         content=chunk_text,
                         relevance=float(score),
-                    )
+                    ),
                 )
 
         retrieval_results.sort(key=lambda x: x.relevance, reverse=True)
@@ -257,7 +257,7 @@ class HeadingRetriever(PassageRetriever):
                         id=doc_id,
                         content=(f"{'#' * header_level} {header_text}\n{clean_lead}"),
                         relevance=score / 100,
-                    )
+                    ),
                 )
                 score += 1
 
@@ -297,7 +297,7 @@ class TextRankRetriever(PassageRetriever):
                         id=doc_id,
                         content=" ".join(sentences),
                         relevance=1.0,
-                    )
+                    ),
                 )
                 continue
 
@@ -327,7 +327,7 @@ class TextRankRetriever(PassageRetriever):
                     id=doc_id,
                     content=" ".join(x[2] for x in top_sentences),
                     relevance=total_score,
-                )
+                ),
             )
 
         retrieval_results.sort(key=lambda x: x.relevance, reverse=True)
@@ -349,8 +349,8 @@ class IntentBasedRetriever(PassageRetriever):
     SPECIFIC_FACT: The user is asking for a precise detail or answer.
     AMBIGUOUS: The query is too vague to determine a specific direction.
     Query: {self.ctx.user_message}""",  # noqa: E501
-                )
-            ]
+                ),
+            ],
         )
 
     async def _get_retriever(self) -> PassageRetriever:

@@ -81,10 +81,10 @@ def test_extracts_multiple_textual_tool_calls_from_provider_output():
     assert clean_content == ""
     assert [call.function.name for call in calls] == ["weather", "web_search"]
     assert json.loads(calls[0].function.arguments) == {
-        "location": "Dallas, Texas"
+        "location": "Dallas, Texas",
     }
     assert json.loads(calls[1].function.arguments) == {
-        "query": "current Dallas weather"
+        "query": "current Dallas weather",
     }
     assert calls[0].id != calls[1].id
 
@@ -103,7 +103,7 @@ def test_preserves_surrounding_text_and_string_arguments():
     assert len(calls) == 1
     assert calls[0].function.name == "web_search"
     assert json.loads(calls[0].function.arguments) == {
-        "query": "Dallas weather"
+        "query": "Dallas weather",
     }
 
 

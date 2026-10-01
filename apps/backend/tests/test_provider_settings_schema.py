@@ -149,7 +149,7 @@ async def test_provider_capabilities_round_trip_and_merge(tmp_path):
                 supports_vision=True,
                 context_window_source=ModelCapabilitySource.CATALOG,
                 vision_source=ModelCapabilitySource.CATALOG,
-            )
+            ),
         ],
     )
 
@@ -227,7 +227,7 @@ async def test_focused_provider_and_tool_settings_preserve_owned_values(tmp_path
                 provider_id=provider_id,
                 name="local-model",
                 is_active=True,
-            )
+            ),
         ],
     )
 
@@ -246,7 +246,7 @@ async def test_focused_provider_and_tool_settings_preserve_owned_values(tmp_path
                     key="image_search_provider",
                     value={"name": "Tavily", "parameters": {"api_key": "secret"}},
                 ),
-            ]
+            ],
         )
         await session.commit()
 
@@ -261,7 +261,7 @@ async def test_focused_provider_and_tool_settings_preserve_owned_values(tmp_path
                 api_key="secret",
                 model_count=1,
                 active_model_count=1,
-            )
+            ),
         ]
         assert provider_settings.draft_model is not None
         assert provider_settings.draft_model.provider_id == provider_id
@@ -317,7 +317,7 @@ async def test_focused_settings_writes_return_the_persisted_resources(tmp_path):
                 name="Local",
                 base_url="http://localhost:8080/v1",
                 api_key="secret",
-            )
+            ),
         ],
         draft_model_id=None,
     )
@@ -378,7 +378,7 @@ async def test_removing_a_provider_clears_its_draft_model(tmp_path):
                 provider_id=provider_id,
                 name="local-model",
                 is_active=True,
-            )
+            ),
         ],
     )
     sessions = async_sessionmaker(engine, expire_on_commit=False)
@@ -422,7 +422,7 @@ async def test_removing_the_selected_captioning_provider_is_rejected(tmp_path):
                 is_active=True,
                 supports_vision=True,
                 vision_source=ModelCapabilitySource.MANUAL,
-            )
+            ),
         ],
     )
     sessions = async_sessionmaker(engine, expire_on_commit=False)
@@ -464,14 +464,14 @@ async def test_initialization_creates_current_schema_and_is_repeatable(tmp_path,
         }
         search_tables = {
             row[0] for row in connection.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('chat_search', 'folder_search')"
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('chat_search', 'folder_search')",
             )
         }
         migration_table = connection.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'asterism_schema_migrations'"
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'asterism_schema_migrations'",
         ).fetchone()
         stored_tools = connection.execute(
-            "SELECT value FROM app_settings WHERE key = 'active_tools'"
+            "SELECT value FROM app_settings WHERE key = 'active_tools'",
         ).fetchone()
         with pytest.raises(sqlite3.IntegrityError):
             connection.execute(

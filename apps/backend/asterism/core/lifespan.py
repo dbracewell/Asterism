@@ -8,7 +8,7 @@ from asterism.common.package_walker import load_decorators
 from asterism.core import config
 from asterism.db.database import db_session_manager
 from asterism.domains.chat.jobs import chat_jobs
-from asterism.domains.knowledge.runtime import (
+from asterism.domains.knowledge_base.runtime import (
     initialize_knowledge_runtime,
     shutdown_knowledge_runtime,
 )

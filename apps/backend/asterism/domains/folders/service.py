@@ -103,8 +103,8 @@ async def list_folder_chats(
                 .where(*where)
                 .order_by(ChatModel.updated_at.desc())
                 .offset((page - 1) * page_size)
-                .limit(page_size)
-            )
+                .limit(page_size),
+            ),
         )
         chat_infos = []
         for chat in chats:
@@ -112,12 +112,12 @@ async def list_folder_chats(
                 select(MessageModel.content)
                 .where(MessageModel.chat_id == chat.id)
                 .order_by(MessageModel.created_at.desc())
-                .limit(1)
+                .limit(1),
             )
             info = ChatInfo.model_validate(chat)
             info.preview = preview
             info.message_count = await session.scalar(
-                select(func.count()).select_from(MessageModel).where(MessageModel.chat_id == chat.id)
+                select(func.count()).select_from(MessageModel).where(MessageModel.chat_id == chat.id),
             )
             chat_infos.append(info)
         return FolderChatList(

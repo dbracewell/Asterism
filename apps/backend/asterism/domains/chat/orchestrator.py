@@ -119,8 +119,8 @@ class ChatOrchestrator:
                     select(UserFileModel).where(
                         UserFileModel.user_id == self.user_id,
                         UserFileModel.filename.in_(filenames),
-                    )
-                )
+                    ),
+                ),
             )
             found = {file.filename: file for file in records}
             if any(filename not in found for filename in filenames):
@@ -136,7 +136,7 @@ class ChatOrchestrator:
                         size=file.size,
                         kind=file.kind,
                         status=file.content_status,
-                    )
+                    ),
                 )
             return resolved
 
@@ -179,7 +179,7 @@ class ChatOrchestrator:
             {
                 "type": AgentEventType.COMPLETE.value,
                 "last_messages": [message.model_dump(mode="json") for message in self.chat.messages[parent_index:]],
-            }
+            },
         )
         self._active_parent_id = None
 
@@ -219,7 +219,7 @@ class ChatOrchestrator:
                 type=EventType.WEBHOOK_CHAT_UPDATE,
                 payload=ChatUpdateEvent(session_id=self.chat_id, title=title),
                 user_id=self.user_id,
-            )
+            ),
         )
 
     @staticmethod
@@ -292,7 +292,7 @@ class ChatOrchestrator:
                     "id": tool.id,
                     "name": tool.function.name,
                     "arguments": tool.function.arguments,
-                }
+                },
             )
             tasks.append(self._wait_for_ui_approval(tool, queue))
 
@@ -338,7 +338,7 @@ class ChatOrchestrator:
                     select(UserFileModel).where(
                         UserFileModel.user_id == self.user_id,
                         UserFileModel.filename.in_(names),
-                    )
+                    ),
                 )
                 files_by_name = {file.filename: file for file in records}
 
@@ -358,20 +358,20 @@ class ChatOrchestrator:
                             encoded = base64.b64encode(path.read_bytes()).decode("ascii")
                             parts.append(
                                 ImageUrlContentPart(
-                                    image_url=ImageUrlContent(url=f"data:{file.mime_type};base64,{encoded}")
-                                )
+                                    image_url=ImageUrlContent(url=f"data:{file.mime_type};base64,{encoded}"),
+                                ),
                             )
                         elif vision_enabled:
                             parts.append(
                                 TextContentPart(
-                                    text=f'(image "{reference.name}" not included: file is too large or unavailable)'
-                                )
+                                    text=f'(image "{reference.name}" not included: file is too large or unavailable)',
+                                ),
                             )
                         else:
                             parts.append(
                                 TextContentPart(
-                                    text=f'(image "{reference.name}" not included: model does not support image input)'
-                                )
+                                    text=f'(image "{reference.name}" not included: model does not support image input)',
+                                ),
                             )
                     elif file.content_cache:
                         parts.append(TextContentPart(text=f"### Attached file: {reference.name}\n{file.content_cache}"))
@@ -457,7 +457,7 @@ class ChatOrchestrator:
                                 {
                                     "type": AgentEventType.ERROR.value,
                                     "content": "The model returned an empty response. Please try again.",
-                                }
+                                },
                             )
                             return
 
@@ -492,7 +492,7 @@ class ChatOrchestrator:
                                 "last_messages": [
                                     m.model_dump(mode="json") for m in self.chat.messages[last_user_message_index:]
                                 ],
-                            }
+                            },
                         )
 
                     case AgentEvent(type=AgentEventType.SUB_AGENT):
@@ -505,7 +505,7 @@ class ChatOrchestrator:
                                     "sub_agent_name": (event.sub_agent.sub_agent_name),
                                     "depth": event.sub_agent.depth,
                                     "event": (event.sub_agent.event.model_dump(mode="json")),
-                                }
+                                },
                             )
 
                     case AgentEvent(type=AgentEventType.DELTA):

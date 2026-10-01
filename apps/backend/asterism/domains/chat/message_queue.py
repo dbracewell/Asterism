@@ -30,7 +30,7 @@ class MessageQueue(asyncio.Queue[dict[str, Any]]):
 
 
 _queue_cache: SlidingTTLCache[uuid.UUID, MessageQueue] = SlidingTTLCache[
-    uuid.UUID, MessageQueue
+    uuid.UUID, MessageQueue,
 ](maxsize=QUEUE_CACHE_MAXSIZE, ttl=QUEUE_CACHE_TTL_SECONDS)
 
 

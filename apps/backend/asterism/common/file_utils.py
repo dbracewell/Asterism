@@ -1,16 +1,17 @@
-import filetype
+from pathlib import Path
 
 
-def get_file_mime_type(file_path) -> str:
-    path = str(file_path)
-    kind = filetype.guess(path)
-    if kind is None:
-        match path[-3:].lower():
-            case "png":
-                return "image/png"
-            case "jpg":
-                return "image/jpg"
-            case "webp":
-                return "image/webp"
-        return "text/plain"
-    return kind.mime
+def calculate_directory_size(root: Path) -> int:
+    """Total bytes of regular files under *root*, ignoring symlinks."""
+    if not root.is_dir():
+        return 0
+    total = 0
+    for path in root.rglob("*"):
+        if path.is_file() and not path.is_symlink():
+            try:
+                total += path.stat().st_size
+            except OSError:
+                pass
+    return total
+
+

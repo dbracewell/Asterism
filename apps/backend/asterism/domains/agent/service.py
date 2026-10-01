@@ -10,9 +10,7 @@ from asterism.core.exceptions import (
 )
 from asterism.db.database import get_async_db_session
 from asterism.domains.chat.models import ChatModel
-from asterism.domains.knowledge.assignments import AgentKnowledgeBaseAssignmentModel
-from asterism.domains.knowledge.models import KnowledgeBaseModel
-from asterism.domains.settings import service as settings_service
+from asterism.domains.knowledge_base.models import AgentKnowledgeBaseAssignmentModel, KnowledgeBaseModel
 from asterism.domains.settings.models import UserSettingModel
 
 from .models import AgentProfileModel, SubAgentTraceModel
@@ -27,7 +25,10 @@ from .schemas import (
 
 
 async def _assignment_summaries(
-    *, user_id: str, agent_id: uuid.UUID, session: AsyncSession
+    *,
+    user_id: str,
+    agent_id: uuid.UUID,
+    session: AsyncSession,
 ) -> list[KnowledgeBaseAssignmentSummary]:
     rows = await session.execute(
         select(KnowledgeBaseModel.id, KnowledgeBaseModel.name)
@@ -40,7 +41,7 @@ async def _assignment_summaries(
             AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
             KnowledgeBaseModel.user_id == user_id,
         )
-        .order_by(AgentKnowledgeBaseAssignmentModel.position)
+        .order_by(AgentKnowledgeBaseAssignmentModel.position),
     )
     return [KnowledgeBaseAssignmentSummary(id=row.id, name=row.name) for row in rows]
 
@@ -54,6 +55,8 @@ async def _ensure_valid_tools(
     profile: AgentProfile,
     session: AsyncSession | None = None,
 ) -> AgentProfile:
+    from asterism.domains.settings import service as settings_service
+
     app_settings = await settings_service.get_app_settings(session=session)
     if profile.tools:
         profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
@@ -164,7 +167,7 @@ async def _ensure_main_agent_can_be_removed(
             ChatModel.user_id == user_id,
             ChatModel.agent_id == agent_id,
         )
-        .limit(1)
+        .limit(1),
     )
     if assigned_chat_id is not None:
         raise BadDataException("This main agent is assigned to an existing chat and cannot be changed")
@@ -174,8 +177,8 @@ async def _ensure_main_agent_can_be_removed(
             select(AgentProfileModel.id).where(
                 AgentProfileModel.user_id == user_id,
                 AgentProfileModel.sub_agent.is_(False),
-            )
-        )
+            ),
+        ),
     )
     if len(main_agent_ids) <= 1:
         raise BadDataException("A user must retain at least one main agent")
@@ -184,7 +187,7 @@ async def _ensure_main_agent_can_be_removed(
         select(UserSettingModel.value).where(
             UserSettingModel.user_id == user_id,
             UserSettingModel.key == "default_agent_id",
-        )
+        ),
     )
     if str(default_agent_id) not in {str(id) for id in main_agent_ids}:
         raise BadDataException("Select a valid default main agent before changing this agent")

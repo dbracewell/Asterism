@@ -20,7 +20,7 @@ from asterism.domains.settings.provider_types import ModelCapabilitySource
 
 class Model:
     def __init__(
-        self, *, active: bool, vision: bool | None, source: ModelCapabilitySource = ModelCapabilitySource.PROVIDER
+        self, *, active: bool, vision: bool | None, source: ModelCapabilitySource = ModelCapabilitySource.PROVIDER,
     ) -> None:
         self.id = uuid.uuid4()
         self.is_active = active
@@ -94,6 +94,6 @@ def test_caption_output_is_normalized_and_bounded():
 
 def test_local_caption_request_is_a_path_reference_not_image_bytes(tmp_path: Path):
     request = CaptionRequest(
-        revision_id=uuid.uuid4(), image_path=tmp_path / "image.png", max_image_bytes=1, max_caption_chars=1
+        revision_id=uuid.uuid4(), image_path=tmp_path / "image.png", max_image_bytes=1, max_caption_chars=1,
     )
     assert request.image_path.name == "image.png"

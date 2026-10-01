@@ -36,7 +36,7 @@ def _discovery(payload: dict[str, object]) -> OpenAIProviderDiscovery:
             transport=httpx.MockTransport(handler),
             follow_redirects=False,
             event_hooks={"response": [_limit_response_size]},
-        )
+        ),
     )
 
 
@@ -63,7 +63,7 @@ async def test_generic_discovery_manual_fallback_save_reload_and_refresh(tmp_pat
             "supports_vision": False,
             "context_window_source": ModelCapabilitySource.MANUAL,
             "vision_source": ModelCapabilitySource.MANUAL,
-        }
+        },
     )
     provider = Provider(
         id=provider_id,
@@ -125,7 +125,7 @@ async def test_runtime_lookup_uses_normalized_urls_and_only_active_models(tmp_pa
                     provider_id=openai_id,
                     name="gpt-4o",
                     is_active=True,
-                )
+                ),
             ],
         ),
         Provider(

@@ -52,7 +52,7 @@ def test_user() -> AuthedUser:
 @pytest.fixture
 def make_chat_session():
     def _create(
-        allowed_tools: list[str], messages: list[Message] | None = None
+        allowed_tools: list[str], messages: list[Message] | None = None,
     ) -> Chat:
         return Chat(
             info=ChatInfo(
@@ -69,7 +69,7 @@ def make_chat_session():
 
 
 def _make_agent_profile(
-    agent_id: uuid.UUID, name: str = "SubAgent"
+    agent_id: uuid.UUID, name: str = "SubAgent",
 ) -> AgentProfile:
     return AgentProfile(
         id=agent_id,
@@ -111,7 +111,7 @@ class RecordingLLMClient:
 
 
 async def setup_test_db() -> tuple[
-    AsyncEngine, async_sessionmaker[AsyncSession]
+    AsyncEngine, async_sessionmaker[AsyncSession],
 ]:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
@@ -175,15 +175,15 @@ class TestSubAgentTraces:
                 msg = (
                     await session.scalars(
                         select(MessageModel).where(
-                            MessageModel.user_id == user_id
-                        )
+                            MessageModel.user_id == user_id,
+                        ),
                     )
                 ).first()
                 agent = (
                     await session.scalars(
                         select(AgentProfileModel).where(
-                            AgentProfileModel.user_id == user_id
-                        )
+                            AgentProfileModel.user_id == user_id,
+                        ),
                     )
                 ).first()
                 assert msg is not None
@@ -215,7 +215,7 @@ class TestSubAgentTraces:
                 )
 
                 created_trace = await create_sub_agent_trace(
-                    trace_create, session=session
+                    trace_create, session=session,
                 )
                 assert created_trace.id is not None
                 assert created_trace.parent_message_id == msg.id
@@ -243,7 +243,7 @@ class TestSubAgentTraces:
 
     @pytest.mark.asyncio
     async def test_sub_agent_tool_automatically_persists_trace(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         Verify that executing the sub_agent tool automatically captures
@@ -253,7 +253,7 @@ class TestSubAgentTraces:
         session = make_chat_session(allowed_tools=["sub_agent"])
         sub_agent_id = uuid.uuid4()
         sub_agent_profile = _make_agent_profile(
-            sub_agent_id, name="WorkerAgent"
+            sub_agent_id, name="WorkerAgent",
         )
 
         recording_client = RecordingLLMClient()
@@ -277,8 +277,8 @@ class TestSubAgentTraces:
                 "asterism.domains.agent.service.get_user_agents",
                 new=AsyncMock(
                     return_value=MagicMock(
-                        agents={sub_agent_id: sub_agent_profile}
-                    )
+                        agents={sub_agent_id: sub_agent_profile},
+                    ),
                 ),
             ),
             patch(
@@ -288,7 +288,7 @@ class TestSubAgentTraces:
                         active_tools=["sub_agent"],
                         retrieval_model_id=None,
                         embedding_model_id=None,
-                    )
+                    ),
                 ),
             ),
             patch(
@@ -336,7 +336,7 @@ class TestSubAgentTraces:
 
     @pytest.mark.asyncio
     async def test_sub_agent_trace_with_tool_calls_in_history(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         Verify that sub-agent message history in trace captures intermediate
@@ -346,7 +346,7 @@ class TestSubAgentTraces:
         session = make_chat_session(allowed_tools=["sub_agent"])
         sub_agent_id = uuid.uuid4()
         sub_agent_profile = _make_agent_profile(
-            sub_agent_id, name="ToolUserAgent"
+            sub_agent_id, name="ToolUserAgent",
         )
         sub_agent_profile.tools = ["sub_agent"]
 
@@ -361,11 +361,11 @@ class TestSubAgentTraces:
                             arguments='{"agent_id": "%s", "prompt": "nested"}'
                             % sub_agent_id,
                         ),
-                    )
+                    ),
                 ],
                 finish_reason="tool_calls",
                 total_tokens=20,
-            )
+            ),
         ]
         step2 = [
             LLMEvent(
@@ -373,7 +373,7 @@ class TestSubAgentTraces:
                 content="Finished after recursion check aborted nested.",
                 finish_reason="stop",
                 total_tokens=30,
-            )
+            ),
         ]
         recording_client = RecordingLLMClient(responses=[step1, step2])
         persisted_traces: list[SubAgentTraceCreate] = []
@@ -396,8 +396,8 @@ class TestSubAgentTraces:
                 "asterism.domains.agent.service.get_user_agents",
                 new=AsyncMock(
                     return_value=MagicMock(
-                        agents={sub_agent_id: sub_agent_profile}
-                    )
+                        agents={sub_agent_id: sub_agent_profile},
+                    ),
                 ),
             ),
             patch(
@@ -407,7 +407,7 @@ class TestSubAgentTraces:
                         active_tools=["sub_agent"],
                         retrieval_model_id=None,
                         embedding_model_id=None,
-                    )
+                    ),
                 ),
             ),
             patch(
@@ -461,15 +461,15 @@ class TestSubAgentTraces:
                 msg = (
                     await session.scalars(
                         select(MessageModel).where(
-                            MessageModel.user_id == user_id
-                        )
+                            MessageModel.user_id == user_id,
+                        ),
                     )
                 ).first()
                 agent = (
                     await session.scalars(
                         select(AgentProfileModel).where(
-                            AgentProfileModel.user_id == user_id
-                        )
+                            AgentProfileModel.user_id == user_id,
+                        ),
                     )
                 ).first()
                 assert msg is not None

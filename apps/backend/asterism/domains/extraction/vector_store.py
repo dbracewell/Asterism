@@ -8,6 +8,7 @@ from typing import Protocol
 
 import lancedb
 import pyarrow as pa
+from asterism.core import config
 
 
 class VectorStoreError(RuntimeError):
@@ -86,7 +87,7 @@ class LanceDbVectorStore:
                 pa.field("chunk_ordinal", pa.int32(), nullable=False),
                 pa.field("content", pa.string(), nullable=False),
                 pa.field("vector", pa.list_(pa.float32(), self._dimension), nullable=False),
-            ]
+            ],
         )
 
     def _initialize_sync(self) -> None:
@@ -162,7 +163,7 @@ class LanceDbVectorStore:
                         .where(f"{owner_filter} AND {file_filter}", prefilter=True)
                         .limit(limit)
                         .to_list()
-                    )
+                    ),
                 )
         except Exception as error:
             raise VectorStoreError("Knowledge vector search failed") from error
@@ -191,7 +192,7 @@ class LanceDbVectorStore:
     async def delete_file_generation(self, *, user_id: str, file_id: str, artifact_generation: int) -> None:
         await self._delete(
             f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)} "
-            f"AND artifact_generation = {artifact_generation}"
+            f"AND artifact_generation = {artifact_generation}",
         )
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None:
@@ -203,3 +204,10 @@ class LanceDbVectorStore:
     async def close(self) -> None:
         self._table = None
         self._connection = None
+
+
+vector_store = LanceDbVectorStore(
+    config.knowledge_root / "lancedb",
+    dimension=config.embedding_dimension,
+    max_concurrency=config.max_concurrent_knowledge_vector_operations,
+)

@@ -160,7 +160,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                     sub_agent_name="Unknown sub-agent",
                     depth=len(ctx.call_stack),
                     event=error,
-                )
+                ),
             )
             if inspect.isawaitable(res):
                 await res
@@ -185,7 +185,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                         type=AgentEventType.ERROR,
                         content=content,
                     ),
-                )
+                ),
             )
             if inspect.isawaitable(res):
                 await res
@@ -286,7 +286,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                     sub_agent_name=agent_profile.name,
                     depth=len(ctx.call_stack),
                     event=last_response,
-                )
+                ),
             )
             if inspect.isawaitable(res):
                 await res
@@ -308,7 +308,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                     sub_agent_name=agent_profile.name,
                     depth=len(ctx.call_stack),
                     event=last_response,
-                )
+                ),
             )
             if inspect.isawaitable(res):
                 await res

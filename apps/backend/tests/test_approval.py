@@ -90,7 +90,7 @@ class TestInteractiveApprovalPolicy:
         callback_called = False
 
         async def on_pending(
-            tools: list[ToolCall], queue: UserResponseQueue
+            tools: list[ToolCall], queue: UserResponseQueue,
         ) -> None:
             nonlocal callback_called
             callback_called = True
@@ -109,7 +109,7 @@ class TestInteractiveApprovalPolicy:
         received_tools: list[ToolCall] = []
 
         async def on_pending(
-            tools: list[ToolCall], queue: UserResponseQueue
+            tools: list[ToolCall], queue: UserResponseQueue,
         ) -> None:
             received_tools.extend(tools)
             for tool in tools:
@@ -129,7 +129,7 @@ class TestInteractiveApprovalPolicy:
         """Callback can reject tools."""
 
         async def on_pending(
-            tools: list[ToolCall], queue: UserResponseQueue
+            tools: list[ToolCall], queue: UserResponseQueue,
         ) -> None:
             for tool in tools:
                 queue.respond(tool, accept=False)
@@ -146,7 +146,7 @@ class TestInteractiveApprovalPolicy:
         """Permitted tools are auto-approved, unpermitted go to callback."""
 
         async def on_pending(
-            tools: list[ToolCall], queue: UserResponseQueue
+            tools: list[ToolCall], queue: UserResponseQueue,
         ) -> None:
             for tool in tools:
                 queue.respond(tool, accept=True)
@@ -173,7 +173,7 @@ class TestInteractiveApprovalPolicy:
         """Callback can respond asynchronously (simulating user delay)."""
 
         async def on_pending(
-            tools: list[ToolCall], queue: UserResponseQueue
+            tools: list[ToolCall], queue: UserResponseQueue,
         ) -> None:
             # Simulate a brief delay before responding
             await asyncio.sleep(0.01)

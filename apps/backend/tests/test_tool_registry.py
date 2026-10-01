@@ -8,7 +8,7 @@ from sqlalchemy.exc import StatementError
 def test_tool_failures_are_json_serializable_for_message_persistence():
     tool_call = ToolCall(id="call-1", function=Function(name="search_knowledge", arguments="{}"))
     result = ToolRegistry._exception_to_tool_result(
-        StatementError("statement", "SELECT 1", {}, ValueError("bad UUID")), tool_call
+        StatementError("statement", "SELECT 1", {}, ValueError("bad UUID")), tool_call,
     )
 
     assert json.loads(result.content)["error"].startswith("Tool failed with exception:")

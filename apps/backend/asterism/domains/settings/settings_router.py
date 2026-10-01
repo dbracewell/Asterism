@@ -6,9 +6,8 @@ from pydantic import JsonValue
 import asterism.domains.settings.service as settings_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
-from asterism.domains.knowledge.captioning import CaptionModelStatus
-from asterism.domains.knowledge.embedding_download import EmbeddingModelStatus
-from asterism.domains.knowledge.schemas import (
+from asterism.domains.extraction.model_download import DownloadProgress
+from asterism.domains.knowledge_base.schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
     KnowledgeProcessingProfileUpdate,
@@ -243,7 +242,7 @@ async def discover_and_sync_provider_models(
                 api_key=provider.api_key,
                 provider_id=provider.id,
                 existing_models=provider.models,
-            )
+            ),
         )
     except ProviderDiscoveryError as exc:
         raise HTTPException(
@@ -347,7 +346,7 @@ async def get_captioning_configuration(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeCaptionConfiguration:
-    from asterism.domains.knowledge.service import get_captioning_configuration as get_configuration
+    from asterism.domains.knowledge_base.service import get_captioning_configuration as get_configuration
 
     return await get_configuration(session=session)
 
@@ -364,7 +363,7 @@ async def update_captioning_configuration(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeCaptionConfiguration:
-    from asterism.domains.knowledge.service import update_captioning_configuration as update_configuration
+    from asterism.domains.knowledge_base.service import update_captioning_configuration as update_configuration
 
     return await update_configuration(payload=payload, session=session)
 
@@ -375,9 +374,11 @@ async def update_captioning_configuration(
     operation_id="appKnowledgeProcessingProfileUpdate",
 )
 async def update_knowledge_processing_profile(
-    payload: KnowledgeProcessingProfileUpdate, user: AdminUserDep, session: DBSessionDep
+    payload: KnowledgeProcessingProfileUpdate,
+    user: AdminUserDep,
+    session: DBSessionDep,
 ) -> KnowledgeReprocessSummary:
-    from asterism.domains.knowledge.service import update_processing_profile_and_reprocess
+    from asterism.domains.knowledge_base.service import update_processing_profile_and_reprocess
 
     return await update_processing_profile_and_reprocess(payload=payload, session=session)
 
@@ -424,33 +425,33 @@ async def delete_app_setting(
 
 @settings_router.get(
     "/app/knowledge-embedding/status",
-    response_model=EmbeddingModelStatus,
+    response_model=DownloadProgress,
     operation_id="appKnowledgeEmbeddingStatus",
     summary="Get automatic knowledge embedding bundle readiness",
 )
-async def get_knowledge_embedding_status(user: AdminUserDep) -> EmbeddingModelStatus:
-    from asterism.domains.knowledge.runtime import embedding_model_download
+async def get_knowledge_embedding_status(user: AdminUserDep) -> DownloadProgress:
+    from asterism.domains.extraction.embedding import embedding_download_service
 
-    return embedding_model_download.status()
+    return embedding_download_service.progress()
 
 
 @settings_router.get(
     "/app/caption-model/status",
-    response_model=CaptionModelStatus,
+    response_model=DownloadProgress,
     operation_id="appCaptionModelStatus",
     summary="Get local caption model download/readiness status",
 )
 async def get_caption_model_status(
     user: AdminUserDep,
-) -> CaptionModelStatus:
-    from asterism.domains.knowledge.runtime import caption_model_download
+) -> DownloadProgress:
+    from asterism.domains.extraction.captioning import captioning_download_service
 
-    return caption_model_download.status()
+    return captioning_download_service.progress()
 
 
 @settings_router.post(
     "/app/caption-model/download",
-    response_model=CaptionModelStatus,
+    response_model=DownloadProgress,
     operation_id="appCaptionModelDownload",
     summary="Start downloading the local caption model",
     status_code=202,
@@ -460,24 +461,24 @@ async def get_caption_model_status(
 )
 async def start_caption_model_download(
     user: AdminUserDep,
-) -> CaptionModelStatus:
-    from asterism.domains.knowledge.runtime import caption_model_download
+) -> DownloadProgress:
+    from asterism.domains.extraction.captioning import captioning_download_service
 
     try:
-        return await caption_model_download.start_download()
+        return await captioning_download_service.start_download()
     except RuntimeError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @settings_router.post(
     "/app/caption-model/cancel",
-    response_model=CaptionModelStatus,
+    response_model=DownloadProgress,
     operation_id="appCaptionModelCancel",
     summary="Cancel an active local caption model download",
 )
 async def cancel_caption_model_download(
     user: AdminUserDep,
-) -> CaptionModelStatus:
-    from asterism.domains.knowledge.runtime import caption_model_download
+) -> DownloadProgress:
+    from asterism.domains.extraction.captioning import captioning_download_service
 
-    return await caption_model_download.cancel_download()
+    return await captioning_download_service.cancel_download()
