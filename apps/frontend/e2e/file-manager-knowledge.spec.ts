@@ -48,7 +48,7 @@ test("shows canonical processing state and confirms the full impact before file 
   page,
 }) => {
   let deleted = false;
-  await page.route("**/api/py/files**", async (route) => {
+  await page.route(/\/api\/py\/files\/.*/, async (route) => {
     const request = route.request();
     const method = request.method();
     const url = request.url();
@@ -76,9 +76,7 @@ test("shows canonical processing state and confirms the full impact before file 
   });
 
   await page.goto("/e2e/file-manager");
-  const diagram = page
-    .locator('[data-slot="card"]')
-    .filter({ hasText: "diagram.png" });
+  const diagram = page.getByRole("button", { name: /diagram\.png/ });
   await expect(diagram).toBeVisible();
   await expect(page.getByText("Knowledge: ready")).toBeVisible();
   await page.getByRole("button", { name: "Edit caption", exact: true }).click();

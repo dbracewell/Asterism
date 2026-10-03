@@ -130,21 +130,18 @@ test("curates a library file without making a second processed copy", async ({
   await page.goto("/e2e/knowledge-captions");
   await page.getByLabel("Uploaded file").selectOption(imageFile.id);
   await page.getByRole("button", { name: "Add existing file" }).click();
+  const diagram = page
+    .locator('[data-slot="card"]')
+    .filter({ hasText: "diagram.png" });
+  await expect(diagram).toBeVisible();
   await expect(
-    page.locator('[data-slot="card-title"]').filter({ hasText: "diagram.png" }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Manage processing, captions, and deletion in Files."),
+    diagram.getByText("Manage processing, captions, and deletion in Files."),
   ).toBeVisible();
   await page.getByRole("button", { name: "Move diagram.png up" }).click();
   await expect(
     page.getByRole("button", { name: "Move diagram.png up" }),
   ).toBeDisabled();
-  await page
-    .locator('[data-slot="card"]')
-    .filter({ hasText: "diagram.png" })
-    .getByRole("button", { name: "Remove from collection" })
-    .click();
+  await diagram.getByRole("button", { name: "Remove from collection" }).click();
   await expect(
     page.locator('[data-slot="card-title"]').filter({ hasText: "report.pdf" }),
   ).toBeVisible();

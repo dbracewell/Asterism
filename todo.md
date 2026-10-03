@@ -588,7 +588,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] Use the generated process environment with backend-init validation.
   - [x] Add coverage for missing and malformed root dotenv files.
   - [x] Configuration tests: 29 passed; workspace checks and diff checks passed.
-  - [-] Isolated runner completed database initialization; backend startup timed out locally before browser tests.
+  - [x] Isolated E2E with CI settings: 10 Playwright tests passed.
   - [x] Stabilize E2E mocks for the generated trailing-slash file-list URL and explicitly skip irrelevant embedding provisioning during browser tests.
   - [x] Configuration checks: 29 passed; focused backend and provider-tab regressions pass; Ruff, compileall, and frontend typecheck pass.
   - [x] Install uv in the GitHub E2E job before backend initialization.
