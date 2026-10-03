@@ -589,6 +589,8 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] Add coverage for missing and malformed root dotenv files.
   - [x] Configuration tests: 29 passed; workspace checks and diff checks passed.
   - [-] Isolated runner completed database initialization; backend startup timed out locally before browser tests.
+  - [x] Stabilize E2E mocks for the generated trailing-slash file-list URL and explicitly skip irrelevant embedding provisioning during browser tests.
+  - [x] Configuration checks: 29 passed; focused backend and provider-tab regressions pass; Ruff, compileall, and frontend typecheck pass.
   - [x] Install uv in the GitHub E2E job before backend initialization.
   - [x] Cover assigned models becoming inactive/missing and URL-selected provider catalog loading.
   - [x] Related backend tests: 24 passed; provider-tab tests: 5 passed; focused lint and frontend typecheck passed.

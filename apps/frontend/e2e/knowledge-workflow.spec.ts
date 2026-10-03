@@ -116,7 +116,7 @@ test("curates a library file without making a second processed copy", async ({
       await route.fulfill({ json: removed });
     },
   );
-  await page.route("**/api/py/files?**", (route) =>
+  await page.route(/\/api\/py\/files\/?(?:\?.*)?$/, (route) =>
     route.fulfill({
       json: {
         files: [imageFile, reportFile],
@@ -130,7 +130,9 @@ test("curates a library file without making a second processed copy", async ({
   await page.goto("/e2e/knowledge-captions");
   await page.getByLabel("Uploaded file").selectOption(imageFile.id);
   await page.getByRole("button", { name: "Add existing file" }).click();
-  await expect(page.getByText("diagram.png")).toBeVisible();
+  await expect(
+    page.locator('[data-slot="card-title"]').filter({ hasText: "diagram.png" }),
+  ).toBeVisible();
   await expect(
     page.getByText("Manage processing, captions, and deletion in Files."),
   ).toBeVisible();
@@ -139,9 +141,11 @@ test("curates a library file without making a second processed copy", async ({
     page.getByRole("button", { name: "Move diagram.png up" }),
   ).toBeDisabled();
   await page
-    .getByRole("article")
+    .locator('[data-slot="card"]')
     .filter({ hasText: "diagram.png" })
     .getByRole("button", { name: "Remove from collection" })
     .click();
-  await expect(page.getByText("report.pdf")).toBeVisible();
+  await expect(
+    page.locator('[data-slot="card-title"]').filter({ hasText: "report.pdf" }),
+  ).toBeVisible();
 });

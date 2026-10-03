@@ -6,6 +6,9 @@ const testStorageRoot = resolve(process.cwd(), "test-results/storage");
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
+  // The isolated backend and Next development server share the GitHub runner.
+  // Serial CI execution avoids resource contention during fresh setup.
+  workers: process.env.CI ? 1 : undefined,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
   use: {

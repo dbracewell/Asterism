@@ -165,6 +165,7 @@ test("frontend and backend scopes remove unrelated known settings", () => {
     ADMIN_PASSPHRASE: "admin",
     SYSTEM_KEY: "system",
     DB_URL: "sqlite",
+    SKIP_KNOWLEDGE_MODEL_PROVISIONING: "true",
     EXTRA_PROVIDER_KEY: "provider",
   };
   const backend = environmentForScope(environment, "backend");
@@ -172,10 +173,12 @@ test("frontend and backend scopes remove unrelated known settings", () => {
   assert.equal(backend.ADMIN_PASSPHRASE, undefined);
   assert.equal(backend.SYSTEM_KEY, "system");
   assert.equal(backend.DB_URL, "sqlite");
+  assert.equal(backend.SKIP_KNOWLEDGE_MODEL_PROVISIONING, "true");
   assert.equal(backend.EXTRA_PROVIDER_KEY, "provider");
   const frontend = environmentForScope(environment, "frontend");
   assert.equal(frontend.DB_URL, undefined);
   assert.equal(frontend.BETTER_AUTH_SECRET, "auth");
+  assert.equal(frontend.SKIP_KNOWLEDGE_MODEL_PROVISIONING, undefined);
 });
 
 function copyLauncher(root) {

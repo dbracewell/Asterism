@@ -22,6 +22,7 @@ export const CATALOG = {
   MAX_CHARS_FOR_RETRIEVAL: { classification: "tuning", defaultValue: "50000" },
   CORS_ALLOWED_ORIGINS: { classification: "security-policy" },
   DEFAULT_ALLOWED_TOOLS: { classification: "capability-policy" },
+  SKIP_KNOWLEDGE_MODEL_PROVISIONING: { classification: "test-control" },
 };
 
 const RUNTIME_PROFILES = new Set([

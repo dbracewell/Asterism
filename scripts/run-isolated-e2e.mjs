@@ -20,6 +20,8 @@ const environment = {
   ADMIN_PASSPHRASE: secret(),
   STORAGE_ROOT: storage,
   BETTER_AUTH_DB_PATH: join(root, "users.db"),
+  // E2E routes mock file processing, so model provisioning is unnecessary.
+  SKIP_KNOWLEDGE_MODEL_PROVISIONING: "true",
 };
 
 const backendHealthUrl = "http://127.0.0.1:8000/api/py/openapi.json";
