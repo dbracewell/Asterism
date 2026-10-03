@@ -40,6 +40,12 @@ class JobManager[**P](abc.ABC):
         task.cancel()
         return True
 
+    async def cancel_and_wait(self, key: str) -> None:
+        task = self._tasks.get(key)
+        if task is not None:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
     async def shutdown(self) -> None:
         for task in self._tasks.values():
             task.cancel()

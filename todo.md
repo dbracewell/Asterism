@@ -571,3 +571,13 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 
 - [x] Verify story acceptance criteria and request user completion confirmation.
 - [x] On confirmation, merge approved story branches, announce completion, and propose the next plan.
+
+## Refactor stabilization — Dependency cycles and regression verification
+
+- [~] RS-1 — Finish the simplified module boundaries and verify the application (branch: `fix/refactor-dependency-cycles`)
+  - [x] Inspect Knot results and baseline import/test failures.
+  - [x] Remove circular dependencies and repair stale imports and runtime wiring.
+  - [x] Update regression coverage for the simplified interfaces.
+  - [x] Verify backend/frontend lint, types, tests, and production build.
+  - [-] Isolated E2E could not start because pnpm identity verification requires unavailable registry access.
+  - [ ] Document results and obtain user confirmation before merge.

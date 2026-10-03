@@ -19,9 +19,10 @@ from asterism.domains.extraction.models import FileExtractionModel, FileKnowledg
 from asterism.domains.extraction.schemas import FileKnowledgeArtifact
 
 from .models import FileContentStatus, FileKind, UserFileModel
-from .processor import MarkItDownFileProcessor
+from .processor import ensure_file_processed as ensure_file_processed
 from .schemas import UserFile, UserFileList
 from .store import LocalFileStore
+from .store import get_file_store as get_file_store
 
 _DENIED_EXTENSIONS = {
     ".app",
@@ -87,10 +88,6 @@ _DOCUMENT_EXTENSIONS = {
 }
 
 
-def get_file_store() -> LocalFileStore:
-    return LocalFileStore(config.files_root)
-
-
 def _legacy_filename(filename: str) -> str:
     # Preserve the former download endpoint's handling of URL-encoded/hidden names.
     return re.sub(r"^\.+", "", re.sub("%2E", ".", filename, flags=re.IGNORECASE))
@@ -101,12 +98,13 @@ async def get_user_file(
     filename: str,
     session: AsyncSession | None = None,
 ) -> FileResponse:
-    file_info = await get_user_file_info(user_id=user_id, filename=filename, session=session)
     filename = _legacy_filename(filename)
     try:
         requested_path = get_file_store().open(user_id, filename)
     except ValueError as error:
         raise BadDataException("Access to file is denied") from error
+
+    file_info = await get_user_file_info(user_id=user_id, filename=filename, session=session)
 
     if not requested_path.is_file():
         raise NotFoundException("Access to file is denied")
@@ -255,21 +253,17 @@ async def upload_files(
         for file in created:
             artifacts.append(await ensure_file_knowledge_artifact(file=file, session=session))
         await session.commit()
-        from asterism.domains.knowledge_base.runtime import knowledge_ingestion_jobs
+        from asterism.domains.extraction.runtime import start_file_ingestion_job
 
         for file, artifact in zip(created, artifacts, strict=True):
             if artifact.status.value in {"pending", "failed"}:
-                knowledge_ingestion_jobs.enqueue(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
+                start_file_ingestion_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
     except Exception:
         await session.rollback()
         for filename in saved:
             store.delete(user_id, filename)
         raise
     return UserFileList(files=[UserFile.model_validate(file) for file in created])
-
-
-async def ensure_file_processed(*, file: UserFileModel, session: AsyncSession) -> UserFileModel:
-    return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)  # pyright: ignore[reportArgumentType]
 
 
 async def list_user_files(
@@ -326,7 +320,7 @@ async def get_file_knowledge_status(
 
 
 async def retry_file_knowledge_processing(*, user_id: str, filename: str, session: AsyncSession):
-    from asterism.domains.knowledge_base.runtime import knowledge_ingestion_jobs
+    from asterism.domains.extraction.runtime import start_file_ingestion_job
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     artifact = await session.scalar(
@@ -344,13 +338,13 @@ async def retry_file_knowledge_processing(*, user_id: str, filename: str, sessio
     artifact.started_at = None
     artifact.completed_at = None
     await session.commit()
-    knowledge_ingestion_jobs.enqueue(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
+    start_file_ingestion_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
     return FileKnowledgeArtifact.model_validate(artifact)
 
 
 async def cancel_file_knowledge_processing(*, user_id: str, filename: str, session: AsyncSession):
     from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-    from asterism.domains.knowledge_base.runtime import knowledge_ingestion_jobs
+    from asterism.domains.extraction.runtime import cancel_file_jobs
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     artifact = await session.scalar(
@@ -361,7 +355,7 @@ async def cancel_file_knowledge_processing(*, user_id: str, filename: str, sessi
     if artifact is None:
         raise NotFoundException("Knowledge processing record not found")
     if artifact.status in {FileKnowledgeArtifactStatus.PENDING, FileKnowledgeArtifactStatus.PROCESSING}:
-        knowledge_ingestion_jobs.cancel(str(artifact.id))
+        await cancel_file_jobs(artifact.id)
         artifact.status = FileKnowledgeArtifactStatus.CANCELED
         artifact.error_code = "canceled"
         artifact.error_reason = "Processing canceled by user"
@@ -371,7 +365,7 @@ async def cancel_file_knowledge_processing(*, user_id: str, filename: str, sessi
 
 async def regenerate_file_caption(*, user_id: str, filename: str, session: AsyncSession):
     from asterism.domains.extraction.models import FileExtractionModel, KnowledgeCaptionStatus
-    from asterism.domains.knowledge_base.runtime import knowledge_caption_jobs
+    from asterism.domains.extraction.runtime import start_file_caption_job
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     if file.kind is not FileKind.IMAGE:
@@ -388,13 +382,13 @@ async def regenerate_file_caption(*, user_id: str, filename: str, session: Async
     artifact.caption_error_code = None
     artifact.caption_error_reason = None
     await session.commit()
-    knowledge_caption_jobs.enqueue(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
+    start_file_caption_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
     return FileKnowledgeArtifact.model_validate(artifact)
 
 
 async def clear_file_caption(*, user_id: str, filename: str, session: AsyncSession):
     from asterism.domains.extraction.models import FileExtractionModel, KnowledgeCaptionStatus
-    from asterism.domains.knowledge_base.runtime import vector_store
+    from asterism.domains.extraction.runtime import vector_store
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     artifact = await session.scalar(
@@ -405,6 +399,9 @@ async def clear_file_caption(*, user_id: str, filename: str, session: AsyncSessi
     )
     if artifact is None:
         raise NotFoundException("Knowledge processing record not found")
+    from asterism.domains.extraction.runtime import cancel_file_jobs
+
+    await cancel_file_jobs(artifact.id)
     chunk_id = hashlib.sha256(f"{artifact.file_id}:{artifact.generation}:caption".encode()).hexdigest()
     await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
     artifact.caption_text = None
@@ -417,8 +414,8 @@ async def clear_file_caption(*, user_id: str, filename: str, session: AsyncSessi
 
 async def edit_file_caption(*, user_id: str, filename: str, text: str, session: AsyncSession):
     from asterism.domains.extraction.models import FileExtractionModel, KnowledgeCaptionStatus
-    from asterism.domains.knowledge_base.runtime import embedding_provider, vector_store
-    from asterism.domains.knowledge_base.vector_store import VectorChunk
+    from asterism.domains.extraction.runtime import embedding_provider, vector_store
+    from asterism.domains.extraction.vector_store import VectorChunk
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     artifact = await session.scalar(
@@ -429,6 +426,9 @@ async def edit_file_caption(*, user_id: str, filename: str, text: str, session: 
     )
     if artifact is None:
         raise NotFoundException("Knowledge processing record not found")
+    from asterism.domains.extraction.runtime import cancel_file_jobs
+
+    await cancel_file_jobs(artifact.id)
     chunk_id = hashlib.sha256(f"{artifact.file_id}:{artifact.generation}:caption".encode()).hexdigest()
     vector = (await embedding_provider.embed_text([text]))[0]
     await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
@@ -456,7 +456,7 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     )
     if file is None:
         raise NotFoundException("File not found")
-    from asterism.domains.knowledge_base.runtime import vector_store
+    from asterism.domains.extraction.runtime import vector_store
 
     await _remove_file_knowledge_records(file_id=file.id, session=session)
     response = UserFile.model_validate(file)
@@ -481,8 +481,8 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
     enable cascade actions.
     """
     from asterism.domains.extraction.models import FileExtractionModel
+    from asterism.domains.extraction.runtime import cancel_file_jobs
     from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
-    from asterism.domains.knowledge_base.runtime import knowledge_ingestion_jobs
 
     artifact_ids = list(
         await session.scalars(
@@ -490,7 +490,7 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
         ),
     )
     for artifact_id in artifact_ids:
-        knowledge_ingestion_jobs.cancel(str(artifact_id))
+        await cancel_file_jobs(artifact_id)
     await session.execute(delete(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.file_id == file_id))
     await session.execute(delete(FileExtractionModel).where(FileExtractionModel.file_id == file_id))
 
@@ -530,7 +530,7 @@ async def delete_user_files(
             pass
 
     if deleted_files:
-        from asterism.domains.knowledge_base.runtime import vector_store
+        from asterism.domains.extraction.runtime import vector_store
 
         for file in deleted_files:
             try:

@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 from contextlib import asynccontextmanager
 
@@ -7,13 +6,13 @@ import pytest_asyncio
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.db.base import Base
+from asterism.domains.extraction.ingestion import ingest_file_artifact
+from asterism.domains.extraction.model_download import DownloadNotReadyError
+from asterism.domains.extraction.models import FileKnowledgeArtifactStatus
+from asterism.domains.extraction.runtime import recover_interrupted
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
-from asterism.domains.knowledge.caption_jobs import KnowledgeCaptionJobs
-from asterism.domains.knowledge.embedding_download import EmbeddingBundleNotReadyError
-from asterism.domains.knowledge.ingestion import ingest_file_artifact
-from asterism.domains.knowledge.jobs import KnowledgeIngestionJobs
-from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus, KnowledgeBaseFileModel
-from asterism.domains.knowledge.schemas import (
+from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
+from asterism.domains.knowledge_base.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseFileCreate,
     KnowledgeBaseFileReorder,
@@ -21,11 +20,10 @@ from asterism.domains.knowledge.schemas import (
     KnowledgeCaptionConfigurationUpdate,
     KnowledgeProcessingProfileUpdate,
 )
-from asterism.domains.knowledge.service import (
+from asterism.domains.knowledge_base.service import (
     add_knowledge_base_file,
     create_knowledge_base,
     delete_knowledge_base,
-    get_captioning_configuration,
     get_knowledge_base,
     list_knowledge_base_files,
     list_knowledge_bases,
@@ -35,6 +33,7 @@ from asterism.domains.knowledge.service import (
     update_knowledge_base,
     update_processing_profile_and_reprocess,
 )
+from asterism.domains.settings.knowledge import get_captioning_configuration
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.user.models import UserModel
 from sqlalchemy import select
@@ -58,8 +57,7 @@ async def knowledge_session(tmp_path, monkeypatch):
         def cancel(self, _):
             return False
 
-    monkeypatch.setattr("asterism.domains.knowledge.runtime.vector_store", FakeVectorStore())
-    monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", FakeJobs())
+    monkeypatch.setattr("asterism.domains.extraction.runtime.vector_store", FakeVectorStore())
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
         session.add_all([UserModel(id="user-a"), UserModel(id="user-b")])
@@ -312,7 +310,10 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
             return True
 
     jobs = FakeJobs()
-    monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", jobs)
+    monkeypatch.setattr(
+        "asterism.domains.knowledge_base.service.start_file_ingestion_job",
+        lambda **kwargs: jobs.enqueue(**kwargs),
+    )
     file = UserFileModel(
         user_id="user-a",
         filename="profile.txt",
@@ -324,9 +325,9 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
     )
     knowledge_session.add(file)
     await knowledge_session.flush()
-    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+    from asterism.domains.extraction.models import FileExtractionModel
 
-    ready = FileKnowledgeArtifactModel(
+    ready = FileExtractionModel(
         user_id="user-a",
         file_id=file.id,
         generation=1,
@@ -348,7 +349,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
     )
     artifacts = list(
         await knowledge_session.scalars(
-            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id),
+            select(FileExtractionModel).where(FileExtractionModel.file_id == file.id),
         ),
     )
     assert result.queued_file_count == 1
@@ -396,7 +397,10 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(know
             return True
 
     jobs = FakeJobs()
-    monkeypatch.setattr("asterism.domains.knowledge.runtime.knowledge_ingestion_jobs", jobs)
+    monkeypatch.setattr(
+        "asterism.domains.knowledge_base.service.start_file_ingestion_job",
+        lambda **kwargs: jobs.enqueue(**kwargs),
+    )
     file = UserFileModel(
         user_id="user-a",
         filename="caption-transition.png",
@@ -408,9 +412,9 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(know
     )
     knowledge_session.add(file)
     await knowledge_session.flush()
-    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+    from asterism.domains.extraction.models import FileExtractionModel
 
-    ready = FileKnowledgeArtifactModel(
+    ready = FileExtractionModel(
         user_id=file.user_id,
         file_id=file.id,
         generation=1,
@@ -428,7 +432,7 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(know
     )
     artifacts = list(
         await knowledge_session.scalars(
-            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id),
+            select(FileExtractionModel).where(FileExtractionModel.file_id == file.id),
         ),
     )
     replacement = next(item for item in artifacts if item.generation == 2)
@@ -443,7 +447,7 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(know
         session=knowledge_session,
     )
     assert no_op.updated_at == updated.updated_at
-    assert len(list(await knowledge_session.scalars(select(FileKnowledgeArtifactModel)))) == 2
+    assert len(list(await knowledge_session.scalars(select(FileExtractionModel)))) == 2
 
 
 @pytest.mark.asyncio
@@ -519,7 +523,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     path = config.files_root / "user-a"
     path.mkdir(parents=True)
     (path / file.filename).write_text("hello world", encoding="utf-8")
-    from asterism.domains.knowledge.service import ensure_file_knowledge_artifact
+    from asterism.domains.knowledge_base.service import ensure_file_knowledge_artifact
 
     artifact = await ensure_file_knowledge_artifact(file=file, session=knowledge_session)
     await knowledge_session.commit()
@@ -580,26 +584,6 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
 
 
 @pytest.mark.asyncio
-async def test_caption_job_cancel_signals_the_single_queued_revision(monkeypatch):
-    started = asyncio.Event()
-
-    async def blocked_run(**_):
-        started.set()
-        await asyncio.Event().wait()
-
-    jobs = KnowledgeCaptionJobs(lambda *_: None)  # type: ignore[arg-type]
-    monkeypatch.setattr(jobs, "_run", blocked_run)
-    artifact_id = uuid.uuid4()
-    file_id = uuid.uuid4()
-    assert jobs.enqueue(user_id="user-a", file_id=file_id, artifact_id=artifact_id)
-    await started.wait()
-    assert jobs.cancel(str(artifact_id))
-    with pytest.raises(asyncio.CancelledError):
-        await jobs._tasks[str(artifact_id)]
-    await asyncio.sleep(0)
-    assert not jobs.cancel(str(artifact_id))
-
-
 @pytest.mark.asyncio
 async def test_restart_recovery_makes_processing_artifact_retryable(knowledge_session, monkeypatch):
     file = UserFileModel(
@@ -613,9 +597,9 @@ async def test_restart_recovery_makes_processing_artifact_retryable(knowledge_se
     )
     knowledge_session.add(file)
     await knowledge_session.flush()
-    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+    from asterism.domains.extraction.models import FileExtractionModel
 
-    artifact = FileKnowledgeArtifactModel(
+    artifact = FileExtractionModel(
         user_id="user-a",
         file_id=file.id,
         generation=1,
@@ -630,8 +614,8 @@ async def test_restart_recovery_makes_processing_artifact_retryable(knowledge_se
     async def session_factory():
         yield knowledge_session
 
-    monkeypatch.setattr("asterism.domains.knowledge.jobs.get_async_db_session", session_factory)
-    await KnowledgeIngestionJobs(max_concurrency=1).recover_interrupted()
+    monkeypatch.setattr("asterism.domains.extraction.runtime.get_async_db_session", session_factory)
+    await recover_interrupted()
     await knowledge_session.refresh(artifact)
     assert artifact.status is FileKnowledgeArtifactStatus.PENDING
     assert artifact.error_code == "interrupted"
@@ -652,9 +636,9 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(knowledge_ses
     )
     knowledge_session.add(file)
     await knowledge_session.flush()
-    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+    from asterism.domains.extraction.models import FileExtractionModel
 
-    artifact = FileKnowledgeArtifactModel(
+    artifact = FileExtractionModel(
         user_id="user-a",
         file_id=file.id,
         generation=1,
@@ -668,14 +652,14 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(knowledge_ses
     async def already_processed(*, file, session):
         return file
 
-    monkeypatch.setattr("asterism.domains.knowledge.ingestion.ensure_file_processed", already_processed)
+    monkeypatch.setattr("asterism.domains.extraction.ingestion.ensure_file_processed", already_processed)
 
     class WaitingEmbeddings:
         async def embed_text(self, _):
-            raise EmbeddingBundleNotReadyError("provisioning")
+            raise DownloadNotReadyError("provisioning")
 
         async def embed_image(self, _):
-            raise EmbeddingBundleNotReadyError("provisioning")
+            raise DownloadNotReadyError("provisioning")
 
     class Vectors:
         async def delete_file_generation(self, **_):

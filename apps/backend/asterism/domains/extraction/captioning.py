@@ -4,115 +4,38 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import uuid
-from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path
 from typing import Any
-from uuid import UUID
 
 from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import get_async_db_session
-from asterism.domains.extraction.models import FileExtractionModel
+from asterism.domains.extraction.embedding import embedding_provider
+from asterism.domains.extraction.models import FileExtractionModel, KnowledgeCaptionMode, KnowledgeCaptionStatus
+from asterism.domains.extraction.vector_store import VectorChunk, vector_store
 from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.files.schemas import UserFile
-from asterism.domains.files.service import get_file_store
+from asterism.domains.files.store import get_file_store
 from asterism.domains.knowledge_base.schemas import KnowledgeCaptionConfiguration
-from asterism.domains.knowledge_base.service import get_captioning_configuration
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
-from asterism.domains.settings.provider_types import ModelCapabilitySource
-from asterism.domains.settings.schemas import Llm
+from asterism.domains.settings.knowledge import get_captioning_configuration
 from asterism.domains.settings.service import get_model_and_provider
-from model_download import ModelDownloadService, PinnedModel, verify_manifest
 from PIL import Image
 from sqlalchemy import select
 
+from .caption_schemas import (
+    CaptionErrorCode,
+    CaptioningConfiguration,
+    CaptioningError,
+    CaptionMode,
+    CaptionRequest,
+    CaptionResult,
+)
+from .model_download import ModelDownloadService, PinnedModel, verify_manifest
+
 logger = get_logger("CAPTION_PROCESSING")
-
-
-@dataclass(frozen=True)
-class CaptionRequest:
-    revision_id: UUID
-    image_path: Path
-    file: UserFile
-    max_image_bytes: int
-    max_caption_chars: int
-
-
-class CaptionErrorCode(StrEnum):
-    DISABLED = "disabled"
-    INVALID_SELECTION = "invalid_selection"
-    NOT_READY = "not_ready"
-    ARTIFACT_MISSING = "artifact_missing"
-    ARTIFACT_INVALID = "artifact_invalid"
-    IMAGE_INVALID = "image_invalid"
-    PROVIDER_FAILURE = "provider_failure"
-    TIMEOUT = "timeout"
-    OUTPUT_INVALID = "output_invalid"
-
-
-class CaptioningError(RuntimeError):
-    """Safe error suitable for persistence or user display; never include image data."""
-
-    def __init__(self, code: CaptionErrorCode, message: str) -> None:
-        super().__init__(message)
-        self.code = code
-
-
-class CaptionMode(StrEnum):
-    DISABLED = "disabled"
-    PROVIDER = "provider"
-    LOCAL = "local"
-
-
-@dataclass(frozen=True)
-class CaptionResult:
-    text: str
-    source: CaptionMode
-    model: str
-
-
-@dataclass(frozen=True)
-class CaptioningConfiguration:
-    mode: CaptionMode = CaptionMode.DISABLED
-    provider_model_id: UUID | None = None
-
-    def validate(self, models: list[Llm]) -> None:
-        if self.mode is CaptionMode.DISABLED:
-            if self.provider_model_id is not None:
-                raise CaptioningError(CaptionErrorCode.INVALID_SELECTION, "Disabled captioning cannot select a model")
-            return
-
-        if self.mode is CaptionMode.LOCAL:
-            if self.provider_model_id is not None:
-                raise CaptioningError(
-                    CaptionErrorCode.INVALID_SELECTION,
-                    "Local captioning cannot select a provider model",
-                )
-            return
-
-        if self.provider_model_id is None:
-            raise CaptioningError(CaptionErrorCode.INVALID_SELECTION, "Provider captioning requires a model")
-
-        selected = next((model for model in models if model.id == self.provider_model_id), None)
-
-        if (
-            selected is None
-            or not selected.is_active
-            or selected.supports_vision is not True
-            or selected.vision_source
-            not in {
-                ModelCapabilitySource.CATALOG,
-                ModelCapabilitySource.PROVIDER,
-                ModelCapabilitySource.MANUAL,
-            }
-        ):
-            raise CaptioningError(
-                CaptionErrorCode.INVALID_SELECTION,
-                "Captioning requires an active discovered vision-capable model",
-            )
 
 
 def bounded_caption(text: str, limit: int) -> str:
@@ -332,10 +255,53 @@ async def caption(
             if artifact is None or file is None:
                 return
 
-            await _caption(artifact=artifact, file=file)
+            if artifact.caption_status not in {KnowledgeCaptionStatus.PENDING, KnowledgeCaptionStatus.FAILED}:
+                return
+            artifact.caption_status = KnowledgeCaptionStatus.RUNNING
+            await session.commit()
+            try:
+                result = await asyncio.wait_for(
+                    _caption(artifact=artifact, file=file),
+                    timeout=config.file_conversion_timeout_s,
+                )
+                vector = (await embedding_provider.embed_text([result.text]))[0]
+                chunk_id = hashlib.sha256(f"{file.id}:{artifact.generation}:caption".encode()).hexdigest()
+                await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
+                await vector_store.add(
+                    [
+                        VectorChunk(
+                            chunk_id,
+                            user_id,
+                            str(file.id),
+                            artifact.generation,
+                            artifact.chunk_count,
+                            result.text,
+                            vector,
+                        ),
+                    ],
+                )
+                artifact.caption_text = result.text
+                artifact.caption_source = KnowledgeCaptionMode(result.source.value)
+                artifact.caption_model = result.model
+                artifact.caption_status = KnowledgeCaptionStatus.ACCEPTED
+                artifact.caption_error_code = None
+                artifact.caption_error_reason = None
+            except Exception as error:
+                artifact.caption_status = KnowledgeCaptionStatus.FAILED
+                artifact.caption_error_code = (
+                    error.code.value
+                    if isinstance(error, CaptioningError)
+                    else "timeout"
+                    if isinstance(error, TimeoutError)
+                    else "provider_failure"
+                )
+                artifact.caption_error_reason = (
+                    str(error) if isinstance(error, CaptioningError) else "Image captioning failed; check server logs"
+                )
+                logger.exception("Image captioning failed")
+            await session.commit()
     except Exception:
-        # Restart recovery and explicit retry will process the persisted
-        # pending artifact; never leak task exceptions from uploads.
+        logger.exception("Could not persist image caption work")
         return
 
 

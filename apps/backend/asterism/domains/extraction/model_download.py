@@ -140,6 +140,9 @@ class ModelDownloadService:
 
     def __post_init__(self) -> None:
         self.model_root = self.model_root.resolve()
+        previous_root = self.model_root.with_name(f"{self.model_root.name}.previous")
+        if not self.model_root.exists() and verify_manifest(previous_root, self.pinned_model):
+            previous_root.replace(self.model_root)
         self._check_existing_bundle()
 
     def _check_existing_bundle(self) -> None:
@@ -166,7 +169,7 @@ class ModelDownloadService:
         if self.state.status in {"downloading", "verifying"}:
             self.state = DownloadState(status="idle")
 
-        return DownloadProgress(status=self.state)
+        return self.progress()
 
     async def start_download(self) -> DownloadProgress:
         if self.state.status == "ready" or self.state.status in {"downloading", "verifying"}:
@@ -245,8 +248,8 @@ class ModelDownloadService:
             raise
         except Exception as error:
             self.state.status = "failed"
-            self.state.error = "Embedding bundle download failed; check server logs"
-            logger.exception("Bundle provisioning failed", error)
+            self.state.error = "Model bundle download failed; check server logs"
+            logger.exception("Bundle provisioning failed")
             raise error
 
     def _clear_task(self, task: asyncio.Task[str]) -> None:
@@ -267,11 +270,13 @@ class ModelDownloadService:
     def progress(self) -> DownloadProgress:
         downloading = self.state.status in {"downloading", "verifying"}
         self.model_root.resolve().mkdir(exist_ok=True, parents=True)
+        manifest = self.model_root / MANIFEST_FILENAME
         return DownloadProgress(
             status=self.state.status,
             bytes_downloaded=calculate_directory_size(self.model_root.resolve()) if self.model_root else 0,
             total_bytes=self.pinned_model.size_bytes if downloading and self.pinned_model.size_bytes is not None else 0,
             error=self.state.error,
+            bundle_sha256=sha256_file(manifest) if self.state.status == "ready" and manifest.is_file() else None,
         )
 
     def is_ready(self) -> bool:

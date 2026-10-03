@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass
 from enum import StrEnum, auto
 from typing import Any, Self
 
@@ -129,3 +130,11 @@ class SubAgentTraceCreate(BaseModel):
     total_tokens: int = 0
     elapsed_ms: int = 0
     depth: int = 0
+
+
+@dataclass
+class ToolUseAuthorization:
+    """Result of a tool-use authorization decision."""
+
+    tool: ToolCall
+    accept: bool

@@ -63,3 +63,9 @@ class LocalFileStore:
         if not root.is_dir():
             return iter(())
         return (path for path in root.iterdir() if path.is_file())
+
+
+def get_file_store() -> LocalFileStore:
+    from asterism.core import config
+
+    return LocalFileStore(config.files_root)

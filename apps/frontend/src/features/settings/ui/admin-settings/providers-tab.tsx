@@ -565,7 +565,9 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
   return (
     <form
       className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
-      onSubmit={handleSubmit((values) => void save(values, "Settings saved."))}
+      onSubmit={handleSubmit((values) => {
+        void save(values, "Settings saved.").catch(() => undefined);
+      })}
     >
       <div className="relative">
         <h1 className="border-b pb-2 text-base font-bold">

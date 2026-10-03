@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from asterism.domains.knowledge.captioning import CaptionRequest, LocalSmolVlm2CaptionProvider
+from asterism.domains.extraction.captioning import CaptionRequest, LocalSmolVlm2CaptionProvider
 from PIL import Image
 
 

@@ -9,7 +9,7 @@ from asterism.common.hashing import sha256_file
 from asterism.core import config
 
 from .models import FileContentStatus, FileKind, UserFileModel
-from .store import FileStore
+from .store import FileStore, get_file_store
 
 _TRUNCATION_MARKER = "\n… [content truncated]"
 
@@ -116,3 +116,7 @@ class MarkItDownFileProcessor:
             # Converter errors often contain document content; never surface or log them.
             file.content_status = FileContentStatus.FAILED
             file.content_error = "File could not be processed"
+
+
+async def ensure_file_processed(*, file: UserFileModel, session: AsyncSession) -> UserFileModel:
+    return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)  # pyright: ignore[reportArgumentType]

@@ -9,18 +9,21 @@ from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
-from asterism.domains.files.service import ensure_file_processed, get_file_store
-from asterism.domains.knowledge_base.service import get_captioning_configuration
-from embedding import EmbeddingProviderError, embedding_provider
-from models import (
+from asterism.domains.files.processor import ensure_file_processed
+from asterism.domains.files.store import get_file_store
+from asterism.domains.settings.knowledge import get_captioning_configuration
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .embedding import EmbeddingProvider, EmbeddingProviderError, embedding_provider
+from .model_download import DownloadNotReadyError
+from .models import (
     FileExtractionModel,
     FileKnowledgeArtifactStatus,
     KnowledgeCaptionMode,
     KnowledgeCaptionStatus,
 )
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from vector_store import VectorChunk, vector_store
+from .vector_store import VectorChunk, vector_store
 
 logger = logging.getLogger(__name__)
 
@@ -52,15 +55,19 @@ def _artifact_chunk_id(artifact: FileExtractionModel, ordinal: int) -> str:
     return hashlib.sha256(source).hexdigest()
 
 
-async def embed_file(processed: UserFileModel) -> tuple[list[list[float]], list[str], bool]:
+async def embed_file(
+    processed: UserFileModel,
+    *,
+    provider: EmbeddingProvider = embedding_provider,
+) -> tuple[list[list[float]], list[str], bool]:
     if processed.kind is FileKind.IMAGE:
         path = get_file_store().open(processed.user_id, processed.filename)
         contents = [f"Image file: {processed.original_name}"]
-        vectors = await embedding_provider.embed_image([path])
+        vectors = await provider.embed_image([path])
         visual_ready = True
     else:
         contents = chunk_text(processed.content_cache or "")
-        vectors = await embedding_provider.embed_text(contents)
+        vectors = await provider.embed_text(contents)
         visual_ready = False
 
     if len(vectors) != len(contents):
@@ -111,7 +118,9 @@ async def ingest_file(
     extraction: FileExtractionModel,
     file: UserFileModel,
     session: AsyncSession,
-    on_caption_request: Callable[[str, uuid.UUID, uuid.UUID], None],
+    on_caption_request: Callable[[str, uuid.UUID, uuid.UUID], None] = lambda *_: None,
+    provider: EmbeddingProvider = embedding_provider,
+    store=vector_store,
 ) -> FileExtractionModel:
 
     if extraction.status in (FileKnowledgeArtifactStatus.READY, FileKnowledgeArtifactStatus.CANCELED):
@@ -128,7 +137,7 @@ async def ingest_file(
         if processed.content_status is not FileContentStatus.READY:
             raise ExtractionError(processed.content_error or "The file could not be processed")
 
-        vectors, contents, visual_ready = await embed_file(processed)
+        vectors, contents, visual_ready = await embed_file(processed, provider=provider)
 
         chunks: Sequence[VectorChunk] = [
             VectorChunk(
@@ -142,12 +151,12 @@ async def ingest_file(
             )
             for ordinal, (content, vector) in enumerate(zip(contents, vectors, strict=True))
         ]
-        await vector_store.delete_file_generation(
+        await store.delete_file_generation(
             user_id=processed.user_id,
             file_id=str(processed.id),
             artifact_generation=extraction.generation,
         )
-        await vector_store.add(chunks)
+        await store.add(chunks)
 
         current_status = await session.scalar(
             select(FileExtractionModel.status).where(
@@ -160,7 +169,7 @@ async def ingest_file(
             raise KnowledgeIngestionError("The file was deleted during processing")
 
         if current_status is FileKnowledgeArtifactStatus.CANCELED:
-            await vector_store.delete_file_generation(
+            await store.delete_file_generation(
                 user_id=processed.user_id,
                 file_id=str(processed.id),
                 artifact_generation=extraction.generation,
@@ -168,9 +177,16 @@ async def ingest_file(
             await session.refresh(extraction)
             return extraction
 
+    except DownloadNotReadyError:
+        extraction.status = FileKnowledgeArtifactStatus.PENDING
+        extraction.error_code = "embedding_bundle_pending"
+        extraction.error_reason = "Knowledge embedding bundle is still provisioning"
+        extraction.started_at = None
+        await session.commit()
+        return extraction
     except Exception as error:
         try:
-            await vector_store.delete_file_generation(
+            await store.delete_file_generation(
                 user_id=file.user_id,
                 file_id=str(file.id),
                 artifact_generation=extraction.generation,

@@ -9,9 +9,10 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.extraction.embedding import embedding_download_service, embedding_provider
 from asterism.domains.extraction.ingestion import ingest
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus, KnowledgeCaptionStatus
-from captioning import caption, captioning_download_service, local_caption_provider
 from sqlalchemy import select, update
-from vector_store import vector_store
+
+from .captioning import caption, captioning_download_service, local_caption_provider
+from .vector_store import vector_store
 
 logger = get_logger("KNOWLEDGE-RUNTIME")
 
@@ -21,24 +22,27 @@ job_manager = JobManager(
 )
 
 
-def start_file_ingestion_job(
-    user_id: str,
-    file_id: uuid.UUID,
-    artifact_id: uuid.UUID,
-):
-    job_manager.enqueue(
-        key=f"ingestion-{artifact_id}",
-        runnable=ingest,
-        user_id=user_id,
-        file_id=file_id,
-        artifact_id=artifact_id,
-        on_caption_request=lambda artifact, file: job_manager.enqueue(
-            key=f"caption-{user_id}:{file_id}:{artifact_id}",
-            runnable=caption,
-            artifact=artifact,
-            file=file,
-        ),
+def start_file_caption_job(user_id: str, file_id: uuid.UUID, artifact_id: uuid.UUID) -> bool:
+    return job_manager.enqueue(
+        key=f"caption-{artifact_id}", runnable=caption,
+        user_id=user_id, file_id=file_id, artifact_id=artifact_id,
     )
+
+
+def start_file_ingestion_job(user_id: str, file_id: uuid.UUID, artifact_id: uuid.UUID) -> bool:
+    if not embedding_download_service.is_ready():
+        # Persisted pending rows are resumed after provisioning succeeds.
+        return False
+    return job_manager.enqueue(
+        key=f"ingestion-{artifact_id}", runnable=ingest,
+        user_id=user_id, file_id=file_id, artifact_id=artifact_id,
+        on_caption_request=start_file_caption_job,
+    )
+
+
+async def cancel_file_jobs(artifact_id: uuid.UUID) -> None:
+    await job_manager.cancel_and_wait(f"ingestion-{artifact_id}")
+    await job_manager.cancel_and_wait(f"caption-{artifact_id}")
 
 
 async def recover_interrupted() -> None:
@@ -81,13 +85,6 @@ async def resume_ingestion_jobs() -> None:
 
 async def initialize_knowledge_runtime() -> None:
     """Create/open LanceDB and make interrupted jobs explicitly retryable."""
-    # The download service verifies an existing local bundle during construction.
-    # Restore that verified manifest hash into the provider after a process restart;
-    # otherwise a valid downloaded bundle would incorrectly look unprovisioned.
-    download_progress = captioning_download_service.progress()
-    if download_progress.status == "ready" and captioning_download_service.on_bundle_ready:
-        await captioning_download_service.on_bundle_ready(download_progress.bundle_sha256)
-
     await vector_store.initialize()
     await recover_interrupted()
 

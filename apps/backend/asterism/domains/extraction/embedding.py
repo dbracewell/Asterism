@@ -8,13 +8,14 @@ from typing import Protocol
 import numpy as np
 import onnxruntime as ort
 from asterism.core import config
-from model_download import (
+from PIL import Image
+from transformers import CLIPImageProcessorPil, CLIPTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
+
+from .model_download import (
     ModelDownloadService,
     PinnedModel,
     verify_manifest,
 )
-from PIL import Image
-from transformers import CLIPImageProcessorPil, CLIPTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
 
 
 class EmbeddingProviderError(RuntimeError):

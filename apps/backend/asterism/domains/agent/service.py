@@ -55,9 +55,9 @@ async def _ensure_valid_tools(
     profile: AgentProfile,
     session: AsyncSession | None = None,
 ) -> AgentProfile:
-    from asterism.domains.settings import service as settings_service
+    from asterism.domains.settings.tool_settings import get_tool_settings
 
-    app_settings = await settings_service.get_app_settings(session=session)
+    app_settings = await get_tool_settings(session=session)
     if profile.tools:
         profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
         if profile.knowledge_bases:

@@ -7,7 +7,7 @@ from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
 from asterism.domains.extraction.runtime import embedding_provider, vector_store
-from asterism.domains.knowledge.models import (
+from asterism.domains.knowledge_base.models import (
     AgentKnowledgeBaseAssignmentModel,
     KnowledgeBaseFileModel,
     KnowledgeBaseModel,

@@ -346,7 +346,7 @@ async def get_captioning_configuration(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeCaptionConfiguration:
-    from asterism.domains.knowledge_base.service import get_captioning_configuration as get_configuration
+    from asterism.domains.settings.knowledge import get_captioning_configuration as get_configuration
 
     return await get_configuration(session=session)
 

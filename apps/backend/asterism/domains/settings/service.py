@@ -36,6 +36,7 @@ from .schemas import (
     ToolSettings,
     UserSettings,
 )
+from .tool_settings import get_tool_settings as get_tool_settings
 
 logger = get_logger("Settings")
 
@@ -295,17 +296,6 @@ async def get_provider_settings(
         )
 
 
-async def get_tool_settings(
-    session: AsyncSession | None = None,
-) -> ToolSettings:
-    async with get_async_db_session(session) as session:
-        stmt = select(ApplicationSettingsModel).where(
-            ApplicationSettingsModel.key.in_(_TOOL_SETTINGS_KEYS),
-        )
-        settings = {row.key: row.value for row in (await session.scalars(stmt)).all()}
-        return ToolSettings.model_validate(settings)
-
-
 async def update_provider_settings(
     settings: ProviderSettings,
     session: AsyncSession | None = None,
@@ -346,7 +336,7 @@ async def update_provider_settings(
         # cascade-owned models).  The selected captioner is part of the global
         # processing policy, so reject that edit rather than leaving a stored
         # policy pointing at a missing or ineligible model.
-        from asterism.domains.knowledge_base.service import ensure_captioning_selection_is_valid
+        from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
 
         await ensure_captioning_selection_is_valid(session=session)
 
@@ -455,7 +445,7 @@ async def update_provider_model(
         model.vision_source = update.vision_source
         await session.flush()
 
-        from asterism.domains.knowledge_base.service import ensure_captioning_selection_is_valid
+        from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
 
         await ensure_captioning_selection_is_valid(session=session)
 
@@ -509,7 +499,7 @@ async def replace_provider_models(
             raise NotFoundException(f"Provider id {provider_id} not found in database")
         provider.models = _merge_models(models, provider.models)
 
-        from asterism.domains.knowledge_base.service import ensure_captioning_selection_is_valid
+        from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
 
         await ensure_captioning_selection_is_valid(session=session)
         await session.commit()
