@@ -2116,10 +2116,12 @@ export type FileGetOneError = FileGetOneErrors[keyof FileGetOneErrors];
 
 export type FileGetOneResponses = {
     /**
-     * Successful Response
+     * File download
      */
-    200: unknown;
+    200: Blob | File;
 };
+
+export type FileGetOneResponse = FileGetOneResponses[keyof FileGetOneResponses];
 
 export type FileKnowledgeGetStatusData = {
     body?: never;

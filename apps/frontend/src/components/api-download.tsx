@@ -23,7 +23,7 @@ export const APIDownload = ({
     setLoading(true);
     let objectUrl: string | null = null;
     try {
-      const { data } = await api.getFile({
+      const { data } = await api.fileGetOne({
         path: { filename },
       });
       if (!data) throw new Error("File is unavailable");

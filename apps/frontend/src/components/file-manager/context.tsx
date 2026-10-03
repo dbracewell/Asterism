@@ -2,8 +2,8 @@ import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { client } from "@/lib/api";
 import { ErrorDetail, UserFile } from "@/lib/client";
 import {
+  fileDeleteManyMutation,
   fileGetManyOptions,
-  filesDeleteManyMutation,
   fileUploadMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { isErrorDetail } from "@/lib/utils";
@@ -106,7 +106,7 @@ export const FileManagerProvider = ({
   );
 
   const { mutate: deleteFileMutation, isPending: isDeleting } = useMutation({
-    ...filesDeleteManyMutation({ client }),
+    ...fileDeleteManyMutation({ client }),
     onError: (error) => {
       if (isErrorDetail(error)) {
         toast.error(`Unable to delete files. ${error.detail}`);

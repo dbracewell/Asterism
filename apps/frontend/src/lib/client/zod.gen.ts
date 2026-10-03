@@ -978,6 +978,11 @@ export const zFileGetOnePath = z.object({
     filename: z.string()
 });
 
+/**
+ * File download
+ */
+export const zFileGetOneResponse = z.string();
+
 export const zFileKnowledgeGetStatusPath = z.object({
     filename: z.string()
 });

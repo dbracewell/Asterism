@@ -6,7 +6,7 @@ import pytest_asyncio
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.db.base import Base
-from asterism.domains.extraction.ingestion import ingest_file_artifact
+from asterism.domains.extraction.ingestion import ingest_file
 from asterism.domains.extraction.model_download import DownloadNotReadyError
 from asterism.domains.extraction.models import FileKnowledgeArtifactStatus
 from asterism.domains.extraction.runtime import recover_interrupted
@@ -374,12 +374,12 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
             raise AssertionError("failed embeddings must not write vectors")
 
     replacement = next(item for item in artifacts if item.generation == 2)
-    failed = await ingest_file_artifact(
-        artifact=replacement,
+    failed = await ingest_file(
+        extraction=replacement,
         file=file,
         session=knowledge_session,
-        embedding_provider=FailingEmbeddings(),
-        vector_store=FakeVectors(),
+        provider=FailingEmbeddings(),
+        store=FakeVectors(),
     )
     assert failed.status is FileKnowledgeArtifactStatus.FAILED
     await knowledge_session.refresh(ready)
@@ -563,22 +563,22 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
             pass
 
     vectors = FakeVectors()
-    indexed = await ingest_file_artifact(
-        artifact=artifact,
+    indexed = await ingest_file(
+        extraction=artifact,
         file=file,
         session=knowledge_session,
-        embedding_provider=FakeEmbeddings(),
-        vector_store=vectors,
+        provider=FakeEmbeddings(),
+        store=vectors,
     )
     assert indexed.status is FileKnowledgeArtifactStatus.READY
     assert len(vectors.chunks) == 1
     # A ready immutable revision is a no-op rather than generating duplicate chunks.
-    await ingest_file_artifact(
-        artifact=indexed,
+    await ingest_file(
+        extraction=indexed,
         file=file,
         session=knowledge_session,
-        embedding_provider=FakeEmbeddings(),
-        vector_store=vectors,
+        provider=FakeEmbeddings(),
+        store=vectors,
     )
     assert len(vectors.chunks) == 1
 
@@ -668,12 +668,12 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(knowledge_ses
         async def add(self, _):
             raise AssertionError("no vectors are added while provisioning")
 
-    result = await ingest_file_artifact(
-        artifact=artifact,
+    result = await ingest_file(
+        extraction=artifact,
         file=file,
         session=knowledge_session,
-        embedding_provider=WaitingEmbeddings(),
-        vector_store=Vectors(),
+        provider=WaitingEmbeddings(),
+        store=Vectors(),
     )
     assert result.status is FileKnowledgeArtifactStatus.PENDING
     assert result.error_code == "embedding_bundle_pending"

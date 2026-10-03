@@ -230,13 +230,23 @@ async def edit_file_caption(
     response_class=FileResponse,
     status_code=status.HTTP_200_OK,
     operation_id="fileGetOne",
+    responses={
+        status.HTTP_200_OK: {
+            "description": "File download",
+            "content": {
+                "application/octet-stream": {
+                    "schema": {"type": "string", "format": "binary"},
+                },
+            },
+        },
+    },
 )
 async def get_file(
     user: AuthedUserDep,
     filename: str,
     db: DBSessionDep,
 ):
-    return file_service.get_user_file(
+    return await file_service.get_user_file(
         user_id=user.id,
         filename=filename,
         session=db,
