@@ -516,6 +516,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
         "Model discovery failed. Check the provider connection and try again.",
       ),
   });
+  
   useEffect(() => {
     reset({
       llm_providers: appSettings.llm_providers ?? [],

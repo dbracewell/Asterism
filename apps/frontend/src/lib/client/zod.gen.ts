@@ -121,9 +121,6 @@ export const zCreateUserRequest = z.object({
     system_key: z.string().nullish()
 });
 
-/**
- * DownloadStatus
- */
 export const zDownloadStatus = z.enum([
     'idle',
     'downloading',
@@ -133,33 +130,10 @@ export const zDownloadStatus = z.enum([
 ]);
 
 /**
- * CaptionModelStatus
- *
- * Admin-facing status of the local caption model download/readiness.
+ * DownloadProgress
  */
-export const zCaptionModelStatus = z.object({
-    status: zDownloadStatus,
-    bytes_downloaded: z.int().optional().default(0),
-    total_bytes: z.int().optional().default(0),
-    error: z.string().nullish(),
-    bundle_sha256: z.string().nullish()
-});
-
-/**
- * EmbeddingModelStatus
- *
- * Safe, admin-readable provisioning state; never exposes bundle bytes.
- */
-export const zEmbeddingModelStatus = z.object({
-    status: z.enum([
-        'idle',
-        'downloading',
-        'verifying',
-        'ready',
-        'failed'
-    ]),
-    model_id: z.string().optional().default('Xenova/clip-vit-base-patch32'),
-    revision: z.string().optional().default('dcb5f6119fdbb94f1053e98bd74da0ac582ed2a7'),
+export const zDownloadProgress = z.object({
+    status: zDownloadStatus.optional().default('idle'),
     bytes_downloaded: z.int().optional().default(0),
     total_bytes: z.int().optional().default(0),
     error: z.string().nullish(),
@@ -263,7 +237,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('adfcd88b-8ae0-4db8-92a5-6a7bd888a442'),
+    id: z.uuid().optional().default('94a21c80-b668-4c8e-8fd0-20017635db3a'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -951,12 +925,12 @@ export const zProviderSettingsWritable = z.object({
 /**
  * Filenames
  */
-export const zFilesDeleteManyBody = z.array(z.string());
+export const zFileDeleteManyBody = z.array(z.string());
 
 /**
  * Successful Response
  */
-export const zFilesDeleteManyResponse = zUserFileList;
+export const zFileDeleteManyResponse = zUserFileList;
 
 export const zFileGetManyQuery = z.object({
     page: z.int().gte(1).optional().default(1),
@@ -1000,14 +974,9 @@ export const zFileDeletePath = z.object({
  */
 export const zFileDeleteResponse = zUserFile;
 
-export const zGetFilePath = z.object({
+export const zFileGetOnePath = z.object({
     filename: z.string()
 });
-
-/**
- * Returns the user's file
- */
-export const zGetFileResponse = z.string();
 
 export const zFileKnowledgeGetStatusPath = z.object({
     filename: z.string()
@@ -1427,22 +1396,22 @@ export const zAppSettingUpdateResponse = zSetting;
 /**
  * Successful Response
  */
-export const zAppKnowledgeEmbeddingStatusResponse = zEmbeddingModelStatus;
+export const zAppKnowledgeEmbeddingStatusResponse = zDownloadProgress;
 
 /**
  * Successful Response
  */
-export const zAppCaptionModelStatusResponse = zCaptionModelStatus;
+export const zAppCaptionModelStatusResponse = zDownloadProgress;
 
 /**
  * Successful Response
  */
-export const zAppCaptionModelDownloadResponse = zCaptionModelStatus;
+export const zAppCaptionModelDownloadResponse = zDownloadProgress;
 
 /**
  * Successful Response
  */
-export const zAppCaptionModelCancelResponse = zCaptionModelStatus;
+export const zAppCaptionModelCancelResponse = zDownloadProgress;
 
 export const zUserCreateUserBody = zCreateUserRequest;
 

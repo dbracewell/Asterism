@@ -111,6 +111,16 @@ def verify_manifest(model_root: Path, model: PinnedModel) -> bool:
         if not isinstance(files, dict) or not files:
             return False
 
+        if model.filename and model.sha256:
+            # If the model has a specific filename and SHA-256, ensure that the manifest contains it.
+            if model.filename not in files or files[model.filename].lower() != model.sha256.lower():
+                return False
+        if model.filename and model.size_bytes:
+            # If the model has a specific filename and size, ensure that the file size matches.
+            file_path = root / model.filename
+            if not file_path.is_file() or file_path.stat().st_size != model.size_bytes:
+                return False
+
         for relative_path, expected_sha256 in files.items():
             if not isinstance(relative_path, str) or not isinstance(expected_sha256, str):
                 return False

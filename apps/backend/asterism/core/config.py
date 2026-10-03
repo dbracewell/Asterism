@@ -93,9 +93,6 @@ class Config(BaseSettings):
     max_concurrent_knowledge_vector_operations: int = 2
     """Maximum simultaneous blocking LanceDB operations."""
 
-    max_concurrent_knowledge_ingestions: int = 2
-    """Maximum document ingestion jobs running at once."""
-
     local_caption_model_bundle_sha256: str = ""
     """SHA-256 of the explicitly provisioned local SmolVLM2 manifest; empty means unavailable."""
 
@@ -211,8 +208,8 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS must be from 1 to 16")
         if not 1 <= self.max_concurrent_knowledge_vector_operations <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS must be from 1 to 16")
-        if not 1 <= self.max_concurrent_knowledge_ingestions <= 16:
-            raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_INGESTIONS must be from 1 to 16")
+        if not 1 <= self.max_concurrent_extractions <= 16:
+            raise ConfigValidationError("MAX_CONCURRENT_EXTRACTIONS must be from 1 to 16")
         if self.local_caption_model_bundle_sha256 and (
             len(self.local_caption_model_bundle_sha256) != 64
             or any(char not in "0123456789abcdef" for char in self.local_caption_model_bundle_sha256.lower())

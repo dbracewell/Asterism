@@ -13,9 +13,9 @@ def generate_thumbnail(content: bytes) -> str | None:
             target_w = 128
             target_h = 128
             if orig_w > orig_h:
-                target_h = int(orig_h * (target_w / orig_w))
+                target_h = max(1, int(orig_h * (target_w / orig_w)))
             else:
-                target_w = int(orig_w * (target_h / orig_h))
+                target_w = max(1, int(orig_w * (target_h / orig_h)))
             thumbnail_img = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
             buffered = io.BytesIO()
             thumbnail_img.save(buffered, format="jpeg")

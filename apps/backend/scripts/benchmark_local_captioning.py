@@ -18,7 +18,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from asterism.domains.extraction.captioning import CaptionRequest, LocalSmolVlm2CaptionProvider
+from asterism.domains.extraction.captioning import CaptionRequest, local_caption_provider
+from asterism.domains.files.schemas import UserFile
 from PIL import Image
 
 
@@ -47,16 +48,29 @@ def _peak_rss_bytes() -> int:
 
 
 async def benchmark(model_root: Path, bundle_sha256: str, *, concurrency: int) -> CaptionBenchmarkResult:
-    provider = LocalSmolVlm2CaptionProvider(
-        model_root,
-        bundle_sha256=bundle_sha256,
-        max_concurrency=concurrency,
-    )
+    provider = local_caption_provider
     with tempfile.TemporaryDirectory(prefix="asterism-caption-benchmark-") as directory:
         image_path = Path(directory) / "fixture.png"
         Image.new("RGB", (224, 224), "red").save(image_path)
+        user_file = UserFile(
+            id=uuid4(),
+            filename="image.png",
+            original_name="image.png",
+            size=image_path.stat().st_size,
+            mime_type="image/png",
+            kind="image",
+            content_status="ready",
+            content_error=None,
+            created_at=int(time.time()),
+            updated_at=int(time.time()),
+            thumbnail=None,
+        )
         request = CaptionRequest(
-            revision_id=uuid4(), image_path=image_path, max_image_bytes=1024 * 1024, max_caption_chars=2_000,
+            revision_id=uuid4(),
+            image_path=image_path,
+            max_image_bytes=1024 * 1024,
+            max_caption_chars=2_000,
+            file=user_file,
         )
         started = time.perf_counter()
         await provider.initialize()

@@ -13,7 +13,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from asterism.domains.extraction.embeddings import OnnxClipEmbeddingProvider
+from asterism.domains.extraction.embedding import embedding_provider
 from PIL import Image
 
 ARTIFACT_SHA256 = "0898a3facfdb27f0a041e57649b4989cfd094e4a0040d6ae75ed69917dfc7328"
@@ -35,12 +35,7 @@ def cosine(left: list[float], right: list[float]) -> float:
 
 
 async def benchmark(model_root: Path) -> BenchmarkResult:
-    provider = OnnxClipEmbeddingProvider(
-        model_root,
-        artifact_sha256=ARTIFACT_SHA256,
-        artifact_size_bytes=ARTIFACT_SIZE_BYTES,
-        max_concurrency=1,
-    )
+    provider = embedding_provider
     start = time.perf_counter()
     await provider.initialize()
     initialize_seconds = time.perf_counter() - start
