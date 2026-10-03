@@ -4,7 +4,7 @@ from asterism.core.exceptions import BadDataException
 from asterism.db.base import Base
 from asterism.domains.agent.schemas import PartialAgentProfile
 from asterism.domains.agent.service import delete_agent_profile, upsert_agent_profile
-from asterism.domains.settings.models import ApplicationSettingsModel
+from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel, ProviderModel
 from asterism.domains.settings.service import (
     get_user_settings,
     upsert_user_setting,
@@ -96,3 +96,31 @@ async def test_main_agent_delete_and_conversion_preserve_default(main_agent_sess
     await delete_agent_profile("user-a", other.id, main_agent_session)
     with pytest.raises(BadDataException, match="at least one main"):
         await delete_agent_profile("user-a", default.id, main_agent_session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("unavailable", ["inactive", "missing"])
+async def test_settings_clear_unavailable_agent_model(main_agent_session, unavailable):
+    provider = ProviderModel(name="Test provider", base_url="http://localhost/v1", api_key="test")
+    main_agent_session.add(provider)
+    await main_agent_session.flush()
+    model = LLMModel(name="Assigned model", provider_id=provider.id, is_active=True)
+    main_agent_session.add(model)
+    await main_agent_session.commit()
+    agent = await upsert_agent_profile(
+        "user-a", profile("Main").model_copy(update={"model_id": model.id}), main_agent_session,
+    )
+    settings = await get_user_settings("user-a", main_agent_session)
+    assert settings.agents[agent.id].model_id == model.id
+    assert model.id in [item.id for item in settings.models]
+
+    if unavailable == "inactive":
+        model.is_active = False
+    else:
+        await main_agent_session.delete(model)
+    await main_agent_session.commit()
+
+    settings = await get_user_settings("user-a", main_agent_session)
+    assert agent.id in settings.agents
+    assert settings.agents[agent.id].model_id is None
+    assert model.id not in [item.id for item in settings.models]
