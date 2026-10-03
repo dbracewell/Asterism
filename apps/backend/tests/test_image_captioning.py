@@ -1,26 +1,22 @@
-import hashlib
 import json
 import uuid
 from pathlib import Path
 
 import pytest
-from asterism.domains.knowledge.captioning import (
-    LOCAL_SMOLVLM2_MODEL_ID,
-    LOCAL_SMOLVLM2_REVISION,
+from asterism.domains.extraction.caption_schemas import (
     CaptionErrorCode,
     CaptioningConfiguration,
     CaptioningError,
     CaptionMode,
     CaptionRequest,
-    LocalSmolVlm2CaptionProvider,
-    bounded_caption,
 )
+from asterism.domains.extraction.captioning import LocalSmolVlm2CaptionProvider, bounded_caption, caption_model
 from asterism.domains.settings.provider_types import ModelCapabilitySource
 
 
 class Model:
     def __init__(
-        self, *, active: bool, vision: bool | None, source: ModelCapabilitySource = ModelCapabilitySource.PROVIDER
+        self, *, active: bool, vision: bool | None, source: ModelCapabilitySource = ModelCapabilitySource.PROVIDER,
     ) -> None:
         self.id = uuid.uuid4()
         self.is_active = active
@@ -60,8 +56,8 @@ def test_captioning_configuration_rejects_invalid_mode_selection(configuration):
 
 @pytest.mark.asyncio
 async def test_local_captioning_never_initializes_without_a_provisioned_manifest(tmp_path: Path):
-    provider = LocalSmolVlm2CaptionProvider(tmp_path, bundle_sha256="")
-    with pytest.raises(CaptioningError, match="not been provisioned") as error:
+    provider = LocalSmolVlm2CaptionProvider(tmp_path, pinned_model=caption_model)
+    with pytest.raises(CaptioningError, match="not provisioned") as error:
         await provider.initialize()
     assert error.value.code is CaptionErrorCode.NOT_READY
 
@@ -71,17 +67,17 @@ async def test_local_captioning_verifies_manifest_and_all_declared_files_before_
     model_file = tmp_path / "weights.safetensors"
     model_file.write_bytes(b"expected weights")
     manifest = {
-        "model_id": LOCAL_SMOLVLM2_MODEL_ID,
-        "revision": LOCAL_SMOLVLM2_REVISION,
+        "model_id": caption_model.id,
+        "revision": caption_model.revision,
         "files": {"weights.safetensors": "0" * 64},
     }
     manifest_bytes = json.dumps(manifest).encode()
     (tmp_path / "manifest.json").write_bytes(manifest_bytes)
-    provider = LocalSmolVlm2CaptionProvider(tmp_path, bundle_sha256=hashlib.sha256(manifest_bytes).hexdigest())
+    provider = LocalSmolVlm2CaptionProvider(tmp_path, pinned_model=caption_model)
 
-    with pytest.raises(CaptioningError, match="artifact verification failed") as error:
+    with pytest.raises(CaptioningError, match="manifest is invalid") as error:
         await provider.initialize()
-    assert error.value.code is CaptionErrorCode.ARTIFACT_INVALID
+    assert error.value.code is CaptionErrorCode.NOT_READY
 
 
 def test_caption_output_is_normalized_and_bounded():
@@ -94,6 +90,10 @@ def test_caption_output_is_normalized_and_bounded():
 
 def test_local_caption_request_is_a_path_reference_not_image_bytes(tmp_path: Path):
     request = CaptionRequest(
-        revision_id=uuid.uuid4(), image_path=tmp_path / "image.png", max_image_bytes=1, max_caption_chars=1
+        file=None,  # type: ignore[arg-type]
+        revision_id=uuid.uuid4(),
+        image_path=tmp_path / "image.png",
+        max_image_bytes=1,
+        max_caption_chars=1,
     )
     assert request.image_path.name == "image.png"

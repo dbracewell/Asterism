@@ -10,15 +10,21 @@ from __future__ import annotations
 import asyncio
 import uuid
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, Protocol
 
 from asterism.domains.chat.message_queue import discard_message_queue
-from asterism.domains.chat.orchestrator import ChatOrchestrator
+
+
+class ChatJobRuntime(Protocol):
+    pending_approvals: dict[str, asyncio.Future[bool]]
+
+    async def cancel_active_generation(self) -> None: ...
+    async def generate_chat_title(self) -> None: ...
 
 
 @dataclass
 class ChatJob:
-    orchestrator: ChatOrchestrator
+    orchestrator: ChatJobRuntime
     task: asyncio.Task[None] | None = None
     title_task: asyncio.Task[None] | None = None
     controllers: int = 0
@@ -95,7 +101,7 @@ class ChatJobManager:
     def count(self) -> int:
         return len(self._jobs)
 
-    def get_or_create(self, chat_id: uuid.UUID, orchestrator: ChatOrchestrator) -> ChatJob:
+    def get_or_create(self, chat_id: uuid.UUID, orchestrator: ChatJobRuntime) -> ChatJob:
         if self._shutting_down:
             raise RuntimeError("Chat jobs are shutting down")
         # There is no await between lookup and insertion, so this is atomic on

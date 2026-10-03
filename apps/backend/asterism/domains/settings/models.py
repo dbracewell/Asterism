@@ -32,18 +32,15 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         server_default=ProviderType.GENERIC_OPENAI.value,
     )
     name: Mapped[str] = mapped_column(
-        "name",
         Text,
         nullable=False,
         unique=True,
     )
     base_url: Mapped[str] = mapped_column(
-        "base_url",
         Text,
         nullable=False,
     )
     api_key: Mapped[str] = mapped_column(
-        "api_key",
         Text,
         nullable=False,
     )
@@ -66,12 +63,10 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
     )
 
     name: Mapped[str] = mapped_column(
-        "name",
         Text,
         nullable=False,
     )
     is_active: Mapped[bool] = mapped_column(
-        "is_active",
         Boolean,
         nullable=False,
     )
@@ -110,7 +105,6 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
         server_default=ModelCapabilitySource.UNKNOWN.value,
     )
     provider_id: Mapped[uuid.UUID] = mapped_column(
-        "provider_id",
         ForeignKey(
             column="providers.id",
             ondelete="CASCADE",

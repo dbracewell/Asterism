@@ -9,17 +9,14 @@ class ToolModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "tools"
 
     name: Mapped[str] = mapped_column(
-        "name",
         String,
         nullable=False,
     )
     description: Mapped[str] = mapped_column(
-        "description",
         Text,
         nullable=False,
     )
     content: Mapped[str] = mapped_column(
-        "content",
         Text,
         nullable=False,
     )

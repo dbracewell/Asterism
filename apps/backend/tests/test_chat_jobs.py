@@ -173,7 +173,7 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
         return parent.model_copy(update={"status": kwargs["payload"].status})
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.chat_service.add_message", add_message
+        "asterism.domains.chat.orchestrator.chat_service.add_message", add_message,
     )
     monkeypatch.setattr(
         "asterism.domains.chat.orchestrator.chat_service.update_message",
@@ -202,7 +202,7 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
                 content="Tell me something",
                 status=MessageStatus.PENDING,
                 created_at=1,
-            )
+            ),
         ],
     )
 
@@ -262,7 +262,7 @@ async def test_context_estimate_handles_unknown_models_multimodal_and_reserved_o
                 content=[
                     TextContentPart(text="### Attached file: notes.txt\nImportant details"),
                     ImageUrlContentPart(
-                        image_url=ImageUrlContent(url="data:image/png;base64,ignored")
+                        image_url=ImageUrlContent(url="data:image/png;base64,ignored"),
                     ),
                 ],
             ),
@@ -288,7 +288,7 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
                 content="Plan my garden for spring",
                 status=MessageStatus.PENDING,
                 created_at=1,
-            )
+            ),
         ],
     )
     agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
@@ -302,7 +302,7 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
         saved.append(title)
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.get_draft_model", unavailable_draft_model
+        "asterism.domains.chat.orchestrator.get_draft_model", unavailable_draft_model,
     )
     monkeypatch.setattr(orchestrator, "_save_chat_title", save)
 
@@ -314,7 +314,7 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
 @pytest.mark.asyncio
 @pytest.mark.parametrize("provider_output", [" \n ", "None", "null", "N/A"])
 async def test_title_generation_falls_back_after_invalid_provider_output(
-    monkeypatch, provider_output
+    monkeypatch, provider_output,
 ):
     chat = Chat(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
@@ -325,7 +325,7 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
                 content="Organize my weekly tasks",
                 status=MessageStatus.PENDING,
                 created_at=1,
-            )
+            ),
         ],
     )
     agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
@@ -343,7 +343,7 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
         saved.append(title)
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.get_draft_model", lambda: EmptyDraftModel()
+        "asterism.domains.chat.orchestrator.get_draft_model", lambda: EmptyDraftModel(),
     )
     monkeypatch.setattr(orchestrator, "_save_chat_title", save)
 
@@ -368,10 +368,10 @@ async def test_title_save_persists_and_publishes_the_title(monkeypatch):
         updates.append(kwargs)
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.chat_service.update_chat", update_chat
+        "asterism.domains.chat.orchestrator.chat_service.update_chat", update_chat,
     )
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.event_bus.emit", events.append
+        "asterism.domains.chat.orchestrator.event_bus.emit", events.append,
     )
 
     await orchestrator._save_chat_title("Garden plan")
@@ -502,7 +502,7 @@ def test_outbound_queue_is_bounded_and_keeps_newest_packets():
 
 def test_queue_ttl_is_a_fallback_for_unretired_idle_queues(monkeypatch):
     cache = SlidingTTLCache[uuid.UUID, message_queue.MessageQueue](
-        maxsize=2, ttl=0.001
+        maxsize=2, ttl=0.001,
     )
     monkeypatch.setattr(message_queue, "_queue_cache", cache)
     chat_id = uuid.uuid4()

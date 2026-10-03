@@ -79,7 +79,7 @@ async def searxng(
                             url=url,
                             snippet=result.get("content"),
                             relevance_score=result.get("score", 0.0),
-                        )
+                        ),
                     )
 
                 current_count = len(search_results)

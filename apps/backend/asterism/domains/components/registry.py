@@ -50,7 +50,7 @@ class ComponentRegistry:
 
         if parameters_dict:
             instance = factory(
-                factory.parameters.model_validate(parameters_dict)  # pyright: ignore[reportGeneralTypeIssues]
+                factory.parameters.model_validate(parameters_dict),  # pyright: ignore[reportGeneralTypeIssues]
             )
         else:
             instance = factory(NoArgs())

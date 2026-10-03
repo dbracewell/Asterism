@@ -37,7 +37,7 @@ def test_user() -> AuthedUser:
 @pytest.fixture
 def make_chat_session():
     def _create(
-        allowed_tools: list[str], messages: list[Message] | None = None
+        allowed_tools: list[str], messages: list[Message] | None = None,
     ) -> Chat:
         return Chat(
             info=ChatInfo(
@@ -54,7 +54,7 @@ def make_chat_session():
 
 
 def _make_agent_profile(
-    agent_id: uuid.UUID, name: str = "SubAgent"
+    agent_id: uuid.UUID, name: str = "SubAgent",
 ) -> AgentProfile:
     return AgentProfile(
         id=agent_id,
@@ -107,7 +107,7 @@ class RecordingLLMClient:
 class TestSubAgentContextForwarding:
     @pytest.mark.asyncio
     async def test_sub_agent_receives_parent_conversation_context(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         Verify recent messages from parent chat session are forwarded
@@ -116,16 +116,16 @@ class TestSubAgentContextForwarding:
         messages = [
             _make_message("user", "What is Asterism?"),
             _make_message(
-                "assistant", "Asterism is an AI multi-agent platform."
+                "assistant", "Asterism is an AI multi-agent platform.",
             ),
             _make_message("user", "Can you inspect the architecture?"),
         ]
         session = make_chat_session(
-            allowed_tools=["sub_agent"], messages=messages
+            allowed_tools=["sub_agent"], messages=messages,
         )
         sub_agent_id = uuid.uuid4()
         sub_agent_profile = _make_agent_profile(
-            sub_agent_id, name="InspectorAgent"
+            sub_agent_id, name="InspectorAgent",
         )
 
         recording_client = RecordingLLMClient()
@@ -144,8 +144,8 @@ class TestSubAgentContextForwarding:
                 "asterism.domains.agent.service.get_user_agents",
                 new=AsyncMock(
                     return_value=MagicMock(
-                        agents={sub_agent_id: sub_agent_profile}
-                    )
+                        agents={sub_agent_id: sub_agent_profile},
+                    ),
                 ),
             ),
             patch(
@@ -155,7 +155,7 @@ class TestSubAgentContextForwarding:
                         active_tools=["sub_agent"],
                         retrieval_model_id=None,
                         embedding_model_id=None,
-                    )
+                    ),
                 ),
             ),
         ):
@@ -202,7 +202,7 @@ class TestSubAgentContextForwarding:
 
     @pytest.mark.asyncio
     async def test_sub_agent_context_window_message_limit(
-        self, test_user, make_chat_session, monkeypatch
+        self, test_user, make_chat_session, monkeypatch,
     ):
         """Verify context window limits the number of forwarded messages to N."""  # noqa: E501
         monkeypatch.setattr(config, "sub_agent_context_window_messages", 3)
@@ -212,7 +212,7 @@ class TestSubAgentContextForwarding:
             _make_message("user", f"Old message {i}") for i in range(10)
         ]
         session = make_chat_session(
-            allowed_tools=["sub_agent"], messages=messages
+            allowed_tools=["sub_agent"], messages=messages,
         )
 
         ctx = ToolContext(
@@ -239,7 +239,7 @@ class TestSubAgentContextForwarding:
 
     @pytest.mark.asyncio
     async def test_sub_agent_context_window_token_limit(
-        self, test_user, make_chat_session, monkeypatch
+        self, test_user, make_chat_session, monkeypatch,
     ):
         """Verify context window stops when accumulated token limit is exceeded."""  # noqa: E501
         monkeypatch.setattr(config, "sub_agent_context_window_messages", 20)
@@ -248,7 +248,7 @@ class TestSubAgentContextForwarding:
         # The tokenizer counts each short message as roughly three tokens.
         messages = [_make_message("user", f"Message {i}") for i in range(5)]
         session = make_chat_session(
-            allowed_tools=["sub_agent"], messages=messages
+            allowed_tools=["sub_agent"], messages=messages,
         )
 
         ctx = ToolContext(
@@ -273,7 +273,7 @@ class TestSubAgentContextForwarding:
 
     @pytest.mark.asyncio
     async def test_sub_agent_forwards_user_files_in_context_block(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         Verify user_files from ToolContext are included in the forwarded
@@ -303,7 +303,7 @@ class TestSubAgentContextForwarding:
 
     @pytest.mark.asyncio
     async def test_sub_agent_forwards_user_files_to_child_tool_context(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         Verify user_files are propagated so tools executed by the sub-agent
@@ -311,12 +311,12 @@ class TestSubAgentContextForwarding:
         """
         sub_agent_id = uuid.uuid4()
         sub_agent_profile = _make_agent_profile(
-            sub_agent_id, name="FileToolAgent"
+            sub_agent_id, name="FileToolAgent",
         )
         sub_agent_profile.tools = ["mock_file_tool"]
 
         session = make_chat_session(
-            allowed_tools=["sub_agent", "mock_file_tool"]
+            allowed_tools=["sub_agent", "mock_file_tool"],
         )
         user_files = ["uploaded_report.pdf"]
 
@@ -326,7 +326,7 @@ class TestSubAgentContextForwarding:
             pass
 
         @tool_registry.tool(
-            name="mock_file_tool", description="Mock file reader"
+            name="mock_file_tool", description="Mock file reader",
         )
         def mock_file_tool(t_ctx: ToolContext[MockFileArgs]) -> str:
             observed_files_in_child_tool.extend(t_ctx.user_files)
@@ -342,20 +342,20 @@ class TestSubAgentContextForwarding:
                             name="mock_file_tool",
                             arguments="{}",
                         ),
-                    )
+                    ),
                 ],
                 finish_reason="tool_calls",
-            )
+            ),
         ]
         step2_events = [
             LLMEvent(
                 type=LLMEventType.COMPLETE,
                 content="Finished reading file.",
                 finish_reason="stop",
-            )
+            ),
         ]
         recording_client = RecordingLLMClient(
-            responses=[step1_events, step2_events]
+            responses=[step1_events, step2_events],
         )
 
         with (
@@ -372,8 +372,8 @@ class TestSubAgentContextForwarding:
                 "asterism.domains.agent.service.get_user_agents",
                 new=AsyncMock(
                     return_value=MagicMock(
-                        agents={sub_agent_id: sub_agent_profile}
-                    )
+                        agents={sub_agent_id: sub_agent_profile},
+                    ),
                 ),
             ),
             patch(
@@ -383,7 +383,7 @@ class TestSubAgentContextForwarding:
                         active_tools=["mock_file_tool"],
                         retrieval_model_id=None,
                         embedding_model_id=None,
-                    )
+                    ),
                 ),
             ),
         ):
@@ -406,7 +406,7 @@ class TestSubAgentContextForwarding:
 
     @pytest.mark.asyncio
     async def test_sub_agent_caller_supplied_parent_context(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """Verify caller notes passed in SubAgentArgs.parent_context are forwarded."""  # noqa: E501
         session = make_chat_session(allowed_tools=["sub_agent"])
@@ -434,7 +434,7 @@ class TestSubAgentContextForwarding:
 
     @pytest.mark.asyncio
     async def test_sub_agent_empty_context_block(
-        self, test_user, make_chat_session
+        self, test_user, make_chat_session,
     ):
         """
         Verify _build_parent_context_block returns None when there is no

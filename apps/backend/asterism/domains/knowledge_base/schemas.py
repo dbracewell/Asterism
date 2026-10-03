@@ -78,7 +78,7 @@ class KnowledgeProcessingConfiguration(BaseModel):
     embedding_model: str = Field(min_length=1, max_length=512)
     captioning_policy: str = Field(min_length=1, max_length=512)
     captioning: KnowledgeProcessingCaptioningConfiguration = Field(
-        default_factory=KnowledgeProcessingCaptioningConfiguration
+        default_factory=KnowledgeProcessingCaptioningConfiguration,
     )
 
     @field_validator("extraction_policy", "chunking_policy", "embedding_model", "captioning_policy")
@@ -93,32 +93,6 @@ class KnowledgeProcessingConfiguration(BaseModel):
 class KnowledgeReprocessSummary(BaseModel):
     profile: KnowledgeProcessingProfile
     queued_file_count: int = Field(ge=0)
-
-
-class FileKnowledgeArtifact(BaseModel):
-    """A versioned, file-owned generation of extracted knowledge."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    file_id: uuid.UUID
-    generation: int = Field(ge=1)
-    processing_profile_generation: int = Field(ge=1)
-    processing_profile_identity: str = Field(min_length=64, max_length=64)
-    contract_version: int = Field(ge=1)
-    status: Literal["pending", "processing", "ready", "failed", "canceled"]
-    is_current: bool
-    extracted_content: str | None = None
-    chunk_count: int = Field(ge=0)
-    text_embeddings_ready: bool
-    visual_embedding_ready: bool
-    caption: "KnowledgeCaptionMetadata"
-    error_code: str | None = None
-    error_reason: str | None = None
-    started_at: int | None = None
-    completed_at: int | None = None
-    created_at: int
-    updated_at: int
 
 
 class KnowledgeBaseFile(BaseModel):
@@ -147,17 +121,6 @@ class KnowledgeBaseFileList(BaseModel):
 
 class KnowledgeBaseFileReorder(BaseModel):
     membership_ids: list[uuid.UUID] = Field(min_length=1, max_length=10_000)
-
-
-class KnowledgeCaptionMetadata(BaseModel):
-    status: str | None = None
-    source: str | None = None
-    model: str | None = None
-    text: str | None = Field(default=None, max_length=10_000)
-    error_code: str | None = None
-    error_reason: str | None = None
-    generated_at: int | None = None
-    accepted_at: int | None = None
 
 
 class KnowledgeCaptionUpdate(BaseModel):

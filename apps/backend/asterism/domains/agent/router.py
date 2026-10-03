@@ -4,8 +4,8 @@ from fastapi import APIRouter
 
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
-from asterism.domains.knowledge.schemas import KnowledgeBaseAssignmentList, KnowledgeBaseAssignmentReplace
-from asterism.domains.knowledge.service import (
+from asterism.domains.knowledge_base.schemas import KnowledgeBaseAssignmentList, KnowledgeBaseAssignmentReplace
+from asterism.domains.knowledge_base.service import (
     get_agent_knowledge_base_assignments,
     replace_agent_knowledge_base_assignments,
 )
@@ -71,7 +71,7 @@ async def create_agent(
     operation_id="agentKnowledgeBaseAssignmentsGet",
 )
 async def get_knowledge_base_assignments(
-    agent_id: uuid.UUID, user: AuthedUserDep, session: DBSessionDep
+    agent_id: uuid.UUID, user: AuthedUserDep, session: DBSessionDep,
 ) -> KnowledgeBaseAssignmentList:
     return await get_agent_knowledge_base_assignments(user_id=user.id, agent_id=agent_id, session=session)
 
@@ -88,7 +88,7 @@ async def replace_knowledge_base_assignments(
     session: DBSessionDep,
 ) -> KnowledgeBaseAssignmentList:
     return await replace_agent_knowledge_base_assignments(
-        user_id=user.id, agent_id=agent_id, payload=payload, session=session
+        user_id=user.id, agent_id=agent_id, payload=payload, session=session,
     )
 
 

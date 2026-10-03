@@ -9,13 +9,24 @@ from asterism.common.hashing import sha256_file
 from asterism.core import config
 
 from .models import FileContentStatus, FileKind, UserFileModel
-from .store import FileStore
+from .store import FileStore, get_file_store
 
 _TRUNCATION_MARKER = "\n… [content truncated]"
 
 
 class FileProcessor(Protocol):
-    async def ensure_processed(self, file: UserFileModel, session: AsyncSession) -> UserFileModel: ...
+    """
+    A file processor is responsible for ensuring that a persisted user file has been processed and its content is
+    available for use. The processor may perform operations such as converting the file to a different format,
+    extracting text content, or generating previews. The processor should handle any necessary error handling and
+    update the file's content status accordingly.
+    """
+
+    async def ensure_processed(
+        self,
+        file: UserFileModel,
+        session: AsyncSession,
+    ) -> UserFileModel: ...
 
 
 class MarkItDownFileProcessor:
@@ -105,3 +116,7 @@ class MarkItDownFileProcessor:
             # Converter errors often contain document content; never surface or log them.
             file.content_status = FileContentStatus.FAILED
             file.content_error = "File could not be processed"
+
+
+async def ensure_file_processed(*, file: UserFileModel, session: AsyncSession) -> UserFileModel:
+    return await MarkItDownFileProcessor(get_file_store()).ensure_processed(file, session)  # pyright: ignore[reportArgumentType]

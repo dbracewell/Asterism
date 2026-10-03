@@ -1,7 +1,7 @@
 import asyncio
 from typing import AsyncGenerator
 
-from asterism.domains.agent.approval import ToolUseAuthorization
+from asterism.domains.agent.schemas import ToolUseAuthorization
 from asterism.domains.llm.schemas import ToolCall
 
 __all__ = ["ToolUseAuthorization", "UserResponseQueue"]
@@ -25,7 +25,7 @@ class UserResponseQueue:
                     ToolUseAuthorization(
                         tool=tc,
                         accept=True,
-                    )
+                    ),
                 )
 
     @property
@@ -45,7 +45,7 @@ class UserResponseQueue:
             ToolUseAuthorization(
                 tool=tool_call,
                 accept=accept,
-            )
+            ),
         )
 
     async def wait(self) -> AsyncGenerator[ToolUseAuthorization, None]:

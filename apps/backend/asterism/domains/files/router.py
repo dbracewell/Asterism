@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 import asterism.domains.files.service as file_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
-from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+from asterism.domains.extraction.schemas import FileKnowledgeArtifact
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .schemas import FileCaptionEdit, UserFile, UserFileList
@@ -14,7 +14,12 @@ from .schemas import FileCaptionEdit, UserFile, UserFileList
 file_router = APIRouter(
     tags=["files"],
     prefix="/files",
-    responses={404: {"description": "Not found", "model": ErrorDetail}},
+    responses={
+        400: {"model": ErrorDetail, "description": "Bad Request"},
+        401: {"model": ErrorDetail, "description": "Unauthorized"},
+        403: {"model": ErrorDetail, "description": "Forbidden"},
+        404: {"description": "Not found", "model": ErrorDetail},
+    },
 )
 
 
@@ -23,7 +28,6 @@ file_router = APIRouter(
     response_model=UserFileList,
     status_code=status.HTTP_201_CREATED,
     operation_id="fileUpload",
-    responses={400: {"model": ErrorDetail}, 401: {"model": ErrorDetail}},
 )
 async def upload_files(
     user: AuthedUserDep,
@@ -36,19 +40,24 @@ async def upload_files(
 @file_router.get(
     "/",
     response_model=UserFileList,
+    status_code=status.HTTP_200_OK,
     operation_id="fileGetMany",
-    responses={401: {"model": ErrorDetail}},
 )
 async def list_files(
     user: AuthedUserDep,
     db: DBSessionDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
-    sort_by: Literal["name", "kind", "date", "size"] = Query(default="name", regex="^(name|kind|date|size)$"),
+    sort_by: Literal["name", "kind", "date", "size"] = Query(default="name", pattern="^(name|kind|date|size)$"),
     query: str | None = Query(default=None, description="Search query to filter files by name"),
 ) -> UserFileList:
     return await file_service.list_user_files(
-        user_id=user.id, session=db, page=page, page_size=page_size, sort_by=sort_by, query=query
+        user_id=user.id,
+        session=db,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        query=query,
     )
 
 
@@ -56,10 +65,7 @@ async def list_files(
     "/",
     response_model=UserFileList,
     status_code=status.HTTP_200_OK,
-    operation_id="filesDeleteMany",
-    responses={
-        200: {"model": UserFileList},
-    },
+    operation_id="fileDeleteMany",
 )
 async def delete_man_files(
     user: AuthedUserDep,
@@ -78,12 +84,6 @@ async def delete_man_files(
     response_model=UserFile,
     status_code=status.HTTP_200_OK,
     operation_id="fileGetFileInfo",
-    responses={
-        200: {"model": UserFile},
-        401: {"model": ErrorDetail},
-        400: {"model": ErrorDetail},
-        404: {"model": ErrorDetail},
-    },
 )
 async def get_file_info(
     user: AuthedUserDep,
@@ -100,73 +100,144 @@ async def get_file_info(
 @file_router.delete(
     "/{filename}",
     response_model=UserFile,
+    status_code=status.HTTP_200_OK,
     operation_id="fileDelete",
-    responses={401: {"model": ErrorDetail}, 404: {"model": ErrorDetail}},
 )
-async def delete_file(filename: str, user: AuthedUserDep, db: DBSessionDep) -> UserFile:
-    return await file_service.delete_user_file(user_id=user.id, filename=filename, session=db)
+async def delete_file(
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> UserFile:
+    return await file_service.delete_user_file(
+        user_id=user.id,
+        filename=filename,
+        session=db,
+    )
 
 
-@file_router.get("/{filename}/knowledge", response_model=FileKnowledgeArtifact, operation_id="fileKnowledgeGetStatus")
-async def get_file_knowledge_status(filename: str, user: AuthedUserDep, db: DBSessionDep) -> FileKnowledgeArtifact:
-    return await file_service.get_file_knowledge_status(user_id=user.id, filename=filename, session=db)
+@file_router.get(
+    "/{filename}/knowledge",
+    response_model=FileKnowledgeArtifact,
+    status_code=status.HTTP_200_OK,
+    operation_id="fileKnowledgeGetStatus",
+)
+async def get_file_knowledge_status(
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> FileKnowledgeArtifact:
+    return await file_service.get_file_knowledge_status(
+        user_id=user.id,
+        filename=filename,
+        session=db,
+    )
 
 
 @file_router.post(
-    "/{filename}/knowledge/retry", response_model=FileKnowledgeArtifact, operation_id="fileKnowledgeRetry"
+    "/{filename}/knowledge/retry",
+    response_model=FileKnowledgeArtifact,
+    status_code=status.HTTP_200_OK,
+    operation_id="fileKnowledgeRetry",
 )
 async def retry_file_knowledge_processing(
-    filename: str, user: AuthedUserDep, db: DBSessionDep
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
 ) -> FileKnowledgeArtifact:
-    return await file_service.retry_file_knowledge_processing(user_id=user.id, filename=filename, session=db)
+    return await file_service.retry_file_knowledge_processing(
+        user_id=user.id,
+        filename=filename,
+        session=db,
+    )
 
 
 @file_router.post(
-    "/{filename}/knowledge/cancel", response_model=FileKnowledgeArtifact, operation_id="fileKnowledgeCancel"
+    "/{filename}/knowledge/cancel",
+    response_model=FileKnowledgeArtifact,
+    status_code=status.HTTP_200_OK,
+    operation_id="fileKnowledgeCancel",
 )
 async def cancel_file_knowledge_processing(
-    filename: str, user: AuthedUserDep, db: DBSessionDep
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
 ) -> FileKnowledgeArtifact:
-    return await file_service.cancel_file_knowledge_processing(user_id=user.id, filename=filename, session=db)
+    return await file_service.cancel_file_knowledge_processing(
+        user_id=user.id,
+        filename=filename,
+        session=db,
+    )
 
 
 @file_router.post(
     "/{filename}/knowledge/caption/regenerate",
     response_model=FileKnowledgeArtifact,
+    status_code=status.HTTP_200_OK,
     operation_id="fileCaptionRegenerate",
 )
-async def regenerate_file_caption(filename: str, user: AuthedUserDep, db: DBSessionDep) -> FileKnowledgeArtifact:
-    return await file_service.regenerate_file_caption(user_id=user.id, filename=filename, session=db)
+async def regenerate_file_caption(
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> FileKnowledgeArtifact:
+    return await file_service.regenerate_file_caption(
+        user_id=user.id,
+        filename=filename,
+        session=db,
+    )
 
 
 @file_router.delete(
-    "/{filename}/knowledge/caption", response_model=FileKnowledgeArtifact, operation_id="fileCaptionClear"
+    "/{filename}/knowledge/caption",
+    response_model=FileKnowledgeArtifact,
+    status_code=status.HTTP_200_OK,
+    operation_id="fileCaptionClear",
 )
-async def clear_file_caption(filename: str, user: AuthedUserDep, db: DBSessionDep) -> FileKnowledgeArtifact:
-    return await file_service.clear_file_caption(user_id=user.id, filename=filename, session=db)
-
-
-@file_router.put("/{filename}/knowledge/caption", response_model=FileKnowledgeArtifact, operation_id="fileCaptionEdit")
-async def edit_file_caption(
-    filename: str, payload: FileCaptionEdit, user: AuthedUserDep, db: DBSessionDep
+async def clear_file_caption(
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
 ) -> FileKnowledgeArtifact:
-    return await file_service.edit_file_caption(user_id=user.id, filename=filename, text=payload.text, session=db)
+    return await file_service.clear_file_caption(
+        user_id=user.id,
+        filename=filename,
+        session=db,
+    )
+
+
+@file_router.put(
+    "/{filename}/knowledge/caption",
+    response_model=FileKnowledgeArtifact,
+    status_code=status.HTTP_200_OK,
+    operation_id="fileCaptionEdit",
+)
+async def edit_file_caption(
+    filename: str,
+    payload: FileCaptionEdit,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> FileKnowledgeArtifact:
+    return await file_service.edit_file_caption(
+        user_id=user.id,
+        filename=filename,
+        text=payload.text,
+        session=db,
+    )
 
 
 @file_router.get(
     "/{filename}",
     response_class=FileResponse,
     status_code=status.HTTP_200_OK,
-    operation_id="getFile",
-    responses={
-        200: {
-            "description": "Returns the user's file",
-            "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}},
-        },
-        401: {"model": ErrorDetail},
-        400: {"model": ErrorDetail},
-        404: {"model": ErrorDetail},
-    },
+    operation_id="fileGetOne",
 )
-async def get_file(user: AuthedUserDep, filename: str):
-    return file_service.get_user_file(user_id=user.id, filename=filename)
+async def get_file(
+    user: AuthedUserDep,
+    filename: str,
+    db: DBSessionDep,
+):
+    return file_service.get_user_file(
+        user_id=user.id,
+        filename=filename,
+        session=db,
+    )

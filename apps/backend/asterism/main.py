@@ -21,7 +21,7 @@ from asterism.domains.chat.router import chat_router
 from asterism.domains.components.router import components_router
 from asterism.domains.files.router import file_router
 from asterism.domains.folders.router import folder_router
-from asterism.domains.knowledge.router import knowledge_router
+from asterism.domains.knowledge_base.router import knowledge_router
 from asterism.domains.settings.settings_router import settings_router
 from asterism.domains.tools.router import tools_router
 from asterism.domains.user.router import user_router
@@ -49,9 +49,7 @@ def openapi_schema():
     )
 
     if "ErrorDetail" not in openapi_schema["components"]["schemas"]:
-        openapi_schema["components"]["schemas"]["ErrorDetail"] = (
-            ErrorDetail.model_json_schema()
-        )
+        openapi_schema["components"]["schemas"]["ErrorDetail"] = ErrorDetail.model_json_schema()
 
     for path, methods in openapi_schema["paths"].items():
         for method, operation in methods.items():
@@ -62,8 +60,8 @@ def openapi_schema():
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/ErrorDetail",
-                            }
-                        }
+                            },
+                        },
                     },
                 }
 

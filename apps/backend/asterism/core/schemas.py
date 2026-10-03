@@ -36,7 +36,4 @@ class Document(BaseModel):
         return str(self.metadata.get("source", self.id))
 
     def to_llm_context(self):
-        return (
-            f"source:{self.source}\n"
-            f"content:{self.content[: config.max_chars_for_retrieval]}"
-        )
+        return f"source:{self.source}\ncontent:{self.content[: config.max_chars_for_retrieval]}"

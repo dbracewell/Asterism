@@ -4,15 +4,11 @@ from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.base import Base
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.service import get_agent_profile
+from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
 from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.knowledge.models import (
-    FileKnowledgeArtifactModel,
-    FileKnowledgeArtifactStatus,
-    KnowledgeBaseFileModel,
-    KnowledgeBaseModel,
-)
-from asterism.domains.knowledge.schemas import KnowledgeBaseAssignmentReplace
-from asterism.domains.knowledge.service import (
+from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel, KnowledgeBaseModel
+from asterism.domains.knowledge_base.schemas import KnowledgeBaseAssignmentReplace
+from asterism.domains.knowledge_base.service import (
     get_agent_knowledge_base_assignments,
     replace_agent_knowledge_base_assignments,
 )
@@ -51,7 +47,7 @@ async def _ready_base(session, user_id: str, name: str) -> KnowledgeBaseModel:
     session.add_all(
         [
             KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=file.id, position=1),
-            FileKnowledgeArtifactModel(
+            FileExtractionModel(
                 user_id=user_id,
                 file_id=file.id,
                 generation=1,
@@ -60,7 +56,7 @@ async def _ready_base(session, user_id: str, name: str) -> KnowledgeBaseModel:
                 status=FileKnowledgeArtifactStatus.READY,
                 is_current=True,
             ),
-        ]
+        ],
     )
     await session.commit()
     return base

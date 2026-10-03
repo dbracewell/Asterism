@@ -11,7 +11,7 @@ Set the printed SHA-256 as LOCAL_CAPTION_MODEL_BUNDLE_SHA256.
 import argparse
 from pathlib import Path
 
-from asterism.domains.knowledge.caption_download import write_manifest
+from asterism.domains.knowledge_base.caption_download import write_manifest
 
 
 def arguments() -> argparse.Namespace:

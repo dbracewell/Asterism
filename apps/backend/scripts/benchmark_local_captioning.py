@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from asterism.domains.knowledge.captioning import CaptionRequest, LocalSmolVlm2CaptionProvider
+from asterism.domains.extraction.captioning import CaptionRequest, LocalSmolVlm2CaptionProvider
 from PIL import Image
 
 
@@ -56,7 +56,7 @@ async def benchmark(model_root: Path, bundle_sha256: str, *, concurrency: int) -
         image_path = Path(directory) / "fixture.png"
         Image.new("RGB", (224, 224), "red").save(image_path)
         request = CaptionRequest(
-            revision_id=uuid4(), image_path=image_path, max_image_bytes=1024 * 1024, max_caption_chars=2_000
+            revision_id=uuid4(), image_path=image_path, max_image_bytes=1024 * 1024, max_caption_chars=2_000,
         )
         started = time.perf_counter()
         await provider.initialize()

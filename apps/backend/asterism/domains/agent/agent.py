@@ -137,7 +137,7 @@ class Agent:
                     continue
 
                 agent_info.append(
-                    f"- id: {profile.id} (name: {profile.name}) - {profile.description}"  # noqa: E501
+                    f"- id: {profile.id} (name: {profile.name}) - {profile.description}",  # noqa: E501
                 )
 
             base_prompt = (
@@ -212,12 +212,12 @@ class Agent:
                             LLMMessage.assistant(
                                 content=event.content,
                                 tool_calls=event.tool_calls,
-                            )
+                            ),
                         )
                         self.logger.debug(
                             f"Event(type={event.type}, "
                             f"content={event.content[:100]} "
-                            f"tools={[f'{tc.function.name}({tc.function.arguments})' for tc in event.tool_calls or []]} "  # noqa: E501
+                            f"tools={[f'{tc.function.name}({tc.function.arguments})' for tc in event.tool_calls or []]} ",  # noqa: E501
                         )
 
                         tool_results: list[ToolResult] = []
@@ -290,7 +290,7 @@ class Agent:
                                 self.logger.debug(
                                     f"{response.tool_call.function.name}("
                                     f"{response.tool_call.function.arguments})"
-                                    f"=>'{re.sub(r'\s+', ' ', response.content[:64])}...'"  # noqa: E501
+                                    f"=>'{re.sub(r'\s+', ' ', response.content[:64])}...'",  # noqa: E501
                                 )
                                 messages.append(LLMMessage.tool_call_result(response))
                                 tool_results.append(response)

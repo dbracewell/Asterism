@@ -13,7 +13,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from asterism.domains.knowledge.embeddings import OnnxClipEmbeddingProvider
+from asterism.domains.extraction.embeddings import OnnxClipEmbeddingProvider
 from PIL import Image
 
 ARTIFACT_SHA256 = "0898a3facfdb27f0a041e57649b4989cfd094e4a0040d6ae75ed69917dfc7328"

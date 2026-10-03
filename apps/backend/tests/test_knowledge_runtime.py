@@ -4,7 +4,7 @@ from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.schemas import AgentProfile, KnowledgeBaseAssignmentSummary
 from asterism.domains.chat.schemas import Chat, ChatInfo
-from asterism.domains.knowledge.search_tool import _bounded_excerpt
+from asterism.domains.tools.builtin.search_knowledge import _bounded_excerpt
 
 
 def _agent(knowledge_bases: list[KnowledgeBaseAssignmentSummary]) -> Agent:

@@ -1,7 +1,7 @@
 import re
 import uuid
 
-from sqlalchemy import and_, delete, desc, select, text, update
+from sqlalchemy import and_, delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import (

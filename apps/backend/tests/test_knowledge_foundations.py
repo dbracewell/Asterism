@@ -1,14 +1,13 @@
-import hashlib
 from pathlib import Path
 
 import pytest
 from asterism.core.config import Config, ConfigValidationError
 from asterism.db.base import Base
+from asterism.domains.extraction.embedding import EmbeddingProviderError, OnnxClipEmbeddingProvider, embedding_model
+from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
+from asterism.domains.extraction.schemas import FileKnowledgeArtifact
+from asterism.domains.extraction.vector_store import LanceDbVectorStore, VectorChunk
 from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.knowledge.embeddings import EmbeddingProviderError, OnnxClipEmbeddingProvider
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
-from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
-from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -22,7 +21,7 @@ async def test_lancedb_filters_by_owner_and_allowed_file_and_deletes(tmp_path: P
             VectorChunk("one", "user-a", "file-a", 1, 0, "private", [1.0, 0.0]),
             VectorChunk("two", "user-a", "file-b", 1, 0, "other file", [0.9, 0.1]),
             VectorChunk("three", "user-b", "file-a", 1, 0, "other user", [1.0, 0.0]),
-        ]
+        ],
     )
 
     results = await store.search(
@@ -69,7 +68,7 @@ async def test_knowledge_schema_is_created_from_models(tmp_path: Path):
     assert {
         "knowledge_bases",
         "agent_knowledge_base_assignments",
-        "file_knowledge_artifacts",
+        "file_extractions",
         "knowledge_base_files",
     } <= tables
     assert "knowledge_documents" not in tables
@@ -101,7 +100,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
         await session.flush()
         session.add_all(
             [
-                FileKnowledgeArtifactModel(
+                FileExtractionModel(
                     user_id="user-a",
                     file_id=user_file.id,
                     generation=1,
@@ -110,7 +109,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     status=FileKnowledgeArtifactStatus.READY,
                     is_current=True,
                 ),
-                FileKnowledgeArtifactModel(
+                FileExtractionModel(
                     user_id="user-a",
                     file_id=user_file.id,
                     generation=2,
@@ -119,14 +118,14 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     status=FileKnowledgeArtifactStatus.PROCESSING,
                     is_current=False,
                 ),
-            ]
+            ],
         )
         await session.commit()
         artifact = await session.scalar(
-            select(FileKnowledgeArtifactModel).where(
-                FileKnowledgeArtifactModel.file_id == user_file.id,
-                FileKnowledgeArtifactModel.generation == 1,
-            )
+            select(FileExtractionModel).where(
+                FileExtractionModel.file_id == user_file.id,
+                FileExtractionModel.generation == 1,
+            ),
         )
         assert artifact is not None
         assert FileKnowledgeArtifact.model_validate(artifact).caption.model_dump() == {
@@ -140,7 +139,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
             "accepted_at": None,
         }
 
-        duplicate_current = FileKnowledgeArtifactModel(
+        duplicate_current = FileExtractionModel(
             user_id="user-a",
             file_id=user_file.id,
             generation=3,
@@ -158,25 +157,11 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
 def test_embedding_artifact_requires_expected_checksum_and_size(tmp_path: Path):
     artifact = tmp_path / "model.onnx"
     artifact.write_bytes(b"known-artifact")
-    provider = OnnxClipEmbeddingProvider(
-        tmp_path,
-        artifact_sha256=hashlib.sha256(b"different").hexdigest(),
-        artifact_size_bytes=len(b"known-artifact"),
-    )
-    with pytest.raises(EmbeddingProviderError, match="checksum"):
-        provider._verify_artifact()
+    provider = OnnxClipEmbeddingProvider(tmp_path, pinned_model=embedding_model)
+    with pytest.raises(EmbeddingProviderError, match="manifest verification"):
+        provider._initialize_sync()
 
 
-def test_knowledge_configuration_rejects_oversize_model(tmp_path: Path):
-    settings = Config(
-        _env_file=None,
-        storage_root=tmp_path,
-        config_profile="development",
-        system_key="not-a-placeholder-secret",
-        knowledge_embedding_model_size_bytes=400 * 1024 * 1024 + 1,
-    )
-    with pytest.raises(ConfigValidationError, match="KNOWLEDGE_EMBEDDING_MODEL_SIZE_BYTES"):
-        settings.validate_runtime()
 
 
 def test_caption_configuration_accepts_unprovisioned_local_mode_and_rejects_invalid_bundle_digest(tmp_path: Path):

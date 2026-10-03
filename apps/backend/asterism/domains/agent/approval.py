@@ -1,22 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Awaitable, Callable, Protocol
+from typing import Awaitable, Callable, Protocol
 
+from asterism.domains.agent.schemas import ToolUseAuthorization as ToolUseAuthorization
+from asterism.domains.agent.user_response_queue import UserResponseQueue
 from asterism.domains.llm.schemas import ToolCall
-
-if TYPE_CHECKING:
-    from asterism.domains.agent.user_response_queue import (
-        UserResponseQueue,
-    )
-
-
-@dataclass
-class ToolUseAuthorization:
-    """Result of a tool-use authorization decision."""
-
-    tool: ToolCall
-    accept: bool
 
 
 class ToolApprovalPolicy(Protocol):
@@ -79,7 +67,7 @@ class InteractiveApprovalPolicy:
     def __init__(
         self,
         on_pending: Callable[
-            [list[ToolCall], UserResponseQueue], Awaitable[None]
+            [list[ToolCall], UserResponseQueue], Awaitable[None],
         ],
     ) -> None:
         self._on_pending = on_pending
@@ -89,10 +77,6 @@ class InteractiveApprovalPolicy:
         tools: list[ToolCall],
         permissions: list[str],
     ) -> list[ToolUseAuthorization]:
-        from asterism.domains.agent.user_response_queue import (
-            UserResponseQueue,
-        )
-
         queue = UserResponseQueue(tools=tools, has_permission=permissions)
 
         # Collect tools that need external approval (pending

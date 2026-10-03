@@ -40,7 +40,7 @@ async def web_search(
         search_results = await web_search_component(ctx.args)
         logger.debug(
             f"provider={provider.name} query={ctx.args.query} "
-            f"results in {len(search_results)} results"
+            f"results in {len(search_results)} results",
         )
         return await _research(search_results)
     except Exception as e:

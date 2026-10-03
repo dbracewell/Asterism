@@ -109,7 +109,7 @@ class ToolRegistry:
                 )
                 for t in self.registry.values()
                 if t.name in app_settings.active_tools
-            ]
+            ],
         )
 
     def tools(self) -> ToolInfoList:
@@ -121,7 +121,7 @@ class ToolRegistry:
                     component_type=t.component_type,
                 )
                 for t in self.registry.values()
-            ]
+            ],
         )
 
     def schemas(
@@ -143,7 +143,7 @@ class ToolRegistry:
 
     @staticmethod
     def _exception_to_tool_result(
-        ex: BaseException, tool_call: ToolCall
+        ex: BaseException, tool_call: ToolCall,
     ) -> ToolResult:
         # Tool results are persisted in JSON columns. Never retain an exception
         # instance here: SQLAlchemy/Pydantic exceptions are not JSON serializable.
@@ -181,7 +181,7 @@ class ToolRegistry:
 
             try:
                 arguments = llm_tool.arg_validator.model_validate(
-                    _parse_tool_call_arguments(tool_call.function.arguments)
+                    _parse_tool_call_arguments(tool_call.function.arguments),
                 )
             except Exception as e:
                 return ToolRegistry._exception_to_tool_result(e, tool_call)

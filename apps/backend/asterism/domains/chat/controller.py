@@ -103,7 +103,7 @@ class ChatController:
                 match cmd.get("type"):
                     case "chat":
                         current_job = self.job.start(
-                            self.orchestrator.handle_new_user_message(cmd.get("message", ""), cmd.get("files", []))
+                            self.orchestrator.handle_new_user_message(cmd.get("message", ""), cmd.get("files", [])),
                         )
                     case "regenerate":
                         current_job = self.job.start(self._regenerate(cmd.get("parent_message_id", "")))
@@ -127,7 +127,7 @@ class ChatController:
             {
                 "type": "regenerate",
                 "parent_id": str(parent_message.id),
-            }
+            },
         )
         await self.orchestrator.handle_regenerate_message(parent_message_index)
 
@@ -164,7 +164,7 @@ class ChatController:
                     {
                         "type": "status",
                         "is_processing": self.job.is_active or self.orchestrator.is_active,
-                    }
+                    },
                 )
         except asyncio.CancelledError:
             pass

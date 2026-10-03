@@ -25,7 +25,7 @@ async def main_agent_session(tmp_path):
                 UserModel(id="user-a"),
                 UserModel(id="user-b"),
                 ApplicationSettingsModel(key="active_tools", value=[]),
-            ]
+            ],
         )
         await session.commit()
         yield session
@@ -49,38 +49,38 @@ async def test_default_must_be_an_owned_main_agent(main_agent_session):
     main = await upsert_agent_profile("user-a", profile("Main"), main_agent_session)
     assert main.tools == ["sub_agent"]
     sub = await upsert_agent_profile(
-        "user-a", profile("Worker", sub_agent=True), main_agent_session
+        "user-a", profile("Worker", sub_agent=True), main_agent_session,
     )
     other = await upsert_agent_profile("user-b", profile("Other"), main_agent_session)
 
     await upsert_user_setting(
-        "user-a", "default_agent_id", str(main.id), main_agent_session
+        "user-a", "default_agent_id", str(main.id), main_agent_session,
     )
     settings = await get_user_settings("user-a", main_agent_session)
     assert settings.default_agent_id == main.id
 
     with pytest.raises(BadDataException, match="sub-agent"):
         await upsert_user_setting(
-            "user-a", "default_agent_id", str(sub.id), main_agent_session
+            "user-a", "default_agent_id", str(sub.id), main_agent_session,
         )
     with pytest.raises(BadDataException, match="main agent UUID"):
         await upsert_user_setting(
-            "user-a", "default_agent_id", "not-a-uuid", main_agent_session
+            "user-a", "default_agent_id", "not-a-uuid", main_agent_session,
         )
     with pytest.raises(BadDataException):
         await upsert_user_setting(
-            "user-a", "default_agent_id", str(other.id), main_agent_session
+            "user-a", "default_agent_id", str(other.id), main_agent_session,
         )
 
 
 @pytest.mark.asyncio
 async def test_main_agent_delete_and_conversion_preserve_default(main_agent_session):
     default = await upsert_agent_profile(
-        "user-a", profile("Default"), main_agent_session
+        "user-a", profile("Default"), main_agent_session,
     )
     other = await upsert_agent_profile("user-a", profile("Other"), main_agent_session)
     await upsert_user_setting(
-        "user-a", "default_agent_id", str(default.id), main_agent_session
+        "user-a", "default_agent_id", str(default.id), main_agent_session,
     )
 
     with pytest.raises(BadDataException, match="Select another default"):

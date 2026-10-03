@@ -202,7 +202,7 @@ class OpenAIProviderDiscovery:
                     supports_vision=supports_vision,
                     context_window_source=context_source,
                     vision_source=vision_source,
-                )
+                ),
             )
 
         merged = merge_discovered_models(
@@ -374,7 +374,7 @@ def merge_discovered_models(
                 "id": existing.id,
                 "provider_id": existing.provider_id,
                 "is_active": existing.is_active,
-            }
+            },
         )
         if existing.context_window_source == ModelCapabilitySource.MANUAL:
             result.context_window = existing.context_window
