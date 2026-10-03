@@ -7,6 +7,7 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, noload, selectinload
 
+from asterism.common.collection_utils import search
 from asterism.common.log import get_logger
 from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, NotFoundException
@@ -89,6 +90,11 @@ async def get_user_settings(
             user_id=user_id,
             session=session,
         )
+        for profile in user_agents.agents.values():
+            contains = search(user_settings.models, lambda m: m.id == profile.model_id)
+            if not contains:
+                profile.model_id = None
+
         user_settings.agents = user_agents.agents
 
     # settings_cache.set_user_settings(user_id, user_settings)

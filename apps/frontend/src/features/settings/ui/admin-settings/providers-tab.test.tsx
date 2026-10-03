@@ -8,6 +8,7 @@ import { OPENAI_BASE_URL, providerSchema, ProvidersTab } from "./providers-tab";
 
 const mocks = vi.hoisted(() => ({
   listModels: vi.fn(),
+  getSearchParam: vi.fn(),
   updateModel: vi.fn(),
   updateProviderSettings: vi.fn(),
 }));
@@ -54,7 +55,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 
 vi.mock("@/hooks/use-read-write-search-params", () => ({
   useReadWriteSearchParams: () => ({
-    getSearchParam: () => undefined,
+    getSearchParam: mocks.getSearchParam,
     setSearchParams: vi.fn(),
   }),
 }));
@@ -84,6 +85,8 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 describe("provider model browser", () => {
   beforeEach(() => {
+    mocks.getSearchParam.mockReset();
+    mocks.listModels.mockReset();
     mocks.listModels.mockResolvedValue({ models: [], total: 0 });
     mocks.updateModel.mockReset();
     mocks.updateProviderSettings.mockReset();
@@ -143,10 +146,10 @@ describe("provider model browser", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Unselect All" }));
-    await waitFor(() =>
-      expect(mocks.updateModel.mock.calls).toHaveLength(3),
-    );
-    expect(mocks.updateModel.mock.calls.slice(1).map(([request]) => request)).toEqual(
+    await waitFor(() => expect(mocks.updateModel.mock.calls).toHaveLength(3));
+    expect(
+      mocks.updateModel.mock.calls.slice(1).map(([request]) => request),
+    ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           body: expect.objectContaining({ is_active: false }),
@@ -204,9 +207,7 @@ describe("provider model browser", () => {
       expect(mocks.updateProviderSettings.mock.calls[0]?.[0]).toEqual({
         body: {
           draft_model_id: null,
-          llm_providers: [
-            expect.objectContaining({ id: retainedProviderId }),
-          ],
+          llm_providers: [expect.objectContaining({ id: retainedProviderId })],
         },
       }),
     );
@@ -231,6 +232,32 @@ describe("provider model browser", () => {
         base_url: "https://example.test/v1",
       }).success,
     ).toBe(false);
+  });
+
+  it("opens and loads the provider selected by the URL without a click", async () => {
+    mocks.getSearchParam.mockImplementation((name: string) =>
+      name === "provider" ? settings.llm_providers![0].id : undefined,
+    );
+    mocks.listModels.mockResolvedValue({
+      models: [
+        {
+          id: "30000000-0000-4000-8000-000000000001",
+          name: "URL-selected model",
+          provider_id: settings.llm_providers![0].id,
+          is_active: true,
+          context_window: null,
+          supports_vision: null,
+          context_window_source: "unknown",
+          vision_source: "unknown",
+        },
+      ],
+      total: 1,
+      next_cursor: null,
+    });
+    render(<ProvidersTab appSettings={settings} />, { wrapper: Wrapper });
+    expect(screen.getByLabelText("Search Large catalog models")).toBeVisible();
+    expect(await screen.findByText("URL-selected model")).toBeVisible();
+    expect(mocks.listModels).toHaveBeenCalledTimes(1);
   });
 
   it("defers a large catalog until the administrator opens it", () => {

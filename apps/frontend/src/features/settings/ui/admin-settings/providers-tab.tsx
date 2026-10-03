@@ -123,10 +123,10 @@ function ModelRow({
   const update = useMutation({
     ...appProviderModelUpdateMutation({ client }),
     onSuccess: () => {
-      router.refresh();
       router.replace(
         `${pathname}?t=admin&setting=providers&provider=${providerId}&cursor=${model.id}`,
       );
+      router.refresh();
       toast.success(`Saved ${model.name}`);
     },
     onError: () => toast.error(`Could not save ${model.name}.`),
@@ -256,7 +256,10 @@ function ModelCatalog({
   const { getSearchParam, setSearchParams } = useReadWriteSearchParams();
   const searchProviderId = getSearchParam("provider");
   const queryClient = useQueryClient();
-  const [expanded, setExpanded] = useState(provider.id === searchProviderId);
+  const [expanded, setExpanded] = useState(
+    provider.id === searchProviderId ||
+      getSearchParam("provider") === provider.id,
+  );
   const [searchInput, setSearchInput] = useState("");
   const [isUpdatingAll, setIsUpdatingAll] = useState(false);
   const [models, setModels] = useState<Llm[]>([]);
@@ -265,6 +268,15 @@ function ModelCatalog({
   const [previousCursors, setPreviousCursors] = useState<Array<string | null>>(
     [],
   );
+
+  useEffect(() => {
+    if (provider.id === searchProviderId) {
+      setExpanded(true);
+    }
+    if (getSearchParam("provider") === provider.id) {
+      setExpanded(true);
+    }
+  }, [provider.id, searchProviderId, getSearchParam]);
 
   const catalog = useQuery({
     ...appProviderModelsListOptions({
@@ -516,7 +528,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
         "Model discovery failed. Check the provider connection and try again.",
       ),
   });
-  
+
   useEffect(() => {
     reset({
       llm_providers: appSettings.llm_providers ?? [],

@@ -88,6 +88,10 @@ async def initialize_knowledge_runtime() -> None:
     await vector_store.initialize()
     await recover_interrupted()
 
+    if config.skip_knowledge_model_provisioning:
+        logger.info("Knowledge model provisioning disabled by runtime configuration")
+        return
+
     embedding_download_service.on_bundle_ready = lambda _: resume_ingestion_jobs()
     if embedding_download_service.is_ready():
         await resume_ingestion_jobs()

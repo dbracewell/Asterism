@@ -48,7 +48,7 @@ test("shows canonical processing state and confirms the full impact before file 
   page,
 }) => {
   let deleted = false;
-  await page.route("**/api/py/files**", async (route) => {
+  await page.route(/\/api\/py\/files\/.*/, async (route) => {
     const request = route.request();
     const method = request.method();
     const url = request.url();
@@ -76,7 +76,8 @@ test("shows canonical processing state and confirms the full impact before file 
   });
 
   await page.goto("/e2e/file-manager");
-  await expect(page.getByText("diagram.png", { exact: true })).toBeVisible();
+  const diagram = page.getByRole("button", { name: /diagram\.png/ });
+  await expect(diagram).toBeVisible();
   await expect(page.getByText("Knowledge: ready")).toBeVisible();
   await page.getByRole("button", { name: "Edit caption", exact: true }).click();
   await expect(
@@ -87,7 +88,7 @@ test("shows canonical processing state and confirms the full impact before file 
   await page.getByLabel("Caption text").fill("An edited diagram");
   await page.getByRole("button", { name: "Save caption" }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await page.getByText("diagram.png", { exact: true }).click();
+  await diagram.click();
   await page.getByRole("button", { name: "Delete selected files" }).click();
   await expect(page.getByText("Delete selected files?")).toBeVisible();
   await expect(

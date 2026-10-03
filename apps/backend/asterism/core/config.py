@@ -90,6 +90,9 @@ class Config(BaseSettings):
     max_concurrent_knowledge_embeddings: int = 2
     """Maximum simultaneous local ONNX embedding inferences."""
 
+    skip_knowledge_model_provisioning: bool = False
+    """Disable automatic embedding-model provisioning for isolated test runtimes."""
+
     max_concurrent_knowledge_vector_operations: int = 2
     """Maximum simultaneous blocking LanceDB operations."""
 

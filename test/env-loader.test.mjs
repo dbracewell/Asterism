@@ -165,6 +165,7 @@ test("frontend and backend scopes remove unrelated known settings", () => {
     ADMIN_PASSPHRASE: "admin",
     SYSTEM_KEY: "system",
     DB_URL: "sqlite",
+    SKIP_KNOWLEDGE_MODEL_PROVISIONING: "true",
     EXTRA_PROVIDER_KEY: "provider",
   };
   const backend = environmentForScope(environment, "backend");
@@ -172,10 +173,12 @@ test("frontend and backend scopes remove unrelated known settings", () => {
   assert.equal(backend.ADMIN_PASSPHRASE, undefined);
   assert.equal(backend.SYSTEM_KEY, "system");
   assert.equal(backend.DB_URL, "sqlite");
+  assert.equal(backend.SKIP_KNOWLEDGE_MODEL_PROVISIONING, "true");
   assert.equal(backend.EXTRA_PROVIDER_KEY, "provider");
   const frontend = environmentForScope(environment, "frontend");
   assert.equal(frontend.DB_URL, undefined);
   assert.equal(frontend.BETTER_AUTH_SECRET, "auth");
+  assert.equal(frontend.SKIP_KNOWLEDGE_MODEL_PROVISIONING, undefined);
 });
 
 function copyLauncher(root) {
@@ -272,4 +275,39 @@ test("CLI forwards termination and does not orphan its child", async () => {
   );
   assert.equal(code, 128 + 15);
   assert.throws(() => process.kill(childPid, 0), { code: "ESRCH" });
+});
+
+test("isolated backend initialization does not require or read dotenv", () => {
+  const root = fixture();
+  const launcher = copyLauncher(root);
+  const storage = join(root, "storage");
+  mkdirSync(storage);
+  const args = [
+    launcher,
+    "--env",
+    "none",
+    "--scope",
+    "backend",
+    "--profile",
+    "backend-init",
+    "--",
+    process.execPath,
+    "-e",
+    "if (process.env.STORAGE_ROOT !== process.argv[1] || process.env.ASTERISM_CONFIG_PROFILE !== 'backend-init') process.exit(1)",
+    storage,
+  ];
+  const options = {
+    cwd: join(root, "apps", "backend"),
+    encoding: "utf8",
+    env: {
+      PATH: process.env.PATH,
+      SYSTEM_KEY: "test-isolated-system-key-0123456789abcdef",
+      STORAGE_ROOT: storage,
+    },
+  };
+  const missingDotenv = spawnSync(process.execPath, args, options);
+  assert.equal(missingDotenv.status, 0, missingDotenv.stderr);
+  writeFileSync(join(root, ".env"), "INVALID DOTENV\n");
+  const malformedDotenv = spawnSync(process.execPath, args, options);
+  assert.equal(malformedDotenv.status, 0, malformedDotenv.stderr);
 });
