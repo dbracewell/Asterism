@@ -581,3 +581,12 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
   - [x] Verify backend/frontend lint, types, tests, and production build.
   - [-] Isolated E2E could not start because pnpm identity verification requires unavailable registry access.
   - [ ] Document results and obtain user confirmation before merge.
+
+## CI repair — Isolated E2E initialization
+
+- [~] CI-1 — Initialize the isolated backend without a root dotenv file (branch: `fix/isolated-e2e-environment`)
+  - [x] Use the generated process environment with backend-init validation.
+  - [x] Add coverage for missing and malformed root dotenv files.
+  - [x] Configuration tests: 29 passed; workspace checks and diff checks passed.
+  - [-] Isolated runner completed database initialization; backend startup timed out locally before browser tests.
+  - [ ] Obtain user confirmation before merge.

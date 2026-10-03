@@ -24,7 +24,8 @@ const environment = {
 
 const backendHealthUrl = "http://127.0.0.1:8000/api/py/openapi.json";
 
-const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const delay = (milliseconds) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 async function assertBackendPortIsAvailable() {
   try {
@@ -47,10 +48,14 @@ async function waitForBackend(backend) {
   while (Date.now() < deadline) {
     if (startupError) throw startupError;
     if (backend.exitCode !== null) {
-      throw new Error(`Isolated backend exited before becoming ready (exit ${backend.exitCode})`);
+      throw new Error(
+        `Isolated backend exited before becoming ready (exit ${backend.exitCode})`,
+      );
     }
     try {
-      const response = await fetch(backendHealthUrl, { signal: AbortSignal.timeout(1_000) });
+      const response = await fetch(backendHealthUrl, {
+        signal: AbortSignal.timeout(1_000),
+      });
       if (response.ok) return;
     } catch {
       // The application creates its schema during startup; retry until ready.
@@ -99,9 +104,27 @@ try {
   }
 
   const backendInitialization = spawnSync(
-    "pnpm",
-    ["--filter", "@asterism/backend", "init:db"],
-    { env: environment, stdio: "inherit" },
+    process.execPath,
+    [
+      "../../scripts/run-with-env.mjs",
+      "--env",
+      "none",
+      "--scope",
+      "backend",
+      "--profile",
+      "backend-init",
+      "--",
+      "uv",
+      "run",
+      "python",
+      "-m",
+      "asterism.db.init_db",
+    ],
+    {
+      cwd: join(process.cwd(), "apps", "backend"),
+      env: environment,
+      stdio: "inherit",
+    },
   );
   if (backendInitialization.error) throw backendInitialization.error;
   if (backendInitialization.status !== 0) {
