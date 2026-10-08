@@ -127,6 +127,7 @@ class UserSettings(BaseModel):
     default_model_id: uuid.UUID | None = Field(default=None)
     agents: dict[uuid.UUID, AgentProfile] = Field(default_factory=dict)
     default_agent_id: uuid.UUID | None = Field(default=None)
+    show_thinking: bool = Field(default=True)
 
     @property
     def default_agent_profile(self) -> AgentProfile:

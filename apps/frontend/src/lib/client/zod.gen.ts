@@ -237,7 +237,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('94a21c80-b668-4c8e-8fd0-20017635db3a'),
+    id: z.uuid().optional().default('3e23bb88-f3f3-42f9-a401-b9cb0cff74cb'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -860,7 +860,8 @@ export const zUserSettings = z.object({
     models: z.array(zLlmDisplayInfo).optional(),
     default_model_id: z.uuid().nullish(),
     agents: z.record(z.string(), zAgentProfile).optional(),
-    default_agent_id: z.uuid().nullish()
+    default_agent_id: z.uuid().nullish(),
+    show_thinking: z.boolean().optional().default(true)
 });
 
 /**

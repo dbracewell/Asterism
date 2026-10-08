@@ -5,7 +5,7 @@
   "main": "index.js",
   "packageManager": "pnpm@11.17.0",
   "scripts": {
-    "dev": "node scripts/run-with-env.mjs --env required --scope all --profile development -- mprocs --config mprocs.yaml",
+    "dev": "node scripts/run-with-env.mjs --env required --scope all --profile development -- dekit mprocs --config mprocs.yaml",
     "build": "pnpm --filter @asterism/frontend build",
     "lint": "pnpm --filter @asterism/backend lint && pnpm --filter @asterism/frontend lint",
     "test": "pnpm --filter @asterism/backend test && pnpm --filter @asterism/frontend test && pnpm test:config",

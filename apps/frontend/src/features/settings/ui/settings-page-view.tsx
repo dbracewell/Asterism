@@ -24,7 +24,7 @@ export const SettingsPageView = () => {
       onValueChange={(value) => {
         setSearchParams({ t: value, setting: undefined });
       }}
-      className="flex min-h-0 flex-1 flex-col overflow-hidden! pt-12"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden! p-2"
     >
       <TabsList>
         <TabsTrigger value="user">User Settings</TabsTrigger>

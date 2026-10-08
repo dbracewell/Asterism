@@ -15,11 +15,13 @@ interface ThemeSelectorProps {
   currentTheme?: string;
   onChange?: (theme: string) => void;
   updateTheme?: boolean;
+  disabled?: boolean;
 }
 
 export const ThemeSelector = ({
   currentTheme,
   onChange,
+  disabled,
 }: ThemeSelectorProps) => {
   const { lightThemes, darkThemes } = useTheme();
 
@@ -29,6 +31,7 @@ export const ThemeSelector = ({
     <div className="flex items-center gap-2">
       <Select
         defaultValue={value}
+        disabled={disabled}
         onValueChange={(name) => {
           onChange?.(name);
         }}

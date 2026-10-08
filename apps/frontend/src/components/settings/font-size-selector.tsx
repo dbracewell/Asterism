@@ -12,11 +12,13 @@ import { useTheme } from "@/features/theme/components/theme-context";
 interface FontSizeSelectorProps {
   currentSize?: string;
   onChange?: (size: string) => void;
+  disabled?: boolean;
 }
 
 export const FontSizeSelector = ({
   currentSize,
   onChange,
+  disabled,
 }: FontSizeSelectorProps) => {
   const { setFontSize } = useTheme();
 
@@ -25,6 +27,7 @@ export const FontSizeSelector = ({
   return (
     <Select
       defaultValue={value}
+      disabled={disabled}
       onValueChange={(size) => {
         setFontSize(size);
         onChange?.(size);

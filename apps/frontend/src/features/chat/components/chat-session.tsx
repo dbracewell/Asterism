@@ -452,6 +452,8 @@ const MessageItem = React.memo(
     defaultShowThinking?: boolean;
     sendJsonMessage: SendJsonMessage;
   }) => {
+    const user = useUser();
+    const userShowThinking = user.settings.show_thinking ?? false;
     const [showThinking, setShowThinking] = React.useState(defaultShowThinking);
     const thinkingRef = React.useRef<HTMLParagraphElement>(null);
     React.useEffect(() => {
@@ -478,40 +480,42 @@ const MessageItem = React.memo(
           !!message.tool_calls && "mb-0!",
         )}
       >
-        <details
-          open={showThinking}
-          onClick={(e) => {
-            e.preventDefault();
-            setShowThinking((prev) => !prev);
-          }}
-          className={cn(
-            "text-muted-foreground bg-muted rounded-xl p-2 text-sm",
-            !message.thinking && "hidden",
-          )}
-        >
-          <summary>
-            Thinking{" "}
-            {message.tool_calls && (
-              <>({formatPlural(message.tool_calls.length, "tool call")})</>
+        {userShowThinking && (
+          <details
+            open={showThinking}
+            onClick={(e) => {
+              e.preventDefault();
+              setShowThinking((prev) => !prev);
+            }}
+            className={cn(
+              "text-muted-foreground bg-muted rounded-xl p-2 text-sm",
+              !message.thinking && "hidden",
             )}
-          </summary>
-          <p
-            ref={thinkingRef}
-            className="max-h-50 overflow-y-auto whitespace-pre-wrap"
-            style={{ overflowAnchor: "auto" }}
           >
-            {message.thinking ?? ""}
-          </p>
-          {message.tool_calls && message.tool_calls.length > 0 && (
-            <h4 className="mt-0.5 font-bold">Tools</h4>
-          )}
-          {message.tool_calls?.map((tc) => (
-            <div key={tc.id}>
-              • {tc.function.name}{" "}
-              {tc.function.arguments !== "{}" && tc.function.arguments}
-            </div>
-          ))}
-        </details>
+            <summary>
+              Thinking{" "}
+              {message.tool_calls && (
+                <>({formatPlural(message.tool_calls.length, "tool call")})</>
+              )}
+            </summary>
+            <p
+              ref={thinkingRef}
+              className="max-h-50 overflow-y-auto whitespace-pre-wrap"
+              style={{ overflowAnchor: "auto" }}
+            >
+              {message.thinking ?? ""}
+            </p>
+            {message.tool_calls && message.tool_calls.length > 0 && (
+              <h4 className="mt-0.5 font-bold">Tools</h4>
+            )}
+            {message.tool_calls?.map((tc) => (
+              <div key={tc.id}>
+                • {tc.function.name}{" "}
+                {tc.function.arguments !== "{}" && tc.function.arguments}
+              </div>
+            ))}
+          </details>
+        )}
         {message.needsPermission &&
           message.needsPermission.map((t) => (
             <div key={t.id}>

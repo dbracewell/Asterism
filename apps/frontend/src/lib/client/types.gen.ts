@@ -1716,6 +1716,10 @@ export type UserSettings = {
      * Default Agent Id
      */
     default_agent_id?: string | null;
+    /**
+     * Show Thinking
+     */
+    show_thinking?: boolean;
 };
 
 /**

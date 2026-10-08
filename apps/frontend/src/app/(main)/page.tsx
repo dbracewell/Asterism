@@ -12,7 +12,6 @@ import { AgentProfile } from "@/lib/client";
 import { BotIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import "react-circular-progressbar/dist/styles.css";
 
 export default function AppPage() {
   const user = useUser();
