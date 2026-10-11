@@ -149,13 +149,6 @@ export const zErrorDetail = z.object({
 });
 
 /**
- * FileCaptionEdit
- */
-export const zFileCaptionEdit = z.object({
-    text: z.string().min(1).max(10000)
-});
-
-/**
  * FileContentStatus
  */
 export const zFileContentStatus = z.enum([
@@ -237,7 +230,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('3e23bb88-f3f3-42f9-a401-b9cb0cff74cb'),
+    id: z.uuid().optional().default('5dcde4b2-b67e-45d9-917b-711a565a282c'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -838,7 +831,8 @@ export const zUserFile = z.object({
     content_error: z.string().nullable(),
     created_at: z.int(),
     updated_at: z.int(),
-    thumbnail: z.string().nullable()
+    thumbnail: z.string().nullable(),
+    knowledge_base_count: z.int().gte(0).optional().default(0)
 });
 
 /**
@@ -993,14 +987,14 @@ export const zFileKnowledgeGetStatusPath = z.object({
  */
 export const zFileKnowledgeGetStatusResponse = zFileKnowledgeArtifact;
 
-export const zFileKnowledgeRetryPath = z.object({
+export const zFileKnowledgeRegeneratePath = z.object({
     filename: z.string()
 });
 
 /**
  * Successful Response
  */
-export const zFileKnowledgeRetryResponse = zFileKnowledgeArtifact;
+export const zFileKnowledgeRegenerateResponse = zFileKnowledgeArtifact;
 
 export const zFileKnowledgeCancelPath = z.object({
     filename: z.string()
@@ -1010,35 +1004,6 @@ export const zFileKnowledgeCancelPath = z.object({
  * Successful Response
  */
 export const zFileKnowledgeCancelResponse = zFileKnowledgeArtifact;
-
-export const zFileCaptionRegeneratePath = z.object({
-    filename: z.string()
-});
-
-/**
- * Successful Response
- */
-export const zFileCaptionRegenerateResponse = zFileKnowledgeArtifact;
-
-export const zFileCaptionClearPath = z.object({
-    filename: z.string()
-});
-
-/**
- * Successful Response
- */
-export const zFileCaptionClearResponse = zFileKnowledgeArtifact;
-
-export const zFileCaptionEditBody = zFileCaptionEdit;
-
-export const zFileCaptionEditPath = z.object({
-    filename: z.string()
-});
-
-/**
- * Successful Response
- */
-export const zFileCaptionEditResponse = zFileKnowledgeArtifact;
 
 /**
  * Successful Response

@@ -18,7 +18,7 @@ references a file and never initiates duplicate work.
 | **Content cache** | Bounded converted text used as the input to chunking. It is source-file conversion state, distinct from the artifact's indexed vector rows. | `UserFileModel.content_cache`, produced by `MarkItDownFileProcessor` |
 | **Chunk** | One bounded text excerpt, or the display content associated with a visual image embedding. A chunk has stable provenance within an artifact generation. | `VectorChunk` and a LanceDB `knowledge_chunks` row |
 | **Embedding / vector** | A normalized numeric representation of a chunk, caption, or image used for similarity search. Vectors are not relational artifact fields; their provenance links them to an artifact generation. | `OnnxClipEmbeddingProvider`, `LanceDbVectorStore` |
-| **Canonical caption** | The one derived caption associated with an image artifact, shared wherever that file is used. It may be generated, edited, cleared, or regenerated in Files; it is never per knowledge base. | Artifact caption fields and one caption `VectorChunk` |
+| **Canonical caption** | The one derived caption associated with an image artifact, shared wherever that file is used. It may be generated or regenerated in Files; it is never per knowledge base. | Artifact caption fields and one caption `VectorChunk` |
 | **Knowledge base** | A private, named collection used to curate which library files an agent may search. It does not own or duplicate a file's processing. | `KnowledgeBaseModel` |
 | **Membership** | An ordered relationship between a knowledge base and a source file. Removing it preserves the file and its knowledge artifact. | `KnowledgeBaseFileModel` / `knowledge_base_files` |
 | **Allowed file IDs** | The file IDs resolved from bases assigned to the active agent before a vector query is issued. This is the retrieval authorization boundary. | `AgentKnowledgeBaseAssignmentModel` plus `LanceDbVectorStore.search(..., allowed_file_ids=...)` |
@@ -196,16 +196,16 @@ queues replacement generations before the provider or model can be removed.
 `KnowledgeCaptionJobs` bounds concurrent captions, embeds a successful caption,
 and stores it as `draft` canonical metadata. The caption vector uses the next
 chunk ordinal (`artifact.chunk_count`) and a deterministic chunk ID based on the
-file and artifact generation. Editing a caption through
-`files.service.edit_file_caption()` replaces that vector and marks it `accepted`;
-clearing it deletes the caption vector and marks it `cleared`.
+file and artifact generation. Users cannot edit or clear a caption; regenerating
+a file (`files.service.regenerate_file_knowledge()`) resets its artifact to
+`pending` and reprocesses both the embedding and the caption.
 
 ## State, retry, and deletion rules
 
 `FileKnowledgeArtifactStatus` moves from `pending` to `processing` to `ready`,
 or to `failed`/`canceled`. `KnowledgeIngestionJobs.recover_interrupted()` changes
-interrupted `processing` rows to retryable `pending` rows at startup; retry and
-cancel API actions are implemented by `retry_file_knowledge_processing()` and
+interrupted `processing` rows to retryable `pending` rows at startup; regenerate
+and cancel API actions are implemented by `regenerate_file_knowledge()` and
 `cancel_file_knowledge_processing()`.
 
 `KnowledgeCaptionStatus` is independent of artifact readiness: it can be

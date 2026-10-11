@@ -1,120 +1,94 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { client } from "@/lib/api";
 import {
-  fileCaptionRegenerateMutation,
-  fileCaptionClearMutation,
-  fileCaptionEditMutation,
   fileKnowledgeGetStatusOptions,
-  fileKnowledgeRetryMutation,
+  fileKnowledgeRegenerateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Library, RotateCcw } from "lucide-react";
+
+type BadgeVariant = "secondary" | "destructive" | "outline";
+
+const variantFor = (status: string): BadgeVariant => {
+  if (status === "failed") return "destructive";
+  if (status === "ready" || status === "accepted") return "secondary";
+  return "outline";
+};
+
+const POLL_INTERVAL_MS = 2000;
+
+const isActive = (artifact?: {
+  status: string;
+  caption: { status?: string | null };
+}) =>
+  artifact?.status === "pending" ||
+  artifact?.status === "processing" ||
+  artifact?.caption.status === "pending" ||
+  artifact?.caption.status === "running";
 
 export function KnowledgeStatus({
   filename,
-  isImage,
+  knowledgeBaseCount,
 }: {
   filename: string;
-  isImage: boolean;
+  knowledgeBaseCount: number;
 }) {
-  const { data } = useQuery(
-    fileKnowledgeGetStatusOptions({ client, path: { filename } }),
-  );
-  const retry = useMutation(fileKnowledgeRetryMutation({ client }));
-  const regenerate = useMutation(fileCaptionRegenerateMutation({ client }));
-  const clear = useMutation(fileCaptionClearMutation({ client }));
-  const edit = useMutation(fileCaptionEditMutation({ client }));
-  const [editing, setEditing] = useState(false);
-  const [text, setText] = useState("");
+  const { data } = useQuery({
+    ...fileKnowledgeGetStatusOptions({ client, path: { filename } }),
+    // No push channel exists; poll only while work is in flight.
+    refetchInterval: (query) =>
+      isActive(query.state.data) ? POLL_INTERVAL_MS : false,
+  });
+  const regenerate = useMutation(fileKnowledgeRegenerateMutation({ client }));
   if (!data) return null;
-  const failed = data.status === "failed" || data.status === "canceled";
+  const captionStatus = data.caption.status ?? "none";
+  const busy =
+    regenerate.isPending ||
+    data.status === "pending" ||
+    data.status === "processing";
   return (
-    <div className="flex items-center gap-1 text-xs">
-      <span className="text-muted-foreground capitalize">
-        Knowledge: {data.status}
-      </span>
-      {failed && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => retry.mutate({ path: { filename } })}
-          disabled={retry.isPending}
-        >
-          Retry
-        </Button>
-      )}
-      {isImage && data.status === "ready" && (
-        <>
+    <div className="flex flex-wrap items-center gap-1 text-xs">
+      <Badge variant={variantFor(data.status)}>Embedding: {data.status}</Badge>
+      <Badge variant={variantFor(captionStatus)}>Caption: {captionStatus}</Badge>
+      <Tooltip>
+        <TooltipTrigger asChild>
           <Button
-            size="sm"
-            variant="outline"
+            size="icon-xs"
+            variant="ghost"
+            aria-label="Regenerate embedding and caption"
             onClick={() => regenerate.mutate({ path: { filename } })}
-            disabled={regenerate.isPending}
+            disabled={busy}
           >
-            Regenerate caption
+            <RotateCcw />
           </Button>
-          {data.caption.text && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => clear.mutate({ path: { filename } })}
-              disabled={clear.isPending}
+        </TooltipTrigger>
+        <TooltipContent>Regenerate embedding and caption</TooltipContent>
+      </Tooltip>
+      {knowledgeBaseCount > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              role="img"
+              aria-label="In a knowledge base"
+              className="text-muted-foreground inline-flex"
             >
-              Clear caption
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setText(data.caption.text ?? "");
-              setEditing(true);
-            }}
-          >
-            Edit caption
-          </Button>
-        </>
+              <Library className="size-4" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            In {knowledgeBaseCount} knowledge{" "}
+            {knowledgeBaseCount === 1 ? "base" : "bases"}
+          </TooltipContent>
+        </Tooltip>
       )}
-      <Dialog open={editing} onOpenChange={setEditing}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit canonical caption</DialogTitle>
-          </DialogHeader>
-          <DialogDescription>
-            Caption regeneration may send the image to the configured external
-            provider.
-          </DialogDescription>
-          <Input
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            aria-label="Caption text"
-          />
-          <DialogFooter>
-            <Button
-              disabled={!text.trim() || edit.isPending}
-              onClick={() =>
-                edit.mutate(
-                  { path: { filename }, body: { text } },
-                  { onSuccess: () => setEditing(false) },
-                )
-              }
-            >
-              Save caption
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
