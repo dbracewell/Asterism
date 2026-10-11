@@ -763,6 +763,16 @@ export type KnowledgeBaseFileList = {
 };
 
 /**
+ * KnowledgeBaseFileRemove
+ */
+export type KnowledgeBaseFileRemove = {
+    /**
+     * File Ids
+     */
+    file_ids: Array<string>;
+};
+
+/**
  * KnowledgeBaseFileReorder
  */
 export type KnowledgeBaseFileReorder = {
@@ -1927,6 +1937,12 @@ export type FileGetManyData = {
          * Search query to filter files by name
          */
         query?: string | null;
+        /**
+         * Knowledge Base Id
+         *
+         * Only list files that belong to this knowledge base
+         */
+        knowledge_base_id?: string | null;
     };
     url: '/files/';
 };
@@ -2887,6 +2903,40 @@ export type KnowledgeBaseCreateResponses = {
 };
 
 export type KnowledgeBaseCreateResponse = KnowledgeBaseCreateResponses[keyof KnowledgeBaseCreateResponses];
+
+export type KnowledgeBaseFileDeleteManyData = {
+    body: KnowledgeBaseFileRemove;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/files';
+};
+
+export type KnowledgeBaseFileDeleteManyErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseFileDeleteManyError = KnowledgeBaseFileDeleteManyErrors[keyof KnowledgeBaseFileDeleteManyErrors];
+
+export type KnowledgeBaseFileDeleteManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBaseFileList;
+};
+
+export type KnowledgeBaseFileDeleteManyResponse = KnowledgeBaseFileDeleteManyResponses[keyof KnowledgeBaseFileDeleteManyResponses];
 
 export type KnowledgeBaseFileGetManyData = {
     body?: never;

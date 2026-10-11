@@ -4,15 +4,18 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { ApiClient } from "@/lib/client";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { KnowledgeBaseDetail } from "./knowledge-base-detail";
 
 const { api, client } = vi.hoisted(() => ({
   client: { getConfig: () => ({ baseUrl: "" }) },
   api: {
-    knowledgeBaseFileGetMany: vi.fn(),
     fileGetMany: vi.fn(),
+    fileGetFileInfo: vi.fn(),
+    fileKnowledgeGetStatus: vi.fn(),
     fileUpload: vi.fn(),
     knowledgeBaseFileCreate: vi.fn(),
+    knowledgeBaseFileDeleteMany: vi.fn(),
   },
 }));
 vi.mock("@/lib/api", () => ({ client }));
@@ -29,27 +32,63 @@ function renderDetail() {
         })
       }
     >
-      <KnowledgeBaseDetail knowledgeBaseId="base-1" />
+      <TooltipProvider>
+        <KnowledgeBaseDetail knowledgeBaseId="base-1" />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
 
+const libraryFile = {
+  id: "file-1",
+  filename: "notes.txt",
+  original_name: "notes.txt",
+  size: 5,
+  kind: "text",
+  mime_type: "text/plain",
+  content_status: "ready",
+  knowledge_base_count: 1,
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   ApiClient.__registry.set(api as never);
-  api.knowledgeBaseFileGetMany.mockResolvedValue({ data: { files: [] } });
-  api.fileGetMany.mockResolvedValue({
-    data: {
-      files: [
-        {
-          id: "file-1",
-          original_name: "notes.txt",
-          mime_type: "text/plain",
-          content_status: "ready",
-        },
-      ],
-    },
+  // The same endpoint serves the library picker and the knowledge-base explorer.
+  api.fileGetMany.mockImplementation(async () => ({
+    data: { files: [libraryFile], total: 1 },
+  }));
+  api.fileKnowledgeGetStatus.mockResolvedValue({
+    data: { status: "ready", caption: { status: null, text: null } },
   });
+});
+
+it("lists member files in the explorer and removes only the membership", async () => {
+  api.knowledgeBaseFileDeleteMany.mockResolvedValue({ data: { files: [] } });
+  renderDetail();
+  const user = userEvent.setup();
+  expect(api.fileGetMany).toHaveBeenCalledWith(
+    expect.objectContaining({
+      query: expect.objectContaining({ knowledge_base_id: "base-1" }),
+    }),
+  );
+  await user.click(await screen.findByRole("button", { name: /notes\.txt/ }));
+  expect(
+    screen.queryByRole("button", { name: "Delete selected files" }),
+  ).not.toBeInTheDocument();
+  await user.click(
+    screen.getByRole("button", {
+      name: "Remove selected files from knowledge base",
+    }),
+  );
+  await user.click(await screen.findByRole("button", { name: "Confirm" }));
+  await waitFor(() =>
+    expect(api.knowledgeBaseFileDeleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { knowledge_base_id: "base-1" },
+        body: { file_ids: ["file-1"] },
+      }),
+    ),
+  );
 });
 
 it("adds an existing library file as a membership without ingestion", async () => {

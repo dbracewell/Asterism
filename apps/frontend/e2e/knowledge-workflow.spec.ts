@@ -54,95 +54,76 @@ test("lists knowledge bases through the generated API client", async ({
   );
 });
 
-test("curates a library file without making a second processed copy", async ({
+test("manages knowledge-base membership in the file explorer without deleting library files", async ({
   page,
 }) => {
-  let memberships: Array<{ id: string; file_id: string; position: number }> = [
-    {
-      id: "30000000-0000-4000-8000-000000000002",
-      file_id: reportFile.id,
-      position: 0,
-    },
-  ];
+  let memberIds = [reportFile.id];
+  const library = [imageFile, reportFile];
+  const artifact = {
+    status: "ready",
+    caption: { status: null, text: null },
+  };
   await page.route(
     `**/api/py/knowledge-bases/${base.id}/files**`,
     async (route) => {
-      if (route.request().method() === "GET") {
+      const method = route.request().method();
+      if (method === "POST") {
+        const { file_id: fileId } = route.request().postDataJSON();
+        memberIds = [...memberIds, fileId];
+        await route.fulfill({ status: 201, json: { id: fileId } });
+        return;
+      }
+      if (method === "DELETE") {
+        const { file_ids: fileIds } = route.request().postDataJSON();
+        memberIds = memberIds.filter((id) => !fileIds.includes(id));
         await route.fulfill({
-          json: {
-            files: memberships,
-            total: memberships.length,
-            page: 1,
-            page_size: 100,
-          },
+          json: { files: [], total: 0, page: 1, page_size: 1 },
         });
         return;
       }
-      if (route.request().method() === "POST") {
-        const membership = {
-          id: "30000000-0000-4000-8000-000000000001",
-          file_id: imageFile.id,
-          position: memberships.length,
-        };
-        memberships = [...memberships, membership];
-        await route.fulfill({ status: 201, json: membership });
-        return;
-      }
-      if (route.request().method() === "PUT") {
-        const { membership_ids: membershipIds } = route
-          .request()
-          .postDataJSON();
-        memberships = membershipIds.map((id: string, position: number) => ({
-          ...memberships.find((membership) => membership.id === id)!,
-          position,
-        }));
-        await route.fulfill({
-          json: {
-            files: memberships,
-            total: memberships.length,
-            page: 1,
-            page_size: 100,
-          },
-        });
-        return;
-      }
-      const membershipId = route.request().url().split("/").pop();
-      const removed = memberships.find(
-        (membership) => membership.id === membershipId,
-      )!;
-      memberships = memberships.filter(
-        (membership) => membership.id !== membershipId,
-      );
-      await route.fulfill({ json: removed });
+      await route.fulfill({
+        json: { files: [], total: 0, page: 1, page_size: 100 },
+      });
     },
   );
-  await page.route(/\/api\/py\/files\/?(?:\?.*)?$/, (route) =>
-    route.fulfill({
-      json: {
-        files: [imageFile, reportFile],
-        total: 2,
-        page: 1,
-        page_size: 100,
-      },
-    }),
+  await page.route(/\/api\/py\/files\/info\/.*/, (route) =>
+    route.fulfill({ json: imageFile }),
   );
+  await page.route(/\/api\/py\/files\/[^/?]+\/knowledge$/, (route) =>
+    route.fulfill({ json: artifact }),
+  );
+  await page.route(/\/api\/py\/files\/?(?:\?.*)?$/, (route) => {
+    const inBase = new URL(route.request().url()).searchParams.has(
+      "knowledge_base_id",
+    );
+    const files = inBase
+      ? library.filter((file) => memberIds.includes(file.id))
+      : library;
+    return route.fulfill({
+      json: { files, total: files.length, page: 1, page_size: 100 },
+    });
+  });
 
   await page.goto("/e2e/knowledge-captions");
   await page.getByLabel("Uploaded file").selectOption(imageFile.id);
   await page.getByRole("button", { name: "Add existing file" }).click();
-  const diagram = page
-    .locator('[data-slot="card"]')
-    .filter({ hasText: "diagram.png" });
-  await expect(diagram).toBeVisible();
+  const explorer = page;
   await expect(
-    diagram.getByText("Manage processing, captions, and deletion in Files."),
+    explorer.getByRole("button", { name: /diagram\.png/ }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Move diagram.png up" }).click();
   await expect(
-    page.getByRole("button", { name: "Move diagram.png up" }),
-  ).toBeDisabled();
-  await diagram.getByRole("button", { name: "Remove from collection" }).click();
+    page.getByRole("button", { name: "Delete selected files" }),
+  ).toHaveCount(0);
+
+  await explorer.getByRole("button", { name: /diagram\.png/ }).click();
+  await page
+    .getByRole("button", { name: "Remove selected files from knowledge base" })
+    .click();
+  await page.getByRole("button", { name: "Confirm" }).click();
   await expect(
-    page.locator('[data-slot="card-title"]').filter({ hasText: "report.pdf" }),
+    explorer.getByRole("button", { name: /diagram\.png/ }),
+  ).toHaveCount(0);
+  await expect(
+    explorer.getByRole("button", { name: /report\.pdf/ }),
   ).toBeVisible();
 });
