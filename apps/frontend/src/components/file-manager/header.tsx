@@ -12,7 +12,14 @@ import {
   IconSelectAll,
   IconSquareOff,
 } from "@tabler/icons-react";
-import { Grid2X2, List, SearchIcon, Trash2Icon, UnlinkIcon, XIcon } from "lucide-react";
+import {
+  Grid2X2,
+  List,
+  SearchIcon,
+  Trash2Icon,
+  UnlinkIcon,
+  XIcon,
+} from "lucide-react";
 import { useRef, useState } from "react";
 
 export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
@@ -179,7 +186,11 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
                 {selectedFiles.length > 0 && ` (${selectedFiles.length})`}
               </Button>
             ) : knowledgeBaseId ? (
-              <Hint hint="Remove selected files from this knowledge base" side="top" asChild>
+              <Hint
+                hint="Remove selected files from this knowledge base"
+                side="top"
+                asChild
+              >
                 <Button
                   aria-label="Remove selected files from knowledge base"
                   variant="secondary"

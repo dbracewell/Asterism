@@ -54,7 +54,12 @@ class VectorStore(Protocol):
     async def delete_file_generation(self, *, user_id: str, file_id: str, artifact_generation: int) -> None: ...
 
     async def get_file_vectors(
-        self, *, user_id: str, file_id: str, artifact_generation: int, limit: int,
+        self,
+        *,
+        user_id: str,
+        file_id: str,
+        artifact_generation: int,
+        limit: int,
     ) -> list[list[float]]: ...
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None: ...
@@ -200,7 +205,12 @@ class LanceDbVectorStore:
         )
 
     async def get_file_vectors(
-        self, *, user_id: str, file_id: str, artifact_generation: int, limit: int,
+        self,
+        *,
+        user_id: str,
+        file_id: str,
+        artifact_generation: int,
+        limit: int,
     ) -> list[list[float]]:
         await self.initialize()
         table = self._require_table()

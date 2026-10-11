@@ -85,8 +85,12 @@ test("shows canonical processing state and confirms the full impact before file 
   await expect(
     page.getByRole("img", { name: "In a knowledge base" }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Edit caption" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Clear caption" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit caption" })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole("button", { name: "Clear caption" })).toHaveCount(
+    0,
+  );
   await page
     .getByRole("button", {
       name: "Regenerate embedding and caption",

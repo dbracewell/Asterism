@@ -8,12 +8,12 @@ generated captions are canonical file metadata and are indexed as draft text;
 users can regenerate a file's embedding and caption from the File Manager.
 Image CLIP vectors remain independently indexed throughout.
 
-| Data | Owner | Storage |
-| --- | --- | --- |
-| File artifacts, ordered knowledge-base memberships, and agent assignments | Relational database | SQLite through the existing SQLAlchemy/migration path |
-| Chunk content, provenance IDs, and vectors | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb` |
-| Pinned local embedding model and tokenizer/processor assets | Operator | `STORAGE_ROOT/models/knowledge-clip` |
-| Pinned local caption bundle and its integrity manifest | Admin or operator | `STORAGE_ROOT/models/captioning-smolvlm2` |
+| Data                                                                      | Owner                | Storage                                               |
+| ------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------- |
+| File artifacts, ordered knowledge-base memberships, and agent assignments | Relational database  | SQLite through the existing SQLAlchemy/migration path |
+| Chunk content, provenance IDs, and vectors                                | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb`                      |
+| Pinned local embedding model and tokenizer/processor assets               | Operator             | `STORAGE_ROOT/models/knowledge-clip`                  |
+| Pinned local caption bundle and its integrity manifest                    | Admin or operator    | `STORAGE_ROOT/models/captioning-smolvlm2`             |
 
 `knowledge_chunks` is one LanceDB table. Every row includes `user_id`, `file_id`,
 and artifact generation provenance. Retrieval resolves an agent's assigned
@@ -113,10 +113,10 @@ a generated 224px red square. Its returned caption accurately identifies the
 red, otherwise-empty image. Each value is one run; the Linux container shares
 the Apple M5 Max host but is a separate Linux arm64 runtime.
 
-| Target | Bundle | Initialize | Cold caption | Warm caption | 2 concurrent captions | Peak RSS (1 / 2) |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| macOS arm64, Apple M5 Max | 983 MiB | 2.66 s | 3.98 s | 3.78 s | 6.56 s | 2.53 / 3.72 GiB |
-| Linux arm64, Docker/Colima on same host | 983 MiB | 2.65 s | 11.94 s | 11.86 s | 26.66 s | 2.56 / 3.38 GiB |
+| Target                                  |  Bundle | Initialize | Cold caption | Warm caption | 2 concurrent captions | Peak RSS (1 / 2) |
+| --------------------------------------- | ------: | ---------: | -----------: | -----------: | --------------------: | ---------------: |
+| macOS arm64, Apple M5 Max               | 983 MiB |     2.66 s |       3.98 s |       3.78 s |                6.56 s |  2.53 / 3.72 GiB |
+| Linux arm64, Docker/Colima on same host | 983 MiB |     2.65 s |      11.94 s |      11.86 s |               26.66 s |  2.56 / 3.38 GiB |
 
 **Deployment threshold:** local mode defaults to one concurrent caption and
 requires at least 4 GiB process RSS headroom. Do not enable it on
@@ -194,10 +194,10 @@ Runtime 1.20.1. Its fixed corpus contains generated 224px red and blue squares;
 `a red square` must rank red above blue and `a blue square` must rank blue above
 red. Both rankings passed on every measured target.
 
-| Target | Initialize | 2 text embeddings | 2 image embeddings | Peak RSS |
-| --- | ---: | ---: | ---: | ---: |
-| macOS arm64, Apple M5 Max | 0.312 s | 0.044 s | 0.034 s | ~849 MiB |
-| Linux arm64, Docker/Colima on the same host | 0.406 s | 0.031 s | 0.018 s | ~1.11 GiB |
+| Target                                      | Initialize | 2 text embeddings | 2 image embeddings |  Peak RSS |
+| ------------------------------------------- | ---------: | ----------------: | -----------------: | --------: |
+| macOS arm64, Apple M5 Max                   |    0.312 s |           0.044 s |            0.034 s |  ~849 MiB |
+| Linux arm64, Docker/Colima on the same host |    0.406 s |           0.031 s |            0.018 s | ~1.11 GiB |
 
 The artifact bundle satisfies the <400 MB disk-model constraint and the
 relevance smoke threshold, so it is the selected initial provider. Its CPU
