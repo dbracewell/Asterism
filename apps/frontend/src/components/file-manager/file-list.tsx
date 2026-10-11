@@ -3,9 +3,11 @@ import { APIDownload } from "@/components/api-download";
 import { APIImage } from "@/components/api-image";
 import { useFileManager } from "@/components/file-manager/context";
 import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
+import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/lib/formatters";
 import { cn } from "cn";
-import { FileIcon } from "lucide-react";
+import { ExternalLink, FileIcon } from "lucide-react";
+import Link from "next/link";
 
 export const FileList = () => {
   const { loadError, files, view, selectedFiles, toggleSelect } =
@@ -111,6 +113,20 @@ export const FileList = () => {
                     >
                       {file.original_name}
                     </h4>
+                    <Button
+                      asChild
+                      size="xs"
+                      variant="outline"
+                      className="shrink-0"
+                    >
+                      <Link
+                        href={`/files/${encodeURIComponent(file.filename)}`}
+                        aria-label={`Open ${file.original_name}`}
+                      >
+                        <ExternalLink />
+                        Open
+                      </Link>
+                    </Button>
                     <APIDownload
                       className="text-sm underline"
                       filename={file.filename}

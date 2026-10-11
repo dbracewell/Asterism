@@ -11,13 +11,16 @@ from asterism.db.base import Base
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.chat.schemas import Chat, ChatInfo, Message, MessageFileReference, MessageStatus
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
+from asterism.domains.extraction.vector_store import LanceDbVectorStore, VectorChunk
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.processor import MarkItDownFileProcessor
 from asterism.domains.files.service import (
     cancel_file_knowledge_processing,
     delete_user_file,
     ensure_file_processed,
+    get_file_knowledge_bases,
     get_file_knowledge_status,
+    get_similar_files,
     get_user_file,
     list_user_files,
     regenerate_file_knowledge,
@@ -237,6 +240,73 @@ async def test_list_files_reports_knowledge_base_membership_count(file_session):
     listed = await list_user_files(user_id="user-a", session=file_session)
 
     assert {file.filename: file.knowledge_base_count for file in listed.files} == {"in-base.txt": 2, "alone.txt": 0}
+
+
+@pytest.mark.asyncio
+async def test_similar_files_rank_by_cosine_and_stay_user_scoped(file_session, monkeypatch, tmp_path):
+    store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
+    monkeypatch.setattr("asterism.domains.extraction.runtime.vector_store", store)
+    uploaded = await upload_files(
+        user_id="user-a",
+        uploads=[_upload(name, name.encode()) for name in ("src.txt", "near.txt", "far.txt", "stale.txt")],
+        session=file_session,
+    )
+    other = await upload_files(user_id="user-b", uploads=[_upload("theirs.txt", b"theirs")], session=file_session)
+    by_name = {file.filename: file for file in [*uploaded.files, *other.files]}
+    vectors = {
+        "src.txt": [1.0, 0.0],
+        "near.txt": [0.8, 0.6],
+        "far.txt": [0.0, 1.0],
+        "stale.txt": [1.0, 0.0],
+        "theirs.txt": [1.0, 0.0],
+    }
+    owners = {"theirs.txt": "user-b"}
+    for name, vector in vectors.items():
+        artifact = await file_session.scalar(
+            select(FileExtractionModel).where(FileExtractionModel.file_id == by_name[name].id),
+        )
+        assert artifact is not None
+        artifact.status = FileKnowledgeArtifactStatus.READY
+        artifact.is_current = name != "stale.txt"
+        await store.add(
+            [VectorChunk(f"{name}-0", owners.get(name, "user-a"), str(by_name[name].id), 1, 0, name, vector)],
+        )
+    await file_session.commit()
+
+    result = await get_similar_files(user_id="user-a", filename="src.txt", session=file_session)
+
+    assert [item.file.filename for item in result.files] == ["near.txt", "far.txt"]
+    assert result.files[0].score == pytest.approx(0.8, abs=1e-5)
+    assert result.files[1].score == pytest.approx(0.0, abs=1e-5)
+    assert (await get_similar_files(user_id="user-a", filename="stale.txt", session=file_session)).files == []
+    with pytest.raises(NotFoundException):
+        await get_similar_files(user_id="user-a", filename="theirs.txt", session=file_session)
+
+
+@pytest.mark.asyncio
+async def test_file_knowledge_bases_lists_only_containing_user_bases(file_session):
+    uploaded = await upload_files(
+        user_id="user-a", uploads=[_upload("a.txt", b"a"), _upload("b.txt", b"b")], session=file_session,
+    )
+    file_a, file_b = uploaded.files
+    bases = [KnowledgeBaseModel(user_id="user-a", name=name) for name in ("Zeta", "Alpha")]
+    file_session.add_all(bases)
+    await file_session.flush()
+    file_session.add_all(
+        [
+            KnowledgeBaseFileModel(knowledge_base_id=bases[0].id, file_id=file_a.id, position=1),
+            KnowledgeBaseFileModel(knowledge_base_id=bases[1].id, file_id=file_a.id, position=1),
+            KnowledgeBaseFileModel(knowledge_base_id=bases[0].id, file_id=file_b.id, position=2),
+        ],
+    )
+    await file_session.commit()
+
+    listed = await get_file_knowledge_bases(user_id="user-a", filename="a.txt", session=file_session)
+
+    assert [base.name for base in listed] == ["Alpha", "Zeta"]
+    assert await get_file_knowledge_bases(user_id="user-a", filename="b.txt", session=file_session) != []
+    with pytest.raises(NotFoundException):
+        await get_file_knowledge_bases(user_id="user-b", filename="a.txt", session=file_session)
 
 
 @pytest.mark.asyncio

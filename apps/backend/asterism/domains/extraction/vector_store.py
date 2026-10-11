@@ -53,6 +53,10 @@ class VectorStore(Protocol):
 
     async def delete_file_generation(self, *, user_id: str, file_id: str, artifact_generation: int) -> None: ...
 
+    async def get_file_vectors(
+        self, *, user_id: str, file_id: str, artifact_generation: int, limit: int,
+    ) -> list[list[float]]: ...
+
     async def delete_file(self, *, user_id: str, file_id: str) -> None: ...
 
     async def delete_chunk(self, *, user_id: str, chunk_id: str) -> None: ...
@@ -194,6 +198,22 @@ class LanceDbVectorStore:
             f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)} "
             f"AND artifact_generation = {artifact_generation}",
         )
+
+    async def get_file_vectors(
+        self, *, user_id: str, file_id: str, artifact_generation: int, limit: int,
+    ) -> list[list[float]]:
+        await self.initialize()
+        table = self._require_table()
+        predicate = (
+            f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)} "
+            f"AND artifact_generation = {artifact_generation}"
+        )
+        try:
+            async with self._semaphore:
+                rows = await asyncio.to_thread(lambda: table.search().where(predicate).limit(limit).to_list())
+        except Exception as error:
+            raise VectorStoreError("Knowledge vectors could not be read") from error
+        return [[float(value) for value in row["vector"]] for row in rows]
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None:
         await self._delete(f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)}")

@@ -1,0 +1,173 @@
+"use client";
+
+import { APIImage } from "@/components/api-image";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { client } from "@/lib/api";
+import {
+  fileGetFileInfoOptions,
+  fileKnowledgeBaseGetManyOptions,
+  fileKnowledgeGetStatusOptions,
+  fileSimilarGetManyOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
+import { formatFileSize } from "@/lib/formatters";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+const fileHref = (filename: string) => `/files/${encodeURIComponent(filename)}`;
+
+export function FileView({ filename }: { filename: string }) {
+  const path = { filename };
+  const info = useQuery(fileGetFileInfoOptions({ client, path }));
+  const knowledge = useQuery(fileKnowledgeGetStatusOptions({ client, path }));
+  const similar = useQuery(fileSimilarGetManyOptions({ client, path }));
+  const bases = useQuery(fileKnowledgeBaseGetManyOptions({ client, path }));
+  const router = useRouter();
+
+  if (info.error) {
+    return (
+      <p className="text-destructive p-6" role="alert">
+        This file could not be found.
+      </p>
+    );
+  }
+  if (!info.data) return <p className="text-muted-foreground p-6">Loading…</p>;
+
+  const file = info.data;
+  const artifact = knowledge.data;
+  return (
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
+      <Button
+        type="button"
+        variant="ghost"
+        className="self-start"
+        onClick={() => router.back()}
+      >
+        <ArrowLeft />
+        Back
+      </Button>
+      <header className="flex items-start gap-4">
+        {file.kind === "image" && (
+          <APIImage
+            className="shrink-0 rounded object-cover"
+            filename={file.filename}
+            alt={file.original_name}
+            width={96}
+            height={96}
+          />
+        )}
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-semibold">
+            {file.original_name}
+          </h1>
+          <p className="text-muted-foreground text-sm capitalize">
+            {file.kind} · {file.mime_type} · {formatFileSize(file.size, 2, false)}
+          </p>
+          {artifact && (
+            <div className="mt-2 flex gap-1">
+              <Badge variant="outline">Embedding: {artifact.status}</Badge>
+              <Badge variant="outline">
+                Caption: {artifact.caption.status ?? "none"}
+              </Badge>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Caption</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {artifact?.caption.text ? (
+            <p>{artifact.caption.text}</p>
+          ) : (
+            <p className="text-muted-foreground">No caption.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Extracted content</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {artifact?.extracted_content ? (
+            <pre className="bg-muted max-h-96 overflow-auto rounded p-3 text-sm whitespace-pre-wrap">
+              {artifact.extracted_content}
+            </pre>
+          ) : (
+            <p className="text-muted-foreground">
+              {artifact?.status === "ready"
+                ? "This file has no extracted text."
+                : "Content is not available until processing is ready."}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Similar files</CardTitle>
+          <CardDescription>
+            The five most similar files in your library.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {similar.data?.files.length ? (
+            <ul className="divide-y">
+              {similar.data.files.map(({ file: other, score }) => (
+                <li
+                  key={other.id}
+                  className="flex items-center justify-between gap-2 py-2"
+                >
+                  <Link
+                    className="truncate underline"
+                    href={fileHref(other.filename)}
+                  >
+                    {other.original_name}
+                  </Link>
+                  <Badge variant="secondary">{score.toFixed(3)}</Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground">No similar files.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Knowledge bases</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {bases.data?.length ? (
+            <ul className="divide-y">
+              {bases.data.map((base) => (
+                <li key={base.id} className="py-2">
+                  <Link className="underline" href={`/knowledge/${base.id}`}>
+                    {base.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground">
+              This file is not in any knowledge base.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </main>
+  );
+}

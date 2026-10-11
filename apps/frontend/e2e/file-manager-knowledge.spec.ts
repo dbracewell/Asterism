@@ -77,6 +77,9 @@ test("shows canonical processing state and confirms the full impact before file 
   await page.goto("/e2e/file-manager");
   const diagram = page.getByRole("button", { name: /diagram\.png/ });
   await expect(diagram).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open diagram.png" }),
+  ).toHaveAttribute("href", "/files/diagram.png");
   await expect(page.getByText("Embedding: ready")).toBeVisible();
   await expect(page.getByText("Caption: accepted")).toBeVisible();
   await expect(

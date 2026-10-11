@@ -7,9 +7,10 @@ import asterism.domains.files.service as file_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.extraction.schemas import FileKnowledgeArtifact
+from asterism.domains.knowledge_base.schemas import KnowledgeBase
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from .schemas import UserFile, UserFileList
+from .schemas import SimilarFileList, UserFile, UserFileList
 
 file_router = APIRouter(
     tags=["files"],
@@ -167,6 +168,35 @@ async def cancel_file_knowledge_processing(
         filename=filename,
         session=db,
     )
+
+
+@file_router.get(
+    "/{filename}/similar",
+    response_model=SimilarFileList,
+    status_code=status.HTTP_200_OK,
+    operation_id="fileSimilarGetMany",
+)
+async def get_similar_files(
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    limit: int = Query(default=5, ge=1, le=20),
+) -> SimilarFileList:
+    return await file_service.get_similar_files(user_id=user.id, filename=filename, session=db, limit=limit)
+
+
+@file_router.get(
+    "/{filename}/knowledge-bases",
+    response_model=list[KnowledgeBase],
+    status_code=status.HTTP_200_OK,
+    operation_id="fileKnowledgeBaseGetMany",
+)
+async def get_file_knowledge_bases(
+    filename: str,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> list[KnowledgeBase]:
+    return await file_service.get_file_knowledge_bases(user_id=user.id, filename=filename, session=db)
 
 
 @file_router.get(

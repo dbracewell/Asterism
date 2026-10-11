@@ -20,7 +20,7 @@ from asterism.domains.extraction.schemas import FileKnowledgeArtifact
 
 from .models import FileContentStatus, FileKind, UserFileModel
 from .processor import ensure_file_processed as ensure_file_processed
-from .schemas import UserFile, UserFileList
+from .schemas import SimilarFile, SimilarFileList, UserFile, UserFileList
 from .store import LocalFileStore
 from .store import get_file_store as get_file_store
 
@@ -379,6 +379,102 @@ async def cancel_file_knowledge_processing(*, user_id: str, filename: str, sessi
         artifact.error_reason = "Processing canceled by user"
         await session.commit()
     return FileKnowledgeArtifact.model_validate(artifact)
+
+
+_SIMILARITY_MAX_SOURCE_VECTORS = 256
+_SIMILARITY_CHUNKS_PER_RESULT = 20
+
+
+async def get_similar_files(*, user_id: str, filename: str, session: AsyncSession, limit: int = 5) -> SimilarFileList:
+    from asterism.domains.extraction.runtime import vector_store
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    current = await session.scalar(
+        select(FileExtractionModel).where(
+            FileExtractionModel.file_id == file.id,
+            FileExtractionModel.is_current.is_(True),
+            FileExtractionModel.status == FileKnowledgeArtifactStatus.READY,
+        ),
+    )
+    if current is None:
+        return SimilarFileList(files=[])
+    source_vectors = await vector_store.get_file_vectors(
+        user_id=user_id,
+        file_id=str(file.id),
+        artifact_generation=current.generation,
+        limit=_SIMILARITY_MAX_SOURCE_VECTORS,
+    )
+    if not source_vectors:
+        return SimilarFileList(files=[])
+
+    # Embeddings are unit-length, so the normalized mean is the file's centroid direction.
+    dimension = len(source_vectors[0])
+    centroid = [sum(vector[index] for vector in source_vectors) / len(source_vectors) for index in range(dimension)]
+    norm = sum(value * value for value in centroid) ** 0.5
+    if norm == 0:
+        return SimilarFileList(files=[])
+    centroid = [value / norm for value in centroid]
+
+    candidates = {
+        str(file_id): generation
+        for file_id, generation in (
+            await session.execute(
+                select(FileExtractionModel.file_id, FileExtractionModel.generation).where(
+                    FileExtractionModel.user_id == user_id,
+                    FileExtractionModel.file_id != file.id,
+                    FileExtractionModel.is_current.is_(True),
+                    FileExtractionModel.status == FileKnowledgeArtifactStatus.READY,
+                ),
+            )
+        ).all()
+    }
+    if not candidates:
+        return SimilarFileList(files=[])
+    hits = await vector_store.search(
+        centroid,
+        user_id=user_id,
+        allowed_file_ids=list(candidates),
+        limit=limit * _SIMILARITY_CHUNKS_PER_RESULT,
+    )
+    # LanceDB reports squared L2 distance; for unit vectors cosine = 1 - d / 2.
+    best: dict[str, float] = {}
+    for hit in hits:
+        if candidates.get(hit.file_id) != hit.artifact_generation:
+            continue
+        best[hit.file_id] = max(best.get(hit.file_id, -1.0), min(1.0, max(-1.0, 1 - hit.score / 2)))
+    ranked = sorted(best.items(), key=lambda item: item[1], reverse=True)[:limit]
+    if not ranked:
+        return SimilarFileList(files=[])
+    models = {
+        str(model.id): model
+        for model in await session.scalars(
+            select(UserFileModel).where(
+                UserFileModel.user_id == user_id,
+                UserFileModel.id.in_([uuid.UUID(file_id) for file_id, _ in ranked]),
+            ),
+        )
+    }
+    return SimilarFileList(
+        files=[
+            SimilarFile(file=UserFile.model_validate(models[file_id]), score=score)
+            for file_id, score in ranked
+            if file_id in models
+        ],
+    )
+
+
+async def get_file_knowledge_bases(*, user_id: str, filename: str, session: AsyncSession):
+    from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel, KnowledgeBaseModel
+    from asterism.domains.knowledge_base.schemas import KnowledgeBase
+
+    file = await _owned_file(user_id=user_id, filename=filename, session=session)
+    bases = await session.scalars(
+        select(KnowledgeBaseModel)
+        .join(KnowledgeBaseFileModel, KnowledgeBaseFileModel.knowledge_base_id == KnowledgeBaseModel.id)
+        .where(KnowledgeBaseFileModel.file_id == file.id, KnowledgeBaseModel.user_id == user_id)
+        .order_by(KnowledgeBaseModel.name),
+    )
+    return [KnowledgeBase.model_validate(base) for base in bases]
 
 
 async def _owned_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFileModel:

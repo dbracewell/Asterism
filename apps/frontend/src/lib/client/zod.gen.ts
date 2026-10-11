@@ -230,7 +230,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('5dcde4b2-b67e-45d9-917b-711a565a282c'),
+    id: z.uuid().optional().default('d7c904a5-cdcc-4d6b-b532-8b8efbeeb58b'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -836,6 +836,21 @@ export const zUserFile = z.object({
 });
 
 /**
+ * SimilarFile
+ */
+export const zSimilarFile = z.object({
+    file: zUserFile,
+    score: z.number().gte(-1).lte(1)
+});
+
+/**
+ * SimilarFileList
+ */
+export const zSimilarFileList = z.object({
+    files: z.array(zSimilarFile)
+});
+
+/**
  * UserFileList
  */
 export const zUserFileList = z.object({
@@ -1004,6 +1019,30 @@ export const zFileKnowledgeCancelPath = z.object({
  * Successful Response
  */
 export const zFileKnowledgeCancelResponse = zFileKnowledgeArtifact;
+
+export const zFileSimilarGetManyPath = z.object({
+    filename: z.string()
+});
+
+export const zFileSimilarGetManyQuery = z.object({
+    limit: z.int().gte(1).lte(20).optional().default(5)
+});
+
+/**
+ * Successful Response
+ */
+export const zFileSimilarGetManyResponse = zSimilarFileList;
+
+export const zFileKnowledgeBaseGetManyPath = z.object({
+    filename: z.string()
+});
+
+/**
+ * Response Fileknowledgebasegetmany
+ *
+ * Successful Response
+ */
+export const zFileKnowledgeBaseGetManyResponse = z.array(zKnowledgeBase);
 
 /**
  * Successful Response
