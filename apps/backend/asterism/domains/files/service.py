@@ -275,6 +275,7 @@ async def list_user_files(
     sort_by: Literal["name", "kind", "date", "size"] = "name",
     query: str | None = None,
     knowledge_base_id: uuid.UUID | None = None,
+    check_knowledge_base_id: uuid.UUID | None = None,
 ) -> UserFileList:
     from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
 
@@ -313,10 +314,21 @@ async def list_user_files(
         .group_by(KnowledgeBaseFileModel.file_id),
     )
     counts = {file_id: count for file_id, count in membership.all()}
+    checked: set[uuid.UUID] = set()
+    if check_knowledge_base_id is not None:
+        checked = set(
+            await session.scalars(
+                select(KnowledgeBaseFileModel.file_id).where(
+                    KnowledgeBaseFileModel.knowledge_base_id == check_knowledge_base_id,
+                    KnowledgeBaseFileModel.file_id.in_([file.id for file in result]),
+                ),
+            ),
+        )
     files = []
     for file in result:
         item = UserFile.model_validate(file)
         item.knowledge_base_count = counts.get(file.id, 0)
+        item.in_checked_knowledge_base = file.id in checked
         files.append(item)
     return UserFileList(
         files=files,

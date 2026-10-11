@@ -1,10 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { ApiClient } from "@/lib/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ApiClient } from "@/lib/client";
 import { KnowledgeBaseDetail } from "./knowledge-base-detail";
 
 const { api, client } = vi.hoisted(() => ({
@@ -14,7 +14,7 @@ const { api, client } = vi.hoisted(() => ({
     fileGetFileInfo: vi.fn(),
     fileKnowledgeGetStatus: vi.fn(),
     fileUpload: vi.fn(),
-    knowledgeBaseFileCreate: vi.fn(),
+    knowledgeBaseFileCreateMany: vi.fn(),
     knowledgeBaseFileDeleteMany: vi.fn(),
   },
 }));
@@ -39,24 +39,31 @@ function renderDetail() {
   );
 }
 
-const libraryFile = {
-  id: "file-1",
-  filename: "notes.txt",
-  original_name: "notes.txt",
+const file = (id: string, name: string, inChecked = false) => ({
+  id,
+  filename: name,
+  original_name: name,
   size: 5,
   kind: "text",
   mime_type: "text/plain",
   content_status: "ready",
-  knowledge_base_count: 1,
+  knowledge_base_count: inChecked ? 1 : 0,
+  in_checked_knowledge_base: inChecked,
+});
+
+type ListOptions = {
+  query?: { knowledge_base_id?: string; check_knowledge_base_id?: string };
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
   ApiClient.__registry.set(api as never);
-  // The same endpoint serves the library picker and the knowledge-base explorer.
-  api.fileGetMany.mockImplementation(async () => ({
-    data: { files: [libraryFile], total: 1 },
-  }));
+  api.fileGetMany.mockImplementation(async ({ query }: ListOptions) => {
+    const files = query?.knowledge_base_id
+      ? [file("member", "member.txt", true)]
+      : [file("member", "member.txt", true), file("fresh", "fresh.txt")];
+    return { data: { files, total: files.length } };
+  });
   api.fileKnowledgeGetStatus.mockResolvedValue({
     data: { status: "ready", caption: { status: null, text: null } },
   });
@@ -71,7 +78,7 @@ it("lists member files in the explorer and removes only the membership", async (
       query: expect.objectContaining({ knowledge_base_id: "base-1" }),
     }),
   );
-  await user.click(await screen.findByRole("button", { name: /notes\.txt/ }));
+  await user.click(await screen.findByRole("button", { name: /member\.txt/ }));
   expect(
     screen.queryByRole("button", { name: "Delete selected files" }),
   ).not.toBeInTheDocument();
@@ -85,55 +92,42 @@ it("lists member files in the explorer and removes only the membership", async (
     expect(api.knowledgeBaseFileDeleteMany).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { knowledge_base_id: "base-1" },
-        body: { file_ids: ["file-1"] },
+        body: { file_ids: ["member"] },
       }),
     ),
   );
 });
 
-it("adds an existing library file as a membership without ingestion", async () => {
-  api.knowledgeBaseFileCreate.mockResolvedValue({
-    data: { id: "membership-1" },
-  });
+it("adds selected files from the picker, which has no delete and blocks existing members", async () => {
+  api.knowledgeBaseFileCreateMany.mockResolvedValue({ data: { files: [] } });
   renderDetail();
   const user = userEvent.setup();
-  await screen.findByRole("option", { name: "notes.txt" });
-  await user.selectOptions(
-    await screen.findByLabelText("Uploaded file"),
-    "file-1",
+  await user.click(screen.getByRole("button", { name: "Add files" }));
+  const dialog = await screen.findByRole("dialog");
+  expect(
+    await within(dialog).findByText(/Already in this knowledge base/),
+  ).toBeInTheDocument();
+  expect(
+    within(dialog).queryByRole("button", { name: /Delete selected files/ }),
+  ).not.toBeInTheDocument();
+
+  const add = within(dialog).getByRole("button", { name: /Add selected/ });
+  await user.click(within(dialog).getByRole("button", { name: /member\.txt/ }));
+  expect(add).toBeDisabled();
+
+  await user.click(within(dialog).getByRole("button", { name: /fresh\.txt/ }));
+  await user.click(
+    within(dialog).getByRole("button", { name: "Add selected (1)" }),
   );
-  const addButton = screen.getByRole("button", { name: "Add existing file" });
-  await waitFor(() => expect(addButton).toBeEnabled());
-  await user.click(addButton);
   await waitFor(() =>
-    expect(api.knowledgeBaseFileCreate).toHaveBeenCalledWith(
+    expect(api.knowledgeBaseFileCreateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { knowledge_base_id: "base-1" },
-        body: { file_id: "file-1" },
+        body: { file_ids: ["fresh"] },
       }),
     ),
   );
-});
-
-it("uploads files into the library then adds memberships", async () => {
-  api.fileUpload.mockResolvedValue({
-    data: { files: [{ id: "file-1" }, { id: "file-2" }] },
-  });
-  api.knowledgeBaseFileCreate.mockResolvedValue({ data: {} });
-  renderDetail();
-  fireEvent.change(await screen.findByLabelText("Upload knowledge files"), {
-    target: {
-      files: [new File(["one"], "one.txt"), new File(["two"], "two.txt")],
-    },
-  });
   await waitFor(() =>
-    expect(api.knowledgeBaseFileCreate).toHaveBeenCalledTimes(2),
-  );
-  expect(api.knowledgeBaseFileCreate).toHaveBeenNthCalledWith(
-    1,
-    expect.objectContaining({
-      path: { knowledge_base_id: "base-1" },
-      body: { file_id: "file-1" },
-    }),
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
   );
 });

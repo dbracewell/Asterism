@@ -112,6 +112,10 @@ class KnowledgeBaseFileCreate(BaseModel):
     file_id: uuid.UUID
 
 
+class KnowledgeBaseFileCreateMany(BaseModel):
+    file_ids: list[uuid.UUID] = Field(min_length=1, max_length=1_000)
+
+
 class KnowledgeBaseFileRemove(BaseModel):
     file_ids: list[uuid.UUID] = Field(min_length=1, max_length=1_000)
 

@@ -68,9 +68,12 @@ test("manages knowledge-base membership in the file explorer without deleting li
     async (route) => {
       const method = route.request().method();
       if (method === "POST") {
-        const { file_id: fileId } = route.request().postDataJSON();
-        memberIds = [...memberIds, fileId];
-        await route.fulfill({ status: 201, json: { id: fileId } });
+        const { file_ids: fileIds } = route.request().postDataJSON();
+        memberIds = [...memberIds, ...fileIds];
+        await route.fulfill({
+          status: 201,
+          json: { files: [], total: 0, page: 1, page_size: 1 },
+        });
         return;
       }
       if (method === "DELETE") {
@@ -96,17 +99,24 @@ test("manages knowledge-base membership in the file explorer without deleting li
     const inBase = new URL(route.request().url()).searchParams.has(
       "knowledge_base_id",
     );
-    const files = inBase
-      ? library.filter((file) => memberIds.includes(file.id))
-      : library;
+    const files = (
+      inBase ? library.filter((file) => memberIds.includes(file.id)) : library
+    ).map((file) => ({
+      ...file,
+      in_checked_knowledge_base: memberIds.includes(file.id),
+    }));
     return route.fulfill({
       json: { files, total: files.length, page: 1, page_size: 100 },
     });
   });
 
   await page.goto("/e2e/knowledge-captions");
-  await page.getByLabel("Uploaded file").selectOption(imageFile.id);
-  await page.getByRole("button", { name: "Add existing file" }).click();
+  await page.getByRole("button", { name: "Add files" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("Already in this knowledge base")).toBeVisible();
+  await dialog.getByRole("button", { name: /diagram\.png/ }).click();
+  await dialog.getByRole("button", { name: /Add selected/ }).click();
+  await expect(dialog).toHaveCount(0);
   const explorer = page;
   await expect(
     explorer.getByRole("button", { name: /diagram\.png/ }),

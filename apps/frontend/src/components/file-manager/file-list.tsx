@@ -10,7 +10,7 @@ import { ExternalLink, FileIcon } from "lucide-react";
 import Link from "next/link";
 
 export const FileList = () => {
-  const { loadError, files, view, selectedFiles, toggleSelect } =
+  const { loadError, files, view, selectedFiles, toggleSelect, isSelectable } =
     useFileManager();
 
   return (
@@ -66,6 +66,7 @@ export const FileList = () => {
                     : index % 2 === 1 && "bg-background text-foreground",
                   selectedFiles.includes(file.filename) &&
                     "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground",
+                  !isSelectable(file) && "opacity-60",
                 )}
               >
                 {file.kind === "image" ? (
@@ -135,6 +136,7 @@ export const FileList = () => {
                   </div>
                   <span className="text-muted-foreground block w-full truncate text-xs capitalize">
                     {file.kind} · {formatFileSize(file.size, 2, false)}
+                    {!isSelectable(file) && " · Already in this knowledge base"}
                   </span>
                   <KnowledgeStatus
                     filename={file.filename}

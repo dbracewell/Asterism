@@ -741,6 +741,16 @@ export type KnowledgeBaseFileCreate = {
 };
 
 /**
+ * KnowledgeBaseFileCreateMany
+ */
+export type KnowledgeBaseFileCreateMany = {
+    /**
+     * File Ids
+     */
+    file_ids: Array<string>;
+};
+
+/**
  * KnowledgeBaseFileList
  */
 export type KnowledgeBaseFileList = {
@@ -1689,6 +1699,12 @@ export type UserFile = {
      * Knowledge Base Count
      */
     knowledge_base_count?: number;
+    /**
+     * In Checked Knowledge Base
+     *
+     * Whether the file is in the knowledge base named by check_knowledge_base_id
+     */
+    in_checked_knowledge_base?: boolean;
 };
 
 /**
@@ -1943,6 +1959,12 @@ export type FileGetManyData = {
          * Only list files that belong to this knowledge base
          */
         knowledge_base_id?: string | null;
+        /**
+         * Check Knowledge Base Id
+         *
+         * Mark each file by whether it is already in this knowledge base
+         */
+        check_knowledge_base_id?: string | null;
     };
     url: '/files/';
 };
@@ -3018,6 +3040,44 @@ export type KnowledgeBaseFileCreateResponses = {
 };
 
 export type KnowledgeBaseFileCreateResponse = KnowledgeBaseFileCreateResponses[keyof KnowledgeBaseFileCreateResponses];
+
+export type KnowledgeBaseFileCreateManyData = {
+    body: KnowledgeBaseFileCreateMany;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/knowledge-bases/{knowledge_base_id}/files/bulk';
+};
+
+export type KnowledgeBaseFileCreateManyErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type KnowledgeBaseFileCreateManyError = KnowledgeBaseFileCreateManyErrors[keyof KnowledgeBaseFileCreateManyErrors];
+
+export type KnowledgeBaseFileCreateManyResponses = {
+    /**
+     * Successful Response
+     */
+    201: KnowledgeBaseFileList;
+};
+
+export type KnowledgeBaseFileCreateManyResponse = KnowledgeBaseFileCreateManyResponses[keyof KnowledgeBaseFileCreateManyResponses];
 
 export type KnowledgeBaseFileReorderData = {
     body: KnowledgeBaseFileReorder;

@@ -35,7 +35,11 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
     isUploading,
     knowledgeBaseId,
     removeSelectedFromKnowledgeBase,
+    pickerKnowledgeBaseId,
+    addSelectedToKnowledgeBase,
+    isSelectable,
   } = useFileManager();
+  const selectableFiles = files.filter(isSelectable);
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
@@ -143,11 +147,12 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
               <Button
                 variant="ghost"
                 disabled={
-                  files.length === 0 || selectedFiles.length === files.length
+                  selectableFiles.length === 0 ||
+                  selectedFiles.length === selectableFiles.length
                 }
                 size="icon-lg"
                 onClick={() =>
-                  setSelectedFiles(files.map((file) => file.filename))
+                  setSelectedFiles(selectableFiles.map((file) => file.filename))
                 }
               >
                 <IconSelectAll />
@@ -163,7 +168,17 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
                 <IconSquareOff />
               </Button>
             </Hint>
-            {knowledgeBaseId ? (
+            {pickerKnowledgeBaseId ? (
+              <Button
+                disabled={
+                  selectedFiles.length === 0 || isDeleting || isUploading
+                }
+                onClick={() => addSelectedToKnowledgeBase()}
+              >
+                Add selected
+                {selectedFiles.length > 0 && ` (${selectedFiles.length})`}
+              </Button>
+            ) : knowledgeBaseId ? (
               <Hint hint="Remove selected files from this knowledge base" side="top" asChild>
                 <Button
                   aria-label="Remove selected files from knowledge base"

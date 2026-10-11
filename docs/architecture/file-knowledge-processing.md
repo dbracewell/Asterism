@@ -242,6 +242,13 @@ of file deletion. The explorer's sort order replaces the former manual ordering
 in the UI; the `position` column and reorder endpoint remain but are unused by
 the frontend.
 
+Adding files uses a dialog hosting the same explorer in picker mode (no delete,
+upload allowed). `GET /files/?check_knowledge_base_id=` marks each file with
+`in_checked_knowledge_base`, which the picker uses to make existing members
+unselectable. "Add selected" calls `POST /knowledge-bases/{id}/files/bulk`, which
+is atomic: an unknown or foreign file ID rejects the whole request, and files
+already in the base are skipped.
+
 ## File view and similar files
 
 `/files/{filename}` in the frontend shows a file's extracted content, caption,
