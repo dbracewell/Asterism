@@ -572,6 +572,46 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 - [x] Verify story acceptance criteria and request user completion confirmation.
 - [x] On confirmation, merge approved story branches, announce completion, and propose the next plan.
 
+## EPIC-23 — File and Knowledge Base UI Cleanup
+
+Plan: [EPIC-23](docs/epics/EPIC-23-FILE-AND-KNOWLEDGE-BASE-UI-CLEANUP.md).
+Status: Planned.
+Order: US-23.1 → US-23.2 → US-23.3 → US-23.4.
+
+- [x] US-23.1 — Compact knowledge status in the file explorer
+  - [x] US-23.1-T1: Remove Regenerate/Clear/Edit caption buttons from the explorer (and the caption edit/clear/regenerate endpoints).
+  - [x] US-23.1-T2: Add Embedding and Caption status badges.
+  - [x] US-23.1-T3: Add a `RotateCcw` regenerate button (`POST /files/{filename}/knowledge/regenerate` replaces retry).
+  - [x] US-23.1-T4: Add a knowledge-base membership icon with tooltip (`knowledge_base_count` on file list items).
+  - [x] US-23.1-T5: Update component and E2E tests.
+  - [x] Obtain user confirmation before merge (branch: `feat/us-23.1-compact-knowledge-status`).
+
+- [ ] US-23.2 — File view with content, caption, and similar files
+  - [ ] US-23.2-T1: Add top-5 similar-files endpoint and regenerate the client.
+  - [ ] US-23.2-T2: Provide extracted content, caption, and membership data.
+  - [ ] US-23.2-T3: Add the file view page.
+  - [ ] US-23.2-T4: Link the explorer to the file view.
+  - [ ] US-23.2-T5: Handle missing/processing/failed artifacts.
+  - [ ] US-23.2-T6: Add backend and frontend tests.
+
+- [ ] US-23.3 — Explorer-style file management in a knowledge base
+  - [ ] US-23.3-T1: Make shared file-manager components data-source/action configurable.
+  - [ ] US-23.3-T2: Use the shared explorer in the knowledge-base detail view.
+  - [ ] US-23.3-T3: Keep deletion-versus-removal explanations accurate.
+  - [ ] US-23.3-T4: Update tests.
+
+- [ ] US-23.4 — Add files to a knowledge base via explorer popup
+  - [ ] US-23.4-T1: Build the no-delete, selectable explorer dialog.
+  - [ ] US-23.4-T2: Add the "Add selected" batch action.
+  - [ ] US-23.4-T3: Mark files already in the base as unselectable.
+  - [ ] US-23.4-T4: Handle partial failures and loading/empty states.
+  - [ ] US-23.4-T5: Add tests/E2E, run quality gates, and update docs.
+
+### Epic closure
+
+- [ ] Verify story acceptance criteria and request user confirmation.
+- [ ] On confirmation, merge approved story branches and propose the next plan.
+
 ## Refactor stabilization — Dependency cycles and regression verification
 
 - [~] RS-1 — Finish the simplified module boundaries and verify the application (branch: `fix/refactor-dependency-cycles`)

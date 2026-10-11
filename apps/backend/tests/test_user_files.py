@@ -20,7 +20,7 @@ from asterism.domains.files.service import (
     get_file_knowledge_status,
     get_user_file,
     list_user_files,
-    retry_file_knowledge_processing,
+    regenerate_file_knowledge,
     upload_files,
 )
 from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel, KnowledgeBaseModel
@@ -212,10 +212,31 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
 
     canceled = await cancel_file_knowledge_processing(user_id="user-a", filename=file.filename, session=file_session)
     assert canceled.status == "canceled"
-    retried = await retry_file_knowledge_processing(user_id="user-a", filename=file.filename, session=file_session)
+    retried = await regenerate_file_knowledge(user_id="user-a", filename=file.filename, session=file_session)
     assert (retried.id, retried.generation, retried.status) == (status.id, 1, "pending")
-    assert cancelled == [str(status.id)]
+    assert cancelled == [str(status.id)] * 2
     assert enqueued == [str(status.id), str(status.id)]
+
+
+@pytest.mark.asyncio
+async def test_list_files_reports_knowledge_base_membership_count(file_session):
+    uploaded = await upload_files(
+        user_id="user-a",
+        uploads=[_upload("in-base.txt", b"one"), _upload("alone.txt", b"two")],
+        session=file_session,
+    )
+    in_base = next(file for file in uploaded.files if file.filename == "in-base.txt")
+    bases = [KnowledgeBaseModel(user_id="user-a", name=name) for name in ("A", "B")]
+    file_session.add_all(bases)
+    await file_session.flush()
+    file_session.add_all(
+        [KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=in_base.id, position=1) for base in bases],
+    )
+    await file_session.commit()
+
+    listed = await list_user_files(user_id="user-a", session=file_session)
+
+    assert {file.filename: file.knowledge_base_count for file in listed.files} == {"in-base.txt": 2, "alone.txt": 0}
 
 
 @pytest.mark.asyncio

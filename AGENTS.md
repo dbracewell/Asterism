@@ -18,6 +18,15 @@ The platform supports:
 
 This document defines the expected architecture, delivery process, and implementation guardrails for all contributors and coding agents.
 
+### Development stage policy
+
+This project is in active development and has no production users.
+
+- Do not preserve backwards compatibility (APIs, schemas, config, stored data, file formats).
+- Breaking changes are acceptable; do not add compatibility shims, deprecation paths, or legacy fallbacks.
+- Existing data is disposable. Prefer dropping/resetting the database (e.g. `scripts/reset-databases.mjs`) over writing migrations.
+- Do not write data migrations; change the schema directly and update initialization.
+
 ---
 
 ## 2) Core Product Model
@@ -134,6 +143,10 @@ All storage dependencies must be implemented behind interfaces so future swaps a
 - API client generation: **Hey API** (type-safe client from backend OpenAPI)
 - Auth: **BetterAuth with JWT**
 
+Frontend-specific agent rules are defined in [apps/frontend/AGENTS.md](apps/frontend/AGENTS.md) and are incorporated here by reference; read and follow them for all frontend work.
+
+@apps/frontend/AGENTS.md
+
 Frontend UI rules:
 
 - Prefer existing shadcn/ui components over raw HTML elements for interactive UI and common patterns (forms, inputs, dialogs, menus, tables, alerts, etc.).
@@ -231,7 +244,7 @@ When an epic completes:
 3. Add/adjust tests with each meaningful behavior change.
 4. Avoid hidden coupling between frontend and backend contracts.
 5. Regenerate typed API clients after OpenAPI changes.
-6. Keep migration paths explicit for relational/vector/file backends.
+6. Keep storage behind interfaces; schema changes do not need migrations (reset the data instead).
 7. Capture major architectural decisions in ADR-style notes when scope is non-trivial.
 
 ---

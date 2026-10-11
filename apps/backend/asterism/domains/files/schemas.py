@@ -19,6 +19,7 @@ class UserFile(BaseModel):
     created_at: int
     updated_at: int
     thumbnail: str | None
+    knowledge_base_count: int = Field(default=0, ge=0)
 
 
 class UserFileList(BaseModel):
@@ -26,7 +27,3 @@ class UserFileList(BaseModel):
     total: int = Field(default=0, ge=0)
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, ge=1)
-
-
-class FileCaptionEdit(BaseModel):
-    text: str = Field(min_length=1, max_length=10_000)

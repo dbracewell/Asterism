@@ -120,7 +120,10 @@ export const FileList = () => {
                   <span className="text-muted-foreground block w-full truncate text-xs capitalize">
                     {file.kind} · {formatFileSize(file.size, 2, false)}
                   </span>
-                  <KnowledgeStatus filename={file.filename} isImage={file.kind === "image"} />
+                  <KnowledgeStatus
+                    filename={file.filename}
+                    knowledgeBaseCount={file.knowledge_base_count ?? 0}
+                  />
                 </div>
               </article>
             ))}

@@ -10,6 +10,7 @@ const imageFile = {
   content_status: "ready",
   content_error: null,
   thumbnail: null,
+  knowledge_base_count: 1,
   created_at: 0,
   updated_at: 0,
 };
@@ -48,15 +49,13 @@ test("shows canonical processing state and confirms the full impact before file 
   page,
 }) => {
   let deleted = false;
+  let regenerated = 0;
   await page.route(/\/api\/py\/files\/.*/, async (route) => {
     const request = route.request();
     const method = request.method();
     const url = request.url();
-    if (url.includes("/knowledge/caption") && method === "PUT") {
-      await route.fulfill({ json: artifact });
-      return;
-    }
     if (url.includes("/knowledge")) {
+      if (method === "POST") regenerated += 1;
       await route.fulfill({ json: artifact });
       return;
     }
@@ -78,16 +77,20 @@ test("shows canonical processing state and confirms the full impact before file 
   await page.goto("/e2e/file-manager");
   const diagram = page.getByRole("button", { name: /diagram\.png/ });
   await expect(diagram).toBeVisible();
-  await expect(page.getByText("Knowledge: ready")).toBeVisible();
-  await page.getByRole("button", { name: "Edit caption", exact: true }).click();
+  await expect(page.getByText("Embedding: ready")).toBeVisible();
+  await expect(page.getByText("Caption: accepted")).toBeVisible();
   await expect(
-    page.getByText(
-      "Caption regeneration may send the image to the configured external provider.",
-    ),
+    page.getByRole("img", { name: "In a knowledge base" }),
   ).toBeVisible();
-  await page.getByLabel("Caption text").fill("An edited diagram");
-  await page.getByRole("button", { name: "Save caption" }).click();
-  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit caption" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Clear caption" })).toHaveCount(0);
+  await page
+    .getByRole("button", {
+      name: "Regenerate embedding and caption",
+      exact: true,
+    })
+    .click();
+  await expect.poll(() => regenerated).toBe(1);
   await diagram.click();
   await page.getByRole("button", { name: "Delete selected files" }).click();
   await expect(page.getByText("Delete selected files?")).toBeVisible();

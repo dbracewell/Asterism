@@ -5,7 +5,7 @@ locally provisioned model artifacts. Every eligible uploaded file has a
 file-owned artifact generation independent of knowledge-base membership. Image
 captioning is globally disabled by default. When an administrator enables it,
 generated captions are canonical file metadata and are indexed as draft text;
-users can edit, regenerate, or clear that shared caption in the File Manager.
+users can regenerate a file's embedding and caption from the File Manager.
 Image CLIP vectors remain independently indexed throughout.
 
 | Data | Owner | Storage |
