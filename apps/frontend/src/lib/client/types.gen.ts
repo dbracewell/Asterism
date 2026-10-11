@@ -1434,6 +1434,29 @@ export type Setting = {
 };
 
 /**
+ * SimilarFile
+ */
+export type SimilarFile = {
+    file: UserFile;
+    /**
+     * Score
+     *
+     * Cosine similarity between file embeddings
+     */
+    score: number;
+};
+
+/**
+ * SimilarFileList
+ */
+export type SimilarFileList = {
+    /**
+     * Files
+     */
+    files: Array<SimilarFile>;
+};
+
+/**
  * SubAgentTrace
  */
 export type SubAgentTrace = {
@@ -2258,6 +2281,105 @@ export type FileKnowledgeCancelResponses = {
 };
 
 export type FileKnowledgeCancelResponse = FileKnowledgeCancelResponses[keyof FileKnowledgeCancelResponses];
+
+export type FileSimilarGetManyData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/files/{filename}/similar';
+};
+
+export type FileSimilarGetManyErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorDetail;
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Forbidden
+     */
+    403: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileSimilarGetManyError = FileSimilarGetManyErrors[keyof FileSimilarGetManyErrors];
+
+export type FileSimilarGetManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: SimilarFileList;
+};
+
+export type FileSimilarGetManyResponse = FileSimilarGetManyResponses[keyof FileSimilarGetManyResponses];
+
+export type FileKnowledgeBaseGetManyData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/files/{filename}/knowledge-bases';
+};
+
+export type FileKnowledgeBaseGetManyErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorDetail;
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Forbidden
+     */
+    403: ErrorDetail;
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type FileKnowledgeBaseGetManyError = FileKnowledgeBaseGetManyErrors[keyof FileKnowledgeBaseGetManyErrors];
+
+export type FileKnowledgeBaseGetManyResponses = {
+    /**
+     * Response Fileknowledgebasegetmany
+     *
+     * Successful Response
+     */
+    200: Array<KnowledgeBase>;
+};
+
+export type FileKnowledgeBaseGetManyResponse = FileKnowledgeBaseGetManyResponses[keyof FileKnowledgeBaseGetManyResponses];
 
 export type ChatSessionGetManyData = {
     body?: never;

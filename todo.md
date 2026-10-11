@@ -586,13 +586,14 @@ Order: US-23.1 → US-23.2 → US-23.3 → US-23.4.
   - [x] US-23.1-T5: Update component and E2E tests.
   - [x] Obtain user confirmation before merge (branch: `feat/us-23.1-compact-knowledge-status`).
 
-- [ ] US-23.2 — File view with content, caption, and similar files
-  - [ ] US-23.2-T1: Add top-5 similar-files endpoint and regenerate the client.
-  - [ ] US-23.2-T2: Provide extracted content, caption, and membership data.
-  - [ ] US-23.2-T3: Add the file view page.
-  - [ ] US-23.2-T4: Link the explorer to the file view.
-  - [ ] US-23.2-T5: Handle missing/processing/failed artifacts.
-  - [ ] US-23.2-T6: Add backend and frontend tests.
+- [x] US-23.2 — File view with content, caption, and similar files
+  - [x] US-23.2-T1: Add top-5 similar-files endpoint and regenerate the client.
+  - [x] US-23.2-T2: Provide extracted content, caption, and membership data (existing status endpoint plus `GET /files/{filename}/knowledge-bases`).
+  - [x] US-23.2-T3: Add the file view page (`/files/[filename]`).
+  - [x] US-23.2-T4: Link the explorer to the file view.
+  - [x] US-23.2-T5: Handle missing/processing/failed artifacts.
+  - [x] US-23.2-T6: Add backend and frontend tests.
+  - [x] Obtain user confirmation before merge (branch: `feat/us-23.2-file-view`).
 
 - [ ] US-23.3 — Explorer-style file management in a knowledge base
   - [ ] US-23.3-T1: Make shared file-manager components data-source/action configurable.

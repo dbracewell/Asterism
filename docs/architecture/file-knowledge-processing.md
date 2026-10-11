@@ -232,6 +232,16 @@ tool first resolves `AgentKnowledgeBaseAssignmentModel` and
 unfiltered search mode, preserving the authorization boundary at the vector-store
 query rather than filtering global results in application code.
 
+## File view and similar files
+
+`/files/{filename}` in the frontend shows a file's extracted content, caption,
+similar files, and containing knowledge bases. `GET /files/{filename}/similar`
+(`files.service.get_similar_files()`) reads the file's current-generation vectors,
+averages them into a normalized centroid, and searches the owner's other ready,
+current-generation files. Results are grouped by file using the best chunk, with
+cosine similarity derived from LanceDB's squared L2 distance over unit vectors.
+`GET /files/{filename}/knowledge-bases` lists the owner's containing bases.
+
 ## Related guides
 
 - [Knowledge retrieval and image captioning](knowledge-retrieval.md)
