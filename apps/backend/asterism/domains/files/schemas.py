@@ -20,6 +20,10 @@ class UserFile(BaseModel):
     updated_at: int
     thumbnail: str | None
     knowledge_base_count: int = Field(default=0, ge=0)
+    in_checked_knowledge_base: bool = Field(
+        default=False,
+        description="Whether the file is in the knowledge base named by check_knowledge_base_id",
+    )
 
 
 class UserFileList(BaseModel):

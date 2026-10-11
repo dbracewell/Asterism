@@ -230,7 +230,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('1d982da5-d8fb-4e6a-9b39-aec3511445bc'),
+    id: z.uuid().optional().default('178e327d-efd8-46da-ae5f-485f908b775d'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -261,6 +261,13 @@ export const zKnowledgeBaseFile = z.object({
  */
 export const zKnowledgeBaseFileCreate = z.object({
     file_id: z.uuid()
+});
+
+/**
+ * KnowledgeBaseFileCreateMany
+ */
+export const zKnowledgeBaseFileCreateMany = z.object({
+    file_ids: z.array(z.uuid()).min(1).max(1000)
 });
 
 /**
@@ -839,7 +846,8 @@ export const zUserFile = z.object({
     created_at: z.int(),
     updated_at: z.int(),
     thumbnail: z.string().nullable(),
-    knowledge_base_count: z.int().gte(0).optional().default(0)
+    knowledge_base_count: z.int().gte(0).optional().default(0),
+    in_checked_knowledge_base: z.boolean().optional().default(false)
 });
 
 /**
@@ -959,7 +967,8 @@ export const zFileGetManyQuery = z.object({
         'size'
     ]).optional().default('name'),
     query: z.string().nullish(),
-    knowledge_base_id: z.uuid().nullish()
+    knowledge_base_id: z.uuid().nullish(),
+    check_knowledge_base_id: z.uuid().nullish()
 });
 
 /**
@@ -1221,6 +1230,17 @@ export const zKnowledgeBaseFileCreatePath = z.object({
  * Successful Response
  */
 export const zKnowledgeBaseFileCreateResponse = zKnowledgeBaseFile;
+
+export const zKnowledgeBaseFileCreateManyBody = zKnowledgeBaseFileCreateMany;
+
+export const zKnowledgeBaseFileCreateManyPath = z.object({
+    knowledge_base_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zKnowledgeBaseFileCreateManyResponse = zKnowledgeBaseFileList;
 
 export const zKnowledgeBaseFileReorderBody = zKnowledgeBaseFileReorder;
 

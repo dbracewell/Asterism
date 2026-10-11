@@ -55,6 +55,9 @@ async def list_files(
     knowledge_base_id: uuid.UUID | None = Query(
         default=None, description="Only list files that belong to this knowledge base",
     ),
+    check_knowledge_base_id: uuid.UUID | None = Query(
+        default=None, description="Mark each file by whether it is already in this knowledge base",
+    ),
 ) -> UserFileList:
     return await file_service.list_user_files(
         user_id=user.id,
@@ -64,6 +67,7 @@ async def list_files(
         sort_by=sort_by,
         query=query,
         knowledge_base_id=knowledge_base_id,
+        check_knowledge_base_id=check_knowledge_base_id,
     )
 
 

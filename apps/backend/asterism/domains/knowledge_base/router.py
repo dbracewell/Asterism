@@ -13,6 +13,7 @@ from .schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseFile,
     KnowledgeBaseFileCreate,
+    KnowledgeBaseFileCreateMany,
     KnowledgeBaseFileList,
     KnowledgeBaseFileRemove,
     KnowledgeBaseFileReorder,
@@ -70,6 +71,27 @@ async def add_knowledge_base_file(
     db: DBSessionDep,
 ) -> KnowledgeBaseFile:
     return await knowledge_service.add_knowledge_base_file(
+        user_id=user.id,
+        knowledge_base_id=knowledge_base_id,
+        payload=payload,
+        session=db,
+    )
+
+
+@knowledge_router.post(
+    "/{knowledge_base_id}/files/bulk",
+    response_model=KnowledgeBaseFileList,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="knowledgeBaseFileCreateMany",
+    responses={409: {"model": ErrorDetail}},
+)
+async def add_knowledge_base_files(
+    knowledge_base_id: uuid.UUID,
+    payload: KnowledgeBaseFileCreateMany,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> KnowledgeBaseFileList:
+    return await knowledge_service.add_knowledge_base_files(
         user_id=user.id,
         knowledge_base_id=knowledge_base_id,
         payload=payload,

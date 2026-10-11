@@ -31,6 +31,7 @@ from .schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseFile,
     KnowledgeBaseFileCreate,
+    KnowledgeBaseFileCreateMany,
     KnowledgeBaseFileList,
     KnowledgeBaseFileRemove,
     KnowledgeBaseFileReorder,
@@ -330,6 +331,50 @@ async def add_knowledge_base_file(
         await session.rollback()
         raise CodedException(409, "This file is already attached to the knowledge base") from error
     return KnowledgeBaseFile.model_validate(membership)
+
+
+async def add_knowledge_base_files(
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    payload: KnowledgeBaseFileCreateMany,
+    session: AsyncSession,
+) -> KnowledgeBaseFileList:
+    """Atomically attach owned files; files already in the base are skipped."""
+    await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
+    requested = list(dict.fromkeys(payload.file_ids))
+    owned = set(
+        await session.scalars(
+            select(UserFileModel.id).where(UserFileModel.user_id == user_id, UserFileModel.id.in_(requested)),
+        ),
+    )
+    if owned != set(requested):
+        raise NotFoundException("File not found")
+    existing = set(
+        await session.scalars(
+            select(KnowledgeBaseFileModel.file_id).where(
+                KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
+                KnowledgeBaseFileModel.file_id.in_(requested),
+            ),
+        ),
+    )
+    position = await _next_file_position(knowledge_base_id=knowledge_base_id, session=session)
+    added = [
+        KnowledgeBaseFileModel(knowledge_base_id=knowledge_base_id, file_id=file_id, position=position + offset)
+        for offset, file_id in enumerate(file_id for file_id in requested if file_id not in existing)
+    ]
+    session.add_all(added)
+    try:
+        await session.commit()
+    except IntegrityError as error:
+        await session.rollback()
+        raise CodedException(409, "A file is already attached to the knowledge base") from error
+    return KnowledgeBaseFileList(
+        files=[KnowledgeBaseFile.model_validate(item) for item in added],
+        total=len(added),
+        page=1,
+        page_size=max(len(added), 1),
+    )
 
 
 async def list_knowledge_base_files(

@@ -6,7 +6,7 @@ Simplify knowledge status in the file explorer, add a dedicated file view, and
 make knowledge-base file management use the same explorer experience as the
 file library.
 
-**Status: Planned — no user story has started.**
+**Status: Complete — all user stories implemented and merged.**
 
 ## Product decisions
 

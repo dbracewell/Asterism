@@ -575,7 +575,7 @@ Checklist convention: `[ ]` pending, `[~]` in progress, `[x]` completed, `[-]` c
 ## EPIC-23 — File and Knowledge Base UI Cleanup
 
 Plan: [EPIC-23](docs/epics/EPIC-23-FILE-AND-KNOWLEDGE-BASE-UI-CLEANUP.md).
-Status: Planned.
+Status: EPIC-23 complete.
 Order: US-23.1 → US-23.2 → US-23.3 → US-23.4.
 
 - [x] US-23.1 — Compact knowledge status in the file explorer
@@ -602,17 +602,18 @@ Order: US-23.1 → US-23.2 → US-23.3 → US-23.4.
   - [x] US-23.3-T4: Update tests.
   - [x] Obtain user confirmation before merge (branch: `feat/us-23.3-kb-file-explorer`).
 
-- [ ] US-23.4 — Add files to a knowledge base via explorer popup
-  - [ ] US-23.4-T1: Build the no-delete, selectable explorer dialog.
-  - [ ] US-23.4-T2: Add the "Add selected" batch action.
-  - [ ] US-23.4-T3: Mark files already in the base as unselectable.
-  - [ ] US-23.4-T4: Handle partial failures and loading/empty states.
-  - [ ] US-23.4-T5: Add tests/E2E, run quality gates, and update docs.
+- [x] US-23.4 — Add files to a knowledge base via explorer popup
+  - [x] US-23.4-T1: Build the no-delete, selectable explorer dialog.
+  - [x] US-23.4-T2: Add the "Add selected" batch action (`POST /knowledge-bases/{id}/files/bulk`).
+  - [x] US-23.4-T3: Mark files already in the base as unselectable (`check_knowledge_base_id`).
+  - [x] US-23.4-T4: Handle partial failures and loading/empty states (atomic batch; error toast).
+  - [x] US-23.4-T5: Add tests/E2E, run quality gates, and update docs.
+  - [x] Obtain user confirmation before merge (branch: `feat/us-23.4-add-files-dialog`).
 
 ### Epic closure
 
-- [ ] Verify story acceptance criteria and request user confirmation.
-- [ ] On confirmation, merge approved story branches and propose the next plan.
+- [x] Verify story acceptance criteria and request user confirmation.
+- [x] On confirmation, merge approved story branches and propose the next plan.
 
 ## Refactor stabilization — Dependency cycles and regression verification
 

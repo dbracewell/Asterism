@@ -5,6 +5,7 @@ import {
   fileDeleteManyMutation,
   fileGetManyOptions,
   fileUploadMutation,
+  knowledgeBaseFileCreateManyMutation,
   knowledgeBaseFileDeleteManyMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { isErrorDetail } from "@/lib/utils";
@@ -40,6 +41,9 @@ type FileManagerContext = {
   isDeleting: boolean;
   knowledgeBaseId?: string;
   removeSelectedFromKnowledgeBase: () => void;
+  pickerKnowledgeBaseId?: string;
+  addSelectedToKnowledgeBase: () => void;
+  isSelectable: (file: UserFile) => boolean;
   lastClicked: number;
   setLastClicked: Dispatch<SetStateAction<number>>;
   page: number;
@@ -70,9 +74,13 @@ export const useFileManager = (): FileManagerContext => {
 export const FileManagerProvider = ({
   children,
   knowledgeBaseId,
+  pickerKnowledgeBaseId,
+  onAdded,
 }: {
   children: React.ReactNode;
   knowledgeBaseId?: string;
+  pickerKnowledgeBaseId?: string;
+  onAdded?: () => void;
 }) => {
   const { confirm: confirmDelete, Dialog: DeleteConfirmation } =
     useConfirmationDialog({
@@ -148,6 +156,7 @@ export const FileManagerProvider = ({
         sort_by: sort,
         query: deferredQuery ?? undefined,
         knowledge_base_id: knowledgeBaseId,
+        check_knowledge_base_id: pickerKnowledgeBaseId,
       },
     }),
   });
@@ -172,6 +181,40 @@ export const FileManagerProvider = ({
         setPage(1);
       },
     });
+
+  const isSelectable = useCallback(
+    (file: UserFile) =>
+      !(pickerKnowledgeBaseId && file.in_checked_knowledge_base),
+    [pickerKnowledgeBaseId],
+  );
+
+  const { mutate: addMembershipsMutation, isPending: isAdding } = useMutation({
+    ...knowledgeBaseFileCreateManyMutation({ client }),
+    onError: (error) => {
+      if (isErrorDetail(error)) {
+        toast.error(`Unable to add files. ${error.detail}`);
+      } else {
+        toast.error("Unable to add files");
+      }
+    },
+    onSuccess: () => {
+      setSelectedFiles([]);
+      setLastClicked(-1);
+      onAdded?.();
+    },
+  });
+
+  const addSelectedToKnowledgeBase = useCallback(() => {
+    if (!pickerKnowledgeBaseId || selectedFiles.length === 0) return;
+    addMembershipsMutation({
+      path: { knowledge_base_id: pickerKnowledgeBaseId },
+      body: {
+        file_ids: files
+          .filter((file) => selectedFiles.includes(file.filename))
+          .map((file) => file.id),
+      },
+    });
+  }, [addMembershipsMutation, files, pickerKnowledgeBaseId, selectedFiles]);
 
   const removeSelectedFromKnowledgeBase = useCallback(async () => {
     if (!knowledgeBaseId || selectedFiles.length === 0) return;
@@ -199,11 +242,14 @@ export const FileManagerProvider = ({
       shiftPressed: boolean,
       ctrlPressed: boolean,
     ) => {
+      if (!isSelectable(files[index])) return;
       if (shiftPressed) {
-        const selection = files.slice(
-          Math.min(Math.max(0, lastClicked), index),
-          Math.max(Math.max(0, lastClicked), index) + 1,
-        );
+        const selection = files
+          .slice(
+            Math.min(Math.max(0, lastClicked), index),
+            Math.max(Math.max(0, lastClicked), index) + 1,
+          )
+          .filter(isSelectable);
         const selectionFilenames = selection.map((file) => file.filename);
         setSelectedFiles((current) => {
           const newSelection = current.filter(
@@ -232,7 +278,7 @@ export const FileManagerProvider = ({
       }
       setLastClicked(index);
     },
-    [setSelectedFiles, files, lastClicked],
+    [setSelectedFiles, files, lastClicked, isSelectable],
   );
 
   const ctx = useMemo(
@@ -252,9 +298,12 @@ export const FileManagerProvider = ({
       uploadFiles,
       isUploading,
       deleteSelectedFiles,
-      isDeleting: isDeleting || isRemoving,
+      isDeleting: isDeleting || isRemoving || isAdding,
       knowledgeBaseId,
       removeSelectedFromKnowledgeBase,
+      pickerKnowledgeBaseId,
+      addSelectedToKnowledgeBase,
+      isSelectable,
       files,
       loadError: error,
       total: data?.total ?? 0,
@@ -272,8 +321,12 @@ export const FileManagerProvider = ({
       deleteSelectedFiles,
       isDeleting,
       isRemoving,
+      isAdding,
       knowledgeBaseId,
       removeSelectedFromKnowledgeBase,
+      pickerKnowledgeBaseId,
+      addSelectedToKnowledgeBase,
+      isSelectable,
       files,
       data?.total,
       error,

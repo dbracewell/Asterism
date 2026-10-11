@@ -27,8 +27,8 @@ from asterism.domains.files.service import (
     upload_files,
 )
 from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel, KnowledgeBaseModel
-from asterism.domains.knowledge_base.schemas import KnowledgeBaseFileRemove
-from asterism.domains.knowledge_base.service import remove_knowledge_base_files
+from asterism.domains.knowledge_base.schemas import KnowledgeBaseFileCreateMany, KnowledgeBaseFileRemove
+from asterism.domains.knowledge_base.service import add_knowledge_base_files, remove_knowledge_base_files
 from asterism.domains.llm.schemas import ImageUrlContentPart, text_content
 from asterism.domains.user.models import UserModel
 from openpyxl import Workbook
@@ -354,6 +354,46 @@ async def test_list_files_filters_by_knowledge_base_and_bulk_removal_keeps_files
             payload=KnowledgeBaseFileRemove(file_ids=[file_b.id]),
             session=file_session,
         )
+
+
+@pytest.mark.asyncio
+async def test_bulk_add_is_atomic_skips_existing_and_marks_checked_base(file_session):
+    uploaded = await upload_files(
+        user_id="user-a",
+        uploads=[_upload(name, name.encode()) for name in ("a.txt", "b.txt", "c.txt")],
+        session=file_session,
+    )
+    other = await upload_files(user_id="user-b", uploads=[_upload("theirs.txt", b"x")], session=file_session)
+    file_a, file_b, file_c = uploaded.files
+    base = KnowledgeBaseModel(user_id="user-a", name="Base")
+    file_session.add(base)
+    await file_session.flush()
+    file_session.add(KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=file_a.id, position=1))
+    await file_session.commit()
+
+    added = await add_knowledge_base_files(
+        user_id="user-a",
+        knowledge_base_id=base.id,
+        payload=KnowledgeBaseFileCreateMany(file_ids=[file_a.id, file_b.id, file_b.id, file_c.id]),
+        session=file_session,
+    )
+    assert [item.file_id for item in added.files] == [file_b.id, file_c.id]
+    assert [item.position for item in added.files] == [2, 3]
+
+    with pytest.raises(NotFoundException):
+        await add_knowledge_base_files(
+            user_id="user-a",
+            knowledge_base_id=base.id,
+            payload=KnowledgeBaseFileCreateMany(file_ids=[other.files[0].id]),
+            session=file_session,
+        )
+    in_base = await list_user_files(user_id="user-a", session=file_session, knowledge_base_id=base.id)
+    assert in_base.total == 3
+
+    listed = await list_user_files(user_id="user-a", session=file_session, check_knowledge_base_id=base.id)
+    assert all(file.in_checked_knowledge_base for file in listed.files)
+    unchecked = await list_user_files(user_id="user-a", session=file_session)
+    assert not any(file.in_checked_knowledge_base for file in unchecked.files)
 
 
 @pytest.mark.asyncio
