@@ -5,6 +5,7 @@ import {
   fileDeleteManyMutation,
   fileGetManyOptions,
   fileUploadMutation,
+  knowledgeBaseFileDeleteManyMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { isErrorDetail } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -37,6 +38,8 @@ type FileManagerContext = {
   isUploading: boolean;
   deleteSelectedFiles: () => void;
   isDeleting: boolean;
+  knowledgeBaseId?: string;
+  removeSelectedFromKnowledgeBase: () => void;
   lastClicked: number;
   setLastClicked: Dispatch<SetStateAction<number>>;
   page: number;
@@ -66,8 +69,10 @@ export const useFileManager = (): FileManagerContext => {
 
 export const FileManagerProvider = ({
   children,
+  knowledgeBaseId,
 }: {
   children: React.ReactNode;
+  knowledgeBaseId?: string;
 }) => {
   const { confirm: confirmDelete, Dialog: DeleteConfirmation } =
     useConfirmationDialog({
@@ -75,6 +80,12 @@ export const FileManagerProvider = ({
       description:
         "This permanently removes the selected files, every knowledge-base membership, and all derived extractions, captions, and vectors.",
       confirmVariant: "destructive",
+    });
+  const { confirm: confirmRemove, Dialog: RemoveConfirmation } =
+    useConfirmationDialog({
+      title: "Remove selected files from this knowledge base?",
+      description:
+        "The files stay in your library with their extractions, captions, and vectors. Only their membership in this knowledge base is removed.",
     });
   const [view, setView] = useState<View>("list");
   const [lastClicked, setLastClicked] = useState(-1);
@@ -136,6 +147,7 @@ export const FileManagerProvider = ({
         page_size: PAGE_SIZE,
         sort_by: sort,
         query: deferredQuery ?? undefined,
+        knowledge_base_id: knowledgeBaseId,
       },
     }),
   });
@@ -143,6 +155,42 @@ export const FileManagerProvider = ({
   const files = useMemo(() => {
     return data?.files ?? [];
   }, [data?.files]);
+
+  const { mutate: removeMembershipMutation, isPending: isRemoving } =
+    useMutation({
+      ...knowledgeBaseFileDeleteManyMutation({ client }),
+      onError: (error) => {
+        if (isErrorDetail(error)) {
+          toast.error(`Unable to remove files. ${error.detail}`);
+        } else {
+          toast.error("Unable to remove files");
+        }
+      },
+      onSuccess: () => {
+        setSelectedFiles([]);
+        setLastClicked(-1);
+        setPage(1);
+      },
+    });
+
+  const removeSelectedFromKnowledgeBase = useCallback(async () => {
+    if (!knowledgeBaseId || selectedFiles.length === 0) return;
+    if (!(await confirmRemove())) return;
+    removeMembershipMutation({
+      path: { knowledge_base_id: knowledgeBaseId },
+      body: {
+        file_ids: files
+          .filter((file) => selectedFiles.includes(file.filename))
+          .map((file) => file.id),
+      },
+    });
+  }, [
+    confirmRemove,
+    files,
+    knowledgeBaseId,
+    removeMembershipMutation,
+    selectedFiles,
+  ]);
 
   const toggleSelect = useCallback(
     (
@@ -204,7 +252,9 @@ export const FileManagerProvider = ({
       uploadFiles,
       isUploading,
       deleteSelectedFiles,
-      isDeleting,
+      isDeleting: isDeleting || isRemoving,
+      knowledgeBaseId,
+      removeSelectedFromKnowledgeBase,
       files,
       loadError: error,
       total: data?.total ?? 0,
@@ -221,6 +271,9 @@ export const FileManagerProvider = ({
       isUploading,
       deleteSelectedFiles,
       isDeleting,
+      isRemoving,
+      knowledgeBaseId,
+      removeSelectedFromKnowledgeBase,
       files,
       data?.total,
       error,
@@ -234,6 +287,7 @@ export const FileManagerProvider = ({
         {children}
       </FileManagerContext.Provider>
       <DeleteConfirmation />
+      <RemoveConfirmation />
     </>
   );
 };

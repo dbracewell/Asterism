@@ -14,6 +14,7 @@ from .schemas import (
     KnowledgeBaseFile,
     KnowledgeBaseFileCreate,
     KnowledgeBaseFileList,
+    KnowledgeBaseFileRemove,
     KnowledgeBaseFileReorder,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
@@ -94,6 +95,25 @@ async def list_knowledge_base_files(
         session=db,
         page=page,
         page_size=page_size,
+    )
+
+
+@knowledge_router.delete(
+    "/{knowledge_base_id}/files",
+    response_model=KnowledgeBaseFileList,
+    operation_id="knowledgeBaseFileDeleteMany",
+)
+async def remove_knowledge_base_files(
+    knowledge_base_id: uuid.UUID,
+    payload: KnowledgeBaseFileRemove,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> KnowledgeBaseFileList:
+    return await knowledge_service.remove_knowledge_base_files(
+        user_id=user.id,
+        knowledge_base_id=knowledge_base_id,
+        payload=payload,
+        session=db,
     )
 
 

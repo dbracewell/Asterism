@@ -27,6 +27,8 @@ from asterism.domains.files.service import (
     upload_files,
 )
 from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel, KnowledgeBaseModel
+from asterism.domains.knowledge_base.schemas import KnowledgeBaseFileRemove
+from asterism.domains.knowledge_base.service import remove_knowledge_base_files
 from asterism.domains.llm.schemas import ImageUrlContentPart, text_content
 from asterism.domains.user.models import UserModel
 from openpyxl import Workbook
@@ -307,6 +309,51 @@ async def test_file_knowledge_bases_lists_only_containing_user_bases(file_sessio
     assert await get_file_knowledge_bases(user_id="user-a", filename="b.txt", session=file_session) != []
     with pytest.raises(NotFoundException):
         await get_file_knowledge_bases(user_id="user-b", filename="a.txt", session=file_session)
+
+
+@pytest.mark.asyncio
+async def test_list_files_filters_by_knowledge_base_and_bulk_removal_keeps_files(file_session):
+    uploaded = await upload_files(
+        user_id="user-a",
+        uploads=[_upload(name, name.encode()) for name in ("a.txt", "b.txt", "c.txt")],
+        session=file_session,
+    )
+    file_a, file_b, file_c = uploaded.files
+    base = KnowledgeBaseModel(user_id="user-a", name="Base")
+    file_session.add(base)
+    await file_session.flush()
+    file_session.add_all(
+        [
+            KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=file_a.id, position=1),
+            KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=file_b.id, position=2),
+        ],
+    )
+    await file_session.commit()
+
+    in_base = await list_user_files(user_id="user-a", session=file_session, knowledge_base_id=base.id)
+    assert {file.filename for file in in_base.files} == {"a.txt", "b.txt"}
+    assert in_base.total == 2
+    assert (await list_user_files(user_id="user-b", session=file_session, knowledge_base_id=base.id)).files == []
+
+    removed = await remove_knowledge_base_files(
+        user_id="user-a",
+        knowledge_base_id=base.id,
+        payload=KnowledgeBaseFileRemove(file_ids=[file_a.id, file_c.id]),
+        session=file_session,
+    )
+    assert [item.file_id for item in removed.files] == [file_a.id]
+    remaining = await list_user_files(user_id="user-a", session=file_session, knowledge_base_id=base.id)
+    assert [file.filename for file in remaining.files] == ["b.txt"]
+    assert {file.filename for file in (await list_user_files(user_id="user-a", session=file_session)).files} == {
+        "a.txt", "b.txt", "c.txt",
+    }
+    with pytest.raises(NotFoundException):
+        await remove_knowledge_base_files(
+            user_id="user-b",
+            knowledge_base_id=base.id,
+            payload=KnowledgeBaseFileRemove(file_ids=[file_b.id]),
+            session=file_session,
+        )
 
 
 @pytest.mark.asyncio

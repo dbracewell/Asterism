@@ -274,7 +274,10 @@ async def list_user_files(
     page_size: int = 50,
     sort_by: Literal["name", "kind", "date", "size"] = "name",
     query: str | None = None,
+    knowledge_base_id: uuid.UUID | None = None,
 ) -> UserFileList:
+    from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
+
     order_by_column = UserFileModel.kind
     if sort_by == "name":
         order_by_column = UserFileModel.filename
@@ -288,9 +291,15 @@ async def list_user_files(
         .where(UserFileModel.user_id == user_id, UserFileModel.filename.ilike(f"%{query}%") if query else True)  # pyright: ignore[reportArgumentType]
         .order_by(order_by_column)
     )
+    if knowledge_base_id is not None:
+        statement = statement.where(
+            UserFileModel.id.in_(
+                select(KnowledgeBaseFileModel.file_id).where(
+                    KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
+                ),
+            ),
+        )
     total = await session.scalar(select(func.count()).select_from(statement.subquery()))
-    from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
-
     result = list(
         await session.scalars(
             statement.order_by(UserFileModel.created_at.desc(), UserFileModel.filename)

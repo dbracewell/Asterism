@@ -32,6 +32,7 @@ from .schemas import (
     KnowledgeBaseFile,
     KnowledgeBaseFileCreate,
     KnowledgeBaseFileList,
+    KnowledgeBaseFileRemove,
     KnowledgeBaseFileReorder,
     KnowledgeBaseList,
     KnowledgeBaseUpdate,
@@ -375,6 +376,30 @@ async def remove_knowledge_base_file(
     await session.delete(membership)
     await session.commit()
     return response
+
+
+async def remove_knowledge_base_files(
+    *,
+    user_id: str,
+    knowledge_base_id: uuid.UUID,
+    payload: KnowledgeBaseFileRemove,
+    session: AsyncSession,
+) -> KnowledgeBaseFileList:
+    """Remove memberships only; library files and their derived knowledge are untouched."""
+    await _owned_base(user_id=user_id, knowledge_base_id=knowledge_base_id, session=session)
+    memberships = list(
+        await session.scalars(
+            select(KnowledgeBaseFileModel).where(
+                KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
+                KnowledgeBaseFileModel.file_id.in_(payload.file_ids),
+            ),
+        ),
+    )
+    removed = [KnowledgeBaseFile.model_validate(membership) for membership in memberships]
+    for membership in memberships:
+        await session.delete(membership)
+    await session.commit()
+    return KnowledgeBaseFileList(files=removed, total=len(removed), page=1, page_size=max(len(removed), 1))
 
 
 async def reorder_knowledge_base_files(

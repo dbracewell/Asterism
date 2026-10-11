@@ -12,7 +12,7 @@ import {
   IconSelectAll,
   IconSquareOff,
 } from "@tabler/icons-react";
-import { Grid2X2, List, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
+import { Grid2X2, List, SearchIcon, Trash2Icon, UnlinkIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
 export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
@@ -33,6 +33,8 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
     setPage,
     isDeleting,
     isUploading,
+    knowledgeBaseId,
+    removeSelectedFromKnowledgeBase,
   } = useFileManager();
 
   return (
@@ -161,19 +163,35 @@ export const Header = ({ allowFileUpload }: { allowFileUpload: boolean }) => {
                 <IconSquareOff />
               </Button>
             </Hint>
-            <Hint hint="Delete selected files" side="top" asChild>
-              <Button
-                aria-label="Delete selected files"
-                variant="destructive"
-                size="icon-lg"
-                disabled={
-                  selectedFiles.length === 0 || isDeleting || isUploading
-                }
-                onClick={() => deleteSelectedFiles()}
-              >
-                <Trash2Icon />
-              </Button>
-            </Hint>
+            {knowledgeBaseId ? (
+              <Hint hint="Remove selected files from this knowledge base" side="top" asChild>
+                <Button
+                  aria-label="Remove selected files from knowledge base"
+                  variant="secondary"
+                  size="icon-lg"
+                  disabled={
+                    selectedFiles.length === 0 || isDeleting || isUploading
+                  }
+                  onClick={() => removeSelectedFromKnowledgeBase()}
+                >
+                  <UnlinkIcon />
+                </Button>
+              </Hint>
+            ) : (
+              <Hint hint="Delete selected files" side="top" asChild>
+                <Button
+                  aria-label="Delete selected files"
+                  variant="destructive"
+                  size="icon-lg"
+                  disabled={
+                    selectedFiles.length === 0 || isDeleting || isUploading
+                  }
+                  onClick={() => deleteSelectedFiles()}
+                >
+                  <Trash2Icon />
+                </Button>
+              </Hint>
+            )}
             {/* {actionButton && (
               <Hint hint={actionButton.hint} side="top" asChild>
                 <Button

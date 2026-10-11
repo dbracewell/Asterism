@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Query, UploadFile, status
@@ -51,6 +52,9 @@ async def list_files(
     page_size: int = Query(default=50, ge=1, le=100),
     sort_by: Literal["name", "kind", "date", "size"] = Query(default="name", pattern="^(name|kind|date|size)$"),
     query: str | None = Query(default=None, description="Search query to filter files by name"),
+    knowledge_base_id: uuid.UUID | None = Query(
+        default=None, description="Only list files that belong to this knowledge base",
+    ),
 ) -> UserFileList:
     return await file_service.list_user_files(
         user_id=user.id,
@@ -59,6 +63,7 @@ async def list_files(
         page_size=page_size,
         sort_by=sort_by,
         query=query,
+        knowledge_base_id=knowledge_base_id,
     )
 
 

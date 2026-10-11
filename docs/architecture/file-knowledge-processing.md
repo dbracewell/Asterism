@@ -232,6 +232,16 @@ tool first resolves `AgentKnowledgeBaseAssignmentModel` and
 unfiltered search mode, preserving the authorization boundary at the vector-store
 query rather than filtering global results in application code.
 
+## Knowledge-base file management
+
+A knowledge base's page reuses the file explorer: `GET /files/?knowledge_base_id=`
+lists only that base's files, and `DELETE /knowledge-bases/{id}/files` (body:
+`file_ids`) removes memberships without touching the library files or their
+artifacts. In this mode the explorer offers "remove from knowledge base" instead
+of file deletion. The explorer's sort order replaces the former manual ordering
+in the UI; the `position` column and reorder endpoint remain but are unused by
+the frontend.
+
 ## File view and similar files
 
 `/files/{filename}` in the frontend shows a file's extracted content, caption,

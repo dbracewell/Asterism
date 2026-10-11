@@ -595,11 +595,12 @@ Order: US-23.1 → US-23.2 → US-23.3 → US-23.4.
   - [x] US-23.2-T6: Add backend and frontend tests.
   - [x] Obtain user confirmation before merge (branch: `feat/us-23.2-file-view`).
 
-- [ ] US-23.3 — Explorer-style file management in a knowledge base
-  - [ ] US-23.3-T1: Make shared file-manager components data-source/action configurable.
-  - [ ] US-23.3-T2: Use the shared explorer in the knowledge-base detail view.
-  - [ ] US-23.3-T3: Keep deletion-versus-removal explanations accurate.
-  - [ ] US-23.3-T4: Update tests.
+- [x] US-23.3 — Explorer-style file management in a knowledge base
+  - [x] US-23.3-T1: Make shared file-manager components data-source/action configurable (`knowledgeBaseId`; `GET /files/?knowledge_base_id=`).
+  - [x] US-23.3-T2: Use the shared explorer in the knowledge-base detail view (bulk `DELETE /knowledge-bases/{id}/files`).
+  - [x] US-23.3-T3: Keep deletion-versus-removal explanations accurate.
+  - [x] US-23.3-T4: Update tests.
+  - [x] Obtain user confirmation before merge (branch: `feat/us-23.3-kb-file-explorer`).
 
 - [ ] US-23.4 — Add files to a knowledge base via explorer popup
   - [ ] US-23.4-T1: Build the no-delete, selectable explorer dialog.

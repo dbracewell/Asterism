@@ -20,14 +20,16 @@ type FileManagerProps = {
   className?: string;
   actionButton?: ActionButtonProps;
   allowFileUpload?: boolean;
+  knowledgeBaseId?: string;
 };
 
 export const FileManager = ({
   allowFileUpload,
   className,
+  knowledgeBaseId,
 }: FileManagerProps) => {
   return (
-    <FileManagerProvider>
+    <FileManagerProvider knowledgeBaseId={knowledgeBaseId}>
       <FileManagerPane
         allowFileUpload={allowFileUpload ?? false}
         className={className}
