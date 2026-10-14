@@ -625,6 +625,20 @@ Order: US-23.1 → US-23.2 → US-23.3 → US-23.4.
   - [-] Isolated E2E could not start because pnpm identity verification requires unavailable registry access.
   - [ ] Document results and obtain user confirmation before merge.
 
+## Modular file-manager stabilization
+
+- [~] FM-1 — Repair regressions and verify the modular file manager (branch: `fix/modular-file-manager-verification`)
+  - [x] Update the E2E page to compose the provider, ribbon, upload area, and file list.
+  - [x] Update knowledge-base fixtures and router mocks; name icon controls for accessibility.
+  - [x] Supply jsdom's missing ResizeObserver API for Radix component tests.
+  - [x] Backend/frontend lint and type checks passed; backend dependency graph has no cycles.
+  - [x] Complete tests passed: 222 backend, 76 frontend, 6 migration, and 29 configuration tests; no unhandled Vitest errors.
+  - [x] Production build and synthetic-secret checks passed; container configuration parity passed.
+  - [x] Isolated Playwright with `CI=1` passed all 10 tests without retries.
+  - [x] Workspace-task and diff checks passed; dotenv audit passed on a tracked-file checkout snapshot (local ignored `.env` preserved).
+  - [x] Docker frontend-build target passed without dotenv files or runtime secrets.
+  - [ ] Obtain user confirmation before merge.
+
 ## CI repair — Isolated E2E initialization
 
 - [~] CI-1 — Initialize the isolated backend without a root dotenv file (branch: `fix/isolated-e2e-environment`)

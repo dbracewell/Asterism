@@ -1,56 +1,51 @@
-import { useConfirmationDialog } from "@/components/confirmation-dialog";
+import { Footer } from "@/components/file-manager/footer";
 import { client } from "@/lib/api";
-import { ErrorDetail, UserFile } from "@/lib/client";
-import {
-  fileDeleteManyMutation,
-  fileGetManyOptions,
-  fileUploadMutation,
-  knowledgeBaseFileCreateManyMutation,
-  knowledgeBaseFileDeleteManyMutation,
-} from "@/lib/client/@tanstack/react-query.gen";
-import { isErrorDetail } from "@/lib/utils";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { fileGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
+import { UserFile } from "@/lib/client/types.gen";
+import { useQuery } from "@tanstack/react-query";
 import {
   createContext,
   Dispatch,
-  SetStateAction,
   useCallback,
   useContext,
   useDeferredValue,
   useMemo,
   useState,
 } from "react";
-import { toast } from "sonner";
 
 export type View = "list" | "grid";
 export type Sort = "name" | "kind" | "date" | "size";
+export type Mode = "normal" | "picker";
 export const PAGE_SIZE = 50;
 
-type FileManagerContext = {
-  view: View;
-  setView: Dispatch<SetStateAction<View>>;
+type ClickEvent = {
+  property: string;
+  value: string | null | string[] | number;
+};
+
+type QueryParameters = {
   sort: Sort;
-  setSort: Dispatch<SetStateAction<Sort>>;
-  query: string | null;
-  setQuery: (query: string | null) => void;
-  selectedFiles: string[];
-  setSelectedFiles: Dispatch<SetStateAction<string[]>>;
-  uploadFiles: (files: FileList | null) => void;
-  isUploading: boolean;
-  deleteSelectedFiles: () => void;
-  isDeleting: boolean;
-  knowledgeBaseId?: string;
-  removeSelectedFromKnowledgeBase: () => void;
-  pickerKnowledgeBaseId?: string;
-  addSelectedToKnowledgeBase: () => void;
-  isSelectable: (file: UserFile) => boolean;
-  lastClicked: number;
-  setLastClicked: Dispatch<SetStateAction<number>>;
   page: number;
-  setPage: Dispatch<SetStateAction<number>>;
+  query: string | null;
+};
+
+type FileManagerContext = {
+  lastClickEvent: ClickEvent | null;
+  view: View;
+  selectedFiles: string[];
+  setSelectedFiles: Dispatch<React.SetStateAction<string[]>>;
+  queryParameters: QueryParameters;
+  isSearchVisible: boolean;
+  totalFiles: number;
   files: UserFile[];
-  total: number;
-  loadError: ErrorDetail | null;
+  isMutating: boolean;
+  knowledgeBaseId?: string;
+  mode: Mode;
+  filesLoading: boolean;
+  isSelectable: (file: UserFile) => boolean;
+  setIsMutating: Dispatch<React.SetStateAction<boolean>>;
+  setIsSearchVisible: Dispatch<React.SetStateAction<boolean>>;
+  dispatch: (event: ClickEvent) => void;
   toggleSelect: (
     filename: string,
     index: number,
@@ -74,89 +69,69 @@ export const useFileManager = (): FileManagerContext => {
 export const FileManagerProvider = ({
   children,
   knowledgeBaseId,
-  pickerKnowledgeBaseId,
-  onAdded,
+  checkKnowledgeBaseId,
+  mode = "normal",
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isSelectable = (_) => true,
 }: {
   children: React.ReactNode;
   knowledgeBaseId?: string;
-  pickerKnowledgeBaseId?: string;
-  onAdded?: () => void;
+  checkKnowledgeBaseId?: string;
+  mode?: Mode;
+  isSelectable?: (file: UserFile) => boolean;
 }) => {
-  const { confirm: confirmDelete, Dialog: DeleteConfirmation } =
-    useConfirmationDialog({
-      title: "Delete selected files?",
-      description:
-        "This permanently removes the selected files, every knowledge-base membership, and all derived extractions, captions, and vectors.",
-      confirmVariant: "destructive",
-    });
-  const { confirm: confirmRemove, Dialog: RemoveConfirmation } =
-    useConfirmationDialog({
-      title: "Remove selected files from this knowledge base?",
-      description:
-        "The files stay in your library with their extractions, captions, and vectors. Only their membership in this knowledge base is removed.",
-    });
-  const [view, setView] = useState<View>("list");
-  const [lastClicked, setLastClicked] = useState(-1);
-  const [sort, setSort] = useState<Sort>("name");
-  const [page, setPage] = useState(1);
+  const [queryParameters, setQueryParameters] = useState<QueryParameters>({
+    sort: "name",
+    page: 1,
+    query: null,
+  });
+  const [view, setView] = useState<View>("grid");
+  const [lastClickEvent, setLastClickEvent] = useState<ClickEvent | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [query, setQuery] = useState<string | null>(null);
-  const deferredQuery = useDeferredValue(query?.trim() ?? null);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [lastFileClickedIndex, setLastFileClickedIndex] = useState(-1);
+  const deferredQuery = useDeferredValue(queryParameters.query?.trim() ?? null);
 
-  const { mutate: addFiles, isPending: isUploading } = useMutation({
-    ...fileUploadMutation({ client }),
-    onError: (error) => {
-      if (isErrorDetail(error)) {
-        toast.error(`Unable to upload files. ${error.detail}`);
-      } else {
-        toast.error("Unable to upload files");
-      }
-    },
-  });
+  const dispatch = useCallback((event: ClickEvent) => {
+    setLastClickEvent(event);
+    switch (event.property.toLocaleLowerCase()) {
+      case "view":
+        setView(event.value as View);
+        break;
+      case "sort":
+        setQueryParameters((prev) => ({
+          ...prev,
+          sort: event.value as Sort,
+          page: 1,
+        }));
+        break;
+      case "page":
+        setQueryParameters((prev) => ({
+          ...prev,
+          page: event.value as number,
+        }));
+        break;
+      case "query":
+        setQueryParameters((prev) => ({
+          ...prev,
+          query: event.value as string | null,
+          page: 1,
+        }));
+        break;
+    }
+  }, []);
 
-  const uploadFiles = useCallback(
-    (files: FileList | null) => {
-      if (!files) return;
-      addFiles({
-        body: { files: Array.from(files) },
-      });
-    },
-    [addFiles],
-  );
-
-  const { mutate: deleteFileMutation, isPending: isDeleting } = useMutation({
-    ...fileDeleteManyMutation({ client }),
-    onError: (error) => {
-      if (isErrorDetail(error)) {
-        toast.error(`Unable to delete files. ${error.detail}`);
-      } else {
-        toast.error("Unable to delete files");
-      }
-    },
-    onSuccess: () => {
-      setSelectedFiles([]);
-      setLastClicked(-1);
-      setPage(1);
-    },
-  });
-
-  const deleteSelectedFiles = useCallback(async () => {
-    if (selectedFiles.length === 0 || !(await confirmDelete())) return;
-    deleteFileMutation({
-      body: selectedFiles,
-    });
-  }, [confirmDelete, deleteFileMutation, selectedFiles]);
-
-  const { data, error } = useQuery({
+  const { data, isPending } = useQuery({
     ...fileGetManyOptions({
       client,
       query: {
-        page,
+        page: queryParameters.page,
         page_size: PAGE_SIZE,
-        sort_by: sort,
+        sort_by: queryParameters.sort,
         query: deferredQuery ?? undefined,
         knowledge_base_id: knowledgeBaseId,
-        check_knowledge_base_id: pickerKnowledgeBaseId,
+        check_knowledge_base_id: checkKnowledgeBaseId,
       },
     }),
   });
@@ -165,75 +140,7 @@ export const FileManagerProvider = ({
     return data?.files ?? [];
   }, [data?.files]);
 
-  const { mutate: removeMembershipMutation, isPending: isRemoving } =
-    useMutation({
-      ...knowledgeBaseFileDeleteManyMutation({ client }),
-      onError: (error) => {
-        if (isErrorDetail(error)) {
-          toast.error(`Unable to remove files. ${error.detail}`);
-        } else {
-          toast.error("Unable to remove files");
-        }
-      },
-      onSuccess: () => {
-        setSelectedFiles([]);
-        setLastClicked(-1);
-        setPage(1);
-      },
-    });
-
-  const isSelectable = useCallback(
-    (file: UserFile) =>
-      !(pickerKnowledgeBaseId && file.in_checked_knowledge_base),
-    [pickerKnowledgeBaseId],
-  );
-
-  const { mutate: addMembershipsMutation, isPending: isAdding } = useMutation({
-    ...knowledgeBaseFileCreateManyMutation({ client }),
-    onError: (error) => {
-      if (isErrorDetail(error)) {
-        toast.error(`Unable to add files. ${error.detail}`);
-      } else {
-        toast.error("Unable to add files");
-      }
-    },
-    onSuccess: () => {
-      setSelectedFiles([]);
-      setLastClicked(-1);
-      onAdded?.();
-    },
-  });
-
-  const addSelectedToKnowledgeBase = useCallback(() => {
-    if (!pickerKnowledgeBaseId || selectedFiles.length === 0) return;
-    addMembershipsMutation({
-      path: { knowledge_base_id: pickerKnowledgeBaseId },
-      body: {
-        file_ids: files
-          .filter((file) => selectedFiles.includes(file.filename))
-          .map((file) => file.id),
-      },
-    });
-  }, [addMembershipsMutation, files, pickerKnowledgeBaseId, selectedFiles]);
-
-  const removeSelectedFromKnowledgeBase = useCallback(async () => {
-    if (!knowledgeBaseId || selectedFiles.length === 0) return;
-    if (!(await confirmRemove())) return;
-    removeMembershipMutation({
-      path: { knowledge_base_id: knowledgeBaseId },
-      body: {
-        file_ids: files
-          .filter((file) => selectedFiles.includes(file.filename))
-          .map((file) => file.id),
-      },
-    });
-  }, [
-    confirmRemove,
-    files,
-    knowledgeBaseId,
-    removeMembershipMutation,
-    selectedFiles,
-  ]);
+  const totalFiles = data?.total ?? 0;
 
   const toggleSelect = useCallback(
     (
@@ -246,10 +153,11 @@ export const FileManagerProvider = ({
       if (shiftPressed) {
         const selection = files
           .slice(
-            Math.min(Math.max(0, lastClicked), index),
-            Math.max(Math.max(0, lastClicked), index) + 1,
+            Math.min(Math.max(0, lastFileClickedIndex), index),
+            Math.max(Math.max(0, lastFileClickedIndex), index) + 1,
           )
           .filter(isSelectable);
+
         const selectionFilenames = selection.map((file) => file.filename);
         setSelectedFiles((current) => {
           const newSelection = current.filter(
@@ -261,7 +169,7 @@ export const FileManagerProvider = ({
             return [...newSelection, ...selectionFilenames];
           }
         });
-        setLastClicked((prev) => (prev === -1 ? index : prev));
+        setLastFileClickedIndex((prev) => (prev === -1 ? index : prev));
         return;
       }
 
@@ -276,71 +184,58 @@ export const FileManagerProvider = ({
           current.includes(filename) ? [] : [filename],
         );
       }
-      setLastClicked(index);
+      setLastFileClickedIndex(index);
     },
-    [setSelectedFiles, files, lastClicked, isSelectable],
+    [setSelectedFiles, files, lastFileClickedIndex, isSelectable],
   );
 
   const ctx = useMemo(
     () => ({
+      queryParameters,
+      dispatch,
       view,
-      setView,
-      lastClicked,
-      setLastClicked,
-      sort,
-      setSort,
-      page,
-      setPage,
+      lastClickEvent,
       selectedFiles,
       setSelectedFiles,
-      query,
-      setQuery,
-      uploadFiles,
-      isUploading,
-      deleteSelectedFiles,
-      isDeleting: isDeleting || isRemoving || isAdding,
-      knowledgeBaseId,
-      removeSelectedFromKnowledgeBase,
-      pickerKnowledgeBaseId,
-      addSelectedToKnowledgeBase,
-      isSelectable,
+      isSearchVisible,
+      setIsSearchVisible,
       files,
-      loadError: error,
-      total: data?.total ?? 0,
+      isSelectable,
+      isMutating,
+      setIsMutating,
       toggleSelect,
+      knowledgeBaseId,
+      totalFiles,
+      filesLoading: isPending,
+      mode,
     }),
     [
+      queryParameters,
+      dispatch,
       view,
-      lastClicked,
-      sort,
-      page,
+      lastClickEvent,
       selectedFiles,
-      query,
-      uploadFiles,
-      isUploading,
-      deleteSelectedFiles,
-      isDeleting,
-      isRemoving,
-      isAdding,
-      knowledgeBaseId,
-      removeSelectedFromKnowledgeBase,
-      pickerKnowledgeBaseId,
-      addSelectedToKnowledgeBase,
-      isSelectable,
+      isSearchVisible,
       files,
-      data?.total,
-      error,
+      isSelectable,
+      isMutating,
+      knowledgeBaseId,
+      setIsMutating,
       toggleSelect,
+      totalFiles,
+      isPending,
+      mode,
     ],
   );
 
   return (
     <>
       <FileManagerContext.Provider value={{ ...ctx }}>
-        {children}
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
+          {children}
+          <Footer />
+        </div>
       </FileManagerContext.Provider>
-      <DeleteConfirmation />
-      <RemoveConfirmation />
     </>
   );
 };

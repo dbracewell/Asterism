@@ -3,23 +3,34 @@ import { APIDownload } from "@/components/api-download";
 import { APIImage } from "@/components/api-image";
 import { useFileManager } from "@/components/file-manager/context";
 import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { formatFileSize } from "@/lib/formatters";
 import { cn } from "cn";
 import { ExternalLink, FileIcon } from "lucide-react";
 import Link from "next/link";
 
 export const FileList = () => {
-  const { loadError, files, view, selectedFiles, toggleSelect, isSelectable } =
-    useFileManager();
+  const {
+    files,
+    view,
+    selectedFiles,
+    isSelectable,
+    toggleSelect,
+    filesLoading,
+    mode,
+  } = useFileManager();
+
+  if (filesLoading) {
+    return (
+      <div className="flex h-full min-h-0 flex-1 flex-col gap-2">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {loadError && (
-        <p className="text-destructive" role="alert">
-          {loadError.detail}
-        </p>
-      )}
       {files.length === 0 ? (
         <section className="text-muted-foreground bg-card flex flex-1 items-center justify-center text-lg">
           No files found.
@@ -30,7 +41,7 @@ export const FileList = () => {
             className={cn(
               "min-h-0 w-full min-w-0 gap-1 overflow-y-auto px-4 py-2",
               view === "grid"
-                ? "grid grid-cols-2 grid-rows-[fit-content(200px)] gap-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                ? "grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] grid-rows-[fit-content(200px)] gap-3"
                 : "flex flex-col",
             )}
           >
@@ -97,7 +108,7 @@ export const FileList = () => {
                 <div
                   className={cn(
                     "flex w-full min-w-0 flex-1 flex-col text-sm",
-                    view === "grid" && "text-center",
+                    view === "grid" ? "text-center" : "ml-4 justify-start",
                   )}
                 >
                   <div
@@ -114,35 +125,49 @@ export const FileList = () => {
                     >
                       {file.original_name}
                     </h4>
-                    <Button
-                      asChild
-                      size="xs"
-                      variant="outline"
-                      className="shrink-0"
-                    >
-                      <Link
-                        href={`/files/${encodeURIComponent(file.filename)}`}
-                        aria-label={`Open ${file.original_name}`}
-                      >
-                        <ExternalLink />
-                        Open
-                      </Link>
-                    </Button>
-                    <APIDownload
-                      className="text-sm underline"
-                      filename={file.filename}
-                      linkText="[↓]"
-                    />
                   </div>
-                  <span className="text-muted-foreground block w-full truncate text-xs capitalize">
-                    {file.kind} · {formatFileSize(file.size, 2, false)}
-                    {!isSelectable(file) && " · Already in this knowledge base"}
-                  </span>
+                  <div className="text-muted-foreground flex w-full items-center gap-4 truncate text-xs capitalize">
+                    <span
+                      className={cn(
+                        view === "grid" && "flex-1 text-center",
+                        view === "grid" && mode === "normal" && "-mr-10",
+                      )}
+                    >
+                      {file.kind} · {formatFileSize(file.size, 2, false)}
+                      {!isSelectable(file) && (
+                        <>
+                          <br /> Already in this knowledge base
+                        </>
+                      )}
+                    </span>
+                    {mode === "normal" && (
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={`/files/${encodeURIComponent(file.filename)}`}
+                          aria-label={`Open ${file.original_name}`}
+                          className={buttonVariants({
+                            variant: "ghost",
+                            size: "icon-xs",
+                            className: "shrink-0",
+                          })}
+                        >
+                          <ExternalLink />
+                        </Link>
+                        <APIDownload
+                          className="text-sm font-bold"
+                          filename={file.filename}
+                          linkText="[↓]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {mode === "normal" && (
                   <KnowledgeStatus
                     filename={file.filename}
                     knowledgeBaseCount={file.knowledge_base_count ?? 0}
                   />
-                </div>
+                )}
               </article>
             ))}
           </div>

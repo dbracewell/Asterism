@@ -1,4 +1,4 @@
-import { FileManager } from "@/components/file-manager";
+import * as FileManager from "@/components/file-manager";
 
 export default function FilesPage() {
   return (
@@ -6,7 +6,15 @@ export default function FilesPage() {
       <h1 className="bg-accent text-accent-foreground border-b px-4 py-2 text-lg font-bold">
         File Manager
       </h1>
-      <FileManager allowFileUpload={true} />
+      <FileManager.Provider>
+        <FileManager.UploadFileDropZone>
+          <FileManager.Ribbon>
+            <FileManager.DeleteSelectedFilesSection />
+            <FileManager.UploadFilesSection />
+          </FileManager.Ribbon>
+          <FileManager.FileList />
+        </FileManager.UploadFileDropZone>
+      </FileManager.Provider>
     </div>
   );
 }

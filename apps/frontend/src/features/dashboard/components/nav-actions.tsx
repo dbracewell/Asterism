@@ -43,7 +43,7 @@ export const NavActions = () => {
               asChild
               size="lgText"
               tooltip="Knowledge bases"
-              isActive={pathname === "/knowledge"}
+              isActive={pathname.startsWith("/knowledge")}
             >
               <Link href="/knowledge">
                 <DatabaseIcon /> <span>Knowledge</span>

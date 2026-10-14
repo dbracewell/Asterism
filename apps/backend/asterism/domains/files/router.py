@@ -53,10 +53,12 @@ async def list_files(
     sort_by: Literal["name", "kind", "date", "size"] = Query(default="name", pattern="^(name|kind|date|size)$"),
     query: str | None = Query(default=None, description="Search query to filter files by name"),
     knowledge_base_id: uuid.UUID | None = Query(
-        default=None, description="Only list files that belong to this knowledge base",
+        default=None,
+        description="Only list files that belong to this knowledge base",
     ),
     check_knowledge_base_id: uuid.UUID | None = Query(
-        default=None, description="Mark each file by whether it is already in this knowledge base",
+        default=None,
+        description="Mark each file by whether it is already in this knowledge base",
     ),
 ) -> UserFileList:
     return await file_service.list_user_files(

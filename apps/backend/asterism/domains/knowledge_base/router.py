@@ -177,7 +177,11 @@ async def remove_knowledge_base_file(
     )
 
 
-@knowledge_router.get("/{knowledge_base_id}", response_model=KnowledgeBase, operation_id="knowledgeBaseGetOne")
+@knowledge_router.get(
+    "/{knowledge_base_id}",
+    response_model=KnowledgeBase,
+    operation_id="knowledgeBaseGetOne",
+)
 async def get_knowledge_base(knowledge_base_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> KnowledgeBase:
     return await knowledge_service.get_knowledge_base(user_id=user.id, knowledge_base_id=knowledge_base_id, session=db)
 
