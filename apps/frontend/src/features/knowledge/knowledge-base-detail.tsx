@@ -1,28 +1,55 @@
 "use client";
 
-import { FileManager } from "@/components/file-manager";
-import { AddFilesDialog } from "@/features/knowledge/add-files-dialog";
+import * as FileManager from "@/components/file-manager";
+import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
+import { client } from "@/lib/api";
+import { knowledgeBaseGetOneOptions } from "@/lib/client/@tanstack/react-query.gen";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeftIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function KnowledgeBaseDetail({
   knowledgeBaseId,
 }: {
   knowledgeBaseId: string;
 }) {
+  const router = useRouter();
+  const { data: kb } = useQuery(
+    knowledgeBaseGetOneOptions({
+      client,
+      path: { knowledge_base_id: knowledgeBaseId },
+    }),
+  );
   return (
-    <main className="mx-auto flex h-screen min-h-0 w-full max-w-5xl flex-col gap-6 p-6 pt-12">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Knowledge base files</h1>
-          <p className="text-muted-foreground">
-            This collection references files in your library. Processing and
-            captions belong to each file, not this knowledge base. Removing a
-            file here keeps it in your library with its derived knowledge.
+    <main className="flex min-h-0 flex-1 flex-col">
+      <header className="bg-accent text-accent-foreground flex items-center gap-2 border-b py-2 pr-4 pl-2 text-lg font-bold">
+        <Hint hint="Back" asChild>
+          <Button
+            aria-label="Back"
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+          >
+            <ArrowLeftIcon />
+          </Button>
+        </Hint>
+        <div className="flex flex-col">
+          <h3>Knowledge Base: {kb?.name ?? ""}</h3>
+          <p className="text-muted-foreground text-sm">
+            {kb?.description ?? ""}
           </p>
         </div>
-        <AddFilesDialog knowledgeBaseId={knowledgeBaseId} />
       </header>
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
-        <FileManager knowledgeBaseId={knowledgeBaseId} />
+        <FileManager.Provider knowledgeBaseId={knowledgeBaseId}>
+          <FileManager.Ribbon>
+            <FileManager.KnowledgeBaseSection
+              knowledgeBaseId={knowledgeBaseId}
+            />
+          </FileManager.Ribbon>
+          <FileManager.FileList />
+        </FileManager.Provider>
       </div>
     </main>
   );

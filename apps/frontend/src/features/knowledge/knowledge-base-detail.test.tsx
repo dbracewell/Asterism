@@ -7,9 +7,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ApiClient } from "@/lib/client";
 import { KnowledgeBaseDetail } from "./knowledge-base-detail";
 
-const { api, client } = vi.hoisted(() => ({
+const { api, client, back } = vi.hoisted(() => ({
+  back: vi.fn(),
   client: { getConfig: () => ({ baseUrl: "" }) },
   api: {
+    knowledgeBaseGetOne: vi.fn(),
     fileGetMany: vi.fn(),
     fileGetFileInfo: vi.fn(),
     fileKnowledgeGetStatus: vi.fn(),
@@ -19,6 +21,7 @@ const { api, client } = vi.hoisted(() => ({
   },
 }));
 vi.mock("@/lib/api", () => ({ client }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ back }) }));
 
 function renderDetail() {
   return render(
@@ -58,6 +61,9 @@ type ListOptions = {
 beforeEach(() => {
   vi.clearAllMocks();
   ApiClient.__registry.set(api as never);
+  api.knowledgeBaseGetOne.mockResolvedValue({
+    data: { id: "base-1", name: "Research", description: "Private notes" },
+  });
   api.fileGetMany.mockImplementation(async ({ query }: ListOptions) => {
     const files = query?.knowledge_base_id
       ? [file("member", "member.txt", true)]
@@ -73,6 +79,9 @@ it("lists member files in the explorer and removes only the membership", async (
   api.knowledgeBaseFileDeleteMany.mockResolvedValue({ data: { files: [] } });
   renderDetail();
   const user = userEvent.setup();
+  expect(await screen.findByText("Knowledge Base: Research")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Back" }));
+  expect(back).toHaveBeenCalledOnce();
   expect(api.fileGetMany).toHaveBeenCalledWith(
     expect.objectContaining({
       query: expect.objectContaining({ knowledge_base_id: "base-1" }),

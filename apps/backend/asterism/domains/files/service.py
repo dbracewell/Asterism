@@ -289,7 +289,7 @@ async def list_user_files(
 
     statement = (
         select(UserFileModel)
-        .where(UserFileModel.user_id == user_id, UserFileModel.filename.ilike(f"%{query}%") if query else True)  # pyright: ignore[reportArgumentType]
+        .where(UserFileModel.user_id == user_id, UserFileModel.filename.ilike(f"%{query}%") if query else True)
         .order_by(order_by_column)
     )
     if knowledge_base_id is not None:
