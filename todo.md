@@ -1,15 +1,9 @@
 # Active and Pending Work
 
-EPIC-24 (US-24.1–US-24.3) was confirmed complete on 2026-10-14; its checklists are [archived](docs/archive/todo-completed-2026-10-14.md). All remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
+EPIC-24 (US-24.1–US-24.3) was confirmed complete on 2026-10-14; its checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-25.1 was also confirmed complete on 2026-10-14 and is archived there; all remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-25 — Project chats and chat files](docs/epics/EPIC-25-PROJECT-CHATS-AND-CHAT-FILES.md)
 
-- [ ] US-25.1: Chat project binding and scoped attachments (2–3 person-days).
-  - [ ] US-25.1-T1: Replace folder_id with nullable project_id in chat contracts and introduce explicit ChatFile membership using stable file IDs.
-  - [ ] US-25.1-T2: Validate owner consistency at service and DB boundaries; a chat belongs to zero or one project.
-  - [ ] US-25.1-T3: Persist message-to-file provenance using file IDs and resolve attachments against the active message branch.
-  - [ ] US-25.1-T4: Compose project memberships and active-branch chat attachments without implicitly granting the entire user library.
-  - [ ] US-25.1-T5: Regenerate clients and test general/project chats, branches, missing files, and foreign identifiers.
 - [ ] US-25.2: Chat membership changes and search (2–3 person-days).
   - [ ] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
   - [ ] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.

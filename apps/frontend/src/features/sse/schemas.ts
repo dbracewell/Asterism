@@ -13,7 +13,7 @@ export const EventPayloadSchemas = {
   "chat-session:update": z.object({
     session_id: z.string(),
     title: z.string().nullable(),
-    folder_id: z.string().nullable(),
+    project_id: z.string().nullable(),
   }),
   "connection:status": z.object({ status: z.boolean() }),
   "chat-session:scroll": z.object({

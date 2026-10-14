@@ -11,11 +11,12 @@ from asterism.core.exceptions import (
 )
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.service import get_agent_profile
-from asterism.domains.files.models import UserFileModel
-from asterism.domains.files.service import ensure_file_processed
+from asterism.domains.files.models import FileContentStatus, UserFileModel
 from asterism.domains.folders.models import FolderModel
 from asterism.domains.settings.service import get_model_and_provider, get_user_settings
 
+from .attachments import bind_message_files, resolve_file_references
+from .branches import active_branch
 from .models import (
     ChatModel,
     MessageModel,
@@ -28,7 +29,6 @@ from .schemas import (
     ChatInfoList,
     ChatUpdateRequest,
     Message,
-    MessageFileReference,
     MessageStatus,
     NewChatRequest,
     NewMessageRequest,
@@ -48,8 +48,18 @@ async def add_message(
     session: AsyncSession | None = None,
 ) -> Message:
     async with get_async_db_session(session) as session:
+        await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
+        if message.parent_message_id is not None:
+            await _owned_message(
+                user_id=user_id, chat_id=chat_id, message_id=message.parent_message_id, session=session,
+            )
+        if message.files and message.role != "user":
+            raise BadDataException("Only user messages can attach files")
+        files = await resolve_file_references(user_id=user_id, file_ids=message.files, session=session)
+        await bind_message_files(user_id=user_id, chat_id=chat_id, files=files, session=session)
         new_message = MessageModel(
-            **message.model_dump(exclude={"active_child_id"}),
+            **message.model_dump(exclude={"active_child_id", "files"}),
+            files=files,
             user_id=user_id,
             chat_id=chat_id,
         )
@@ -83,6 +93,13 @@ async def update_message(
     session: AsyncSession | None = None,
 ) -> Message:
     async with get_async_db_session(session) as session:
+        await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
+        await _owned_message(user_id=user_id, chat_id=chat_id, message_id=message_id, session=session)
+        if payload.active_child_id is not None:
+            child = await _owned_message(user_id=user_id, chat_id=chat_id,
+                                         message_id=payload.active_child_id, session=session)
+            if child.parent_message_id != message_id:
+                raise BadDataException("Active child must be a direct child of this message")
         update_stmt = (
             update(MessageModel)
             .where(
@@ -115,40 +132,21 @@ async def create_chat(
             requested_agent_id=payload.agent_id,
             session=session,
         )
-        files: list[MessageFileReference] = []
-        if payload.files:
-            records = list(
-                await session.scalars(
-                    select(UserFileModel).where(
-                        UserFileModel.user_id == user_id,
-                        UserFileModel.filename.in_(payload.files),
-                    ),
-                ),
-            )
-            found = {file.filename: file for file in records}
-            if any(filename not in found for filename in payload.files):
-                raise BadDataException("One or more attached files are unavailable")
-            for filename in payload.files:
-                file = await ensure_file_processed(file=found[filename], session=session)
-                files.append(
-                    MessageFileReference(
-                        filename=file.filename,
-                        name=file.original_name,
-                        mime_type=file.mime_type,
-                        size=file.size,
-                        kind=file.kind,
-                        status=file.content_status,
-                    ),
-                )
+        if payload.project_id is not None:
+            from asterism.domains.projects.scope import read_project_context
+
+            await read_project_context(user_id=user_id, project_id=payload.project_id, session=session)
+        files = await resolve_file_references(user_id=user_id, file_ids=payload.files, session=session)
 
         new_session = ChatModel(
             user_id=user_id,
             agent_id=agent_id,
-            folder_id=payload.folder_id,
+            project_id=payload.project_id,
         )
         session.add(new_session)
         await session.flush()
 
+        await bind_message_files(user_id=user_id, chat_id=new_session.id, files=files, session=session)
         new_message = MessageModel(
             chat_id=new_session.id,
             user_id=user_id,
@@ -198,6 +196,7 @@ async def update_chat(
     session: AsyncSession | None = None,
 ) -> Chat:
     async with get_async_db_session(session) as session:
+        await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
         update_stmt = (
             update(ChatModel)
             .where(
@@ -283,7 +282,7 @@ async def get_many(
     async with get_async_db_session(session) as session:
         stmt = (
             select(ChatModel)
-            .where(ChatModel.user_id == user_id, ChatModel.folder_id.is_(None))
+            .where(ChatModel.user_id == user_id, ChatModel.project_id.is_(None))
             .order_by(desc(ChatModel.created_at))
         )
         result = await session.scalars(stmt)
@@ -338,7 +337,6 @@ async def search(
             )
 
         results: list[SearchResult] = []
-        matching_folder_ids: set[uuid.UUID] = set()
         for chat in matched_chats:
             title = chat.title or "Untitled chat"
             title_matches = all(term in title.casefold() for term in terms)
@@ -364,26 +362,16 @@ async def search(
                     id=chat.id,
                     title=title,
                     updated_at=chat.updated_at,
-                    folder_id=chat.folder_id,
                     match_source=source,
                     snippet=snippet,
                 ),
             )
-            if chat.folder_id:
-                matching_folder_ids.add(chat.folder_id)
 
         folders = list(await session.scalars(select(FolderModel).where(FolderModel.user_id == user_id)))
         folders_by_id = {folder.id: folder for folder in folders}
-        # A match in a nested folder also makes every ancestor discoverable.
-        for folder_id in list(matching_folder_ids):
-            current = folders_by_id.get(folder_id)
-            while current:
-                matching_folder_ids.add(current.id)
-                current = folders_by_id.get(current.parent_id)  # pyright: ignore[reportArgumentType]
-
         for folder in folders:
             title_matches = folder.id in folder_title_ids
-            if not title_matches and folder.id not in matching_folder_ids:
+            if not title_matches:
                 continue
             results.append(
                 SearchResult(
@@ -392,8 +380,8 @@ async def search(
                     title=folder.title,
                     updated_at=folder.updated_at,
                     folder_id=folder.parent_id,
-                    match_source=(SearchMatchSource.FOLDER_TITLE if title_matches else SearchMatchSource.CONTENT),
-                    snippet=(folder.title if title_matches else "Contains a matching chat"),
+                    match_source=SearchMatchSource.FOLDER_TITLE,
+                    snippet=folder.title,
                 ),
             )
 
@@ -479,45 +467,33 @@ async def get_one(
                 messages=[],
             )
 
-        message_map = {msg.id: msg for msg in all_messages}
-        children_map: dict[uuid.UUID | None, list[MessageModel]] = {}
-        for msg in all_messages:
-            parent_id = msg.parent_message_id
-            if parent_id not in children_map:
-                children_map[parent_id] = []
-            children_map[parent_id].append(msg)
+        messages = active_branch(all_messages)
+        ids = {file.file_id for message in messages for file in message.files}
+        existing = set(await session.scalars(select(UserFileModel.id).where(
+            UserFileModel.user_id == user_id, UserFileModel.id.in_(ids),
+        )))
+        for message in messages:
+            message.files = [file if file.file_id in existing else file.model_copy(
+                update={"status": FileContentStatus.FAILED},
+            ) for file in message.files]
+        return Chat(info=chat_info, messages=messages)
 
-        for parent_id in children_map:
-            children_map[parent_id].sort(key=lambda x: x.created_at)
 
-        root_messages = children_map.get(None, [])
-        if not root_messages:
-            return Chat(
-                info=chat_info,
-                messages=[],
-            )
+async def _lock_owned_chat(*, user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> ChatModel:
+    chat = await session.scalar(update(ChatModel).where(
+        ChatModel.user_id == user_id, ChatModel.id == chat_id,
+    ).values(updated_at=ChatModel.updated_at).returning(ChatModel))
+    if chat is None:
+        raise NotFoundException("Chat not found")
+    return chat
 
-        current_node = root_messages[0]
-        active_thread: list[Message] = []
 
-        while current_node is not None:
-            parent_id = current_node.parent_message_id
-            thread_msg = Message.model_validate(current_node)
-            siblings = children_map.get(parent_id, [])
-            node_index = siblings.index(current_node)
-            thread_msg.has_siblings = len(siblings) > 1
-            thread_msg.sibling_count = len(siblings)
-            thread_msg.current_sibling_index = node_index + 1
-            thread_msg.next_sibling_id = siblings[node_index + 1].id if node_index + 1 < len(siblings) else None
-            thread_msg.previous_sibling_id = siblings[node_index - 1].id if node_index - 1 >= 0 else None
-            active_thread.append(thread_msg)
-
-            if current_node.active_child_id and current_node.active_child_id in message_map:
-                current_node = message_map[current_node.active_child_id]
-            else:
-                break
-
-        return Chat(
-            info=chat_info,
-            messages=active_thread,
-        )
+async def _owned_message(
+    *, user_id: str, chat_id: uuid.UUID, message_id: uuid.UUID, session: AsyncSession,
+) -> MessageModel:
+    message = await session.scalar(select(MessageModel).where(
+        MessageModel.user_id == user_id, MessageModel.chat_id == chat_id, MessageModel.id == message_id,
+    ))
+    if message is None:
+        raise NotFoundException("Message not found")
+    return message

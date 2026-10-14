@@ -5,8 +5,6 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from asterism.domains.chat.schemas import ChatInfo
-
 
 class FlatFolder(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -16,7 +14,6 @@ class FlatFolder(BaseModel):
     created_at: int
     updated_at: int
     parent_id: Optional[uuid.UUID]
-    sessions: list[ChatInfo] = Field(default_factory=list)
 
 
 class Folder(FlatFolder):
@@ -26,13 +23,6 @@ class Folder(FlatFolder):
 class FolderList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     folders: list[Folder]
-
-
-class FolderChatList(BaseModel):
-    chats: list[ChatInfo]
-    total: int = Field(ge=0)
-    page: int = Field(ge=1)
-    page_size: int = Field(ge=1)
 
 
 class NewFolderRequest(BaseModel):

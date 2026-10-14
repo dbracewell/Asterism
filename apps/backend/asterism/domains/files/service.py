@@ -484,11 +484,13 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
     foreign keys: deterministic test/development SQLite connections may not
     enable cascade actions.
     """
+    from asterism.domains.chat.file_references import detach_deleted_file as detach_chat_file
     from asterism.domains.extraction.models import FileExtractionModel
     from asterism.domains.extraction.runtime import cancel_file_jobs
     from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
     from asterism.domains.projects.file_references import detach_deleted_file
 
+    await detach_chat_file(file_id=file_id, session=session)
     source = await session.get(UserFileModel, file_id)
     if source is not None:
         await detach_deleted_file(user_id=source.user_id, file_id=file_id, session=session)
@@ -562,3 +564,21 @@ async def validate_owned_file_ids(*, user_id: str, file_ids: list[uuid.UUID], se
     )
     if owned != set(file_ids):
         raise NotFoundException("File not found")
+
+
+async def get_file_info_by_id(*, user_id: str, file_id: uuid.UUID, session: AsyncSession) -> UserFile:
+    file = await session.scalar(select_owned_files(user_id=user_id).where(UserFileModel.id == file_id))
+    if file is None:
+        raise NotFoundException("File not found")
+    return (await describe_files(user_id=user_id, files=[file], session=session))[0]
+
+
+async def download_file_by_id(*, user_id: str, file_id: uuid.UUID, session: AsyncSession) -> FileResponse:
+    file = await session.scalar(select_owned_files(user_id=user_id).where(UserFileModel.id == file_id))
+    if file is None:
+        raise NotFoundException("File not found")
+    path = get_file_store().open(user_id, file.storage_key)
+    if not path.is_file():
+        raise NotFoundException("File not found")
+    return FileResponse(path=path, filename=file.original_name, media_type=file.mime_type,
+                        headers={"Cache-Control": "private, no-store"})

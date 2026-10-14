@@ -546,7 +546,8 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
     assert calls == 1
 
     references = [
-        MessageFileReference(filename=record.filename, name=record.original_name, mime_type=record.mime_type,
+        MessageFileReference(file_id=record.id, filename=record.filename,
+                             name=record.original_name, mime_type=record.mime_type,
                              size=record.size, kind=record.kind, status=record.content_status)
         for record in records
     ]
@@ -555,6 +556,15 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
         messages=[Message(id=uuid.uuid4(), role="user", content="Analyze",
                           status=MessageStatus.PENDING, created_at=0, files=references)],
     )
+    from asterism.domains.chat.models import ChatFileModel, ChatModel, MessageModel
+
+    file_session.add(ChatModel(id=chat.info.id, user_id="user-a"))
+    await file_session.flush()
+    file_session.add(MessageModel(id=chat.messages[0].id, chat_id=chat.info.id, user_id="user-a",
+                                  role="user", content="Analyze", files=references))
+    file_session.add_all([ChatFileModel(chat_id=chat.info.id, user_id="user-a", file_id=record.id)
+                          for record in records])
+    await file_session.commit()
     agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
     orchestrator = ChatOrchestrator(agent)  # type: ignore[arg-type]
 

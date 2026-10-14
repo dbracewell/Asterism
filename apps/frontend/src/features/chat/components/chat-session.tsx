@@ -542,7 +542,7 @@ const MessageItem = React.memo(
           )}
         />
         {message.role === "user" && message.files && (
-          <MessageAttachments files={message.files} />
+          <MessageAttachments chatId={chatId} files={message.files} />
         )}
         {message.role === "assistant" && message.status === "pending" && (
           <Loading />

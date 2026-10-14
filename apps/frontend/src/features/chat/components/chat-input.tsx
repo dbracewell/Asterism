@@ -2,7 +2,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { client } from "@/lib/api";
+import { fileUploadMutation } from "@/lib/client/@tanstack/react-query.gen";
+import { useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
   IconArrowUp,
@@ -77,6 +79,7 @@ export const ChatInput = ({
   placeholder,
   className,
 }: ChatInput2Props) => {
+  const uploadFile = useMutation(fileUploadMutation({ client }));
   const [isDragOver, setIsDragOver] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -130,13 +133,13 @@ export const ChatInput = ({
         updateFile(attachment.id, { state: "uploading", error: undefined });
         try {
           // This generated client is deliberately used instead of a hand-written fetch.
-          const { data } = await api.fileUpload({
+          const data = await uploadFile.mutateAsync({
             body: { files: [attachment.file] },
           });
           const uploaded = data?.files[0];
           if (!uploaded)
             throw new Error("The server did not return an uploaded file.");
-          return uploaded.filename;
+          return uploaded.id;
         } catch (error) {
           // This is an expected, user-correctable state. Do not use console.error:
           // Next.js development mode presents those as an application error overlay.

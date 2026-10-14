@@ -7,7 +7,6 @@ from asterism.domains.chat.schemas import MessageStatus, SearchMatchSource, Sear
 from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.chat.service import search
 from asterism.domains.folders.models import FolderModel
-from asterism.domains.folders.service import list_folder_chats
 from asterism.domains.user.models import UserModel
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -27,15 +26,15 @@ async def search_session(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_search_finds_titles_content_and_containing_folders(search_session):
+async def test_chat_search_finds_titles_content_without_obsolete_folder_binding(search_session):
     folder = FolderModel(user_id="user-a", title="Research")
     search_session.add(folder)
     await search_session.flush()
     child = FolderModel(user_id="user-a", title="Papers", parent_id=folder.id)
     search_session.add(child)
     await search_session.flush()
-    title_chat = ChatModel(user_id="user-a", title="Ocean currents", folder_id=folder.id)
-    content_chat = ChatModel(user_id="user-a", title="Notes", folder_id=child.id)
+    title_chat = ChatModel(user_id="user-a", title="Ocean currents")
+    content_chat = ChatModel(user_id="user-a", title="Notes")
     other_user_chat = ChatModel(user_id="user-b", title="Ocean secret")
     search_session.add_all([title_chat, content_chat, other_user_chat])
     await search_session.flush()
@@ -55,33 +54,14 @@ async def test_search_finds_titles_content_and_containing_folders(search_session
     chats = [item for item in result.results if item.kind is SearchResultKind.CHAT]
     folders = [item for item in result.results if item.kind is SearchResultKind.FOLDER]
     assert {item.id for item in chats} == {title_chat.id, content_chat.id}
-    assert {item.id for item in folders} == {folder.id, child.id}
+    assert folders == []
     assert next(item for item in chats if item.id == title_chat.id).match_source is SearchMatchSource.TITLE
     content_result = next(item for item in chats if item.id == content_chat.id)
     assert content_result.match_source is SearchMatchSource.CONTENT
     assert "ocean" in (content_result.snippet or "").casefold()
-    assert content_result.path == ["Research", "Papers"]
-
-
-@pytest.mark.asyncio
-async def test_folder_chat_list_is_paginated_and_user_scoped(search_session):
-    folder = FolderModel(user_id="user-a", title="Work")
-    other_folder = FolderModel(user_id="user-b", title="Private")
-    search_session.add_all([folder, other_folder])
-    await search_session.flush()
-    search_session.add_all(
-        [
-            ChatModel(user_id="user-a", title="One", folder_id=folder.id),
-            ChatModel(user_id="user-a", title="Two", folder_id=folder.id),
-            ChatModel(user_id="user-b", title="Hidden", folder_id=other_folder.id),
-        ],
-    )
-    await search_session.commit()
-
-    result = await list_folder_chats("user-a", folder.id, 1, 1, search_session)
-
-    assert result.total == 2
-    assert len(result.chats) == 1
+    assert content_result.path == []
+    folder_results = await search("user-a", "Research", session=search_session)
+    assert [item.id for item in folder_results.results] == [folder.id]
 
 
 @pytest.mark.asyncio

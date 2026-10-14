@@ -175,8 +175,8 @@ async def delete_project(
 ) -> Project:
     """Remove metadata/memberships through FK cascades, preserving library sources.
 
-    US-25 adds chat detachment in the chat-service boundary; US-26 adds affected
-    run cancellation. This schema stage has no project-bound chats or runs yet.
+    US-25.1 FK actions detach chats into General while preserving local references.
+    US-25.2 adds explicit chat-service lifecycle coordination; US-26 adds run cancellation.
     """
     await _owned_project(user_id=user_id, project_id=project_id, session=session)
     project = await session.scalar(

@@ -1,6 +1,6 @@
 # Projects and Chat Context Refactor — Proposed Roadmap
 
-Status: EPIC-24 complete (US-24.1–US-24.3 user confirmed 2026-10-14); later stories remain proposed. Estimates dated 2026-10-14.
+Status: EPIC-24 and US-25.1 complete (user confirmed 2026-10-14); later stories remain proposed. Estimates dated 2026-10-14.
 
 ## Product direction
 

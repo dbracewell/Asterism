@@ -711,3 +711,17 @@ those gates were not rerun for this documentation-only cleanup.
   - Query responsibility amendment: owner-scoped domain selects, generic DB pagination, caller-owned filters, and separate enrichment; documented in AGENTS.md and ADR-0017. Full backend/static checks rerun after amendment; frontend/Playwright not repeated for the contract-preserving query refactor.
   - Initial frontend/E2E setup attempts stopped before tests; dependency/native-binding repair preceded the successful E2E run with no test retries. GitHub CI was not triggered. Working database/source data was not reset.
   - User confirmation on 2026-10-14 authorizes commit/merge. **EPIC-24 complete**; next recommended story is US-25.1.
+
+
+## US-25.1 — Chat project binding and scoped attachments
+
+- [x] US-25.1 (completed; user confirmed 2026-10-14): Chat project binding and scoped attachments (2–3 person-days).
+  - [x] US-25.1-T1: Replace folder_id with nullable project_id in chat contracts and introduce explicit ChatFile membership using stable file IDs.
+  - [x] US-25.1-T2: Validate owner consistency at service and DB boundaries; a chat belongs to zero or one project.
+  - [x] US-25.1-T3: Persist message-to-file provenance using file IDs and resolve attachments against the active message branch.
+  - [x] US-25.1-T4: Compose project memberships and active-branch chat attachments without implicitly granting the entire user library.
+  - [x] US-25.1-T5: Regenerate clients and test general/project chats, branches, missing files, and foreign identifiers.
+  - Verification: backend **330 tests passed**, Ruff/compileall passed, targeted basedpyright **0 errors / 0 warnings**, and dependency review **no cycles** (141 modules / 482 imports). Frontend lint/TypeScript/build passed; **87 unit tests**, **6 migration tests**, **29 configuration tests**, and **11 isolated Playwright tests** passed. Independent generated-client consistency matched all 18 TS files.
+  - Runtime/HTTP/schema coverage verifies project/General/sibling/branch/library isolation, immutable ID provenance, original-byte access, atomic invalid-batch rejection, owner-consistent foreign keys, deletion/detachment, same-name replacement denial, and title-event project identity. Playwright uses API mocks; backend tests exercise source storage and constraints directly. JWT decoding is substituted in HTTP tests; normal Bearer/service/DB checks execute.
+  - Guarded moves/search and explicit lifecycle coordination remain US-25.2; draft/retry/removal lifecycle remains US-25.3. Full prompt/tool/retrieval integration remains EPIC-26/29. No working database reset, migration, compatibility fallback, or later-story implementation was performed. GitHub CI was not triggered.
+  - User confirmation on 2026-10-14 authorizes commit/merge. Next recommended story: **US-25.2 — Chat membership changes and search**.

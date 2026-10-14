@@ -98,7 +98,7 @@ Comprehensive system design guides and Mermaid sequence diagrams are available i
 
 Fresh initialization includes `projects` and `project_files`. Memberships use composite
 owner foreign keys and a unique project/file pair; sources and extraction generations
-remain independent. Project lifecycle APIs are available as described below; chat binding remains a subsequent story.
+remain independent. Project lifecycle and owner-consistent chat bindings are available as described below.
 See [ADR-0017](../../docs/adr/0017-project-file-and-chat-boundaries.md) for the approved
 contracts. Existing databases are disposable: use the verified-target reset workflow
 above to recreate them rather than relying on `create_all` to alter existing tables.
@@ -135,11 +135,10 @@ membership changes: call it for a real change, commit memberships and revision t
 and roll the whole transaction back on failure. Bulk no-ops must not advance it.
 
 Deletion removes project metadata and memberships through database cascades and retains
-source bytes, extraction generations, and references in other projects. Chats do not
-have project bindings in this stage. US-25.2 adds transactional detachment to General
-while retaining history/attachments; US-26.1 adds affected-run cancellation before
-project deletion. No migration or current development database reset is needed for
-this API-only story. The generated Hey API SDK, schemas, and TanStack Query operations
+source bytes, extraction generations, and references in other projects. US-25.1
+project foreign keys detach chats to General while preserving history/local references.
+US-25.2 adds explicit chat-service lifecycle coordination; US-26.1 adds affected-run
+cancellation before project deletion. No current development database was reset. The generated Hey API SDK, schemas, and TanStack Query operations
 are synchronized; project UI arrives in EPIC-27.
 
 
@@ -192,3 +191,49 @@ add parameters to the library listing service.
 uses separate helpers to enrich only the selected page. The shared database helper
 imports no domain models. Keep new domain-specific filters in their owning callers;
 avoid a generic query hierarchy or accumulating mode flags in one service function.
+
+
+### Chat project binding and active-branch files (US-25.1)
+
+Chats use nullable `project_id` (null means General), replacing folder binding.
+`POST /chat/` accepts an owned `project_id` and up to 100 stable UUIDs in `files`.
+WebSocket `chat` commands also carry UUIDs in `files`; filenames are metadata only.
+Missing/foreign files or duplicate attachment IDs reject the whole message/create
+operation. Messages and unique owner-consistent `chat_files` references commit together.
+No source copy or new extraction generation is created by attachment binding.
+
+Each persisted message attachment includes `file_id` plus its original metadata snapshot.
+Deleting a source removes local memberships but retains historical IDs/metadata; reopened
+messages mark deleted references unavailable. A new upload with the same filename is a
+new source and never replaces an old message's attachment. Parent/active-child edges
+must stay within the same chat/owner; services also validate direct-child relationships.
+
+`GET /chat/{chat_id}/files/context` returns the project identity/revision/instructions,
+UUID-sorted `allowed_file_ids`, `files` provenance (`project`/`chat` and message IDs),
+and `unavailable_file_ids` for active-branch local references without current membership
+or source. Only current project memberships plus local references present on the active
+message branch count. Inactive branches, sibling chats, unbound message snapshots, and
+unselected library files grant no access. The source-ID queries do not load file bodies.
+`branches.py` is shared by chat presentation and scope reads; `projects/scope.py` is the
+small project-owned reader for future execution context integration.
+
+`GET /chat/{chat_id}/files/{file_id}/info` and `GET /chat/{chat_id}/files/{file_id}`
+recheck that scope and resolve metadata/original bytes by immutable ID through the file
+service and FileStore. Runtime attachment assembly uses the same branch/membership
+reader before reading cached document content or images. Ownership is checked in both
+services and composite database foreign keys. General scope contains no project prompt.
+
+This story supplies the binding/scope foundation. Guarded moves, scoped chat lists,
+project search, and explicit deletion coordination remain US-25.2; draft handling,
+retry/attachment removal lifecycle remain US-25.3. Project prompt composition and
+contextual tool/retrieval/delegation authorization arrive in EPIC-26/29; existing
+knowledge-base tool assignments are still present until the planned refactor cutover.
+The new scope reader is not a claim that every legacy runtime tool already uses it.
+
+Obsolete folder-chat routes, schemas, creation/list controls, and chat-derived folder
+search paths were removed with the binding. Folder entities/title search remain until
+their later removal; project navigation remains EPIC-27. NewChatRequest rejects old
+`folder_id` and filename attachments; PATCH currently edits title only, with project
+moves added in US-25.2. Fresh initialization includes `chat_files`; reset disposable
+local data before running this new schema against an older development database.
+The current development database was not reset and no migration/fallback was added.

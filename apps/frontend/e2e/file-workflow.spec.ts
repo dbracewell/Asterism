@@ -23,6 +23,10 @@ test("uploads, attaches, and renders a persisted file with a mocked reply", asyn
     }
     await route.continue();
   });
+  const sourcePath = `**/api/py/chat/22222222-2222-4222-8222-222222222222/files/${uploaded.id}`;
+  await page.route(sourcePath, (route) => route.fulfill({
+    status: 200, body: "original pdf bytes", contentType: "application/pdf",
+  }));
   await page.goto("/e2e/files");
   await page.getByLabel("Choose attachments").setInputFiles({
     name: "report.pdf",
@@ -38,6 +42,12 @@ test("uploads, attaches, and renders a persisted file with a mocked reply", asyn
   await expect(page.getByLabel("Assistant reply")).toHaveText(
     "Mocked assistant reply: Summarize this",
   );
+  const download = page.waitForEvent("download");
+  const request = page.waitForRequest((request) => request.url().includes(`/files/${uploaded.id}`));
+  await page.getByRole("link", { name: "Download report.pdf" }).click();
+  expect((await request).url()).toContain(`/chat/22222222-2222-4222-8222-222222222222/files/${uploaded.id}`);
+  expect((await download).suggestedFilename()).toBe("report.pdf");
+
 });
 
 test("keeps a failed upload visible and does not send the message", async ({

@@ -95,7 +95,7 @@ export default function AppPage() {
               createChatSession({
                 body: {
                   agent_id: selectedAgent.id,
-                  folder_id: searchParams.get("folder_id"),
+                  project_id: searchParams.get("project_id"),
                   user_prompt: prompt,
                   files,
                 },

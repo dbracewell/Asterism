@@ -354,9 +354,16 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
 
 
 @pytest.mark.asyncio
-async def test_title_save_persists_and_publishes_the_title(monkeypatch):
+@pytest.mark.parametrize("initial_project_id,persisted_project_id", [
+    (None, None),
+    (uuid.UUID("11111111-1111-4111-8111-111111111111"), uuid.UUID("11111111-1111-4111-8111-111111111111")),
+    (uuid.UUID("11111111-1111-4111-8111-111111111111"), None),
+])
+async def test_title_save_persists_and_publishes_current_project_identity(
+    monkeypatch, initial_project_id, persisted_project_id,
+):
     chat = Chat(
-        info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
+        info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1, project_id=initial_project_id),
         messages=[],
     )
     agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
@@ -366,6 +373,7 @@ async def test_title_save_persists_and_publishes_the_title(monkeypatch):
 
     async def update_chat(**kwargs):
         updates.append(kwargs)
+        return Chat(info=chat.info.model_copy(update={"project_id": persisted_project_id}), messages=[])
 
     monkeypatch.setattr(
         "asterism.domains.chat.orchestrator.chat_service.update_chat", update_chat,
@@ -379,6 +387,8 @@ async def test_title_save_persists_and_publishes_the_title(monkeypatch):
     assert chat.info.title == "Garden plan"
     assert updates[0]["payload"].title == "Garden plan"
     assert events[0].payload.title == "Garden plan"
+    assert events[0].payload.project_id == persisted_project_id
+    assert chat.info.project_id == persisted_project_id
 
 
 @pytest.mark.asyncio

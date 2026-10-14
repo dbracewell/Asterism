@@ -58,7 +58,12 @@ erDiagram
     users ||--o{ file_knowledge_artifacts : "owns"
 
     folders ||--o{ folders : "parent_of"
-    folders ||--o{ chats : "categorizes"
+    users ||--o{ projects : "owns"
+    projects |o--o{ chats : "provides context"
+    projects ||--o{ project_files : "references"
+    user_files ||--o{ project_files : "is referenced by"
+    chats ||--o{ chat_files : "references locally"
+    user_files ||--o{ chat_files : "is referenced by"
 
     agent_profiles ||--o{ chats : "bound to"
     chats ||--o{ messages : "contains"
@@ -83,12 +88,33 @@ erDiagram
     chats {
         uuid id PK
         string user_id FK
-        uuid folder_id FK
+        uuid project_id FK
         uuid agent_id FK
         string title
         json allowed_tools
         datetime created_at
         datetime updated_at
+    }
+
+    projects {
+        uuid id PK
+        string user_id FK
+        string name
+        text description
+        text system_prompt
+        int context_revision
+    }
+
+    project_files {
+        uuid project_id PK,FK
+        uuid file_id PK,FK
+        string user_id FK
+    }
+
+    chat_files {
+        uuid chat_id PK,FK
+        uuid file_id PK,FK
+        string user_id FK
     }
 
     messages {
@@ -343,3 +369,25 @@ behavior.
 - [System Overview](overview.md)
 - [Chat & Real-Time WebSocket](chat-and-websocket.md)
 - [Agent Runtime & Execution Loop](agent-runtime.md)
+
+
+## Project/chat source references (US-25.1)
+
+Chats bind to zero or one owned project, with General represented by null. ProjectFile
+and ChatFile are unique owner-consistent references to independent source rows; they do
+not own bytes or extraction generations. Message JSON attachment snapshots include
+immutable file IDs and metadata, so source deletion cannot make an old filename refer
+to a later upload. Composite keys constrain message and branch-edge ownership.
+
+The active branch is traversed once through shared chat-domain logic. Its local file
+IDs must also appear in current ChatFile memberships and owned source rows; project
+memberships supply the other allowed set. Sibling/inactive-branch/unselected library
+files are excluded. The chat file scope API exposes source provenance and project
+revision/instructions; scoped source downloads and attachment assembly use that reader.
+Full prompt/tool/retrieval integration remains in EPIC-26/29.
+
+Original bytes remain in user-scoped, file-ID-sharded FileStore storage. Organization is
+relational; source consumers resolve opaque keys and listings query the database.
+Deleting a source removes memberships while retaining message snapshots for unavailable
+history. Project deletion sets chat project_id to null and preserves local references.
+Guarded moves and explicit lifecycle coordination are implemented in US-25.2.

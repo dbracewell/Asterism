@@ -1,9 +1,19 @@
 import { ChatInput } from "@/features/chat/components/chat-input";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const { fileUpload } = vi.hoisted(() => ({ fileUpload: vi.fn() }));
-vi.mock("@/lib/api", () => ({ api: { fileUpload } }));
+vi.mock("@/lib/api", () => ({ client: {} }));
+vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  fileUploadMutation: () => ({ mutationFn: fileUpload }),
+}));
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const render = (component: React.ReactNode) => rtlRender(
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { retry: false } } })}>
+    {component}
+  </QueryClientProvider>,
+);
 
 beforeEach(() => {
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -15,10 +25,10 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-it("uploads picker files through the generated client then includes filenames in the submit payload", async () => {
+it("uploads picker files through the generated client then includes stable file IDs in the submit payload", async () => {
   const onSubmit = vi.fn();
   fileUpload.mockResolvedValue({
-    data: { files: [{ filename: "stored-note.txt" }] },
+    files: [{ id: "11111111-1111-4111-8111-111111111111", filename: "stored-note.txt" }],
   });
   render(<ChatInput onSubmit={onSubmit} />);
   const user = userEvent.setup();
@@ -32,11 +42,11 @@ it("uploads picker files through the generated client then includes filenames in
   await waitFor(() =>
     expect(fileUpload).toHaveBeenCalledWith({
       body: { files: [expect.any(File)] },
-    }),
+    }, expect.anything()),
   );
   expect(onSubmit).toHaveBeenCalledWith({
     prompt: "Please read this",
-    files: ["stored-note.txt"],
+    files: ["11111111-1111-4111-8111-111111111111"],
   });
 });
 

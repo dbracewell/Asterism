@@ -269,6 +269,40 @@ export type ChatContextUsage = {
 };
 
 /**
+ * ChatFileScope
+ */
+export type ChatFileScope = {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Project Id
+     */
+    project_id: string | null;
+    /**
+     * Project Context Revision
+     */
+    project_context_revision?: number | null;
+    /**
+     * Project System Prompt
+     */
+    project_system_prompt?: string;
+    /**
+     * Allowed File Ids
+     */
+    allowed_file_ids: Array<string>;
+    /**
+     * Files
+     */
+    files: Array<ScopedChatFile>;
+    /**
+     * Unavailable File Ids
+     */
+    unavailable_file_ids: Array<string>;
+};
+
+/**
  * ChatInfo
  */
 export type ChatInfo = {
@@ -297,9 +331,9 @@ export type ChatInfo = {
      */
     title?: string | null;
     /**
-     * Folder Id
+     * Project Id
      */
-    folder_id?: string | null;
+    project_id?: string | null;
     /**
      * Agent Id
      */
@@ -333,10 +367,6 @@ export type ChatUpdateRequest = {
      * Title
      */
     title?: string | null;
-    /**
-     * Folder Id
-     */
-    folder_id?: string | null;
 };
 
 /**
@@ -585,35 +615,9 @@ export type Folder = {
      */
     parent_id: string | null;
     /**
-     * Sessions
-     */
-    sessions?: Array<ChatInfo>;
-    /**
      * Children
      */
     children?: Array<Folder>;
-};
-
-/**
- * FolderChatList
- */
-export type FolderChatList = {
-    /**
-     * Chats
-     */
-    chats: Array<ChatInfo>;
-    /**
-     * Total
-     */
-    total: number;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Page Size
-     */
-    page_size: number;
 };
 
 /**
@@ -1141,6 +1145,10 @@ export type Message = {
  */
 export type MessageFileReference = {
     /**
+     * File Id
+     */
+    file_id: string;
+    /**
      * Filename
      */
     filename: string;
@@ -1183,9 +1191,9 @@ export type NewChatRequest = {
      */
     agent_id?: string | null;
     /**
-     * Folder Id
+     * Project Id
      */
-    folder_id?: string | null;
+    project_id?: string | null;
     /**
      * Files
      */
@@ -1523,6 +1531,24 @@ export type ProviderSummary = {
  * ProviderType
  */
 export type ProviderType = 'openai' | 'generic_openai';
+
+/**
+ * ScopedChatFile
+ */
+export type ScopedChatFile = {
+    /**
+     * File Id
+     */
+    file_id: string;
+    /**
+     * Sources
+     */
+    sources: Array<'project' | 'chat'>;
+    /**
+     * Message Ids
+     */
+    message_ids?: Array<string>;
+};
 
 /**
  * SearchMatchSource
@@ -2834,6 +2860,116 @@ export type MessageUpdateResponses = {
 
 export type MessageUpdateResponse = MessageUpdateResponses[keyof MessageUpdateResponses];
 
+export type ChatFileGetScopeData = {
+    body?: never;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/files/context';
+};
+
+export type ChatFileGetScopeErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatFileGetScopeError = ChatFileGetScopeErrors[keyof ChatFileGetScopeErrors];
+
+export type ChatFileGetScopeResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatFileScope;
+};
+
+export type ChatFileGetScopeResponse = ChatFileGetScopeResponses[keyof ChatFileGetScopeResponses];
+
+export type ChatFileGetInfoData = {
+    body?: never;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+        /**
+         * File Id
+         */
+        file_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/files/{file_id}/info';
+};
+
+export type ChatFileGetInfoErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatFileGetInfoError = ChatFileGetInfoErrors[keyof ChatFileGetInfoErrors];
+
+export type ChatFileGetInfoResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserFile;
+};
+
+export type ChatFileGetInfoResponse = ChatFileGetInfoResponses[keyof ChatFileGetInfoResponses];
+
+export type ChatFileDownloadData = {
+    body?: never;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+        /**
+         * File Id
+         */
+        file_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/files/{file_id}';
+};
+
+export type ChatFileDownloadErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatFileDownloadError = ChatFileDownloadErrors[keyof ChatFileDownloadErrors];
+
+export type ChatFileDownloadResponses = {
+    /**
+     * Authorized original source download
+     */
+    200: Blob | File;
+};
+
+export type ChatFileDownloadResponse = ChatFileDownloadResponses[keyof ChatFileDownloadResponses];
+
 export type FolderGetManyData = {
     body?: never;
     path?: never;
@@ -2887,49 +3023,6 @@ export type FolderCreateResponses = {
 };
 
 export type FolderCreateResponse = FolderCreateResponses[keyof FolderCreateResponses];
-
-export type FolderChatGetManyData = {
-    body?: never;
-    path: {
-        /**
-         * Folder Id
-         */
-        folder_id: string;
-    };
-    query?: {
-        /**
-         * Page
-         */
-        page?: number;
-        /**
-         * Page Size
-         */
-        page_size?: number;
-    };
-    url: '/folders/{folder_id}/chats';
-};
-
-export type FolderChatGetManyErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type FolderChatGetManyError = FolderChatGetManyErrors[keyof FolderChatGetManyErrors];
-
-export type FolderChatGetManyResponses = {
-    /**
-     * Successful Response
-     */
-    200: FolderChatList;
-};
-
-export type FolderChatGetManyResponse = FolderChatGetManyResponses[keyof FolderChatGetManyResponses];
 
 export type FolderDeleteData = {
     body?: never;

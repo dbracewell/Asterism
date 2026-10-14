@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from enum import StrEnum, auto
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -17,6 +18,7 @@ class MessageStatus(StrEnum):
 
 
 class MessageFileReference(BaseModel):
+    file_id: uuid.UUID
     filename: str
     name: str
     mime_type: str
@@ -38,7 +40,7 @@ class NewMessageRequest(BaseModel):
     status: MessageStatus = Field(default=MessageStatus.PENDING)
     tool_calls: list[ToolCall] | None = Field(default=None)
     tool_call_results: list[ToolResult] | None = Field(default=None)
-    files: list[MessageFileReference] = Field(default_factory=list)
+    files: list[uuid.UUID] = Field(default_factory=list, max_length=100)
 
 
 class Message(LLMMessage):
@@ -99,7 +101,7 @@ class ChatInfo(BaseModel):
     updated_at: int
     allowed_tools: list[str] = Field(default_factory=list)
     title: str | None = Field(default=None)
-    folder_id: uuid.UUID | None = Field(default=None)
+    project_id: uuid.UUID | None = Field(default=None)
     agent_id: uuid.UUID | None = Field(default=None)
     preview: str | None = Field(default=None)
     message_count: int | None = Field(default=None)
@@ -154,14 +156,29 @@ class BulkDeleteChatResponse(BaseModel):
 
 
 class NewChatRequest(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(extra="forbid")
     user_prompt: str
     agent_id: uuid.UUID | None = Field(default=None)
-    folder_id: uuid.UUID | None = Field(default=None)
-    files: list[str] = Field(default_factory=list)
+    project_id: uuid.UUID | None = Field(default=None)
+    files: list[uuid.UUID] = Field(default_factory=list, max_length=100)
 
 
 class ChatUpdateRequest(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(extra="forbid")
     title: str | None = Field(default=None)
-    folder_id: uuid.UUID | None = Field(default=None)
+
+
+class ScopedChatFile(BaseModel):
+    file_id: uuid.UUID
+    sources: list[Literal["project", "chat"]]
+    message_ids: list[uuid.UUID] = Field(default_factory=list)
+
+
+class ChatFileScope(BaseModel):
+    chat_id: uuid.UUID
+    project_id: uuid.UUID | None
+    project_context_revision: int | None = None
+    project_system_prompt: str = ""
+    allowed_file_ids: list[uuid.UUID]
+    files: list[ScopedChatFile]
+    unavailable_file_ids: list[uuid.UUID]

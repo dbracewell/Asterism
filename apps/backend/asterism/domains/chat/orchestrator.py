@@ -26,7 +26,6 @@ from asterism.domains.chat.schemas import (
     ChatContextUsage,
     ChatUpdateRequest,
     Message,
-    MessageFileReference,
     MessageStatus,
     NewMessageRequest,
     UpdateMessageRequest,
@@ -87,58 +86,18 @@ class ChatOrchestrator:
     def is_active(self) -> bool:
         return self.queue.qsize() > 0 or self.is_processing_messages
 
-    async def handle_new_user_message(self, text: str, filenames: list[str] | None = None) -> None:
-        files = await self._resolve_files(filenames or [])
+    async def handle_new_user_message(self, text: str, file_ids: list[str] | None = None) -> None:
         parent_message_id = self.chat.messages[-1].id if self.chat.messages else None
-
-        user_message: Message = await chat_service.add_message(
-            user_id=self.user_id,
-            chat_id=self.chat_id,
-            message=NewMessageRequest(
-                role="user",
-                content=text,
-                parent_message_id=parent_message_id,
-                status=MessageStatus.PENDING,
-                model_id=self.agent.profile.model_id,  # type:ignore
-                files=files,
-            ),
+        user_message = await chat_service.add_message(
+            user_id=self.user_id, chat_id=self.chat_id,
+            message=NewMessageRequest.model_validate({
+                "role": "user", "content": text, "parent_message_id": parent_message_id,
+                "status": MessageStatus.PENDING, "model_id": self.agent.profile.model_id,
+                "files": file_ids or [],
+            }),
         )
-        self.chat.messages.append(Message.model_validate(user_message))
-        self.agent.user_files = [file.filename for file in files]
+        self.chat.messages.append(user_message)
         await self.run_agent()
-
-    async def _resolve_files(self, filenames: list[str]):
-        if len(filenames) != len(set(filenames)):
-            raise BadDataException("Attached files must not be repeated")
-        if not filenames:
-            return []
-
-        async with get_async_db_session() as session:
-            records = list(
-                await session.scalars(
-                    select(UserFileModel).where(
-                        UserFileModel.user_id == self.user_id,
-                        UserFileModel.filename.in_(filenames),
-                    ),
-                ),
-            )
-            found = {file.filename: file for file in records}
-            if any(filename not in found for filename in filenames):
-                raise BadDataException("One or more attached files are unavailable")
-            resolved = []
-            for filename in filenames:
-                file = await ensure_file_processed(file=found[filename], session=session)
-                resolved.append(
-                    MessageFileReference(
-                        filename=file.filename,
-                        name=file.original_name,
-                        mime_type=file.mime_type,
-                        size=file.size,
-                        kind=file.kind,
-                        status=file.content_status,
-                    ),
-                )
-            return resolved
 
     async def cancel_active_generation(self) -> None:
         """Finalize the active user turn so reconnecting never re-runs it."""
@@ -209,15 +168,16 @@ class ChatOrchestrator:
 
     async def _save_chat_title(self, title: str) -> None:
         self.chat.info.title = title
-        await chat_service.update_chat(
+        updated = await chat_service.update_chat(
             user_id=self.user_id,
             chat_id=self.chat_id,
             payload=ChatUpdateRequest(title=title),
         )
+        self.chat.info.project_id = updated.info.project_id
         event_bus.emit(
             Event(
                 type=EventType.WEBHOOK_CHAT_UPDATE,
-                payload=ChatUpdateEvent(session_id=self.chat_id, title=title),
+                payload=ChatUpdateEvent(session_id=self.chat_id, title=title, project_id=updated.info.project_id),
                 user_id=self.user_id,
             ),
         )
@@ -326,21 +286,28 @@ class ChatOrchestrator:
         pass
 
     async def _build_agent_messages(self) -> list[LLMMessage]:
-        files_by_name: dict[str, UserFileModel] = {}
-        names = [file.filename for message in self.chat.messages for file in message.files]
+        files_by_id: dict[uuid.UUID, UserFileModel] = {}
+        ids = [file.file_id for message in self.chat.messages for file in message.files]
         vision_enabled = False
-        if names:
+        if ids:
             if self.agent.profile.model_id:
                 model = await settings_service.get_model_and_provider(model_id=self.agent.profile.model_id)
                 vision_enabled = model.supports_vision is True
             async with get_async_db_session() as session:
+                from .scope import resolve_chat_file_scope
+
+                scope = await resolve_chat_file_scope(user_id=self.user_id, chat_id=self.chat_id, session=session)
                 records = await session.scalars(
                     select(UserFileModel).where(
                         UserFileModel.user_id == self.user_id,
-                        UserFileModel.filename.in_(names),
+                        UserFileModel.id.in_(ids),
+                        UserFileModel.id.in_(scope.allowed_file_ids),
                     ),
                 )
-                files_by_name = {file.filename: file for file in records}
+                files_by_id = {}
+                for file in records:
+                    files_by_id[file.id] = await ensure_file_processed(file=file, session=session)
+                self.agent.user_files = [str(file_id) for file_id in scope.allowed_file_ids]
 
         messages: list[LLMMessage] = []
         for message in self.chat.messages:
@@ -349,7 +316,7 @@ class ChatOrchestrator:
             else:
                 parts: list[TextContentPart | ImageUrlContentPart] = [TextContentPart(text=message.content)]
                 for reference in message.files:
-                    file = files_by_name.get(reference.filename)
+                    file = files_by_id.get(reference.file_id)
                     if file is None:
                         parts.append(TextContentPart(text=f'(attached file "{reference.name}" is no longer available)'))
                     elif file.kind.value == "image":

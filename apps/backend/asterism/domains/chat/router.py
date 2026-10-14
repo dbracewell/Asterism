@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Query, WebSocket
+from fastapi.responses import FileResponse
 
 import asterism.domains.agent.service as agent_service
 import asterism.domains.chat.service as chat_service
@@ -14,12 +15,14 @@ from asterism.domains.chat.connection import WebSocketConnection
 from asterism.domains.chat.controller import ChatController
 from asterism.domains.chat.jobs import chat_jobs
 from asterism.domains.chat.orchestrator import ChatOrchestrator
+from asterism.domains.files.schemas import UserFile
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .schemas import (
     BulkDeleteChatRequest,
     BulkDeleteChatResponse,
     Chat,
+    ChatFileScope,
     ChatInfoList,
     ChatUpdateRequest,
     Message,
@@ -238,3 +241,42 @@ async def update_message(
         payload=payload,
         session=db,
     )
+
+
+@chat_router.get("/{chat_id}/files/context", response_model=ChatFileScope, operation_id="chatFileGetScope")
+async def get_file_scope(chat_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> ChatFileScope:
+    from .scope import resolve_chat_file_scope
+
+    return await resolve_chat_file_scope(user_id=user.id, chat_id=chat_id, session=db)
+
+
+@chat_router.get("/{chat_id}/files/{file_id}/info", response_model=UserFile, operation_id="chatFileGetInfo")
+async def get_chat_file_info(chat_id: uuid.UUID, file_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> UserFile:
+    from asterism.domains.files.service import get_file_info_by_id
+
+    from .scope import require_chat_file
+
+    await require_chat_file(user_id=user.id, chat_id=chat_id, file_id=file_id, session=db)
+    return await get_file_info_by_id(user_id=user.id, file_id=file_id, session=db)
+
+
+@chat_router.get(
+    "/{chat_id}/files/{file_id}",
+    response_class=FileResponse,
+    operation_id="chatFileDownload",
+    responses={
+        200: {
+            "description": "Authorized original source download",
+            "content": {
+                "application/octet-stream": {"schema": {"type": "string", "format": "binary"}},
+            },
+        },
+    },
+)
+async def download_chat_file(chat_id: uuid.UUID, file_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep):
+    from asterism.domains.files.service import download_file_by_id
+
+    from .scope import require_chat_file
+
+    await require_chat_file(user_id=user.id, chat_id=chat_id, file_id=file_id, session=db)
+    return await download_file_by_id(user_id=user.id, file_id=file_id, session=db)

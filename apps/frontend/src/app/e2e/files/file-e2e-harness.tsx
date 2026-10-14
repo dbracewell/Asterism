@@ -10,14 +10,14 @@ export function FileE2EHarness() {
   const [reply, setReply] = useState("");
   return <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-4 p-8">
     <h1 className="text-xl font-bold">File chat verification</h1>
-    <ChatInput onSubmit={({ prompt, files: filenames }) => {
-      setFiles(filenames.map((filename) => ({
-        filename, name: filename, mime_type: filename.endsWith(".png") ? "image/png" : "application/pdf",
-        size: 12, kind: filename.endsWith(".png") ? "image" : "document", status: "ready",
+    <ChatInput onSubmit={({ prompt, files: fileIds }) => {
+      setFiles(fileIds.map((file_id) => ({
+        file_id, filename: "report.pdf", name: "report.pdf", mime_type: "application/pdf",
+        size: 12, kind: "document", status: "ready",
       })));
       setReply(`Mocked assistant reply: ${prompt}`);
     }} />
-    {files.length > 0 && <section aria-label="Persisted user message"><MessageAttachments files={files} /></section>}
+    {files.length > 0 && <section aria-label="Persisted user message"><MessageAttachments chatId="22222222-2222-4222-8222-222222222222" files={files} /></section>}
     {reply && <section aria-label="Assistant reply">{reply}</section>}
   </main>;
 }

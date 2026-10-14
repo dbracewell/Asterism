@@ -1,7 +1,7 @@
 import uuid
 
 from pydantic import TypeAdapter
-from sqlalchemy import UUID, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import UUID, Enum, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from asterism.common.enums import enum_values
@@ -22,8 +22,8 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         index=True,
         nullable=False,
     )
-    folder_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("folders.id", ondelete="CASCADE"),
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("projects.id", ondelete="SET NULL"),
         index=True,
         nullable=True,
     )
@@ -42,7 +42,12 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         default=default_allowed_tools,
     )
 
-    __table_args__ = (Index("idx_chat_id_user", "id", "user_id"),)
+    __table_args__ = (
+        UniqueConstraint("id", "user_id", name="uq_chats_id_user"),
+        ForeignKeyConstraint(
+            ["project_id", "user_id"], ["projects.id", "projects.user_id"], name="fk_chats_project_owner",
+        ),
+    )
 
 
 class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
@@ -131,9 +136,48 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default=0,
     )
+    __table_args__ = (
+        UniqueConstraint("id", "chat_id", "user_id", name="uq_messages_id_chat_user"),
+        ForeignKeyConstraint(
+            ["chat_id", "user_id"], ["chats.id", "chats.user_id"], ondelete="CASCADE", name="fk_messages_chat_owner",
+        ),
+        ForeignKeyConstraint(
+            ["parent_message_id", "chat_id", "user_id"],
+            ["messages.id", "messages.chat_id", "messages.user_id"],
+            name="fk_messages_parent_scope",
+        ),
+        ForeignKeyConstraint(
+            ["active_child_id", "chat_id", "user_id"],
+            ["messages.id", "messages.chat_id", "messages.user_id"],
+            name="fk_messages_active_child_scope",
+        ),
+    )
+
     active_child: Mapped["MessageModel | None"] = relationship(
         "MessageModel",
         foreign_keys=[active_child_id],
         remote_side="MessageModel.id",
         post_update=True,
+    )
+
+
+class ChatFileModel(Base, TimestampMixin):
+    """Explicit local source references; active-branch provenance narrows this set."""
+
+    __tablename__ = "chat_files"
+    chat_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    file_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["chat_id", "user_id"], ["chats.id", "chats.user_id"], ondelete="CASCADE", name="fk_chat_files_chat_owner",
+        ),
+        ForeignKeyConstraint(
+            ["file_id", "user_id"],
+            ["user_files.id", "user_files.user_id"],
+            ondelete="CASCADE",
+            name="fk_chat_files_file_owner",
+        ),
+        Index("idx_chat_files_file_owner", "file_id", "user_id"),
     )

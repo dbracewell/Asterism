@@ -74,8 +74,7 @@ export const zChatContextUsage = z.object({
  * ChatUpdateRequest
  */
 export const zChatUpdateRequest = z.object({
-    title: z.string().nullish(),
-    folder_id: z.uuid().nullish()
+    title: z.string().nullish()
 });
 
 /**
@@ -178,6 +177,26 @@ export const zFileProjectSummary = z.object({
 });
 
 /**
+ * Folder
+ */
+export const zFolder = z.object({
+    id: z.uuid(),
+    user_id: z.string(),
+    title: z.string(),
+    created_at: z.int(),
+    updated_at: z.int(),
+    parent_id: z.uuid().nullable(),
+    children: z.array(z.lazy((): any => zFolder)).optional()
+});
+
+/**
+ * FolderList
+ */
+export const zFolderList = z.object({
+    folders: z.array(zFolder)
+});
+
+/**
  * Function
  */
 export const zFunction = z.object({
@@ -239,7 +258,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('5ca97d43-1ff8-4a80-a211-6acf5c87eebf'),
+    id: z.uuid().optional().default('dbdd8b6b-6e2a-4dfb-ac92-1094a68b7198'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -426,6 +445,7 @@ export const zKnowledgeReprocessSummary = z.object({
  * MessageFileReference
  */
 export const zMessageFileReference = z.object({
+    file_id: z.uuid(),
     filename: z.string(),
     name: z.string(),
     mime_type: z.string(),
@@ -473,7 +493,7 @@ export const zChatInfo = z.object({
     updated_at: z.int(),
     allowed_tools: z.array(z.string()).optional(),
     title: z.string().nullish(),
-    folder_id: z.uuid().nullish(),
+    project_id: z.uuid().nullish(),
     agent_id: z.uuid().nullish(),
     preview: z.string().nullish(),
     message_count: z.int().nullish(),
@@ -485,37 +505,6 @@ export const zChatInfo = z.object({
  */
 export const zChatInfoList = z.object({
     chats: z.array(zChatInfo)
-});
-
-/**
- * Folder
- */
-export const zFolder = z.object({
-    id: z.uuid(),
-    user_id: z.string(),
-    title: z.string(),
-    created_at: z.int(),
-    updated_at: z.int(),
-    parent_id: z.uuid().nullable(),
-    sessions: z.array(zChatInfo).optional(),
-    children: z.array(z.lazy((): any => zFolder)).optional()
-});
-
-/**
- * FolderChatList
- */
-export const zFolderChatList = z.object({
-    chats: z.array(zChatInfo),
-    total: z.int().gte(0),
-    page: z.int().gte(1),
-    page_size: z.int().gte(1)
-});
-
-/**
- * FolderList
- */
-export const zFolderList = z.object({
-    folders: z.array(zFolder)
 });
 
 /**
@@ -552,8 +541,8 @@ export const zLlmDisplayInfo = z.object({
 export const zNewChatRequest = z.object({
     user_prompt: z.string(),
     agent_id: z.uuid().nullish(),
-    folder_id: z.uuid().nullish(),
-    files: z.array(z.string()).optional()
+    project_id: z.uuid().nullish(),
+    files: z.array(z.uuid()).max(100).optional()
 });
 
 /**
@@ -726,6 +715,28 @@ export const zProviderSettings = z.object({
     llm_providers: z.array(zProviderSummary).optional(),
     draft_model_id: z.uuid().nullish(),
     draft_model: zLlmDisplayInfo.nullish()
+});
+
+/**
+ * ScopedChatFile
+ */
+export const zScopedChatFile = z.object({
+    file_id: z.uuid(),
+    sources: z.array(z.enum(['project', 'chat'])),
+    message_ids: z.array(z.uuid()).optional()
+});
+
+/**
+ * ChatFileScope
+ */
+export const zChatFileScope = z.object({
+    chat_id: z.uuid(),
+    project_id: z.uuid().nullable(),
+    project_context_revision: z.int().nullish(),
+    project_system_prompt: z.string().optional().default(''),
+    allowed_file_ids: z.array(z.uuid()),
+    files: z.array(zScopedChatFile),
+    unavailable_file_ids: z.array(z.uuid())
 });
 
 /**
@@ -1201,6 +1212,35 @@ export const zMessageUpdatePath = z.object({
  */
 export const zMessageUpdateResponse = zMessage;
 
+export const zChatFileGetScopePath = z.object({
+    chat_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatFileGetScopeResponse = zChatFileScope;
+
+export const zChatFileGetInfoPath = z.object({
+    chat_id: z.uuid(),
+    file_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatFileGetInfoResponse = zUserFile;
+
+export const zChatFileDownloadPath = z.object({
+    chat_id: z.uuid(),
+    file_id: z.uuid()
+});
+
+/**
+ * Authorized original source download
+ */
+export const zChatFileDownloadResponse = z.string();
+
 /**
  * Successful Response
  */
@@ -1212,20 +1252,6 @@ export const zFolderCreateBody = zNewFolderRequest;
  * Successful Response
  */
 export const zFolderCreateResponse = zFolder;
-
-export const zFolderChatGetManyPath = z.object({
-    folder_id: z.uuid()
-});
-
-export const zFolderChatGetManyQuery = z.object({
-    page: z.int().gte(1).optional().default(1),
-    page_size: z.int().gte(1).lte(100).optional().default(20)
-});
-
-/**
- * Successful Response
- */
-export const zFolderChatGetManyResponse = zFolderChatList;
 
 export const zFolderDeletePath = z.object({
     folder_id: z.string()

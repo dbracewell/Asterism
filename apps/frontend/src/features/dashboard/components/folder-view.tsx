@@ -6,9 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CreateFolderInput } from "@/features/dashboard/components/create-folder-input";
-import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import { Folder } from "@/lib/client";
 import { folderDeleteMutation } from "@/lib/client/@tanstack/react-query.gen";
@@ -17,7 +15,6 @@ import {
   IconFolder,
   IconFolderOpen,
   IconFolderPlus,
-  IconMessage2Plus,
   IconTrash,
 } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
@@ -35,20 +32,14 @@ export const FolderView = ({
   folder: Folder;
   depth?: number;
 }) => {
-  const [sessions, setSessions] = useState(folder.sessions);
   const [foldersOpen, setFoldersOpen] = useState<Set<string>>(
     () => new Set(JSON.parse(Cookie.get("asterism-open-folders") ?? "[]")),
   );
   const [isAdding, setIsAdding] = useState(false);
   const newFolderTitleRef = useRef<HTMLInputElement | null>(null);
   const hasChildren = folder.children && folder.children.length > 0;
-  const hasSessions = folder.sessions && folder.sessions.length > 0;
   const pathName = usePathname();
   const folderSelected = pathName.endsWith(`/folders/${folder.id}`);
-
-  useEffect(() => {
-    setSessions(folder.sessions);
-  }, [folder.sessions]);
 
   useEffect(() => {
     let timeOut = null;
@@ -90,7 +81,6 @@ export const FolderView = ({
     setFoldersOpen((prev) => {
       const filtered = new Set(prev);
       if (
-        (folder.sessions && folder.sessions.length > 0) ||
         (folder.children && folder.children.length > 0)
       ) {
         filtered.add(folder.id);
@@ -124,33 +114,12 @@ export const FolderView = ({
   }, [closeFolder, openFolder, foldersOpen, folder.id]);
 
   useEffect(() => {
-    if (!hasChildren && !hasSessions) closeFolder();
-  }, [hasChildren, hasSessions, closeFolder]);
+    if (!hasChildren) closeFolder();
+  }, [hasChildren, closeFolder]);
 
   const addSubFolder = useCallback(() => {
     setIsAdding(true);
   }, []);
-
-  useSubscribeEvent({
-    type: "chat-session:update",
-    handler: async (payload) => {
-      const hasSession = folder.sessions?.find(
-        (s) => s.id === payload.session_id,
-      );
-      if (!hasSession) return;
-      setSessions((prev) =>
-        prev?.map((session) => {
-          if (session.id === payload.session_id) {
-            return {
-              ...session,
-              title: payload.title,
-            };
-          }
-          return session;
-        }),
-      );
-    },
-  });
 
   return (
     <div
@@ -194,7 +163,6 @@ export const FolderView = ({
             <FolderDropDown
               folderId={folder.id}
               addSubFolder={addSubFolder}
-              openFolder={forceOpenFolder}
             />
           </div>
         </div>
@@ -229,32 +197,7 @@ export const FolderView = ({
           </div>
         )}
 
-        {foldersOpen.has(folder.id) && (
-          <div className="flex flex-col">
-            {sessions?.map((session) => (
-              <div
-                key={session.id}
-                className="flex h-8 items-center"
-                style={{ paddingLeft: 21 + depth }}
-              >
-                <div className="bg-border h-full w-px" />
-                <div className="bg-border h-px w-3 pr-2" />
-                <div
-                  className={cn(
-                    "group/item hover:bg-sidebar-accent text-sidebar-accent-foreground flex h-7 w-full flex-1 items-center justify-between rounded px-2 py-1.5 text-left",
-                    pathName.endsWith(`/c/${session.id}`) &&
-                      "bg-sidebar-accent text-sidebar-accent-foreground",
-                  )}
-                >
-                  <Link href={`/c/${session.id}`} className="flex-1 truncate">
-                    {session.title}
-                  </Link>
-                  <ChatSessionActionMenu button chat_id={session.id} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+
       </div>
     </div>
   );
@@ -263,17 +206,15 @@ export const FolderView = ({
 const FolderDropDown = ({
   folderId,
   addSubFolder,
-  openFolder,
 }: {
   folderId: string;
   addSubFolder: () => void;
-  openFolder: (folder_id: string) => void;
 }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { confirm, Dialog } = useConfirmationDialog({
     title: "Delete folder?",
-    description: "This permanently deletes the folder and its chats.",
+    description: "This permanently deletes the folder and its subfolders.",
     confirmVariant: "destructive",
   });
   const deleteFolder = useMutation({
@@ -312,14 +253,6 @@ const FolderDropDown = ({
         <DropdownMenuItem asChild>
           <Link href={`/folders/${folderId}`}>
             <IconFolderOpen /> Open folder
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            href={`/?folder_id=${folderId}`}
-            onClick={() => openFolder(folderId)}
-          >
-            <IconMessage2Plus /> New Chat
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

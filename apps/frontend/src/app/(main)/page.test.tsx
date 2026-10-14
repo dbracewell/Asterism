@@ -56,7 +56,7 @@ vi.mock("@/features/chat/hooks/use-chat-session-crud", () => ({
   useChatSessionCrud: () => ({ createChatSession: mocks.createChatSession }),
 }));
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams("folder_id=folder-1"),
+  useSearchParams: () => new URLSearchParams("project_id=project-1"),
 }));
 vi.mock("@/components/animated-border", () => ({
   AnimatedBorder: ({
@@ -107,7 +107,7 @@ it("defaults to a main agent, excludes sub-agents, and sends an override", async
     body: {
       agent_id: "main-override",
       files: [],
-      folder_id: "folder-1",
+      project_id: "project-1",
       user_prompt: "Hello",
     },
   });

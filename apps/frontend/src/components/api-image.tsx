@@ -8,31 +8,39 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { client } from "@/lib/api";
-import { fileGetFileInfoOptions } from "@/lib/client/@tanstack/react-query.gen";
+import { chatFileGetInfoOptions, fileGetFileInfoOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { UserFile, ErrorDetail } from "@/lib/client";
 
 import { DownloadIcon, Loader2 } from "lucide-react";
 
-export const APIImage = ({
-  filename,
-  alt = "Generated image",
-  width = "auto",
-  height = "auto",
-  zoomable = false,
-  className,
-}: {
+type ImageProps = {
   filename: string;
   alt?: string;
   width?: number | string;
   height?: number | string;
   zoomable?: boolean;
   className?: string;
-}) => {
-  const { data, isLoading, error } = useQuery(
-    fileGetFileInfoOptions({ client, path: { filename } }),
-  );
+};
 
+export const APIImage = ({ chatId, fileId, ...props }: ImageProps & ({ chatId?: never; fileId?: never } | { chatId: string; fileId: string })) =>
+  chatId && fileId ? <ChatImage {...props} chatId={chatId} fileId={fileId} /> : <LibraryImage {...props} />;
+
+const LibraryImage = (props: ImageProps) => {
+  const result = useQuery(fileGetFileInfoOptions({ client, path: { filename: props.filename } }));
+  return <ImageContent {...props} result={result} />;
+};
+
+const ChatImage = ({ chatId, fileId, ...props }: ImageProps & { chatId: string; fileId: string }) => {
+  const result = useQuery(chatFileGetInfoOptions({ client, path: { chat_id: chatId, file_id: fileId } }));
+  return <ImageContent {...props} result={result} />;
+};
+
+const ImageContent = ({
+  alt = "Generated image", width = "auto", height = "auto", zoomable = false, className,
+  result: { data, isLoading, error },
+}: ImageProps & { result: UseQueryResult<UserFile, ErrorDetail> }) => {
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500">
