@@ -1,16 +1,11 @@
 # Active and Pending Work
 
-EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
+EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-29.1 was also confirmed complete and archived. Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-29 — User agent settings, chat models, and project delegation](docs/epics/EPIC-29-USER-AGENT-SETTINGS-CHAT-MODELS-AND-PROJECT-DELEGATION.md)
 
 Scheduled after EPIC-25 and before EPIC-26. Backend estimate: 8–12 person-days.
 
-- [ ] US-29.1: One main agent configuration per user.
-  - [ ] US-29.1-T1: Replace multiple selectable main-agent profiles/default-agent selection with exactly one user-owned main-agent configuration; provision it with the user and enforce uniqueness in the DB and existence in service lifecycle paths. Main-agent configuration has no bound model.
-  - [ ] US-29.1-T2: Expose owner-scoped read/update of main-agent instructions, ordinary capabilities, loop limits, and supported generation defaults through user settings; prevent deleting the sole main-agent configuration. Preserve separate user-profile/persona invariants.
-  - [ ] US-29.1-T3: Keep separately managed, owner-scoped sub-agent definitions with name, description, instructions, capabilities, and one fixed model per definition; permit zero or more without an arbitrary product count limit. Validate model availability and handle model deletion/disablement explicitly without silent replacement.
-  - [ ] US-29.1-T4: Update fresh initialization, user provisioning, schemas, and generated clients without migrations; test singleton creation/races, settings isolation, sub-agent CRUD, required model binding, and invalid capability/model references.
 - [ ] US-29.2: Chat model selection and model provenance.
   - [ ] US-29.2-T1: Define the available chat-model API from the existing provider/model catalog with enabled/authorized status, display identity, and relevant capabilities; return a clear state when no model is available.
   - [ ] US-29.2-T2: Replace chat main-agent selection with persisted model selection, including draft/new chats and an explicit initialization policy; validate requested models server-side. Model changes apply on the next turn; reject changes during an active run.

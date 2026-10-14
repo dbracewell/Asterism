@@ -11,18 +11,8 @@ from asterism.domains.knowledge_base.service import (
 )
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from .schemas import (
-    AgentProfile,
-    PartialAgentProfile,
-    SubAgentTrace,
-    UserAgents,
-)
-from .service import (
-    delete_agent_profile,
-    get_sub_agent_traces_by_parent_message,
-    get_user_agents,
-    upsert_agent_profile,
-)
+from .schemas import SubAgentCreate, SubAgentDefinition, SubAgentTrace
+from .service import delete_agent_profile, get_sub_agent_traces_by_parent_message, get_sub_agents, save_sub_agent
 
 agents_router = APIRouter(
     prefix="/agents",
@@ -31,38 +21,21 @@ agents_router = APIRouter(
 )
 
 
-@agents_router.get(
-    "",
-    response_model=UserAgents,
-    operation_id="agentsGetUserAgents",
-    summary="Gets all agents defined by a user",
-)
-async def get_many(
-    user: AuthedUserDep,
-    session: DBSessionDep,
-) -> UserAgents:
-    return await get_user_agents(
-        user_id=user.id,
-        session=session,
-    )
+@agents_router.get("/sub-agents", response_model=list[SubAgentDefinition], operation_id="subAgentsList")
+async def list_sub_agents(user: AuthedUserDep, session: DBSessionDep) -> list[SubAgentDefinition]:
+    return await get_sub_agents(user.id, session)
 
 
-@agents_router.post(
-    "",
-    response_model=AgentProfile,
-    operation_id="agentsUpsertAgentProfile",
-    summary="Creates or updates an agent",
-)
-async def create_agent(
-    user: AuthedUserDep,
-    payload: PartialAgentProfile,
-    session: DBSessionDep,
-) -> AgentProfile:
-    return await upsert_agent_profile(
-        user_id=user.id,
-        agent_profile=payload,
-        session=session,
-    )
+@agents_router.post("/sub-agents", response_model=SubAgentDefinition, operation_id="subAgentCreate", status_code=201)
+async def create_sub_agent(payload: SubAgentCreate, user: AuthedUserDep, session: DBSessionDep) -> SubAgentDefinition:
+    return await save_sub_agent(user.id, payload, session=session)
+
+
+@agents_router.put("/sub-agents/{agent_id}", response_model=SubAgentDefinition, operation_id="subAgentUpdate")
+async def update_sub_agent(
+    agent_id: uuid.UUID, payload: SubAgentCreate, user: AuthedUserDep, session: DBSessionDep,
+) -> SubAgentDefinition:
+    return await save_sub_agent(user.id, payload, agent_id=agent_id, session=session)
 
 
 @agents_router.get(
@@ -71,7 +44,9 @@ async def create_agent(
     operation_id="agentKnowledgeBaseAssignmentsGet",
 )
 async def get_knowledge_base_assignments(
-    agent_id: uuid.UUID, user: AuthedUserDep, session: DBSessionDep,
+    agent_id: uuid.UUID,
+    user: AuthedUserDep,
+    session: DBSessionDep,
 ) -> KnowledgeBaseAssignmentList:
     return await get_agent_knowledge_base_assignments(user_id=user.id, agent_id=agent_id, session=session)
 
@@ -88,7 +63,10 @@ async def replace_knowledge_base_assignments(
     session: DBSessionDep,
 ) -> KnowledgeBaseAssignmentList:
     return await replace_agent_knowledge_base_assignments(
-        user_id=user.id, agent_id=agent_id, payload=payload, session=session,
+        user_id=user.id,
+        agent_id=agent_id,
+        payload=payload,
+        session=session,
     )
 
 
@@ -111,16 +89,16 @@ async def get_traces_for_parent_message(
 
 
 @agents_router.delete(
-    "/{agent_id}",
-    response_model=AgentProfile,
-    operation_id="agentsDeleteAgent",
+    "/sub-agents/{agent_id}",
+    response_model=SubAgentDefinition,
+    operation_id="subAgentDelete",
     summary="Delete an agent",
 )
 async def delete_agent(
     agent_id: uuid.UUID,
     user: AuthedUserDep,
     session: DBSessionDep,
-) -> AgentProfile:
+) -> SubAgentDefinition:
     return await delete_agent_profile(
         user_id=user.id,
         agent_id=agent_id,

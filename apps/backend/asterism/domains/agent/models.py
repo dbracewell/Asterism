@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Optional
 
-from sqlalchemy import ForeignKey, Integer, Text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
@@ -12,13 +12,27 @@ from asterism.domains.llm.schemas import ChatCompletionParams
 
 class AgentProfileModel(Base, UuidPrimaryKeyMixin):
     __tablename__ = "agent_profiles"
+    __table_args__ = (
+        CheckConstraint(
+            "(sub_agent = false AND model_id IS NULL) OR (sub_agent = true AND model_id IS NOT NULL)",
+            name="agent_role_model",
+        ),
+        CheckConstraint("max_steps >= 1 AND max_steps <= 100", name="agent_loop_limit"),
+        Index(
+            "one_main_agent_per_user",
+            "user_id",
+            unique=True,
+            sqlite_where=text("sub_agent = false"),
+            postgresql_where=text("sub_agent = false"),
+        ),
+    )
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
         index=True,
         nullable=False,
     )
-    model_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("models.id", ondelete="SET NULL"),
+    model_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("models.id", ondelete="RESTRICT"),
         index=True,
         nullable=True,
     )
@@ -34,9 +48,10 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         Text,
         nullable=False,
     )
-    system_prompt: Mapped[str | None] = mapped_column(
+    system_prompt: Mapped[str] = mapped_column(
         Text,
-        nullable=True,
+        nullable=False,
+        default="",
     )
     max_steps: Mapped[int] = mapped_column(
         Integer,
@@ -48,9 +63,10 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         nullable=False,
         default=dict,
     )
-    tools: Mapped[list[str] | None] = mapped_column(
+    tools: Mapped[list[str]] = mapped_column(
         JSONB_COLUMN(),
-        nullable=True,
+        nullable=False,
+        default=list,
     )
 
 

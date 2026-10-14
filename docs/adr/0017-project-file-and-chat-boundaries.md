@@ -97,3 +97,28 @@ and leaves independent project memberships and original sources intact.
 The current composer awaits persistence and retains successful upload IDs for failed-send
 retry. Rich server-draft/picker/removal UI remains US-27.3. This provides lifecycle contracts
 without starting that UI story or EPIC-26's prompt/tool/retrieval integration.
+
+### US-29.1 singleton configuration boundary
+
+Main and delegated configurations retain one storage identity table for existing
+trace and knowledge-assignment references, with distinct public editing contracts.
+A partial unique owner index permits one main row; a role/model check requires no
+model for that row and exactly one model for each worker. User creation provisions
+both rows in one transaction. Conflict-safe provisioning handles concurrent creation,
+while existing-user checks avoid an unnecessary write lock. Services never delete
+or convert the main configuration. Separate persona/profile defaults are unchanged.
+
+Main settings accept only supported bounded generation fields and active registered
+capability names. The tools domain exposes registration names through a dependency-free
+catalog, so configuration validation does not import invocation/settings infrastructure.
+Stored unavailable capability choices remain visible in settings; runtime filters active
+capabilities and rejects chat/approval grants outside the configuration allowlist. Worker model disablement retains its UUID and exposes availability;
+provider deletion requires explicit rebinding/removal, with restrictive model FKs as
+backstop. There is no automatic worker model replacement or worker count limit.
+
+Main runtime receives an explicitly selected user default model separately from its
+configuration for this story. It refreshes instructions/limits before the next turn
+and revalidates a model before using a cached client. Persisted chat model selection,
+project-selected workers, and derived internal tools remain the subsequent EPIC-29
+stories. Existing caller adjustments do not declare US-27.4/27.5 complete. Fresh-schema
+verification uses disposable isolated databases; the working database is retained.

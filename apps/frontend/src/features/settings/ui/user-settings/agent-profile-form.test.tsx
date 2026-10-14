@@ -1,65 +1,85 @@
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReactNode } from "react";
 import { expect, it, vi } from "vitest";
-
-import { AgentProfileForm } from "./agent-profile-form";
-
-const { replaceAssignments, user } = vi.hoisted(() => ({
-  replaceAssignments: vi.fn(),
-  user: { settings: { default_model_id: "10000000-0000-4000-8000-000000000001", models: [] } },
+import { MainAgentForm, AgentProfileForm } from "./agent-profile-form";
+const mocks = vi.hoisted(() => ({
+  mainSave: vi.fn().mockResolvedValue({}),
+  create: vi.fn(),
+  update: vi.fn(),
 }));
-
 vi.mock("@/features/auth/components/user-context", () => ({
-  useUser: () => user,
-}));
-vi.mock("@/lib/api", () => ({
-  client: {},
-  api: { agentKnowledgeBaseAssignmentsReplace: replaceAssignments },
-}));
-vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
-  agentsUpsertAgentProfileMutation: () => ({ mutationFn: vi.fn() }),
-  toolsGetActiveOptions: () => ({ queryKey: ["tools"], queryFn: () => ({ items: [] }) }),
-  knowledgeBaseGetManyOptions: () => ({
-    queryKey: ["knowledge"],
-    queryFn: () => ({ knowledge_bases: [{ id: "20000000-0000-4000-8000-000000000001", name: "Research" }] }),
+  useUser: () => ({
+    settings: {
+      models: [{ id: "model", name: "Available", provider_name: "Test" }],
+      default_model_id: "model",
+    },
   }),
 }));
-vi.mock("@/components/settings/model-selector", () => ({
-  ModelSelector: () => <span>Model selector</span>,
+vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  mainAgentUpdateMutation: () => ({ mutationFn: mocks.mainSave }),
+  subAgentCreateMutation: () => ({ mutationFn: mocks.create }),
+  subAgentUpdateMutation: () => ({ mutationFn: mocks.update }),
+  toolsGetActiveOptions: () => ({
+    queryKey: ["tools"],
+    queryFn: async () => ({ items: [] }),
+  }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-
-class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-vi.stubGlobal("ResizeObserver", ResizeObserver);
-
 function Wrapper({ children }: { children: ReactNode }) {
-  return <QueryClientProvider client={new QueryClient()}><TooltipProvider>{children}</TooltipProvider></QueryClientProvider>;
+  return (
+    <QueryClientProvider client={new QueryClient()}>
+      {children}
+    </QueryClientProvider>
+  );
 }
-
-it("shows existing assignments and explains automatic knowledge search", async () => {
-  render(<AgentProfileForm profile={{
-    id: "30000000-0000-4000-8000-000000000001",
-    name: "Researcher",
-    description: "Searches notes",
-    sub_agent: false,
-    model_id: "10000000-0000-4000-8000-000000000001",
-    system_prompt: null,
-    max_steps: 5,
-    knowledge_bases: [{ id: "20000000-0000-4000-8000-000000000001", name: "Research" }],
-  }} completeEditing={vi.fn()} />, { wrapper: Wrapper });
-
-  const knowledgeCheckbox = await screen.findByLabelText("Research");
-  expect(screen.getByText(/Assigned knowledge bases enable automatic/)).toBeInTheDocument();
-  expect(knowledgeCheckbox).toBeChecked();
-  await userEvent.setup().click(knowledgeCheckbox);
-  expect(knowledgeCheckbox).not.toBeChecked();
+it("saves main instructions separately from the model and preserves other generation defaults", async () => {
+  render(
+    <MainAgentForm
+      configuration={{
+        id: "main",
+        name: "Main",
+        description: "",
+        system_prompt: "",
+        max_steps: 5,
+        tools: [],
+        chat_parameters: { top_p: 0.8 },
+      }}
+    />,
+    { wrapper: Wrapper },
+  );
+  await userEvent.click(
+    screen.getByRole("button", { name: "Edit main configuration" }),
+  );
+  expect(screen.queryByLabelText("Fixed model")).not.toBeInTheDocument();
+  await userEvent.type(screen.getByLabelText("Instructions"), "Be precise");
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Save configuration" }),
+  );
+  expect(mocks.mainSave).toHaveBeenCalledWith(
+    expect.objectContaining({
+      body: expect.objectContaining({
+        system_prompt: "Be precise",
+        chat_parameters: { top_p: 0.8, temperature: null, max_tokens: null },
+      }),
+    }),
+    expect.anything(),
+  );
+  expect(mocks.mainSave.mock.calls[0][0].body).not.toHaveProperty("model_id");
+});
+it("requires an explicit model for a new sub-agent instead of using the user's default", async () => {
+  render(<AgentProfileForm profile={null} completeEditing={vi.fn()} />, {
+    wrapper: Wrapper,
+  });
+  await userEvent.click(
+    screen.getByRole("button", { name: "Create sub-agent" }),
+  );
+  expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
+    "Select a model",
+  );
+  expect(
+    screen.getByRole("button", { name: "Save configuration" }),
+  ).toBeDisabled();
+  expect(screen.getByRole("alert")).toHaveTextContent("saved binding remains");
 });

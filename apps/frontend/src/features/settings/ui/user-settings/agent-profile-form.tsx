@@ -1,12 +1,6 @@
+import { AgentKnowledgeAssignments } from "./agent-knowledge-assignments";
+import { SubAgentToolWarning } from "./sub-agent-tool-warning";
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { z } from "zod";
-
-import { HelpIcon } from "@/components/help-icon";
-import { Required } from "@/components/required";
-import { ModelSelector } from "@/components/settings/model-selector";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -16,517 +10,340 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Hint } from "@/components/ui/hint";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/features/auth/components/user-context";
-import { agentProfile } from "@/features/settings/schemas";
-import { SubAgentToolWarning } from "@/features/settings/ui/user-settings/sub-agent-tool-warning";
-import { api, client } from "@/lib/api";
-import { AgentProfile } from "@/lib/client";
+import { client } from "@/lib/api";
 import {
-  agentsUpsertAgentProfileMutation,
-  knowledgeBaseGetManyOptions,
+  MainAgentConfiguration,
+  MainAgentUpdate,
+  SubAgentDefinition,
+} from "@/lib/client";
+import {
+  mainAgentUpdateMutation,
+  subAgentCreateMutation,
+  subAgentUpdateMutation,
   toolsGetActiveOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-type AgentProfileFormValues = z.infer<typeof agentProfile>;
+export function MainAgentForm({
+  configuration,
+}: {
+  configuration: MainAgentConfiguration;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Edit main configuration</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Main configuration</DialogTitle>
+          <DialogDescription>
+            Instructions and capabilities shared by your chats. Choose the chat
+            model separately in General settings.
+          </DialogDescription>
+        </DialogHeader>
+        {open && (
+          <ConfigurationForm
+            configuration={configuration}
+            complete={() => setOpen(false)}
+          />
+        )}
+        {open && (
+          <AgentKnowledgeAssignments
+            agentId={configuration.id}
+            initialIds={
+              configuration.knowledge_bases?.map((base) => base.id) ?? []
+            }
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function AgentProfileForm({
   profile,
   completeEditing,
 }: {
-  profile: AgentProfile | null;
+  profile: SubAgentDefinition | null;
   completeEditing: () => void;
 }) {
-  const user = useUser();
-  const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
-  const { data: availableTools } = useQuery(toolsGetActiveOptions({ client }));
-  const { data: knowledgeBases, isLoading: isLoadingKnowledgeBases } = useQuery(
-    {
-      ...knowledgeBaseGetManyOptions({
-        client,
-        query: { page: 1, page_size: 100 },
-      }),
-    },
-  );
-
-  const upsertAgentProfile = useMutation(
-    agentsUpsertAgentProfileMutation({ client }),
-  );
-
-  const form = useForm<AgentProfileFormValues>({
-    resolver: zodResolver(agentProfile),
-    defaultValues: {
-      id: profile?.id ?? null,
-      name: profile?.name ?? "",
-      sub_agent: profile?.sub_agent ?? false,
-      description: profile?.description ?? "",
-      systemPrompt: profile?.system_prompt,
-      maxSteps: profile?.max_steps ?? 5,
-      modelId: profile?.model_id ?? user.settings.default_model_id ?? "",
-      tools:
-        profile?.tools?.map((tool) => ({
-          value: tool,
-        })) ?? [],
-      knowledgeBaseIds: profile?.knowledge_bases?.map((base) => base.id) ?? [],
-      chatParameters: profile?.chat_parameters ?? {},
-    },
-  });
-
-  const actsAsSubAgent = useWatch({
-    control: form.control,
-    name: "sub_agent",
-  });
-
-  useEffect(() => {
-    form.reset({
-      id: profile?.id ?? null,
-      name: profile?.name ?? "",
-      sub_agent: profile?.sub_agent ?? false,
-      description: profile?.description ?? "",
-      modelId: profile?.model_id ?? user.settings.default_model_id ?? "",
-      systemPrompt: profile?.system_prompt,
-      maxSteps: profile?.max_steps ?? 5,
-      tools:
-        profile?.tools?.map((tool) => ({
-          value: tool,
-        })) ?? [],
-      knowledgeBaseIds: profile?.knowledge_bases?.map((base) => base.id) ?? [],
-      chatParameters: profile?.chat_parameters ?? {},
-    });
-    if (profile) {
-      setIsOpen(true);
-    }
-  }, [profile, form, user]);
-
-  const onOpenChange = (value: boolean) => {
-    form.reset();
+  const [creating, setCreating] = useState(false);
+  const open = creating || profile !== null;
+  const close = () => {
+    setCreating(false);
     completeEditing();
-    setIsOpen(value);
   };
-
-  const {
-    fields: toolsFields,
-    append: toolsAppend,
-    remove: toolsRemove,
-  } = useFieldArray({
-    control: form.control,
-    name: "tools",
-  });
-
-  async function onSubmit(data: AgentProfileFormValues) {
-    const cp =
-      Object.keys(data.chatParameters).length > 0
-        ? data.chatParameters
-        : undefined;
-    try {
-      const agent = await upsertAgentProfile.mutateAsync({
-        body: {
-          id: data.id ?? undefined,
-          sub_agent: data.sub_agent,
-          description: data.description,
-          name: data.name,
-          max_steps: data.maxSteps,
-          system_prompt: data.systemPrompt,
-          tools: [
-            ...data.tools.map((t) => t.value),
-            ...(!data.sub_agent &&
-            !data.tools.some((t) => t.value === "sub_agent")
-              ? ["sub_agent"]
-              : []),
-          ],
-          model_id: data.modelId,
-          chat_parameters: cp,
-        },
-      });
-      if (!agent.id) throw new Error("The saved agent did not include an ID.");
-      await api.agentKnowledgeBaseAssignmentsReplace({
-        path: { agent_id: agent.id },
-        body: { knowledge_base_ids: data.knowledgeBaseIds },
-      });
-      toast.success(
-        `Successfully ${profile == null ? "created new" : "updated"} agent ${agent.name}`,
-      );
-      onOpenChange(false);
-      router.refresh();
-    } catch {
-      toast.error(
-        `Failed to ${profile == null ? "create new" : "update"} agent and its knowledge assignments`,
-      );
-    }
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (!value) close();
+        else setCreating(true);
+      }}
+    >
       <DialogTrigger asChild>
-        <Hint hint="Create new agent" asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              form.reset({
-                id: null,
-                name: "",
-                description: "",
-                sub_agent: false,
-                systemPrompt: null,
-                maxSteps: 5,
-                modelId: user.settings.default_model_id ?? "",
-                tools: [],
-                knowledgeBaseIds: [],
-                chatParameters: {},
-              });
-              setIsOpen(true);
-            }}
-          >
-            <PlusIcon />
-          </Button>
-        </Hint>
+        <Button>Create sub-agent</Button>
       </DialogTrigger>
-      <DialogContent className="bg-card text-card-foreground flex h-full w-full! max-w-full! flex-col overflow-clip! p-0! sm:h-[80%]! md:max-w-250!">
-        <DialogHeader className="bg-secondary text-secondary-foreground border-b p-2">
-          <DialogTitle className="text-xl font-bold">Agent Editor</DialogTitle>
-          <DialogDescription className="text-secondary-foreground">
-            {profile == null
-              ? "Create a new Agent to help you perform specific tasks."
-              : "Modify an existing Agent to help you perform specific tasks."}
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {profile ? "Edit sub-agent" : "Create sub-agent"}
+          </DialogTitle>
+          <DialogDescription>
+            Each delegated worker uses its own fixed model.
           </DialogDescription>
         </DialogHeader>
-        <form
-          id="agentProfile-form"
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex min-h-0 flex-1 flex-col space-y-6 px-2"
-        >
-          <Controller
-            control={form.control}
-            name="id"
-            render={({ field }) => (
-              <Input type="hidden" {...field} value={field.value ?? ""} />
-            )}
+        {open && (
+          <ConfigurationForm
+            key={profile?.id ?? "new"}
+            configuration={profile}
+            subAgent
+            complete={close}
           />
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <Controller
-                  control={form.control}
-                  name="name"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="form-agentProfile-name">
-                        <Required>
-                          Name <HelpIcon text="The name of the agent." />
-                        </Required>
-                      </FieldLabel>
-                      <Input
-                        autoComplete="off"
-                        placeholder="The agent's name"
-                        {...field}
-                        min={3}
-                        max={30}
-                        id="form-agentProfile-name"
-                        aria-invalid={fieldState.invalid}
-                      />
-                      <FieldError errors={[fieldState.error]} />
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={form.control}
-                  name="description"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="form-agentProfile-description">
-                        <Required>
-                          Description{" "}
-                          <HelpIcon text="Describes what actions the agent performs." />
-                        </Required>
-                      </FieldLabel>
-                      <Input
-                        autoComplete="off"
-                        className="w-full!"
-                        placeholder="Describes what actions the agent performs."
-                        {...field}
-                        min={3}
-                        max={256}
-                        id="form-agentProfile-description"
-                        aria-invalid={fieldState.invalid}
-                      />
-                      <FieldError errors={[fieldState.error]} />
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={form.control}
-                  name="modelId"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="form-agentProfile-model">
-                        <Required>
-                          Model{" "}
-                          <HelpIcon text="The model the agent will use to perform actions." />
-                        </Required>
-                      </FieldLabel>
-                      <ModelSelector
-                        id="form-agentProfile-model"
-                        defaultModel={field.value}
-                        onValueChange={(v) => field.onChange(v)}
-                        availableModels={user.settings.models}
-                      />
-                      <FieldError errors={[fieldState.error]} />
-                    </Field>
-                  )}
-                />
+        )}
+        {open && profile && (
+          <AgentKnowledgeAssignments
+            key={profile.id}
+            agentId={profile.id}
+            initialIds={profile.knowledge_bases?.map((base) => base.id) ?? []}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-                <Controller
-                  control={form.control}
-                  name="maxSteps"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="form-agentProfile-maxSteps">
-                        <Required>
-                          Max Steps{" "}
-                          <HelpIcon text="The maximum number of steps the agent can take to complete a task." />
-                        </Required>{" "}
-                      </FieldLabel>
-                      <Input
-                        type="number"
-                        placeholder="Enter maxSteps"
-                        {...field}
-                        min={1}
-                        max={20}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            isFinite(e.target.valueAsNumber)
-                              ? e.target.valueAsNumber
-                              : "",
-                          )
-                        }
-                        id="form-agentProfile-maxSteps"
-                        aria-invalid={fieldState.invalid}
-                      />
-                      <FieldError errors={[fieldState.error]} />
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={form.control}
-                  name="sub_agent"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="form-agentProfile-subAgent"
-                          onCheckedChange={field.onChange}
-                          checked={field.value ?? false}
-                        />
-                        <FieldLabel htmlFor="form-agentProfile-subAgent">
-                          <Required>
-                            Acts as Sub Agent{" "}
-                            <HelpIcon text="Can this agent be used as a sub agent?" />
-                          </Required>{" "}
-                        </FieldLabel>
-                      </div>
-                      <FieldError errors={[fieldState.error]} />
-                    </Field>
-                  )}
-                />
-              </div>
-
-              <Controller
-                control={form.control}
-                name="systemPrompt"
-                render={({ field, fieldState }) => (
-                  <Field
-                    data-invalid={fieldState.invalid}
-                    className="flex min-h-0 flex-col"
-                  >
-                    <FieldLabel htmlFor="form-agentProfile-systemPrompt">
-                      System Prompt
-                    </FieldLabel>
-                    <Textarea
-                      autoComplete="off"
-                      placeholder="The system prompt used to guide the agent's actions."
-                      {...field}
-                      className="h-55! resize-none!"
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value || "")}
-                      id="form-agentProfile-systemPrompt"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            </div>
-
-            <Field className="mt-3 mb-2 flex flex-1 flex-col">
-              <FieldLabel>Knowledge bases</FieldLabel>
-              <p className="text-muted-foreground text-sm">
-                Assigned knowledge bases enable automatic{" "}
-                <code>search_knowledge</code> for this agent. Leave all
-                unchecked to disable knowledge search.
-              </p>
-              {isLoadingKnowledgeBases ? (
-                <p className="text-muted-foreground text-sm">
-                  Loading knowledge bases…
-                </p>
-              ) : knowledgeBases?.knowledge_bases.length ? (
-                <Controller
-                  control={form.control}
-                  name="knowledgeBaseIds"
-                  render={({ field }) => (
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
-                      {knowledgeBases.knowledge_bases.map((base) => (
-                        <div key={base.id} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`form-agentProfile-knowledge-${base.id}`}
-                            checked={field.value.includes(base.id)}
-                            onCheckedChange={(checked) =>
-                              field.onChange(
-                                checked
-                                  ? [...field.value, base.id]
-                                  : field.value.filter((id) => id !== base.id),
-                              )
-                            }
-                          />
-                          <Label
-                            htmlFor={`form-agentProfile-knowledge-${base.id}`}
-                            className="truncate"
-                          >
-                            {base.name}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                />
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No knowledge bases are available. Create one from Knowledge
-                  first.
-                </p>
-              )}
-            </Field>
-
-            <Field className="mt-3 mb-2 flex flex-1 flex-col">
-              <FieldLabel>Tools</FieldLabel>
-              {actsAsSubAgent && <SubAgentToolWarning />}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
-                {availableTools?.items.map((tool) => (
-                  <div key={tool.name} className="flex items-center gap-2">
-                    <Checkbox
-                      key={tool.name}
-                      checked={
-                        (!actsAsSubAgent && tool.name === "sub_agent") ||
-                        toolsFields.find((t) => t.value === tool.name) != null
-                      }
-                      disabled={!actsAsSubAgent && tool.name === "sub_agent"}
-                      onCheckedChange={(e) => {
-                        if (e) {
-                          toolsAppend({ value: tool.name });
-                        } else {
-                          toolsRemove(
-                            toolsFields.findIndex((t) => t.value === tool.name),
-                          );
-                        }
-                      }}
-                    />
-                    <span className="truncate">{tool.name}</span>{" "}
-                    <HelpIcon text={tool.description} />
-                  </div>
-                ))}
-              </div>
-            </Field>
-
-            <Controller
-              control={form.control}
-              name="chatParameters"
-              render={({ field, fieldState }) => (
-                <Field
-                  data-invalid={fieldState.invalid}
-                  className="grid grid-cols-[auto_1fr] md:grid-cols-[auto_1fr_auto_1fr]"
-                >
-                  <Label htmlFor="temperature">Temperature</Label>
-                  <Input
-                    id="temperature"
-                    type="number"
-                    value={field.value.temperature ?? ""}
-                    onChange={(e) => {
-                      form.setValue(
-                        "chatParameters.temperature",
-                        isFinite(e.target.valueAsNumber)
-                          ? e.target.valueAsNumber
-                          : undefined,
-                        {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        },
-                      );
-                    }}
-                  />
-                  <Label htmlFor="max_tokens">Max Output Tokens</Label>
-                  <Input
-                    id="max_tokens"
-                    type="number"
-                    value={field.value.max_tokens ?? ""}
-                    onChange={(e) => {
-                      form.setValue(
-                        "chatParameters.max_tokens",
-                        isFinite(e.target.valueAsNumber)
-                          ? e.target.valueAsNumber
-                          : undefined,
-                        {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        },
-                      );
-                    }}
-                  />
-                  <Label htmlFor="frequency_penalty">Frequency Penalty</Label>
-                  <Input
-                    id="frequency_penalty"
-                    type="number"
-                    value={field.value.frequency_penalty ?? ""}
-                    onChange={(e) => {
-                      form.setValue(
-                        "chatParameters.frequency_penalty",
-                        isFinite(e.target.valueAsNumber)
-                          ? e.target.valueAsNumber
-                          : undefined,
-                        {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        },
-                      );
-                    }}
-                  />
-                  <FieldError errors={[fieldState.error]} />
-                </Field>
-              )}
+function ConfigurationForm({
+  configuration,
+  subAgent = false,
+  complete,
+}: {
+  configuration: MainAgentConfiguration | SubAgentDefinition | null;
+  subAgent?: boolean;
+  complete: () => void;
+}) {
+  const user = useUser();
+  const router = useRouter();
+  const [name, setName] = useState(configuration?.name ?? "");
+  const [description, setDescription] = useState(
+    configuration?.description ?? "",
+  );
+  const [modelId, setModelId] = useState(
+    configuration && "model_id" in configuration ? configuration.model_id : "",
+  );
+  const [prompt, setPrompt] = useState(configuration?.system_prompt ?? "");
+  const [maxSteps, setMaxSteps] = useState(configuration?.max_steps ?? 5);
+  const [tools, setTools] = useState(configuration?.tools ?? []);
+  const [temperature, setTemperature] = useState(
+    configuration?.chat_parameters?.temperature?.toString() ?? "",
+  );
+  const [maxTokens, setMaxTokens] = useState(
+    configuration?.chat_parameters?.max_tokens?.toString() ?? "",
+  );
+  const toolQuery = useQuery(toolsGetActiveOptions({ client }));
+  const mainMutation = useMutation(mainAgentUpdateMutation({ client }));
+  const createMutation = useMutation(subAgentCreateMutation({ client }));
+  const updateMutation = useMutation(subAgentUpdateMutation({ client }));
+  const pending =
+    mainMutation.isPending ||
+    createMutation.isPending ||
+    updateMutation.isPending;
+  const available = user.settings.models ?? [];
+  const missingTools = tools.filter(
+    (tool) => !toolQuery.data?.items.some((item) => item.name === tool),
+  );
+  const invalidModel =
+    subAgent && !available.some((model) => model.id === modelId);
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const body: MainAgentUpdate = {
+      system_prompt: prompt,
+      max_steps: maxSteps,
+      tools,
+      chat_parameters: {
+        ...configuration?.chat_parameters,
+        temperature: temperature === "" ? null : Number(temperature),
+        max_tokens: maxTokens === "" ? null : Number(maxTokens),
+      },
+    };
+    try {
+      if (subAgent) {
+        const subBody = { ...body, name, description, model_id: modelId };
+        if (configuration)
+          await updateMutation.mutateAsync({
+            path: { agent_id: configuration.id },
+            body: subBody,
+          });
+        else await createMutation.mutateAsync({ body: subBody });
+      } else await mainMutation.mutateAsync({ body });
+      toast.success("Configuration saved");
+      router.refresh();
+      complete();
+    } catch {
+      toast.error("Could not save configuration");
+    }
+  };
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      {subAgent && <SubAgentToolWarning />}
+      {subAgent && (
+        <>
+          <div>
+            <Label htmlFor="agent-name">Name</Label>
+            <Input
+              id="agent-name"
+              required
+              maxLength={200}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
             />
           </div>
-          <div className="flex items-end justify-end gap-2 pb-5">
+          <div>
+            <Label htmlFor="agent-description">Description</Label>
+            <Textarea
+              id="agent-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="agent-model">Fixed model</Label>
+            <Select value={modelId} onValueChange={setModelId}>
+              <SelectTrigger id="agent-model">
+                <SelectValue placeholder="Select a model" />
+              </SelectTrigger>
+              <SelectContent>
+                {available.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name} ({model.provider_name})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {invalidModel && (
+              <p role="alert" className="text-destructive text-sm">
+                Choose an available model. The saved binding remains until you
+                save a replacement.
+              </p>
+            )}
+          </div>
+        </>
+      )}
+      <div>
+        <Label htmlFor="agent-prompt">Instructions</Label>
+        <Textarea
+          id="agent-prompt"
+          value={prompt}
+          onChange={(event) => setPrompt(event.target.value)}
+        />
+      </div>
+      <div>
+        <Label htmlFor="agent-steps">Maximum steps</Label>
+        <Input
+          id="agent-steps"
+          type="number"
+          min={1}
+          max={100}
+          required
+          value={maxSteps}
+          onChange={(event) => setMaxSteps(Number(event.target.value))}
+        />
+      </div>
+      <div>
+        <Label htmlFor="agent-temperature">Temperature (optional)</Label>
+        <Input
+          id="agent-temperature"
+          type="number"
+          min={0}
+          max={2}
+          step="any"
+          value={temperature}
+          onChange={(event) => setTemperature(event.target.value)}
+        />
+      </div>
+      <div>
+        <Label htmlFor="agent-tokens">Maximum tokens (optional)</Label>
+        <Input
+          id="agent-tokens"
+          type="number"
+          min={1}
+          value={maxTokens}
+          onChange={(event) => setMaxTokens(event.target.value)}
+        />
+      </div>
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Allowed tools</legend>
+        {toolQuery.isPending && <p role="status">Loading tools…</p>}
+        {toolQuery.isError && (
+          <div role="alert">
+            Could not load tools.{" "}
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => void toolQuery.refetch()}
             >
-              Cancel
+              Retry
             </Button>
-            <Button type="submit">{profile == null ? "Create" : "Save"}</Button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        )}
+        {toolQuery.data?.items.length === 0 && (
+          <p className="text-muted-foreground text-sm">No active tools.</p>
+        )}
+        {toolQuery.data?.items.map((tool) => (
+          <Label key={tool.name} className="flex items-center gap-2">
+            <Checkbox
+              checked={tools.includes(tool.name)}
+              onCheckedChange={(checked) =>
+                setTools(
+                  checked
+                    ? [...tools, tool.name]
+                    : tools.filter((value) => value !== tool.name),
+                )
+              }
+            />
+            {tool.name}
+          </Label>
+        ))}
+        {missingTools.map((tool) => (
+          <Label key={tool} className="flex items-center gap-2">
+            <Checkbox
+              checked
+              onCheckedChange={() =>
+                setTools(tools.filter((value) => value !== tool))
+              }
+            />
+            {tool} (unavailable; remove to save)
+          </Label>
+        ))}
+      </fieldset>
+      <Button
+        type="submit"
+        disabled={
+          pending ||
+          toolQuery.isPending ||
+          toolQuery.isError ||
+          invalidModel ||
+          missingTools.length > 0
+        }
+      >
+        {pending ? "Saving…" : "Save configuration"}
+      </Button>
+    </form>
   );
 }

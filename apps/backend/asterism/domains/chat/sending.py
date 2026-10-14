@@ -134,7 +134,7 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
                 await session.commit()
                 return result
             agent_id = await resolve_main_agent_id(
-                user_id=user_id, requested_agent_id=payload.agent_id, session=session,
+                user_id=user_id, session=session,
             )
             if payload.project_id is not None:
                 await require_owned_project(user_id=user_id, project_id=payload.project_id, session=session)

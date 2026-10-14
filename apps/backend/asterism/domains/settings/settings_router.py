@@ -6,6 +6,8 @@ from pydantic import JsonValue
 import asterism.domains.settings.service as settings_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
+from asterism.domains.agent.schemas import MainAgentConfiguration, MainAgentUpdate
+from asterism.domains.agent.service import get_main_agent, update_main_agent
 from asterism.domains.extraction.model_download import DownloadProgress
 from asterism.domains.knowledge_base.schemas import (
     KnowledgeCaptionConfiguration,
@@ -43,6 +45,18 @@ settings_router = APIRouter(
     tags=["settings"],
     responses={404: {"description": "Not found", "model": ErrorDetail}},
 )
+
+
+@settings_router.get("/user/main-agent", response_model=MainAgentConfiguration, operation_id="mainAgentGet")
+async def read_main_agent(user: AuthedUserDep, session: DBSessionDep) -> MainAgentConfiguration:
+    return await get_main_agent(user.id, session)
+
+
+@settings_router.put("/user/main-agent", response_model=MainAgentConfiguration, operation_id="mainAgentUpdate")
+async def write_main_agent(
+    payload: MainAgentUpdate, user: AuthedUserDep, session: DBSessionDep,
+) -> MainAgentConfiguration:
+    return await update_main_agent(user.id, payload, session)
 
 
 @settings_router.get(

@@ -1,153 +1,27 @@
 import uuid
 
 import pytest
-import pytest_asyncio
-from asterism.core.exceptions import BadDataException, NotFoundException, UnauthorizedException
-from asterism.db.base import Base
-from asterism.domains.agent.schemas import PartialAgentProfile
-from asterism.domains.agent.service import (
-    delete_agent_profile,
-    upsert_agent_profile,
-)
-from asterism.domains.chat.models import ChatModel
+from asterism.domains.agent.service import get_main_agent_profile
 from asterism.domains.chat.schemas import NewChatRequest
-from asterism.domains.chat.service import create_chat, delete_chats, get_one
-from asterism.domains.settings.models import ApplicationSettingsModel
+from asterism.domains.chat.service import create_chat, get_one
 from asterism.domains.settings.service import upsert_user_setting
-from asterism.domains.user.models import UserModel
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from pydantic import ValidationError
+from test_main_agent_defaults import main_agent_session as _main_agent_session
 
-
-@pytest_asyncio.fixture
-async def chat_agent_session(tmp_path):
-    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'chats.db'}")
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-    sessions = async_sessionmaker(engine, expire_on_commit=False)
-    async with sessions() as session:
-        session.add_all(
-            [
-                UserModel(id="user-a"),
-                UserModel(id="user-b"),
-                ApplicationSettingsModel(key="active_tools", value=["sub_agent"]),
-            ],
-        )
-        await session.commit()
-        yield session
-    await engine.dispose()
-
-
-def profile(name: str, *, sub_agent: bool = False) -> PartialAgentProfile:
-    return PartialAgentProfile(
-        name=name,
-        description="test agent",
-        sub_agent=sub_agent,
-        model_id=None,
-        system_prompt=None,
-        max_steps=5,
-        tools=[],
-    )
+main_agent_session = _main_agent_session
 
 
 @pytest.mark.asyncio
-async def test_chat_binds_default_or_explicit_owned_main_agent(chat_agent_session):
-    default = await upsert_agent_profile(
-        "user-a", profile("Default"), chat_agent_session,
-    )
-    override = await upsert_agent_profile(
-        "user-a", profile("Override"), chat_agent_session,
-    )
-    await upsert_user_setting(
-        "user-a", "default_agent_id", str(default.id), chat_agent_session,
-    )
-
-    default_chat = await create_chat(
-        "user-a", NewChatRequest(request_id=uuid.uuid4(), user_prompt="Default"), chat_agent_session,
-    )
-    override_chat = await create_chat(
-        "user-a",
-        NewChatRequest(request_id=uuid.uuid4(), user_prompt="Override", agent_id=override.id),
-        chat_agent_session,
-    )
-
-    assert default_chat.info.agent_id == default.id
-    assert override_chat.info.agent_id == override.id
-
-    await upsert_user_setting(
-        "user-a", "default_agent_id", str(override.id), chat_agent_session,
-    )
-    persisted_default_chat = await get_one(
-        default_chat.info.id, "user-a", chat_agent_session,
-    )
-    assert persisted_default_chat.info.agent_id == default.id
-
-    with pytest.raises(BadDataException, match="assigned to an existing chat"):
-        await delete_agent_profile("user-a", override.id, chat_agent_session)
-
-
-@pytest.mark.asyncio
-async def test_chat_rejects_sub_agents_and_other_users_agents(chat_agent_session):
-    main = await upsert_agent_profile("user-a", profile("Main"), chat_agent_session)
-    sub = await upsert_agent_profile(
-        "user-a", profile("Worker", sub_agent=True), chat_agent_session,
-    )
-    other = await upsert_agent_profile("user-b", profile("Other"), chat_agent_session)
-    await upsert_user_setting(
-        "user-a", "default_agent_id", str(main.id), chat_agent_session,
-    )
-
-    with pytest.raises(BadDataException, match="main agent"):
-        await create_chat(
-            "user-a",
-            NewChatRequest(request_id=uuid.uuid4(), user_prompt="Delegate", agent_id=sub.id),
-            chat_agent_session,
-        )
-    with pytest.raises(UnauthorizedException):
-        await create_chat(
-            "user-a",
-            NewChatRequest(request_id=uuid.uuid4(), user_prompt="Foreign", agent_id=other.id),
-            chat_agent_session,
-        )
-
-
-@pytest.mark.asyncio
-async def test_bulk_delete_is_atomic_and_user_scoped(chat_agent_session):
-    owned = [ChatModel(user_id="user-a"), ChatModel(user_id="user-a")]
-    other = ChatModel(user_id="user-b")
-    chat_agent_session.add_all([*owned, other])
-    await chat_agent_session.commit()
-
-    deleted = await delete_chats(
-        "user-a", [owned[0].id, owned[1].id], chat_agent_session,
-    )
-    assert set(deleted.deleted_chat_ids) == {owned[0].id, owned[1].id}
-    assert await chat_agent_session.get(ChatModel, owned[0].id) is None
-    assert await chat_agent_session.get(ChatModel, other.id) is not None
-
-    with pytest.raises(NotFoundException):
-        await delete_chats("user-a", [other.id], chat_agent_session)
-
-
-@pytest.mark.asyncio
-async def test_delete_retires_owned_runtime_before_persistence(chat_agent_session, monkeypatch):
-    chat = ChatModel(user_id="user-a")
-    chat_agent_session.add(chat)
-    await chat_agent_session.commit()
-    retired = []
-
-    async def retire(chat_id):
-        retired.append(chat_id)
-
-    monkeypatch.setattr("asterism.domains.chat.jobs.chat_jobs.retire", retire)
-    await delete_chats("user-a", [chat.id], chat_agent_session)
-
-    assert retired == [chat.id]
-    assert await chat_agent_session.get(ChatModel, chat.id) is None
-
-
-def test_agent_profile_ids_are_unique_without_a_random_openapi_default():
-    from asterism.domains.agent.schemas import AgentProfile
-
-    fields = profile("Main").model_dump(exclude={"id"})
-    assert AgentProfile(**fields).id != AgentProfile(**fields).id
-    assert "default" not in AgentProfile.model_json_schema()["properties"]["id"]
+async def test_chat_uses_singleton_independent_of_model_selection(main_agent_session):
+    session = main_agent_session
+    main = await get_main_agent_profile("user-a", session)
+    chat = await create_chat("user-a", NewChatRequest(request_id=uuid.uuid4(), user_prompt="Hello"), session)
+    assert chat.info.agent_id == main.id
+    assert chat.info.context_model is None
+    await upsert_user_setting("user-a", "default_model_id", str(session.info["model"].id), session)
+    reopened = await get_one(chat.info.id, "user-a", session)
+    assert reopened.info.context_model.id == session.info["model"].id
+    assert reopened.info.agent_id == main.id
+    assert (await get_main_agent_profile("user-a", session)).model_id is None
+    with pytest.raises(ValidationError):
+        NewChatRequest(request_id=uuid.uuid4(), user_prompt="Old selection", agent_id=main.id)

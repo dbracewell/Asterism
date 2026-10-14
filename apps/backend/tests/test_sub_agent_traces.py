@@ -149,6 +149,7 @@ async def setup_test_db() -> tuple[
             name="ResearchAgent",
             description="Researches facts",
             sub_agent=True,
+            model_id=uuid.uuid4(),
             system_prompt="You research facts.",
         )
         session.add(agent_profile)

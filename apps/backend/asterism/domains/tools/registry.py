@@ -21,6 +21,7 @@ from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
 from asterism.domains.settings.schemas import ApplicationSettings
+from asterism.domains.tools.catalog import registered_tool_names
 from asterism.domains.tools.schemas import ToolInfo, ToolInfoList
 
 
@@ -95,7 +96,8 @@ class LLMTool[T: BaseModel]:
 
 
 class ToolRegistry:
-    def __init__(self):
+    def __init__(self, names: set[str] | None = None):
+        self._names = names
         self.registry: dict[str, LLMTool] = {}
 
     async def active_tools(self) -> ToolInfoList:
@@ -252,6 +254,8 @@ class ToolRegistry:
             is_async = inspect.iscoroutinefunction(func)
             tool_desc = description or (inspect.getdoc(func) or "").strip()
             arg_validator, schema = to_json_schema(func, tool_name, tool_desc)
+            if self._names is not None:
+                self._names.add(tool_name)
             self.registry[tool_name] = LLMTool(
                 name=tool_name,
                 description=tool_desc,
@@ -266,4 +270,4 @@ class ToolRegistry:
         return decorator
 
 
-tool_registry = ToolRegistry()
+tool_registry = ToolRegistry(names=registered_tool_names)

@@ -3,7 +3,6 @@ import uuid
 import pytest
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
-from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.chat.models import ChatFileModel, ChatModel, MessageModel
 from asterism.domains.chat.schemas import NewMessageRequest, UpdateMessageRequest
 from asterism.domains.chat.service import add_message, update_message
@@ -17,10 +16,10 @@ project_api = _project_api
 
 async def seed_agent(sessions, user="a"):
     async with sessions() as session:
-        agent = AgentProfileModel(user_id=user, name="Main", description="Scope test", tools=[], model_id=None)
-        session.add(agent)
-        await session.commit()
-        return str(agent.id)
+        from asterism.domains.agent.service import get_main_agent_profile
+        from asterism.domains.user.service import initialize_user_settings
+        await initialize_user_settings(user, session)
+        return str((await get_main_agent_profile(user, session)).id)
 
 
 async def upload(client, name, user="a"):
@@ -35,7 +34,6 @@ async def chat(client, agent, files=(), project=None, user="a"):
         headers=auth(user),
         json={
             "request_id": str(uuid.uuid4()),
-            "agent_id": agent,
             "user_prompt": "Use these references",
             "files": list(files),
             "project_id": project,
@@ -112,7 +110,7 @@ async def test_create_rejects_foreign_missing_duplicate_ids_atomically_and_old_c
     agent = await seed_agent(sessions)
     owned, foreign = await upload(client, "owned.txt"), await upload(client, "foreign.txt", "b")
     foreign_project = (await client.post("/projects/", headers=auth("b"), json={"name": "Foreign"})).json()
-    base = {"request_id": str(uuid.uuid4()), "agent_id": agent, "user_prompt": "Test"}
+    base = {"request_id": str(uuid.uuid4()), "user_prompt": "Test"}
     payloads = [
         ({"files": [owned["id"], foreign["id"]]}, 400),
         ({"files": [owned["id"], str(uuid.uuid4())]}, 400),
@@ -293,7 +291,7 @@ async def test_reopen_and_runtime_assembly_recheck_persisted_branch_and_deleted_
             for file in (left, right)
         ]
         reopened = await get_one(chat_id, "a", session)
-    agent = SimpleNamespace(session=reopened, profile=SimpleNamespace(model_id=None))
+    agent = SimpleNamespace(session=reopened, model_id=None)
     orchestrator = ChatOrchestrator(agent)
 
     @asynccontextmanager

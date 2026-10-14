@@ -165,7 +165,6 @@ class NewChatRequest(BaseModel):
     request_id: uuid.UUID
     draft_id: uuid.UUID | None = None
     user_prompt: str
-    agent_id: uuid.UUID | None = Field(default=None)
     project_id: uuid.UUID | None = Field(default=None)
     files: list[uuid.UUID] = Field(default_factory=list, max_length=100)
 

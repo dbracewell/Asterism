@@ -1,6 +1,6 @@
 # EPIC-29 — User agent settings, chat models, and project delegation
 
-Status: Proposed / not started.
+Status: US-29.1 completed; user confirmed 2026-10-14. Later stories not started.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Added from the user's 2026-10-14 product direction. Numbering is stable: implement this epic **after EPIC-25 and before EPIC-26**, despite its number. UI work belongs to US-27.4/27.5.
 
@@ -12,12 +12,37 @@ Estimated effort: **8–12 engineering person-days**, including story-level veri
 As a user, I want one main agent whose behavior I configure in user settings.
 
 **Estimate:** 2–3 person-days. **Dependencies:** EPIC-25.
-- [ ] US-29.1-T1: Replace multiple selectable main-agent profiles/default-agent selection with exactly one user-owned main-agent configuration; provision it with the user and enforce uniqueness in the DB and existence in service lifecycle paths. Main-agent configuration has no bound model.
-- [ ] US-29.1-T2: Expose owner-scoped read/update of main-agent instructions, ordinary capabilities, loop limits, and supported generation defaults through user settings; prevent deleting the sole main-agent configuration. Preserve separate user-profile/persona invariants.
-- [ ] US-29.1-T3: Keep separately managed, owner-scoped sub-agent definitions with name, description, instructions, capabilities, and one fixed model per definition; permit zero or more without an arbitrary product count limit. Validate model availability and handle model deletion/disablement explicitly without silent replacement.
-- [ ] US-29.1-T4: Update fresh initialization, user provisioning, schemas, and generated clients without migrations; test singleton creation/races, settings isolation, sub-agent CRUD, required model binding, and invalid capability/model references.
+- [x] US-29.1-T1: Replace multiple selectable main-agent profiles/default-agent selection with exactly one user-owned main-agent configuration; provision it with the user and enforce uniqueness in the DB and existence in service lifecycle paths. Main-agent configuration has no bound model.
+- [x] US-29.1-T2: Expose owner-scoped read/update of main-agent instructions, ordinary capabilities, loop limits, and supported generation defaults through user settings; prevent deleting the sole main-agent configuration. Preserve separate user-profile/persona invariants.
+- [x] US-29.1-T3: Keep separately managed, owner-scoped sub-agent definitions with name, description, instructions, capabilities, and one fixed model per definition; permit zero or more without an arbitrary product count limit. Validate model availability and handle model deletion/disablement explicitly without silent replacement.
+- [x] US-29.1-T4: Update fresh initialization, user provisioning, schemas, and generated clients without migrations; test singleton creation/races, settings isolation, sub-agent CRUD, required model binding, and invalid capability/model references.
 
 **Acceptance:** Every user has exactly one main agent edited in settings; users cannot create/select alternative main agents. Main-agent configuration is independent of chat model selection; sub-agents remain distinct definitions bound to a single model.
+
+US-29.1 delivery boundary: the existing settings and new-chat callers now consume
+singleton main settings and distinct sub-agent endpoints. Main runtime construction
+uses the explicitly selected user `default_model_id` separately from configuration,
+with no first-available fallback. Persisted per-chat model selection remains US-29.2;
+project sub-agent selection and automatic internal tools remain US-29.3/29.4. The
+broader settings/navigation experience remains US-27.4/27.5.
+
+Verification: all 358 backend tests, backend lint, compileall, focused basedpyright (agent/user/settings and
+changed tool catalog/registry), and import-cycle checks pass. Frontend lint/TypeScript,
+94 Vitest tests, 6 auth-database checks, 29 root configuration tests, and production
+build pass. All 18 generated TypeScript files match freshly served OpenAPI after
+SDK trailing-whitespace normalization. The final isolated Playwright run passed all
+13 tests without retries, after correcting a locator that also matched Next's route
+announcer. Backend regression coverage includes atomic singleton provisioning/races,
+role/model storage checks, owner isolation, fixed-model CRUD/disablement/deletion,
+main behavior refresh, and rejection of tool grants outside configured capabilities.
+The working database was retained. User confirmed completion on 2026-10-14, authorizing commit and merge into main.
+
+A broader basedpyright probe of the chat domain still reports two unchanged typing
+issues: `ChatController.orchestrator` assigns the job's generic runtime protocol to
+a concrete orchestrator annotation, and persisted `Message.content` narrows mutable
+`LLMMessage.content`. These predate this story; the repository's configured backend
+typecheck command (compileall), frontend TypeScript, and focused static checks above
+pass. No full-repository basedpyright pass is claimed.
 
 ### US-29.2 — Chat model selection and model provenance
 

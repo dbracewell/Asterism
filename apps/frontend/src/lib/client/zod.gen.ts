@@ -31,43 +31,6 @@ export const zBulkDeleteChatResponse = z.object({
 });
 
 /**
- * ChatCompletionParams
- */
-export const zChatCompletionParams = z.object({
-    reasoning_effort: z.unknown().optional(),
-    temperature: z.number().optional(),
-    top_p: z.number().optional(),
-    frequency_penalty: z.number().optional(),
-    presence_penalty: z.number().optional(),
-    seed: z.int().optional(),
-    stop: z.union([
-        z.string(),
-        z.array(z.string())
-    ]).optional(),
-    extra_body: z.record(z.string(), z.unknown()).optional(),
-    tool_choice: z.union([
-        z.enum([
-            'required',
-            'auto',
-            'none'
-        ]),
-        z.record(z.string(), z.unknown())
-    ]).optional(),
-    max_tokens: z.int().optional(),
-    modalities: z.array(z.enum(['text', 'audio'])).optional(),
-    audio: z.record(z.string(), z.unknown()).optional(),
-    prediction: z.record(z.string(), z.unknown()).optional(),
-    parallel_tool_calls: z.boolean().optional(),
-    n: z.int().optional(),
-    logit_bias: z.record(z.string(), z.int()).optional(),
-    logprobs: z.boolean().optional(),
-    top_logprobs: z.int().optional(),
-    extra_headers: z.record(z.string(), z.string()).optional(),
-    extra_query: z.record(z.string(), z.unknown()).optional(),
-    timeout: z.number().nullish()
-});
-
-/**
  * ChatContextUsage
  */
 export const zChatContextUsage = z.object({
@@ -254,6 +217,18 @@ export const zFunction = z.object({
     arguments: z.string()
 });
 
+/**
+ * GenerationDefaults
+ */
+export const zGenerationDefaults = z.object({
+    temperature: z.number().gte(0).lte(2).nullish(),
+    top_p: z.number().gte(0).lte(1).nullish(),
+    presence_penalty: z.number().gte(-2).lte(2).nullish(),
+    frequency_penalty: z.number().gte(-2).lte(2).nullish(),
+    max_tokens: z.int().gte(1).nullish(),
+    seed: z.int().nullish()
+});
+
 export const zJsonValue = z.unknown();
 
 /**
@@ -294,22 +269,6 @@ export const zKnowledgeBaseAssignmentReplace = z.object({
 export const zKnowledgeBaseAssignmentSummary = z.object({
     id: z.uuid(),
     name: z.string()
-});
-
-/**
- * AgentProfile
- */
-export const zAgentProfile = z.object({
-    name: z.string(),
-    description: z.string(),
-    sub_agent: z.boolean(),
-    model_id: z.uuid().nullable(),
-    system_prompt: z.string().nullable(),
-    max_steps: z.int(),
-    chat_parameters: zChatCompletionParams.optional(),
-    tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional(),
-    knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
 /**
@@ -492,6 +451,30 @@ export const zKnowledgeReprocessSummary = z.object({
 });
 
 /**
+ * MainAgentConfiguration
+ */
+export const zMainAgentConfiguration = z.object({
+    system_prompt: z.string().optional().default(''),
+    max_steps: z.int().gte(1).lte(100).optional().default(5),
+    tools: z.array(z.string()).optional(),
+    chat_parameters: zGenerationDefaults.optional(),
+    id: z.uuid(),
+    name: z.string(),
+    description: z.string(),
+    knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
+});
+
+/**
+ * MainAgentUpdate
+ */
+export const zMainAgentUpdate = z.object({
+    system_prompt: z.string().optional().default(''),
+    max_steps: z.int().gte(1).lte(100).optional().default(5),
+    tools: z.array(z.string()).optional(),
+    chat_parameters: zGenerationDefaults.optional()
+});
+
+/**
  * MessageFileReference
  */
 export const zMessageFileReference = z.object({
@@ -596,7 +579,6 @@ export const zNewChatRequest = z.object({
     request_id: z.uuid(),
     draft_id: z.uuid().nullish(),
     user_prompt: z.string(),
-    agent_id: z.uuid().nullish(),
     project_id: z.uuid().nullish(),
     files: z.array(z.uuid()).max(100).optional()
 });
@@ -607,21 +589,6 @@ export const zNewChatRequest = z.object({
 export const zNewFolderRequest = z.object({
     title: z.string(),
     parent_id: z.uuid().nullish()
-});
-
-/**
- * PartialAgentProfile
- */
-export const zPartialAgentProfile = z.object({
-    name: z.string(),
-    description: z.string(),
-    sub_agent: z.boolean(),
-    model_id: z.uuid().nullable(),
-    system_prompt: z.string().nullable(),
-    max_steps: z.int(),
-    chat_parameters: zChatCompletionParams.optional(),
-    tools: z.array(z.string()).nullish(),
-    id: z.uuid().nullish()
 });
 
 /**
@@ -843,6 +810,35 @@ export const zSetting = z.object({
 });
 
 /**
+ * SubAgentCreate
+ */
+export const zSubAgentCreate = z.object({
+    system_prompt: z.string().optional().default(''),
+    max_steps: z.int().gte(1).lte(100).optional().default(5),
+    tools: z.array(z.string()).optional(),
+    chat_parameters: zGenerationDefaults.optional(),
+    name: z.string().min(1).max(200),
+    description: z.string().optional().default(''),
+    model_id: z.uuid()
+});
+
+/**
+ * SubAgentDefinition
+ */
+export const zSubAgentDefinition = z.object({
+    system_prompt: z.string().optional().default(''),
+    max_steps: z.int().gte(1).lte(100).optional().default(5),
+    tools: z.array(z.string()).optional(),
+    chat_parameters: zGenerationDefaults.optional(),
+    name: z.string().min(1).max(200),
+    description: z.string().optional().default(''),
+    model_id: z.uuid(),
+    id: z.uuid(),
+    model_available: z.boolean(),
+    knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
+});
+
+/**
  * SubAgentTrace
  */
 export const zSubAgentTrace = z.object({
@@ -961,13 +957,6 @@ export const zUpdateSettingValue = z.object({
 });
 
 /**
- * UserAgents
- */
-export const zUserAgents = z.object({
-    agents: z.record(z.string(), zAgentProfile)
-});
-
-/**
  * UserFile
  */
 export const zUserFile = z.object({
@@ -1020,8 +1009,8 @@ export const zUserSettings = z.object({
     font_size: z.string().optional().default('16px'),
     models: z.array(zLlmDisplayInfo).optional(),
     default_model_id: z.uuid().nullish(),
-    agents: z.record(z.string(), zAgentProfile).optional(),
-    default_agent_id: z.uuid().nullish(),
+    main_agent: zMainAgentConfiguration,
+    sub_agents: z.record(z.string(), zSubAgentDefinition).optional(),
     show_thinking: z.boolean().optional().default(true)
 });
 
@@ -1648,6 +1637,18 @@ export const zProjectFileAddManyResponse = zProjectFileBatchResult;
 /**
  * Successful Response
  */
+export const zMainAgentGetResponse = zMainAgentConfiguration;
+
+export const zMainAgentUpdateBody = zMainAgentUpdate;
+
+/**
+ * Successful Response
+ */
+export const zMainAgentUpdateResponse = zMainAgentConfiguration;
+
+/**
+ * Successful Response
+ */
 export const zUserSettingsGetResponse = zUserSettings;
 
 /**
@@ -1855,16 +1856,38 @@ export const zComponentsByTypePath = z.object({
 export const zComponentsByTypeResponse = zComponentListResponse;
 
 /**
+ * Response Subagentslist
+ *
  * Successful Response
  */
-export const zAgentsGetUserAgentsResponse = zUserAgents;
+export const zSubAgentsListResponse = z.array(zSubAgentDefinition);
 
-export const zAgentsUpsertAgentProfileBody = zPartialAgentProfile;
+export const zSubAgentCreateBody = zSubAgentCreate;
 
 /**
  * Successful Response
  */
-export const zAgentsUpsertAgentProfileResponse = zAgentProfile;
+export const zSubAgentCreateResponse = zSubAgentDefinition;
+
+export const zSubAgentDeletePath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zSubAgentDeleteResponse = zSubAgentDefinition;
+
+export const zSubAgentUpdateBody = zSubAgentCreate;
+
+export const zSubAgentUpdatePath = z.object({
+    agent_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zSubAgentUpdateResponse = zSubAgentDefinition;
 
 export const zAgentKnowledgeBaseAssignmentsGetPath = z.object({
     agent_id: z.uuid()
@@ -1896,12 +1919,3 @@ export const zAgentsGetSubAgentTracesPath = z.object({
  * Successful Response
  */
 export const zAgentsGetSubAgentTracesResponse = z.array(zSubAgentTrace);
-
-export const zAgentsDeleteAgentPath = z.object({
-    agent_id: z.uuid()
-});
-
-/**
- * Successful Response
- */
-export const zAgentsDeleteAgentResponse = zAgentProfile;

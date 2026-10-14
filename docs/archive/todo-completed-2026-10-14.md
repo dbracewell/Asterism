@@ -745,3 +745,13 @@ those gates were not rerun for this documentation-only cleanup.
   - [x] US-25.3-T3: Keep file access consistent across reopen, regenerate, branch changes, and deleted-file references.
   - [x] US-25.3-T4: Regenerate clients and test cancellation, failed upload/send, replay, removal, and cross-chat isolation.
   - Verification: backend 357 tests; frontend 93 tests plus 6 auth migration tests; root 29 tests; lint/type/build/schema/client consistency/cycle checks passed; final isolated Playwright 13 passed with one worker and no retries. Scope boundaries and initial repairs are recorded in the epic. User confirmation on 2026-10-14 authorizes commit/merge. EPIC-25 complete; next recommended story: US-29.1.
+
+
+## US-29.1 — One main agent configuration per user
+
+- [x] US-29.1 (completed; user confirmed 2026-10-14): One main agent configuration per user.
+  - [x] US-29.1-T1: Replace multiple selectable main-agent profiles/default-agent selection with exactly one user-owned main-agent configuration; provision it with the user and enforce uniqueness in the DB and existence in service lifecycle paths. Main-agent configuration has no bound model.
+  - [x] US-29.1-T2: Expose owner-scoped read/update of main-agent instructions, ordinary capabilities, loop limits, and supported generation defaults through user settings; prevent deleting the sole main-agent configuration. Preserve separate user-profile/persona invariants.
+  - [x] US-29.1-T3: Keep separately managed, owner-scoped sub-agent definitions with name, description, instructions, capabilities, and one fixed model per definition; permit zero or more without an arbitrary product count limit. Validate model availability and handle model deletion/disablement explicitly without silent replacement.
+  - [x] US-29.1-T4: Update fresh initialization, user provisioning, schemas, and generated clients without migrations; test singleton creation/races, settings isolation, sub-agent CRUD, required model binding, and invalid capability/model references.
+  - Verification: 358 backend tests; 94 frontend tests; 6 auth database tests; 29 root tests; lint, configured typechecks, focused backend static typing, build, import-cycle and generated-client checks passed. Final isolated Playwright: 13 passed without retries. Two pre-existing broader chat typing errors remain documented in the epic. Working database retained; no migration or compatibility fallback. User confirmation on 2026-10-14 authorizes commit/merge. Next recommended story: US-29.2.

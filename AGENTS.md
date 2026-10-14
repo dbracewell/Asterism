@@ -53,20 +53,18 @@ Users can create additional profiles, but the invariant above must always hold.
 
 ## 2.3 Agents
 
-Each user must always have:
+Each user has exactly one owned main-agent configuration, provisioned atomically with
+that user and edited through user settings. It contains instructions, explicitly
+allowed capabilities, loop limits, and supported generation defaults; it has no
+bound model and cannot be deleted or replaced by another selectable main agent.
 
-- **At least one agent**
-- **Exactly one default agent**
+Users may separately manage zero or more owned sub-agent definitions. Each definition
+has a name, description, instructions, explicit capabilities, and exactly one fixed
+model binding. Disabled models retain their bindings and are explicitly unavailable;
+model/provider deletion must not silently select a replacement.
 
-An agent includes:
-
-- A system prompt
-- Allowed skills
-- Allowed tools
-- Allowed MCP servers
-- Optional model/runtime preferences
-
-Agents are scoped so capability access is explicit and auditable.
+Persona/profile defaults remain a separate invariant. Per-chat model selection and
+project-selected delegation are delivered by their own stories.
 
 ## 2.4 Skills / Tools / MCP / Image Generation
 
@@ -177,8 +175,9 @@ Memory writes and retrieval should be traceable to:
 ## 4) Domain and Data Design Principles
 
 1. **Invariants enforced at service + DB layers**
-   - At least one profile/agent per user
-   - Exactly one default profile/agent per user
+   - At least one profile and exactly one default profile per user
+   - Exactly one model-free main-agent configuration per user
+   - Zero or more separately owned, fixed-model sub-agent definitions
 2. **Capability scoping by allowlist**
    - Agent can use only assigned tools/skills/MCP servers
 3. **Auditability first**
@@ -303,7 +302,7 @@ Keep documentation updated when behavior changes:
 ## 10) Non-Negotiable Invariants Summary
 
 - Each user always has at least one profile and one default profile.
-- Each user always has at least one agent and one default agent.
+- Each user always has exactly one main-agent configuration; sub-agent definitions bind one fixed model.
 - Agent capabilities are explicit and restricted by assignment.
 - Story completion requires task completion + passing tests + user confirmation before merge.
 - Only one user story is actively implemented at a time.

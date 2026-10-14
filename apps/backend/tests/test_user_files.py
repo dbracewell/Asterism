@@ -565,7 +565,7 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
     file_session.add_all([ChatFileModel(chat_id=chat.info.id, user_id="user-a", file_id=record.id)
                           for record in records])
     await file_session.commit()
-    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    agent = SimpleNamespace(session=chat, model_id=uuid.uuid4())
     orchestrator = ChatOrchestrator(agent)  # type: ignore[arg-type]
 
     @asynccontextmanager

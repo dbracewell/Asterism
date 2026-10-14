@@ -135,7 +135,7 @@ move controls are delivered in later workspace stories.
 The composer keeps the prompt and attachment chips until persistence is acknowledged.
 It uploads through the generated TanStack mutation, caches successful source IDs, retries
 only failed uploads, and reuses one request UUID for an unchanged failed send. Editing the
-prompt, selections or new-chat agent/project scope creates a new send key. Follow-ups use
+prompt, selections or new-chat main/model/project scope creates a new send key. Follow-ups use
 the generated `chatMessageSend` mutation with an explicit parent before signaling
 WebSocket `resume`; new chats await `chatSessionCreate`. Failed acceptance retains the
 prompt and uploaded sources for retry, and duplicate clicks are blocked while acceptance
@@ -147,3 +147,14 @@ implemented in US-25.3. The existing composer stages its picks locally and submi
 IDs atomically; the richer server-draft/library-picker and persisted-removal controls are
 integrated in US-27.3. Project/local-file context displays remain EPIC-27. Generated API
 clients include the draft and send contracts; there is no handwritten API transport.
+
+### Singleton main settings (US-29.1)
+
+Agent settings expose one model-free main editor and separate fixed-model sub-agent
+create/edit/delete controls. New chats display the main identity without offering an
+agent selector. An explicitly selected available default model in General settings
+is required for starting a chat until per-chat model selection lands in US-29.2.
+Generated TanStack mutations save the new contracts; unavailable sub-agent bindings
+are visible and never silently replaced with the user's default model. Tool queries
+show loading/error/retry states, and disabled tools must be deliberately removed
+before saving a configuration.

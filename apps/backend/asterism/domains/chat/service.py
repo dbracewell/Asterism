@@ -10,7 +10,6 @@ from asterism.core.exceptions import (
 )
 from asterism.db.database import get_async_db_session
 from asterism.db.queries import paginate_select
-from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.files.models import FileContentStatus
 from asterism.domains.settings.service import get_model_and_provider
 
@@ -223,19 +222,12 @@ async def _get_context_model(
     if chat_session.agent_id is None:
         return None
 
-    profile = await get_agent_profile(
-        user_id=chat_session.user_id,
-        agent_id=chat_session.agent_id,
-        session=session,
-    )
-    if profile.model_id is None:
-        return None
+    from asterism.domains.settings.service import get_default_chat_model_id
 
-    model = await get_model_and_provider(
-        model_id=profile.model_id,
-        user_id=chat_session.user_id,
-        session=session,
-    )
+    model_id = await get_default_chat_model_id(chat_session.user_id, session)
+    if model_id is None:
+        return None
+    model = await get_model_and_provider(model_id=model_id, user_id=chat_session.user_id, session=session)
     return ChatContextModel(
         id=model.id,
         name=model.name,

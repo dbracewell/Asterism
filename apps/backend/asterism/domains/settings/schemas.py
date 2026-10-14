@@ -12,8 +12,7 @@ from pydantic import (
     model_validator,
 )
 
-from asterism.core.exceptions import BadDataException
-from asterism.domains.agent.schemas import AgentProfile
+from asterism.domains.agent.schemas import MainAgentConfiguration, SubAgentDefinition
 
 from .provider_types import (
     ModelCapabilitySource,
@@ -125,18 +124,9 @@ class UserSettings(BaseModel):
     font_size: str = Field(default="16px")
     models: list[LlmDisplayInfo] = Field(default_factory=list[LlmDisplayInfo])
     default_model_id: uuid.UUID | None = Field(default=None)
-    agents: dict[uuid.UUID, AgentProfile] = Field(default_factory=dict)
-    default_agent_id: uuid.UUID | None = Field(default=None)
+    main_agent: MainAgentConfiguration
+    sub_agents: dict[uuid.UUID, SubAgentDefinition] = Field(default_factory=dict)
     show_thinking: bool = Field(default=True)
-
-    @property
-    def default_agent_profile(self) -> AgentProfile:
-        if not self.default_agent_id:
-            raise BadDataException("User does not have a default agent profile set.")
-        agent: AgentProfile | None = self.agents.get(self.default_agent_id)
-        if agent is None:
-            raise BadDataException("User does not have a default agent profile set.")
-        return agent
 
 
 class ApplicationSettings(BaseModel):

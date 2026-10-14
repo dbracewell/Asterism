@@ -264,10 +264,10 @@ export const ChatSession = ({
     return <Spinner />;
   }
 
-  const chatAgent = user.settings.agents?.[session.info.agent_id ?? ""];
+  const chatAgent = user.settings.main_agent;
   const contextWindow =
     session.info.context_model?.context_window ??
-    user.settings.models?.find((model) => model.id === chatAgent?.model_id)
+    user.settings.models?.find((model) => model.id === user.settings.default_model_id)
       ?.context_window ??
     null;
 

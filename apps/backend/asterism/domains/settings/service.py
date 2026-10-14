@@ -7,7 +7,6 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, noload, selectinload
 
-from asterism.common.collection_utils import search
 from asterism.common.log import get_logger
 from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, NotFoundException
@@ -71,31 +70,10 @@ async def get_user_settings(
         result = await session.scalars(stmt)
         combined: dict[str, Any] = {row.key: row.value for row in result.all()}
 
-        # Settings are user-editable key/value rows. Normalize legacy or
-        # malformed defaults before validating the aggregate response.
-        user_agents = await agent_service.get_user_agents(
-            user_id=user_id,
-            session=session,
-        )
-        default_agent_id = _parse_default_agent_id(combined.get("default_agent_id"))
-        if default_agent_id is None:
-            combined.pop("default_agent_id", None)
-        else:
-            default_agent = user_agents.agents.get(default_agent_id)
-            if default_agent is None or default_agent.sub_agent:
-                combined.pop("default_agent_id", None)
-
+        combined["main_agent"] = await agent_service.get_main_agent(user_id, session)
+        combined["sub_agents"] = {agent.id: agent for agent in await agent_service.get_sub_agents(user_id, session)}
         user_settings = UserSettings.model_validate(combined)
-        user_settings.models = await get_user_models(
-            user_id=user_id,
-            session=session,
-        )
-        for profile in user_agents.agents.values():
-            contains = search(user_settings.models, lambda m: m.id == profile.model_id)
-            if not contains:
-                profile.model_id = None
-
-        user_settings.agents = user_agents.agents
+        user_settings.models = await get_user_models(user_id=user_id, session=session)
 
     # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings
@@ -107,12 +85,8 @@ async def bulk_upsert_user_settings(
     session: AsyncSession | None = None,
 ) -> UserSettings:
     async with get_async_db_session(session) as session:
-        if "default_agent_id" in updates:
-            await _validate_default_main_agent(
-                user_id,
-                updates["default_agent_id"],
-                session,
-            )
+        for key, value in updates.items():
+            await _validate_user_setting(key, value, session)
 
         for key, value in updates.items():
             if value is None:
@@ -158,8 +132,7 @@ async def upsert_user_setting(
         return Setting(key=key, value=value)
 
     async with get_async_db_session(session) as session:
-        if key == "default_agent_id":
-            await _validate_default_main_agent(user_id, value, session)
+        await _validate_user_setting(key, value, session)
         stmt = (
             insert(UserSettingModel)
             .values(
@@ -189,6 +162,7 @@ async def delete_user_setting(
     session: AsyncSession | None = None,
 ) -> None:
     async with get_async_db_session(session) as session:
+        await _validate_user_setting(key, None, session)
         stmt = delete(UserSettingModel).where(
             UserSettingModel.user_id == user_id,
             UserSettingModel.key == key,
@@ -198,31 +172,47 @@ async def delete_user_setting(
         # settings_cache.remove_user_setting(user_id)
 
 
-def _parse_default_agent_id(value: Any) -> uuid.UUID | None:
-    if isinstance(value, uuid.UUID):
-        return value
-    if not isinstance(value, str):
-        return None
-    try:
-        return uuid.UUID(value)
-    except ValueError:
-        return None
+async def _validate_user_setting(key: str, value: Any, session: AsyncSession) -> None:
+    if key not in {"theme", "font_size", "default_model_id", "show_thinking"}:
+        raise BadDataException("Unsupported user setting")
+    if value is not None and key == "default_model_id":
+        try:
+            model_id = uuid.UUID(str(value))
+        except ValueError as exc:
+            raise BadDataException("default_model_id must be a model UUID") from exc
+        model = await session.get(LLMModel, model_id)
+        if model is None or not model.is_active:
+            raise BadDataException("Default model must be available and active")
+    if value is not None and key == "show_thinking" and not isinstance(value, bool):
+        raise BadDataException("show_thinking must be boolean")
+    if value is not None and key in {"theme", "font_size"} and not isinstance(value, str):
+        raise BadDataException(f"{key} must be text")
 
 
-async def _validate_default_main_agent(
-    user_id: str,
-    value: Any,
-    session: AsyncSession,
-) -> None:
-    agent_id = _parse_default_agent_id(value)
-    if agent_id is None:
-        raise BadDataException("default_agent_id must be a main agent UUID")
+async def get_default_chat_model_id(user_id: str, session: AsyncSession | None = None) -> uuid.UUID | None:
+    """Explicit user selection, independent of main configuration; chat selection follows in US-29.2."""
+    async with get_async_db_session(session) as session:
+        value = await session.scalar(
+            select(UserSettingModel.value).where(
+                UserSettingModel.user_id == user_id,
+                UserSettingModel.key == "default_model_id",
+            ),
+        )
+        return uuid.UUID(str(value)) if value is not None else None
 
-    agent = await session.get(AgentProfileModel, agent_id)
-    if agent is None or agent.user_id != user_id:
-        raise BadDataException("default_agent_id must reference one of your main agents")
-    if agent.sub_agent:
-        raise BadDataException("A sub-agent cannot be the default agent")
+
+async def _ensure_provider_unbound(provider_id: uuid.UUID, session: AsyncSession) -> None:
+    bound = await session.scalar(
+        select(AgentProfileModel.id)
+        .join(
+            LLMModel,
+            LLMModel.id == AgentProfileModel.model_id,
+        )
+        .where(LLMModel.provider_id == provider_id, AgentProfileModel.sub_agent.is_(True))
+        .limit(1),
+    )
+    if bound is not None:
+        raise BadDataException("Rebind or delete sub-agents before deleting their model provider")
 
 
 # ------------------------------------------------------------------
@@ -318,6 +308,7 @@ async def update_provider_settings(
             if draft_provider_id is not None and draft_provider_id not in incoming_ids:
                 draft_model_id = None
         for deleted_id in set(existing_providers).difference(incoming_ids):
+            await _ensure_provider_unbound(deleted_id, session)
             await session.execute(delete(ProviderModel).where(ProviderModel.id == deleted_id))
 
         for provider in settings.llm_providers:
@@ -867,6 +858,7 @@ async def bulk_upsert_providers(
             await session.flush()
 
     for delete_id in set(existing_providers.keys()).difference(processed_providers):
+        await _ensure_provider_unbound(delete_id, session)
         await session.execute(delete(ProviderModel).where(ProviderModel.id == delete_id))
 
 

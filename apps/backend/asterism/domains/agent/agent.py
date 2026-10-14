@@ -50,7 +50,11 @@ class Agent:
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
         user_files: list[str] | None = None,
         parent_message_id: uuid.UUID | None = None,
+        model_id: uuid.UUID | None = None,
     ) -> None:
+        if profile.sub_agent and model_id is not None and model_id != profile.model_id:
+            raise BadDataException("Sub-agent model binding cannot be overridden")
+        self.model_id = profile.model_id if profile.sub_agent else model_id
         self.profile: AgentProfile = profile
         self.max_steps: int = profile.max_steps
         self.user: AuthedUser = user
@@ -75,15 +79,26 @@ class Agent:
         else:
             self.call_stack = []
 
+    async def refresh_main_configuration(self) -> None:
+        from .service import get_main_agent_profile
+
+        if self.profile.sub_agent:
+            raise BadDataException("A chat must use the main configuration")
+        self.profile = await get_main_agent_profile(self.user.id)
+        self.max_steps = self.profile.max_steps
+        self._knowledge_search_enabled = bool(self.profile.knowledge_bases)
+        model_id = await settings_service.get_default_chat_model_id(self.user.id)
+        if model_id != self.model_id:
+            self._client = None
+        self.model_id = model_id
+
     async def _get_client(self) -> LLMClientProtocol:
+        if self.model_id is None:
+            raise BadDataException("Choose a default model in settings before running a chat")
+        model_info: LlmWithProvider = await settings_service.get_model_and_provider(model_id=self.model_id)
         if self._client is not None:
             return self._client
 
-        if not self.profile.model_id:
-            raise BadDataException("Agent profile does not have a model_id set. Cannot create LLM client.")
-        model_info: LlmWithProvider = await settings_service.get_model_and_provider(
-            model_id=self.profile.model_id,
-        )
         client = LLMClient(
             api_key=model_info.provider.api_key,
             base_url=model_info.provider.base_url,
@@ -98,6 +113,13 @@ class Agent:
         auths: list[ToolUseAuthorization],
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
     ) -> AsyncGenerator[ToolResult, None]:
+        configured = set(self.profile.tools or [])
+        if self._knowledge_search_enabled:
+            configured.add("search_knowledge")
+        auths = [
+            ToolUseAuthorization(tool=auth.tool, accept=auth.accept and auth.tool.function.name in configured)
+            for auth in auths
+        ]
         tasks = [
             tool_registry.invoke_tool(
                 tool_call=auth.tool,

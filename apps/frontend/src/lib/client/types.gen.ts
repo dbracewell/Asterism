@@ -5,49 +5,6 @@ export type ClientOptions = {
 };
 
 /**
- * AgentProfile
- */
-export type AgentProfile = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Description
-     */
-    description: string;
-    /**
-     * Sub Agent
-     */
-    sub_agent: boolean;
-    /**
-     * Model Id
-     */
-    model_id: string | null;
-    /**
-     * System Prompt
-     */
-    system_prompt: string | null;
-    /**
-     * Max Steps
-     */
-    max_steps: number;
-    chat_parameters?: ChatCompletionParams;
-    /**
-     * Tools
-     */
-    tools?: Array<string> | null;
-    /**
-     * Id
-     */
-    id?: string;
-    /**
-     * Knowledge Bases
-     */
-    knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
-};
-
-/**
  * ApplicationSettings
  */
 export type ApplicationSettings = {
@@ -133,110 +90,6 @@ export type Chat = {
      */
     messages: Array<Message>;
     context_usage?: ChatContextUsage | null;
-};
-
-/**
- * ChatCompletionParams
- */
-export type ChatCompletionParams = {
-    /**
-     * Reasoning Effort
-     */
-    reasoning_effort?: unknown;
-    /**
-     * Temperature
-     */
-    temperature?: number;
-    /**
-     * Top P
-     */
-    top_p?: number;
-    /**
-     * Frequency Penalty
-     */
-    frequency_penalty?: number;
-    /**
-     * Presence Penalty
-     */
-    presence_penalty?: number;
-    /**
-     * Seed
-     */
-    seed?: number;
-    /**
-     * Stop
-     */
-    stop?: string | Array<string>;
-    /**
-     * Extra Body
-     */
-    extra_body?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Tool Choice
-     */
-    tool_choice?: 'required' | 'auto' | 'none' | {
-        [key: string]: unknown;
-    };
-    /**
-     * Max Tokens
-     */
-    max_tokens?: number;
-    /**
-     * Modalities
-     */
-    modalities?: Array<'text' | 'audio'>;
-    /**
-     * Audio
-     */
-    audio?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Prediction
-     */
-    prediction?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Parallel Tool Calls
-     */
-    parallel_tool_calls?: boolean;
-    /**
-     * N
-     */
-    n?: number;
-    /**
-     * Logit Bias
-     */
-    logit_bias?: {
-        [key: string]: number;
-    };
-    /**
-     * Logprobs
-     */
-    logprobs?: boolean;
-    /**
-     * Top Logprobs
-     */
-    top_logprobs?: number;
-    /**
-     * Extra Headers
-     */
-    extra_headers?: {
-        [key: string]: string;
-    };
-    /**
-     * Extra Query
-     */
-    extra_query?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Timeout
-     */
-    timeout?: number | null;
 };
 
 /**
@@ -750,6 +603,36 @@ export type Function = {
     arguments: string;
 };
 
+/**
+ * GenerationDefaults
+ */
+export type GenerationDefaults = {
+    /**
+     * Temperature
+     */
+    temperature?: number | null;
+    /**
+     * Top P
+     */
+    top_p?: number | null;
+    /**
+     * Presence Penalty
+     */
+    presence_penalty?: number | null;
+    /**
+     * Frequency Penalty
+     */
+    frequency_penalty?: number | null;
+    /**
+     * Max Tokens
+     */
+    max_tokens?: number | null;
+    /**
+     * Seed
+     */
+    seed?: number | null;
+};
+
 export type JsonValue = unknown;
 
 /**
@@ -1160,6 +1043,60 @@ export type LlmDisplayInfo = {
 };
 
 /**
+ * MainAgentConfiguration
+ */
+export type MainAgentConfiguration = {
+    /**
+     * System Prompt
+     */
+    system_prompt?: string;
+    /**
+     * Max Steps
+     */
+    max_steps?: number;
+    /**
+     * Tools
+     */
+    tools?: Array<string>;
+    chat_parameters?: GenerationDefaults;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Knowledge Bases
+     */
+    knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
+};
+
+/**
+ * MainAgentUpdate
+ */
+export type MainAgentUpdate = {
+    /**
+     * System Prompt
+     */
+    system_prompt?: string;
+    /**
+     * Max Steps
+     */
+    max_steps?: number;
+    /**
+     * Tools
+     */
+    tools?: Array<string>;
+    chat_parameters?: GenerationDefaults;
+};
+
+/**
  * Message
  */
 export type Message = {
@@ -1305,10 +1242,6 @@ export type NewChatRequest = {
      */
     user_prompt: string;
     /**
-     * Agent Id
-     */
-    agent_id?: string | null;
-    /**
      * Project Id
      */
     project_id?: string | null;
@@ -1330,45 +1263,6 @@ export type NewFolderRequest = {
      * Parent Id
      */
     parent_id?: string | null;
-};
-
-/**
- * PartialAgentProfile
- */
-export type PartialAgentProfile = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Description
-     */
-    description: string;
-    /**
-     * Sub Agent
-     */
-    sub_agent: boolean;
-    /**
-     * Model Id
-     */
-    model_id: string | null;
-    /**
-     * System Prompt
-     */
-    system_prompt: string | null;
-    /**
-     * Max Steps
-     */
-    max_steps: number;
-    chat_parameters?: ChatCompletionParams;
-    /**
-     * Tools
-     */
-    tools?: Array<string> | null;
-    /**
-     * Id
-     */
-    id?: string | null;
 };
 
 /**
@@ -1767,6 +1661,80 @@ export type SimilarFileList = {
 };
 
 /**
+ * SubAgentCreate
+ */
+export type SubAgentCreate = {
+    /**
+     * System Prompt
+     */
+    system_prompt?: string;
+    /**
+     * Max Steps
+     */
+    max_steps?: number;
+    /**
+     * Tools
+     */
+    tools?: Array<string>;
+    chat_parameters?: GenerationDefaults;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+};
+
+/**
+ * SubAgentDefinition
+ */
+export type SubAgentDefinition = {
+    /**
+     * System Prompt
+     */
+    system_prompt?: string;
+    /**
+     * Max Steps
+     */
+    max_steps?: number;
+    /**
+     * Tools
+     */
+    tools?: Array<string>;
+    chat_parameters?: GenerationDefaults;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Model Available
+     */
+    model_available: boolean;
+    /**
+     * Knowledge Bases
+     */
+    knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
+};
+
+/**
  * SubAgentTrace
  */
 export type SubAgentTrace = {
@@ -1932,18 +1900,6 @@ export type UpdateSettingValue = {
 };
 
 /**
- * UserAgents
- */
-export type UserAgents = {
-    /**
-     * Agents
-     */
-    agents: {
-        [key: string]: AgentProfile;
-    };
-};
-
-/**
  * UserFile
  */
 export type UserFile = {
@@ -2043,16 +1999,13 @@ export type UserSettings = {
      * Default Model Id
      */
     default_model_id?: string | null;
+    main_agent: MainAgentConfiguration;
     /**
-     * Agents
+     * Sub Agents
      */
-    agents?: {
-        [key: string]: AgentProfile;
+    sub_agents?: {
+        [key: string]: SubAgentDefinition;
     };
-    /**
-     * Default Agent Id
-     */
-    default_agent_id?: string | null;
     /**
      * Show Thinking
      */
@@ -4317,6 +4270,60 @@ export type ProjectFileAddManyResponses = {
 
 export type ProjectFileAddManyResponse = ProjectFileAddManyResponses[keyof ProjectFileAddManyResponses];
 
+export type MainAgentGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/settings/user/main-agent';
+};
+
+export type MainAgentGetErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type MainAgentGetError = MainAgentGetErrors[keyof MainAgentGetErrors];
+
+export type MainAgentGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: MainAgentConfiguration;
+};
+
+export type MainAgentGetResponse = MainAgentGetResponses[keyof MainAgentGetResponses];
+
+export type MainAgentUpdateData = {
+    body: MainAgentUpdate;
+    path?: never;
+    query?: never;
+    url: '/settings/user/main-agent';
+};
+
+export type MainAgentUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type MainAgentUpdateError = MainAgentUpdateErrors[keyof MainAgentUpdateErrors];
+
+export type MainAgentUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: MainAgentConfiguration;
+};
+
+export type MainAgentUpdateResponse = MainAgentUpdateResponses[keyof MainAgentUpdateResponses];
+
 export type UserSettingsGetData = {
     body?: never;
     path?: never;
@@ -5200,39 +5207,41 @@ export type ComponentsByTypeResponses = {
 
 export type ComponentsByTypeResponse = ComponentsByTypeResponses[keyof ComponentsByTypeResponses];
 
-export type AgentsGetUserAgentsData = {
+export type SubAgentsListData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/agents';
+    url: '/agents/sub-agents';
 };
 
-export type AgentsGetUserAgentsErrors = {
+export type SubAgentsListErrors = {
     /**
      * Not found
      */
     404: ErrorDetail;
 };
 
-export type AgentsGetUserAgentsError = AgentsGetUserAgentsErrors[keyof AgentsGetUserAgentsErrors];
+export type SubAgentsListError = SubAgentsListErrors[keyof SubAgentsListErrors];
 
-export type AgentsGetUserAgentsResponses = {
+export type SubAgentsListResponses = {
     /**
+     * Response Subagentslist
+     *
      * Successful Response
      */
-    200: UserAgents;
+    200: Array<SubAgentDefinition>;
 };
 
-export type AgentsGetUserAgentsResponse = AgentsGetUserAgentsResponses[keyof AgentsGetUserAgentsResponses];
+export type SubAgentsListResponse = SubAgentsListResponses[keyof SubAgentsListResponses];
 
-export type AgentsUpsertAgentProfileData = {
-    body: PartialAgentProfile;
+export type SubAgentCreateData = {
+    body: SubAgentCreate;
     path?: never;
     query?: never;
-    url: '/agents';
+    url: '/agents/sub-agents';
 };
 
-export type AgentsUpsertAgentProfileErrors = {
+export type SubAgentCreateErrors = {
     /**
      * Not found
      */
@@ -5243,16 +5252,84 @@ export type AgentsUpsertAgentProfileErrors = {
     422: ErrorDetail;
 };
 
-export type AgentsUpsertAgentProfileError = AgentsUpsertAgentProfileErrors[keyof AgentsUpsertAgentProfileErrors];
+export type SubAgentCreateError = SubAgentCreateErrors[keyof SubAgentCreateErrors];
 
-export type AgentsUpsertAgentProfileResponses = {
+export type SubAgentCreateResponses = {
     /**
      * Successful Response
      */
-    200: AgentProfile;
+    201: SubAgentDefinition;
 };
 
-export type AgentsUpsertAgentProfileResponse = AgentsUpsertAgentProfileResponses[keyof AgentsUpsertAgentProfileResponses];
+export type SubAgentCreateResponse = SubAgentCreateResponses[keyof SubAgentCreateResponses];
+
+export type SubAgentDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/sub-agents/{agent_id}';
+};
+
+export type SubAgentDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type SubAgentDeleteError = SubAgentDeleteErrors[keyof SubAgentDeleteErrors];
+
+export type SubAgentDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: SubAgentDefinition;
+};
+
+export type SubAgentDeleteResponse = SubAgentDeleteResponses[keyof SubAgentDeleteResponses];
+
+export type SubAgentUpdateData = {
+    body: SubAgentCreate;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/agents/sub-agents/{agent_id}';
+};
+
+export type SubAgentUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type SubAgentUpdateError = SubAgentUpdateErrors[keyof SubAgentUpdateErrors];
+
+export type SubAgentUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: SubAgentDefinition;
+};
+
+export type SubAgentUpdateResponse = SubAgentUpdateResponses[keyof SubAgentUpdateResponses];
 
 export type AgentKnowledgeBaseAssignmentsGetData = {
     body?: never;
@@ -5357,37 +5434,3 @@ export type AgentsGetSubAgentTracesResponses = {
 };
 
 export type AgentsGetSubAgentTracesResponse = AgentsGetSubAgentTracesResponses[keyof AgentsGetSubAgentTracesResponses];
-
-export type AgentsDeleteAgentData = {
-    body?: never;
-    path: {
-        /**
-         * Agent Id
-         */
-        agent_id: string;
-    };
-    query?: never;
-    url: '/agents/{agent_id}';
-};
-
-export type AgentsDeleteAgentErrors = {
-    /**
-     * Not found
-     */
-    404: ErrorDetail;
-    /**
-     * Validation Error
-     */
-    422: ErrorDetail;
-};
-
-export type AgentsDeleteAgentError = AgentsDeleteAgentErrors[keyof AgentsDeleteAgentErrors];
-
-export type AgentsDeleteAgentResponses = {
-    /**
-     * Successful Response
-     */
-    200: AgentProfile;
-};
-
-export type AgentsDeleteAgentResponse = AgentsDeleteAgentResponses[keyof AgentsDeleteAgentResponses];

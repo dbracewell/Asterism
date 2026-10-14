@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import Any, Self
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -59,7 +59,8 @@ class KnowledgeBaseAssignmentSummary(BaseModel):
     name: str
 
 
-class PartialAgentProfile(BaseModel):
+class AgentProfile(BaseModel):
+    """Normalized runtime configuration, separate from public editing contracts."""
     model_config = ConfigDict(from_attributes=True, extra="ignore")
     name: str
     description: str
@@ -71,26 +72,46 @@ class PartialAgentProfile(BaseModel):
         default_factory=ChatCompletionParams,
     )
     tools: list[str] | None = Field(default_factory=default_allowed_tools)
-    id: uuid.UUID | None = None
-
-    @classmethod
-    def create_default_agent(
-        cls,
-        model_id: uuid.UUID,
-    ) -> Self:
-        return cls(
-            model_id=model_id,
-            max_steps=5,
-            sub_agent=False,
-            description="A default agent to answer the user's requests",
-            name="Default agent",
-            system_prompt=("You are a helpful agent here to assist the user in their information needs."),
-        )
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 
-class AgentProfile(PartialAgentProfile):
+class GenerationDefaults(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    temperature: float | None = Field(default=None, ge=0, le=2)
+    top_p: float | None = Field(default=None, ge=0, le=1)
+    presence_penalty: float | None = Field(default=None, ge=-2, le=2)
+    frequency_penalty: float | None = Field(default=None, ge=-2, le=2)
+    max_tokens: int | None = Field(default=None, ge=1)
+    seed: int | None = None
+
+
+class MainAgentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    system_prompt: str = ""
+    max_steps: int = Field(default=5, ge=1, le=100)
+    tools: list[str] = Field(default_factory=list)
+    chat_parameters: GenerationDefaults = Field(default_factory=GenerationDefaults)
+
+
+class MainAgentConfiguration(MainAgentUpdate):
     model_config = ConfigDict(from_attributes=True)
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)  # pyright: ignore[reportIncompatibleVariableOverride]
+    id: uuid.UUID
+    name: str
+    description: str
+    knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
+
+
+class SubAgentCreate(MainAgentUpdate):
+    name: str = Field(min_length=1, max_length=200)
+    description: str = ""
+    model_id: uuid.UUID
+
+
+class SubAgentDefinition(SubAgentCreate):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    model_available: bool
     knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 

@@ -326,3 +326,30 @@ can establish a new local membership; receipt replay cannot do so.
 Fresh initialization registers `chat_drafts`, `chat_draft_files` and
 `chat_send_receipts`. No working database/source storage reset, data migration or
 compatibility path was introduced.
+
+### Agent configuration (US-29.1)
+
+User creation atomically provisions one model-free main configuration. A partial
+unique owner index and role/model check enforce singleton uniqueness and fixed
+worker bindings. Authenticated lifecycle checks ensure existence without writing
+when the configuration already exists. `GET/PUT /settings/user/main-agent` exposes
+instructions, active registered tools, loop limits (1–100), and supported generation
+defaults. Requests reject model/role selection and arbitrary provider overrides.
+The user settings aggregate returns `main_agent` and `sub_agents`; there is no
+`default_agent_id` or generic main-agent create/delete endpoint.
+
+`GET/POST /agents/sub-agents`, `PUT/DELETE /agents/sub-agents/{id}` manage owned
+fixed-model definitions without a product count limit. Creation and edits require
+an active catalog model. Disablement preserves the binding and reports
+`model_available: false`; runtime rechecks model availability even for cached clients.
+Bound model deletion is restricted in storage, and provider deletion requires explicit
+rebinding or definition deletion first. Persona/profile invariants are separate.
+
+Until US-29.2, runtime uses the user's explicitly configured `default_model_id`
+independently of main settings. Chat creation binds the sole main configuration
+server-side and rejects `agent_id` input. Main instructions/limits refresh before the
+next turn; model changes do not change the main configuration or historical message IDs.
+
+These are fresh-schema changes. Use the documented development reset for an existing
+local database; no migration or legacy fallback is provided. Story verification uses
+temporary databases and does not reset the working database.

@@ -31,7 +31,7 @@ export default async function ChatSessionPage(props: ChatSessionPageProps) {
 
   const user = await getCurrentUser();
 
-  if (user.settings.default_agent_id == null) {
+  if (user.settings.default_model_id == null) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="bg-destructive border-destructive flex flex-col items-center gap-6 rounded-xl border-2 p-20 text-center text-white/80 shadow-lg">

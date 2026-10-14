@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetErrors, AgentKnowledgeBaseAssignmentsGetResponses, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceErrors, AgentKnowledgeBaseAssignmentsReplaceResponses, AgentsDeleteAgentData, AgentsDeleteAgentErrors, AgentsDeleteAgentResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AgentsGetUserAgentsData, AgentsGetUserAgentsErrors, AgentsGetUserAgentsResponses, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileErrors, AgentsUpsertAgentProfileResponses, AppCaptioningGetData, AppCaptioningGetErrors, AppCaptioningGetResponses, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetErrors, AppCaptioningProviderModelsGetResponses, AppCaptioningUpdateData, AppCaptioningUpdateErrors, AppCaptioningUpdateResponses, AppCaptionModelCancelData, AppCaptionModelCancelErrors, AppCaptionModelCancelResponses, AppCaptionModelDownloadData, AppCaptionModelDownloadErrors, AppCaptionModelDownloadResponses, AppCaptionModelStatusData, AppCaptionModelStatusErrors, AppCaptionModelStatusResponses, AppKnowledgeEmbeddingStatusData, AppKnowledgeEmbeddingStatusErrors, AppKnowledgeEmbeddingStatusResponses, AppKnowledgeProcessingProfileUpdateData, AppKnowledgeProcessingProfileUpdateErrors, AppKnowledgeProcessingProfileUpdateResponses, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncErrors, AppProviderModelsDiscoverAndSyncResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppProviderModelsListData, AppProviderModelsListErrors, AppProviderModelsListResponses, AppProviderModelUpdateData, AppProviderModelUpdateErrors, AppProviderModelUpdateResponses, AppProviderSettingsGetData, AppProviderSettingsGetErrors, AppProviderSettingsGetResponses, AppProviderSettingsUpdateData, AppProviderSettingsUpdateErrors, AppProviderSettingsUpdateResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, AppToolSettingsGetData, AppToolSettingsGetErrors, AppToolSettingsGetResponses, AppToolSettingsUpdateData, AppToolSettingsUpdateErrors, AppToolSettingsUpdateResponses, ChatDraftAddFilesData, ChatDraftAddFilesErrors, ChatDraftAddFilesResponses, ChatDraftCreateData, ChatDraftCreateErrors, ChatDraftCreateResponses, ChatDraftDiscardData, ChatDraftDiscardErrors, ChatDraftDiscardResponses, ChatDraftGetOneData, ChatDraftGetOneErrors, ChatDraftGetOneResponses, ChatDraftRemoveFilesData, ChatDraftRemoveFilesErrors, ChatDraftRemoveFilesResponses, ChatDraftUploadData, ChatDraftUploadErrors, ChatDraftUploadResponses, ChatFileDownloadData, ChatFileDownloadErrors, ChatFileDownloadResponses, ChatFileGetInfoData, ChatFileGetInfoErrors, ChatFileGetInfoResponses, ChatFileGetScopeData, ChatFileGetScopeErrors, ChatFileGetScopeResponses, ChatFileRemoveData, ChatFileRemoveErrors, ChatFileRemoveResponses, ChatMessageSendData, ChatMessageSendErrors, ChatMessageSendResponses, ChatSearchData, ChatSearchErrors, ChatSearchResponses, ChatSessionBulkDeleteData, ChatSessionBulkDeleteErrors, ChatSessionBulkDeleteResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionMoveData, ChatSessionMoveErrors, ChatSessionMoveResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FileDeleteData, FileDeleteErrors, FileDeleteManyData, FileDeleteManyErrors, FileDeleteManyResponses, FileDeleteResponses, FileGetFileInfoData, FileGetFileInfoErrors, FileGetFileInfoResponses, FileGetManyData, FileGetManyErrors, FileGetManyResponses, FileGetOneData, FileGetOneErrors, FileGetOneResponses, FileKnowledgeBaseGetManyData, FileKnowledgeBaseGetManyErrors, FileKnowledgeBaseGetManyResponses, FileKnowledgeCancelData, FileKnowledgeCancelErrors, FileKnowledgeCancelResponses, FileKnowledgeGetStatusData, FileKnowledgeGetStatusErrors, FileKnowledgeGetStatusResponses, FileKnowledgeRegenerateData, FileKnowledgeRegenerateErrors, FileKnowledgeRegenerateResponses, FileSimilarGetManyData, FileSimilarGetManyErrors, FileSimilarGetManyResponses, FileUploadData, FileUploadErrors, FileUploadResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, KnowledgeBaseCreateData, KnowledgeBaseCreateErrors, KnowledgeBaseCreateResponses, KnowledgeBaseDeleteData, KnowledgeBaseDeleteErrors, KnowledgeBaseDeleteResponses, KnowledgeBaseFileCreateData, KnowledgeBaseFileCreateErrors, KnowledgeBaseFileCreateManyData, KnowledgeBaseFileCreateManyErrors, KnowledgeBaseFileCreateManyResponses, KnowledgeBaseFileCreateResponses, KnowledgeBaseFileDeleteData, KnowledgeBaseFileDeleteErrors, KnowledgeBaseFileDeleteManyData, KnowledgeBaseFileDeleteManyErrors, KnowledgeBaseFileDeleteManyResponses, KnowledgeBaseFileDeleteResponses, KnowledgeBaseFileGetManyData, KnowledgeBaseFileGetManyErrors, KnowledgeBaseFileGetManyResponses, KnowledgeBaseFileReorderData, KnowledgeBaseFileReorderErrors, KnowledgeBaseFileReorderResponses, KnowledgeBaseGetManyData, KnowledgeBaseGetManyErrors, KnowledgeBaseGetManyResponses, KnowledgeBaseGetOneData, KnowledgeBaseGetOneErrors, KnowledgeBaseGetOneResponses, KnowledgeBaseUpdateData, KnowledgeBaseUpdateErrors, KnowledgeBaseUpdateResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ProjectCreateData, ProjectCreateErrors, ProjectCreateResponses, ProjectDeleteData, ProjectDeleteErrors, ProjectDeleteResponses, ProjectFileAddManyData, ProjectFileAddManyErrors, ProjectFileAddManyResponses, ProjectFileGetManyData, ProjectFileGetManyErrors, ProjectFileGetManyResponses, ProjectFileRemoveManyData, ProjectFileRemoveManyErrors, ProjectFileRemoveManyResponses, ProjectGetManyData, ProjectGetManyErrors, ProjectGetManyResponses, ProjectGetOneData, ProjectGetOneErrors, ProjectGetOneResponses, ProjectUpdateData, ProjectUpdateErrors, ProjectUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
+import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetErrors, AgentKnowledgeBaseAssignmentsGetResponses, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceErrors, AgentKnowledgeBaseAssignmentsReplaceResponses, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesErrors, AgentsGetSubAgentTracesResponses, AppCaptioningGetData, AppCaptioningGetErrors, AppCaptioningGetResponses, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetErrors, AppCaptioningProviderModelsGetResponses, AppCaptioningUpdateData, AppCaptioningUpdateErrors, AppCaptioningUpdateResponses, AppCaptionModelCancelData, AppCaptionModelCancelErrors, AppCaptionModelCancelResponses, AppCaptionModelDownloadData, AppCaptionModelDownloadErrors, AppCaptionModelDownloadResponses, AppCaptionModelStatusData, AppCaptionModelStatusErrors, AppCaptionModelStatusResponses, AppKnowledgeEmbeddingStatusData, AppKnowledgeEmbeddingStatusErrors, AppKnowledgeEmbeddingStatusResponses, AppKnowledgeProcessingProfileUpdateData, AppKnowledgeProcessingProfileUpdateErrors, AppKnowledgeProcessingProfileUpdateResponses, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncErrors, AppProviderModelsDiscoverAndSyncResponses, AppProviderModelsDiscoverData, AppProviderModelsDiscoverErrors, AppProviderModelsDiscoverResponses, AppProviderModelsListData, AppProviderModelsListErrors, AppProviderModelsListResponses, AppProviderModelUpdateData, AppProviderModelUpdateErrors, AppProviderModelUpdateResponses, AppProviderSettingsGetData, AppProviderSettingsGetErrors, AppProviderSettingsGetResponses, AppProviderSettingsUpdateData, AppProviderSettingsUpdateErrors, AppProviderSettingsUpdateResponses, AppSettingDeleteData, AppSettingDeleteErrors, AppSettingDeleteResponses, AppSettingsBulkUpdateData, AppSettingsBulkUpdateErrors, AppSettingsBulkUpdateResponses, AppSettingsGetData, AppSettingsGetErrors, AppSettingsGetResponses, AppSettingUpdateData, AppSettingUpdateErrors, AppSettingUpdateResponses, AppToolSettingsGetData, AppToolSettingsGetErrors, AppToolSettingsGetResponses, AppToolSettingsUpdateData, AppToolSettingsUpdateErrors, AppToolSettingsUpdateResponses, ChatDraftAddFilesData, ChatDraftAddFilesErrors, ChatDraftAddFilesResponses, ChatDraftCreateData, ChatDraftCreateErrors, ChatDraftCreateResponses, ChatDraftDiscardData, ChatDraftDiscardErrors, ChatDraftDiscardResponses, ChatDraftGetOneData, ChatDraftGetOneErrors, ChatDraftGetOneResponses, ChatDraftRemoveFilesData, ChatDraftRemoveFilesErrors, ChatDraftRemoveFilesResponses, ChatDraftUploadData, ChatDraftUploadErrors, ChatDraftUploadResponses, ChatFileDownloadData, ChatFileDownloadErrors, ChatFileDownloadResponses, ChatFileGetInfoData, ChatFileGetInfoErrors, ChatFileGetInfoResponses, ChatFileGetScopeData, ChatFileGetScopeErrors, ChatFileGetScopeResponses, ChatFileRemoveData, ChatFileRemoveErrors, ChatFileRemoveResponses, ChatMessageSendData, ChatMessageSendErrors, ChatMessageSendResponses, ChatSearchData, ChatSearchErrors, ChatSearchResponses, ChatSessionBulkDeleteData, ChatSessionBulkDeleteErrors, ChatSessionBulkDeleteResponses, ChatSessionCreateData, ChatSessionCreateErrors, ChatSessionCreateResponses, ChatSessionDeleteData, ChatSessionDeleteErrors, ChatSessionDeleteResponses, ChatSessionGetManyData, ChatSessionGetManyErrors, ChatSessionGetManyResponses, ChatSessionGetOneData, ChatSessionGetOneErrors, ChatSessionGetOneResponses, ChatSessionMoveData, ChatSessionMoveErrors, ChatSessionMoveResponses, ChatSessionUpdateData, ChatSessionUpdateErrors, ChatSessionUpdateResponses, ComponentsByTypeData, ComponentsByTypeErrors, ComponentsByTypeResponses, FileDeleteData, FileDeleteErrors, FileDeleteManyData, FileDeleteManyErrors, FileDeleteManyResponses, FileDeleteResponses, FileGetFileInfoData, FileGetFileInfoErrors, FileGetFileInfoResponses, FileGetManyData, FileGetManyErrors, FileGetManyResponses, FileGetOneData, FileGetOneErrors, FileGetOneResponses, FileKnowledgeBaseGetManyData, FileKnowledgeBaseGetManyErrors, FileKnowledgeBaseGetManyResponses, FileKnowledgeCancelData, FileKnowledgeCancelErrors, FileKnowledgeCancelResponses, FileKnowledgeGetStatusData, FileKnowledgeGetStatusErrors, FileKnowledgeGetStatusResponses, FileKnowledgeRegenerateData, FileKnowledgeRegenerateErrors, FileKnowledgeRegenerateResponses, FileSimilarGetManyData, FileSimilarGetManyErrors, FileSimilarGetManyResponses, FileUploadData, FileUploadErrors, FileUploadResponses, FolderCreateData, FolderCreateErrors, FolderCreateResponses, FolderDeleteData, FolderDeleteErrors, FolderDeleteResponses, FolderGetManyData, FolderGetManyErrors, FolderGetManyResponses, FolderGetOneData, FolderGetOneErrors, FolderGetOneResponses, KnowledgeBaseCreateData, KnowledgeBaseCreateErrors, KnowledgeBaseCreateResponses, KnowledgeBaseDeleteData, KnowledgeBaseDeleteErrors, KnowledgeBaseDeleteResponses, KnowledgeBaseFileCreateData, KnowledgeBaseFileCreateErrors, KnowledgeBaseFileCreateManyData, KnowledgeBaseFileCreateManyErrors, KnowledgeBaseFileCreateManyResponses, KnowledgeBaseFileCreateResponses, KnowledgeBaseFileDeleteData, KnowledgeBaseFileDeleteErrors, KnowledgeBaseFileDeleteManyData, KnowledgeBaseFileDeleteManyErrors, KnowledgeBaseFileDeleteManyResponses, KnowledgeBaseFileDeleteResponses, KnowledgeBaseFileGetManyData, KnowledgeBaseFileGetManyErrors, KnowledgeBaseFileGetManyResponses, KnowledgeBaseFileReorderData, KnowledgeBaseFileReorderErrors, KnowledgeBaseFileReorderResponses, KnowledgeBaseGetManyData, KnowledgeBaseGetManyErrors, KnowledgeBaseGetManyResponses, KnowledgeBaseGetOneData, KnowledgeBaseGetOneErrors, KnowledgeBaseGetOneResponses, KnowledgeBaseUpdateData, KnowledgeBaseUpdateErrors, KnowledgeBaseUpdateResponses, MainAgentGetData, MainAgentGetErrors, MainAgentGetResponses, MainAgentUpdateData, MainAgentUpdateErrors, MainAgentUpdateResponses, MessageUpdateData, MessageUpdateErrors, MessageUpdateResponses, ProjectCreateData, ProjectCreateErrors, ProjectCreateResponses, ProjectDeleteData, ProjectDeleteErrors, ProjectDeleteResponses, ProjectFileAddManyData, ProjectFileAddManyErrors, ProjectFileAddManyResponses, ProjectFileGetManyData, ProjectFileGetManyErrors, ProjectFileGetManyResponses, ProjectFileRemoveManyData, ProjectFileRemoveManyErrors, ProjectFileRemoveManyResponses, ProjectGetManyData, ProjectGetManyErrors, ProjectGetManyResponses, ProjectGetOneData, ProjectGetOneErrors, ProjectGetOneResponses, ProjectUpdateData, ProjectUpdateErrors, ProjectUpdateResponses, SubAgentCreateData, SubAgentCreateErrors, SubAgentCreateResponses, SubAgentDeleteData, SubAgentDeleteErrors, SubAgentDeleteResponses, SubAgentsListData, SubAgentsListErrors, SubAgentsListResponses, SubAgentUpdateData, SubAgentUpdateErrors, SubAgentUpdateResponses, ToolsGetActiveData, ToolsGetActiveErrors, ToolsGetActiveResponses, ToolsGetAllData, ToolsGetAllErrors, ToolsGetAllResponses, UserCreateUserData, UserCreateUserErrors, UserCreateUserResponses, UserDeleteData, UserDeleteErrors, UserDeleteResponses, UserSettingDeleteData, UserSettingDeleteErrors, UserSettingDeleteResponses, UserSettingsBulkUpdateData, UserSettingsBulkUpdateErrors, UserSettingsBulkUpdateResponses, UserSettingsGetData, UserSettingsGetErrors, UserSettingsGetResponses, UserSettingUpdateData, UserSettingUpdateErrors, UserSettingUpdateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -746,6 +746,32 @@ export class ApiClient extends HeyApiClient {
     }
 
     /**
+     * Read Main Agent
+     */
+    public mainAgentGet<ThrowOnError extends boolean = false>(options?: Options<MainAgentGetData, ThrowOnError>): RequestResult<MainAgentGetResponses, MainAgentGetErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<MainAgentGetResponses, MainAgentGetErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/user/main-agent',
+            ...options
+        });
+    }
+
+    /**
+     * Write Main Agent
+     */
+    public mainAgentUpdate<ThrowOnError extends boolean = false>(options: Options<MainAgentUpdateData, ThrowOnError>): RequestResult<MainAgentUpdateResponses, MainAgentUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).put<MainAgentUpdateResponses, MainAgentUpdateErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/settings/user/main-agent',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+
+    /**
      * Get all user settings
      */
     public userSettingsGet<ThrowOnError extends boolean = false>(options?: Options<UserSettingsGetData, ThrowOnError>): RequestResult<UserSettingsGetResponses, UserSettingsGetErrors, ThrowOnError> {
@@ -1111,23 +1137,49 @@ export class ApiClient extends HeyApiClient {
     }
 
     /**
-     * Gets all agents defined by a user
+     * List Sub Agents
      */
-    public agentsGetUserAgents<ThrowOnError extends boolean = false>(options?: Options<AgentsGetUserAgentsData, ThrowOnError>): RequestResult<AgentsGetUserAgentsResponses, AgentsGetUserAgentsErrors, ThrowOnError> {
-        return (options?.client ?? this.client).get<AgentsGetUserAgentsResponses, AgentsGetUserAgentsErrors, ThrowOnError>({
+    public subAgentsList<ThrowOnError extends boolean = false>(options?: Options<SubAgentsListData, ThrowOnError>): RequestResult<SubAgentsListResponses, SubAgentsListErrors, ThrowOnError> {
+        return (options?.client ?? this.client).get<SubAgentsListResponses, SubAgentsListErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/agents',
+            url: '/agents/sub-agents',
             ...options
         });
     }
 
     /**
-     * Creates or updates an agent
+     * Create Sub Agent
      */
-    public agentsUpsertAgentProfile<ThrowOnError extends boolean = false>(options: Options<AgentsUpsertAgentProfileData, ThrowOnError>): RequestResult<AgentsUpsertAgentProfileResponses, AgentsUpsertAgentProfileErrors, ThrowOnError> {
-        return (options.client ?? this.client).post<AgentsUpsertAgentProfileResponses, AgentsUpsertAgentProfileErrors, ThrowOnError>({
+    public subAgentCreate<ThrowOnError extends boolean = false>(options: Options<SubAgentCreateData, ThrowOnError>): RequestResult<SubAgentCreateResponses, SubAgentCreateErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<SubAgentCreateResponses, SubAgentCreateErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/agents',
+            url: '/agents/sub-agents',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+
+    /**
+     * Delete an agent
+     */
+    public subAgentDelete<ThrowOnError extends boolean = false>(options: Options<SubAgentDeleteData, ThrowOnError>): RequestResult<SubAgentDeleteResponses, SubAgentDeleteErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<SubAgentDeleteResponses, SubAgentDeleteErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/agents/sub-agents/{agent_id}',
+            ...options
+        });
+    }
+
+    /**
+     * Update Sub Agent
+     */
+    public subAgentUpdate<ThrowOnError extends boolean = false>(options: Options<SubAgentUpdateData, ThrowOnError>): RequestResult<SubAgentUpdateResponses, SubAgentUpdateErrors, ThrowOnError> {
+        return (options.client ?? this.client).put<SubAgentUpdateResponses, SubAgentUpdateErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/agents/sub-agents/{agent_id}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1169,17 +1221,6 @@ export class ApiClient extends HeyApiClient {
         return (options.client ?? this.client).get<AgentsGetSubAgentTracesResponses, AgentsGetSubAgentTracesErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/agents/traces/{parent_message_id}',
-            ...options
-        });
-    }
-
-    /**
-     * Delete an agent
-     */
-    public agentsDeleteAgent<ThrowOnError extends boolean = false>(options: Options<AgentsDeleteAgentData, ThrowOnError>): RequestResult<AgentsDeleteAgentResponses, AgentsDeleteAgentErrors, ThrowOnError> {
-        return (options.client ?? this.client).delete<AgentsDeleteAgentResponses, AgentsDeleteAgentErrors, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/agents/{agent_id}',
             ...options
         });
     }

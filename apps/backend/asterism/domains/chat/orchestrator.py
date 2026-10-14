@@ -89,6 +89,8 @@ class ChatOrchestrator:
     async def reload_chat(self) -> None:
         self.chat = await chat_service.get_one(chat_id=self.chat_id, user_id=self.user_id)
         self.agent.session = self.chat
+        if self.chat.info.agent_id is not None:
+            await self.agent.refresh_main_configuration()
 
     async def resume_pending_turn(self) -> None:
         await self.reload_chat()
@@ -113,7 +115,7 @@ class ChatOrchestrator:
                     thinking=self._streaming_thinking,
                     status=MessageStatus.CANCELLED,
                     parent_message_id=parent_id,
-                    model_id=self.agent.profile.model_id,  # type: ignore
+                    model_id=self.agent.model_id,  # type: ignore
                 ),
             )
             self.chat.messages.append(partial)
@@ -285,8 +287,8 @@ class ChatOrchestrator:
         ids = [file.file_id for message in self.chat.messages for file in message.files]
         vision_enabled = False
         if ids:
-            if self.agent.profile.model_id:
-                model = await settings_service.get_model_and_provider(model_id=self.agent.profile.model_id)
+            if self.agent.model_id:
+                model = await settings_service.get_model_and_provider(model_id=self.agent.model_id)
                 vision_enabled = model.supports_vision is True
             async with get_async_db_session() as session:
                 from .scope import resolve_chat_file_scope
@@ -440,7 +442,7 @@ class ChatOrchestrator:
                                 parent_message_id=parent_message.id,
                                 tool_calls=event.tool_calls if event.has_tool_calls() else None,
                                 tool_call_results=event.tool_results if event.has_tool_results() else None,
-                                model_id=self.agent.profile.model_id,  # type:ignore
+                                model_id=self.agent.model_id,  # type:ignore
                             ),
                         )
                         parent_message.active_child_id = new_message.id

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { agentProfile } from "@/features/settings/schemas";
+import { zSubAgentCreate } from "@/lib/client/zod.gen";
 import * as fs from "fs";
 
 function getImportPath(componentName: string): string {
@@ -294,11 +294,11 @@ export function ${componentName}() {
 `.trim();
 }
 
-const schemaName = "agentProfile";
+const schemaName = "zSubAgentCreate";
 const componentName = `${schemaName[0].toUpperCase() + schemaName.slice(1)}Form`;
 const outputFileName = `${componentName}.tsx`;
 
-const generatedCode = generateFormCode(schemaName, agentProfile, componentName);
+const generatedCode = generateFormCode(schemaName, zSubAgentCreate, componentName);
 
 fs.writeFileSync(outputFileName, generatedCode);
 console.log(`✅ Successfully generated ${outputFileName}`);

@@ -153,7 +153,7 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
     )
     agent = SimpleNamespace(
         session=chat,
-        profile=SimpleNamespace(model_id=uuid.uuid4()),
+        model_id=uuid.uuid4(),
     )
     orchestrator = ChatOrchestrator(agent)
     added = []
@@ -213,7 +213,7 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
 
     agent = SimpleNamespace(
         session=chat,
-        profile=SimpleNamespace(model_id=uuid.uuid4()),
+        model_id=uuid.uuid4(),
         run=run,
     )
     orchestrator = ChatOrchestrator(agent)
@@ -293,7 +293,7 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
             ),
         ],
     )
-    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    agent = SimpleNamespace(session=chat, model_id=uuid.uuid4())
     orchestrator = ChatOrchestrator(agent)
     saved: list[str] = []
 
@@ -330,7 +330,7 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
             ),
         ],
     )
-    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    agent = SimpleNamespace(session=chat, model_id=uuid.uuid4())
     orchestrator = ChatOrchestrator(agent)
     invoked = 0
     saved: list[str] = []
@@ -368,7 +368,7 @@ async def test_title_save_persists_and_publishes_current_project_identity(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1, project_id=initial_project_id),
         messages=[],
     )
-    agent = SimpleNamespace(session=chat, profile=SimpleNamespace(model_id=uuid.uuid4()))
+    agent = SimpleNamespace(session=chat, model_id=uuid.uuid4())
     orchestrator = ChatOrchestrator(agent)
     updates = []
     events = []

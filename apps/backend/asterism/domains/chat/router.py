@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 
 import asterism.domains.agent.service as agent_service
 import asterism.domains.chat.service as chat_service
+import asterism.domains.settings.service as settings_service
 from asterism.common.log import get_logger
 from asterism.core.exceptions import UnauthorizedException
 from asterism.core.schemas import ErrorDetail
@@ -71,6 +72,7 @@ async def chat(
         return
 
     agent: Agent = Agent(
+        model_id=await settings_service.get_default_chat_model_id(user.id, session),
         profile=await agent_service.get_agent_profile(
             user_id=user.id,
             agent_id=chat_session.info.agent_id,
@@ -226,6 +228,7 @@ async def get_session(
     )
     if chat_session.info.agent_id is not None:
         agent = Agent(
+            model_id=await settings_service.get_default_chat_model_id(user.id, db),
             profile=await agent_service.get_agent_profile(
                 user_id=user.id,
                 agent_id=chat_session.info.agent_id,
