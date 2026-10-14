@@ -311,7 +311,7 @@ async def _caption(artifact: FileExtractionModel, file: UserFileModel) -> Captio
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Only image documents can be captioned")
 
     try:
-        image_path = get_file_store().open(artifact.user_id, file.filename)
+        image_path = get_file_store().open(artifact.user_id, file.storage_key)
     except ValueError as error:
         logger.error(f"Image file ({file.id}) is unavailable: {error}")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Image file is unavailable") from error

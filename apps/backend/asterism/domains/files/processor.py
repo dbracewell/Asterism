@@ -56,7 +56,7 @@ class MarkItDownFileProcessor:
         file: UserFileModel,
         session: AsyncSession,
     ) -> UserFileModel:
-        path = self.store.open(file.user_id, file.filename)
+        path = self.store.open(file.user_id, file.storage_key)
         if not path.is_file():
             file.content_status = FileContentStatus.FAILED
             file.content_error = "File is no longer available"

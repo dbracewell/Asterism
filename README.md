@@ -191,7 +191,7 @@ linked against SQLite **3.45+** (the backend uses JSONB functions).
    ```
 
    Both initialization commands preserve existing data. To intentionally delete and
-   recreate both local SQLite databases, run `pnpm reset:db`, inspect the displayed
+   recreate both local SQLite databases and clear disposable source/extraction storage, run `pnpm reset:db`, inspect the displayed
    absolute targets, and type `RESET`. Noninteractive execution is canceled unless
    `pnpm reset:db -- --yes` is supplied explicitly. Reset supports only validated
    local SQLite targets; back up any data you need first.

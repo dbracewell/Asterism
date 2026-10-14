@@ -5,6 +5,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from .models import FileContentStatus, FileKind
 
 
+class FileProjectSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    context_revision: int = Field(ge=1)
+
+
 class UserFile(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -19,6 +27,7 @@ class UserFile(BaseModel):
     created_at: int
     updated_at: int
     thumbnail: str | None
+    projects: list[FileProjectSummary] = Field(default_factory=list)
     knowledge_base_count: int = Field(default=0, ge=0)
     in_checked_knowledge_base: bool = Field(
         default=False,

@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 import pytest_asyncio
 from asterism.core.exceptions import BadDataException, NotFoundException
@@ -34,6 +36,7 @@ async def _ready_base(session, user_id: str, name: str) -> KnowledgeBaseModel:
     session.add(base)
     await session.flush()
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id=user_id,
         filename=f"{name.lower()}.txt",
         original_name="ready.txt",

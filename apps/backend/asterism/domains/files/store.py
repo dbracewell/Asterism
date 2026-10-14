@@ -1,71 +1,76 @@
-from collections.abc import Iterator
+"""Original source storage. Keys are opaque to consumers; only this adapter resolves paths."""
+
+import re
+import uuid
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import quote
 
 
 class FileStore(Protocol):
-    def save(self, user_id: str, filename: str, content: bytes) -> Path: ...
+    def save(self, user_id: str, file_id: uuid.UUID, extension: str, content: bytes) -> str: ...
 
-    def open(self, user_id: str, filename: str) -> Path: ...
+    def open(self, user_id: str, storage_key: str) -> Path: ...
 
-    def delete(self, user_id: str, filename: str) -> None: ...
-
-    def stat(self, user_id: str, filename: str): ...
-
-    def list(self, user_id: str) -> Iterator[Path]: ...
+    def delete(self, user_id: str, storage_key: str) -> None: ...
 
 
 class LocalFileStore:
-    """Filesystem implementation with a separate, traversal-safe root per user."""
+    """User-scoped, ID-sharded sources independent of workspace organization."""
 
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
 
-    def _user_root(self, user_id: str) -> Path:
-        # Auth user IDs are opaque data, never path components supplied by a route.
-        root = (self.root / user_id).resolve()
-        try:
-            root.relative_to(self.root)
-        except ValueError as error:
-            raise ValueError("Invalid file owner") from error
-        return root
+    @staticmethod
+    def _owner(user_id: str) -> str:
+        if not user_id or user_id in {".", ".."}:
+            raise ValueError("Invalid file owner")
+        return quote(user_id, safe="")
 
-    def _path(self, user_id: str, filename: str) -> Path:
-        if not filename or Path(filename).name != filename or "/" in filename or "\\" in filename:
-            raise ValueError("Invalid filename")
-        path = (self._user_root(user_id) / filename).resolve()
+    def _path(self, user_id: str, storage_key: str) -> Path:
+        parts = storage_key.split("/")
+        if len(parts) != 5 or parts[0] != self._owner(user_id):
+            raise ValueError("Invalid storage key or owner")
         try:
-            path.relative_to(self._user_root(user_id))
+            file_id = uuid.UUID(parts[3])
         except ValueError as error:
-            raise ValueError("Invalid filename") from error
+            raise ValueError("Invalid storage key") from error
+        if (parts[1], parts[2], parts[3]) != (file_id.hex[:2], file_id.hex[2:4], str(file_id)):
+            raise ValueError("Invalid storage key")
+        if not re.fullmatch(r"source(?:\.[a-z0-9]{1,16})?", parts[4]):
+            raise ValueError("Invalid storage key")
+        path = (self.root / storage_key).resolve()
+        try:
+            path.relative_to(self.root / parts[0])
+        except ValueError as error:
+            raise ValueError("Invalid storage key") from error
         return path
 
-    def save(self, user_id: str, filename: str, content: bytes) -> Path:
-        path = self._path(user_id, filename)
+    def save(self, user_id: str, file_id: uuid.UUID, extension: str, content: bytes) -> str:
+        extension = extension.lower()
+        if extension and not re.fullmatch(r"\.[a-z0-9]{1,16}", extension):
+            extension = ""
+        key = f"{self._owner(user_id)}/{file_id.hex[:2]}/{file_id.hex[2:4]}/{file_id}/source{extension}"
+        path = self._path(user_id, key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        # Exclusive creation guarantees collision handling cannot overwrite a file.
-        with path.open("xb") as file:
-            file.write(content)
-        return path
+        try:
+            with path.open("xb") as file:
+                file.write(content)
+        except FileExistsError:
+            raise
+        except Exception:
+            path.unlink(missing_ok=True)
+            raise
+        return key
 
-    def open(self, user_id: str, filename: str) -> Path:
-        return self._path(user_id, filename)
+    def open(self, user_id: str, storage_key: str) -> Path:
+        return self._path(user_id, storage_key)
 
-    def delete(self, user_id: str, filename: str) -> None:
-        path = self._path(user_id, filename)
-        path.unlink(missing_ok=True)
-
-    def stat(self, user_id: str, filename: str):
-        return self._path(user_id, filename).stat()
-
-    def list(self, user_id: str) -> Iterator[Path]:
-        root = self._user_root(user_id)
-        if not root.is_dir():
-            return iter(())
-        return (path for path in root.iterdir() if path.is_file())
+    def delete(self, user_id: str, storage_key: str) -> None:
+        self._path(user_id, storage_key).unlink(missing_ok=True)
 
 
-def get_file_store() -> LocalFileStore:
+def get_file_store() -> FileStore:
     from asterism.core import config
 
     return LocalFileStore(config.files_root)

@@ -34,6 +34,7 @@ class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         String(255),
         nullable=False,
     )
+    storage_key: Mapped[str] = mapped_column(String(1024), nullable=False, unique=True)
     original_name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,

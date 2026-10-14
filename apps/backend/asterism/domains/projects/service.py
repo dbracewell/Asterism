@@ -8,9 +8,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
+from asterism.domains.files.schemas import UserFileList
 
-from .models import ProjectModel
-from .schemas import Project, ProjectCreate, ProjectList, ProjectUpdate
+from .models import ProjectFileModel, ProjectModel
+from .schemas import Project, ProjectCreate, ProjectFileBatch, ProjectFileBatchResult, ProjectList, ProjectUpdate
 
 ProjectSort = Literal["name", "created", "updated"]
 
@@ -193,3 +194,95 @@ async def delete_project(
     response = Project.model_validate(project)
     await session.commit()
     return response
+
+
+async def change_project_files(
+    *,
+    user_id: str,
+    project_id: uuid.UUID,
+    payload: ProjectFileBatch,
+    remove: bool,
+    session: AsyncSession,
+) -> ProjectFileBatchResult:
+    from asterism.domains.files.service import validate_owned_file_ids
+
+    ids = sorted(set(payload.file_ids), key=str)
+    try:
+        # Acquire the project write lock and compare the revision before reading
+        # memberships. This also rejects stale no-op requests without bumping it.
+        project = await _write_project(
+            user_id=user_id,
+            project_id=project_id,
+            expected_context_revision=payload.expected_context_revision,
+            changes={},
+            advance_revision=False,
+            session=session,
+        )
+        await validate_owned_file_ids(user_id=user_id, file_ids=ids, session=session)
+        existing = set(
+            await session.scalars(
+                select(ProjectFileModel.file_id).where(
+                    ProjectFileModel.project_id == project_id,
+                    ProjectFileModel.user_id == user_id,
+                    ProjectFileModel.file_id.in_(ids),
+                ),
+            ),
+        )
+        changed = [file_id for file_id in ids if (file_id in existing) == remove]
+        if changed:
+            if remove:
+                await session.execute(
+                    delete(ProjectFileModel).where(
+                        ProjectFileModel.project_id == project_id,
+                        ProjectFileModel.user_id == user_id,
+                        ProjectFileModel.file_id.in_(changed),
+                    ),
+                )
+            else:
+                session.add_all(
+                    [ProjectFileModel(project_id=project_id, file_id=file_id, user_id=user_id) for file_id in changed],
+                )
+            revision = await advance_context_revision(
+                user_id=user_id,
+                project_id=project_id,
+                expected_context_revision=payload.expected_context_revision,
+                session=session,
+            )
+        else:
+            revision = project.context_revision
+        result = ProjectFileBatchResult(
+            context_revision=revision,
+            changed_file_ids=changed,
+            unchanged_file_ids=[file_id for file_id in ids if file_id not in changed],
+        )
+        await session.commit()
+        return result
+    except IntegrityError as error:
+        await session.rollback()
+        raise CodedException(409, "Project files changed; reload and retry") from error
+    except Exception:
+        await session.rollback()
+        raise
+
+
+async def list_project_files(
+    *,
+    user_id: str,
+    project_id: uuid.UUID,
+    session: AsyncSession,
+    page: int = 1,
+    page_size: int = 50,
+    sort_by: Literal["name", "kind", "date", "size"] = "name",
+    query: str | None = None,
+) -> UserFileList:
+    from asterism.domains.files.listing import list_file_page
+    from asterism.domains.files.models import UserFileModel
+    from asterism.domains.files.queries import select_owned_files
+
+    await _owned_project(user_id=user_id, project_id=project_id, session=session)
+    ids = select(ProjectFileModel.file_id).where(
+        ProjectFileModel.project_id == project_id,
+        ProjectFileModel.user_id == user_id,
+    )
+    statement = select_owned_files(user_id=user_id, query=query, sort_by=sort_by).where(UserFileModel.id.in_(ids))
+    return await list_file_page(user_id=user_id, statement=statement, session=session, page=page, page_size=page_size)

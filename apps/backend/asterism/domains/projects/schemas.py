@@ -49,3 +49,16 @@ class ProjectList(BaseModel):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
     page_size: int = Field(ge=1, le=100)
+
+
+class ProjectFileBatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_context_revision: int = Field(ge=1)
+    file_ids: list[uuid.UUID] = Field(min_length=1, max_length=1000)
+
+
+class ProjectFileBatchResult(BaseModel):
+    context_revision: int = Field(ge=1)
+    changed_file_ids: list[uuid.UUID]
+    unchanged_file_ids: list[uuid.UUID]

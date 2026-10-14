@@ -169,6 +169,15 @@ export const zFileKind = z.enum([
 ]);
 
 /**
+ * FileProjectSummary
+ */
+export const zFileProjectSummary = z.object({
+    id: z.uuid(),
+    name: z.string(),
+    context_revision: z.int().gte(1)
+});
+
+/**
  * Function
  */
 export const zFunction = z.object({
@@ -230,7 +239,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('6b966f7d-9a02-49df-aa1f-8beb881a1849'),
+    id: z.uuid().optional().default('5ca97d43-1ff8-4a80-a211-6acf5c87eebf'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -593,6 +602,23 @@ export const zProjectCreate = z.object({
 });
 
 /**
+ * ProjectFileBatch
+ */
+export const zProjectFileBatch = z.object({
+    expected_context_revision: z.int().gte(1),
+    file_ids: z.array(z.uuid()).min(1).max(1000)
+});
+
+/**
+ * ProjectFileBatchResult
+ */
+export const zProjectFileBatchResult = z.object({
+    context_revision: z.int().gte(1),
+    changed_file_ids: z.array(z.uuid()),
+    unchanged_file_ids: z.array(z.uuid())
+});
+
+/**
  * ProjectList
  */
 export const zProjectList = z.object({
@@ -888,6 +914,7 @@ export const zUserFile = z.object({
     created_at: z.int(),
     updated_at: z.int(),
     thumbnail: z.string().nullable(),
+    projects: z.array(zFileProjectSummary).optional(),
     knowledge_base_count: z.int().gte(0).optional().default(0),
     in_checked_knowledge_base: z.boolean().optional().default(false)
 });
@@ -1389,6 +1416,49 @@ export const zProjectUpdatePath = z.object({
  * Successful Response
  */
 export const zProjectUpdateResponse = zProject;
+
+export const zProjectFileRemoveManyBody = zProjectFileBatch;
+
+export const zProjectFileRemoveManyPath = z.object({
+    project_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectFileRemoveManyResponse = zProjectFileBatchResult;
+
+export const zProjectFileGetManyPath = z.object({
+    project_id: z.uuid()
+});
+
+export const zProjectFileGetManyQuery = z.object({
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(50),
+    sort_by: z.enum([
+        'name',
+        'kind',
+        'date',
+        'size'
+    ]).optional().default('name'),
+    query: z.string().max(10000).nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectFileGetManyResponse = zUserFileList;
+
+export const zProjectFileAddManyBody = zProjectFileBatch;
+
+export const zProjectFileAddManyPath = z.object({
+    project_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectFileAddManyResponse = zProjectFileBatchResult;
 
 /**
  * Successful Response

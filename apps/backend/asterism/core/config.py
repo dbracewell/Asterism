@@ -289,9 +289,6 @@ class Config(BaseSettings):
     def local_caption_models_root(self) -> Path:
         return self.storage_root / "models" / "captioning-smolvlm2"
 
-    def get_user_file(self, user_id: str, filename: str) -> Path:
-        files_dir = self.files_root / user_id / filename
-        return files_dir.resolve()
 
 
 config = Config()

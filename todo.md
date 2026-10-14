@@ -1,16 +1,6 @@
 # Active and Pending Work
 
-US-24.1 and US-24.2 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). All remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
-
-## [EPIC-24 — Project domain and file membership](docs/epics/EPIC-24-PROJECT-DOMAIN-AND-FILE-MEMBERSHIP.md)
-
-- [ ] US-24.3: Project file membership API (2–3 person-days).
-  - [ ] US-24.3-T1: Implement atomic bulk add/remove and paginated project file listing through the file-service boundary.
-  - [ ] US-24.3-T2: Validate all file owners, enforce unique membership, and report already-added files deterministically.
-  - [ ] US-24.3-T3: Expose project membership summaries for file views and removal impact; omit unused manual ordering.
-  - [ ] US-24.3-T4: Regenerate clients and test sharing one file between projects, removal, and physical-file deletion cleanup.
-  - [ ] US-24.3-T5: Persist original project and chat files through FileStore using user-scoped, file-ID-sharded paths (for example files/<user-id>/<id-prefix-1>/<id-prefix-2>/<file-id>/source.<ext>); keep original names in metadata and project/chat organization in database memberships. Resolve opaque storage keys through FileStore; do not expose or reconstruct local paths in callers, copy files on membership changes, or scan directories for file listings. Reset disposable storage without migration or legacy-path fallbacks.
-  - [ ] US-24.3-T6: Add file-store contract tests for deterministic shard placement, owner isolation, original-byte round trips, shared references without duplicate source writes, stable storage keys across project rename/membership changes, and source deletion; verify extraction reads through the storage abstraction.
+EPIC-24 (US-24.1–US-24.3) was confirmed complete on 2026-10-14; its checklists are [archived](docs/archive/todo-completed-2026-10-14.md). All remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-25 — Project chats and chat files](docs/epics/EPIC-25-PROJECT-CHATS-AND-CHAT-FILES.md)
 

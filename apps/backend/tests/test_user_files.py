@@ -26,6 +26,7 @@ from asterism.domains.files.service import (
     regenerate_file_knowledge,
     upload_files,
 )
+from asterism.domains.files.store import get_file_store
 from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel, KnowledgeBaseModel
 from asterism.domains.knowledge_base.schemas import KnowledgeBaseFileCreateMany, KnowledgeBaseFileRemove
 from asterism.domains.knowledge_base.service import add_knowledge_base_files, remove_knowledge_base_files
@@ -84,7 +85,7 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
     assert {(artifact.file_id, artifact.status, artifact.is_current) for artifact in artifacts} == {
         (file.id, FileKnowledgeArtifactStatus.PENDING, False) for file in uploaded.files
     }
-    assert (config.files_root / "user-a" / "report.txt").read_bytes() == b"first"
+    assert (await source_path(file_session, uploaded.files[0])).read_bytes() == b"first"
     assert (await list_user_files(user_id="user-b", session=file_session)).files == []
 
 
@@ -108,7 +109,7 @@ async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_sessi
     assert [file.id for file in repeated.files] == [first.files[0].id]
     assert [file.filename for file in user_files] == ["report.txt"]
     assert other_user.files[0].id != first.files[0].id
-    assert not (config.files_root / "user-a" / "report(2).txt").exists()
+    assert len(list(config.files_root.rglob("source.*"))) == 2
 
 
 @pytest.mark.asyncio
@@ -123,7 +124,7 @@ async def test_upload_rejects_unsafe_extensions_and_size(file_session, monkeypat
         await upload_files(
             user_id="user-a", uploads=[_upload("large.txt", b"four")], session=file_session,
         )
-    assert not (config.files_root / "user-a" / "large.txt").exists()
+    assert list(config.files_root.rglob("source.*")) == []
 
 
 @pytest.mark.asyncio
@@ -137,10 +138,11 @@ async def test_delete_is_user_scoped_and_download_remains_available(file_session
         await delete_user_file(user_id="user-b", filename=filename, session=file_session)
 
     response = await get_user_file("user-a", filename, session=file_session)
-    assert response.path == config.files_root / "user-a" / filename
+    assert response.path == await source_path(file_session, uploaded.files[0])
+    path = response.path
     deleted = await delete_user_file(user_id="user-a", filename=filename, session=file_session)
     assert deleted.filename == filename
-    assert not (config.files_root / "user-a" / filename).exists()
+    assert not path.exists()
     assert await file_session.scalar(select(UserFileModel.id)) is None
 
 
@@ -176,6 +178,7 @@ async def test_delete_file_cancels_artifacts_and_removes_memberships_vectors_and
     file_session.add(KnowledgeBaseFileModel(knowledge_base_id=base.id, file_id=file.id, position=1))
     await file_session.commit()
 
+    path = await source_path(file_session, file)
     await delete_user_file(user_id="user-a", filename=file.filename, session=file_session)
 
     assert cancelled == [str(artifact.id)]
@@ -190,7 +193,7 @@ async def test_delete_file_cancels_artifacts_and_removes_memberships_vectors_and
         await file_session.scalar(select(KnowledgeBaseFileModel.id).where(KnowledgeBaseFileModel.file_id == file.id))
         is None
     )
-    assert not (config.files_root / "user-a" / file.filename).exists()
+    assert not path.exists()
 
 
 @pytest.mark.asyncio
@@ -408,7 +411,7 @@ async def test_processing_reads_text_caches_and_invalidates(file_session):
     assert processed.content_status is FileContentStatus.READY
     assert processed.content_cache == "hello\nworld"
 
-    path = config.files_root / "user-a" / processed.filename
+    path = get_file_store().open(processed.user_id, processed.storage_key)
     path.write_text("changed", encoding="utf-8")
     processed = await ensure_file_processed(file=processed, session=file_session)
     assert processed.content_cache == "changed"
@@ -508,7 +511,7 @@ async def test_processing_handles_a_missing_file(file_session):
     )
     file = await file_session.get(UserFileModel, uploaded.files[0].id)
     assert file is not None
-    (config.files_root / "user-a" / file.filename).unlink()
+    (await source_path(file_session, file)).unlink()
 
     processed = await ensure_file_processed(file=file, session=file_session)
     assert processed.content_status is FileContentStatus.FAILED
@@ -585,3 +588,40 @@ async def test_download_rejects_traversal(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "storage_root", tmp_path)
     with pytest.raises(BadDataException):
         await get_user_file("user-a", "../secret.txt")
+
+
+async def source_path(session, file):
+    model = await session.get(UserFileModel, file.id)
+    return get_file_store().open(model.user_id, model.storage_key)
+
+
+@pytest.mark.asyncio
+async def test_upload_batch_failure_rolls_back_sources_and_metadata(file_session):
+    with pytest.raises(BadDataException):
+        await upload_files(user_id="user-a", uploads=[_upload("valid.txt", b"keep"), _upload("bad.exe", b"x")],
+                           session=file_session)
+    assert list(config.files_root.rglob("source.*")) == []
+    assert await file_session.scalar(select(UserFileModel.id)) is None
+    assert await file_session.scalar(select(FileExtractionModel.id)) is None
+
+
+@pytest.mark.asyncio
+async def test_bulk_physical_deletion_cleans_project_references_without_fk_cascades(file_session):
+    from asterism.domains.files.service import delete_user_files
+    from asterism.domains.projects.models import ProjectFileModel, ProjectModel
+
+    uploaded = await upload_files(user_id="user-a", uploads=[_upload("shared.txt", b"shared")], session=file_session)
+    file = uploaded.files[0]
+    projects = [ProjectModel(user_id="user-a", name=name) for name in ("One", "Two")]
+    file_session.add_all(projects)
+    await file_session.flush()
+    file_session.add_all([ProjectFileModel(user_id="user-a", project_id=p.id, file_id=file.id) for p in projects])
+    await file_session.commit()
+    path = await source_path(file_session, file)
+    result = await delete_user_files(user_id="user-a", filenames=[file.filename], session=file_session)
+    assert [p.name for p in result.files[0].projects] == ["One", "Two"]
+    assert await file_session.scalar(select(ProjectFileModel.file_id)) is None
+    assert not path.exists()
+    for project in projects:
+        await file_session.refresh(project)
+        assert project.context_revision == 2

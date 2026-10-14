@@ -14,9 +14,11 @@ const backendPath = process.env.DB_URL
   : resolve(join(storageRoot, "database.db"));
 
 async function confirmed() {
-  console.log("The following local SQLite databases will be deleted:");
+  console.log("The following disposable local data will be deleted:");
   console.log(`- authentication: ${authPath}`);
   console.log(`- backend: ${backendPath}`);
+  console.log(`- original files: ${join(storageRoot, "files")}`);
+  console.log(`- extraction storage: ${join(storageRoot, "knowledge")}`);
   if (assumeYes) return true;
   if (!process.stdin.isTTY) return false;
   const prompt = createInterface({

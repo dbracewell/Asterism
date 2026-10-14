@@ -695,3 +695,19 @@ those gates were not rerun for this documentation-only cleanup.
   - [x] US-24.2-T4: Regenerate Hey API types and add authorization, lifecycle, and validation tests.
   - Verification: backend lint/compile passed; targeted schema basedpyright **0 errors / 0 warnings** after optional-field correction; full backend suite **287 passed** (38 focused project API tests); frontend lint/TypeScript passed; frontend unit suite **30 files / 86 tests passed**; frontend migration tests **6 passed**; no circular imports (132 modules / 437 internal imports); served OpenAPI and regenerated-client consistency passed.
   - Lifecycle definition: shared sources/generations survive deletion. Chat detachment is wired in US-25.2 and run cancellation in US-26.1 when those integrations exist. Frontend build/Playwright were not run; no frontend workflow added. No current database reset performed; completion confirmed for commit and merge.
+
+
+## US-24.3 — Project file membership API
+
+- [x] US-24.3 (completed; user confirmed 2026-10-14): Project file membership API (2–3 person-days).
+  - [x] US-24.3-T1: Implement atomic bulk add/remove and paginated project file listing through the file-service boundary. Review amendment: compose domain-owned base selects, separate pagination/enrichment, and record focused-function rules in AGENTS.md.
+  - [x] US-24.3-T2: Validate all file owners, enforce unique membership, and report already-added files deterministically.
+  - [x] US-24.3-T3: Expose project membership summaries for file views and removal impact; omit unused manual ordering.
+  - [x] US-24.3-T4: Regenerate clients and test sharing one file between projects, removal, and physical-file deletion cleanup.
+  - [x] US-24.3-T5: Persist original project and chat files through FileStore using user-scoped, file-ID-sharded paths (for example files/<user-id>/<id-prefix-1>/<id-prefix-2>/<file-id>/source.<ext>); keep original names in metadata and project/chat organization in database memberships. Resolve opaque storage keys through FileStore; do not expose or reconstruct local paths in callers, copy files on membership changes, or scan directories for file listings. Reset disposable storage without migration or legacy-path fallbacks.
+  - [x] US-24.3-T6: Add file-store contract tests for deterministic shard placement, owner isolation, original-byte round trips, shared references without duplicate source writes, stable storage keys across project rename/membership changes, and source deletion; verify extraction reads through the storage abstraction.
+
+  - Verification: backend suite **310 passed**, Ruff/compileall passed, targeted query/listing basedpyright **0 errors / 0 warnings**, dependency review **no cycles** (136 modules / 457 imports). Frontend lint/TypeScript/build passed; **86 unit tests**, **6 migration tests**, **29 configuration tests**, and **11 isolated Playwright tests** passed. Independent generated-client consistency matched all 18 TS files.
+  - Query responsibility amendment: owner-scoped domain selects, generic DB pagination, caller-owned filters, and separate enrichment; documented in AGENTS.md and ADR-0017. Full backend/static checks rerun after amendment; frontend/Playwright not repeated for the contract-preserving query refactor.
+  - Initial frontend/E2E setup attempts stopped before tests; dependency/native-binding repair preceded the successful E2E run with no test retries. GitHub CI was not triggered. Working database/source data was not reset.
+  - User confirmation on 2026-10-14 authorizes commit/merge. **EPIC-24 complete**; next recommended story is US-25.1.

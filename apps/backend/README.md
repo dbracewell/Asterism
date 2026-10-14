@@ -141,3 +141,54 @@ while retaining history/attachments; US-26.1 adds affected-run cancellation befo
 project deletion. No migration or current development database reset is needed for
 this API-only story. The generated Hey API SDK, schemas, and TanStack Query operations
 are synchronized; project UI arrives in EPIC-27.
+
+
+### Project file membership and original storage (US-24.3)
+
+`GET /projects/{project_id}/files` lists project files through the file service with
+`page`, `page_size` (1–100), `sort_by` (`name`, `kind`, `date`, `size`), and literal
+filename search in `query`. Database membership filters are applied before pagination.
+
+`POST` and `DELETE /projects/{project_id}/files` accept
+`{ "expected_context_revision": 1, "file_ids": ["<uuid>"] }` (1–1000 input IDs).
+Both operations validate the entire owner-scoped batch and commit atomically.
+Repeated IDs are deduplicated; response `changed_file_ids` and `unchanged_file_ids`
+are sorted by UUID. On add, unchanged means already present; on remove, it means
+already absent. Actual changes advance the context revision once; no-op batches
+preserve it. A stale revision returns 409, including for no-ops. Missing or foreign
+projects/files return 404 without partial writes.
+
+File list/detail responses include `projects` summaries (`id`, `name`,
+`context_revision`) for removal impact and future file UI. Membership removal keeps
+source bytes, extraction, and other references. Physical deletion removes all project
+references and advances affected project revisions in the deletion transaction.
+Project rename, deletion, and membership changes never copy or move source bytes.
+
+Originals are stored by FileStore under
+`files/<encoded-user-id>/<uuid-prefix-1>/<uuid-prefix-2>/<file-id>/source.<ext>`.
+Names remain metadata; `storage_key` is an internal opaque key persisted on the file
+row and omitted from API schemas. Consumers resolve keys through FileStore, including
+downloads, text/document processing, extraction/captioning, and chat vision.
+File listings query the database rather than scanning source directories.
+
+This schema/storage change requires a clean development reset of disposable data.
+The verified-target `pnpm reset:db` workflow deletes both databases plus source
+`files/` and extraction `knowledge/`, while preserving provider bundles in `models/`.
+Backend-only reset also clears its source/extraction storage. Ordinary initialization
+preserves storage and does not migrate old schemas or paths. No existing development
+data was reset while implementing this story.
+
+
+### Composable list queries
+
+Keep query construction separate from execution, pagination, response enrichment,
+and mutations. `domains/files/queries.py::select_owned_files` supplies source ownership,
+literal name search, and deterministic file ordering. Project/library callers compose
+their membership predicates on that select before executing it. Project scopes do not
+add parameters to the library listing service.
+
+`db/queries.py::paginate_select` contains only generic count/page mechanics.
+`domains/files/listing.py::list_file_page` enforces owner scope again at execution and
+uses separate helpers to enrich only the selected page. The shared database helper
+imports no domain models. Keep new domain-specific filters in their owning callers;
+avoid a generic query hierarchy or accumulating mode flags in one service function.

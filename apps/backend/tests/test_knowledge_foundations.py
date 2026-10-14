@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 import pytest
@@ -88,6 +89,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
         user_file = UserFileModel(
+            storage_key=str(uuid.uuid4()),
             user_id="user-a",
             filename="report.txt",
             original_name="report.txt",
@@ -160,8 +162,6 @@ def test_embedding_artifact_requires_expected_checksum_and_size(tmp_path: Path):
     provider = OnnxClipEmbeddingProvider(tmp_path, pinned_model=embedding_model)
     with pytest.raises(EmbeddingProviderError, match="manifest verification"):
         provider._initialize_sync()
-
-
 
 
 def test_caption_configuration_accepts_unprovisioned_local_mode_and_rejects_invalid_bundle_digest(tmp_path: Path):

@@ -8,7 +8,7 @@ from typing import Literal
 import filetype
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.images import generate_thumbnail
@@ -18,10 +18,11 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
 from asterism.domains.extraction.schemas import FileKnowledgeArtifact
 
+from .listing import describe_files, list_file_page
 from .models import FileContentStatus, FileKind, UserFileModel
 from .processor import ensure_file_processed as ensure_file_processed
+from .queries import select_owned_files
 from .schemas import SimilarFile, SimilarFileList, UserFile, UserFileList
-from .store import LocalFileStore
 from .store import get_file_store as get_file_store
 
 _DENIED_EXTENSIONS = {
@@ -88,33 +89,24 @@ _DOCUMENT_EXTENSIONS = {
 }
 
 
-def _legacy_filename(filename: str) -> str:
-    # Preserve the former download endpoint's handling of URL-encoded/hidden names.
-    return re.sub(r"^\.+", "", re.sub("%2E", ".", filename, flags=re.IGNORECASE))
-
-
 async def get_user_file(
     user_id: str,
     filename: str,
     session: AsyncSession | None = None,
 ) -> FileResponse:
-    filename = _legacy_filename(filename)
-    try:
-        requested_path = get_file_store().open(user_id, filename)
-    except ValueError as error:
-        raise BadDataException("Access to file is denied") from error
-
-    file_info = await get_user_file_info(user_id=user_id, filename=filename, session=session)
-
-    if not requested_path.is_file():
-        raise NotFoundException("Access to file is denied")
-
-    return FileResponse(
-        path=requested_path,
-        filename=filename,
-        media_type=file_info.mime_type,
-        headers={"Cache-Control": "public, max-age=31536000, immutable"},
-    )
+    if not filename or Path(filename).name != filename or "/" in filename or "\\" in filename:
+        raise BadDataException("Access to file is denied")
+    async with get_async_db_session(session) as session:
+        file = await _owned_file(user_id=user_id, filename=filename, session=session)
+        requested_path = get_file_store().open(user_id, file.storage_key)
+        if not requested_path.is_file():
+            raise NotFoundException("Access to file is denied")
+        return FileResponse(
+            path=requested_path,
+            filename=file.original_name,
+            media_type=file.mime_type,
+            headers={"Cache-Control": "private, max-age=31536000, immutable"},
+        )
 
 
 async def get_user_file_info(
@@ -122,7 +114,6 @@ async def get_user_file_info(
     filename: str,
     session: AsyncSession | None = None,
 ) -> UserFile:
-    filename = _legacy_filename(filename)
     async with get_async_db_session(session) as session:
         statement = select(UserFileModel).where(
             UserFileModel.user_id == user_id,
@@ -132,7 +123,7 @@ async def get_user_file_info(
         if file is None:
             raise NotFoundException("File does not exist")
 
-        return UserFile.model_validate(file)
+        return (await describe_files(user_id=user_id, files=[file], session=session))[0]
 
 
 def sanitize_filename(name: str) -> str:
@@ -170,20 +161,16 @@ def detect_mime_type(filename: str, content: bytes) -> str:
 
 async def _deduplicated_filename(
     session: AsyncSession,
-    store: LocalFileStore,
     user_id: str,
     filename: str,
 ) -> str:
     stem, extension = Path(filename).stem, Path(filename).suffix
     candidate, counter = filename, 2
-    while (
-        await session.scalar(
-            select(UserFileModel.id).where(
-                UserFileModel.user_id == user_id,
-                UserFileModel.filename == candidate,
-            ),
-        )
-        or store.open(user_id, candidate).exists()
+    while await session.scalar(
+        select(UserFileModel.id).where(
+            UserFileModel.user_id == user_id,
+            UserFileModel.filename == candidate,
+        ),
     ):
         candidate = f"{stem}({counter}){extension}"
         counter += 1
@@ -218,18 +205,23 @@ async def upload_files(
             )
             # Reuse only an intact, same-name object. Different content retains the
             # existing name-collision behavior, and ownership is always user-scoped.
-            if existing is not None and store.open(user_id, existing.filename).is_file():
+            if existing is not None and store.open(user_id, existing.storage_key).is_file():
                 if existing not in created:
                     created.append(existing)
                 continue
 
-            filename = await _deduplicated_filename(session, store, user_id, original_name)
+            filename = await _deduplicated_filename(session, user_id, original_name)
             mime_type = detect_mime_type(filename, content)
 
             file_kind = classify_file(filename, mime_type)
             thumbnail = generate_thumbnail(content) if file_kind is FileKind.IMAGE else None
 
+            file_id = uuid.uuid4()
+            storage_key = store.save(user_id, file_id, Path(original_name).suffix, content)
+            saved.append(storage_key)
             model = UserFileModel(
+                id=file_id,
+                storage_key=storage_key,
                 user_id=user_id,
                 filename=filename,
                 original_name=original_name,
@@ -240,8 +232,6 @@ async def upload_files(
                 content_status=FileContentStatus.PENDING,
                 thumbnail=thumbnail,
             )
-            store.save(user_id, filename, content)
-            saved.append(filename)
             session.add(model)
             created.append(model)
 
@@ -263,7 +253,7 @@ async def upload_files(
         for filename in saved:
             store.delete(user_id, filename)
         raise
-    return UserFileList(files=[UserFile.model_validate(file) for file in created])
+    return UserFileList(files=await describe_files(user_id=user_id, files=created, session=session))
 
 
 async def list_user_files(
@@ -279,62 +269,16 @@ async def list_user_files(
 ) -> UserFileList:
     from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
 
-    order_by_column = UserFileModel.kind
-    if sort_by == "name":
-        order_by_column = UserFileModel.filename
-    if sort_by == "date":
-        order_by_column = UserFileModel.created_at
-    if sort_by == "size":
-        order_by_column = UserFileModel.size.desc()
-
-    statement = (
-        select(UserFileModel)
-        .where(UserFileModel.user_id == user_id, UserFileModel.filename.ilike(f"%{query}%") if query else True)
-        .order_by(order_by_column)
-    )
+    statement = select_owned_files(user_id=user_id, query=query, sort_by=sort_by)
     if knowledge_base_id is not None:
-        statement = statement.where(
-            UserFileModel.id.in_(
-                select(KnowledgeBaseFileModel.file_id).where(
-                    KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
-                ),
+        statement = statement.where(UserFileModel.id.in_(
+            select(KnowledgeBaseFileModel.file_id).where(
+                KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
             ),
-        )
-    total = await session.scalar(select(func.count()).select_from(statement.subquery()))
-    result = list(
-        await session.scalars(
-            statement.order_by(UserFileModel.created_at.desc(), UserFileModel.filename)
-            .offset((page - 1) * page_size)
-            .limit(page_size),
-        ),
-    )
-    membership = await session.execute(
-        select(KnowledgeBaseFileModel.file_id, func.count())
-        .where(KnowledgeBaseFileModel.file_id.in_([file.id for file in result]))
-        .group_by(KnowledgeBaseFileModel.file_id),
-    )
-    counts = {file_id: count for file_id, count in membership.all()}
-    checked: set[uuid.UUID] = set()
-    if check_knowledge_base_id is not None:
-        checked = set(
-            await session.scalars(
-                select(KnowledgeBaseFileModel.file_id).where(
-                    KnowledgeBaseFileModel.knowledge_base_id == check_knowledge_base_id,
-                    KnowledgeBaseFileModel.file_id.in_([file.id for file in result]),
-                ),
-            ),
-        )
-    files = []
-    for file in result:
-        item = UserFile.model_validate(file)
-        item.knowledge_base_count = counts.get(file.id, 0)
-        item.in_checked_knowledge_base = file.id in checked
-        files.append(item)
-    return UserFileList(
-        files=files,
-        total=total or 0,
-        page=page,
-        page_size=page_size,
+        ))
+    return await list_file_page(
+        user_id=user_id, statement=statement, session=session, page=page, page_size=page_size,
+        check_knowledge_base_id=check_knowledge_base_id,
     )
 
 
@@ -475,9 +419,12 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
             ),
         )
     }
+    summaries = {str(file.id): file for file in await describe_files(
+        user_id=user_id, files=list(models.values()), session=session,
+    )}
     return SimilarFileList(
         files=[
-            SimilarFile(file=UserFile.model_validate(models[file_id]), score=score)
+            SimilarFile(file=summaries[file_id], score=score)
             for file_id, score in ranked
             if file_id in models
         ],
@@ -515,8 +462,8 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
         raise NotFoundException("File not found")
     from asterism.domains.extraction.runtime import vector_store
 
+    response = (await describe_files(user_id=user_id, files=[file], session=session))[0]
     await _remove_file_knowledge_records(file_id=file.id, session=session)
-    response = UserFile.model_validate(file)
     file_id = file.id
     await session.delete(file)
     await session.commit()
@@ -526,7 +473,7 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
         # Database/source deletion remains authoritative; a restarted worker
         # cannot restore vectors because its file/artifact row is gone.
         pass
-    get_file_store().delete(user_id, filename)
+    get_file_store().delete(user_id, file.storage_key)
     return response
 
 
@@ -540,7 +487,11 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
     from asterism.domains.extraction.models import FileExtractionModel
     from asterism.domains.extraction.runtime import cancel_file_jobs
     from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
+    from asterism.domains.projects.file_references import detach_deleted_file
 
+    source = await session.get(UserFileModel, file_id)
+    if source is not None:
+        await detach_deleted_file(user_id=source.user_id, file_id=file_id, session=session)
     artifact_ids = list(
         await session.scalars(
             select(FileExtractionModel.id).where(FileExtractionModel.file_id == file_id),
@@ -559,6 +510,7 @@ async def delete_user_files(
     session: AsyncSession,
 ) -> UserFileList:
     deleted_files: list[UserFile] = []
+    storage_keys: list[str] = []
     store = get_file_store()
 
     try:
@@ -571,17 +523,18 @@ async def delete_user_files(
                     ),
                 )
                 if file is not None:
+                    deleted_files.extend(await describe_files(user_id=user_id, files=[file], session=session))
                     await _remove_file_knowledge_records(file_id=file.id, session=session)
-                    deleted_files.append(UserFile.model_validate(file))
+                    storage_keys.append(file.storage_key)
                     await session.delete(file)
             await session.commit()
     except Exception:
         await session.rollback()
         raise
 
-    for file in deleted_files:
+    for storage_key in storage_keys:
         try:
-            store.delete(user_id, file.filename)
+            store.delete(user_id, storage_key)
         except Exception:
             # If the file is missing from the store, we still want to return a successful response.
             pass
@@ -596,3 +549,16 @@ async def delete_user_files(
                 pass
 
     return UserFileList(files=deleted_files)
+
+
+async def validate_owned_file_ids(*, user_id: str, file_ids: list[uuid.UUID], session: AsyncSession) -> None:
+    owned = set(
+        await session.scalars(
+            select(UserFileModel.id).where(
+                UserFileModel.user_id == user_id,
+                UserFileModel.id.in_(file_ids),
+            ),
+        ),
+    )
+    if owned != set(file_ids):
+        raise NotFoundException("File not found")

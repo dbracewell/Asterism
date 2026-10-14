@@ -61,7 +61,7 @@ async def embed_file(
     provider: EmbeddingProvider = embedding_provider,
 ) -> tuple[list[list[float]], list[str], bool]:
     if processed.kind is FileKind.IMAGE:
-        path = get_file_store().open(processed.user_id, processed.filename)
+        path = get_file_store().open(processed.user_id, processed.storage_key)
         contents = [f"Image file: {processed.original_name}"]
         vectors = await provider.embed_image([path])
         visual_ready = True

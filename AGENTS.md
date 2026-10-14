@@ -246,6 +246,8 @@ When an epic completes:
 5. Regenerate typed API clients after OpenAPI changes.
 6. Keep storage behind interfaces; schema changes do not need migrations (reset the data instead).
 7. Capture major architectural decisions in ADR-style notes when scope is non-trivial.
+8. Keep functions and services focused on one responsibility. Separate query construction, pagination/execution, response enrichment, and lifecycle mutations; do not grow a general service function by adding flags or parameters for each new caller or domain.
+9. Compose reusable, owner-scoped base selects in the owning domain's `queries.py`; callers add their domain-specific filters before pagination. Put only domain-neutral query mechanics (such as pagination) in `db/queries.py` or `common`; shared modules must not import domain models or embed domain policy. Preserve owner checks at service/execution boundaries, deterministic ordering, and database filtering before pagination. Prefer small functions over a generic query framework or inheritance hierarchy.
 
 ---
 

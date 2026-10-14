@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import shutil
 import sys
 from pathlib import Path
 
@@ -40,6 +41,8 @@ def confirmed_reset(path: Path, assume_yes: bool) -> bool:
     if not sys.stdin.isatty():
         return False
     print(f"Backend database selected for deletion: {path}")
+    print(f"Disposable source storage selected for deletion: {config.files_root}")
+    print(f"Disposable extraction storage selected for deletion: {config.knowledge_root}")
     return input("Type RESET to continue: ") == "RESET"
 
 
@@ -51,6 +54,11 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
             raise RuntimeError("Database reset canceled; no files were deleted")
         DEFAULT_LOGGER.warning("Deleting the selected backend SQLite database")
         delete_database_files(database_path)
+        for root in (config.files_root, config.knowledge_root):
+            if root.is_symlink():
+                root.unlink()
+            elif root.exists():
+                shutil.rmtree(root)
 
     config.prepare_storage()
     db_session_manager.init()
@@ -79,7 +87,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Delete the selected local SQLite database before initialization.",
+        help="Delete the selected SQLite database, original files, and extraction storage; preserve model bundles.",
     )
     parser.add_argument(
         "--yes",

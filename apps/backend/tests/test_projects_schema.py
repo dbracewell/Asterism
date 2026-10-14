@@ -31,6 +31,7 @@ def project_session(tmp_path):
 def seed(session):
     project = ProjectModel(user_id="a", name="Project")
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="a", filename="source.txt", original_name="source.txt",
         size=1, mime_type="text/plain", kind=FileKind.TEXT, sha256="a" * 64,
     )
@@ -72,6 +73,7 @@ def test_memberships_reject_cross_owner_links(project_session, owner, foreign_pr
     project, file = seed(project_session)
     other_project = ProjectModel(user_id="b", name="Other")
     other_file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="b", filename="other.txt", original_name="other.txt",
         size=1, mime_type="text/plain", kind=FileKind.TEXT, sha256="b" * 64,
     )

@@ -353,7 +353,9 @@ class ChatOrchestrator:
                     if file is None:
                         parts.append(TextContentPart(text=f'(attached file "{reference.name}" is no longer available)'))
                     elif file.kind.value == "image":
-                        path = config.files_root / self.user_id / file.filename
+                        from asterism.domains.files.store import get_file_store
+
+                        path = get_file_store().open(self.user_id, file.storage_key)
                         if vision_enabled and path.is_file() and file.size <= config.max_vision_image_bytes:
                             encoded = base64.b64encode(path.read_bytes()).decode("ascii")
                             parts.append(

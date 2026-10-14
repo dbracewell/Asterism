@@ -74,6 +74,7 @@ async def test_file_memberships_are_owned_ordered_references(knowledge_session):
         session=knowledge_session,
     )
     owned = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="first.txt",
         original_name="first.txt",
@@ -83,6 +84,7 @@ async def test_file_memberships_are_owned_ordered_references(knowledge_session):
         sha256="a" * 64,
     )
     second = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="second.txt",
         original_name="second.txt",
@@ -92,6 +94,7 @@ async def test_file_memberships_are_owned_ordered_references(knowledge_session):
         sha256="b" * 64,
     )
     foreign = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-b",
         filename="private.txt",
         original_name="private.txt",
@@ -315,6 +318,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
         lambda **kwargs: jobs.enqueue(**kwargs),
     )
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="profile.txt",
         original_name="profile.txt",
@@ -402,6 +406,7 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(know
         lambda **kwargs: jobs.enqueue(**kwargs),
     )
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="caption-transition.png",
         original_name="caption-transition.png",
@@ -458,6 +463,7 @@ async def test_file_memberships_reuse_owned_file_metadata(knowledge_session):
         session=knowledge_session,
     )
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="source.txt",
         original_name="Source.txt",
@@ -468,6 +474,7 @@ async def test_file_memberships_reuse_owned_file_metadata(knowledge_session):
         content_status=FileContentStatus.READY,
     )
     foreign_file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-b",
         filename="private.txt",
         original_name="Private.txt",
@@ -509,6 +516,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
         session=knowledge_session,
     )
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="index.txt",
         original_name="index.txt",
@@ -520,9 +528,10 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     )
     knowledge_session.add(file)
     await knowledge_session.commit()
-    path = config.files_root / "user-a"
-    path.mkdir(parents=True)
-    (path / file.filename).write_text("hello world", encoding="utf-8")
+    from asterism.domains.files.store import get_file_store
+
+    file.storage_key = get_file_store().save("user-a", file.id, ".txt", b"hello world")
+    await knowledge_session.commit()
     from asterism.domains.knowledge_base.service import ensure_file_knowledge_artifact
 
     artifact = await ensure_file_knowledge_artifact(file=file, session=knowledge_session)
@@ -587,6 +596,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
 @pytest.mark.asyncio
 async def test_restart_recovery_makes_processing_artifact_retryable(knowledge_session, monkeypatch):
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="restart.txt",
         original_name="restart.txt",
@@ -624,6 +634,7 @@ async def test_restart_recovery_makes_processing_artifact_retryable(knowledge_se
 @pytest.mark.asyncio
 async def test_embedding_provisioning_wait_leaves_artifact_pending(knowledge_session, monkeypatch):
     file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
         user_id="user-a",
         filename="waiting.txt",
         original_name="waiting.txt",

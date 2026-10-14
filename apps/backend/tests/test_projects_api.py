@@ -273,9 +273,11 @@ async def test_deletion_retains_shared_source_bytes_and_extraction(project_api):
     first, second = await create(client, name="First"), await create(client, name="Second")
     # Exercise the existing source abstraction; project deletion never invokes it.
     store = LocalFileStore(tmp_path / "sources")
-    store.save(user_id="a", filename="source.txt", content=b"keep these original bytes")
+    source_id = uuid.uuid4()
+    source_key = store.save("a", source_id, ".txt", b"keep these original bytes")
     async with sessions() as session:
         file = UserFileModel(
+            id=source_id, storage_key=source_key,
             user_id="a",
             filename="source.txt",
             original_name="source.txt",
@@ -308,7 +310,7 @@ async def test_deletion_retains_shared_source_bytes_and_extraction(project_api):
         assert len((await session.scalars(select(FileExtractionModel))).all()) == 1
         memberships = (await session.scalars(select(ProjectFileModel))).all()
         assert [m.project_id for m in memberships] == [uuid.UUID(second["id"])]
-    assert store.open(user_id="a", filename="source.txt").read_bytes() == b"keep these original bytes"
+    assert store.open("a", source_key).read_bytes() == b"keep these original bytes"
 
 
 @pytest.mark.asyncio
@@ -387,6 +389,7 @@ async def test_stale_membership_transaction_rolls_back_all_changes(project_api):
     project_id = uuid.UUID(project["id"])
     async with sessions() as session:
         files = [UserFileModel(
+            storage_key=str(uuid.uuid4()),
             user_id="a", filename=name, original_name=name, size=1,
             mime_type="text/plain", kind=FileKind.TEXT, sha256="a" * 64,
         ) for name in ("one.txt", "two.txt")]

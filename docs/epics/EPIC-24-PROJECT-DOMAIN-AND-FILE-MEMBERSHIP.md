@@ -1,6 +1,6 @@
 # EPIC-24 — Project domain and file membership
 
-Status: US-24.1 complete (user confirmed 2026-10-14); US-24.2 complete (user confirmed 2026-10-14); US-24.3 not started.
+Status: Complete — all three stories user-confirmed on 2026-10-14.
 
 Contracts: [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md).
 
@@ -38,12 +38,12 @@ As a user, I want to create, edit, find, and delete projects with their instruct
 As a user, I want to add and remove files from projects without copying or reprocessing them.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-24.2.
-- [ ] US-24.3-T1: Implement atomic bulk add/remove and paginated project file listing through the file-service boundary.
-- [ ] US-24.3-T2: Validate all file owners, enforce unique membership, and report already-added files deterministically.
-- [ ] US-24.3-T3: Expose project membership summaries for file views and removal impact; omit unused manual ordering.
-- [ ] US-24.3-T4: Regenerate clients and test sharing one file between projects, removal, and physical-file deletion cleanup.
-- [ ] US-24.3-T5: Persist original project and chat files through FileStore using user-scoped, file-ID-sharded paths (for example files/<user-id>/<id-prefix-1>/<id-prefix-2>/<file-id>/source.<ext>); keep original names in metadata and project/chat organization in database memberships. Resolve opaque storage keys through FileStore; do not expose or reconstruct local paths in callers, copy files on membership changes, or scan directories for file listings. Reset disposable storage without migration or legacy-path fallbacks.
-- [ ] US-24.3-T6: Add file-store contract tests for deterministic shard placement, owner isolation, original-byte round trips, shared references without duplicate source writes, stable storage keys across project rename/membership changes, and source deletion; verify extraction reads through the storage abstraction.
+- [x] US-24.3-T1: Implement atomic bulk add/remove and paginated project file listing through the file-service boundary.
+- [x] US-24.3-T2: Validate all file owners, enforce unique membership, and report already-added files deterministically.
+- [x] US-24.3-T3: Expose project membership summaries for file views and removal impact; omit unused manual ordering.
+- [x] US-24.3-T4: Regenerate clients and test sharing one file between projects, removal, and physical-file deletion cleanup.
+- [x] US-24.3-T5: Persist original project and chat files through FileStore using user-scoped, file-ID-sharded paths (for example files/<user-id>/<id-prefix-1>/<id-prefix-2>/<file-id>/source.<ext>); keep original names in metadata and project/chat organization in database memberships. Resolve opaque storage keys through FileStore; do not expose or reconstruct local paths in callers, copy files on membership changes, or scan directories for file listings. Reset disposable storage without migration or legacy-path fallbacks.
+- [x] US-24.3-T6: Add file-store contract tests for deterministic shard placement, owner isolation, original-byte round trips, shared references without duplicate source writes, stable storage keys across project rename/membership changes, and source deletion; verify extraction reads through the storage abstraction.
 
 **Acceptance:** Adding a file twice is harmless; a foreign ID rejects the whole batch; removing membership preserves bytes, extraction, and other memberships. Original files use user-scoped, file-ID-sharded storage behind FileStore; the same file can be referenced by multiple projects/chats without another physical copy. Project changes leave storage keys unchanged, and file listings use database queries.
 
@@ -117,3 +117,81 @@ contract non-nullable. Revision-only patches are tested as no-ops. Focused tests
 (38), full backend suite (287), Ruff, and targeted static typing were rerun successfully.
 Independent regeneration confirms unchanged client contracts after normalizing only
 the existing import-time AgentProfile UUID default and trailing whitespace.
+
+
+## US-24.3 implementation and verification (2026-10-14)
+
+Implemented on `feat/us-24.3-project-file-membership`; user confirmed completion
+on 2026-10-14, authorizing commit/merge. Completed checklist archived in
+[the daily archive](../archive/todo-completed-2026-10-14.md). EPIC-24 is complete;
+US-25.1 is the next recommended story.
+
+Added owner-scoped paginated project file listing and atomic bulk add/remove through
+file-service validation/listing boundaries. Expected context revisions serialize
+concurrent membership writes; real batches advance once, no-ops retain the revision,
+and stale requests fail. UUID-sorted changed/unchanged IDs report duplicates and absent
+memberships deterministically. Mixed-owner/missing IDs reject the whole batch.
+File list/detail/related-file responses carry project identity/revision summaries;
+physical file deletion removes references and advances affected project contexts.
+Membership operations do not enqueue extraction, move bytes, or invoke FileStore.
+
+Uploads persist internal opaque storage keys for user-scoped, UUID-sharded originals;
+metadata preserves names. Downloads, conversion, extraction/captioning, and chat image
+reads resolve keys through FileStore. Directory listing was removed from the source
+store contract. Ordinary initialization preserves data; explicit reset now clears
+originals and extraction storage while retaining provider model bundles. No migrations,
+legacy-path fallbacks, manual ordering, UI workflows, or working-data reset were added.
+Chat file binding and project UI remain in their subsequent stories.
+
+| Gate | Result |
+| --- | --- |
+| Backend Ruff | Passed |
+| Backend compileall | Passed; repository typecheck gate is compilation |
+| Full backend unit/integration suite (test-profile wrapper) | 310 passed after query responsibility refactor |
+| Source-store contract / project membership HTTP tests | Passed within backend suite; includes sharing, stale/concurrent writes, atomic foreign/missing rejection, stable keys, original bytes, owner/shard isolation, no repeated writes/processing, removal, deletion, and isolated reset |
+| Dependency/import review | No circular imports; 136 modules, 457 internal imports; all source consumers resolve keys through FileStore |
+| Frontend ESLint | Passed |
+| Frontend TypeScript | Passed |
+| Frontend Vitest | 30 files, 86 tests passed |
+| Frontend auth migration tests | 6 passed |
+| Frontend production build | Passed |
+| OpenAPI / generated clients | Served schema exported with ASGI; Hey API 0.98.1 regenerated SDK/types/Zod/query operations. Independent generation matches all 18 TS files, ignoring trailing whitespace only |
+| Isolated Playwright (`CI=1`) | 11 passed, one worker, no test retries; existing UI workflows use API mocks. New project membership and real source-byte behavior are verified by backend HTTP/integration tests, pending project UI stories |
+| Root configuration tests | 29 passed |
+| Diff whitespace check | Passed |
+| GitHub CI | Not triggered; local gates only |
+
+Verification environment notes: initial frontend/E2E invocations stopped before tests
+because dependency installation was incomplete, registry access was sandboxed, or the
+SQLite native binding was absent. Dependencies were restored from the frozen lockfile
+and SQLite rebuilt; the subsequent isolated E2E run passed all tests. Its backend is
+intentionally terminated during cleanup (pnpm logs exit 143). Sandbox pnpm invocations
+can request a modules-directory purge without a TTY; backend/config checks were verified
+with the repository's underlying test-profile wrapper and Node command. No lockfile or
+package manifest changes were made.
+
+HTTP tests substitute JWT decoding while exercising normal Bearer enforcement,
+owner/service checks, production foreign-key constraints, transactions, and source
+storage. Dedicated file lifecycle tests also cover cleanup without FK cascades.
+
+
+### Query responsibility review amendment
+
+The user requested keeping functions focused and avoiding accumulating scope parameters
+on `list_user_files`. Refactored this within US-24.3: `domains/files/queries.py` builds
+reusable owner-scoped source selects; project/library callers compose their own
+membership filters before pagination. `db/queries.py` provides typed, domain-neutral
+count/page mechanics, while `domains/files/listing.py` separates page execution and
+response enrichment. Owner scope is enforced again at execution. Removed the new
+`file_ids` argument from the library service; project listing no longer calls it.
+AGENTS.md and backend/ADR documentation record the responsibility and dependency rules.
+
+Final amendment checks: full backend suite 310 passed, Ruff and compileall passed,
+targeted basedpyright for all three new query/listing modules passed with zero errors,
+and dependency analysis found no cycles (136 modules, 457 imports). Tests cover composed
+membership filters before count/pagination, all sort modes with stable ties, literal
+search, execution-level owner isolation even with an unscoped select, invalid page
+bounds, and shared/domain query dependency boundaries. Public HTTP/OpenAPI contracts
+are unchanged by this refactor. Served schema comparison matches after excluding the
+pre-existing per-process `AgentProfile.id` UUID default; the prior frontend and Playwright results above were
+not rerun for this amendment. No other story was started.

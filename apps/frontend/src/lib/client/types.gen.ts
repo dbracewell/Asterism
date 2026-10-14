@@ -539,6 +539,24 @@ export type FileKnowledgeArtifact = {
 };
 
 /**
+ * FileProjectSummary
+ */
+export type FileProjectSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Context Revision
+     */
+    context_revision: number;
+};
+
+/**
  * Folder
  */
 export type Folder = {
@@ -1280,6 +1298,38 @@ export type ProjectCreate = {
 };
 
 /**
+ * ProjectFileBatch
+ */
+export type ProjectFileBatch = {
+    /**
+     * Expected Context Revision
+     */
+    expected_context_revision: number;
+    /**
+     * File Ids
+     */
+    file_ids: Array<string>;
+};
+
+/**
+ * ProjectFileBatchResult
+ */
+export type ProjectFileBatchResult = {
+    /**
+     * Context Revision
+     */
+    context_revision: number;
+    /**
+     * Changed File Ids
+     */
+    changed_file_ids: Array<string>;
+    /**
+     * Unchanged File Ids
+     */
+    unchanged_file_ids: Array<string>;
+};
+
+/**
  * ProjectList
  */
 export type ProjectList = {
@@ -1791,6 +1841,10 @@ export type UserFile = {
      * Thumbnail
      */
     thumbnail: string | null;
+    /**
+     * Projects
+     */
+    projects?: Array<FileProjectSummary>;
     /**
      * Knowledge Base Count
      */
@@ -3566,6 +3620,145 @@ export type ProjectUpdateResponses = {
 };
 
 export type ProjectUpdateResponse = ProjectUpdateResponses[keyof ProjectUpdateResponses];
+
+export type ProjectFileRemoveManyData = {
+    body: ProjectFileBatch;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/projects/{project_id}/files';
+};
+
+export type ProjectFileRemoveManyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not Found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ProjectFileRemoveManyError = ProjectFileRemoveManyErrors[keyof ProjectFileRemoveManyErrors];
+
+export type ProjectFileRemoveManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProjectFileBatchResult;
+};
+
+export type ProjectFileRemoveManyResponse = ProjectFileRemoveManyResponses[keyof ProjectFileRemoveManyResponses];
+
+export type ProjectFileGetManyData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+        /**
+         * Sort By
+         */
+        sort_by?: 'name' | 'kind' | 'date' | 'size';
+        /**
+         * Query
+         */
+        query?: string | null;
+    };
+    url: '/projects/{project_id}/files';
+};
+
+export type ProjectFileGetManyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not Found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ProjectFileGetManyError = ProjectFileGetManyErrors[keyof ProjectFileGetManyErrors];
+
+export type ProjectFileGetManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserFileList;
+};
+
+export type ProjectFileGetManyResponse = ProjectFileGetManyResponses[keyof ProjectFileGetManyResponses];
+
+export type ProjectFileAddManyData = {
+    body: ProjectFileBatch;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/projects/{project_id}/files';
+};
+
+export type ProjectFileAddManyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorDetail;
+    /**
+     * Not Found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ProjectFileAddManyError = ProjectFileAddManyErrors[keyof ProjectFileAddManyErrors];
+
+export type ProjectFileAddManyResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProjectFileBatchResult;
+};
+
+export type ProjectFileAddManyResponse = ProjectFileAddManyResponses[keyof ProjectFileAddManyResponses];
 
 export type UserSettingsGetData = {
     body?: never;
