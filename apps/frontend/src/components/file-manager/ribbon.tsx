@@ -4,30 +4,30 @@ import { useUploadFiles } from "@/components/file-manager/hooks";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput,
 } from "@/components/ui/input-group";
 import { AddFilesDialog } from "@/features/knowledge/add-files-dialog";
 import { client } from "@/lib/api";
 import {
-  fileDeleteManyMutation,
-  knowledgeBaseFileDeleteManyMutation,
+    fileDeleteManyMutation,
+    knowledgeBaseFileDeleteManyMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { isErrorDetail } from "@/lib/utils";
 import {
-  IconFileUpload,
-  IconSelectAll,
-  IconSquareOff,
+    IconFileUpload,
+    IconSelectAll,
+    IconSquareOff,
 } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import {
-  Grid2X2Icon,
-  ListIcon,
-  SearchIcon,
-  Trash2Icon,
-  UnlinkIcon,
-  XIcon,
+    Grid2X2Icon,
+    ListIcon,
+    SearchIcon,
+    Trash2Icon,
+    UnlinkIcon,
+    XIcon,
 } from "lucide-react";
 import { ReactNode, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -35,7 +35,7 @@ import { toast } from "sonner";
 export const Ribbon = ({ children }: { children?: ReactNode }) => {
   return (
     <div className="flex min-h-0 flex-col gap-2">
-      <div className="divide-x-border flex flex-wrap items-center divide-x border-b py-2 pr-0.5">
+      <div className="divide-border flex flex-wrap items-center divide-x border-b py-2 pr-0.5">
         <ViewSection />
         <SortSection />
         <SearchSection />
