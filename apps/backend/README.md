@@ -137,7 +137,7 @@ and roll the whole transaction back on failure. Bulk no-ops must not advance it.
 Deletion removes project metadata and memberships through database cascades and retains
 source bytes, extraction generations, and references in other projects. US-25.1
 project foreign keys detach chats to General while preserving history/local references.
-US-25.2 adds explicit chat-service lifecycle coordination; US-26.1 adds affected-run
+US-25.2 coordinates explicit detachment in the deletion transaction; US-26.1 adds affected-run
 cancellation before project deletion. No current development database was reset. The generated Hey API SDK, schemas, and TanStack Query operations
 are synchronized; project UI arrives in EPIC-27.
 
@@ -223,17 +223,47 @@ service and FileStore. Runtime attachment assembly uses the same branch/membersh
 reader before reading cached document content or images. Ownership is checked in both
 services and composite database foreign keys. General scope contains no project prompt.
 
-This story supplies the binding/scope foundation. Guarded moves, scoped chat lists,
-project search, and explicit deletion coordination remain US-25.2; draft handling,
+US-25.1 supplies the binding/scope foundation. US-25.2 implements guarded moves,
+scoped chat lists, project search, and explicit deletion coordination; draft handling,
 retry/attachment removal lifecycle remain US-25.3. Project prompt composition and
 contextual tool/retrieval/delegation authorization arrive in EPIC-26/29; existing
 knowledge-base tool assignments are still present until the planned refactor cutover.
 The new scope reader is not a claim that every legacy runtime tool already uses it.
 
 Obsolete folder-chat routes, schemas, creation/list controls, and chat-derived folder
-search paths were removed with the binding. Folder entities/title search remain until
-their later removal; project navigation remains EPIC-27. NewChatRequest rejects old
+search paths were removed with the binding. US-25.2 replaces folder title search
+with project name/description search. Folder entities remain until their later removal; project navigation remains EPIC-27. NewChatRequest rejects old
 `folder_id` and filename attachments; PATCH currently edits title only, with project
-moves added in US-25.2. Fresh initialization includes `chat_files`; reset disposable
+moves exposed separately by US-25.2. Fresh initialization includes `chat_files`; reset disposable
 local data before running this new schema against an older development database.
 The current development database was not reset and no migration/fallback was added.
+
+
+### Chat membership and search (US-25.2)
+
+`PATCH /chat/{chat_id}/project` requires `{ "project_id": "<owned UUID>" }`
+or `{ "project_id": null }` for General. Missing/foreign chats or projects return
+404; active generation or pending approval returns 409. The process-local job manager
+blocks turn starts and competing moves until the transaction commits or rolls back.
+This uses the existing single-process runtime boundary, not a distributed run lock.
+Moves retain every message, branch and chat-local membership; they never copy sources
+or promote attachments into project files. The next scope read exposes the destination
+project instructions/revision/files (or empty project context for General), even with a
+cached SQLAlchemy chat. Historical answers may still contain prior project information.
+Prompt composition and contextual retrieval/delegation remain EPIC-26/29.
+
+`GET /chat/` lists General chats by default. Supply an owned `project_id` to list its
+chats. It returns `chats`, `total`, `page` and `page_size` (default 50, maximum 100),
+with database filtering before pagination and updated-time/UUID ordering.
+
+`GET /chat/search?q=...` searches chat titles/messages and project names/descriptions
+through the database-specific search adapter. `scope=general` returns only General
+chats; `scope=project&project_id=...` returns only that owned project's chats. Default
+`scope=all` returns chats and projects. Other scopes reject a project ID. Page size
+is 20 by default and at most 100. Results expose current `project_id`/`project_name`,
+use deterministic updated-time/kind/UUID ordering and enrich only the selected page.
+Project system prompts, extracted files, and obsolete folder ancestry are not indexed.
+Fresh initialization installs `chat_search`/`project_search` and update/delete triggers;
+reset disposable older databases explicitly. No working database was reset for this story.
+Project deletion detaches through a chat-owned transaction-local operation before
+removing the project; failures/stale revisions roll back both operations.

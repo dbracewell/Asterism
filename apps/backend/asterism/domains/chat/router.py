@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Query, WebSocket
 from fastapi.responses import FileResponse
@@ -23,7 +24,9 @@ from .schemas import (
     BulkDeleteChatResponse,
     Chat,
     ChatFileScope,
+    ChatInfo,
     ChatInfoList,
+    ChatMoveRequest,
     ChatUpdateRequest,
     Message,
     NewChatRequest,
@@ -110,9 +113,15 @@ async def new_session(
 async def list_sessions(
     user: AuthedUserDep,
     db: DBSessionDep,
+    project_id: uuid.UUID | None = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
 ) -> ChatInfoList:
     return await chat_service.get_many(
         user_id=user.id,
+        project_id=project_id,
+        page=page,
+        page_size=page_size,
         session=db,
     )
 
@@ -175,16 +184,20 @@ async def update_session(
     operation_id="chatSearch",
     response_model=SearchResultList,
 )
-async def search_chats_and_folders(
+async def search_chats_and_projects(
     q: str,
     user: AuthedUserDep,
     db: DBSessionDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    scope: Literal["all", "general", "project"] = "all",
+    project_id: uuid.UUID | None = None,
 ) -> SearchResultList:
     return await chat_service.search(
         user_id=user.id,
         query=q,
+        scope=scope,
+        project_id=project_id,
         page=page,
         page_size=page_size,
         session=db,
@@ -280,3 +293,15 @@ async def download_chat_file(chat_id: uuid.UUID, file_id: uuid.UUID, user: Authe
 
     await require_chat_file(user_id=user.id, chat_id=chat_id, file_id=file_id, session=db)
     return await download_file_by_id(user_id=user.id, file_id=file_id, session=db)
+
+
+@chat_router.patch(
+    "/{chat_id}/project", response_model=ChatInfo, operation_id="chatSessionMove",
+    responses={409: {"model": ErrorDetail}},
+)
+async def move_session(
+    chat_id: uuid.UUID, payload: ChatMoveRequest, user: AuthedUserDep, db: DBSessionDep,
+) -> ChatInfo:
+    from .membership import move_chat
+
+    return await move_chat(user_id=user.id, chat_id=chat_id, payload=payload, session=db)

@@ -16,14 +16,18 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 
 const renderSearch = () =>
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
       <ChatSearch />
     </QueryClientProvider>,
   );
 
 beforeEach(() => search.mockReset());
 
-it("shows matching chats with their snippet and folder path", async () => {
+it("shows matching chats with their snippet and project membership", async () => {
   search.mockResolvedValue({
     results: [
       {
@@ -31,7 +35,8 @@ it("shows matching chats with their snippet and folder path", async () => {
         id: "chat-1",
         title: "Ocean currents",
         snippet: "Explain ocean circulation",
-        path: ["Research", "Papers"],
+        project_id: "project-1",
+        project_name: "Research",
         match_source: "content",
         updated_at: 1,
       },
@@ -42,13 +47,12 @@ it("shows matching chats with their snippet and folder path", async () => {
   });
   renderSearch();
 
-  await userEvent.setup().type(
-    screen.getByLabelText("Search chats and folders"),
-    "ocean",
-  );
+  await userEvent
+    .setup()
+    .type(screen.getByLabelText("Search chats and projects"), "ocean");
 
   expect(await screen.findByText("Ocean currents")).toBeInTheDocument();
-  expect(screen.getByText("Research / Papers")).toBeInTheDocument();
+  expect(screen.getByText("Research")).toBeInTheDocument();
   expect(screen.getByText("Chat content")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /ocean currents/i })).toHaveAttribute(
     "href",
@@ -63,7 +67,7 @@ it("shows empty and error search states", async () => {
       : Promise.resolve({ results: [], total: 0, page: 1, page_size: 20 }),
   );
   renderSearch();
-  const input = screen.getByLabelText("Search chats and folders");
+  const input = screen.getByLabelText("Search chats and projects");
   await userEvent.setup().type(input, "nothing");
   expect(await screen.findByText("No matches found.")).toBeInTheDocument();
 
@@ -72,4 +76,38 @@ it("shows empty and error search states", async () => {
   await waitFor(() =>
     expect(screen.getByRole("alert")).toHaveTextContent("Unable to search"),
   );
+});
+
+it("labels project description matches and General chats", async () => {
+  search.mockResolvedValue({
+    results: [
+      {
+        kind: "project",
+        id: "project-1",
+        title: "Research",
+        snippet: "Ocean studies",
+        match_source: "project_description",
+      },
+      {
+        kind: "chat",
+        id: "chat-1",
+        title: "Ocean notes",
+        project_name: null,
+        snippet: "Ocean notes",
+        match_source: "title",
+      },
+    ],
+    total: 2,
+    page: 1,
+    page_size: 20,
+  });
+  renderSearch();
+  await userEvent
+    .setup()
+    .type(screen.getByLabelText("Search chats and projects"), "ocean");
+  expect(await screen.findByText("Project description")).toBeInTheDocument();
+  expect(screen.getByText("General")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: /Research/ }),
+  ).not.toBeInTheDocument();
 });

@@ -71,6 +71,13 @@ export const zChatContextUsage = z.object({
 });
 
 /**
+ * ChatMoveRequest
+ */
+export const zChatMoveRequest = z.object({
+    project_id: z.uuid().nullable()
+});
+
+/**
  * ChatUpdateRequest
  */
 export const zChatUpdateRequest = z.object({
@@ -258,7 +265,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('dbdd8b6b-6e2a-4dfb-ac92-1094a68b7198'),
+    id: z.uuid().optional().default('5281bb50-b168-4f63-ac48-00350a518225'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -504,7 +511,10 @@ export const zChatInfo = z.object({
  * ChatInfoList
  */
 export const zChatInfoList = z.object({
-    chats: z.array(zChatInfo)
+    chats: z.array(zChatInfo),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1)
 });
 
 /**
@@ -745,13 +755,14 @@ export const zChatFileScope = z.object({
 export const zSearchMatchSource = z.enum([
     'title',
     'content',
-    'folder_title'
+    'project_name',
+    'project_description'
 ]);
 
 /**
  * SearchResultKind
  */
-export const zSearchResultKind = z.enum(['chat', 'folder']);
+export const zSearchResultKind = z.enum(['chat', 'project']);
 
 /**
  * SearchResult
@@ -761,10 +772,10 @@ export const zSearchResult = z.object({
     id: z.uuid(),
     title: z.string(),
     updated_at: z.int(),
-    folder_id: z.uuid().nullish(),
+    project_id: z.uuid().nullish(),
+    project_name: z.string().nullish(),
     match_source: zSearchMatchSource,
-    snippet: z.string().nullish(),
-    path: z.array(z.string()).optional()
+    snippet: z.string().nullish()
 });
 
 /**
@@ -1141,6 +1152,12 @@ export const zFileKnowledgeBaseGetManyPath = z.object({
  */
 export const zFileKnowledgeBaseGetManyResponse = z.array(zKnowledgeBase);
 
+export const zChatSessionGetManyQuery = z.object({
+    project_id: z.uuid().nullish(),
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(50)
+});
+
 /**
  * Successful Response
  */
@@ -1192,7 +1209,13 @@ export const zChatSessionUpdateResponse = zChat;
 export const zChatSearchQuery = z.object({
     q: z.string(),
     page: z.int().gte(1).optional().default(1),
-    page_size: z.int().gte(1).lte(100).optional().default(20)
+    page_size: z.int().gte(1).lte(100).optional().default(20),
+    scope: z.enum([
+        'all',
+        'general',
+        'project'
+    ]).optional().default('all'),
+    project_id: z.uuid().nullish()
 });
 
 /**
@@ -1240,6 +1263,17 @@ export const zChatFileDownloadPath = z.object({
  * Authorized original source download
  */
 export const zChatFileDownloadResponse = z.string();
+
+export const zChatSessionMoveBody = zChatMoveRequest;
+
+export const zChatSessionMovePath = z.object({
+    chat_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatSessionMoveResponse = zChatInfo;
 
 /**
  * Successful Response

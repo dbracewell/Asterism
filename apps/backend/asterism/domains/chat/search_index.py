@@ -14,8 +14,8 @@ async def initialize_search_index(connection: AsyncConnection) -> None:
     for statement in (
         "CREATE VIRTUAL TABLE IF NOT EXISTS chat_search USING fts5("
         "chat_id UNINDEXED, user_id UNINDEXED, title, content)",
-        "CREATE VIRTUAL TABLE IF NOT EXISTS folder_search USING fts5("
-        "folder_id UNINDEXED, user_id UNINDEXED, title)",
+        "CREATE VIRTUAL TABLE IF NOT EXISTS project_search USING fts5("
+        "project_id UNINDEXED, user_id UNINDEXED, name, description)",
         "CREATE TRIGGER IF NOT EXISTS chat_search_chats_ai AFTER INSERT ON chats BEGIN "
         "INSERT INTO chat_search(chat_id, user_id, title, content) "
         "VALUES (new.id, new.user_id, coalesce(new.title, ''), ''); END",
@@ -45,20 +45,22 @@ async def initialize_search_index(connection: AsyncConnection) -> None:
         "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
         "coalesce(group_concat(messages.content, ' '), '') FROM chats "
         "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = old.chat_id; END",
-        "CREATE TRIGGER IF NOT EXISTS folder_search_ai AFTER INSERT ON folders BEGIN "
-        "INSERT INTO folder_search(folder_id, user_id, title) VALUES (new.id, new.user_id, new.title); END",
-        "CREATE TRIGGER IF NOT EXISTS folder_search_au AFTER UPDATE OF title ON folders BEGIN "
-        "DELETE FROM folder_search WHERE folder_id = new.id; "
-        "INSERT INTO folder_search(folder_id, user_id, title) VALUES (new.id, new.user_id, new.title); END",
-        "CREATE TRIGGER IF NOT EXISTS folder_search_ad AFTER DELETE ON folders BEGIN "
-        "DELETE FROM folder_search WHERE folder_id = old.id; END",
+        "CREATE TRIGGER IF NOT EXISTS project_search_ai AFTER INSERT ON projects BEGIN "
+        "INSERT INTO project_search(project_id, user_id, name, description) "
+        "VALUES (new.id, new.user_id, new.name, new.description); END",
+        "CREATE TRIGGER IF NOT EXISTS project_search_au AFTER UPDATE OF name, description ON projects BEGIN "
+        "DELETE FROM project_search WHERE project_id = new.id; "
+        "INSERT INTO project_search(project_id, user_id, name, description) "
+        "VALUES (new.id, new.user_id, new.name, new.description); END",
+        "CREATE TRIGGER IF NOT EXISTS project_search_ad AFTER DELETE ON projects BEGIN "
+        "DELETE FROM project_search WHERE project_id = old.id; END",
     ):
         await connection.execute(text(statement))
 
 
 class ChatSearchIndex(Protocol):
     async def find_chat_ids(self, user_id: str, terms: Sequence[str]) -> list[uuid.UUID]: ...
-    async def find_folder_ids(self, user_id: str, terms: Sequence[str]) -> set[uuid.UUID]: ...
+    async def find_project_ids(self, user_id: str, terms: Sequence[str]) -> set[uuid.UUID]: ...
 
 
 def _fts_query(terms: Sequence[str]) -> str:
@@ -78,9 +80,9 @@ class SqliteFtsSearchIndex:
         )
         return [uuid.UUID(value) for value in result.all()]
 
-    async def find_folder_ids(self, user_id: str, terms: Sequence[str]) -> set[uuid.UUID]:
+    async def find_project_ids(self, user_id: str, terms: Sequence[str]) -> set[uuid.UUID]:
         result = await self.session.scalars(
-            text("SELECT folder_id FROM folder_search WHERE user_id = :user_id AND folder_search MATCH :query"),
+            text("SELECT project_id FROM project_search WHERE user_id = :user_id AND project_search MATCH :query"),
             {"user_id": user_id, "query": _fts_query(terms)},
         )
         return {uuid.UUID(value) for value in result.all()}

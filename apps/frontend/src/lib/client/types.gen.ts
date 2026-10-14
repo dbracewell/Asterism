@@ -357,6 +357,28 @@ export type ChatInfoList = {
      * Chats
      */
     chats: Array<ChatInfo>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+};
+
+/**
+ * ChatMoveRequest
+ */
+export type ChatMoveRequest = {
+    /**
+     * Project Id
+     */
+    project_id: string | null;
 };
 
 /**
@@ -1553,7 +1575,7 @@ export type ScopedChatFile = {
 /**
  * SearchMatchSource
  */
-export type SearchMatchSource = 'title' | 'content' | 'folder_title';
+export type SearchMatchSource = 'title' | 'content' | 'project_name' | 'project_description';
 
 /**
  * SearchResult
@@ -1573,24 +1595,24 @@ export type SearchResult = {
      */
     updated_at: number;
     /**
-     * Folder Id
+     * Project Id
      */
-    folder_id?: string | null;
+    project_id?: string | null;
+    /**
+     * Project Name
+     */
+    project_name?: string | null;
     match_source: SearchMatchSource;
     /**
      * Snippet
      */
     snippet?: string | null;
-    /**
-     * Path
-     */
-    path?: Array<string>;
 };
 
 /**
  * SearchResultKind
  */
-export type SearchResultKind = 'chat' | 'folder';
+export type SearchResultKind = 'chat' | 'project';
 
 /**
  * SearchResultList
@@ -2598,7 +2620,20 @@ export type FileKnowledgeBaseGetManyResponse = FileKnowledgeBaseGetManyResponses
 export type ChatSessionGetManyData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Project Id
+         */
+        project_id?: string | null;
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
     url: '/chat/';
 };
 
@@ -2607,6 +2642,10 @@ export type ChatSessionGetManyErrors = {
      * Not found
      */
     404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
 };
 
 export type ChatSessionGetManyError = ChatSessionGetManyErrors[keyof ChatSessionGetManyErrors];
@@ -2796,6 +2835,14 @@ export type ChatSearchData = {
          * Page Size
          */
         page_size?: number;
+        /**
+         * Scope
+         */
+        scope?: 'all' | 'general' | 'project';
+        /**
+         * Project Id
+         */
+        project_id?: string | null;
     };
     url: '/chat/search';
 };
@@ -2969,6 +3016,44 @@ export type ChatFileDownloadResponses = {
 };
 
 export type ChatFileDownloadResponse = ChatFileDownloadResponses[keyof ChatFileDownloadResponses];
+
+export type ChatSessionMoveData = {
+    body: ChatMoveRequest;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/project';
+};
+
+export type ChatSessionMoveErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatSessionMoveError = ChatSessionMoveErrors[keyof ChatSessionMoveErrors];
+
+export type ChatSessionMoveResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatInfo;
+};
+
+export type ChatSessionMoveResponse = ChatSessionMoveResponses[keyof ChatSessionMoveResponses];
 
 export type FolderGetManyData = {
     body?: never;

@@ -110,17 +110,21 @@ class ChatInfo(BaseModel):
 
 class ChatInfoList(BaseModel):
     chats: list[ChatInfo]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
 
 
 class SearchResultKind(StrEnum):
     CHAT = auto()
-    FOLDER = auto()
+    PROJECT = auto()
 
 
 class SearchMatchSource(StrEnum):
     TITLE = auto()
     CONTENT = auto()
-    FOLDER_TITLE = auto()
+    PROJECT_NAME = auto()
+    PROJECT_DESCRIPTION = auto()
 
 
 class SearchResult(BaseModel):
@@ -128,10 +132,10 @@ class SearchResult(BaseModel):
     id: uuid.UUID
     title: str
     updated_at: int
-    folder_id: uuid.UUID | None = None
+    project_id: uuid.UUID | None = None
+    project_name: str | None = None
     match_source: SearchMatchSource
     snippet: str | None = None
-    path: list[str] = Field(default_factory=list)
 
 
 class SearchResultList(BaseModel):
@@ -166,6 +170,11 @@ class NewChatRequest(BaseModel):
 class ChatUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     title: str | None = Field(default=None)
+
+
+class ChatMoveRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    project_id: uuid.UUID | None
 
 
 class ScopedChatFile(BaseModel):

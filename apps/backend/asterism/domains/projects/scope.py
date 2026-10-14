@@ -10,6 +10,7 @@ from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.queries import select_owned_files
 
 from .models import ProjectFileModel, ProjectModel
+from .queries import select_owned_projects
 from .schemas import Project
 
 
@@ -19,14 +20,7 @@ async def read_project_context(
     project_id: uuid.UUID,
     session: AsyncSession,
 ) -> tuple[Project, list[uuid.UUID]]:
-    project = await session.scalar(
-        select(ProjectModel).where(
-            ProjectModel.user_id == user_id,
-            ProjectModel.id == project_id,
-        ),
-    )
-    if project is None:
-        raise NotFoundException("Project not found")
+    project = await require_owned_project(user_id=user_id, project_id=project_id, session=session)
     memberships = select(ProjectFileModel.file_id).where(
         ProjectFileModel.user_id == user_id,
         ProjectFileModel.project_id == project_id,
@@ -38,3 +32,12 @@ async def read_project_context(
         .where(UserFileModel.id.in_(memberships)),
     )
     return Project.model_validate(project), list(files)
+
+
+async def require_owned_project(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> ProjectModel:
+    project = await session.scalar(select_owned_projects(user_id=user_id).where(
+        ProjectModel.id == project_id,
+    ).execution_options(populate_existing=True))
+    if project is None:
+        raise NotFoundException("Project not found")
+    return project

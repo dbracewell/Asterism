@@ -1,7 +1,6 @@
-import re
 import uuid
 
-from sqlalchemy import and_, delete, desc, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import (
@@ -10,9 +9,9 @@ from asterism.core.exceptions import (
     UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
+from asterism.db.queries import paginate_select
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.files.models import FileContentStatus, UserFileModel
-from asterism.domains.folders.models import FolderModel
 from asterism.domains.settings.service import get_model_and_provider, get_user_settings
 
 from .attachments import bind_message_files, resolve_file_references
@@ -21,6 +20,7 @@ from .models import (
     ChatModel,
     MessageModel,
 )
+from .queries import select_owned_chats
 from .schemas import (
     BulkDeleteChatResponse,
     Chat,
@@ -32,13 +32,9 @@ from .schemas import (
     MessageStatus,
     NewChatRequest,
     NewMessageRequest,
-    SearchMatchSource,
-    SearchResult,
-    SearchResultKind,
-    SearchResultList,
     UpdateMessageRequest,
 )
-from .search_index import search_index_for
+from .search import search as search
 
 
 async def add_message(
@@ -278,136 +274,20 @@ async def delete_chats(
 async def get_many(
     user_id: str,
     session: AsyncSession | None = None,
+    *,
+    project_id: uuid.UUID | None = None,
+    page: int = 1,
+    page_size: int = 50,
 ) -> ChatInfoList:
     async with get_async_db_session(session) as session:
-        stmt = (
-            select(ChatModel)
-            .where(ChatModel.user_id == user_id, ChatModel.project_id.is_(None))
-            .order_by(desc(ChatModel.created_at))
-        )
-        result = await session.scalars(stmt)
-        return ChatInfoList(chats=[ChatInfo.model_validate(r) for r in result.all()])
+        if project_id is not None:
+            from asterism.domains.projects.scope import require_owned_project
 
-
-def _search_terms(query: str) -> list[str]:
-    # Keyword search intentionally treats punctuation as separators and never
-    # passes user input through as SQL/FTS syntax.
-    return re.findall(r"[\w]+", query.casefold())[:10]
-
-
-def _snippet(content: str, terms: list[str], limit: int = 180) -> str:
-    normalized = content.replace("\n", " ").strip()
-    if not normalized:
-        return ""
-    position = min(
-        (normalized.casefold().find(term) for term in terms if term in normalized.casefold()),
-        default=0,
-    )
-    start = max(0, position - 50)
-    end = min(len(normalized), start + limit)
-    prefix = "…" if start else ""
-    suffix = "…" if end < len(normalized) else ""
-    return f"{prefix}{normalized[start:end]}{suffix}"
-
-
-async def search(
-    user_id: str,
-    query: str,
-    page: int = 1,
-    page_size: int = 20,
-    session: AsyncSession | None = None,
-) -> SearchResultList:
-    terms = _search_terms(query)
-    if not terms:
-        return SearchResultList(results=[], total=0, page=page, page_size=page_size)
-
-    async with get_async_db_session(session) as session:
-        content_conditions = [MessageModel.content.ilike(f"%{term}%") for term in terms]
-        search_index = search_index_for(session)
-        chat_ids = await search_index.find_chat_ids(user_id, terms)
-        folder_title_ids = await search_index.find_folder_ids(user_id, terms)
-        matched_chats = []
-        if chat_ids:
-            matched_chats = list(
-                await session.scalars(
-                    select(ChatModel)
-                    .where(ChatModel.user_id == user_id, ChatModel.id.in_(chat_ids))
-                    .order_by(desc(ChatModel.updated_at)),
-                ),
-            )
-
-        results: list[SearchResult] = []
-        for chat in matched_chats:
-            title = chat.title or "Untitled chat"
-            title_matches = all(term in title.casefold() for term in terms)
-            if title_matches:
-                source = SearchMatchSource.TITLE
-                snippet = title
-            else:
-                content = await session.scalar(
-                    select(MessageModel.content)
-                    .where(
-                        MessageModel.chat_id == chat.id,
-                        MessageModel.user_id == user_id,
-                        and_(*content_conditions),
-                    )
-                    .order_by(MessageModel.created_at)
-                    .limit(1),
-                )
-                source = SearchMatchSource.CONTENT
-                snippet = _snippet(content or "", terms)
-            results.append(
-                SearchResult(
-                    kind=SearchResultKind.CHAT,
-                    id=chat.id,
-                    title=title,
-                    updated_at=chat.updated_at,
-                    match_source=source,
-                    snippet=snippet,
-                ),
-            )
-
-        folders = list(await session.scalars(select(FolderModel).where(FolderModel.user_id == user_id)))
-        folders_by_id = {folder.id: folder for folder in folders}
-        for folder in folders:
-            title_matches = folder.id in folder_title_ids
-            if not title_matches:
-                continue
-            results.append(
-                SearchResult(
-                    kind=SearchResultKind.FOLDER,
-                    id=folder.id,
-                    title=folder.title,
-                    updated_at=folder.updated_at,
-                    folder_id=folder.parent_id,
-                    match_source=SearchMatchSource.FOLDER_TITLE,
-                    snippet=folder.title,
-                ),
-            )
-
-        def folder_path(folder_id: uuid.UUID | None) -> list[str]:
-            path: list[str] = []
-            current = folders_by_id.get(folder_id) if folder_id else None
-            while current:
-                path.append(current.title)
-                current = folders_by_id.get(current.parent_id)  # pyright: ignore[reportArgumentType]
-            return list(reversed(path))
-
-        results = [
-            result.model_copy(
-                update={"path": folder_path(result.id if result.kind is SearchResultKind.FOLDER else result.folder_id)},
-            )
-            for result in results
-        ]
-        results.sort(key=lambda result: result.updated_at, reverse=True)
-        total = len(results)
-        start = (page - 1) * page_size
-        return SearchResultList(
-            results=results[start : start + page_size],
-            total=total,
-            page=page,
-            page_size=page_size,
-        )
+            await require_owned_project(user_id=user_id, project_id=project_id, session=session)
+        statement = select_owned_chats(user_id=user_id).where(ChatModel.project_id == project_id)
+        result = await paginate_select(statement=statement, session=session, page=page, page_size=page_size)
+        return ChatInfoList(chats=[ChatInfo.model_validate(chat) for chat in result.records],
+                            total=result.total, page=page, page_size=page_size)
 
 
 async def _get_context_model(

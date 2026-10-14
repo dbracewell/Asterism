@@ -263,15 +263,15 @@ erDiagram
 
 ## Search indexes
 
-SQLite FTS5 virtual tables, `chat_search` and `folder_search`, provide
-user-scoped keyword search over chat titles and persisted message text, and over
-folder titles. They deliberately do not index attachment metadata or extracted
-file content. Database initialization installs the indexes and triggers that
-rebuild a chat document when its title or message content changes.
-The search service tokenizes input into up to ten word terms and constructs quoted
-`AND` queries rather than passing user input through as FTS syntax. Results remain
-filtered by authenticated user ID; folder results include matches from contained
-chats and their ancestor paths.
+SQLite FTS5 virtual tables, `chat_search` and `project_search`, provide
+owner-scoped keyword search over chat titles/persisted message text and project
+names/descriptions. Project prompts, attachments and extracted file content are not
+indexed. Fresh initialization installs indexes and insert/update/delete triggers.
+The adapter accepts up to ten quoted word terms joined with `AND`; user input is
+never passed through as FTS syntax. The search service rechecks owner predicates,
+filters General/project chat scope before database pagination, sorts mixed results
+by updated time/kind/UUID, and enriches only the selected page with current project
+identity and snippets. Project search replaces folder search and ancestor traversal.
 
 ## Chat binding, context, and message tree
 

@@ -725,3 +725,13 @@ those gates were not rerun for this documentation-only cleanup.
   - Runtime/HTTP/schema coverage verifies project/General/sibling/branch/library isolation, immutable ID provenance, original-byte access, atomic invalid-batch rejection, owner-consistent foreign keys, deletion/detachment, same-name replacement denial, and title-event project identity. Playwright uses API mocks; backend tests exercise source storage and constraints directly. JWT decoding is substituted in HTTP tests; normal Bearer/service/DB checks execute.
   - Guarded moves/search and explicit lifecycle coordination remain US-25.2; draft/retry/removal lifecycle remains US-25.3. Full prompt/tool/retrieval integration remains EPIC-26/29. No working database reset, migration, compatibility fallback, or later-story implementation was performed. GitHub CI was not triggered.
   - User confirmation on 2026-10-14 authorizes commit/merge. Next recommended story: **US-25.2 — Chat membership changes and search**.
+
+
+## US-25.2 — Chat membership changes and search
+
+- [x] US-25.2 (completed; user confirmed 2026-10-14): Chat membership changes and search (2–3 person-days).
+  - [x] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
+  - [x] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.
+  - [x] US-25.2-T3: Replace folder search and ancestor traversal with project name/description and chat search behind the existing search adapter.
+  - [x] US-25.2-T4: Regenerate clients; test search isolation, pagination, move effects, and project deletion detaching chats.
+  - Verification: backend 338 tests; frontend 89 tests plus 6 auth migration tests; root 29 tests; lint/type/build/client consistency/cycle checks passed; isolated Playwright 12 passed with one worker and no retries on the final run. Details and runtime boundary in the epic. User confirmation on 2026-10-14 authorizes commit/merge. Next recommended story: US-25.3.

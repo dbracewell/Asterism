@@ -6,7 +6,7 @@ from asterism.domains.chat.models import ChatModel, MessageModel
 from asterism.domains.chat.schemas import MessageStatus, SearchMatchSource, SearchResultKind
 from asterism.domains.chat.search_index import initialize_search_index
 from asterism.domains.chat.service import search
-from asterism.domains.folders.models import FolderModel
+from asterism.domains.projects.models import ProjectModel
 from asterism.domains.user.models import UserModel
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -26,12 +26,12 @@ async def search_session(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_chat_search_finds_titles_content_without_obsolete_folder_binding(search_session):
-    folder = FolderModel(user_id="user-a", title="Research")
-    search_session.add(folder)
+async def test_chat_search_finds_titles_content_and_projects(search_session):
+    project = ProjectModel(user_id="user-a", name="Research")
+    search_session.add(project)
     await search_session.flush()
-    child = FolderModel(user_id="user-a", title="Papers", parent_id=folder.id)
-    search_session.add(child)
+    other_project = ProjectModel(user_id="user-a", name="Papers")
+    search_session.add(other_project)
     await search_session.flush()
     title_chat = ChatModel(user_id="user-a", title="Ocean currents")
     content_chat = ChatModel(user_id="user-a", title="Notes")
@@ -52,16 +52,17 @@ async def test_chat_search_finds_titles_content_without_obsolete_folder_binding(
     result = await search("user-a", "ocean", session=search_session)
 
     chats = [item for item in result.results if item.kind is SearchResultKind.CHAT]
-    folders = [item for item in result.results if item.kind is SearchResultKind.FOLDER]
+    projects = [item for item in result.results if item.kind is SearchResultKind.PROJECT]
     assert {item.id for item in chats} == {title_chat.id, content_chat.id}
-    assert folders == []
+    assert projects == []
     assert next(item for item in chats if item.id == title_chat.id).match_source is SearchMatchSource.TITLE
     content_result = next(item for item in chats if item.id == content_chat.id)
     assert content_result.match_source is SearchMatchSource.CONTENT
     assert "ocean" in (content_result.snippet or "").casefold()
-    assert content_result.path == []
-    folder_results = await search("user-a", "Research", session=search_session)
-    assert [item.id for item in folder_results.results] == [folder.id]
+    assert content_result.project_id is None
+    assert content_result.project_name is None
+    project_results = await search("user-a", "Research", session=search_session)
+    assert [item.id for item in project_results.results] == [project.id]
 
 
 @pytest.mark.asyncio
@@ -80,3 +81,53 @@ async def test_search_paginates_and_requires_all_keywords(search_session):
     assert result.page == 2
     assert len(result.results) == 1
     assert result.results[0].kind is SearchResultKind.CHAT
+
+
+@pytest.mark.asyncio
+async def test_project_description_index_updates_and_never_searches_prompt_or_foreign_data(search_session):
+    from sqlalchemy import delete, update
+
+    project = ProjectModel(user_id="user-a", name="Course", description="Marine ocean observations",
+                           system_prompt="confidentialkeyword")
+    foreign = ProjectModel(user_id="user-b", name="Ocean secret")
+    search_session.add_all([project, foreign])
+    await search_session.commit()
+    result = await search("user-a", "ocean", session=search_session)
+    assert [row.id for row in result.results] == [project.id]
+    assert result.results[0].match_source is SearchMatchSource.PROJECT_DESCRIPTION
+    assert "ocean" in result.results[0].snippet
+    assert (await search("user-a", "confidentialkeyword", session=search_session)).total == 0
+    await search_session.execute(update(ProjectModel).where(ProjectModel.id == project.id).values(
+        name="Ocean course", description="Updated description",
+    ))
+    await search_session.commit()
+    result = await search("user-a", "ocean", session=search_session)
+    assert result.results[0].match_source is SearchMatchSource.PROJECT_NAME
+    assert (await search("user-a", "marine", session=search_session)).total == 0
+    await search_session.execute(delete(ProjectModel).where(ProjectModel.id == project.id))
+    await search_session.commit()
+    assert (await search("user-a", "ocean", session=search_session)).total == 0
+
+
+@pytest.mark.asyncio
+async def test_search_rechecks_adapter_ownership_and_mixed_pagination(search_session, monkeypatch):
+    from asterism.domains.chat import search as search_module
+
+    project = ProjectModel(user_id="user-a", name="Ocean project", updated_at=100)
+    foreign = ProjectModel(user_id="user-b", name="Ocean private", updated_at=100)
+    chat = ChatModel(user_id="user-a", title="Ocean chat", updated_at=100)
+    foreign_chat = ChatModel(user_id="user-b", title="Ocean private", updated_at=100)
+    search_session.add_all([project, foreign, chat, foreign_chat])
+    await search_session.commit()
+
+    class Index:
+        async def find_chat_ids(self, user_id, terms):
+            return [chat.id, foreign_chat.id]
+
+        async def find_project_ids(self, user_id, terms):
+            return {project.id, foreign.id}
+
+    monkeypatch.setattr(search_module, "search_index_for", lambda session: Index())
+    pages = [await search("user-a", "ocean", page=page, page_size=1, session=search_session) for page in (1, 2, 3)]
+    assert [page.total for page in pages] == [2, 2, 2]
+    assert [[row.id for row in page.results] for page in pages] == [[chat.id], [project.id], []]

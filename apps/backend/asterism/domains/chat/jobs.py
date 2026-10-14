@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Awaitable, Callable, Protocol
 
+from asterism.core.exceptions import CodedException
 from asterism.domains.chat.message_queue import discard_message_queue
 
 
@@ -54,6 +56,9 @@ class ChatJob:
         if self.retired:
             operation.close()  # pyright: ignore[reportAttributeAccessIssue]
             raise RuntimeError("This chat job has been retired")
+        if self.manager and self.manager.membership_is_changing(self):
+            operation.close()  # pyright: ignore[reportAttributeAccessIssue]
+            raise CodedException(409, "Chat membership is changing; retry the turn")
         if self.is_active:
             operation.close()  # pyright: ignore[reportAttributeAccessIssue]
             raise RuntimeError("A generation is already active for this chat")
@@ -96,6 +101,22 @@ class ChatJobManager:
         self._jobs: dict[uuid.UUID, ChatJob] = {}
         self._retirement_tasks: set[asyncio.Task[None]] = set()
         self._shutting_down = False
+        self._membership_changes: set[uuid.UUID] = set()
+
+    def membership_is_changing(self, job: ChatJob) -> bool:
+        return any(self._jobs.get(chat_id) is job for chat_id in self._membership_changes)
+
+    @contextmanager
+    def guard_membership_change(self, chat_id: uuid.UUID):
+        """Serialize moves against process-local starts through transaction completion."""
+        job = self._jobs.get(chat_id)
+        if chat_id in self._membership_changes or (job and (job.is_active or job.has_pending_approval)):
+            raise CodedException(409, "Cannot move a chat while a run is active or membership is changing")
+        self._membership_changes.add(chat_id)
+        try:
+            yield
+        finally:
+            self._membership_changes.discard(chat_id)
 
     @property
     def count(self) -> int:

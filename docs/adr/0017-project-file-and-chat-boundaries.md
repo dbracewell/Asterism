@@ -60,7 +60,18 @@ for every existing runtime path.
 
 Chat project binding uses a single project FK with SET NULL plus a composite owner FK,
 so deleting a project detaches chat identity while preserving owner, history, and local
-references. US-25.2 adds explicit lifecycle coordination and guarded moves/search;
+references. US-25.2 implements explicit transaction-local detachment and guarded moves/search;
 US-26 adds run cancellation and prompt/retrieval integration. Old folder-chat bindings
 and their immediate callers are removed now, without compatibility adapters. Folder
-entities/title search remain until their assigned cutover stories.
+entities remain until their assigned cutover story; US-25.2 replaces title search with project name/description search.
+
+
+US-25.2 serializes membership moves against process-local generation starts for the
+entire relational transaction and rejects active runs/pending approvals. No persisted
+or distributed run-lock abstraction is introduced ahead of runtime context work.
+Owned base selects live in their domain queries.py; mixed indexed search filters and
+paginates in SQL before page-only response enrichment. Current scope readers refresh
+cached membership identity; a move changes the next resolved project context without
+rewriting history or promoting local attachments. Project deletion checks its revision
+under a write lock, detaches via the chat-owned boundary, and commits both changes
+atomically. Runtime cancellation and project prompt composition remain US-26.1.

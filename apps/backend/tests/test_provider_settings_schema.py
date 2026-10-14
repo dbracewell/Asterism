@@ -464,7 +464,7 @@ async def test_initialization_creates_current_schema_and_is_repeatable(tmp_path,
         }
         search_tables = {
             row[0] for row in connection.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('chat_search', 'folder_search')",
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('chat_search', 'project_search')",
             )
         }
         migration_table = connection.execute(
@@ -487,7 +487,7 @@ async def test_initialization_creates_current_schema_and_is_repeatable(tmp_path,
         "context_window_source",
         "vision_source",
     }.issubset(model_columns)
-    assert search_tables == {"chat_search", "folder_search"}
+    assert search_tables == {"chat_search", "project_search"}
     assert migration_table is None
     assert stored_tools is not None
     assert {

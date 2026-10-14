@@ -32,23 +32,24 @@ export const ChatSearch = () => {
       <div>
         <h1 className="text-2xl font-semibold">Search</h1>
         <p className="text-muted-foreground text-sm">
-          Find chats and folders by name or conversation content.
+          Find chats and projects by name, project description, or conversation
+          content.
         </p>
       </div>
       <div className="relative">
         <SearchIcon className="text-muted-foreground absolute top-1/2 left-2 size-4 -translate-y-1/2" />
         <Input
-          aria-label="Search chats and folders"
+          aria-label="Search chats and projects"
           autoFocus
           className="h-10 pl-8 text-sm"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search chats and folders"
+          placeholder="Search chats and projects"
           value={query}
         />
       </div>
       {!enabled && (
         <p className="text-muted-foreground text-sm">
-          Enter one or more keywords to search your chats and folders.
+          Enter one or more keywords to search your chats and projects.
         </p>
       )}
       {isFetching && (
@@ -78,9 +79,9 @@ export const ChatSearch = () => {
             <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
               {result.snippet}
             </p>
-            {(result.path?.length ?? 0) > 0 && (
+            {result.kind === "chat" && (
               <p className="text-muted-foreground mt-2 text-xs">
-                {result.path?.join(" / ")}
+                {result.project_name ?? "General"}
               </p>
             )}
             <p className="text-muted-foreground mt-2 text-xs">
@@ -88,9 +89,9 @@ export const ChatSearch = () => {
                 ? result.match_source === "title"
                   ? "Chat title"
                   : "Chat content"
-                : result.match_source === "folder_title"
-                  ? "Folder name"
-                  : "Contains a matching chat"}
+                : result.match_source === "project_name"
+                  ? "Project name"
+                  : "Project description"}
             </p>
           </>
         );

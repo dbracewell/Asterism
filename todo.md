@@ -1,14 +1,9 @@
 # Active and Pending Work
 
-EPIC-24 (US-24.1–US-24.3) was confirmed complete on 2026-10-14; its checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-25.1 was also confirmed complete on 2026-10-14 and is archived there; all remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
+EPIC-24 (US-24.1–US-24.3) was confirmed complete on 2026-10-14; its checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-25.1 and US-25.2 were also confirmed complete on 2026-10-14 and are archived there; all remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-25 — Project chats and chat files](docs/epics/EPIC-25-PROJECT-CHATS-AND-CHAT-FILES.md)
 
-- [ ] US-25.2: Chat membership changes and search (2–3 person-days).
-  - [ ] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
-  - [ ] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.
-  - [ ] US-25.2-T3: Replace folder search and ancestor traversal with project name/description and chat search behind the existing search adapter.
-  - [ ] US-25.2-T4: Regenerate clients; test search isolation, pagination, move effects, and project deletion detaching chats.
 - [ ] US-25.3: Chat upload and attachment lifecycle (2–3 person-days).
   - [ ] US-25.3-T1: Bind new uploads and explicitly selected library files to the target chat; support draft uploads before a new chat has an ID.
   - [ ] US-25.3-T2: Define send/attach atomicity, failed-send retry, draft cleanup, and attachment removal without deleting source files.

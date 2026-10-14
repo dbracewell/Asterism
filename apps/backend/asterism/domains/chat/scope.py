@@ -21,7 +21,9 @@ async def resolve_chat_file_scope(
     chat_id: uuid.UUID,
     session: AsyncSession,
 ) -> ChatFileScope:
-    chat = await session.scalar(select(ChatModel).where(ChatModel.id == chat_id, ChatModel.user_id == user_id))
+    chat = await session.scalar(select(ChatModel).where(
+        ChatModel.id == chat_id, ChatModel.user_id == user_id,
+    ).execution_options(populate_existing=True))
     if chat is None:
         raise NotFoundException("Chat not found")
     records = list(

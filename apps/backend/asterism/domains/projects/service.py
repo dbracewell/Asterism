@@ -11,6 +11,7 @@ from asterism.core.exceptions import BadDataException, CodedException, NotFoundE
 from asterism.domains.files.schemas import UserFileList
 
 from .models import ProjectFileModel, ProjectModel
+from .queries import select_owned_projects
 from .schemas import Project, ProjectCreate, ProjectFileBatch, ProjectFileBatchResult, ProjectList, ProjectUpdate
 
 ProjectSort = Literal["name", "created", "updated"]
@@ -18,8 +19,8 @@ ProjectSort = Literal["name", "created", "updated"]
 
 async def _owned_project(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> ProjectModel:
     project = await session.scalar(
-        select(ProjectModel)
-        .where(ProjectModel.id == project_id, ProjectModel.user_id == user_id)
+        select_owned_projects(user_id=user_id)
+        .where(ProjectModel.id == project_id)
         .execution_options(populate_existing=True),
     )
     if project is None:
@@ -60,7 +61,7 @@ async def list_projects(
     }
     if sort_by not in orders:
         raise BadDataException("Invalid project sort")
-    statement = select(ProjectModel).where(ProjectModel.user_id == user_id)
+    statement = select_owned_projects(user_id=user_id)
     if search := (query or "").strip():
         # User input is a literal substring, not SQL LIKE wildcard syntax.
         statement = statement.where(
@@ -173,27 +174,27 @@ async def delete_project(
     expected_context_revision: int,
     session: AsyncSession,
 ) -> Project:
-    """Remove metadata/memberships through FK cascades, preserving library sources.
+    """Detach through the chat lifecycle boundary and delete in one transaction.
 
-    US-25.1 FK actions detach chats into General while preserving local references.
-    US-25.2 adds explicit chat-service lifecycle coordination; US-26 adds run cancellation.
+    Runtime cancellation before project deletion is integrated in US-26.1.
     """
-    await _owned_project(user_id=user_id, project_id=project_id, session=session)
-    project = await session.scalar(
-        delete(ProjectModel)
-        .where(
-            ProjectModel.id == project_id,
-            ProjectModel.user_id == user_id,
+    from asterism.domains.chat.membership import detach_project_chats
+
+    try:
+        await _write_project(user_id=user_id, project_id=project_id,
+                             expected_context_revision=expected_context_revision,
+                             changes={}, advance_revision=False, session=session)
+        await detach_project_chats(user_id=user_id, project_id=project_id, session=session)
+        project = await session.scalar(delete(ProjectModel).where(
+            ProjectModel.id == project_id, ProjectModel.user_id == user_id,
             ProjectModel.context_revision == expected_context_revision,
-        )
-        .returning(ProjectModel),
-    )
-    if project is None:
+        ).returning(ProjectModel))
+        response = Project.model_validate(project)
+        await session.commit()
+        return response
+    except Exception:
         await session.rollback()
-        raise CodedException(409, "Project context changed; reload the project and retry")
-    response = Project.model_validate(project)
-    await session.commit()
-    return response
+        raise
 
 
 async def change_project_files(

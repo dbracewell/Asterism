@@ -1,6 +1,6 @@
 # EPIC-25 — Project chats and chat files
 
-Status: US-25.1 complete (user confirmed 2026-10-14); later stories pending.
+Status: US-25.1 complete (user confirmed 2026-10-14); US-25.2 complete (user confirmed 2026-10-14); US-25.3 pending.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -25,10 +25,10 @@ As a user, I want project chats and General chats to have explicit, isolated fil
 As a user, I want to organize and find chats within projects or General.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-25.1.
-- [ ] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
-- [ ] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.
-- [ ] US-25.2-T3: Replace folder search and ancestor traversal with project name/description and chat search behind the existing search adapter.
-- [ ] US-25.2-T4: Regenerate clients; test search isolation, pagination, move effects, and project deletion detaching chats.
+- [x] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
+- [x] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.
+- [x] US-25.2-T3: Replace folder search and ancestor traversal with project name/description and chat search behind the existing search adapter.
+- [x] US-25.2-T4: Regenerate clients; test search isolation, pagination, move effects, and project deletion detaching chats.
 
 **Acceptance:** Moves do not promote attachments into project files; search is owner-scoped; historical answers remain visible and are not retroactively regenerated.
 
@@ -121,3 +121,74 @@ The schema change requires a clean disposable-data reset before running against 
 development database. Only isolated test/E2E databases were initialized; no migrations,
 legacy fallbacks, source copies on membership changes, or new extraction generations were
 introduced. User completion confirmation on 2026-10-14 authorizes commit/merge.
+
+
+## US-25.2 implementation and verification (2026-10-14)
+
+Implemented on `feature/us-25.2-chat-membership-search`; user confirmed completion
+on 2026-10-14, authorizing commit/merge. Completed checklist archived in the
+[daily archive](../archive/todo-completed-2026-10-14.md). Only this story was implemented.
+
+Owned project creation remains on POST /chat/. PATCH /chat/{chat_id}/project requires
+an explicit nullable project_id, validates both owners and returns current ChatInfo.
+Moves to a project or General preserve message/branch history and local memberships,
+and do not promote attachments, duplicate sources or alter extraction generations.
+Active generation/pending approval and overlapping moves return 409. The existing
+process-local job manager blocks new turn starts until commit/rollback; this does not
+claim a distributed run lock. Scope reads refresh cached chat/project ORM identity and
+immediately expose the destination prompt/revision/file IDs. Historical answers can
+retain prior project information. Full provider prompt composition, contextual tools
+and project-deletion run cancellation remain the assigned EPIC-26/29 work.
+
+Project deletion obtains a revision-guarded write lock, calls a chat-owned detachment
+operation without committing, then deletes/commits in the same transaction. Injected
+failure after detachment and stale revisions leave both project and chats intact.
+
+General/project chat lists filter before database pagination. Indexed search replaces
+folder title/ancestor search with owned project name/description and chat title/content
+matches. Default search spans chats/projects; General/project scopes return their chats.
+Mixed results paginate in SQL with deterministic updated-time/kind/UUID ordering and
+page-only enrichment, including current project identity. Domain-owned base selects
+and separate search query/enrichment helpers keep policy out of common DB mechanics.
+SQLite initialization installs project FTS triggers; obsolete folder entities remain
+for EPIC-28. No prompt/extracted-file content is indexed.
+
+The existing search UI displays project description/name matches and chat membership.
+The General sidebar now pages older chats and refetches paged data on title events so
+membership/order/count metadata stay current. Project navigation/move controls remain
+EPIC-27. Hey API SDK/types/Zod/query operations were regenerated from ASGI-served
+OpenAPI; an independent generation matched all 18 TypeScript files ignoring trailing
+whitespace only.
+
+| Gate | Result |
+| --- | --- |
+| Backend Ruff / compileall | Passed |
+| Targeted basedpyright (membership/search/query/project-reader modules) | Passed, 0 errors/warnings |
+| Full backend unit/integration suite | 338 passed |
+| Move/lifecycle/search regressions | Passed: owner/auth isolation, active generation/approval denial, start-vs-move serialization, history/local attachment preservation, stale/failed delete rollback, cached identity refresh, scoped SQL pagination, project index update/delete, adapter ownership recheck, OpenAPI contracts |
+| Frontend ESLint / TypeScript | Passed |
+| Frontend Vitest | 32 files, 89 tests passed |
+| Frontend auth migration tests | 6 passed |
+| Root configuration tests | 29 passed |
+| Production build | Passed |
+| OpenAPI / Hey API consistency | Passed, independent 18-file comparison |
+| Isolated Playwright (`CI=1`) | Final run: 12 passed, one worker, no retries; changed search tested with API mocks, real owner/transaction behavior covered by backend HTTP tests |
+| Dependency cycles | Passed; 145 modules, 505 internal imports, no circular imports |
+| Diff whitespace | Passed |
+| GitHub CI | Not triggered; local verification only |
+
+Initial frontend search expectations were updated from folder paths to project identity.
+The new E2E page initially redirected to sign-in; it was added to the existing test-only
+public-route allowlist, and the complete browser suite passed on the final run.
+An interrupted pnpm automatic dependency reinstall hit sandbox network restrictions
+and left missing links; generated install metadata was refreshed and dependencies
+restored with network access. Frontend lint/type/unit/migration commands used the
+repository script bodies through `pnpm --config.verifyDepsBeforeRun=false exec` to
+avoid repeated local reinstall attempts. Build/E2E ran with required network/localhost
+access. No tracked dependency/configuration changes were made. Expected browser
+failed-upload logging and deliberate backend shutdown exit 143 are part of existing
+isolated tests/cleanup.
+
+Only isolated databases were initialized. No working database reset, migration,
+compatibility adapter, live provider call or later-story implementation occurred.
+Older disposable development schemas/indexes require the documented reset workflow.

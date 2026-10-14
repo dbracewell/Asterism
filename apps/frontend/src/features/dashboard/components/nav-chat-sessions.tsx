@@ -13,7 +13,6 @@ import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collaps
 import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
-import { ChatInfoList } from "@/lib/client";
 import {
   chatSessionBulkDeleteMutation,
   chatSessionGetManyOptions,
@@ -34,32 +33,21 @@ export const NavChatSessions = ({
 }) => {
   const queryClient = useQueryClient();
   const pathname = usePathname();
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
   const { data, isPending, error } = useQuery({
     ...chatSessionGetManyOptions({
       client: client,
+      query: { page, page_size: pageSize },
     }),
   });
 
   useSubscribeEvent({
     type: "chat-session:update",
-    handler: async (payload) => {
-      queryClient.setQueryData(
-        chatSessionGetManyQueryKey(),
-        (prev: ChatInfoList | null) => {
-          if (!prev) return;
-          return {
-            chats: prev.chats.map((chat) => {
-              if (chat.id === payload.session_id) {
-                return {
-                  ...chat,
-                  title: payload.title,
-                };
-              }
-              return chat;
-            }),
-          } as ChatInfoList;
-        },
-      );
+    handler: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: chatSessionGetManyQueryKey(),
+      });
     },
   });
 
@@ -213,6 +201,34 @@ export const NavChatSessions = ({
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
+      {(page > 1 || data.total > pageSize) && (
+        <div className="flex justify-between gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
+          <Button
+            aria-label="Previous chats"
+            disabled={page === 1}
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setPage((value) => value - 1);
+              setSelectedIds(new Set());
+            }}
+          >
+            Previous
+          </Button>
+          <Button
+            aria-label="Next chats"
+            disabled={page * pageSize >= data.total}
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setPage((value) => value + 1);
+              setSelectedIds(new Set());
+            }}
+          >
+            Next
+          </Button>
+        </div>
+      )}
       <Dialog />
     </CollapsibleSidebarGroup>
   );
