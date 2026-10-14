@@ -12,16 +12,16 @@ provider's catalog.
 **As an administrator**, I want to search and edit a provider's model catalog
 in small pages so that a large provider does not block the Providers tab.
 
-- [ ] Return provider summaries, model counts, and current draft-model display
+- [x] Return provider summaries, model counts, and current draft-model display
       data from the provider-settings contract without eagerly loading models.
-- [ ] Add an admin-authorized, bounded, stable paginated provider-model search
+- [x] Add an admin-authorized, bounded, stable paginated provider-model search
       endpoint and a focused model-update endpoint.
-- [ ] Preserve provider create/update/delete and draft-model behavior without
+- [x] Preserve provider create/update/delete and draft-model behavior without
       deleting models that are not in the current page.
-- [ ] Load a provider's model browser only on expansion; provide debounced
+- [x] Load a provider's model browser only on expansion; provide debounced
       search, page navigation, model activation, capability editing, and draft
       selection.
-- [ ] Regenerate the Hey API client and add large-catalog, authorization,
+- [x] Regenerate the Hey API client and add large-catalog, authorization,
       pagination, update, and UI regression coverage.
 
 **Acceptance criteria**

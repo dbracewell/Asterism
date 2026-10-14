@@ -94,14 +94,14 @@ without coupling to a specific approval mechanism.
 
 **Dependencies:** None.
 
-- [ ] US-10.1-T1: Define `ToolApprovalPolicy` protocol with `async def authorize(tools: list[ToolCall], permissions: list[str]) -> list[ToolUseAuthorization]`.
-- [ ] US-10.1-T2: Implement `AllowlistApprovalPolicy` — auto-approve tools whose name is in the allowlist, reject all others. No async coordination needed.
-- [ ] US-10.1-T3: Implement `InteractiveApprovalPolicy` — encapsulates the current `UserResponseQueue` + callback pattern. Accepts an `on_pending` callback for the orchestrator to hook into. Returns authorizations once all tools are resolved or timed out.
-- [ ] US-10.1-T4: Refactor `Agent.__init__` to accept an optional `approval_policy` parameter. Default to `AllowlistApprovalPolicy(self.allowed_tools)` when not provided.
-- [ ] US-10.1-T5: Refactor `Agent.run()` to call `self.approval_policy.authorize(...)` instead of creating a `UserResponseQueue` and yielding a blocking `TOOL_CALL` event. The `TOOL_CALL` event should still be yielded for observability, but it must not block execution — authorization is handled by the policy.
-- [ ] US-10.1-T6: Migrate `ChatOrchestrator` to construct `Agent` with `InteractiveApprovalPolicy`, passing its WebSocket approval callback. Remove the `TOOL_CALL` event interception and `_wait_for_ui_approval` workaround from the orchestrator's event loop.
-- [ ] US-10.1-T7: Simplify or remove `UserResponseQueue` if fully replaced by the policy implementations. If retained as an internal detail of `InteractiveApprovalPolicy`, move it there.
-- [ ] US-10.1-T8: Add unit tests for `AllowlistApprovalPolicy` (approved, rejected, mixed, empty), `InteractiveApprovalPolicy` (approved, rejected, timeout, partial), and `Agent.run()` with each policy.
+- [x] US-10.1-T1: Define `ToolApprovalPolicy` protocol with `async def authorize(tools: list[ToolCall], permissions: list[str]) -> list[ToolUseAuthorization]`.
+- [x] US-10.1-T2: Implement `AllowlistApprovalPolicy` — auto-approve tools whose name is in the allowlist, reject all others. No async coordination needed.
+- [x] US-10.1-T3: Implement `InteractiveApprovalPolicy` — encapsulates the current `UserResponseQueue` + callback pattern. Accepts an `on_pending` callback for the orchestrator to hook into. Returns authorizations once all tools are resolved or timed out.
+- [x] US-10.1-T4: Refactor `Agent.__init__` to accept an optional `approval_policy` parameter. Default to `AllowlistApprovalPolicy(self.allowed_tools)` when not provided.
+- [x] US-10.1-T5: Refactor `Agent.run()` to call `self.approval_policy.authorize(...)` instead of creating a `UserResponseQueue` and yielding a blocking `TOOL_CALL` event. The `TOOL_CALL` event should still be yielded for observability, but it must not block execution — authorization is handled by the policy.
+- [x] US-10.1-T6: Migrate `ChatOrchestrator` to construct `Agent` with `InteractiveApprovalPolicy`, passing its WebSocket approval callback. Remove the `TOOL_CALL` event interception and `_wait_for_ui_approval` workaround from the orchestrator's event loop.
+- [x] US-10.1-T7: Simplify or remove `UserResponseQueue` if fully replaced by the policy implementations. If retained as an internal detail of `InteractiveApprovalPolicy`, move it there.
+- [x] US-10.1-T8: Add unit tests for `AllowlistApprovalPolicy` (approved, rejected, mixed, empty), `InteractiveApprovalPolicy` (approved, rejected, timeout, partial), and `Agent.run()` with each policy.
 
 **Acceptance criteria**
 
@@ -122,10 +122,10 @@ boundaries.
 
 **Dependencies:** US-10.1.
 
-- [ ] US-10.2-T1: Construct the sub-agent's `Agent` with `AllowlistApprovalPolicy` using the intersection of the parent agent's `allowed_tools` and the sub-agent profile's `tools`.
-- [ ] US-10.2-T2: Remove the manual auto-approve loop (`for pending_tool in queue.pending: respond(...)`) from `sub_agent.py` — the policy now handles this.
-- [ ] US-10.2-T3: Add tests verifying that a sub-agent cannot execute tools not in its profile's allowlist, even if the parent agent has access to them.
-- [ ] US-10.2-T4: Add tests verifying that a sub-agent cannot execute tools not in the parent's allowlist, even if the sub-agent profile lists them.
+- [x] US-10.2-T1: Construct the sub-agent's `Agent` with `AllowlistApprovalPolicy` using the intersection of the parent agent's `allowed_tools` and the sub-agent profile's `tools`.
+- [x] US-10.2-T2: Remove the manual auto-approve loop (`for pending_tool in queue.pending: respond(...)`) from `sub_agent.py` — the policy now handles this.
+- [x] US-10.2-T3: Add tests verifying that a sub-agent cannot execute tools not in its profile's allowlist, even if the parent agent has access to them.
+- [x] US-10.2-T4: Add tests verifying that a sub-agent cannot execute tools not in the parent's allowlist, even if the sub-agent profile lists them.
 
 **Acceptance criteria**
 

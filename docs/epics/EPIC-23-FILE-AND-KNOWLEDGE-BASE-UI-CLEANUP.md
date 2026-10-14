@@ -37,16 +37,16 @@ regenerate action so the explorer is uncluttered.
 
 **Dependencies:** None.
 
-- [ ] US-23.1-T1: Remove Regenerate caption, Clear caption, and Edit caption
+- [x] US-23.1-T1: Remove Regenerate caption, Clear caption, and Edit caption
       buttons and any now-unused dialogs/mutations usage from the explorer.
-- [ ] US-23.1-T2: Add `Embedding (status)` and `Caption (status)` badges derived
+- [x] US-23.1-T2: Add `Embedding (status)` and `Caption (status)` badges derived
       from file knowledge artifacts, including pending/processing/failed/
       disabled states.
-- [ ] US-23.1-T3: Add a `RotateCcw` regenerate button that reprocesses the file
+- [x] US-23.1-T3: Add a `RotateCcw` regenerate button that reprocesses the file
       and is disabled while processing.
-- [ ] US-23.1-T4: Add a knowledge-base membership icon with tooltip; expose
+- [x] US-23.1-T4: Add a knowledge-base membership icon with tooltip; expose
       membership in the file list response if it is not already available.
-- [ ] US-23.1-T5: Update component tests and E2E coverage.
+- [x] US-23.1-T5: Update component tests and E2E coverage.
 
 **Acceptance criteria**
 
@@ -60,18 +60,18 @@ regenerate action so the explorer is uncluttered.
 
 **Dependencies:** US-23.1.
 
-- [ ] US-23.2-T1: Add a backend endpoint returning the top 5 similar files with
+- [x] US-23.2-T1: Add a backend endpoint returning the top 5 similar files with
       scores (excluding the file itself), user-scoped and current-generation
       only; regenerate the Hey API client.
-- [ ] US-23.2-T2: Add or reuse endpoints for extracted content, caption, and
+- [x] US-23.2-T2: Add or reuse endpoints for extracted content, caption, and
       knowledge-base memberships for a file.
-- [ ] US-23.2-T3: Add the file view route/page with sections for extracted
+- [x] US-23.2-T3: Add the file view route/page with sections for extracted
       content, caption, similar files (linking to their views), and knowledge
       bases (linking to their views).
-- [ ] US-23.2-T4: Link to the file view from the explorer.
-- [ ] US-23.2-T5: Handle files without ready artifacts (empty/processing/failed
+- [x] US-23.2-T4: Link to the file view from the explorer.
+- [x] US-23.2-T5: Handle files without ready artifacts (empty/processing/failed
       states).
-- [ ] US-23.2-T6: Add backend tests (scoping, ordering, exclusion, missing
+- [x] US-23.2-T6: Add backend tests (scoping, ordering, exclusion, missing
       embeddings) and frontend tests.
 
 **Acceptance criteria**
@@ -86,14 +86,14 @@ regenerate action so the explorer is uncluttered.
 
 **Dependencies:** US-23.1.
 
-- [ ] US-23.3-T1: Make the shared file-manager components configurable by data
+- [x] US-23.3-T1: Make the shared file-manager components configurable by data
       source (all files vs. knowledge-base files) and allowed actions.
-- [ ] US-23.3-T2: Replace the file list in the knowledge-base detail view with
+- [x] US-23.3-T2: Replace the file list in the knowledge-base detail view with
       the shared explorer, supporting remove-from-base (not delete file),
       regenerate, and open file view.
-- [ ] US-23.3-T3: Keep the existing deletion-versus-membership-removal
+- [x] US-23.3-T3: Keep the existing deletion-versus-membership-removal
       explanations accurate.
-- [ ] US-23.3-T4: Update tests.
+- [x] US-23.3-T4: Update tests.
 
 **Acceptance criteria**
 
@@ -107,13 +107,13 @@ knowledge base.
 
 **Dependencies:** US-23.3.
 
-- [ ] US-23.4-T1: Build a dialog hosting the shared explorer in a no-delete,
+- [x] US-23.4-T1: Build a dialog hosting the shared explorer in a no-delete,
       selection-enabled mode.
-- [ ] US-23.4-T2: Add an "Add selected" action that adds the selected files in
+- [x] US-23.4-T2: Add an "Add selected" action that adds the selected files in
       one request (use the existing batch endpoint or add one).
-- [ ] US-23.4-T3: Mark files already in the base as unselectable.
-- [ ] US-23.4-T4: Handle partial failures and loading/empty states.
-- [ ] US-23.4-T5: Add tests and E2E coverage; run quality gates and update
+- [x] US-23.4-T3: Mark files already in the base as unselectable.
+- [x] US-23.4-T4: Handle partial failures and loading/empty states.
+- [x] US-23.4-T5: Add tests and E2E coverage; run quality gates and update
       architecture/README docs.
 
 **Acceptance criteria**
@@ -124,5 +124,5 @@ knowledge base.
 
 ### Epic closure
 
-- [ ] Verify story acceptance criteria and request user confirmation.
-- [ ] On confirmation, merge approved story branches and propose the next plan.
+- [x] Verify story acceptance criteria and request user confirmation.
+- [x] On confirmation, merge approved story branches and propose the next plan.

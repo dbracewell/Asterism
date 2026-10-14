@@ -205,7 +205,7 @@ Work is organized into **Epics → User Stories → Tasks**.
 
 - Root-level `todo.md` is the live execution checklist.
 - When a new epic is created, copy all user stories and tasks into `todo.md` as checklist items.
-- Never delete previous epic/story/task history from `todo.md`; preserve progress visibility.
+- Archive completed epic/story/task history under `/docs/archive` before removing it from `todo.md`; keep the live checklist focused on active and pending work.
 
 ## 5.3 Story Execution Policy
 

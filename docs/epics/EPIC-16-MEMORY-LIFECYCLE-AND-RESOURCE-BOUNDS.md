@@ -66,18 +66,18 @@ in-memory state so that each long-running resource has an owner and a bound.
 
 **Dependencies:** None.
 
-- [ ] US-16.1-T1: Inventory backend and frontend application-owned module globals,
+- [x] US-16.1-T1: Inventory backend and frontend application-owned module globals,
       singleton registries, caches, maps/dictionaries, queues, timers, event
       listeners, background tasks, and connection state; exclude generated code and
       dependency internals unless Asterism controls the keys or retention.
-- [ ] US-16.1-T2: For every item, record owner, key cardinality/source, retained
+- [x] US-16.1-T2: For every item, record owner, key cardinality/source, retained
       object graph, creation path, normal/error/disconnect/deletion/shutdown cleanup,
       current bound/TTL, and whether expiry is eager or lazy.
-- [ ] US-16.1-T3: Exercise representative lifecycle paths with tests or a small
+- [x] US-16.1-T3: Exercise representative lifecycle paths with tests or a small
       harness: completed/cancelled/deleted chat, reconnect, provider failure,
       WebSocket/SSE disconnect, event-handler failure, and high-cardinality model/IP
       input.
-- [ ] US-16.1-T4: Publish the inventory and accepted resource contracts in an
+- [x] US-16.1-T4: Publish the inventory and accepted resource contracts in an
       ADR-style note; turn every unresolved unbounded path into a subsequent epic
       task before implementation begins.
 
@@ -96,21 +96,21 @@ runtime state without breaking active-generation reconnects.
 
 **Dependencies:** US-16.1.
 
-- [ ] US-16.2-T1: Define a `ChatJob` lifecycle/state contract including active
+- [x] US-16.2-T1: Define a `ChatJob` lifecycle/state contract including active
       generation, title task, pending approvals, connected controllers, idle state,
       explicit cancellation, deletion, and backend shutdown.
-- [ ] US-16.2-T2: Add race-safe `ChatJobManager` removal/retirement APIs and
+- [x] US-16.2-T2: Add race-safe `ChatJobManager` removal/retirement APIs and
       controller attach/detach tracking. Remove an idle completed job after its last
       controller detaches; never remove a job with active work or an approval wait.
-- [ ] US-16.2-T3: Couple chat deletion to runtime retirement: verify ownership,
+- [x] US-16.2-T3: Couple chat deletion to runtime retirement: verify ownership,
       cancel/await active job safely, discard queued packets, then delete persistence
       without allowing late writes or recreation of stale state.
-- [ ] US-16.2-T4: Replace or constrain the per-chat message-queue cache so queues
+- [x] US-16.2-T4: Replace or constrain the per-chat message-queue cache so queues
       have explicit removal with job retirement/deletion, a bounded fallback policy,
       and a defined packet/backpressure limit for disconnected clients.
-- [ ] US-16.2-T5: Add lifespan shutdown cleanup that cancels/awaits active jobs
+- [x] US-16.2-T5: Add lifespan shutdown cleanup that cancels/awaits active jobs
       and releases queues without masking shutdown errors.
-- [ ] US-16.2-T6: Add backend tests for completion, cancellation, reconnect,
+- [x] US-16.2-T6: Add backend tests for completion, cancellation, reconnect,
       duplicate connections, deletion during/after generation, queued-event bounds,
       expiry fallback, and shutdown; assert manager/queue cardinality returns to the
       expected baseline.
@@ -130,19 +130,19 @@ bounded under high-cardinality input and slow consumers.
 
 **Dependencies:** US-16.1.
 
-- [ ] US-16.3-T1: Apply an explicit finite cache size and suitable invalidation to
+- [x] US-16.3-T1: Apply an explicit finite cache size and suitable invalidation to
       token encodings; test many distinct administrator-provided model names and
       preserve known-model behavior.
-- [ ] US-16.3-T2: Review `SlidingTTLCache` use for lazy-expiry behavior, cache
+- [x] US-16.3-T2: Review `SlidingTTLCache` use for lazy-expiry behavior, cache
       size accounting, and expiration under idle traffic; fix or replace it where its
       contract cannot meet US-16.1's resource requirements.
-- [ ] US-16.3-T3: Define bounded concurrency, ownership, error handling, and
+- [x] US-16.3-T3: Define bounded concurrency, ownership, error handling, and
       shutdown behavior for backend event-dispatch tasks. Keep static handler
       registration separate from request/user-keyed retained state.
-- [ ] US-16.3-T4: Review component singletons and user caches against the
+- [x] US-16.3-T4: Review component singletons and user caches against the
       inventory; add limits, invalidation, or lifecycle cleanup only where evidence
       requires it.
-- [ ] US-16.3-T5: Add focused tests for cache eviction/expiry, task failure,
+- [x] US-16.3-T5: Add focused tests for cache eviction/expiry, task failure,
       cancellation, and shutdown; expose only safe aggregate diagnostics needed to
       verify bounds.
 
@@ -161,19 +161,19 @@ rate-limit entries when clients disconnect or requests fail.
 
 **Dependencies:** US-16.1.
 
-- [ ] US-16.4-T1: Verify SSE cleanup for request abort, stream cancellation,
+- [x] US-16.4-T1: Verify SSE cleanup for request abort, stream cancellation,
       enqueue failure, and initialization failure; make cleanup idempotent and ensure
       every path clears the heartbeat and removes the global emitter listener.
-- [ ] US-16.4-T2: Bound the server-global SSE listener population and specify
+- [x] US-16.4-T2: Bound the server-global SSE listener population and specify
       behavior when the listener threshold is reached; ensure diagnostics do not
       expose user/event payloads.
-- [ ] US-16.4-T3: Verify and, if necessary, bound the IP rate-limit store under
+- [x] US-16.4-T3: Verify and, if necessary, bound the IP rate-limit store under
       high-cardinality forwarded addresses; test expiry and cleanup scheduling across
       server lifecycle.
-- [ ] US-16.4-T4: Audit client-side timers, WebSocket hooks, subscriptions, and
+- [x] US-16.4-T4: Audit client-side timers, WebSocket hooks, subscriptions, and
       global event-bus handlers for mount/unmount cleanup; add regression tests for
       navigation and reconnect cycles.
-- [ ] US-16.4-T5: Add frontend unit/integration coverage and an isolated
+- [x] US-16.4-T5: Add frontend unit/integration coverage and an isolated
       connection-churn harness where needed.
 
 **Acceptance criteria**
@@ -190,14 +190,14 @@ extended traffic rather than only passing short unit tests.
 
 **Dependencies:** US-16.2, US-16.3, US-16.4.
 
-- [ ] US-16.5-T1: Build deterministic backend and frontend churn scenarios for
+- [x] US-16.5-T1: Build deterministic backend and frontend churn scenarios for
       many unique chats, users/model names, reconnects, cancellations, deletions,
       SSE clients, and event bursts without external provider dependencies.
-- [ ] US-16.5-T2: Assert resource counters/cardinality and task/listener counts
+- [x] US-16.5-T2: Assert resource counters/cardinality and task/listener counts
       plateau within documented bounds after cleanup/TTL windows; fail on regression.
-- [ ] US-16.5-T3: Run focused and full lint, typecheck, unit/integration, and E2E
+- [x] US-16.5-T3: Run focused and full lint, typecheck, unit/integration, and E2E
       checks; regenerate the Hey API client if an API contract changes.
-- [ ] US-16.5-T4: Update runtime architecture and operator documentation with
+- [x] US-16.5-T4: Update runtime architecture and operator documentation with
       ownership, limits, eviction/overflow behavior, restart semantics, and safe
       diagnostics.
 

@@ -25,12 +25,12 @@ Make chats safer to manage and easier to find while preserving background genera
 
 **Dependencies:** None.
 
-- [ ] US-15.1-T1: Introduce a per-chat background job manager that owns active orchestration independently of WebSocket controllers and prevents duplicate jobs.
-- [ ] US-15.1-T2: Make WebSocket connections attach/detach from job state without cancelling it on disconnect; support reconnect during and after generation.
-- [ ] US-15.1-T3: Add an authenticated `cancel` command and cancellation-safe orchestration, including model streams, tool tasks, and pending approvals.
-- [ ] US-15.1-T4: Persist a terminal cancelled state and partial assistant output where available; ensure cancelled/pending work never restarts on reconnect.
-- [ ] US-15.1-T5: Add accessible Stop-generating UI and live status handling without treating navigation as cancellation.
-- [ ] US-15.1-T6: Add backend/frontend tests for disconnect continuation, reconnect, explicit cancellation, terminal persistence, and duplicate-job prevention.
+- [x] US-15.1-T1: Introduce a per-chat background job manager that owns active orchestration independently of WebSocket controllers and prevents duplicate jobs.
+- [x] US-15.1-T2: Make WebSocket connections attach/detach from job state without cancelling it on disconnect; support reconnect during and after generation.
+- [x] US-15.1-T3: Add an authenticated `cancel` command and cancellation-safe orchestration, including model streams, tool tasks, and pending approvals.
+- [x] US-15.1-T4: Persist a terminal cancelled state and partial assistant output where available; ensure cancelled/pending work never restarts on reconnect.
+- [x] US-15.1-T5: Add accessible Stop-generating UI and live status handling without treating navigation as cancellation.
+- [x] US-15.1-T6: Add backend/frontend tests for disconnect continuation, reconnect, explicit cancellation, terminal persistence, and duplicate-job prevention.
 
 **Acceptance criteria**
 
@@ -41,10 +41,10 @@ Make chats safer to manage and easier to find while preserving background genera
 
 ### US-15.2 — Find chats and folders with keyword search
 
-- [ ] Add a user-scoped, paginated search API and SQLite FTS-backed indexes for folder titles, chat titles, and message content.
-- [ ] Return typed grouped results with match reason, safe snippet, chat/folder path, and stable ordering.
-- [ ] Add debounced accessible sidebar/global search UI using the generated client.
-- [ ] Test user isolation, escaping, pagination, title/content/folder matches, and empty/error states.
+- [x] Add a user-scoped, paginated search API and SQLite FTS-backed indexes for folder titles, chat titles, and message content.
+- [x] Return typed grouped results with match reason, safe snippet, chat/folder path, and stable ordering.
+- [x] Add debounced accessible sidebar/global search UI using the generated client.
+- [x] Test user isolation, escaping, pagination, title/content/folder matches, and empty/error states.
 
 ### US-15.6 — Generate reliable chat titles
 
@@ -52,10 +52,10 @@ Make chats safer to manage and easier to find while preserving background genera
 
 **Dependencies:** US-15.1.
 
-- [ ] US-15.6-T1: Move title generation into the connection-independent chat job lifecycle and ensure it runs at most once per chat.
-- [ ] US-15.6-T2: Replace the unbounded empty-title retry with bounded retries, timeouts, validation, and a deterministic fallback title.
-- [ ] US-15.6-T3: Persist and publish the final title reliably; prevent background failures from leaving a title permanently null.
-- [ ] US-15.6-T4: Add tests for disconnect continuation, empty/invalid provider output, provider failure, duplicate connections, title persistence, and search/sidebar updates.
+- [x] US-15.6-T1: Move title generation into the connection-independent chat job lifecycle and ensure it runs at most once per chat.
+- [x] US-15.6-T2: Replace the unbounded empty-title retry with bounded retries, timeouts, validation, and a deterministic fallback title.
+- [x] US-15.6-T3: Persist and publish the final title reliably; prevent background failures from leaving a title permanently null.
+- [x] US-15.6-T4: Add tests for disconnect continuation, empty/invalid provider output, provider failure, duplicate connections, title persistence, and search/sidebar updates.
 
 **Acceptance criteria**
 
@@ -65,17 +65,17 @@ Make chats safer to manage and easier to find while preserving background genera
 
 ### US-15.3 — Select and safely delete chats from the sidebar
 
-- [ ] Add sidebar selection mode, selected count, select-visible, and accessible keyboard controls.
-- [ ] Add atomic bulk deletion with strict ownership validation and coherent cache invalidation.
-- [ ] Require confirmation for single and bulk chat deletion; handle Escape/backdrop cancellation correctly.
-- [ ] Test confirmation, active-route navigation, partial failure, cache updates, and bulk ownership checks.
+- [x] Add sidebar selection mode, selected count, select-visible, and accessible keyboard controls.
+- [x] Add atomic bulk deletion with strict ownership validation and coherent cache invalidation.
+- [x] Require confirmation for single and bulk chat deletion; handle Escape/backdrop cancellation correctly.
+- [x] Test confirmation, active-route navigation, partial failure, cache updates, and bulk ownership checks.
 
 ### US-15.4 — Browse and start chats from a folder page
 
-- [ ] Add an ownership-safe folder route and paginated direct-chat listing API.
-- [ ] Render session cards with title, updated time, agent, message count, and deterministic conversation preview.
-- [ ] Add a folder-scoped composer that starts a chat in that folder and routes to it.
-- [ ] Test pagination, empty states, ownership, navigation, and folder assignment.
+- [x] Add an ownership-safe folder route and paginated direct-chat listing API.
+- [x] Render session cards with title, updated time, agent, message count, and deterministic conversation preview.
+- [x] Add a folder-scoped composer that starts a chat in that folder and routes to it.
+- [x] Test pagination, empty states, ownership, navigation, and folder assignment.
 
 ### US-15.5 — Show estimated chat context consumption
 

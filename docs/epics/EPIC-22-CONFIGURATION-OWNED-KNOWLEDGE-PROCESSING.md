@@ -8,7 +8,7 @@ that defines the platform-wide knowledge-processing policy. A changed extraction
 chunking, embedding, caption mode, or selected caption provider model must create
 a new generation and queue the eligible file library.
 
-**Status: Planned — no user story has started; the epic covers the complete knowledge-processing policy.**
+**Status: Complete — US-22.1 through US-22.4 verified, user-confirmed, and merged into `main`.**
 
 ## Product decisions
 

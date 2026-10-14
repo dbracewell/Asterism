@@ -17,6 +17,10 @@ activity and persisted execution traces.
 
 ## Architecture
 
+Active and pending work is tracked in [`todo.md`](todo.md). Completed checklist
+history through 2026-10-14 is preserved in the
+[completed work archive](docs/archive/todo-completed-2026-10-14.md).
+
 The implementation-oriented architecture guides are in
 [`architecture/`](docs/architecture/README.md):
 
