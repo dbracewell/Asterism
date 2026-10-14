@@ -84,6 +84,7 @@ class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     )
 
     __table_args__ = (
+        UniqueConstraint("id", "user_id", name="uq_user_files_id_user"),
         UniqueConstraint("user_id", "filename", name="uq_user_files_user_filename"),
         Index("idx_user_files_user_filename", "user_id", "filename"),
     )

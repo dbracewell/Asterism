@@ -11,6 +11,7 @@ from asterism.domains.knowledge_base.models import (  # noqa: F401
     KnowledgeBaseFileModel,
     KnowledgeBaseModel,
 )
+from asterism.domains.projects.models import ProjectFileModel, ProjectModel  # noqa: F401
 from asterism.domains.settings.models import (  # noqa: F401
     ApplicationSettingsModel,
     LLMModel,

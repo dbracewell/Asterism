@@ -675,3 +675,13 @@ those gates were not rerun for this documentation-only cleanup.
   - [x] Cover assigned models becoming inactive/missing and URL-selected provider catalog loading.
   - [x] Related backend tests: 24 passed; provider-tab tests: 5 passed; focused lint and frontend typecheck passed.
   - [x] Completion confirmed by the maintainer merge; closure record reconciled on 2026-10-14.
+
+## US-24.1 — Project boundaries and fresh schema
+
+- [x] US-24.1: Project boundaries and fresh schema (1–2 person-days). **Completed; user confirmed 2026-10-14.**
+  - [x] US-24.1-T1: Document the proposed contracts and lifecycle rules in an ADR; resolve the roadmap assumptions before implementation.
+  - [x] US-24.1-T2: Add Project (owner, name, description, system_prompt, context_revision, timestamps) and unique ProjectFile memberships; use composite ownership constraints or equivalent DB enforcement.
+  - [x] US-24.1-T3: Keep source files and extraction generations independent of projects; update fresh initialization and isolated reset fixtures without migrations.
+  - [x] US-24.1-T4: Add schema/invariant tests and review dependency direction; do not introduce a generic container framework.
+  - Verification: backend Ruff passed; backend compileall passed; full backend suite **249 passed**; `knot asterism` reported **no circular imports** (129 modules, 428 imports); app/OpenAPI import passed with no new project API contract.
+  - Fresh initialization/reset tests used temporary storage only. Frontend lint/typecheck/tests/build and Playwright were not run: no frontend/API/user workflow changes. Client regeneration is not applicable. No current database reset performed; completion confirmed for commit and merge.

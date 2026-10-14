@@ -51,3 +51,20 @@ def test_sqlite_reset_rejects_remote_database(monkeypatch):
     monkeypatch.setattr(config, "db_url", "postgresql://user:secret@example.test/db")
     with pytest.raises(RuntimeError, match="only a local SQLite"):
         sqlite_database_path()
+
+
+@pytest.mark.asyncio
+async def test_fresh_and_isolated_reset_initialization_include_projects(tmp_path, monkeypatch):
+    database = tmp_path / "isolated.db"
+    monkeypatch.setattr(config, "storage_root", tmp_path)
+    monkeypatch.setattr(config, "db_url", f"sqlite+aiosqlite:///{database}")
+    for reset in (False, True):
+        await initialize_database(reset=reset, assume_yes=True)
+        with sqlite3.connect(database) as connection:
+            tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            assert {"projects", "project_files", "user_files", "file_extractions"} <= tables
+            assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+            if not reset:
+                connection.execute("CREATE TABLE reset_canary (value TEXT)")
+            else:
+                assert "reset_canary" not in tables

@@ -92,3 +92,13 @@ Comprehensive system design guides and Mermaid sequence diagrams are available i
 - [Data Model & Storage](../../docs/architecture/data-and-storage.md) — High-concurrency SQLite WAL, JSONB columns, and the message tree
 - [Knowledge Retrieval](../../docs/architecture/knowledge-retrieval.md) — LanceDB lifecycle, offline model provisioning, and multimodal embedding benchmark
 - [Authentication & Security](../../docs/architecture/auth-and-security.md) — BetterAuth, JWKS RS256 token verification, and tenancy
+
+
+### Project schema (US-24.1)
+
+Fresh initialization includes `projects` and `project_files`. Memberships use composite
+owner foreign keys and a unique project/file pair; sources and extraction generations
+remain independent. Project lifecycle APIs and chat binding are subsequent stories.
+See [ADR-0017](../../docs/adr/0017-project-file-and-chat-boundaries.md) for the approved
+contracts. Existing databases are disposable: use the verified-target reset workflow
+above to recreate them rather than relying on `create_all` to alter existing tables.
