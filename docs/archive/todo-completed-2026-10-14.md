@@ -685,3 +685,13 @@ those gates were not rerun for this documentation-only cleanup.
   - [x] US-24.1-T4: Add schema/invariant tests and review dependency direction; do not introduce a generic container framework.
   - Verification: backend Ruff passed; backend compileall passed; full backend suite **249 passed**; `knot asterism` reported **no circular imports** (129 modules, 428 imports); app/OpenAPI import passed with no new project API contract.
   - Fresh initialization/reset tests used temporary storage only. Frontend lint/typecheck/tests/build and Playwright were not run: no frontend/API/user workflow changes. Client regeneration is not applicable. No current database reset performed; completion confirmed for commit and merge.
+
+## US-24.2 — Project lifecycle API
+
+- [x] US-24.2: Project lifecycle API (2–3 person-days). **Completed; user confirmed 2026-10-14.**
+  - [x] US-24.2-T1: Implement owner-scoped create/read/update/delete, pagination, search, validation, and deterministic sorting.
+  - [x] US-24.2-T2: Increment context_revision for prompt and membership changes; reject stale updates where appropriate.
+  - [x] US-24.2-T3: Define deletion as detach chats to General and remove memberships while retaining source files; cancel affected runs before deletion once runtime integration exists.
+  - [x] US-24.2-T4: Regenerate Hey API types and add authorization, lifecycle, and validation tests.
+  - Verification: backend lint/compile passed; targeted schema basedpyright **0 errors / 0 warnings** after optional-field correction; full backend suite **287 passed** (38 focused project API tests); frontend lint/TypeScript passed; frontend unit suite **30 files / 86 tests passed**; frontend migration tests **6 passed**; no circular imports (132 modules / 437 internal imports); served OpenAPI and regenerated-client consistency passed.
+  - Lifecycle definition: shared sources/generations survive deletion. Chat detachment is wired in US-25.2 and run cancellation in US-26.1 when those integrations exist. Frontend build/Playwright were not run; no frontend workflow added. No current database reset performed; completion confirmed for commit and merge.

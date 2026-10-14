@@ -1,6 +1,6 @@
 # EPIC-24 — Project domain and file membership
 
-Status: US-24.1 complete (user confirmed 2026-10-14); US-24.2 and US-24.3 not started.
+Status: US-24.1 complete (user confirmed 2026-10-14); US-24.2 complete (user confirmed 2026-10-14); US-24.3 not started.
 
 Contracts: [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md).
 
@@ -26,10 +26,10 @@ As a developer, I want explicit project, file, and chat boundaries so each modul
 As a user, I want to create, edit, find, and delete projects with their instructions.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-24.1.
-- [ ] US-24.2-T1: Implement owner-scoped create/read/update/delete, pagination, search, validation, and deterministic sorting.
-- [ ] US-24.2-T2: Increment context_revision for prompt and membership changes; reject stale updates where appropriate.
-- [ ] US-24.2-T3: Define deletion as detach chats to General and remove memberships while retaining source files; cancel affected runs before deletion once runtime integration exists.
-- [ ] US-24.2-T4: Regenerate Hey API types and add authorization, lifecycle, and validation tests.
+- [x] US-24.2-T1: Implement owner-scoped create/read/update/delete, pagination, search, validation, and deterministic sorting.
+- [x] US-24.2-T2: Increment context_revision for prompt and membership changes; reject stale updates where appropriate.
+- [x] US-24.2-T3: Define deletion as detach chats to General and remove memberships while retaining source files; cancel affected runs before deletion once runtime integration exists.
+- [x] US-24.2-T4: Regenerate Hey API types and add authorization, lifecycle, and validation tests.
 
 **Acceptance:** Foreign projects are inaccessible; name is required; description and prompt may be empty; deleting a project never deletes shared source files.
 
@@ -72,3 +72,48 @@ file storage and extraction models remain independent. No migrations were added.
 
 The working development database was not reset. User confirmation authorizes committing and merging this story.
 Existing unrelated `.pi/` and other epic planning files were preserved.
+
+## US-24.2 implementation and verification (2026-10-14)
+
+Implemented on `feat/us-24.2-project-lifecycle-api`; user confirmed completion on 2026-10-14. Completed checklist archived in [the daily archive](../archive/todo-completed-2026-10-14.md).
+Owner-scoped CRUD, pagination, literal name/description search, deterministic sorting,
+request validation, duplicate-name conflicts, and atomic revision guards are implemented.
+Changed prompts advance context_revision; metadata-only edits/no-ops do not. PATCH and
+DELETE require the expected context revision. A transaction-local revision operation
+is provided/tested for actual membership changes in US-24.3.
+
+Deletion cascades memberships and preserves source bytes, extraction, and other project
+references. The deletion lifecycle is defined now; chat detachment is implemented in
+US-25.2 after binding exists, and cancellation before deletion in US-26.1 after runtime
+integration exists. Those future task descriptions explicitly record the handoff.
+No placeholder framework, migrations, or working database reset were introduced.
+
+| Gate | Result |
+| --- | --- |
+| Backend Ruff | Passed |
+| Backend compileall | Passed; repository typecheck gate is compilation |
+| Targeted static type check (`basedpyright`, projects/schemas.py) | Passed: 0 errors, 0 warnings after correcting optional patch-field annotations |
+| Focused project HTTP API tests | 38 passed; JWT token decoding is substituted in ASGI tests, while Bearer requirement and user/service/DB boundaries run normally |
+| Full backend unit/integration suite | 287 passed |
+| Dependency cycles | None; 132 modules, 437 internal imports |
+| Frontend ESLint | Passed |
+| Frontend TypeScript (`tsc --noEmit`) | Passed |
+| Frontend Vitest | 30 files, 86 tests passed |
+| Frontend migration tests | 6 passed |
+| OpenAPI / generated clients | Served schema exported through ASGI; SDK/types/Zod/query operations regenerated with Hey API 0.98.1. Independent regeneration matches all 18 TS files ignoring trailing whitespace only |
+| Frontend build / isolated Playwright | Not run; no frontend workflow added in this story |
+| Root configuration tests / CI jobs | Not run; configuration/workflow files unchanged; CI not triggered |
+| Diff whitespace check | Passed |
+
+Tests cover direct API ownership isolation, all endpoints requiring auth, request
+validation, empty description/prompt, duplicate-name rollback, stale/no-op/metadata
+updates, concurrent prompt/create winners, stable pagination, literal wildcard searches,
+shared-source byte preservation, and transactional membership revision rollback.
+User confirmation authorizes committing and merging US-24.2.
+
+Schema review correction: patch fields now explicitly allow None internally for omitted
+values, with a validator rejecting supplied nulls. SkipJsonSchema keeps the request
+contract non-nullable. Revision-only patches are tested as no-ops. Focused tests
+(38), full backend suite (287), Ruff, and targeted static typing were rerun successfully.
+Independent regeneration confirms unchanged client contracts after normalizing only
+the existing import-time AgentProfile UUID default and trailing whitespace.

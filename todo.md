@@ -1,14 +1,9 @@
 # Active and Pending Work
 
-US-24.1 was confirmed complete on 2026-10-14; its checklist is [archived](docs/archive/todo-completed-2026-10-14.md). All remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
+US-24.1 and US-24.2 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). All remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-24 — Project domain and file membership](docs/epics/EPIC-24-PROJECT-DOMAIN-AND-FILE-MEMBERSHIP.md)
 
-- [ ] US-24.2: Project lifecycle API (2–3 person-days).
-  - [ ] US-24.2-T1: Implement owner-scoped create/read/update/delete, pagination, search, validation, and deterministic sorting.
-  - [ ] US-24.2-T2: Increment context_revision for prompt and membership changes; reject stale updates where appropriate.
-  - [ ] US-24.2-T3: Define deletion as detach chats to General and remove memberships while retaining source files; cancel affected runs before deletion once runtime integration exists.
-  - [ ] US-24.2-T4: Regenerate Hey API types and add authorization, lifecycle, and validation tests.
 - [ ] US-24.3: Project file membership API (2–3 person-days).
   - [ ] US-24.3-T1: Implement atomic bulk add/remove and paginated project file listing through the file-service boundary.
   - [ ] US-24.3-T2: Validate all file owners, enforce unique membership, and report already-added files deterministically.
@@ -27,7 +22,7 @@ US-24.1 was confirmed complete on 2026-10-14; its checklist is [archived](docs/a
   - [ ] US-25.1-T5: Regenerate clients and test general/project chats, branches, missing files, and foreign identifiers.
 - [ ] US-25.2: Chat membership changes and search (2–3 person-days).
   - [ ] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
-  - [ ] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages.
+  - [ ] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.
   - [ ] US-25.2-T3: Replace folder search and ancestor traversal with project name/description and chat search behind the existing search adapter.
   - [ ] US-25.2-T4: Regenerate clients; test search isolation, pagination, move effects, and project deletion detaching chats.
 - [ ] US-25.3: Chat upload and attachment lifecycle (2–3 person-days).
@@ -67,7 +62,7 @@ Scheduled after EPIC-25 and before EPIC-26. Backend estimate: 8–12 person-days
 - [ ] US-26.1: Execution scope resolver (2–3 person-days).
   - [ ] US-26.1-T1: Implement a server-derived context with user/profile/main-agent-or-sub-agent/chat/project IDs, selected and executed model identity, eligible project sub-agent IDs, effective internal tools, active branch, configuration/prompt revision, allowed file IDs, and file provenance.
   - [ ] US-26.1-T2: Inject small project and chat scope readers into the resolver rather than letting Agent query domain tables.
-  - [ ] US-26.1-T3: Resolve scope at turn start and recheck authorization before each file/retrieval tool call; reject canceled or revoked execution contexts.
+  - [ ] US-26.1-T3: Resolve scope at turn start and recheck authorization before each file/retrieval tool call; reject canceled or revoked execution contexts. Connect project deletion to cancellation of affected active runs before deleting project context, once runtime integration exists.
   - [ ] US-26.1-T4: Pass narrowed context to delegated agents and background/restarted jobs without granting new tools or wider files.
   - [ ] US-26.1-T5: Test empty scope, cross-user IDs, same-agent different-chat isolation, delegation, and revocation races.
 - [ ] US-26.2: Composable project prompts (2–3 person-days).

@@ -26,7 +26,7 @@ As a user, I want to organize and find chats within projects or General.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-25.1.
 - [ ] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
-- [ ] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages.
+- [ ] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.
 - [ ] US-25.2-T3: Replace folder search and ancestor traversal with project name/description and chat search behind the existing search adapter.
 - [ ] US-25.2-T4: Regenerate clients; test search isolation, pagination, move effects, and project deletion detaching chats.
 

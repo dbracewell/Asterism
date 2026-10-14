@@ -230,7 +230,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('178e327d-efd8-46da-ae5f-485f908b775d'),
+    id: z.uuid().optional().default('6b966f7d-9a02-49df-aa1f-8beb881a1849'),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -568,6 +568,48 @@ export const zPartialAgentProfile = z.object({
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
     id: z.uuid().nullish()
+});
+
+/**
+ * Project
+ */
+export const zProject = z.object({
+    id: z.uuid(),
+    name: z.string(),
+    description: z.string(),
+    system_prompt: z.string(),
+    context_revision: z.int().gte(1),
+    created_at: z.int(),
+    updated_at: z.int()
+});
+
+/**
+ * ProjectCreate
+ */
+export const zProjectCreate = z.object({
+    name: z.string().min(1).max(255),
+    description: z.string().max(10000).optional().default(''),
+    system_prompt: z.string().max(100000).optional().default('')
+});
+
+/**
+ * ProjectList
+ */
+export const zProjectList = z.object({
+    projects: z.array(zProject),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1).lte(100)
+});
+
+/**
+ * ProjectUpdate
+ */
+export const zProjectUpdate = z.object({
+    expected_context_revision: z.int().gte(1),
+    name: z.string().min(1).max(255).optional(),
+    description: z.string().max(10000).optional(),
+    system_prompt: z.string().max(100000).optional()
 });
 
 /**
@@ -1291,6 +1333,62 @@ export const zKnowledgeBaseUpdatePath = z.object({
  * Successful Response
  */
 export const zKnowledgeBaseUpdateResponse = zKnowledgeBase;
+
+export const zProjectGetManyQuery = z.object({
+    page: z.int().gte(1).optional().default(1),
+    page_size: z.int().gte(1).lte(100).optional().default(50),
+    sort_by: z.enum([
+        'name',
+        'created',
+        'updated'
+    ]).optional().default('name'),
+    query: z.string().max(10000).nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectGetManyResponse = zProjectList;
+
+export const zProjectCreateBody = zProjectCreate;
+
+/**
+ * Successful Response
+ */
+export const zProjectCreateResponse = zProject;
+
+export const zProjectDeletePath = z.object({
+    project_id: z.uuid()
+});
+
+export const zProjectDeleteQuery = z.object({
+    expected_context_revision: z.int().gte(1)
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectDeleteResponse = zProject;
+
+export const zProjectGetOnePath = z.object({
+    project_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectGetOneResponse = zProject;
+
+export const zProjectUpdateBody = zProjectUpdate;
+
+export const zProjectUpdatePath = z.object({
+    project_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectUpdateResponse = zProject;
 
 /**
  * Successful Response

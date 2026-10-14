@@ -1,6 +1,6 @@
 # Projects and Chat Context Refactor — Proposed Roadmap
 
-Status: US-24.1 complete (user confirmed 2026-10-14); later stories remain proposed. Estimates dated 2026-10-14.
+Status: US-24.1 complete (user confirmed 2026-10-14); US-24.2 complete (user confirmed 2026-10-14); later stories remain proposed. Estimates dated 2026-10-14.
 
 ## Product direction
 

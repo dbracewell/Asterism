@@ -98,7 +98,46 @@ Comprehensive system design guides and Mermaid sequence diagrams are available i
 
 Fresh initialization includes `projects` and `project_files`. Memberships use composite
 owner foreign keys and a unique project/file pair; sources and extraction generations
-remain independent. Project lifecycle APIs and chat binding are subsequent stories.
+remain independent. Project lifecycle APIs are available as described below; chat binding remains a subsequent story.
 See [ADR-0017](../../docs/adr/0017-project-file-and-chat-boundaries.md) for the approved
 contracts. Existing databases are disposable: use the verified-target reset workflow
 above to recreate them rather than relying on `create_all` to alter existing tables.
+
+
+### Project lifecycle API (US-24.2)
+
+All project endpoints use the existing JWT/user dependency and owner scope. A foreign
+ID returns the same 404 as a missing ID. Project names are trimmed, required, at most
+255 characters, and unique per owner with case-sensitive equality. Description and
+system prompt default to empty strings (limits: 10,000 and 100,000 characters).
+Explicit nulls and unrecognized request-body fields are rejected with 422.
+
+| Method | Path | Behavior |
+| --- | --- | --- |
+| POST | `/api/py/projects/` | Create; returns 201 and the project |
+| GET | `/api/py/projects/` | List with page/page_size, sort_by, and query |
+| GET | `/api/py/projects/{project_id}` | Read an owned project |
+| PATCH | `/api/py/projects/{project_id}` | Update supplied fields; expected_context_revision is required in the body |
+| DELETE | `/api/py/projects/{project_id}` | Delete; expected_context_revision is required in the query |
+
+Pagination starts at page 1, defaults to 50 rows, and permits up to 100 per page.
+`sort_by` accepts `name` (ascending, default), `created`, or `updated` (newest first),
+with UUID tie breaking. `query` searches literal substrings of name/description,
+case-insensitively using the relational adapter's comparison semantics; `%` and `_`
+are literal characters. Responses include projects, total, page, and page_size.
+
+Prompt changes advance context_revision atomically; unchanged prompts and metadata-only
+edits do not. A no-op patch preserves timestamps. This revision tracks runtime context,
+not a general metadata edit version. Stale updates/deletes and duplicate names return
+409. Reload after a conflict; do not blindly retry using the newer revision.
+`advance_context_revision` is a transaction-local service operation for subsequent
+membership changes: call it for a real change, commit memberships and revision together,
+and roll the whole transaction back on failure. Bulk no-ops must not advance it.
+
+Deletion removes project metadata and memberships through database cascades and retains
+source bytes, extraction generations, and references in other projects. Chats do not
+have project bindings in this stage. US-25.2 adds transactional detachment to General
+while retaining history/attachments; US-26.1 adds affected-run cancellation before
+project deletion. No migration or current development database reset is needed for
+this API-only story. The generated Hey API SDK, schemas, and TanStack Query operations
+are synchronized; project UI arrives in EPIC-27.
