@@ -90,7 +90,7 @@ class PartialAgentProfile(BaseModel):
 
 class AgentProfile(PartialAgentProfile):
     model_config = ConfigDict(from_attributes=True)
-    id: uuid.UUID = uuid.uuid4()  # pyright: ignore[reportIncompatibleVariableOverride]
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)  # pyright: ignore[reportIncompatibleVariableOverride]
     knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 

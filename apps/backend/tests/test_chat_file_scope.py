@@ -34,6 +34,7 @@ async def chat(client, agent, files=(), project=None, user="a"):
         "/chat/",
         headers=auth(user),
         json={
+            "request_id": str(uuid.uuid4()),
             "agent_id": agent,
             "user_prompt": "Use these references",
             "files": list(files),
@@ -111,7 +112,7 @@ async def test_create_rejects_foreign_missing_duplicate_ids_atomically_and_old_c
     agent = await seed_agent(sessions)
     owned, foreign = await upload(client, "owned.txt"), await upload(client, "foreign.txt", "b")
     foreign_project = (await client.post("/projects/", headers=auth("b"), json={"name": "Foreign"})).json()
-    base = {"agent_id": agent, "user_prompt": "Test"}
+    base = {"request_id": str(uuid.uuid4()), "agent_id": agent, "user_prompt": "Test"}
     payloads = [
         ({"files": [owned["id"], foreign["id"]]}, 400),
         ({"files": [owned["id"], str(uuid.uuid4())]}, 400),

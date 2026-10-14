@@ -32,7 +32,7 @@ async def move_chat(
         )
         if owned is None:
             raise NotFoundException("Chat not found")
-        with chat_jobs.guard_membership_change(chat_id):
+        with chat_jobs.guard_idle_change(chat_id):
             try:
                 chat = await session.scalar(
                     update(ChatModel)

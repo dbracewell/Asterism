@@ -1,5 +1,6 @@
 """Validate stable source IDs and persist local references in the message transaction."""
 
+import asyncio
 import uuid
 
 from sqlalchemy import select
@@ -61,3 +62,30 @@ async def bind_message_files(
         [ChatFileModel(chat_id=chat_id, user_id=user_id, file_id=file_id)
          for file_id in ids if file_id not in existing],
     )
+
+
+async def remove_chat_file(*, user_id: str, chat_id: uuid.UUID, file_id: uuid.UUID,
+                           session: AsyncSession):
+    from sqlalchemy import delete, update
+
+    from asterism.core.exceptions import NotFoundException
+
+    from .jobs import chat_jobs
+    from .models import ChatModel
+    from .scope import resolve_chat_file_scope
+
+    try:
+        if not await session.scalar(select(ChatModel.id).where(ChatModel.id == chat_id, ChatModel.user_id == user_id)):
+            raise NotFoundException("Chat not found")
+        with chat_jobs.guard_idle_change(chat_id):
+            await session.execute(update(ChatModel).where(ChatModel.id == chat_id, ChatModel.user_id == user_id)
+                                  .values(updated_at=ChatModel.updated_at))
+            await session.execute(delete(ChatFileModel).where(
+                ChatFileModel.chat_id == chat_id, ChatFileModel.user_id == user_id, ChatFileModel.file_id == file_id,
+            ))
+            result = await resolve_chat_file_scope(user_id=user_id, chat_id=chat_id, session=session)
+            await session.commit()
+            return result
+    except (Exception, asyncio.CancelledError):
+        await session.rollback()
+        raise

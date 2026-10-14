@@ -75,7 +75,7 @@ async def resolve_chat_file_scope(
             )
             for file_id in allowed
         ],
-        unavailable_file_ids=sorted(set(provenance) - local_ids, key=str),
+        unavailable_file_ids=sorted(set(provenance) - (local_ids | project_ids), key=str),
     )
 
 

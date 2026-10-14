@@ -1,14 +1,6 @@
 # Active and Pending Work
 
-EPIC-24 (US-24.1–US-24.3) was confirmed complete on 2026-10-14; its checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-25.1 and US-25.2 were also confirmed complete on 2026-10-14 and are archived there; all remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
-
-## [EPIC-25 — Project chats and chat files](docs/epics/EPIC-25-PROJECT-CHATS-AND-CHAT-FILES.md)
-
-- [ ] US-25.3: Chat upload and attachment lifecycle (2–3 person-days).
-  - [ ] US-25.3-T1: Bind new uploads and explicitly selected library files to the target chat; support draft uploads before a new chat has an ID.
-  - [ ] US-25.3-T2: Define send/attach atomicity, failed-send retry, draft cleanup, and attachment removal without deleting source files.
-  - [ ] US-25.3-T3: Keep file access consistent across reopen, regenerate, branch changes, and deleted-file references.
-  - [ ] US-25.3-T4: Regenerate clients and test cancellation, failed upload/send, replay, removal, and cross-chat isolation.
+EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-29 — User agent settings, chat models, and project delegation](docs/epics/EPIC-29-USER-AGENT-SETTINGS-CHAT-MODELS-AND-PROJECT-DELEGATION.md)
 

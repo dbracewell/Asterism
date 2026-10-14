@@ -128,3 +128,22 @@ Library file views retain their owner-scoped library endpoints. Missing historic
 references render without download links. ChatInfo/NewChatRequest use `project_id`;
 obsolete folder chat actions/listing are removed. Project navigation and guarded
 move controls are delivered in later workspace stories.
+
+
+### Chat upload/send lifecycle
+
+The composer keeps the prompt and attachment chips until persistence is acknowledged.
+It uploads through the generated TanStack mutation, caches successful source IDs, retries
+only failed uploads, and reuses one request UUID for an unchanged failed send. Editing the
+prompt, selections or new-chat agent/project scope creates a new send key. Follow-ups use
+the generated `chatMessageSend` mutation with an explicit parent before signaling
+WebSocket `resume`; new chats await `chatSessionCreate`. Failed acceptance retains the
+prompt and uploaded sources for retry, and duplicate clicks are blocked while acceptance
+is pending. Local chip removal/abandonment revokes browser preview URLs and never deletes
+library sources. Historical attachments with `available: false` have no download link.
+
+Server draft upload/select/remove/discard contracts, expiry, and atomic consumption are
+implemented in US-25.3. The existing composer stages its picks locally and submits source
+IDs atomically; the richer server-draft/library-picker and persisted-removal controls are
+integrated in US-27.3. Project/local-file context displays remain EPIC-27. Generated API
+clients include the draft and send contracts; there is no handwritten API transport.

@@ -74,19 +74,62 @@ vi.mock("@/components/animated-border", () => ({
 }));
 vi.mock("@/components/logo", () => ({ default: () => null }));
 vi.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: { value: string; onValueChange: (value: string) => void; children: React.ReactNode }) => (
-    <select aria-label="Main agent for new chat" value={value} onChange={(event) => onValueChange(event.target.value)}>{children}</select>
+  Select: ({
+    value,
+    onValueChange,
+    children,
+  }: {
+    value: string;
+    onValueChange: (value: string) => void;
+    children: React.ReactNode;
+  }) => (
+    <select
+      aria-label="Main agent for new chat"
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
+      {children}
+    </select>
   ),
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   SelectValue: () => null,
-  SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => <option value={value}>{children}</option>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  SelectItem: ({
+    value,
+    children,
+  }: {
+    value: string;
+    children: React.ReactNode;
+  }) => <option value={value}>{children}</option>,
 }));
 vi.mock("@/features/chat/components/chat-input", () => ({
-  ChatInput: ({ onSubmit, disabled }: { onSubmit: (payload: { prompt: string; files: string[] }) => void; disabled?: boolean }) => (
-    <button disabled={disabled} onClick={() => onSubmit({ prompt: "Hello", files: [] })}>Start chat</button>
+  ChatInput: ({
+    onSubmit,
+    disabled,
+  }: {
+    onSubmit: (payload: {
+      prompt: string;
+      files: string[];
+      requestId: string;
+    }) => void;
+    disabled?: boolean;
+  }) => (
+    <button
+      disabled={disabled}
+      onClick={() =>
+        onSubmit({ prompt: "Hello", files: [], requestId: "request-1" })
+      }
+    >
+      Start chat
+    </button>
   ),
-  ChatInputContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  ChatInputContainer: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 const initialSettings = structuredClone(mocks.user.settings);
@@ -96,15 +139,25 @@ it("defaults to a main agent, excludes sub-agents, and sends an override", async
   render(<AppPage />);
   const user = userEvent.setup();
 
-  expect(screen.getByRole("option", { name: "Default assistant" })).toBeInTheDocument();
-  expect(screen.getByRole("option", { name: "Writing assistant" })).toBeInTheDocument();
-  expect(screen.queryByRole("option", { name: "Hidden worker" })).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("option", { name: "Default assistant" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("option", { name: "Writing assistant" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("option", { name: "Hidden worker" }),
+  ).not.toBeInTheDocument();
 
-  await user.selectOptions(screen.getByLabelText("Main agent for new chat"), "main-override");
+  await user.selectOptions(
+    screen.getByLabelText("Main agent for new chat"),
+    "main-override",
+  );
   await user.click(screen.getByRole("button", { name: "Start chat" }));
 
   expect(mocks.createChatSession).toHaveBeenCalledWith({
     body: {
+      request_id: "request-1",
       agent_id: "main-override",
       files: [],
       project_id: "project-1",

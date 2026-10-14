@@ -27,6 +27,7 @@ import {
   chatSessionGetOneOptions,
   chatSessionGetOneQueryKey,
   messageUpdateMutation,
+  chatMessageSendMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -40,16 +41,8 @@ import {
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 
-const TEMP_USER_MESSAGE_PREFIX = "user-msg:";
 const SCROLL_BOTTOM_THRESHOLD = 200;
 const AUTO_SCROLL_LOCK_THRESHOLD = 16;
-
-const createTempUserMessageId = () => {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return `${TEMP_USER_MESSAGE_PREFIX}${crypto.randomUUID()}`;
-  }
-  return `${TEMP_USER_MESSAGE_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2)}`;
-};
 
 export const ChatSession = ({
   chatId,
@@ -180,10 +173,7 @@ export const ChatSession = ({
       queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev) return;
         const index = prev.messages.findLastIndex((m) => {
-          return (
-            m.id === updatedMessages[0].id ||
-            m.id.startsWith(TEMP_USER_MESSAGE_PREFIX)
-          );
+          return m.id === updatedMessages[0].id;
         });
         let new_messages: Message[];
         if (index >= 0) {
@@ -197,29 +187,54 @@ export const ChatSession = ({
     },
   });
 
-  const addUserMessage = React.useCallback(
-    ({ prompt, files }: { prompt: string; files: string[] }) => {
-      setSubAgentActivities([]);
-      queryClient.setQueryData(queryKey, (prev?: Chat) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          messages: [
-            ...prev.messages,
-            {
-              id: createTempUserMessageId(),
-              role: "user",
-              content: prompt,
-              created_at: Date.now() / 1000,
-              status: "completed",
-            } as Message,
-          ],
-        };
-      });
-      sendJsonMessage({ type: "chat", message: prompt, files });
-    },
-    [sendJsonMessage, queryClient, queryKey],
-  );
+  const sendMessage = useMutation(chatMessageSendMutation({ client }));
+  const pendingSend = React.useRef<{
+    requestId: string;
+    parentId: string | null;
+  } | null>(null);
+  const addUserMessage = async ({
+    prompt,
+    files,
+    requestId,
+  }: {
+    prompt: string;
+    files: string[];
+    requestId: string;
+  }) => {
+    if (!session) throw new Error("Chat is not loaded. Please retry.");
+    if (pendingSend.current?.requestId !== requestId) {
+      pendingSend.current = {
+        requestId,
+        parentId: session.messages.at(-1)?.id ?? null,
+      };
+    }
+    const accepted = await sendMessage.mutateAsync({
+      path: { chat_id: chatId },
+      body: {
+        request_id: requestId,
+        user_prompt: prompt,
+        files,
+        parent_message_id: pendingSend.current.parentId,
+      },
+    });
+    setSubAgentActivities([]);
+    queryClient.setQueryData(queryKey, (prev?: Chat) => {
+      if (!prev) return prev;
+      const existing = prev.messages.some(
+        (message) => message.id === accepted.id,
+      );
+      return {
+        ...prev,
+        messages: existing
+          ? prev.messages.map((message) =>
+              message.id === accepted.id ? accepted : message,
+            )
+          : [...prev.messages, accepted],
+      };
+    });
+    // Persistence acknowledgement precedes generation; reconnect can resume this same pending turn.
+    sendJsonMessage({ type: "resume" });
+  };
 
   const connectionStatus = React.useMemo(
     () => connectionStatusMap[readyState],
@@ -331,9 +346,7 @@ export const ChatSession = ({
             disabled={isProcessing || connectionStatus !== "Connected"}
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
-            onSubmit={({ prompt, files }) => {
-              addUserMessage({ prompt, files });
-            }}
+            onSubmit={addUserMessage}
             bottomComponent={
               <div className="flex w-full items-center justify-between gap-2 p-2">
                 <ContextUsageProgress

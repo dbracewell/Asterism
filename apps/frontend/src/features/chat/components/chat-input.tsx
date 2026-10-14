@@ -14,9 +14,9 @@ import {
   IconPlus,
   IconX,
 } from "@tabler/icons-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type UploadState = "queued" | "uploading" | "failed";
+type UploadState = "queued" | "uploading" | "ready" | "failed";
 
 const uploadErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;
@@ -37,11 +37,17 @@ interface AttachedFile {
   preview?: string;
   state: UploadState;
   error?: string;
+  sourceId?: string;
 }
 
 export type ChatInput2Props = {
   bottomComponent?: React.JSX.Element;
-  onSubmit: (data: { prompt: string; files: string[] }) => void;
+  onSubmit: (data: {
+    prompt: string;
+    files: string[];
+    requestId: string;
+  }) => void | Promise<unknown>;
+  requestScope?: string;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
@@ -72,6 +78,7 @@ export const ChatInputContainer = ({
 export const ChatInput = ({
   bottomComponent,
   onSubmit,
+  requestScope,
   disabled,
   onStop,
   onLineNumberChange,
@@ -84,6 +91,17 @@ export const ChatInput = ({
   const [prompt, setPrompt] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sendError, setSendError] = useState<string>();
+  const submittingRef = useRef(false);
+  const requestRef = useRef<{ signature: string; id: string } | null>(null);
+  const previewUrls = useRef(new Set<string>());
+  useEffect(() => {
+    const urls = previewUrls.current;
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+      urls.clear();
+    };
+  }, []);
   const numberOfLinesRef = useRef(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -98,6 +116,9 @@ export const ChatInput = ({
         ? URL.createObjectURL(file)
         : undefined,
     }));
+    additions.forEach((file) => {
+      if (file.preview) previewUrls.current.add(file.preview);
+    });
     setAttachedFiles((previous) => [...previous, ...additions]);
   }, []);
 
@@ -113,7 +134,10 @@ export const ChatInput = ({
     (id: string) =>
       setAttachedFiles((files) => {
         const file = files.find((item) => item.id === id);
-        if (file?.preview) URL.revokeObjectURL(file.preview);
+        if (file?.preview) {
+          URL.revokeObjectURL(file.preview);
+          previewUrls.current.delete(file.preview);
+        }
         return files.filter((item) => item.id !== id);
       }),
     [],
@@ -122,14 +146,17 @@ export const ChatInput = ({
   const submitPrompt = async () => {
     if (
       disabled ||
-      isSubmitting ||
+      submittingRef.current ||
       !onSubmit ||
       (!prompt.trim() && !attachedFiles.length)
     )
       return;
+    submittingRef.current = true;
     setIsSubmitting(true);
+    setSendError(undefined);
     const uploads = await Promise.all(
       attachedFiles.map(async (attachment) => {
+        if (attachment.sourceId) return attachment.sourceId;
         updateFile(attachment.id, { state: "uploading", error: undefined });
         try {
           // This generated client is deliberately used instead of a hand-written fetch.
@@ -139,6 +166,7 @@ export const ChatInput = ({
           const uploaded = data?.files[0];
           if (!uploaded)
             throw new Error("The server did not return an uploaded file.");
+          updateFile(attachment.id, { state: "ready", sourceId: uploaded.id });
           return uploaded.id;
         } catch (error) {
           // This is an expected, user-correctable state. Do not use console.error:
@@ -158,19 +186,35 @@ export const ChatInput = ({
     const files = uploads.filter(
       (filename): filename is string => filename !== null,
     );
-    setIsSubmitting(false);
-
-    // Do not send a partial set: failed chips remain retryable with the prompt intact.
-    if (files.length !== attachedFiles.length) return;
-
-    onSubmit({ prompt: prompt.trim(), files });
-
-    attachedFiles.forEach(
-      (file) => file.preview && URL.revokeObjectURL(file.preview),
-    );
-
-    setAttachedFiles([]);
-    setPrompt("");
+    try {
+      // Uploads are library sources; no partial message is accepted after an upload failure.
+      if (files.length !== attachedFiles.length) return;
+      const signature = JSON.stringify({
+        prompt: prompt.trim(),
+        files,
+        scope: requestScope,
+      });
+      if (requestRef.current?.signature !== signature) {
+        requestRef.current = { signature, id: crypto.randomUUID() };
+      }
+      await onSubmit({
+        prompt: prompt.trim(),
+        files,
+        requestId: requestRef.current.id,
+      });
+      attachedFiles.forEach(
+        (file) => file.preview && URL.revokeObjectURL(file.preview),
+      );
+      previewUrls.current.clear();
+      setAttachedFiles([]);
+      setPrompt("");
+      requestRef.current = null;
+    } catch (error) {
+      setSendError(uploadErrorMessage(error));
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   const hasPrompt = prompt.trim().length > 0;
@@ -210,7 +254,8 @@ export const ChatInput = ({
             className="sr-only"
             multiple
             onChange={(event) => {
-              addFiles(Array.from(event.target.files ?? []));
+              if (!disabled && !submittingRef.current)
+                addFiles(Array.from(event.target.files ?? []));
               event.target.value = "";
             }}
             ref={fileInputRef}
@@ -218,6 +263,7 @@ export const ChatInput = ({
           />
           <Button
             aria-label="Add attachments"
+            disabled={disabled || isSubmitting}
             onClick={() => fileInputRef.current?.click()}
             size="icon"
             type="button"
@@ -244,12 +290,14 @@ export const ChatInput = ({
               {file.state === "uploading" && (
                 <span className="text-xs">Uploading…</span>
               )}
+              {file.state === "ready" && <span className="text-xs">Ready</span>}
               {file.state === "failed" && (
                 <span className="text-xs">Failed</span>
               )}
               <button
                 aria-label={`Remove ${file.name}`}
                 className="ml-auto rounded-full p-0.5 focus-visible:outline"
+                disabled={isSubmitting}
                 onClick={() => removeFile(file.id)}
                 type="button"
               >
@@ -269,7 +317,13 @@ export const ChatInput = ({
               {file.name}: {file.error}
             </p>
           ))}
+        {sendError && (
+          <p role="alert" className="text-destructive px-2 text-xs">
+            {sendError}
+          </p>
+        )}
         <Textarea
+          disabled={disabled || isSubmitting}
           aria-label="Message"
           ref={textareaRef}
           value={prompt}

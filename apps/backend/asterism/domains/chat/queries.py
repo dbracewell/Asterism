@@ -2,7 +2,7 @@
 
 from sqlalchemy import select
 
-from .models import ChatModel
+from .models import ChatModel, MessageModel
 
 
 def select_owned_chats(*, user_id: str):
@@ -14,3 +14,7 @@ def select_owned_chats(*, user_id: str):
             ChatModel.id.asc(),
         )
     )
+
+
+def select_owned_messages(*, user_id: str, chat_id):
+    return select(MessageModel).where(MessageModel.user_id == user_id, MessageModel.chat_id == chat_id)

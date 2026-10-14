@@ -86,17 +86,12 @@ class ChatOrchestrator:
     def is_active(self) -> bool:
         return self.queue.qsize() > 0 or self.is_processing_messages
 
-    async def handle_new_user_message(self, text: str, file_ids: list[str] | None = None) -> None:
-        parent_message_id = self.chat.messages[-1].id if self.chat.messages else None
-        user_message = await chat_service.add_message(
-            user_id=self.user_id, chat_id=self.chat_id,
-            message=NewMessageRequest.model_validate({
-                "role": "user", "content": text, "parent_message_id": parent_message_id,
-                "status": MessageStatus.PENDING, "model_id": self.agent.profile.model_id,
-                "files": file_ids or [],
-            }),
-        )
-        self.chat.messages.append(user_message)
+    async def reload_chat(self) -> None:
+        self.chat = await chat_service.get_one(chat_id=self.chat_id, user_id=self.user_id)
+        self.agent.session = self.chat
+
+    async def resume_pending_turn(self) -> None:
+        await self.reload_chat()
         await self.run_agent()
 
     async def cancel_active_generation(self) -> None:

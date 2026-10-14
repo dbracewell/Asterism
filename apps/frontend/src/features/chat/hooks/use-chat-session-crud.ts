@@ -41,20 +41,23 @@ export const useChatSessionCrud = () => {
       }
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: chatSessionGetManyQueryKey() });
+      await queryClient.invalidateQueries({
+        queryKey: chatSessionGetManyQueryKey(),
+      });
     },
-    onError: () => toast.error("Failed to delete chat session. Please try again."),
+    onError: () =>
+      toast.error("Failed to delete chat session. Please try again."),
   });
 
   return useMemo(
     () => ({
-      createChatSession: createChatSession.mutate,
+      createChatSession: createChatSession.mutateAsync,
       deleteChatSession: deleteChatSession.mutate,
       isCreating: createChatSession.isPending,
       isDeleting: deleteChatSession.isPending,
     }),
     [
-      createChatSession.mutate,
+      createChatSession.mutateAsync,
       deleteChatSession.mutate,
       createChatSession.isPending,
       deleteChatSession.isPending,

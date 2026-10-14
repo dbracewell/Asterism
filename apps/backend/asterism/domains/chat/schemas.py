@@ -25,6 +25,7 @@ class MessageFileReference(BaseModel):
     size: int = Field(ge=0)
     kind: FileKind
     status: FileContentStatus
+    available: bool = True
 
 
 class NewMessageRequest(BaseModel):
@@ -161,6 +162,8 @@ class BulkDeleteChatResponse(BaseModel):
 
 class NewChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    request_id: uuid.UUID
+    draft_id: uuid.UUID | None = None
     user_prompt: str
     agent_id: uuid.UUID | None = Field(default=None)
     project_id: uuid.UUID | None = Field(default=None)
@@ -191,3 +194,30 @@ class ChatFileScope(BaseModel):
     allowed_file_ids: list[uuid.UUID]
     files: list[ScopedChatFile]
     unavailable_file_ids: list[uuid.UUID]
+
+
+class ChatDraftCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    chat_id: uuid.UUID | None = None
+
+
+class ChatDraftFiles(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    file_ids: list[uuid.UUID] = Field(max_length=100)
+
+
+class ChatDraft(BaseModel):
+    id: uuid.UUID
+    chat_id: uuid.UUID | None
+    expires_at: int
+    file_ids: list[uuid.UUID]
+    unavailable_file_ids: list[uuid.UUID]
+
+
+class ChatSendRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    request_id: uuid.UUID
+    user_prompt: str = Field(min_length=1)
+    parent_message_id: uuid.UUID | None
+    draft_id: uuid.UUID | None = None
+    files: list[uuid.UUID] = Field(default_factory=list, max_length=100)

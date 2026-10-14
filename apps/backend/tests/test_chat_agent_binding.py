@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 import pytest_asyncio
 from asterism.core.exceptions import BadDataException, NotFoundException, UnauthorizedException
@@ -60,11 +62,11 @@ async def test_chat_binds_default_or_explicit_owned_main_agent(chat_agent_sessio
     )
 
     default_chat = await create_chat(
-        "user-a", NewChatRequest(user_prompt="Default"), chat_agent_session,
+        "user-a", NewChatRequest(request_id=uuid.uuid4(), user_prompt="Default"), chat_agent_session,
     )
     override_chat = await create_chat(
         "user-a",
-        NewChatRequest(user_prompt="Override", agent_id=override.id),
+        NewChatRequest(request_id=uuid.uuid4(), user_prompt="Override", agent_id=override.id),
         chat_agent_session,
     )
 
@@ -97,13 +99,13 @@ async def test_chat_rejects_sub_agents_and_other_users_agents(chat_agent_session
     with pytest.raises(BadDataException, match="main agent"):
         await create_chat(
             "user-a",
-            NewChatRequest(user_prompt="Delegate", agent_id=sub.id),
+            NewChatRequest(request_id=uuid.uuid4(), user_prompt="Delegate", agent_id=sub.id),
             chat_agent_session,
         )
     with pytest.raises(UnauthorizedException):
         await create_chat(
             "user-a",
-            NewChatRequest(user_prompt="Foreign", agent_id=other.id),
+            NewChatRequest(request_id=uuid.uuid4(), user_prompt="Foreign", agent_id=other.id),
             chat_agent_session,
         )
 
@@ -141,3 +143,11 @@ async def test_delete_retires_owned_runtime_before_persistence(chat_agent_sessio
 
     assert retired == [chat.id]
     assert await chat_agent_session.get(ChatModel, chat.id) is None
+
+
+def test_agent_profile_ids_are_unique_without_a_random_openapi_default():
+    from asterism.domains.agent.schemas import AgentProfile
+
+    fields = profile("Main").model_dump(exclude={"id"})
+    assert AgentProfile(**fields).id != AgentProfile(**fields).id
+    assert "default" not in AgentProfile.model_json_schema()["properties"]["id"]

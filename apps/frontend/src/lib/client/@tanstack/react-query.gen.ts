@@ -4,7 +4,7 @@ import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutation
 
 import { client } from '../client.gen';
 import { ApiClient, type Options } from '../sdk.gen';
-import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetError, AgentKnowledgeBaseAssignmentsGetResponse, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceError, AgentKnowledgeBaseAssignmentsReplaceResponse, AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesError, AgentsGetSubAgentTracesResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppCaptioningGetData, AppCaptioningGetError, AppCaptioningGetResponse, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetError, AppCaptioningProviderModelsGetResponse, AppCaptioningUpdateData, AppCaptioningUpdateError, AppCaptioningUpdateResponse, AppCaptionModelCancelData, AppCaptionModelCancelError, AppCaptionModelCancelResponse, AppCaptionModelDownloadData, AppCaptionModelDownloadError, AppCaptionModelDownloadResponse, AppCaptionModelStatusData, AppCaptionModelStatusError, AppCaptionModelStatusResponse, AppKnowledgeEmbeddingStatusData, AppKnowledgeEmbeddingStatusError, AppKnowledgeEmbeddingStatusResponse, AppKnowledgeProcessingProfileUpdateData, AppKnowledgeProcessingProfileUpdateError, AppKnowledgeProcessingProfileUpdateResponse, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncError, AppProviderModelsDiscoverAndSyncResponse, AppProviderModelsDiscoverData, AppProviderModelsDiscoverError, AppProviderModelsDiscoverResponse, AppProviderModelsListData, AppProviderModelsListError, AppProviderModelsListResponse, AppProviderModelUpdateData, AppProviderModelUpdateError, AppProviderModelUpdateResponse, AppProviderSettingsGetData, AppProviderSettingsGetError, AppProviderSettingsGetResponse, AppProviderSettingsUpdateData, AppProviderSettingsUpdateError, AppProviderSettingsUpdateResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, AppToolSettingsGetData, AppToolSettingsGetError, AppToolSettingsGetResponse, AppToolSettingsUpdateData, AppToolSettingsUpdateError, AppToolSettingsUpdateResponse, ChatFileDownloadData, ChatFileDownloadError, ChatFileDownloadResponse, ChatFileGetInfoData, ChatFileGetInfoError, ChatFileGetInfoResponse, ChatFileGetScopeData, ChatFileGetScopeError, ChatFileGetScopeResponse, ChatSearchData, ChatSearchError, ChatSearchResponse, ChatSessionBulkDeleteData, ChatSessionBulkDeleteError, ChatSessionBulkDeleteResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionMoveData, ChatSessionMoveError, ChatSessionMoveResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FileDeleteData, FileDeleteError, FileDeleteManyData, FileDeleteManyError, FileDeleteManyResponse, FileDeleteResponse, FileGetFileInfoData, FileGetFileInfoError, FileGetFileInfoResponse, FileGetManyData, FileGetManyError, FileGetManyResponse, FileGetOneData, FileGetOneError, FileGetOneResponse, FileKnowledgeBaseGetManyData, FileKnowledgeBaseGetManyError, FileKnowledgeBaseGetManyResponse, FileKnowledgeCancelData, FileKnowledgeCancelError, FileKnowledgeCancelResponse, FileKnowledgeGetStatusData, FileKnowledgeGetStatusError, FileKnowledgeGetStatusResponse, FileKnowledgeRegenerateData, FileKnowledgeRegenerateError, FileKnowledgeRegenerateResponse, FileSimilarGetManyData, FileSimilarGetManyError, FileSimilarGetManyResponse, FileUploadData, FileUploadError, FileUploadResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, KnowledgeBaseCreateData, KnowledgeBaseCreateError, KnowledgeBaseCreateResponse, KnowledgeBaseDeleteData, KnowledgeBaseDeleteError, KnowledgeBaseDeleteResponse, KnowledgeBaseFileCreateData, KnowledgeBaseFileCreateError, KnowledgeBaseFileCreateManyData, KnowledgeBaseFileCreateManyError, KnowledgeBaseFileCreateManyResponse, KnowledgeBaseFileCreateResponse, KnowledgeBaseFileDeleteData, KnowledgeBaseFileDeleteError, KnowledgeBaseFileDeleteManyData, KnowledgeBaseFileDeleteManyError, KnowledgeBaseFileDeleteManyResponse, KnowledgeBaseFileDeleteResponse, KnowledgeBaseFileGetManyData, KnowledgeBaseFileGetManyError, KnowledgeBaseFileGetManyResponse, KnowledgeBaseFileReorderData, KnowledgeBaseFileReorderError, KnowledgeBaseFileReorderResponse, KnowledgeBaseGetManyData, KnowledgeBaseGetManyError, KnowledgeBaseGetManyResponse, KnowledgeBaseGetOneData, KnowledgeBaseGetOneError, KnowledgeBaseGetOneResponse, KnowledgeBaseUpdateData, KnowledgeBaseUpdateError, KnowledgeBaseUpdateResponse, MessageUpdateData, MessageUpdateError, MessageUpdateResponse, ProjectCreateData, ProjectCreateError, ProjectCreateResponse, ProjectDeleteData, ProjectDeleteError, ProjectDeleteResponse, ProjectFileAddManyData, ProjectFileAddManyError, ProjectFileAddManyResponse, ProjectFileGetManyData, ProjectFileGetManyError, ProjectFileGetManyResponse, ProjectFileRemoveManyData, ProjectFileRemoveManyError, ProjectFileRemoveManyResponse, ProjectGetManyData, ProjectGetManyError, ProjectGetManyResponse, ProjectGetOneData, ProjectGetOneError, ProjectGetOneResponse, ProjectUpdateData, ProjectUpdateError, ProjectUpdateResponse, ToolsGetActiveData, ToolsGetActiveError, ToolsGetActiveResponse, ToolsGetAllData, ToolsGetAllError, ToolsGetAllResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
+import type { AgentKnowledgeBaseAssignmentsGetData, AgentKnowledgeBaseAssignmentsGetError, AgentKnowledgeBaseAssignmentsGetResponse, AgentKnowledgeBaseAssignmentsReplaceData, AgentKnowledgeBaseAssignmentsReplaceError, AgentKnowledgeBaseAssignmentsReplaceResponse, AgentsDeleteAgentData, AgentsDeleteAgentError, AgentsDeleteAgentResponse, AgentsGetSubAgentTracesData, AgentsGetSubAgentTracesError, AgentsGetSubAgentTracesResponse, AgentsGetUserAgentsData, AgentsGetUserAgentsError, AgentsGetUserAgentsResponse, AgentsUpsertAgentProfileData, AgentsUpsertAgentProfileError, AgentsUpsertAgentProfileResponse, AppCaptioningGetData, AppCaptioningGetError, AppCaptioningGetResponse, AppCaptioningProviderModelsGetData, AppCaptioningProviderModelsGetError, AppCaptioningProviderModelsGetResponse, AppCaptioningUpdateData, AppCaptioningUpdateError, AppCaptioningUpdateResponse, AppCaptionModelCancelData, AppCaptionModelCancelError, AppCaptionModelCancelResponse, AppCaptionModelDownloadData, AppCaptionModelDownloadError, AppCaptionModelDownloadResponse, AppCaptionModelStatusData, AppCaptionModelStatusError, AppCaptionModelStatusResponse, AppKnowledgeEmbeddingStatusData, AppKnowledgeEmbeddingStatusError, AppKnowledgeEmbeddingStatusResponse, AppKnowledgeProcessingProfileUpdateData, AppKnowledgeProcessingProfileUpdateError, AppKnowledgeProcessingProfileUpdateResponse, AppProviderModelsDiscoverAndSyncData, AppProviderModelsDiscoverAndSyncError, AppProviderModelsDiscoverAndSyncResponse, AppProviderModelsDiscoverData, AppProviderModelsDiscoverError, AppProviderModelsDiscoverResponse, AppProviderModelsListData, AppProviderModelsListError, AppProviderModelsListResponse, AppProviderModelUpdateData, AppProviderModelUpdateError, AppProviderModelUpdateResponse, AppProviderSettingsGetData, AppProviderSettingsGetError, AppProviderSettingsGetResponse, AppProviderSettingsUpdateData, AppProviderSettingsUpdateError, AppProviderSettingsUpdateResponse, AppSettingDeleteData, AppSettingDeleteError, AppSettingsBulkUpdateData, AppSettingsBulkUpdateError, AppSettingsBulkUpdateResponse, AppSettingsGetData, AppSettingsGetError, AppSettingsGetResponse, AppSettingUpdateData, AppSettingUpdateError, AppSettingUpdateResponse, AppToolSettingsGetData, AppToolSettingsGetError, AppToolSettingsGetResponse, AppToolSettingsUpdateData, AppToolSettingsUpdateError, AppToolSettingsUpdateResponse, ChatDraftAddFilesData, ChatDraftAddFilesError, ChatDraftAddFilesResponse, ChatDraftCreateData, ChatDraftCreateError, ChatDraftCreateResponse, ChatDraftDiscardData, ChatDraftDiscardError, ChatDraftDiscardResponse, ChatDraftGetOneData, ChatDraftGetOneError, ChatDraftGetOneResponse, ChatDraftRemoveFilesData, ChatDraftRemoveFilesError, ChatDraftRemoveFilesResponse, ChatDraftUploadData, ChatDraftUploadError, ChatDraftUploadResponse, ChatFileDownloadData, ChatFileDownloadError, ChatFileDownloadResponse, ChatFileGetInfoData, ChatFileGetInfoError, ChatFileGetInfoResponse, ChatFileGetScopeData, ChatFileGetScopeError, ChatFileGetScopeResponse, ChatFileRemoveData, ChatFileRemoveError, ChatFileRemoveResponse, ChatMessageSendData, ChatMessageSendError, ChatMessageSendResponse, ChatSearchData, ChatSearchError, ChatSearchResponse, ChatSessionBulkDeleteData, ChatSessionBulkDeleteError, ChatSessionBulkDeleteResponse, ChatSessionCreateData, ChatSessionCreateError, ChatSessionCreateResponse, ChatSessionDeleteData, ChatSessionDeleteError, ChatSessionDeleteResponse, ChatSessionGetManyData, ChatSessionGetManyError, ChatSessionGetManyResponse, ChatSessionGetOneData, ChatSessionGetOneError, ChatSessionGetOneResponse, ChatSessionMoveData, ChatSessionMoveError, ChatSessionMoveResponse, ChatSessionUpdateData, ChatSessionUpdateError, ChatSessionUpdateResponse, ComponentsByTypeData, ComponentsByTypeError, ComponentsByTypeResponse, FileDeleteData, FileDeleteError, FileDeleteManyData, FileDeleteManyError, FileDeleteManyResponse, FileDeleteResponse, FileGetFileInfoData, FileGetFileInfoError, FileGetFileInfoResponse, FileGetManyData, FileGetManyError, FileGetManyResponse, FileGetOneData, FileGetOneError, FileGetOneResponse, FileKnowledgeBaseGetManyData, FileKnowledgeBaseGetManyError, FileKnowledgeBaseGetManyResponse, FileKnowledgeCancelData, FileKnowledgeCancelError, FileKnowledgeCancelResponse, FileKnowledgeGetStatusData, FileKnowledgeGetStatusError, FileKnowledgeGetStatusResponse, FileKnowledgeRegenerateData, FileKnowledgeRegenerateError, FileKnowledgeRegenerateResponse, FileSimilarGetManyData, FileSimilarGetManyError, FileSimilarGetManyResponse, FileUploadData, FileUploadError, FileUploadResponse, FolderCreateData, FolderCreateError, FolderCreateResponse, FolderDeleteData, FolderDeleteError, FolderDeleteResponse, FolderGetManyData, FolderGetManyError, FolderGetManyResponse, FolderGetOneData, FolderGetOneError, FolderGetOneResponse, KnowledgeBaseCreateData, KnowledgeBaseCreateError, KnowledgeBaseCreateResponse, KnowledgeBaseDeleteData, KnowledgeBaseDeleteError, KnowledgeBaseDeleteResponse, KnowledgeBaseFileCreateData, KnowledgeBaseFileCreateError, KnowledgeBaseFileCreateManyData, KnowledgeBaseFileCreateManyError, KnowledgeBaseFileCreateManyResponse, KnowledgeBaseFileCreateResponse, KnowledgeBaseFileDeleteData, KnowledgeBaseFileDeleteError, KnowledgeBaseFileDeleteManyData, KnowledgeBaseFileDeleteManyError, KnowledgeBaseFileDeleteManyResponse, KnowledgeBaseFileDeleteResponse, KnowledgeBaseFileGetManyData, KnowledgeBaseFileGetManyError, KnowledgeBaseFileGetManyResponse, KnowledgeBaseFileReorderData, KnowledgeBaseFileReorderError, KnowledgeBaseFileReorderResponse, KnowledgeBaseGetManyData, KnowledgeBaseGetManyError, KnowledgeBaseGetManyResponse, KnowledgeBaseGetOneData, KnowledgeBaseGetOneError, KnowledgeBaseGetOneResponse, KnowledgeBaseUpdateData, KnowledgeBaseUpdateError, KnowledgeBaseUpdateResponse, MessageUpdateData, MessageUpdateError, MessageUpdateResponse, ProjectCreateData, ProjectCreateError, ProjectCreateResponse, ProjectDeleteData, ProjectDeleteError, ProjectDeleteResponse, ProjectFileAddManyData, ProjectFileAddManyError, ProjectFileAddManyResponse, ProjectFileGetManyData, ProjectFileGetManyError, ProjectFileGetManyResponse, ProjectFileRemoveManyData, ProjectFileRemoveManyError, ProjectFileRemoveManyResponse, ProjectGetManyData, ProjectGetManyError, ProjectGetManyResponse, ProjectGetOneData, ProjectGetOneError, ProjectGetOneResponse, ProjectUpdateData, ProjectUpdateError, ProjectUpdateResponse, ToolsGetActiveData, ToolsGetActiveError, ToolsGetActiveResponse, ToolsGetAllData, ToolsGetAllError, ToolsGetAllResponse, UserCreateUserData, UserCreateUserError, UserCreateUserResponse, UserDeleteData, UserDeleteError, UserDeleteResponse, UserSettingDeleteData, UserSettingDeleteError, UserSettingsBulkUpdateData, UserSettingsBulkUpdateError, UserSettingsBulkUpdateResponse, UserSettingsGetData, UserSettingsGetError, UserSettingsGetResponse, UserSettingUpdateData, UserSettingUpdateError, UserSettingUpdateResponse } from '../types.gen';
 
 /**
  * Delete Man Files
@@ -517,6 +517,23 @@ export const chatFileGetInfoOptions = (options: Options<ChatFileGetInfoData>) =>
     queryKey: chatFileGetInfoQueryKey(options)
 });
 
+/**
+ * Remove Chat File
+ */
+export const chatFileRemoveMutation = (options?: Partial<Options<ChatFileRemoveData>>): UseMutationOptions<ChatFileRemoveResponse, ChatFileRemoveError, Options<ChatFileRemoveData>> => {
+    const mutationOptions: UseMutationOptions<ChatFileRemoveResponse, ChatFileRemoveError, Options<ChatFileRemoveData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatFileRemove({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const chatFileDownloadQueryKey = (options: Options<ChatFileDownloadData>) => createQueryKey('chatFileDownload', options);
 
 /**
@@ -542,6 +559,126 @@ export const chatSessionMoveMutation = (options?: Partial<Options<ChatSessionMov
     const mutationOptions: UseMutationOptions<ChatSessionMoveResponse, ChatSessionMoveError, Options<ChatSessionMoveData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ApiClient.__registry.get().chatSessionMove({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Create Draft
+ */
+export const chatDraftCreateMutation = (options?: Partial<Options<ChatDraftCreateData>>): UseMutationOptions<ChatDraftCreateResponse, ChatDraftCreateError, Options<ChatDraftCreateData>> => {
+    const mutationOptions: UseMutationOptions<ChatDraftCreateResponse, ChatDraftCreateError, Options<ChatDraftCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatDraftCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Discard Draft
+ */
+export const chatDraftDiscardMutation = (options?: Partial<Options<ChatDraftDiscardData>>): UseMutationOptions<ChatDraftDiscardResponse, ChatDraftDiscardError, Options<ChatDraftDiscardData>> => {
+    const mutationOptions: UseMutationOptions<ChatDraftDiscardResponse, ChatDraftDiscardError, Options<ChatDraftDiscardData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatDraftDiscard({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const chatDraftGetOneQueryKey = (options: Options<ChatDraftGetOneData>) => createQueryKey('chatDraftGetOne', options);
+
+/**
+ * Read Draft
+ */
+export const chatDraftGetOneOptions = (options: Options<ChatDraftGetOneData>) => queryOptions<ChatDraftGetOneResponse, ChatDraftGetOneError, ChatDraftGetOneResponse, ReturnType<typeof chatDraftGetOneQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ApiClient.__registry.get().chatDraftGetOne({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: chatDraftGetOneQueryKey(options)
+});
+
+/**
+ * Remove Draft Files
+ */
+export const chatDraftRemoveFilesMutation = (options?: Partial<Options<ChatDraftRemoveFilesData>>): UseMutationOptions<ChatDraftRemoveFilesResponse, ChatDraftRemoveFilesError, Options<ChatDraftRemoveFilesData>> => {
+    const mutationOptions: UseMutationOptions<ChatDraftRemoveFilesResponse, ChatDraftRemoveFilesError, Options<ChatDraftRemoveFilesData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatDraftRemoveFiles({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Add Draft Files
+ */
+export const chatDraftAddFilesMutation = (options?: Partial<Options<ChatDraftAddFilesData>>): UseMutationOptions<ChatDraftAddFilesResponse, ChatDraftAddFilesError, Options<ChatDraftAddFilesData>> => {
+    const mutationOptions: UseMutationOptions<ChatDraftAddFilesResponse, ChatDraftAddFilesError, Options<ChatDraftAddFilesData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatDraftAddFiles({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Upload Draft Files
+ */
+export const chatDraftUploadMutation = (options?: Partial<Options<ChatDraftUploadData>>): UseMutationOptions<ChatDraftUploadResponse, ChatDraftUploadError, Options<ChatDraftUploadData>> => {
+    const mutationOptions: UseMutationOptions<ChatDraftUploadResponse, ChatDraftUploadError, Options<ChatDraftUploadData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatDraftUpload({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Send Message
+ */
+export const chatMessageSendMutation = (options?: Partial<Options<ChatMessageSendData>>): UseMutationOptions<ChatMessageSendResponse, ChatMessageSendError, Options<ChatMessageSendData>> => {
+    const mutationOptions: UseMutationOptions<ChatMessageSendResponse, ChatMessageSendError, Options<ChatMessageSendData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ApiClient.__registry.get().chatMessageSend({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

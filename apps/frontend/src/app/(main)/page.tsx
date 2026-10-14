@@ -90,10 +90,12 @@ export default function AppPage() {
             className="rounded-t-none!"
             placeholder="Where will your curiosity lead you today?"
             disabled={!selectedAgent}
-            onSubmit={({ prompt, files }) => {
+            requestScope={`${selectedAgentId}:${searchParams.get("project_id") ?? "general"}`}
+            onSubmit={({ prompt, files, requestId }) => {
               if (!selectedAgent) return;
-              createChatSession({
+              return createChatSession({
                 body: {
+                  request_id: requestId,
                   agent_id: selectedAgent.id,
                   project_id: searchParams.get("project_id"),
                   user_prompt: prompt,

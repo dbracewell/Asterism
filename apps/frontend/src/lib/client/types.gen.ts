@@ -68,6 +68,18 @@ export type ApplicationSettings = {
 };
 
 /**
+ * Body_chatDraftUpload
+ */
+export type BodyChatDraftUpload = {
+    /**
+     * Files
+     *
+     * Stage uploaded library sources for this draft
+     */
+    files: Array<Blob | File>;
+};
+
+/**
  * Body_fileUpload
  */
 export type BodyFileUpload = {
@@ -269,6 +281,52 @@ export type ChatContextUsage = {
 };
 
 /**
+ * ChatDraft
+ */
+export type ChatDraft = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Chat Id
+     */
+    chat_id: string | null;
+    /**
+     * Expires At
+     */
+    expires_at: number;
+    /**
+     * File Ids
+     */
+    file_ids: Array<string>;
+    /**
+     * Unavailable File Ids
+     */
+    unavailable_file_ids: Array<string>;
+};
+
+/**
+ * ChatDraftCreate
+ */
+export type ChatDraftCreate = {
+    /**
+     * Chat Id
+     */
+    chat_id?: string | null;
+};
+
+/**
+ * ChatDraftFiles
+ */
+export type ChatDraftFiles = {
+    /**
+     * File Ids
+     */
+    file_ids: Array<string>;
+};
+
+/**
  * ChatFileScope
  */
 export type ChatFileScope = {
@@ -379,6 +437,32 @@ export type ChatMoveRequest = {
      * Project Id
      */
     project_id: string | null;
+};
+
+/**
+ * ChatSendRequest
+ */
+export type ChatSendRequest = {
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * User Prompt
+     */
+    user_prompt: string;
+    /**
+     * Parent Message Id
+     */
+    parent_message_id: string | null;
+    /**
+     * Draft Id
+     */
+    draft_id?: string | null;
+    /**
+     * Files
+     */
+    files?: Array<string>;
 };
 
 /**
@@ -1188,6 +1272,10 @@ export type MessageFileReference = {
     size: number;
     kind: FileKind;
     status: FileContentStatus;
+    /**
+     * Available
+     */
+    available?: boolean;
 };
 
 /**
@@ -1204,6 +1292,14 @@ export type ModelCapabilitySource = 'catalog' | 'provider' | 'manual' | 'unknown
  * NewChatRequest
  */
 export type NewChatRequest = {
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Draft Id
+     */
+    draft_id?: string | null;
     /**
      * User Prompt
      */
@@ -2672,6 +2768,10 @@ export type ChatSessionCreateErrors = {
      */
     404: ErrorDetail;
     /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
      * Validation Error
      */
     422: ErrorDetail;
@@ -2979,6 +3079,48 @@ export type ChatFileGetInfoResponses = {
 
 export type ChatFileGetInfoResponse = ChatFileGetInfoResponses[keyof ChatFileGetInfoResponses];
 
+export type ChatFileRemoveData = {
+    body?: never;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+        /**
+         * File Id
+         */
+        file_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/files/{file_id}';
+};
+
+export type ChatFileRemoveErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatFileRemoveError = ChatFileRemoveErrors[keyof ChatFileRemoveErrors];
+
+export type ChatFileRemoveResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatFileScope;
+};
+
+export type ChatFileRemoveResponse = ChatFileRemoveResponses[keyof ChatFileRemoveResponses];
+
 export type ChatFileDownloadData = {
     body?: never;
     path: {
@@ -3054,6 +3196,243 @@ export type ChatSessionMoveResponses = {
 };
 
 export type ChatSessionMoveResponse = ChatSessionMoveResponses[keyof ChatSessionMoveResponses];
+
+export type ChatDraftCreateData = {
+    body: ChatDraftCreate;
+    path?: never;
+    query?: never;
+    url: '/chat/drafts';
+};
+
+export type ChatDraftCreateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatDraftCreateError = ChatDraftCreateErrors[keyof ChatDraftCreateErrors];
+
+export type ChatDraftCreateResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatDraft;
+};
+
+export type ChatDraftCreateResponse = ChatDraftCreateResponses[keyof ChatDraftCreateResponses];
+
+export type ChatDraftDiscardData = {
+    body?: never;
+    path: {
+        /**
+         * Draft Id
+         */
+        draft_id: string;
+    };
+    query?: never;
+    url: '/chat/drafts/{draft_id}';
+};
+
+export type ChatDraftDiscardErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatDraftDiscardError = ChatDraftDiscardErrors[keyof ChatDraftDiscardErrors];
+
+export type ChatDraftDiscardResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatDraft;
+};
+
+export type ChatDraftDiscardResponse = ChatDraftDiscardResponses[keyof ChatDraftDiscardResponses];
+
+export type ChatDraftGetOneData = {
+    body?: never;
+    path: {
+        /**
+         * Draft Id
+         */
+        draft_id: string;
+    };
+    query?: never;
+    url: '/chat/drafts/{draft_id}';
+};
+
+export type ChatDraftGetOneErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatDraftGetOneError = ChatDraftGetOneErrors[keyof ChatDraftGetOneErrors];
+
+export type ChatDraftGetOneResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatDraft;
+};
+
+export type ChatDraftGetOneResponse = ChatDraftGetOneResponses[keyof ChatDraftGetOneResponses];
+
+export type ChatDraftRemoveFilesData = {
+    body: ChatDraftFiles;
+    path: {
+        /**
+         * Draft Id
+         */
+        draft_id: string;
+    };
+    query?: never;
+    url: '/chat/drafts/{draft_id}/files';
+};
+
+export type ChatDraftRemoveFilesErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatDraftRemoveFilesError = ChatDraftRemoveFilesErrors[keyof ChatDraftRemoveFilesErrors];
+
+export type ChatDraftRemoveFilesResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatDraft;
+};
+
+export type ChatDraftRemoveFilesResponse = ChatDraftRemoveFilesResponses[keyof ChatDraftRemoveFilesResponses];
+
+export type ChatDraftAddFilesData = {
+    body: ChatDraftFiles;
+    path: {
+        /**
+         * Draft Id
+         */
+        draft_id: string;
+    };
+    query?: never;
+    url: '/chat/drafts/{draft_id}/files';
+};
+
+export type ChatDraftAddFilesErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatDraftAddFilesError = ChatDraftAddFilesErrors[keyof ChatDraftAddFilesErrors];
+
+export type ChatDraftAddFilesResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatDraft;
+};
+
+export type ChatDraftAddFilesResponse = ChatDraftAddFilesResponses[keyof ChatDraftAddFilesResponses];
+
+export type ChatDraftUploadData = {
+    body: BodyChatDraftUpload;
+    path: {
+        /**
+         * Draft Id
+         */
+        draft_id: string;
+    };
+    query?: never;
+    url: '/chat/drafts/{draft_id}/uploads';
+};
+
+export type ChatDraftUploadErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatDraftUploadError = ChatDraftUploadErrors[keyof ChatDraftUploadErrors];
+
+export type ChatDraftUploadResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserFileList;
+};
+
+export type ChatDraftUploadResponse = ChatDraftUploadResponses[keyof ChatDraftUploadResponses];
+
+export type ChatMessageSendData = {
+    body: ChatSendRequest;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/message';
+};
+
+export type ChatMessageSendErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatMessageSendError = ChatMessageSendErrors[keyof ChatMessageSendErrors];
+
+export type ChatMessageSendResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type ChatMessageSendResponse = ChatMessageSendResponses[keyof ChatMessageSendResponses];
 
 export type FolderGetManyData = {
     body?: never;

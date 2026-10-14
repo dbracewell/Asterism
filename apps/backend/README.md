@@ -224,8 +224,8 @@ reader before reading cached document content or images. Ownership is checked in
 services and composite database foreign keys. General scope contains no project prompt.
 
 US-25.1 supplies the binding/scope foundation. US-25.2 implements guarded moves,
-scoped chat lists, project search, and explicit deletion coordination; draft handling,
-retry/attachment removal lifecycle remain US-25.3. Project prompt composition and
+scoped chat lists, project search, and explicit deletion coordination. US-25.3 implements
+draft handling, idempotent acceptance and attachment removal. Project prompt composition and
 contextual tool/retrieval/delegation authorization arrive in EPIC-26/29; existing
 knowledge-base tool assignments are still present until the planned refactor cutover.
 The new scope reader is not a claim that every legacy runtime tool already uses it.
@@ -267,3 +267,62 @@ Fresh initialization installs `chat_search`/`project_search` and update/delete t
 reset disposable older databases explicitly. No working database was reset for this story.
 Project deletion detaches through a chat-owned transaction-local operation before
 removing the project; failures/stale revisions roll back both operations.
+
+
+### Chat drafts, send acceptance and attachment removal (US-25.3)
+
+| API | Purpose |
+| --- | --- |
+| `POST /chat/drafts` | Create an owner-scoped draft; optional `chat_id` binds it to an existing owned chat, otherwise it is for a new chat |
+| `GET /chat/drafts/{draft_id}` | Read staged source IDs, unavailable IDs and expiry |
+| `POST /chat/drafts/{draft_id}/uploads` | Ingest library sources and stage their immutable IDs |
+| `POST /chat/drafts/{draft_id}/files` | Stage explicitly selected owned library IDs |
+| `DELETE /chat/drafts/{draft_id}/files` | Remove selected draft references without deleting sources |
+| `DELETE /chat/drafts/{draft_id}` | Discard an unsent draft and its references |
+| `POST /chat/` | Accept a new chat/user message with required `request_id`, optional `draft_id`, and/or explicit `files` |
+| `POST /chat/{chat_id}/message` | Accept a follow-up with required `request_id`, `user_prompt`, explicit nullable `parent_message_id`, optional `draft_id` and/or `files` |
+| `DELETE /chat/{chat_id}/files/{file_id}` | Revoke chat-local membership without deleting sources, message snapshots or project memberships |
+
+Draft references grant no runtime access. Drafts expire after 24 hours; access to expired
+drafts fails, and creating another draft lazily prunes that owner's expired references.
+Discard/expiry preserves library files and extraction generations. Snapshots of selected
+IDs survive physical source deletion within an unsent draft, so send rejects an incomplete
+set instead of silently dropping a missing file or substituting a same-name replacement.
+Remove unavailable selections explicitly before sending. Membership links use composite
+owner foreign keys, and services validate the entire owned batch (at most 100 unique
+sources across direct and staged selections).
+
+Upload has two phases: source metadata/bytes commit in the existing file service, then
+references are staged after rechecking draft ownership/expiry. An expired/discarded draft
+or failed staging leaves durable library sources with no runtime grant. Upload failure or
+cancellation before source commit rolls back metadata and removes uncommitted bytes.
+A processing-dispatch failure after commit preserves the original source. Upload retries
+reuse intact same-original-name/same-content IDs even after a display-name collision.
+
+Message acceptance is one relational transaction: history, active-child linkage, local
+ChatFile references, owner-scoped send receipt, and draft consumption commit together.
+A request UUID identifies one immutable send payload per owner. Retry the same key/body
+if acknowledgement is lost; it returns the existing accepted message with current status
+and availability. A different payload using that key returns 409. Receipts last until the
+chat/message is deleted. Replay does not restore revoked attachments, change branches,
+or retroactively regenerate history. Stale parent/branch, an awaiting pending message,
+active generation or approval causes a new send to fail with 409. New-chat acceptance
+serializes owner writes so concurrent retries produce one chat/message/receipt.
+
+Generation follows acceptance. WebSocket commands use `resume` to reload persisted
+history/current scope and generate a pending turn; duplicate resume signals during an
+active job do nothing. Reconnect and regeneration reload current persisted history.
+Generation failure/cancellation retains accepted history and local memberships; canceled
+turns have terminal status and are not restarted by receipt replay/reconnect. Provider
+prompt/retrieval/delegation integration remains EPIC-26/29.
+
+Removal is owner-scoped and rejected during an active run/approval. A no-op repeat is
+safe. It revokes the local reference across branches while preserving historical stable-ID
+snapshots; `MessageFileReference.available` is response-only current authorization, so
+reopened/acknowledged history cannot link a revoked or deleted source. Independent
+project membership can still authorize that source. A later deliberate new attachment
+can establish a new local membership; receipt replay cannot do so.
+
+Fresh initialization registers `chat_drafts`, `chat_draft_files` and
+`chat_send_receipts`. No working database/source storage reset, data migration or
+compatibility path was introduced.

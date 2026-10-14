@@ -1,6 +1,6 @@
 # EPIC-25 — Project chats and chat files
 
-Status: US-25.1 complete (user confirmed 2026-10-14); US-25.2 complete (user confirmed 2026-10-14); US-25.3 pending.
+Status: Complete — US-25.1, US-25.2 and US-25.3 confirmed complete by the user on 2026-10-14.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -37,10 +37,10 @@ As a user, I want to organize and find chats within projects or General.
 As a user, I want uploaded files to remain usable when I reopen a chat.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-25.1.
-- [ ] US-25.3-T1: Bind new uploads and explicitly selected library files to the target chat; support draft uploads before a new chat has an ID.
-- [ ] US-25.3-T2: Define send/attach atomicity, failed-send retry, draft cleanup, and attachment removal without deleting source files.
-- [ ] US-25.3-T3: Keep file access consistent across reopen, regenerate, branch changes, and deleted-file references.
-- [ ] US-25.3-T4: Regenerate clients and test cancellation, failed upload/send, replay, removal, and cross-chat isolation.
+- [x] US-25.3-T1: Bind new uploads and explicitly selected library files to the target chat; support draft uploads before a new chat has an ID.
+- [x] US-25.3-T2: Define send/attach atomicity, failed-send retry, draft cleanup, and attachment removal without deleting source files.
+- [x] US-25.3-T3: Keep file access consistent across reopen, regenerate, branch changes, and deleted-file references.
+- [x] US-25.3-T4: Regenerate clients and test cancellation, failed upload/send, replay, removal, and cross-chat isolation.
 
 **Acceptance:** An upload is available only through explicit scope memberships; reopening preserves valid attachments; draft or failed sends do not grant unrelated chats access.
 
@@ -192,3 +192,92 @@ isolated tests/cleanup.
 Only isolated databases were initialized. No working database reset, migration,
 compatibility adapter, live provider call or later-story implementation occurred.
 Older disposable development schemas/indexes require the documented reset workflow.
+
+
+## US-25.3 implementation and verification (2026-10-14)
+
+Implemented on `feature/us-25.3-chat-attachment-lifecycle`; user confirmed completion
+on 2026-10-14, authorizing commit/merge. Completed checklist archived in the
+[daily archive](../archive/todo-completed-2026-10-14.md). Only US-25.3 was implemented.
+EPIC-25 is complete; next recommended story is US-29.1, following the approved
+EPIC-25 → EPIC-29 → EPIC-26 sequence.
+
+Chat-owned draft metadata, immutable selected-ID snapshots, source memberships and
+durable owner/request send receipts are registered in fresh initialization. Drafts can
+stage uploads or selected library IDs before a new chat exists or for an owned existing
+chat. Draft memberships never grant runtime access. They have a fixed 24-hour expiry;
+expired access fails, and creating another draft lazily removes that owner's expired
+references. Discard/removal/expiry never deletes library bytes or extraction generations.
+Deleted or detached staged IDs remain explicit unavailable input until deliberately
+removed/reselected; retained snapshots cannot resurrect removed source memberships.
+
+Source ingest commits separately from staging; cancellation/expiry after ingest leaves
+an owned library source without chat access. Pre-commit upload cancellation/failure
+cleans metadata and uncommitted bytes. Post-commit extraction-dispatch failure preserves
+the source. Original-name/content deduplication reuses IDs on retry, including uploads
+whose display names collided. No per-chat copy or extraction generation is introduced.
+
+New-chat requests require request_id; the new follow-up HTTP acceptance API also requires
+an explicit nullable parent. It validates owners, whole source sets, draft target/expiry,
+active branch and pending/active-run state before persistence. Message, branch linkage,
+ChatFile references, send receipt and draft consumption commit atomically. Same-key/body
+replay acknowledges the existing message without duplicating history or granting removed
+attachments. Changed payloads using the key fail with 409. New-chat owner write locking
+and receipt uniqueness serialize concurrent retries; failures/cancellation roll back
+acceptance and retain a retryable draft. Receipts cascade when their chat/message is deleted.
+
+Generation resumes accepted pending history through the socket's resume command. It reloads
+persisted branch/context on resume/reconnect and before regeneration. Duplicate resume
+signals during a live job do nothing; cancellation preserves references and terminal
+history without restarting on replay. Local attachment removal is owner-scoped, rejects
+active generation/approval, revokes across branches, retains historical ID snapshots and
+leaves project/source memberships intact. Current response-only availability suppresses
+links to removed/deleted sources; independent project membership still authorizes access.
+
+The existing composer awaits acceptance, preserves prompt/chips on failure, caches successful
+uploads, retries only failed uploads, and retains a request key for an unchanged failed send.
+It blocks duplicate submits, uses generated TanStack mutations for upload/create/follow-up,
+and cleans preview resources on removal/abandonment. The richer server-draft/library-picker
+and persisted-removal UI remain US-27.3, as planned; project/local context display remains
+EPIC-27. Full prompt/retrieval/delegation integration remains EPIC-26/29.
+
+Independent fresh-process code generation exposed AgentProfile's import-time UUID default.
+It now uses a per-instance UUID factory; a regression checks unique instance identities and
+absence of a random OpenAPI default. This narrow correction makes the served schema/client
+contract reproducible; it does not start the main-agent configuration story.
+
+| Gate | Result |
+| --- | --- |
+| Backend Ruff / compileall | Passed |
+| Targeted basedpyright (six lifecycle/query modules) | Passed, 0 errors and 0 warnings |
+| Full backend unit/integration suite | 357 passed |
+| Lifecycle/HTTP/DB/runtime regressions | Passed: owned draft/create/pick/upload isolation, mixed-owner/missing/duplicate rejection, atomic rollback, cancellation before acceptance/ingest, discard-during-upload, fixed expiry, unavailable snapshots, explicit re-selection, immutable byte access, source-preserving dispatch failure, lost-ack/concurrent create receipts, active run/approval/branch guards, removal/reopen/regeneration/replay, generation cancellation and duplicate resume |
+| Frontend ESLint / TypeScript | Passed |
+| Frontend Vitest | 32 files, 93 tests passed |
+| Frontend auth migration tests | 6 passed |
+| Root configuration tests | 29 passed |
+| Production build | Passed |
+| Served OpenAPI / Hey API consistency | Passed; independent generation from another fresh ASGI process matches all 18 TS files ignoring trailing whitespace only |
+| Isolated Playwright (`CI=1`) | Final run: 13 passed, one worker, no retries; upload/send/retry/download use generated clients and mocked API replies |
+| Dependency cycles | Passed; 149 modules, 539 internal imports, no circular imports |
+| Diff whitespace | Passed |
+| GitHub CI | Not triggered; local verification only |
+
+Backend HTTP tests substitute JWT decoding; normal Bearer checks, owner services, relational
+transactions, foreign-key constraints and source storage execute normally. Runtime assembly
+uses test agents rather than a live provider. Browser tests verify transport/state and
+original-byte download requests with mocks; real source/ownership/branch/lifecycle behavior
+is covered separately in backend tests. No live provider execution is claimed.
+
+Earlier runs found stale request-ID expectations, ambiguous browser locators (Message versus
+Send message, the Next route announcer, and a knowledge membership description versus its
+file row), and early interactions before the E2E harness hydrated. The expectations/locators
+and test-only hydration gate were corrected before the final successful complete browser
+run. An additional retained-draft-membership regression drove fail-closed consumption and
+explicit re-selection behavior. Expected failed-upload browser logging and cleanup's backend
+exit 143 are part of the isolated runner. Frontend checks use the repository script bodies
+via pnpm exec with verifyDepsBeforeRun=false to avoid the observed local automatic-reinstall
+issue; tracked dependency/configuration files were not changed.
+
+Only isolated databases/storage were initialized. No working database/source reset,
+data migration, compatibility adapter or later-story implementation occurred.

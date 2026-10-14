@@ -11,8 +11,8 @@ from asterism.core.exceptions import (
 from asterism.db.database import get_async_db_session
 from asterism.db.queries import paginate_select
 from asterism.domains.agent.service import get_agent_profile
-from asterism.domains.files.models import FileContentStatus, UserFileModel
-from asterism.domains.settings.service import get_model_and_provider, get_user_settings
+from asterism.domains.files.models import FileContentStatus
+from asterism.domains.settings.service import get_model_and_provider
 
 from .attachments import bind_message_files, resolve_file_references
 from .branches import active_branch
@@ -20,7 +20,7 @@ from .models import (
     ChatModel,
     MessageModel,
 )
-from .queries import select_owned_chats
+from .queries import select_owned_chats, select_owned_messages
 from .schemas import (
     BulkDeleteChatResponse,
     Chat,
@@ -30,11 +30,11 @@ from .schemas import (
     ChatUpdateRequest,
     Message,
     MessageStatus,
-    NewChatRequest,
     NewMessageRequest,
     UpdateMessageRequest,
 )
 from .search import search as search
+from .sending import create_chat as create_chat
 
 
 async def add_message(
@@ -109,80 +109,6 @@ async def update_message(
         message = await session.scalar(update_stmt)
         await session.commit()
         return Message.model_validate(message)
-
-
-async def create_chat(
-    user_id: str,
-    payload: NewChatRequest,
-    session: AsyncSession | None = None,
-) -> Chat:
-    if not payload.user_prompt:
-        raise BadDataException("User prompt cannot be empty")
-
-    if len(payload.files) != len(set(payload.files)):
-        raise BadDataException("Attached files must not be repeated")
-
-    async with get_async_db_session(session) as session:
-        agent_id = await _resolve_main_agent_id(
-            user_id=user_id,
-            requested_agent_id=payload.agent_id,
-            session=session,
-        )
-        if payload.project_id is not None:
-            from asterism.domains.projects.scope import read_project_context
-
-            await read_project_context(user_id=user_id, project_id=payload.project_id, session=session)
-        files = await resolve_file_references(user_id=user_id, file_ids=payload.files, session=session)
-
-        new_session = ChatModel(
-            user_id=user_id,
-            agent_id=agent_id,
-            project_id=payload.project_id,
-        )
-        session.add(new_session)
-        await session.flush()
-
-        await bind_message_files(user_id=user_id, chat_id=new_session.id, files=files, session=session)
-        new_message = MessageModel(
-            chat_id=new_session.id,
-            user_id=user_id,
-            status=MessageStatus.PENDING,
-            content=payload.user_prompt,
-            role="user",
-            files=files,
-        )
-        session.add(new_message)
-
-        await session.commit()
-        await session.refresh(new_session)
-        await session.refresh(new_message)
-
-        return Chat(
-            info=ChatInfo.model_validate(new_session),
-            messages=[Message.model_validate(new_message)],
-        )
-
-
-async def _resolve_main_agent_id(
-    user_id: str,
-    requested_agent_id: uuid.UUID | None,
-    session: AsyncSession,
-) -> uuid.UUID:
-    if requested_agent_id is None:
-        settings = await get_user_settings(user_id=user_id, session=session)
-        requested_agent_id = settings.default_agent_id
-
-    if requested_agent_id is None:
-        raise BadDataException("Select a default main agent before starting a chat")
-
-    agent = await get_agent_profile(
-        user_id=user_id,
-        agent_id=requested_agent_id,
-        session=session,
-    )
-    if agent.sub_agent:
-        raise BadDataException("A chat must use a main agent, not a sub-agent")
-    return agent.id
 
 
 async def update_chat(
@@ -334,10 +260,7 @@ async def get_one(
         chat_info = ChatInfo.model_validate(chat_session)
         chat_info.context_model = await _get_context_model(chat_session, session)
 
-        stmt = select(MessageModel).where(
-            MessageModel.chat_id == chat_id,
-            MessageModel.user_id == user_id,
-        )
+        stmt = select_owned_messages(user_id=user_id, chat_id=chat_id)
         result = await session.execute(stmt)
         all_messages = result.scalars().all()
 
@@ -348,13 +271,13 @@ async def get_one(
             )
 
         messages = active_branch(all_messages)
-        ids = {file.file_id for message in messages for file in message.files}
-        existing = set(await session.scalars(select(UserFileModel.id).where(
-            UserFileModel.user_id == user_id, UserFileModel.id.in_(ids),
-        )))
+        from .scope import resolve_chat_file_scope
+
+        scope = await resolve_chat_file_scope(user_id=user_id, chat_id=chat_id, session=session)
+        allowed = set(scope.allowed_file_ids)
         for message in messages:
-            message.files = [file if file.file_id in existing else file.model_copy(
-                update={"status": FileContentStatus.FAILED},
+            message.files = [file if file.file_id in allowed else file.model_copy(
+                update={"status": FileContentStatus.FAILED, "available": False},
             ) for file in message.files]
         return Chat(info=chat_info, messages=messages)
 
@@ -371,8 +294,8 @@ async def _lock_owned_chat(*, user_id: str, chat_id: uuid.UUID, session: AsyncSe
 async def _owned_message(
     *, user_id: str, chat_id: uuid.UUID, message_id: uuid.UUID, session: AsyncSession,
 ) -> MessageModel:
-    message = await session.scalar(select(MessageModel).where(
-        MessageModel.user_id == user_id, MessageModel.chat_id == chat_id, MessageModel.id == message_id,
+    message = await session.scalar(select_owned_messages(user_id=user_id, chat_id=chat_id).where(
+        MessageModel.id == message_id,
     ))
     if message is None:
         raise NotFoundException("Message not found")

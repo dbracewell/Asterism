@@ -391,3 +391,30 @@ relational; source consumers resolve opaque keys and listings query the database
 Deleting a source removes memberships while retaining message snapshots for unavailable
 history. Project deletion sets chat project_id to null and preserves local references.
 Guarded moves and explicit lifecycle coordination are implemented in US-25.2.
+
+
+## Draft references and durable message acceptance
+
+US-25.3 adds ChatDraft (owner, optional target chat, fixed 24-hour expiry and selected-ID
+snapshot), ChatDraftFile (unique owner-consistent source membership) and ChatSendReceipt
+(owner/request UUID, payload fingerprint and owner-consistent chat/message acknowledgement).
+The draft snapshot is data, not an authorization grant: consumption validates all live
+source owners and memberships again. It retains unavailable IDs after physical deletion,
+so an incomplete draft cannot silently send a partial set. Draft discard/lazy expiry
+cleans references, never source bytes/generations. Message/chat deletion cascades receipts;
+target-chat deletion cascades its unsent drafts.
+
+Source ingest commits before draft staging; cancellation/expiry between them can leave a
+library source without granting any chat access. Message acceptance commits user history,
+branch linkage, local references, receipt and draft consumption together. Request replay
+returns that accepted message's current status/availability and cannot rebind revoked files
+or switch branches. New-chat creation serializes owner writes for duplicate-request races;
+follow-up acceptance/removal share the process-local idle-change gate with moves. The DB
+write lock and explicit parent check detect concurrent branch changes before mutation.
+
+Socket generation resumes persisted pending messages after reloading current history and
+scope. Cancellation is terminal but preserves references; regeneration uses the current
+persisted branch/memberships. Response-only file availability prevents historical snapshots
+from authorizing removed/deleted files. Project membership is independent of local removal.
+Extraction bytes/state remain owned by Files/Extraction. No migration or old API fallback
+is added; full execution context/prompt/retrieval work remains EPIC-26/29.

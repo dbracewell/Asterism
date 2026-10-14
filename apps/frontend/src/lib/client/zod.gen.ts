@@ -3,6 +3,13 @@
 import * as z from 'zod';
 
 /**
+ * Body_chatDraftUpload
+ */
+export const zBodyChatDraftUpload = z.object({
+    files: z.array(z.string())
+});
+
+/**
  * Body_fileUpload
  */
 export const zBodyFileUpload = z.object({
@@ -71,10 +78,46 @@ export const zChatContextUsage = z.object({
 });
 
 /**
+ * ChatDraft
+ */
+export const zChatDraft = z.object({
+    id: z.uuid(),
+    chat_id: z.uuid().nullable(),
+    expires_at: z.int(),
+    file_ids: z.array(z.uuid()),
+    unavailable_file_ids: z.array(z.uuid())
+});
+
+/**
+ * ChatDraftCreate
+ */
+export const zChatDraftCreate = z.object({
+    chat_id: z.uuid().nullish()
+});
+
+/**
+ * ChatDraftFiles
+ */
+export const zChatDraftFiles = z.object({
+    file_ids: z.array(z.uuid()).max(100)
+});
+
+/**
  * ChatMoveRequest
  */
 export const zChatMoveRequest = z.object({
     project_id: z.uuid().nullable()
+});
+
+/**
+ * ChatSendRequest
+ */
+export const zChatSendRequest = z.object({
+    request_id: z.uuid(),
+    user_prompt: z.string().min(1),
+    parent_message_id: z.uuid().nullable(),
+    draft_id: z.uuid().nullish(),
+    files: z.array(z.uuid()).max(100).optional()
 });
 
 /**
@@ -265,7 +308,7 @@ export const zAgentProfile = z.object({
     max_steps: z.int(),
     chat_parameters: zChatCompletionParams.optional(),
     tools: z.array(z.string()).nullish(),
-    id: z.uuid().optional().default('5281bb50-b168-4f63-ac48-00350a518225'),
+    id: z.uuid().optional(),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -458,7 +501,8 @@ export const zMessageFileReference = z.object({
     mime_type: z.string(),
     size: z.int().gte(0),
     kind: zFileKind,
-    status: zFileContentStatus
+    status: zFileContentStatus,
+    available: z.boolean().optional().default(true)
 });
 
 /**
@@ -549,6 +593,8 @@ export const zLlmDisplayInfo = z.object({
  * NewChatRequest
  */
 export const zNewChatRequest = z.object({
+    request_id: z.uuid(),
+    draft_id: z.uuid().nullish(),
     user_prompt: z.string(),
     agent_id: z.uuid().nullish(),
     project_id: z.uuid().nullish(),
@@ -1254,6 +1300,16 @@ export const zChatFileGetInfoPath = z.object({
  */
 export const zChatFileGetInfoResponse = zUserFile;
 
+export const zChatFileRemovePath = z.object({
+    chat_id: z.uuid(),
+    file_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatFileRemoveResponse = zChatFileScope;
+
 export const zChatFileDownloadPath = z.object({
     chat_id: z.uuid(),
     file_id: z.uuid()
@@ -1274,6 +1330,75 @@ export const zChatSessionMovePath = z.object({
  * Successful Response
  */
 export const zChatSessionMoveResponse = zChatInfo;
+
+export const zChatDraftCreateBody = zChatDraftCreate;
+
+/**
+ * Successful Response
+ */
+export const zChatDraftCreateResponse = zChatDraft;
+
+export const zChatDraftDiscardPath = z.object({
+    draft_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftDiscardResponse = zChatDraft;
+
+export const zChatDraftGetOnePath = z.object({
+    draft_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftGetOneResponse = zChatDraft;
+
+export const zChatDraftRemoveFilesBody = zChatDraftFiles;
+
+export const zChatDraftRemoveFilesPath = z.object({
+    draft_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftRemoveFilesResponse = zChatDraft;
+
+export const zChatDraftAddFilesBody = zChatDraftFiles;
+
+export const zChatDraftAddFilesPath = z.object({
+    draft_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftAddFilesResponse = zChatDraft;
+
+export const zChatDraftUploadBody = zBodyChatDraftUpload;
+
+export const zChatDraftUploadPath = z.object({
+    draft_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftUploadResponse = zUserFileList;
+
+export const zChatMessageSendBody = zChatSendRequest;
+
+export const zChatMessageSendPath = z.object({
+    chat_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatMessageSendResponse = zMessage;
 
 /**
  * Successful Response

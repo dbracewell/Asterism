@@ -50,7 +50,7 @@ class ChatController:
             # The generation task belongs to the chat job, not this socket.
             # Disconnecting a browser must therefore only stop this controller.
             if self.queue.qsize() == 0 and not self.job.is_active:
-                self.job.start(self.orchestrator.run_agent())
+                self.job.start(self.orchestrator.resume_pending_turn())
 
             command_tasks = [
                 asyncio.create_task(self._accept_commands_loop()),
@@ -101,10 +101,10 @@ class ChatController:
             cmd = await self.inbound_commands.get()
             try:
                 match cmd.get("type"):
-                    case "chat":
-                        current_job = self.job.start(
-                            self.orchestrator.handle_new_user_message(cmd.get("message", ""), cmd.get("files", [])),
-                        )
+                    case "resume":
+                        if self.job.is_active:
+                            continue
+                        current_job = self.job.start(self.orchestrator.resume_pending_turn())
                     case "regenerate":
                         current_job = self.job.start(self._regenerate(cmd.get("parent_message_id", "")))
                     case "ping":
@@ -122,6 +122,7 @@ class ChatController:
                 self.inbound_commands.task_done()
 
     async def _regenerate(self, parent_message_id: str) -> None:
+        await self.orchestrator.reload_chat()
         parent_message_index, parent_message = self.orchestrator.find_message(parent_message_id)
         await self.connection.send_json(
             {

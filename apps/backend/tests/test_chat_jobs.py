@@ -43,6 +43,7 @@ async def test_chat_job_is_shared_and_disconnect_safe():
 
     orchestrator = SimpleNamespace(
         run_agent=run_agent,
+        resume_pending_turn=run_agent,
         cancel_active_generation=cancel_active_generation,
     )
     job = manager.get_or_create(chat_id, orchestrator)
@@ -109,6 +110,7 @@ async def test_controller_disconnect_does_not_cancel_the_chat_job():
 
     orchestrator = SimpleNamespace(
         run_agent=run_agent,
+        resume_pending_turn=run_agent,
         generate_chat_title=lambda: asyncio.sleep(0),
         is_active=False,
     )
@@ -406,6 +408,7 @@ async def test_explicit_job_cancel_finalizes_the_active_generation():
 
     orchestrator = SimpleNamespace(
         run_agent=run_agent,
+        resume_pending_turn=run_agent,
         cancel_active_generation=cancel_active_generation,
     )
     job = manager.get_or_create(uuid.uuid4(), orchestrator)
@@ -521,3 +524,30 @@ def test_queue_ttl_is_a_fallback_for_unretired_idle_queues(monkeypatch):
     time.sleep(0.01)
     assert get_message_queue(chat_id) is not first
     assert message_queue_count() == 1
+
+
+@pytest.mark.asyncio
+async def test_duplicate_resume_during_generation_does_not_start_another_turn():
+    manager = ChatJobManager()
+    chat_id = uuid.uuid4()
+    resumed = []
+
+    async def resume():
+        resumed.append(True)
+
+    job = manager.get_or_create(chat_id, SimpleNamespace(resume_pending_turn=resume))
+    manager.attach(chat_id, job)
+    active = job.start(asyncio.sleep(30))
+    controller = ChatController(chat_id=chat_id, connection=SimpleNamespace(), job=job)
+    controller._is_running = True
+    commands = asyncio.create_task(controller._process_commands_loop())
+    try:
+        await controller.inbound_commands.put({"type": "resume"})
+        await asyncio.wait_for(controller.inbound_commands.join(), 1)
+        assert resumed == []
+        assert job.task is active and not active.done()
+    finally:
+        commands.cancel()
+        await asyncio.gather(commands, return_exceptions=True)
+        job.orchestrator.cancel_active_generation = lambda: asyncio.sleep(0)
+        await manager.retire(chat_id)

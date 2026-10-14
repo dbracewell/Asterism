@@ -56,7 +56,7 @@ class ChatJob:
         if self.retired:
             operation.close()  # pyright: ignore[reportAttributeAccessIssue]
             raise RuntimeError("This chat job has been retired")
-        if self.manager and self.manager.membership_is_changing(self):
+        if self.manager and self.manager.chat_is_changing(self):
             operation.close()  # pyright: ignore[reportAttributeAccessIssue]
             raise CodedException(409, "Chat membership is changing; retry the turn")
         if self.is_active:
@@ -103,15 +103,15 @@ class ChatJobManager:
         self._shutting_down = False
         self._membership_changes: set[uuid.UUID] = set()
 
-    def membership_is_changing(self, job: ChatJob) -> bool:
+    def chat_is_changing(self, job: ChatJob) -> bool:
         return any(self._jobs.get(chat_id) is job for chat_id in self._membership_changes)
 
     @contextmanager
-    def guard_membership_change(self, chat_id: uuid.UUID):
+    def guard_idle_change(self, chat_id: uuid.UUID):
         """Serialize moves against process-local starts through transaction completion."""
         job = self._jobs.get(chat_id)
         if chat_id in self._membership_changes or (job and (job.is_active or job.has_pending_approval)):
-            raise CodedException(409, "Cannot move a chat while a run is active or membership is changing")
+            raise CodedException(409, "Cannot change a chat while a run is active or another change is in progress")
         self._membership_changes.add(chat_id)
         try:
             yield

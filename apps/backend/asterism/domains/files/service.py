@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import mimetypes
 import re
@@ -199,7 +200,7 @@ async def upload_files(
             existing = await session.scalar(
                 select(UserFileModel).where(
                     UserFileModel.user_id == user_id,
-                    UserFileModel.filename == original_name,
+                    UserFileModel.original_name == original_name,
                     UserFileModel.sha256 == sha256,
                 ),
             )
@@ -243,16 +244,16 @@ async def upload_files(
         for file in created:
             artifacts.append(await ensure_file_knowledge_artifact(file=file, session=session))
         await session.commit()
-        from asterism.domains.extraction.runtime import start_file_ingestion_job
-
-        for file, artifact in zip(created, artifacts, strict=True):
-            if artifact.status.value in {"pending", "failed"}:
-                start_file_ingestion_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
-    except Exception:
+    except (Exception, asyncio.CancelledError):
         await session.rollback()
         for filename in saved:
             store.delete(user_id, filename)
         raise
+    from asterism.domains.extraction.runtime import start_file_ingestion_job
+
+    for file, artifact in zip(created, artifacts, strict=True):
+        if artifact.status.value in {"pending", "failed"}:
+            start_file_ingestion_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
     return UserFileList(files=await describe_files(user_id=user_id, files=created, session=session))
 
 

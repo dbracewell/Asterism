@@ -1,7 +1,7 @@
 import uuid
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Query, WebSocket
+from fastapi import APIRouter, File, Query, UploadFile, WebSocket
 from fastapi.responses import FileResponse
 
 import asterism.domains.agent.service as agent_service
@@ -16,17 +16,21 @@ from asterism.domains.chat.connection import WebSocketConnection
 from asterism.domains.chat.controller import ChatController
 from asterism.domains.chat.jobs import chat_jobs
 from asterism.domains.chat.orchestrator import ChatOrchestrator
-from asterism.domains.files.schemas import UserFile
+from asterism.domains.files.schemas import UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .schemas import (
     BulkDeleteChatRequest,
     BulkDeleteChatResponse,
     Chat,
+    ChatDraft,
+    ChatDraftCreate,
+    ChatDraftFiles,
     ChatFileScope,
     ChatInfo,
     ChatInfoList,
     ChatMoveRequest,
+    ChatSendRequest,
     ChatUpdateRequest,
     Message,
     NewChatRequest,
@@ -92,6 +96,7 @@ async def chat(
     "/",
     response_model=Chat,
     operation_id="chatSessionCreate",
+    responses={409: {"model": ErrorDetail}},
 )
 async def new_session(
     payload: NewChatRequest,
@@ -305,3 +310,79 @@ async def move_session(
     from .membership import move_chat
 
     return await move_chat(user_id=user.id, chat_id=chat_id, payload=payload, session=db)
+
+
+@chat_router.post("/drafts", response_model=ChatDraft, operation_id="chatDraftCreate")
+async def create_draft(payload: ChatDraftCreate, user: AuthedUserDep, db: DBSessionDep) -> ChatDraft:
+    from .drafts import create_draft
+
+    return await create_draft(user_id=user.id, payload=payload, session=db)
+
+
+@chat_router.get("/drafts/{draft_id}", response_model=ChatDraft, operation_id="chatDraftGetOne")
+async def read_draft(draft_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> ChatDraft:
+    from .drafts import get_draft
+
+    return await get_draft(user_id=user.id, draft_id=draft_id, session=db)
+
+
+@chat_router.delete("/drafts/{draft_id}", response_model=ChatDraft, operation_id="chatDraftDiscard")
+async def discard_draft(draft_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> ChatDraft:
+    from .drafts import discard_draft
+
+    return await discard_draft(user_id=user.id, draft_id=draft_id, session=db)
+
+
+@chat_router.post("/drafts/{draft_id}/files", response_model=ChatDraft, operation_id="chatDraftAddFiles")
+async def add_draft_files(
+    draft_id: uuid.UUID, payload: ChatDraftFiles, user: AuthedUserDep, db: DBSessionDep,
+) -> ChatDraft:
+    from .drafts import change_draft_files
+
+    return await change_draft_files(user_id=user.id, draft_id=draft_id, payload=payload, remove=False, session=db)
+
+
+@chat_router.delete("/drafts/{draft_id}/files", response_model=ChatDraft, operation_id="chatDraftRemoveFiles")
+async def remove_draft_files(
+    draft_id: uuid.UUID, payload: ChatDraftFiles, user: AuthedUserDep, db: DBSessionDep,
+) -> ChatDraft:
+    from .drafts import change_draft_files
+
+    return await change_draft_files(user_id=user.id, draft_id=draft_id, payload=payload, remove=True, session=db)
+
+
+@chat_router.post("/drafts/{draft_id}/uploads", response_model=UserFileList, operation_id="chatDraftUpload")
+async def upload_draft_files(
+    draft_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep,
+    files: Annotated[list[UploadFile], File(description="Stage uploaded library sources for this draft")],
+) -> UserFileList:
+    from asterism.domains.files.service import upload_files
+
+    from .drafts import change_draft_files, get_draft
+
+    # Source ingestion commits independently; only an accepted message grants runtime access.
+    # Revalidation after ingest covers cancellation/expiry while the upload was running.
+    await get_draft(user_id=user.id, draft_id=draft_id, session=db)
+    result = await upload_files(user_id=user.id, uploads=files, session=db)
+    await change_draft_files(user_id=user.id, draft_id=draft_id,
+                             payload=ChatDraftFiles(file_ids=[file.id for file in result.files]),
+                             remove=False, session=db)
+    return result
+
+
+@chat_router.post("/{chat_id}/message", response_model=Message, operation_id="chatMessageSend",
+                  responses={409: {"model": ErrorDetail}})
+async def send_message(chat_id: uuid.UUID, payload: ChatSendRequest, user: AuthedUserDep, db: DBSessionDep) -> Message:
+    from .sending import send_message
+
+    return await send_message(user_id=user.id, chat_id=chat_id, payload=payload, session=db)
+
+
+@chat_router.delete("/{chat_id}/files/{file_id}", response_model=ChatFileScope, operation_id="chatFileRemove",
+                    responses={409: {"model": ErrorDetail}})
+async def remove_chat_file(
+    chat_id: uuid.UUID, file_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep,
+) -> ChatFileScope:
+    from .attachments import remove_chat_file
+
+    return await remove_chat_file(user_id=user.id, chat_id=chat_id, file_id=file_id, session=db)

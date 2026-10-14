@@ -75,3 +75,25 @@ cached membership identity; a move changes the next resolved project context wit
 rewriting history or promoting local attachments. Project deletion checks its revision
 under a write lock, detaches via the chat-owned boundary, and commits both changes
 atomically. Runtime cancellation and project prompt composition remain US-26.1.
+
+
+### US-25.3 lifecycle decision
+
+Draft staging and source ownership are separate. Uploads are durable owner-library sources;
+unsent references expire after 24 hours and never grant runtime scope. Discard/expiry
+removes references without deleting a potentially shared source. Keep selected-ID snapshots
+alongside live draft memberships so physical source deletion is explicit at send rather
+than silently omitting input. Composite foreign keys enforce reference ownership.
+
+User sends require an owner-scoped request UUID and persist a fingerprinted receipt with
+the accepted chat/message. Accept history, active-child linkage, local memberships, receipt
+and draft consumption in one transaction; replay an acknowledgement without reattaching
+files or executing the old turn. The socket handles generation of persisted pending turns
+through resume, not unacknowledged message creation. Reload branch/memberships for reopen
+and regeneration. Distinguish canceled terminal turns from retryable pending execution.
+Removal revokes local access across branches, preserves immutable historical snapshots,
+and leaves independent project memberships and original sources intact.
+
+The current composer awaits persistence and retains successful upload IDs for failed-send
+retry. Rich server-draft/picker/removal UI remains US-27.3. This provides lifecycle contracts
+without starting that UI story or EPIC-26's prompt/tool/retrieval integration.

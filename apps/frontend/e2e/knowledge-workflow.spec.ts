@@ -117,8 +117,8 @@ test("manages knowledge-base membership in the file explorer without deleting li
   await page.getByRole("button", { name: "Add files" }).click();
   const dialog = page.getByRole("dialog");
   await expect(
-    dialog.getByText("Already in this knowledge base"),
-  ).toBeVisible();
+    dialog.getByRole("button", { name: /report\.pdf/ }),
+  ).toContainText("Already in this knowledge base");
   await dialog.getByRole("button", { name: /diagram\.png/ }).click();
   await dialog.getByRole("button", { name: /Add selected/ }).click();
   await expect(dialog).toHaveCount(0);
