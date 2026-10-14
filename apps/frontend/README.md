@@ -68,6 +68,13 @@ deleting the file from Files removes its memberships and derived knowledge.
 Agent-profile knowledge-base assignments enable the scoped `search_knowledge`
 tool. The generated client is the source for these REST contracts.
 
+File lists (including the add-files picker) and knowledge-base details show query
+failures with a Retry action. Cached files remain visible when a refresh fails;
+failed requests do not appear as empty search results. Knowledge-base management
+controls are available only after its details load successfully. Per-file
+processing-status queries also support retry, and regeneration failures produce
+an error notification.
+
 ## Docker and migrations
 
 Only the repository-root Dockerfile and Compose configuration are supported.

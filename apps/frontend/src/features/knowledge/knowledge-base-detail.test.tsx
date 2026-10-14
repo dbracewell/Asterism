@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 
@@ -7,7 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ApiClient } from "@/lib/client";
 import { KnowledgeBaseDetail } from "./knowledge-base-detail";
 
-const { api, client, back } = vi.hoisted(() => ({
+const { api, client, back, toastError } = vi.hoisted(() => ({
+  toastError: vi.fn(),
   back: vi.fn(),
   client: { getConfig: () => ({ baseUrl: "" }) },
   api: {
@@ -22,19 +23,18 @@ const { api, client, back } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/api", () => ({ client }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back }) }));
+vi.mock("sonner", () => ({ toast: { error: toastError } }));
 
-function renderDetail() {
+function renderDetail(
+  queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  }),
+) {
   return render(
-    <QueryClientProvider
-      client={
-        new QueryClient({
-          defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-          },
-        })
-      }
-    >
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <KnowledgeBaseDetail knowledgeBaseId="base-1" />
       </TooltipProvider>
@@ -59,7 +59,7 @@ type ListOptions = {
 };
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   ApiClient.__registry.set(api as never);
   api.knowledgeBaseGetOne.mockResolvedValue({
     data: { id: "base-1", name: "Research", description: "Private notes" },
@@ -79,7 +79,9 @@ it("lists member files in the explorer and removes only the membership", async (
   api.knowledgeBaseFileDeleteMany.mockResolvedValue({ data: { files: [] } });
   renderDetail();
   const user = userEvent.setup();
-  expect(await screen.findByText("Knowledge Base: Research")).toBeInTheDocument();
+  expect(
+    await screen.findByText("Knowledge Base: Research"),
+  ).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Back" }));
   expect(back).toHaveBeenCalledOnce();
   expect(api.fileGetMany).toHaveBeenCalledWith(
@@ -111,7 +113,7 @@ it("adds selected files from the picker, which has no delete and blocks existing
   api.knowledgeBaseFileCreateMany.mockResolvedValue({ data: { files: [] } });
   renderDetail();
   const user = userEvent.setup();
-  await user.click(screen.getByRole("button", { name: "Add files" }));
+  await user.click(await screen.findByRole("button", { name: "Add files" }));
   const dialog = await screen.findByRole("dialog");
   expect(
     await within(dialog).findByText(/Already in this knowledge base/),
@@ -138,5 +140,163 @@ it("adds selected files from the picker, which has no delete and blocks existing
   );
   await waitFor(() =>
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
+});
+
+it("shows loading before enabling knowledge-base management", async () => {
+  api.knowledgeBaseGetOne.mockReturnValue(new Promise(() => {}));
+  renderDetail();
+  expect(screen.getByText("Loading...")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Add files" }),
+  ).not.toBeInTheDocument();
+  expect(api.fileGetMany).not.toHaveBeenCalled();
+});
+
+it("handles a missing knowledge base and retries without mounting its explorer", async () => {
+  api.knowledgeBaseGetOne.mockRejectedValueOnce({
+    code: "not_found",
+    detail: "Knowledge base not found.",
+  });
+  renderDetail();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Knowledge base not found.",
+  );
+  expect(
+    screen.queryByRole("button", { name: "Add files" }),
+  ).not.toBeInTheDocument();
+  expect(api.fileGetMany).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(
+    await screen.findByText("Knowledge Base: Research"),
+  ).toBeInTheDocument();
+  expect(await screen.findByText("member.txt")).toBeInTheDocument();
+});
+
+it("shows a generic knowledge-base error for network failures", async () => {
+  api.knowledgeBaseGetOne.mockRejectedValue(new TypeError("Failed to fetch"));
+  renderDetail();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Unable to load knowledge base.",
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
+  expect(back).toHaveBeenCalledOnce();
+});
+
+it("distinguishes a failed file query from an empty list and retries", async () => {
+  api.fileGetMany.mockRejectedValueOnce({
+    code: "unavailable",
+    detail: "File service unavailable.",
+  });
+  renderDetail();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "File service unavailable.",
+  );
+  expect(screen.queryByText("No files found.")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Page 0 of 0/)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByText("member.txt")).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+it("retains cached files and displays errors when a refresh fails", async () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  renderDetail(queryClient);
+  expect(await screen.findByText("member.txt")).toBeInTheDocument();
+  api.fileGetMany.mockRejectedValue(new TypeError("Failed to fetch"));
+  await act(async () => {
+    await queryClient.invalidateQueries({
+      predicate: (query) =>
+        (query.queryKey[0] as { _id?: string } | undefined)?._id ===
+        "fileGetMany",
+    });
+  });
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Unable to load files.",
+  );
+  expect(screen.getByText("member.txt")).toBeInTheDocument();
+});
+
+it("shows file-query errors inside the add-files picker", async () => {
+  renderDetail();
+  expect(await screen.findByText("member.txt")).toBeInTheDocument();
+  api.fileGetMany.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+  await userEvent.click(screen.getByRole("button", { name: "Add files" }));
+  const dialog = await screen.findByRole("dialog");
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+    "Unable to load files.",
+  );
+  expect(
+    within(dialog).getByRole("button", { name: "Add selected (0)" }),
+  ).toBeDisabled();
+  await userEvent.click(within(dialog).getByRole("button", { name: "Retry" }));
+  expect(await within(dialog).findByText("fresh.txt")).toBeInTheDocument();
+});
+
+it("reports file processing status failures and retries", async () => {
+  api.fileKnowledgeGetStatus.mockRejectedValueOnce(
+    new TypeError("Failed to fetch"),
+  );
+  renderDetail();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Unable to load file processing status.",
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByText("Embedding: ready")).toBeInTheDocument();
+});
+
+it("reports regeneration failures", async () => {
+  const regenerate = vi
+    .fn()
+    .mockRejectedValue(new TypeError("Failed to fetch"));
+  ApiClient.__registry.set({
+    ...api,
+    fileKnowledgeRegenerate: regenerate,
+  } as never);
+  renderDetail();
+  await userEvent.click(
+    await screen.findByRole("button", {
+      name: "Regenerate embedding and caption",
+    }),
+  );
+  await waitFor(() =>
+    expect(toastError).toHaveBeenCalledWith(
+      "Unable to regenerate embedding and caption.",
+    ),
+  );
+});
+
+it("prevents repeated retry while loading and recovers to an empty list", async () => {
+  let resolveFiles!: (value: {
+    data: { files: never[]; total: number };
+  }) => void;
+  api.fileGetMany
+    .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFiles = resolve;
+        }),
+    );
+  renderDetail();
+  await screen.findByRole("alert");
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByText("Loading...")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Retry" }),
+  ).not.toBeInTheDocument();
+  await act(async () => resolveFiles({ data: { files: [], total: 0 } }));
+  expect(await screen.findByText("No files found.")).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.getByText("Page 0 of 0")).toBeInTheDocument();
+});
+
+it("handles structured validation errors without rendering their detail as an object", async () => {
+  api.fileGetMany.mockRejectedValue({ detail: [{ msg: "Invalid request" }] });
+  renderDetail();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Unable to load files.",
   );
 });

@@ -57,6 +57,9 @@ test("lists knowledge bases through the generated API client", async ({
 test("manages knowledge-base membership in the file explorer without deleting library files", async ({
   page,
 }) => {
+  await page.route(new RegExp(`/api/py/knowledge-bases/${base.id}$`), (route) =>
+    route.fulfill({ json: base }),
+  );
   let memberIds = [reportFile.id];
   const library = [imageFile, reportFile];
   const artifact = {
@@ -138,4 +141,49 @@ test("manages knowledge-base membership in the file explorer without deleting li
   await expect(
     explorer.getByRole("button", { name: /report\.pdf/ }),
   ).toBeVisible();
+});
+
+test("recovers from knowledge-base and file query failures using Retry", async ({
+  page,
+}) => {
+  let baseAvailable = false;
+  let filesAvailable = false;
+  await page.route(new RegExp(`/api/py/knowledge-bases/${base.id}$`), (route) =>
+    route.fulfill(
+      baseAvailable
+        ? { json: base }
+        : {
+            status: 404,
+            json: { code: "not_found", detail: "Knowledge base not found." },
+          },
+    ),
+  );
+  await page.route(/\/api\/py\/files\/?(?:\?.*)?$/, (route) =>
+    route.fulfill(
+      filesAvailable
+        ? { json: { files: [], total: 0 } }
+        : {
+            status: 503,
+            json: { code: "unavailable", detail: "File service unavailable." },
+          },
+    ),
+  );
+  await page.goto("/e2e/knowledge-captions");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Knowledge base not found." }),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole("button", { name: "Add files" })).toHaveCount(0);
+  baseAvailable = true;
+  await page.getByRole("button", { name: "Retry", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Knowledge Base: Research" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "File service unavailable." }),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("No files found.")).toHaveCount(0);
+  filesAvailable = true;
+  await page.getByRole("button", { name: "Retry", exact: true }).click();
+  await expect(page.getByText("No files found.")).toBeVisible();
+  await expect(page.getByText("Page 0 of 0")).toBeVisible();
 });

@@ -3,6 +3,7 @@ import { APIDownload } from "@/components/api-download";
 import { APIImage } from "@/components/api-image";
 import { useFileManager } from "@/components/file-manager/context";
 import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
+import { QueryError } from "@/components/query-error";
 import { buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { formatFileSize } from "@/lib/formatters";
@@ -18,20 +19,31 @@ export const FileList = () => {
     isSelectable,
     toggleSelect,
     filesLoading,
+    filesError,
+    filesFetching,
+    retryFiles,
     mode,
   } = useFileManager();
 
   if (filesLoading) {
     return (
       <div className="flex h-full min-h-0 flex-1 flex-col gap-2">
-        <Spinner />
+        <Spinner loadingMessage />
       </div>
     );
   }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {files.length === 0 ? (
+      {!!filesError && (
+        <QueryError
+          error={filesError}
+          message="Unable to load files."
+          retry={retryFiles}
+          isRetrying={filesFetching}
+        />
+      )}
+      {files.length === 0 && !filesError ? (
         <section className="text-muted-foreground bg-card flex flex-1 items-center justify-center text-lg">
           No files found.
         </section>

@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { formatPlural } from "@/lib/formatters";
 
 export const Footer = () => {
-  const { dispatch, queryParameters, totalFiles } = useFileManager();
+  const { dispatch, queryParameters, totalFiles, filesLoading, filesError } =
+    useFileManager();
+  if (filesLoading || filesError) return null;
   return (
     <div className="bg-muted text-muted-foreground flex items-center gap-2 rounded-none border-t px-4 py-2 text-xs">
       <p>{formatPlural(totalFiles, "file", "total files")}</p>

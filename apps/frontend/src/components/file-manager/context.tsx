@@ -42,6 +42,9 @@ type FileManagerContext = {
   knowledgeBaseId?: string;
   mode: Mode;
   filesLoading: boolean;
+  filesError: unknown;
+  filesFetching: boolean;
+  retryFiles: () => Promise<unknown>;
   isSelectable: (file: UserFile) => boolean;
   setIsMutating: Dispatch<React.SetStateAction<boolean>>;
   setIsSearchVisible: Dispatch<React.SetStateAction<boolean>>;
@@ -122,7 +125,7 @@ export const FileManagerProvider = ({
     }
   }, []);
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, error, isFetching, refetch } = useQuery({
     ...fileGetManyOptions({
       client,
       query: {
@@ -207,6 +210,9 @@ export const FileManagerProvider = ({
       knowledgeBaseId,
       totalFiles,
       filesLoading: isPending,
+      filesError: error,
+      filesFetching: isFetching,
+      retryFiles: refetch,
       mode,
     }),
     [
@@ -224,6 +230,9 @@ export const FileManagerProvider = ({
       toggleSelect,
       totalFiles,
       isPending,
+      error,
+      isFetching,
+      refetch,
       mode,
     ],
   );

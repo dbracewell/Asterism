@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Library, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
 type BadgeVariant = "secondary" | "destructive" | "outline";
 
@@ -41,13 +43,26 @@ export function KnowledgeStatus({
   filename: string;
   knowledgeBaseCount: number;
 }) {
-  const { data } = useQuery({
+  const { data, error, isFetching, refetch } = useQuery({
     ...fileKnowledgeGetStatusOptions({ client, path: { filename } }),
     // No push channel exists; poll only while work is in flight.
     refetchInterval: (query) =>
       isActive(query.state.data) ? POLL_INTERVAL_MS : false,
   });
-  const regenerate = useMutation(fileKnowledgeRegenerateMutation({ client }));
+  const regenerate = useMutation({
+    ...fileKnowledgeRegenerateMutation({ client }),
+    onError: () => toast.error("Unable to regenerate embedding and caption."),
+  });
+  if (error) {
+    return (
+      <QueryError
+        error={error}
+        message="Unable to load file processing status."
+        retry={refetch}
+        isRetrying={isFetching}
+      />
+    );
+  }
   if (!data) return null;
   const captionStatus = data.caption.status ?? "none";
   const busy =
@@ -57,7 +72,9 @@ export function KnowledgeStatus({
   return (
     <div className="flex flex-wrap items-center gap-1 text-xs">
       <Badge variant={variantFor(data.status)}>Embedding: {data.status}</Badge>
-      <Badge variant={variantFor(captionStatus)}>Caption: {captionStatus}</Badge>
+      <Badge variant={variantFor(captionStatus)}>
+        Caption: {captionStatus}
+      </Badge>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button

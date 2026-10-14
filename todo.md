@@ -627,6 +627,15 @@ Order: US-23.1 → US-23.2 → US-23.3 → US-23.4.
 
 ## Modular file-manager stabilization
 
+- [x] FM-2 — Recover from file-manager and knowledge-base query failures (branch: `fix/file-manager-query-errors`)
+  - [x] Show loading, errors, and retry actions for shared file queries and knowledge-base detail.
+  - [x] Preserve cached files on refresh failures and avoid misleading empty/count states.
+  - [x] Report file processing-status and regeneration failures.
+  - [x] Cover initial failures, retry recovery, cached refresh failures, picker errors, and structured API errors.
+  - [x] Frontend lint/type checks passed; 86 unit tests and 6 migration tests passed without unhandled errors.
+  - [x] Correct the membership E2E's missing detail-query fixture and add browser query-retry coverage; final isolated CI run passed all 11 tests without retries.
+  - [x] Obtain user confirmation before merge.
+
 - [~] FM-1 — Repair regressions and verify the modular file manager (branch: `fix/modular-file-manager-verification`)
   - [x] Update the E2E page to compose the provider, ribbon, upload area, and file list.
   - [x] Update knowledge-base fixtures and router mocks; name icon controls for accessibility.
