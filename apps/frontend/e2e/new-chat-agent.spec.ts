@@ -4,7 +4,27 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   page,
 }) => {
   await page.route("**/api/py/tools/active", (route) =>
-    route.fulfill({ json: { items: [] } }),
+    route.fulfill({
+      json: {
+        items: [
+          {
+            name: "sub_agent",
+            policy: "context_managed",
+            description: "Delegation",
+          },
+          {
+            name: "search_knowledge",
+            policy: "context_managed",
+            description: "Retrieval",
+          },
+          {
+            name: "web_fetch",
+            policy: "user_configurable",
+            description: "Fetch",
+          },
+        ],
+      },
+    }),
   );
   let saved: unknown;
   await page.route("**/api/py/settings/user/main-agent", (route) => {
@@ -28,6 +48,11 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   ).toContainText("Fixed model unavailable");
   await page.getByRole("button", { name: "Edit main configuration" }).click();
   await expect(page.getByLabel("Fixed model")).toHaveCount(0);
+  await expect(page.getByText("web_fetch", { exact: true })).toBeVisible();
+  await expect(page.getByText("sub_agent", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("search_knowledge", { exact: true })).toHaveCount(
+    0,
+  );
   await page
     .getByLabel("Instructions", { exact: true })
     .fill("Explain carefully");
@@ -38,6 +63,7 @@ test("edits the sole model-free main configuration and exposes unavailable worke
     max_steps: 5,
   });
   expect(saved).not.toHaveProperty("model_id");
+  expect(saved).toMatchObject({ tools: [] });
   await page.getByRole("button", { name: "Edit Research worker" }).click();
   await expect(page.getByLabel("Fixed model")).toBeVisible();
   await expect(

@@ -132,3 +132,9 @@ def test_leaves_malformed_or_unsupported_textual_calls_as_content():
 
     assert extract_text_tool_calls(malformed) == (malformed, [])
     assert extract_text_tool_calls(unsupported) == (unsupported, [])
+
+
+def test_provider_payload_omits_tools_without_an_explicit_effective_set():
+    client = LLMClient(model_name="model", api_key="key", base_url="http://example.test")
+    for tools in (None, []):
+        assert "tools" not in client._prepare_completion_params(messages=[LLMMessage.user("Hello")], tools=tools)

@@ -29,6 +29,7 @@ def model_choice(model: LLMModel) -> ChatModelChoice:
         context_window=model.context_window,
         context_window_source=model.context_window_source,
         supports_vision=model.supports_vision,
+        supports_tools=model.supports_tools,
     )
 
 

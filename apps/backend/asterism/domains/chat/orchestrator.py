@@ -380,7 +380,10 @@ class ChatOrchestrator:
                 input_tokens += estimate_text_tokens(tool_call.model_dump_json(), model_name)
 
         # Tool schemas are part of the first agent request when tools are enabled.
-        input_tokens += estimate_text_tokens(json.dumps(tool_registry.schemas(self.agent.profile.tools)), model_name)
+        input_tokens += estimate_text_tokens(
+            json.dumps(tool_registry.schemas(self.agent.effective_tools if self.agent.max_steps > 1 else [])),
+            model_name,
+        )
         input_tokens += image_parts * 765
         reserved_output = self.agent.profile.chat_parameters.get("max_tokens")
         return ChatContextUsage(

@@ -9,6 +9,7 @@ from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.chat.schemas import Chat, ChatInfo
 from asterism.domains.tools.builtin.sub_agent import SubAgentArgs, sub_agent
 from asterism.domains.tools.registry import ToolContext
+from tool_policy_doubles import isolated_tool_policy as _isolated_tool_policy
 
 
 @pytest.fixture
@@ -357,3 +358,7 @@ class TestAgentCallStackInitialization:
             call_stack=[parent_id, profile_id],
         )
         assert agent.call_stack == [parent_id, profile_id]
+
+
+isolated_tool_policy = _isolated_tool_policy
+pytestmark = pytest.mark.usefixtures("isolated_tool_policy")

@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from contextlib import asynccontextmanager
 
 import httpx
 import pytest
@@ -40,6 +41,17 @@ async def project_api(tmp_path, monkeypatch):
             ],
         )
         await session.commit()
+
+    @asynccontextmanager
+    async def session_context(session=None):
+        if session is not None:
+            yield session
+        else:
+            async with sessions() as session:
+                yield session
+
+    for module in ["chat.tool_policy", "chat.delegation", "agent.service"]:
+        monkeypatch.setattr(f"asterism.domains.{module}.get_async_db_session", session_context)
 
     async def db():
         async with sessions() as session:

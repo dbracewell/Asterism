@@ -3,6 +3,7 @@ import inspect
 import time
 import uuid
 from collections.abc import AsyncGenerator, Awaitable, Callable
+from dataclasses import replace
 
 from pydantic import BaseModel, Field
 
@@ -112,6 +113,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     from asterism.core.config import config
     from asterism.domains.agent.approval import AllowlistApprovalPolicy
     from asterism.domains.chat.delegation import require_delegation_target
+    from asterism.domains.chat.tool_policy import require_internal_tool
 
     target_id = ctx.args.agent_id
     execution_id = uuid.uuid4()
@@ -157,6 +159,9 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         )
 
     try:
+        parent_scope = await require_internal_tool(
+            name="sub_agent", user_id=ctx.user.id, chat_id=ctx.session.info.id, scope=ctx.tool_scope
+        )
         agent_profile = await require_delegation_target(
             user_id=ctx.user.id,
             chat_id=ctx.session.info.id,
@@ -208,6 +213,9 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         parent_msg_id = ctx.session.messages[-1].id
 
     async def check_authorization() -> None:
+        await require_internal_tool(
+            name="sub_agent", user_id=ctx.user.id, chat_id=ctx.session.info.id, scope=parent_scope
+        )
         await require_delegation_target(
             user_id=ctx.user.id,
             chat_id=ctx.session.info.id,
@@ -228,6 +236,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         parent_message_id=parent_msg_id,
         delegation_scope=ctx.delegation_scope,
         authorization_check=check_authorization,
+        tool_scope=replace(parent_scope, caller_agent_id=target_id, model_id=agent_profile.model_id),
     )
 
     forwarded_types = {

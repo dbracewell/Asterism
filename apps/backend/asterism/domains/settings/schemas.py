@@ -29,6 +29,8 @@ class Llm(BaseModel):
     is_active: bool
     context_window: PositiveInt | None = None
     supports_vision: bool | None = None
+    supports_tools: bool | None = None
+    tools_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
 
@@ -42,6 +44,7 @@ class Llm(BaseModel):
             self.supports_vision,
             self.vision_source,
         )
+        self.tools_source = Llm._normalized_source(self.supports_tools, self.tools_source)
         return self
 
     @staticmethod
@@ -97,6 +100,8 @@ class LlmDisplayInfo(BaseModel):
     provider_name: str
     context_window: PositiveInt | None = None
     supports_vision: bool | None = None
+    supports_tools: bool | None = None
+    tools_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
 
@@ -153,6 +158,8 @@ class ProviderModelUpdate(BaseModel):
     is_active: bool
     context_window: PositiveInt | None = None
     supports_vision: bool | None = None
+    supports_tools: bool | None = None
+    tools_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
 
@@ -166,6 +173,7 @@ class ProviderModelUpdate(BaseModel):
             self.supports_vision,
             self.vision_source,
         )
+        self.tools_source = Llm._normalized_source(self.supports_tools, self.tools_source)
         return self
 
 

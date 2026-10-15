@@ -5,7 +5,7 @@ from asterism.core.events import Event, EventType, event_bus
 from asterism.core.schemas import ErrorDetail
 from asterism.domains.tools.registry import tool_registry
 from asterism.domains.tools.schemas import ToolInfoList
-from asterism.domains.user.dependencies import AuthedUserDep
+from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 
 @event_bus.on(EventType.TOOL_CREATED)
@@ -36,5 +36,5 @@ async def get_active_tools(_: AuthedUserDep) -> ToolInfoList:
     operation_id="toolsGetAll",
     summary="Get all  tools",
 )
-async def get_all_tools(_: AuthedUserDep) -> ToolInfoList:
+async def get_all_tools(_: AdminUserDep) -> ToolInfoList:
     return tool_registry.tools()

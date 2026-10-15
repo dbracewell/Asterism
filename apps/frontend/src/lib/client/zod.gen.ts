@@ -533,6 +533,7 @@ export const zChatModelChoice = z.object({
   context_window: z.int().nullish(),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   supports_vision: z.boolean().nullish(),
+  supports_tools: z.boolean().nullish(),
 });
 
 /**
@@ -545,6 +546,8 @@ export const zLlm = z.object({
   is_active: z.boolean(),
   context_window: z.int().gt(0).nullish(),
   supports_vision: z.boolean().nullish(),
+  supports_tools: z.boolean().nullish(),
+  tools_source: zModelCapabilitySource.optional().default("unknown"),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   vision_source: zModelCapabilitySource.optional().default("unknown"),
 });
@@ -559,6 +562,8 @@ export const zLlmDisplayInfo = z.object({
   provider_name: z.string(),
   context_window: z.int().gt(0).nullish(),
   supports_vision: z.boolean().nullish(),
+  supports_tools: z.boolean().nullish(),
+  tools_source: zModelCapabilitySource.optional().default("unknown"),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   vision_source: zModelCapabilitySource.optional().default("unknown"),
 });
@@ -718,6 +723,8 @@ export const zProviderModelUpdate = z.object({
   is_active: z.boolean(),
   context_window: z.int().gt(0).nullish(),
   supports_vision: z.boolean().nullish(),
+  supports_tools: z.boolean().nullish(),
+  tools_source: zModelCapabilitySource.optional().default("unknown"),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   vision_source: zModelCapabilitySource.optional().default("unknown"),
 });
@@ -932,12 +939,18 @@ export const zToolCall = z.object({
 });
 
 /**
+ * ToolPolicy
+ */
+export const zToolPolicy = z.enum(["user_configurable", "context_managed"]);
+
+/**
  * ToolInfo
  */
 export const zToolInfo = z.object({
   name: z.string(),
   description: z.string(),
   component_type: zComponentType.nullish(),
+  policy: zToolPolicy.optional().default("user_configurable"),
 });
 
 /**

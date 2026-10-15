@@ -556,6 +556,7 @@ export type {
   ToolCall,
   ToolInfo,
   ToolInfoList,
+  ToolPolicy,
   ToolResult,
   ToolSettings,
   ToolsGetActiveData,

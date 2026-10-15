@@ -255,6 +255,8 @@ async def test_context_estimate_handles_unknown_models_multimodal_and_reserved_o
     agent = SimpleNamespace(
         session=chat,
         profile=SimpleNamespace(tools=[], chat_parameters={"max_tokens": 100}),
+        max_steps=2,
+        effective_tools=[],
         _build_system_prompt=system_prompt,
     )
     orchestrator = ChatOrchestrator(agent)

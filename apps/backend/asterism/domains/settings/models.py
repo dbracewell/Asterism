@@ -78,6 +78,22 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
         Boolean(create_constraint=True, name="ck_models_supports_vision_boolean"),
         nullable=True,
     )
+    supports_tools: Mapped[bool | None] = mapped_column(
+        Boolean(create_constraint=True, name="ck_models_supports_tools_boolean"), nullable=True
+    )
+    tools_source: Mapped[ModelCapabilitySource] = mapped_column(
+        Enum(
+            ModelCapabilitySource,
+            values_callable=_enum_values,
+            native_enum=False,
+            create_constraint=True,
+            validate_strings=True,
+            name="tools_source",
+        ),
+        nullable=False,
+        default=ModelCapabilitySource.UNKNOWN,
+        server_default=ModelCapabilitySource.UNKNOWN.value,
+    )
     context_window_source: Mapped[ModelCapabilitySource] = mapped_column(
         Enum(
             ModelCapabilitySource,

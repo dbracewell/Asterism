@@ -22,6 +22,8 @@ from asterism.domains.llm.schemas import (
     ToolResult,
 )
 from asterism.domains.settings.schemas import LlmWithProvider
+from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
+from asterism.domains.tools.context import ContextToolScope
 from asterism.domains.tools.registry import tool_registry
 
 from .approval import (
@@ -53,10 +55,13 @@ class Agent:
         parent_message_id: uuid.UUID | None = None,
         model_id: uuid.UUID | None = None,
         delegation_scope: DelegationScope | None = None,
+        tool_scope: ContextToolScope | None = None,
         authorization_check: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
         if profile.sub_agent and model_id is not None and model_id != profile.model_id:
             raise BadDataException("Sub-agent model binding cannot be overridden")
+        self.tool_scope = tool_scope
+        self.effective_tools: list[str] = []
         self._delegation_available = False
         self.delegation_scope = delegation_scope
         self.authorization_check = authorization_check
@@ -68,12 +73,8 @@ class Agent:
         self.session: Chat = session
         self.logger: Logger = logger or get_logger("Agent")
         self._client: LLMClientProtocol | None = None
-        self._knowledge_search_enabled = bool(profile.knowledge_bases)
         configured_tools = allowed_tools if allowed_tools is not None else config.default_allowed_tools
-        self.allowed_tools: list[str] = [
-            *configured_tools,
-            *(["search_knowledge"] if self._knowledge_search_enabled else []),
-        ]
+        self.allowed_tools: list[str] = configurable_tools(configured_tools)
         self._approval_policy: ToolApprovalPolicy = approval_policy or AllowlistApprovalPolicy()
         self.event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = event_sink
         self.user_files: list[str] = list(user_files) if user_files else []
@@ -93,7 +94,6 @@ class Agent:
             raise BadDataException("A chat must use the main configuration")
         self.profile = await get_main_agent_profile(self.user.id)
         self.max_steps = self.profile.max_steps
-        self._knowledge_search_enabled = bool(self.profile.knowledge_bases)
         model_id = self.session.info.selected_model_id
         if model_id != self.model_id:
             self._client = None
@@ -121,7 +121,6 @@ class Agent:
             {**execution.configuration.model_dump(exclude_none=True), "sub_agent": False, "model_id": None},
         )
         self.max_steps = self.profile.max_steps
-        self._knowledge_search_enabled = bool(self.profile.knowledge_bases)
 
     async def _get_client(self) -> LLMClientProtocol:
         if self.model_id is None:
@@ -138,6 +137,7 @@ class Agent:
         if self.execution is not None and (
             model_info.name != self.execution.model.name
             or model_info.provider.id != self.execution.model.provider_id
+            or model_info.supports_tools != self.execution.model.supports_tools
             or model_info.supports_vision != self.execution.model.supports_vision
             or model_info.context_window != self.execution.model.context_window
         ):
@@ -161,13 +161,19 @@ class Agent:
     ) -> AsyncGenerator[ToolResult, None]:
         if self.authorization_check:
             await self.authorization_check()
-        configured = set(self.profile.tools or [])
-        if self._knowledge_search_enabled:
-            configured.add("search_knowledge")
+        configured = set(await self.resolve_tools())
         auths = [
             ToolUseAuthorization(tool=auth.tool, accept=auth.accept and auth.tool.function.name in configured)
             for auth in auths
         ]
+
+        async def authorize_internal(name: str) -> None:
+            from asterism.domains.chat.tool_policy import require_internal_tool
+
+            await require_internal_tool(
+                name=name, user_id=self.user.id, chat_id=self.session.info.id, scope=self.tool_scope
+            )
+
         tasks = [
             tool_registry.invoke_tool(
                 tool_call=auth.tool,
@@ -180,6 +186,8 @@ class Agent:
                 event_sink=event_sink,
                 parent_message_id=self.parent_message_id,
                 delegation_scope=self.delegation_scope,
+                tool_scope=self.tool_scope,
+                authorize_internal=authorize_internal,
             )
             for auth in auths
             if auth.accept
@@ -195,16 +203,26 @@ class Agent:
                 tool_call=auth.tool,
             )
 
+    async def resolve_tools(self, *, reset: bool = False) -> list[str]:
+        from asterism.domains.chat.tool_policy import resolve_effective_tools
+
+        self.effective_tools, self.tool_scope = await resolve_effective_tools(
+            user_id=self.user.id,
+            chat_id=self.session.info.id,
+            profile=self.profile,
+            model_id=self.model_id,
+            ceiling=None if reset else self.tool_scope,
+        )
+        self.delegation_scope = self.tool_scope.delegation if self.tool_scope else None
+        return self.effective_tools
+
     async def _build_system_prompt(self) -> str | None:
         base_prompt = self.profile.system_prompt or ""
 
-        if "sub_agent" in (self.profile.tools or []):
-            from asterism.domains.chat.delegation import eligible_delegation_targets, resolve_delegation_scope
+        await self.resolve_tools(reset=not self.profile.sub_agent)
+        if "sub_agent" in self.effective_tools:
+            from asterism.domains.chat.delegation import eligible_delegation_targets
 
-            if not self.profile.sub_agent:
-                self.delegation_scope = await resolve_delegation_scope(
-                    user_id=self.user.id, chat_id=self.session.info.id
-                )
             agent_profiles = await eligible_delegation_targets(
                 user_id=self.user.id,
                 chat_id=self.session.info.id,
@@ -269,10 +287,7 @@ class Agent:
             # steps to respond to them
             tools: list[str] | None = []
             if step + 1 < self.max_steps:
-                tools = [
-                    *(self.profile.tools or []),
-                    *(["search_knowledge"] if self._knowledge_search_enabled else []),
-                ]
+                tools = await self.resolve_tools()
 
             if tools and not self._delegation_available:
                 tools = [name for name in tools if name != "sub_agent"]
@@ -321,7 +336,7 @@ class Agent:
 
                             auths = await self._approval_policy.authorize(
                                 event.tool_calls,
-                                self.allowed_tools,
+                                sorted(set(self.allowed_tools) | (set(self.effective_tools) & INTERNAL_TOOL_NAMES)),
                             )
 
                             sub_agent_queue: asyncio.Queue[SubAgentEventEnvelope] = asyncio.Queue()

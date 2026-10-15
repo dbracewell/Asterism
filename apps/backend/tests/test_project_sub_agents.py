@@ -1,17 +1,17 @@
 import asyncio
 import uuid
+from dataclasses import replace
 
 import pytest
 from asterism.core.exceptions import BadDataException
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.models import AgentProfileModel
-from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.chat.delegation import require_delegation_target, resolve_delegation_scope
 from asterism.domains.chat.models import ChatModel
 from asterism.domains.chat.schemas import Chat, ChatInfo
 from asterism.domains.projects.models import ProjectModel, ProjectSubAgentModel
-from asterism.domains.settings.models import LLMModel
+from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
 from asterism.domains.tools.builtin.sub_agent import SubAgentArgs, sub_agent
 from asterism.domains.tools.registry import ToolContext
 from sqlalchemy import select, update
@@ -155,6 +155,8 @@ async def runtime_setup(project_api, monkeypatch):
     await change(client, p, [a["id"]])
     await change(client, q, [b["id"]])
     async with sessions() as db:
+        await db.execute(update(LLMModel).values(supports_tools=True))
+        db.add(ApplicationSettingsModel(key="active_tools", value=["sub_agent", "search_knowledge", "web_search"]))
         chat = ChatModel(user_id="a", project_id=uuid.UUID(p["id"]))
         db.add(chat)
         await db.commit()
@@ -172,6 +174,15 @@ async def runtime_setup(project_api, monkeypatch):
     monkeypatch.setattr("asterism.domains.chat.delegation.get_async_db_session", session_context)
     monkeypatch.setattr("asterism.domains.agent.service.get_async_db_session", session_context)
     return client, sessions, p, q, a, b, chat_id
+
+
+async def _runtime_tool_scope(chat_id):
+    from asterism.domains.agent.service import get_main_agent_profile
+    from asterism.domains.chat.tool_policy import resolve_effective_tools
+
+    profile = await get_main_agent_profile("a")
+    _, ceiling = await resolve_effective_tools(user_id="a", chat_id=chat_id, profile=profile, model_id=uuid.UUID(int=2))
+    return ceiling
 
 
 @pytest.mark.asyncio
@@ -240,6 +251,7 @@ async def test_revocation_cancels_silent_child_and_rejects_output(project_api, m
         app_settings=MagicMock(),
         client=MagicMock(),
         delegation_scope=scope,
+        tool_scope=await _runtime_tool_scope(chat_id),
         user_files=["authorized.txt"],
     )
     task = asyncio.create_task(sub_agent(ctx))
@@ -273,16 +285,9 @@ async def test_runtime_prompt_only_advertises_selected_targets_and_general_has_n
     from asterism.domains.llm.schemas import LLMEvent, LLMEventType, LLMMessage
 
     client, sessions, p, q, a, b, chat_id = await runtime_setup(project_api, monkeypatch)
-    profile = AgentProfile(
-        id=uuid.uuid4(),
-        name="Main",
-        description="",
-        sub_agent=False,
-        model_id=None,
-        system_prompt="",
-        tools=["sub_agent"],
-        max_steps=2,
-    )
+    from asterism.domains.agent.service import get_main_agent_profile
+
+    profile = await get_main_agent_profile("a")
     user = AuthedUser(id="a", email="a@x.test", name="A", role="user")
     chat = Chat(info=ChatInfo(id=chat_id, user_id="a", created_at=0, updated_at=0), messages=[])
     agent = Agent(profile=profile, user=user, session=chat, model_id=uuid.UUID(int=2))
@@ -345,6 +350,7 @@ async def test_direct_tool_invocation_in_general_and_unselected_target_fails_clo
             app_settings=MagicMock(),
             client=MagicMock(),
             delegation_scope=ceiling,
+            tool_scope=await _runtime_tool_scope(chat_id),
         )
         assert "rejected" in (await sub_agent(ctx)).lower()
 
@@ -359,6 +365,11 @@ async def test_revocation_cancels_pending_child_tool_work(project_api, monkeypat
 
     client, sessions, p, q, a, b, chat_id = await runtime_setup(project_api, monkeypatch)
     scope = await resolve_delegation_scope(user_id="a", chat_id=chat_id)
+    async with sessions() as db:
+        await db.execute(
+            update(AgentProfileModel).where(AgentProfileModel.id == uuid.UUID(a["id"])).values(tools=["web_search"])
+        )
+        await db.commit()
     profile = await require_delegation_target(user_id="a", chat_id=chat_id, scope=scope, target_id=uuid.UUID(a["id"]))
 
     async def check():
@@ -392,6 +403,7 @@ async def test_revocation_cancels_pending_child_tool_work(project_api, monkeypat
         allowed_tools=["web_search"],
         authorization_check=check,
         delegation_scope=scope,
+        tool_scope=replace(await _runtime_tool_scope(chat_id), caller_agent_id=profile.id, model_id=profile.model_id),
     )
     monkeypatch.setattr(child, "_get_client", AsyncMock(return_value=Client()))
 

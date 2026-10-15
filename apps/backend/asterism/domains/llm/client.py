@@ -298,9 +298,11 @@ class LLMClient(LLMClientProtocol):
 
         completion_args: dict[str, Any] = {
             "model": self.model_name,
-            "tools": tool_registry.schemas(tools),
             **kwargs,
         }
+        schemas = tool_registry.schemas(tools)
+        if schemas:
+            completion_args["tools"] = schemas
         # Kept out of ChatCompletionParams, but discard it defensively while
         # callers migrate from the former provider-specific option.
         completion_args.pop("thinking_budget_tokens", None)

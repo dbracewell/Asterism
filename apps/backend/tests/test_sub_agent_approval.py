@@ -17,6 +17,7 @@ from asterism.domains.llm.schemas import (
 )
 from asterism.domains.tools.builtin.sub_agent import SubAgentArgs, sub_agent
 from asterism.domains.tools.registry import ToolContext
+from tool_policy_doubles import isolated_tool_policy as _isolated_tool_policy
 
 
 def _make_tool_call(name: str, tool_id: str = "") -> ToolCall:
@@ -356,3 +357,7 @@ class TestSubAgentProfileAuthorization:
         assert created_agent is not None
         assert created_agent.allowed_tools == []
         assert created_agent.profile.tools == []
+
+
+isolated_tool_policy = _isolated_tool_policy
+pytestmark = pytest.mark.usefixtures("isolated_tool_policy")

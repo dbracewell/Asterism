@@ -22,6 +22,7 @@ from asterism.domains.tools.builtin.sub_agent import (
 )
 from asterism.domains.tools.registry import ToolContext, tool_registry
 from pydantic import BaseModel
+from tool_policy_doubles import isolated_tool_policy as _isolated_tool_policy
 
 
 @pytest.fixture
@@ -466,3 +467,7 @@ class TestSubAgentContextForwarding:
 
         context_block = _build_parent_context_block(ctx)
         assert context_block is None
+
+
+isolated_tool_policy = _isolated_tool_policy
+pytestmark = pytest.mark.usefixtures("isolated_tool_policy")

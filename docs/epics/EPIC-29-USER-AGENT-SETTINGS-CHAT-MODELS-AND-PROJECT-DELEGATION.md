@@ -1,6 +1,6 @@
 # EPIC-29 — User agent settings, chat models, and project delegation
 
-Status: US-29.1 completed; user confirmed 2026-10-14. US-29.2 completed; user confirmed 2026-10-15. US-29.3 completed; user confirmed 2026-10-15. US-29.4 not started.
+Status: US-29.1 completed; user confirmed 2026-10-14. US-29.2 completed; user confirmed 2026-10-15. US-29.3 completed; user confirmed 2026-10-15. US-29.4 completed; user confirmed 2026-10-15. EPIC-29 complete.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Added from the user's 2026-10-14 product direction. Numbering is stable: implement this epic **after EPIC-25 and before EPIC-26**, despite its number. UI work belongs to US-27.4/27.5.
 
@@ -135,13 +135,57 @@ No live external-provider verification is claimed. User confirmed completion on
 As a user, I want required orchestration tools to work automatically without manual tool switches.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-29.2 and US-29.3.
-- [ ] US-29.4-T1: Introduce explicit tool metadata/policy separating user-configurable tools from internal context-managed tools; exclude internal tools from user-facing selectable tool lists and reject attempts to override their state through user settings/chat payloads. Retain admin management, audit traces, and ordinary capability allowlists.
-- [ ] US-29.4-T2: Automatically enable delegation for project execution when selected eligible sub-agents exist; omit it for empty selection and General. Expose only eligible target descriptions; preserve fixed sub-agent models and bounded recursion.
-- [ ] US-29.4-T3: Automatically enable project-knowledge search when the current project has file memberships, with explicit pending/failed/unavailable extraction behavior; also support authorized General/project chat-local attachment retrieval when that scope has files. Empty file scope disables retrieval and fails closed if directly invoked.
-- [ ] US-29.4-T4: Derive effective tools on the server from admin policy, settings, model capabilities, and authorized context; an internal tool cannot expand file scope or delegation targets. Recheck on invocation and after revocation. Automatic enablement means the runtime/model can use the tool when relevant, not a compulsory search/delegation on every turn.
-- [ ] US-29.4-T5: Regenerate affected clients and test hidden metadata, forged toggles, General/project/empty states, admin-disabled capabilities, model tool support, unavailable artifacts, selection/membership revocation, and delegated scope narrowing.
+- [x] US-29.4-T1: Introduce explicit tool metadata/policy separating user-configurable tools from internal context-managed tools; exclude internal tools from user-facing selectable tool lists and reject attempts to override their state through user settings/chat payloads. Retain admin management, audit traces, and ordinary capability allowlists.
+- [x] US-29.4-T2: Automatically enable delegation for project execution when selected eligible sub-agents exist; omit it for empty selection and General. Expose only eligible target descriptions; preserve fixed sub-agent models and bounded recursion.
+- [x] US-29.4-T3: Automatically enable project-knowledge search when the current project has file memberships, with explicit pending/failed/unavailable extraction behavior; also support authorized General/project chat-local attachment retrieval when that scope has files. Empty file scope disables retrieval and fails closed if directly invoked.
+- [x] US-29.4-T4: Derive effective tools on the server from admin policy, settings, model capabilities, and authorized context; an internal tool cannot expand file scope or delegation targets. Recheck on invocation and after revocation. Automatic enablement means the runtime/model can use the tool when relevant, not a compulsory search/delegation on every turn.
+- [x] US-29.4-T5: Regenerate affected clients and test hidden metadata, forged toggles, General/project/empty states, admin-disabled capabilities, model tool support, unavailable artifacts, selection/membership revocation, and delegated scope narrowing.
 
 **Acceptance:** Users do not toggle delegation or contextual retrieval. Project selections/files determine their availability, and calls obey the same server-side authorization as other tools. General never delegates, but can retrieve its own attachments. Internal tools remain traceable even though absent from user tool pickers.
+
+US-29.4 implementation (2026-10-15): delegation and contextual retrieval now carry
+explicit context-managed policy metadata. User-facing active tools omit them;
+main/sub-agent settings reject their assignment, and chat contracts reject forged
+extra toggles. Admins retain the full tool list and enable/disable controls. Fresh
+initialization enables internal tools separately from ordinary capability defaults.
+
+A chat-owned policy boundary derives effective tools and an immutable server-only
+ceiling from current admin policy, explicit model tool support, caller configuration,
+project-selected targets and active file scope. General never delegates, and empty
+projects omit delegation. Project files and General/project local attachments enable
+retrieval even while artifacts are pending. Children inherit file/target ceilings
+and fixed models; ordinary tools retain explicit capability and approval boundaries.
+Invocation rechecks live policy through an injected registry callback, with direct
+checks in each internal built-in. Delegation polling rechecks policy without scanning
+conversation/file history. Retrieval filters ready current artifacts before vector
+search, rechecks after embedding and search, discards revoked/stale results, and
+reports pending/failed/canceled/unavailable states and service outages explicitly.
+Knowledge-base assignments no longer grant runtime retrieval. Availability never
+forces the model to invoke a tool.
+
+Model storage, discovery, admin controls, chat choices and execution provenance now
+include nullable tool support. Unknown/false disables tools; explicit provider
+metadata and manual override provenance are retained without guessing capabilities
+from model names. Empty effective sets omit provider tool schemas. The schema
+requires fresh initialization; no migration or working-database reset was performed.
+The broader scope resolver, shared retrieval service and prompt refactor remain
+EPIC-26.
+
+Verification: 396 backend tests, 101 frontend tests, 6 auth-database checks, 29 root
+configuration checks, and all 16 isolated Playwright tests pass. The browser run
+needed no test retries and covers hidden internal controls and saving explicit model
+tool support. The existing settings fixture duplicate-key warning remains; there were
+no failing browser tests. Lint, configured typechecks, focused backend basedpyright
+(zero errors/warnings), import-cycle checks, formatting and production build pass.
+All 18 generated TypeScript files match regeneration from served ASGI OpenAPI after
+formatting. Focused integration coverage includes General and empty scopes, forged
+toggles, admin/model revocation, delegated scope inheritance, pending/failed/missing
+artifacts, unavailable embeddings, and revocation during embedding/vector search.
+Backend verification was repeated after the final polling-policy simplification.
+No live external-provider verification is claimed. User confirmed completion on
+2026-10-15, authorizing commit and merge into `main` under AGENTS.md section 5.4.
+All four stories are confirmed complete; EPIC-29 is complete. The next recommended
+epic is EPIC-26, beginning with US-26.1 — Execution scope resolver.
 
 ## Shared definition of done
 

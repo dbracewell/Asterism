@@ -282,3 +282,46 @@ separate modules. Automatic internal-tool enablement remains US-29.4; selection 
 remains US-27.5, and the broader file/retrieval scope resolver remains EPIC-26.
 Fresh schema initialization is required; this story adds no migrations and does not
 reset the working database.
+
+## Context-managed tools (US-29.4)
+
+`sub_agent` and `search_knowledge` carry `context_managed` policy metadata. User tool
+lists omit them, and main/sub-agent settings reject assignments of these names.
+The full tool list is admin-only and retains their global switches and metadata.
+Fresh initialization enables the internal tools in admin policy, independently of
+the ordinary user capability defaults.
+
+The chat tool-policy boundary composes current admin settings, the caller's
+configuration, explicit model tool support, active chat/project file memberships,
+and the project-selected delegation ceiling. It returns the effective tools and a
+server-only immutable context. Agent runtime consumes that boundary for prompts,
+estimates and provider schemas. Internal tools are automatically authorized only
+when effective; ordinary tools still require their explicit assignments and the
+existing runtime approval policy. Availability does not compel invocation.
+
+General chats never delegate. Projects with no available selected targets do not
+offer delegation. Retrieval is offered when the turn's file ceiling intersects
+current project files or active-branch local attachments, including General chat
+attachments. Unselected library, sibling-chat and inactive-branch files confer no
+retrieval access. Legacy knowledge-base assignments no longer grant runtime search.
+Children inherit the parent file and target ceilings, retain their fixed models,
+and cannot resolve a wider scope. A later turn resolves a new ceiling.
+
+Registry invocation requires an injected server authorization callback for internal
+tools; the tools also recheck live policy themselves. No registry dependency points
+back to the chat policy implementation. Delegation rechecks parent policy during
+its existing cancellation guard. Retrieval filters authorized ready current
+artifacts before querying vectors and rechecks after embedding and vector search;
+revoked files and stale generations are discarded. Pending, failed, canceled and
+unavailable artifacts have explicit states. Embedding/vector outages return an
+unavailable result. Result limits, byte bounds, captions, source provenance and file
+citations remain part of the response. No tool reads widen the inherited scope.
+
+Models expose nullable `supports_tools` and `tools_source`; unknown support fails
+closed. Admins can set tool support in the existing model catalog UI. Explicit
+provider metadata is accepted, manual overrides survive refresh, and chat execution
+snapshots retain actual tool support for replay validation. No capability is guessed
+from model names. Provider payloads omit tools when the effective set is empty.
+The broader injected retrieval service, prompt composition and execution-context
+refactor remain EPIC-26. This story requires fresh schema initialization, without
+migrations or resetting the working database.

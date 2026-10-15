@@ -200,6 +200,10 @@ class OpenAIProviderDiscovery:
                     is_active=False,
                     context_window=context_window,
                     supports_vision=supports_vision,
+                    tools_source=ModelCapabilitySource.PROVIDER,
+                    supports_tools=raw_model.get("supports_tools")
+                    if isinstance(raw_model.get("supports_tools"), bool)
+                    else None,
                     context_window_source=context_source,
                     vision_source=vision_source,
                 ),
@@ -389,6 +393,9 @@ def merge_discovered_models(
         elif discovered.supports_vision is None and existing.supports_vision is not None:
             result.supports_vision = existing.supports_vision
             result.vision_source = existing.vision_source
+        if existing.tools_source == ModelCapabilitySource.MANUAL or discovered.supports_tools is None:
+            result.supports_tools = existing.supports_tools
+            result.tools_source = existing.tools_source
         merged.append(result)
 
     # A provider may temporarily omit a model. Keep the selected draft model so

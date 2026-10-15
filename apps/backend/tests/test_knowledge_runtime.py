@@ -28,12 +28,12 @@ def _agent(knowledge_bases: list[KnowledgeBaseAssignmentSummary]) -> Agent:
     return Agent(profile=profile, user=user, session=chat, allowed_tools=[])
 
 
-def test_knowledge_search_is_automatically_allowed_only_for_assigned_agents():
+def test_knowledge_assignments_do_not_grant_context_tool_authority():
     unassigned = _agent([])
     assigned = _agent([KnowledgeBaseAssignmentSummary(id=uuid.uuid4(), name="Private")])
 
     assert "search_knowledge" not in unassigned.allowed_tools
-    assert assigned.allowed_tools == ["search_knowledge"]
+    assert assigned.allowed_tools == []
 
 
 def test_bounded_excerpt_never_splits_utf8_codepoints():

@@ -258,6 +258,8 @@ async def get_provider_settings(
                     provider_name=draft_row.provider.name,
                     context_window=draft_row.context_window,
                     supports_vision=draft_row.supports_vision,
+                    supports_tools=draft_row.supports_tools,
+                    tools_source=draft_row.tools_source,
                     context_window_source=draft_row.context_window_source,
                     vision_source=draft_row.vision_source,
                 )
@@ -425,6 +427,8 @@ async def update_provider_model(
 
         model.is_active = update.is_active
         model.context_window = update.context_window
+        model.tools_source = update.tools_source
+        model.supports_tools = update.supports_tools
         model.supports_vision = update.supports_vision
         model.context_window_source = update.context_window_source
         model.vision_source = update.vision_source
@@ -528,6 +532,8 @@ async def get_captioning_models(
                 provider_name=model.provider.name,
                 context_window=model.context_window,
                 supports_vision=model.supports_vision,
+                supports_tools=model.supports_tools,
+                tools_source=model.tools_source,
                 context_window_source=model.context_window_source,
                 vision_source=model.vision_source,
             )
@@ -752,6 +758,8 @@ async def get_user_models(
                     provider_name=m.provider.name,
                     context_window=m.context_window,
                     supports_vision=m.supports_vision,
+                    supports_tools=m.supports_tools,
+                    tools_source=m.tools_source,
                     context_window_source=m.context_window_source,
                     vision_source=m.vision_source,
                 ),
@@ -836,6 +844,8 @@ async def bulk_upsert_providers(
                         is_active=m.is_active,
                         context_window=m.context_window,
                         supports_vision=m.supports_vision,
+                        supports_tools=m.supports_tools,
+                        tools_source=m.tools_source,
                         context_window_source=m.context_window_source,
                         vision_source=m.vision_source,
                     )
@@ -861,6 +871,8 @@ def _merge_models(
             existing_model = existing_models_by_name[m_data.name]
             existing_model.is_active = m_data.is_active
             existing_model.context_window = m_data.context_window
+            existing_model.tools_source = m_data.tools_source
+            existing_model.supports_tools = m_data.supports_tools
             existing_model.supports_vision = m_data.supports_vision
             existing_model.context_window_source = m_data.context_window_source
             existing_model.vision_source = m_data.vision_source
@@ -872,6 +884,8 @@ def _merge_models(
                 is_active=m_data.is_active,
                 context_window=m_data.context_window,
                 supports_vision=m_data.supports_vision,
+                supports_tools=m_data.supports_tools,
+                tools_source=m_data.tools_source,
                 context_window_source=m_data.context_window_source,
                 vision_source=m_data.vision_source,
             )

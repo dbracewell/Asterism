@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.components.schemas import ComponentType
 
+from .catalog import ToolPolicy
+
 
 class SearchArgs(BaseModel):
     query: str = Field(
@@ -33,6 +35,7 @@ class ToolInfo(BaseModel):
     name: str
     description: str
     component_type: ComponentType | None = None
+    policy: ToolPolicy = ToolPolicy.USER_CONFIGURABLE
 
 
 class ToolInfoList(BaseModel):

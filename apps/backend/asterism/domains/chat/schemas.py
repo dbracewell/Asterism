@@ -41,6 +41,7 @@ class ChatModelChoice(BaseModel):
     context_window: int | None = None
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     supports_vision: bool | None = None
+    supports_tools: bool | None = None
 
 
 class MessageExecution(BaseModel):

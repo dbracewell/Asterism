@@ -39,6 +39,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -116,6 +117,9 @@ function ModelRow({
     model.context_window?.toString() ?? "",
   );
 
+  const [toolSupport, setToolSupport] = useState(
+    model.supports_tools == null ? "unknown" : String(model.supports_tools),
+  );
   const [vision, setVision] = useState(
     model.supports_vision == null ? "unknown" : String(model.supports_vision),
   );
@@ -134,6 +138,9 @@ function ModelRow({
 
   useEffect(() => {
     setIsActive(model.is_active);
+    setToolSupport(
+      model.supports_tools == null ? "unknown" : String(model.supports_tools),
+    );
     setContextWindow(model.context_window?.toString() ?? "");
     setVision(
       model.supports_vision == null ? "unknown" : String(model.supports_vision),
@@ -153,6 +160,14 @@ function ModelRow({
         is_active: isActive,
         context_window: context,
         supports_vision: supportsVision,
+        supports_tools:
+          toolSupport === "unknown" ? null : toolSupport === "true",
+        tools_source:
+          toolSupport === "unknown"
+            ? "unknown"
+            : String(model.supports_tools) === toolSupport
+              ? model.tools_source
+              : "manual",
         context_window_source:
           context == null
             ? "unknown"
@@ -172,7 +187,7 @@ function ModelRow({
   };
 
   return (
-    <div className="grid gap-3 rounded border p-3 lg:grid-cols-[minmax(14rem,1fr)_10rem_10rem_auto]">
+    <div className="grid gap-3 rounded border p-3 lg:grid-cols-[minmax(14rem,1fr)_10rem_10rem_10rem_auto]">
       <div className="flex min-w-0 items-center gap-2">
         <Checkbox
           id={`model-${model.id}-active`}
@@ -212,6 +227,21 @@ function ModelRow({
             <SelectItem value="unknown">Unknown</SelectItem>
             <SelectItem value="true">Supported</SelectItem>
             <SelectItem value="false">Not supported</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`model-${model.id}-tools`}>Tool calls</FieldLabel>
+        <Select value={toolSupport} onValueChange={setToolSupport}>
+          <SelectTrigger id={`model-${model.id}-tools`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="unknown">Unknown</SelectItem>
+              <SelectItem value="true">Supported</SelectItem>
+              <SelectItem value="false">Not supported</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </Field>
@@ -328,6 +358,8 @@ function ModelCatalog({
               is_active: isActive,
               context_window: model.context_window,
               supports_vision: model.supports_vision,
+              supports_tools: model.supports_tools,
+              tools_source: model.tools_source,
               context_window_source: model.context_window_source,
               vision_source: model.vision_source,
             },

@@ -363,6 +363,10 @@ export type ChatModelChoice = {
    * Supports Vision
    */
   supports_vision?: boolean | null;
+  /**
+   * Supports Tools
+   */
+  supports_tools?: boolean | null;
 };
 
 /**
@@ -1112,6 +1116,11 @@ export type Llm = {
    * Supports Vision
    */
   supports_vision?: boolean | null;
+  /**
+   * Supports Tools
+   */
+  supports_tools?: boolean | null;
+  tools_source?: ModelCapabilitySource;
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
 };
@@ -1144,6 +1153,11 @@ export type LlmDisplayInfo = {
    * Supports Vision
    */
   supports_vision?: boolean | null;
+  /**
+   * Supports Tools
+   */
+  supports_tools?: boolean | null;
+  tools_source?: ModelCapabilitySource;
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
 };
@@ -1670,6 +1684,11 @@ export type ProviderModelUpdate = {
    * Supports Vision
    */
   supports_vision?: boolean | null;
+  /**
+   * Supports Tools
+   */
+  supports_tools?: boolean | null;
+  tools_source?: ModelCapabilitySource;
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
 };
@@ -2031,6 +2050,7 @@ export type ToolInfo = {
    */
   description: string;
   component_type?: ComponentType | null;
+  policy?: ToolPolicy;
 };
 
 /**
@@ -2042,6 +2062,11 @@ export type ToolInfoList = {
    */
   items: Array<ToolInfo>;
 };
+
+/**
+ * ToolPolicy
+ */
+export type ToolPolicy = "user_configurable" | "context_managed";
 
 /**
  * ToolResult

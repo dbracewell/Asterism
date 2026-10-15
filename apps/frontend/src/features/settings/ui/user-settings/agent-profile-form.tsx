@@ -165,8 +165,11 @@ function ConfigurationForm({
     createMutation.isPending ||
     updateMutation.isPending;
   const available = user.settings.models ?? [];
+  const selectableTools =
+    toolQuery.data?.items.filter((tool) => tool.policy !== "context_managed") ??
+    [];
   const missingTools = tools.filter(
-    (tool) => !toolQuery.data?.items.some((item) => item.name === tool),
+    (tool) => !selectableTools.some((item) => item.name === tool),
   );
   const invalidModel =
     subAgent && !available.some((model) => model.id === modelId);
@@ -302,10 +305,12 @@ function ConfigurationForm({
             </Button>
           </div>
         )}
-        {toolQuery.data?.items.length === 0 && (
-          <p className="text-muted-foreground text-sm">No active tools.</p>
-        )}
-        {toolQuery.data?.items.map((tool) => (
+        {!toolQuery.isPending &&
+          !toolQuery.isError &&
+          selectableTools.length === 0 && (
+            <p className="text-muted-foreground text-sm">No active tools.</p>
+          )}
+        {selectableTools.map((tool) => (
           <Label key={tool.name} className="flex items-center gap-2">
             <Checkbox
               checked={tools.includes(tool.name)}

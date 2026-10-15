@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -171,6 +172,9 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
                   }}
                 />
                 <Label htmlFor={`tool-${tool.name}`}>{tool.name}</Label>
+                {tool.policy === "context_managed" && (
+                  <Badge variant="secondary">Context managed</Badge>
+                )}
               </div>
               <p className="text-muted-foreground px-2 py-1 text-xs">
                 {tool.description}

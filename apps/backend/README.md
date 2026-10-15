@@ -399,3 +399,10 @@ Project sub-agent selections use owner-scoped `GET`, `POST`, and `DELETE`
 `expected_context_revision`; General chats cannot delegate. See
 [project-selected delegation](../../docs/architecture/agent-runtime.md#project-selected-delegation-us-293)
 for runtime revocation, fixed-model and schema initialization behavior.
+
+Delegation and contextual file search are internal tools derived by the server;
+users cannot assign or toggle them. Admins retain global enable/disable controls.
+Model settings include **Tool calls** support (`supports_tools`); unknown or false
+support disables tool schemas. Generic discovery consumes explicit `supports_tools`
+metadata and preserves manual overrides. No tool capability is inferred from a
+model name. This schema change requires fresh initialization; no migration is run.

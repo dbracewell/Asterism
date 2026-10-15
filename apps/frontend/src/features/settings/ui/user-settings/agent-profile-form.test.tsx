@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   mainSave: vi.fn().mockResolvedValue({}),
   create: vi.fn(),
   update: vi.fn(),
+  tools: vi.fn().mockResolvedValue({ items: [] }),
 }));
 vi.mock("@/features/auth/components/user-context", () => ({
   useUser: () => ({
@@ -23,7 +24,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   subAgentUpdateMutation: () => ({ mutationFn: mocks.update }),
   toolsGetActiveOptions: () => ({
     queryKey: ["tools"],
-    queryFn: async () => ({ items: [] }),
+    queryFn: mocks.tools,
   }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -82,4 +83,48 @@ it("requires an explicit model for a new sub-agent instead of using the user's d
     screen.getByRole("button", { name: "Save configuration" }),
   ).toBeDisabled();
   expect(screen.getByRole("alert")).toHaveTextContent("saved binding remains");
+});
+
+it("hides context-managed tools while retaining ordinary tool settings", async () => {
+  mocks.tools.mockResolvedValue({
+    items: [
+      {
+        name: "sub_agent",
+        policy: "context_managed",
+        description: "Delegation",
+      },
+      {
+        name: "search_knowledge",
+        policy: "context_managed",
+        description: "Retrieval",
+      },
+      { name: "web_fetch", policy: "user_configurable", description: "Fetch" },
+    ],
+  });
+  render(
+    <MainAgentForm
+      configuration={{
+        id: "main",
+        name: "Main",
+        description: "",
+        system_prompt: "",
+        max_steps: 5,
+        tools: [],
+      }}
+    />,
+    { wrapper: Wrapper },
+  );
+  await userEvent.click(
+    screen.getByRole("button", { name: "Edit main configuration" }),
+  );
+  await screen.findByText("web_fetch");
+  expect(screen.queryByText("sub_agent")).not.toBeInTheDocument();
+  expect(screen.queryByText("search_knowledge")).not.toBeInTheDocument();
+  await userEvent.click(screen.getByLabelText("web_fetch"));
+  await userEvent.click(
+    screen.getByRole("button", { name: "Save configuration" }),
+  );
+  expect(mocks.mainSave.mock.calls.at(-1)?.[0].body.tools).toEqual([
+    "web_fetch",
+  ]);
 });

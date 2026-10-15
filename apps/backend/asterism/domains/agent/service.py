@@ -14,6 +14,7 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.knowledge_base.models import AgentKnowledgeBaseAssignmentModel, KnowledgeBaseModel
 from asterism.domains.llm.schemas import ChatCompletionParams
 from asterism.domains.settings.models import LLMModel
+from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
 from asterism.domains.user.models import UserModel
 
 from .models import AgentProfileModel, SubAgentTraceModel
@@ -67,8 +68,7 @@ async def _ensure_valid_tools(
     app_settings = await get_tool_settings(session=session)
     if profile.tools:
         profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
-        if profile.knowledge_bases:
-            profile.tools.append("search_knowledge")
+        profile.tools = configurable_tools(profile.tools)
     return profile
 
 
@@ -149,6 +149,7 @@ async def get_main_agent(user_id: str, session: AsyncSession | None = None) -> M
         if row is None:
             raise NotFoundException("Main configuration not provisioned")
         result = MainAgentConfiguration.model_validate(row)
+        result.tools = configurable_tools(result.tools)
         result.knowledge_bases = await _assignment_summaries(user_id=user_id, agent_id=row.id, session=session)
         return result
 
@@ -159,6 +160,8 @@ async def _validate_configuration(payload: MainAgentUpdate, session: AsyncSessio
     settings = await get_tool_settings(session=session)
     from asterism.domains.tools.catalog import registered_tool_names
 
+    if set(payload.tools) & INTERNAL_TOOL_NAMES:
+        raise BadDataException("Internal tools are managed by context and cannot be configured")
     invalid = set(payload.tools) - (set(settings.active_tools) & registered_tool_names)
     if invalid:
         raise BadDataException(f"Unavailable tools: {', '.join(sorted(invalid))}")

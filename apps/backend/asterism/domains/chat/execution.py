@@ -72,6 +72,7 @@ async def validate_recorded_execution(
     if (
         choice.name != recorded.model.name
         or choice.provider_id != recorded.model.provider_id
+        or choice.supports_tools != recorded.model.supports_tools
         or choice.supports_vision != recorded.model.supports_vision
         or choice.context_window != recorded.model.context_window
     ):

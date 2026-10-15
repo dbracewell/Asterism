@@ -31,3 +31,22 @@ Verification: 382 backend tests, 100 frontend tests, 6 auth-database checks, 29 
 The working database was retained. Fresh schema initialization is required.
 
 Next recommended story: US-29.4 — Internal tools derived from context and settings.
+
+## US-29.4 — Internal tools derived from context and settings
+
+User confirmed completion on 2026-10-15 and authorized commit and merge into `main`.
+
+- [x] US-29.4: Internal tools derived from context and settings.
+  - [x] US-29.4-T1: Introduce explicit tool metadata/policy separating user-configurable tools from internal context-managed tools; exclude internal tools from user-facing selectable tool lists and reject attempts to override their state through user settings/chat payloads. Retain admin management, audit traces, and ordinary capability allowlists.
+  - [x] US-29.4-T2: Automatically enable delegation for project execution when selected eligible sub-agents exist; omit it for empty selection and General. Expose only eligible target descriptions; preserve fixed sub-agent models and bounded recursion.
+  - [x] US-29.4-T3: Automatically enable project-knowledge search when the current project has file memberships, with explicit pending/failed/unavailable extraction behavior; also support authorized General/project chat-local attachment retrieval when that scope has files. Empty file scope disables retrieval and fails closed if directly invoked.
+  - [x] US-29.4-T4: Derive effective tools on the server from admin policy, settings, model capabilities, and authorized context; an internal tool cannot expand file scope or delegation targets. Recheck on invocation and after revocation. Automatic enablement means the runtime/model can use the tool when relevant, not a compulsory search/delegation on every turn.
+  - [x] US-29.4-T5: Regenerate affected clients and test hidden metadata, forged toggles, General/project/empty states, admin-disabled capabilities, model tool support, unavailable artifacts, selection/membership revocation, and delegated scope narrowing.
+
+Verification: 396 backend tests, 101 frontend tests, 6 auth-database checks, 29 root configuration checks, and all 16 isolated Playwright tests passed without browser test retries. Lint, formatting, configured type checks, focused backend basedpyright, import-cycle checks, production build, and regenerated-client consistency passed. The existing settings fixture duplicate-key warning and external-provider verification limits are recorded in EPIC-29.
+
+The working database was retained; fresh schema initialization is required.
+
+EPIC-29 is complete: all four stories and 17 tasks have been implemented and user-confirmed. US-29.1 is archived under 2026-10-14; US-29.2 through US-29.4 are archived here.
+
+Next recommended epic: EPIC-26 — Composable execution context. Begin with US-26.1 — Execution scope resolver.

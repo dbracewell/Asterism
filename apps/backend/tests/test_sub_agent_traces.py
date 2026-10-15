@@ -37,6 +37,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from tool_policy_doubles import isolated_tool_policy as _isolated_tool_policy
 
 
 @pytest.fixture
@@ -504,3 +505,7 @@ class TestSubAgentTraces:
                 assert traces[1].total_tokens == 20
         finally:
             await engine.dispose()
+
+
+isolated_tool_policy = _isolated_tool_policy
+pytestmark = pytest.mark.usefixtures("isolated_tool_policy")

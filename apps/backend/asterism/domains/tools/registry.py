@@ -22,7 +22,8 @@ from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
 from asterism.domains.llm.schemas import LLMClientProtocol, ToolCall, ToolResult
 from asterism.domains.settings.schemas import ApplicationSettings
-from asterism.domains.tools.catalog import registered_tool_names
+from asterism.domains.tools.catalog import ToolPolicy, registered_tool_names, tool_policy
+from asterism.domains.tools.context import ContextToolScope
 from asterism.domains.tools.schemas import ToolInfo, ToolInfoList
 
 
@@ -82,6 +83,7 @@ class ToolContext[T: BaseModel | None]:
     event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None
     parent_message_id: uuid.UUID | None = None
     delegation_scope: DelegationScope | None = None
+    tool_scope: ContextToolScope | None = None
 
 
 @dataclass(frozen=True)
@@ -93,6 +95,7 @@ class LLMTool[T: BaseModel]:
     arg_validator: Type[BaseModel]
     function: Callable[[ToolContext[T]], Any]
     component_type: ComponentType | None = None
+    policy: ToolPolicy = ToolPolicy.USER_CONFIGURABLE
 
 
 class ToolRegistry:
@@ -108,9 +111,10 @@ class ToolRegistry:
                     name=t.name,
                     description=t.description,
                     component_type=t.component_type,
+                    policy=t.policy,
                 )
                 for t in self.registry.values()
-                if t.name in app_settings.active_tools
+                if t.name in app_settings.active_tools and t.policy == ToolPolicy.USER_CONFIGURABLE
             ],
         )
 
@@ -121,6 +125,7 @@ class ToolRegistry:
                     name=t.name,
                     description=t.description,
                     component_type=t.component_type,
+                    policy=t.policy,
                 )
                 for t in self.registry.values()
             ],
@@ -131,7 +136,7 @@ class ToolRegistry:
         tool_names: list[str] | None = None,
     ) -> list[ChatCompletionFunctionToolParam]:
         if tool_names is None:
-            return [llm_tool.schema for llm_tool in self.registry.values()]
+            return []
 
         tool_name_set = set(tool_names)
         return [llm_tool.schema for llm_tool in self.registry.values() if llm_tool.name in tool_name_set]
@@ -167,6 +172,8 @@ class ToolRegistry:
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
         parent_message_id: uuid.UUID | None = None,
         delegation_scope: DelegationScope | None = None,
+        tool_scope: ContextToolScope | None = None,
+        authorize_internal: Callable[[str], Awaitable[None]] | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
 
@@ -183,6 +190,14 @@ class ToolRegistry:
             except Exception as e:
                 return ToolRegistry._exception_to_tool_result(e, tool_call)
 
+            if llm_tool.policy == ToolPolicy.CONTEXT_MANAGED:
+                try:
+                    if authorize_internal is None or tool_scope is None:
+                        raise ValueError("Internal tool unavailable without server authorization")
+                    await authorize_internal(llm_tool.name)
+                except Exception as error:
+                    return ToolRegistry._exception_to_tool_result(error, tool_call)
+
             ctx = ToolContext(
                 args=arguments,
                 user=user,
@@ -195,7 +210,11 @@ class ToolRegistry:
                 event_sink=event_sink,
                 parent_message_id=parent_message_id,
                 delegation_scope=delegation_scope,
+                tool_scope=tool_scope,
             )
+
+            if llm_tool.name not in ctx.app_settings.active_tools:
+                return ToolRegistry._exception_to_tool_result(ValueError("Tool disabled by administrator"), tool_call)
 
             if llm_tool.is_async:
                 raw_result = await llm_tool.function(ctx)
@@ -260,6 +279,7 @@ class ToolRegistry:
                 schema=schema,
                 function=func,
                 component_type=component_type,
+                policy=tool_policy(tool_name),
             )
             return wrapper
 

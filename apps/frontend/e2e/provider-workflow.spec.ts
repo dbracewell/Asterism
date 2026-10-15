@@ -65,3 +65,32 @@ test("does not mount a large catalog until it is opened", async ({ page }) => {
   await expect(page.getByText("model-49")).toBeVisible();
   await expect(page.getByText("model-50")).toHaveCount(0);
 });
+
+test("persists explicit tool-call support through the admin model control", async ({
+  page,
+}) => {
+  await routeProviderApi(page);
+  let saved: unknown;
+  await page.route(
+    `**/api/py/settings/app/providers/${providerId}/models/10000000-0000-4000-8000-000000000000`,
+    (route) => {
+      saved = route.request().postDataJSON();
+      return route.fulfill({
+        json: {
+          id: "10000000-0000-4000-8000-000000000000",
+          name: "model-0",
+          provider_id: providerId,
+          ...(saved as object),
+        },
+      });
+    },
+  );
+  await page.goto("/e2e/providers");
+  await page.getByRole("button", { name: "Browse 1,000 models" }).click();
+  await page.getByLabel("Tool calls", { exact: true }).first().click();
+  await page.getByRole("option", { name: "Supported", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).first().click();
+  await expect
+    .poll(() => saved)
+    .toMatchObject({ supports_tools: true, tools_source: "manual" });
+});

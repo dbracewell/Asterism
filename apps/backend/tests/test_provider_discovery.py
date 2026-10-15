@@ -264,3 +264,33 @@ def test_request_schema_marks_api_key_write_only_and_never_repr_leaks_secret():
 
     assert api_key_schema["writeOnly"] is True
     assert API_KEY not in repr(request)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("support", [True, False, None])
+async def test_tool_support_uses_explicit_provider_metadata_and_remains_unknown_otherwise(support):
+    async def handler(_):
+        data = {"id": "local"}
+        if support is not None:
+            data["supports_tools"] = support
+        return httpx.Response(200, json={"data": [data]})
+
+    model = (await _discovery(handler).discover(_request())).models[0]
+    assert model.supports_tools is support
+    assert model.tools_source == (ModelCapabilitySource.UNKNOWN if support is None else ModelCapabilitySource.PROVIDER)
+
+
+def test_discovery_respects_manual_tool_override_but_accepts_provider_revocation():
+    provider = uuid.uuid4()
+    existing = Llm(
+        id=uuid.uuid4(),
+        provider_id=provider,
+        name="local",
+        is_active=True,
+        supports_tools=True,
+        tools_source=ModelCapabilitySource.PROVIDER,
+    )
+    discovered = existing.model_copy(update={"supports_tools": False})
+    assert merge_discovered_models([existing], [discovered])[0].supports_tools is False
+    existing.tools_source = ModelCapabilitySource.MANUAL
+    assert merge_discovered_models([existing], [discovered])[0].supports_tools is True

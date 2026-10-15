@@ -18,6 +18,7 @@ from asterism.domains.llm.schemas import (
 )
 from asterism.domains.tools.builtin.sub_agent import SubAgentArgs, sub_agent
 from asterism.domains.tools.registry import ToolContext
+from tool_policy_doubles import isolated_tool_policy as _isolated_tool_policy
 
 
 @pytest.fixture
@@ -498,3 +499,7 @@ class TestSubAgentStreaming:
         assert sub_agent_packets[0]["depth"] == 1
         assert sub_agent_packets[0]["event"]["type"] == "delta"
         assert sub_agent_packets[0]["event"]["content"] == "Sub-agent delta"
+
+
+isolated_tool_policy = _isolated_tool_policy
+pytestmark = pytest.mark.usefixtures("isolated_tool_policy")
