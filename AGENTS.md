@@ -251,33 +251,13 @@ When an epic completes:
 
 ---
 
-## 7) Suggested Initial Epic Breakdown
-
-1. **EPIC-1-FOUNDATIONS**
-   - Monorepo setup hardening, CI, lint/test, shared standards
-2. **EPIC-2-AUTH-AND-USER-MODEL**
-   - BetterAuth + JWT, user records, RBAC skeleton
-3. **EPIC-3-PROFILES-AND-AGENTS**
-   - CRUD + default invariants for profiles/agents, USER.md support
-4. **EPIC-4-CAPABILITY-REGISTRY**
-   - Admin management for skills/tools/MCP/image providers
-5. **EPIC-5-AGENT-RUNTIME-AND-LOOPS**
-   - LangChain orchestration, loop controls, execution traces
-6. **EPIC-6-MEMORY-SYSTEM**
-   - Short-term + long-term memory, retrieval integration
-7. **EPIC-7-CHAT-AND-UX**
-   - Core chat experience, profile/agent switching, streaming responses
-8. **EPIC-8-OBSERVABILITY-HARDENING**
-   - Logging, analytics hooks, safety checks, performance
-
----
-
 ## 8) Quality Gates
 
 Minimum expectations per story:
 
 - Lint passes
 - Type checks pass
+- formatting (pnpm format)
 - Unit/integration tests pass (or updated intentionally)
 - API schema and generated clients synchronized
 - No broken auth/permission paths

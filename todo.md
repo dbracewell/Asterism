@@ -11,7 +11,7 @@ EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are 
   - [ ] US-26.1-T4: Pass narrowed context to delegated agents and background/restarted jobs without granting new tools or wider files.
   - [ ] US-26.1-T5: Test empty scope, cross-user IDs, same-agent different-chat isolation, delegation, and revocation races.
 - [ ] US-26.2: Composable project prompts (2–3 person-days).
-  - [ ] US-26.2-T1: Extract a PromptComposer from Agent._build_system_prompt with typed layers and explicit conflict rules.
+  - [ ] US-26.2-T1: Extract a PromptComposer from Agent.\_build_system_prompt with typed layers and explicit conflict rules.
   - [ ] US-26.2-T2: Compose platform rules, agent role/capabilities, profile instructions where supported, project task instructions, and bounded runtime context.
   - [ ] US-26.2-T3: Use the same composed prompt for token estimates, main-agent calls, delegated calls, and turn replay; never treat file text as system instructions.
   - [ ] US-26.2-T4: Snapshot prompt revision per turn; apply edits to later turns and persist source/revision provenance rather than logging full private prompts.
