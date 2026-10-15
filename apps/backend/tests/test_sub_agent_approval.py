@@ -142,7 +142,7 @@ class TestSubAgentProfileAuthorization:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=sub_profile),
             ),
             patch(
@@ -194,7 +194,7 @@ class TestSubAgentProfileAuthorization:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=sub_profile),
             ),
             patch.object(
@@ -261,7 +261,7 @@ class TestSubAgentProfileAuthorization:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=sub_profile),
             ),
             patch.object(
@@ -332,7 +332,7 @@ class TestSubAgentProfileAuthorization:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=sub_profile),
             ),
             patch.object(

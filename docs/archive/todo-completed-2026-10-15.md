@@ -15,3 +15,19 @@ Verification: 368 backend tests, 100 frontend tests, 15 isolated browser tests w
 The working database was retained; schema changes require a fresh development database.
 
 Next recommended story: US-29.3 — Project-selected sub-agents.
+
+## US-29.3 — Project-selected sub-agents
+
+User confirmed completion on 2026-10-15 and authorized commit and merge into `main`.
+
+- [x] US-29.3: Project-selected sub-agents.
+  - [x] US-29.3-T1: Add unique, owner-consistent project/sub-agent memberships with database enforcement and atomic owner-scoped list/select/deselect APIs; new projects start with no selected sub-agents. Reject main-agent and foreign IDs.
+  - [x] US-29.3-T2: Derive eligible delegation targets only from the active project's selection; General chats never use sub-agents, even if the user has definitions. A model-supplied target must be in the current server-derived set.
+  - [x] US-29.3-T3: Increment project context revision on selection changes; clean references on sub-agent/project deletion, and cancel/reject affected delegation after deselection or revocation. Moves/deletion change eligible targets with the chat's next context; recheck authorization at invocation.
+  - [x] US-29.3-T4: Regenerate clients and test empty selection, select/deselect, duplicate batches, mixed-owner atomic rejection, two projects with distinct selections, General denial, deleted definitions, revocation during a run, and delegation depth/cycle limits.
+
+Verification: 382 backend tests, 100 frontend tests, 6 auth-database checks, 29 root configuration checks, and a final isolated Playwright run with all 15 tests passing without retries. Lint, formatting, configured type checks, focused backend basedpyright, import-cycle checks, production build, and generated-client consistency passed. Initial browser setup failures and the existing settings fixture duplicate-key warning are documented in EPIC-29. No live external-provider check is claimed.
+
+The working database was retained. Fresh schema initialization is required.
+
+Next recommended story: US-29.4 — Internal tools derived from context and settings.

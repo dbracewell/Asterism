@@ -86,7 +86,7 @@ class TestSubAgentRecursionSafety:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=child_profile),
             ),
             patch.object(Agent, "run", new=fake_run),
@@ -127,7 +127,7 @@ class TestSubAgentRecursionSafety:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(
                     return_value=_make_agent_profile(agent_c_id, "C"),
                 ),
@@ -160,7 +160,7 @@ class TestSubAgentRecursionSafety:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(
                     return_value=_make_agent_profile(agent_d_id, "D"),
                 ),

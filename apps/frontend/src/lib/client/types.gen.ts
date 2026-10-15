@@ -1511,6 +1511,64 @@ export type ProjectList = {
 };
 
 /**
+ * ProjectSubAgentBatch
+ */
+export type ProjectSubAgentBatch = {
+  /**
+   * Expected Context Revision
+   */
+  expected_context_revision: number;
+  /**
+   * Agent Ids
+   */
+  agent_ids: Array<string>;
+};
+
+/**
+ * ProjectSubAgentBatchResult
+ */
+export type ProjectSubAgentBatchResult = {
+  /**
+   * Context Revision
+   */
+  context_revision: number;
+  /**
+   * Changed Agent Ids
+   */
+  changed_agent_ids: Array<string>;
+  /**
+   * Unchanged Agent Ids
+   */
+  unchanged_agent_ids: Array<string>;
+};
+
+/**
+ * ProjectSubAgentList
+ */
+export type ProjectSubAgentList = {
+  /**
+   * Context Revision
+   */
+  context_revision: number;
+  /**
+   * Agents
+   */
+  agents: Array<SubAgentDefinition>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
  * ProjectUpdate
  */
 export type ProjectUpdate = {
@@ -4611,6 +4669,143 @@ export type ProjectFileAddManyResponses = {
 
 export type ProjectFileAddManyResponse =
   ProjectFileAddManyResponses[keyof ProjectFileAddManyResponses];
+
+export type ProjectSubAgentDeselectManyData = {
+  body: ProjectSubAgentBatch;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/sub-agents";
+};
+
+export type ProjectSubAgentDeselectManyErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ProjectSubAgentDeselectManyError =
+  ProjectSubAgentDeselectManyErrors[keyof ProjectSubAgentDeselectManyErrors];
+
+export type ProjectSubAgentDeselectManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectSubAgentBatchResult;
+};
+
+export type ProjectSubAgentDeselectManyResponse =
+  ProjectSubAgentDeselectManyResponses[keyof ProjectSubAgentDeselectManyResponses];
+
+export type ProjectSubAgentGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/projects/{project_id}/sub-agents";
+};
+
+export type ProjectSubAgentGetManyErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ProjectSubAgentGetManyError =
+  ProjectSubAgentGetManyErrors[keyof ProjectSubAgentGetManyErrors];
+
+export type ProjectSubAgentGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectSubAgentList;
+};
+
+export type ProjectSubAgentGetManyResponse =
+  ProjectSubAgentGetManyResponses[keyof ProjectSubAgentGetManyResponses];
+
+export type ProjectSubAgentSelectManyData = {
+  body: ProjectSubAgentBatch;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/sub-agents";
+};
+
+export type ProjectSubAgentSelectManyErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ProjectSubAgentSelectManyError =
+  ProjectSubAgentSelectManyErrors[keyof ProjectSubAgentSelectManyErrors];
+
+export type ProjectSubAgentSelectManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectSubAgentBatchResult;
+};
+
+export type ProjectSubAgentSelectManyResponse =
+  ProjectSubAgentSelectManyResponses[keyof ProjectSubAgentSelectManyResponses];
 
 export type MainAgentGetData = {
   body?: never;

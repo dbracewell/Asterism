@@ -1,6 +1,8 @@
+import asyncio
 import inspect
 import time
 import uuid
+from collections.abc import AsyncGenerator, Awaitable, Callable
 
 from pydantic import BaseModel, Field
 
@@ -74,6 +76,32 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
     )
 
 
+async def _authorized_events(
+    events: AsyncGenerator[AgentEvent, None],
+    check: Callable[[], Awaitable[None]],
+) -> AsyncGenerator[AgentEvent, None]:
+    """Cancel even a silent/in-flight child when its live authorization is revoked."""
+    pending = None
+    try:
+        while True:
+            await check()
+            pending = asyncio.create_task(anext(events))
+            while not pending.done():
+                await asyncio.wait({pending}, timeout=0.1)
+                await check()
+            try:
+                event = pending.result()
+            except StopAsyncIteration:
+                return
+            await check()
+            yield event
+    finally:
+        if pending is not None:
+            pending.cancel()
+            await asyncio.gather(pending, return_exceptions=True)
+        await events.aclose()
+
+
 @tool_registry.tool(
     description="Hands of work to a sub agent to perform.",
 )
@@ -83,7 +111,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     """
     from asterism.core.config import config
     from asterism.domains.agent.approval import AllowlistApprovalPolicy
-    from asterism.domains.agent.service import get_agent_profile
+    from asterism.domains.chat.delegation import require_delegation_target
 
     target_id = ctx.args.agent_id
     execution_id = uuid.uuid4()
@@ -129,8 +157,13 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         )
 
     try:
-        agent_profile = await get_agent_profile(ctx.user.id, target_id)
-    except Exception:
+        agent_profile = await require_delegation_target(
+            user_id=ctx.user.id,
+            chat_id=ctx.session.info.id,
+            scope=ctx.delegation_scope,
+            target_id=target_id,
+        )
+    except Exception as exc:
         logger.exception(
             "delegation profile lookup failed execution_id=%s target_agent_id=%s",
             execution_id,
@@ -138,7 +171,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         )
         error = AgentEvent(
             type=AgentEventType.ERROR,
-            content=(f"Sub-agent could not be loaded. Check backend logs with execution ID {execution_id}."),
+            content=f"Delegation rejected: {exc}",
         )
         if ctx.event_sink:
             res = ctx.event_sink(
@@ -153,30 +186,6 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             if inspect.isawaitable(res):
                 await res
         return error.content
-
-    if not agent_profile:
-        logger.warning(
-            "delegation rejected execution_id=%s reason=profile_not_found target_agent_id=%s",
-            execution_id,
-            target_id,
-        )
-        content = f"Agent with id {target_id} was not found."
-        if ctx.event_sink:
-            res = ctx.event_sink(
-                SubAgentEventEnvelope(
-                    execution_id=execution_id,
-                    sub_agent_id=target_id,
-                    sub_agent_name="Unknown sub-agent",
-                    depth=len(ctx.call_stack),
-                    event=AgentEvent(
-                        type=AgentEventType.ERROR,
-                        content=content,
-                    ),
-                ),
-            )
-            if inspect.isawaitable(res):
-                await res
-        return content
 
     # Authorization to invoke `sub_agent` belongs to the parent. Once
     # delegated, the child runs autonomously with the active tools explicitly
@@ -198,6 +207,15 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     if parent_msg_id is None and ctx.session and getattr(ctx.session, "messages", None):
         parent_msg_id = ctx.session.messages[-1].id
 
+    async def check_authorization() -> None:
+        await require_delegation_target(
+            user_id=ctx.user.id,
+            chat_id=ctx.session.info.id,
+            scope=ctx.delegation_scope,
+            target_id=target_id,
+            config_revision=agent_profile.config_revision,
+        )
+
     agent = Agent(
         profile=sub_profile,
         user=ctx.user,
@@ -208,6 +226,8 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         event_sink=ctx.event_sink,
         user_files=ctx.user_files,
         parent_message_id=parent_msg_id,
+        delegation_scope=ctx.delegation_scope,
+        authorization_check=check_authorization,
     )
 
     forwarded_types = {
@@ -241,7 +261,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         len(ctx.user_files),
     )
     try:
-        async for event in agent.run(messages=sub_agent_messages):
+        async for event in _authorized_events(agent.run(messages=sub_agent_messages), check_authorization):
             received_event = True
             last_response = event
             if event.type == AgentEventType.COMPLETE:

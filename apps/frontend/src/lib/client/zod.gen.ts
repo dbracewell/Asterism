@@ -676,6 +676,23 @@ export const zProjectList = z.object({
 });
 
 /**
+ * ProjectSubAgentBatch
+ */
+export const zProjectSubAgentBatch = z.object({
+  expected_context_revision: z.int().gte(1),
+  agent_ids: z.array(z.uuid()).min(1).max(1000),
+});
+
+/**
+ * ProjectSubAgentBatchResult
+ */
+export const zProjectSubAgentBatchResult = z.object({
+  context_revision: z.int().gte(1),
+  changed_agent_ids: z.array(z.uuid()),
+  unchanged_agent_ids: z.array(z.uuid()),
+});
+
+/**
  * ProjectUpdate
  */
 export const zProjectUpdate = z.object({
@@ -872,6 +889,17 @@ export const zSubAgentDefinition = z.object({
   model_available: z.boolean(),
   config_revision: z.int().gte(1).optional().default(1),
   knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional(),
+});
+
+/**
+ * ProjectSubAgentList
+ */
+export const zProjectSubAgentList = z.object({
+  context_revision: z.int().gte(1),
+  agents: z.array(zSubAgentDefinition),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1).lte(100),
 });
 
 /**
@@ -1681,6 +1709,42 @@ export const zProjectFileAddManyPath = z.object({
  * Successful Response
  */
 export const zProjectFileAddManyResponse = zProjectFileBatchResult;
+
+export const zProjectSubAgentDeselectManyBody = zProjectSubAgentBatch;
+
+export const zProjectSubAgentDeselectManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectSubAgentDeselectManyResponse = zProjectSubAgentBatchResult;
+
+export const zProjectSubAgentGetManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+export const zProjectSubAgentGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectSubAgentGetManyResponse = zProjectSubAgentList;
+
+export const zProjectSubAgentSelectManyBody = zProjectSubAgentBatch;
+
+export const zProjectSubAgentSelectManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectSubAgentSelectManyResponse = zProjectSubAgentBatchResult;
 
 /**
  * Successful Response

@@ -248,3 +248,37 @@ changed models and revoked capabilities reject replay, without selecting another
 model. Historical snapshots survive catalog edits/deletion. Delegated agents retain
 their own fixed models. See ADR-0017 and the backend README for API and isolation
 boundaries; file authorization is always revalidated from current memberships.
+
+## Project-selected delegation (US-29.3)
+
+A project starts with no selected sub-agents. `GET /projects/{project_id}/sub-agents`
+returns a paginated selection with fixed model availability and the project context
+revision. `POST` selects and `DELETE` deselects an atomic batch of `agent_ids`, with
+`expected_context_revision`. Duplicate IDs are deduplicated; a stale revision or any
+foreign, missing, or main-agent ID rejects the whole batch. Actual changes advance
+the revision once; no-ops retain it. Composite foreign keys enforce owner and role
+consistency even for direct database writes.
+
+The agent receives an immutable delegation ceiling from the chat/project boundary.
+Only selected, available definitions are described in its prompt. A model-supplied
+ID must belong to that ceiling and the current project's selection. General chats
+have no ceiling and cannot delegate, including direct tool invocations. Each child
+inherits the ceiling, chat, file references, cycle stack and depth limit; it retains
+its own fixed model and explicit tool capabilities. Selection adds no files or
+knowledge-base assignments.
+
+Invocation and child execution recheck the live chat project, context revision,
+selected target, definition revision and model availability. The streaming guard
+checks before forwarding output and polls an in-flight silent child every 100 ms;
+revocation cancels the child and its pending tool tasks. Project context changes
+invalidate existing delegation, including prompt/file changes, so a new turn must
+resolve a fresh ceiling. Definition deletion advances all affected project revisions
+in the deletion transaction and cascades memberships. Project deletion also cascades
+selections and detaches chats. Already delivered output or completed external tool
+side effects cannot be undone.
+
+Project membership storage, live chat authorization and the runtime ceiling are
+separate modules. Automatic internal-tool enablement remains US-29.4; selection UI
+remains US-27.5, and the broader file/retrieval scope resolver remains EPIC-26.
+Fresh schema initialization is required; this story adds no migrations and does not
+reset the working database.

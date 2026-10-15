@@ -271,7 +271,7 @@ class TestSubAgentTraces:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=sub_agent_profile),
             ),
             patch.object(
@@ -280,13 +280,10 @@ class TestSubAgentTraces:
                 new=AsyncMock(return_value=recording_client),
             ),
             patch(
-                "asterism.domains.agent.service.get_user_agents",
-                new=AsyncMock(
-                    return_value=MagicMock(
-                        agents={sub_agent_id: sub_agent_profile},
-                    ),
-                ),
+                "asterism.domains.chat.delegation.eligible_delegation_targets",
+                new=AsyncMock(return_value=[sub_agent_profile]),
             ),
+            patch("asterism.domains.chat.delegation.resolve_delegation_scope", new=AsyncMock(return_value=None)),
             patch(
                 "asterism.domains.settings.service.get_app_settings",
                 new=AsyncMock(
@@ -389,7 +386,7 @@ class TestSubAgentTraces:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=sub_agent_profile),
             ),
             patch.object(
@@ -398,13 +395,10 @@ class TestSubAgentTraces:
                 new=AsyncMock(return_value=recording_client),
             ),
             patch(
-                "asterism.domains.agent.service.get_user_agents",
-                new=AsyncMock(
-                    return_value=MagicMock(
-                        agents={sub_agent_id: sub_agent_profile},
-                    ),
-                ),
+                "asterism.domains.chat.delegation.eligible_delegation_targets",
+                new=AsyncMock(return_value=[sub_agent_profile]),
             ),
+            patch("asterism.domains.chat.delegation.resolve_delegation_scope", new=AsyncMock(return_value=None)),
             patch(
                 "asterism.domains.settings.service.get_app_settings",
                 new=AsyncMock(

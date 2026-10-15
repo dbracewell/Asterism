@@ -1,6 +1,6 @@
 # EPIC-29 — User agent settings, chat models, and project delegation
 
-Status: US-29.1 completed; user confirmed 2026-10-14. US-29.2 completed; user confirmed 2026-10-15. Later stories not started.
+Status: US-29.1 completed; user confirmed 2026-10-14. US-29.2 completed; user confirmed 2026-10-15. US-29.3 completed; user confirmed 2026-10-15. US-29.4 not started.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Added from the user's 2026-10-14 product direction. Numbering is stable: implement this epic **after EPIC-25 and before EPIC-26**, despite its number. UI work belongs to US-27.4/27.5.
 
@@ -91,12 +91,44 @@ User confirmed completion on 2026-10-15 and authorized commit and merge into `ma
 As a user, I want to choose which of my sub-agents may participate in a project.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-29.1.
-- [ ] US-29.3-T1: Add unique, owner-consistent project/sub-agent memberships with database enforcement and atomic owner-scoped list/select/deselect APIs; new projects start with no selected sub-agents. Reject main-agent and foreign IDs.
-- [ ] US-29.3-T2: Derive eligible delegation targets only from the active project's selection; General chats never use sub-agents, even if the user has definitions. A model-supplied target must be in the current server-derived set.
-- [ ] US-29.3-T3: Increment project context revision on selection changes; clean references on sub-agent/project deletion, and cancel/reject affected delegation after deselection or revocation. Moves/deletion change eligible targets with the chat's next context; recheck authorization at invocation.
-- [ ] US-29.3-T4: Regenerate clients and test empty selection, select/deselect, duplicate batches, mixed-owner atomic rejection, two projects with distinct selections, General denial, deleted definitions, revocation during a run, and delegation depth/cycle limits.
+- [x] US-29.3-T1: Add unique, owner-consistent project/sub-agent memberships with database enforcement and atomic owner-scoped list/select/deselect APIs; new projects start with no selected sub-agents. Reject main-agent and foreign IDs.
+- [x] US-29.3-T2: Derive eligible delegation targets only from the active project's selection; General chats never use sub-agents, even if the user has definitions. A model-supplied target must be in the current server-derived set.
+- [x] US-29.3-T3: Increment project context revision on selection changes; clean references on sub-agent/project deletion, and cancel/reject affected delegation after deselection or revocation. Moves/deletion change eligible targets with the chat's next context; recheck authorization at invocation.
+- [x] US-29.3-T4: Regenerate clients and test empty selection, select/deselect, duplicate batches, mixed-owner atomic rejection, two projects with distinct selections, General denial, deleted definitions, revocation during a run, and delegation depth/cycle limits.
 
 **Acceptance:** A project can select any subset of the user's sub-agents. Unselected agents cannot be invoked; General has no delegation. Selection grants neither extra file access nor unrestricted recursive delegation.
+
+US-29.3 implementation (2026-10-15): project selections start empty and use
+owner/role-consistent composite foreign keys. Paginated list and atomic batch
+select/deselect endpoints expose revision guards, deterministic deduplication,
+fixed-model availability and whole-batch rejection for invalid targets. Definition
+deletion advances every affected project revision and cascades selections.
+
+The chat authorization boundary derives an immutable target ceiling; prompts only
+advertise selected, available workers. General and forged/unselected targets fail
+closed. Children inherit that ceiling, chat/file references, cycle and depth limits,
+while retaining their own fixed models and explicit capabilities. Invocation and
+streaming validate current project membership, context and definition revisions,
+and model availability. Silent child generation is checked every 100 ms and canceled
+on revocation, including pending tool work. Any project context revision change
+invalidates existing delegation; the next turn resolves a fresh ceiling. Selection
+adds no file access. Automatic enablement remains US-29.4 and selection UI remains
+US-27.5. Fresh schema initialization is required; the working database was retained.
+
+Verification: 382 backend tests; 100 frontend tests; 6 auth-database checks; 29 root
+configuration checks; backend/frontend lint, configured typechecks, focused backend
+basedpyright (zero errors/warnings), import-cycle checks, formatting and production
+build pass. All 18 generated TypeScript files match regeneration from OpenAPI served
+through ASGI with the application root path. The final isolated Playwright run
+passed all 15 tests without retries. Earlier browser attempts encountered dependency
+network/install and occupied-port setup failures; locked dependencies were restored
+and the final run used `pnpm_config_verify_deps_before_run=false`. The existing
+settings E2E fixture emits a duplicate React key warning; no browser test failed.
+Runtime/API regressions cover role/owner DB enforcement, concurrent batches, empty
+and distinct project selections, General denial, stale ceilings, deletion/moves,
+unavailable models and revocation during silent generation and pending tools.
+No live external-provider verification is claimed. User confirmed completion on
+2026-10-15, authorizing commit and merge into `main` under AGENTS.md section 5.4.
 
 ### US-29.4 — Internal tools derived from context and settings
 

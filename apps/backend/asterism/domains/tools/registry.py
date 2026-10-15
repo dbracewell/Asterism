@@ -16,6 +16,7 @@ from pydantic import BaseModel
 import asterism.domains.settings.service as settings_service
 from asterism.common.retries import async_retry
 from asterism.core.schemas import AuthedUser
+from asterism.domains.agent.delegation_scope import DelegationScope
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
@@ -80,6 +81,7 @@ class ToolContext[T: BaseModel | None]:
     call_stack: list[uuid.UUID] = field(default_factory=list)
     event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None
     parent_message_id: uuid.UUID | None = None
+    delegation_scope: DelegationScope | None = None
 
 
 @dataclass(frozen=True)
@@ -164,6 +166,7 @@ class ToolRegistry:
         call_stack: list[uuid.UUID] | None = None,
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
         parent_message_id: uuid.UUID | None = None,
+        delegation_scope: DelegationScope | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
 
@@ -191,6 +194,7 @@ class ToolRegistry:
                 call_stack=list(call_stack) if call_stack else [],
                 event_sink=event_sink,
                 parent_message_id=parent_message_id,
+                delegation_scope=delegation_scope,
             )
 
             if llm_tool.is_async:

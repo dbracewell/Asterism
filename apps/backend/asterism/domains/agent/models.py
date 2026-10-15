@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Optional
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
@@ -13,6 +13,7 @@ from asterism.domains.llm.schemas import ChatCompletionParams
 class AgentProfileModel(Base, UuidPrimaryKeyMixin):
     __tablename__ = "agent_profiles"
     __table_args__ = (
+        UniqueConstraint("id", "user_id", "sub_agent", name="uq_agent_profile_id_owner_role"),
         CheckConstraint(
             "(sub_agent = false AND model_id IS NULL) OR (sub_agent = true AND model_id IS NOT NULL)",
             name="agent_role_model",

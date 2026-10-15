@@ -393,3 +393,9 @@ properties and main generation defaults. Sub-agents keep their own required fixe
 models; they cannot inherit or override them with the chat selection. These guards
 remain single-process like the existing job manager; distributed run locks are outside
 this story. Persisted execution snapshots are not durable tool/workflow checkpoints.
+
+Project sub-agent selections use owner-scoped `GET`, `POST`, and `DELETE`
+`/projects/{project_id}/sub-agents`. Writes take an atomic `agent_ids` batch and
+`expected_context_revision`; General chats cannot delegate. See
+[project-selected delegation](../../docs/architecture/agent-runtime.md#project-selected-delegation-us-293)
+for runtime revocation, fixed-model and schema initialization behavior.

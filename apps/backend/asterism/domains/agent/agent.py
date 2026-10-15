@@ -29,6 +29,7 @@ from .approval import (
     ToolApprovalPolicy,
     ToolUseAuthorization,
 )
+from .delegation_scope import DelegationScope
 from .schemas import (
     AgentEvent,
     AgentEventType,
@@ -51,9 +52,14 @@ class Agent:
         user_files: list[str] | None = None,
         parent_message_id: uuid.UUID | None = None,
         model_id: uuid.UUID | None = None,
+        delegation_scope: DelegationScope | None = None,
+        authorization_check: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
         if profile.sub_agent and model_id is not None and model_id != profile.model_id:
             raise BadDataException("Sub-agent model binding cannot be overridden")
+        self._delegation_available = False
+        self.delegation_scope = delegation_scope
+        self.authorization_check = authorization_check
         self.execution: MessageExecution | None = None
         self.model_id = profile.model_id if profile.sub_agent else model_id
         self.profile: AgentProfile = profile
@@ -153,6 +159,8 @@ class Agent:
         auths: list[ToolUseAuthorization],
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
     ) -> AsyncGenerator[ToolResult, None]:
+        if self.authorization_check:
+            await self.authorization_check()
         configured = set(self.profile.tools or [])
         if self._knowledge_search_enabled:
             configured.add("search_knowledge")
@@ -171,6 +179,7 @@ class Agent:
                 call_stack=self.call_stack,
                 event_sink=event_sink,
                 parent_message_id=self.parent_message_id,
+                delegation_scope=self.delegation_scope,
             )
             for auth in auths
             if auth.accept
@@ -190,17 +199,29 @@ class Agent:
         base_prompt = self.profile.system_prompt or ""
 
         if "sub_agent" in (self.profile.tools or []):
-            from .service import get_user_agents
+            from asterism.domains.chat.delegation import eligible_delegation_targets, resolve_delegation_scope
 
-            agent_profiles = await get_user_agents(self.user.id)
+            if not self.profile.sub_agent:
+                self.delegation_scope = await resolve_delegation_scope(
+                    user_id=self.user.id, chat_id=self.session.info.id
+                )
+            agent_profiles = await eligible_delegation_targets(
+                user_id=self.user.id,
+                chat_id=self.session.info.id,
+                scope=self.delegation_scope,
+            )
+            self._delegation_available = bool(agent_profiles)
             agent_info = []
-            for profile in agent_profiles.agents.values():
+            for profile in agent_profiles:
                 if profile.id == self.profile.id or profile.sub_agent is False:
                     continue
 
                 agent_info.append(
                     f"- id: {profile.id} (name: {profile.name}) - {profile.description}",  # noqa: E501
                 )
+
+            if not agent_info:
+                return base_prompt.strip() or None
 
             base_prompt = (
                 f"{base_prompt}\n\n"
@@ -225,6 +246,8 @@ class Agent:
         self,
         messages: list[LLMMessage],
     ) -> AsyncGenerator[AgentEvent, None]:
+        if self.authorization_check:
+            await self.authorization_check()
         client: LLMClientProtocol = await self._get_client()
 
         messages = list(messages)
@@ -240,6 +263,8 @@ class Agent:
 
         last_user_message: LLMMessage = messages[-1]
         for step in range(self.max_steps):
+            if self.authorization_check:
+                await self.authorization_check()
             # Only allow tools if there are enough
             # steps to respond to them
             tools: list[str] | None = []
@@ -249,11 +274,16 @@ class Agent:
                     *(["search_knowledge"] if self._knowledge_search_enabled else []),
                 ]
 
+            if tools and not self._delegation_available:
+                tools = [name for name in tools if name != "sub_agent"]
+
             async for event in client.chat(
                 messages=messages,
                 tools=tools,
                 **self.profile.chat_parameters,
             ):
+                if self.authorization_check:
+                    await self.authorization_check()
                 match event.type:
                     case LLMEventType.ERROR:
                         yield AgentEvent(
@@ -324,30 +354,38 @@ class Agent:
                                 return collected
 
                             tool_task = asyncio.create_task(_collect_tool_results())
+                            get_task = None
 
-                            while not tool_task.done():
-                                get_task = asyncio.create_task(sub_agent_queue.get())
-                                done, _ = await asyncio.wait(
-                                    [tool_task, get_task],
-                                    return_when=asyncio.FIRST_COMPLETED,
-                                )
-                                if get_task in done:
-                                    envelope = get_task.result()
+                            try:
+                                while not tool_task.done():
+                                    get_task = asyncio.create_task(sub_agent_queue.get())
+                                    done, _ = await asyncio.wait(
+                                        [tool_task, get_task],
+                                        return_when=asyncio.FIRST_COMPLETED,
+                                    )
+                                    if get_task in done:
+                                        envelope = get_task.result()
+                                        yield AgentEvent(
+                                            type=AgentEventType.SUB_AGENT,
+                                            sub_agent=envelope,
+                                        )
+                                    else:
+                                        get_task.cancel()
+
+                                while not sub_agent_queue.empty():
+                                    envelope = sub_agent_queue.get_nowait()
                                     yield AgentEvent(
                                         type=AgentEventType.SUB_AGENT,
                                         sub_agent=envelope,
                                     )
-                                else:
+
+                                responses = await tool_task
+                            finally:
+                                tool_task.cancel()
+                                await asyncio.gather(tool_task, return_exceptions=True)
+                                if get_task is not None:
                                     get_task.cancel()
-
-                            while not sub_agent_queue.empty():
-                                envelope = sub_agent_queue.get_nowait()
-                                yield AgentEvent(
-                                    type=AgentEventType.SUB_AGENT,
-                                    sub_agent=envelope,
-                                )
-
-                            responses = await tool_task
+                                    await asyncio.gather(get_task, return_exceptions=True)
                             for response in responses:
                                 self.logger.debug(
                                     f"{response.tool_call.function.name}("

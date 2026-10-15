@@ -51,3 +51,31 @@ class ProjectFileModel(Base, TimestampMixin):
         ),
         Index("idx_project_files_file_owner", "file_id", "user_id"),
     )
+
+
+class ProjectSubAgentModel(Base, TimestampMixin):
+    """A selection grants delegation eligibility only; role and owner are DB-enforced."""
+
+    __tablename__ = "project_sub_agents"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    agent_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    sub_agent: Mapped[bool] = mapped_column(nullable=False, default=True, server_default="1")
+
+    __table_args__ = (
+        CheckConstraint("sub_agent = true", name="ck_project_sub_agent_role"),
+        ForeignKeyConstraint(
+            ["project_id", "user_id"],
+            ["projects.id", "projects.user_id"],
+            ondelete="CASCADE",
+            name="fk_project_sub_agents_project_owner",
+        ),
+        ForeignKeyConstraint(
+            ["agent_id", "user_id", "sub_agent"],
+            ["agent_profiles.id", "agent_profiles.user_id", "agent_profiles.sub_agent"],
+            ondelete="CASCADE",
+            name="fk_project_sub_agents_agent_owner_role",
+        ),
+        Index("idx_project_sub_agents_agent_owner", "agent_id", "user_id"),
+    )

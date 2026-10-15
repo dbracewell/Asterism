@@ -162,7 +162,7 @@ class TestSubAgentStreaming:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=child_profile),
             ),
             patch.object(Agent, "run", new=fake_child_run),
@@ -225,7 +225,7 @@ class TestSubAgentStreaming:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=child_profile),
             ),
             patch.object(Agent, "run", new=fake_child_run),
@@ -318,15 +318,14 @@ class TestSubAgentStreaming:
         parent_events: list[AgentEvent] = []
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=child_profile),
             ),
             patch(
-                "asterism.domains.agent.service.get_user_agents",
-                new=AsyncMock(
-                    return_value=MagicMock(agents={child_id: child_profile}),
-                ),
+                "asterism.domains.chat.delegation.eligible_delegation_targets",
+                new=AsyncMock(return_value=[child_profile]),
             ),
+            patch("asterism.domains.chat.delegation.resolve_delegation_scope", new=AsyncMock(return_value=None)),
             patch(
                 "asterism.domains.settings.service.get_app_settings",
                 new=AsyncMock(
@@ -404,7 +403,7 @@ class TestSubAgentStreaming:
 
         with (
             patch(
-                "asterism.domains.agent.service.get_agent_profile",
+                "asterism.domains.chat.delegation.require_delegation_target",
                 new=AsyncMock(return_value=child_c_profile),
             ),
             patch.object(Agent, "run", new=fake_c_run),

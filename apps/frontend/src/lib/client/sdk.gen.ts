@@ -255,6 +255,15 @@ import type {
   ProjectGetOneData,
   ProjectGetOneErrors,
   ProjectGetOneResponses,
+  ProjectSubAgentDeselectManyData,
+  ProjectSubAgentDeselectManyErrors,
+  ProjectSubAgentDeselectManyResponses,
+  ProjectSubAgentGetManyData,
+  ProjectSubAgentGetManyErrors,
+  ProjectSubAgentGetManyResponses,
+  ProjectSubAgentSelectManyData,
+  ProjectSubAgentSelectManyErrors,
+  ProjectSubAgentSelectManyResponses,
   ProjectUpdateData,
   ProjectUpdateErrors,
   ProjectUpdateResponses,
@@ -1586,6 +1595,77 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/files",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Deselect Project Sub Agents
+   */
+  public projectSubAgentDeselectMany<ThrowOnError extends boolean = false>(
+    options: Options<ProjectSubAgentDeselectManyData, ThrowOnError>,
+  ): RequestResult<
+    ProjectSubAgentDeselectManyResponses,
+    ProjectSubAgentDeselectManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      ProjectSubAgentDeselectManyResponses,
+      ProjectSubAgentDeselectManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/sub-agents",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Project Sub Agents
+   */
+  public projectSubAgentGetMany<ThrowOnError extends boolean = false>(
+    options: Options<ProjectSubAgentGetManyData, ThrowOnError>,
+  ): RequestResult<
+    ProjectSubAgentGetManyResponses,
+    ProjectSubAgentGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ProjectSubAgentGetManyResponses,
+      ProjectSubAgentGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/sub-agents",
+      ...options,
+    });
+  }
+
+  /**
+   * Select Project Sub Agents
+   */
+  public projectSubAgentSelectMany<ThrowOnError extends boolean = false>(
+    options: Options<ProjectSubAgentSelectManyData, ThrowOnError>,
+  ): RequestResult<
+    ProjectSubAgentSelectManyResponses,
+    ProjectSubAgentSelectManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ProjectSubAgentSelectManyResponses,
+      ProjectSubAgentSelectManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/sub-agents",
       ...options,
       headers: {
         "Content-Type": "application/json",

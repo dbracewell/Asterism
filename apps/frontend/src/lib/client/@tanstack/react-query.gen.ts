@@ -255,6 +255,15 @@ import type {
   ProjectGetOneData,
   ProjectGetOneError,
   ProjectGetOneResponse,
+  ProjectSubAgentDeselectManyData,
+  ProjectSubAgentDeselectManyError,
+  ProjectSubAgentDeselectManyResponse,
+  ProjectSubAgentGetManyData,
+  ProjectSubAgentGetManyError,
+  ProjectSubAgentGetManyResponse,
+  ProjectSubAgentSelectManyData,
+  ProjectSubAgentSelectManyError,
+  ProjectSubAgentSelectManyResponse,
   ProjectUpdateData,
   ProjectUpdateError,
   ProjectUpdateResponse,
@@ -2260,6 +2269,144 @@ export const projectFileAddManyMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Deselect Project Sub Agents
+ */
+export const projectSubAgentDeselectManyMutation = (
+  options?: Partial<Options<ProjectSubAgentDeselectManyData>>,
+): UseMutationOptions<
+  ProjectSubAgentDeselectManyResponse,
+  ProjectSubAgentDeselectManyError,
+  Options<ProjectSubAgentDeselectManyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ProjectSubAgentDeselectManyResponse,
+    ProjectSubAgentDeselectManyError,
+    Options<ProjectSubAgentDeselectManyData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .projectSubAgentDeselectMany({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const projectSubAgentGetManyQueryKey = (
+  options: Options<ProjectSubAgentGetManyData>,
+) => createQueryKey("projectSubAgentGetMany", options);
+
+/**
+ * List Project Sub Agents
+ */
+export const projectSubAgentGetManyOptions = (
+  options: Options<ProjectSubAgentGetManyData>,
+) =>
+  queryOptions<
+    ProjectSubAgentGetManyResponse,
+    ProjectSubAgentGetManyError,
+    ProjectSubAgentGetManyResponse,
+    ReturnType<typeof projectSubAgentGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().projectSubAgentGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: projectSubAgentGetManyQueryKey(options),
+  });
+
+export const projectSubAgentGetManyInfiniteQueryKey = (
+  options: Options<ProjectSubAgentGetManyData>,
+): QueryKey<Options<ProjectSubAgentGetManyData>> =>
+  createQueryKey("projectSubAgentGetMany", options, true);
+
+/**
+ * List Project Sub Agents
+ */
+export const projectSubAgentGetManyInfiniteOptions = (
+  options: Options<ProjectSubAgentGetManyData>,
+) =>
+  infiniteQueryOptions<
+    ProjectSubAgentGetManyResponse,
+    ProjectSubAgentGetManyError,
+    InfiniteData<ProjectSubAgentGetManyResponse>,
+    QueryKey<Options<ProjectSubAgentGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ProjectSubAgentGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ProjectSubAgentGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry
+          .get()
+          .projectSubAgentGetMany({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true,
+          });
+        return data;
+      },
+      queryKey: projectSubAgentGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Select Project Sub Agents
+ */
+export const projectSubAgentSelectManyMutation = (
+  options?: Partial<Options<ProjectSubAgentSelectManyData>>,
+): UseMutationOptions<
+  ProjectSubAgentSelectManyResponse,
+  ProjectSubAgentSelectManyError,
+  Options<ProjectSubAgentSelectManyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ProjectSubAgentSelectManyResponse,
+    ProjectSubAgentSelectManyError,
+    Options<ProjectSubAgentSelectManyData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .projectSubAgentSelectMany({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

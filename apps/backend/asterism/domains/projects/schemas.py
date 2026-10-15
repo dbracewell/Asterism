@@ -4,6 +4,8 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from pydantic.json_schema import SkipJsonSchema
 
+from asterism.domains.agent.schemas import SubAgentDefinition
+
 ProjectName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
 
 
@@ -62,3 +64,24 @@ class ProjectFileBatchResult(BaseModel):
     context_revision: int = Field(ge=1)
     changed_file_ids: list[uuid.UUID]
     unchanged_file_ids: list[uuid.UUID]
+
+
+class ProjectSubAgentBatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_context_revision: int = Field(ge=1)
+    agent_ids: list[uuid.UUID] = Field(min_length=1, max_length=1000)
+
+
+class ProjectSubAgentBatchResult(BaseModel):
+    context_revision: int = Field(ge=1)
+    changed_agent_ids: list[uuid.UUID]
+    unchanged_agent_ids: list[uuid.UUID]
+
+
+class ProjectSubAgentList(BaseModel):
+    context_revision: int = Field(ge=1)
+    agents: list[SubAgentDefinition]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1, le=100)

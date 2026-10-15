@@ -259,6 +259,9 @@ async def delete_agent_profile(
         row = await session.get(AgentProfileModel, agent_id)
         assert row is not None
         definition = await _sub_definition(profile, session)
+        from asterism.domains.projects.revocation import revoke_agent_projects
+
+        await revoke_agent_projects(user_id=user_id, agent_id=agent_id, session=session)
         await session.delete(row)
         await session.commit()
         return definition
