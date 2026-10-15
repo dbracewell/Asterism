@@ -30,7 +30,9 @@ describe("SSE rate limiter", () => {
 
   it("caps high-cardinality keys", () => {
     for (let index = 0; index < MAX_RATE_LIMIT_ENTRIES; index++) {
-      expect(checkRateLimit(`203.0.${Math.floor(index / 256)}.${index % 256}`)).toBe(true);
+      expect(
+        checkRateLimit(`203.0.${Math.floor(index / 256)}.${index % 256}`),
+      ).toBe(true);
     }
     expect(checkRateLimit("198.51.100.1")).toBe(false);
     expect(rateLimitEntryCount()).toBe(MAX_RATE_LIMIT_ENTRIES);

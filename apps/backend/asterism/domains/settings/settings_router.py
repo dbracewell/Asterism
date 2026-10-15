@@ -54,7 +54,9 @@ async def read_main_agent(user: AuthedUserDep, session: DBSessionDep) -> MainAge
 
 @settings_router.put("/user/main-agent", response_model=MainAgentConfiguration, operation_id="mainAgentUpdate")
 async def write_main_agent(
-    payload: MainAgentUpdate, user: AuthedUserDep, session: DBSessionDep,
+    payload: MainAgentUpdate,
+    user: AuthedUserDep,
+    session: DBSessionDep,
 ) -> MainAgentConfiguration:
     return await update_main_agent(user.id, payload, session)
 

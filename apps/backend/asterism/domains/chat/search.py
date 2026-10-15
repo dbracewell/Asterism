@@ -53,7 +53,11 @@ async def search(
         chat_ids = await index.find_chat_ids(user_id, terms)
         project_ids = await index.find_project_ids(user_id, terms) if scope == "all" else set()
         matches = _select_matches(
-            user_id=user_id, chat_ids=chat_ids, project_ids=project_ids, scope=scope, project_id=project_id,
+            user_id=user_id,
+            chat_ids=chat_ids,
+            project_ids=project_ids,
+            scope=scope,
+            project_id=project_id,
         )
         total = await session.scalar(select(func.count()).select_from(matches))
         rows = (

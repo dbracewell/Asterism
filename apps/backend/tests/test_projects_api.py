@@ -437,7 +437,10 @@ async def test_stale_membership_transaction_rolls_back_all_changes(project_api):
         session.add(ProjectFileModel(project_id=project_id, file_id=file_ids[1], user_id="a"))
         with pytest.raises(CodedException) as error:
             await advance_context_revision(
-                user_id="a", project_id=project_id, expected_context_revision=1, session=session,
+                user_id="a",
+                project_id=project_id,
+                expected_context_revision=1,
+                session=session,
             )
         assert error.value.code == 409
         await session.rollback()

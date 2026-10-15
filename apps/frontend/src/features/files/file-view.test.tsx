@@ -32,7 +32,9 @@ const file = (id: string, name: string) => ({
 function renderView() {
   return render(
     <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
     >
       <FileView filename="notes.txt" />
     </QueryClientProvider>,
@@ -63,15 +65,13 @@ it("shows content, caption, similar files with scores, and knowledge bases", asy
 
   expect(await screen.findByText("hello extracted world")).toBeInTheDocument();
   expect(screen.getByText("A short caption")).toBeInTheDocument();
-  expect(await screen.findByRole("link", { name: "other.txt" })).toHaveAttribute(
-    "href",
-    "/files/other.txt",
-  );
+  expect(
+    await screen.findByRole("link", { name: "other.txt" }),
+  ).toHaveAttribute("href", "/files/other.txt");
   expect(screen.getByText("0.812")).toBeInTheDocument();
-  expect(await screen.findByRole("link", { name: "References" })).toHaveAttribute(
-    "href",
-    "/knowledge/kb-1",
-  );
+  expect(
+    await screen.findByRole("link", { name: "References" }),
+  ).toHaveAttribute("href", "/knowledge/kb-1");
 });
 
 it("goes back through the Next.js router", async () => {

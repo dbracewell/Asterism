@@ -290,6 +290,5 @@ class Config(BaseSettings):
         return self.storage_root / "models" / "captioning-smolvlm2"
 
 
-
 config = Config()
 config.validate_runtime()

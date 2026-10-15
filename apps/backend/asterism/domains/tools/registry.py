@@ -78,9 +78,7 @@ class ToolContext[T: BaseModel | None]:
     client: LLMClientProtocol
     user_files: list[str] = field(default_factory=list)
     call_stack: list[uuid.UUID] = field(default_factory=list)
-    event_sink: (
-        Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None
-    ) = None
+    event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None
     parent_message_id: uuid.UUID | None = None
 
 
@@ -134,18 +132,15 @@ class ToolRegistry:
             return [llm_tool.schema for llm_tool in self.registry.values()]
 
         tool_name_set = set(tool_names)
-        return [
-            llm_tool.schema
-            for llm_tool in self.registry.values()
-            if llm_tool.name in tool_name_set
-        ]
+        return [llm_tool.schema for llm_tool in self.registry.values() if llm_tool.name in tool_name_set]
 
     def __getitem__(self, tool_name: str) -> LLMTool:
         return self.registry[tool_name]
 
     @staticmethod
     def _exception_to_tool_result(
-        ex: BaseException, tool_call: ToolCall,
+        ex: BaseException,
+        tool_call: ToolCall,
     ) -> ToolResult:
         # Tool results are persisted in JSON columns. Never retain an exception
         # instance here: SQLAlchemy/Pydantic exceptions are not JSON serializable.
@@ -167,17 +162,14 @@ class ToolRegistry:
         user_files: list[str] = [],
         max_retries: int = 3,
         call_stack: list[uuid.UUID] | None = None,
-        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None]
-        | None = None,
+        event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
         parent_message_id: uuid.UUID | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
 
         @async_retry(
             max_retries=max_retries,
-            on_exceed_attempts=lambda ex: (
-                ToolRegistry._exception_to_tool_result(ex, tool_call)
-            ),
+            on_exceed_attempts=lambda ex: ToolRegistry._exception_to_tool_result(ex, tool_call),
         )
         async def call_tool() -> ToolResult:
 

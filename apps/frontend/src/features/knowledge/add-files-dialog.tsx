@@ -111,11 +111,7 @@ const KnowledgeBaseAddSection = ({
 
   return (
     <FileManager.RibbonSection title="Add">
-      <Hint
-        hint="Add selected files to this knowledge base"
-        side="top"
-        asChild
-      >
+      <Hint hint="Add selected files to this knowledge base" side="top" asChild>
         <Button
           aria-label={`Add selected (${selectedFiles.length})`}
           variant="ghost"

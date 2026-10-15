@@ -272,13 +272,19 @@ async def list_user_files(
 
     statement = select_owned_files(user_id=user_id, query=query, sort_by=sort_by)
     if knowledge_base_id is not None:
-        statement = statement.where(UserFileModel.id.in_(
-            select(KnowledgeBaseFileModel.file_id).where(
-                KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
-            ),
-        ))
+        statement = statement.where(
+            UserFileModel.id.in_(
+                select(KnowledgeBaseFileModel.file_id).where(
+                    KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
+                ),
+            )
+        )
     return await list_file_page(
-        user_id=user_id, statement=statement, session=session, page=page, page_size=page_size,
+        user_id=user_id,
+        statement=statement,
+        session=session,
+        page=page,
+        page_size=page_size,
         check_knowledge_base_id=check_knowledge_base_id,
     )
 
@@ -420,15 +426,16 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
             ),
         )
     }
-    summaries = {str(file.id): file for file in await describe_files(
-        user_id=user_id, files=list(models.values()), session=session,
-    )}
+    summaries = {
+        str(file.id): file
+        for file in await describe_files(
+            user_id=user_id,
+            files=list(models.values()),
+            session=session,
+        )
+    }
     return SimilarFileList(
-        files=[
-            SimilarFile(file=summaries[file_id], score=score)
-            for file_id, score in ranked
-            if file_id in models
-        ],
+        files=[SimilarFile(file=summaries[file_id], score=score) for file_id, score in ranked if file_id in models],
     )
 
 
@@ -581,5 +588,9 @@ async def download_file_by_id(*, user_id: str, file_id: uuid.UUID, session: Asyn
     path = get_file_store().open(user_id, file.storage_key)
     if not path.is_file():
         raise NotFoundException("File not found")
-    return FileResponse(path=path, filename=file.original_name, media_type=file.mime_type,
-                        headers={"Cache-Control": "private, no-store"})
+    return FileResponse(
+        path=path,
+        filename=file.original_name,
+        media_type=file.mime_type,
+        headers={"Cache-Control": "private, no-store"},
+    )

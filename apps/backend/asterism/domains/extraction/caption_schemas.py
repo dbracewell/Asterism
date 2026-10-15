@@ -89,5 +89,3 @@ class CaptioningConfiguration:
                 CaptionErrorCode.INVALID_SELECTION,
                 "Captioning requires an active discovered vision-capable model",
             )
-
-

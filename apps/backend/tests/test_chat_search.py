@@ -1,4 +1,3 @@
-
 import pytest
 import pytest_asyncio
 from asterism.db.base import Base
@@ -87,8 +86,9 @@ async def test_search_paginates_and_requires_all_keywords(search_session):
 async def test_project_description_index_updates_and_never_searches_prompt_or_foreign_data(search_session):
     from sqlalchemy import delete, update
 
-    project = ProjectModel(user_id="user-a", name="Course", description="Marine ocean observations",
-                           system_prompt="confidentialkeyword")
+    project = ProjectModel(
+        user_id="user-a", name="Course", description="Marine ocean observations", system_prompt="confidentialkeyword"
+    )
     foreign = ProjectModel(user_id="user-b", name="Ocean secret")
     search_session.add_all([project, foreign])
     await search_session.commit()
@@ -97,9 +97,14 @@ async def test_project_description_index_updates_and_never_searches_prompt_or_fo
     assert result.results[0].match_source is SearchMatchSource.PROJECT_DESCRIPTION
     assert "ocean" in result.results[0].snippet
     assert (await search("user-a", "confidentialkeyword", session=search_session)).total == 0
-    await search_session.execute(update(ProjectModel).where(ProjectModel.id == project.id).values(
-        name="Ocean course", description="Updated description",
-    ))
+    await search_session.execute(
+        update(ProjectModel)
+        .where(ProjectModel.id == project.id)
+        .values(
+            name="Ocean course",
+            description="Updated description",
+        )
+    )
     await search_session.commit()
     result = await search("user-a", "ocean", session=search_session)
     assert result.results[0].match_source is SearchMatchSource.PROJECT_NAME

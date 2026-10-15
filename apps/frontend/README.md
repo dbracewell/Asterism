@@ -118,7 +118,6 @@ pnpm --filter @asterism/frontend codegen
 
 The correct architecture links are under [`docs/architecture`](../../docs/architecture/README.md).
 
-
 ## Chat file contracts (US-25.1)
 
 The composer uses the generated TanStack upload mutation and sends returned file UUIDs
@@ -128,7 +127,6 @@ Library file views retain their owner-scoped library endpoints. Missing historic
 references render without download links. ChatInfo/NewChatRequest use `project_id`;
 obsolete folder chat actions/listing are removed. Project navigation and guarded
 move controls are delivered in later workspace stories.
-
 
 ### Chat upload/send lifecycle
 

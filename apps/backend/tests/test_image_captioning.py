@@ -16,7 +16,11 @@ from asterism.domains.settings.provider_types import ModelCapabilitySource
 
 class Model:
     def __init__(
-        self, *, active: bool, vision: bool | None, source: ModelCapabilitySource = ModelCapabilitySource.PROVIDER,
+        self,
+        *,
+        active: bool,
+        vision: bool | None,
+        source: ModelCapabilitySource = ModelCapabilitySource.PROVIDER,
     ) -> None:
         self.id = uuid.uuid4()
         self.is_active = active

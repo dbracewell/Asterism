@@ -146,7 +146,9 @@ it("creates, edits, and deletes a knowledge base through the generated client", 
   );
 
   await user.click(screen.getByRole("button", { name: "Delete Research" }));
-  expect(screen.getByRole("heading", { name: "Delete knowledge base" })).toBeVisible();
+  expect(
+    screen.getByRole("heading", { name: "Delete knowledge base" }),
+  ).toBeVisible();
   expect(api.knowledgeBaseDelete).not.toHaveBeenCalled();
   await user.click(screen.getByRole("button", { name: "Cancel" }));
   expect(api.knowledgeBaseDelete).not.toHaveBeenCalled();

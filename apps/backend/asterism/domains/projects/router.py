@@ -100,8 +100,13 @@ async def list_project_files(
     query: str | None = Query(default=None, max_length=10_000),
 ) -> UserFileList:
     return await service.list_project_files(
-        user_id=user.id, project_id=project_id, session=db,
-        page=page, page_size=page_size, sort_by=sort_by, query=query,
+        user_id=user.id,
+        project_id=project_id,
+        session=db,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        query=query,
     )
 
 
@@ -118,7 +123,11 @@ async def add_project_files(
     db: DBSessionDep,
 ) -> ProjectFileBatchResult:
     return await service.change_project_files(
-        user_id=user.id, project_id=project_id, payload=payload, remove=False, session=db,
+        user_id=user.id,
+        project_id=project_id,
+        payload=payload,
+        remove=False,
+        session=db,
     )
 
 
@@ -135,5 +144,9 @@ async def remove_project_files(
     db: DBSessionDep,
 ) -> ProjectFileBatchResult:
     return await service.change_project_files(
-        user_id=user.id, project_id=project_id, payload=payload, remove=True, session=db,
+        user_id=user.id,
+        project_id=project_id,
+        payload=payload,
+        remove=True,
+        session=db,
     )

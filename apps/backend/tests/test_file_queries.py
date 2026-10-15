@@ -54,7 +54,9 @@ async def test_composed_file_filters_apply_before_count_and_stable_pagination(fi
     assert [p.files[0].filename for p in pages[:2]] == expected
     assert pages[2].files == []
     searched = await list_file_page(
-        user_id="user-a", session=file_session, statement=select_owned_files(user_id="user-a", query="%_"),
+        user_id="user-a",
+        session=file_session,
+        statement=select_owned_files(user_id="user-a", query="%_"),
     )
     assert [file.filename for file in searched.files] == ["a%_.txt"]
 
@@ -64,7 +66,9 @@ async def test_file_page_execution_enforces_owner_even_for_unscoped_select(file_
     await upload_files(user_id="user-a", session=file_session, uploads=[_upload("owned.txt", b"a")])
     await upload_files(user_id="user-b", session=file_session, uploads=[_upload("foreign.txt", b"b")])
     page = await list_file_page(
-        user_id="user-a", session=file_session, statement=select(UserFileModel).order_by(UserFileModel.filename),
+        user_id="user-a",
+        session=file_session,
+        statement=select(UserFileModel).order_by(UserFileModel.filename),
     )
     assert page.total == 1
     assert [file.filename for file in page.files] == ["owned.txt"]
@@ -75,7 +79,10 @@ async def test_file_page_execution_enforces_owner_even_for_unscoped_select(file_
 async def test_shared_pagination_rejects_invalid_bounds(file_session, page, page_size):
     with pytest.raises(BadDataException, match="Invalid pagination"):
         await paginate_select(
-            statement=select_owned_files(user_id="user-a"), session=file_session, page=page, page_size=page_size,
+            statement=select_owned_files(user_id="user-a"),
+            session=file_session,
+            page=page,
+            page_size=page_size,
         )
 
 

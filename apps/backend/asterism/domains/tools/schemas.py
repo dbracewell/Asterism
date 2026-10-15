@@ -21,12 +21,10 @@ class SearchArgs(BaseModel):
         description="The language to use to gather search results",
         title="Search Language",
     )
-    time_range: Literal["past_24_hours", "past_week", "past_month", "all"] = (
-        Field(
-            default="all",
-            description="The time range (ALL, DAY, MONTH, YEAR) to limit the search to",  # noqa: E501
-            title="Time Range",
-        )
+    time_range: Literal["past_24_hours", "past_week", "past_month", "all"] = Field(
+        default="all",
+        description="The time range (ALL, DAY, MONTH, YEAR) to limit the search to",  # noqa: E501
+        title="Time Range",
     )
 
 

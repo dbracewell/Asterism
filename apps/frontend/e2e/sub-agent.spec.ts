@@ -36,7 +36,9 @@ async function routeDelegationStream(
   });
 }
 
-test("shows delegated progress and the final parent response", async ({ page }) => {
+test("shows delegated progress and the final parent response", async ({
+  page,
+}) => {
   await routeDelegationStream(page, [
     { type: "start" },
     subAgentPacket("execution-success", { type: "start" }),
@@ -74,12 +76,14 @@ test("shows delegated progress and the final parent response", async ({ page }) 
   await expect(activity).toContainText("Delegated research complete");
   await expect(activity).toContainText("web_search");
   await expect(activity).toContainText("Completed");
-  await expect(page.getByRole("region", { name: "Parent response" })).toHaveText(
-    "Parent synthesized the research",
-  );
+  await expect(
+    page.getByRole("region", { name: "Parent response" }),
+  ).toHaveText("Parent synthesized the research");
 });
 
-test("shows a delegated timeout while allowing a parent response", async ({ page }) => {
+test("shows a delegated timeout while allowing a parent response", async ({
+  page,
+}) => {
   await routeDelegationStream(page, [
     { type: "start" },
     subAgentPacket("execution-timeout", { type: "start" }),
@@ -89,7 +93,9 @@ test("shows a delegated timeout while allowing a parent response", async ({ page
     }),
     {
       type: "complete",
-      last_messages: [assistantMessage("I could not complete the delegated research")],
+      last_messages: [
+        assistantMessage("I could not complete the delegated research"),
+      ],
     },
   ]);
 
@@ -99,7 +105,7 @@ test("shows a delegated timeout while allowing a parent response", async ({ page
   const activity = page.getByTestId("sub-agent-execution-timeout");
   await expect(activity).toContainText("Failed");
   await expect(activity.getByRole("alert")).toContainText("timed out");
-  await expect(page.getByRole("region", { name: "Parent response" })).toHaveText(
-    "I could not complete the delegated research",
-  );
+  await expect(
+    page.getByRole("region", { name: "Parent response" }),
+  ).toHaveText("I could not complete the delegated research");
 });

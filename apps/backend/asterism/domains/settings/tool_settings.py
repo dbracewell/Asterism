@@ -8,6 +8,7 @@ from .schemas import ToolSettings
 
 _TOOL_SETTINGS_KEYS = set(ToolSettings.model_fields)
 
+
 async def get_tool_settings(
     session: AsyncSession | None = None,
 ) -> ToolSettings:
@@ -17,5 +18,3 @@ async def get_tool_settings(
         )
         settings = {row.key: row.value for row in (await session.scalars(stmt)).all()}
         return ToolSettings.model_validate(settings)
-
-

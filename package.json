@@ -20,7 +20,8 @@
     "reset:db": "node scripts/run-with-env.mjs --env required --scope all --profile reset -- node scripts/reset-databases.mjs",
     "ci:local:quality": "pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false && pnpm check:workspace-tasks && pnpm lint && pnpm typecheck && pnpm test",
     "ci:local:e2e": "pnpm install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend install --frozen-lockfile --config.strictDepBuilds=false --config.ignore-scripts=false && pnpm --filter @asterism/frontend rebuild better-sqlite3 --config.ignore-scripts=false && pnpm --filter @asterism/frontend exec playwright install chromium && node scripts/run-isolated-e2e.mjs",
-    "ci:local": "pnpm ci:local:quality && pnpm ci:local:e2e"
+    "ci:local": "pnpm ci:local:quality && pnpm ci:local:e2e",
+    "format": "pnpm --filter @asterism/backend format && pnpm --filter @asterism/frontend format"
   },
   "keywords": [],
   "author": "",

@@ -35,9 +35,13 @@ async def read_project_context(
 
 
 async def require_owned_project(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> ProjectModel:
-    project = await session.scalar(select_owned_projects(user_id=user_id).where(
-        ProjectModel.id == project_id,
-    ).execution_options(populate_existing=True))
+    project = await session.scalar(
+        select_owned_projects(user_id=user_id)
+        .where(
+            ProjectModel.id == project_id,
+        )
+        .execution_options(populate_existing=True)
+    )
     if project is None:
         raise NotFoundException("Project not found")
     return project

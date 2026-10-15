@@ -38,12 +38,16 @@ class ProjectFileModel(Base, TimestampMixin):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ["project_id", "user_id"], ["projects.id", "projects.user_id"],
-            ondelete="CASCADE", name="fk_project_files_project_owner",
+            ["project_id", "user_id"],
+            ["projects.id", "projects.user_id"],
+            ondelete="CASCADE",
+            name="fk_project_files_project_owner",
         ),
         ForeignKeyConstraint(
-            ["file_id", "user_id"], ["user_files.id", "user_files.user_id"],
-            ondelete="CASCADE", name="fk_project_files_file_owner",
+            ["file_id", "user_id"],
+            ["user_files.id", "user_files.user_id"],
+            ondelete="CASCADE",
+            name="fk_project_files_file_owner",
         ),
         Index("idx_project_files_file_owner", "file_id", "user_id"),
     )

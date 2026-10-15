@@ -6,7 +6,9 @@ import { folderGetOneOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
 
 export const FolderPage = ({ folderId }: { folderId: string }) => {
-  const folder = useQuery(folderGetOneOptions({ client, path: { folder_id: folderId } }));
+  const folder = useQuery(
+    folderGetOneOptions({ client, path: { folder_id: folderId } }),
+  );
   if (folder.error) throw folder.error;
   if (!folder.data) return <Spinner />;
   return (

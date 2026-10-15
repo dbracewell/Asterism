@@ -4,10 +4,7 @@ import {
   sseListenerCount,
   subscribeSse,
 } from "@/features/sse/lib/event-emitter";
-import {
-  checkRateLimit,
-  clientIpKey,
-} from "@/features/sse/lib/rate-limiter";
+import { checkRateLimit, clientIpKey } from "@/features/sse/lib/rate-limiter";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { getAuth } from "@/lib/auth";
 import { getFrontendServerConfig } from "@/lib/server-config";
@@ -55,7 +52,10 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
   if (sseListenerCount() >= 50) {
-    return NextResponse.json({ message: "SSE capacity reached" }, { status: 503 });
+    return NextResponse.json(
+      { message: "SSE capacity reached" },
+      { status: 503 },
+    );
   }
 
   let cleanup = () => {};

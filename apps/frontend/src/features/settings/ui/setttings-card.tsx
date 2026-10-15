@@ -33,8 +33,7 @@ export const SettingsCard = ({
   }, [requestedSection]);
 
   const selectedSetting = settings.find(
-    (setting) =>
-      setting.type === "section" && setting.value === activeSection,
+    (setting) => setting.type === "section" && setting.value === activeSection,
   );
 
   return (

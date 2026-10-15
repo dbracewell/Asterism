@@ -65,7 +65,7 @@ src = ["asterism"]
 
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "COM812"]
+select = ["E", "F", "I"]
 fixable = ["ALL"]
 
 [tool.ruff.format]

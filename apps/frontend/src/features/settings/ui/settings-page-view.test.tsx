@@ -75,9 +75,9 @@ describe("SettingsPageView", () => {
   it("navigates to admin settings when its trigger is selected", async () => {
     renderPage();
 
-    await userEvent.setup().click(
-      screen.getByRole("tab", { name: "Admin Settings" }),
-    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("tab", { name: "Admin Settings" }));
 
     expect(mocks.replace).toHaveBeenCalledWith("/settings?t=admin");
   });

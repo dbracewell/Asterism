@@ -33,7 +33,10 @@ async def create_sub_agent(payload: SubAgentCreate, user: AuthedUserDep, session
 
 @agents_router.put("/sub-agents/{agent_id}", response_model=SubAgentDefinition, operation_id="subAgentUpdate")
 async def update_sub_agent(
-    agent_id: uuid.UUID, payload: SubAgentCreate, user: AuthedUserDep, session: DBSessionDep,
+    agent_id: uuid.UUID,
+    payload: SubAgentCreate,
+    user: AuthedUserDep,
+    session: DBSessionDep,
 ) -> SubAgentDefinition:
     return await save_sub_agent(user.id, payload, agent_id=agent_id, session=session)
 

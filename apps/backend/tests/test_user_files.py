@@ -70,10 +70,14 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
     )
 
     assert [file.filename for file in uploaded.files] == [
-        "report.txt", "report(2).txt", "photo.png",
+        "report.txt",
+        "report(2).txt",
+        "photo.png",
     ]
     assert [file.kind for file in uploaded.files] == [
-        FileKind.TEXT, FileKind.TEXT, FileKind.IMAGE,
+        FileKind.TEXT,
+        FileKind.TEXT,
+        FileKind.IMAGE,
     ]
     assert uploaded.files[0].mime_type == "text/plain"
     assert uploaded.files[2].mime_type == "image/png"
@@ -92,7 +96,9 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
 @pytest.mark.asyncio
 async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_session):
     first = await upload_files(
-        user_id="user-a", uploads=[_upload("report.txt", b"same bytes")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("report.txt", b"same bytes")],
+        session=file_session,
     )
     repeated = await upload_files(
         user_id="user-a",
@@ -100,7 +106,9 @@ async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_sessi
         session=file_session,
     )
     other_user = await upload_files(
-        user_id="user-b", uploads=[_upload("report.txt", b"same bytes")], session=file_session,
+        user_id="user-b",
+        uploads=[_upload("report.txt", b"same bytes")],
+        session=file_session,
     )
 
     user_files = list(
@@ -116,13 +124,17 @@ async def test_upload_reuses_same_user_filename_and_hash_without_copy(file_sessi
 async def test_upload_rejects_unsafe_extensions_and_size(file_session, monkeypatch):
     with pytest.raises(BadDataException, match="not allowed"):
         await upload_files(
-            user_id="user-a", uploads=[_upload("bad.exe", b"x")], session=file_session,
+            user_id="user-a",
+            uploads=[_upload("bad.exe", b"x")],
+            session=file_session,
         )
 
     monkeypatch.setattr(config, "max_upload_file_size_bytes", 3)
     with pytest.raises(BadDataException, match="exceeds"):
         await upload_files(
-            user_id="user-a", uploads=[_upload("large.txt", b"four")], session=file_session,
+            user_id="user-a",
+            uploads=[_upload("large.txt", b"four")],
+            session=file_session,
         )
     assert list(config.files_root.rglob("source.*")) == []
 
@@ -130,7 +142,9 @@ async def test_upload_rejects_unsafe_extensions_and_size(file_session, monkeypat
 @pytest.mark.asyncio
 async def test_delete_is_user_scoped_and_download_remains_available(file_session):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("keep.txt", b"content")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("keep.txt", b"content")],
+        session=file_session,
     )
     filename = uploaded.files[0].filename
 
@@ -165,7 +179,9 @@ async def test_delete_file_cancels_artifacts_and_removes_memberships_vectors_and
     monkeypatch.setattr("asterism.domains.extraction.runtime.cancel_file_jobs", cancel_jobs)
 
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("knowledge.txt", b"private knowledge")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("knowledge.txt", b"private knowledge")],
+        session=file_session,
     )
     file = uploaded.files[0]
     artifact = await file_session.scalar(
@@ -212,7 +228,9 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
     monkeypatch.setattr("asterism.domains.extraction.runtime.start_file_ingestion_job", start_ingestion_job)
     monkeypatch.setattr("asterism.domains.knowledge_base.service.start_file_ingestion_job", start_ingestion_job)
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("retry.txt", b"retry me")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("retry.txt", b"retry me")],
+        session=file_session,
     )
     file = uploaded.files[0]
     status = await get_file_knowledge_status(user_id="user-a", filename=file.filename, session=file_session)
@@ -291,7 +309,9 @@ async def test_similar_files_rank_by_cosine_and_stay_user_scoped(file_session, m
 @pytest.mark.asyncio
 async def test_file_knowledge_bases_lists_only_containing_user_bases(file_session):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("a.txt", b"a"), _upload("b.txt", b"b")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("a.txt", b"a"), _upload("b.txt", b"b")],
+        session=file_session,
     )
     file_a, file_b = uploaded.files
     bases = [KnowledgeBaseModel(user_id="user-a", name=name) for name in ("Zeta", "Alpha")]
@@ -348,7 +368,9 @@ async def test_list_files_filters_by_knowledge_base_and_bulk_removal_keeps_files
     remaining = await list_user_files(user_id="user-a", session=file_session, knowledge_base_id=base.id)
     assert [file.filename for file in remaining.files] == ["b.txt"]
     assert {file.filename for file in (await list_user_files(user_id="user-a", session=file_session)).files} == {
-        "a.txt", "b.txt", "c.txt",
+        "a.txt",
+        "b.txt",
+        "c.txt",
     }
     with pytest.raises(NotFoundException):
         await remove_knowledge_base_files(
@@ -402,7 +424,9 @@ async def test_bulk_add_is_atomic_skips_existing_and_marks_checked_base(file_ses
 @pytest.mark.asyncio
 async def test_processing_reads_text_caches_and_invalidates(file_session):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("note.txt", b"hello\nworld")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("note.txt", b"hello\nworld")],
+        session=file_session,
     )
     file = await file_session.get(UserFileModel, uploaded.files[0].id)
     assert file is not None
@@ -443,7 +467,6 @@ def _xlsx_bytes() -> bytes:
     return output.getvalue()
 
 
-
 @pytest.mark.asyncio
 async def test_processing_converts_html_document(file_session):
     uploaded = await upload_files(
@@ -478,10 +501,13 @@ async def test_processing_converts_a_spreadsheet_document(file_session):
 
 @pytest.mark.asyncio
 async def test_processing_truncates_content_and_contains_converter_failures(
-    file_session, monkeypatch,
+    file_session,
+    monkeypatch,
 ):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("note.txt", b"abcdef")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("note.txt", b"abcdef")],
+        session=file_session,
     )
     monkeypatch.setattr(config, "max_converted_chars", 4)
     file = await file_session.get(UserFileModel, uploaded.files[0].id)
@@ -490,7 +516,9 @@ async def test_processing_truncates_content_and_contains_converter_failures(
     assert processed.content_cache == "abcd\n… [content truncated]"
 
     document = await upload_files(
-        user_id="user-a", uploads=[_upload("broken.pdf", b"not really a PDF")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("broken.pdf", b"not really a PDF")],
+        session=file_session,
     )
 
     async def timeout(_, __):
@@ -507,7 +535,9 @@ async def test_processing_truncates_content_and_contains_converter_failures(
 @pytest.mark.asyncio
 async def test_processing_handles_a_missing_file(file_session):
     uploaded = await upload_files(
-        user_id="user-a", uploads=[_upload("missing.txt", b"content")], session=file_session,
+        user_id="user-a",
+        uploads=[_upload("missing.txt", b"content")],
+        session=file_session,
     )
     file = await file_session.get(UserFileModel, uploaded.files[0].id)
     assert file is not None
@@ -546,24 +576,47 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
     assert calls == 1
 
     references = [
-        MessageFileReference(file_id=record.id, filename=record.filename,
-                             name=record.original_name, mime_type=record.mime_type,
-                             size=record.size, kind=record.kind, status=record.content_status)
+        MessageFileReference(
+            file_id=record.id,
+            filename=record.filename,
+            name=record.original_name,
+            mime_type=record.mime_type,
+            size=record.size,
+            kind=record.kind,
+            status=record.content_status,
+        )
         for record in records
     ]
     chat = Chat(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=0, updated_at=0),
-        messages=[Message(id=uuid.uuid4(), role="user", content="Analyze",
-                          status=MessageStatus.PENDING, created_at=0, files=references)],
+        messages=[
+            Message(
+                id=uuid.uuid4(),
+                role="user",
+                content="Analyze",
+                status=MessageStatus.PENDING,
+                created_at=0,
+                files=references,
+            )
+        ],
     )
     from asterism.domains.chat.models import ChatFileModel, ChatModel, MessageModel
 
     file_session.add(ChatModel(id=chat.info.id, user_id="user-a"))
     await file_session.flush()
-    file_session.add(MessageModel(id=chat.messages[0].id, chat_id=chat.info.id, user_id="user-a",
-                                  role="user", content="Analyze", files=references))
-    file_session.add_all([ChatFileModel(chat_id=chat.info.id, user_id="user-a", file_id=record.id)
-                          for record in records])
+    file_session.add(
+        MessageModel(
+            id=chat.messages[0].id,
+            chat_id=chat.info.id,
+            user_id="user-a",
+            role="user",
+            content="Analyze",
+            files=references,
+        )
+    )
+    file_session.add_all(
+        [ChatFileModel(chat_id=chat.info.id, user_id="user-a", file_id=record.id) for record in records]
+    )
     await file_session.commit()
     agent = SimpleNamespace(session=chat, model_id=uuid.uuid4())
     orchestrator = ChatOrchestrator(agent)  # type: ignore[arg-type]
@@ -573,6 +626,7 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
         yield file_session
 
     monkeypatch.setattr("asterism.domains.chat.orchestrator.get_async_db_session", session_context)
+
     async def model_with_vision(**_):
         return SimpleNamespace(supports_vision=True)
 
@@ -608,8 +662,9 @@ async def source_path(session, file):
 @pytest.mark.asyncio
 async def test_upload_batch_failure_rolls_back_sources_and_metadata(file_session):
     with pytest.raises(BadDataException):
-        await upload_files(user_id="user-a", uploads=[_upload("valid.txt", b"keep"), _upload("bad.exe", b"x")],
-                           session=file_session)
+        await upload_files(
+            user_id="user-a", uploads=[_upload("valid.txt", b"keep"), _upload("bad.exe", b"x")], session=file_session
+        )
     assert list(config.files_root.rglob("source.*")) == []
     assert await file_session.scalar(select(UserFileModel.id)) is None
     assert await file_session.scalar(select(FileExtractionModel.id)) is None

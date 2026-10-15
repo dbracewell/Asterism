@@ -23,7 +23,9 @@ project_api = _project_api
 
 async def move(client, record, project_id, user="a"):
     return await client.patch(
-        f"/chat/{record['info']['id']}/project", headers=auth(user), json={"project_id": project_id},
+        f"/chat/{record['info']['id']}/project",
+        headers=auth(user),
+        json={"project_id": project_id},
     )
 
 
@@ -175,7 +177,10 @@ async def test_project_deletion_detaches_atomically_and_preserves_local_context(
         async with sessions() as session:
             with pytest.raises(RuntimeError, match="Injected failure"):
                 await delete_project(
-                    user_id="a", project_id=uuid.UUID(project["id"]), expected_context_revision=1, session=session,
+                    user_id="a",
+                    project_id=uuid.UUID(project["id"]),
+                    expected_context_revision=1,
+                    session=session,
                 )
     for record in records:
         assert (await scope(client, record))["project_id"] == project["id"]

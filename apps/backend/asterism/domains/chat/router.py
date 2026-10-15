@@ -61,14 +61,20 @@ async def available_chat_models(user: AuthedUserDep, session: DBSessionDep) -> l
     responses={409: {"model": ErrorDetail}},
 )
 async def select_chat_model(
-    chat_id: uuid.UUID, payload: ChatModelUpdate, user: AuthedUserDep, session: DBSessionDep,
+    chat_id: uuid.UUID,
+    payload: ChatModelUpdate,
+    user: AuthedUserDep,
+    session: DBSessionDep,
 ) -> ChatInfo:
     return await change_chat_model(user_id=user.id, chat_id=chat_id, payload=payload, session=session)
 
 
 @chat_router.put("/drafts/{draft_id}/model", response_model=ChatDraft, operation_id="chatDraftModelUpdate")
 async def select_draft_model(
-    draft_id: uuid.UUID, payload: ChatDraftModelUpdate, user: AuthedUserDep, session: DBSessionDep,
+    draft_id: uuid.UUID,
+    payload: ChatDraftModelUpdate,
+    user: AuthedUserDep,
+    session: DBSessionDep,
 ) -> ChatDraft:
     from .drafts import change_draft_model
 

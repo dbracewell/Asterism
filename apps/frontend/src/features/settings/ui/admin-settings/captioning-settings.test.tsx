@@ -167,14 +167,18 @@ describe("captioning settings", () => {
   });
 
   it("shows a policy-transition validation error without hiding the current policy", async () => {
-    mocks.update.mockRejectedValue({ detail: "Captioning requires an active discovered vision-capable model" });
+    mocks.update.mockRejectedValue({
+      detail: "Captioning requires an active discovered vision-capable model",
+    });
     const user = userEvent.setup();
     renderSettings();
     await screen.findByRole("heading", { name: "Knowledge processing" });
 
     await user.click(screen.getByLabelText("Local SmolVLM2 (CPU)"));
     expect(
-      await screen.findByText("Captioning requires an active discovered vision-capable model"),
+      await screen.findByText(
+        "Captioning requires an active discovered vision-capable model",
+      ),
     ).toBeVisible();
     expect(screen.getByText(/Image captioning is one part/)).toBeVisible();
   });

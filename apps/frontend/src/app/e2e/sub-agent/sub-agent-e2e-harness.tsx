@@ -24,7 +24,9 @@ export const SubAgentE2EHarness = () => {
       setActivities((current) => updateSubAgentActivities(current, event));
     },
     onStreamComplete: (messages) => {
-      const assistant = messages.findLast((message) => message.role === "assistant");
+      const assistant = messages.findLast(
+        (message) => message.role === "assistant",
+      );
       setParentResponse(assistant?.content ?? "");
     },
   });

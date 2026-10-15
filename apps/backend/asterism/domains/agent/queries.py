@@ -1,4 +1,5 @@
 """Owner-scoped selects for agent configuration storage."""
+
 from sqlalchemy import select
 
 from .models import AgentProfileModel

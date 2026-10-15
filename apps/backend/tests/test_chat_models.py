@@ -149,7 +149,10 @@ async def test_execution_snapshot_resume_regeneration_history_and_fixed_worker(p
         await session.commit()
         async with sessions() as resumed_session:
             resumed = await prepare_execution(
-                user_id="a", chat_id=chat_id, message_id=parent_id, session=resumed_session,
+                user_id="a",
+                chat_id=chat_id,
+                message_id=parent_id,
+                session=resumed_session,
             )
             assert resumed == original
         answer = await add_message(

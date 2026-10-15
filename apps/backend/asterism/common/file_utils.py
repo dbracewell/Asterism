@@ -13,5 +13,3 @@ def calculate_directory_size(root: Path) -> int:
             except OSError:
                 pass
     return total
-
-

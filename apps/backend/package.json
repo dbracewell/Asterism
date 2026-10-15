@@ -13,6 +13,7 @@
     "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db --reset",
     "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db --reset --yes",
     "cycles": "knot .",
-    "deps": "pydeps  --rankdir TB  asterism"
+    "deps": "pydeps  --rankdir TB  asterism",
+    "format": "ruff check --select I --fix . && ruff format ."
   }
 }

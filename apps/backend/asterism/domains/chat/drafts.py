@@ -200,7 +200,11 @@ async def get_draft(*, user_id: str, draft_id: uuid.UUID, session: AsyncSession)
 
 
 async def change_draft_model(
-    *, user_id: str, draft_id: uuid.UUID, payload: ChatDraftModelUpdate, session: AsyncSession,
+    *,
+    user_id: str,
+    draft_id: uuid.UUID,
+    payload: ChatDraftModelUpdate,
+    session: AsyncSession,
 ) -> ChatDraft:
     from asterism.core.exceptions import CodedException
 

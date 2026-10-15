@@ -77,13 +77,21 @@ try {
 
   // Collection routes must retain their slash and Authorization header rather
   // than bouncing between Next.js normalization and FastAPI's slash redirect.
-  for (const path of ["/api/py/chat/", "/api/py/folders/", "/api/py/settings/user"]) {
+  for (const path of [
+    "/api/py/chat/",
+    "/api/py/folders/",
+    "/api/py/settings/user",
+  ]) {
     const result = await fetch(`${origin}${path}`, {
       headers: { Authorization: "Bearer test-token" },
       redirect: "manual",
       signal: AbortSignal.timeout(10000),
     });
-    assert.equal(result.status, 200, `${path} unexpectedly redirected or failed`);
+    assert.equal(
+      result.status,
+      200,
+      `${path} unexpectedly redirected or failed`,
+    );
     assert.deepEqual(await result.json(), {
       path,
       authorization: "Bearer test-token",

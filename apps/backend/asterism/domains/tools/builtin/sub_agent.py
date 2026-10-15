@@ -17,10 +17,7 @@ class SubAgentArgs(BaseModel):
     prompt: str
     parent_context: str | None = Field(
         default=None,
-        description=(
-            "Optional additional context or instructions from the caller "
-            "to forward to the sub-agent."
-        ),
+        description=("Optional additional context or instructions from the caller to forward to the sub-agent."),
     )
 
 
@@ -52,10 +49,7 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
 
             msg_content = msg.content or ""
             msg_tokens = estimate_text_tokens(msg_content)
-            if (
-                accumulated_tokens + msg_tokens > max_tokens
-                and selected_messages
-            ):
+            if accumulated_tokens + msg_tokens > max_tokens and selected_messages:
                 break
 
             role = getattr(msg, "role", "user").capitalize()
@@ -95,8 +89,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     execution_id = uuid.uuid4()
     logger = get_logger("SUB_AGENT")
     logger.info(
-        "delegation requested execution_id=%s target_agent_id=%s "
-        "parent_message_id=%s chat_id=%s depth=%d",
+        "delegation requested execution_id=%s target_agent_id=%s parent_message_id=%s chat_id=%s depth=%d",
         execution_id,
         target_id,
         ctx.parent_message_id,
@@ -124,8 +117,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     if len(ctx.call_stack) > config.max_sub_agent_depth:
         chain_str = " -> ".join(str(aid) for aid in ctx.call_stack)
         logger.warning(
-            "delegation rejected execution_id=%s reason=depth_limit "
-            "max_depth=%d chain=%s",
+            "delegation rejected execution_id=%s reason=depth_limit max_depth=%d chain=%s",
             execution_id,
             config.max_sub_agent_depth,
             chain_str,
@@ -140,17 +132,13 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         agent_profile = await get_agent_profile(ctx.user.id, target_id)
     except Exception:
         logger.exception(
-            "delegation profile lookup failed execution_id=%s "
-            "target_agent_id=%s",
+            "delegation profile lookup failed execution_id=%s target_agent_id=%s",
             execution_id,
             target_id,
         )
         error = AgentEvent(
             type=AgentEventType.ERROR,
-            content=(
-                "Sub-agent could not be loaded. Check backend logs with "
-                f"execution ID {execution_id}."
-            ),
+            content=(f"Sub-agent could not be loaded. Check backend logs with execution ID {execution_id}."),
         )
         if ctx.event_sink:
             res = ctx.event_sink(
@@ -168,8 +156,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
 
     if not agent_profile:
         logger.warning(
-            "delegation rejected execution_id=%s reason=profile_not_found "
-            "target_agent_id=%s",
+            "delegation rejected execution_id=%s reason=profile_not_found target_agent_id=%s",
             execution_id,
             target_id,
         )
@@ -197,8 +184,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     # assignments would make specialized sub-agents ineffective.
     allowed_tools = sorted(set(agent_profile.tools or []))
     logger.debug(
-        "delegation authorized execution_id=%s sub_agent_name=%s "
-        "approval_mode=profile_allowlist allowed_tools=%s",
+        "delegation authorized execution_id=%s sub_agent_name=%s approval_mode=profile_allowlist allowed_tools=%s",
         execution_id,
         agent_profile.name,
         allowed_tools,
@@ -209,11 +195,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     child_call_stack = [*ctx.call_stack, target_id]
 
     parent_msg_id = ctx.parent_message_id
-    if (
-        parent_msg_id is None
-        and ctx.session
-        and getattr(ctx.session, "messages", None)
-    ):
+    if parent_msg_id is None and ctx.session and getattr(ctx.session, "messages", None):
         parent_msg_id = ctx.session.messages[-1].id
 
     agent = Agent(
@@ -252,8 +234,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     )
     received_event = False
     logger.info(
-        "delegation started execution_id=%s sub_agent_name=%s "
-        "context_included=%s file_count=%d",
+        "delegation started execution_id=%s sub_agent_name=%s context_included=%s file_count=%d",
         execution_id,
         agent_profile.name,
         context_block is not None,
@@ -330,10 +311,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         from asterism.domains.agent.schemas import SubAgentTraceCreate
         from asterism.domains.agent.service import create_sub_agent_trace
 
-        serialized_messages = [
-            m.model_dump(mode="json")
-            for m in getattr(agent, "messages", sub_agent_messages)
-        ]
+        serialized_messages = [m.model_dump(mode="json") for m in getattr(agent, "messages", sub_agent_messages)]
         trace_data = SubAgentTraceCreate(
             user_id=ctx.user.id,
             parent_message_id=parent_msg_id,
@@ -342,11 +320,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             prompt=ctx.args.prompt,
             caller_context=ctx.args.parent_context,
             messages=serialized_messages,
-            result=(
-                last_response.content
-                if last_response.type == AgentEventType.COMPLETE
-                else None
-            ),
+            result=(last_response.content if last_response.type == AgentEventType.COMPLETE else None),
             step_count=step_count,
             total_tokens=total_tokens,
             elapsed_ms=elapsed_ms,
@@ -360,8 +334,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         )
     except Exception:
         logger.warning(
-            "delegation trace persistence failed execution_id=%s "
-            "parent_message_id=%s",
+            "delegation trace persistence failed execution_id=%s parent_message_id=%s",
             execution_id,
             parent_msg_id,
             exc_info=True,

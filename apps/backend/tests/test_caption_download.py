@@ -103,7 +103,7 @@ class TestDownloadServiceStatus:
     def test_idle_when_no_model_present(self, tmp_path: Path):
         service = caption_download_service(tmp_path)
         status = service.progress()
-        assert status.status == 'idle'
+        assert status.status == "idle"
         assert status.bundle_sha256 is None
 
     def test_ready_when_existing_bundle_present(self, tmp_path: Path):
@@ -113,7 +113,7 @@ class TestDownloadServiceStatus:
 
         service = caption_download_service(tmp_path)
         status = service.progress()
-        assert status.status == 'ready'
+        assert status.status == "ready"
         assert status.bundle_sha256 is not None
         assert len(status.bundle_sha256) == 64
 
@@ -124,24 +124,24 @@ class TestDownloadServiceStatus:
         model.write_bytes(b"modified model weights")
 
         service = caption_download_service(tmp_path)
-        assert service.progress().status == 'idle'
+        assert service.progress().status == "idle"
 
     def test_idle_when_manifest_is_invalid(self, tmp_path: Path):
         (tmp_path / MANIFEST_FILENAME).write_text("not json")
         service = caption_download_service(tmp_path)
-        assert service.progress().status == 'idle'
+        assert service.progress().status == "idle"
 
     def test_idle_when_manifest_references_missing_files(self, tmp_path: Path):
         manifest = {"files": {"missing.bin": "a" * 64}}
         (tmp_path / MANIFEST_FILENAME).write_text(json.dumps(manifest))
         service = caption_download_service(tmp_path)
-        assert service.progress().status == 'idle'
+        assert service.progress().status == "idle"
 
     def test_idle_when_manifest_has_empty_files(self, tmp_path: Path):
         manifest = {"files": {}}
         (tmp_path / MANIFEST_FILENAME).write_text(json.dumps(manifest))
         service = caption_download_service(tmp_path)
-        assert service.progress().status == 'idle'
+        assert service.progress().status == "idle"
 
 
 # ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ class TestDownloadLifecycle:
     @pytest.mark.asyncio
     async def test_download_transitions_to_ready(self, tmp_path: Path):
         service = caption_download_service(tmp_path)
-        assert service.progress().status == 'idle'
+        assert service.progress().status == "idle"
 
         with patch(
             "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
@@ -181,14 +181,14 @@ class TestDownloadLifecycle:
             mock.side_effect = lambda *_: do_download()
 
             status = await service.start_download()
-            assert status.status == 'downloading'
+            assert status.status == "downloading"
 
             # Wait for the background task to complete
             if service.state.task:
                 await service.state.task
 
         final = service.progress()
-        assert final.status == 'ready'
+        assert final.status == "ready"
         assert final.bundle_sha256 is not None
 
     @pytest.mark.asyncio
@@ -208,7 +208,7 @@ class TestDownloadLifecycle:
                     await service.state.task
 
         final = service.progress()
-        assert final.status == 'failed'
+        assert final.status == "failed"
         assert final.error == "Model bundle download failed; check server logs"
 
     @pytest.mark.asyncio
@@ -225,7 +225,7 @@ class TestDownloadLifecycle:
                 with pytest.raises(RuntimeError):
                     await service.state.task
 
-        assert service.progress().status == 'failed'
+        assert service.progress().status == "failed"
 
         # Second attempt succeeds
         with patch(
@@ -242,7 +242,7 @@ class TestDownloadLifecycle:
             if service.state.task:
                 await service.state.task
 
-        assert service.progress().status == 'ready'
+        assert service.progress().status == "ready"
 
     @pytest.mark.asyncio
     async def test_concurrent_download_rejected(self, tmp_path: Path):
@@ -266,7 +266,7 @@ class TestDownloadLifecycle:
                 await hold.wait()
                 (tmp_path / "model.safetensors").write_bytes(b"weights")
                 sha = write_manifest(tmp_path, model=caption_model)
-                service.state.status = 'ready'
+                service.state.status = "ready"
                 service.state.bundle_sha256 = sha
                 return sha
 
@@ -288,11 +288,11 @@ class TestDownloadLifecycle:
         write_manifest(tmp_path, model=caption_model)
 
         service = caption_download_service(tmp_path)
-        assert service.progress().status == 'ready'
+        assert service.progress().status == "ready"
 
         # start_download should return ready immediately without starting a task
         status = await service.start_download()
-        assert status.status == 'ready'
+        assert status.status == "ready"
         assert service.state.task is None
 
 
@@ -314,17 +314,17 @@ class TestDownloadCancellation:
         service._run_download = blocking_run  # type: ignore[assignment]
 
         await service.start_download()
-        assert service.progress().status == 'downloading'
+        assert service.progress().status == "downloading"
 
         status = await service.cancel_download()
-        assert status.status == 'idle'
+        assert status.status == "idle"
         assert status.error is None
 
     @pytest.mark.asyncio
     async def test_cancel_when_idle_is_noop(self, tmp_path: Path):
         service = caption_download_service(tmp_path)
         status = await service.cancel_download()
-        assert status.status == 'idle'
+        assert status.status == "idle"
 
 
 # ---------------------------------------------------------------------------
@@ -392,13 +392,13 @@ class TestDownloadShutdown:
         await service.start_download()
 
         await service.shutdown()
-        assert service.progress().status == 'idle'
+        assert service.progress().status == "idle"
 
     @pytest.mark.asyncio
     async def test_shutdown_when_idle_is_safe(self, tmp_path: Path):
         service = caption_download_service(tmp_path)
         await service.shutdown()
-        assert service.progress().status == 'idle'
+        assert service.progress().status == "idle"
 
 
 # ---------------------------------------------------------------------------
@@ -418,18 +418,18 @@ class TestCaptionModelEndpoints:
         from asterism.domains.settings.settings_router import get_caption_model_status
 
         with patch("asterism.domains.extraction.captioning.captioning_download_service") as mock_service:
-            mock_service.progress.return_value = DownloadProgress(status='idle')
+            mock_service.progress.return_value = DownloadProgress(status="idle")
             result = await get_caption_model_status(user=admin_user)
-            assert result.status == 'idle'
+            assert result.status == "idle"
 
     @pytest.mark.asyncio
     async def test_start_download_endpoint(self, admin_user):
         from asterism.domains.settings.settings_router import start_caption_model_download
 
         with patch("asterism.domains.extraction.captioning.captioning_download_service") as mock_service:
-            mock_service.start_download = AsyncMock(return_value=DownloadProgress(status='downloading'))
+            mock_service.start_download = AsyncMock(return_value=DownloadProgress(status="downloading"))
             result = await start_caption_model_download(user=admin_user)
-            assert result.status == 'downloading'
+            assert result.status == "downloading"
 
     @pytest.mark.asyncio
     async def test_start_download_endpoint_conflict(self, admin_user):
@@ -448,6 +448,6 @@ class TestCaptionModelEndpoints:
         from asterism.domains.settings.settings_router import cancel_caption_model_download
 
         with patch("asterism.domains.extraction.captioning.captioning_download_service") as mock_service:
-            mock_service.cancel_download = AsyncMock(return_value=DownloadProgress(status='idle'))
+            mock_service.cancel_download = AsyncMock(return_value=DownloadProgress(status="idle"))
             result = await cancel_caption_model_download(user=admin_user)
-            assert result.status == 'idle'
+            assert result.status == "idle"

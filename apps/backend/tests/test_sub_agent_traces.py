@@ -52,7 +52,8 @@ def test_user() -> AuthedUser:
 @pytest.fixture
 def make_chat_session():
     def _create(
-        allowed_tools: list[str], messages: list[Message] | None = None,
+        allowed_tools: list[str],
+        messages: list[Message] | None = None,
     ) -> Chat:
         return Chat(
             info=ChatInfo(
@@ -69,7 +70,8 @@ def make_chat_session():
 
 
 def _make_agent_profile(
-    agent_id: uuid.UUID, name: str = "SubAgent",
+    agent_id: uuid.UUID,
+    name: str = "SubAgent",
 ) -> AgentProfile:
     return AgentProfile(
         id=agent_id,
@@ -111,7 +113,8 @@ class RecordingLLMClient:
 
 
 async def setup_test_db() -> tuple[
-    AsyncEngine, async_sessionmaker[AsyncSession],
+    AsyncEngine,
+    async_sessionmaker[AsyncSession],
 ]:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
@@ -216,7 +219,8 @@ class TestSubAgentTraces:
                 )
 
                 created_trace = await create_sub_agent_trace(
-                    trace_create, session=session,
+                    trace_create,
+                    session=session,
                 )
                 assert created_trace.id is not None
                 assert created_trace.parent_message_id == msg.id
@@ -235,16 +239,16 @@ class TestSubAgentTraces:
                 )
                 assert len(retrieved) == 1
                 assert retrieved[0].id == created_trace.id
-                assert (
-                    retrieved[0].result == "Asterism is a multi-agent system."
-                )
+                assert retrieved[0].result == "Asterism is a multi-agent system."
                 assert retrieved[0].caller_context == "High priority"
         finally:
             await engine.dispose()
 
     @pytest.mark.asyncio
     async def test_sub_agent_tool_automatically_persists_trace(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """
         Verify that executing the sub_agent tool automatically captures
@@ -254,7 +258,8 @@ class TestSubAgentTraces:
         session = make_chat_session(allowed_tools=["sub_agent"])
         sub_agent_id = uuid.uuid4()
         sub_agent_profile = _make_agent_profile(
-            sub_agent_id, name="WorkerAgent",
+            sub_agent_id,
+            name="WorkerAgent",
         )
 
         recording_client = RecordingLLMClient()
@@ -330,14 +335,13 @@ class TestSubAgentTraces:
             assert trace.depth == 0
             # Ensure full message history was captured
             assert len(trace.messages) >= 2
-            assert any(
-                "You are WorkerAgent." in str(m.get("content"))
-                for m in trace.messages
-            )
+            assert any("You are WorkerAgent." in str(m.get("content")) for m in trace.messages)
 
     @pytest.mark.asyncio
     async def test_sub_agent_trace_with_tool_calls_in_history(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """
         Verify that sub-agent message history in trace captures intermediate
@@ -347,7 +351,8 @@ class TestSubAgentTraces:
         session = make_chat_session(allowed_tools=["sub_agent"])
         sub_agent_id = uuid.uuid4()
         sub_agent_profile = _make_agent_profile(
-            sub_agent_id, name="ToolUserAgent",
+            sub_agent_id,
+            name="ToolUserAgent",
         )
         sub_agent_profile.tools = ["sub_agent"]
 
@@ -359,8 +364,7 @@ class TestSubAgentTraces:
                         id="call_x",
                         function=Function(
                             name="sub_agent",
-                            arguments='{"agent_id": "%s", "prompt": "nested"}'
-                            % sub_agent_id,
+                            arguments='{"agent_id": "%s", "prompt": "nested"}' % sub_agent_id,
                         ),
                     ),
                 ],

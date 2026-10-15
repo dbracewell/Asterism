@@ -10,9 +10,7 @@ from .schemas import Component, ComponentType
 
 class ComponentRegistry:
     def __init__(self):
-        self.providers_by_type: dict[ComponentType, list[type[Component]]] = (
-            defaultdict(list)
-        )
+        self.providers_by_type: dict[ComponentType, list[type[Component]]] = defaultdict(list)
         self.providers_by_unique_id: dict[str, type[Component]] = {}
         self.singletons: dict[str, Component] = {}
 

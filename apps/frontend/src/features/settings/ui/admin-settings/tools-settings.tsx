@@ -7,7 +7,11 @@ import { ComponentRegistry } from "@/features/settings/types";
 import { ComponentSettings } from "@/features/settings/ui/admin-settings/component-settings";
 import { client } from "@/lib/api";
 import { arraysEqual } from "@/lib/arrays";
-import { ComponentProviderParameters, ComponentType, ToolSettings } from "@/lib/client";
+import {
+  ComponentProviderParameters,
+  ComponentType,
+  ToolSettings,
+} from "@/lib/client";
 import {
   appToolSettingsGetOptions,
   appToolSettingsGetQueryKey,
@@ -18,11 +22,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-const ToolsSettingsForm = ({
-  appSettings,
-}: {
-  appSettings: ToolSettings;
-}) => {
+const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState("");
   const [filterActive, setFilterActive] = useState(false);

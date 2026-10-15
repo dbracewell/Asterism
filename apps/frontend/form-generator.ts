@@ -298,7 +298,11 @@ const schemaName = "zSubAgentCreate";
 const componentName = `${schemaName[0].toUpperCase() + schemaName.slice(1)}Form`;
 const outputFileName = `${componentName}.tsx`;
 
-const generatedCode = generateFormCode(schemaName, zSubAgentCreate, componentName);
+const generatedCode = generateFormCode(
+  schemaName,
+  zSubAgentCreate,
+  componentName,
+);
 
 fs.writeFileSync(outputFileName, generatedCode);
 console.log(`✅ Successfully generated ${outputFileName}`);

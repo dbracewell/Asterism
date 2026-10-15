@@ -110,10 +110,7 @@ def test_preserves_surrounding_text_and_string_arguments():
 @pytest.mark.asyncio
 async def test_stream_handler_converts_text_calls_and_continues_agent_loop():
     handler = StreamHandler()
-    handler.content = (
-        '<tool_call>{"tool_name":"web_search","arguments":'
-        '{"query":"Dallas weather"}}</tool_call>'
-    )
+    handler.content = '<tool_call>{"tool_name":"web_search","arguments":{"query":"Dallas weather"}}</tool_call>'
 
     async def empty_stream():
         if False:
@@ -131,9 +128,7 @@ async def test_stream_handler_converts_text_calls_and_continues_agent_loop():
 
 def test_leaves_malformed_or_unsupported_textual_calls_as_content():
     malformed = '<tool_call>{"tool_name":"web_search",oops}</tool_call>'
-    unsupported = (
-        '<tool_call>{"tool_name":"web_search","arguments":[]}</tool_call>'
-    )
+    unsupported = '<tool_call>{"tool_name":"web_search","arguments":[]}</tool_call>'
 
     assert extract_text_tool_calls(malformed) == (malformed, [])
     assert extract_text_tool_calls(unsupported) == (unsupported, [])

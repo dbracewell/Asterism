@@ -34,7 +34,8 @@ describe("getLazyAdminSettingsSections", () => {
     );
 
     expect(providers?.type).toBe("section");
-    if (providers?.type !== "section") throw new Error("Providers pane missing");
+    if (providers?.type !== "section")
+      throw new Error("Providers pane missing");
 
     render(providers.settingsPane);
 

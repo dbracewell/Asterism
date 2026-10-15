@@ -24,9 +24,13 @@ async def test_chat_permission_cannot_grant_unassigned_main_capability(main_agen
     )
     invoke = AsyncMock()
     monkeypatch.setattr("asterism.domains.agent.agent.tool_registry.invoke_tool", invoke)
-    call = ToolCall.model_validate({
-        "id": "unassigned", "type": "function", "function": {"name": "web_fetch", "arguments": "{}"},
-    })
+    call = ToolCall.model_validate(
+        {
+            "id": "unassigned",
+            "type": "function",
+            "function": {"name": "web_fetch", "arguments": "{}"},
+        }
+    )
     results = [result async for result in agent._run_tools("", [ToolUseAuthorization(tool=call, accept=True)])]
     assert len(results) == 1 and "not authorized" in results[0].content
     invoke.assert_not_called()

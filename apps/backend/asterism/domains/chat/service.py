@@ -94,7 +94,10 @@ async def update_message(
         await _owned_message(user_id=user_id, chat_id=chat_id, message_id=message_id, session=session)
         if payload.active_child_id is not None:
             child = await _owned_message(
-                user_id=user_id, chat_id=chat_id, message_id=payload.active_child_id, session=session,
+                user_id=user_id,
+                chat_id=chat_id,
+                message_id=payload.active_child_id,
+                session=session,
             )
             if child.parent_message_id != message_id:
                 raise BadDataException("Active child must be a direct child of this message")

@@ -17,7 +17,8 @@
     "codegen": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile codegen -- openapi-ts",
     "migrate:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile auth-migrate -- node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes",
     "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- node scripts/reset-db.mjs",
-    "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- node scripts/reset-db.mjs --yes"
+    "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- node scripts/reset-db.mjs --yes",
+    "format": "prettier . --write"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

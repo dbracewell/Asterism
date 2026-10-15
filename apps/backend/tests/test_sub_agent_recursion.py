@@ -39,7 +39,8 @@ def make_chat_session():
 
 
 def _make_agent_profile(
-    agent_id: uuid.UUID, name: str = "SubAgent",
+    agent_id: uuid.UUID,
+    name: str = "SubAgent",
 ) -> AgentProfile:
     return AgentProfile(
         id=agent_id,
@@ -177,7 +178,9 @@ class TestSubAgentRecursionSafety:
 
     @pytest.mark.asyncio
     async def test_cycle_detection_direct_self_recursion(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Direct self-recursion (A calling A) is detected and rejected."""
         root_id = uuid.uuid4()
@@ -201,7 +204,9 @@ class TestSubAgentRecursionSafety:
 
     @pytest.mark.asyncio
     async def test_cycle_detection_indirect_cycle(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Indirect cycle (A -> B -> A) is detected and rejected."""
         root_id = uuid.uuid4()
@@ -226,7 +231,9 @@ class TestSubAgentRecursionSafety:
 
     @pytest.mark.asyncio
     async def test_cycle_detection_multi_hop_cycle(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Multi-hop cycle (A -> B -> C -> B) is detected and rejected."""
         root_id = uuid.uuid4()
@@ -247,15 +254,14 @@ class TestSubAgentRecursionSafety:
 
         result = await sub_agent(ctx)
         assert "Recursion cycle detected" in result
-        assert (
-            f"{root_id} -> {agent_b_id} -> {agent_c_id} -> {agent_b_id}"
-            in result
-        )
+        assert f"{root_id} -> {agent_b_id} -> {agent_c_id} -> {agent_b_id}" in result
         assert "Sub-agent call aborted" in result
 
     @pytest.mark.asyncio
     async def test_depth_exceeded_default_limit(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Attempting to exceed maximum sub-agent depth (default: 3)
         is rejected."""
@@ -286,7 +292,10 @@ class TestSubAgentRecursionSafety:
 
     @pytest.mark.asyncio
     async def test_depth_limit_configurable(
-        self, monkeypatch, test_user, make_chat_session,
+        self,
+        monkeypatch,
+        test_user,
+        make_chat_session,
     ):
         """Overriding max_sub_agent_depth enforces the configured limit."""
         monkeypatch.setattr(config, "max_sub_agent_depth", 1)
@@ -316,7 +325,9 @@ class TestSubAgentRecursionSafety:
 
 class TestAgentCallStackInitialization:
     def test_agent_initializes_call_stack_with_profile_id(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         profile_id = uuid.uuid4()
         profile = _make_agent_profile(profile_id, "TestAgent")
@@ -330,7 +341,9 @@ class TestAgentCallStackInitialization:
         assert agent.call_stack == [profile_id]
 
     def test_agent_initializes_call_stack_from_provided_stack(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         profile_id = uuid.uuid4()
         parent_id = uuid.uuid4()

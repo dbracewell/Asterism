@@ -199,7 +199,10 @@ async def test_upload_failure_and_failed_send_leave_draft_retryable_and_no_parti
     await stage(client, staged, [file["id"]])
     await seed_agent(sessions)
     payload = NewChatRequest(
-        model_id=uuid.UUID(int=1), request_id=uuid.uuid4(), user_prompt="Atomic", draft_id=staged["id"],
+        model_id=uuid.UUID(int=1),
+        request_id=uuid.uuid4(),
+        user_prompt="Atomic",
+        draft_id=staged["id"],
     )
     async with sessions() as session:
 

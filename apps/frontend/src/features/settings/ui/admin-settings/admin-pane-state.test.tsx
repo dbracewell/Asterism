@@ -1,10 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  AdminPaneErrorBoundary,
-  AdminPaneLoading,
-} from "./admin-pane-state";
+import { AdminPaneErrorBoundary, AdminPaneLoading } from "./admin-pane-state";
 
 const BrokenPane = () => {
   throw new Error("broken pane");

@@ -80,9 +80,7 @@ export const FolderView = ({
   const openFolder = useCallback(() => {
     setFoldersOpen((prev) => {
       const filtered = new Set(prev);
-      if (
-        (folder.children && folder.children.length > 0)
-      ) {
+      if (folder.children && folder.children.length > 0) {
         filtered.add(folder.id);
       }
       return filtered;
@@ -160,10 +158,7 @@ export const FolderView = ({
             >
               <span className="truncate">{folder.title}</span>
             </Link>
-            <FolderDropDown
-              folderId={folder.id}
-              addSubFolder={addSubFolder}
-            />
+            <FolderDropDown folderId={folder.id} addSubFolder={addSubFolder} />
           </div>
         </div>
 
@@ -196,8 +191,6 @@ export const FolderView = ({
             ))}
           </div>
         )}
-
-
       </div>
     </div>
   );

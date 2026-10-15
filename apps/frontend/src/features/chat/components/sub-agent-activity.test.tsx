@@ -112,7 +112,9 @@ describe("sub-agent activity", () => {
       />,
     );
 
-    expect(screen.getByRole("region", { name: "Sub-agent activity" })).toBeVisible();
+    expect(
+      screen.getByRole("region", { name: "Sub-agent activity" }),
+    ).toBeVisible();
     expect(screen.getByText("Researcher")).toBeVisible();
     expect(screen.getByText("Working")).toBeVisible();
     expect(screen.getByText(/web_search/)).toBeVisible();

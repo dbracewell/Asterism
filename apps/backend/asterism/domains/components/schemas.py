@@ -28,7 +28,7 @@ class Component[T: BaseModel](abc.ABC):
     parameters: ClassVar[BaseModel]
 
     def __init__(self, config: T) -> None:
-        self.config:T = config
+        self.config: T = config
 
     @abc.abstractmethod
     async def __call__(self, *args, **kwargs) -> Any: ...

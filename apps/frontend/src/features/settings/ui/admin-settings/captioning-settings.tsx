@@ -52,7 +52,7 @@ function CaptioningSettingsPane() {
   useEffect(() => {
     if (current) setDraftMode(current.mode);
   }, [current]);
-  
+
   const localStatus = modelStatus.data;
   const updateError = update.error;
   const updateErrorMessage =
@@ -64,9 +64,12 @@ function CaptioningSettingsPane() {
         ? String(updateError.detail)
         : "The captioning configuration could not be saved.";
 
-  if (configuration.isLoading) return <p>Loading knowledge processing settings…</p>;
+  if (configuration.isLoading)
+    return <p>Loading knowledge processing settings…</p>;
   if (configuration.isError || !current) {
-    return <p role="alert">Knowledge processing settings could not be loaded.</p>;
+    return (
+      <p role="alert">Knowledge processing settings could not be loaded.</p>
+    );
   }
 
   return (
@@ -89,7 +92,8 @@ function CaptioningSettingsPane() {
       <div className="space-y-2 rounded-md border p-4">
         <h3 className="font-medium">Knowledge embeddings</h3>
         <p className="text-sm">
-          Model status: <strong>{embeddingStatus.data?.status ?? "unknown"}</strong>
+          Model status:{" "}
+          <strong>{embeddingStatus.data?.status ?? "unknown"}</strong>
           {embeddingStatus.data?.total_bytes
             ? ` (${embeddingStatus.data.bytes_downloaded} / ${embeddingStatus.data.total_bytes} bytes)`
             : ""}
@@ -104,9 +108,9 @@ function CaptioningSettingsPane() {
           </p>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Asterism provisions the reviewed local embedding bundle automatically.
-            Files uploaded while it is preparing remain queued and are processed
-            when the bundle is ready.
+            Asterism provisions the reviewed local embedding bundle
+            automatically. Files uploaded while it is preparing remain queued
+            and are processed when the bundle is ready.
           </p>
         )}
       </div>
@@ -143,9 +147,9 @@ function CaptioningSettingsPane() {
       {draftMode === "provider" && (
         <div className="space-y-2">
           <p className="rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
-            Selecting a provider sends source images to that provider for caption
-            generation. Save only if this external processing is appropriate for
-            your files.
+            Selecting a provider sends source images to that provider for
+            caption generation. Save only if this external processing is
+            appropriate for your files.
           </p>
           <Label htmlFor="caption-provider-model">Vision model</Label>
           <Select

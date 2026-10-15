@@ -50,10 +50,7 @@ def _get_type_name(annotation) -> str:
 
 
 def _to_structured_format(model: Type[BaseModel]) -> str:
-    fields = [
-        f'"{name}": {_get_type_name(field.annotation)}'
-        for name, field in model.model_fields.items()
-    ]
+    fields = [f'"{name}": {_get_type_name(field.annotation)}' for name, field in model.model_fields.items()]
     return "{" + ", ".join(fields) + "}"
 
 

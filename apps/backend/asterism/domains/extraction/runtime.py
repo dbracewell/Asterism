@@ -24,8 +24,11 @@ job_manager = JobManager(
 
 def start_file_caption_job(user_id: str, file_id: uuid.UUID, artifact_id: uuid.UUID) -> bool:
     return job_manager.enqueue(
-        key=f"caption-{artifact_id}", runnable=caption,
-        user_id=user_id, file_id=file_id, artifact_id=artifact_id,
+        key=f"caption-{artifact_id}",
+        runnable=caption,
+        user_id=user_id,
+        file_id=file_id,
+        artifact_id=artifact_id,
     )
 
 
@@ -34,8 +37,11 @@ def start_file_ingestion_job(user_id: str, file_id: uuid.UUID, artifact_id: uuid
         # Persisted pending rows are resumed after provisioning succeeds.
         return False
     return job_manager.enqueue(
-        key=f"ingestion-{artifact_id}", runnable=ingest,
-        user_id=user_id, file_id=file_id, artifact_id=artifact_id,
+        key=f"ingestion-{artifact_id}",
+        runnable=ingest,
+        user_id=user_id,
+        file_id=file_id,
+        artifact_id=artifact_id,
         on_caption_request=start_file_caption_job,
     )
 

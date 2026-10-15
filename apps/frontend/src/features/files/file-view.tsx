@@ -70,7 +70,8 @@ export function FileView({ filename }: { filename: string }) {
             {file.original_name}
           </h1>
           <p className="text-muted-foreground text-sm capitalize">
-            {file.kind} · {file.mime_type} · {formatFileSize(file.size, 2, false)}
+            {file.kind} · {file.mime_type} ·{" "}
+            {formatFileSize(file.size, 2, false)}
           </p>
           {artifact && (
             <div className="mt-2 flex gap-1">

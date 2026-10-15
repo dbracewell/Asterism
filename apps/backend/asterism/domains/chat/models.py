@@ -46,7 +46,8 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     # Retain unavailable/deleted selections instead of retargeting the chat.
     selected_model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     selected_model_snapshot: Mapped[ChatModelChoice | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(ChatModelChoice)), nullable=True,
+        JSONB_COLUMN(TypeAdapter(ChatModelChoice)),
+        nullable=True,
     )
     model_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     title: Mapped[str | None] = mapped_column(
@@ -92,10 +93,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=True,
     )
     execution: Mapped[MessageExecution | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(MessageExecution)), nullable=True,
+        JSONB_COLUMN(TypeAdapter(MessageExecution)),
+        nullable=True,
     )
     pending_execution: Mapped[MessageExecution | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(MessageExecution)), nullable=True,
+        JSONB_COLUMN(TypeAdapter(MessageExecution)),
+        nullable=True,
     )
     status: Mapped[MessageStatus] = mapped_column(
         Enum(

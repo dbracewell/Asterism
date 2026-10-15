@@ -1,4 +1,5 @@
 """Processing-policy persistence and validation, independent of worker lifecycles."""
+
 import hashlib
 import json
 
@@ -127,5 +128,3 @@ async def ensure_captioning_selection_is_valid(*, session: AsyncSession) -> None
         raise BadDataException(
             "Cannot remove or make ineligible the provider model selected for image captioning",
         ) from error
-
-

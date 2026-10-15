@@ -344,11 +344,7 @@ async def test_focused_settings_writes_return_the_persisted_resources(tmp_path):
             redacted_update,
             session,
         )
-        assert (
-            persisted_provider_settings.llm_providers[0]
-            .api_key.get_secret_value()
-            == "secret"
-        )
+        assert persisted_provider_settings.llm_providers[0].api_key.get_secret_value() == "secret"
         assert await update_tool_settings(tool_settings, session) == tool_settings
 
         assert await get_provider_settings(session) == provider_settings
@@ -453,17 +449,12 @@ async def test_initialization_creates_current_schema_and_is_repeatable(tmp_path,
     await initialize_database()
 
     with sqlite3.connect(database) as connection:
-        provider_columns = {
-            row[1] for row in connection.execute("PRAGMA table_info(providers)")
-        }
-        model_columns = {
-            row[1] for row in connection.execute("PRAGMA table_info(models)")
-        }
-        user_file_columns = {
-            row[1] for row in connection.execute("PRAGMA table_info(user_files)")
-        }
+        provider_columns = {row[1] for row in connection.execute("PRAGMA table_info(providers)")}
+        model_columns = {row[1] for row in connection.execute("PRAGMA table_info(models)")}
+        user_file_columns = {row[1] for row in connection.execute("PRAGMA table_info(user_files)")}
         search_tables = {
-            row[0] for row in connection.execute(
+            row[0]
+            for row in connection.execute(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('chat_search', 'project_search')",
             )
         }
@@ -491,6 +482,17 @@ async def test_initialization_creates_current_schema_and_is_repeatable(tmp_path,
     assert migration_table is None
     assert stored_tools is not None
     assert {
-        "id", "user_id", "filename", "original_name", "size", "mime_type", "kind",
-        "sha256", "content_status", "content_error", "content_cache", "created_at", "updated_at",
+        "id",
+        "user_id",
+        "filename",
+        "original_name",
+        "size",
+        "mime_type",
+        "kind",
+        "sha256",
+        "content_status",
+        "content_error",
+        "content_cache",
+        "created_at",
+        "updated_at",
     }.issubset(user_file_columns)

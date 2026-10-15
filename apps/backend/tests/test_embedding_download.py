@@ -14,7 +14,6 @@ PINNED_REVISION = embedding_model.revision
 REQUIRED_FILES = embedding_model.allow_patterns
 
 
-
 def _write_verified_bundle(root: Path, model: bytes = b"reviewed-onnx") -> str:
     root.mkdir(parents=True, exist_ok=True)
     for name in REQUIRED_FILES:

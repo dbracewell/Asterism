@@ -181,14 +181,24 @@ async def delete_project(
     from asterism.domains.chat.membership import detach_project_chats
 
     try:
-        await _write_project(user_id=user_id, project_id=project_id,
-                             expected_context_revision=expected_context_revision,
-                             changes={}, advance_revision=False, session=session)
+        await _write_project(
+            user_id=user_id,
+            project_id=project_id,
+            expected_context_revision=expected_context_revision,
+            changes={},
+            advance_revision=False,
+            session=session,
+        )
         await detach_project_chats(user_id=user_id, project_id=project_id, session=session)
-        project = await session.scalar(delete(ProjectModel).where(
-            ProjectModel.id == project_id, ProjectModel.user_id == user_id,
-            ProjectModel.context_revision == expected_context_revision,
-        ).returning(ProjectModel))
+        project = await session.scalar(
+            delete(ProjectModel)
+            .where(
+                ProjectModel.id == project_id,
+                ProjectModel.user_id == user_id,
+                ProjectModel.context_revision == expected_context_revision,
+            )
+            .returning(ProjectModel)
+        )
         response = Project.model_validate(project)
         await session.commit()
         return response

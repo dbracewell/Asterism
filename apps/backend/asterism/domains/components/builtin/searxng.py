@@ -53,9 +53,7 @@ async def searxng(
                     "pageno": page,
                     "safesearch": _SEARXNG_SAFE_SEARCH_MAP[config.safe_search],
                     "language": args.search_language,
-                    "time_range": args.time_range
-                    if args.time_range != "all"
-                    else "",
+                    "time_range": args.time_range if args.time_range != "all" else "",
                     "categories": category,
                     "theme": "simple",
                     "image_proxy": 0,
@@ -83,10 +81,7 @@ async def searxng(
                     )
 
                 current_count = len(search_results)
-                if (
-                    current_count < previous_count + 10
-                    or current_count >= args.limit
-                ):
+                if current_count < previous_count + 10 or current_count >= args.limit:
                     break
 
                 await asyncio.sleep(1)

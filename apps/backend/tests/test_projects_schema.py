@@ -32,8 +32,13 @@ def seed(session):
     project = ProjectModel(user_id="a", name="Project")
     file = UserFileModel(
         storage_key=str(uuid.uuid4()),
-        user_id="a", filename="source.txt", original_name="source.txt",
-        size=1, mime_type="text/plain", kind=FileKind.TEXT, sha256="a" * 64,
+        user_id="a",
+        filename="source.txt",
+        original_name="source.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="a" * 64,
     )
     session.add_all([project, file])
     session.commit()
@@ -52,11 +57,20 @@ def test_project_defaults_and_owner_scoped_names(project_session):
     project_session.rollback()
 
 
-@pytest.mark.parametrize("changes", [
-    {"name": ""}, {"name": "   "}, {"name": "x" * 256},
-    {"name": None}, {"context_revision": 0}, {"context_revision": None},
-    {"description": None}, {"system_prompt": None}, {"user_id": "missing"},
-])
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"name": ""},
+        {"name": "   "},
+        {"name": "x" * 256},
+        {"name": None},
+        {"context_revision": 0},
+        {"context_revision": None},
+        {"description": None},
+        {"system_prompt": None},
+        {"user_id": "missing"},
+    ],
+)
 def test_invalid_project_writes_are_rejected(project_session, changes):
     project, _ = seed(project_session)
     with pytest.raises(IntegrityError):
@@ -65,24 +79,38 @@ def test_invalid_project_writes_are_rejected(project_session, changes):
     project_session.rollback()
 
 
-@pytest.mark.parametrize("owner,foreign_project,foreign_file", [
-    ("a", False, True), ("a", True, False), ("b", False, False),
-    ("b", True, False), ("b", False, True),
-])
+@pytest.mark.parametrize(
+    "owner,foreign_project,foreign_file",
+    [
+        ("a", False, True),
+        ("a", True, False),
+        ("b", False, False),
+        ("b", True, False),
+        ("b", False, True),
+    ],
+)
 def test_memberships_reject_cross_owner_links(project_session, owner, foreign_project, foreign_file):
     project, file = seed(project_session)
     other_project = ProjectModel(user_id="b", name="Other")
     other_file = UserFileModel(
         storage_key=str(uuid.uuid4()),
-        user_id="b", filename="other.txt", original_name="other.txt",
-        size=1, mime_type="text/plain", kind=FileKind.TEXT, sha256="b" * 64,
+        user_id="b",
+        filename="other.txt",
+        original_name="other.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="b" * 64,
     )
     project_session.add_all([other_project, other_file])
     project_session.commit()
-    project_session.add(ProjectFileModel(
-        project_id=other_project.id if foreign_project else project.id,
-        file_id=other_file.id if foreign_file else file.id, user_id=owner,
-    ))
+    project_session.add(
+        ProjectFileModel(
+            project_id=other_project.id if foreign_project else project.id,
+            file_id=other_file.id if foreign_file else file.id,
+            user_id=owner,
+        )
+    )
     with pytest.raises(IntegrityError):
         project_session.commit()
     project_session.rollback()
@@ -91,11 +119,13 @@ def test_memberships_reject_cross_owner_links(project_session, owner, foreign_pr
 @pytest.mark.parametrize("missing", ["project", "file", "owner"])
 def test_memberships_reject_missing_references(project_session, missing):
     project, file = seed(project_session)
-    project_session.add(ProjectFileModel(
-        project_id=uuid.uuid4() if missing == "project" else project.id,
-        file_id=uuid.uuid4() if missing == "file" else file.id,
-        user_id=None if missing == "owner" else "a",
-    ))
+    project_session.add(
+        ProjectFileModel(
+            project_id=uuid.uuid4() if missing == "project" else project.id,
+            file_id=uuid.uuid4() if missing == "file" else file.id,
+            user_id=None if missing == "owner" else "a",
+        )
+    )
     with pytest.raises(IntegrityError):
         project_session.commit()
     project_session.rollback()
@@ -116,14 +146,26 @@ def test_shared_file_and_generations_survive_membership_and_project_deletion(pro
     other = ProjectModel(user_id="a", name="Other")
     project_session.add(other)
     project_session.flush()
-    project_session.add_all([
-        ProjectFileModel(project_id=project.id, file_id=file.id, user_id="a"),
-        ProjectFileModel(project_id=other.id, file_id=file.id, user_id="a"),
-        FileExtractionModel(user_id="a", file_id=file.id, generation=1,
-                            processing_profile_generation=1, processing_profile_identity="a" * 64),
-        FileExtractionModel(user_id="a", file_id=file.id, generation=2,
-                            processing_profile_generation=1, processing_profile_identity="a" * 64),
-    ])
+    project_session.add_all(
+        [
+            ProjectFileModel(project_id=project.id, file_id=file.id, user_id="a"),
+            ProjectFileModel(project_id=other.id, file_id=file.id, user_id="a"),
+            FileExtractionModel(
+                user_id="a",
+                file_id=file.id,
+                generation=1,
+                processing_profile_generation=1,
+                processing_profile_identity="a" * 64,
+            ),
+            FileExtractionModel(
+                user_id="a",
+                file_id=file.id,
+                generation=2,
+                processing_profile_generation=1,
+                processing_profile_identity="a" * 64,
+            ),
+        ]
+    )
     project_session.commit()
     project_session.execute(delete(ProjectFileModel).where(ProjectFileModel.project_id == project.id))
     project_session.commit()
@@ -142,7 +184,8 @@ def test_source_and_owner_deletion_cascade_memberships(project_session, target):
     project_session.commit()
     statement = (
         delete(UserFileModel).where(UserFileModel.id == file.id)
-        if target == "file" else delete(UserModel).where(UserModel.id == "a")
+        if target == "file"
+        else delete(UserModel).where(UserModel.id == "a")
     )
     project_session.execute(statement)
     project_session.commit()
@@ -156,6 +199,7 @@ def test_source_and_owner_deletion_cascade_memberships(project_session, target):
 def test_extraction_has_no_project_or_chat_model_imports():
     extraction = Path(__file__).parents[1] / "asterism" / "domains" / "extraction"
     forbidden = ("asterism.domains.projects", "asterism.domains.chat", "asterism.db.base")
+
     def is_forbidden(module):
         return any(module == name or module.startswith(name + ".") for name in forbidden)
 
@@ -165,7 +209,6 @@ def test_extraction_has_no_project_or_chat_model_imports():
                 assert not is_forbidden(node.module or ""), path
             elif isinstance(node, ast.Import):
                 assert all(not is_forbidden(alias.name) for alias in node.names), path
-
 
 
 @pytest.mark.parametrize("target", ["project", "file", "membership"])

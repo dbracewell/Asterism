@@ -44,7 +44,8 @@ async def test_shared_sources_no_copy_no_processing_and_membership_summaries(pro
         artifacts = list(await session.scalars(select(FileExtractionModel.id)))
     # Membership operations must not access bytes or enqueue extraction.
     monkeypatch.setattr(
-        "asterism.domains.files.service.get_file_store", lambda: pytest.fail("Membership changed physical storage"),
+        "asterism.domains.files.service.get_file_store",
+        lambda: pytest.fail("Membership changed physical storage"),
     )
     monkeypatch.setattr(
         "asterism.domains.extraction.runtime.start_file_ingestion_job",
@@ -60,7 +61,9 @@ async def test_shared_sources_no_copy_no_processing_and_membership_summaries(pro
     assert [p["name"] for p in info["projects"]] == ["First", "Second"]
     assert {p["context_revision"] for p in info["projects"]} == {2}
     renamed = await client.patch(
-        f"/projects/{first['id']}", headers=auth(), json={"expected_context_revision": 2, "name": "Renamed"},
+        f"/projects/{first['id']}",
+        headers=auth(),
+        json={"expected_context_revision": 2, "name": "Renamed"},
     )
     assert renamed.status_code == 200
     removed = await change(client, first, [file["id"]], revision=2, method="DELETE")

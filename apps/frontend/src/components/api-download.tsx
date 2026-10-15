@@ -12,7 +12,10 @@ export const APIDownload = ({
   filename: string;
   className?: string;
   linkText?: string;
-} & ({ chatId?: never; fileId?: never } | { chatId: string; fileId: string })) => {
+} & (
+  | { chatId?: never; fileId?: never }
+  | { chatId: string; fileId: string }
+)) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -25,9 +28,12 @@ export const APIDownload = ({
     setLoading(true);
     let objectUrl: string | null = null;
     try {
-      const { data } = chatId && fileId
-        ? await api.chatFileDownload({ path: { chat_id: chatId, file_id: fileId } })
-        : await api.fileGetOne({ path: { filename } });
+      const { data } =
+        chatId && fileId
+          ? await api.chatFileDownload({
+              path: { chat_id: chatId, file_id: fileId },
+            })
+          : await api.fileGetOne({ path: { filename } });
       if (!data) throw new Error("File is unavailable");
       const blob = data instanceof Blob ? data : new Blob([data]);
       objectUrl = URL.createObjectURL(blob);
