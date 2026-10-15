@@ -63,8 +63,9 @@ has a name, description, instructions, explicit capabilities, and exactly one fi
 model binding. Disabled models retain their bindings and are explicitly unavailable;
 model/provider deletion must not silently select a replacement.
 
-Persona/profile defaults remain a separate invariant. Per-chat model selection and
-project-selected delegation are delivered by their own stories.
+Persona/profile defaults remain a separate invariant. Chats persist their model
+selection independently of main configuration and preserve per-execution provenance.
+Project-selected delegation is delivered by its own story.
 
 ## 2.4 Skills / Tools / MCP / Image Generation
 

@@ -1,6 +1,6 @@
 # EPIC-29 — User agent settings, chat models, and project delegation
 
-Status: US-29.1 completed; user confirmed 2026-10-14. Later stories not started.
+Status: US-29.1 completed; user confirmed 2026-10-14. US-29.2 completed; user confirmed 2026-10-15. Later stories not started.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Added from the user's 2026-10-14 product direction. Numbering is stable: implement this epic **after EPIC-25 and before EPIC-26**, despite its number. UI work belongs to US-27.4/27.5.
 
@@ -49,12 +49,42 @@ pass. No full-repository basedpyright pass is claimed.
 As a user, I want to choose the model used for each chat while keeping my main-agent behavior.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-29.1.
-- [ ] US-29.2-T1: Define the available chat-model API from the existing provider/model catalog with enabled/authorized status, display identity, and relevant capabilities; return a clear state when no model is available.
-- [ ] US-29.2-T2: Replace chat main-agent selection with persisted model selection, including draft/new chats and an explicit initialization policy; validate requested models server-side. Model changes apply on the next turn; reject changes during an active run.
-- [ ] US-29.2-T3: Pass the selected model separately from main-agent configuration through runtime construction, token/context estimates, streaming, attachment/vision handling, background/resumed jobs, and regeneration. Snapshot the actual model/provider and configuration revision per turn; distinguish replay of a recorded turn from regeneration using the current selection.
-- [ ] US-29.2-T4: Regenerate clients and test switching/reopen, concurrent update/send, unavailable or unauthorized models, model capability differences, retry/regeneration/replay, and sub-agents retaining their own fixed models. Never silently fall back to a different model.
+- [x] US-29.2-T1: Define the available chat-model API from the existing provider/model catalog with enabled/authorized status, display identity, and relevant capabilities; return a clear state when no model is available.
+- [x] US-29.2-T2: Replace chat main-agent selection with persisted model selection, including draft/new chats and an explicit initialization policy; validate requested models server-side. Model changes apply on the next turn; reject changes during an active run.
+- [x] US-29.2-T3: Pass the selected model separately from main-agent configuration through runtime construction, token/context estimates, streaming, attachment/vision handling, background/resumed jobs, and regeneration. Snapshot the actual model/provider and configuration revision per turn; distinguish replay of a recorded turn from regeneration using the current selection.
+- [x] US-29.2-T4: Regenerate clients and test switching/reopen, concurrent update/send, unavailable or unauthorized models, model capability differences, retry/regeneration/replay, and sub-agents retaining their own fixed models. Never silently fall back to a different model.
 
 **Acceptance:** Chat model changes preserve main-agent properties and history. The backend reports the selected and actually executed model; estimates and execution agree. Historical turns retain their model provenance, and an unavailable selection produces an actionable error.
+
+US-29.2 implementation (2026-10-15): new chats require an explicit catalog model;
+the user default is a picker prefill only. Existing chats use a persisted model ID,
+metadata snapshot and guarded selection revision. Draft selection is optional until
+send and uses an expected previous model ID. Send receipts replay accepted messages;
+new sends require the observed revision. Model disablement/deletion remains visible
+without a replacement or history rewrite.
+
+The job records an execution/model/provider/capability and main-configuration revision
+snapshot before generation. Resume reuses it; regeneration validates the current
+choice before altering the branch, including assistant parents in multi-step turns.
+Actual assistant output, cancellation and stream starts retain that snapshot. Pending
+estimates use the recorded choice/configuration and report actionable replay failures.
+Sub-agents retain their fixed models. Guards remain process-local, as the existing
+job manager. Minimal picker/history integration is implemented; the broader US-27.5
+workspace/model browser remains pending. The working database was retained and fresh
+schema initialization is required.
+
+Verification: 368 backend tests; 100 frontend tests; 6 auth-database checks; 29 root
+configuration checks; backend/frontend lint, configured typechecks, focused backend
+basedpyright, import-cycle checks and production build pass. The final isolated
+Playwright run passed all 15 tests without retries, including real model picker,
+history-label, unavailable-selection and retry controls with API mocks. Backend tests
+cover model/draft validation, selection/send/run serialization, resume/regeneration,
+capability changes, actual streamed/persisted provenance and fixed workers. Two
+pre-existing broader chat typing errors (controller runtime annotation and persisted
+content narrowing) remain as documented under US-29.1; no full basedpyright pass is
+claimed. All 18 generated TypeScript files match freshly served OpenAPI after SDK whitespace
+normalization; required choice/revision and provenance schemas were validated.
+User confirmed completion on 2026-10-15 and authorized commit and merge into `main`.
 
 ### US-29.3 — Project-selected sub-agents
 

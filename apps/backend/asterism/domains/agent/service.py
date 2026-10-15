@@ -1,7 +1,7 @@
 import uuid
 from typing import cast
 
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -180,9 +180,17 @@ async def update_main_agent(
         profile = await get_main_agent_profile(user_id, session)
         row = await session.get(AgentProfileModel, profile.id)
         assert row is not None
-        for key, value in payload.model_dump().items():
-            setattr(row, key, value)
-        row.chat_parameters = cast(ChatCompletionParams, payload.chat_parameters.model_dump(exclude_none=True))
+        values = payload.model_dump()
+        values["chat_parameters"] = payload.chat_parameters.model_dump(exclude_none=True)
+        await session.execute(
+            update(AgentProfileModel)
+            .where(
+                AgentProfileModel.id == row.id,
+                AgentProfileModel.user_id == user_id,
+            )
+            .values(**values, config_revision=AgentProfileModel.config_revision + 1)
+            .execution_options(synchronize_session="fetch"),
+        )
         await session.commit()
         return await get_main_agent(user_id, session)
 
@@ -204,7 +212,9 @@ async def get_sub_agents(user_id: str, session: AsyncSession | None = None) -> l
         definitions = []
         for row in rows:
             profile = await _with_assignment_summaries(
-                AgentProfile.model_validate(row), user_id=user_id, session=session,
+                AgentProfile.model_validate(row),
+                user_id=user_id,
+                session=session,
             )
             definitions.append(await _sub_definition(profile, session))
         return definitions
@@ -227,6 +237,8 @@ async def save_sub_agent(
                 raise BadDataException("Main configuration cannot become a sub-agent")
             row = await session.get(AgentProfileModel, agent_id)
             assert row is not None
+        if agent_id is not None:
+            row.config_revision = AgentProfileModel.config_revision + 1
         for key, value in payload.model_dump().items():
             setattr(row, key, value)
         row.chat_parameters = cast(ChatCompletionParams, payload.chat_parameters.model_dump(exclude_none=True))
@@ -236,7 +248,9 @@ async def save_sub_agent(
 
 
 async def delete_agent_profile(
-    user_id: str, agent_id: uuid.UUID, session: AsyncSession | None = None,
+    user_id: str,
+    agent_id: uuid.UUID,
+    session: AsyncSession | None = None,
 ) -> SubAgentDefinition:
     async with get_async_db_session(session) as session:
         profile = await get_agent_profile(user_id, agent_id, session)

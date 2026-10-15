@@ -193,7 +193,6 @@ async def test_runtime_refreshes_main_behavior_separate_from_model_and_rechecks_
 ):
     from contextlib import asynccontextmanager
 
-    from asterism.core.exceptions import NotFoundException
     from asterism.core.schemas import AuthedUser
     from asterism.domains.agent.agent import Agent
     from asterism.domains.chat.schemas import Chat, ChatInfo
@@ -205,7 +204,14 @@ async def test_runtime_refreshes_main_behavior_separate_from_model_and_rechecks_
         profile=profile,
         user=AuthedUser(id="user-a", name="A", email="a@example.test", role="user"),
         session=Chat(
-            info=ChatInfo(id=uuid.uuid4(), user_id="user-a", agent_id=profile.id, created_at=0, updated_at=0),
+            info=ChatInfo(
+                id=uuid.uuid4(),
+                user_id="user-a",
+                agent_id=profile.id,
+                selected_model_id=model.id,
+                created_at=0,
+                updated_at=0,
+            ),
             messages=[],
         ),
         model_id=model.id,
@@ -228,7 +234,7 @@ async def test_runtime_refreshes_main_behavior_separate_from_model_and_rechecks_
     assert await runtime._get_client() is marker
     model.is_active = False
     await session.commit()
-    with pytest.raises(NotFoundException):
+    with pytest.raises(BadDataException, match="unavailable"):
         await runtime._get_client()
 
 

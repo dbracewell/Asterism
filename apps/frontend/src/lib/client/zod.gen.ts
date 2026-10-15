@@ -44,6 +44,7 @@ export const zChatContextUsage = z.object({
  * ChatDraft
  */
 export const zChatDraft = z.object({
+    model_id: z.uuid().nullish(),
     id: z.uuid(),
     chat_id: z.uuid().nullable(),
     expires_at: z.int(),
@@ -55,6 +56,7 @@ export const zChatDraft = z.object({
  * ChatDraftCreate
  */
 export const zChatDraftCreate = z.object({
+    model_id: z.uuid().nullish(),
     chat_id: z.uuid().nullish()
 });
 
@@ -63,6 +65,22 @@ export const zChatDraftCreate = z.object({
  */
 export const zChatDraftFiles = z.object({
     file_ids: z.array(z.uuid()).max(100)
+});
+
+/**
+ * ChatDraftModelUpdate
+ */
+export const zChatDraftModelUpdate = z.object({
+    model_id: z.uuid().nullable(),
+    expected_model_id: z.uuid().nullable()
+});
+
+/**
+ * ChatModelUpdate
+ */
+export const zChatModelUpdate = z.object({
+    model_id: z.uuid(),
+    expected_model_revision: z.int().gte(1)
 });
 
 /**
@@ -76,6 +94,7 @@ export const zChatMoveRequest = z.object({
  * ChatSendRequest
  */
 export const zChatSendRequest = z.object({
+    expected_model_revision: z.int().gte(1),
     request_id: z.uuid(),
     user_prompt: z.string().min(1),
     parent_message_id: z.uuid().nullable(),
@@ -461,6 +480,7 @@ export const zMainAgentConfiguration = z.object({
     id: z.uuid(),
     name: z.string(),
     description: z.string(),
+    config_revision: z.int().gte(1).optional().default(1),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -518,30 +538,20 @@ export const zChatContextModel = z.object({
 });
 
 /**
- * ChatInfo
+ * ChatModelChoice
  */
-export const zChatInfo = z.object({
+export const zChatModelChoice = z.object({
     id: z.uuid(),
-    user_id: z.string(),
-    created_at: z.int(),
-    updated_at: z.int(),
-    allowed_tools: z.array(z.string()).optional(),
-    title: z.string().nullish(),
-    project_id: z.uuid().nullish(),
-    agent_id: z.uuid().nullish(),
-    preview: z.string().nullish(),
-    message_count: z.int().nullish(),
-    context_model: zChatContextModel.nullish()
-});
-
-/**
- * ChatInfoList
- */
-export const zChatInfoList = z.object({
-    chats: z.array(zChatInfo),
-    total: z.int().gte(0),
-    page: z.int().gte(1),
-    page_size: z.int().gte(1)
+    name: z.string(),
+    provider_id: z.uuid(),
+    provider_name: z.string(),
+    available: z.boolean(),
+    enabled: z.boolean().optional().default(true),
+    authorized: z.boolean().optional().default(true),
+    unavailable_reason: z.string().nullish(),
+    context_window: z.int().nullish(),
+    context_window_source: zModelCapabilitySource.optional().default('unknown'),
+    supports_vision: z.boolean().nullish()
 });
 
 /**
@@ -573,9 +583,53 @@ export const zLlmDisplayInfo = z.object({
 });
 
 /**
+ * MessageExecution
+ */
+export const zMessageExecution = z.object({
+    id: z.uuid().optional(),
+    request_message_id: z.uuid(),
+    model: zChatModelChoice,
+    model_revision: z.int().gte(1),
+    configuration: zMainAgentConfiguration
+});
+
+/**
+ * ChatInfo
+ */
+export const zChatInfo = z.object({
+    id: z.uuid(),
+    user_id: z.string(),
+    created_at: z.int(),
+    updated_at: z.int(),
+    allowed_tools: z.array(z.string()).optional(),
+    title: z.string().nullish(),
+    project_id: z.uuid().nullish(),
+    agent_id: z.uuid().nullish(),
+    preview: z.string().nullish(),
+    message_count: z.int().nullish(),
+    context_model: zChatContextModel.nullish(),
+    selected_model_id: z.uuid().nullish(),
+    model_revision: z.int().gte(1).optional().default(1),
+    selected_model: zChatModelChoice.nullish(),
+    pending_execution: zMessageExecution.nullish(),
+    resume_error: z.string().nullish()
+});
+
+/**
+ * ChatInfoList
+ */
+export const zChatInfoList = z.object({
+    chats: z.array(zChatInfo),
+    total: z.int().gte(0),
+    page: z.int().gte(1),
+    page_size: z.int().gte(1)
+});
+
+/**
  * NewChatRequest
  */
 export const zNewChatRequest = z.object({
+    model_id: z.uuid(),
     request_id: z.uuid(),
     draft_id: z.uuid().nullish(),
     user_prompt: z.string(),
@@ -835,6 +889,7 @@ export const zSubAgentDefinition = z.object({
     model_id: z.uuid(),
     id: z.uuid(),
     model_available: z.boolean(),
+    config_revision: z.int().gte(1).optional().default(1),
     knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional()
 });
 
@@ -901,6 +956,7 @@ export const zMessage = z.object({
     content: z.string(),
     thinking: z.string().nullish(),
     tool_calls: z.array(zToolCall).nullish(),
+    execution: zMessageExecution.nullish(),
     id: z.uuid(),
     status: zMessageStatus,
     created_at: z.int(),
@@ -1186,6 +1242,35 @@ export const zFileKnowledgeBaseGetManyPath = z.object({
  * Successful Response
  */
 export const zFileKnowledgeBaseGetManyResponse = z.array(zKnowledgeBase);
+
+/**
+ * Response Chatmodelslist
+ *
+ * Successful Response
+ */
+export const zChatModelsListResponse = z.array(zChatModelChoice);
+
+export const zChatModelUpdateBody = zChatModelUpdate;
+
+export const zChatModelUpdatePath = z.object({
+    chat_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatModelUpdateResponse = zChatInfo;
+
+export const zChatDraftModelUpdateBody = zChatDraftModelUpdate;
+
+export const zChatDraftModelUpdatePath = z.object({
+    draft_id: z.uuid()
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftModelUpdateResponse = zChatDraft;
 
 export const zChatSessionGetManyQuery = z.object({
     project_id: z.uuid().nullish(),

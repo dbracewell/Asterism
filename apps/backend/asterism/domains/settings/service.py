@@ -189,18 +189,6 @@ async def _validate_user_setting(key: str, value: Any, session: AsyncSession) ->
         raise BadDataException(f"{key} must be text")
 
 
-async def get_default_chat_model_id(user_id: str, session: AsyncSession | None = None) -> uuid.UUID | None:
-    """Explicit user selection, independent of main configuration; chat selection follows in US-29.2."""
-    async with get_async_db_session(session) as session:
-        value = await session.scalar(
-            select(UserSettingModel.value).where(
-                UserSettingModel.user_id == user_id,
-                UserSettingModel.key == "default_model_id",
-            ),
-        )
-        return uuid.UUID(str(value)) if value is not None else None
-
-
 async def _ensure_provider_unbound(provider_id: uuid.UUID, session: AsyncSession) -> None:
     bound = await session.scalar(
         select(AgentProfileModel.id)

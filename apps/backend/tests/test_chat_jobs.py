@@ -2,6 +2,7 @@ import asyncio
 import time
 import uuid
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from asterism.common.cache import SlidingTTLCache
@@ -175,7 +176,8 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
         return parent.model_copy(update={"status": kwargs["payload"].status})
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.chat_service.add_message", add_message,
+        "asterism.domains.chat.orchestrator.chat_service.add_message",
+        add_message,
     )
     monkeypatch.setattr(
         "asterism.domains.chat.orchestrator.chat_service.update_message",
@@ -215,6 +217,7 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
         session=chat,
         model_id=uuid.uuid4(),
         run=run,
+        prepare_execution=AsyncMock(return_value=None),
     )
     orchestrator = ChatOrchestrator(agent)
 
@@ -304,7 +307,8 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
         saved.append(title)
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.get_draft_model", unavailable_draft_model,
+        "asterism.domains.chat.orchestrator.get_draft_model",
+        unavailable_draft_model,
     )
     monkeypatch.setattr(orchestrator, "_save_chat_title", save)
 
@@ -316,7 +320,8 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
 @pytest.mark.asyncio
 @pytest.mark.parametrize("provider_output", [" \n ", "None", "null", "N/A"])
 async def test_title_generation_falls_back_after_invalid_provider_output(
-    monkeypatch, provider_output,
+    monkeypatch,
+    provider_output,
 ):
     chat = Chat(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1),
@@ -345,7 +350,8 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
         saved.append(title)
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.get_draft_model", lambda: EmptyDraftModel(),
+        "asterism.domains.chat.orchestrator.get_draft_model",
+        lambda: EmptyDraftModel(),
     )
     monkeypatch.setattr(orchestrator, "_save_chat_title", save)
 
@@ -356,13 +362,18 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("initial_project_id,persisted_project_id", [
-    (None, None),
-    (uuid.UUID("11111111-1111-4111-8111-111111111111"), uuid.UUID("11111111-1111-4111-8111-111111111111")),
-    (uuid.UUID("11111111-1111-4111-8111-111111111111"), None),
-])
+@pytest.mark.parametrize(
+    "initial_project_id,persisted_project_id",
+    [
+        (None, None),
+        (uuid.UUID("11111111-1111-4111-8111-111111111111"), uuid.UUID("11111111-1111-4111-8111-111111111111")),
+        (uuid.UUID("11111111-1111-4111-8111-111111111111"), None),
+    ],
+)
 async def test_title_save_persists_and_publishes_current_project_identity(
-    monkeypatch, initial_project_id, persisted_project_id,
+    monkeypatch,
+    initial_project_id,
+    persisted_project_id,
 ):
     chat = Chat(
         info=ChatInfo(id=uuid.uuid4(), user_id="user-a", created_at=1, updated_at=1, project_id=initial_project_id),
@@ -378,10 +389,12 @@ async def test_title_save_persists_and_publishes_current_project_identity(
         return Chat(info=chat.info.model_copy(update={"project_id": persisted_project_id}), messages=[])
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.chat_service.update_chat", update_chat,
+        "asterism.domains.chat.orchestrator.chat_service.update_chat",
+        update_chat,
     )
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.event_bus.emit", events.append,
+        "asterism.domains.chat.orchestrator.event_bus.emit",
+        events.append,
     )
 
     await orchestrator._save_chat_title("Garden plan")
@@ -515,7 +528,8 @@ def test_outbound_queue_is_bounded_and_keeps_newest_packets():
 
 def test_queue_ttl_is_a_fallback_for_unretired_idle_queues(monkeypatch):
     cache = SlidingTTLCache[uuid.UUID, message_queue.MessageQueue](
-        maxsize=2, ttl=0.001,
+        maxsize=2,
+        ttl=0.001,
     )
     monkeypatch.setattr(message_queue, "_queue_cache", cache)
     chat_id = uuid.uuid4()

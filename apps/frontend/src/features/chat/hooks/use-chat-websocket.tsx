@@ -1,7 +1,4 @@
-import {
-  AgentEventSchema,
-  AgentSubAgentEvent,
-} from "@/features/chat/schemas";
+import { AgentEventSchema, AgentSubAgentEvent } from "@/features/chat/schemas";
 import { StreamingMessage } from "@/features/chat/types";
 import { Message } from "@/lib/client";
 import { chatWebSocketUrl } from "@/lib/backend-url";
@@ -162,7 +159,11 @@ export const useChatWebSocket = ({
       }
 
       if (msgContent.type === "start") {
-        const pendingMessage = createPendingAssistantMessage();
+        const pendingMessage = {
+          ...createPendingAssistantMessage(),
+          execution: msgContent.execution,
+          model_id: msgContent.execution?.model.id,
+        };
         streamingMessageRef.current = pendingMessage;
         onStreamStartRef.current?.(pendingMessage);
         scheduleFlush();

@@ -48,7 +48,8 @@ def make_chat_session():
 
 
 def _make_agent_profile(
-    agent_id: uuid.UUID, name: str = "SubAgent",
+    agent_id: uuid.UUID,
+    name: str = "SubAgent",
 ) -> AgentProfile:
     return AgentProfile(
         id=agent_id,
@@ -113,7 +114,9 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_sub_agent_forwards_events_to_event_sink(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Verify sub_agent forwards DELTA, TOOL_CALL, and COMPLETE to sink."""
         root_id = uuid.uuid4()
@@ -188,7 +191,10 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_sub_agent_forwards_start_and_error_as_terminal_diagnostics(
-        self, test_user, make_chat_session, caplog,
+        self,
+        test_user,
+        make_chat_session,
+        caplog,
     ):
         root_id = uuid.uuid4()
         child_id = uuid.uuid4()
@@ -245,7 +251,9 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_parent_agent_event_stream_includes_sub_agent_events(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Verify parent agent.run() yields SUB_AGENT events when child runs."""
         parent_id = uuid.uuid4()
@@ -338,9 +346,7 @@ class TestSubAgentStreaming:
                 parent_events.append(evt)
 
         # Verify parent emitted SUB_AGENT events
-        sub_agent_events = [
-            e for e in parent_events if e.type == AgentEventType.SUB_AGENT
-        ]
+        sub_agent_events = [e for e in parent_events if e.type == AgentEventType.SUB_AGENT]
         assert len(sub_agent_events) >= 2
 
         delta_sub = sub_agent_events[0].sub_agent
@@ -363,7 +369,9 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_multi_level_sub_agent_depth_forwarding(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Verify multi-level sub-agent call (depth 2) carries depth=2
         in envelope."""
@@ -410,7 +418,9 @@ class TestSubAgentStreaming:
 
     @pytest.mark.asyncio
     async def test_chat_orchestrator_forwards_sub_agent_events_to_queue(
-        self, test_user, make_chat_session,
+        self,
+        test_user,
+        make_chat_session,
     ):
         """Verify ChatOrchestrator forwards SUB_AGENT events to
         message queue."""
@@ -438,6 +448,7 @@ class TestSubAgentStreaming:
             allowed_tools=["sub_agent"],
         )
 
+        agent.prepare_execution = AsyncMock(return_value=None)
         orchestrator = ChatOrchestrator(agent)
         queue = get_message_queue(session.info.id)
 
@@ -478,11 +489,7 @@ class TestSubAgentStreaming:
         while not queue.empty():
             queued_messages.append(await queue.get())
 
-        sub_agent_packets = [
-            pkt
-            for pkt in queued_messages
-            if isinstance(pkt, dict) and pkt.get("type") == "sub_agent"
-        ]
+        sub_agent_packets = [pkt for pkt in queued_messages if isinstance(pkt, dict) and pkt.get("type") == "sub_agent"]
         assert len(sub_agent_packets) == 1
         assert sub_agent_packets[0]["execution_id"] == str(
             envelope.execution_id,

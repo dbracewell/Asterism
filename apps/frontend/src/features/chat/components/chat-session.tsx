@@ -1,4 +1,5 @@
 "use client";
+import { ExistingChatModelPicker, ExecutionLabel } from "./chat-model-picker";
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { Badge } from "@/components/ui/badge";
@@ -191,6 +192,7 @@ export const ChatSession = ({
   const pendingSend = React.useRef<{
     requestId: string;
     parentId: string | null;
+    modelRevision: number;
   } | null>(null);
   const addUserMessage = async ({
     prompt,
@@ -206,12 +208,14 @@ export const ChatSession = ({
       pendingSend.current = {
         requestId,
         parentId: session.messages.at(-1)?.id ?? null,
+        modelRevision: session.info.model_revision ?? 1,
       };
     }
     const accepted = await sendMessage.mutateAsync({
       path: { chat_id: chatId },
       body: {
         request_id: requestId,
+        expected_model_revision: pendingSend.current.modelRevision,
         user_prompt: prompt,
         files,
         parent_message_id: pendingSend.current.parentId,
@@ -267,7 +271,7 @@ export const ChatSession = ({
   const chatAgent = user.settings.main_agent;
   const contextWindow =
     session.info.context_model?.context_window ??
-    user.settings.models?.find((model) => model.id === user.settings.default_model_id)
+    user.settings.models?.find((model) => model.id === session.info.selected_model_id)
       ?.context_window ??
     null;
 
@@ -290,6 +294,10 @@ export const ChatSession = ({
           }
         }}
       >
+        <ExistingChatModelPicker info={session.info} disabled={isProcessing || sendMessage.isPending}
+          onSelected={(info) => queryClient.setQueryData(queryKey, (previous?: Chat) => previous ? { ...previous, info: { ...previous.info, ...info } } : previous)} />
+        {session.info.resume_error && <p role="alert">{session.info.resume_error}</p>}
+        {!session.info.selected_model?.available && <p role="alert">Choose an available model to continue. Historical messages keep their original model.</p>}
         {chatAgent && (
           <Badge className="mb-3 w-fit" variant="secondary">
             Agent: {chatAgent.name}
@@ -343,9 +351,10 @@ export const ChatSession = ({
         )}
         <ChatInputContainer className="border-primary mx-auto w-full max-w-[80%] min-w-[80%] border">
           <ChatInput
-            disabled={isProcessing || connectionStatus !== "Connected"}
+            disabled={isProcessing || connectionStatus !== "Connected" || !session.info.selected_model?.available}
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
+            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}`}
             onSubmit={addUserMessage}
             bottomComponent={
               <div className="flex w-full items-center justify-between gap-2 p-2">
@@ -493,6 +502,7 @@ const MessageItem = React.memo(
           !!message.tool_calls && "mb-0!",
         )}
       >
+        {message.role === "assistant" && <ExecutionLabel execution={message.execution} />}
         {userShowThinking && (
           <details
             open={showThinking}

@@ -55,3 +55,36 @@ it("forwards typed sub-agent packets without replacing the parent stream", () =>
   expect(onSubAgentEvent).toHaveBeenCalledWith(packet);
   expect(onStreamUpdate).not.toHaveBeenCalled();
 });
+
+it("carries the executed model snapshot into the streaming assistant message", () => {
+  const onStreamStart = vi.fn();
+  renderHook(() =>
+    useChatWebSocket({ chatId: "chat", jwtToken: "token", onStreamStart }),
+  );
+  const options = socket.mock.calls.at(-1)?.[1] as {
+    onMessage: (event: { data: string }) => void;
+  };
+  const execution = {
+    id: "11111111-1111-4111-8111-111111111111",
+    request_message_id: "22222222-2222-4222-8222-222222222222",
+    model_revision: 2,
+    model: {
+      id: "33333333-3333-4333-8333-333333333333",
+      name: "Executed model",
+      provider_id: "44444444-4444-4444-8444-444444444444",
+      provider_name: "Provider",
+      available: true,
+    },
+    configuration: {
+      id: "55555555-5555-4555-8555-555555555555",
+      name: "Main",
+      description: "",
+      config_revision: 3,
+    },
+  };
+  options.onMessage({ data: JSON.stringify({ type: "start", execution }) });
+  expect(onStreamStart.mock.calls[0][0]).toMatchObject({
+    model_id: execution.model.id,
+    execution,
+  });
+});

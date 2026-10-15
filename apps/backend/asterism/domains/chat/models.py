@@ -1,7 +1,18 @@
 import uuid
 
 from pydantic import TypeAdapter
-from sqlalchemy import UUID, Enum, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    UUID,
+    CheckConstraint,
+    Enum,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from asterism.common.enums import enum_values
@@ -11,7 +22,7 @@ from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
-from .schemas import MessageFileReference, MessageStatus
+from .schemas import ChatModelChoice, MessageExecution, MessageFileReference, MessageStatus
 
 
 class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
@@ -32,6 +43,12 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         index=True,
         nullable=True,
     )
+    # Retain unavailable/deleted selections instead of retargeting the chat.
+    selected_model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    selected_model_snapshot: Mapped[ChatModelChoice | None] = mapped_column(
+        JSONB_COLUMN(TypeAdapter(ChatModelChoice)), nullable=True,
+    )
+    model_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     title: Mapped[str | None] = mapped_column(
         String,
         nullable=True,
@@ -43,9 +60,12 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
 
     __table_args__ = (
+        CheckConstraint("model_revision >= 1", name="chat_model_revision_positive"),
         UniqueConstraint("id", "user_id", name="uq_chats_id_user"),
         ForeignKeyConstraint(
-            ["project_id", "user_id"], ["projects.id", "projects.user_id"], name="fk_chats_project_owner",
+            ["project_id", "user_id"],
+            ["projects.id", "projects.user_id"],
+            name="fk_chats_project_owner",
         ),
     )
 
@@ -69,8 +89,13 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         index=True,
     )
     model_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID,
         nullable=True,
+    )
+    execution: Mapped[MessageExecution | None] = mapped_column(
+        JSONB_COLUMN(TypeAdapter(MessageExecution)), nullable=True,
+    )
+    pending_execution: Mapped[MessageExecution | None] = mapped_column(
+        JSONB_COLUMN(TypeAdapter(MessageExecution)), nullable=True,
     )
     status: Mapped[MessageStatus] = mapped_column(
         Enum(
@@ -139,7 +164,10 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     __table_args__ = (
         UniqueConstraint("id", "chat_id", "user_id", name="uq_messages_id_chat_user"),
         ForeignKeyConstraint(
-            ["chat_id", "user_id"], ["chats.id", "chats.user_id"], ondelete="CASCADE", name="fk_messages_chat_owner",
+            ["chat_id", "user_id"],
+            ["chats.id", "chats.user_id"],
+            ondelete="CASCADE",
+            name="fk_messages_chat_owner",
         ),
         ForeignKeyConstraint(
             ["parent_message_id", "chat_id", "user_id"],
@@ -171,7 +199,10 @@ class ChatFileModel(Base, TimestampMixin):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ["chat_id", "user_id"], ["chats.id", "chats.user_id"], ondelete="CASCADE", name="fk_chat_files_chat_owner",
+            ["chat_id", "user_id"],
+            ["chats.id", "chats.user_id"],
+            ondelete="CASCADE",
+            name="fk_chat_files_chat_owner",
         ),
         ForeignKeyConstraint(
             ["file_id", "user_id"],

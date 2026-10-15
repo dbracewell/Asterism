@@ -62,6 +62,7 @@ async def test_new_draft_upload_and_library_pick_commit_only_to_accepted_chat(pr
     async with sessions() as session:
         assert await session.scalar(select(func.count()).select_from(ChatFileModel)) == 0
     payload = {
+        "model_id": "00000000-0000-0000-0000-000000000001",
         "request_id": str(uuid.uuid4()),
         "project_id": project["id"],
         "draft_id": staged["id"],
@@ -110,6 +111,7 @@ async def test_drafts_enforce_owner_target_and_whole_batch_validation(project_ap
         f"/chat/{second['info']['id']}/message",
         headers=auth(),
         json={
+            "expected_model_revision": 1,
             "request_id": str(uuid.uuid4()),
             "user_prompt": "Wrong target",
             "draft_id": staged["id"],
@@ -121,6 +123,7 @@ async def test_drafts_enforce_owner_target_and_whole_batch_validation(project_ap
         "/chat/",
         headers=auth(),
         json={
+            "model_id": "00000000-0000-0000-0000-000000000001",
             "request_id": str(uuid.uuid4()),
             "user_prompt": "Wrong new chat",
             "draft_id": staged["id"],
@@ -195,7 +198,9 @@ async def test_upload_failure_and_failed_send_leave_draft_retryable_and_no_parti
     file = await upload(client, "retry.txt")
     await stage(client, staged, [file["id"]])
     await seed_agent(sessions)
-    payload = NewChatRequest(request_id=uuid.uuid4(), user_prompt="Atomic", draft_id=staged["id"])
+    payload = NewChatRequest(
+        model_id=uuid.UUID(int=1), request_id=uuid.uuid4(), user_prompt="Atomic", draft_id=staged["id"],
+    )
     async with sessions() as session:
 
         async def failing_commit():
@@ -225,6 +230,7 @@ async def test_followup_receipts_guard_branch_active_runs_and_atomic_draft_consu
     staged = await draft(client, record["info"]["id"])
     await stage(client, staged, [file["id"]])
     payload = {
+        "expected_model_revision": 1,
         "request_id": str(uuid.uuid4()),
         "user_prompt": "Read",
         "parent_message_id": record["messages"][0]["id"],
@@ -308,7 +314,11 @@ async def test_removal_revokes_local_access_and_keeps_history_sources_and_projec
 async def test_same_request_concurrent_create_has_one_message_and_receipt(project_api):
     client, sessions, _ = project_api
     await seed_agent(sessions)
-    payload = {"request_id": str(uuid.uuid4()), "user_prompt": "Exactly once"}
+    payload = {
+        "model_id": "00000000-0000-0000-0000-000000000001",
+        "request_id": str(uuid.uuid4()),
+        "user_prompt": "Exactly once",
+    }
     responses = await asyncio.gather(*[client.post("/chat/", headers=auth(), json=payload) for _ in range(2)])
     assert [r.status_code for r in responses] == [200, 200]
     assert responses[0].json() == responses[1].json()
@@ -363,7 +373,12 @@ async def test_deleted_draft_source_is_removed_before_send_and_never_retargeted(
     response = await client.post(
         "/chat/",
         headers=auth(),
-        json={"request_id": str(uuid.uuid4()), "user_prompt": "Continue", "draft_id": staged["id"]},
+        json={
+            "model_id": "00000000-0000-0000-0000-000000000001",
+            "request_id": str(uuid.uuid4()),
+            "user_prompt": "Continue",
+            "draft_id": staged["id"],
+        },
     )
     assert response.status_code == 400  # Never silently accept an incomplete staged set.
     await client.request(
@@ -375,7 +390,12 @@ async def test_deleted_draft_source_is_removed_before_send_and_never_retargeted(
     response = await client.post(
         "/chat/",
         headers=auth(),
-        json={"request_id": str(uuid.uuid4()), "user_prompt": "Continue", "draft_id": staged["id"]},
+        json={
+            "model_id": "00000000-0000-0000-0000-000000000001",
+            "request_id": str(uuid.uuid4()),
+            "user_prompt": "Continue",
+            "draft_id": staged["id"],
+        },
     )
     assert response.status_code == 200
     assert response.json()["messages"][0]["files"] == []
@@ -418,6 +438,7 @@ async def test_cancelled_send_releases_guard_and_retains_retryable_draft(project
     file = await upload(client, "cancel.txt")
     await stage(client, staged, [file["id"]])
     payload = ChatSendRequest(
+        expected_model_revision=1,
         request_id=uuid.uuid4(),
         user_prompt="Read",
         draft_id=staged["id"],
@@ -461,6 +482,7 @@ async def test_reopen_regenerate_and_revocation_use_current_memberships(project_
     await complete_root(sessions, record)
     file = await upload(client, "resume.txt")
     payload = {
+        "expected_model_revision": 1,
         "request_id": str(uuid.uuid4()),
         "user_prompt": "Read",
         "files": [file["id"]],
@@ -471,7 +493,11 @@ async def test_reopen_regenerate_and_revocation_use_current_memberships(project_
     async with sessions() as session:
         reopened = await get_one(uuid.UUID(record["info"]["id"]), "a", session)
     agent = SimpleNamespace(
-        session=reopened, model_id=None, parent_message_id=None, refresh_main_configuration=AsyncMock(),
+        session=reopened,
+        model_id=None,
+        parent_message_id=None,
+        prepare_execution=AsyncMock(return_value=None),
+        refresh_main_configuration=AsyncMock(),
     )
     orchestrator = ChatOrchestrator(agent)
 
@@ -512,12 +538,22 @@ async def test_generation_cancel_keeps_attachments_without_replay_restart(projec
     monkeypatch.setattr(config, "storage_root", tmp_path)
     file = await upload(client, "cancel-generation.txt")
     await seed_agent(sessions)
-    payload = {"request_id": str(uuid.uuid4()), "user_prompt": "Read", "files": [file["id"]]}
+    payload = {
+        "model_id": "00000000-0000-0000-0000-000000000001",
+        "request_id": str(uuid.uuid4()),
+        "user_prompt": "Read",
+        "files": [file["id"]],
+    }
     record = (await client.post("/chat/", headers=auth(), json=payload)).json()
     async with sessions() as session:
         reopened = await get_one(uuid.UUID(record["info"]["id"]), "a", session)
     orchestrator = ChatOrchestrator(
-        SimpleNamespace(session=reopened, model_id=None, refresh_main_configuration=AsyncMock()),
+        SimpleNamespace(
+            session=reopened,
+            model_id=None,
+            prepare_execution=AsyncMock(return_value=None),
+            refresh_main_configuration=AsyncMock(),
+        ),
     )
 
     @asynccontextmanager
@@ -630,7 +666,12 @@ async def test_draft_snapshot_cannot_restore_revoked_membership(project_api, mon
         await session.execute(delete(ChatDraftFileModel).where(ChatDraftFileModel.draft_id == uuid.UUID(staged["id"])))
         await session.commit()
     await seed_agent(sessions)
-    payload = {"request_id": str(uuid.uuid4()), "user_prompt": "Read", "draft_id": staged["id"]}
+    payload = {
+        "model_id": "00000000-0000-0000-0000-000000000001",
+        "request_id": str(uuid.uuid4()),
+        "user_prompt": "Read",
+        "draft_id": staged["id"],
+    }
     assert (await client.post("/chat/", headers=auth(), json=payload)).status_code == 400
     current = (await client.get(f"/chat/drafts/{staged['id']}", headers=auth())).json()
     assert current["unavailable_file_ids"] == [file["id"]]

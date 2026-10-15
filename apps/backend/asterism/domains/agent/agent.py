@@ -10,9 +10,9 @@ from typing import AsyncGenerator, Awaitable, Callable, cast
 import asterism.domains.settings.service as settings_service
 from asterism.common.log import get_logger
 from asterism.core.config import config
-from asterism.core.exceptions import BadDataException
+from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.core.schemas import AuthedUser
-from asterism.domains.chat.schemas import Chat
+from asterism.domains.chat.schemas import Chat, MessageExecution
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import (
     ContentPart,
@@ -54,6 +54,7 @@ class Agent:
     ) -> None:
         if profile.sub_agent and model_id is not None and model_id != profile.model_id:
             raise BadDataException("Sub-agent model binding cannot be overridden")
+        self.execution: MessageExecution | None = None
         self.model_id = profile.model_id if profile.sub_agent else model_id
         self.profile: AgentProfile = profile
         self.max_steps: int = profile.max_steps
@@ -87,15 +88,54 @@ class Agent:
         self.profile = await get_main_agent_profile(self.user.id)
         self.max_steps = self.profile.max_steps
         self._knowledge_search_enabled = bool(self.profile.knowledge_bases)
-        model_id = await settings_service.get_default_chat_model_id(self.user.id)
+        model_id = self.session.info.selected_model_id
         if model_id != self.model_id:
             self._client = None
         self.model_id = model_id
 
+    async def prepare_execution(self, message_id: uuid.UUID, *, restart: bool = False) -> MessageExecution:
+        from asterism.domains.chat.execution import prepare_execution
+
+        if self.profile.sub_agent:
+            raise BadDataException("Sub-agents retain their fixed model binding")
+        execution = await prepare_execution(
+            user_id=self.user.id,
+            chat_id=self.session.info.id,
+            message_id=message_id,
+            restart=restart,
+        )
+        self.apply_execution(execution)
+        return execution
+
+    def apply_execution(self, execution: MessageExecution) -> None:
+        self._client = None
+        self.execution = execution
+        self.model_id = execution.model.id
+        self.profile = AgentProfile.model_validate(
+            {**execution.configuration.model_dump(exclude_none=True), "sub_agent": False, "model_id": None},
+        )
+        self.max_steps = self.profile.max_steps
+        self._knowledge_search_enabled = bool(self.profile.knowledge_bases)
+
     async def _get_client(self) -> LLMClientProtocol:
         if self.model_id is None:
-            raise BadDataException("Choose a default model in settings before running a chat")
-        model_info: LlmWithProvider = await settings_service.get_model_and_provider(model_id=self.model_id)
+            raise BadDataException("Choose an available chat model before generating")
+        try:
+            model_info: LlmWithProvider = await settings_service.get_model_and_provider(model_id=self.model_id)
+        except NotFoundException as error:
+            action = (
+                "edit the sub-agent definition"
+                if self.profile.sub_agent
+                else "choose an available chat model and regenerate"
+            )
+            raise BadDataException(f"Execution model is unavailable; {action}") from error
+        if self.execution is not None and (
+            model_info.name != self.execution.model.name
+            or model_info.provider.id != self.execution.model.provider_id
+            or model_info.supports_vision != self.execution.model.supports_vision
+            or model_info.context_window != self.execution.model.context_window
+        ):
+            raise BadDataException("Recorded model identity changed; regenerate using the current selection")
         if self._client is not None:
             return self._client
 

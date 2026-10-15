@@ -12,6 +12,14 @@ vi.stubGlobal(
   },
 );
 
+// Radix Select calls browser pointer/layout APIs absent from jsdom.
+Object.defineProperties(HTMLElement.prototype, {
+  hasPointerCapture: { configurable: true, value: () => false },
+  setPointerCapture: { configurable: true, value: () => {} },
+  releasePointerCapture: { configurable: true, value: () => {} },
+  scrollIntoView: { configurable: true, value: () => {} },
+});
+
 afterEach(() => {
   cleanup();
 });

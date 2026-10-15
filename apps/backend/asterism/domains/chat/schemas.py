@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
 from asterism.domains.settings.provider_types import ModelCapabilitySource
@@ -28,7 +29,36 @@ class MessageFileReference(BaseModel):
     available: bool = True
 
 
+class ChatModelChoice(BaseModel):
+    id: uuid.UUID
+    name: str
+    provider_id: uuid.UUID
+    provider_name: str
+    available: bool
+    enabled: bool = True
+    authorized: bool = True
+    unavailable_reason: str | None = None
+    context_window: int | None = None
+    context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+    supports_vision: bool | None = None
+
+
+class MessageExecution(BaseModel):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    request_message_id: uuid.UUID
+    model: ChatModelChoice
+    model_revision: int = Field(ge=1)
+    configuration: MainAgentConfiguration
+
+
+class ChatModelUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    model_id: uuid.UUID
+    expected_model_revision: int = Field(ge=1)
+
+
 class NewMessageRequest(BaseModel):
+    execution: MessageExecution | None = None
     model_id: uuid.UUID
     role: str
     content: str
@@ -45,6 +75,7 @@ class NewMessageRequest(BaseModel):
 
 
 class Message(LLMMessage):
+    execution: MessageExecution | None = None
     model_config = ConfigDict(from_attributes=True)
     # Persisted chat content remains plain text; multimodal parts are runtime-only.
     content: str
@@ -107,6 +138,11 @@ class ChatInfo(BaseModel):
     preview: str | None = Field(default=None)
     message_count: int | None = Field(default=None)
     context_model: ChatContextModel | None = Field(default=None)
+    selected_model_id: uuid.UUID | None = None
+    model_revision: int = Field(default=1, ge=1)
+    selected_model: ChatModelChoice | None = None
+    pending_execution: MessageExecution | None = None
+    resume_error: str | None = None
 
 
 class ChatInfoList(BaseModel):
@@ -161,6 +197,7 @@ class BulkDeleteChatResponse(BaseModel):
 
 
 class NewChatRequest(BaseModel):
+    model_id: uuid.UUID
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID
     draft_id: uuid.UUID | None = None
@@ -196,6 +233,7 @@ class ChatFileScope(BaseModel):
 
 
 class ChatDraftCreate(BaseModel):
+    model_id: uuid.UUID | None = None
     model_config = ConfigDict(extra="forbid")
     chat_id: uuid.UUID | None = None
 
@@ -206,6 +244,7 @@ class ChatDraftFiles(BaseModel):
 
 
 class ChatDraft(BaseModel):
+    model_id: uuid.UUID | None = None
     id: uuid.UUID
     chat_id: uuid.UUID | None
     expires_at: int
@@ -214,9 +253,16 @@ class ChatDraft(BaseModel):
 
 
 class ChatSendRequest(BaseModel):
+    expected_model_revision: int = Field(ge=1)
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID
     user_prompt: str = Field(min_length=1)
     parent_message_id: uuid.UUID | None
     draft_id: uuid.UUID | None = None
     files: list[uuid.UUID] = Field(default_factory=list, max_length=100)
+
+
+class ChatDraftModelUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    model_id: uuid.UUID | None
+    expected_model_id: uuid.UUID | None

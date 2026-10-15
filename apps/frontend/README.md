@@ -152,9 +152,22 @@ clients include the draft and send contracts; there is no handwritten API transp
 
 Agent settings expose one model-free main editor and separate fixed-model sub-agent
 create/edit/delete controls. New chats display the main identity without offering an
-agent selector. An explicitly selected available default model in General settings
-is required for starting a chat until per-chat model selection lands in US-29.2.
+agent selector. The chat model picker is independent of main settings; a user
+default only prefills new chats, and unavailable selections require an explicit
+replacement. Existing chat selections persist.
 Generated TanStack mutations save the new contracts; unavailable sub-agent bindings
 are visible and never silently replaced with the user's default model. Tool queries
 show loading/error/retry states, and disabled tools must be deliberately removed
 before saving a configuration.
+
+### Chat model controls (US-29.2)
+
+New chats send an explicit model ID. Existing chats switch through generated TanStack
+mutations with the observed model revision, and the picker is disabled during a run
+or send acceptance. Model/query loading, empty, failed, cached-refresh failure, retry,
+and unavailable-selection states are explicit; no first-available fallback is used.
+A model change updates the composer request scope without dropping prompt/attachments.
+Assistant cards and streaming output use their recorded model/provider/configuration
+revision instead of relabeling old messages from today's selection. Reopen does not
+require a global default model. The broader model browser, project sub-agent selection
+and workspace composition remain US-27.5.

@@ -15,9 +15,13 @@ main_agent_session = _main_agent_session
 async def test_chat_uses_singleton_independent_of_model_selection(main_agent_session):
     session = main_agent_session
     main = await get_main_agent_profile("user-a", session)
-    chat = await create_chat("user-a", NewChatRequest(request_id=uuid.uuid4(), user_prompt="Hello"), session)
+    chat = await create_chat(
+        "user-a",
+        NewChatRequest(model_id=session.info["model"].id, request_id=uuid.uuid4(), user_prompt="Hello"),
+        session,
+    )
     assert chat.info.agent_id == main.id
-    assert chat.info.context_model is None
+    assert chat.info.selected_model_id == session.info["model"].id
     await upsert_user_setting("user-a", "default_model_id", str(session.info["model"].id), session)
     reopened = await get_one(chat.info.id, "user-a", session)
     assert reopened.info.context_model.id == session.info["model"].id

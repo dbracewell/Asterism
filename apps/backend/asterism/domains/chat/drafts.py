@@ -11,8 +11,9 @@ from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.domains.files.service import validate_owned_file_ids
 
 from .draft_models import ChatDraftFileModel, ChatDraftModel
+from .model_selection import require_chat_model
 from .models import ChatModel
-from .schemas import ChatDraft, ChatDraftCreate, ChatDraftFiles
+from .schemas import ChatDraft, ChatDraftCreate, ChatDraftFiles, ChatDraftModelUpdate
 
 DRAFT_TTL_SECONDS = 24 * 60 * 60
 
@@ -57,6 +58,7 @@ async def draft_response(*, draft: ChatDraftModel, session: AsyncSession) -> Cha
     )
     return ChatDraft(
         id=draft.id,
+        model_id=draft.model_id,
         chat_id=draft.chat_id,
         expires_at=draft.expires_at,
         file_ids=sorted(draft.selected_file_ids, key=str),
@@ -75,9 +77,14 @@ async def create_draft(*, user_id: str, payload: ChatDraftCreate, session: Async
                 ),
             ):
                 raise NotFoundException("Chat not found")
+        if payload.model_id is not None:
+            if payload.chat_id is not None:
+                raise BadDataException("Change an existing chat's model through its selection endpoint")
+            await require_chat_model(payload.model_id, session)
         draft = ChatDraftModel(
             user_id=user_id,
             chat_id=payload.chat_id,
+            model_id=payload.model_id,
             expires_at=int(time.time()) + DRAFT_TTL_SECONDS,
         )
         session.add(draft)
@@ -188,5 +195,27 @@ async def get_draft(*, user_id: str, draft_id: uuid.UUID, session: AsyncSession)
         await session.commit()
         return result
     except (Exception, asyncio.CancelledError):
+        await session.rollback()
+        raise
+
+
+async def change_draft_model(
+    *, user_id: str, draft_id: uuid.UUID, payload: ChatDraftModelUpdate, session: AsyncSession,
+) -> ChatDraft:
+    from asterism.core.exceptions import CodedException
+
+    try:
+        draft = await owned_draft(user_id=user_id, draft_id=draft_id, session=session)
+        if draft.chat_id is not None:
+            raise BadDataException("Change the existing chat's model through its selection endpoint")
+        if draft.model_id != payload.expected_model_id:
+            raise CodedException(409, "Draft model selection changed; reload and retry")
+        if payload.model_id is not None:
+            await require_chat_model(payload.model_id, session)
+        draft.model_id = payload.model_id
+        result = await draft_response(draft=draft, session=session)
+        await session.commit()
+        return result
+    except BaseException:
         await session.rollback()
         raise

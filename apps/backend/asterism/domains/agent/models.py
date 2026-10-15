@@ -17,6 +17,7 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
             "(sub_agent = false AND model_id IS NULL) OR (sub_agent = true AND model_id IS NOT NULL)",
             name="agent_role_model",
         ),
+        CheckConstraint("config_revision >= 1", name="agent_config_revision_positive"),
         CheckConstraint("max_steps >= 1 AND max_steps <= 100", name="agent_loop_limit"),
         Index(
             "one_main_agent_per_user",
@@ -53,6 +54,7 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         nullable=False,
         default="",
     )
+    config_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     max_steps: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

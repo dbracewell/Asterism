@@ -235,3 +235,16 @@ Frontend WebSocket-contract E2E coverage uses the test-only `/e2e/sub-agent` har
 - [Tool Authorization & Approval](tool-authorization.md)
 - [Chat & Real-Time WebSocket](chat-and-websocket.md)
 - [System Overview](overview.md)
+
+## Chat model selection and recorded executions
+
+US-29.2 supplies a chat's selected model separately from its singleton main-agent
+configuration. An explicit model/revision change is guarded against active jobs.
+Before generation, the chat execution service captures model/provider/capabilities
+and the main configuration/revision. Streaming, vision assembly, estimates and
+persisted assistant messages use that identity. Resume reuses a pending execution;
+regeneration explicitly starts one from the current chat selection. Unavailable or
+changed models and revoked capabilities reject replay, without selecting another
+model. Historical snapshots survive catalog edits/deletion. Delegated agents retain
+their own fixed models. See ADR-0017 and the backend README for API and isolation
+boundaries; file authorization is always revalidated from current memberships.

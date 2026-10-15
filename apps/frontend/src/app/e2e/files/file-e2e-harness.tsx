@@ -24,6 +24,7 @@ export function FileE2EHarness() {
             path: { chat_id: "22222222-2222-4222-8222-222222222222" },
             body: {
               user_prompt: prompt,
+              expected_model_revision: 1,
               files: fileIds,
               request_id: requestId,
               parent_message_id: null,

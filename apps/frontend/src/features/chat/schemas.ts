@@ -1,3 +1,4 @@
+import { zMessageExecution } from "@/lib/client/zod.gen";
 import { zMessage } from "@/lib/client/zod.gen";
 import z from "zod";
 
@@ -43,6 +44,7 @@ const AgentCompleteEvent = z.object({
 
 const GenericAgentEvent = z.object({
   type: z.union([z.literal("start")]),
+  execution: zMessageExecution.nullish(),
 });
 
 const AgentRegenerateEvent = z.object({

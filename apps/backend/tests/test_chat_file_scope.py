@@ -18,6 +18,7 @@ async def seed_agent(sessions, user="a"):
     async with sessions() as session:
         from asterism.domains.agent.service import get_main_agent_profile
         from asterism.domains.user.service import initialize_user_settings
+
         await initialize_user_settings(user, session)
         return str((await get_main_agent_profile(user, session)).id)
 
@@ -33,6 +34,7 @@ async def chat(client, agent, files=(), project=None, user="a"):
         "/chat/",
         headers=auth(user),
         json={
+            "model_id": "00000000-0000-0000-0000-000000000001",
             "request_id": str(uuid.uuid4()),
             "user_prompt": "Use these references",
             "files": list(files),
@@ -110,7 +112,7 @@ async def test_create_rejects_foreign_missing_duplicate_ids_atomically_and_old_c
     agent = await seed_agent(sessions)
     owned, foreign = await upload(client, "owned.txt"), await upload(client, "foreign.txt", "b")
     foreign_project = (await client.post("/projects/", headers=auth("b"), json={"name": "Foreign"})).json()
-    base = {"request_id": str(uuid.uuid4()), "user_prompt": "Test"}
+    base = {"model_id": "00000000-0000-0000-0000-000000000001", "request_id": str(uuid.uuid4()), "user_prompt": "Test"}
     payloads = [
         ({"files": [owned["id"], foreign["id"]]}, 400),
         ({"files": [owned["id"], str(uuid.uuid4())]}, 400),

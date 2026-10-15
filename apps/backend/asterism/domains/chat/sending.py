@@ -20,9 +20,10 @@ from .branches import active_branch
 from .draft_models import ChatSendReceiptModel
 from .drafts import consume_draft, read_draft_file_ids
 from .jobs import chat_jobs
+from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
 from .queries import select_owned_chats, select_owned_messages
-from .schemas import Chat, ChatInfo, ChatSendRequest, Message, MessageStatus, NewChatRequest
+from .schemas import Chat, ChatSendRequest, Message, MessageStatus, NewChatRequest
 
 
 def fingerprint(payload: BaseModel, *, chat_id: uuid.UUID | None = None) -> str:
@@ -53,9 +54,10 @@ async def accepted_chat(*, receipt: ChatSendReceiptModel, session: AsyncSession)
 
     scope = await resolve_chat_file_scope(user_id=receipt.user_id, chat_id=receipt.chat_id, session=session)
     response = Message.model_validate(message)
-    response.files = [file.model_copy(update={"available": file.file_id in scope.allowed_file_ids})
-                      for file in response.files]
-    return Chat(info=ChatInfo.model_validate(chat), messages=[response])
+    response.files = [
+        file.model_copy(update={"available": file.file_id in scope.allowed_file_ids}) for file in response.files
+    ]
+    return Chat(info=await selection_info(chat, session), messages=[response])
 
 
 async def resolve_send_files(
@@ -109,12 +111,15 @@ async def persist_user_send(
         )
     session.add(
         ChatSendReceiptModel(
-            user_id=user_id, request_id=payload.request_id, chat_id=chat.id,
-            message_id=message.id, fingerprint=expected,
+            user_id=user_id,
+            request_id=payload.request_id,
+            chat_id=chat.id,
+            message_id=message.id,
+            fingerprint=expected,
         ),
     )
     await consume_draft(user_id=user_id, draft_id=payload.draft_id, session=session)
-    result = Chat(info=ChatInfo.model_validate(chat), messages=[Message.model_validate(message)])
+    result = Chat(info=await selection_info(chat, session), messages=[Message.model_validate(message)])
     await session.commit()
     return result
 
@@ -127,21 +132,42 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
         try:
             await session.execute(update(UserModel).where(UserModel.id == user_id).values(id=UserModel.id))
             receipt = await find_receipt(
-                user_id=user_id, request_id=payload.request_id, expected=expected, session=session,
+                user_id=user_id,
+                request_id=payload.request_id,
+                expected=expected,
+                session=session,
             )
             if receipt is not None:
                 result = await accepted_chat(receipt=receipt, session=session)
                 await session.commit()
                 return result
             agent_id = await resolve_main_agent_id(
-                user_id=user_id, session=session,
+                user_id=user_id,
+                session=session,
             )
             if payload.project_id is not None:
                 await require_owned_project(user_id=user_id, project_id=payload.project_id, session=session)
             files = await resolve_send_files(
-                user_id=user_id, chat_id=None, draft_id=payload.draft_id, file_ids=payload.files, session=session,
+                user_id=user_id,
+                chat_id=None,
+                draft_id=payload.draft_id,
+                file_ids=payload.files,
+                session=session,
             )
-            chat = ChatModel(user_id=user_id, agent_id=agent_id, project_id=payload.project_id)
+            choice = await require_chat_model(payload.model_id, session)
+            if payload.draft_id is not None:
+                from .drafts import owned_draft
+
+                draft = await owned_draft(user_id=user_id, draft_id=payload.draft_id, session=session)
+                if draft.model_id is not None and draft.model_id != payload.model_id:
+                    raise CodedException(409, "Draft model selection changed; reload before sending")
+            chat = ChatModel(
+                user_id=user_id,
+                agent_id=agent_id,
+                project_id=payload.project_id,
+                selected_model_id=payload.model_id,
+                selected_model_snapshot=choice,
+            )
             session.add(chat)
             await session.flush()
             return await persist_user_send(
@@ -156,7 +182,10 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
         except IntegrityError as error:
             await session.rollback()
             receipt = await find_receipt(
-                user_id=user_id, request_id=payload.request_id, expected=expected, session=session,
+                user_id=user_id,
+                request_id=payload.request_id,
+                expected=expected,
+                session=session,
             )
             if receipt is not None:
                 result = await accepted_chat(receipt=receipt, session=session)
@@ -178,8 +207,9 @@ async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendReq
         if receipt is not None:
             return (await accepted_chat(receipt=receipt, session=session)).messages[0]
         # Owner resolution precedes runtime state so foreign activity is not exposed.
-        if not await session.scalar(select_owned_chats(user_id=user_id).with_only_columns(ChatModel.id)
-                                    .where(ChatModel.id == chat_id)):
+        if not await session.scalar(
+            select_owned_chats(user_id=user_id).with_only_columns(ChatModel.id).where(ChatModel.id == chat_id),
+        ):
             raise NotFoundException("Chat not found")
         with chat_jobs.guard_idle_change(chat_id):
             chat = await session.scalar(
@@ -194,6 +224,11 @@ async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendReq
             )
             if chat is None:
                 raise NotFoundException("Chat not found")
+            if chat.model_revision != payload.expected_model_revision:
+                raise CodedException(409, "Chat model selection changed; reload before sending")
+            if chat.selected_model_id is None:
+                raise CodedException(409, "Choose a chat model before sending")
+            await require_chat_model(chat.selected_model_id, session)
             branch = active_branch(
                 list(
                     await session.scalars(
@@ -206,7 +241,11 @@ async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendReq
             if branch and branch[-1].status == MessageStatus.PENDING:
                 raise CodedException(409, "A message is awaiting generation; resume or regenerate it")
             files = await resolve_send_files(
-                user_id=user_id, chat_id=chat_id, draft_id=payload.draft_id, file_ids=payload.files, session=session,
+                user_id=user_id,
+                chat_id=chat_id,
+                draft_id=payload.draft_id,
+                file_ids=payload.files,
+                session=session,
             )
             result = await persist_user_send(
                 user_id=user_id,

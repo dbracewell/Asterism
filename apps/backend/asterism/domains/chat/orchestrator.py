@@ -26,6 +26,7 @@ from asterism.domains.chat.schemas import (
     ChatContextUsage,
     ChatUpdateRequest,
     Message,
+    MessageExecution,
     MessageStatus,
     NewMessageRequest,
     UpdateMessageRequest,
@@ -63,6 +64,7 @@ class ChatOrchestrator:
         self._active_parent_id: uuid.UUID | None = None
         self._streaming_content: str = ""
         self._streaming_thinking: str = ""
+        self._execution: MessageExecution | None = None
 
         # Inject interactive approval into the agent so tool
         # authorization flows through the WebSocket UI.
@@ -115,6 +117,7 @@ class ChatOrchestrator:
                     thinking=self._streaming_thinking,
                     status=MessageStatus.CANCELLED,
                     parent_message_id=parent_id,
+                    execution=self._execution,
                     model_id=self.agent.model_id,  # type: ignore
                 ),
             )
@@ -149,6 +152,7 @@ class ChatOrchestrator:
         return message_index, self.chat.messages[message_index]
 
     async def handle_regenerate_message(self, parent_message_index: int) -> None:
+        self._execution = await self.agent.prepare_execution(self.chat.messages[parent_message_index].id, restart=True)
         parent_message: Message = self.chat.messages[parent_message_index]
         parent_message = await chat_service.update_message(
             user_id=self.user_id,
@@ -395,7 +399,7 @@ class ChatOrchestrator:
 
             last_user_message_index = index_of(
                 self.chat.messages,
-                lambda m: m.role == "user" and m.status == MessageStatus.PENDING,
+                lambda m: m.role in {"user", "assistant"} and m.status == MessageStatus.PENDING,
                 reverse=True,
             )
             if last_user_message_index < 0:
@@ -409,6 +413,7 @@ class ChatOrchestrator:
             self._streaming_content = ""
             self._streaming_thinking = ""
 
+            self._execution = await self.agent.prepare_execution(parent_message.id)
             messages = await self._build_agent_messages()
             async for event in self.agent.run(messages=messages):
                 print(f"Agent event: {event}")
@@ -442,6 +447,7 @@ class ChatOrchestrator:
                                 parent_message_id=parent_message.id,
                                 tool_calls=event.tool_calls if event.has_tool_calls() else None,
                                 tool_call_results=event.tool_results if event.has_tool_results() else None,
+                                execution=self._execution,
                                 model_id=self.agent.model_id,  # type:ignore
                             ),
                         )
@@ -473,6 +479,14 @@ class ChatOrchestrator:
                                     "event": (event.sub_agent.event.model_dump(mode="json")),
                                 },
                             )
+
+                    case AgentEvent(type=AgentEventType.START):
+                        await self.queue.put(
+                            {
+                                **event.model_dump(mode="json"),
+                                "execution": self._execution.model_dump(mode="json") if self._execution else None,
+                            },
+                        )
 
                     case AgentEvent(type=AgentEventType.DELTA):
                         self._streaming_content = event.content

@@ -14,6 +14,7 @@ from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.store import LocalFileStore
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel
 from asterism.domains.projects.service import advance_context_revision
+from asterism.domains.settings.models import LLMModel, ProviderModel
 from asterism.domains.user.models import UserModel
 from asterism.main import app
 from sqlalchemy import event, select, update
@@ -29,6 +30,15 @@ async def project_api(tmp_path, monkeypatch):
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
         session.add_all([UserModel(id="a"), UserModel(id="b")])
+        provider = ProviderModel(name="Chat test provider", base_url="http://localhost/v1", api_key="test")
+        session.add(provider)
+        await session.flush()
+        session.add_all(
+            [
+                LLMModel(id=uuid.UUID(int=1), provider_id=provider.id, name="Chat A", is_active=True),
+                LLMModel(id=uuid.UUID(int=2), provider_id=provider.id, name="Chat B", is_active=True),
+            ],
+        )
         await session.commit()
 
     async def db():
@@ -247,7 +257,9 @@ async def test_listing_literal_search_pagination_and_stable_ties(project_api):
         ids = []
         for page in range(1, 4):
             result = await client.get(
-                "/projects/", headers=auth(), params={"sort_by": sort, "page": page, "page_size": 1},
+                "/projects/",
+                headers=auth(),
+                params={"sort_by": sort, "page": page, "page_size": 1},
             )
             assert result.status_code == 200
             assert result.json()["total"] == 3
@@ -277,7 +289,8 @@ async def test_deletion_retains_shared_source_bytes_and_extraction(project_api):
     source_key = store.save("a", source_id, ".txt", b"keep these original bytes")
     async with sessions() as session:
         file = UserFileModel(
-            id=source_id, storage_key=source_key,
+            id=source_id,
+            storage_key=source_key,
             user_id="a",
             filename="source.txt",
             original_name="source.txt",
@@ -321,7 +334,10 @@ async def test_membership_revision_is_transactional_and_guards_stale_updates(pro
     async with sessions() as session:
         assert (
             await advance_context_revision(
-                user_id="a", project_id=project_id, expected_context_revision=1, session=session,
+                user_id="a",
+                project_id=project_id,
+                expected_context_revision=1,
+                session=session,
             )
             == 2
         )
@@ -330,7 +346,10 @@ async def test_membership_revision_is_transactional_and_guards_stale_updates(pro
     async with sessions() as session:
         assert (
             await advance_context_revision(
-                user_id="a", project_id=project_id, expected_context_revision=1, session=session,
+                user_id="a",
+                project_id=project_id,
+                expected_context_revision=1,
+                session=session,
             )
             == 2
         )
@@ -338,13 +357,18 @@ async def test_membership_revision_is_transactional_and_guards_stale_updates(pro
     async with sessions() as session:
         with pytest.raises(CodedException) as error:
             await advance_context_revision(
-                user_id="a", project_id=project_id, expected_context_revision=1, session=session,
+                user_id="a",
+                project_id=project_id,
+                expected_context_revision=1,
+                session=session,
             )
         assert error.value.code == 409
         await session.rollback()
     assert (
         await client.patch(
-            f"/projects/{project_id}", headers=auth(), json={"expected_context_revision": 1, "system_prompt": "stale"},
+            f"/projects/{project_id}",
+            headers=auth(),
+            json={"expected_context_revision": 1, "system_prompt": "stale"},
         )
     ).status_code == 409
 
@@ -369,16 +393,18 @@ async def test_concurrent_context_writes_and_duplicate_creates_have_one_winner(p
     client, _, _ = project_api
     project = await create(client)
     path = f"/projects/{project['id']}"
-    responses = await asyncio.gather(*[
-        client.patch(path, headers=auth(), json={"expected_context_revision": 1, "system_prompt": prompt})
-        for prompt in ("one", "two")
-    ])
+    responses = await asyncio.gather(
+        *[
+            client.patch(path, headers=auth(), json={"expected_context_revision": 1, "system_prompt": prompt})
+            for prompt in ("one", "two")
+        ],
+    )
     assert sorted(response.status_code for response in responses) == [200, 409]
     winner = next(response.json() for response in responses if response.status_code == 200)
     assert (await client.get(path, headers=auth())).json() == winner
-    responses = await asyncio.gather(*[
-        client.post("/projects/", headers=auth(), json={"name": "Same"}) for _ in range(2)
-    ])
+    responses = await asyncio.gather(
+        *[client.post("/projects/", headers=auth(), json={"name": "Same"}) for _ in range(2)],
+    )
     assert sorted(response.status_code for response in responses) == [201, 409]
 
 
@@ -388,23 +414,31 @@ async def test_stale_membership_transaction_rolls_back_all_changes(project_api):
     project = await create(client)
     project_id = uuid.UUID(project["id"])
     async with sessions() as session:
-        files = [UserFileModel(
-            storage_key=str(uuid.uuid4()),
-            user_id="a", filename=name, original_name=name, size=1,
-            mime_type="text/plain", kind=FileKind.TEXT, sha256="a" * 64,
-        ) for name in ("one.txt", "two.txt")]
+        files = [
+            UserFileModel(
+                storage_key=str(uuid.uuid4()),
+                user_id="a",
+                filename=name,
+                original_name=name,
+                size=1,
+                mime_type="text/plain",
+                kind=FileKind.TEXT,
+                sha256="a" * 64,
+            )
+            for name in ("one.txt", "two.txt")
+        ]
         session.add_all(files)
         await session.commit()
         file_ids = [file.id for file in files]
         session.add(ProjectFileModel(project_id=project_id, file_id=file_ids[0], user_id="a"))
-        await advance_context_revision(user_id="a", project_id=project_id,
-                                       expected_context_revision=1, session=session)
+        await advance_context_revision(user_id="a", project_id=project_id, expected_context_revision=1, session=session)
         await session.commit()
     async with sessions() as session:
         session.add(ProjectFileModel(project_id=project_id, file_id=file_ids[1], user_id="a"))
         with pytest.raises(CodedException) as error:
-            await advance_context_revision(user_id="a", project_id=project_id,
-                                           expected_context_revision=1, session=session)
+            await advance_context_revision(
+                user_id="a", project_id=project_id, expected_context_revision=1, session=session,
+            )
         assert error.value.code == 409
         await session.rollback()
     async with sessions() as session:

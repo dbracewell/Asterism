@@ -61,6 +61,7 @@ class KnowledgeBaseAssignmentSummary(BaseModel):
 
 class AgentProfile(BaseModel):
     """Normalized runtime configuration, separate from public editing contracts."""
+
     model_config = ConfigDict(from_attributes=True, extra="ignore")
     name: str
     description: str
@@ -73,6 +74,7 @@ class AgentProfile(BaseModel):
     )
     tools: list[str] | None = Field(default_factory=default_allowed_tools)
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    config_revision: int = Field(default=1, ge=1)
     knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 
@@ -99,6 +101,7 @@ class MainAgentConfiguration(MainAgentUpdate):
     id: uuid.UUID
     name: str
     description: str
+    config_revision: int = Field(default=1, ge=1)
     knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 
@@ -112,6 +115,7 @@ class SubAgentDefinition(SubAgentCreate):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     model_available: bool
+    config_revision: int = Field(default=1, ge=1)
     knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 

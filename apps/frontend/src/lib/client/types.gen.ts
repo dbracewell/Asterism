@@ -138,6 +138,10 @@ export type ChatContextUsage = {
  */
 export type ChatDraft = {
     /**
+     * Model Id
+     */
+    model_id?: string | null;
+    /**
      * Id
      */
     id: string;
@@ -164,6 +168,10 @@ export type ChatDraft = {
  */
 export type ChatDraftCreate = {
     /**
+     * Model Id
+     */
+    model_id?: string | null;
+    /**
      * Chat Id
      */
     chat_id?: string | null;
@@ -177,6 +185,20 @@ export type ChatDraftFiles = {
      * File Ids
      */
     file_ids: Array<string>;
+};
+
+/**
+ * ChatDraftModelUpdate
+ */
+export type ChatDraftModelUpdate = {
+    /**
+     * Model Id
+     */
+    model_id: string | null;
+    /**
+     * Expected Model Id
+     */
+    expected_model_id: string | null;
 };
 
 /**
@@ -258,6 +280,20 @@ export type ChatInfo = {
      */
     message_count?: number | null;
     context_model?: ChatContextModel | null;
+    /**
+     * Selected Model Id
+     */
+    selected_model_id?: string | null;
+    /**
+     * Model Revision
+     */
+    model_revision?: number;
+    selected_model?: ChatModelChoice | null;
+    pending_execution?: MessageExecution | null;
+    /**
+     * Resume Error
+     */
+    resume_error?: string | null;
 };
 
 /**
@@ -283,6 +319,67 @@ export type ChatInfoList = {
 };
 
 /**
+ * ChatModelChoice
+ */
+export type ChatModelChoice = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Provider Id
+     */
+    provider_id: string;
+    /**
+     * Provider Name
+     */
+    provider_name: string;
+    /**
+     * Available
+     */
+    available: boolean;
+    /**
+     * Enabled
+     */
+    enabled?: boolean;
+    /**
+     * Authorized
+     */
+    authorized?: boolean;
+    /**
+     * Unavailable Reason
+     */
+    unavailable_reason?: string | null;
+    /**
+     * Context Window
+     */
+    context_window?: number | null;
+    context_window_source?: ModelCapabilitySource;
+    /**
+     * Supports Vision
+     */
+    supports_vision?: boolean | null;
+};
+
+/**
+ * ChatModelUpdate
+ */
+export type ChatModelUpdate = {
+    /**
+     * Model Id
+     */
+    model_id: string;
+    /**
+     * Expected Model Revision
+     */
+    expected_model_revision: number;
+};
+
+/**
  * ChatMoveRequest
  */
 export type ChatMoveRequest = {
@@ -296,6 +393,10 @@ export type ChatMoveRequest = {
  * ChatSendRequest
  */
 export type ChatSendRequest = {
+    /**
+     * Expected Model Revision
+     */
+    expected_model_revision: number;
     /**
      * Request Id
      */
@@ -1072,6 +1173,10 @@ export type MainAgentConfiguration = {
      */
     description: string;
     /**
+     * Config Revision
+     */
+    config_revision?: number;
+    /**
      * Knowledge Bases
      */
     knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
@@ -1116,6 +1221,7 @@ export type Message = {
      * Tool Calls
      */
     tool_calls?: Array<ToolCall> | null;
+    execution?: MessageExecution | null;
     /**
      * Id
      */
@@ -1184,6 +1290,26 @@ export type Message = {
 };
 
 /**
+ * MessageExecution
+ */
+export type MessageExecution = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Request Message Id
+     */
+    request_message_id: string;
+    model: ChatModelChoice;
+    /**
+     * Model Revision
+     */
+    model_revision: number;
+    configuration: MainAgentConfiguration;
+};
+
+/**
  * MessageFileReference
  */
 export type MessageFileReference = {
@@ -1229,6 +1355,10 @@ export type ModelCapabilitySource = 'catalog' | 'provider' | 'manual' | 'unknown
  * NewChatRequest
  */
 export type NewChatRequest = {
+    /**
+     * Model Id
+     */
+    model_id: string;
     /**
      * Request Id
      */
@@ -1728,6 +1858,10 @@ export type SubAgentDefinition = {
      * Model Available
      */
     model_available: boolean;
+    /**
+     * Config Revision
+     */
+    config_revision?: number;
     /**
      * Knowledge Bases
      */
@@ -2665,6 +2799,105 @@ export type FileKnowledgeBaseGetManyResponses = {
 };
 
 export type FileKnowledgeBaseGetManyResponse = FileKnowledgeBaseGetManyResponses[keyof FileKnowledgeBaseGetManyResponses];
+
+export type ChatModelsListData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/chat/models';
+};
+
+export type ChatModelsListErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+};
+
+export type ChatModelsListError = ChatModelsListErrors[keyof ChatModelsListErrors];
+
+export type ChatModelsListResponses = {
+    /**
+     * Response Chatmodelslist
+     *
+     * Successful Response
+     */
+    200: Array<ChatModelChoice>;
+};
+
+export type ChatModelsListResponse = ChatModelsListResponses[keyof ChatModelsListResponses];
+
+export type ChatModelUpdateData = {
+    body: ChatModelUpdate;
+    path: {
+        /**
+         * Chat Id
+         */
+        chat_id: string;
+    };
+    query?: never;
+    url: '/chat/{chat_id}/model';
+};
+
+export type ChatModelUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Conflict
+     */
+    409: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatModelUpdateError = ChatModelUpdateErrors[keyof ChatModelUpdateErrors];
+
+export type ChatModelUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatInfo;
+};
+
+export type ChatModelUpdateResponse = ChatModelUpdateResponses[keyof ChatModelUpdateResponses];
+
+export type ChatDraftModelUpdateData = {
+    body: ChatDraftModelUpdate;
+    path: {
+        /**
+         * Draft Id
+         */
+        draft_id: string;
+    };
+    query?: never;
+    url: '/chat/drafts/{draft_id}/model';
+};
+
+export type ChatDraftModelUpdateErrors = {
+    /**
+     * Not found
+     */
+    404: ErrorDetail;
+    /**
+     * Validation Error
+     */
+    422: ErrorDetail;
+};
+
+export type ChatDraftModelUpdateError = ChatDraftModelUpdateErrors[keyof ChatDraftModelUpdateErrors];
+
+export type ChatDraftModelUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatDraft;
+};
+
+export type ChatDraftModelUpdateResponse = ChatDraftModelUpdateResponses[keyof ChatDraftModelUpdateResponses];
 
 export type ChatSessionGetManyData = {
     body?: never;

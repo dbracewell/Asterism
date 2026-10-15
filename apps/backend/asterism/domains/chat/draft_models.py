@@ -15,8 +15,11 @@ class ChatDraftModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     __tablename__ = "chat_drafts"
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     chat_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     selected_file_ids: Mapped[list[uuid.UUID]] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(list[uuid.UUID])), nullable=False, default=list,
+        JSONB_COLUMN(TypeAdapter(list[uuid.UUID])),
+        nullable=False,
+        default=list,
     )
     expires_at: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     __table_args__ = (

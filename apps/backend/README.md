@@ -345,11 +345,51 @@ an active catalog model. Disablement preserves the binding and reports
 Bound model deletion is restricted in storage, and provider deletion requires explicit
 rebinding or definition deletion first. Persona/profile invariants are separate.
 
-Until US-29.2, runtime uses the user's explicitly configured `default_model_id`
-independently of main settings. Chat creation binds the sole main configuration
-server-side and rejects `agent_id` input. Main instructions/limits refresh before the
-next turn; model changes do not change the main configuration or historical message IDs.
+US-29.2 persists model selection on the chat, independently of main settings. The
+user default model is only a new-chat picker prefill; it never retargets existing
+chats. Chat creation binds the sole main configuration server-side and rejects
+`agent_id` input. Historical message identities and model snapshots remain stable.
 
 These are fresh-schema changes. Use the documented development reset for an existing
 local database; no migration or legacy fallback is provided. Story verification uses
 temporary databases and does not reset the working database.
+
+### Chat model selection and execution provenance (US-29.2)
+
+`GET /chat/models` exposes platform-catalog model/provider identity, `enabled`,
+`authorized`, `available`, context-window provenance and vision capability. All
+currently authenticated users share catalog visibility; no provider credentials
+are exposed. An empty catalog returns an empty list; disabled entries are explicit.
+`NewChatRequest.model_id` is required. There is no first-available selection or
+runtime dependency on a user default model.
+
+`PUT /chat/{id}/model` requires an owned chat, an active model and the observed
+`expected_model_revision`. Actual changes increment the revision; same-model edits
+are no-ops. Model changes, send acceptance and generation starts use the existing
+process-local idle guard through transaction completion. Active runs and pending
+approvals reject changes. Follow-up sends carry the observed model revision;
+acknowledgement replay returns the already accepted message even after selection
+changes. Selections retain their UUID and display snapshot after catalog deletion;
+reopen reports unavailability without relabeling history or choosing a replacement.
+
+New-chat drafts optionally persist `model_id`. `PUT /chat/drafts/{id}/model` uses
+an expected previous model ID, including null. Acceptance validates the choice and
+rejects a mismatch without consuming the draft or partially attaching files.
+Follow-up drafts use the existing chat selection endpoint instead of another binding.
+
+Before provider execution, the runtime atomically records an execution UUID,
+model/provider and capability identity, selection revision, and a complete main
+configuration snapshot with its revision on the pending message. Resume uses that
+recorded snapshot; explicit regeneration records the current selection/configuration
+before changing the active branch. Model identity/capability changes, disablement and
+revoked tools/knowledge assignments reject replay with a regeneration action. File
+memberships are still revalidated from current authorized scope. Assistant output,
+cancelled partial output and stream-start packets carry the actual execution snapshot.
+Historical metadata has no model/provider FK that could erase or relabel it.
+
+Context reads expose a recorded pending execution and actionable resume errors;
+replay estimates use that snapshot. New turns use the selected model's window/vision
+properties and main generation defaults. Sub-agents keep their own required fixed
+models; they cannot inherit or override them with the chat selection. These guards
+remain single-process like the existing job manager; distributed run locks are outside
+this story. Persisted execution snapshots are not durable tool/workflow checkpoints.

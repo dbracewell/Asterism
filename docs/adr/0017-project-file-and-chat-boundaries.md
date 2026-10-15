@@ -122,3 +122,30 @@ and revalidates a model before using a cached client. Persisted chat model selec
 project-selected workers, and derived internal tools remain the subsequent EPIC-29
 stories. Existing caller adjustments do not declare US-27.4/27.5 complete. Fresh-schema
 verification uses disposable isolated databases; the working database is retained.
+
+### US-29.2 chat selection and execution snapshots
+
+Model choice belongs to the chat, with a positive selection revision and an explicit
+new-chat model ID. The user default is a picker prefill only. Catalog visibility is
+currently platform-wide for authenticated users; model availability checks stay at
+execution/mutation boundaries. Removed/disabled selections retain identity and expose
+an unavailable state. There is no implicit replacement, model FK that erases history,
+or main-agent model binding.
+
+Selection updates use expected revisions and the existing idle-change guard through
+relational commit; send acceptance checks the observed revision. Provider execution
+starts under the job guard and snapshots actual model/provider/capabilities, selection
+revision and the versioned main configuration. A pending private execution record
+survives reconnect/process restart. Resume reuses it; explicit regeneration validates
+and stores a new snapshot before altering the branch. Revoked capabilities or changed
+model identity/capabilities reject replay rather than silently substituting settings.
+Current source/attachment authorization still applies to replay. Multi-step assistant
+parents may be regenerated without changing their original executed-model metadata.
+
+Every persisted assistant/partial answer and stream-start packet carries the actual
+execution. Estimates for pending replay apply the recorded configuration/model, and
+an unavailable replay has an explicit regeneration error. Sub-agent model bindings
+remain distinct; project selection/internal-tool derivation are subsequent stories.
+No distributed runtime-lock framework, migration, compatibility API, or working-data
+reset is introduced. The present model controls are caller integration for US-29.2;
+they do not mark the broader US-27.5 UI complete.
