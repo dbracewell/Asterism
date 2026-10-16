@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from asterism.common.log import get_logger
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
+from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.token_counting import estimate_text_tokens
@@ -206,6 +207,31 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
 
     sub_profile = agent_profile.model_copy(update={"tools": allowed_tools})
 
+    parent_execution = ctx.execution_scope or ExecutionScope(
+        user_id=parent_scope.user_id,
+        user_profile_id=None,
+        agent_id=parent_scope.caller_agent_id,
+        is_sub_agent=False,
+        chat_id=parent_scope.chat_id,
+        project_id=parent_scope.project_id,
+        selected_model=None,
+        executed_model=ModelIdentity(id=parent_scope.model_id),
+        eligible_sub_agent_ids=(parent_scope.delegation.agent_ids if parent_scope.delegation else frozenset())
+        | {target_id},
+        effective_internal_tools=frozenset({"sub_agent", "search_knowledge"}),
+        active_branch_message_ids=(),
+        configuration_revision=1,
+        prompt_revision=parent_scope.delegation.context_revision if parent_scope.delegation else None,
+        allowed_file_ids=parent_scope.file_ids,
+        file_provenance=(),
+    )
+    child_scope = parent_execution.narrow_for_sub_agent(
+        agent_id=target_id,
+        executed_model=ModelIdentity(id=agent_profile.model_id),
+        configuration_revision=agent_profile.config_revision,
+        effective_internal_tools=parent_execution.effective_internal_tools,
+    )
+
     child_call_stack = [*ctx.call_stack, target_id]
 
     parent_msg_id = ctx.parent_message_id
@@ -237,6 +263,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         delegation_scope=ctx.delegation_scope,
         authorization_check=check_authorization,
         tool_scope=replace(parent_scope, caller_agent_id=target_id, model_id=agent_profile.model_id),
+        execution_scope=child_scope,
     )
 
     forwarded_types = {

@@ -12,6 +12,7 @@ from asterism.common.log import get_logger
 from asterism.core.config import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.core.schemas import AuthedUser
+from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity, resolve_execution_scope
 from asterism.domains.chat.schemas import Chat, MessageExecution
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import (
@@ -57,6 +58,7 @@ class Agent:
         delegation_scope: DelegationScope | None = None,
         tool_scope: ContextToolScope | None = None,
         authorization_check: Callable[[], Awaitable[None]] | None = None,
+        execution_scope: ExecutionScope | None = None,
     ) -> None:
         if profile.sub_agent and model_id is not None and model_id != profile.model_id:
             raise BadDataException("Sub-agent model binding cannot be overridden")
@@ -65,6 +67,7 @@ class Agent:
         self._delegation_available = False
         self.delegation_scope = delegation_scope
         self.authorization_check = authorization_check
+        self.execution_scope = execution_scope
         self.execution: MessageExecution | None = None
         self.model_id = profile.model_id if profile.sub_agent else model_id
         self.profile: AgentProfile = profile
@@ -122,6 +125,65 @@ class Agent:
         )
         self.max_steps = self.profile.max_steps
 
+    async def prepare_execution_scope(self) -> ExecutionScope:
+        from asterism.db.database import get_async_db_session
+        from asterism.domains.chat.scope import read_chat_scope_snapshot, read_project_scope_snapshot
+
+        await self.resolve_tools(reset=not self.profile.sub_agent)
+        executed_model = None
+        if self.model_id is not None:
+            if self.execution is not None:
+                choice = self.execution.model
+                executed_model = ModelIdentity(id=choice.id, provider_id=choice.provider_id, name=choice.name)
+            elif self.execution_scope is not None and self.execution_scope.executed_model is not None:
+                executed_model = self.execution_scope.executed_model
+            else:
+                executed_model = ModelIdentity(id=self.model_id)
+        selected_choice = self.session.info.selected_model
+        selected_model = (
+            ModelIdentity(
+                id=selected_choice.id,
+                provider_id=selected_choice.provider_id,
+                name=selected_choice.name,
+            )
+            if selected_choice is not None
+            else None
+        )
+        if self.profile.sub_agent and self.execution_scope is not None:
+            selected_model = self.execution_scope.selected_model
+
+        async with get_async_db_session() as db:
+
+            async def chat_reader():
+                return await read_chat_scope_snapshot(user_id=self.user.id, chat_id=self.session.info.id, session=db)
+
+            async def project_reader(project_id: uuid.UUID):
+                return await read_project_scope_snapshot(user_id=self.user.id, project_id=project_id, session=db)
+
+            scope = await resolve_execution_scope(
+                user_id=self.user.id,
+                user_profile_id=None,
+                agent_id=self.profile.id,
+                is_sub_agent=self.profile.sub_agent,
+                chat_id=self.session.info.id,
+                selected_model=selected_model,
+                executed_model=executed_model,
+                effective_internal_tools=frozenset(set(self.effective_tools) & INTERNAL_TOOL_NAMES),
+                configuration_revision=self.profile.config_revision,
+                chat_scope_reader=chat_reader,
+                project_scope_reader=project_reader,
+            )
+        if self.profile.sub_agent and self.execution_scope is not None:
+            if (
+                scope.project_id != self.execution_scope.project_id
+                or not scope.allowed_file_ids <= self.execution_scope.allowed_file_ids
+                or not scope.eligible_sub_agent_ids <= self.execution_scope.eligible_sub_agent_ids
+                or not scope.effective_internal_tools <= self.execution_scope.effective_internal_tools
+            ):
+                raise BadDataException("Delegated execution scope changed")
+        self.execution_scope = scope
+        return scope
+
     async def _get_client(self) -> LLMClientProtocol:
         if self.model_id is None:
             raise BadDataException("Choose an available chat model before generating")
@@ -170,6 +232,8 @@ class Agent:
         async def authorize_internal(name: str) -> None:
             from asterism.domains.chat.tool_policy import require_internal_tool
 
+            if self.execution_scope is None or name not in self.execution_scope.effective_internal_tools:
+                raise BadDataException("Internal tool is unavailable in this execution context")
             await require_internal_tool(
                 name=name, user_id=self.user.id, chat_id=self.session.info.id, scope=self.tool_scope
             )
@@ -187,6 +251,7 @@ class Agent:
                 parent_message_id=self.parent_message_id,
                 delegation_scope=self.delegation_scope,
                 tool_scope=self.tool_scope,
+                execution_scope=self.execution_scope,
                 authorize_internal=authorize_internal,
             )
             for auth in auths
@@ -213,6 +278,12 @@ class Agent:
             model_id=self.model_id,
             ceiling=None if reset else self.tool_scope,
         )
+        if self.execution_scope is not None:
+            self.effective_tools = [
+                name
+                for name in self.effective_tools
+                if name not in INTERNAL_TOOL_NAMES or name in self.execution_scope.effective_internal_tools
+            ]
         self.delegation_scope = self.tool_scope.delegation if self.tool_scope else None
         return self.effective_tools
 

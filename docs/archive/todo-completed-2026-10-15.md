@@ -50,3 +50,18 @@ The working database was retained; fresh schema initialization is required.
 EPIC-29 is complete: all four stories and 17 tasks have been implemented and user-confirmed. US-29.1 is archived under 2026-10-14; US-29.2 through US-29.4 are archived here.
 
 Next recommended epic: EPIC-26 — Composable execution context. Begin with US-26.1 — Execution scope resolver.
+
+## US-26.1 — Execution scope resolver
+
+User confirmed completion on 2026-10-15 and authorized merge into `main`.
+
+- [x] US-26.1: Execution scope resolver.
+  - [x] US-26.1-T1: Implement a server-derived context with user/profile/main-agent-or-sub-agent/chat/project IDs, selected and executed model identity, eligible project sub-agent IDs, effective internal tools, active branch, configuration/prompt revision, allowed file IDs, and file provenance. (`user_profile_id` is typed but unpopulated: no active-profile concept exists in the runtime yet.)
+  - [x] US-26.1-T2: Inject small project and chat scope readers into the resolver rather than letting Agent query domain tables.
+  - [x] US-26.1-T3: Resolve scope at turn start and recheck authorization before each file/retrieval tool call; reject canceled or revoked execution contexts. Connect project deletion to cancellation of affected active runs before deleting project context.
+  - [x] US-26.1-T4: Pass narrowed context to delegated agents and background/restarted jobs without granting new tools or wider files.
+  - [x] US-26.1-T5: Test empty scope, cross-user IDs, same-agent different-chat isolation, delegation, and revocation races.
+
+Verification: 402 backend tests passed; ruff check and format clean; basedpyright reports 11 pre-existing errors in unrelated web-search components (unchanged by this story). Frontend gates and OpenAPI regeneration were not run because no frontend or API contract changed.
+
+Next recommended story: US-26.2 — Composable project prompts.

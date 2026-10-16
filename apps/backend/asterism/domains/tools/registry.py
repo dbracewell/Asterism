@@ -17,6 +17,7 @@ import asterism.domains.settings.service as settings_service
 from asterism.common.retries import async_retry
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.delegation_scope import DelegationScope
+from asterism.domains.agent.execution_scope import ExecutionScope
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.chat.schemas import Chat
 from asterism.domains.components.schemas import ComponentType
@@ -84,6 +85,7 @@ class ToolContext[T: BaseModel | None]:
     parent_message_id: uuid.UUID | None = None
     delegation_scope: DelegationScope | None = None
     tool_scope: ContextToolScope | None = None
+    execution_scope: ExecutionScope | None = None
 
 
 @dataclass(frozen=True)
@@ -173,6 +175,7 @@ class ToolRegistry:
         parent_message_id: uuid.UUID | None = None,
         delegation_scope: DelegationScope | None = None,
         tool_scope: ContextToolScope | None = None,
+        execution_scope: ExecutionScope | None = None,
         authorize_internal: Callable[[str], Awaitable[None]] | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
@@ -211,6 +214,7 @@ class ToolRegistry:
                 parent_message_id=parent_message_id,
                 delegation_scope=delegation_scope,
                 tool_scope=tool_scope,
+                execution_scope=execution_scope,
             )
 
             if llm_tool.name not in ctx.app_settings.active_tools:

@@ -218,6 +218,7 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
         model_id=uuid.uuid4(),
         run=run,
         prepare_execution=AsyncMock(return_value=None),
+        prepare_execution_scope=AsyncMock(return_value=None),
     )
     orchestrator = ChatOrchestrator(agent)
 

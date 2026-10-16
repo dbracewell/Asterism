@@ -93,7 +93,6 @@ Comprehensive system design guides and Mermaid sequence diagrams are available i
 - [Knowledge Retrieval](../../docs/architecture/knowledge-retrieval.md) — LanceDB lifecycle, offline model provisioning, and multimodal embedding benchmark
 - [Authentication & Security](../../docs/architecture/auth-and-security.md) — BetterAuth, JWKS RS256 token verification, and tenancy
 
-
 ### Project schema (US-24.1)
 
 Fresh initialization includes `projects` and `project_files`. Memberships use composite
@@ -103,7 +102,6 @@ See [ADR-0017](../../docs/adr/0017-project-file-and-chat-boundaries.md) for the 
 contracts. Existing databases are disposable: use the verified-target reset workflow
 above to recreate them rather than relying on `create_all` to alter existing tables.
 
-
 ### Project lifecycle API (US-24.2)
 
 All project endpoints use the existing JWT/user dependency and owner scope. A foreign
@@ -112,13 +110,13 @@ ID returns the same 404 as a missing ID. Project names are trimmed, required, at
 system prompt default to empty strings (limits: 10,000 and 100,000 characters).
 Explicit nulls and unrecognized request-body fields are rejected with 422.
 
-| Method | Path | Behavior |
-| --- | --- | --- |
-| POST | `/api/py/projects/` | Create; returns 201 and the project |
-| GET | `/api/py/projects/` | List with page/page_size, sort_by, and query |
-| GET | `/api/py/projects/{project_id}` | Read an owned project |
-| PATCH | `/api/py/projects/{project_id}` | Update supplied fields; expected_context_revision is required in the body |
-| DELETE | `/api/py/projects/{project_id}` | Delete; expected_context_revision is required in the query |
+| Method | Path                            | Behavior                                                                  |
+| ------ | ------------------------------- | ------------------------------------------------------------------------- |
+| POST   | `/api/py/projects/`             | Create; returns 201 and the project                                       |
+| GET    | `/api/py/projects/`             | List with page/page_size, sort_by, and query                              |
+| GET    | `/api/py/projects/{project_id}` | Read an owned project                                                     |
+| PATCH  | `/api/py/projects/{project_id}` | Update supplied fields; expected_context_revision is required in the body |
+| DELETE | `/api/py/projects/{project_id}` | Delete; expected_context_revision is required in the query                |
 
 Pagination starts at page 1, defaults to 50 rows, and permits up to 100 per page.
 `sort_by` accepts `name` (ascending, default), `created`, or `updated` (newest first),
@@ -128,8 +126,7 @@ are literal characters. Responses include projects, total, page, and page_size.
 
 Prompt changes advance context_revision atomically; unchanged prompts and metadata-only
 edits do not. A no-op patch preserves timestamps. This revision tracks runtime context,
-not a general metadata edit version. Stale updates/deletes and duplicate names return
-409. Reload after a conflict; do not blindly retry using the newer revision.
+not a general metadata edit version. Stale updates/deletes and duplicate names return 409. Reload after a conflict; do not blindly retry using the newer revision.
 `advance_context_revision` is a transaction-local service operation for subsequent
 membership changes: call it for a real change, commit memberships and revision together,
 and roll the whole transaction back on failure. Bulk no-ops must not advance it.
@@ -140,7 +137,6 @@ project foreign keys detach chats to General while preserving history/local refe
 US-25.2 coordinates explicit detachment in the deletion transaction; US-26.1 adds affected-run
 cancellation before project deletion. No current development database was reset. The generated Hey API SDK, schemas, and TanStack Query operations
 are synchronized; project UI arrives in EPIC-27.
-
 
 ### Project file membership and original storage (US-24.3)
 
@@ -177,7 +173,6 @@ Backend-only reset also clears its source/extraction storage. Ordinary initializ
 preserves storage and does not migrate old schemas or paths. No existing development
 data was reset while implementing this story.
 
-
 ### Composable list queries
 
 Keep query construction separate from execution, pagination, response enrichment,
@@ -191,7 +186,6 @@ add parameters to the library listing service.
 uses separate helpers to enrich only the selected page. The shared database helper
 imports no domain models. Keep new domain-specific filters in their owning callers;
 avoid a generic query hierarchy or accumulating mode flags in one service function.
-
 
 ### Chat project binding and active-branch files (US-25.1)
 
@@ -215,7 +209,18 @@ or source. Only current project memberships plus local references present on the
 message branch count. Inactive branches, sibling chats, unbound message snapshots, and
 unselected library files grant no access. The source-ID queries do not load file bodies.
 `branches.py` is shared by chat presentation and scope reads; `projects/scope.py` is the
-small project-owned reader for future execution context integration.
+small project-owned reader. `chat/scope.py` exposes it with a chat reader as two injected
+snapshot readers (`read_chat_scope_snapshot`, `read_project_scope_snapshot`).
+
+`agent/execution_scope.py` defines the immutable `ExecutionScope`: user, agent (main or
+sub-agent), chat, project, selected and executed model identity, eligible project
+sub-agent IDs, effective internal tools, active branch, configuration/prompt revisions,
+allowed file IDs and file provenance. `resolve_execution_scope` composes the injected
+readers (the Agent never queries domain tables). The orchestrator resolves it at turn
+start; internal tool calls are clamped to it and still re-check live authorization.
+`ExecutionScope.narrow_for_sub_agent` derives a child scope that can only keep the parent's
+files and eligible targets and cannot add internal tools. Deleting a project first retires
+active runs of its chats (outside the write transaction), then detaches the chats.
 
 `GET /chat/{chat_id}/files/{file_id}/info` and `GET /chat/{chat_id}/files/{file_id}`
 recheck that scope and resolve metadata/original bytes by immutable ID through the file
@@ -237,7 +242,6 @@ with project name/description search. Folder entities remain until their later r
 moves exposed separately by US-25.2. Fresh initialization includes `chat_files`; reset disposable
 local data before running this new schema against an older development database.
 The current development database was not reset and no migration/fallback was added.
-
 
 ### Chat membership and search (US-25.2)
 
@@ -268,20 +272,19 @@ reset disposable older databases explicitly. No working database was reset for t
 Project deletion detaches through a chat-owned transaction-local operation before
 removing the project; failures/stale revisions roll back both operations.
 
-
 ### Chat drafts, send acceptance and attachment removal (US-25.3)
 
-| API | Purpose |
-| --- | --- |
-| `POST /chat/drafts` | Create an owner-scoped draft; optional `chat_id` binds it to an existing owned chat, otherwise it is for a new chat |
-| `GET /chat/drafts/{draft_id}` | Read staged source IDs, unavailable IDs and expiry |
-| `POST /chat/drafts/{draft_id}/uploads` | Ingest library sources and stage their immutable IDs |
-| `POST /chat/drafts/{draft_id}/files` | Stage explicitly selected owned library IDs |
-| `DELETE /chat/drafts/{draft_id}/files` | Remove selected draft references without deleting sources |
-| `DELETE /chat/drafts/{draft_id}` | Discard an unsent draft and its references |
-| `POST /chat/` | Accept a new chat/user message with required `request_id`, optional `draft_id`, and/or explicit `files` |
-| `POST /chat/{chat_id}/message` | Accept a follow-up with required `request_id`, `user_prompt`, explicit nullable `parent_message_id`, optional `draft_id` and/or `files` |
-| `DELETE /chat/{chat_id}/files/{file_id}` | Revoke chat-local membership without deleting sources, message snapshots or project memberships |
+| API                                      | Purpose                                                                                                                                 |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /chat/drafts`                      | Create an owner-scoped draft; optional `chat_id` binds it to an existing owned chat, otherwise it is for a new chat                     |
+| `GET /chat/drafts/{draft_id}`            | Read staged source IDs, unavailable IDs and expiry                                                                                      |
+| `POST /chat/drafts/{draft_id}/uploads`   | Ingest library sources and stage their immutable IDs                                                                                    |
+| `POST /chat/drafts/{draft_id}/files`     | Stage explicitly selected owned library IDs                                                                                             |
+| `DELETE /chat/drafts/{draft_id}/files`   | Remove selected draft references without deleting sources                                                                               |
+| `DELETE /chat/drafts/{draft_id}`         | Discard an unsent draft and its references                                                                                              |
+| `POST /chat/`                            | Accept a new chat/user message with required `request_id`, optional `draft_id`, and/or explicit `files`                                 |
+| `POST /chat/{chat_id}/message`           | Accept a follow-up with required `request_id`, `user_prompt`, explicit nullable `parent_message_id`, optional `draft_id` and/or `files` |
+| `DELETE /chat/{chat_id}/files/{file_id}` | Revoke chat-local membership without deleting sources, message snapshots or project memberships                                         |
 
 Draft references grant no runtime access. Drafts expire after 24 hours; access to expired
 drafts fails, and creating another draft lazily prunes that owner's expired references.
