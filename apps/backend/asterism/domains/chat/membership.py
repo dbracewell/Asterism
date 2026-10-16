@@ -62,6 +62,17 @@ async def move_chat(
                 raise
 
 
+async def retire_project_chat_runs(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> None:
+    """Cancel active runtime jobs for an owned project's chats; persistence is untouched."""
+    chat_ids = list(
+        await session.scalars(
+            select(ChatModel.id).where(ChatModel.user_id == user_id, ChatModel.project_id == project_id),
+        ),
+    )
+    for chat_id in chat_ids:
+        await chat_jobs.retire(chat_id)
+
+
 async def detach_project_chats(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> None:
     """Caller owns commit/rollback; history and local attachments remain untouched."""
     await session.execute(

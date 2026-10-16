@@ -176,10 +176,15 @@ async def delete_project(
 ) -> Project:
     """Detach through the chat lifecycle boundary and delete in one transaction.
 
-    Runtime cancellation before project deletion is integrated in US-26.1.
+    Active runs of affected chats are cancelled first, outside the write transaction,
+    because a cancelled run persists its terminal state through its own session.
     """
-    from asterism.domains.chat.membership import detach_project_chats
+    from asterism.domains.chat.membership import detach_project_chats, retire_project_chat_runs
 
+    current = await _owned_project(user_id=user_id, project_id=project_id, session=session)
+    if current.context_revision != expected_context_revision:
+        raise CodedException(409, "Project context changed; reload the project and retry")
+    await retire_project_chat_runs(user_id=user_id, project_id=project_id, session=session)
     try:
         await _write_project(
             user_id=user_id,

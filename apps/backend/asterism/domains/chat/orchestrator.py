@@ -417,6 +417,7 @@ class ChatOrchestrator:
             self._streaming_thinking = ""
 
             self._execution = await self.agent.prepare_execution(parent_message.id)
+            await self.agent.prepare_execution_scope()
             messages = await self._build_agent_messages()
             async for event in self.agent.run(messages=messages):
                 print(f"Agent event: {event}")

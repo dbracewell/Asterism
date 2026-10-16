@@ -11,6 +11,7 @@ import pytest_asyncio
 from asterism.core.exceptions import BadDataException
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.agent import Agent
+from asterism.domains.agent.execution_scope import ExecutionScope
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.service import get_agent_profile, get_main_agent_profile
 from asterism.domains.chat.models import ChatModel
@@ -107,6 +108,30 @@ def ctx(r, scope):
         app_settings=MagicMock(),
         client=MagicMock(),
         tool_scope=scope,
+        execution_scope=make_execution_scope(r, scope),
+    )
+
+
+def make_execution_scope(r, scope):
+    if scope is None:
+        return None
+    delegation = scope.delegation
+    return ExecutionScope(
+        user_id=scope.user_id,
+        user_profile_id=None,
+        agent_id=scope.caller_agent_id,
+        is_sub_agent=False,
+        chat_id=scope.chat_id,
+        project_id=scope.project_id,
+        selected_model=None,
+        executed_model=None,
+        eligible_sub_agent_ids=(delegation.agent_ids if delegation else frozenset()) | {uuid.UUID(r.a["id"])},
+        effective_internal_tools=frozenset({"search_knowledge", "sub_agent"}),
+        active_branch_message_ids=(),
+        configuration_revision=r.profile.config_revision,
+        prompt_revision=delegation.context_revision if delegation else None,
+        allowed_file_ids=scope.file_ids,
+        file_provenance=(),
     )
 
 
@@ -357,9 +382,14 @@ async def test_internal_policy_revocation_cancels_active_delegation(context_runt
         app_settings=MagicMock(),
         tool_scope=scope,
         delegation_scope=scope.delegation,
+        execution_scope=make_execution_scope(r, scope),
     )
     task = asyncio.create_task(sub_agent(request))
-    await asyncio.wait_for(started.wait(), 2)
+    started_task = asyncio.create_task(started.wait())
+    done, _ = await asyncio.wait({task, started_task}, timeout=2, return_when=asyncio.FIRST_COMPLETED)
+    if task in done:
+        await task
+    assert started.is_set()
     async with r.sessions() as db:
         if revocation == "admin":
             await db.execute(

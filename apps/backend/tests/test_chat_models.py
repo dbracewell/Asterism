@@ -289,6 +289,7 @@ async def test_runtime_persists_actual_execution_and_streams_its_identity(projec
 
     for domain in ["execution", "service"]:
         monkeypatch.setattr(f"asterism.domains.chat.{domain}.get_async_db_session", database)
+    monkeypatch.setattr("asterism.db.database.get_async_db_session", database)
 
     executing = uuid.UUID(B)
 

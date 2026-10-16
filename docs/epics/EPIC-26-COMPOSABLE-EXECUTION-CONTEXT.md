@@ -12,11 +12,11 @@ Estimated effort: **8–12 engineering person-days**, including story-level veri
 As a developer, I want one typed execution context used by every runtime consumer.
 
 **Estimate:** 2–3 person-days. **Dependencies:** EPIC-25 and EPIC-29.
-- [ ] US-26.1-T1: Implement a server-derived context with user/profile/main-agent-or-sub-agent/chat/project IDs, selected and executed model identity, eligible project sub-agent IDs, effective internal tools, active branch, configuration/prompt revision, allowed file IDs, and file provenance.
-- [ ] US-26.1-T2: Inject small project and chat scope readers into the resolver rather than letting Agent query domain tables.
-- [ ] US-26.1-T3: Resolve scope at turn start and recheck authorization before each file/retrieval tool call; reject canceled or revoked execution contexts. Connect project deletion to cancellation of affected active runs before deleting project context, once runtime integration exists.
-- [ ] US-26.1-T4: Pass narrowed context to delegated agents and background/restarted jobs without granting new tools or wider files.
-- [ ] US-26.1-T5: Test empty scope, cross-user IDs, same-agent different-chat isolation, delegation, and revocation races.
+- [x] US-26.1-T1: Implement a server-derived context with user/profile/main-agent-or-sub-agent/chat/project IDs, selected and executed model identity, eligible project sub-agent IDs, effective internal tools, active branch, configuration/prompt revision, allowed file IDs, and file provenance.
+- [x] US-26.1-T2: Inject small project and chat scope readers into the resolver rather than letting Agent query domain tables.
+- [x] US-26.1-T3: Resolve scope at turn start and recheck authorization before each file/retrieval tool call; reject canceled or revoked execution contexts. Connect project deletion to cancellation of affected active runs before deleting project context, once runtime integration exists.
+- [x] US-26.1-T4: Pass narrowed context to delegated agents and background/restarted jobs without granting new tools or wider files.
+- [x] US-26.1-T5: Test empty scope, cross-user IDs, same-agent different-chat isolation, delegation, and revocation races.
 
 **Acceptance:** An agent used in two chats receives two distinct scopes; delegated agents cannot widen file access; ownership alone is insufficient for a runtime file read.
 

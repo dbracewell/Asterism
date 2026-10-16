@@ -449,6 +449,7 @@ class TestSubAgentStreaming:
         )
 
         agent.prepare_execution = AsyncMock(return_value=None)
+        agent.prepare_execution_scope = AsyncMock(return_value=None)
         orchestrator = ChatOrchestrator(agent)
         queue = get_message_queue(session.info.id)
 
