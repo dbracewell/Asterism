@@ -429,3 +429,8 @@ Agent knowledge-base assignment table/API fields/endpoints and settings controls
 removed. Initialize a fresh disposable development database before using this
 schema; the verified current database is not reset by the story workflow. Remaining
 standalone knowledge-base removal is scheduled for EPIC-28.
+
+Execution and retrieval provenance, resume ceilings, delegated trace privacy, and
+future memory partitioning are documented in
+[context isolation](../../docs/architecture/context-isolation.md). Project moves
+retain chat history; removing source access cannot erase historical answers.

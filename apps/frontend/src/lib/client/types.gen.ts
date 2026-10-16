@@ -485,6 +485,80 @@ export type ComponentResponse = {
 export type ComponentType = "WebSearch" | "ImageSearch" | "ImageGenerator";
 
 /**
+ * ConfigurationProvenance
+ */
+export type ConfigurationProvenance = {
+  /**
+   * Agent Id
+   */
+  agent_id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Is Sub Agent
+   */
+  is_sub_agent: boolean;
+};
+
+/**
+ * ContextProvenance
+ */
+export type ContextProvenance = {
+  /**
+   * User Id
+   */
+  user_id: string;
+  /**
+   * User Profile Id
+   */
+  user_profile_id: string | null;
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+  /**
+   * Project Id
+   */
+  project_id: string | null;
+  /**
+   * Execution Id
+   */
+  execution_id: string | null;
+  /**
+   * Request Message Id
+   */
+  request_message_id: string | null;
+  /**
+   * Scope Revision
+   */
+  scope_revision: string;
+  /**
+   * Allowed File Ids
+   */
+  allowed_file_ids: Array<string>;
+  /**
+   * Active Branch Message Ids
+   */
+  active_branch_message_ids: Array<string>;
+  /**
+   * Project Revision
+   */
+  project_revision: number | null;
+  /**
+   * Configurations
+   */
+  configurations: Array<ConfigurationProvenance>;
+  /**
+   * Selected Sub Agent Ids
+   */
+  selected_sub_agent_ids: Array<string>;
+  selected_model: ModelProvenance | null;
+  executed_model: ModelProvenance | null;
+};
+
+/**
  * CreateUserRequest
  *
  * Request model for creating a new user.
@@ -1274,6 +1348,7 @@ export type Message = {
  * MessageExecution
  */
 export type MessageExecution = {
+  context?: ContextProvenance | null;
   prompt?: PromptProvenance;
   /**
    * Id
@@ -1336,6 +1411,24 @@ export type ModelCapabilitySource =
   | "provider"
   | "manual"
   | "unknown";
+
+/**
+ * ModelProvenance
+ */
+export type ModelProvenance = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Provider Id
+   */
+  provider_id: string | null;
+  /**
+   * Name
+   */
+  name: string | null;
+};
 
 /**
  * NewChatRequest
@@ -1957,6 +2050,7 @@ export type SubAgentDefinition = {
  * SubAgentTrace
  */
 export type SubAgentTrace = {
+  context_provenance?: ContextProvenance | null;
   prompt_provenance?: PromptProvenance | null;
   /**
    * Id
@@ -1983,23 +2077,21 @@ export type SubAgentTrace = {
    */
   sub_agent_name: string;
   /**
-   * Prompt
+   * Task Digest
    */
-  prompt: string;
+  task_digest: string;
   /**
-   * Caller Context
+   * Caller Context Digest
    */
-  caller_context?: string | null;
+  caller_context_digest?: string | null;
   /**
-   * Messages
+   * Message Roles
    */
-  messages?: Array<{
-    [key: string]: unknown;
-  }>;
+  message_roles?: Array<string>;
   /**
-   * Result
+   * Result Digest
    */
-  result?: string | null;
+  result_digest?: string | null;
   /**
    * Step Count
    */

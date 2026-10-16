@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import re
 import uuid
 from dataclasses import replace
 from logging import Logger
@@ -166,6 +165,9 @@ class Agent:
             if selected_choice is not None
             else None
         )
+        if self.execution is not None:
+            choice = self.execution.model
+            selected_model = ModelIdentity(id=choice.id, provider_id=choice.provider_id, name=choice.name)
         if self.profile.sub_agent and self.execution_scope is not None:
             selected_model = self.execution_scope.selected_model
 
@@ -198,6 +200,31 @@ class Agent:
                 or not scope.effective_internal_tools <= self.execution_scope.effective_internal_tools
             ):
                 raise BadDataException("Delegated execution scope changed")
+        if self.profile.sub_agent and self.execution_scope is not None:
+            scope = replace(
+                scope,
+                configuration_provenance=self.execution_scope.configuration_provenance,
+                selected_sub_agent_ids=self.execution_scope.selected_sub_agent_ids,
+                execution_id=self.execution_scope.execution_id,
+                request_message_id=self.execution_scope.request_message_id,
+            )
+        if self.execution is not None and self.execution.context is not None:
+            recorded = self.execution.context
+            if (
+                recorded.user_id != scope.user_id
+                or recorded.chat_id != scope.chat_id
+                or recorded.project_id != scope.project_id
+            ):
+                raise BadDataException("Recorded source context changed; regenerate")
+            allowed = scope.allowed_file_ids & frozenset(recorded.allowed_file_ids)
+            scope = replace(
+                scope,
+                allowed_file_ids=allowed,
+                file_provenance=tuple(file for file in scope.file_provenance if file.file_id in allowed),
+                eligible_sub_agent_ids=scope.eligible_sub_agent_ids & frozenset(recorded.selected_sub_agent_ids),
+                selected_sub_agent_ids=frozenset(recorded.selected_sub_agent_ids),
+                configuration_provenance=recorded.configurations,
+            )
         if self.prompt_snapshot is not None:
             if scope.project_id != self.prompt_snapshot.project_id:
                 raise BadDataException("Recorded prompt project changed; regenerate")
@@ -231,6 +258,13 @@ class Agent:
             or model_info.context_window != self.execution.model.context_window
         ):
             raise BadDataException("Recorded model identity changed; regenerate using the current selection")
+        if self.execution_scope is not None:
+            self.execution_scope = replace(
+                self.execution_scope,
+                executed_model=ModelIdentity(
+                    id=self.model_id, provider_id=model_info.provider.id, name=model_info.name
+                ),
+            )
         if self._client is not None:
             return self._client
 
@@ -431,11 +465,7 @@ class Agent:
                                 tool_calls=event.tool_calls,
                             ),
                         )
-                        self.logger.debug(
-                            f"Event(type={event.type}, "
-                            f"content={event.content[:100]} "
-                            f"tools={[f'{tc.function.name}({tc.function.arguments})' for tc in event.tool_calls or []]} ",  # noqa: E501
-                        )
+                        self.logger.debug("event type=%s tool_count=%d", event.type, len(event.tool_calls or []))
 
                         tool_results: list[ToolResult] = []
                         if event.tool_calls:
@@ -512,11 +542,7 @@ class Agent:
                                     get_task.cancel()
                                     await asyncio.gather(get_task, return_exceptions=True)
                             for response in responses:
-                                self.logger.debug(
-                                    f"{response.tool_call.function.name}("
-                                    f"{response.tool_call.function.arguments})"
-                                    f"=>'{re.sub(r'\s+', ' ', response.content[:64])}...'",  # noqa: E501
-                                )
+                                self.logger.debug("tool completed name=%s", response.tool_call.function.name)
                                 messages.append(LLMMessage.tool_call_result(response))
                                 tool_results.append(response)
 

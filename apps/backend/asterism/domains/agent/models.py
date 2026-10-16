@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import TypeAdapter
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, UniqueConstraint, text
@@ -10,6 +10,7 @@ from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.llm.schemas import ChatCompletionParams
 
+from .context_provenance import ContextProvenance
 from .prompts import PromptProvenance
 
 
@@ -78,6 +79,10 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
 
 class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     __tablename__ = "sub_agent_traces"
+    context_provenance: Mapped[ContextProvenance | None] = mapped_column(
+        JSONB_COLUMN(TypeAdapter(ContextProvenance)),
+        nullable=True,
+    )
     prompt_provenance: Mapped[PromptProvenance | None] = mapped_column(
         JSONB_COLUMN(TypeAdapter(PromptProvenance)),
         nullable=True,
@@ -102,20 +107,20 @@ class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         Text,
         nullable=False,
     )
-    prompt: Mapped[str] = mapped_column(
+    task_digest: Mapped[str] = mapped_column(
         Text,
         nullable=False,
     )
-    caller_context: Mapped[str | None] = mapped_column(
+    caller_context_digest: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
-    messages: Mapped[list[dict[str, Any]]] = mapped_column(
+    message_roles: Mapped[list[str]] = mapped_column(
         JSONB_COLUMN(),
         nullable=False,
         default=list,
     )
-    result: Mapped[str | None] = mapped_column(
+    result_digest: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )

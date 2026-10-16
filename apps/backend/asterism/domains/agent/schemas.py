@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,6 +13,7 @@ from asterism.domains.llm.schemas import (
     ToolResult,
 )
 
+from .context_provenance import ContextProvenance
 from .prompts import PromptProvenance
 
 
@@ -118,6 +118,7 @@ class UserAgents(BaseModel):
 
 
 class SubAgentTrace(BaseModel):
+    context_provenance: ContextProvenance | None = None
     prompt_provenance: PromptProvenance | None = None
     model_config = ConfigDict(from_attributes=True)
 
@@ -127,10 +128,10 @@ class SubAgentTrace(BaseModel):
     parent_message_id: uuid.UUID | None = None
     sub_agent_id: uuid.UUID
     sub_agent_name: str
-    prompt: str
-    caller_context: str | None = None
-    messages: list[dict[str, Any]] = Field(default_factory=list)
-    result: str | None = None
+    task_digest: str
+    caller_context_digest: str | None = None
+    message_roles: list[str] = Field(default_factory=list)
+    result_digest: str | None = None
     step_count: int = 0
     total_tokens: int = 0
     elapsed_ms: int = 0
@@ -138,15 +139,17 @@ class SubAgentTrace(BaseModel):
 
 
 class SubAgentTraceCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    context_provenance: ContextProvenance | None = None
     prompt_provenance: PromptProvenance | None = None
     user_id: str
     parent_message_id: uuid.UUID | None = None
     sub_agent_id: uuid.UUID
     sub_agent_name: str
-    prompt: str
-    caller_context: str | None = None
-    messages: list[dict[str, Any]] = Field(default_factory=list)
-    result: str | None = None
+    task_digest: str
+    caller_context_digest: str | None = None
+    message_roles: list[str] = Field(default_factory=list)
+    result_digest: str | None = None
     step_count: int = 0
     total_tokens: int = 0
     elapsed_ms: int = 0

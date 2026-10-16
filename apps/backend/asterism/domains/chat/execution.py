@@ -11,6 +11,7 @@ from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
 
+from .execution_context import build_execution_provenance
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
 from .prompt_composition import build_prompt_snapshot
@@ -47,6 +48,15 @@ async def prepare_execution(
             if recorded is not None and not restart:
                 await validate_recorded_execution(recorded, current, session)
                 validate_prompt_snapshot(recorded, message.pending_prompt, chat.project_id)
+                if (
+                    recorded.context is None
+                    or recorded.context.chat_id != chat_id
+                    or recorded.context.user_id != user_id
+                    or recorded.context.execution_id != recorded.id
+                    or recorded.context.request_message_id != message_id
+                    or recorded.request_message_id != message_id
+                ):
+                    raise CodedException(409, "Recorded source context is unavailable or changed; regenerate")
                 execution = recorded
             else:
                 if chat.selected_model_id is None:
@@ -68,6 +78,9 @@ async def prepare_execution(
                     model=choice,
                     model_revision=chat.model_revision,
                     configuration=current,
+                )
+                execution.context = await build_execution_provenance(
+                    user_id=user_id, chat_id=chat_id, execution=execution, session=session
                 )
                 message.pending_execution = execution
             await session.commit()

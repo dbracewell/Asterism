@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from asterism.domains.agent.context_provenance import ContextProvenance
 from asterism.domains.agent.prompts import PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.files.models import FileContentStatus, FileKind
@@ -46,6 +47,7 @@ class ChatModelChoice(BaseModel):
 
 
 class MessageExecution(BaseModel):
+    context: ContextProvenance | None = None
     prompt: PromptProvenance = Field(default_factory=PromptProvenance)
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     request_message_id: uuid.UUID

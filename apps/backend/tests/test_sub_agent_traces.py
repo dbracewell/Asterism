@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -168,7 +169,7 @@ class TestSubAgentTraces:
     async def test_create_and_get_sub_agent_traces(self):
         """
         Verify that sub-agent traces can be persisted to the database and
-        retrieved by parent_message_id with all metrics and message history.
+        retrieved by parent_message_id with metrics and content-free message metadata.
         """
         engine, session_maker = await setup_test_db()
         try:
@@ -199,20 +200,10 @@ class TestSubAgentTraces:
                     parent_message_id=msg.id,
                     sub_agent_id=agent.id,
                     sub_agent_name=agent.name,
-                    prompt="Find information on Asterism",
-                    caller_context="High priority",
-                    messages=[
-                        {"role": "system", "content": "You research facts."},
-                        {
-                            "role": "user",
-                            "content": "Find information on Asterism",
-                        },
-                        {
-                            "role": "assistant",
-                            "content": "Asterism is a multi-agent system.",
-                        },
-                    ],
-                    result="Asterism is a multi-agent system.",
+                    task_digest=hashlib.sha256(b"Find information on Asterism").hexdigest(),
+                    caller_context_digest=hashlib.sha256(b"High priority").hexdigest(),
+                    message_roles=["user", "assistant"],
+                    result_digest=hashlib.sha256(b"Asterism is a multi-agent system.").hexdigest(),
                     step_count=1,
                     total_tokens=150,
                     elapsed_ms=320,
@@ -230,7 +221,7 @@ class TestSubAgentTraces:
                 assert created_trace.step_count == 1
                 assert created_trace.total_tokens == 150
                 assert created_trace.elapsed_ms == 320
-                assert len(created_trace.messages) == 3
+                assert created_trace.message_roles == ["user", "assistant"]
 
                 # Query by parent message
                 retrieved = await get_sub_agent_traces_by_parent_message(
@@ -240,8 +231,8 @@ class TestSubAgentTraces:
                 )
                 assert len(retrieved) == 1
                 assert retrieved[0].id == created_trace.id
-                assert retrieved[0].result == "Asterism is a multi-agent system."
-                assert retrieved[0].caller_context == "High priority"
+                assert retrieved[0].result_digest == hashlib.sha256(b"Asterism is a multi-agent system.").hexdigest()
+                assert retrieved[0].caller_context_digest == hashlib.sha256(b"High priority").hexdigest()
         finally:
             await engine.dispose()
 
@@ -250,10 +241,11 @@ class TestSubAgentTraces:
         self,
         test_user,
         make_chat_session,
+        caplog,
     ):
         """
         Verify that executing the sub_agent tool automatically captures
-        metrics, steps, and full message history and persists a trace record.
+        metrics and message roles without retaining content bodies.
         """
         parent_msg_id = uuid.uuid4()
         session = make_chat_session(allowed_tools=["sub_agent"])
@@ -324,16 +316,22 @@ class TestSubAgentTraces:
             assert trace.parent_message_id == parent_msg_id
             assert trace.sub_agent_id == sub_agent_id
             assert trace.sub_agent_name == "WorkerAgent"
-            assert trace.prompt == "Perform delegated calculation."
-            assert trace.caller_context == "Use exact integers."
-            assert trace.result == "Sub-agent finished delegated work."
+            assert trace.task_digest == hashlib.sha256(b"Perform delegated calculation.").hexdigest()
+            assert trace.caller_context_digest == hashlib.sha256(b"Use exact integers.").hexdigest()
+            assert trace.result_digest == hashlib.sha256(b"Sub-agent finished delegated work.").hexdigest()
             assert trace.step_count == 1
             assert trace.total_tokens == 42
             assert trace.elapsed_ms >= 0
             assert trace.depth == 0
             # Capture task history and provenance without private system prompts
-            assert len(trace.messages) >= 2
-            assert not any(m.get("role") == "system" for m in trace.messages)
+            assert len(trace.message_roles) >= 2
+            assert "system" not in trace.message_roles
+            assert "Perform delegated calculation." not in caplog.text
+            assert "Sub-agent finished delegated work." not in caplog.text
+            assert trace.context_provenance is not None
+            assert trace.context_provenance.executed_model.id == sub_agent_profile.model_id
+            assert "Perform delegated calculation." not in trace.model_dump_json()
+            assert "Sub-agent finished delegated work." not in trace.model_dump_json()
             assert trace.prompt_provenance is not None
             assert "You are WorkerAgent." not in trace.prompt_provenance.model_dump_json()
 
@@ -441,7 +439,7 @@ class TestSubAgentTraces:
             assert trace.depth == 1
 
             # Verify intermediate tool call and result are preserved in messages
-            roles = [m.get("role") for m in trace.messages]
+            roles = trace.message_roles
             assert "system" not in roles
             assert "user" in roles
             assert "assistant" in roles
@@ -485,9 +483,9 @@ class TestSubAgentTraces:
                             parent_message_id=msg.id,
                             sub_agent_id=agent.id,
                             sub_agent_name=agent.name,
-                            prompt=f"Task {i}",
-                            messages=[{"role": "user", "content": f"Task {i}"}],
-                            result=f"Done {i}",
+                            task_digest=hashlib.sha256(f"Task {i}".encode()).hexdigest(),
+                            message_roles=["user"],
+                            result_digest=hashlib.sha256(f"Done {i}".encode()).hexdigest(),
                             step_count=1,
                             total_tokens=10 * (i + 1),
                         ),
@@ -501,8 +499,8 @@ class TestSubAgentTraces:
                     session=session,
                 )
                 assert len(traces) == 2
-                assert traces[0].prompt == "Task 0"
-                assert traces[1].prompt == "Task 1"
+                assert traces[0].task_digest == hashlib.sha256(b"Task 0").hexdigest()
+                assert traces[1].task_digest == hashlib.sha256(b"Task 1").hexdigest()
                 assert traces[0].total_tokens == 10
                 assert traces[1].total_tokens == 20
         finally:

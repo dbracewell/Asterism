@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel, Field
 
 from asterism.core.exceptions import BadDataException, CodedException
+from asterism.domains.agent.context_provenance import ContextProvenance, describe_context
 from asterism.domains.agent.execution_scope import ExecutionScope, FileProvenance
 from asterism.domains.extraction.embedding import EmbeddingProvider
 from asterism.domains.extraction.models import FileKnowledgeArtifactStatus
@@ -57,6 +58,7 @@ class RetrievalResponse(BaseModel):
     message: str | None = None
     file_states: list[dict[str, str]] = Field(default_factory=list)
     scope: dict[str, str | int | None]
+    provenance: ContextProvenance
 
 
 def _file_states(snapshot: RetrievalSnapshot) -> list[dict[str, str]]:
@@ -115,6 +117,7 @@ class RetrievalService:
         results: list[RetrievalHit] | None = None,
     ) -> RetrievalResponse:
         return RetrievalResponse(
+            provenance=describe_context(scope),
             results=results or [],
             count=len(results or []),
             message=message,

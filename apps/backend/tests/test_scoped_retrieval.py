@@ -107,6 +107,10 @@ async def test_database_vector_prefilter_and_result_provenance(context_runtime, 
     assert shared.sources == ("project", "chat") and shared.message_ids == (r.chat.messages[0].id,)
     assert result.scope["chat_id"] == str(scope.chat_id) and result.scope["project_id"] == r.p["id"]
     assert result.scope["executed_model_id"] == str(uuid.UUID(int=2))
+    assert result.provenance.chat_id == scope.chat_id
+    assert result.provenance.project_id == scope.project_id
+    assert result.provenance.configurations[0].agent_id == scope.agent_id
+    assert "Project evidence" not in result.provenance.model_dump_json()
     await store.close()
 
 

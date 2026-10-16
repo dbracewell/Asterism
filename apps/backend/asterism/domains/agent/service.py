@@ -242,15 +242,16 @@ async def create_sub_agent_trace(
 ) -> SubAgentTrace:
     async with get_async_db_session(session) as session:
         model = SubAgentTraceModel(
+            context_provenance=trace.context_provenance,
             prompt_provenance=trace.prompt_provenance,
             user_id=trace.user_id,
             parent_message_id=trace.parent_message_id,
             sub_agent_id=trace.sub_agent_id,
             sub_agent_name=trace.sub_agent_name,
-            prompt=trace.prompt,
-            caller_context=trace.caller_context,
-            messages=trace.messages,
-            result=trace.result,
+            task_digest=trace.task_digest,
+            caller_context_digest=trace.caller_context_digest,
+            message_roles=trace.message_roles,
+            result_digest=trace.result_digest,
             step_count=trace.step_count,
             total_tokens=trace.total_tokens,
             elapsed_ms=trace.elapsed_ms,

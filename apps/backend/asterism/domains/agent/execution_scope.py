@@ -5,7 +5,16 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Literal
 
+from pydantic import BaseModel, ConfigDict
+
 from asterism.core.exceptions import BadDataException
+
+
+class ConfigurationProvenance(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    agent_id: uuid.UUID
+    revision: int
+    is_sub_agent: bool
 
 
 @dataclass(frozen=True)
@@ -58,6 +67,8 @@ class ExecutionScope:
     allowed_file_ids: frozenset[uuid.UUID]
     file_provenance: tuple[FileProvenance, ...]
 
+    configuration_provenance: tuple[ConfigurationProvenance, ...] = ()
+    selected_sub_agent_ids: frozenset[uuid.UUID] = frozenset()
     project_instructions: str = ""
     request_message_id: uuid.UUID | None = None
     execution_id: uuid.UUID | None = None
@@ -75,6 +86,16 @@ class ExecutionScope:
         if not effective_internal_tools <= self.effective_internal_tools:
             raise BadDataException("Delegated execution cannot add internal tools")
         return ExecutionScope(
+            configuration_provenance=(
+                self.configuration_provenance
+                or (
+                    ConfigurationProvenance(
+                        agent_id=self.agent_id, revision=self.configuration_revision, is_sub_agent=self.is_sub_agent
+                    ),
+                )
+            )
+            + (ConfigurationProvenance(agent_id=agent_id, revision=configuration_revision, is_sub_agent=True),),
+            selected_sub_agent_ids=self.selected_sub_agent_ids or self.eligible_sub_agent_ids,
             user_id=self.user_id,
             user_profile_id=self.user_profile_id,
             agent_id=agent_id,

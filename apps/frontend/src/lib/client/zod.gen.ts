@@ -143,6 +143,15 @@ export const zComponentType = z.enum([
 ]);
 
 /**
+ * ConfigurationProvenance
+ */
+export const zConfigurationProvenance = z.object({
+  agent_id: z.uuid(),
+  revision: z.int(),
+  is_sub_agent: z.boolean(),
+});
+
+/**
  * CreateUserRequest
  *
  * Request model for creating a new user.
@@ -546,6 +555,35 @@ export const zLlmDisplayInfo = z.object({
 });
 
 /**
+ * ModelProvenance
+ */
+export const zModelProvenance = z.object({
+  id: z.uuid(),
+  provider_id: z.uuid().nullable(),
+  name: z.string().nullable(),
+});
+
+/**
+ * ContextProvenance
+ */
+export const zContextProvenance = z.object({
+  user_id: z.string(),
+  user_profile_id: z.uuid().nullable(),
+  chat_id: z.uuid(),
+  project_id: z.uuid().nullable(),
+  execution_id: z.uuid().nullable(),
+  request_message_id: z.uuid().nullable(),
+  scope_revision: z.string(),
+  allowed_file_ids: z.array(z.uuid()),
+  active_branch_message_ids: z.array(z.uuid()),
+  project_revision: z.int().nullable(),
+  configurations: z.array(zConfigurationProvenance),
+  selected_sub_agent_ids: z.array(z.uuid()),
+  selected_model: zModelProvenance.nullable(),
+  executed_model: zModelProvenance.nullable(),
+});
+
+/**
  * NewChatRequest
  */
 export const zNewChatRequest = z.object({
@@ -663,6 +701,7 @@ export const zPromptProvenance = z.object({
  * MessageExecution
  */
 export const zMessageExecution = z.object({
+  context: zContextProvenance.nullish(),
   prompt: zPromptProvenance.optional(),
   id: z.uuid().optional(),
   request_message_id: z.uuid(),
@@ -908,6 +947,7 @@ export const zProjectSubAgentList = z.object({
  * SubAgentTrace
  */
 export const zSubAgentTrace = z.object({
+  context_provenance: zContextProvenance.nullish(),
   prompt_provenance: zPromptProvenance.nullish(),
   id: z.uuid(),
   created_at: z.int(),
@@ -915,10 +955,10 @@ export const zSubAgentTrace = z.object({
   parent_message_id: z.uuid().nullish(),
   sub_agent_id: z.uuid(),
   sub_agent_name: z.string(),
-  prompt: z.string(),
-  caller_context: z.string().nullish(),
-  messages: z.array(z.record(z.string(), z.unknown())).optional(),
-  result: z.string().nullish(),
+  task_digest: z.string(),
+  caller_context_digest: z.string().nullish(),
+  message_roles: z.array(z.string()).optional(),
+  result_digest: z.string().nullish(),
   step_count: z.int().optional().default(0),
   total_tokens: z.int().optional().default(0),
   elapsed_ms: z.int().optional().default(0),

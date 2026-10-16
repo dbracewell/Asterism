@@ -1,6 +1,6 @@
 # EPIC-26 — Composable execution context
 
-Status: In progress. US-26.1, US-26.2, and US-26.3 are confirmed complete; US-26.4 remains pending.
+Status: Complete. All four user stories are confirmed complete; US-26.4 was confirmed on 2026-10-16.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -131,13 +131,59 @@ As a user, I want project information to stay within its intended context.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-26.2 and US-26.3.
 
-- [ ] US-26.4-T1: Add project/chat/scope-revision, main/sub-agent configuration, selected target set, and actual model/provider provenance to execution and retrieval traces without logging file bodies or full prompts.
-- [ ] US-26.4-T2: Audit any existing summary, cache, memory, and resume paths for cross-chat reuse; key derived context by its source scope.
-- [ ] US-26.4-T3: For any active long-term memory path, scope project-derived writes/reads by project and General-chat-derived writes/reads by chat; do not add a new memory engine.
-- [ ] US-26.4-T4: If no long-term memory integration exists, define the typed boundary and tests for future integration without building project-wide conversational memory.
-- [ ] US-26.4-T5: Test reuse of one agent/profile across projects, moves, restart, and removal; document that existing historical messages cannot be unlearned.
+- [x] US-26.4-T1: Add project/chat/scope-revision, main/sub-agent configuration, selected target set, and actual model/provider provenance to execution and retrieval traces without logging file bodies or full prompts.
+- [x] US-26.4-T2: Audit any existing summary, cache, memory, and resume paths for cross-chat reuse; key derived context by its source scope.
+- [x] US-26.4-T3: For any active long-term memory path, scope project-derived writes/reads by project and General-chat-derived writes/reads by chat; do not add a new memory engine.
+- [x] US-26.4-T4: If no long-term memory integration exists, define the typed boundary and tests for future integration without building project-wide conversational memory.
+- [x] US-26.4-T5: Test reuse of one agent/profile across projects, moves, restart, and removal; document that existing historical messages cannot be unlearned.
 
 **Acceptance:** Project/chat content is not automatically written into a shared profile namespace; traces identify which context was used; moving a chat is an explicit transfer of its history.
+
+**Implementation and verification (2026-10-16):** Typed, content-free provenance
+now records execution source identity, project/chat/profile, branch/file scope,
+configuration chain, selected targets/model, and actual model/provider. Main turn
+snapshots persist provenance atomically; reopened/resumed runs retain their
+recorded file and target ceilings, while regeneration captures current scope.
+Delegated audit storage now holds digests, roles, metrics, and provenance instead
+of task/message/tool/result bodies. Runtime content/argument debug output is
+removed. Generated clients reflect the changed trace and execution contracts.
+
+No active long-term memory integration exists. `MemoryNamespace` and
+`DerivedContextKey` define future project/General-chat partitions and exact source
+identity without adding storage or automatic cross-chat memory. The audited reuse
+paths, future authorization requirements, and explicit history-transfer behavior
+are documented in [context isolation](../architecture/context-isolation.md).
+Tests cover shared agent/profile identities across scopes, delegation provenance,
+source changes, persisted resume ceilings, regeneration, moves, project removal,
+and historical-message retention. Existing scoped retrieval tests continue to
+cover in-flight removal, generations, and owner checks.
+
+| Gate                           | Result                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Backend unit/integration suite | 430 passed, including 9 new provenance/isolation cases                                           |
+| Frontend unit tests            | 102 passed                                                                                       |
+| Frontend migration tests       | 6 passed                                                                                         |
+| Root configuration tests       | 29 passed                                                                                        |
+| Backend/frontend lint          | Passed                                                                                           |
+| Backend/frontend typecheck     | Passed; compileall plus targeted basedpyright on changed modules, 0 errors/warnings              |
+| Formatting                     | `pnpm format` passed                                                                             |
+| Frontend production build      | Passed                                                                                           |
+| OpenAPI/generated clients      | Independent regeneration from current served schema matched all 18 client file hashes            |
+| Import cycles                  | 170 modules / 668 imports; no cycles                                                             |
+| Isolated Playwright            | 16 passed without retries; runner exit 0; managed backend reports 143 during intentional cleanup |
+| Diff integrity                 | `git diff --check` passed                                                                        |
+
+Initial verification repaired new lifecycle-test HTTP/revision/status assumptions
+and a type-only import cycle. Restricted-network dependency setup was canceled;
+stale pnpm installation metadata was refreshed and dependencies relinked with
+network-enabled execution. A build overlapping E2E cleanup lost a generated type
+file; a sequential production build passed. Lint's initial uv-cache restriction
+was resolved with the documented temporary cache. No live provider request or
+current database reset was performed; tests use fresh databases. The unrelated
+`core/config.py` edit is preserved outside this story. No migration or compatibility
+fallback was added. User confirmed completion and authorized commit/merge on
+2026-10-16; the checklist is [archived](../archive/todo-completed-2026-10-16.md).
+EPIC-26 is complete. Next recommended story: US-27.1 — Project navigation and settings.
 
 ## Shared definition of done
 

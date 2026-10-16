@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import inspect
 import time
 import uuid
@@ -9,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from asterism.common.log import get_logger
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
+from asterism.domains.agent.context_provenance import describe_context
 from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
@@ -371,19 +373,22 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         from asterism.domains.agent.schemas import SubAgentTraceCreate
         from asterism.domains.agent.service import create_sub_agent_trace
 
-        serialized_messages = [
-            m.model_dump(mode="json") for m in getattr(agent, "messages", sub_agent_messages) if m.role != "system"
-        ]
+        message_roles = [m.role for m in getattr(agent, "messages", sub_agent_messages) if m.role != "system"]
         trace_data = SubAgentTraceCreate(
+            context_provenance=describe_context(agent.execution_scope or child_scope),
             prompt_provenance=agent.prompt_snapshot.provenance if agent.prompt_snapshot else None,
             user_id=ctx.user.id,
             parent_message_id=parent_msg_id,
             sub_agent_id=target_id,
             sub_agent_name=agent_profile.name,
-            prompt=ctx.args.prompt,
-            caller_context=ctx.args.parent_context,
-            messages=serialized_messages,
-            result=(last_response.content if last_response.type == AgentEventType.COMPLETE else None),
+            task_digest=hashlib.sha256(ctx.args.prompt.encode()).hexdigest(),
+            caller_context_digest=hashlib.sha256(ctx.args.parent_context.encode()).hexdigest()
+            if ctx.args.parent_context
+            else None,
+            message_roles=message_roles,
+            result_digest=hashlib.sha256(last_response.content.encode()).hexdigest()
+            if last_response.type == AgentEventType.COMPLETE
+            else None,
             step_count=step_count,
             total_tokens=total_tokens,
             elapsed_ms=elapsed_ms,

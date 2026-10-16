@@ -218,7 +218,6 @@ class ChatOrchestrator:
                                 LLMMessage.user(create_title_generation_prompt(user_message.content.strip())),
                             ],
                         )
-                    print(f"Chat title candidate: {candidate}")
                     title = self._validated_title(candidate)
                     if title:
                         break
@@ -403,7 +402,6 @@ class ChatOrchestrator:
             await self.agent.prepare_execution_scope()
             messages = await self._build_agent_messages()
             async for event in self.agent.run(messages=messages):
-                print(f"Agent event: {event}")
                 match event:
                     case AgentEvent(type=AgentEventType.COMPLETE):
                         # An OpenAI-compatible provider can occasionally end a
