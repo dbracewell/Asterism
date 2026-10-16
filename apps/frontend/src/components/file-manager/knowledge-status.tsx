@@ -14,7 +14,9 @@ import {
   fileKnowledgeRegenerateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Library, RotateCcw } from "lucide-react";
+import Link from "next/link";
+import type { FileProjectSummary } from "@/lib/client";
+import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 type BadgeVariant = "secondary" | "destructive" | "outline";
@@ -38,10 +40,12 @@ const isActive = (artifact?: {
 
 export function KnowledgeStatus({
   filename,
-  knowledgeBaseCount,
+  projects,
+  canRegenerate = true,
 }: {
   filename: string;
-  knowledgeBaseCount: number;
+  projects: FileProjectSummary[];
+  canRegenerate?: boolean;
 }) {
   const { data, error, isFetching, refetch } = useQuery({
     ...fileKnowledgeGetStatusOptions({ client, path: { filename } }),
@@ -53,59 +57,50 @@ export function KnowledgeStatus({
     ...fileKnowledgeRegenerateMutation({ client }),
     onError: () => toast.error("Unable to regenerate embedding and caption."),
   });
-  if (error) {
-    return (
-      <QueryError
-        error={error}
-        message="Unable to load file processing status."
-        retry={refetch}
-        isRetrying={isFetching}
-      />
-    );
-  }
-  if (!data) return null;
-  const captionStatus = data.caption.status ?? "none";
-  const busy =
-    regenerate.isPending ||
-    data.status === "pending" ||
-    data.status === "processing";
+  const captionStatus = data?.caption.status ?? "none";
+  const busy = regenerate.isPending || isActive(data);
   return (
     <div className="flex flex-wrap items-center gap-1 text-xs">
-      <Badge variant={variantFor(data.status)}>Embedding: {data.status}</Badge>
-      <Badge variant={variantFor(captionStatus)}>
-        Caption: {captionStatus}
-      </Badge>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="icon-xs"
-            variant="ghost"
-            aria-label="Regenerate embedding and caption"
-            onClick={() => regenerate.mutate({ path: { filename } })}
-            disabled={busy}
-          >
-            <RotateCcw />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Regenerate embedding and caption</TooltipContent>
-      </Tooltip>
-      {knowledgeBaseCount > 0 && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              role="img"
-              aria-label="In a knowledge base"
-              className="text-muted-foreground inline-flex"
-            >
-              <Library className="size-4" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            In {knowledgeBaseCount} knowledge{" "}
-            {knowledgeBaseCount === 1 ? "base" : "bases"}
-          </TooltipContent>
-        </Tooltip>
+      {error && (
+        <QueryError
+          error={error}
+          message="Unable to load file processing status."
+          retry={refetch}
+          isRetrying={isFetching}
+        />
       )}
+      {!data && !error && <span role="status">Loading processing status…</span>}
+      {data && (
+        <>
+          <Badge variant={variantFor(data.status)}>
+            Embedding: {data.status}
+          </Badge>
+          <Badge variant={variantFor(captionStatus)}>
+            Caption: {captionStatus}
+          </Badge>
+          {canRegenerate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  aria-label="Regenerate embedding and caption"
+                  onClick={() => regenerate.mutate({ path: { filename } })}
+                  disabled={busy || !!error}
+                >
+                  <RotateCcw />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Regenerate embedding and caption</TooltipContent>
+            </Tooltip>
+          )}
+        </>
+      )}
+      {projects.map((project) => (
+        <Badge variant="outline" key={project.id} asChild>
+          <Link href={`/projects/${project.id}`}>{project.name}</Link>
+        </Badge>
+      ))}
     </div>
   );
 }

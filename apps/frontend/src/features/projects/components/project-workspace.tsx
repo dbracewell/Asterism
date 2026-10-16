@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ProjectFiles } from "./project-files";
 import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
 
@@ -88,7 +89,10 @@ export function ProjectWorkspace({
               disabled={project.isFetching || !!project.error}
             />
           ) : (
-            <WorkspaceChats key={projectId} projectId={projectId} />
+            <>
+              <WorkspaceChats key={projectId} projectId={projectId} />
+              <ProjectFiles key={`files-${projectId}`} projectId={projectId} />
+            </>
           )}
         </>
       )}

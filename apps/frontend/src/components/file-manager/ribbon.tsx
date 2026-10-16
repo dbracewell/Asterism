@@ -223,6 +223,7 @@ const SelectionSection = () => {
 
 export const DeleteSelectedFilesSection = () => {
   const {
+    actions,
     dispatch,
     selectedFiles,
     setSelectedFiles,
@@ -234,7 +235,7 @@ export const DeleteSelectedFilesSection = () => {
     useConfirmationDialog({
       title: "Delete selected files?",
       description:
-        "This permanently removes the selected files, every knowledge-base membership, and all derived extractions, captions, and vectors.",
+        "This permanently removes the selected files, every project and chat membership, and all derived extractions, captions, and vectors.",
       confirmVariant: "destructive",
     });
 
@@ -270,6 +271,7 @@ export const DeleteSelectedFilesSection = () => {
     });
   }, [confirmDelete, deleteFileMutation, selectedFiles]);
 
+  if (!actions.delete) return null;
   return (
     <RibbonSection title="Delete">
       <DeleteConfirmation />
@@ -289,9 +291,10 @@ export const DeleteSelectedFilesSection = () => {
 };
 
 export const UploadFilesSection = () => {
-  const { isMutating } = useFileManager();
+  const { isMutating, actions } = useFileManager();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadFiles = useUploadFiles();
+  if (!actions.upload) return null;
   return (
     <RibbonSection title="Upload">
       <input

@@ -1,5 +1,6 @@
 "use client";
 
+import { QueryError } from "@/components/query-error";
 import { APIImage } from "@/components/api-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,6 @@ import {
 import { client } from "@/lib/api";
 import {
   fileGetFileInfoOptions,
-  fileKnowledgeBaseGetManyOptions,
   fileKnowledgeGetStatusOptions,
   fileSimilarGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
@@ -30,7 +30,6 @@ export function FileView({ filename }: { filename: string }) {
   const info = useQuery(fileGetFileInfoOptions({ client, path }));
   const knowledge = useQuery(fileKnowledgeGetStatusOptions({ client, path }));
   const similar = useQuery(fileSimilarGetManyOptions({ client, path }));
-  const bases = useQuery(fileKnowledgeBaseGetManyOptions({ client, path }));
   const router = useRouter();
 
   if (info.error) {
@@ -84,12 +83,22 @@ export function FileView({ filename }: { filename: string }) {
         </div>
       </header>
 
+      {knowledge.error && (
+        <QueryError
+          error={knowledge.error}
+          message="Unable to load file processing artifacts."
+          retry={knowledge.refetch}
+          isRetrying={knowledge.isFetching}
+        />
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Caption</CardTitle>
         </CardHeader>
         <CardContent>
-          {artifact?.caption.text ? (
+          {knowledge.isPending ? (
+            <p role="status">Loading caption…</p>
+          ) : knowledge.error && !artifact ? null : artifact?.caption.text ? (
             <p>{artifact.caption.text}</p>
           ) : (
             <p className="text-muted-foreground">No caption.</p>
@@ -102,7 +111,10 @@ export function FileView({ filename }: { filename: string }) {
           <CardTitle>Extracted content</CardTitle>
         </CardHeader>
         <CardContent>
-          {artifact?.extracted_content ? (
+          {knowledge.isPending ? (
+            <p role="status">Loading content…</p>
+          ) : knowledge.error &&
+            !artifact ? null : artifact?.extracted_content ? (
             <pre className="bg-muted max-h-96 overflow-auto rounded p-3 text-sm whitespace-pre-wrap">
               {artifact.extracted_content}
             </pre>
@@ -124,7 +136,18 @@ export function FileView({ filename }: { filename: string }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {similar.data?.files.length ? (
+          {similar.error && (
+            <QueryError
+              error={similar.error}
+              message="Unable to load similar files."
+              retry={similar.refetch}
+              isRetrying={similar.isFetching}
+            />
+          )}
+          {similar.isPending ? (
+            <p role="status">Loading similar files…</p>
+          ) : similar.error && !similar.data ? null : similar.data?.files
+              .length ? (
             <ul className="divide-y">
               {similar.data.files.map(({ file: other, score }) => (
                 <li
@@ -149,14 +172,14 @@ export function FileView({ filename }: { filename: string }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Knowledge bases</CardTitle>
+          <CardTitle>Projects</CardTitle>
         </CardHeader>
         <CardContent>
-          {bases.data?.length ? (
+          {file.projects?.length ? (
             <ul className="divide-y">
-              {bases.data.map((base) => (
+              {file.projects.map((base) => (
                 <li key={base.id} className="py-2">
-                  <Link className="underline" href={`/knowledge/${base.id}`}>
+                  <Link className="underline" href={`/projects/${base.id}`}>
                     {base.name}
                   </Link>
                 </li>
@@ -164,7 +187,7 @@ export function FileView({ filename }: { filename: string }) {
             </ul>
           ) : (
             <p className="text-muted-foreground">
-              This file is not in any knowledge base.
+              This file is not in any project.
             </p>
           )}
         </CardContent>

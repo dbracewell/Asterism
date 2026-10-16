@@ -14,7 +14,7 @@ export const UploadFileDropZone = ({
   children: React.ReactNode;
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const { isMutating } = useFileManager();
+  const { isMutating, source, actions } = useFileManager();
   const uploadFiles = useUploadFiles();
   return (
     <section
@@ -24,7 +24,7 @@ export const UploadFileDropZone = ({
       }}
       onDragOver={(event) => {
         event.preventDefault();
-        setIsDragOver(true);
+        if (actions.upload && !isMutating) setIsDragOver(true);
       }}
       onDrop={(event) => {
         event.preventDefault();
@@ -49,7 +49,9 @@ export const UploadFileDropZone = ({
         )}
       >
         <IconCirclePlus className="mr-1" size={16} />
-        Drop files here to add as attachments
+        {source.kind === "project"
+          ? "Drop files here to upload and add to this project"
+          : "Drop files here to upload to your library"}
       </div>
       {children}
     </section>

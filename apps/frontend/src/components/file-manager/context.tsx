@@ -1,6 +1,9 @@
 import { Footer } from "@/components/file-manager/footer";
 import { client } from "@/lib/api";
-import { fileGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
+import {
+  projectFileGetManyOptions,
+  fileGetManyOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
 import { UserFile } from "@/lib/client/types.gen";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -29,7 +32,20 @@ type QueryParameters = {
   query: string | null;
 };
 
+export type FileSource =
+  | { kind: "library" }
+  | { kind: "project"; projectId: string };
+export type FileActions = {
+  upload: boolean;
+  delete: boolean;
+  regenerate: boolean;
+};
+
 type FileManagerContext = {
+  source: FileSource;
+  actions: FileActions;
+  onUploaded?: (files: UserFile[]) => Promise<void>;
+  unavailableReason: string;
   lastClickEvent: ClickEvent | null;
   view: View;
   selectedFiles: string[];
@@ -71,6 +87,14 @@ export const useFileManager = (): FileManagerContext => {
 
 export const FileManagerProvider = ({
   children,
+  source = { kind: "library" },
+  actions = {
+    upload: true,
+    delete: source.kind === "library",
+    regenerate: true,
+  },
+  onUploaded,
+  unavailableReason = "Already in this project",
   knowledgeBaseId,
   checkKnowledgeBaseId,
   mode = "normal",
@@ -78,6 +102,10 @@ export const FileManagerProvider = ({
   isSelectable = (_) => true,
 }: {
   children: React.ReactNode;
+  source?: FileSource;
+  actions?: FileActions;
+  onUploaded?: (files: UserFile[]) => Promise<void>;
+  unavailableReason?: string;
   knowledgeBaseId?: string;
   checkKnowledgeBaseId?: string;
   mode?: Mode;
@@ -98,6 +126,10 @@ export const FileManagerProvider = ({
 
   const dispatch = useCallback((event: ClickEvent) => {
     setLastClickEvent(event);
+    if (["query", "page", "sort"].includes(event.property)) {
+      setSelectedFiles([]);
+      setLastFileClickedIndex(-1);
+    }
     switch (event.property.toLocaleLowerCase()) {
       case "view":
         setView(event.value as View);
@@ -125,19 +157,33 @@ export const FileManagerProvider = ({
     }
   }, []);
 
-  const { data, isPending, error, isFetching, refetch } = useQuery({
+  const query = {
+    page: queryParameters.page,
+    page_size: PAGE_SIZE,
+    sort_by: queryParameters.sort,
+    query: deferredQuery ?? undefined,
+  };
+  const library = useQuery({
     ...fileGetManyOptions({
       client,
       query: {
-        page: queryParameters.page,
-        page_size: PAGE_SIZE,
-        sort_by: queryParameters.sort,
-        query: deferredQuery ?? undefined,
+        ...query,
         knowledge_base_id: knowledgeBaseId,
         check_knowledge_base_id: checkKnowledgeBaseId,
       },
     }),
+    enabled: source.kind === "library",
   });
+  const project = useQuery({
+    ...projectFileGetManyOptions({
+      client,
+      path: { project_id: source.kind === "project" ? source.projectId : "" },
+      query,
+    }),
+    enabled: source.kind === "project",
+  });
+  const { data, isPending, error, isFetching, refetch } =
+    source.kind === "project" ? project : library;
 
   const files = useMemo(() => {
     return data?.files ?? [];
@@ -194,11 +240,17 @@ export const FileManagerProvider = ({
 
   const ctx = useMemo(
     () => ({
+      source,
+      actions,
+      onUploaded,
+      unavailableReason,
       queryParameters,
       dispatch,
       view,
       lastClickEvent,
-      selectedFiles,
+      selectedFiles: selectedFiles.filter((name) =>
+        files.some((file) => file.filename === name && isSelectable(file)),
+      ),
       setSelectedFiles,
       isSearchVisible,
       setIsSearchVisible,
@@ -216,6 +268,10 @@ export const FileManagerProvider = ({
       mode,
     }),
     [
+      source,
+      actions,
+      onUploaded,
+      unavailableReason,
       queryParameters,
       dispatch,
       view,

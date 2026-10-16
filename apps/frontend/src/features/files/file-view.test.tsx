@@ -12,7 +12,6 @@ const { api, client } = vi.hoisted(() => ({
     fileGetFileInfo: vi.fn(),
     fileKnowledgeGetStatus: vi.fn(),
     fileSimilarGetMany: vi.fn(),
-    fileKnowledgeBaseGetMany: vi.fn(),
   },
 }));
 vi.mock("@/lib/api", () => ({ client }));
@@ -27,6 +26,7 @@ const file = (id: string, name: string) => ({
   size: 10,
   mime_type: "text/plain",
   kind: "text",
+  projects: [{ id: "p-1", name: "References" }],
 });
 
 function renderView() {
@@ -55,12 +55,9 @@ beforeEach(() => {
   api.fileSimilarGetMany.mockResolvedValue({
     data: { files: [{ file: file("2", "other.txt"), score: 0.8123 }] },
   });
-  api.fileKnowledgeBaseGetMany.mockResolvedValue({
-    data: [{ id: "kb-1", name: "References" }],
-  });
 });
 
-it("shows content, caption, similar files with scores, and knowledge bases", async () => {
+it("shows content, caption, similar files with scores, and projects", async () => {
   renderView();
 
   expect(await screen.findByText("hello extracted world")).toBeInTheDocument();
@@ -71,7 +68,7 @@ it("shows content, caption, similar files with scores, and knowledge bases", asy
   expect(screen.getByText("0.812")).toBeInTheDocument();
   expect(
     await screen.findByRole("link", { name: "References" }),
-  ).toHaveAttribute("href", "/knowledge/kb-1");
+  ).toHaveAttribute("href", "/projects/p-1");
 });
 
 it("goes back through the Next.js router", async () => {
@@ -87,7 +84,9 @@ it("shows empty states when nothing is available", async () => {
     data: { status: "pending", caption: { status: null, text: null } },
   });
   api.fileSimilarGetMany.mockResolvedValue({ data: { files: [] } });
-  api.fileKnowledgeBaseGetMany.mockResolvedValue({ data: [] });
+  api.fileGetFileInfo.mockResolvedValue({
+    data: { ...file("1", "notes.txt"), projects: [] },
+  });
   renderView();
 
   expect(await screen.findByText("No caption.")).toBeInTheDocument();
@@ -96,6 +95,26 @@ it("shows empty states when nothing is available", async () => {
   ).toBeInTheDocument();
   expect(await screen.findByText("No similar files.")).toBeInTheDocument();
   expect(
-    await screen.findByText("This file is not in any knowledge base."),
+    await screen.findByText("This file is not in any project."),
   ).toBeInTheDocument();
+});
+
+it("keeps project memberships visible when processing artifacts cannot load", async () => {
+  api.fileKnowledgeGetStatus.mockRejectedValue({
+    detail: "Processing record missing",
+  });
+  renderView();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Unable to load file processing artifacts",
+  );
+  expect(screen.getByRole("link", { name: "References" })).toHaveAttribute(
+    "href",
+    "/projects/p-1",
+  );
+  expect(screen.queryByText("No caption.")).not.toBeInTheDocument();
+  api.fileKnowledgeGetStatus.mockResolvedValue({
+    data: { status: "ready", caption: { text: "Recovered" } },
+  });
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByText("Recovered")).toBeInTheDocument();
 });

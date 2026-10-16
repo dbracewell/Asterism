@@ -46,6 +46,7 @@ export function AddFilesDialog({
         <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <FileManager.Provider
             checkKnowledgeBaseId={knowledgeBaseId}
+            unavailableReason="Already in this knowledge base"
             isSelectable={(file) => !file.in_checked_knowledge_base}
             mode="picker"
           >

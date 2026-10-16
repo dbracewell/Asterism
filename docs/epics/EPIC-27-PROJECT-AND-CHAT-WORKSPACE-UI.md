@@ -1,6 +1,6 @@
 # EPIC-27 — Project and chat workspace UI
 
-Status: In progress. US-27.1 was confirmed complete on 2026-10-16; US-27.2 is next. Later stories remain pending.
+Status: In progress. US-27.1 was confirmed complete on 2026-10-16; US-27.2 was confirmed complete on 2026-10-16; US-27.3 is next. Later stories remain pending.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -71,7 +71,7 @@ with no uncaught browser errors. No migrations, new UI dependencies, compatibili
 fallbacks, or later-story file/sub-agent workflows were added. User confirmed
 completion and authorized commit/merge on 2026-10-16; the checklist is
 [archived](../archive/todo-completed-2026-10-16.md).
-Next recommended story: US-27.2 — Composable project file explorer.
+US-27.2 implementation and verification are recorded below.
 
 ### US-27.2 — Composable project file explorer
 
@@ -79,13 +79,66 @@ As a user, I want to manage project files through the existing explorer.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-27.1 and US-26.3.
 
-- [ ] US-27.2-T1: Reuse file-manager list, selection, upload, and picker components through explicit data sources and permitted actions.
-- [ ] US-27.2-T2: Add project file upload/add/remove, processing state, regenerate, and file view links; reuse the atomic membership API.
-- [ ] US-27.2-T3: Replace knowledge-base badges/detail links with project memberships and accurate deletion impact.
-- [ ] US-27.2-T4: Keep remove-from-project distinct from physical file deletion; use generated hooks and the global mutation invalidation policy.
-- [ ] US-27.2-T5: Test shared files, picker exclusions, unavailable artifacts, removal versus deletion, and project-local filtering.
+- [x] US-27.2-T1: Reuse file-manager list, selection, upload, and picker components through explicit data sources and permitted actions.
+- [x] US-27.2-T2: Add project file upload/add/remove, processing state, regenerate, and file view links; reuse the atomic membership API.
+- [x] US-27.2-T3: Replace knowledge-base badges/detail links with project memberships and accurate deletion impact.
+- [x] US-27.2-T4: Keep remove-from-project distinct from physical file deletion; use generated hooks and the global mutation invalidation policy.
+- [x] US-27.2-T5: Test shared files, picker exclusions, unavailable artifacts, removal versus deletion, and project-local filtering.
 
 **Acceptance:** Project and library views share explorer components; adding membership does not reprocess a file; destructive controls match the selected scope.
+
+**Implementation and verification (2026-10-16):** Implemented on
+`feat/us-27.2-project-file-explorer`; user confirmed completion and authorized
+commit/merge on 2026-10-16. Project overviews compose the existing explorer with an explicit
+project data source and permitted actions. Shared list/grid, selection, search,
+sort, pagination, upload/drop zone, processing state/regenerate, and file links
+remain in the FileManager components. Project-local search and pagination use the
+project endpoint; the library picker excludes current members and adds immutable
+IDs through the atomic revision-guarded membership API without reprocessing.
+
+Project removal is separate from library deletion and confirms retention of the
+source, artifacts, other projects, and chat-local attachments. Upload creates library
+files before adding membership; failed membership explains where those files remain
+and permits a later library add. Project badges and file detail memberships link to
+project overviews and remain usable when artifacts cannot load. Membership conflicts
+preserve selection and expose a project refresh before retry. Mutations use generated
+Hey API options and the global invalidation policy. Mobile list rows wrap processing
+and membership badges below filenames. See [workspace architecture](../architecture/project-workspaces.md).
+
+| Gate                           | Result                                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Backend unit/integration suite | 430 passed                                                                                                         |
+| Frontend unit/component suite  | 125 passed, including 11 new regressions                                                                           |
+| Frontend migration tests       | 6 passed                                                                                                           |
+| Root configuration tests       | 29 passed                                                                                                          |
+| Backend/frontend lint          | Passed                                                                                                             |
+| Backend/frontend typecheck     | Configured compileall and TypeScript gates passed; no backend story code/schema changes                            |
+| Formatting                     | `pnpm format` passed                                                                                               |
+| Frontend production build      | Passed                                                                                                             |
+| OpenAPI/generated clients      | Regeneration from the isolated backend reproduced the existing client without changes                              |
+| Isolated Playwright            | 22 passed without retries on the final run; runner exit 0; managed backend reports 143 during intentional cleanup  |
+| Visual review                  | Final desktop and 390px mobile screenshots inspected; filenames remain visible and there is no horizontal overflow |
+| Diff integrity                 | `git diff --check` passed                                                                                          |
+
+Component regressions cover shared memberships, picker exclusions, scoped filtering,
+failed/missing artifacts, membership removal versus physical deletion, revision
+conflicts/refetch, upload membership recovery, and action restrictions. The new
+browser scenario uses the production overview/explorer in the existing test-only
+workspace harness with mocked HTTP endpoints; it does not exercise an authenticated
+project flow against the real backend. Existing backend tests cover owner/revision
+and lifecycle boundaries. No external model providers were invoked, no database was
+reset, and the unrelated `core/config.py` edit remains untouched.
+
+Early verification needed the uv cache workaround, a missing tooltip test provider,
+and restoration of pinned pnpm dependencies after automatic setup hit sandbox network
+restrictions. One browser run was interrupted after concurrent client regeneration
+briefly removed files read by Next.js; this is not counted as a pass. A later complete
+22-test run passed, and visual inspection then found mobile filename compression.
+The final run above includes the responsive repair and a filename-width assertion.
+No migrations, new UI dependencies, compatibility shims, or later-story chat attachment
+workflows were added. Standalone knowledge-base consumers remain for US-28.1 cleanup.
+The completed checklist is [archived](../archive/todo-completed-2026-10-16.md).
+Next recommended story: US-27.3 — Visible chat attachment scope.
 
 ### US-27.3 — Visible chat attachment scope
 

@@ -67,3 +67,20 @@ Verification: 430 backend tests, 114 frontend unit/component tests (including 12
 New browser coverage uses production workspace components in a test-only harness with mocked HTTP endpoints; authenticated project workflows against the real backend and external model providers were not exercised. Existing backend tests cover ownership, revisions, and lifecycle behavior. The current database and unrelated `core/config.py` edit were retained. No new UI dependencies, migration, or compatibility fallback was added.
 
 Next recommended story: US-27.2 — Composable project file explorer. EPIC-27 remains in progress.
+
+## US-27.2 — Composable project file explorer
+
+User confirmed completion on 2026-10-16 and authorized commit and merge into `main`.
+
+- [x] US-27.2: Composable project file explorer — confirmed complete 2026-10-16.
+  - [x] US-27.2-T1: Reuse file-manager list, selection, upload, and picker components through explicit data sources and permitted actions.
+  - [x] US-27.2-T2: Add project file upload/add/remove, processing state, regenerate, and file view links; reuse the atomic membership API.
+  - [x] US-27.2-T3: Replace knowledge-base badges/detail links with project memberships and accurate deletion impact.
+  - [x] US-27.2-T4: Keep remove-from-project distinct from physical file deletion; use generated hooks and the global mutation invalidation policy.
+  - [x] US-27.2-T5: Test shared files, picker exclusions, unavailable artifacts, removal versus deletion, and project-local filtering.
+
+Verification: 430 backend tests, 125 frontend unit/component tests (including 11 new regressions), 6 frontend migration tests, 29 root configuration tests, and 22 isolated Playwright tests passed. Backend/frontend lint, formatting, configured type checks, production build, generated-client consistency, and diff integrity passed. Final desktop and 390px mobile screenshots were inspected; filenames remain visible without horizontal overflow. Playwright passed without retries on the final run; the isolated runner exited 0 while its managed backend reported 143 during intentional cleanup. Initial verification repairs are recorded in [EPIC-27](../epics/EPIC-27-PROJECT-AND-CHAT-WORKSPACE-UI.md).
+
+Project and library views share explorer components with explicit data sources and permitted actions. Membership addition reuses artifacts; removal is distinct from physical deletion. Browser coverage uses production components in a test-only harness with mocked HTTP endpoints; authenticated project workflows against the real backend and external providers were not exercised. The current database and unrelated `core/config.py` edit were retained. No new UI dependencies, migrations, or compatibility shims were added.
+
+Next recommended story: US-27.3 — Visible chat attachment scope. EPIC-27 remains in progress.

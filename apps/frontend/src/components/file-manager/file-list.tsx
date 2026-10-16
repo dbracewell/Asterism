@@ -13,6 +13,8 @@ import Link from "next/link";
 
 export const FileList = () => {
   const {
+    unavailableReason,
+    actions,
     files,
     view,
     selectedFiles,
@@ -70,10 +72,14 @@ export const FileList = () => {
                     e.ctrlKey || e.metaKey,
                   );
                 }}
+                aria-disabled={!isSelectable(file)}
+                aria-pressed={selectedFiles.includes(file.filename)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if ((e.target as HTMLElement).closest("a, button")) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     toggleSelect(
                       file.filename,
                       index,
@@ -86,7 +92,10 @@ export const FileList = () => {
                   "hover:bg-accent/50 hover:text-accent-foreground flex items-center gap-1 rounded-lg p-2 select-none focus:outline-none",
                   view === "grid"
                     ? "bg-background text-foreground flex-col border"
-                    : index % 2 === 1 && "bg-background text-foreground",
+                    : "flex-wrap sm:flex-nowrap",
+                  view === "list" &&
+                    index % 2 === 1 &&
+                    "bg-background text-foreground",
                   selectedFiles.includes(file.filename) &&
                     "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground",
                   !isSelectable(file) && "opacity-60",
@@ -148,7 +157,7 @@ export const FileList = () => {
                       {file.kind} · {formatFileSize(file.size, 2, false)}
                       {!isSelectable(file) && (
                         <>
-                          <br /> Already in this knowledge base
+                          <br /> {unavailableReason}
                         </>
                       )}
                     </span>
@@ -175,10 +184,17 @@ export const FileList = () => {
                   </div>
                 </div>
                 {mode === "normal" && (
-                  <KnowledgeStatus
-                    filename={file.filename}
-                    knowledgeBaseCount={file.knowledge_base_count ?? 0}
-                  />
+                  <div
+                    className={cn(
+                      view === "list" && "w-full sm:w-auto sm:max-w-[55%]",
+                    )}
+                  >
+                    <KnowledgeStatus
+                      filename={file.filename}
+                      projects={file.projects ?? []}
+                      canRegenerate={actions.regenerate}
+                    />
+                  </div>
                 )}
               </article>
             ))}

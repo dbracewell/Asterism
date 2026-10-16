@@ -10,7 +10,7 @@ const imageFile = {
   content_status: "ready",
   content_error: null,
   thumbnail: null,
-  knowledge_base_count: 1,
+  projects: [{ id: "p-1", name: "References", context_revision: 1 }],
   created_at: 0,
   updated_at: 0,
 };
@@ -82,9 +82,7 @@ test("shows canonical processing state and confirms the full impact before file 
   ).toHaveAttribute("href", "/files/diagram.png");
   await expect(page.getByText("Embedding: ready")).toBeVisible();
   await expect(page.getByText("Caption: accepted")).toBeVisible();
-  await expect(
-    page.getByRole("img", { name: "In a knowledge base" }),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "References" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit caption" })).toHaveCount(
     0,
   );
@@ -103,7 +101,7 @@ test("shows canonical processing state and confirms the full impact before file 
   await expect(page.getByText("Delete selected files?")).toBeVisible();
   await expect(
     page.getByText(
-      "This permanently removes the selected files, every knowledge-base membership, and all derived extractions, captions, and vectors.",
+      "This permanently removes the selected files, every project and chat membership, and all derived extractions, captions, and vectors.",
     ),
   ).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();

@@ -7,7 +7,8 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 export const useUploadFiles = () => {
-  const { dispatch, setIsMutating } = useFileManager();
+  const { dispatch, setIsMutating, onUploaded, actions, isMutating } =
+    useFileManager();
   const { mutate: addFiles } = useMutation({
     ...fileUploadMutation({ client }),
     onMutate: () => {
@@ -16,7 +17,8 @@ export const useUploadFiles = () => {
     onSettled: () => {
       setIsMutating(false);
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await onUploaded?.(data.files);
       dispatch({ property: "page", value: 1 });
       dispatch({
         property: "uploadedFiles",
@@ -34,12 +36,12 @@ export const useUploadFiles = () => {
 
   const uploadFiles = useCallback(
     (files: FileList | null) => {
-      if (!files) return;
+      if (!files || !actions.upload || isMutating) return;
       addFiles({
         body: { files: Array.from(files) },
       });
     },
-    [addFiles],
+    [addFiles, actions.upload, isMutating],
   );
   return uploadFiles;
 };
