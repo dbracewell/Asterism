@@ -104,12 +104,13 @@ export const ChatSearch = () => {
             {content}
           </Link>
         ) : (
-          <div
-            className="rounded-lg border p-3"
+          <Link
+            href={`/projects/${result.id}`}
+            className="hover:bg-muted/50 rounded-lg border p-3"
             key={`${result.kind}-${result.id}`}
           >
             {content}
-          </div>
+          </Link>
         );
       })}
       {data && data.total > PAGE_SIZE && (

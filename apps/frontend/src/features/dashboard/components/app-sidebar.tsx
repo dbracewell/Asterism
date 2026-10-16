@@ -2,16 +2,14 @@ import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 import { AppSidebarHeader } from "@/features/dashboard/components/app-sidebar-header";
 import { NavActions } from "@/features/dashboard/components/nav-actions";
 import { NavChatSessions } from "@/features/dashboard/components/nav-chat-sessions";
-import { NavFolders } from "@/features/dashboard/components/nav-folders";
+import { NavWorkspaces } from "@/features/projects/components/nav-workspaces";
 import { NavFooter } from "@/features/dashboard/components/nav-footer";
 
 export const AppSidebar = async ({
   sidebarWidth,
-  navFolderOpen,
   navSessionsOpen,
 }: {
   sidebarWidth?: string;
-  navFolderOpen: boolean;
   navSessionsOpen: boolean;
 }) => {
   return (
@@ -21,7 +19,7 @@ export const AppSidebar = async ({
         {/*<NavProfileSelector />*/}
         <NavActions />
         <div className="flex min-h-0 flex-1 flex-col">
-          <NavFolders defaultIsOpen={navFolderOpen} />
+          <NavWorkspaces />
           <NavChatSessions defaultIsOpen={navSessionsOpen} />
         </div>
       </SidebarContent>

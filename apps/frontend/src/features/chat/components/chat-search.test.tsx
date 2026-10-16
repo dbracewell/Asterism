@@ -107,7 +107,8 @@ it("labels project description matches and General chats", async () => {
     .type(screen.getByLabelText("Search chats and projects"), "ocean");
   expect(await screen.findByText("Project description")).toBeInTheDocument();
   expect(screen.getByText("General")).toBeInTheDocument();
-  expect(
-    screen.queryByRole("link", { name: /Research/ }),
-  ).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Research/ })).toHaveAttribute(
+    "href",
+    "/projects/project-1",
+  );
 });

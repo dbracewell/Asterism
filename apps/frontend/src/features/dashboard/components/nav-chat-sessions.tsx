@@ -1,5 +1,8 @@
 "use client";
 
+import { Spinner } from "@/components/ui/spinner";
+import { QueryError } from "@/components/query-error";
+import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,15 +34,34 @@ export const NavChatSessions = ({
 }: {
   defaultIsOpen: boolean;
 }) => {
+  const workspace = useWorkspaceScope();
+  return (
+    <ScopedNavChatSessions
+      key={workspace.projectId ?? "general"}
+      defaultIsOpen={defaultIsOpen}
+      workspace={workspace}
+    />
+  );
+};
+
+function ScopedNavChatSessions({
+  defaultIsOpen,
+  workspace,
+}: {
+  defaultIsOpen: boolean;
+  workspace: ReturnType<typeof useWorkspaceScope>;
+}) {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const [page, setPage] = useState(1);
   const pageSize = 50;
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch, isFetching } = useQuery({
     ...chatSessionGetManyOptions({
       client: client,
-      query: { page, page_size: pageSize },
+      query: { page, page_size: pageSize, project_id: workspace.projectId },
     }),
+    enabled: !workspace.pending && !workspace.error,
+    retry: false,
   });
 
   useSubscribeEvent({
@@ -88,18 +110,36 @@ export const NavChatSessions = ({
     });
   };
 
-  if (error) {
-    if ("detail" in error) {
-      throw Error(error.detail);
-    } else {
-      throw Error(JSON.stringify(error));
-    }
-  }
+  if (workspace.pending)
+    return (
+      <div role="status" aria-label="Loading chat workspace">
+        <Spinner size={24} />
+      </div>
+    );
 
+  if (workspace.error)
+    return (
+      <QueryError
+        error={workspace.error}
+        message="Could not resolve chat workspace. Reopen the chat to retry."
+        retry={workspace.refetch}
+        isRetrying={workspace.isFetching}
+      />
+    );
+
+  if (error && !data)
+    return (
+      <QueryError
+        error={error}
+        message="Could not load workspace chats."
+        retry={refetch}
+        isRetrying={isFetching}
+      />
+    );
   if (isPending || data == null) {
     return (
       <CollapsibleSidebarGroup
-        label="Chats"
+        label={workspace.projectId ? "Project chats" : "General chats"}
         defaultIsOpen={defaultIsOpen}
         onMenuActionClick={() => {}}
         cookieName={SESSIONS_OPEN_COOKIE}
@@ -111,9 +151,13 @@ export const NavChatSessions = ({
 
   return (
     <CollapsibleSidebarGroup
-      label="Chats"
+      label={workspace.projectId ? "Project chats" : "General chats"}
       defaultIsOpen={defaultIsOpen}
-      onMenuActionClick={() => router.push("/")}
+      onMenuActionClick={() =>
+        router.push(
+          workspace.projectId ? `/?project_id=${workspace.projectId}` : "/",
+        )
+      }
       onSecondaryMenuActionClick={() => {
         setSelectionMode((active) => !active);
         setSelectedIds(new Set());
@@ -162,6 +206,17 @@ export const NavChatSessions = ({
           </>
         ) : null}
       </div>
+      {error && (
+        <QueryError
+          error={error}
+          message="Could not refresh chats. Showing saved results."
+          retry={refetch}
+          isRetrying={isFetching}
+        />
+      )}
+      {data.chats.length === 0 && (
+        <p className="text-muted-foreground px-2 text-sm">No chats yet.</p>
+      )}
       <SidebarMenu className="min-h-0 w-full gap-0.5 select-none">
         {data.chats?.map((session, index) => (
           <SidebarMenuItem
@@ -188,12 +243,12 @@ export const NavChatSessions = ({
                 "hover:bg-transparent! hover:text-inherit!",
                 session.title == null && "bg-sidebar-border animate-pulse",
               )}
-              tooltip={session.title ?? ""}
+              tooltip={session.title || "Untitled chat"}
             >
               <Link href={`/c/${session.id}`}>
                 <IconMessage2 className="hidden group-data-[collapsible=icon]:block" />
                 <span className="group-data-[collapsible=icon]:hidden">
-                  {session.title ?? ""}
+                  {session.title || "Untitled chat"}
                 </span>
               </Link>
             </SidebarMenuButton>
@@ -232,4 +287,4 @@ export const NavChatSessions = ({
       <Dialog />
     </CollapsibleSidebarGroup>
   );
-};
+}

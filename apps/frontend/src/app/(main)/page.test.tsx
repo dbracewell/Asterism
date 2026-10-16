@@ -5,6 +5,7 @@ import { expect, it, vi } from "vitest";
 import AppPage from "./page";
 const mocks = vi.hoisted(() => ({
   createChatSession: vi.fn(),
+  getProject: vi.fn(async () => ({ id: "project", name: "Research" })),
   user: {
     name: "Ada",
     settings: {
@@ -20,6 +21,10 @@ vi.mock("@/features/chat/hooks/use-chat-session-crud", () => ({
   useChatSessionCrud: () => ({ createChatSession: mocks.createChatSession }),
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  projectGetOneOptions: () => ({
+    queryKey: ["project"],
+    queryFn: mocks.getProject,
+  }),
   chatModelsListOptions: () => ({
     queryKey: ["models"],
     queryFn: async () => [
@@ -118,4 +123,24 @@ it("retains an unavailable default without choosing a first-available replacemen
   expect(screen.getByRole("button", { name: "Start chat" })).toBeDisabled();
   expect(screen.getByLabelText("Chat model")).not.toHaveValue("model");
   mocks.user.settings.default_model_id = "model";
+});
+
+it("blocks new-chat sends when the selected project is unavailable and recovers with retry", async () => {
+  mocks.user.settings.default_model_id = "model";
+  mocks.createChatSession.mockClear();
+  mocks.getProject.mockRejectedValueOnce({ detail: "Project unavailable" });
+  renderPage();
+  await waitFor(() =>
+    expect(screen.getByRole("alert")).toHaveTextContent("Project unavailable"),
+  );
+  expect(screen.getByRole("button", { name: "Start chat" })).toBeDisabled();
+  expect(mocks.createChatSession).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Start chat" })).toBeEnabled(),
+  );
+  expect(screen.getByRole("link", { name: "Research" })).toHaveAttribute(
+    "href",
+    "/projects/project",
+  );
 });

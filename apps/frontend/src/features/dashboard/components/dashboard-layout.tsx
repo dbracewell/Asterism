@@ -6,7 +6,6 @@ import { MobileSidebarTrigger } from "@/features/dashboard/components/mobile-sid
 import { ThemeCheck } from "@/features/dashboard/components/theme-check";
 import { UpdateTimeZone } from "@/features/dashboard/components/update-timezone";
 import {
-  FOLDER_OPEN_COOKIE,
   SESSIONS_OPEN_COOKIE,
   SIDEBAR_WIDTH_COOKIE,
 } from "@/features/dashboard/constants";
@@ -22,7 +21,6 @@ export const DashboardLayout = async ({
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
   const sidebarWidth = cookieStore.get(SIDEBAR_WIDTH_COOKIE)?.value;
-  const navFolderOpen = cookieStore.get(FOLDER_OPEN_COOKIE)?.value === "true";
   const navSessionsOpen =
     cookieStore.get(SESSIONS_OPEN_COOKIE)?.value === "true";
 
@@ -33,7 +31,6 @@ export const DashboardLayout = async ({
       <SidebarProvider defaultOpen={defaultOpen}>
         <AppSidebar
           sidebarWidth={sidebarWidth}
-          navFolderOpen={navFolderOpen}
           navSessionsOpen={navSessionsOpen}
         />
         <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col">

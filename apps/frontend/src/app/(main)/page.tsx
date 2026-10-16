@@ -1,4 +1,6 @@
 "use client";
+import { WorkspaceIdentity } from "@/features/projects/components/chat-workspace";
+import { projectGetOneOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { AnimatedBorder } from "@/components/animated-border";
 import Constellation from "@/components/logo";
 import { useUser } from "@/features/auth/components/user-context";
@@ -19,6 +21,13 @@ export default function AppPage() {
   const user = useUser();
   const searchParams = useSearchParams();
   const { createChatSession } = useChatSessionCrud();
+  const projectId = searchParams.get("project_id");
+  const project = useQuery({
+    ...projectGetOneOptions({ client, path: { project_id: projectId ?? "" } }),
+    enabled: !!projectId,
+    retry: false,
+  });
+  const workspaceAvailable = !projectId || (!!project.data && !project.error);
   const main = user.settings.main_agent;
   const [modelId, setModelId] = useState(user.settings.default_model_id ?? "");
   const models = useQuery({
@@ -40,6 +49,7 @@ export default function AppPage() {
       <h1 className="z-1 text-4xl font-bold">
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
+      <WorkspaceIdentity projectId={projectId} />
       <ChatInputContainer className="border-0">
         <AnimatedBorder
           childContainerClassName="rounded-t-none"
@@ -51,7 +61,7 @@ export default function AppPage() {
                 </span>
               </div>
               <ChatModelPicker value={modelId} onChange={setModelId} />
-              {!modelAvailable && (
+              {models.data && !modelAvailable && (
                 <p className="text-destructive px-2 text-sm" role="alert">
                   Choose an available chat model before starting a chat.
                 </p>
@@ -62,15 +72,15 @@ export default function AppPage() {
           <ChatInput
             className="rounded-t-none!"
             placeholder="Where will your curiosity lead you today?"
-            disabled={!modelAvailable}
+            disabled={!modelAvailable || !workspaceAvailable}
             requestScope={`${main.id}:${modelId || "none"}:${searchParams.get("project_id") ?? "general"}`}
             onSubmit={({ prompt, files, requestId }) => {
-              if (!modelAvailable) return;
+              if (!modelAvailable || !workspaceAvailable) return;
               return createChatSession({
                 body: {
                   request_id: requestId,
                   model_id: modelId,
-                  project_id: searchParams.get("project_id"),
+                  project_id: projectId,
                   user_prompt: prompt,
                   files,
                 },

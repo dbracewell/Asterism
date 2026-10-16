@@ -169,3 +169,8 @@ Assistant cards and streaming output use their recorded model/provider/configura
 revision instead of relabeling old messages from today's selection. Reopen does not
 require a global default model. The broader model browser, project sub-agent selection
 and workspace composition remain US-27.5.
+
+Project and General workspace routes, revision-safe project settings, and explicit
+chat-history transfer are described in
+[project workspaces](../../docs/architecture/project-workspaces.md). Project file
+management and sub-agent selection are delivered by their own stories.

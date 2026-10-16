@@ -1,4 +1,5 @@
 "use client";
+import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
 import { ExistingChatModelPicker, ExecutionLabel } from "./chat-model-picker";
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
@@ -48,11 +49,9 @@ const AUTO_SCROLL_LOCK_THRESHOLD = 16;
 export const ChatSession = ({
   chatId,
   jwtToken,
-  folderId,
 }: {
   chatId: string;
   jwtToken: string;
-  folderId?: string;
 }) => {
   const queryClient = useQueryClient();
   const user = useUser();
@@ -75,7 +74,6 @@ export const ChatSession = ({
 
   const sessionLoadedRef = React.useRef(false);
   const setSession = useActiveChatSession((state) => state.setSession);
-  const folderIdRef = React.useRef(folderId);
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const [incomingMessage, setIncomingMessage] =
     React.useState<StreamingMessage | null>(null);
@@ -119,10 +117,6 @@ export const ChatSession = ({
       setSession({ id: payload.session_id, title: payload.title });
     },
   });
-
-  React.useEffect(() => {
-    folderIdRef.current = folderId;
-  }, [folderId]);
 
   React.useEffect(() => {
     if (preventAutoScrollRef.current || !incomingMessage) return;
@@ -295,6 +289,10 @@ export const ChatSession = ({
           }
         }}
       >
+        <ChatWorkspace
+          info={session.info}
+          disabled={isProcessing || sendMessage.isPending}
+        />
         <ExistingChatModelPicker
           info={session.info}
           disabled={isProcessing || sendMessage.isPending}

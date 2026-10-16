@@ -50,3 +50,20 @@ Verification: 430 backend tests (including 9 new provenance/isolation cases), 10
 No active long-term memory engine exists; typed project/General-chat memory namespaces and source-specific derived-context keys define the future boundary. Delegated traces retain metadata/digests rather than bodies. The current database and unrelated `core/config.py` edit were retained. No migration, compatibility fallback, live provider call, or automatic project-wide conversational memory was added.
 
 EPIC-26 is confirmed complete. Next recommended story: US-27.1 — Project navigation and settings.
+
+## US-27.1 — Project navigation and settings
+
+User confirmed completion on 2026-10-16 and authorized commit and merge into `main`.
+
+- [x] US-27.1: Project navigation and settings — confirmed complete 2026-10-16.
+  - [x] US-27.1-T1: Replace folder navigation with Projects and General; add project CRUD, paginated lists/search, and project overview/settings routes.
+  - [x] US-27.1-T2: Add name, description, and system-prompt forms using existing shadcn components and generated TanStack Query hooks.
+  - [x] US-27.1-T3: Create chats in the selected project; show project identity in chat and provide moves with a clear history-transfer explanation.
+  - [x] US-27.1-T4: Handle empty/loading/error states and deletion confirmation describing chat detachment.
+  - [x] US-27.1-T5: Add component tests and focused Playwright coverage for navigation, edits, moves, and deletion.
+
+Verification: 430 backend tests, 114 frontend unit/component tests (including 12 new workspace regressions), 6 frontend migration tests, 29 root configuration tests, and 21 isolated Playwright tests passed. Backend/frontend lint, formatting, configured type checks, production build, generated-client consistency, and diff integrity passed. Desktop and 390px mobile screenshots were inspected without horizontal overflow. Playwright passed without retries on the final run; the isolated runner exited 0, while its managed backend reported 143 during intentional cleanup. Initial test/mock repairs are recorded in [EPIC-27](../epics/EPIC-27-PROJECT-AND-CHAT-WORKSPACE-UI.md).
+
+New browser coverage uses production workspace components in a test-only harness with mocked HTTP endpoints; authenticated project workflows against the real backend and external model providers were not exercised. Existing backend tests cover ownership, revisions, and lifecycle behavior. The current database and unrelated `core/config.py` edit were retained. No new UI dependencies, migration, or compatibility fallback was added.
+
+Next recommended story: US-27.2 — Composable project file explorer. EPIC-27 remains in progress.

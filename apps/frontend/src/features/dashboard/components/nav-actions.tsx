@@ -10,10 +10,12 @@ import {
 import { IconMessage2Plus } from "@tabler/icons-react";
 import { DatabaseIcon, FilesIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
+import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { usePathname } from "next/navigation";
 
 export const NavActions = () => {
   const pathname = usePathname();
+  const { projectId } = useWorkspaceScope();
 
   return (
     <SidebarGroup>
@@ -21,7 +23,7 @@ export const NavActions = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lgText" tooltip="New Chat" asChild>
-              <Link href="/">
+              <Link href={projectId ? `/?project_id=${projectId}` : "/"}>
                 <IconMessage2Plus /> <span>New Chat</span>
               </Link>
             </SidebarMenuButton>
