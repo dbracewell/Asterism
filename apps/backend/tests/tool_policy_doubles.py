@@ -1,8 +1,10 @@
 """Policy doubles for isolated streaming/approval tests; live policy has integration coverage."""
 
 import uuid
+from dataclasses import replace
 
 import pytest
+from asterism.domains.agent.delegation_scope import DelegationScope
 from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
 from asterism.domains.tools.context import ContextToolScope
 
@@ -42,14 +44,14 @@ def isolated_tool_policy(monkeypatch):
                 effective_internal_tools=frozenset({"sub_agent", "search_knowledge"}),
                 active_branch_message_ids=(),
                 configuration_revision=1,
-                prompt_revision=None,
+                prompt_revision=1,
                 allowed_file_ids=self.tool_scope.file_ids,
                 file_provenance=(),
             )
         return self.effective_tools
 
     async def require(*, name, user_id, chat_id, scope):
-        return scope or ContextToolScope(
+        result = scope or ContextToolScope(
             user_id=user_id,
             chat_id=chat_id,
             project_id=uuid.uuid4(),
@@ -58,6 +60,15 @@ def isolated_tool_policy(monkeypatch):
             file_ids=frozenset(),
             delegation=None,
         )
+
+        if result.delegation is None:
+            result = replace(
+                result,
+                delegation=DelegationScope(
+                    chat_id=chat_id, project_id=result.project_id, context_revision=1, agent_ids=_AnyTarget()
+                ),
+            )
+        return result
 
     monkeypatch.setattr("asterism.domains.agent.agent.Agent.resolve_tools", resolve)
     monkeypatch.setattr("asterism.domains.chat.tool_policy.require_internal_tool", require)

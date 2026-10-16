@@ -510,6 +510,8 @@ export type {
   ProjectUpdateErrors,
   ProjectUpdateResponse,
   ProjectUpdateResponses,
+  PromptProvenance,
+  PromptSource,
   Provider,
   ProviderDiscoveryRequest,
   ProviderDiscoveryRequestWritable,

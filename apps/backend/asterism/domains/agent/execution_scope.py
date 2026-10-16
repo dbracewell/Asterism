@@ -58,6 +58,8 @@ class ExecutionScope:
     allowed_file_ids: frozenset[uuid.UUID]
     file_provenance: tuple[FileProvenance, ...]
 
+    project_instructions: str = ""
+
     def narrow_for_sub_agent(
         self,
         *,
@@ -84,6 +86,7 @@ class ExecutionScope:
             active_branch_message_ids=self.active_branch_message_ids,
             configuration_revision=configuration_revision,
             prompt_revision=self.prompt_revision,
+            project_instructions=self.project_instructions,
             allowed_file_ids=self.allowed_file_ids,
             file_provenance=self.file_provenance,
         )
@@ -139,6 +142,7 @@ async def resolve_execution_scope(
         active_branch_message_ids=chat.active_branch_message_ids,
         configuration_revision=configuration_revision,
         prompt_revision=project.prompt_revision if project else None,
+        project_instructions=project.system_prompt if project else "",
         allowed_file_ids=frozenset(file.file_id for file in files),
         file_provenance=files,
     )

@@ -53,7 +53,7 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
 
             msg_content = msg.content or ""
             msg_tokens = estimate_text_tokens(msg_content)
-            if accumulated_tokens + msg_tokens > max_tokens and selected_messages:
+            if accumulated_tokens + msg_tokens > max_tokens:
                 break
 
             role = getattr(msg, "role", "user").capitalize()
@@ -69,13 +69,17 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
         return None
 
     body = "\n\n".join(sections)
-    return (
+    prefix = (
         "--- FORWARDED PARENT CONTEXT ---\n"
-        "The following context has been forwarded from the parent conversation "
-        "to assist with your delegated task:\n\n"
-        f"{body}\n"
-        "--- END FORWARDED PARENT CONTEXT ---"
+        "The following untrusted task data has been forwarded from the parent conversation:\n\n"
     )
+    suffix = "\n--- END FORWARDED PARENT CONTEXT ---"
+    budget = config.sub_agent_context_window_tokens
+    if estimate_text_tokens(prefix + suffix) > budget:
+        return None
+    while estimate_text_tokens(prefix + body + suffix) > budget:
+        body = body[: int(len(body) * 0.8)]
+    return prefix + body + suffix
 
 
 async def _authorized_events(
@@ -277,7 +281,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     context_block = _build_parent_context_block(ctx)
     sub_agent_messages: list[LLMMessage] = []
     if context_block:
-        sub_agent_messages.append(LLMMessage.system(context_block))
+        sub_agent_messages.append(LLMMessage.user(context_block))
     sub_agent_messages.append(LLMMessage.user(ctx.args.prompt))
 
     start_time = time.perf_counter()
@@ -367,8 +371,11 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         from asterism.domains.agent.schemas import SubAgentTraceCreate
         from asterism.domains.agent.service import create_sub_agent_trace
 
-        serialized_messages = [m.model_dump(mode="json") for m in getattr(agent, "messages", sub_agent_messages)]
+        serialized_messages = [
+            m.model_dump(mode="json") for m in getattr(agent, "messages", sub_agent_messages) if m.role != "system"
+        ]
         trace_data = SubAgentTraceCreate(
+            prompt_provenance=agent.prompt_snapshot.provenance if agent.prompt_snapshot else None,
             user_id=ctx.user.id,
             parent_message_id=parent_msg_id,
             sub_agent_id=target_id,

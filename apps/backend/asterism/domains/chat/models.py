@@ -20,6 +20,7 @@ from asterism.core.config import default_allowed_tools
 from asterism.db.base_model import Base
 from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
+from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
 from .schemas import ChatModelChoice, MessageExecution, MessageFileReference, MessageStatus
@@ -94,6 +95,10 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
     execution: Mapped[MessageExecution | None] = mapped_column(
         JSONB_COLUMN(TypeAdapter(MessageExecution)),
+        nullable=True,
+    )
+    pending_prompt: Mapped[PromptSnapshot | None] = mapped_column(
+        JSONB_COLUMN(TypeAdapter(PromptSnapshot)),
         nullable=True,
     )
     pending_execution: Mapped[MessageExecution | None] = mapped_column(

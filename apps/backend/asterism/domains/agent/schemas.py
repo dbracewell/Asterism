@@ -14,6 +14,8 @@ from asterism.domains.llm.schemas import (
     ToolResult,
 )
 
+from .prompts import PromptProvenance
+
 
 class AgentEventType(StrEnum):
     START = auto()
@@ -124,6 +126,7 @@ class UserAgents(BaseModel):
 
 
 class SubAgentTrace(BaseModel):
+    prompt_provenance: PromptProvenance | None = None
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -143,6 +146,7 @@ class SubAgentTrace(BaseModel):
 
 
 class SubAgentTraceCreate(BaseModel):
+    prompt_provenance: PromptProvenance | None = None
     user_id: str
     parent_message_id: uuid.UUID | None = None
     sub_agent_id: uuid.UUID

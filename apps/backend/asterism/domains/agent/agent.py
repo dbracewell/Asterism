@@ -4,6 +4,7 @@ import asyncio
 import inspect
 import re
 import uuid
+from dataclasses import replace
 from logging import Logger
 from typing import AsyncGenerator, Awaitable, Callable, cast
 
@@ -33,6 +34,7 @@ from .approval import (
     ToolUseAuthorization,
 )
 from .delegation_scope import DelegationScope
+from .prompts import PromptComposer, PromptSnapshot
 from .schemas import (
     AgentEvent,
     AgentEventType,
@@ -59,6 +61,7 @@ class Agent:
         tool_scope: ContextToolScope | None = None,
         authorization_check: Callable[[], Awaitable[None]] | None = None,
         execution_scope: ExecutionScope | None = None,
+        prompt_snapshot: PromptSnapshot | None = None,
     ) -> None:
         if profile.sub_agent and model_id is not None and model_id != profile.model_id:
             raise BadDataException("Sub-agent model binding cannot be overridden")
@@ -68,6 +71,7 @@ class Agent:
         self.delegation_scope = delegation_scope
         self.authorization_check = authorization_check
         self.execution_scope = execution_scope
+        self.prompt_snapshot = prompt_snapshot
         self.execution: MessageExecution | None = None
         self.model_id = profile.model_id if profile.sub_agent else model_id
         self.profile: AgentProfile = profile
@@ -103,7 +107,7 @@ class Agent:
         self.model_id = model_id
 
     async def prepare_execution(self, message_id: uuid.UUID, *, restart: bool = False) -> MessageExecution:
-        from asterism.domains.chat.execution import prepare_execution
+        from asterism.domains.chat.execution import prepare_execution, read_execution_prompt
 
         if self.profile.sub_agent:
             raise BadDataException("Sub-agents retain their fixed model binding")
@@ -114,11 +118,20 @@ class Agent:
             restart=restart,
         )
         self.apply_execution(execution)
+        self.prompt_snapshot = await read_execution_prompt(
+            user_id=self.user.id,
+            chat_id=self.session.info.id,
+            message_id=message_id,
+        )
         return execution
 
     def apply_execution(self, execution: MessageExecution) -> None:
         self._client = None
         self.execution = execution
+        self.prompt_snapshot = None
+        self.execution_scope = None
+        self.tool_scope = None
+        self.delegation_scope = None
         self.model_id = execution.model.id
         self.profile = AgentProfile.model_validate(
             {**execution.configuration.model_dump(exclude_none=True), "sub_agent": False, "model_id": None},
@@ -181,6 +194,14 @@ class Agent:
                 or not scope.effective_internal_tools <= self.execution_scope.effective_internal_tools
             ):
                 raise BadDataException("Delegated execution scope changed")
+        if self.prompt_snapshot is not None:
+            if scope.project_id != self.prompt_snapshot.project_id:
+                raise BadDataException("Recorded prompt project changed; regenerate")
+            scope = replace(
+                scope,
+                prompt_revision=self.prompt_snapshot.project_revision,
+                project_instructions=self.prompt_snapshot.project_instructions,
+            )
         self.execution_scope = scope
         return scope
 
@@ -287,49 +308,50 @@ class Agent:
         self.delegation_scope = self.tool_scope.delegation if self.tool_scope else None
         return self.effective_tools
 
-    async def _build_system_prompt(self) -> str | None:
-        base_prompt = self.profile.system_prompt or ""
+    async def _build_system_prompt(self) -> str:
+        from asterism.domains.chat.prompt_composition import build_prompt_snapshot, build_runtime_prompt
 
         await self.resolve_tools(reset=not self.profile.sub_agent)
-        if "sub_agent" in self.effective_tools:
-            from asterism.domains.chat.delegation import eligible_delegation_targets
+        self._delegation_available = "sub_agent" in self.effective_tools
+        snapshot = self.prompt_snapshot
+        if snapshot is None and self.execution is not None:
+            from asterism.domains.chat.execution import read_execution_prompt
 
-            agent_profiles = await eligible_delegation_targets(
+            snapshot = await read_execution_prompt(
                 user_id=self.user.id,
                 chat_id=self.session.info.id,
-                scope=self.delegation_scope,
+                message_id=self.execution.request_message_id,
             )
-            self._delegation_available = bool(agent_profiles)
-            agent_info = []
-            for profile in agent_profiles:
-                if profile.id == self.profile.id or profile.sub_agent is False:
-                    continue
-
-                agent_info.append(
-                    f"- id: {profile.id} (name: {profile.name}) - {profile.description}",  # noqa: E501
-                )
-
-            if not agent_info:
-                return base_prompt.strip() or None
-
-            base_prompt = (
-                f"{base_prompt}\n\n"
-                "You have access to a tool called 'sub_agent' "
-                "that allows you to delegate tasks to a sub-agent. "
-                "Use this tool when you need to break down complex "
-                "tasks or when you want to delegate work to another agent. "
-                "Make sure that if the sub agent generates information needed "
-                "to be seen by the user that you output that information in your "  # noqa: E501
-                "response. "
-                "Sub Agents:"
-                f"\n{'\n'.join(agent_info)}"
+            if snapshot.provenance != self.execution.prompt:
+                raise BadDataException("Recorded prompt changed; regenerate")
+            self.prompt_snapshot = snapshot
+        if snapshot is None and self.execution_scope is not None and self.profile.sub_agent:
+            scope = self.execution_scope
+            snapshot = PromptComposer().snapshot(
+                agent_id=self.profile.id,
+                agent_revision=self.profile.config_revision,
+                agent_instructions=self.profile.system_prompt or "",
+                project_id=scope.project_id,
+                project_revision=scope.prompt_revision,
+                project_instructions=scope.project_instructions,
+                runtime_context=await build_runtime_prompt(
+                    user_id=self.user.id,
+                    chat_id=self.session.info.id,
+                    profile=self.profile,
+                    tools=self.effective_tools,
+                    scope=self.tool_scope,
+                ),
             )
-
-        base_prompt = base_prompt.strip()
-        if base_prompt == "":
-            return None
-
-        return base_prompt
+            self.prompt_snapshot = snapshot
+        if snapshot is None:
+            snapshot = await build_prompt_snapshot(
+                user_id=self.user.id,
+                chat_id=self.session.info.id,
+                profile=self.profile,
+                model_id=self.model_id,
+                ceiling=self.tool_scope,
+            )
+        return snapshot.text
 
     async def run(
         self,

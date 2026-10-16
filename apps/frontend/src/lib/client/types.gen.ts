@@ -1312,6 +1312,7 @@ export type Message = {
  * MessageExecution
  */
 export type MessageExecution = {
+  prompt?: PromptProvenance;
   /**
    * Id
    */
@@ -1602,6 +1603,42 @@ export type ProjectUpdate = {
    * System Prompt
    */
   system_prompt?: string;
+};
+
+/**
+ * PromptProvenance
+ */
+export type PromptProvenance = {
+  /**
+   * Composer Revision
+   */
+  composer_revision?: number;
+  /**
+   * Sources
+   */
+  sources?: Array<PromptSource>;
+};
+
+/**
+ * PromptSource
+ */
+export type PromptSource = {
+  /**
+   * Kind
+   */
+  kind: "platform" | "agent" | "profile" | "project" | "runtime";
+  /**
+   * Source Id
+   */
+  source_id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Digest
+   */
+  digest: string;
 };
 
 /**
@@ -1962,6 +1999,7 @@ export type SubAgentDefinition = {
  * SubAgentTrace
  */
 export type SubAgentTrace = {
+  prompt_provenance?: PromptProvenance | null;
   /**
    * Id
    */

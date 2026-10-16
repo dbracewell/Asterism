@@ -325,3 +325,43 @@ from model names. Provider payloads omit tools when the effective set is empty.
 The broader injected retrieval service, prompt composition and execution-context
 refactor remain EPIC-26. This story requires fresh schema initialization, without
 migrations or resetting the working database.
+
+## Composable prompts (US-26.2)
+
+`domains/agent/prompts.py` owns the typed, ordered layers and explicit conflict
+policy. Platform restrictions are mandatory; agent role and explicit profile
+constraints remain authoritative; project instructions refine the task; user
+turns supply the request. Conflicts resolve in that priority order; runtime metadata
+cannot override instruction layers. Authorization is enforced by tool/file services rather
+than inferred from layer order. File text, retrieved passages, and forwarded
+conversation history remain task data in user/tool messages.
+
+The chat composition root injects project/chat readers and effective capability
+policy. Main calls, delegated calls, token estimates, and replay use the same
+`PromptComposer`. General chats omit the project layer, and an empty project
+prompt contributes provenance without an instruction block. Runtime capability
+and delegation descriptions are capped at 8,000 characters. Forwarded delegation
+context has a total token budget including caller notes, file labels, role labels,
+and its wrapper; oversized first messages cannot bypass it.
+
+Turn preparation atomically persists a private prompt snapshot alongside the
+model/configuration execution snapshot. Pending-turn estimates and resumed turns
+read that snapshot. Project or main-agent edits affect later turns and explicit
+regeneration; chat model switching does not rewrite an earlier turn's prompt.
+Delegates inherit the parent turn's project instructions and revision with their
+own agent role and narrowed capabilities. Live revocation still takes precedence:
+a prompt snapshot never grants continued access after cancellation or revocation.
+Project moves reject reuse of a prompt captured for a different project.
+
+Public execution provenance identifies composer version and each source's kind,
+ID, revision, and SHA-256 digest. Private composed system messages are excluded
+from sub-agent trace history; traces retain task messages and prompt provenance.
+Private replay inputs are stored on the requesting message and are not included
+in chat/API schemas or full-prompt logs. The runtime has no profile-persona binding
+yet: the composer supports an explicit profile layer, but callers do not invent
+one. No memory integration or retrieval rewrite is introduced by this story.
+
+The direct schema changes add `messages.pending_prompt` and
+`sub_agent_traces.prompt_provenance`. Existing development databases require the
+normal disposable-data reset before running this schema. Story verification uses
+fresh isolated databases and leaves the current development database intact.

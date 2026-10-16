@@ -2,6 +2,8 @@
 
 import uuid
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from asterism.core.exceptions import BadDataException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.schemas import AgentProfile
@@ -22,10 +24,11 @@ async def resolve_effective_tools(
     profile: AgentProfile,
     model_id: uuid.UUID | None,
     ceiling: ContextToolScope | None = None,
+    session: AsyncSession | None = None,
 ) -> tuple[list[str], ContextToolScope | None]:
     if model_id is None:
         return [], None
-    async with get_async_db_session() as db:
+    async with get_async_db_session(session) as db:
         model = await db.get(LLMModel, model_id)
         if model is None or not model.is_active:
             return [], ceiling
@@ -76,7 +79,9 @@ async def resolve_effective_tools(
         if "search_knowledge" in active and ceiling.file_ids.intersection(files.allowed_file_ids):
             names.add("search_knowledge")
     if "sub_agent" in active:
-        targets = await eligible_delegation_targets(user_id=user_id, chat_id=chat_id, scope=ceiling.delegation)
+        targets = await eligible_delegation_targets(
+            user_id=user_id, chat_id=chat_id, scope=ceiling.delegation, session=session
+        )
         if any(target.id != profile.id for target in targets):
             names.add("sub_agent")
     return sorted(names), ceiling

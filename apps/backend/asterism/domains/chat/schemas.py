@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from asterism.domains.agent.prompts import PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
@@ -45,6 +46,7 @@ class ChatModelChoice(BaseModel):
 
 
 class MessageExecution(BaseModel):
+    prompt: PromptProvenance = Field(default_factory=PromptProvenance)
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     request_message_id: uuid.UUID
     model: ChatModelChoice
@@ -79,7 +81,7 @@ class Message(LLMMessage):
     execution: MessageExecution | None = None
     model_config = ConfigDict(from_attributes=True)
     # Persisted chat content remains plain text; multimodal parts are runtime-only.
-    content: str
+    content: str  # type: ignore[reportIncompatibleVariableOverride] - persisted messages are text only
     id: uuid.UUID
     status: MessageStatus
     created_at: int

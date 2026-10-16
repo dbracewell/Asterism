@@ -50,8 +50,17 @@ async def project_api(tmp_path, monkeypatch):
             async with sessions() as session:
                 yield session
 
-    for module in ["chat.tool_policy", "chat.delegation", "agent.service"]:
+    for module in [
+        "chat.tool_policy",
+        "chat.delegation",
+        "chat.prompt_composition",
+        "chat.execution",
+        "chat.service",
+        "agent.service",
+    ]:
         monkeypatch.setattr(f"asterism.domains.{module}.get_async_db_session", session_context)
+
+    monkeypatch.setattr("asterism.db.database.get_async_db_session", session_context)
 
     async def db():
         async with sessions() as session:

@@ -331,9 +331,11 @@ class TestSubAgentTraces:
             assert trace.total_tokens == 42
             assert trace.elapsed_ms >= 0
             assert trace.depth == 0
-            # Ensure full message history was captured
+            # Capture task history and provenance without private system prompts
             assert len(trace.messages) >= 2
-            assert any("You are WorkerAgent." in str(m.get("content")) for m in trace.messages)
+            assert not any(m.get("role") == "system" for m in trace.messages)
+            assert trace.prompt_provenance is not None
+            assert "You are WorkerAgent." not in trace.prompt_provenance.model_dump_json()
 
     @pytest.mark.asyncio
     async def test_sub_agent_trace_with_tool_calls_in_history(
@@ -440,7 +442,7 @@ class TestSubAgentTraces:
 
             # Verify intermediate tool call and result are preserved in messages
             roles = [m.get("role") for m in trace.messages]
-            assert "system" in roles
+            assert "system" not in roles
             assert "user" in roles
             assert "assistant" in roles
             assert "tool" in roles

@@ -569,49 +569,6 @@ export const zLlmDisplayInfo = z.object({
 });
 
 /**
- * MessageExecution
- */
-export const zMessageExecution = z.object({
-  id: z.uuid().optional(),
-  request_message_id: z.uuid(),
-  model: zChatModelChoice,
-  model_revision: z.int().gte(1),
-  configuration: zMainAgentConfiguration,
-});
-
-/**
- * ChatInfo
- */
-export const zChatInfo = z.object({
-  id: z.uuid(),
-  user_id: z.string(),
-  created_at: z.int(),
-  updated_at: z.int(),
-  allowed_tools: z.array(z.string()).optional(),
-  title: z.string().nullish(),
-  project_id: z.uuid().nullish(),
-  agent_id: z.uuid().nullish(),
-  preview: z.string().nullish(),
-  message_count: z.int().nullish(),
-  context_model: zChatContextModel.nullish(),
-  selected_model_id: z.uuid().nullish(),
-  model_revision: z.int().gte(1).optional().default(1),
-  selected_model: zChatModelChoice.nullish(),
-  pending_execution: zMessageExecution.nullish(),
-  resume_error: z.string().nullish(),
-});
-
-/**
- * ChatInfoList
- */
-export const zChatInfoList = z.object({
-  chats: z.array(zChatInfo),
-  total: z.int().gte(0),
-  page: z.int().gte(1),
-  page_size: z.int().gte(1),
-});
-
-/**
  * NewChatRequest
  */
 export const zNewChatRequest = z.object({
@@ -705,6 +662,68 @@ export const zProjectUpdate = z.object({
   name: z.string().min(1).max(255).optional(),
   description: z.string().max(10000).optional(),
   system_prompt: z.string().max(100000).optional(),
+});
+
+/**
+ * PromptSource
+ */
+export const zPromptSource = z.object({
+  kind: z.enum(["platform", "agent", "profile", "project", "runtime"]),
+  source_id: z.string(),
+  revision: z.int(),
+  digest: z.string(),
+});
+
+/**
+ * PromptProvenance
+ */
+export const zPromptProvenance = z.object({
+  composer_revision: z.int().optional().default(1),
+  sources: z.array(zPromptSource).optional().default([]),
+});
+
+/**
+ * MessageExecution
+ */
+export const zMessageExecution = z.object({
+  prompt: zPromptProvenance.optional(),
+  id: z.uuid().optional(),
+  request_message_id: z.uuid(),
+  model: zChatModelChoice,
+  model_revision: z.int().gte(1),
+  configuration: zMainAgentConfiguration,
+});
+
+/**
+ * ChatInfo
+ */
+export const zChatInfo = z.object({
+  id: z.uuid(),
+  user_id: z.string(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  allowed_tools: z.array(z.string()).optional(),
+  title: z.string().nullish(),
+  project_id: z.uuid().nullish(),
+  agent_id: z.uuid().nullish(),
+  preview: z.string().nullish(),
+  message_count: z.int().nullish(),
+  context_model: zChatContextModel.nullish(),
+  selected_model_id: z.uuid().nullish(),
+  model_revision: z.int().gte(1).optional().default(1),
+  selected_model: zChatModelChoice.nullish(),
+  pending_execution: zMessageExecution.nullish(),
+  resume_error: z.string().nullish(),
+});
+
+/**
+ * ChatInfoList
+ */
+export const zChatInfoList = z.object({
+  chats: z.array(zChatInfo),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
 });
 
 /**
@@ -913,6 +932,7 @@ export const zProjectSubAgentList = z.object({
  * SubAgentTrace
  */
 export const zSubAgentTrace = z.object({
+  prompt_provenance: zPromptProvenance.nullish(),
   id: z.uuid(),
   created_at: z.int(),
   user_id: z.string(),

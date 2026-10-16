@@ -7,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
-from asterism.domains.agent.schemas import MainAgentConfiguration
+from asterism.domains.agent.prompts import PromptSnapshot
+from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
 
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
+from .prompt_composition import build_prompt_snapshot
 from .queries import select_owned_messages
 from .schemas import MessageExecution
 
@@ -44,12 +46,24 @@ async def prepare_execution(
             recorded = message.pending_execution
             if recorded is not None and not restart:
                 await validate_recorded_execution(recorded, current, session)
+                validate_prompt_snapshot(recorded, message.pending_prompt, chat.project_id)
                 execution = recorded
             else:
                 if chat.selected_model_id is None:
                     raise CodedException(409, "Choose a chat model before generating")
                 choice = await require_chat_model(chat.selected_model_id, session)
+                prompt = await build_prompt_snapshot(
+                    user_id=user_id,
+                    chat_id=chat_id,
+                    profile=AgentProfile.model_validate(
+                        {**current.model_dump(exclude_none=True), "sub_agent": False, "model_id": None}
+                    ),
+                    model_id=choice.id,
+                    session=session,
+                )
+                message.pending_prompt = prompt
                 execution = MessageExecution(
+                    prompt=prompt.provenance,
                     request_message_id=message_id,
                     model=choice,
                     model_revision=chat.model_revision,
@@ -82,3 +96,24 @@ async def validate_recorded_execution(
     } <= {base.id for base in current.knowledge_bases}:
         raise CodedException(409, "Recorded capabilities changed; regenerate with current settings")
     return choice
+
+
+async def read_execution_prompt(*, user_id: str, chat_id: uuid.UUID, message_id: uuid.UUID) -> PromptSnapshot:
+    async with get_async_db_session() as session:
+        message = await session.scalar(
+            select_owned_messages(user_id=user_id, chat_id=chat_id).where(MessageModel.id == message_id)
+        )
+        if message is None or message.pending_prompt is None:
+            raise NotFoundException("Recorded prompt not found")
+        return message.pending_prompt
+
+
+def validate_prompt_snapshot(
+    execution: MessageExecution,
+    snapshot: PromptSnapshot | None,
+    project_id: uuid.UUID | None,
+) -> None:
+    if snapshot is None or snapshot.provenance != execution.prompt:
+        raise CodedException(409, "Recorded prompt is unavailable or changed; regenerate")
+    if snapshot.project_id != project_id:
+        raise CodedException(409, "Recorded prompt project changed; regenerate")

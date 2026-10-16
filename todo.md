@@ -1,15 +1,9 @@
 # Active and Pending Work
 
-EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-29.1 was also confirmed complete and archived. US-29.2 was confirmed complete on 2026-10-15; its checklist is [archived](docs/archive/todo-completed-2026-10-15.md). US-29.3 and US-29.4 were confirmed complete on 2026-10-15 and are archived in the same file. US-26.1 was confirmed complete on 2026-10-15 and is archived there too. EPIC-29 is complete. Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
+EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-29.1 was also confirmed complete and archived. US-29.2 was confirmed complete on 2026-10-15; its checklist is [archived](docs/archive/todo-completed-2026-10-15.md). US-29.3 and US-29.4 were confirmed complete on 2026-10-15 and are archived in the same file. US-26.1 was confirmed complete on 2026-10-15 and is archived there too. US-26.2 was confirmed complete on 2026-10-16; its checklist is [archived](docs/archive/todo-completed-2026-10-16.md). EPIC-29 is complete. Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-26 — Composable execution context](docs/epics/EPIC-26-COMPOSABLE-EXECUTION-CONTEXT.md)
 
-- [ ] US-26.2: Composable project prompts (2–3 person-days).
-  - [ ] US-26.2-T1: Extract a PromptComposer from Agent.\_build_system_prompt with typed layers and explicit conflict rules.
-  - [ ] US-26.2-T2: Compose platform rules, agent role/capabilities, profile instructions where supported, project task instructions, and bounded runtime context.
-  - [ ] US-26.2-T3: Use the same composed prompt for token estimates, main-agent calls, delegated calls, and turn replay; never treat file text as system instructions.
-  - [ ] US-26.2-T4: Snapshot prompt revision per turn; apply edits to later turns and persist source/revision provenance rather than logging full private prompts.
-  - [ ] US-26.2-T5: Test precedence, empty project prompt, edits, chat model switching, main-agent settings edits, delegation, and context-budget accounting.
 - [ ] US-26.3: Shared retrieval and file-tool authorization (2–3 person-days).
   - [ ] US-26.3-T1: Move search logic from the built-in tool into an injected RetrievalService using the resolved scope and existing extraction/vector interfaces.
   - [ ] US-26.3-T2: Replace agent knowledge-base assignments with contextual access; derive contextual retrieval as an internal tool through US-29.4 policy, rather than a user-selectable agent toggle or assignment.

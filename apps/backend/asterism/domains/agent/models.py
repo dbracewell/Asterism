@@ -1,6 +1,7 @@
 import uuid
 from typing import Any, Optional
 
+from pydantic import TypeAdapter
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -8,6 +9,8 @@ from asterism.db.base_model import Base
 from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.llm.schemas import ChatCompletionParams
+
+from .prompts import PromptProvenance
 
 
 class AgentProfileModel(Base, UuidPrimaryKeyMixin):
@@ -75,6 +78,10 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
 
 class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     __tablename__ = "sub_agent_traces"
+    prompt_provenance: Mapped[PromptProvenance | None] = mapped_column(
+        JSONB_COLUMN(TypeAdapter(PromptProvenance)),
+        nullable=True,
+    )
 
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),

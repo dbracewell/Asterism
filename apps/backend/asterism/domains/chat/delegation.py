@@ -67,6 +67,7 @@ async def eligible_delegation_targets(
     user_id: str,
     chat_id: uuid.UUID,
     scope: DelegationScope | None,
+    session: AsyncSession | None = None,
 ) -> list[AgentProfile]:
     if scope is None:
         return []
@@ -74,7 +75,9 @@ async def eligible_delegation_targets(
     for target_id in sorted(scope.agent_ids, key=str):
         try:
             targets.append(
-                await require_delegation_target(user_id=user_id, chat_id=chat_id, scope=scope, target_id=target_id)
+                await require_delegation_target(
+                    user_id=user_id, chat_id=chat_id, scope=scope, target_id=target_id, session=session
+                )
             )
         except CodedException:
             # Revoked/missing/unavailable definitions are never advertised.

@@ -284,12 +284,13 @@ async def get_one(
             from asterism.domains.agent.schemas import MainAgentConfiguration
             from asterism.domains.agent.service import get_main_agent_profile
 
-            from .execution import validate_recorded_execution
+            from .execution import validate_prompt_snapshot, validate_recorded_execution
 
             execution = pending.pending_execution
             chat_info.pending_execution = execution
             try:
                 current = MainAgentConfiguration.model_validate(await get_main_agent_profile(user_id, session))
+                validate_prompt_snapshot(execution, pending.pending_prompt, chat_info.project_id)
                 choice = await validate_recorded_execution(execution, current, session)
                 chat_info.context_model = ChatContextModel(
                     id=choice.id,

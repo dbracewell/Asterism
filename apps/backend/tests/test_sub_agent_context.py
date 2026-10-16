@@ -188,7 +188,7 @@ class TestSubAgentContextForwarding:
             assert "You are InspectorAgent." in sub_msgs[0].content
 
             # 2. Forwarded parent context block
-            assert sub_msgs[1].role == "system"
+            assert sub_msgs[1].role == "user"
             assert "--- FORWARDED PARENT CONTEXT ---" in sub_msgs[1].content
             assert "### Recent Conversation History" in sub_msgs[1].content
             assert "[User]: What is Asterism?" in sub_msgs[1].content
@@ -247,7 +247,7 @@ class TestSubAgentContextForwarding:
     ):
         """Verify context window stops when accumulated token limit is exceeded."""  # noqa: E501
         monkeypatch.setattr(config, "sub_agent_context_window_messages", 20)
-        monkeypatch.setattr(config, "sub_agent_context_window_tokens", 7)
+        monkeypatch.setattr(config, "sub_agent_context_window_tokens", 60)
 
         # The tokenizer counts each short message as roughly three tokens.
         messages = [_make_message("user", f"Message {i}") for i in range(5)]
@@ -271,10 +271,10 @@ class TestSubAgentContextForwarding:
         context_block = _build_parent_context_block(ctx)
         assert context_block is not None
 
-        # The two latest messages fit; adding the third exceeds the budget.
-        assert "Message 4" in context_block
-        assert "Message 3" in context_block
-        assert "Message 2" not in context_block
+        # The entire block, including wrapper and role labels, respects the budget.
+        from asterism.domains.llm.token_counting import estimate_text_tokens
+
+        assert estimate_text_tokens(context_block) <= 60
 
     @pytest.mark.asyncio
     async def test_sub_agent_forwards_user_files_in_context_block(
