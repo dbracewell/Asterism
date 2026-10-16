@@ -1,4 +1,3 @@
-import { AgentKnowledgeAssignments } from "./agent-knowledge-assignments";
 import { SubAgentToolWarning } from "./sub-agent-tool-warning";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -63,14 +62,6 @@ export function MainAgentForm({
             complete={() => setOpen(false)}
           />
         )}
-        {open && (
-          <AgentKnowledgeAssignments
-            agentId={configuration.id}
-            initialIds={
-              configuration.knowledge_bases?.map((base) => base.id) ?? []
-            }
-          />
-        )}
       </DialogContent>
     </Dialog>
   );
@@ -115,13 +106,6 @@ export function AgentProfileForm({
             configuration={profile}
             subAgent
             complete={close}
-          />
-        )}
-        {open && profile && (
-          <AgentKnowledgeAssignments
-            key={profile.id}
-            agentId={profile.id}
-            initialIds={profile.knowledge_bases?.map((base) => base.id) ?? []}
           />
         )}
       </DialogContent>

@@ -618,14 +618,40 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
         [ChatFileModel(chat_id=chat.info.id, user_id="user-a", file_id=record.id) for record in records]
     )
     await file_session.commit()
-    agent = SimpleNamespace(session=chat, model_id=uuid.uuid4())
-    orchestrator = ChatOrchestrator(agent)  # type: ignore[arg-type]
+    from asterism.core.schemas import AuthedUser
+    from asterism.domains.agent.agent import Agent
+    from asterism.domains.agent.service import get_main_agent_profile
+    from asterism.domains.settings.models import LLMModel, ProviderModel
+    from asterism.domains.user.service import initialize_user_settings
+
+    provider = ProviderModel(name="Files", base_url="http://localhost/v1", api_key="test")
+    file_session.add(provider)
+    await file_session.flush()
+    model = LLMModel(provider_id=provider.id, name="Files", is_active=True, supports_vision=True)
+    file_session.add(model)
+    await initialize_user_settings("user-a", file_session)
+    await file_session.commit()
 
     @asynccontextmanager
-    async def session_context():
-        yield file_session
+    async def session_context(session=None):
+        yield session or file_session
 
-    monkeypatch.setattr("asterism.domains.chat.orchestrator.get_async_db_session", session_context)
+    for module in [
+        "agent.service",
+        "chat.tool_policy",
+        "chat.delegation",
+        "chat.runtime_files",
+        "files.runtime_access",
+    ]:
+        monkeypatch.setattr(f"asterism.domains.{module}.get_async_db_session", session_context)
+    monkeypatch.setattr("asterism.db.database.get_async_db_session", session_context)
+    agent = Agent(
+        profile=await get_main_agent_profile("user-a", file_session),
+        user=AuthedUser(id="user-a", email="a@x.test", name="A", role="user"),
+        session=chat,
+        model_id=model.id,
+    )
+    orchestrator = ChatOrchestrator(agent)
 
     async def model_with_vision(**_):
         return SimpleNamespace(supports_vision=True)

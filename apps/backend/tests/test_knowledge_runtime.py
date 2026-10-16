@@ -2,12 +2,12 @@ import uuid
 
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.agent import Agent
-from asterism.domains.agent.schemas import AgentProfile, KnowledgeBaseAssignmentSummary
+from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.chat.schemas import Chat, ChatInfo
-from asterism.domains.tools.builtin.search_knowledge import _bounded_excerpt
+from asterism.domains.retrieval.service import _bounded_excerpt
 
 
-def _agent(knowledge_bases: list[KnowledgeBaseAssignmentSummary]) -> Agent:
+def _agent() -> Agent:
     agent_id = uuid.uuid4()
     profile = AgentProfile(
         id=agent_id,
@@ -18,7 +18,6 @@ def _agent(knowledge_bases: list[KnowledgeBaseAssignmentSummary]) -> Agent:
         system_prompt=None,
         max_steps=2,
         tools=[],
-        knowledge_bases=knowledge_bases,
     )
     user = AuthedUser(id="user-a", email="user@example.test", name="User", role="user")
     chat = Chat(
@@ -28,12 +27,10 @@ def _agent(knowledge_bases: list[KnowledgeBaseAssignmentSummary]) -> Agent:
     return Agent(profile=profile, user=user, session=chat, allowed_tools=[])
 
 
-def test_knowledge_assignments_do_not_grant_context_tool_authority():
-    unassigned = _agent([])
-    assigned = _agent([KnowledgeBaseAssignmentSummary(id=uuid.uuid4(), name="Private")])
-
-    assert "search_knowledge" not in unassigned.allowed_tools
-    assert assigned.allowed_tools == []
+def test_runtime_agent_has_no_knowledge_assignment_contract():
+    agent = _agent()
+    assert "knowledge_bases" not in type(agent.profile).model_fields
+    assert "search_knowledge" not in agent.allowed_tools
 
 
 def test_bounded_excerpt_never_splits_utf8_codepoints():

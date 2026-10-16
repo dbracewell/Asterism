@@ -91,9 +91,7 @@ async def validate_recorded_execution(
         or choice.context_window != recorded.model.context_window
     ):
         raise CodedException(409, "Recorded model identity changed; regenerate with the current selection")
-    if not set(recorded.configuration.tools) <= set(current.tools) or not {
-        base.id for base in recorded.configuration.knowledge_bases
-    } <= {base.id for base in current.knowledge_bases}:
+    if not set(recorded.configuration.tools) <= set(current.tools):
         raise CodedException(409, "Recorded capabilities changed; regenerate with current settings")
     return choice
 

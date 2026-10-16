@@ -2,16 +2,6 @@
 
 export { ApiClient, type Options } from "./sdk.gen";
 export type {
-  AgentKnowledgeBaseAssignmentsGetData,
-  AgentKnowledgeBaseAssignmentsGetError,
-  AgentKnowledgeBaseAssignmentsGetErrors,
-  AgentKnowledgeBaseAssignmentsGetResponse,
-  AgentKnowledgeBaseAssignmentsGetResponses,
-  AgentKnowledgeBaseAssignmentsReplaceData,
-  AgentKnowledgeBaseAssignmentsReplaceError,
-  AgentKnowledgeBaseAssignmentsReplaceErrors,
-  AgentKnowledgeBaseAssignmentsReplaceResponse,
-  AgentKnowledgeBaseAssignmentsReplaceResponses,
   AgentsGetSubAgentTracesData,
   AgentsGetSubAgentTracesError,
   AgentsGetSubAgentTracesErrors,
@@ -347,9 +337,6 @@ export type {
   GenerationDefaults,
   JsonValue,
   KnowledgeBase,
-  KnowledgeBaseAssignmentList,
-  KnowledgeBaseAssignmentReplace,
-  KnowledgeBaseAssignmentSummary,
   KnowledgeBaseCreate,
   KnowledgeBaseCreateData,
   KnowledgeBaseCreateError,

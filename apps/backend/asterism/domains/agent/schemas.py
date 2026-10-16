@@ -56,11 +56,6 @@ class AgentEvent(BaseModel):
         return len(self.tool_results) > 0
 
 
-class KnowledgeBaseAssignmentSummary(BaseModel):
-    id: uuid.UUID
-    name: str
-
-
 class AgentProfile(BaseModel):
     """Normalized runtime configuration, separate from public editing contracts."""
 
@@ -77,7 +72,6 @@ class AgentProfile(BaseModel):
     tools: list[str] | None = Field(default_factory=default_allowed_tools)
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     config_revision: int = Field(default=1, ge=1)
-    knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 
 class GenerationDefaults(BaseModel):
@@ -104,7 +98,6 @@ class MainAgentConfiguration(MainAgentUpdate):
     name: str
     description: str
     config_revision: int = Field(default=1, ge=1)
-    knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 
 class SubAgentCreate(MainAgentUpdate):
@@ -118,7 +111,6 @@ class SubAgentDefinition(SubAgentCreate):
     id: uuid.UUID
     model_available: bool
     config_revision: int = Field(default=1, ge=1)
-    knowledge_bases: list[KnowledgeBaseAssignmentSummary] = Field(default_factory=list)
 
 
 class UserAgents(BaseModel):

@@ -11,7 +11,6 @@ from asterism.core.exceptions import (
     UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
-from asterism.domains.knowledge_base.models import AgentKnowledgeBaseAssignmentModel, KnowledgeBaseModel
 from asterism.domains.llm.schemas import ChatCompletionParams
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
@@ -21,7 +20,6 @@ from .models import AgentProfileModel, SubAgentTraceModel
 from .queries import select_owned_agent_profiles
 from .schemas import (
     AgentProfile,
-    KnowledgeBaseAssignmentSummary,
     MainAgentConfiguration,
     MainAgentUpdate,
     SubAgentCreate,
@@ -30,33 +28,6 @@ from .schemas import (
     SubAgentTraceCreate,
     UserAgents,
 )
-
-
-async def _assignment_summaries(
-    *,
-    user_id: str,
-    agent_id: uuid.UUID,
-    session: AsyncSession,
-) -> list[KnowledgeBaseAssignmentSummary]:
-    rows = await session.execute(
-        select(KnowledgeBaseModel.id, KnowledgeBaseModel.name)
-        .join(
-            AgentKnowledgeBaseAssignmentModel,
-            AgentKnowledgeBaseAssignmentModel.knowledge_base_id == KnowledgeBaseModel.id,
-        )
-        .where(
-            AgentKnowledgeBaseAssignmentModel.user_id == user_id,
-            AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
-            KnowledgeBaseModel.user_id == user_id,
-        )
-        .order_by(AgentKnowledgeBaseAssignmentModel.position),
-    )
-    return [KnowledgeBaseAssignmentSummary(id=row.id, name=row.name) for row in rows]
-
-
-async def _with_assignment_summaries(profile: AgentProfile, *, user_id: str, session: AsyncSession) -> AgentProfile:
-    profile.knowledge_bases = await _assignment_summaries(user_id=user_id, agent_id=profile.id, session=session)
-    return profile
 
 
 async def _ensure_valid_tools(
@@ -83,7 +54,7 @@ async def get_user_agents(
         agents_dict: dict[uuid.UUID, AgentProfile] = {}
         for r in results:
             profile = await _ensure_valid_tools(AgentProfile.model_validate(r), session=session)
-            agents_dict[r.id] = await _with_assignment_summaries(profile, user_id=user_id, session=session)
+            agents_dict[r.id] = profile
 
         return UserAgents(agents=agents_dict)
 
@@ -100,7 +71,7 @@ async def get_agent_profile(
         if user_id != result.user_id:
             raise UnauthorizedException()
         profile = await _ensure_valid_tools(AgentProfile.model_validate(result), session=session)
-        return await _with_assignment_summaries(profile, user_id=user_id, session=session)
+        return profile
 
 
 async def provision_main_agent(user_id: str, session: AsyncSession) -> None:
@@ -150,7 +121,6 @@ async def get_main_agent(user_id: str, session: AsyncSession | None = None) -> M
             raise NotFoundException("Main configuration not provisioned")
         result = MainAgentConfiguration.model_validate(row)
         result.tools = configurable_tools(result.tools)
-        result.knowledge_bases = await _assignment_summaries(user_id=user_id, agent_id=row.id, session=session)
         return result
 
 
@@ -214,11 +184,7 @@ async def get_sub_agents(user_id: str, session: AsyncSession | None = None) -> l
         )
         definitions = []
         for row in rows:
-            profile = await _with_assignment_summaries(
-                AgentProfile.model_validate(row),
-                user_id=user_id,
-                session=session,
-            )
+            profile = AgentProfile.model_validate(row)
             definitions.append(await _sub_definition(profile, session))
         return definitions
 

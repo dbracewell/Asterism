@@ -1,21 +1,16 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import json
 import uuid
 from logging import Logger
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
-
 import asterism.domains.chat.service as chat_service
 from asterism.common.collection_utils import index_of
 from asterism.common.log import get_logger
-from asterism.core import config
 from asterism.core.events import ChatUpdateEvent, Event, EventType, event_bus
 from asterism.core.exceptions import BadDataException
-from asterism.db.database import get_async_db_session
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
@@ -31,8 +26,6 @@ from asterism.domains.chat.schemas import (
     NewMessageRequest,
     UpdateMessageRequest,
 )
-from asterism.domains.files.models import UserFileModel
-from asterism.domains.files.service import ensure_file_processed
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.llm.schemas import (
     ImageUrlContent,
@@ -287,28 +280,38 @@ class ChatOrchestrator:
         pass
 
     async def _build_agent_messages(self) -> list[LLMMessage]:
-        files_by_id: dict[uuid.UUID, UserFileModel] = {}
-        ids = [file.file_id for message in self.chat.messages for file in message.files]
-        vision_enabled = False
+        ids = {file.file_id for message in self.chat.messages for file in message.files}
+        payloads = {}
+        self.agent.file_input_authorization = None
         if ids:
-            if self.agent.model_id:
-                model = await settings_service.get_model_and_provider(model_id=self.agent.model_id)
-                vision_enabled = model.supports_vision is True
-            async with get_async_db_session() as session:
-                from .scope import resolve_chat_file_scope
+            from asterism.domains.chat.runtime_files import create_runtime_file_reader
 
-                scope = await resolve_chat_file_scope(user_id=self.user_id, chat_id=self.chat_id, session=session)
-                records = await session.scalars(
-                    select(UserFileModel).where(
-                        UserFileModel.user_id == self.user_id,
-                        UserFileModel.id.in_(ids),
-                        UserFileModel.id.in_(scope.allowed_file_ids),
-                    ),
+            execution_scope = (
+                await self.agent.prepare_execution_scope()
+                if self.agent.execution is None
+                else self.agent.execution_scope or await self.agent.prepare_execution_scope()
+            )
+            model = await settings_service.get_model_and_provider(model_id=self.agent.model_id)
+            reader = create_runtime_file_reader(
+                ceiling=self.agent.tool_scope, check_active=self.agent.authorization_check
+            )
+            allowed = execution_scope.allowed_file_ids
+            self.agent.user_files = [str(file_id) for file_id in sorted(allowed, key=str)]
+            loaded: set[uuid.UUID] = set()
+            for file_id in sorted(ids & allowed, key=str):
+                payload = await reader.read_for_model(
+                    execution_scope, file_id, supports_vision=model.supports_vision is True
                 )
-                files_by_id = {}
-                for file in records:
-                    files_by_id[file.id] = await ensure_file_processed(file=file, session=session)
-                self.agent.user_files = [str(file_id) for file_id in scope.allowed_file_ids]
+                payloads[file_id] = payload
+                if payload.text or payload.image_url:
+                    loaded.add(file_id)
+            input_ids = frozenset(loaded)
+
+            async def authorize_payload():
+                await reader.validate_files(execution_scope, input_ids)
+
+            await authorize_payload()
+            self.agent.file_input_authorization = authorize_payload
 
         messages: list[LLMMessage] = []
         for message in self.chat.messages:
@@ -317,37 +320,17 @@ class ChatOrchestrator:
             else:
                 parts: list[TextContentPart | ImageUrlContentPart] = [TextContentPart(text=message.content)]
                 for reference in message.files:
-                    file = files_by_id.get(reference.file_id)
-                    if file is None:
+                    payload = payloads.get(reference.file_id)
+                    if payload is None:
                         parts.append(TextContentPart(text=f'(attached file "{reference.name}" is no longer available)'))
-                    elif file.kind.value == "image":
-                        from asterism.domains.files.store import get_file_store
-
-                        path = get_file_store().open(self.user_id, file.storage_key)
-                        if vision_enabled and path.is_file() and file.size <= config.max_vision_image_bytes:
-                            encoded = base64.b64encode(path.read_bytes()).decode("ascii")
-                            parts.append(
-                                ImageUrlContentPart(
-                                    image_url=ImageUrlContent(url=f"data:{file.mime_type};base64,{encoded}"),
-                                ),
-                            )
-                        elif vision_enabled:
-                            parts.append(
-                                TextContentPart(
-                                    text=f'(image "{reference.name}" not included: file is too large or unavailable)',
-                                ),
-                            )
-                        else:
-                            parts.append(
-                                TextContentPart(
-                                    text=f'(image "{reference.name}" not included: model does not support image input)',
-                                ),
-                            )
-                    elif file.content_cache:
-                        parts.append(TextContentPart(text=f"### Attached file: {reference.name}\n{file.content_cache}"))
+                    elif payload.image_url:
+                        parts.append(ImageUrlContentPart(image_url=ImageUrlContent(url=payload.image_url)))
+                    elif payload.text:
+                        parts.append(TextContentPart(text=f"### Attached file: {reference.name}\n{payload.text}"))
                     else:
-                        reason = file.content_error or "file type is unsupported"
-                        parts.append(TextContentPart(text=f'(attached file "{reference.name}" not included: {reason})'))
+                        parts.append(
+                            TextContentPart(text=f'(attached file "{reference.name}" not included: {payload.reason})')
+                        )
                 messages.append(LLMMessage(role="user", content=parts))
             for result in message.tool_call_results or []:
                 messages.append(LLMMessage.tool_call_result(result))

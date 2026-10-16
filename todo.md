@@ -1,15 +1,9 @@
 # Active and Pending Work
 
-EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-29.1 was also confirmed complete and archived. US-29.2 was confirmed complete on 2026-10-15; its checklist is [archived](docs/archive/todo-completed-2026-10-15.md). US-29.3 and US-29.4 were confirmed complete on 2026-10-15 and are archived in the same file. US-26.1 was confirmed complete on 2026-10-15 and is archived there too. US-26.2 was confirmed complete on 2026-10-16; its checklist is [archived](docs/archive/todo-completed-2026-10-16.md). EPIC-29 is complete. Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
+EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-29.1 was also confirmed complete and archived. US-29.2 was confirmed complete on 2026-10-15; its checklist is [archived](docs/archive/todo-completed-2026-10-15.md). US-29.3 and US-29.4 were confirmed complete on 2026-10-15 and are archived in the same file. US-26.1 was confirmed complete on 2026-10-15 and is archived there too. US-26.2 and US-26.3 were confirmed complete on 2026-10-16; their checklists are [archived](docs/archive/todo-completed-2026-10-16.md). EPIC-29 is complete. Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-26 — Composable execution context](docs/epics/EPIC-26-COMPOSABLE-EXECUTION-CONTEXT.md)
 
-- [ ] US-26.3: Shared retrieval and file-tool authorization (2–3 person-days).
-  - [ ] US-26.3-T1: Move search logic from the built-in tool into an injected RetrievalService using the resolved scope and existing extraction/vector interfaces.
-  - [ ] US-26.3-T2: Replace agent knowledge-base assignments with contextual access; derive contextual retrieval as an internal tool through US-29.4 policy, rather than a user-selectable agent toggle or assignment.
-  - [ ] US-26.3-T3: Apply owner and allowed-file filters before vector search and equivalent checks to every file reading/summarization/image path.
-  - [ ] US-26.3-T4: Preserve current-generation readiness, result limits, captions, image routing, citations, and scope provenance.
-  - [ ] US-26.3-T5: Test empty scope fails closed, foreign and unrelated files, unavailable embeddings, replacement generations, and stale authorization.
 - [ ] US-26.4: Context provenance and memory isolation (2–3 person-days).
   - [ ] US-26.4-T1: Add project/chat/scope-revision, main/sub-agent configuration, selected target set, and actual model/provider provenance to execution and retrieval traces without logging file bodies or full prompts.
   - [ ] US-26.4-T2: Audit any existing summary, cache, memory, and resume paths for cross-chat reuse; key derived context by its source scope.

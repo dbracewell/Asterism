@@ -59,6 +59,8 @@ class ExecutionScope:
     file_provenance: tuple[FileProvenance, ...]
 
     project_instructions: str = ""
+    request_message_id: uuid.UUID | None = None
+    execution_id: uuid.UUID | None = None
 
     def narrow_for_sub_agent(
         self,
@@ -87,6 +89,8 @@ class ExecutionScope:
             configuration_revision=configuration_revision,
             prompt_revision=self.prompt_revision,
             project_instructions=self.project_instructions,
+            request_message_id=self.request_message_id,
+            execution_id=self.execution_id,
             allowed_file_ids=self.allowed_file_ids,
             file_provenance=self.file_provenance,
         )

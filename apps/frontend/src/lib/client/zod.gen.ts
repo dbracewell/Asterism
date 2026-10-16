@@ -264,28 +264,6 @@ export const zKnowledgeBase = z.object({
 });
 
 /**
- * KnowledgeBaseAssignmentList
- */
-export const zKnowledgeBaseAssignmentList = z.object({
-  knowledge_base_ids: z.array(z.uuid()),
-});
-
-/**
- * KnowledgeBaseAssignmentReplace
- */
-export const zKnowledgeBaseAssignmentReplace = z.object({
-  knowledge_base_ids: z.array(z.uuid()).max(100).optional(),
-});
-
-/**
- * KnowledgeBaseAssignmentSummary
- */
-export const zKnowledgeBaseAssignmentSummary = z.object({
-  id: z.uuid(),
-  name: z.string(),
-});
-
-/**
  * KnowledgeBaseCreate
  */
 export const zKnowledgeBaseCreate = z.object({
@@ -466,7 +444,6 @@ export const zMainAgentConfiguration = z.object({
   name: z.string(),
   description: z.string(),
   config_revision: z.int().gte(1).optional().default(1),
-  knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional(),
 });
 
 /**
@@ -914,7 +891,6 @@ export const zSubAgentDefinition = z.object({
   id: z.uuid(),
   model_available: z.boolean(),
   config_revision: z.int().gte(1).optional().default(1),
-  knowledge_bases: z.array(zKnowledgeBaseAssignmentSummary).optional(),
 });
 
 /**
@@ -2035,29 +2011,6 @@ export const zSubAgentUpdatePath = z.object({
  * Successful Response
  */
 export const zSubAgentUpdateResponse = zSubAgentDefinition;
-
-export const zAgentKnowledgeBaseAssignmentsGetPath = z.object({
-  agent_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zAgentKnowledgeBaseAssignmentsGetResponse =
-  zKnowledgeBaseAssignmentList;
-
-export const zAgentKnowledgeBaseAssignmentsReplaceBody =
-  zKnowledgeBaseAssignmentReplace;
-
-export const zAgentKnowledgeBaseAssignmentsReplacePath = z.object({
-  agent_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zAgentKnowledgeBaseAssignmentsReplaceResponse =
-  zKnowledgeBaseAssignmentList;
 
 export const zAgentsGetSubAgentTracesPath = z.object({
   parent_message_id: z.uuid(),

@@ -772,40 +772,6 @@ export type KnowledgeBase = {
 };
 
 /**
- * KnowledgeBaseAssignmentList
- */
-export type KnowledgeBaseAssignmentList = {
-  /**
-   * Knowledge Base Ids
-   */
-  knowledge_base_ids: Array<string>;
-};
-
-/**
- * KnowledgeBaseAssignmentReplace
- */
-export type KnowledgeBaseAssignmentReplace = {
-  /**
-   * Knowledge Base Ids
-   */
-  knowledge_base_ids?: Array<string>;
-};
-
-/**
- * KnowledgeBaseAssignmentSummary
- */
-export type KnowledgeBaseAssignmentSummary = {
-  /**
-   * Id
-   */
-  id: string;
-  /**
-   * Name
-   */
-  name: string;
-};
-
-/**
  * KnowledgeBaseCreate
  */
 export type KnowledgeBaseCreate = {
@@ -1195,10 +1161,6 @@ export type MainAgentConfiguration = {
    * Config Revision
    */
   config_revision?: number;
-  /**
-   * Knowledge Bases
-   */
-  knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
 };
 
 /**
@@ -1989,10 +1951,6 @@ export type SubAgentDefinition = {
    * Config Revision
    */
   config_revision?: number;
-  /**
-   * Knowledge Bases
-   */
-  knowledge_bases?: Array<KnowledgeBaseAssignmentSummary>;
 };
 
 /**
@@ -5993,78 +5951,6 @@ export type SubAgentUpdateResponses = {
 
 export type SubAgentUpdateResponse =
   SubAgentUpdateResponses[keyof SubAgentUpdateResponses];
-
-export type AgentKnowledgeBaseAssignmentsGetData = {
-  body?: never;
-  path: {
-    /**
-     * Agent Id
-     */
-    agent_id: string;
-  };
-  query?: never;
-  url: "/agents/{agent_id}/knowledge-bases";
-};
-
-export type AgentKnowledgeBaseAssignmentsGetErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type AgentKnowledgeBaseAssignmentsGetError =
-  AgentKnowledgeBaseAssignmentsGetErrors[keyof AgentKnowledgeBaseAssignmentsGetErrors];
-
-export type AgentKnowledgeBaseAssignmentsGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: KnowledgeBaseAssignmentList;
-};
-
-export type AgentKnowledgeBaseAssignmentsGetResponse =
-  AgentKnowledgeBaseAssignmentsGetResponses[keyof AgentKnowledgeBaseAssignmentsGetResponses];
-
-export type AgentKnowledgeBaseAssignmentsReplaceData = {
-  body: KnowledgeBaseAssignmentReplace;
-  path: {
-    /**
-     * Agent Id
-     */
-    agent_id: string;
-  };
-  query?: never;
-  url: "/agents/{agent_id}/knowledge-bases";
-};
-
-export type AgentKnowledgeBaseAssignmentsReplaceErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type AgentKnowledgeBaseAssignmentsReplaceError =
-  AgentKnowledgeBaseAssignmentsReplaceErrors[keyof AgentKnowledgeBaseAssignmentsReplaceErrors];
-
-export type AgentKnowledgeBaseAssignmentsReplaceResponses = {
-  /**
-   * Successful Response
-   */
-  200: KnowledgeBaseAssignmentList;
-};
-
-export type AgentKnowledgeBaseAssignmentsReplaceResponse =
-  AgentKnowledgeBaseAssignmentsReplaceResponses[keyof AgentKnowledgeBaseAssignmentsReplaceResponses];
 
 export type AgentsGetSubAgentTracesData = {
   body?: never;

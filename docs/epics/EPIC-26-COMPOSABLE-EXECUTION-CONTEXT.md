@@ -1,6 +1,6 @@
 # EPIC-26 — Composable execution context
 
-Status: In progress. US-26.1 and US-26.2 are confirmed complete; US-26.3 and US-26.4 remain pending.
+Status: In progress. US-26.1, US-26.2, and US-26.3 are confirmed complete; US-26.4 remains pending.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -76,13 +76,54 @@ As a user, I want relevant project and chat files searched through the same reli
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-26.1.
 
-- [ ] US-26.3-T1: Move search logic from the built-in tool into an injected RetrievalService using the resolved scope and existing extraction/vector interfaces.
-- [ ] US-26.3-T2: Replace agent knowledge-base assignments with contextual access; derive contextual retrieval as an internal tool through US-29.4 policy, rather than a user-selectable agent toggle or assignment.
-- [ ] US-26.3-T3: Apply owner and allowed-file filters before vector search and equivalent checks to every file reading/summarization/image path.
-- [ ] US-26.3-T4: Preserve current-generation readiness, result limits, captions, image routing, citations, and scope provenance.
-- [ ] US-26.3-T5: Test empty scope fails closed, foreign and unrelated files, unavailable embeddings, replacement generations, and stale authorization.
+- [x] US-26.3-T1: Move search logic from the built-in tool into an injected RetrievalService using the resolved scope and existing extraction/vector interfaces.
+- [x] US-26.3-T2: Replace agent knowledge-base assignments with contextual access; derive contextual retrieval as an internal tool through US-29.4 policy, rather than a user-selectable agent toggle or assignment.
+- [x] US-26.3-T3: Apply owner and allowed-file filters before vector search and equivalent checks to every file reading/summarization/image path.
+- [x] US-26.3-T4: Preserve current-generation readiness, result limits, captions, image routing, citations, and scope provenance.
+- [x] US-26.3-T5: Test empty scope fails closed, foreign and unrelated files, unavailable embeddings, replacement generations, and stale authorization.
 
 **Acceptance:** General chats can retrieve attached files; project chats can retrieve project and local files; direct file tools cannot bypass retrieval authorization.
+
+**Implementation and verification (2026-10-16):** Retrieval orchestration is now
+an injected `RetrievalService` using typed execution scope and the existing
+embedding/vector interfaces. The tool is a thin adapter; main/delegated tool
+contexts receive that service and a `RuntimeFileReader`. Shared live readers
+validate owner, caller/model, project, active branch, current memberships,
+delegation, and canceled/replaced execution identity. Inline converted text and
+image reads validate before/after reads and before provider calls. Vector queries
+prefilter owner and ready allowed files; result release checks queried/current
+generations, ownership, UTF-8 bytes, and count bounds. Captions and file/source/
+message citations retain scope revision provenance.
+
+Agent knowledge-base assignment storage, endpoints, response fields, service
+enrichment, and editing controls are removed. Standalone knowledge-base management
+remains scheduled for EPIC-28. See [retrieval architecture](../architecture/knowledge-retrieval.md)
+and [agent runtime](../architecture/agent-runtime.md#shared-retrieval-and-file-reads-us-263).
+
+| Gate                           | Result                                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Backend unit/integration suite | 421 passed, including 13 new scoped retrieval/file cases                                                 |
+| Frontend unit tests            | 102 passed                                                                                               |
+| Frontend migration tests       | 6 passed                                                                                                 |
+| Root configuration tests       | 29 passed                                                                                                |
+| Backend/frontend lint          | Passed                                                                                                   |
+| Backend/frontend typecheck     | Passed; backend compileall plus targeted basedpyright on changed modules, 0 errors/warnings              |
+| Formatting                     | `pnpm format` and backend format check passed                                                            |
+| Frontend production build      | Passed                                                                                                   |
+| OpenAPI/generated clients      | Assignment contracts removed; independent regeneration reproduced all client file hashes                 |
+| Import cycles                  | 168 modules / 654 imports; no cycles                                                                     |
+| Isolated Playwright            | 16 passed without browser retries; runner exit 0, managed backend reports 143 during intentional cleanup |
+| Diff integrity                 | `git diff --check` passed                                                                                |
+
+Verification uses fresh databases, real file bytes, and a real LanceDB query with
+injected query embeddings. External provider calls and live model provisioning
+were not run. Initial runs repaired old assignment/schema expectations, realistic
+runtime/session doubles, and a sub-agent test that incorrectly expected an edit
+trigger when the dialog was already open. An initial import cycle was removed by
+injecting file processing rather than importing it in the runtime reader. No
+compatibility fallback, data migration, or current database reset was added.
+User confirmed completion and authorized commit/merge on 2026-10-16;
+the checklist is [archived](../archive/todo-completed-2026-10-16.md).
 
 ### US-26.4 — Context provenance and memory isolation
 

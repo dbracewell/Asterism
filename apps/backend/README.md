@@ -43,7 +43,7 @@ An uploaded eligible `UserFile` receives a canonical, versioned
 `FileKnowledgeArtifact` and is processed independently of knowledge-base
 membership. Knowledge bases are ordered file collections; they neither own
 vectors nor trigger repeat extraction. Retrieval first resolves the active
-agent's assigned bases to allowed file IDs, then supplies both that set and the
+execution context to live project/chat file IDs, then supplies both that set and the
 authenticated owner to LanceDB.
 
 The File API exposes artifact status plus retry/cancel processing and image
@@ -231,8 +231,8 @@ services and composite database foreign keys. General scope contains no project 
 US-25.1 supplies the binding/scope foundation. US-25.2 implements guarded moves,
 scoped chat lists, project search, and explicit deletion coordination. US-25.3 implements
 draft handling, idempotent acceptance and attachment removal. Project prompt composition and
-contextual tool/retrieval/delegation authorization arrive in EPIC-26/29; existing
-knowledge-base tool assignments are still present until the planned refactor cutover.
+contextual tool/retrieval/delegation authorization are implemented through
+US-26.1/26.2/26.3 and EPIC-29. Agent knowledge-base assignments are removed.
 The new scope reader is not a claim that every legacy runtime tool already uses it.
 
 Obsolete folder-chat routes, schemas, creation/list controls, and chat-derived folder
@@ -254,7 +254,7 @@ Moves retain every message, branch and chat-local membership; they never copy so
 or promote attachments into project files. The next scope read exposes the destination
 project instructions/revision/files (or empty project context for General), even with a
 cached SQLAlchemy chat. Historical answers may still contain prior project information.
-Prompt composition and contextual retrieval/delegation remain EPIC-26/29.
+Prompt composition and contextual retrieval/delegation are implemented through EPIC-26/29.
 
 `GET /chat/` lists General chats by default. Supply an owned `project_id` to list its
 chats. It returns `chats`, `total`, `page` and `page_size` (default 50, maximum 100),
@@ -317,7 +317,7 @@ history/current scope and generate a pending turn; duplicate resume signals duri
 active job do nothing. Reconnect and regeneration reload current persisted history.
 Generation failure/cancellation retains accepted history and local memberships; canceled
 turns have terminal status and are not restarted by receipt replay/reconnect. Provider
-prompt/retrieval/delegation integration remains EPIC-26/29.
+prompt/retrieval/delegation integration is implemented through US-26.1/26.2/26.3 and EPIC-29.
 
 Removal is owner-scoped and rejected during an active run/approval. A no-op repeat is
 safe. It revokes the local reference across branches while preserving historical stable-ID
@@ -385,7 +385,7 @@ model/provider and capability identity, selection revision, and a complete main
 configuration snapshot with its revision on the pending message. Resume uses that
 recorded snapshot; explicit regeneration records the current selection/configuration
 before changing the active branch. Model identity/capability changes, disablement and
-revoked tools/knowledge assignments reject replay with a regeneration action. File
+revoked configured tools reject replay with a regeneration action. File
 memberships are still revalidated from current authorized scope. Assistant output,
 cancelled partial output and stream-start packets carry the actual execution snapshot.
 Historical metadata has no model/provider FK that could erase or relabel it.
@@ -409,3 +409,23 @@ Model settings include **Tool calls** support (`supports_tools`); unknown or fal
 support disables tool schemas. Generic discovery consumes explicit `supports_tools`
 metadata and preserves manual overrides. No tool capability is inferred from a
 model name. This schema change requires fresh initialization; no migration is run.
+
+### Scoped retrieval and model file reads (US-26.3)
+
+`domains/retrieval/service.py` composes injected scope/artifact, embedding, and vector
+readers; `domains/chat/retrieval.py` wires live internal-tool authorization and
+owner-scoped extraction selects. `search_knowledge` is a thin adapter. Results keep
+file/generation/source citations and revision provenance; empty, revoked, canceled,
+or replaced execution scopes fail closed. Authorization and current generation
+are rechecked before vector queries and result release.
+
+`RuntimeFileReader` shares the live reader with retrieval and checks converted text
+and original image bytes before release. Inline attachment payloads are checked
+again before provider calls. Owner-scoped File Manager access is separate from agent
+execution access. Image input still requires explicit vision support and bounded
+bytes. No new retrieval engine or model download is introduced.
+
+Agent knowledge-base assignment table/API fields/endpoints and settings controls are
+removed. Initialize a fresh disposable development database before using this
+schema; the verified current database is not reset by the story workflow. Remaining
+standalone knowledge-base removal is scheduled for EPIC-28.

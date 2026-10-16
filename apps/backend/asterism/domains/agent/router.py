@@ -4,11 +4,6 @@ from fastapi import APIRouter
 
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
-from asterism.domains.knowledge_base.schemas import KnowledgeBaseAssignmentList, KnowledgeBaseAssignmentReplace
-from asterism.domains.knowledge_base.service import (
-    get_agent_knowledge_base_assignments,
-    replace_agent_knowledge_base_assignments,
-)
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .schemas import SubAgentCreate, SubAgentDefinition, SubAgentTrace
@@ -39,38 +34,6 @@ async def update_sub_agent(
     session: DBSessionDep,
 ) -> SubAgentDefinition:
     return await save_sub_agent(user.id, payload, agent_id=agent_id, session=session)
-
-
-@agents_router.get(
-    "/{agent_id}/knowledge-bases",
-    response_model=KnowledgeBaseAssignmentList,
-    operation_id="agentKnowledgeBaseAssignmentsGet",
-)
-async def get_knowledge_base_assignments(
-    agent_id: uuid.UUID,
-    user: AuthedUserDep,
-    session: DBSessionDep,
-) -> KnowledgeBaseAssignmentList:
-    return await get_agent_knowledge_base_assignments(user_id=user.id, agent_id=agent_id, session=session)
-
-
-@agents_router.put(
-    "/{agent_id}/knowledge-bases",
-    response_model=KnowledgeBaseAssignmentList,
-    operation_id="agentKnowledgeBaseAssignmentsReplace",
-)
-async def replace_knowledge_base_assignments(
-    agent_id: uuid.UUID,
-    payload: KnowledgeBaseAssignmentReplace,
-    user: AuthedUserDep,
-    session: DBSessionDep,
-) -> KnowledgeBaseAssignmentList:
-    return await replace_agent_knowledge_base_assignments(
-        user_id=user.id,
-        agent_id=agent_id,
-        payload=payload,
-        session=session,
-    )
 
 
 @agents_router.get(

@@ -146,11 +146,3 @@ class KnowledgeCaptionConfiguration(BaseModel):
 class KnowledgeCaptionConfigurationUpdate(BaseModel):
     mode: Literal["disabled", "provider", "local"]
     provider_model_id: uuid.UUID | None = None
-
-
-class KnowledgeBaseAssignmentReplace(BaseModel):
-    knowledge_base_ids: list[uuid.UUID] = Field(default_factory=list, max_length=100)
-
-
-class KnowledgeBaseAssignmentList(BaseModel):
-    knowledge_base_ids: list[uuid.UUID]

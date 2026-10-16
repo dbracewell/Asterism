@@ -54,6 +54,7 @@ it("saves main instructions separately from the model and preserves other genera
     screen.getByRole("button", { name: "Edit main configuration" }),
   );
   expect(screen.queryByLabelText("Fixed model")).not.toBeInTheDocument();
+  expect(screen.queryByText(/knowledge bases/i)).not.toBeInTheDocument();
   await userEvent.type(screen.getByLabelText("Instructions"), "Be precise");
   await userEvent.click(
     await screen.findByRole("button", { name: "Save configuration" }),
@@ -127,4 +128,29 @@ it("hides context-managed tools while retaining ordinary tool settings", async (
   expect(mocks.mainSave.mock.calls.at(-1)?.[0].body.tools).toEqual([
     "web_fetch",
   ]);
+});
+
+it("edits a sub-agent without offering obsolete knowledge-base assignments", async () => {
+  render(
+    <AgentProfileForm
+      profile={{
+        id: "worker",
+        name: "Worker",
+        description: "",
+        model_id: "model",
+        model_available: true,
+        system_prompt: "Research",
+        max_steps: 5,
+        tools: [],
+      }}
+      completeEditing={vi.fn()}
+    />,
+    { wrapper: Wrapper },
+  );
+  await screen.findByRole("dialog", { name: "Edit sub-agent" });
+  expect(screen.getByLabelText("Fixed model")).toHaveTextContent("Available");
+  expect(screen.queryByText(/knowledge bases/i)).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /save.*assignment/i }),
+  ).not.toBeInTheDocument();
 });

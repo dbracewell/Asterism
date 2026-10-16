@@ -23,6 +23,7 @@ from asterism.domains.llm.schemas import (
     LLMMessage,
     ToolResult,
 )
+from asterism.domains.retrieval.service import RetrievalService
 from asterism.domains.settings.schemas import LlmWithProvider
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
 from asterism.domains.tools.context import ContextToolScope
@@ -62,6 +63,7 @@ class Agent:
         authorization_check: Callable[[], Awaitable[None]] | None = None,
         execution_scope: ExecutionScope | None = None,
         prompt_snapshot: PromptSnapshot | None = None,
+        retrieval_service: RetrievalService | None = None,
     ) -> None:
         if profile.sub_agent and model_id is not None and model_id != profile.model_id:
             raise BadDataException("Sub-agent model binding cannot be overridden")
@@ -71,6 +73,8 @@ class Agent:
         self.delegation_scope = delegation_scope
         self.authorization_check = authorization_check
         self.execution_scope = execution_scope
+        self.file_input_authorization: Callable[[], Awaitable[None]] | None = None
+        self.retrieval_service = retrieval_service
         self.prompt_snapshot = prompt_snapshot
         self.execution: MessageExecution | None = None
         self.model_id = profile.model_id if profile.sub_agent else model_id
@@ -202,6 +206,8 @@ class Agent:
                 prompt_revision=self.prompt_snapshot.project_revision,
                 project_instructions=self.prompt_snapshot.project_instructions,
             )
+        if self.execution is not None:
+            scope = replace(scope, request_message_id=self.execution.request_message_id, execution_id=self.execution.id)
         self.execution_scope = scope
         return scope
 
@@ -259,6 +265,13 @@ class Agent:
                 name=name, user_id=self.user.id, chat_id=self.session.info.id, scope=self.tool_scope
             )
 
+        from asterism.domains.chat.retrieval import create_retrieval_service
+        from asterism.domains.chat.runtime_files import create_runtime_file_reader
+
+        retrieval = self.retrieval_service or create_retrieval_service(
+            ceiling=self.tool_scope,
+            check_active=self.authorization_check,
+        )
         tasks = [
             tool_registry.invoke_tool(
                 tool_call=auth.tool,
@@ -274,6 +287,8 @@ class Agent:
                 tool_scope=self.tool_scope,
                 execution_scope=self.execution_scope,
                 authorize_internal=authorize_internal,
+                retrieval_service=retrieval,
+                file_reader=create_runtime_file_reader(ceiling=self.tool_scope, check_active=self.authorization_check),
             )
             for auth in auths
             if auth.accept
@@ -385,6 +400,8 @@ class Agent:
             if tools and not self._delegation_available:
                 tools = [name for name in tools if name != "sub_agent"]
 
+            if self.file_input_authorization:
+                await self.file_input_authorization()
             async for event in client.chat(
                 messages=messages,
                 tools=tools,

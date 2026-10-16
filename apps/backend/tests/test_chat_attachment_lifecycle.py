@@ -495,25 +495,23 @@ async def test_reopen_regenerate_and_revocation_use_current_memberships(project_
     assert response.status_code == 200
     async with sessions() as session:
         reopened = await get_one(uuid.UUID(record["info"]["id"]), "a", session)
-    agent = SimpleNamespace(
+    from asterism.core.schemas import AuthedUser
+    from asterism.domains.agent.agent import Agent
+    from asterism.domains.agent.service import get_main_agent_profile
+
+    agent = Agent(
+        profile=await get_main_agent_profile("a"),
+        user=AuthedUser(id="a", email="a@x.test", name="A", role="user"),
         session=reopened,
-        model_id=None,
-        parent_message_id=None,
-        prepare_execution=AsyncMock(return_value=None),
-        refresh_main_configuration=AsyncMock(),
+        model_id=reopened.info.selected_model_id,
     )
     orchestrator = ChatOrchestrator(agent)
 
-    @asynccontextmanager
-    async def runtime_session(session=None):
-        async with sessions() as db:
-            yield db
-
-    monkeypatch.setattr("asterism.domains.chat.service.get_async_db_session", runtime_session)
-    monkeypatch.setattr("asterism.domains.chat.orchestrator.get_async_db_session", runtime_session)
     calls = []
 
     async def run_agent():
+        await agent.prepare_execution(orchestrator.chat.messages[-1].id)
+        await agent.prepare_execution_scope()
         calls.append(await orchestrator._build_agent_messages())
 
     monkeypatch.setattr(orchestrator, "run_agent", run_agent)

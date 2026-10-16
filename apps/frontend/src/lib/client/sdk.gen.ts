@@ -9,12 +9,6 @@ import {
 } from "./client";
 import { client } from "./client.gen";
 import type {
-  AgentKnowledgeBaseAssignmentsGetData,
-  AgentKnowledgeBaseAssignmentsGetErrors,
-  AgentKnowledgeBaseAssignmentsGetResponses,
-  AgentKnowledgeBaseAssignmentsReplaceData,
-  AgentKnowledgeBaseAssignmentsReplaceErrors,
-  AgentKnowledgeBaseAssignmentsReplaceResponses,
   AgentsGetSubAgentTracesData,
   AgentsGetSubAgentTracesErrors,
   AgentsGetSubAgentTracesResponses,
@@ -2445,54 +2439,6 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/agents/sub-agents/{agent_id}",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
-   * Get Knowledge Base Assignments
-   */
-  public agentKnowledgeBaseAssignmentsGet<ThrowOnError extends boolean = false>(
-    options: Options<AgentKnowledgeBaseAssignmentsGetData, ThrowOnError>,
-  ): RequestResult<
-    AgentKnowledgeBaseAssignmentsGetResponses,
-    AgentKnowledgeBaseAssignmentsGetErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).get<
-      AgentKnowledgeBaseAssignmentsGetResponses,
-      AgentKnowledgeBaseAssignmentsGetErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/agents/{agent_id}/knowledge-bases",
-      ...options,
-    });
-  }
-
-  /**
-   * Replace Knowledge Base Assignments
-   */
-  public agentKnowledgeBaseAssignmentsReplace<
-    ThrowOnError extends boolean = false,
-  >(
-    options: Options<AgentKnowledgeBaseAssignmentsReplaceData, ThrowOnError>,
-  ): RequestResult<
-    AgentKnowledgeBaseAssignmentsReplaceResponses,
-    AgentKnowledgeBaseAssignmentsReplaceErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).put<
-      AgentKnowledgeBaseAssignmentsReplaceResponses,
-      AgentKnowledgeBaseAssignmentsReplaceErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/agents/{agent_id}/knowledge-bases",
       ...options,
       headers: {
         "Content-Type": "application/json",

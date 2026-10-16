@@ -264,8 +264,7 @@ Only selected, available definitions are described in its prompt. A model-suppli
 ID must belong to that ceiling and the current project's selection. General chats
 have no ceiling and cannot delegate, including direct tool invocations. Each child
 inherits the ceiling, chat, file references, cycle stack and depth limit; it retains
-its own fixed model and explicit tool capabilities. Selection adds no files or
-knowledge-base assignments.
+its own fixed model and explicit tool capabilities. Selection does not add file access.
 
 Invocation and child execution recheck the live chat project, context revision,
 selected target, definition revision and model availability. The streaming guard
@@ -278,8 +277,8 @@ selections and detaches chats. Already delivered output or completed external to
 side effects cannot be undone.
 
 Project membership storage, live chat authorization and the runtime ceiling are
-separate modules. Automatic internal-tool enablement remains US-29.4; selection UI
-remains US-27.5, and the broader file/retrieval scope resolver remains EPIC-26.
+separate modules. Automatic internal-tool enablement is implemented by US-29.4; selection UI
+remains US-27.5. Execution/file scope and shared retrieval are implemented by US-26.1/26.3.
 Fresh schema initialization is required; this story adds no migrations and does not
 reset the working database.
 
@@ -303,7 +302,7 @@ General chats never delegate. Projects with no available selected targets do not
 offer delegation. Retrieval is offered when the turn's file ceiling intersects
 current project files or active-branch local attachments, including General chat
 attachments. Unselected library, sibling-chat and inactive-branch files confer no
-retrieval access. Legacy knowledge-base assignments no longer grant runtime search.
+retrieval access. Agent knowledge-base assignment contracts and storage are removed.
 Children inherit the parent file and target ceilings, retain their fixed models,
 and cannot resolve a wider scope. A later turn resolves a new ceiling.
 
@@ -322,8 +321,8 @@ closed. Admins can set tool support in the existing model catalog UI. Explicit
 provider metadata is accepted, manual overrides survive refresh, and chat execution
 snapshots retain actual tool support for replay validation. No capability is guessed
 from model names. Provider payloads omit tools when the effective set is empty.
-The broader injected retrieval service, prompt composition and execution-context
-refactor remain EPIC-26. This story requires fresh schema initialization, without
+Injected retrieval, prompt composition and execution scope are implemented by
+US-26.1/26.2/26.3; memory isolation remains US-26.4. This story requires fresh schema initialization, without
 migrations or resetting the working database.
 
 ## Composable prompts (US-26.2)
@@ -365,3 +364,25 @@ The direct schema changes add `messages.pending_prompt` and
 `sub_agent_traces.prompt_provenance`. Existing development databases require the
 normal disposable-data reset before running this schema. Story verification uses
 fresh isolated databases and leaves the current development database intact.
+
+## Shared retrieval and file reads (US-26.3)
+
+Main and delegated tool contexts receive an injected `RetrievalService` and
+`RuntimeFileReader`. The tool adapter has no storage queries, and the retrieval
+service has no chat/project table dependencies. Chat-owned composition roots wire
+live policy/scope readers to extraction queries, embedding/vector interfaces, and
+FileStore. File processing is an injected callable, preserving module boundaries.
+
+The execution scope carries the requesting message and execution IDs through
+delegation. Live readers reject canceled/replaced turns, inactive branches,
+project changes, unavailable models, and revoked delegates. Every vector query is
+prefiltered by owner and allowed ready files; generation and ownership checks run
+again before release. Inline attachment assembly and provider calls use the same
+live file authorization boundary. Original images are routed only to vision-capable
+models, with bounded source-byte reads. See [knowledge retrieval](knowledge-retrieval.md).
+
+Agent knowledge-base assignment storage, endpoints, response fields, and editing
+controls are removed; agents derive contextual retrieval through internal-tool
+policy. Standalone knowledge-base management remains for the later clean-cut
+removal story. The schema change requires fresh initialization; the current database
+is retained during story verification.

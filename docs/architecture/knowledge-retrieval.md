@@ -8,16 +8,16 @@ generated captions are canonical file metadata and are indexed as draft text;
 users can regenerate a file's embedding and caption from the File Manager.
 Image CLIP vectors remain independently indexed throughout.
 
-| Data                                                                      | Owner                | Storage                                               |
-| ------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------- |
-| File artifacts, ordered knowledge-base memberships, and agent assignments | Relational database  | SQLite through the existing SQLAlchemy/migration path |
-| Chunk content, provenance IDs, and vectors                                | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb`                      |
-| Pinned local embedding model and tokenizer/processor assets               | Operator             | `STORAGE_ROOT/models/knowledge-clip`                  |
-| Pinned local caption bundle and its integrity manifest                    | Admin or operator    | `STORAGE_ROOT/models/captioning-smolvlm2`             |
+| Data                                                                   | Owner                | Storage                                                 |
+| ---------------------------------------------------------------------- | -------------------- | ------------------------------------------------------- |
+| File artifacts, project/chat scope, and ordered collection memberships | Relational database  | SQLite through SQLAlchemy; direct schema initialization |
+| Chunk content, provenance IDs, and vectors                             | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb`                        |
+| Pinned local embedding model and tokenizer/processor assets            | Operator             | `STORAGE_ROOT/models/knowledge-clip`                    |
+| Pinned local caption bundle and its integrity manifest                 | Admin or operator    | `STORAGE_ROOT/models/captioning-smolvlm2`               |
 
 `knowledge_chunks` is one LanceDB table. Every row includes `user_id`, `file_id`,
-and artifact generation provenance. Retrieval resolves an agent's assigned
-knowledge-base memberships to allowed file IDs before it queries LanceDB; the
+and artifact generation provenance. Retrieval intersects a server-derived execution ceiling with live project and
+active-branch chat file memberships before it queries LanceDB; the
 adapter exposes only owner- and allowed-file-filtered search, file/chunk
 deletion, and no unfiltered search API.
 
@@ -176,16 +176,44 @@ operations; a file artifact produces at most 200 chunks of 1,000 characters with
 configuration values only within their validated ranges and must reserve at
 least 1.25 GiB RSS per embedding worker.
 
-Knowledge bases are private ordered collections owned by their user. The relational
-assignment is an explicit allowlist: only ready file artifacts whose memberships
-belong to bases assigned to the active agent are searched. `search_knowledge` is
-offered and automatically authorized only in that case; it cannot be enabled by an
-agent tool preference or an invented tool name. Every LanceDB query filters the
-owner and resolved allowed file IDs. Results label their provenance as `caption`
-or `text`; image artifacts contribute a visual embedding and captions contribute
-indexed text when present. Runtime
-traces record safe IDs, counts, duration, and model/index versions—not queries,
-document text, caption text, or full files.
+`RetrievalService` is independent of tools and chat storage. The chat composition
+root injects a live scope/artifact reader and the existing `EmbeddingProvider` and
+`VectorStore` interfaces. The `search_knowledge` tool validates its arguments and
+calls that service with the server-derived `ExecutionScope`; it has no database or
+provider globals of its own. The same service is injected into main/delegated tool
+contexts. An empty file scope or absent internal-tool authorization fails closed.
+
+Only ready, current artifacts with text embeddings are sent to the owner- and
+file-filtered vector query. Scope is rechecked after embedding and vector search.
+Results must belong to the requesting owner and a generation that was both ready
+at query time and still current at release. Replacement during search discards the
+hit; a subsequent request can use the new generation. Provider failures return an
+unavailable response after another authorization check, so revocation cannot be
+hidden by an embedding/vector outage. Response size and result counts are bounded,
+including if an adapter returns too many hits; excerpts preserve UTF-8 boundaries.
+
+Each result identifies file/chunk/generation, project/chat source membership, and
+attachment message IDs, with `caption` or `text` match kind. The response includes
+chat/project/agent/model identity and captured prompt versus current context
+revision. Text queries preserve caption indexing; original images remain available
+through the model-facing file reader when the selected model supports vision.
+
+`RuntimeFileReader` uses the same live authorization reader for text, conversion
+cache, and image bytes. Ownership alone is insufficient: the immutable execution
+ceiling and current memberships must both allow the file. Reads validate agent and
+model identity, project, active branch, canceled/replaced turn, and delegated
+selection/configuration. Authorization is checked before processing and after
+processing/byte reads, and cached inline attachment payloads are rechecked before
+every provider request. Image bytes are bounded by both metadata and actual read
+size; non-vision models receive an explicit notice. File and retrieval content stay
+in user/tool messages as task data.
+
+User library APIs and background extraction/captioning retain their owner-scoped
+management roles; they are not agent execution reads. Agent knowledge-base
+assignments, their table/API/schema fields, and settings controls have been removed.
+Standalone collection management remains until EPIC-28. No migration or fallback is
+provided; fresh development schema initialization is required. Already delivered or
+persisted message text cannot be withdrawn from a model's past context.
 
 ## Benchmark record
 
@@ -211,7 +239,7 @@ release-environment preflight targets, not an untested alternative runtime.
 `UserFile` is the immutable source revision. `FileKnowledgeArtifact` owns each
 derived generation, including extraction, chunks, embeddings, and canonical
 image captions. A `knowledge_base_files` row is only an ordered collection
-membership. Retrieval resolves assigned memberships before searching and sends
+membership. Runtime retrieval resolves project/chat execution scope before searching and sends
 both owner and allowed file IDs to LanceDB; it never searches globally then
 filters in application code. Removing a membership preserves the file and its
 artifacts; deleting a file cancels work and removes memberships, artifacts,

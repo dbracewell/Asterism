@@ -262,8 +262,6 @@ async def test_followup_batch_rejection_does_not_bind_partial_files(project_api,
 
 @pytest.mark.asyncio
 async def test_reopen_and_runtime_assembly_recheck_persisted_branch_and_deleted_ids(project_api, monkeypatch):
-    from contextlib import asynccontextmanager
-    from types import SimpleNamespace
 
     from asterism.domains.chat.orchestrator import ChatOrchestrator
     from asterism.domains.chat.service import get_one
@@ -293,15 +291,18 @@ async def test_reopen_and_runtime_assembly_recheck_persisted_branch_and_deleted_
             for file in (left, right)
         ]
         reopened = await get_one(chat_id, "a", session)
-    agent = SimpleNamespace(session=reopened, model_id=None)
+    from asterism.core.schemas import AuthedUser
+    from asterism.domains.agent.agent import Agent
+    from asterism.domains.agent.service import get_main_agent_profile
+
+    agent = Agent(
+        profile=await get_main_agent_profile("a"),
+        user=AuthedUser(id="a", email="a@x.test", name="A", role="user"),
+        session=reopened,
+        model_id=reopened.info.selected_model_id,
+    )
     orchestrator = ChatOrchestrator(agent)
 
-    @asynccontextmanager
-    async def runtime_session():
-        async with sessions() as session:
-            yield session
-
-    monkeypatch.setattr("asterism.domains.chat.orchestrator.get_async_db_session", runtime_session)
     assembled = await orchestrator._build_agent_messages()
     assert "### Attached file: right.txt\nright.txt" in text_content(assembled[-1])
     assert "left.txt" not in text_content(assembled[-1])
@@ -315,6 +316,7 @@ async def test_reopen_and_runtime_assembly_recheck_persisted_branch_and_deleted_
     assert "### Attached file" not in text_content(stale_assembly[-1])
     async with sessions() as session:
         orchestrator.chat = await get_one(chat_id, "a", session)
+        agent.session = orchestrator.chat
     current_assembly = await orchestrator._build_agent_messages()
     assert "### Attached file: left.txt\nleft.txt" in text_content(current_assembly[-1])
     await client.delete(f"/files/{left['filename']}", headers=auth())

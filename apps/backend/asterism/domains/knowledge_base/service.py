@@ -1,12 +1,11 @@
 import uuid
 from typing import Literal
 
-from sqlalchemy import delete, func, select, true
+from sqlalchemy import func, select, true
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
-from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.extraction.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
 from asterism.domains.extraction.runtime import start_file_ingestion_job
@@ -20,14 +19,11 @@ from asterism.domains.settings.knowledge import (
 from asterism.domains.settings.models import LLMModel
 
 from .models import (
-    AgentKnowledgeBaseAssignmentModel,
     KnowledgeBaseFileModel,
     KnowledgeBaseModel,
 )
 from .schemas import (
     KnowledgeBase,
-    KnowledgeBaseAssignmentList,
-    KnowledgeBaseAssignmentReplace,
     KnowledgeBaseCreate,
     KnowledgeBaseFile,
     KnowledgeBaseFileCreate,
@@ -478,90 +474,3 @@ async def reorder_knowledge_base_files(
         page=1,
         page_size=len(ordered),
     )
-
-
-async def get_agent_knowledge_base_assignments(
-    *,
-    user_id: str,
-    agent_id: uuid.UUID,
-    session: AsyncSession,
-) -> KnowledgeBaseAssignmentList:
-    agent = await session.scalar(
-        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id),
-    )
-    if agent is None:
-        raise NotFoundException("Agent not found")
-    assignments = await session.scalars(
-        select(AgentKnowledgeBaseAssignmentModel.knowledge_base_id)
-        .where(
-            AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
-            AgentKnowledgeBaseAssignmentModel.user_id == user_id,
-        )
-        .order_by(AgentKnowledgeBaseAssignmentModel.position),
-    )
-    return KnowledgeBaseAssignmentList(knowledge_base_ids=list(assignments))
-
-
-async def replace_agent_knowledge_base_assignments(
-    *,
-    user_id: str,
-    agent_id: uuid.UUID,
-    payload: KnowledgeBaseAssignmentReplace,
-    session: AsyncSession,
-) -> KnowledgeBaseAssignmentList:
-    agent = await session.scalar(
-        select(AgentProfileModel).where(AgentProfileModel.id == agent_id, AgentProfileModel.user_id == user_id),
-    )
-    if agent is None:
-        raise NotFoundException("Agent not found")
-    base_ids = payload.knowledge_base_ids
-    if len(set(base_ids)) != len(base_ids):
-        raise BadDataException("Knowledge base assignments must not contain duplicates")
-    if base_ids:
-        owned_ids = set(
-            await session.scalars(
-                select(KnowledgeBaseModel.id).where(
-                    KnowledgeBaseModel.user_id == user_id,
-                    KnowledgeBaseModel.id.in_(base_ids),
-                ),
-            ),
-        )
-        if owned_ids != set(base_ids):
-            raise NotFoundException("Knowledge base not found")
-        ready_ids = set(
-            await session.scalars(
-                select(KnowledgeBaseFileModel.knowledge_base_id)
-                .join(
-                    FileExtractionModel,
-                    FileExtractionModel.file_id == KnowledgeBaseFileModel.file_id,
-                )
-                .where(
-                    KnowledgeBaseFileModel.knowledge_base_id.in_(base_ids),
-                    FileExtractionModel.user_id == user_id,
-                    FileExtractionModel.is_current.is_(True),
-                    FileExtractionModel.status == FileKnowledgeArtifactStatus.READY,
-                )
-                .distinct(),
-            ),
-        )
-        if ready_ids != set(base_ids):
-            raise BadDataException("Knowledge bases must contain a ready document before assignment")
-    await session.execute(
-        delete(AgentKnowledgeBaseAssignmentModel).where(
-            AgentKnowledgeBaseAssignmentModel.agent_id == agent_id,
-            AgentKnowledgeBaseAssignmentModel.user_id == user_id,
-        ),
-    )
-    session.add_all(
-        [
-            AgentKnowledgeBaseAssignmentModel(
-                user_id=user_id,
-                agent_id=agent_id,
-                knowledge_base_id=base_id,
-                position=position,
-            )
-            for position, base_id in enumerate(base_ids)
-        ],
-    )
-    await session.commit()
-    return KnowledgeBaseAssignmentList(knowledge_base_ids=base_ids)

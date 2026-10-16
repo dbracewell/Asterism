@@ -11,10 +11,11 @@ import pytest_asyncio
 from asterism.core.exceptions import BadDataException
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.agent import Agent
-from asterism.domains.agent.execution_scope import ExecutionScope
+from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.service import get_agent_profile, get_main_agent_profile
 from asterism.domains.chat.models import ChatModel
+from asterism.domains.chat.retrieval import create_retrieval_service
 from asterism.domains.chat.schemas import Chat, ChatInfo
 from asterism.domains.chat.tool_policy import require_internal_tool, resolve_effective_tools
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
@@ -44,7 +45,7 @@ async def context_runtime(project_api, monkeypatch):
             async with sessions() as db:
                 yield db
 
-    monkeypatch.setattr("asterism.domains.tools.builtin.search_knowledge.get_async_db_session", session_context)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.get_async_db_session", session_context)
     async with sessions() as db:
         await db.execute(
             update(ApplicationSettingsModel)
@@ -109,6 +110,7 @@ def ctx(r, scope):
         client=MagicMock(),
         tool_scope=scope,
         execution_scope=make_execution_scope(r, scope),
+        retrieval_service=create_retrieval_service(ceiling=scope),
     )
 
 
@@ -124,7 +126,7 @@ def make_execution_scope(r, scope):
         chat_id=scope.chat_id,
         project_id=scope.project_id,
         selected_model=None,
-        executed_model=None,
+        executed_model=ModelIdentity(id=scope.model_id),
         eligible_sub_agent_ids=(delegation.agent_ids if delegation else frozenset()) | {uuid.UUID(r.a["id"])},
         effective_internal_tools=frozenset({"search_knowledge", "sub_agent"}),
         active_branch_message_ids=(),
@@ -234,12 +236,14 @@ async def test_retrieval_ready_pending_failed_unavailable_and_ceiling(context_ru
     assert names == ["search_knowledge", "sub_agent"]
     embed = AsyncMock(return_value=[[0.1]])
     matches = [
-        SimpleNamespace(file_id=str(fid), artifact_generation=gen, id="chunk", score=1.0, content="évidence")
+        SimpleNamespace(
+            user_id="a", file_id=str(fid), artifact_generation=gen, id="chunk", score=1.0, content="évidence"
+        )
         for fid, gen in [(ids[0], 1), (ids[0], 0), (ids[1], 1), (unrelated, 1), (foreign, 1)]
     ]
     search = AsyncMock(return_value=matches)
-    monkeypatch.setattr("asterism.domains.tools.builtin.search_knowledge.embedding_provider.embed_text", embed)
-    monkeypatch.setattr("asterism.domains.tools.builtin.search_knowledge.vector_store.search", search)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_text", embed)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.vector_store.search", search)
     result = await search_knowledge(ctx(r, scope))
     assert [hit["file_id"] for hit in result["results"]] == [str(ids[0])]
     assert result["results"][0]["sources"] == ["project"]
@@ -248,7 +252,8 @@ async def test_retrieval_ready_pending_failed_unavailable_and_ceiling(context_ru
     # New membership cannot widen an existing child/turn ceiling.
     later = await add_file(r)
     assert later not in scope.file_ids
-    assert await search_knowledge(ctx(r, replace(scope, file_ids=frozenset({ids[1], ids[2], ids[3]})))) == {
+    unavailable_result = await search_knowledge(ctx(r, replace(scope, file_ids=frozenset({ids[1], ids[2], ids[3]}))))
+    assert {key: unavailable_result[key] for key in ("results", "message", "file_states")} == {
         "results": [],
         "message": "No searchable artifacts are ready; files may be pending, failed, or unavailable.",
         "file_states": sorted(
@@ -288,11 +293,15 @@ async def test_file_revocation_during_retrieval_never_queries_or_returns_revoked
     async def vector(*args, **kwargs):
         assert stage == "vector"
         await revoke()
-        return [SimpleNamespace(file_id=str(fid), artifact_generation=1, id="chunk", score=1.0, content="PRIVATE")]
+        return [
+            SimpleNamespace(
+                user_id="a", file_id=str(fid), artifact_generation=1, id="chunk", score=1.0, content="PRIVATE"
+            )
+        ]
 
     query = AsyncMock(side_effect=vector)
-    monkeypatch.setattr("asterism.domains.tools.builtin.search_knowledge.embedding_provider.embed_text", embed)
-    monkeypatch.setattr("asterism.domains.tools.builtin.search_knowledge.vector_store.search", query)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_text", embed)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.vector_store.search", query)
     with pytest.raises(BadDataException):
         await search_knowledge(ctx(r, scope))
     if stage == "embedding":
@@ -338,7 +347,7 @@ async def test_general_attachment_retrieval_no_delegation_and_unavailable_servic
     assert names == ["search_knowledge"] and scope.delegation is None
     r.chat = general
     embed = AsyncMock(side_effect=RuntimeError("service unavailable"))
-    monkeypatch.setattr("asterism.domains.tools.builtin.search_knowledge.embedding_provider.embed_text", embed)
+    monkeypatch.setattr("asterism.domains.chat.retrieval.embedding_provider.embed_text", embed)
     result = await search_knowledge(ctx(r, scope))
     assert result["results"] == [] and "unavailable" in result["message"]
     from asterism.domains.llm.schemas import Function, ToolCall

@@ -48,6 +48,9 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   ).toContainText("Fixed model unavailable");
   await page.getByRole("button", { name: "Edit main configuration" }).click();
   await expect(page.getByLabel("Fixed model")).toHaveCount(0);
+  await expect(
+    page.getByRole("dialog").getByText(/knowledge bases/i),
+  ).toHaveCount(0);
   await expect(page.getByText("web_fetch", { exact: true })).toBeVisible();
   await expect(page.getByText("sub_agent", { exact: true })).toHaveCount(0);
   await expect(page.getByText("search_knowledge", { exact: true })).toHaveCount(
@@ -66,6 +69,9 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   expect(saved).toMatchObject({ tools: [] });
   await page.getByRole("button", { name: "Edit Research worker" }).click();
   await expect(page.getByLabel("Fixed model")).toBeVisible();
+  await expect(
+    page.getByRole("dialog").getByText(/knowledge bases/i),
+  ).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Save configuration" }),
   ).toBeDisabled();

@@ -10,12 +10,6 @@ import {
 import { client } from "../client.gen";
 import { ApiClient, type Options } from "../sdk.gen";
 import type {
-  AgentKnowledgeBaseAssignmentsGetData,
-  AgentKnowledgeBaseAssignmentsGetError,
-  AgentKnowledgeBaseAssignmentsGetResponse,
-  AgentKnowledgeBaseAssignmentsReplaceData,
-  AgentKnowledgeBaseAssignmentsReplaceError,
-  AgentKnowledgeBaseAssignmentsReplaceResponse,
   AgentsGetSubAgentTracesData,
   AgentsGetSubAgentTracesError,
   AgentsGetSubAgentTracesResponse,
@@ -3420,65 +3414,6 @@ export const subAgentUpdateMutation = (
         ...fnOptions,
         throwOnError: true,
       });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const agentKnowledgeBaseAssignmentsGetQueryKey = (
-  options: Options<AgentKnowledgeBaseAssignmentsGetData>,
-) => createQueryKey("agentKnowledgeBaseAssignmentsGet", options);
-
-/**
- * Get Knowledge Base Assignments
- */
-export const agentKnowledgeBaseAssignmentsGetOptions = (
-  options: Options<AgentKnowledgeBaseAssignmentsGetData>,
-) =>
-  queryOptions<
-    AgentKnowledgeBaseAssignmentsGetResponse,
-    AgentKnowledgeBaseAssignmentsGetError,
-    AgentKnowledgeBaseAssignmentsGetResponse,
-    ReturnType<typeof agentKnowledgeBaseAssignmentsGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry
-        .get()
-        .agentKnowledgeBaseAssignmentsGet({
-          ...options,
-          ...queryKey[0],
-          signal,
-          throwOnError: true,
-        });
-      return data;
-    },
-    queryKey: agentKnowledgeBaseAssignmentsGetQueryKey(options),
-  });
-
-/**
- * Replace Knowledge Base Assignments
- */
-export const agentKnowledgeBaseAssignmentsReplaceMutation = (
-  options?: Partial<Options<AgentKnowledgeBaseAssignmentsReplaceData>>,
-): UseMutationOptions<
-  AgentKnowledgeBaseAssignmentsReplaceResponse,
-  AgentKnowledgeBaseAssignmentsReplaceError,
-  Options<AgentKnowledgeBaseAssignmentsReplaceData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AgentKnowledgeBaseAssignmentsReplaceResponse,
-    AgentKnowledgeBaseAssignmentsReplaceError,
-    Options<AgentKnowledgeBaseAssignmentsReplaceData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry
-        .get()
-        .agentKnowledgeBaseAssignmentsReplace({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
       return data;
     },
   };

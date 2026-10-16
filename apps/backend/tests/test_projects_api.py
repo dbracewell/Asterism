@@ -52,11 +52,15 @@ async def project_api(tmp_path, monkeypatch):
 
     for module in [
         "chat.tool_policy",
+        "chat.retrieval",
+        "chat.runtime_files",
+        "files.runtime_access",
         "chat.delegation",
         "chat.prompt_composition",
         "chat.execution",
         "chat.service",
         "agent.service",
+        "settings.service",
     ]:
         monkeypatch.setattr(f"asterism.domains.{module}.get_async_db_session", session_context)
 

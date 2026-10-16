@@ -5,7 +5,7 @@ import json
 import re
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Type, get_args
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Type, get_args
 
 from openai.types.chat import (
     ChatCompletionFunctionToolParam,
@@ -26,6 +26,10 @@ from asterism.domains.settings.schemas import ApplicationSettings
 from asterism.domains.tools.catalog import ToolPolicy, registered_tool_names, tool_policy
 from asterism.domains.tools.context import ContextToolScope
 from asterism.domains.tools.schemas import ToolInfo, ToolInfoList
+
+if TYPE_CHECKING:
+    from asterism.domains.files.runtime_access import RuntimeFileReader
+    from asterism.domains.retrieval.service import RetrievalService
 
 
 def _parse_tool_call_arguments(arguments: str | None) -> dict[str, Any]:
@@ -86,6 +90,8 @@ class ToolContext[T: BaseModel | None]:
     delegation_scope: DelegationScope | None = None
     tool_scope: ContextToolScope | None = None
     execution_scope: ExecutionScope | None = None
+    retrieval_service: RetrievalService | None = None
+    file_reader: RuntimeFileReader | None = None
 
 
 @dataclass(frozen=True)
@@ -177,6 +183,8 @@ class ToolRegistry:
         tool_scope: ContextToolScope | None = None,
         execution_scope: ExecutionScope | None = None,
         authorize_internal: Callable[[str], Awaitable[None]] | None = None,
+        retrieval_service: RetrievalService | None = None,
+        file_reader: RuntimeFileReader | None = None,
     ) -> ToolResult:
         llm_tool = self.registry[tool_call.function.name]
 
@@ -215,6 +223,8 @@ class ToolRegistry:
                 delegation_scope=delegation_scope,
                 tool_scope=tool_scope,
                 execution_scope=execution_scope,
+                retrieval_service=retrieval_service,
+                file_reader=file_reader,
             )
 
             if llm_tool.name not in ctx.app_settings.active_tools:
