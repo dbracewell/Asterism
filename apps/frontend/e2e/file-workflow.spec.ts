@@ -35,10 +35,36 @@ const acceptedMessage = {
 const messagePath =
   "**/api/py/chat/22222222-2222-4222-8222-222222222222/message";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/py/chat/drafts/*", (route) =>
+    route.fulfill({
+      json: {
+        id: "44444444-4444-4444-8444-444444444444",
+        file_ids: [uploaded.id],
+        unavailable_file_ids: [],
+      },
+    }),
+  );
+  await page.route("**/api/py/chat/drafts", (route) =>
+    route.fulfill({
+      json: {
+        id: "44444444-4444-4444-8444-444444444444",
+        chat_id: null,
+        file_ids: [],
+        unavailable_file_ids: [],
+        expires_at: 9999999999,
+      },
+    }),
+  );
+  await page.route("**/api/py/files/*/knowledge", (route) =>
+    route.fulfill({ json: { status: "ready", caption: { status: null } } }),
+  );
+});
+
 test("uploads, attaches, and renders a persisted file with a mocked reply", async ({
   page,
 }) => {
-  await page.route("**/api/py/files/**", async (route) => {
+  await page.route("**/api/py/chat/drafts/*/uploads", async (route) => {
     if (route.request().method() === "POST") {
       await route.fulfill({ status: 200, json: { files: [uploaded] } });
       return;
@@ -85,7 +111,7 @@ test("uploads, attaches, and renders a persisted file with a mocked reply", asyn
 test("keeps a failed upload visible and does not send the message", async ({
   page,
 }) => {
-  await page.route("**/api/py/files/**", (route) =>
+  await page.route("**/api/py/chat/drafts/*/uploads", (route) =>
     route.fulfill({
       status: 413,
       json: { detail: "File exceeds upload limit" },
@@ -113,7 +139,7 @@ test("retries a failed send with the same receipt key and no duplicate upload", 
 }) => {
   let uploads = 0;
   const sends: Array<{ request_id: string; files: string[] }> = [];
-  await page.route("**/api/py/files/**", (route) => {
+  await page.route("**/api/py/chat/drafts/*/uploads", (route) => {
     uploads += 1;
     return route.fulfill({ json: { files: [uploaded] } });
   });

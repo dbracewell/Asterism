@@ -84,3 +84,20 @@ Verification: 430 backend tests, 125 frontend unit/component tests (including 11
 Project and library views share explorer components with explicit data sources and permitted actions. Membership addition reuses artifacts; removal is distinct from physical deletion. Browser coverage uses production components in a test-only harness with mocked HTTP endpoints; authenticated project workflows against the real backend and external providers were not exercised. The current database and unrelated `core/config.py` edit were retained. No new UI dependencies, migrations, or compatibility shims were added.
 
 Next recommended story: US-27.3 — Visible chat attachment scope. EPIC-27 remains in progress.
+
+## US-27.3 — Visible chat attachment scope
+
+User confirmed completion on 2026-10-16 and authorized commit and merge into `main`.
+
+- [x] US-27.3: Visible chat attachment scope — confirmed complete 2026-10-16.
+  - [x] US-27.3-T1: Expose project files separately from chat attachments in the composer and chat context display.
+  - [x] US-27.3-T2: Integrate draft uploads, explicit library picks, ready/pending/failed states, removal, and retry.
+  - [x] US-27.3-T3: Show source provenance on retrieval citations and provide explicit add-to-project rather than automatic promotion.
+  - [x] US-27.3-T4: Handle reopened chats, model changes, branches, and context estimates consistently.
+  - [x] US-27.3-T5: Add component and E2E tests for General-chat isolation and two project chats with different local attachments.
+
+Verification: 430 backend tests, 134 frontend unit/component tests (including 9 new scope/lifecycle/citation regressions), 6 frontend migration tests, 29 root configuration tests, and 24 isolated Playwright tests passed. Backend/frontend lint, formatting, configured type checks, production build, generated-client consistency (18 TypeScript files after repository formatting), and diff integrity passed. Desktop and 390px mobile screenshots were inspected without horizontal overflow. Playwright passed without retries on the final run; the isolated runner exited 0 while its managed backend reported 143 during intentional cleanup. Initial fixture/type/lint repairs and the scoped route-announcer assertion fix are recorded in [EPIC-27](../epics/EPIC-27-PROJECT-AND-CHAT-WORKSPACE-UI.md).
+
+The composers distinguish project files from active-branch local attachments. Draft uploads/picks, source-preserving removal, explicit project promotion, receipt retries, and live-authorized citation views use the existing backend contracts. Browser coverage uses production components in a test-only harness with mocked HTTP endpoints; a full authenticated ChatSession/provider workflow was not exercised. The current database and unrelated `core/config.py` edit were retained. No backend schema/API change, new UI dependency, migration, or compatibility shim was added.
+
+Next recommended story: US-27.4 — Main-agent settings and sub-agent management. EPIC-27 remains in progress.

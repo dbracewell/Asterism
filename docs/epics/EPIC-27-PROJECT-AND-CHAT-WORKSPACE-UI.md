@@ -1,6 +1,6 @@
 # EPIC-27 — Project and chat workspace UI
 
-Status: In progress. US-27.1 was confirmed complete on 2026-10-16; US-27.2 was confirmed complete on 2026-10-16; US-27.3 is next. Later stories remain pending.
+Status: In progress. US-27.1 was confirmed complete on 2026-10-16; US-27.2 was confirmed complete on 2026-10-16; US-27.3 was confirmed complete on 2026-10-16; US-27.4 is next. Later stories remain pending.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -138,7 +138,7 @@ The final run above includes the responsive repair and a filename-width assertio
 No migrations, new UI dependencies, compatibility shims, or later-story chat attachment
 workflows were added. Standalone knowledge-base consumers remain for US-28.1 cleanup.
 The completed checklist is [archived](../archive/todo-completed-2026-10-16.md).
-Next recommended story: US-27.3 — Visible chat attachment scope.
+US-27.3 implementation and verification are recorded below.
 
 ### US-27.3 — Visible chat attachment scope
 
@@ -146,13 +146,76 @@ As a user, I want to understand which files this conversation can use.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-27.1 and US-25.3 and EPIC-26.
 
-- [ ] US-27.3-T1: Expose project files separately from chat attachments in the composer and chat context display.
-- [ ] US-27.3-T2: Integrate draft uploads, explicit library picks, ready/pending/failed states, removal, and retry.
-- [ ] US-27.3-T3: Show source provenance on retrieval citations and provide explicit add-to-project rather than automatic promotion.
-- [ ] US-27.3-T4: Handle reopened chats, model changes, branches, and context estimates consistently.
-- [ ] US-27.3-T5: Add component and E2E tests for General-chat isolation and two project chats with different local attachments.
+- [x] US-27.3-T1: Expose project files separately from chat attachments in the composer and chat context display.
+- [x] US-27.3-T2: Integrate draft uploads, explicit library picks, ready/pending/failed states, removal, and retry.
+- [x] US-27.3-T3: Show source provenance on retrieval citations and provide explicit add-to-project rather than automatic promotion.
+- [x] US-27.3-T4: Handle reopened chats, model changes, branches, and context estimates consistently.
+- [x] US-27.3-T5: Add component and E2E tests for General-chat isolation and two project chats with different local attachments.
 
 **Acceptance:** A file attached in one chat is visibly local to that chat unless explicitly added to the project; citations resolve to authorized file views.
+
+**Implementation and verification (2026-10-16):** Implemented on
+`feat/us-27.3-visible-chat-attachments`; user confirmed completion and authorized
+commit/merge on 2026-10-16. Both composers expose separate project/shared and active-branch
+chat/local file groups. General exposes only its own chat attachments. Metadata rows
+use scoped immutable-ID queries and pagination; scope refresh/error states suppress
+stale rows. The existing explorer supplies an explicit library picker. Draft upload,
+add/remove/discard, pre-send verification, and acceptance use generated clients and
+the global mutation invalidation policy. Queued/uploading/ready-to-send/failed states
+are separate from canonical embedding/caption processing and retry/regeneration.
+
+Unconfirmed draft IDs from lost staging acknowledgements block a new send. Unchanged
+failed-send retries reuse their original receipt payload without requiring the draft
+to still exist. Successful acceptance consumes staging; navigation/discard cleanup
+retains library sources, with server expiry covering failed cleanup. Workspace changes
+reset new-chat drafts; model changes preserve staged files and change request scope.
+Current branch/model/workspace identity controls saved file scope and estimates.
+Saved estimates are labeled and exclude unsent attachments explicitly.
+
+Local removal confirms source/artifact/project retention across chat branches. Only
+an explicit **Add to project** performs revision-guarded promotion. Retrieved sources
+show validated project/chat provenance and artifact generation. Names and links are
+rechecked against live scope; `/c/[chatId]/files/[fileId]` verifies scoped metadata and
+uses scoped image/download requests without a library fallback. See
+[workspace architecture](../architecture/project-workspaces.md).
+
+| Gate                           | Result                                                                                                                                 |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend unit/integration suite | 430 passed                                                                                                                             |
+| Frontend unit/component suite  | 134 passed, including 9 new scope/lifecycle/citation regressions                                                                       |
+| Frontend migration tests       | 6 passed                                                                                                                               |
+| Root configuration tests       | 29 passed                                                                                                                              |
+| Backend/frontend lint          | Passed                                                                                                                                 |
+| Backend/frontend typecheck     | Configured compileall and TypeScript gates passed; no backend story code/schema changes                                                |
+| Formatting                     | `pnpm format` passed; story documentation formatted separately                                                                         |
+| Frontend production build      | Passed, including the new scoped file-view route                                                                                       |
+| OpenAPI/generated clients      | Independent generation from the isolated backend matched all 18 TypeScript files after repository formatting; actual clients unchanged |
+| Isolated Playwright            | 24 passed without retries on the final run; runner exit 0; managed backend reports 143 during intentional cleanup                      |
+| Visual review                  | Desktop and 390px mobile screenshots inspected; separate groups, filenames, and controls fit without horizontal overflow               |
+| Diff integrity                 | `git diff --check` passed                                                                                                              |
+
+New component regressions cover General isolation, project/local grouping, branch
+scope refetch failure, explicit promotion/removal, library staging, immutable draft
+forwarding, expired cleanup, unseen staged IDs, and revoked citation/file views.
+Existing upload/retry tests now exercise draft creation/upload/reconciliation and
+new-chat tests verify forwarding the draft ID. Browser scenarios cover General,
+two project chats with different local attachments, reopen, model/branch changes,
+source-preserving removal/promotion, citations, and denied views. They use the
+production composer/context/citation/view components in the existing test-only file
+harness with mocked generated-client HTTP endpoints. They do not exercise a complete
+authenticated ChatSession/provider workflow. Backend integration tests independently
+cover owner/branch isolation, durable receipts, and lifecycle behavior.
+
+Initial TypeScript/lint and fixture issues were repaired. The first browser run had
+23 passes and one citation assertion failure: a global alert locator also matched
+Next's route announcer. Scoping that assertion to the page content produced the clean
+24-test final run above. Temporary client generation was formatted from the frontend
+working directory before comparison; no live source files were replaced during browser
+verification. No working database reset, new UI dependency, migration, compatibility
+shim, or external model-provider call was introduced. The unrelated `core/config.py`
+edit remains untouched. The completed checklist is
+[archived](../archive/todo-completed-2026-10-16.md). Next recommended story:
+US-27.4 — Main-agent settings and sub-agent management; EPIC-27 remains in progress.
 
 ### US-27.4 — Main-agent settings and sub-agent management
 

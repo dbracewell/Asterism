@@ -1,15 +1,8 @@
 # Active and Pending Work
 
-EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-29.1 was also confirmed complete and archived. US-29.2 was confirmed complete on 2026-10-15; its checklist is [archived](docs/archive/todo-completed-2026-10-15.md). US-29.3 and US-29.4 were confirmed complete on 2026-10-15 and are archived in the same file. US-26.1 was confirmed complete on 2026-10-15 and is archived there too. US-26.2, US-26.3, and US-26.4 were confirmed complete on 2026-10-16; their checklists are [archived](docs/archive/todo-completed-2026-10-16.md). EPIC-26 and EPIC-29 are complete. US-27.1 was confirmed complete on 2026-10-16 and is [archived](docs/archive/todo-completed-2026-10-16.md). US-27.2 was confirmed complete on 2026-10-16 and is [archived](docs/archive/todo-completed-2026-10-16.md). Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
+EPIC-24 and EPIC-25 were confirmed complete on 2026-10-14; their checklists are [archived](docs/archive/todo-completed-2026-10-14.md). US-29.1 was also confirmed complete and archived. US-29.2 was confirmed complete on 2026-10-15; its checklist is [archived](docs/archive/todo-completed-2026-10-15.md). US-29.3 and US-29.4 were confirmed complete on 2026-10-15 and are archived in the same file. US-26.1 was confirmed complete on 2026-10-15 and is archived there too. US-26.2, US-26.3, and US-26.4 were confirmed complete on 2026-10-16; their checklists are [archived](docs/archive/todo-completed-2026-10-16.md). EPIC-26 and EPIC-29 are complete. US-27.1 was confirmed complete on 2026-10-16 and is [archived](docs/archive/todo-completed-2026-10-16.md). US-27.2 was confirmed complete on 2026-10-16 and is [archived](docs/archive/todo-completed-2026-10-16.md). US-27.3 was confirmed complete on 2026-10-16 and is [archived](docs/archive/todo-completed-2026-10-16.md). Remaining stories are pending. See [roadmap and estimates](docs/plans/projects-and-chat-context-refactor.md). Implement only one story at a time; create its feature branch when implementation begins.
 
 ## [EPIC-27 — Project and chat workspace UI](docs/epics/EPIC-27-PROJECT-AND-CHAT-WORKSPACE-UI.md)
-
-- [ ] US-27.3: Visible chat attachment scope (2–3 person-days).
-  - [ ] US-27.3-T1: Expose project files separately from chat attachments in the composer and chat context display.
-  - [ ] US-27.3-T2: Integrate draft uploads, explicit library picks, ready/pending/failed states, removal, and retry.
-  - [ ] US-27.3-T3: Show source provenance on retrieval citations and provide explicit add-to-project rather than automatic promotion.
-  - [ ] US-27.3-T4: Handle reopened chats, model changes, branches, and context estimates consistently.
-  - [ ] US-27.3-T5: Add component and E2E tests for General-chat isolation and two project chats with different local attachments.
 
 - [ ] US-27.4: Main-agent settings and sub-agent management.
   - [ ] US-27.4-T1: Replace multiple main-agent CRUD/default-selection UI with one main-agent settings form for instructions, ordinary capabilities, limits, and supported generation defaults; remove its model binding and agent selector.

@@ -10,8 +10,39 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const { fileUpload } = vi.hoisted(() => ({ fileUpload: vi.fn() }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
-  fileUploadMutation: () => ({ mutationFn: fileUpload }),
+  chatDraftCreateMutation: () => ({
+    mutationFn: async () => ({ id: "draft-1" }),
+  }),
+  chatDraftUploadMutation: () => ({ mutationFn: fileUpload }),
+  chatDraftGetOneOptions: () => ({
+    queryKey: ["draft"],
+    queryFn: async () => ({
+      file_ids: [
+        ...new Set(
+          (
+            await Promise.allSettled(
+              fileUpload.mock.results.map((result) => result.value),
+            )
+          ).flatMap((result) =>
+            result.status === "fulfilled"
+              ? result.value.files.map((file: { id: string }) => file.id)
+              : [],
+          ),
+        ),
+      ],
+      unavailable_file_ids: [],
+    }),
+  }),
+  chatDraftAddFilesMutation: () => ({ mutationFn: vi.fn() }),
+  chatDraftRemoveFilesMutation: () => ({ mutationFn: vi.fn() }),
+  chatDraftDiscardMutation: () => ({ mutationFn: async () => ({}) }),
+  fileKnowledgeGetStatusOptions: () => ({
+    queryKey: ["processing"],
+    queryFn: async () => ({ status: "ready", caption: { status: null } }),
+  }),
+  fileKnowledgeRegenerateMutation: () => ({ mutationFn: vi.fn() }),
 }));
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const render = (component: React.ReactNode) =>
@@ -21,7 +52,7 @@ const render = (component: React.ReactNode) =>
         new QueryClient({ defaultOptions: { mutations: { retry: false } } })
       }
     >
-      {component}
+      <TooltipProvider>{component}</TooltipProvider>
     </QueryClientProvider>,
   );
 
@@ -58,6 +89,7 @@ it("uploads picker files through the generated client then includes stable file 
     expect(fileUpload).toHaveBeenCalledWith(
       {
         body: { files: [expect.any(File)] },
+        path: { draft_id: "draft-1" },
       },
       expect.anything(),
     ),
@@ -66,6 +98,7 @@ it("uploads picker files through the generated client then includes stable file 
     requestId: expect.any(String),
     prompt: "Please read this",
     files: ["11111111-1111-4111-8111-111111111111"],
+    draftId: "draft-1",
   });
 });
 

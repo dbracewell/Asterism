@@ -1,4 +1,5 @@
 "use client";
+import { ChatFileContext } from "@/features/chat/components/chat-file-context";
 import { WorkspaceIdentity } from "@/features/projects/components/chat-workspace";
 import { projectGetOneOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { AnimatedBorder } from "@/components/animated-border";
@@ -69,13 +70,19 @@ export default function AppPage() {
             </div>
           }
         >
+          <ChatFileContext projectId={projectId} />
           <ChatInput
+            key={projectId ?? "general"}
+            projectId={projectId}
             className="rounded-t-none!"
             placeholder="Where will your curiosity lead you today?"
             disabled={!modelAvailable || !workspaceAvailable}
             requestScope={`${main.id}:${modelId || "none"}:${searchParams.get("project_id") ?? "general"}`}
-            onSubmit={({ prompt, files, requestId }) => {
-              if (!modelAvailable || !workspaceAvailable) return;
+            onSubmit={({ prompt, files, requestId, draftId }) => {
+              if (!modelAvailable || !workspaceAvailable)
+                throw new Error(
+                  "Choose an available model and workspace before sending.",
+                );
               return createChatSession({
                 body: {
                   request_id: requestId,
@@ -83,6 +90,7 @@ export default function AppPage() {
                   project_id: projectId,
                   user_prompt: prompt,
                   files,
+                  ...(draftId ? { draft_id: draftId } : {}),
                 },
               });
             }}

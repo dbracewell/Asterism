@@ -19,13 +19,14 @@ export function FileE2EHarness() {
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-4 p-8">
       <h1 className="text-xl font-bold">File chat verification</h1>
       <ChatInput
-        onSubmit={async ({ prompt, files: fileIds, requestId }) => {
+        onSubmit={async ({ prompt, files: fileIds, requestId, draftId }) => {
           const accepted = await send.mutateAsync({
             path: { chat_id: "22222222-2222-4222-8222-222222222222" },
             body: {
               user_prompt: prompt,
               expected_model_revision: 1,
               files: fileIds,
+              ...(draftId ? { draft_id: draftId } : {}),
               request_id: requestId,
               parent_message_id: null,
             },

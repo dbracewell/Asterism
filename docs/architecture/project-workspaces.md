@@ -1,4 +1,4 @@
-# Project workspaces (US-27.1 and US-27.2)
+# Project workspaces (US-27.1–27.3)
 
 The sidebar exposes General and Projects instead of folder navigation. Workspace
 selection follows the URL and the current chat's persisted project association;
@@ -53,8 +53,7 @@ The backend remains responsible for ownership and live authorization on all path
 
 ## Story boundary and verification
 
-Visible chat attachment scope belongs to US-27.3;
-sub-agent selection and settings belong to US-27.4/27.5. Folder and standalone
+Sub-agent selection and settings belong to US-27.4/27.5. Folder and standalone
 knowledge-base endpoints/routes remain for EPIC-28 cleanup, but folder navigation
 is no longer mounted in the app sidebar. No API/schema compatibility path or data
 reset is needed for this frontend story.
@@ -110,3 +109,65 @@ runs the production project overview/explorer in the existing test-only workspac
 harness with mocked HTTP endpoints; it checks membership requests, upload, filtering,
 selection, links, deletion separation, and desktop/mobile layout. It does not test
 an authenticated project workflow against a real backend or external providers.
+
+## Visible chat attachment scope (US-27.3)
+
+The new-chat and saved-chat composers expose a collapsible **Files in context**
+display. Project files and active-branch chat attachments are separate groups.
+General has no project-file group contents. Saved scopes come from the generated
+chat-scope query; each displayed file uses chat-scoped immutable-ID metadata.
+Only five metadata rows per group are mounted at a time. Scope errors and refreshes
+hide stale rows until authorization is verified. Branch/message, workspace, and model
+identity changes remount the scope reader; generated mutation invalidation refreshes
+membership changes. Reopened chats use the persisted active branch, never a library
+scan to infer local membership.
+
+A shared library picker reuses the explorer's selection/search/sort/pagination and
+excludes current selections, known active-scope files, and the current project's
+members. Choosing a library file stages its immutable ID in a lazy server draft;
+uploads use the draft upload API before a chat ID exists or for the current chat.
+Drafts grant no runtime access. Queued/uploading/ready-to-send/failed states are
+separate from canonical processing/embedding/caption states. Users can upload or
+retry without sending, remove a staged reference, or discard all draft attachments.
+Sources and artifacts remain in the library. Navigation attempts draft cleanup;
+server expiry bounds abandoned references when cleanup cannot reach the server.
+Explicit discard clears local selections even when cleanup fails, with an explanatory
+message. Expired/unavailable draft errors retain the prompt and permit explicit discard.
+
+Before a new send, a generated draft read verifies that its exact IDs match visible
+selections and none is unavailable. This prevents a lost upload/pick acknowledgement
+from silently including an unseen staged file. Unchanged failed-send retries retain
+the original request ID, file IDs, and draft ID without rereading a potentially
+consumed draft, allowing durable receipt replay. Editing attachments resets the retry
+identity. Successful acceptance consumes the draft; local upload bytes are not copied
+into projects. New-chat workspace changes reset the composer/draft; model changes
+preserve staged files and change the next-send request scope. Follow-up requests retain
+an explicit parent and model revision. Saved context estimates use the current saved
+conversation/model response; they are hidden during refresh and labeled **Saved
+context**. Unsent draft attachments are explicitly excluded from that estimate.
+
+Saved local attachments offer confirmed, source-preserving removal across the chat's
+branches. Independent project membership remains visible. **Add to project** is an
+explicit, revision-guarded mutation for a local file; staging, sending, retrieval, and
+moving chats never automatically promote it. Active generation disables these controls;
+the backend independently enforces lifecycle and live scope boundaries.
+
+Retrieval source cards read validated `search_knowledge` tool-result metadata,
+show project/chat provenance at retrieval plus artifact generation/match kind, and
+recheck live chat authorization for source names and links. Other tool results or
+malformed source records do not create citation links. Source lists initially mount
+20 citations, with an explicit control to show more. Links use
+`/c/[chatId]/files/[fileId]`; that route verifies the scoped metadata API and exposes
+only a scoped image/download. Each byte request rechecks scope. Revoked/deleted or
+inactive-branch sources show unavailable/retry states with no library fallback.
+Historical answer text and original retrieval provenance remain historical information.
+
+Component coverage includes scope grouping, General isolation, branch refresh failure,
+explicit promotion/removal, library staging and draft forwarding, upload/send retries,
+expired-draft cleanup, unknown staged IDs, and revoked citations/views. Browser coverage
+uses production composer/context/citation/view components in the existing test-only
+file harness with mocked generated-client HTTP endpoints, including two project chats
+with different local files, reopen, model/branch changes, and desktop/mobile layouts.
+The harness does not run an authenticated full ChatSession/provider workflow; backend
+integration tests separately cover ownership, branches, durable receipts, and source
+lifecycle. No backend API/schema change or working-database reset is required.

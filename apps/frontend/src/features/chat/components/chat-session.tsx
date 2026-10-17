@@ -1,4 +1,6 @@
 "use client";
+import { ChatFileContext } from "./chat-file-context";
+import { RetrievalCitations } from "./retrieval-citations";
 import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
 import { ExistingChatModelPicker, ExecutionLabel } from "./chat-model-picker";
 import { CopyButton } from "@/components/copy-button";
@@ -30,6 +32,7 @@ import {
   chatSessionGetOneQueryKey,
   messageUpdateMutation,
   chatMessageSendMutation,
+  chatFileGetScopeOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -58,6 +61,7 @@ export const ChatSession = ({
   const {
     data: session,
     isLoading,
+    isFetching,
     refetch,
     error,
   } = useQuery({
@@ -66,6 +70,12 @@ export const ChatSession = ({
       path: { chat_id: chatId },
     }),
     staleTime: 60 * 1000,
+  });
+
+  const fileScope = useQuery({
+    ...chatFileGetScopeOptions({ client, path: { chat_id: chatId } }),
+    enabled: !!session,
+    staleTime: 0,
   });
 
   const queryKey = chatSessionGetOneQueryKey({
@@ -192,10 +202,12 @@ export const ChatSession = ({
     prompt,
     files,
     requestId,
+    draftId,
   }: {
     prompt: string;
     files: string[];
     requestId: string;
+    draftId?: string;
   }) => {
     if (!session) throw new Error("Chat is not loaded. Please retry.");
     if (pendingSend.current?.requestId !== requestId) {
@@ -212,6 +224,7 @@ export const ChatSession = ({
         expected_model_revision: pendingSend.current.modelRevision,
         user_prompt: prompt,
         files,
+        ...(draftId ? { draft_id: draftId } : {}),
         parent_message_id: pendingSend.current.parentId,
       },
     });
@@ -365,7 +378,21 @@ export const ChatSession = ({
           </Button>
         )}
         <ChatInputContainer className="border-primary mx-auto w-full max-w-[80%] min-w-[80%] border">
+          <ChatFileContext
+            chatId={chatId}
+            projectId={session.info.project_id ?? null}
+            scopeKey={`${session.info.model_revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
+            disabled={isProcessing || sendMessage.isPending}
+          />
           <ChatInput
+            key={chatId}
+            chatId={chatId}
+            projectId={session.info.project_id}
+            savedFileIds={
+              fileScope.isFetching || fileScope.error
+                ? []
+                : fileScope.data?.allowed_file_ids
+            }
             disabled={
               isProcessing ||
               connectionStatus !== "Connected" ||
@@ -378,7 +405,7 @@ export const ChatSession = ({
             bottomComponent={
               <div className="flex w-full items-center justify-between gap-2 p-2">
                 <ContextUsageProgress
-                  usage={session.context_usage}
+                  usage={isFetching ? null : session.context_usage}
                   contextWindow={contextWindow}
                 />
                 <div className={cn("flex items-center gap-1 text-xs")}>
@@ -419,7 +446,11 @@ export const ContextUsageProgress = ({
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className="flex items-center gap-2"
+      aria-label="Estimated saved conversation context"
+    >
+      <span className="text-muted-foreground text-xs">Saved context</span>
       <Progress value={percent} max={100} className="h-2 w-10" />
       <span className="text-muted-foreground text-xs select-none">
         {percent}%
@@ -585,6 +616,12 @@ const MessageItem = React.memo(
               "bg-accent text-accent-foreground ml-auto w-fit rounded-xl px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
           )}
         />
+        {!!message.tool_call_results?.length && (
+          <RetrievalCitations
+            chatId={chatId}
+            results={message.tool_call_results}
+          />
+        )}
         {message.role === "user" && message.files && (
           <MessageAttachments chatId={chatId} files={message.files} />
         )}

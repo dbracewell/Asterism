@@ -2,9 +2,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { client } from "@/lib/api";
-import { fileUploadMutation } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation } from "@tanstack/react-query";
+import type { UserFile } from "@/lib/client";
+import { useAttachmentDraft } from "../hooks/use-attachment-draft";
+import { LibraryFilePicker } from "@/components/file-manager/library-file-picker";
+import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
 import { cn } from "@/lib/utils";
 import {
   IconArrowUp,
@@ -33,7 +34,8 @@ const uploadErrorMessage = (error: unknown) => {
 interface AttachedFile {
   id: string;
   name: string;
-  file: File;
+  file?: File;
+  source?: UserFile;
   preview?: string;
   state: UploadState;
   error?: string;
@@ -46,8 +48,12 @@ export type ChatInput2Props = {
     prompt: string;
     files: string[];
     requestId: string;
+    draftId?: string;
   }) => void | Promise<unknown>;
   requestScope?: string;
+  chatId?: string;
+  projectId?: string | null;
+  savedFileIds?: string[];
   disabled?: boolean;
   placeholder?: string;
   className?: string;
@@ -79,6 +85,9 @@ export const ChatInput = ({
   bottomComponent,
   onSubmit,
   requestScope,
+  chatId,
+  projectId,
+  savedFileIds = [],
   disabled,
   onStop,
   onLineNumberChange,
@@ -86,7 +95,8 @@ export const ChatInput = ({
   placeholder,
   className,
 }: ChatInput2Props) => {
-  const uploadFile = useMutation(fileUploadMutation({ client }));
+  const draft = useAttachmentDraft(chatId);
+  const [isStaging, setIsStaging] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -107,6 +117,7 @@ export const ChatInput = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const addFiles = useCallback((files: File[]) => {
+    requestRef.current = null;
     const additions = files.map((file) => ({
       id: crypto.randomUUID(),
       name: file.name,
@@ -131,50 +142,72 @@ export const ChatInput = ({
   );
 
   const removeFile = useCallback(
-    (id: string) =>
-      setAttachedFiles((files) => {
-        const file = files.find((item) => item.id === id);
-        if (file?.preview) {
-          URL.revokeObjectURL(file.preview);
-          previewUrls.current.delete(file.preview);
-        }
-        return files.filter((item) => item.id !== id);
-      }),
-    [],
+    async (id: string) => {
+      requestRef.current = null;
+      const selected = attachedFiles.find((item) => item.id === id);
+      setIsStaging(true);
+      try {
+        if (selected?.sourceId) await draft.remove(selected.sourceId);
+        setAttachedFiles((files) => {
+          const file = files.find((item) => item.id === id);
+          if (file?.preview) {
+            URL.revokeObjectURL(file.preview);
+            previewUrls.current.delete(file.preview);
+          }
+          return files.filter((item) => item.id !== id);
+        });
+      } catch (error) {
+        setSendError(uploadErrorMessage(error));
+      } finally {
+        setIsStaging(false);
+      }
+    },
+    [attachedFiles, draft],
   );
 
-  const submitPrompt = async () => {
-    if (
-      disabled ||
-      submittingRef.current ||
-      !onSubmit ||
-      (!prompt.trim() && !attachedFiles.length)
-    )
-      return;
-    submittingRef.current = true;
-    setIsSubmitting(true);
+  function clearAttachments() {
+    attachedFiles.forEach((file) => {
+      if (file.preview) {
+        URL.revokeObjectURL(file.preview);
+        previewUrls.current.delete(file.preview);
+      }
+    });
+    setAttachedFiles([]);
+    requestRef.current = null;
+  }
+  async function discardAttachments() {
+    setIsStaging(true);
     setSendError(undefined);
-    const uploads = await Promise.all(
+    try {
+      await draft.discard();
+    } catch {
+      setSendError(
+        "Attachments cleared here. If server cleanup failed, staged references expire automatically; library files remain.",
+      );
+    } finally {
+      clearAttachments();
+      setIsStaging(false);
+    }
+  }
+
+  const stageUploads = async () =>
+    Promise.all(
       attachedFiles.map(async (attachment) => {
         if (attachment.sourceId) return attachment.sourceId;
+        if (!attachment.file) return null;
         updateFile(attachment.id, { state: "uploading", error: undefined });
         try {
-          // This generated client is deliberately used instead of a hand-written fetch.
-          const data = await uploadFile.mutateAsync({
-            body: { files: [attachment.file] },
-          });
-          const uploaded = data?.files[0];
+          const data = await draft.upload(attachment.file);
+          const uploaded = data.files[0];
           if (!uploaded)
             throw new Error("The server did not return an uploaded file.");
-          updateFile(attachment.id, { state: "ready", sourceId: uploaded.id });
+          updateFile(attachment.id, {
+            state: "ready",
+            sourceId: uploaded.id,
+            source: uploaded,
+          });
           return uploaded.id;
         } catch (error) {
-          // This is an expected, user-correctable state. Do not use console.error:
-          // Next.js development mode presents those as an application error overlay.
-          console.warn("File upload failed", {
-            name: attachment.name,
-            error,
-          });
           updateFile(attachment.id, {
             state: "failed",
             error: uploadErrorMessage(error),
@@ -183,30 +216,64 @@ export const ChatInput = ({
         }
       }),
     );
-    const files = uploads.filter(
-      (filename): filename is string => filename !== null,
-    );
+  const pickFiles = async (files: UserFile[]) => {
+    requestRef.current = null;
+    setIsStaging(true);
+    try {
+      await draft.add(files.map((file) => file.id));
+      setAttachedFiles((current) => [
+        ...current,
+        ...files
+          .filter((file) => !current.some((item) => item.sourceId === file.id))
+          .map((source) => ({
+            id: source.id,
+            sourceId: source.id,
+            name: source.original_name,
+            source,
+            state: "ready" as const,
+          })),
+      ]);
+    } finally {
+      setIsStaging(false);
+    }
+  };
+
+  const submitPrompt = async () => {
+    if (
+      disabled ||
+      isStaging ||
+      submittingRef.current ||
+      !onSubmit ||
+      (!prompt.trim() && !attachedFiles.length)
+    )
+      return;
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    setSendError(undefined);
+    const uploads = await stageUploads();
+    const uploadedIds = uploads.filter((id): id is string => id !== null);
+    const files = [...new Set(uploadedIds)];
     try {
       // Uploads are library sources; no partial message is accepted after an upload failure.
-      if (files.length !== attachedFiles.length) return;
+      if (uploadedIds.length !== attachedFiles.length) return;
       const signature = JSON.stringify({
         prompt: prompt.trim(),
         files,
+        draftId: draft.id.current,
         scope: requestScope,
       });
       if (requestRef.current?.signature !== signature) {
+        await draft.verify(files);
         requestRef.current = { signature, id: crypto.randomUUID() };
       }
       await onSubmit({
         prompt: prompt.trim(),
         files,
         requestId: requestRef.current.id,
+        ...(draft.id.current ? { draftId: draft.id.current } : {}),
       });
-      attachedFiles.forEach(
-        (file) => file.preview && URL.revokeObjectURL(file.preview),
-      );
-      previewUrls.current.clear();
-      setAttachedFiles([]);
+      draft.consumed();
+      clearAttachments();
       setPrompt("");
       requestRef.current = null;
     } catch (error) {
@@ -218,7 +285,7 @@ export const ChatInput = ({
   };
 
   const hasPrompt = prompt.trim().length > 0;
-  const isDisabled = disabled || isSubmitting || !hasPrompt;
+  const isDisabled = disabled || isSubmitting || isStaging || !hasPrompt;
 
   return (
     <form
@@ -234,7 +301,8 @@ export const ChatInput = ({
       onDrop={(event) => {
         event.preventDefault();
         setIsDragOver(false);
-        addFiles(Array.from(event.dataTransfer.files));
+        if (!disabled && !isSubmitting && !isStaging)
+          addFiles(Array.from(event.dataTransfer.files));
       }}
       onSubmit={(event) => {
         event.preventDefault();
@@ -246,7 +314,7 @@ export const ChatInput = ({
         onClick={() => textareaRef.current?.focus()}
       >
         <div
-          className="relative flex flex-wrap items-center gap-2 overflow-hidden p-1"
+          className="relative flex max-h-40 flex-wrap items-center gap-2 overflow-y-auto p-1"
           aria-live="polite"
         >
           <input
@@ -263,7 +331,7 @@ export const ChatInput = ({
           />
           <Button
             aria-label="Add attachments"
-            disabled={disabled || isSubmitting}
+            disabled={disabled || isSubmitting || isStaging}
             onClick={() => fileInputRef.current?.click()}
             size="icon"
             type="button"
@@ -271,6 +339,22 @@ export const ChatInput = ({
           >
             <IconPlus />
           </Button>
+          <LibraryFilePicker
+            disabled={disabled || isSubmitting || isStaging}
+            excludedIds={[
+              ...savedFileIds,
+              ...attachedFiles.flatMap((file) =>
+                file.sourceId ? [file.sourceId] : [],
+              ),
+            ]}
+            projectId={projectId}
+            onPick={pickFiles}
+          />
+          {!!attachedFiles.length && (
+            <span className="text-muted-foreground text-xs">
+              Next message · this chat only
+            </span>
+          )}
           {attachedFiles.map((file) => (
             <Badge
               className="group bg-background relative h-7 max-w-56 rounded-lg! px-1 text-[13px]"
@@ -290,22 +374,78 @@ export const ChatInput = ({
               {file.state === "uploading" && (
                 <span className="text-xs">Uploading…</span>
               )}
+              {file.state === "queued" && (
+                <span className="text-xs">Queued</span>
+              )}
               {file.state === "ready" && <span className="text-xs">Ready</span>}
               {file.state === "failed" && (
                 <span className="text-xs">Failed</span>
               )}
-              <button
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`Remove ${file.name}`}
                 className="ml-auto rounded-full p-0.5 focus-visible:outline"
-                disabled={isSubmitting}
+                disabled={disabled || isSubmitting || isStaging}
                 onClick={() => removeFile(file.id)}
                 type="button"
               >
                 <IconX size={13} />
-              </button>
+              </Button>
             </Badge>
           ))}
         </div>
+        {!!attachedFiles.length && (
+          <div className="flex max-h-40 flex-col gap-2 overflow-y-auto px-2 text-xs">
+            <p>
+              Draft attachments are staged until you send. Removing or
+              discarding keeps the library files. Saved context estimates
+              exclude these unsent attachments.
+            </p>
+            {attachedFiles
+              .filter((file) => file.source)
+              .map((file) => (
+                <div key={file.id} aria-label={`Processing ${file.name}`}>
+                  <span>{file.name}</span>
+                  <KnowledgeStatus
+                    filename={file.source!.filename}
+                    projects={[]}
+                  />
+                </div>
+              ))}
+            <div className="flex flex-wrap gap-2">
+              {attachedFiles.some(
+                (file) => file.state === "queued" || file.state === "failed",
+              ) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled || isSubmitting || isStaging}
+                  onClick={async () => {
+                    setIsStaging(true);
+                    try {
+                      await stageUploads();
+                    } finally {
+                      setIsStaging(false);
+                    }
+                  }}
+                >
+                  Upload / retry attachments
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={disabled || isSubmitting || isStaging}
+                onClick={discardAttachments}
+              >
+                Discard attachments
+              </Button>
+            </div>
+          </div>
+        )}
         {attachedFiles
           .filter((file) => file.state === "failed")
           .map((file) => (
@@ -323,7 +463,7 @@ export const ChatInput = ({
           </p>
         )}
         <Textarea
-          disabled={disabled || isSubmitting}
+          disabled={disabled || isSubmitting || isStaging}
           aria-label="Message"
           ref={textareaRef}
           value={prompt}

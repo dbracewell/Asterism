@@ -81,7 +81,12 @@ vi.mock("@/features/chat/components/chat-input", () => ({
     <button
       disabled={disabled}
       onClick={() =>
-        onSubmit({ prompt: "Hello", files: [], requestId: "request" })
+        onSubmit({
+          prompt: "Hello",
+          files: [],
+          requestId: "request",
+          draftId: "staged-draft",
+        })
       }
     >
       Start chat
@@ -109,6 +114,7 @@ it("prefills only the explicit default, permits a different model, and sends it 
   expect(mocks.createChatSession).toHaveBeenCalledWith({
     body: {
       request_id: "request",
+      draft_id: "staged-draft",
       model_id: "other",
       project_id: "project",
       user_prompt: "Hello",
