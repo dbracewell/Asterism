@@ -1,6 +1,10 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProviderSettings } from "@/lib/client";
@@ -9,6 +13,7 @@ import { OPENAI_BASE_URL, providerSchema, ProvidersTab } from "./providers-tab";
 const mocks = vi.hoisted(() => ({
   listModels: vi.fn(),
   getSearchParam: vi.fn(),
+  setSearchParams: vi.fn(),
   updateModel: vi.fn(),
   updateProviderSettings: vi.fn(),
 }));
@@ -32,20 +37,25 @@ const settings: ProviderSettings = {
       base_url: "http://localhost:8080/v1",
       model_count: 1000,
       active_model_count: 4,
+      ...{ api_key: "secret" },
     },
   ],
 };
 
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appProviderModelsDiscoverAndSyncMutation: () => ({ mutationFn: vi.fn() }),
-  appProviderModelsListOptions: () => ({
-    queryKey: ["appProviderModelsList"],
-    queryFn: mocks.listModels,
+  appProviderModelsListOptions: ({
+    query,
+  }: {
+    query: { cursor?: string };
+  }) => ({
+    queryKey: ["appProviderModelsList", query],
+    queryFn: () => mocks.listModels(query),
   }),
   appProviderModelUpdateMutation: () => ({ mutationFn: mocks.updateModel }),
   appProviderSettingsGetOptions: () => ({
     queryKey: ["appProviderSettingsGet"],
-    queryFn: () => Promise.resolve(settings),
+    queryFn: () => Promise.resolve(structuredClone(settings)),
   }),
   appProviderSettingsGetQueryKey: () => ["appProviderSettingsGet"],
   appProviderSettingsUpdateMutation: () => ({
@@ -56,40 +66,44 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 vi.mock("@/hooks/use-read-write-search-params", () => ({
   useReadWriteSearchParams: () => ({
     getSearchParam: mocks.getSearchParam,
-    setSearchParams: vi.fn(),
+    setSearchParams: mocks.setSearchParams,
   }),
 }));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/settings",
-  useRouter: () => ({ replace: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
+function createTestQueryClient() {
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    mutationCache: new MutationCache({
+      onSuccess: () => {
+        void cache.invalidateQueries();
+      },
+    }),
+  });
+  return cache;
+}
+
 function Wrapper({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(createTestQueryClient);
   return (
-    <QueryClientProvider
-      client={
-        new QueryClient({
-          defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-          },
-        })
-      }
-    >
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
 
 describe("provider model browser", () => {
   beforeEach(() => {
     mocks.getSearchParam.mockReset();
+    mocks.setSearchParams.mockReset();
     mocks.listModels.mockReset();
     mocks.listModels.mockResolvedValue({ models: [], total: 0 });
     mocks.updateModel.mockReset();
     mocks.updateProviderSettings.mockReset();
+    mocks.updateProviderSettings.mockResolvedValue({});
   });
 
   it("updates all displayed models and clears the filter", async () => {
@@ -133,28 +147,32 @@ describe("provider model browser", () => {
     );
 
     await screen.findByText("Active model");
+    expect(mocks.setSearchParams).toHaveBeenCalledWith({
+      provider: settings.llm_providers![0].id,
+    });
     fireEvent.click(screen.getByRole("button", { name: "Select All" }));
-    await waitFor(() =>
-      expect(mocks.updateModel.mock.calls[0]?.[0]).toEqual(
-        expect.objectContaining({
-          path: expect.objectContaining({
-            model_id: "30000000-0000-4000-8000-000000000002",
-          }),
-          body: expect.objectContaining({ is_active: true }),
-        }),
-      ),
-    );
-
+    expect(mocks.updateModel).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Inactive model")).toBeChecked();
+    fireEvent.change(screen.getAllByLabelText("Context window")[0], {
+      target: { value: "8192" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Unselect All" }));
-    await waitFor(() => expect(mocks.updateModel.mock.calls).toHaveLength(3));
-    expect(
-      mocks.updateModel.mock.calls.slice(1).map(([request]) => request),
-    ).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          body: expect.objectContaining({ is_active: false }),
-        }),
-      ]),
+    expect(screen.getByLabelText("Active model")).not.toBeChecked();
+    expect(screen.getAllByLabelText("Context window")[0]).toHaveValue(8192);
+    expect(mocks.updateModel).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Hide models" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(mocks.updateProviderSettings).toHaveBeenCalledTimes(1),
+    );
+    expect(mocks.updateModel).toHaveBeenCalledTimes(2);
+    expect(mocks.updateModel.mock.calls[0][0].body).toMatchObject({
+      is_active: false,
+      context_window: 8192,
+      context_window_source: "manual",
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse 1,000 models" }),
     );
 
     const filter = screen.getByLabelText("Search Large catalog models");
@@ -165,6 +183,158 @@ describe("provider model browser", () => {
       }),
     );
     expect(filter).toHaveValue("");
+  });
+
+  it("saves edits from different catalog pages together with provider edits", async () => {
+    const first = {
+      id: "first-model",
+      name: "First model",
+      provider_id: settings.llm_providers![0].id,
+      is_active: true,
+      context_window: null,
+    };
+    const second = { ...first, id: "second-model", name: "Second model" };
+    mocks.listModels.mockImplementation(({ cursor }) =>
+      Promise.resolve({
+        models: [cursor ? second : first],
+        total: 2,
+        next_cursor: cursor ? null : "page-two",
+      }),
+    );
+    mocks.updateModel.mockResolvedValue({});
+    render(<ProvidersTab />, { wrapper: Wrapper });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Browse 1,000 models" }),
+    );
+    await screen.findByText("First model");
+    fireEvent.change(screen.getByLabelText("Context window"), {
+      target: { value: "4096" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Second model");
+    fireEvent.change(screen.getByLabelText("Context window"), {
+      target: { value: "8192" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByText("First model");
+    expect(screen.getByLabelText("Context window")).toHaveValue(4096);
+    fireEvent.change(screen.getByLabelText("Provider Name"), {
+      target: { value: "Edited provider" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(mocks.updateProviderSettings).toHaveBeenCalledTimes(1),
+    );
+    expect(
+      mocks.updateProviderSettings.mock.calls[0][0].body.llm_providers[0].name,
+    ).toBe("Edited provider");
+    expect(
+      mocks.updateModel.mock.calls.map(([request]) => [
+        request.path.model_id,
+        request.body.context_window,
+      ]),
+    ).toEqual([
+      ["first-model", 4096],
+      ["second-model", 8192],
+    ]);
+  });
+
+  it("retains model edits after a failed save and retries from the main button", async () => {
+    mocks.listModels.mockResolvedValue({
+      models: [
+        {
+          id: "retry-model",
+          name: "Retry model",
+          provider_id: settings.llm_providers![0].id,
+          is_active: true,
+          context_window: null,
+        },
+      ],
+      total: 1,
+    });
+    mocks.updateModel
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue({});
+    render(<ProvidersTab appSettings={settings} />, { wrapper: Wrapper });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse 1,000 models" }),
+    );
+    await screen.findByText("Retry model");
+    fireEvent.change(screen.getByLabelText("Context window"), {
+      target: { value: "4096" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save" })).toBeEnabled(),
+    );
+    expect(mocks.updateProviderSettings).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Context window")).toHaveValue(4096);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(mocks.updateProviderSettings).toHaveBeenCalledTimes(1),
+    );
+    expect(mocks.updateModel).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears a staged draft selection when the model is disabled", async () => {
+    mocks.listModels.mockResolvedValue({
+      models: [
+        {
+          id: "draft-model",
+          name: "Draft candidate",
+          provider_id: settings.llm_providers![0].id,
+          is_active: true,
+          context_window: null,
+        },
+      ],
+      total: 1,
+    });
+    mocks.updateModel.mockResolvedValue({});
+    render(<ProvidersTab appSettings={settings} />, { wrapper: Wrapper });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse 1,000 models" }),
+    );
+    await screen.findByText("Draft candidate");
+    fireEvent.click(screen.getByRole("button", { name: "Set draft" }));
+    expect(mocks.updateProviderSettings).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("Draft candidate"));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(mocks.updateProviderSettings).toHaveBeenCalledTimes(1),
+    );
+    expect(
+      mocks.updateProviderSettings.mock.calls[0][0].body.draft_model_id,
+    ).toBeNull();
+  });
+
+  it("validates context windows on a hidden catalog before sending any updates", async () => {
+    mocks.listModels.mockResolvedValue({
+      models: [
+        {
+          id: "invalid-model",
+          name: "Invalid candidate",
+          provider_id: settings.llm_providers![0].id,
+          is_active: true,
+          context_window: null,
+        },
+      ],
+      total: 1,
+    });
+    render(<ProvidersTab appSettings={settings} />, { wrapper: Wrapper });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse 1,000 models" }),
+    );
+    await screen.findByText("Invalid candidate");
+    fireEvent.change(screen.getByLabelText("Context window"), {
+      target: { value: "-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Hide models" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save" })).toBeEnabled(),
+    );
+    expect(mocks.updateModel).not.toHaveBeenCalled();
+    expect(mocks.updateProviderSettings).not.toHaveBeenCalled();
   });
 
   it("clears the draft model when its provider is removed", async () => {

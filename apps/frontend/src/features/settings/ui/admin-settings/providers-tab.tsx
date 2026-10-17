@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -14,7 +14,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -53,11 +53,10 @@ import {
   appProviderModelsListOptions,
   appProviderModelUpdateMutation,
   appProviderSettingsGetOptions,
-  appProviderSettingsGetQueryKey,
   appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { zProviderType } from "@/lib/client/zod.gen";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
@@ -99,100 +98,42 @@ const emptyProvider = (): FormProvider => ({
   provider_type: "generic_openai",
 });
 
-function ModelRow({
+type ModelDraft = { model: Llm; contextWindow: string };
+type ModelDrafts = Record<string, ModelDraft>;
+const modelDraft = (model: Llm): ModelDraft => ({
   model,
-  providerId,
+  contextWindow: model.context_window?.toString() ?? "",
+});
+
+function ModelRow({
+  draft,
   isDraft,
+  onChange,
   onSetDraft,
 }: {
-  model: Llm;
-  providerId: string;
+  draft: ModelDraft;
   isDraft: boolean;
+  onChange: (draft: ModelDraft) => void;
   onSetDraft: (id: string) => void;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isActive, setIsActive] = useState(model.is_active);
-  const [contextWindow, setContextWindow] = useState(
-    model.context_window?.toString() ?? "",
-  );
-
-  const [toolSupport, setToolSupport] = useState(
-    model.supports_tools == null ? "unknown" : String(model.supports_tools),
-  );
-  const [vision, setVision] = useState(
-    model.supports_vision == null ? "unknown" : String(model.supports_vision),
-  );
-
-  const update = useMutation({
-    ...appProviderModelUpdateMutation({ client }),
-    onSuccess: () => {
-      router.replace(
-        `${pathname}?t=admin&setting=providers&provider=${providerId}&cursor=${model.id}`,
-      );
-      router.refresh();
-      toast.success(`Saved ${model.name}`);
-    },
-    onError: () => toast.error(`Could not save ${model.name}.`),
-  });
-
-  useEffect(() => {
-    setIsActive(model.is_active);
-    setToolSupport(
-      model.supports_tools == null ? "unknown" : String(model.supports_tools),
-    );
-    setContextWindow(model.context_window?.toString() ?? "");
-    setVision(
-      model.supports_vision == null ? "unknown" : String(model.supports_vision),
-    );
-  }, [model]);
-
-  const save = () => {
-    const context = contextWindow.trim() ? Number(contextWindow) : null;
-    if (context != null && (!Number.isInteger(context) || context < 1)) {
-      toast.error("Context window must be a positive whole number.");
-      return;
-    }
-    const supportsVision = vision === "unknown" ? null : vision === "true";
-    update.mutate({
-      path: { provider_id: providerId, model_id: model.id },
-      body: {
-        is_active: isActive,
-        context_window: context,
-        supports_vision: supportsVision,
-        supports_tools:
-          toolSupport === "unknown" ? null : toolSupport === "true",
-        tools_source:
-          toolSupport === "unknown"
-            ? "unknown"
-            : String(model.supports_tools) === toolSupport
-              ? model.tools_source
-              : "manual",
-        context_window_source:
-          context == null
-            ? "unknown"
-            : ["catalog", "provider"].includes(
-                  model.context_window_source ?? "",
-                )
-              ? model.context_window_source
-              : "manual",
-        vision_source:
-          supportsVision == null
-            ? "unknown"
-            : ["catalog", "provider"].includes(model.vision_source ?? "")
-              ? model.vision_source
-              : "manual",
-      },
-    });
-  };
+  const { model, contextWindow } = draft;
+  const isActive = model.is_active;
+  const vision =
+    model.supports_vision == null ? "unknown" : String(model.supports_vision);
+  const toolSupport =
+    model.supports_tools == null ? "unknown" : String(model.supports_tools);
+  const changeModel = (changes: Partial<Llm>) =>
+    onChange({ ...draft, model: { ...model, ...changes } });
 
   return (
-    <div className="grid gap-3 rounded border p-3 lg:grid-cols-[minmax(14rem,1fr)_10rem_10rem_10rem_auto]">
+    <FieldGroup className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-3 rounded border p-3">
       <div className="flex min-w-0 items-center gap-2">
         <Checkbox
           id={`model-${model.id}-active`}
           checked={isActive}
-          onCheckedChange={(value) => setIsActive(value === true)}
+          onCheckedChange={(value) =>
+            changeModel({ is_active: value === true })
+          }
         />
         <FieldLabel
           htmlFor={`model-${model.id}-active`}
@@ -211,7 +152,18 @@ function ModelRow({
           type="number"
           min={1}
           value={contextWindow}
-          onChange={(event) => setContextWindow(event.target.value)}
+          onChange={(event) =>
+            onChange({
+              ...draft,
+              contextWindow: event.target.value,
+              model: {
+                ...model,
+                context_window_source: event.target.value.trim()
+                  ? "manual"
+                  : "unknown",
+              },
+            })
+          }
           placeholder="Unknown"
         />
       </Field>
@@ -219,20 +171,38 @@ function ModelRow({
         <FieldLabel htmlFor={`model-${model.id}-vision`}>
           Vision input
         </FieldLabel>
-        <Select value={vision} onValueChange={setVision}>
+        <Select
+          value={vision}
+          onValueChange={(value) =>
+            changeModel({
+              supports_vision: value === "unknown" ? null : value === "true",
+              vision_source: value === "unknown" ? "unknown" : "manual",
+            })
+          }
+        >
           <SelectTrigger id={`model-${model.id}-vision`}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="unknown">Unknown</SelectItem>
-            <SelectItem value="true">Supported</SelectItem>
-            <SelectItem value="false">Not supported</SelectItem>
+            <SelectGroup>
+              <SelectItem value="unknown">Unknown</SelectItem>
+              <SelectItem value="true">Supported</SelectItem>
+              <SelectItem value="false">Not supported</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </Field>
       <Field>
         <FieldLabel htmlFor={`model-${model.id}-tools`}>Tool calls</FieldLabel>
-        <Select value={toolSupport} onValueChange={setToolSupport}>
+        <Select
+          value={toolSupport}
+          onValueChange={(value) =>
+            changeModel({
+              supports_tools: value === "unknown" ? null : value === "true",
+              tools_source: value === "unknown" ? "unknown" : "manual",
+            })
+          }
+        >
           <SelectTrigger id={`model-${model.id}-tools`}>
             <SelectValue />
           </SelectTrigger>
@@ -245,30 +215,20 @@ function ModelRow({
           </SelectContent>
         </Select>
       </Field>
-      <div className="flex items-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={save}
-          disabled={update.isPending}
-        >
-          {update.isPending ? (
-            <LoaderCircleIcon className="animate-spin" />
-          ) : (
-            <SaveIcon />
-          )}
-          Save
-        </Button>
+      <div className="flex flex-wrap items-end gap-2">
         <Button
           type="button"
           variant={isDraft ? "secondary" : "ghost"}
-          onClick={() => onSetDraft(model.id)}
+          onClick={() => {
+            onChange(draft);
+            onSetDraft(model.id);
+          }}
           disabled={!isActive || isDraft}
         >
           {isDraft ? "Draft model" : "Set draft"}
         </Button>
       </div>
-    </div>
+    </FieldGroup>
   );
 }
 
@@ -277,22 +237,23 @@ function ModelCatalog({
   draftModelId,
   onSetDraft,
   onRefresh,
+  drafts,
+  onChange,
 }: {
   provider: ProviderSummary;
   draftModelId?: string | null;
   onSetDraft: (id: string) => void;
   onRefresh: (id: string) => void;
+  drafts: ModelDrafts;
+  onChange: (draft: ModelDraft) => void;
 }) {
   const { getSearchParam, setSearchParams } = useReadWriteSearchParams();
   const searchProviderId = getSearchParam("provider");
-  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(
     provider.id === searchProviderId ||
       getSearchParam("provider") === provider.id,
   );
   const [searchInput, setSearchInput] = useState("");
-  const [isUpdatingAll, setIsUpdatingAll] = useState(false);
-  const [models, setModels] = useState<Llm[]>([]);
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState<string | null>(getSearchParam("cursor"));
   const [previousCursors, setPreviousCursors] = useState<Array<string | null>>(
@@ -317,18 +278,7 @@ function ModelCatalog({
     enabled: expanded,
   });
 
-  const updateModel = useMutation({
-    ...appProviderModelUpdateMutation({ client }),
-    onSuccess: () => {
-      setSearchParams({ provider: provider.id, cursor: cursor ?? undefined });
-    },
-  });
-
-  useEffect(() => {
-    if (catalog.data?.models) {
-      setModels(catalog.data.models);
-    }
-  }, [catalog.data?.models]);
+  const models = catalog.data?.models ?? [];
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -339,54 +289,10 @@ function ModelCatalog({
     return () => window.clearTimeout(timer);
   }, [searchInput]);
 
-  const setAllModelsActive = async (isActive: boolean) => {
-    const changedModels = models.filter(
-      (model) => model.is_active !== isActive,
-    );
-    if (changedModels.length === 0 || isUpdatingAll) return;
-
-    setIsUpdatingAll(true);
-    setModels((currentModels) =>
-      currentModels.map((model) => ({ ...model, is_active: isActive })),
-    );
-    try {
-      const results = await Promise.allSettled(
-        changedModels.map((model) =>
-          updateModel.mutateAsync({
-            path: { provider_id: provider.id, model_id: model.id },
-            body: {
-              is_active: isActive,
-              context_window: model.context_window,
-              supports_vision: model.supports_vision,
-              supports_tools: model.supports_tools,
-              tools_source: model.tools_source,
-              context_window_source: model.context_window_source,
-              vision_source: model.vision_source,
-            },
-          }),
-        ),
-      );
-      if (results.some((result) => result.status === "rejected")) {
-        throw new Error("One or more model updates failed.");
-      }
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["appProviderModelsList"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: appProviderSettingsGetQueryKey({ client }),
-        }),
-      ]);
-      toast.success(
-        `${isActive ? "Selected" : "Unselected"} ${changedModels.length} models.`,
-      );
-    } catch {
-      await queryClient.invalidateQueries({
-        queryKey: ["appProviderModelsList"],
-      });
-      toast.error("Could not update all displayed models.");
-    } finally {
-      setIsUpdatingAll(false);
+  const setAllModelsActive = (isActive: boolean) => {
+    for (const model of models) {
+      const draft = drafts[model.id] ?? modelDraft(model);
+      onChange({ ...draft, model: { ...draft.model, is_active: isActive } });
     }
   };
 
@@ -396,7 +302,10 @@ function ModelCatalog({
         <Button
           type="button"
           variant="outline"
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => {
+            setExpanded(!expanded);
+            if (!expanded) setSearchParams({ provider: provider.id });
+          }}
         >
           {expanded
             ? `Hide models`
@@ -420,7 +329,7 @@ function ModelCatalog({
           type="button"
           variant="ghost"
           onClick={() => void setAllModelsActive(true)}
-          disabled={models.length === 0 || isUpdatingAll}
+          disabled={models.length === 0}
           title="Select all models displayed on this page"
         >
           Select All
@@ -429,14 +338,14 @@ function ModelCatalog({
           type="button"
           variant="ghost"
           onClick={() => void setAllModelsActive(false)}
-          disabled={models.length === 0 || isUpdatingAll}
+          disabled={models.length === 0}
           title="Unselect all models displayed on this page"
         >
           Unselect All
         </Button>
       </div>
       {expanded && (
-        <div className="mt-3 space-y-3">
+        <div className="mt-3 flex min-w-0 flex-col gap-3">
           <InputGroup>
             <InputGroupInput
               aria-label={`Search ${provider.name} models`}
@@ -472,8 +381,8 @@ function ModelCatalog({
                 {models.map((model) => (
                   <ModelRow
                     key={model.id}
-                    model={model}
-                    providerId={provider.id}
+                    draft={drafts[model.id] ?? modelDraft(model)}
+                    onChange={onChange}
                     isDraft={draftModelId === model.id}
                     onSetDraft={onSetDraft}
                   />
@@ -519,6 +428,8 @@ function ModelCatalog({
 
 function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
   const router = useRouter();
+  const [drafts, setDrafts] = useState<ModelDrafts>({});
+  const [isSaving, setIsSaving] = useState(false);
   const form = useForm<Values>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -546,7 +457,6 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
 
   const saveProviders = useMutation({
     ...appProviderSettingsUpdateMutation({ client }),
-    onSuccess: () => router.refresh(),
   });
 
   const refreshCatalog = useMutation({
@@ -561,20 +471,70 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
       ),
   });
 
+  const updateModel = useMutation(appProviderModelUpdateMutation({ client }));
+  const draftModelId = useWatch({ control, name: "draft_model_id" });
+  const hasChanges =
+    Object.keys(formState.dirtyFields).length > 0 ||
+    Object.keys(drafts).length > 0;
+
   useEffect(() => {
-    reset({
-      llm_providers: appSettings.llm_providers ?? [],
-      draft_model_id: appSettings.draft_model_id ?? null,
-    });
+    reset(
+      {
+        llm_providers: appSettings.llm_providers ?? [],
+        draft_model_id: appSettings.draft_model_id ?? null,
+      },
+      { keepDirtyValues: true },
+    );
   }, [appSettings, reset]);
 
   const save = async (values: Values, message?: string) => {
+    const pending = Object.values(drafts).filter(({ model }) =>
+      values.llm_providers.some(
+        (provider) => provider.id === model.provider_id,
+      ),
+    );
+    const updates = pending.map(({ model, contextWindow }) => ({
+      model,
+      context: contextWindow.trim() ? Number(contextWindow) : null,
+    }));
+    if (
+      updates.some(
+        ({ context }) =>
+          context != null && (!Number.isSafeInteger(context) || context < 1),
+      )
+    ) {
+      toast.error("Context window must be a positive whole number.");
+      throw new Error("Invalid context window");
+    }
+    setIsSaving(true);
     try {
+      // Save models first so a newly enabled model can be selected as the draft.
+      for (const { model, context } of updates) {
+        await updateModel.mutateAsync({
+          path: { provider_id: model.provider_id, model_id: model.id },
+          body: {
+            is_active: model.is_active,
+            context_window: context,
+            supports_vision: model.supports_vision,
+            supports_tools: model.supports_tools,
+            tools_source: model.tools_source,
+            context_window_source: model.context_window_source,
+            vision_source: model.vision_source,
+          },
+        });
+      }
       await saveProviders.mutateAsync({ body: values });
+      setDrafts({});
+      reset(values);
+      router.refresh();
       if (message) toast.success(message);
     } catch {
-      toast.error("Failed to save provider settings.");
+      toast.error(
+        "Could not save all settings. Your edits are kept; retry Save.",
+      );
       throw new Error("Provider settings save failed");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -588,20 +548,30 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
     }
   };
 
-  const setDraft = async (modelId: string) => {
-    try {
-      await save(
-        { ...getValues(), draft_model_id: modelId },
-        "Draft model updated.",
-      );
-    } catch {
-      /* save reports errors */
+  const changeDraft = (draft: ModelDraft) => {
+    setDrafts((current) => ({ ...current, [draft.model.id]: draft }));
+    if (
+      !draft.model.is_active &&
+      draft.model.id === getValues("draft_model_id")
+    ) {
+      setValue("draft_model_id", null, { shouldDirty: true });
     }
+  };
+
+  const setDraft = (modelId: string) => {
+    setValue("draft_model_id", modelId, { shouldDirty: true });
   };
 
   const deleteProvider = (index: number) => {
     const providerId = getValues(`llm_providers.${index}.id`);
-    if (appSettings.draft_model?.provider_id === providerId) {
+    if (
+      appSettings.draft_model?.provider_id === providerId ||
+      Object.values(drafts).some(
+        ({ model }) =>
+          model.provider_id === providerId &&
+          model.id === getValues("draft_model_id"),
+      )
+    ) {
       setValue("draft_model_id", null, { shouldDirty: true });
     }
     remove(index);
@@ -614,168 +584,177 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
         void save(values, "Settings saved.").catch(() => undefined);
       })}
     >
-      <div className="relative">
-        <h1 className="border-b pb-2 text-base font-bold">
-          OpenAI API Compatible Providers
-        </h1>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => append(emptyProvider())}
-          aria-label="Add provider"
-          className="absolute top-0 right-0"
-        >
-          <PlusIcon />
-        </Button>
-      </div>
-      {appSettings.draft_model ? (
-        <p className="text-muted-foreground text-sm">
-          Draft model: {appSettings.draft_model.provider_name} —{" "}
-          {appSettings.draft_model.name}
+      <fieldset disabled={isSaving} className="contents">
+        <div className="relative">
+          <h1 className="border-b pb-2 text-base font-bold">
+            OpenAI API Compatible Providers
+          </h1>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => append(emptyProvider())}
+            aria-label="Add provider"
+            className="absolute top-0 right-0"
+          >
+            <PlusIcon />
+          </Button>
+        </div>
+        {appSettings.draft_model ? (
+          <p className="text-muted-foreground text-sm">
+            Draft model: {appSettings.draft_model.provider_name} —{" "}
+            {appSettings.draft_model.name}
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Choose an active model below to use as the draft model.
+          </p>
+        )}
+        <p className="text-muted-foreground text-sm" role="status">
+          {hasChanges
+            ? "Unsaved changes. Click Save to apply all provider and model edits."
+            : "Provider and model edits apply when you click Save."}
         </p>
-      ) : (
-        <p className="text-muted-foreground text-sm">
-          Choose an active model below to use as the draft model.
-        </p>
-      )}
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        {fields.length === 0 ? (
-          <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
-            <ComputerIcon className="text-muted-foreground/50 size-10" />
-            <h4 className="w-sm text-center text-xl">
-              No providers configured yet. Add one to get started.
-            </h4>
-            <Button onClick={() => append(emptyProvider())}>
-              <PlusIcon /> Add Provider
-            </Button>
-          </div>
-        ) : null}
-        {fields.map((field, index) => {
-          const errors = formState.errors.llm_providers?.[index];
-          const provider = appSettings.llm_providers?.find(
-            (item) => item.id === field.id,
-          ) ?? { ...field, model_count: 0, active_model_count: 0 };
-          return (
-            <FieldSet
-              key={field.fieldKey}
-              className="bg-background/30 rounded border p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <FieldTitle className="text-base! font-medium!">
-                  {field.name.trim() || `Provider ${index + 1}`}
-                </FieldTitle>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => deleteProvider(index)}
-                  aria-label={`Delete provider ${index + 1}`}
-                >
-                  <Trash2Icon />
-                </Button>
-              </div>
-              <FieldGroup>
-                <Input
-                  type="hidden"
-                  {...register(`llm_providers.${index}.id`)}
-                />
-                <Field>
-                  <FieldLabel htmlFor={`provider-type-${index}`}>
-                    Provider Type
-                  </FieldLabel>
-                  <FieldContent>
-                    <Select
-                      value={form.getValues(
-                        `llm_providers.${index}.provider_type`,
-                      )}
-                      onValueChange={(value) => {
-                        form.setValue(
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
+          {fields.length === 0 ? (
+            <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
+              <ComputerIcon className="text-muted-foreground/50 size-10" />
+              <h4 className="max-w-sm text-center text-xl">
+                No providers configured yet. Add one to get started.
+              </h4>
+              <Button type="button" onClick={() => append(emptyProvider())}>
+                <PlusIcon /> Add Provider
+              </Button>
+            </div>
+          ) : null}
+          {fields.map((field, index) => {
+            const errors = formState.errors.llm_providers?.[index];
+            const provider = appSettings.llm_providers?.find(
+              (item) => item.id === field.id,
+            ) ?? { ...field, model_count: 0, active_model_count: 0 };
+            return (
+              <FieldSet
+                key={field.fieldKey}
+                className="bg-background/30 min-w-0 rounded border p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <FieldTitle className="text-base! font-medium!">
+                    {field.name.trim() || `Provider ${index + 1}`}
+                  </FieldTitle>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => deleteProvider(index)}
+                    aria-label={`Delete provider ${index + 1}`}
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </div>
+                <FieldGroup>
+                  <Input
+                    type="hidden"
+                    {...register(`llm_providers.${index}.id`)}
+                  />
+                  <Field>
+                    <FieldLabel htmlFor={`provider-type-${index}`}>
+                      Provider Type
+                    </FieldLabel>
+                    <FieldContent>
+                      <Select
+                        value={form.getValues(
                           `llm_providers.${index}.provider_type`,
-                          value as FormProvider["provider_type"],
-                          { shouldDirty: true, shouldValidate: true },
-                        );
-                        form.setValue(
-                          `llm_providers.${index}.base_url`,
-                          value === "openai" ? OPENAI_BASE_URL : "",
-                          { shouldDirty: true, shouldValidate: true },
-                        );
-                      }}
-                    >
-                      <SelectTrigger
-                        id={`provider-type-${index}`}
-                        aria-label={`Provider type for provider ${index + 1}`}
+                        )}
+                        onValueChange={(value) => {
+                          form.setValue(
+                            `llm_providers.${index}.provider_type`,
+                            value as FormProvider["provider_type"],
+                            { shouldDirty: true, shouldValidate: true },
+                          );
+                          form.setValue(
+                            `llm_providers.${index}.base_url`,
+                            value === "openai" ? OPENAI_BASE_URL : "",
+                            { shouldDirty: true, shouldValidate: true },
+                          );
+                        }}
                       >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="openai">OpenAI</SelectItem>
-                        <SelectItem value="generic_openai">
-                          Generic OpenAI
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FieldContent>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor={`provider-name-${index}`}>
-                    Provider Name
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id={`provider-name-${index}`}
-                      {...register(`llm_providers.${index}.name`)}
-                    />
-                    <FieldError errors={[errors?.name]} />
-                  </FieldContent>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor={`provider-base-url-${index}`}>
-                    Base URL
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id={`provider-base-url-${index}`}
-                      placeholder="https://api.example.com/v1"
-                      {...register(`llm_providers.${index}.base_url`)}
-                    />
-                    <FieldError errors={[errors?.base_url]} />
-                  </FieldContent>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor={`provider-api-key-${index}`}>
-                    API Key
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id={`provider-api-key-${index}`}
-                      type="password"
-                      {...register(`llm_providers.${index}.api_key`)}
-                    />
-                    <FieldError errors={[errors?.api_key]} />
-                  </FieldContent>
-                </Field>
-              </FieldGroup>
-              <ModelCatalog
-                provider={provider}
-                draftModelId={appSettings.draft_model_id}
-                onSetDraft={setDraft}
-                onRefresh={refresh}
-              />
-            </FieldSet>
-          );
-        })}
-      </div>
-      <div className="flex justify-end">
-        <Button type="submit" disabled={saveProviders.isPending}>
-          {saveProviders.isPending ? (
-            <LoaderCircleIcon className="animate-spin" />
-          ) : (
-            <SaveIcon />
-          )}
-          Save
-        </Button>
-      </div>
+                        <SelectTrigger
+                          id={`provider-type-${index}`}
+                          aria-label={`Provider type for provider ${index + 1}`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="openai">OpenAI</SelectItem>
+                          <SelectItem value="generic_openai">
+                            Generic OpenAI
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor={`provider-name-${index}`}>
+                      Provider Name
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={`provider-name-${index}`}
+                        {...register(`llm_providers.${index}.name`)}
+                      />
+                      <FieldError errors={[errors?.name]} />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor={`provider-base-url-${index}`}>
+                      Base URL
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={`provider-base-url-${index}`}
+                        placeholder="https://api.example.com/v1"
+                        {...register(`llm_providers.${index}.base_url`)}
+                      />
+                      <FieldError errors={[errors?.base_url]} />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor={`provider-api-key-${index}`}>
+                      API Key
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={`provider-api-key-${index}`}
+                        type="password"
+                        {...register(`llm_providers.${index}.api_key`)}
+                      />
+                      <FieldError errors={[errors?.api_key]} />
+                    </FieldContent>
+                  </Field>
+                </FieldGroup>
+                <ModelCatalog
+                  provider={provider}
+                  draftModelId={draftModelId}
+                  onSetDraft={setDraft}
+                  onRefresh={refresh}
+                  drafts={drafts}
+                  onChange={changeDraft}
+                />
+              </FieldSet>
+            );
+          })}
+        </div>
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? (
+              <LoaderCircleIcon className="animate-spin" />
+            ) : (
+              <SaveIcon />
+            )}
+            Save
+          </Button>
+        </div>
+      </fieldset>
     </form>
   );
 }

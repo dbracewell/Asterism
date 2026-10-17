@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -43,7 +44,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 function Wrapper({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={new QueryClient()}>
-      {children}
+      <TooltipProvider>{children}</TooltipProvider>
     </QueryClientProvider>
   );
 }
@@ -205,15 +206,17 @@ it("blocks saving when models cannot refresh, without replacing the saved bindin
   });
   render(
     <QueryClientProvider client={cache}>
-      <AgentProfileForm
-        profile={{
-          id: "worker",
-          name: "Worker",
-          model_id: "missing",
-          model_available: false,
-        }}
-        completeEditing={vi.fn()}
-      />
+      <TooltipProvider>
+        <AgentProfileForm
+          profile={{
+            id: "worker",
+            name: "Worker",
+            model_id: "missing",
+            model_available: false,
+          }}
+          completeEditing={vi.fn()}
+        />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
   expect(await screen.findByText(/Could not load models/)).toBeInTheDocument();
@@ -247,14 +250,16 @@ it("preserves ordinary tool selections through a catalog failure and retry", asy
   });
   render(
     <QueryClientProvider client={cache}>
-      <MainAgentForm
-        configuration={{
-          id: "main",
-          name: "Main",
-          description: "",
-          tools: ["web_fetch"],
-        }}
-      />
+      <TooltipProvider>
+        <MainAgentForm
+          configuration={{
+            id: "main",
+            name: "Main",
+            description: "",
+            tools: ["web_fetch"],
+          }}
+        />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
   await userEvent.click(

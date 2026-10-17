@@ -5,3 +5,9 @@ No active or pending stories remain in the [Projects and Chat Context Refactor r
 Completed checklists are archived for [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), and [2026-10-17](docs/archive/todo-completed-2026-10-17.md). US-28.3 verification evidence is [archived separately](docs/archive/us-28.3-verification-2026-10-17.md).
 
 Implement only one story at a time; create its feature branch when implementation begins.
+
+Provider Settings Editing (EPIC-30) was user-confirmed for merge on 2026-10-17. Its completed checklist and verification limitations are in the [dated archive](docs/archive/todo-completed-2026-10-17.md).
+
+## Follow-up verification
+
+- [ ] Repair the remaining nine agent-settings test/UI mismatches documented in [EPIC-30](docs/epics/EPIC-30-PROVIDER-SETTINGS-EDITING.md): unnamed dialog buttons, outdated model-picker assertions, and the unavailable-model status assertion. Tooltip provider setup is fixed.

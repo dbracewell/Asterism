@@ -88,3 +88,20 @@ Verification: formatting, backend/frontend lint, full basedpyright (zero errors 
 The [verification report](us-28.3-verification-2026-10-17.md) records individual gates, earlier failures and repairs, scope measurements, and limitations. Dependency checks reused installed packages and local caches; real authenticated browser flows used a local model double. Live external providers and an empty-cache operating-system installation were not tested. The working database was preserved. No remote CI result or push is claimed.
 
 EPIC-28 and the Projects and Chat Context Refactor roadmap (EPIC-24, EPIC-25, EPIC-29, EPIC-26, EPIC-27, and EPIC-28) are confirmed complete. Recommended next plan: live-provider smoke testing and release preparation.
+
+## US-30.1 — Responsive provider controls and shared Save
+
+The user authorized committing and merging all pending changes on 2026-10-17 from `fix/provider-model-settings-save`, following disclosure of the remaining frontend test failures.
+
+- [x] Replace fixed-width model rows with a layout that wraps within its container.
+- [x] Keep model drafts in the provider form and save all staged changes from the shared action, including edits across searches and pages.
+- [x] Preserve capability provenance, validate context windows, and retain failed edits for retry.
+- [x] Set `provider=<id>` on catalog expansion using the existing URL utility while preserving all current parameters.
+- [x] Add TooltipProvider to agent-settings test wrappers and custom-query-client render paths.
+- [x] Verify provider regressions, lint, type checks, formatting, and responsive browser behavior.
+- [x] Record and defer the remaining agent-settings failures under the user's explicit merge authorization.
+- [x] Obtain user completion confirmation before commit and merge.
+
+Verification: nine provider unit/integration tests and four provider Playwright tests passed; frontend lint, TypeScript, formatting, production build, and six migration checks passed. The broader frontend unit suite reported 124 passing tests and nine failures. Tooltip context errors are fixed; remaining failures concern unnamed icon dialog triggers, outdated Fixed model label/display assertions, and an unavailable-model alert assertion. The full suite is not green; these failures remain tracked in `todo.md`. No backend contract changes, database reset, remote push, or remote CI result is claimed.
+
+See [EPIC-30](../epics/EPIC-30-PROVIDER-SETTINGS-EDITING.md) for behavior and verification details. Recommended next work: repair the remaining agent-settings test/UI mismatches.
