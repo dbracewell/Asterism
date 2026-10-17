@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import (
     BadDataException,
     NotFoundException,
-    UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
 from asterism.db.queries import paginate_select
@@ -148,13 +147,9 @@ async def delete_chat(
     session: AsyncSession | None = None,
 ) -> Chat:
     async with get_async_db_session(session) as session:
-        chat_session = await session.get(ChatModel, chat_id)
-
-        if not chat_session:
-            raise NotFoundException(f"Chat with id {chat_id} not found")
-
-        if chat_session.user_id != user_id:
-            raise UnauthorizedException(f"User {user_id} is not authorized to delete chat session {chat_id}")
+        chat_session = await session.scalar(select_owned_chats(user_id=user_id).where(ChatModel.id == chat_id))
+        if chat_session is None:
+            raise NotFoundException("Chat not found")
 
         # Stop the process-local runtime before persistence deletion. This
         # prevents a cancelled provider task from writing a late message.
@@ -246,11 +241,9 @@ async def get_one(
 ) -> Chat:
 
     async with get_async_db_session(session) as session:
-        chat_session = await session.get(ChatModel, chat_id)
-        if not chat_session:
-            raise NotFoundException()
-        if chat_session.user_id != user_id:
-            raise UnauthorizedException()
+        chat_session = await session.scalar(select_owned_chats(user_id=user_id).where(ChatModel.id == chat_id))
+        if chat_session is None:
+            raise NotFoundException("Chat not found")
 
         from .model_selection import selection_info
 

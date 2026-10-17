@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
+import { createServer, request } from "node:http";
 
 const temporaryRoot = process.env.RUNNER_TEMP ?? tmpdir();
 const root = mkdtempSync(join(temporaryRoot, "asterism-e2e-"));
@@ -14,6 +15,7 @@ const secret = () => `test-${randomBytes(24).toString("hex")}`;
 const environment = {
   ...process.env,
   ASTERISM_CONFIG_PROFILE: "test",
+  ASTERISM_ISOLATED_E2E: "true",
   PUBLIC_URL: "http://localhost:3100",
   BETTER_AUTH_SECRET: secret(),
   SYSTEM_KEY: secret(),
@@ -93,8 +95,39 @@ async function stopBackend(backend) {
   process.kill(-backend.pid, "SIGKILL");
 }
 
+// Production's backend-to-frontend boundary is fixed on loopback :3000.
+// Keep Next on the separate test port while serving only those internal routes.
+const internalFrontend = createServer((incoming, outgoing) => {
+  const pathname = new URL(incoming.url, "http://localhost").pathname;
+  if (!["/api/auth/jwks", "/api/stream"].includes(pathname)) {
+    outgoing.writeHead(404).end();
+    return;
+  }
+  const proxied = request(
+    {
+      hostname: "127.0.0.1",
+      port: 3100,
+      path: incoming.url,
+      method: incoming.method,
+      headers: { ...incoming.headers, host: "localhost:3100" },
+    },
+    (response) => {
+      outgoing.writeHead(response.statusCode, response.headers);
+      response.pipe(outgoing);
+    },
+  );
+  proxied.on("error", () => {
+    outgoing.writeHead(502).end();
+  });
+  incoming.pipe(proxied);
+});
+
 let backend;
 try {
+  await new Promise((resolve, reject) => {
+    internalFrontend.once("error", reject);
+    internalFrontend.listen(3000, "127.0.0.1", resolve);
+  });
   const migration = spawnSync(process.execPath, ["scripts/migrate-db.mjs"], {
     cwd: join(process.cwd(), "apps/frontend"),
     env: environment,
@@ -142,14 +175,22 @@ try {
   });
   await waitForBackend(backend);
 
-  const result = spawnSync(
+  // Keep the event loop free to proxy internal JWKS and callback traffic.
+  const result = spawn(
     "pnpm",
-    ["--filter", "@asterism/frontend", "test:e2e"],
-    { env: environment, stdio: "inherit" },
+    ["--filter", "@asterism/frontend", "test:e2e", ...process.argv.slice(2)],
+    {
+      env: environment,
+      stdio: "inherit",
+    },
   );
-  if (result.error) throw result.error;
-  process.exitCode = result.status ?? 1;
+  process.exitCode = await new Promise((resolve, reject) => {
+    result.once("error", reject);
+    result.once("exit", (status) => resolve(status ?? 1));
+  });
 } finally {
   await stopBackend(backend);
+  internalFrontend.closeAllConnections();
+  await new Promise((resolve) => internalFrontend.close(resolve));
   rmSync(root, { recursive: true, force: true });
 }

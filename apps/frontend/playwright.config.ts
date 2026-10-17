@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 import { resolve } from "node:path";
 
-const testStorageRoot = resolve(process.cwd(), "test-results/storage");
+const testStorageRoot =
+  process.env.STORAGE_ROOT ?? resolve(process.cwd(), "test-results/storage");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -32,12 +33,20 @@ export default defineConfig({
         process.env.BETTER_AUTH_SECRET ??
         "e2e-playwright-local-auth-secret-6b3f29c17ea840df",
       STORAGE_ROOT: testStorageRoot,
-      BETTER_AUTH_DB_PATH: resolve(testStorageRoot, "users.db"),
+      BETTER_AUTH_DB_PATH:
+        process.env.BETTER_AUTH_DB_PATH ?? resolve(testStorageRoot, "users.db"),
     },
   },
   projects: [
     {
+      name: "fresh-install",
+      testMatch: /home\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "chromium",
+      testIgnore: /home\.spec\.ts/,
+      dependencies: ["fresh-install"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],

@@ -1,6 +1,27 @@
 import logging
+import re
 from logging import Logger
 from logging.config import dictConfig
+
+
+class RedactTransportTokens(logging.Filter):
+    """Keep socket query credentials out of Uvicorn transport diagnostics."""
+
+    _token = re.compile(r'([?&](?:token|access_token)=)[^\s&"#]+', re.IGNORECASE)
+
+    @classmethod
+    def redact(cls, value):
+        return cls._token.sub(r"\1[redacted]", value) if isinstance(value, str) else value
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = self.redact(record.msg)
+        if isinstance(record.args, tuple):
+            # Preserve the tuple shape used by Uvicorn's AccessFormatter.
+            record.args = tuple(self.redact(value) for value in record.args)
+        elif isinstance(record.args, dict):
+            record.args = {key: self.redact(value) for key, value in record.args.items()}
+        return True
+
 
 _is_initialized = False
 _root_logger: Logger | None = None
@@ -41,6 +62,8 @@ def __initialize_logging():
     dictConfig(LOGGING_CONFIG)
     _root_logger = logging.getLogger("asterism")
     _root_logger.setLevel(logging.DEBUG)
+    for name in ("uvicorn.error", "uvicorn.access"):
+        logging.getLogger(name).addFilter(RedactTransportTokens())
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
 

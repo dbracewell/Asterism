@@ -115,13 +115,30 @@ temporary state in a `finally` block. It does not load developer dotenv files or
 repository/production databases.
 
 ```bash
-node scripts/run-isolated-e2e.mjs
+CI=1 node scripts/run-isolated-e2e.mjs --retries=0
+# Focus one spec (its fresh-install prerequisite still runs):
+CI=1 node scripts/run-isolated-e2e.mjs authenticated-workspace.spec.ts --retries=0
 # Included in:
 pnpm ci:local:e2e
 ```
 
 `RUNNER_TEMP` is used when available; otherwise the operating-system temporary
 directory is used.
+
+Ports **3000, 3100, and 8000** must be free. A loopback bridge on 3000 forwards
+only backend JWKS and internal stream-callback routes to Next.js on 3100; it does
+not reuse a developer server. The runner passes its unique auth/storage paths to
+both applications and closes the bridge/backend before removing temporary state.
+The Playwright subprocess is asynchronous so internal auth requests can progress.
+CLI arguments pass through to Playwright. The `fresh-install` project is an explicit
+prerequisite before account-creating Chromium tests.
+
+The authenticated workspace spec runs only with the runner's
+`ASTERISM_ISOLATED_E2E=true` marker. It uses real Better Auth/JWT, production routes,
+SQLite/file storage, WebSockets, and a local deterministic OpenAI-compatible model
+double. Other specs retain mocked HTTP/WebSocket boundaries for focused failure/UI
+states. Embedding model provisioning is disabled in isolated runs; pending retrieval
+is explicit, and backend tests verify ready-vector retrieval separately.
 
 ### `run-with-env.mjs`
 

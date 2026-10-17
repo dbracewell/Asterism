@@ -351,3 +351,19 @@ async def test_retained_snapshot_without_local_membership_does_not_grant_access(
     ).status_code == 404
     async with sessions() as session:
         assert await session.get(UserFileModel, uuid.UUID(file["id"])) is not None
+
+
+@pytest.mark.asyncio
+async def test_chat_reads_and_deletion_hide_foreign_identity(project_api):
+    client, sessions, _ = project_api
+    record = await chat(client, await seed_agent(sessions))
+    chat_id = record["info"]["id"]
+    before = (await client.get(f"/chat/{chat_id}", headers=auth())).json()["messages"]
+    for method in ("GET", "DELETE"):
+        foreign = await client.request(method, f"/chat/{chat_id}", headers=auth("b"))
+        missing = await client.request(method, f"/chat/{uuid.uuid4()}", headers=auth("b"))
+        assert foreign.status_code == missing.status_code == 404
+        assert foreign.json() == missing.json()
+    owned = await client.get(f"/chat/{chat_id}", headers=auth())
+    assert owned.status_code == 200
+    assert owned.json()["messages"] == before

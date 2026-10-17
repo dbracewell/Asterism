@@ -74,6 +74,12 @@ is invoked through the root `pnpm reset:db -- --yes` workflow.
 
 ## Quality checks
 
+Backend `typecheck` runs full basedpyright followed by compileall; root and CI
+commands use this gate. Component metadata is class-level, and the chat job manager
+keeps a narrow lifecycle protocol while controllers bind the concrete orchestrator.
+Chat read/delete queries are owner-scoped and return the same 404 for foreign and
+missing identities. Uvicorn transport diagnostics redact token query values.
+
 From the repository root:
 
 ```bash

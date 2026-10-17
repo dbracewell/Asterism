@@ -24,8 +24,8 @@ class BraveSearchConfig(BaseModel):
 
 @component_registry.register()
 class Brave(WebsearchComponent[BraveSearchConfig]):
-    name: str = "BraveWebSearch"
-    parameters: type[BraveSearchConfig] = BraveSearchConfig
+    name = "BraveWebSearch"
+    parameters = BraveSearchConfig
 
     def __init__(self, config: BraveSearchConfig) -> None:
         super().__init__(config)
@@ -80,8 +80,8 @@ class Brave(WebsearchComponent[BraveSearchConfig]):
 
 @component_registry.register()
 class SearchXNG(WebsearchComponent[SearchXNGConfig]):
-    name: str = "SearchXNGWebSearch"
-    parameters: type[SearchXNGConfig] = SearchXNGConfig
+    name = "SearchXNGWebSearch"
+    parameters = SearchXNGConfig
 
     def __init__(self, config: SearchXNGConfig) -> None:
         super().__init__(config)

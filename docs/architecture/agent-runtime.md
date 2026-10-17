@@ -118,7 +118,7 @@ Provider-reported usage is authoritative; UI context estimates are advisory.
 ## Project-selected delegation
 
 New projects select no targets. `/projects/{project_id}/sub-agent-candidates`
-lists owned candidates, and `/projects/{project_id}/sub-agents` reads/replaces the
+lists owned candidates, and `/projects/{project_id}/sub-agents` reads/updates the
 selected set under `expected_context_revision`. No-op membership changes preserve
 the revision. Selected definitions must still be owned, model-available,
 and eligible when advertised, invoked, and used during execution.

@@ -16,8 +16,8 @@ class ImageSearchComponent[T: BaseModel](SearchComponent[T], abc.ABC):
 
 @component_registry.register()
 class SearchXNG(ImageSearchComponent[SearchXNGConfig]):
-    name: str = "SearchXNGImageSearch"
-    parameters: type[SearchXNGConfig] = SearchXNGConfig
+    name = "SearchXNGImageSearch"
+    parameters = SearchXNGConfig
 
     def __init__(self, config: SearchXNGConfig) -> None:
         super().__init__(config)

@@ -51,7 +51,12 @@ for (const script of [
   readFileSync("apps/frontend/scripts/reset-db.mjs", "utf8"),
   readFileSync("apps/backend/asterism/db/init_db.py", "utf8"),
 ]) {
-  assert.doesNotMatch(script ?? "", /auth@latest|\bsource\b|\/Users\//);
+  assert.doesNotMatch(script ?? "", /auth@latest|\/Users\//);
+  // Reject shell sourcing statements, not ordinary prose such as "source storage".
+  assert.doesNotMatch(
+    script ?? "",
+    /(?:^|[;\n]|&&|\|\|)\s*(?:source|\.)[ \t]+/,
+  );
 }
 
 const activeFiles = [

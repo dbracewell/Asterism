@@ -97,6 +97,12 @@ The combined deployment smoke test is documented in the root README.
 
 ## Quality and API generation
 
+For full browser verification, use the root isolated runner; it owns fresh auth,
+backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install
+project runs before account creation. The authenticated workspace spec uses real
+app APIs and sockets against a local model double; focused harness specs retain
+mocked boundaries. See [runner details](../../scripts/README.md#run-isolated-e2emjs).
+
 From the repository root:
 
 ```bash

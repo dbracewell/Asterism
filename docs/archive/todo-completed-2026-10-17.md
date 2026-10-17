@@ -71,3 +71,20 @@ Verification: formatting, lint, configured typechecks, 429 backend tests, 129 fr
 Pre-consolidation ADR, dated README appendices, and original roadmap are preserved verbatim from `aa3f943` in the [documentation history archive](us-28.2-documentation-history-2026-10-17.md). The README appendices now link there; the roadmap retains a stable current-status entry point. See [EPIC-28](../epics/EPIC-28-CLEAN-CUT-REMOVAL-AND-VALIDATION.md) for detailed implementation and verification.
 
 Next recommended story: US-28.3 — Integrated quality and isolation verification. EPIC-28 remains in progress.
+
+## US-28.3 — Integrated quality and isolation verification
+
+Confirmed complete by the user on 2026-10-17, authorizing archival, commit, and local merge from `feat/us-28.3-integrated-validation`.
+
+- [x] US-28.3: Integrated quality and isolation verification (2–3 person-days).
+  - [x] US-28.3-T1: Run backend and frontend lint, typecheck, unit/integration suites, frontend build, and generated-client consistency checks.
+  - [x] US-28.3-T2: Run isolated Playwright covering General upload/use/reopen, project prompt/files, moves, deletion, processing failures, two-user isolation, main-agent settings, chat model switching/provenance, project sub-agent selection/revocation, General non-delegation, and hidden internal tools.
+  - [x] US-28.3-T3: Test main/delegated agent file access and replay; measure bounded scope resolution/query behavior with representative file counts.
+  - [x] US-28.3-T4: Record each gate separately, including any unrun or retry-dependent check; update todo and archive before requesting completion confirmation.
+  - [x] US-28.3-T5: On user confirmation, merge the approved story branch and report epic closure.
+
+Verification: formatting, backend/frontend lint, full basedpyright (zero errors and warnings), compileall, frontend TypeScript, 437 backend tests, 129 frontend tests, 6 auth-database tests, 30 root tests, production frontend build, served-OpenAPI/generated-client consistency, and import-cycle checks passed. All 27 isolated Playwright tests passed with retries disabled. Documentation references and diff integrity passed.
+
+The [verification report](us-28.3-verification-2026-10-17.md) records individual gates, earlier failures and repairs, scope measurements, and limitations. Dependency checks reused installed packages and local caches; real authenticated browser flows used a local model double. Live external providers and an empty-cache operating-system installation were not tested. The working database was preserved. No remote CI result or push is claimed.
+
+EPIC-28 and the Projects and Chat Context Refactor roadmap (EPIC-24, EPIC-25, EPIC-29, EPIC-26, EPIC-27, and EPIC-28) are confirmed complete. Recommended next plan: live-provider smoke testing and release preparation.

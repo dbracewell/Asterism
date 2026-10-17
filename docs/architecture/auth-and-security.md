@@ -36,7 +36,9 @@ termination are not part of this internal hop.
 issuer and audience, and requires the `id` claim before constructing an
 `AuthedUser`. REST dependencies obtain the bearer token through `HTTPBearer`; the
 chat WebSocket validates its required `token` query parameter before accepting the
-connection.
+connection. Uvicorn transport diagnostics redact `token` and `access_token` query
+values before formatting, including WebSocket acceptance logs. Chat read/delete
+queries are owner-filtered and return the same 404 for foreign and missing identities.
 
 ### User and administrator boundaries
 

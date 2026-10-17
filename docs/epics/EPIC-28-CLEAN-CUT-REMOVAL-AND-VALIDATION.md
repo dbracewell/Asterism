@@ -1,6 +1,6 @@
 # EPIC-28 — Clean-cut removal and validation
 
-Status: In progress. US-28.1 confirmed complete on 2026-10-17; US-28.2 confirmed complete on 2026-10-17; US-28.3 remains pending.
+Status: Complete. US-28.1, US-28.2, and US-28.3 were confirmed complete on 2026-10-17.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -144,13 +144,58 @@ As a maintainer, I want the complete replacement validated from a clean install.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-28.2.
 
-- [ ] US-28.3-T1: Run backend and frontend lint, typecheck, unit/integration suites, frontend build, and generated-client consistency checks.
-- [ ] US-28.3-T2: Run isolated Playwright covering General upload/use/reopen, project prompt/files, moves, deletion, processing failures, two-user isolation, main-agent settings, chat model switching/provenance, project sub-agent selection/revocation, General non-delegation, and hidden internal tools.
-- [ ] US-28.3-T3: Test main/delegated agent file access and replay; measure bounded scope resolution/query behavior with representative file counts.
-- [ ] US-28.3-T4: Record each gate separately, including any unrun or retry-dependent check; update todo and archive before requesting completion confirmation.
-- [ ] US-28.3-T5: On user confirmation, merge the approved story branch and report epic closure.
+- [x] US-28.3-T1: Run backend and frontend lint, typecheck, unit/integration suites, frontend build, and generated-client consistency checks.
+- [x] US-28.3-T2: Run isolated Playwright covering General upload/use/reopen, project prompt/files, moves, deletion, processing failures, two-user isolation, main-agent settings, chat model switching/provenance, project sub-agent selection/revocation, General non-delegation, and hidden internal tools.
+- [x] US-28.3-T3: Test main/delegated agent file access and replay; measure bounded scope resolution/query behavior with representative file counts.
+- [x] US-28.3-T4: Record each gate separately, including any unrun or retry-dependent check; update todo and archive before requesting completion confirmation.
+- [x] US-28.3-T5: On user confirmation, merge the approved story branch and report epic closure.
 
 **Acceptance:** Fresh initialization and required CI jobs pass; unauthorized files are rejected through every runtime access path; no unrun gate is reported as passing.
+
+**Implementation and verification (2026-10-17):** Implemented on
+`feat/us-28.3-integrated-validation`; confirmed complete by the user on 2026-10-17,
+authorizing archival, commit, local merge, and EPIC-28 closure. The completed
+[checklist](../archive/todo-completed-2026-10-17.md) and
+[verification evidence](../archive/us-28.3-verification-2026-10-17.md) are archived.
+
+The final gates pass separately: frozen offline pnpm/locked uv dependency checks,
+formatting, backend/frontend lint, **full basedpyright (0 errors, 0 warnings)**,
+compileall, frontend TypeScript, workspace-task validation, **437 backend tests**,
+**129 frontend tests / 34 files**, **6 auth-database tests**, **30 root tests**,
+production frontend build, independent served-OpenAPI/client consistency, and cycle
+checks (**215 modules / 1,012 imports; no cycles**). Basedpyright now runs in the
+backend `typecheck` script, including CI, rather than relying on compileall alone.
+
+Final isolated Chromium: **27 passed with retries disabled**, no skipped tests or
+unhandled browser exceptions. Fresh-install verification is a project prerequisite;
+a real authenticated browser scenario verifies project creation/start-chat, project
+prompt/scoped files, pending retrieval, a fixed-model child, model switching and
+historical execution identity, General upload/use/reopen without project leakage or
+delegation, second-user isolation, deselection, moves, deletion, source preservation,
+and settings persistence. External model HTTP is a local deterministic double;
+other browser harnesses cover focused UI/error states. Backend tests independently
+exercise ready LanceDB retrieval, main/delegated file access, in-flight revocation,
+replay ceilings, branch changes, and ownership.
+
+Scope measurements at 10, 100, and 1,000 owned project files (30, 300, and 3,000 total
+sources) use **six SQL selects** with observed local times **3.170, 2.913, and 5.760 ms**.
+Query count is asserted; wall time is recorded without a brittle performance threshold.
+File/provenance memory and history traversal still grow with input size; this is not
+a concurrent production load test. Retrieval's independent limits remain enforced.
+
+Verification repaired ten pre-existing typing diagnostics, a workspace-check false
+positive, a cold panel-opening test race, and test-runner auth topology/storage
+isolation. Real auth also exposed differing foreign/missing chat responses and
+WebSocket token logging: read/delete now use owner-filtered selects with equal 404s,
+and transport logs redact token query values. Regression tests cover both, and the
+final logs contain no unredacted query token values. Occupied-port refusal preserves
+a controlled existing server and cleans temporary runner storage.
+
+Initial browser/fixture failures and metrics warnings are recorded in the archived
+report; they are not passes. Final full browser verification ran after the isolated-only
+guard with `--retries=0`. No working database reset, provider-model download, migration,
+compatibility shim, dependency change, push, or remote-CI result is claimed. Frozen
+dependency verification reused local caches; it was not an empty-cache/OS install.
 
 ## Shared definition of done
 

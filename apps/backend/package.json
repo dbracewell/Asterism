@@ -8,7 +8,7 @@
     "lint": "uv run ruff check .",
     "test": "node ../../scripts/run-with-env.mjs --env none --scope backend --profile test -- uv run pytest -q",
     "sync": "uv sync",
-    "typecheck": "uv run python -m compileall -q asterism",
+    "typecheck": "uv run basedpyright && uv run python -m compileall -q asterism",
     "init:db": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile backend-init -- uv run python -m asterism.db.init_db",
     "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db --reset",
     "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db --reset --yes",

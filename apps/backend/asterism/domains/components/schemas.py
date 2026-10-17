@@ -25,7 +25,7 @@ class Component[T: BaseModel](abc.ABC):
     component_type: ClassVar[ComponentType]
     singleton: ClassVar[bool] = False
     name: ClassVar[str]
-    parameters: ClassVar[BaseModel]
+    parameters: ClassVar[type[BaseModel]]
 
     def __init__(self, config: T) -> None:
         self.config: T = config

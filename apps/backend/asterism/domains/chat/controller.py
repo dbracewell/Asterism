@@ -1,6 +1,7 @@
 import asyncio
 import uuid
 from logging import Logger
+from typing import cast
 
 from fastapi import WebSocketDisconnect
 
@@ -24,7 +25,9 @@ class ChatController:
         self.connection: Connection = connection
         self.job = job
         self.manager = job.manager or chat_jobs
-        self.orchestrator: ChatOrchestrator = job.orchestrator
+        # Controller jobs are constructed with the concrete chat orchestrator;
+        # the job manager itself depends only on its narrower lifecycle protocol.
+        self.orchestrator = cast(ChatOrchestrator, job.orchestrator)
         self.tasks: BackgroundTaskManager = BackgroundTaskManager()
         self.logger: Logger = get_logger("ChatSession")
         self.inbound_commands: MessageQueue = MessageQueue()

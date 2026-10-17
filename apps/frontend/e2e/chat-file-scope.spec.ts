@@ -189,9 +189,22 @@ test("keeps General isolated and shows two project chats with different local at
       json: { info: { id: chat }, messages: messages[chat] },
     });
   });
+  const openContext = async () => {
+    const trigger = page.getByRole("button", { name: /Files in context/ });
+    // A cold route can render its trigger before hydration attaches handlers.
+    // Repeat only while closed, then assert the controlled panel is open.
+    await expect(async () => {
+      if ((await trigger.getAttribute("aria-expanded")) !== "true") {
+        await trigger.click();
+      }
+      await expect(trigger).toHaveAttribute("aria-expanded", "true", {
+        timeout: 1000,
+      });
+    }).toPass({ timeout: 10000 });
+  };
   general = true;
   await page.goto(`/e2e/files?scope=general&chat=${A}`);
-  await page.getByRole("button", { name: /Files in context/ }).click();
+  await openContext();
   await expect(
     page.getByRole("region", { name: "Project files" }),
   ).toContainText("General has no project files");
@@ -200,7 +213,7 @@ test("keeps General isolated and shows two project chats with different local at
   ).toContainText("No saved attachments");
   general = false;
   await page.goto(`/e2e/files?scope=project&chat=${A}`);
-  await page.getByRole("button", { name: /Files in context/ }).click();
+  await openContext();
   await expect(
     page
       .getByRole("region", { name: "Project files" })
@@ -229,7 +242,7 @@ test("keeps General isolated and shows two project chats with different local at
   expect(promoted).toBe(0);
   expect(regenerated).toBe(0);
   await page.reload();
-  await page.getByRole("button", { name: /Files in context/ }).click();
+  await openContext();
   await expect(
     page.getByRole("region", { name: "Chat attachments" }),
   ).toContainText("library.txt");
@@ -240,7 +253,7 @@ test("keeps General isolated and shows two project chats with different local at
   ).toContainText("No saved attachments");
   alternate = false;
   await page.goto(`/e2e/files?scope=project&chat=${B}`);
-  await page.getByRole("button", { name: /Files in context/ }).click();
+  await openContext();
   const locals = page.getByRole("region", { name: "Chat attachments" });
   await expect(locals).toContainText("upload.txt");
   await expect(locals).not.toContainText("library.txt");
