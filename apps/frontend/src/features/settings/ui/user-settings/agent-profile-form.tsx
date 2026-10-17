@@ -1,6 +1,8 @@
 "use client";
-import { SubAgentToolWarning } from "./sub-agent-tool-warning";
-import { Button } from "@/components/ui/button";
+import { HelpIcon } from "@/components/help-icon";
+import { Required } from "@/components/required";
+import { ModelSelector } from "@/components/settings/model-selector";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -10,23 +12,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Empty, EmptyDescription } from "@/components/ui/empty";
 import {
   Field,
   FieldGroup,
-  FieldLabel as Label,
-  FieldSet,
   FieldLegend,
+  FieldSet,
+  FieldLabel as Label,
 } from "@/components/ui/field";
-import { Empty, EmptyDescription } from "@/components/ui/empty";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Hint } from "@/components/ui/hint";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { client } from "@/lib/api";
 import {
@@ -35,16 +30,18 @@ import {
   SubAgentDefinition,
 } from "@/lib/client";
 import {
-  mainAgentUpdateMutation,
   chatModelsListOptions,
+  mainAgentUpdateMutation,
   subAgentCreateMutation,
   subAgentUpdateMutation,
   toolsGetActiveOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { PencilIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { SubAgentToolWarning } from "./sub-agent-tool-warning";
 
 export function MainAgentForm({
   configuration,
@@ -54,10 +51,12 @@ export function MainAgentForm({
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Edit main configuration</Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <Hint hint="Edit the main agent configuration" asChild>
+        <DialogTrigger className={buttonVariants({ variant: "ghost" })}>
+          <PencilIcon />
+        </DialogTrigger>
+      </Hint>
+      <DialogContent className="flex h-full max-h-[90vh] max-w-[90vw]! flex-col">
         <DialogHeader>
           <DialogTitle>Main configuration</DialogTitle>
           <DialogDescription>
@@ -97,10 +96,12 @@ export function AgentProfileForm({
         else setCreating(true);
       }}
     >
-      <DialogTrigger asChild>
-        <Button>Create sub-agent</Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <Hint hint="Create a new sub-agent" asChild>
+        <DialogTrigger className={buttonVariants({ variant: "ghost" })}>
+          <PlusIcon />
+        </DialogTrigger>
+      </Hint>
+      <DialogContent className="flex h-full max-h-[90vh] w-full max-w-[90vw]! flex-col">
         <DialogHeader>
           <DialogTitle>
             {profile ? "Edit sub-agent" : "Create sub-agent"}
@@ -247,18 +248,21 @@ function ConfigurationForm({
     }
   };
   return (
-    <form onSubmit={submit}>
-      <FieldGroup>
-        <FieldSet disabled={pending}>
+    <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+      <FieldGroup className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <FieldSet disabled={pending} className="flex flex-1 flex-col gap-4">
           <FieldGroup>
             {subAgent && <SubAgentToolWarning />}
             {subAgent && (
               <>
                 <Field>
-                  <Label htmlFor="agent-name">Name</Label>
+                  <Required>
+                    <Label htmlFor="agent-name">Name</Label>
+                  </Required>
                   <Input
                     id="agent-name"
                     required
+                    data-1p-ignore
                     maxLength={200}
                     value={name}
                     onChange={(event) => setName(event.target.value)}
@@ -268,41 +272,22 @@ function ConfigurationForm({
                   <Label htmlFor="agent-description">Description</Label>
                   <Textarea
                     id="agent-description"
+                    data-1p-ignore
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                   />
                 </Field>
                 <Field>
-                  <Label htmlFor="agent-model">Fixed model</Label>
-                  <Select
-                    value={modelId}
+                  <Required>
+                    <Label htmlFor="agent-model">Model</Label>
+                  </Required>
+                  <ModelSelector
                     onValueChange={setModelId}
+                    defaultModel={modelId}
+                    availableModels={available.filter((c) => c.available)}
                     disabled={modelQuery.isPending || modelQuery.isError}
-                  >
-                    <SelectTrigger id="agent-model" aria-invalid={invalidModel}>
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {modelId &&
-                          !available.some((model) => model.id === modelId) && (
-                            <SelectItem value={modelId} disabled>
-                              {modelId} (unavailable)
-                            </SelectItem>
-                          )}
-                        {available.map((model) => (
-                          <SelectItem
-                            key={model.id}
-                            value={model.id}
-                            disabled={!model.available}
-                          >
-                            {model.name} ({model.provider_name})
-                            {!model.available ? " — unavailable" : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  />
+
                   {modelQuery.isPending && <p role="status">Loading models…</p>}
                   {modelQuery.isError && (
                     <Empty role="alert" className="flex-none p-3">
@@ -344,7 +329,10 @@ function ConfigurationForm({
               />
             </Field>
             <Field>
-              <Label htmlFor="agent-steps">Maximum steps</Label>
+              <Label htmlFor="agent-steps">
+                Maximum steps{" "}
+                <HelpIcon text="The maximum number of turns the agent can take before outputting a reply" />
+              </Label>
               <Input
                 id="agent-steps"
                 type="number"
@@ -355,68 +343,59 @@ function ConfigurationForm({
                 onChange={(event) => setMaxSteps(Number(event.target.value))}
               />
             </Field>
-            <Field>
-              <Label htmlFor="agent-temperature">Temperature (optional)</Label>
-              <Input
-                id="agent-temperature"
-                type="number"
-                min={0}
-                max={2}
-                step="any"
-                value={temperature}
-                onChange={(event) => setTemperature(event.target.value)}
-              />
-            </Field>
-            <Field>
-              <Label htmlFor="agent-tokens">Maximum tokens (optional)</Label>
-              <Input
-                id="agent-tokens"
-                type="number"
-                min={1}
-                value={maxTokens}
-                onChange={(event) => setMaxTokens(event.target.value)}
-              />
-            </Field>
-            {(
-              [
-                ["top_p", "Top P (optional)", 0, 1, "any"],
-                [
-                  "presence_penalty",
-                  "Presence penalty (optional)",
-                  -2,
-                  2,
-                  "any",
-                ],
-                [
-                  "frequency_penalty",
-                  "Frequency penalty (optional)",
-                  -2,
-                  2,
-                  "any",
-                ],
-                ["seed", "Seed (optional)", undefined, undefined, "1"],
-              ] as const
-            ).map(([key, label, min, max, step]) => (
-              <Field key={key}>
-                <Label htmlFor={`agent-${key}`}>{label}</Label>
-                <Input
-                  id={`agent-${key}`}
-                  type="number"
-                  min={min}
-                  max={max}
-                  step={step}
-                  value={defaults[key]}
-                  onChange={(event) =>
-                    setDefaults({ ...defaults, [key]: event.target.value })
-                  }
-                />
-              </Field>
-            ))}
-            <p className="text-muted-foreground text-sm">
-              Generation defaults apply when supported by the selected model.
-              Leave a field blank to use its provider default.
-            </p>
-            <FieldSet>
+            <div className="flex flex-col gap-3">
+              <h1 className="text-muted-foreground text-sm">
+                Generation Settings
+              </h1>
+              <FieldSet className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+                <Field>
+                  <Label htmlFor="agent-temperature">Temperature</Label>
+                  <Input
+                    id="agent-temperature"
+                    type="number"
+                    min={0}
+                    max={2}
+                    step="any"
+                    value={temperature}
+                    onChange={(event) => setTemperature(event.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <Label htmlFor="agent-tokens">Maximum tokens</Label>
+                  <Input
+                    id="agent-tokens"
+                    type="number"
+                    min={1}
+                    value={maxTokens}
+                    onChange={(event) => setMaxTokens(event.target.value)}
+                  />
+                </Field>
+                {(
+                  [
+                    ["top_p", "Top P ", 0, 1, "any"],
+                    ["presence_penalty", "Presence penalty ", -2, 2, "any"],
+                    ["frequency_penalty", "Frequency penalty ", -2, 2, "any"],
+                    ["seed", "Seed ", undefined, undefined, "1"],
+                  ] as const
+                ).map(([key, label, min, max, step]) => (
+                  <Field key={key}>
+                    <Label htmlFor={`agent-${key}`}>{label}</Label>
+                    <Input
+                      id={`agent-${key}`}
+                      type="number"
+                      min={min}
+                      max={max}
+                      step={step}
+                      value={defaults[key]}
+                      onChange={(event) =>
+                        setDefaults({ ...defaults, [key]: event.target.value })
+                      }
+                    />
+                  </Field>
+                ))}
+              </FieldSet>
+            </div>
+            <FieldSet className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               <FieldLegend>Allowed tools</FieldLegend>
               {toolQuery.isPending && <p role="status">Loading tools…</p>}
               {toolQuery.isError && (
@@ -454,6 +433,7 @@ function ConfigurationForm({
                       }
                     />
                     {tool.name}
+                    <HelpIcon text={tool.description} />
                   </Label>
                 ))}
               {!toolQuery.isPending &&

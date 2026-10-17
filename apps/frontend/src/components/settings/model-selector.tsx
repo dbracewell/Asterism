@@ -13,6 +13,7 @@ type ModelSelectorProps = {
   availableModels?: LlmDisplayInfo[];
   className?: string;
   align?: "center" | "start" | "end" | undefined;
+  disabled?: boolean;
 };
 
 type ModelInput = {
@@ -26,6 +27,7 @@ export const ModelSelector = ({
   onValueChange,
   availableModels,
   className,
+  disabled = false,
 }: ModelSelectorProps) => {
   const divRef = useRef<HTMLDivElement>(null);
   const [open, setIsOpen] = useState(false);
@@ -94,10 +96,11 @@ export const ModelSelector = ({
     <div
       id={id}
       ref={divRef}
-      className={cn("bg-background relative z-40 flex flex-col", className)}
+      className={cn("bg-input/30 relative z-400 flex flex-col", className)}
     >
       <button
         type="button"
+        disabled={disabled}
         className={cn(
           "bg-input/30 focus-visible:border-border border-border flex h-8 items-center justify-between rounded-md border p-1 text-left text-xs ring-0 outline-0 transition-all focus-visible:ring-0 focus-visible:outline-0",
           distance < 100 && open ? "rounded-t-none" : open && "rounded-b-none",
@@ -111,10 +114,11 @@ export const ModelSelector = ({
       </button>
       <div
         className={cn(
-          "bg-input/30 absolute right-0 left-0 z-1000 flex-col text-xs",
-          "items-start justify-start gap-1 border",
+          "bg-input",
+          "absolute right-0 left-0 z-1000 flex-1 flex-col text-xs",
+          "min-h-40 items-start justify-start border",
           "pb-0.5 text-sm transition-all",
-          open ? "flex" : "hidden",
+          open && !disabled ? "flex" : "hidden",
           distance < 100
             ? "bottom-7 rounded-t border-b-0"
             : "top-8 rounded-b border-t-0",
@@ -128,14 +132,16 @@ export const ModelSelector = ({
             open={open}
           />
         )}
-        <div className="bg-background w-full">
-          <div className="bg-input/30 flex max-h-40 w-full flex-col overflow-y-auto px-0.5">
+        <div className="bg-input w-full pt-2 shadow-2xl">
+          <div className="bg-input flex max-h-40 w-full flex-col overflow-y-auto px-0.5">
             {modelOptions.map((model) => (
               <Button
                 type="button"
                 onClick={() => {
-                  setData(model);
-                  onValueChange(model.value);
+                  if (!disabled) {
+                    setData(model);
+                    onValueChange(model.value);
+                  }
                   setIsOpen(false);
                 }}
                 variant="ghost"
@@ -179,7 +185,7 @@ const FilterInput = ({
   return (
     <div
       className={cn(
-        "bg-muted text-muted-foreground top-0 z-10 flex w-full items-center justify-between border-b",
+        "bg-input/30 text-muted-foreground top-0 z-10 flex w-full items-center justify-between border-b",
         distance < 100 ? "border-t" : "border-b",
       )}
     >

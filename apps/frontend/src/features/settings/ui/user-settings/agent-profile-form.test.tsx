@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReactNode } from "react";
 import { beforeEach, expect, it, vi } from "vitest";
-import { MainAgentForm, AgentProfileForm } from "./agent-profile-form";
+import { AgentProfileForm, MainAgentForm } from "./agent-profile-form";
 const mocks = vi.hoisted(() => ({
   mainSave: vi.fn().mockResolvedValue({}),
   create: vi.fn(),
