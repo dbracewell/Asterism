@@ -31,7 +31,7 @@ termination are not part of this internal hop.
 
 ### JWT verification
 
-[`verify_jwks_token`](../apps/backend/asterism/core/security.py) uses
+[`verify_jwks_token`](../../apps/backend/asterism/core/security.py) uses
 `jwt.PyJWKClient` with a one-hour JWKS/key cache. It accepts only RS256, validates
 issuer and audience, and requires the `id` claim before constructing an
 `AuthedUser`. REST dependencies obtain the bearer token through `HTTPBearer`; the

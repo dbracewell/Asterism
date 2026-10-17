@@ -5,10 +5,10 @@ runtime SDK but differ in URL ownership and capability discovery.
 
 ## Provider types
 
-| Type | Base URL | Discovery |
-| --- | --- | --- |
-| **OpenAI** (`openai`) | Always `https://api.openai.com/v1`; administrator input is ignored and the UI is read-only | `/models` IDs enriched by Asterism's versioned OpenAI capability catalog |
-| **Generic OpenAI** (`generic_openai`) | Required administrator-supplied absolute HTTP(S) URL, normalized without a trailing slash | OpenAI-compatible `/models` with conservative best-effort metadata extraction |
+| Type                                  | Base URL                                                                                   | Discovery                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| **OpenAI** (`openai`)                 | Always `https://api.openai.com/v1`; administrator input is ignored and the UI is read-only | `/models` IDs enriched by Asterism's versioned OpenAI capability catalog      |
+| **Generic OpenAI** (`generic_openai`) | Required administrator-supplied absolute HTTP(S) URL, normalized without a trailing slash  | OpenAI-compatible `/models` with conservative best-effort metadata extraction |
 
 Both runtime chat and discovery use the OpenAI Python SDK. Generic OpenAI is a
 protocol compatibility mode; provider-specific APIs such as native Ollama or
@@ -36,6 +36,8 @@ The initial capability fields are:
 
 - `context_window`: a positive token count, or `null` when unknown.
 - `supports_vision`: `true`, `false`, or `null` when unknown.
+- `supports_tools`: `true`, `false`, or `null` when unknown. Only explicit `true`
+  permits runtime tool schemas and internal tools; model names never imply support.
 
 Each field independently records one source:
 
@@ -57,6 +59,7 @@ small set of explicit fields:
   `max_model_len`.
 - Vision: `supports_vision`, `capabilities.vision`, or image presence in
   `input_modalities` / `architecture.input_modalities`.
+- Tools: an explicit Boolean `supports_tools`. Missing metadata remains unknown.
 
 Asterism does not infer capabilities from model names. Missing, invalid, or
 conflicting metadata remains unknown and requires administrator review. A
@@ -66,11 +69,17 @@ redirect, oversized-response, and malformed-response failures.
 ## Runtime lookup
 
 Models are stored by provider and name. Matching models retain their UUID during
-refresh, preserving agent and draft references. Chat model lookup accepts only
+refresh, preserving sub-agent, chat-selection, and draft references. Chat execution lookup accepts only
 active models. Draft lookup also requires the selected model to remain active.
 The runtime `LLMClient` receives the normalized persisted URL, so OpenAI always
 uses the canonical origin and Generic OpenAI uses the administrator's normalized
 compatible endpoint.
+
+Main-agent settings have no model binding. Chat selection and per-execution model
+provenance are independent; unavailable selections remain visible without silent
+replacement. Sub-agent definitions each bind one model; restrictive references
+require explicit rebinding/removal before provider/model deletion. See
+[agent runtime](agent-runtime.md) for replay and revocation.
 
 ## File-input capability gating
 

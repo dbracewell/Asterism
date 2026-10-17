@@ -79,7 +79,7 @@ backend URL.
 ```text
 asterism/
 ├── apps/
-│   ├── backend/                 # FastAPI package, migrations, and pytest tests
+│   ├── backend/                 # FastAPI package, model initialization, and pytest tests
 │   │   └── asterism/domains/    # agent, chat, files, settings, tools, and user domains
 │   └── frontend/                # Next.js application, generated API client, and Playwright tests
 ├── docs/architecture/           # This implementation documentation
@@ -87,7 +87,7 @@ asterism/
 ├── docker/                      # Combined-container configuration and smoke checks
 ├── scripts/                     # Root environment and workspace helpers
 ├── docs/epics/                  # Product plans
-└── todo.md                      # Execution history
+└── todo.md                      # Active and pending work; completed history lives in docs/archive
 ```
 
 ## Request lifecycle
@@ -98,18 +98,19 @@ asterism/
 2. The public application forwards `/api/py` traffic to FastAPI. FastAPI verifies
    the JWT against `http://127.0.0.1:3000/api/auth/jwks`, checks issuer and
    audience derived from `PUBLIC_URL`, and scopes data access to the token's user.
-3. Creating a chat selects a non-sub-agent profile (the requested profile or the
-   user's default) and persists its ID on the chat. The binding is immutable, so
-   later default-agent changes do not change an existing conversation.
-4. A chat WebSocket attaches a `ChatController` to the per-chat in-process
-   `ChatJob`. The first connection creates the job's `ChatOrchestrator`; later
-   connections subscribe to that same job. A chat command persists its user
-   message and attachment references before invoking the bound `Agent`.
-5. The agent streams text, reasoning, tool-call, and delegated-agent events. Tool
-   approval decisions return through the same WebSocket; final messages, provider
-   usage, and tool results are persisted in SQLite. A user cancellation persists a
-   cancelled parent turn and any partial assistant output; a disconnect alone does
-   not cancel generation.
+3. REST accepts chat creation or a new message using owner-scoped file UUIDs,
+   request receipts, and revision-checked model selection. The chat uses the user's
+   singleton main configuration; project binding is optional. Draft consumption,
+   local references, history, and receipt commit atomically.
+4. A WebSocket attaches a controller to the process-local chat job and resumes
+   persisted pending work. The execution root records model/configuration, composed
+   prompt, branch/project/file/target ceilings, and provenance, then injects live
+   file/retrieval providers into Agent. See [execution context](execution-context.md).
+5. The agent streams text, reasoning, tool calls, and selected-child events. Approval
+   decisions use the same socket. Live policy and scope checks remain mandatory
+   before tool invocation and release. Cancellation persists a canceled parent and
+   partial output; disconnect alone does not cancel generation.
+
 6. The backend uses the shared system key only for loopback callbacks to
    `/api/stream`, such as asynchronous title updates. The frontend fans those
    callbacks out to authenticated SSE clients.

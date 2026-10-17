@@ -227,7 +227,9 @@ that ceiling with live project/chat authorization, then calls
 `LanceDbVectorStore.search()` with both `user_id` and `allowed_file_ids`. Empty
 allowed sets return no results. Before release, retrieval rechecks authorization
 and current artifact generations. Runtime file reads use the same scoped boundary.
-See [knowledge retrieval](knowledge-retrieval.md) for revocation and replay rules.
+See [knowledge retrieval](knowledge-retrieval.md) for revocation and replay rules,
+[execution context](execution-context.md) for injection boundaries, and
+[development reset](development-reset.md) for clean storage initialization.
 
 ## Project file management
 

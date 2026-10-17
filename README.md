@@ -33,6 +33,12 @@ The implementation-oriented architecture guides are in
 - [Knowledge retrieval](docs/architecture/knowledge-retrieval.md) — file-owned processing, private retrieval, and captioning
 - [LLM providers](docs/architecture/llm-providers.md) — supported provider modes and model capabilities
 
+The [execution-context guide](docs/architecture/execution-context.md) traces one turn
+from project/chat membership through prompts, Agent, scoped retrieval, and provider
+access. [ADR-0017](docs/adr/0017-project-file-and-chat-boundaries.md) records current
+accepted contracts. [Memory isolation](docs/architecture/context-isolation.md)
+distinguishes implemented provenance/key boundaries from future memory storage.
+
 ## Configuration
 
 Copy the shared example to the repository root and replace the placeholder secrets:
@@ -151,9 +157,12 @@ upgrades. Do not expose internal ports 3001 or 8000.
 
 `/storage` contains `users.db`, `database.db`, and uploaded files. Auth migrations
 run on each startup using the bundled, pinned official Better Auth CLI and explicit
-`src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer runs only when its database is absent;
-existing backend databases are not reset or automatically migrated. Bind mounts must
-be writable by UID **10001**. Back up databases before upgrades.
+`src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer runs on every startup, creating missing model tables and
+search indexes without upgrading incompatible existing tables. Backend data is not
+automatically migrated or reset. Bind mounts must
+be writable by UID **10001**. Back up databases before upgrades. For an intentional clean development cutover,
+follow [initialization and reset](docs/architecture/development-reset.md); full reset
+removes relational/source/vector data while preserving downloaded model bundles.
 
 Never use `docker compose down -v` unless deleting all persisted data is intentional.
 

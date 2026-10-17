@@ -65,7 +65,9 @@ model/provider deletion must not silently select a replacement.
 
 Persona/profile defaults remain a separate invariant. Chats persist their model
 selection independently of main configuration and preserve per-execution provenance.
-Project-selected delegation is delivered by its own story.
+Projects explicitly select an owner-consistent subset of sub-agent definitions; new
+projects start with no selections. General chats never delegate. Selected targets
+retain fixed models and receive the same or narrower execution file scope.
 
 ## 2.4 Skills / Tools / MCP / Image Generation
 
@@ -74,7 +76,11 @@ Project-selected delegation is delivered by its own story.
   - Tools
   - MCP servers
   - Image generation providers/config
-- Agents only use capabilities explicitly assigned to them.
+- Ordinary capabilities require explicit agent assignment and active admin policy.
+- `sub_agent` and `search_knowledge` are internal context-managed tools, omitted
+  from user capability pickers. Derive availability server-side from live project
+  selections/file scope, admin policy, and explicit model `supports_tools=True`.
+  User payloads, chat preferences, prompt text, and approval cannot grant them.
 
 ---
 
@@ -138,7 +144,7 @@ All storage dependencies must be implemented behind interfaces so future swaps a
 - Framework: **Next.js 16**
 - Styling: **Tailwind CSS 4**
 - Components: **shadcn/ui**
-- Server-state management: **TanStack Query** with the generated Hey API client (We invalidate all queries automatically using mutationCache so need to invalidate on single mutations)
+- Server-state management: **TanStack Query** with the generated Hey API client (the shared mutationCache invalidates queries automatically; do not duplicate invalidation for individual mutations)
 - API client generation: **Hey API** (type-safe client from backend OpenAPI)
 - Auth: **BetterAuth with JWT**
 
@@ -155,15 +161,28 @@ Frontend UI rules:
 
 ## 3.3 Orchestration and Memory
 
-The agent runtime should support:
+Implemented execution boundaries are documented in
+[execution context](docs/architecture/execution-context.md),
+[agent runtime](docs/architecture/agent-runtime.md), and
+[context isolation](docs/architecture/context-isolation.md).
+
+Current runtime behavior includes:
 
 - Single-turn and multi-turn chats
 - Agentic loop execution with bounded iterations and stop criteria
 - Tool/MCP invocation with structured logging
 - Short-term memory (conversation/session scope)
-- Long-term memory (profile scope with retrieval)
+- Typed future memory namespaces and derived-context keys; no active long-term
+  memory store, automatic memory reads/writes, or sibling-chat summaries
 
-Memory writes and retrieval should be traceable to:
+The persona/default-profile invariant is distinct from singleton agent settings.
+The prompt composer supports an optional profile layer; current chat composition
+passes no persona layer. Do not claim a persona memory engine is implemented.
+Future project-derived memory must partition by user/profile/project; General-derived
+memory partitions by user/profile/chat. Derived local summaries additionally key by
+source chat and scope revision. Keys never grant access; reauthorize reads/writes.
+
+Future memory writes and retrieval must be traceable to:
 
 - User
 - Profile
@@ -180,7 +199,11 @@ Memory writes and retrieval should be traceable to:
    - Exactly one model-free main-agent configuration per user
    - Zero or more separately owned, fixed-model sub-agent definitions
 2. **Capability scoping by allowlist**
-   - Agent can use only assigned tools/skills/MCP servers
+   - Ordinary tools/skills/MCP require explicit assignment and admin authorization
+   - Internal tools require server-derived live scope and model capability checks
+   - Agent consumes injected execution scope, file reader, and RetrievalService;
+     domain readers own project/chat membership queries
+   - Prompt layers and untrusted file/retrieval text cannot expand capabilities
 3. **Auditability first**
    - Log agent decisions, tool calls, MCP calls, memory writes
 4. **Provider abstraction**
@@ -244,7 +267,11 @@ When an epic completes:
 3. Add/adjust tests with each meaningful behavior change.
 4. Avoid hidden coupling between frontend and backend contracts.
 5. Regenerate typed API clients after OpenAPI changes.
-6. Keep storage behind interfaces; schema changes do not need migrations (reset the data instead).
+6. Keep storage behind interfaces; backend schema changes use fresh initialization,
+   with no data migrations. See [development reset](docs/architecture/development-reset.md)
+   for the explicit full reset of auth/backend data, source files, and vectors while
+   retaining model bundles. Do not reset the working database as part of story
+   verification; use disposable isolated storage.
 7. Capture major architectural decisions in ADR-style notes when scope is non-trivial.
 8. Keep functions and services focused on one responsibility. Separate query construction, pagination/execution, response enrichment, and lifecycle mutations; do not grow a general service function by adding flags or parameters for each new caller or domain.
 9. Compose reusable, owner-scoped base selects in the owning domain's `queries.py`; callers add their domain-specific filters before pagination. Put only domain-neutral query mechanics (such as pagination) in `db/queries.py` or `common`; shared modules must not import domain models or embed domain policy. Preserve owner checks at service/execution boundaries, deterministic ordering, and database filtering before pagination. Prefer small functions over a generic query framework or inheritance hierarchy.
@@ -284,6 +311,6 @@ Keep documentation updated when behavior changes:
 
 - Each user always has at least one profile and one default profile.
 - Each user always has exactly one main-agent configuration; sub-agent definitions bind one fixed model.
-- Agent capabilities are explicit and restricted by assignment.
+- Ordinary capabilities require explicit assignment; internal tools require live server-derived context and admin policy.
 - Story completion requires task completion + passing tests + user confirmation before merge.
 - Only one user story is actively implemented at a time.

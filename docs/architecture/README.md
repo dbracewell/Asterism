@@ -2,7 +2,7 @@
 
 This directory documents the architecture implemented in the Asterism monorepo.
 Asterism is a self-hosted AI chat application with a Next.js frontend, FastAPI
-backend, capability-scoped main agents and sub-agents, reconnectable streamed
+backend, one main configuration per user and project-selected sub-agents, reconnectable streamed
 responses, full-text chat search, and user-owned file attachments.
 
 ## Document index
@@ -19,6 +19,19 @@ responses, full-text chat search, and user-owned file attachments.
 | [Knowledge retrieval](knowledge-retrieval.md)                                       | File-owned processing, scoped LanceDB retrieval, and image captioning                           |
 | [File knowledge processing](file-knowledge-processing.md)                           | Upload-to-artifact pipeline, embeddings, captions, jobs, and lifecycle guarantees               |
 | [ADR-0016: Memory resource contracts](../adr/adr-0016-memory-resource-contracts.md) | Process-lifetime state inventory, ownership, bounds, and remediation plan                       |
+
+Additional guides:
+
+- [Execution context and module boundaries](execution-context.md): trace project/chat
+  readers into Agent, RuntimeFileReader, and RetrievalService.
+- [Project and chat workspaces](project-workspaces.md): settings, membership UI,
+  attachment scopes, model picker, and selection/error states.
+- [Context provenance and memory isolation](context-isolation.md): replay ceilings,
+  content-free audit, historical information limits, and future memory keys.
+- [Development initialization and reset](development-reset.md): relational, source,
+  vector cleanup, model-bundle retention, and isolated verification.
+- [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md): current accepted
+  project/file/chat/configuration/execution decisions.
 
 ## Current deployment topology
 
@@ -68,10 +81,11 @@ flowchart TD
   nginx supplies the equivalent route in the combined container.
 - **Authentication boundary:** Better Auth owns sessions and signing keys. FastAPI
   validates bearer and WebSocket JWTs against the frontend's loopback JWKS endpoint.
-- **Capability boundary:** chat profiles supply the tool schemas offered to the
-  model; interactive calls outside the chat allowlist require a user decision. A
-  delegated agent executes autonomously only active tools assigned to its own
-  profile.
+- **Capability boundary:** configured ordinary capabilities, admin policy, explicit
+  model support, and live context derive effective tool schemas. Main-agent calls
+  can require interactive approval within this boundary; delegated tools use the
+  child's allowlist. Internal search/delegation are context managed, without user
+  toggles. Approval cannot expand capabilities or file scope.
 - **Persistence boundary:** SQLAlchemy manages the relational store; uploaded bytes
   pass through the `FileStore` protocol, whose current implementation is
   `LocalFileStore`.
@@ -89,6 +103,6 @@ flowchart TD
 - Backend lifespan: [`asterism.core.lifespan:lifespan`](../../apps/backend/asterism/core/lifespan.py)
 - Chat jobs and transport: [`ChatJobManager`](../../apps/backend/asterism/domains/chat/jobs.py) and [`ChatController`](../../apps/backend/asterism/domains/chat/controller.py)
 - Agent loop: [`Agent`](../../apps/backend/asterism/domains/agent/agent.py)
-- Knowledge runtime: [`runtime.py`](../../apps/backend/asterism/domains/knowledge/runtime.py)
+- Knowledge runtime: [`runtime.py`](../../apps/backend/asterism/domains/extraction/runtime.py)
 - Tool registry: [`tool_registry`](../../apps/backend/asterism/domains/tools/registry.py)
 - Frontend chat hook: [`useChatWebSocket`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)

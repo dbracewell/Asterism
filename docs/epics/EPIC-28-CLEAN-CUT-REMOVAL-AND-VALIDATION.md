@@ -1,6 +1,6 @@
 # EPIC-28 — Clean-cut removal and validation
 
-Status: In progress. US-28.1 confirmed complete on 2026-10-17; US-28.2 and US-28.3 remain pending.
+Status: In progress. US-28.1 confirmed complete on 2026-10-17; US-28.2 confirmed complete on 2026-10-17; US-28.3 remains pending.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -78,12 +78,65 @@ As a contributor, I want a clear guide to extending the new modules.
 
 **Estimate:** 1–2 person-days. **Dependencies:** US-28.1.
 
-- [ ] US-28.2-T1: Update architecture diagrams, API/runtime/file lifecycle docs, backend/frontend READMEs, and contributor guidance, including AGENTS.md: exactly one main-agent configuration per user, separate persona/profile defaults, zero or more fixed-model sub-agent definitions, project-selected delegation, and internal context-managed tools.
-- [ ] US-28.2-T2: Document singleton main-agent settings, chat model selection/provenance, project-selected fixed-model sub-agents, internal tool policy, prompt composition, scope resolution, delegation, attachment branching, deletion, memory limits, and provider boundaries.
-- [ ] US-28.2-T3: Document a clean development reset for relational data, vectors, and source files without deleting verified provider model bundles.
-- [ ] US-28.2-T4: Update the ADR to accepted decisions and archive completed planning/status history after user confirmation.
+- [x] US-28.2-T1: Update architecture diagrams, API/runtime/file lifecycle docs, backend/frontend READMEs, and contributor guidance, including AGENTS.md: exactly one main-agent configuration per user, separate persona/profile defaults, zero or more fixed-model sub-agent definitions, project-selected delegation, and internal context-managed tools.
+- [x] US-28.2-T2: Document singleton main-agent settings, chat model selection/provenance, project-selected fixed-model sub-agents, internal tool policy, prompt composition, scope resolution, delegation, attachment branching, deletion, memory limits, and provider boundaries.
+- [x] US-28.2-T3: Document a clean development reset for relational data, vectors, and source files without deleting verified provider model bundles.
+- [x] US-28.2-T4: Update the ADR to accepted decisions and archive completed planning/status history after user confirmation.
 
 **Acceptance:** A contributor can trace project or chat context into Agent and RetrievalService without relying on removed folder or knowledge-base concepts.
+
+**Implementation and verification (2026-10-17):** Implemented on
+`feat/us-28.2-architecture-operator-docs`. User confirmed completion on 2026-10-17
+and authorized final archival, commit, and merge into `main`.
+
+Added [execution context](../architecture/execution-context.md), including a turn
+sequence and linked composition-root/module map, and the
+[development reset runbook](../architecture/development-reset.md). Reworked agent,
+transport, and authorization guides around singleton main settings, independent chat
+model selection/provenance, project-selected fixed-model workers, internal tools,
+prompt layers, narrowing scope, revocation, replay, attachment branches, deletion,
+provider boundaries, and explicit memory limitations. Updated contributor rules,
+architecture index/diagrams, storage/provider/file lifecycle guides, and README
+entrypoints. ADR-0017 now consolidates current accepted decisions. The roadmap and
+ADR-0016 audit are explicitly dated history with current-guide pointers.
+
+The operator guide follows actual root/workspace reset code: review resolved auth
+and backend override paths, stop workers, remove disposable databases/source/vector
+storage, retain embedding/caption bundles, handle sequential-reset failures, and
+reconfigure fresh accounts/providers. Corrected a stale startup comment; shell
+behavior is unchanged. Removed unsupported index-version-switch/reindex instructions.
+
+Verification performed for this documentation change:
+
+- `pnpm format`, `pnpm lint`, and configured `pnpm typecheck`: **passed**.
+- `pnpm test`: **429 backend**, **129 frontend tests across 34 files**, **6
+  auth-database**, and **29 root configuration tests passed**. The backend suite
+  includes isolated initialization/reset canaries proving source/vector deletion
+  and model-bundle retention; configuration tests verify canceled resets preserve data.
+- Documentation audit: **24 guides, 175 local file/anchor links, 49 documented API
+  methods**, and balanced fenced blocks **passed** against repository files and the
+  current app OpenAPI. Initial audit failures identified stale route parameter names,
+  file collection slashes, and a renamed anchor; all were corrected.
+- Shell syntax and `git diff --check`: **passed**. Application sources, generated
+  clients, dependencies, and API schemas are unchanged; client regeneration was
+  unnecessary. The Docker entrypoint diff changes only a comment.
+- Production build, Playwright, and full basedpyright were **not rerun** for this
+  documentation-only change. The preceding US-28.1 evidence above records their
+  results and the 10 known baseline static-analysis errors; those are not new passes.
+- Diagrams were reviewed as Mermaid source; no rendered-image verification is claimed.
+
+No working database reset or provider/model download was performed.
+
+**Confirmed archival (2026-10-17):** Preserved four verbatim snapshots from
+`aa3f943` (pre-consolidation ADR-0017, backend/frontend README story appendices,
+and roadmap) in the [documentation history archive](../archive/us-28.2-documentation-history-2026-10-17.md).
+README appendices now link to the archive; the roadmap retains its stable entry
+point and current pending-story links. The completed story and four tasks were
+[archived](../archive/todo-completed-2026-10-17.md) before removal from live `todo.md`.
+Snapshot fidelity and checklist counts were rechecked. The final active-doc audit
+passed 172 links/anchors and 23 documented API methods across 24 guides after
+removing the dated README appendices. US-28.3
+has not started; EPIC-28 remains in progress.
 
 ### US-28.3 — Integrated quality and isolation verification
 

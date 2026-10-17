@@ -1,296 +1,101 @@
-# Tool Authorization & Approval Architecture
+# Tool authorization and approval
 
-Tool calling in AI systems introduces significant security and operational challenges:
+Tool availability and per-call approval are separate checks. Neither a model call,
+project prompt, chat preference, nor approval click can grant a capability outside
+the server-derived effective tool set.
 
-- **Security & Privilege Escalation**: A chat's configured allowlist can execute immediately; any other offered tool requires an explicit per-call user decision. Sub-agents execute only their own active assigned tools and do not inherit the parent's assignments.
-- **Human-in-the-Loop Coordination**: When a tool requires explicit human approval, execution must pause without blocking the entire server or freezing the user interface.
-- **Asynchronous Protocol Crossing**: Authorization decisions span across the Python agent execution loop, an in-memory message queue, a WebSocket transport layer, and a React frontend.
-- **Timeout & Failure Safety**: Network drops or user hesitation must not leak background tasks or stall the agent indefinitely.
+## Ordinary and internal tools
 
-This document details Asterism's pluggable **Tool Authorization Architecture**, centered on [`ToolApprovalPolicy`](../apps/backend/asterism/domains/agent/approval.py) and interactive WebSocket coordination.
+| Tool class         | Availability                                                                                                      | User control                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Ordinary tools     | Configured capabilities intersected with live configuration, admin active policy, and explicit model tool support | Main/sub-agent settings; chat approval preferences within that boundary |
+| `search_knowledge` | Admin enabled, explicit model tool support, and nonempty live authorized files intersecting the execution ceiling | Context managed; absent from user tool pickers                          |
+| `sub_agent`        | Admin enabled, explicit model tool support, project context, and eligible selected targets other than caller      | Context managed; project target selection supplies eligibility          |
 
----
-
-## Architecture Overview & Pluggable Policy
-
-Tool authorization is decoupled from the agent execution loop via the `ToolApprovalPolicy` protocol:
-
-```mermaid
-classDiagram
-    class ToolApprovalPolicy {
-        <<Protocol>>
-        +authorize(tools: list[ToolCall], permissions: list[str]) list[ToolUseAuthorization]
-    }
-
-    class AllowlistApprovalPolicy {
-        +authorize(tools: list[ToolCall], permissions: list[str]) list[ToolUseAuthorization]
-    }
-
-    class InteractiveApprovalPolicy {
-        -on_pending: Callable
-        +authorize(tools: list[ToolCall], permissions: list[str]) list[ToolUseAuthorization]
-    }
-
-    class ToolUseAuthorization {
-        +tool: ToolCall
-        +accept: bool
-    }
-
-    class UserResponseQueue {
-        -_tools: list[ToolCall]
-        -_has_permission: set[str]
-        -_responded: set[str]
-        -_queue: asyncio.Queue
-        +pending: list[ToolCall]
-        +respond(tool_call: ToolCall, accept: bool) void
-        +wait() AsyncGenerator[ToolUseAuthorization]
-    }
-
-    ToolApprovalPolicy <|.. AllowlistApprovalPolicy
-    ToolApprovalPolicy <|.. InteractiveApprovalPolicy
-    InteractiveApprovalPolicy --> UserResponseQueue : manages
-    AllowlistApprovalPolicy ..> ToolUseAuthorization : creates
-    UserResponseQueue ..> ToolUseAuthorization : produces
-```
-
-### 1. `AllowlistApprovalPolicy`
-
-- **Purpose**: Autonomous, zero-latency authorization for background jobs, automated tasks, and sub-agents.
-- **Behavior**: Inspects each tool call in the batch. If `tool.function.name` is present in `permissions`, it is approved (`accept=True`); otherwise rejected (`accept=False`).
-- **Coordination**: Fully synchronous and immediate.
-
-### 2. `InteractiveApprovalPolicy`
-
-- **Purpose**: Human-in-the-loop validation for interactive chat sessions.
-- **Behavior**:
-  1. Pre-approved tools (matching the chat's runtime allowlist) are immediately marked approved.
-  2. Other tools offered by the profile are flagged as `pending` and can run only after the user approves that call.
-  3. If pending tools exist, the policy triggers the `on_pending` callback.
-  4. The caller (the chat orchestrator) broadcasts approval requests to the UI and awaits user input.
-  5. The policy returns only after all tool decisions are resolved or timed out.
-
----
-
-## Detailed Interactive Tool Approval Flow
-
-The interactive tool authorization flow spans multiple layers across the stack:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as User (Browser UI)
-    participant WS as WebSocket Client
-    participant Controller as ChatController
-    participant Orch as ChatOrchestrator
-    participant Agent as Agent (agent.py)
-    participant Policy as InteractiveApprovalPolicy
-    participant Queue as UserResponseQueue
-    participant ToolReg as ToolRegistry
-
-    Note over Agent: LLM generates tool call(s)
-    Agent->>Policy: authorize(tool_calls, allowed_tools)
-    Policy->>Queue: Initialize with tools & permissions
-
-    alt Tool in allowed_tools
-        Queue->>Queue: Auto-enqueue accept=True
-    else Tool not in allowed_tools (Needs Approval)
-        Policy->>Orch: on_pending(pending_tools, queue)
-        loop For each pending tool
-            Orch->>Controller: Emit "tool_permission_request"
-            Orch->>Orch: Create asyncio.Future (60s timeout)
-        end
-        Controller->>WS: Send JSON "tool_permission_request"
-        WS->>User: Render Approve / Deny buttons
-
-        User->>WS: Click "Approve" (or "Deny")
-        WS->>Controller: Send JSON "tool_approval" {tool_id, approved}
-        Controller->>Orch: resolve_tool_approval(tool_id, approved)
-        Orch->>Orch: future.set_result(approved)
-        Orch->>Queue: queue.respond(tool, approved)
-    end
-
-    Queue-->>Policy: yield all ToolUseAuthorization decisions
-    Policy-->>Agent: return list[ToolUseAuthorization]
-
-    loop For each authorization
-        alt accept == True
-            Agent->>ToolReg: invoke_tool(tool_call, context)
-            ToolReg-->>Agent: ToolResult(content, raw_result)
-        else accept == False
-            Agent->>Agent: Generate synthetic ToolResult<br/>("Tool was not authorized by the user")
-        end
-    end
-
-    Agent->>Agent: Append results to message history for next LLM turn
-```
-
----
-
-## Step-by-Step Breakdown
-
-### 1. Tool Call Detection in the Agent Loop
-
-When the LLM finishes streaming its response, [`Agent.run`](../apps/backend/asterism/domains/agent/agent.py) detects if `event.tool_calls` are present. It yields an `AgentEventType.TOOL_CALL` event to inform the frontend of the intent, and then requests authorization:
-
-```python
-auths = await self._approval_policy.authorize(
-    event.tool_calls,
-    self.allowed_tools,
-)
-```
-
-### 2. Partitioning by Permission
-
-The [`InteractiveApprovalPolicy`](../apps/backend/asterism/domains/agent/approval.py) delegates to [`UserResponseQueue`](../apps/backend/asterism/domains/agent/user_response_queue.py):
-
-- For each tool call where `tc.function.name in permissions`, it immediately enqueues `ToolUseAuthorization(tool=tc, accept=True)` into its internal `asyncio.Queue`. The permissions passed to an interactive chat come from the chat's stored runtime allowlist.
-- Any tools missing from permissions remain in `queue.pending`.
-
-### 3. Asynchronous WebSocket Request & Future Registration
-
-If there are pending tools, `InteractiveApprovalPolicy` calls the registered `on_pending` handler in [`ChatOrchestrator`](../apps/backend/asterism/domains/chat/orchestrator.py):
-
-1. Pushes a `tool_permission_request` message into `ChatOrchestrator.queue` (outbound to frontend).
-2. Creates an `asyncio.Future` stored in `self.pending_approvals[tool.id]`.
-3. Wraps the wait inside `asyncio.timeout(60)`:
-   ```python
-   async with asyncio.timeout(60):
-       self.pending_approvals[tool.id] = future
-       is_approved = await future
-       queue.respond(tool, is_approved)
-   ```
-
-### 4. Client Presentation & User Decision
-
-1. In the React frontend ([`useChatWebSocket`](../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)), the incoming message of type `tool_permission_request` adds the tool call metadata to the active message's `needsPermission` list.
-2. The UI ([`chat-session.tsx`](../apps/frontend/src/features/chat/components/chat-session.tsx)) renders an inline confirmation prompt with tool name and arguments.
-3. The user clicks **Approve** or **Deny**. The client dispatches:
-   ```json
-   {
-     "type": "tool_approval",
-     "tool_id": "call_abc123",
-     "approved": true
-   }
-   ```
-
-### 5. Resolution & Response Consumption
-
-1. [`ChatController._accept_commands_loop`](../apps/backend/asterism/domains/chat/controller.py) intercepts the command and calls `orchestrator.resolve_tool_approval(tool_id, is_approved)`.
-2. The orchestrator resolves the pending future.
-3. The future wakes up, calling `queue.respond(tool, is_approved)`.
-4. `queue.wait()` yields the decision back to `InteractiveApprovalPolicy.authorize()`.
-
-### 6. Timeout Fallback
-
-If the user does not respond within 60 seconds:
-
-- An `asyncio.TimeoutError` triggers in `_wait_for_ui_approval`.
-- The tool is automatically marked rejected: `queue.respond(tool, False)`.
-- A `{"type": "tool_update", "id": tool.id}` message is sent to clean up the UI prompt.
-
-### 7. Execution and Feedback to the LLM
-
-Once all authorizations are returned to `Agent._run_tools`:
-
-- **Approved tools** are executed concurrently via `asyncio.gather(*tasks)` in `ToolRegistry.invoke_tool`.
-- **Rejected tools** never reach `ToolRegistry`. Instead, the agent synthesizes a polite refusal message:
-  > _"Tool '{id} - {name}' was not authorized for use by the user. You should not attempt to call again and should proceed with answering the user's question"_
-- The LLM receives both real tool results and refusal notices in the next loop iteration, allowing it to adapt gracefully.
-
----
-
-## Sub-Agent Permission Sandboxing
-
-When a parent is authorized to invoke the `sub_agent` tool ([`sub_agent.py`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py)), the selected child runs autonomously with the active tools explicitly assigned to its own profile. Parent profiles do not need duplicate assignments; this allows useful specialist agents such as searchers or file processors.
+[Tool policy](../../apps/backend/asterism/domains/chat/tool_policy.py) derives these
+sets and validates `ContextToolScope` identity. General has no delegation scope.
+A project selection grants neither arbitrary tools nor extra files. Internal-tool
+names cannot be smuggled into user configuration or approval preferences; admin
+policy controls remain available as global restrictions.
 
 ```mermaid
 flowchart TD
-    ParentAllowed["Parent allows sub_agent delegation"]
-    SubProfileAllowed["Sub-Agent Profile Tools (e.g., [web_search, web_fetch])"]
-    Active["Admin-enabled active tools"]
-    Validated["Validated Child Profile Allowlist"]
-    SubAgentInstance["Child Agent Instance (AllowlistApprovalPolicy)"]
-
-    ParentAllowed --> SubAgentInstance
-    SubProfileAllowed --> Validated
-    Active --> Validated
-    Validated --> SubAgentInstance
-
-    SubAgentInstance -->|Autonomously executes assigned tool| ExecApproved["Execute web_search / web_fetch"]
-    SubAgentInstance -.->|Rejects unassigned model call| ExecBlocked["Blocked: any tool absent from child profile"]
+    Config[Configuration capabilities]
+    Admin[Admin active policy]
+    Model[Explicit model capabilities]
+    Context[Project/chat files and selected targets]
+    Effective[Server-derived effective tool set]
+    Call[Model tool call]
+    Check{Within effective set?}
+    Approval[Interactive or autonomous approval policy]
+    Live[Invocation-time live revalidation]
+    Run[Tool registry invocation]
+    Deny[Reject]
+    Config --> Effective
+    Admin --> Effective
+    Model --> Effective
+    Context --> Effective
+    Effective --> Check
+    Call --> Approval
+    Approval -->|approved| Check
+    Check -->|no| Deny
+    Check -->|yes| Live
+    Approval -->|denied or timed out| Deny
+    Live -->|still authorized| Run
+    Live -->|revoked| Deny
 ```
 
-### Sandboxing Rules
+## Main-agent interactive approval
 
-1. **Delegation Authorization**: `sub_agent` must be offered in the parent profile's tool schemas. It is either immediately allowed by the chat runtime allowlist or requires the user's per-call approval. Selecting a child delegates authority to that child's configured capability boundary.
-2. **Child Profile Allowlist**: The child receives only tools explicitly assigned to its profile and still globally enabled by the administrator. Tools do not need to be duplicated on the parent profile.
-3. **Autonomous Policy Assignment**: The child `Agent` uses `AllowlistApprovalPolicy`; its runtime allowlist is the child's active profile tools, so assigned tools run without nested user prompts while unassigned or hallucinated calls are rejected.
-4. **Configuration Warning**: The Agent Profile screen warns that tools assigned to profiles marked **Acts as Sub Agent** execute autonomously. Users should assign only tools they trust that specialist to use when delegated.
+[Agent](../../apps/backend/asterism/domains/agent/agent.py) checks effective
+capabilities before dispatch and uses
+[InteractiveApprovalPolicy](../../apps/backend/asterism/domains/agent/approval.py)
+for interactive runs. Tools already permitted by the runtime permissions proceed;
+other requested calls enter `UserResponseQueue` and request a user decision.
+Before invocation, Agent intersects approval with the freshly resolved effective
+tool set. Unauthorized/hallucinated names cannot become executable through approval.
 
----
+`ChatOrchestrator` emits `tool_permission_request` with call identity/name/arguments,
+registers a pending future, and waits up to 60 seconds. The browser sends:
 
-## Sub-Agent Recursion Safety & Bounded Execution
-
-To guard against runaway token spend, thread/event-loop starvation, and infinite loops caused by autonomous agent-to-agent delegation, Asterism implements runtime recursion boundaries and cycle detection.
-
-```mermaid
-flowchart TD
-    InvokeSubAgent["Tool: sub_agent(agent_id, prompt)"]
-    InspectStack["Inspect ctx.call_stack"]
-    CheckCycle{"agent_id in ctx.call_stack?"}
-    CheckDepth{"len(ctx.call_stack) > max_depth?"}
-
-    CycleError["Return Error: Recursion cycle detected (lists chain)"]
-    DepthError["Return Error: Maximum depth exceeded (lists chain & suggests decomposition)"]
-    SpawnChild["Spawn Child Agent(call_stack=[*ctx.call_stack, agent_id])"]
-
-    InvokeSubAgent --> InspectStack
-    InspectStack --> CheckCycle
-    CheckCycle -->|Yes (Cycle)| CycleError
-    CheckCycle -->|No| CheckDepth
-    CheckDepth -->|Yes (> 3)| DepthError
-    CheckDepth -->|No (<= 3)| SpawnChild
+```json
+{
+  "type": "tool_approval",
+  "tool_id": "call_abc123",
+  "approved": true,
+  "always_allow": false
+}
 ```
 
-### 1. Call Stack Tracking
+The socket controller resolves approvals immediately, bypassing its sequential
+execution queue so an agent waiting for approval cannot deadlock it. Denial or
+timeout produces a rejected tool result. `tool_update` clears the prompt. Approved
+calls enter the registry with validated arguments and execution context. An
+`always_allow` preference remains bounded by current ordinary capabilities and
+cannot persist an internal-tool grant.
 
-Every agent execution maintains a `call_stack: list[uuid.UUID]` recording the lineage of agents from the root conversation turn down to the current child:
+## Autonomous delegated tools
 
-- **Root Agent**: Initialized with `[profile.id]` when spawned by the orchestrator.
-- **Propagation**: [`Agent._run_tools`](../apps/backend/asterism/domains/agent/agent.py) forwards `self.call_stack` to [`ToolRegistry.invoke_tool`](../apps/backend/asterism/domains/tools/registry.py), which injects it into [`ToolContext.call_stack`](../apps/backend/asterism/domains/tools/registry.py).
-- **Child Extension**: When [`sub_agent`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py) delegates to a child agent, it appends the target ID: `child_call_stack = [*ctx.call_stack, target_id]`.
+A selected child uses `AllowlistApprovalPolicy` with its own authorized active
+capabilities. Assigned ordinary tools can execute without nested prompts; absent
+capabilities are rejected. Internal tools are derived separately and cannot exceed
+the inherited internal/file ceiling. Do not offer an all-owned-agent catalog or
+allow a child to resolve a fresh broader scope.
 
-### 2. Cycle Detection
+## Sub-agent recursion safety and bounded execution
 
-Before fetching profiles or allocating child resources, `sub_agent` verifies whether `target_id in ctx.call_stack`:
+The root call stack starts with the main configuration ID. Each delegated child
+appends its ID. A target already in the stack fails cycle detection before child
+allocation. `MAX_SUB_AGENT_DEPTH` defaults to 3; a chain at that depth cannot
+create another child. `max_steps` also bounds each child's agent loop.
 
-- **Self-Recursion** ($A \rightarrow A$): Caught immediately because $A$ is in its own call stack.
-- **Indirect Mutual Recursion** ($A \rightarrow B \rightarrow A$): Caught when agent $B$ attempts to delegate back to $A$.
-- **Multi-Hop Cycles** ($A \rightarrow B \rightarrow C \rightarrow B$): Caught when $C$ attempts to delegate back to any ancestor in the call chain.
+Delegation validates selected target, owner, live project revision, fixed-model
+availability, and configuration revision. The built-in monitors authorization while
+waiting for child events, including during silent provider work, and rejects/cancels
+revoked work. The return path rechecks before releasing the result.
 
-When a cycle is detected, execution aborts and returns an actionable error string directly to the calling LLM:
-
-> _"Recursion cycle detected: Agent '{target_id}' is already in the call chain ({root_id} -> ... -> {target_id}). Sub-agent call aborted."_
-
-### 3. Configurable Depth Bounding
-
-Recursion depth is bounded by `config.max_sub_agent_depth` (default: 3).
-
-- Depth 1 ($A \rightarrow B$), Depth 2 ($A \rightarrow B \rightarrow C$), and Depth 3 ($A \rightarrow B \rightarrow C \rightarrow D$) are permitted.
-- If a sub-agent at depth 3 attempts to delegate further ($A \rightarrow B \rightarrow C \rightarrow D \rightarrow E$), `len(ctx.call_stack) > config.max_sub_agent_depth` triggers.
-- An informative error result is returned to the model explaining the limit and advising alternative task decomposition:
-  > _"Maximum sub-agent recursion depth of 3 exceeded (call chain: ...). Sub-agent call aborted. Please decompose the task differently."_
-
----
-
-## Key Files Reference
-
-- Protocol & Policies: [`apps/backend/asterism/domains/agent/approval.py`](../apps/backend/asterism/domains/agent/approval.py)
-- Response Queue: [`apps/backend/asterism/domains/agent/user_response_queue.py`](../apps/backend/asterism/domains/agent/user_response_queue.py)
-- Agent Loop Integration: [`apps/backend/asterism/domains/agent/agent.py`](../apps/backend/asterism/domains/agent/agent.py)
-- Tool Registry & Context: [`apps/backend/asterism/domains/tools/registry.py`](../apps/backend/asterism/domains/tools/registry.py)
-- WebSocket Orchestrator Approval Handler: [`apps/backend/asterism/domains/chat/orchestrator.py`](../apps/backend/asterism/domains/chat/orchestrator.py)
-- WebSocket Inbound Command Processor: [`apps/backend/asterism/domains/chat/controller.py`](../apps/backend/asterism/domains/chat/controller.py)
-- Frontend WebSocket Hook: [`apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx`](../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)
-- Sub-Agent Sandboxing & Recursion Safety: [`apps/backend/asterism/domains/tools/builtin/sub_agent.py`](../apps/backend/asterism/domains/tools/builtin/sub_agent.py)
-- Recursion Unit Tests: [`apps/backend/tests/test_sub_agent_recursion.py`](../apps/backend/tests/test_sub_agent_recursion.py)
+Retrieval and inline files independently revalidate live file authorization before
+provider access and before release. Approval of `search_knowledge` cannot broaden
+the execution ceiling or make pending/failed artifacts searchable. See
+[execution context](execution-context.md), [agent runtime](agent-runtime.md), and
+[retrieval](knowledge-retrieval.md).

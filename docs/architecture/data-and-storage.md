@@ -6,7 +6,7 @@ Asterism's persistence layer is engineered for high-concurrency local developmen
 
 ## Storage Engine Architecture
 
-The backend database system is managed by [`DatabaseSessionManager`](../apps/backend/asterism/db/database.py) using SQLAlchemy 2.0 Asyncio.
+The backend database system is managed by [`DatabaseSessionManager`](../../apps/backend/asterism/db/database.py) using SQLAlchemy 2.0 Asyncio.
 
 ```mermaid
 flowchart TD
@@ -87,10 +87,11 @@ identity and snippets. Project search indexes names and descriptions.
 
 ## Chat binding, context, and message tree
 
-Each chat stores an `agent_id` foreign key to the main profile selected at creation.
-The service rejects sub-agent bindings and uses the user's valid default only when
-the client did not select one. Existing chats retain their binding, and a main
-agent cannot be deleted or converted to a sub-agent while a chat references it.
+Each chat stores the singleton main configuration identity in `agent_id`; callers
+cannot choose another main agent. Chat model UUID/snapshot and positive revision
+are stored independently. Sub-agent fixed models remain on their definitions.
+Messages retain immutable actual execution/model/provider and prompt/context
+provenance across picker changes. Main settings contain no model binding.
 
 Messages retain provider-reported `input_tokens`, `output_tokens`, `total_tokens`,
 and `generation_duration_ms`. The UI's preflight context meter is not persisted
@@ -127,7 +128,7 @@ graph TD
 
 ## JSONB Columns & Serialization
 
-Asterism provides type-safe JSON serialization directly into SQLite columns using [`JSONB_COLUMN`](../apps/backend/asterism/db/columns.py):
+Asterism provides type-safe JSON serialization directly into SQLite columns using [`JSONB_COLUMN`](../../apps/backend/asterism/db/columns.py):
 
 - Supports SQLite 3.45+ native `JSONB` binary formats where supported, falling back cleanly to text JSON.
 - Built-in integration with **Pydantic `TypeAdapter`**, ensuring stored JSON is validated and deserialized directly into strong domain types (such as `list[ToolCall]`, `list[ToolResult]`, and `ChatCompletionParams`).
@@ -143,7 +144,7 @@ bounded processing cache. `messages.files` stores typed snapshots/references rat
 than a relational foreign key, so deleting a file removes its bytes and row without
 rewriting history; affected historical attachments render as unavailable.
 
-The authenticated, user-scoped API provides `POST /files`, paginated `GET /files`,
+The authenticated, user-scoped API provides `POST /files/`, paginated `GET /files/`,
 `GET /files/{filename}`, and `DELETE /files/{filename}`. Uploads sanitize names,
 reject configured executable extensions and oversized input, and never expose
 another user's bytes or metadata. An intact existing object with the same user,
@@ -194,7 +195,8 @@ IDs must also appear in current ChatFile memberships and owned source rows; proj
 memberships supply the other allowed set. Sibling/inactive-branch/unselected library
 files are excluded. The chat file scope API exposes source provenance and project
 revision/instructions; scoped source downloads and attachment assembly use that reader.
-Full prompt/tool/retrieval integration remains in EPIC-26/29.
+The injected execution-context, prompt, and retrieval paths consume this boundary;
+see [execution context](execution-context.md).
 
 Original bytes remain in user-scoped, file-ID-sharded FileStore storage. Organization is
 relational; source consumers resolve opaque keys and listings query the database.
@@ -226,4 +228,5 @@ scope. Cancellation is terminal but preserves references; regeneration uses the 
 persisted branch/memberships. Response-only file availability prevents historical snapshots
 from authorizing removed/deleted files. Project membership is independent of local removal.
 Extraction bytes/state remain owned by Files/Extraction. No migration or old API fallback
-is added; full execution context/prompt/retrieval work remains EPIC-26/29.
+is added. Execution snapshots preserve the recorded ceiling and recheck live access;
+see [agent runtime](agent-runtime.md).

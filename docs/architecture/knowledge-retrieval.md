@@ -8,12 +8,12 @@ generated captions are canonical file metadata and are indexed as draft text;
 users can regenerate a file's embedding and caption from the File Manager.
 Image CLIP vectors remain independently indexed throughout.
 
-| Data                                                                   | Owner                | Storage                                                 |
-| ---------------------------------------------------------------------- | -------------------- | ------------------------------------------------------- |
-| File artifacts, project/chat scope, and ordered collection memberships | Relational database  | SQLite through SQLAlchemy; direct schema initialization |
-| Chunk content, provenance IDs, and vectors                             | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb`                        |
-| Pinned local embedding model and tokenizer/processor assets            | Operator             | `STORAGE_ROOT/models/knowledge-clip`                    |
-| Pinned local caption bundle and its integrity manifest                 | Admin or operator    | `STORAGE_ROOT/models/captioning-smolvlm2`               |
+| Data                                                        | Owner                | Storage                                                 |
+| ----------------------------------------------------------- | -------------------- | ------------------------------------------------------- |
+| File artifacts and project/chat references                  | Relational database  | SQLite through SQLAlchemy; direct schema initialization |
+| Chunk content, provenance IDs, and vectors                  | `LanceDbVectorStore` | `STORAGE_ROOT/knowledge/lancedb`                        |
+| Pinned local embedding model and tokenizer/processor assets | Operator             | `STORAGE_ROOT/models/knowledge-clip`                    |
+| Pinned local caption bundle and its integrity manifest      | Admin or operator    | `STORAGE_ROOT/models/captioning-smolvlm2`               |
 
 `knowledge_chunks` is one LanceDB table. Every row includes `user_id`, `file_id`,
 and artifact generation provenance. Retrieval intersects a server-derived execution ceiling with live project and
@@ -147,11 +147,10 @@ Ingestion jobs are likewise bounded and idempotent; their processing status and
 safe error reason are available from the File Manager, which offers retry and
 cancellation.
 
-For a vector schema/version migration, create a new LanceDB table/version,
-re-embed from the relational file artifacts, validate counts and retrieval,
-then atomically switch the configured table/version and retain/remove the old
-one under an explicit operator decision. Do not mutate vectors in place or rely
-on `Base.metadata.create_all` for relational upgrades.
+Breaking relational/vector schema changes use the explicit disposable-data reset
+workflow. Initialization does not migrate existing tables. See
+[development initialization and reset](development-reset.md) for exact removed and
+retained paths; it preserves provider model bundles.
 
 ## Operations, limits, and security
 
@@ -161,11 +160,10 @@ preserve `knowledge/lancedb`, `models/knowledge-clip`,
 cannot recreate the immutable source files and their relational artifact records. The caption bundle is
 reprovisionable from its pinned revision, but preserve its manifest/checksum so
 an operator can verify the restored bundle before enabling local mode.
-To rebuild a damaged or upgraded index, stop ingestion, retain the old LanceDB
-directory as a rollback copy, create the new table/version, re-ingest the ready
-relational file artifacts, validate file/chunk counts and representative
-queries, then switch the configured version atomically. Never delete the old
-index until that validation and a tested backup are complete.
+There is no operator-facing index-version switch or general migration/reindex
+command. For a disposable development cutover, use the full reset runbook. Do not
+claim that deleting vectors alone will recreate a consistent searchable store;
+processing state and source ownership are relational too.
 
 Defaults bound local work to two concurrent embedding, vector, and ingestion
 operations; a file artifact produces at most 200 chunks of 1,000 characters with a

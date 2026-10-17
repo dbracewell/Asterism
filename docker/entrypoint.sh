@@ -42,7 +42,7 @@ echo "STORAGE_ROOT=${STORAGE_ROOT:-/storage}"
 mkdir -p "$STORAGE_ROOT"
 
 cd /app/apps/backend
-# Initialization is non-destructive and also applies pending Asterism migrations.
+# Initialize current model tables and search indexes without migrating or resetting existing data.
 env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
     .venv/bin/python -m asterism.db.init_db
 

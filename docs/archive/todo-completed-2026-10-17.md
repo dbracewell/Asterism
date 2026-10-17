@@ -53,3 +53,21 @@ Changed backend modules pass static analysis with zero errors or warnings. Full 
 Removed standalone collection models, APIs, UI, generated contracts, and obsolete tests. Retained processing contracts and policy transitions now belong to the files domain. Fresh-schema and API tests verify absence of obsolete tables, triggers, routes, and schemas while preserving project/chat references, model selection, sub-agent definitions, captions, extraction, and provider configuration. The current database was retained; verification used disposable isolated databases. No migrations, compatibility shims, or fallback paths were introduced.
 
 Next recommended story: US-28.2 — Architecture and operator documentation. EPIC-28 remains in progress.
+
+## US-28.2 — Architecture and operator documentation
+
+User confirmed completion on 2026-10-17 and authorized final archival, commit, and merge into `main`.
+
+- [x] US-28.2: Architecture and operator documentation (1–2 person-days). **Confirmed complete 2026-10-17** on `feat/us-28.2-architecture-operator-docs`.
+  - [x] US-28.2-T1: Update architecture diagrams, API/runtime/file lifecycle docs, backend/frontend READMEs, and contributor guidance, including AGENTS.md: exactly one main-agent configuration per user, separate persona/profile defaults, zero or more fixed-model sub-agent definitions, project-selected delegation, and internal context-managed tools.
+  - [x] US-28.2-T2: Document singleton main-agent settings, chat model selection/provenance, project-selected fixed-model sub-agents, internal tool policy, prompt composition, scope resolution, delegation, attachment branching, deletion, memory limits, and provider boundaries.
+  - [x] US-28.2-T3: Document a clean development reset for relational data, vectors, and source files without deleting verified provider model bundles.
+  - [x] US-28.2-T4: Update the ADR to accepted decisions and archive completed planning/status history after user confirmation.
+
+Updated runtime, transport, tool authorization, storage/provider/file lifecycle guidance, contributor rules, and the accepted ADR. Added execution-context/module and development-reset guides. Removed unsupported operator instructions and separated implemented provenance/isolation from future memory storage. The working database was preserved.
+
+Verification: formatting, lint, configured typechecks, 429 backend tests, 129 frontend tests, 6 auth-database tests, and 29 root configuration tests passed. Reset canaries use temporary data and verify source/vector cleanup with model-bundle retention. Documentation links/anchors and methods were checked against repository files/current OpenAPI; shell syntax and diff integrity passed. Final archival references were rechecked after confirmation. Build, Playwright, and full basedpyright were not rerun for this documentation-only story; preceding US-28.1 evidence records those results and its 10 known baseline static errors. Diagrams were reviewed as Mermaid source, without a rendered-image check.
+
+Pre-consolidation ADR, dated README appendices, and original roadmap are preserved verbatim from `aa3f943` in the [documentation history archive](us-28.2-documentation-history-2026-10-17.md). The README appendices now link there; the roadmap retains a stable current-status entry point. See [EPIC-28](../epics/EPIC-28-CLEAN-CUT-REMOVAL-AND-VALIDATION.md) for detailed implementation and verification.
+
+Next recommended story: US-28.3 — Integrated quality and isolation verification. EPIC-28 remains in progress.

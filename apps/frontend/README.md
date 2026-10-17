@@ -109,59 +109,18 @@ pnpm --filter @asterism/frontend codegen
 
 The correct architecture links are under [`docs/architecture`](../../docs/architecture/README.md).
 
-## Chat file contracts (US-25.1)
+## Current runtime and operator guides
 
-The composer uses the generated TanStack upload mutation and sends returned file UUIDs
-in create/stream `files` payloads. Message chips carry immutable `file_id` snapshots;
-chat downloads and previews call generated chat-scoped endpoints with chat/file IDs.
-Library file views retain their owner-scoped library endpoints. Missing historical
-references render without download links. ChatInfo/NewChatRequest use `project_id`;
-Project navigation and guarded
-move controls are delivered in later workspace stories.
+- [Execution context and module boundaries](../../docs/architecture/execution-context.md)
+- [Agent settings, model provenance, delegation, and prompts](../../docs/architecture/agent-runtime.md)
+- [REST acceptance, drafts, branches, and WebSocket transport](../../docs/architecture/chat-and-websocket.md)
+- [Project and chat UI](../../docs/architecture/project-workspaces.md)
+- [Tool policy and approval](../../docs/architecture/tool-authorization.md)
+- [Context provenance and memory limits](../../docs/architecture/context-isolation.md)
+- [Clean initialization and reset with model-bundle retention](../../docs/architecture/development-reset.md)
 
-### Chat upload/send lifecycle
+## Implementation history
 
-The composer keeps the prompt and attachment chips until persistence is acknowledged.
-It uploads through the generated TanStack mutation, caches successful source IDs, retries
-only failed uploads, and reuses one request UUID for an unchanged failed send. Editing the
-prompt, selections or new-chat main/model/project scope creates a new send key. Follow-ups use
-the generated `chatMessageSend` mutation with an explicit parent before signaling
-WebSocket `resume`; new chats await `chatSessionCreate`. Failed acceptance retains the
-prompt and uploaded sources for retry, and duplicate clicks are blocked while acceptance
-is pending. Local chip removal/abandonment revokes browser preview URLs and never deletes
-library sources. Historical attachments with `available: false` have no download link.
-
-Server draft upload/select/remove/discard contracts, expiry, and atomic consumption are
-implemented in US-25.3. The existing composer stages its picks locally and submits source
-IDs atomically; the richer server-draft/library-picker and persisted-removal controls are
-integrated in US-27.3. Project/local-file context displays remain EPIC-27. Generated API
-clients include the draft and send contracts; there is no handwritten API transport.
-
-### Singleton main settings (US-29.1)
-
-Agent settings expose one model-free main editor and separate fixed-model sub-agent
-create/edit/delete controls. New chats display the main identity without offering an
-agent selector. The chat model picker is independent of main settings; a user
-default only prefills new chats, and unavailable selections require an explicit
-replacement. Existing chat selections persist.
-Generated TanStack mutations save the new contracts; unavailable sub-agent bindings
-are visible and never silently replaced with the user's default model. Tool queries
-show loading/error/retry states, and disabled tools must be deliberately removed
-before saving a configuration.
-
-### Chat model controls (US-29.2)
-
-New chats send an explicit model ID. Existing chats switch through generated TanStack
-mutations with the observed model revision, and the picker is disabled during a run
-or send acceptance. Model/query loading, empty, failed, cached-refresh failure, retry,
-and unavailable-selection states are explicit; no first-available fallback is used.
-A model change updates the composer request scope without dropping prompt/attachments.
-Assistant cards and streaming output use their recorded model/provider/configuration
-revision instead of relabeling old messages from today's selection. Reopen does not
-require a global default model. The broader model browser, project sub-agent selection
-and workspace composition remain US-27.5.
-
-Project and General workspace routes, revision-safe project settings, and explicit
-chat-history transfer are described in
-[project workspaces](../../docs/architecture/project-workspaces.md). Project file
-management and sub-agent selection are delivered by their own stories.
+Dated story notes are preserved in the
+[documentation history archive](../../docs/archive/us-28.2-documentation-history-2026-10-17.md).
+Use the runtime and operator guides above for current contracts.
