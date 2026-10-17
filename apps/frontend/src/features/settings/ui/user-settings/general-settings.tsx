@@ -47,7 +47,7 @@ export const GeneralSettings = () => {
         <div className="flex flex-col items-start gap-2">
           <ModelSelector
             className="w-40! sm:w-80!"
-            defaultModel={userSettings.default_model_id ?? undefined}
+            value={userSettings.default_model_id ?? undefined}
             onValueChange={(v) => {
               updateSetting("default_model_id", v);
             }}

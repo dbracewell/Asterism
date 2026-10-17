@@ -55,7 +55,7 @@ it("shows one main editor and unavailable fixed-model workers without default/de
   expect(screen.getByRole("region", { name: "Sub-agents" })).toHaveTextContent(
     "Research",
   );
-  expect(await screen.findByRole("alert")).toHaveTextContent(
+  expect(await screen.findByRole("status")).toHaveTextContent(
     "Fixed model unavailable",
   );
 });

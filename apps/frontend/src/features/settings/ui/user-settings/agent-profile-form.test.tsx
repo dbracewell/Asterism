@@ -66,7 +66,7 @@ it("saves main instructions separately from the model and preserves other genera
   await userEvent.click(
     screen.getByRole("button", { name: "Edit main configuration" }),
   );
-  expect(screen.queryByLabelText("Fixed model")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Model")).not.toBeInTheDocument();
   expect(screen.queryByText(/knowledge bases/i)).not.toBeInTheDocument();
   await userEvent.type(screen.getByLabelText("Instructions"), "Be precise");
   await userEvent.click(
@@ -90,9 +90,7 @@ it("requires an explicit model for a new sub-agent instead of using the user's d
   await userEvent.click(
     screen.getByRole("button", { name: "Create sub-agent" }),
   );
-  expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
-    "Select a model",
-  );
+  expect(screen.getByLabelText("Model")).toHaveTextContent("Select a model");
   expect(
     screen.getByRole("button", { name: "Save configuration" }),
   ).toBeDisabled();
@@ -162,9 +160,7 @@ it("edits a sub-agent without offering obsolete knowledge-base assignments", asy
   );
   await screen.findByRole("dialog", { name: "Edit sub-agent" });
   await waitFor(() =>
-    expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
-      "Available (Test)",
-    ),
+    expect(screen.getByLabelText("Model")).toHaveTextContent("Available"),
   );
   expect(screen.queryByText(/knowledge bases/i)).not.toBeInTheDocument();
   expect(
@@ -220,7 +216,7 @@ it("blocks saving when models cannot refresh, without replacing the saved bindin
     </QueryClientProvider>,
   );
   expect(await screen.findByText(/Could not load models/)).toBeInTheDocument();
-  expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
+  expect(screen.getByLabelText("Model")).toHaveTextContent(
     "missing (unavailable)",
   );
   expect(
@@ -292,11 +288,9 @@ it("saves edited fixed-model workers and validates numeric limits", async () => 
     { wrapper: Wrapper },
   );
   await waitFor(() =>
-    expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
-      "Available (Test)",
-    ),
+    expect(screen.getByLabelText("Model")).toHaveTextContent("Available"),
   );
-  const steps = screen.getByLabelText("Maximum steps");
+  const steps = screen.getByLabelText(/^Maximum steps/);
   await userEvent.clear(steps);
   await userEvent.type(steps, "0");
   expect(steps).toBeInvalid();
@@ -306,7 +300,7 @@ it("saves edited fixed-model workers and validates numeric limits", async () => 
   expect(mocks.update).not.toHaveBeenCalled();
   await userEvent.clear(steps);
   await userEvent.type(steps, "9");
-  await userEvent.type(screen.getByLabelText("Seed (optional)"), "42");
+  await userEvent.type(screen.getByLabelText("Seed"), "42");
   await userEvent.click(
     screen.getByRole("button", { name: "Save configuration" }),
   );

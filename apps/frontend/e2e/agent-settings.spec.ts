@@ -83,14 +83,14 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Edit main configuration" }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByLabel("Fixed model")).toHaveCount(0);
+  await expect(dialog.getByLabel("Model", { exact: true })).toHaveCount(0);
   await dialog.getByLabel("Instructions").fill("Be precise");
   await dialog.getByLabel("Maximum steps").fill("0");
   await dialog.getByRole("button", { name: "Save configuration" }).click();
   await expect(dialog).toBeVisible();
   expect(main.system_prompt).toBe("Original");
   await dialog.getByLabel("Maximum steps").fill("7");
-  await dialog.getByLabel("Top P (optional)").fill("0.8");
+  await dialog.getByLabel("Top P", { exact: true }).fill("0.8");
   await expect(
     dialog.getByRole("checkbox", { name: "web_fetch" }),
   ).toBeVisible();
@@ -102,7 +102,7 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
   await expect(dialog).toHaveCount(0);
   await page.getByRole("button", { name: "Edit main configuration" }).click();
   await expect(dialog.getByLabel("Instructions")).toHaveValue("Be precise");
-  await expect(dialog.getByLabel("Top P (optional)")).toHaveValue("0.8");
+  await expect(dialog.getByLabel("Top P", { exact: true })).toHaveValue("0.8");
   await expect(dialog.getByLabel("web_fetch")).toBeChecked();
   await dialog.getByRole("button", { name: "Close" }).click();
   await page
@@ -112,19 +112,17 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
     dialog.getByRole("button", { name: "Save configuration" }),
   ).toBeDisabled();
   await dialog.getByLabel("Name", { exact: true }).fill("Researcher");
-  await dialog.getByLabel("Fixed model").click();
-  await page
-    .getByRole("option", { name: "Worker model (Test provider)" })
-    .click();
+  await dialog.getByLabel("Model", { exact: true }).click();
+  await page.getByRole("button", { name: "Worker model", exact: true }).click();
   await dialog.getByLabel("Instructions").fill("Research carefully");
   await dialog.getByRole("button", { name: "Save configuration" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(
-    page.getByText("Fixed model: Worker model (Test provider)"),
+    page.getByText("Worker model (Test provider)", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Edit Researcher" }).click();
-  await expect(dialog.getByLabel("Fixed model")).toHaveText(
-    "Worker model (Test provider)",
+  await expect(dialog.getByLabel("Model", { exact: true })).toHaveText(
+    "Worker model",
   );
   await dialog.getByLabel("Name", { exact: true }).fill("Analyst");
   await dialog.getByRole("button", { name: "Save configuration" }).click();
@@ -213,17 +211,17 @@ test("browses pages and recovers query failures while retaining an unavailable b
   );
   await expect(
     page.getByRole("button", { name: "Next", exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   fail = false;
   await page.getByRole("button", { name: "Retry sub-agents" }).click();
-  await expect(page.getByText("Fixed model: " + modelId)).toBeVisible();
+  await expect(page.getByText(modelId, { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Edit Last worker" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Previous", exact: true }).click();
   await page.getByRole("button", { name: "Edit Unavailable worker" }).click();
-  await expect(page.getByLabel("Fixed model")).toHaveText(
+  await expect(page.getByLabel("Model", { exact: true })).toHaveText(
     modelId + " (unavailable)",
   );
   await expect(

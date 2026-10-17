@@ -52,7 +52,10 @@ export function MainAgentForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <Hint hint="Edit the main agent configuration" asChild>
-        <DialogTrigger className={buttonVariants({ variant: "ghost" })}>
+        <DialogTrigger
+          aria-label="Edit main configuration"
+          className={buttonVariants({ variant: "ghost" })}
+        >
           <PencilIcon />
         </DialogTrigger>
       </Hint>
@@ -97,7 +100,10 @@ export function AgentProfileForm({
       }}
     >
       <Hint hint="Create a new sub-agent" asChild>
-        <DialogTrigger className={buttonVariants({ variant: "ghost" })}>
+        <DialogTrigger
+          aria-label="Create sub-agent"
+          className={buttonVariants({ variant: "ghost" })}
+        >
           <PlusIcon />
         </DialogTrigger>
       </Hint>
@@ -282,8 +288,9 @@ function ConfigurationForm({
                     <Label htmlFor="agent-model">Model</Label>
                   </Required>
                   <ModelSelector
+                    id="agent-model"
                     onValueChange={setModelId}
-                    defaultModel={modelId}
+                    value={modelId}
                     availableModels={available.filter((c) => c.available)}
                     disabled={modelQuery.isPending || modelQuery.isError}
                   />

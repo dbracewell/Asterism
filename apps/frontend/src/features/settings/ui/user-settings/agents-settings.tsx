@@ -114,12 +114,6 @@ export const AgentsSettings = () => {
                   Create an agent to get started.
                 </EmptyDescription>
               </EmptyHeader>
-              <Button asChild variant="outline">
-                <AgentProfileForm
-                  profile={editingAgent}
-                  completeEditing={() => setEditingAgent(null)}
-                />
-              </Button>
             </Empty>
           )}
           {agents.data && agents.data.total > 0 && subAgents.length === 0 && (
@@ -218,11 +212,18 @@ function SubAgentCard({
         <CardTitle className="wrap-break-word">{agent.name}</CardTitle>
         <CardDescription className="flex items-center justify-between">
           <p className="text-muted-foreground truncate text-xs">{modelLabel}</p>
-          {agent.model_available ? (
-            <CheckCircle2Icon className="size-4 shrink-0 text-green-500" />
-          ) : (
-            <XCircleIcon className="size-4 shrink-0 text-red-500" />
-          )}
+          <span role="status">
+            <span className="sr-only">
+              {agent.model_available
+                ? "Fixed model available"
+                : "Fixed model unavailable"}
+            </span>
+            {agent.model_available ? (
+              <CheckCircle2Icon className="size-4 shrink-0 text-green-500" />
+            ) : (
+              <XCircleIcon className="size-4 shrink-0 text-red-500" />
+            )}
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-2 overflow-auto">
@@ -232,6 +233,7 @@ function SubAgentCard({
         <Hint hint={`Edit ${agent.name}`} asChild>
           <Button
             variant="outline"
+            aria-label={`Edit ${agent.name}`}
             disabled={mutation.isPending}
             onClick={edit}
           >
@@ -241,6 +243,7 @@ function SubAgentCard({
         <Hint hint={`Delete ${agent.name}`} asChild>
           <Button
             variant="destructive"
+            aria-label={`Delete ${agent.name}`}
             disabled={mutation.isPending}
             onClick={async () => {
               if (await confirm())

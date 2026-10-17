@@ -105,3 +105,19 @@ The user authorized committing and merging all pending changes on 2026-10-17 fro
 Verification: nine provider unit/integration tests and four provider Playwright tests passed; frontend lint, TypeScript, formatting, production build, and six migration checks passed. The broader frontend unit suite reported 124 passing tests and nine failures. Tooltip context errors are fixed; remaining failures concern unnamed icon dialog triggers, outdated Fixed model label/display assertions, and an unavailable-model alert assertion. The full suite is not green; these failures remain tracked in `todo.md`. No backend contract changes, database reset, remote push, or remote CI result is claimed.
 
 See [EPIC-30](../epics/EPIC-30-PROVIDER-SETTINGS-EDITING.md) for behavior and verification details. Recommended next work: repair the remaining agent-settings test/UI mismatches.
+
+## US-30.2 — Repair agent-settings regressions
+
+The user confirmed completion on 2026-10-17, authorizing commit and local merge from `fix/agent-settings-regressions`.
+
+- [x] Repair accessible controls, model-field labeling, and model availability status.
+- [x] Make the shared model picker controlled and update both callers; preserve filtering and explicit selection.
+- [x] Update agent-settings tests for current labels and add model-picker regressions.
+- [x] Complete lint, type checks, formatting, frontend tests, build, and browser verification.
+- [x] Obtain user completion confirmation before commit and merge.
+
+All nine previously failing agent-settings tests now pass. The full frontend suite passed 135 unit/integration tests across 35 files and six database checks, with no unhandled errors. Six focused Chromium scenarios passed without retries, covering agent settings and the provider workflow. Frontend lint, TypeScript, formatting, production build, and diff integrity passed.
+
+Accessible names now identify agent actions and model fields. The shared picker derives its display from its controlled value and the current catalog, preserving absent model IDs as unavailable and never selecting a replacement during refresh. The duplicate empty-list create trigger was removed; model availability has accessible status text. Test assertions reflect current labels and layout while retaining binding, validation, retry, and permission-related behavior checks.
+
+See [EPIC-30](../epics/EPIC-30-PROVIDER-SETTINGS-EDITING.md) for verification details. This follow-up resolves the nine failures recorded during US-30.1. No backend/API changes, working-database reset, push, or remote CI result is claimed. No active EPIC-30 work remains.

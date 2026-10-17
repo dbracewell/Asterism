@@ -4,11 +4,11 @@ import useClickOutside from "@/hooks/use-clickoutside";
 import { LlmDisplayInfo } from "@/lib/client";
 import { cn } from "cn";
 import { ChevronDownIcon, XIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 type ModelSelectorProps = {
   id?: string;
-  defaultModel?: string;
+  value?: string;
   onValueChange: (model: string) => void;
   availableModels?: LlmDisplayInfo[];
   className?: string;
@@ -16,14 +16,9 @@ type ModelSelectorProps = {
   disabled?: boolean;
 };
 
-type ModelInput = {
-  value: string | null;
-  label: string;
-};
-
 export const ModelSelector = ({
   id,
-  defaultModel,
+  value,
   onValueChange,
   availableModels,
   className,
@@ -32,13 +27,10 @@ export const ModelSelector = ({
   const divRef = useRef<HTMLDivElement>(null);
   const [open, setIsOpen] = useState(false);
   const [filter, setFilter] = useState("");
-  const [data, setData] = useState<ModelInput>(() => {
-    const model = availableModels?.find((m) => m.id === defaultModel);
-    return {
-      value: model?.id ?? null,
-      label: model?.name ?? "",
-    };
-  });
+  const menuId = useId();
+  const selectedModel = availableModels?.find((model) => model.id === value);
+  const selectedLabel =
+    selectedModel?.name ?? (value ? `${value} (unavailable)` : "");
   const [distance, setDistance] = useState(0);
   const modelOptions = useMemo(() => {
     return (
@@ -78,41 +70,33 @@ export const ModelSelector = ({
     };
   }, []);
 
-  useClickOutside(divRef, () => {
-    setData((prev) => {
-      if (prev.value) {
-        const model = availableModels?.find((m) => m.id === prev.value);
-        return {
-          value: model?.id ?? null,
-          label: model?.name ?? "",
-        };
-      }
-      return prev;
-    });
-    setIsOpen(false);
-  });
+  useClickOutside(divRef, () => setIsOpen(false));
 
   return (
     <div
-      id={id}
       ref={divRef}
       className={cn("bg-input/30 relative z-400 flex flex-col", className)}
     >
-      <button
+      <Button
+        id={id}
+        variant="outline"
+        aria-expanded={open && !disabled}
+        aria-controls={menuId}
         type="button"
         disabled={disabled}
         className={cn(
-          "bg-input/30 focus-visible:border-border border-border flex h-8 items-center justify-between rounded-md border p-1 text-left text-xs ring-0 outline-0 transition-all focus-visible:ring-0 focus-visible:outline-0",
+          "h-8 w-full justify-between text-left",
           distance < 100 && open ? "rounded-t-none" : open && "rounded-b-none",
         )}
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <span className="truncate">
-          {data.label.trim() || "Select a model..."}
+          {selectedLabel.trim() || "Select a model..."}
         </span>{" "}
-        <ChevronDownIcon className="text-muted-foreground size-3" />
-      </button>
+        <ChevronDownIcon className="text-muted-foreground" />
+      </Button>
       <div
+        id={menuId}
         className={cn(
           "bg-input",
           "absolute right-0 left-0 z-1000 flex-1 flex-col text-xs",
@@ -139,7 +123,6 @@ export const ModelSelector = ({
                 type="button"
                 onClick={() => {
                   if (!disabled) {
-                    setData(model);
                     onValueChange(model.value);
                   }
                   setIsOpen(false);
@@ -147,13 +130,12 @@ export const ModelSelector = ({
                 variant="ghost"
                 className={cn(
                   "hover:bg-primary/10 w-full justify-between! truncate px-2 text-xs!",
-                  model.value === data.value &&
-                    "bg-primary text-primary-foreground",
+                  model.value === value && "bg-primary text-primary-foreground",
                 )}
                 key={model.value}
               >
                 <span className="truncate">{model.label}</span>{" "}
-                <span>{model.value === data.value && "✓"}</span>
+                <span>{model.value === value && "✓"}</span>
               </Button>
             ))}
           </div>
@@ -190,6 +172,7 @@ const FilterInput = ({
       )}
     >
       <input
+        aria-label="Filter models"
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         placeholder="Filter..."
@@ -202,6 +185,7 @@ const FilterInput = ({
         type="button"
         variant="ghost"
         size="icon-sm"
+        aria-label="Clear model filter"
         onClick={() => setFilter("")}
       >
         <XIcon />
