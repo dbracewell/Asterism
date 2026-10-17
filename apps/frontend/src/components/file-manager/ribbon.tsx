@@ -8,12 +8,8 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { AddFilesDialog } from "@/features/knowledge/add-files-dialog";
 import { client } from "@/lib/api";
-import {
-  fileDeleteManyMutation,
-  knowledgeBaseFileDeleteManyMutation,
-} from "@/lib/client/@tanstack/react-query.gen";
+import { fileDeleteManyMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { isErrorDetail } from "@/lib/utils";
 import {
   IconFileUpload,
@@ -26,7 +22,6 @@ import {
   ListIcon,
   SearchIcon,
   Trash2Icon,
-  UnlinkIcon,
   XIcon,
 } from "lucide-react";
 import { ReactNode, useCallback, useMemo, useRef } from "react";
@@ -319,90 +314,6 @@ export const UploadFilesSection = () => {
           onClick={() => fileInputRef.current?.click()}
         >
           <IconFileUpload />
-        </Button>
-      </Hint>
-    </RibbonSection>
-  );
-};
-
-export const KnowledgeBaseSection = ({
-  knowledgeBaseId,
-}: {
-  knowledgeBaseId: string;
-}) => {
-  const {
-    dispatch,
-    selectedFiles,
-    setSelectedFiles,
-    isMutating,
-    setIsMutating,
-    files,
-  } = useFileManager();
-
-  const { confirm: confirmRemove, Dialog: RemoveConfirmation } =
-    useConfirmationDialog({
-      title: "Remove selected files from this knowledge base?",
-      description:
-        "The files stay in your library with their extractions, captions, and vectors. Only their membership in this knowledge base is removed.",
-    });
-
-  const { mutate: removeMembershipMutation } = useMutation({
-    ...knowledgeBaseFileDeleteManyMutation({ client }),
-    onMutate: () => {
-      setIsMutating(true);
-    },
-    onSettled: () => {
-      setIsMutating(false);
-    },
-    onError: (error) => {
-      if (isErrorDetail(error)) {
-        toast.error(`Unable to remove files. ${error.detail}`);
-      } else {
-        toast.error("Unable to remove files");
-      }
-    },
-    onSuccess: () => {
-      setSelectedFiles([]);
-      dispatch({ property: "page", value: 1 });
-    },
-  });
-
-  const removeSelectedFromKnowledgeBase = useCallback(async () => {
-    if (!knowledgeBaseId || selectedFiles.length === 0) return;
-    if (!(await confirmRemove())) return;
-    removeMembershipMutation({
-      path: { knowledge_base_id: knowledgeBaseId },
-      body: {
-        file_ids: files
-          .filter((file) => selectedFiles.includes(file.filename))
-          .map((file) => file.id),
-      },
-    });
-  }, [
-    confirmRemove,
-    files,
-    knowledgeBaseId,
-    removeMembershipMutation,
-    selectedFiles,
-  ]);
-
-  return (
-    <RibbonSection title="Knowledge Base">
-      <RemoveConfirmation />
-      <AddFilesDialog knowledgeBaseId={knowledgeBaseId} />
-      <Hint
-        hint="Remove selected files from this knowledge base"
-        side="top"
-        asChild
-      >
-        <Button
-          aria-label="Remove selected files from knowledge base"
-          variant="destructive"
-          size="icon-lg"
-          disabled={selectedFiles.length === 0 || isMutating}
-          onClick={() => removeSelectedFromKnowledgeBase()}
-        >
-          <UnlinkIcon />
         </Button>
       </Hint>
     </RibbonSection>

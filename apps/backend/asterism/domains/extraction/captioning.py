@@ -16,8 +16,8 @@ from asterism.domains.extraction.embedding import embedding_provider
 from asterism.domains.extraction.models import FileExtractionModel, KnowledgeCaptionMode, KnowledgeCaptionStatus
 from asterism.domains.extraction.vector_store import VectorChunk, vector_store
 from asterism.domains.files.models import FileKind, UserFileModel
+from asterism.domains.files.processing_schemas import KnowledgeCaptionConfiguration
 from asterism.domains.files.store import get_file_store
-from asterism.domains.knowledge_base.schemas import KnowledgeCaptionConfiguration
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
 from asterism.domains.settings.knowledge import get_captioning_configuration

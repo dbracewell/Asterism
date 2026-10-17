@@ -4,33 +4,6 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class KnowledgeBaseCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=10_000)
-
-
-class KnowledgeBaseUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=10_000)
-
-
-class KnowledgeBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str
-    description: str | None
-    created_at: int
-    updated_at: int
-
-
-class KnowledgeBaseList(BaseModel):
-    knowledge_bases: list[KnowledgeBase]
-    total: int = Field(ge=0)
-    page: int = Field(ge=1)
-    page_size: int = Field(ge=1)
-
-
 class KnowledgeProcessingProfile(BaseModel):
     """The globally active processing policy recorded by every artifact."""
 
@@ -93,48 +66,6 @@ class KnowledgeProcessingConfiguration(BaseModel):
 class KnowledgeReprocessSummary(BaseModel):
     profile: KnowledgeProcessingProfile
     queued_file_count: int = Field(ge=0)
-
-
-class KnowledgeBaseFile(BaseModel):
-    """A knowledge base's reference to a file already owned by the user."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    knowledge_base_id: uuid.UUID
-    file_id: uuid.UUID
-    position: int = Field(ge=0)
-    created_at: int
-    updated_at: int
-
-
-class KnowledgeBaseFileCreate(BaseModel):
-    file_id: uuid.UUID
-
-
-class KnowledgeBaseFileCreateMany(BaseModel):
-    file_ids: list[uuid.UUID] = Field(min_length=1, max_length=1_000)
-
-
-class KnowledgeBaseFileRemove(BaseModel):
-    file_ids: list[uuid.UUID] = Field(min_length=1, max_length=1_000)
-
-
-class KnowledgeBaseFileList(BaseModel):
-    files: list[KnowledgeBaseFile]
-    total: int = Field(ge=0)
-    page: int = Field(ge=1)
-    page_size: int = Field(ge=1)
-
-
-class KnowledgeBaseFileReorder(BaseModel):
-    membership_ids: list[uuid.UUID] = Field(min_length=1, max_length=10_000)
-
-
-class KnowledgeCaptionUpdate(BaseModel):
-    text: str | None = Field(default=None, max_length=10_000)
-    accept: bool = False
-    clear: bool = False
 
 
 class KnowledgeCaptionConfiguration(BaseModel):

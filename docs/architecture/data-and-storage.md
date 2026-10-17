@@ -46,220 +46,32 @@ Asterism applies production-grade PRAGMA settings upon establishing every raw co
 
 ## Entity Relationship Diagram (ERD)
 
+This diagram shows the source-reference and execution ownership boundaries.
+
 ```mermaid
 erDiagram
-    users ||--o{ chats : "owns"
-    users ||--o{ folders : "organizes"
-    users ||--o{ agent_profiles : "creates"
-    users ||--o{ user_settings : "has"
-    users ||--o{ sub_agent_traces : "owns"
-    users ||--o{ user_files : "owns"
-    users ||--o{ knowledge_bases : "owns"
-    users ||--o{ file_knowledge_artifacts : "owns"
-
-    folders ||--o{ folders : "parent_of"
-    users ||--o{ projects : "owns"
-    projects |o--o{ chats : "provides context"
-    projects ||--o{ project_files : "references"
-    user_files ||--o{ project_files : "is referenced by"
-    chats ||--o{ chat_files : "references locally"
-    user_files ||--o{ chat_files : "is referenced by"
-
-    agent_profiles ||--o{ chats : "bound to"
-    chats ||--o{ messages : "contains"
-
-    messages ||--o| messages : "parent_of"
-    messages ||--o| messages : "active_child"
-    messages ||--o{ sub_agent_traces : "triggers"
-
-    providers ||--o{ models : "provides"
-    models ||--o{ agent_profiles : "assigned_to"
-    agent_profiles ||--o{ sub_agent_traces : "executes"
-    agent_profiles ||--o{ agent_knowledge_base_assignments : "is assigned"
-    knowledge_bases ||--o{ knowledge_base_files : "contains"
-    user_files ||--o{ knowledge_base_files : "is referenced by"
-    user_files ||--o{ file_knowledge_artifacts : "produces"
-    knowledge_bases ||--o{ agent_knowledge_base_assignments : "is assigned"
-
-    users {
-        string id PK
-    }
-
-    chats {
-        uuid id PK
-        string user_id FK
-        uuid project_id FK
-        uuid agent_id FK
-        string title
-        json allowed_tools
-        datetime created_at
-        datetime updated_at
-    }
-
-    projects {
-        uuid id PK
-        string user_id FK
-        string name
-        text description
-        text system_prompt
-        int context_revision
-    }
-
-    project_files {
-        uuid project_id PK,FK
-        uuid file_id PK,FK
-        string user_id FK
-    }
-
-    chat_files {
-        uuid chat_id PK,FK
-        uuid file_id PK,FK
-        string user_id FK
-    }
-
-    messages {
-        uuid id PK
-        string user_id FK
-        uuid chat_id FK
-        uuid model_id
-        string status
-        uuid parent_message_id FK
-        uuid active_child_id FK
-        string role
-        text content
-        text thinking
-        json files
-        json tool_calls
-        json tool_call_results
-        int input_tokens
-        int output_tokens
-        int total_tokens
-        int generation_duration_ms
-        datetime created_at
-    }
-
-    folders {
-        uuid id PK
-        string user_id FK
-        string title
-        uuid parent_id FK
-    }
-
-    agent_profiles {
-        uuid id PK
-        string user_id FK
-        uuid model_id FK
-        bool sub_agent
-        string name
-        string description
-        text system_prompt
-        int max_steps
-        json chat_parameters
-        json tools
-    }
-
-    providers {
-        uuid id PK
-        string name UK
-        string base_url
-        string api_key
-    }
-
-    models {
-        uuid id PK
-        string name
-        bool is_active
-        uuid provider_id FK
-    }
-
-    user_files {
-        uuid id PK
-        string user_id FK
-        string filename
-        string original_name
-        int size
-        string mime_type
-        string kind
-        string sha256
-        string content_status
-        string content_error
-        text content_cache
-        datetime created_at
-        datetime updated_at
-    }
-
-    knowledge_bases {
-        uuid id PK
-        string user_id FK
-        string name
-        string description
-    }
-
-    knowledge_base_files {
-        uuid id PK
-        uuid knowledge_base_id FK
-        uuid file_id FK
-        int position
-    }
-
-    file_knowledge_artifacts {
-        uuid id PK
-        string user_id FK
-        uuid file_id FK
-        int generation
-        int processing_profile_generation
-        string status
-        bool is_current
-        int chunk_count
-        string caption_status
-        text caption_text
-    }
-
-    agent_knowledge_base_assignments {
-        uuid id PK
-        string user_id FK
-        uuid agent_id FK
-        uuid knowledge_base_id FK
-        int position
-    }
-
-    user_settings {
-        string user_id PK
-        string key PK
-        json value
-    }
-
-    app_settings {
-        string key PK
-        json value
-    }
-
-    tools {
-        uuid id PK
-        string name
-        string description
-        text content
-    }
-
-    sub_agent_traces {
-        uuid id PK
-        string user_id FK
-        uuid parent_message_id FK
-        uuid sub_agent_id FK
-        string sub_agent_name
-        text prompt
-        text caller_context
-        json messages
-        text result
-        int step_count
-        int total_tokens
-        int elapsed_ms
-        int depth
-        datetime created_at
-    }
+    users ||--o{ projects : owns
+    users ||--o{ chats : owns
+    users ||--o{ agent_profiles : configures
+    users ||--o{ user_files : owns
+    projects |o--o{ chats : contextualizes
+    projects ||--o{ project_files : references
+    projects ||--o{ project_sub_agents : selects
+    agent_profiles ||--o{ project_sub_agents : delegates
+    chats ||--o{ messages : contains
+    chats ||--o{ chat_files : references
+    user_files ||--o{ project_files : supplies
+    user_files ||--o{ chat_files : supplies
+    user_files ||--o{ file_extractions : derives
+    messages ||--o{ sub_agent_traces : records
+    agent_profiles ||--o{ sub_agent_traces : executes
+    providers ||--o{ models : provides
 ```
 
----
+`agent_profiles` stores the singleton model-free main configuration and separately
+managed fixed-model sub-agent definitions. Chats retain independent model selection;
+messages record immutable execution provenance. Project memberships and local chat
+references authorize file context without duplicating source or artifact data.
 
 ## Search indexes
 
@@ -271,7 +83,7 @@ The adapter accepts up to ten quoted word terms joined with `AND`; user input is
 never passed through as FTS syntax. The search service rechecks owner predicates,
 filters General/project chat scope before database pagination, sorts mixed results
 by updated time/kind/UUID, and enriches only the selected page with current project
-identity and snippets. Project search replaces folder search and ancestor traversal.
+identity and snippets. Project search indexes names and descriptions.
 
 ## Chat binding, context, and message tree
 
@@ -348,28 +160,26 @@ as non-vision. See [LLM providers](llm-providers.md#file-input-capability-gating
 
 ## File-owned knowledge artifacts
 
-`file_knowledge_artifacts` holds the versioned derived state for an immutable
+`file_extractions` holds the versioned derived state for an immutable
 `user_files` revision: extraction cache, chunk/embedding readiness, canonical
 caption metadata, safe error state, and whether the generation is current. The
 database permits one current generation per file. A pending replacement cannot
 displace a ready generation; it becomes current only after processing and its
 vector writes complete.
 
-`knowledge_base_files` is deliberately a small ordered membership table. It has
-no processing state, vectors, or caption fields, so one library file can appear
-in multiple private bases without repeat work. Agent assignments point to bases,
-and retrieval resolves those memberships to allowed file IDs before issuing its
-LanceDB query. File deletion explicitly cancels work and removes memberships and
-artifacts before source bytes; membership deletion removes only the relationship.
-See [Knowledge retrieval](knowledge-retrieval.md) for runtime and operator
-behavior.
+`project_files` and `chat_files` hold references, without processing state,
+vectors, or caption fields. The execution resolver derives a bounded allowed-file
+set from current project memberships and active-branch chat references. Retrieval
+supplies that set and the owner to LanceDB and rechecks authorization before
+release. File deletion cancels work and removes references and artifacts before
+source bytes; project membership deletion removes only the relationship. See
+[Knowledge retrieval](knowledge-retrieval.md) for runtime and operator behavior.
 
 ## Related Documentation
 
 - [System Overview](overview.md)
 - [Chat & Real-Time WebSocket](chat-and-websocket.md)
 - [Agent Runtime & Execution Loop](agent-runtime.md)
-
 
 ## Project/chat source references (US-25.1)
 
@@ -391,7 +201,6 @@ relational; source consumers resolve opaque keys and listings query the database
 Deleting a source removes memberships while retaining message snapshots for unavailable
 history. Project deletion sets chat project_id to null and preserves local references.
 Guarded moves and explicit lifecycle coordination are implemented in US-25.2.
-
 
 ## Draft references and durable message acceptance
 

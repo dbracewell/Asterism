@@ -1,4 +1,3 @@
-import uuid
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Query, UploadFile, status
@@ -8,7 +7,6 @@ import asterism.domains.files.service as file_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.extraction.schemas import FileKnowledgeArtifact
-from asterism.domains.knowledge_base.schemas import KnowledgeBase
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .schemas import SimilarFileList, UserFile, UserFileList
@@ -52,14 +50,6 @@ async def list_files(
     page_size: int = Query(default=50, ge=1, le=100),
     sort_by: Literal["name", "kind", "date", "size"] = Query(default="name", pattern="^(name|kind|date|size)$"),
     query: str | None = Query(default=None, description="Search query to filter files by name"),
-    knowledge_base_id: uuid.UUID | None = Query(
-        default=None,
-        description="Only list files that belong to this knowledge base",
-    ),
-    check_knowledge_base_id: uuid.UUID | None = Query(
-        default=None,
-        description="Mark each file by whether it is already in this knowledge base",
-    ),
 ) -> UserFileList:
     return await file_service.list_user_files(
         user_id=user.id,
@@ -68,8 +58,6 @@ async def list_files(
         page_size=page_size,
         sort_by=sort_by,
         query=query,
-        knowledge_base_id=knowledge_base_id,
-        check_knowledge_base_id=check_knowledge_base_id,
     )
 
 
@@ -194,20 +182,6 @@ async def get_similar_files(
     limit: int = Query(default=5, ge=1, le=20),
 ) -> SimilarFileList:
     return await file_service.get_similar_files(user_id=user.id, filename=filename, session=db, limit=limit)
-
-
-@file_router.get(
-    "/{filename}/knowledge-bases",
-    response_model=list[KnowledgeBase],
-    status_code=status.HTTP_200_OK,
-    operation_id="fileKnowledgeBaseGetMany",
-)
-async def get_file_knowledge_bases(
-    filename: str,
-    user: AuthedUserDep,
-    db: DBSessionDep,
-) -> list[KnowledgeBase]:
-    return await file_service.get_file_knowledge_bases(user_id=user.id, filename=filename, session=db)
 
 
 @file_router.get(

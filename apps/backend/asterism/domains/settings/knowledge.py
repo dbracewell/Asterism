@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException
 from asterism.domains.extraction.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
-from asterism.domains.knowledge_base.schemas import (
+from asterism.domains.files.processing_schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeProcessingCaptioningConfiguration,
     KnowledgeProcessingConfiguration,

@@ -6,11 +6,6 @@ from asterism.domains.chat.draft_models import ChatDraftFileModel, ChatDraftMode
 from asterism.domains.chat.models import ChatFileModel, ChatModel, MessageModel  # noqa: F401
 from asterism.domains.extraction.models import FileExtractionModel  # noqa: F401
 from asterism.domains.files.models import UserFileModel  # noqa: F401
-from asterism.domains.folders.models import FolderModel  # noqa: F401
-from asterism.domains.knowledge_base.models import (  # noqa: F401
-    KnowledgeBaseFileModel,
-    KnowledgeBaseModel,
-)
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel, ProjectSubAgentModel  # noqa: F401
 from asterism.domains.settings.models import (  # noqa: F401
     ApplicationSettingsModel,

@@ -1,6 +1,6 @@
 # Project workspaces (US-27.1–27.3)
 
-The sidebar exposes General and Projects instead of folder navigation. Workspace
+The sidebar exposes General and Projects. Workspace
 selection follows the URL and the current chat's persisted project association;
 there is no separate browser-wide selected-project state. Recent sidebar chats
 are queried for that workspace, and pagination resets when its identity changes.
@@ -53,10 +53,10 @@ The backend remains responsible for ownership and live authorization on all path
 
 ## Story boundary and verification
 
-Chat model selection and project sub-agent selection are described below. Folder and standalone
-knowledge-base endpoints/routes remain for EPIC-28 cleanup, but folder navigation
-is no longer mounted in the app sidebar. No API/schema compatibility path or data
-reset is needed for this frontend story.
+Chat model selection and project sub-agent selection are described below.
+Standalone folder and knowledge-base domains, API paths, generated contracts, and
+UI routes are removed. Fresh initialization creates only the supported schema;
+the current database is retained during verification.
 
 Component tests cover project creation/search/pagination, loading/error/empty and
 cached refresh failures, scoped new-chat links, guarded settings edits/conflicts,
@@ -78,7 +78,7 @@ Only the selected source's generated query runs; project filtering and paginatio
 use the project file endpoint, rather than filtering a library page in the browser.
 Providers are keyed by project identity, selection resets on query/sort/page
 changes, and selected actions include only currently visible selectable files.
-The standalone knowledge-base consumers remain until US-28.1 removes that domain.
+The explorer supports library and project sources.
 
 Project scope permits upload/regeneration and offers separate membership controls;
 physical file deletion is offered in the library. The library picker uses the shared

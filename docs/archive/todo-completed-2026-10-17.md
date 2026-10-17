@@ -35,3 +35,21 @@ Changed backend project modules pass static analysis. Full backend static analys
 The current database and unrelated `core/config.py` edit were retained. No migration, compatibility shim, new UI dependency, or external model-provider call was introduced.
 
 EPIC-27 is confirmed complete. Next recommended story: US-28.1 — Remove folders and standalone knowledge bases.
+
+## US-28.1 — Remove folders and standalone knowledge bases
+
+User confirmed completion on 2026-10-17 and authorized archive, commit, and merge into `main`.
+
+- [x] US-28.1: Remove folders and standalone knowledge bases (2–3 person-days). **Confirmed complete 2026-10-17** on `feat/us-28.1-remove-legacy-context`.
+  - [x] US-28.1-T1: Delete folder and standalone knowledge-base models/routes/services, knowledge-base agent assignments, multiple-main-agent/default-agent selection contracts and UI, obsolete agent-bound chat model paths, manual internal-tool toggles, generated schemas, obsolete tests, and search triggers; retain model-bound sub-agent definitions and project selections.
+  - [x] US-28.1-T2: Remove old names from seeds, reset/initialization, harnesses, tool descriptions, and active docs; retain extraction and provider configuration.
+  - [x] US-28.1-T3: Regenerate OpenAPI clients and verify the supported schema includes the new project/chat/file/sub-agent memberships, singleton main-agent settings, and chat model selection; obsolete selectable main-agent and manual internal-tool contracts are absent.
+  - [x] US-28.1-T4: Run dependency/import checks and add a fresh-schema test proving obsolete tables and API paths are absent.
+
+Verification: 429 backend tests, 129 frontend unit/component tests, 6 auth-database tests, 29 root configuration tests, and 26 isolated Playwright tests passed. Lint, formatting, configured typechecks, production build, independent served-OpenAPI/generated-client consistency, real HTTP/header/WebSocket proxy verification, import-cycle checks, and diff integrity passed. The initial frontend typecheck required clearing stale generated Next.js route types for removed pages; subsequent verification passed.
+
+Changed backend modules pass static analysis with zero errors or warnings. Full backend static analysis still reports the same 10 baseline errors in unchanged chat controller and search component modules. See [EPIC-28](../epics/EPIC-28-CLEAN-CUT-REMOVAL-AND-VALIDATION.md) for evidence and limitations.
+
+Removed standalone collection models, APIs, UI, generated contracts, and obsolete tests. Retained processing contracts and policy transitions now belong to the files domain. Fresh-schema and API tests verify absence of obsolete tables, triggers, routes, and schemas while preserving project/chat references, model selection, sub-agent definitions, captions, extraction, and provider configuration. The current database was retained; verification used disposable isolated databases. No migrations, compatibility shims, or fallback paths were introduced.
+
+Next recommended story: US-28.2 — Architecture and operator documentation. EPIC-28 remains in progress.

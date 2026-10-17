@@ -41,7 +41,7 @@ connection.
 ### User and administrator boundaries
 
 Backend services pass the authenticated user ID into queries for user-owned chats,
-messages, folders, files, agent profiles, and settings. File routes additionally
+messages, projects, files, main-agent configurations, sub-agent definitions, and settings. File routes additionally
 resolve stored paths below that user's file root. Provider administration and other
 administrator operations use the user's authenticated role; provider credentials are
 write-only in API responses.

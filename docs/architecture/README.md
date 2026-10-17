@@ -7,18 +7,18 @@ responses, full-text chat search, and user-owned file attachments.
 
 ## Document index
 
-| Document                                            | Scope                                                                                           |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| [System overview](overview.md)                      | Topology, workspace layout, request, streaming, and chat-job lifecycle                          |
-| [Authentication and security](auth-and-security.md) | Better Auth, JWT/JWKS verification, tenancy, and internal callbacks                             |
-| [Chat and WebSocket](chat-and-websocket.md)         | Bidirectional chat protocol, reconnectable jobs, queues, cancellation, and controller lifecycle |
-| [Agent runtime](agent-runtime.md)                   | Bounded LLM loop, event stream, delegation, and traces                                          |
-| [Tool authorization](tool-authorization.md)         | Allowlist and interactive approval policies, child-agent boundaries                             |
-| [LLM providers](llm-providers.md)                   | OpenAI and OpenAI-compatible provider configuration and capabilities                            |
-| [Data and storage](data-and-storage.md)             | SQLite schema, FTS search, message tree, local file storage, and attachments                    |
-| [Knowledge retrieval](knowledge-retrieval.md)       | File-owned processing, scoped LanceDB retrieval, and image captioning                           |
-| [File knowledge processing](file-knowledge-processing.md) | Upload-to-artifact pipeline, embeddings, captions, jobs, and lifecycle guarantees          |
-| [ADR-0016: Memory resource contracts](../adr/adr-0016-memory-resource-contracts.md) | Process-lifetime state inventory, ownership, bounds, and remediation plan |
+| Document                                                                            | Scope                                                                                           |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| [System overview](overview.md)                                                      | Topology, workspace layout, request, streaming, and chat-job lifecycle                          |
+| [Authentication and security](auth-and-security.md)                                 | Better Auth, JWT/JWKS verification, tenancy, and internal callbacks                             |
+| [Chat and WebSocket](chat-and-websocket.md)                                         | Bidirectional chat protocol, reconnectable jobs, queues, cancellation, and controller lifecycle |
+| [Agent runtime](agent-runtime.md)                                                   | Bounded LLM loop, event stream, delegation, and traces                                          |
+| [Tool authorization](tool-authorization.md)                                         | Allowlist and interactive approval policies, child-agent boundaries                             |
+| [LLM providers](llm-providers.md)                                                   | OpenAI and OpenAI-compatible provider configuration and capabilities                            |
+| [Data and storage](data-and-storage.md)                                             | SQLite schema, FTS search, message tree, local file storage, and attachments                    |
+| [Knowledge retrieval](knowledge-retrieval.md)                                       | File-owned processing, scoped LanceDB retrieval, and image captioning                           |
+| [File knowledge processing](file-knowledge-processing.md)                           | Upload-to-artifact pipeline, embeddings, captions, jobs, and lifecycle guarantees               |
+| [ADR-0016: Memory resource contracts](../adr/adr-0016-memory-resource-contracts.md) | Process-lifetime state inventory, ownership, bounds, and remediation plan                       |
 
 ## Current deployment topology
 
@@ -76,8 +76,8 @@ flowchart TD
   pass through the `FileStore` protocol, whose current implementation is
   `LocalFileStore`.
 - **Knowledge boundary:** each source file owns its processed generations;
-  knowledge bases are ordered memberships and agent assignments are the retrieval
-  allowlist. LanceDB accepts only owner- and allowed-file-filtered searches.
+  project/chat references resolve into the live execution file scope. Runtime
+  retrieval rechecks authorization and artifact freshness before release. LanceDB accepts only owner- and allowed-file-filtered searches.
 - **Provider boundary:** the runtime uses the OpenAI SDK. Supported configurations
   are canonical OpenAI and a generic OpenAI-compatible HTTP(S) endpoint. Captioning
   is disabled by default; when enabled it uses either the admin-selected discovered

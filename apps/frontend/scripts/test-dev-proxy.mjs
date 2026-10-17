@@ -79,7 +79,7 @@ try {
   // than bouncing between Next.js normalization and FastAPI's slash redirect.
   for (const path of [
     "/api/py/chat/",
-    "/api/py/folders/",
+    "/api/py/projects/",
     "/api/py/settings/user",
   ]) {
     const result = await fetch(`${origin}${path}`, {

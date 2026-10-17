@@ -8,7 +8,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { IconMessage2Plus } from "@tabler/icons-react";
-import { DatabaseIcon, FilesIcon, SearchIcon } from "lucide-react";
+import { FilesIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
 import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { usePathname } from "next/navigation";
@@ -37,18 +37,6 @@ export const NavActions = () => {
             >
               <Link href="/search">
                 <SearchIcon /> <span>Search</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              size="lgText"
-              tooltip="Knowledge bases"
-              isActive={pathname.startsWith("/knowledge")}
-            >
-              <Link href="/knowledge">
-                <DatabaseIcon /> <span>Knowledge</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

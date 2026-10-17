@@ -213,26 +213,6 @@ export const zFileProjectSummary = z.object({
 });
 
 /**
- * Folder
- */
-export const zFolder = z.object({
-  id: z.uuid(),
-  user_id: z.string(),
-  title: z.string(),
-  created_at: z.int(),
-  updated_at: z.int(),
-  parent_id: z.uuid().nullable(),
-  children: z.array(z.lazy((): any => zFolder)).optional(),
-});
-
-/**
- * FolderList
- */
-export const zFolderList = z.object({
-  folders: z.array(zFolder),
-});
-
-/**
  * Function
  */
 export const zFunction = z.object({
@@ -259,95 +239,6 @@ export const zJsonValue = z.unknown();
  */
 export const zBulkUpdateSettingRequest = z.object({
   values: z.record(z.string(), zJsonValue),
-});
-
-/**
- * KnowledgeBase
- */
-export const zKnowledgeBase = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  description: z.string().nullable(),
-  created_at: z.int(),
-  updated_at: z.int(),
-});
-
-/**
- * KnowledgeBaseCreate
- */
-export const zKnowledgeBaseCreate = z.object({
-  name: z.string().min(1).max(255),
-  description: z.string().max(10000).nullish(),
-});
-
-/**
- * KnowledgeBaseFile
- *
- * A knowledge base's reference to a file already owned by the user.
- */
-export const zKnowledgeBaseFile = z.object({
-  id: z.uuid(),
-  knowledge_base_id: z.uuid(),
-  file_id: z.uuid(),
-  position: z.int().gte(0),
-  created_at: z.int(),
-  updated_at: z.int(),
-});
-
-/**
- * KnowledgeBaseFileCreate
- */
-export const zKnowledgeBaseFileCreate = z.object({
-  file_id: z.uuid(),
-});
-
-/**
- * KnowledgeBaseFileCreateMany
- */
-export const zKnowledgeBaseFileCreateMany = z.object({
-  file_ids: z.array(z.uuid()).min(1).max(1000),
-});
-
-/**
- * KnowledgeBaseFileList
- */
-export const zKnowledgeBaseFileList = z.object({
-  files: z.array(zKnowledgeBaseFile),
-  total: z.int().gte(0),
-  page: z.int().gte(1),
-  page_size: z.int().gte(1),
-});
-
-/**
- * KnowledgeBaseFileRemove
- */
-export const zKnowledgeBaseFileRemove = z.object({
-  file_ids: z.array(z.uuid()).min(1).max(1000),
-});
-
-/**
- * KnowledgeBaseFileReorder
- */
-export const zKnowledgeBaseFileReorder = z.object({
-  membership_ids: z.array(z.uuid()).min(1).max(10000),
-});
-
-/**
- * KnowledgeBaseList
- */
-export const zKnowledgeBaseList = z.object({
-  knowledge_bases: z.array(zKnowledgeBase),
-  total: z.int().gte(0),
-  page: z.int().gte(1),
-  page_size: z.int().gte(1),
-});
-
-/**
- * KnowledgeBaseUpdate
- */
-export const zKnowledgeBaseUpdate = z.object({
-  name: z.string().min(1).max(255).nullish(),
-  description: z.string().max(10000).nullish(),
 });
 
 /**
@@ -593,14 +484,6 @@ export const zNewChatRequest = z.object({
   user_prompt: z.string(),
   project_id: z.uuid().nullish(),
   files: z.array(z.uuid()).max(100).optional(),
-});
-
-/**
- * NewFolderRequest
- */
-export const zNewFolderRequest = z.object({
-  title: z.string(),
-  parent_id: z.uuid().nullish(),
 });
 
 /**
@@ -1096,8 +979,6 @@ export const zUserFile = z.object({
   updated_at: z.int(),
   thumbnail: z.string().nullable(),
   projects: z.array(zFileProjectSummary).optional(),
-  knowledge_base_count: z.int().gte(0).optional().default(0),
-  in_checked_knowledge_base: z.boolean().optional().default(false),
 });
 
 /**
@@ -1212,8 +1093,6 @@ export const zFileGetManyQuery = z.object({
   page_size: z.int().gte(1).lte(100).optional().default(50),
   sort_by: z.enum(["name", "kind", "date", "size"]).optional().default("name"),
   query: z.string().nullish(),
-  knowledge_base_id: z.uuid().nullish(),
-  check_knowledge_base_id: z.uuid().nullish(),
 });
 
 /**
@@ -1294,17 +1173,6 @@ export const zFileSimilarGetManyQuery = z.object({
  * Successful Response
  */
 export const zFileSimilarGetManyResponse = zSimilarFileList;
-
-export const zFileKnowledgeBaseGetManyPath = z.object({
-  filename: z.string(),
-});
-
-/**
- * Response Fileknowledgebasegetmany
- *
- * Successful Response
- */
-export const zFileKnowledgeBaseGetManyResponse = z.array(zKnowledgeBase);
 
 /**
  * Response Chatmodelslist
@@ -1532,152 +1400,6 @@ export const zChatMessageSendPath = z.object({
  * Successful Response
  */
 export const zChatMessageSendResponse = zMessage;
-
-/**
- * Successful Response
- */
-export const zFolderGetManyResponse = zFolderList;
-
-export const zFolderCreateBody = zNewFolderRequest;
-
-/**
- * Successful Response
- */
-export const zFolderCreateResponse = zFolder;
-
-export const zFolderDeletePath = z.object({
-  folder_id: z.string(),
-});
-
-/**
- * Successful Response
- */
-export const zFolderDeleteResponse = zFolder;
-
-export const zFolderGetOnePath = z.object({
-  folder_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zFolderGetOneResponse = zFolder;
-
-export const zKnowledgeBaseGetManyQuery = z.object({
-  page: z.int().gte(1).optional().default(1),
-  page_size: z.int().gte(1).lte(100).optional().default(50),
-  sort_by: z.enum(["name", "created"]).optional().default("name"),
-  query: z.string().nullish(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseGetManyResponse = zKnowledgeBaseList;
-
-export const zKnowledgeBaseCreateBody = zKnowledgeBaseCreate;
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseCreateResponse = zKnowledgeBase;
-
-export const zKnowledgeBaseFileDeleteManyBody = zKnowledgeBaseFileRemove;
-
-export const zKnowledgeBaseFileDeleteManyPath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseFileDeleteManyResponse = zKnowledgeBaseFileList;
-
-export const zKnowledgeBaseFileGetManyPath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-export const zKnowledgeBaseFileGetManyQuery = z.object({
-  page: z.int().gte(1).optional().default(1),
-  page_size: z.int().gte(1).lte(100).optional().default(50),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseFileGetManyResponse = zKnowledgeBaseFileList;
-
-export const zKnowledgeBaseFileCreateBody = zKnowledgeBaseFileCreate;
-
-export const zKnowledgeBaseFileCreatePath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseFileCreateResponse = zKnowledgeBaseFile;
-
-export const zKnowledgeBaseFileCreateManyBody = zKnowledgeBaseFileCreateMany;
-
-export const zKnowledgeBaseFileCreateManyPath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseFileCreateManyResponse = zKnowledgeBaseFileList;
-
-export const zKnowledgeBaseFileReorderBody = zKnowledgeBaseFileReorder;
-
-export const zKnowledgeBaseFileReorderPath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseFileReorderResponse = zKnowledgeBaseFileList;
-
-export const zKnowledgeBaseFileDeletePath = z.object({
-  knowledge_base_id: z.uuid(),
-  membership_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseFileDeleteResponse = zKnowledgeBaseFile;
-
-export const zKnowledgeBaseDeletePath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseDeleteResponse = zKnowledgeBase;
-
-export const zKnowledgeBaseGetOnePath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseGetOneResponse = zKnowledgeBase;
-
-export const zKnowledgeBaseUpdateBody = zKnowledgeBaseUpdate;
-
-export const zKnowledgeBaseUpdatePath = z.object({
-  knowledge_base_id: z.uuid(),
-});
-
-/**
- * Successful Response
- */
-export const zKnowledgeBaseUpdateResponse = zKnowledgeBase;
 
 export const zProjectGetManyQuery = z.object({
   page: z.int().gte(1).optional().default(1),

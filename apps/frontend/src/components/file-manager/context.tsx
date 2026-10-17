@@ -55,7 +55,6 @@ type FileManagerContext = {
   totalFiles: number;
   files: UserFile[];
   isMutating: boolean;
-  knowledgeBaseId?: string;
   mode: Mode;
   filesLoading: boolean;
   filesError: unknown;
@@ -95,8 +94,6 @@ export const FileManagerProvider = ({
   },
   onUploaded,
   unavailableReason = "Already in this project",
-  knowledgeBaseId,
-  checkKnowledgeBaseId,
   mode = "normal",
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isSelectable = (_) => true,
@@ -106,8 +103,6 @@ export const FileManagerProvider = ({
   actions?: FileActions;
   onUploaded?: (files: UserFile[]) => Promise<void>;
   unavailableReason?: string;
-  knowledgeBaseId?: string;
-  checkKnowledgeBaseId?: string;
   mode?: Mode;
   isSelectable?: (file: UserFile) => boolean;
 }) => {
@@ -168,8 +163,6 @@ export const FileManagerProvider = ({
       client,
       query: {
         ...query,
-        knowledge_base_id: knowledgeBaseId,
-        check_knowledge_base_id: checkKnowledgeBaseId,
       },
     }),
     enabled: source.kind === "library",
@@ -259,7 +252,6 @@ export const FileManagerProvider = ({
       isMutating,
       setIsMutating,
       toggleSelect,
-      knowledgeBaseId,
       totalFiles,
       filesLoading: isPending,
       filesError: error,
@@ -281,7 +273,6 @@ export const FileManagerProvider = ({
       files,
       isSelectable,
       isMutating,
-      knowledgeBaseId,
       setIsMutating,
       toggleSelect,
       totalFiles,

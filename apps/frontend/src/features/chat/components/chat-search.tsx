@@ -6,7 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import { chatSearchOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
-import { FolderIcon, MessageSquareIcon, SearchIcon } from "lucide-react";
+import { LayersIcon, MessageSquareIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useEffect, useState } from "react";
 
@@ -72,7 +72,7 @@ export const ChatSearch = () => {
               {result.kind === "chat" ? (
                 <MessageSquareIcon className="size-4" />
               ) : (
-                <FolderIcon className="size-4" />
+                <LayersIcon className="size-4" />
               )}
               <span className="truncate">{result.title}</span>
             </div>

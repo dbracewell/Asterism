@@ -67,9 +67,7 @@ async def test_knowledge_schema_is_created_from_models(tmp_path: Path):
         }
     await engine.dispose()
     assert {
-        "knowledge_bases",
         "file_extractions",
-        "knowledge_base_files",
     } <= tables
     assert "agent_knowledge_base_assignments" not in tables
     assert "knowledge_documents" not in tables

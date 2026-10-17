@@ -50,30 +50,21 @@ unknown Generic OpenAI metadata can be completed manually and manual values are
 preserved on refresh. See
 [LLM Providers and Model Capabilities](../../docs/architecture/llm-providers.md).
 
-## Files and knowledge bases
+## Files and project context
 
-**Files** is the user-facing source of truth for upload processing and image
-captions. Eligible uploads are processed in the background; the screen displays
-the current artifact status and lets a user retry failed work or edit, clear, or
-regenerate a canonical image caption. Caption regeneration warns that a selected
-external provider may receive the image. Administrators configure captioning as
-part of the single versioned `knowledge.processing` policy under **Settings →
-Admin Settings → Image Captioning**. A policy change creates replacement file
-generations while existing ready generations remain searchable.
+**Files** manages uploaded sources, processing status, and canonical image captions.
+Users can retry failed work or edit, clear, and regenerate captions. Regeneration
+discloses when an external provider may receive the image. Administrators select
+captioning through the single versioned `knowledge.processing` policy; policy
+changes queue replacements while existing ready generations remain searchable.
 
-**Knowledge** manages ordered collections of existing library files. Adding a
-file only creates a membership, so processing and captions are shared across all
-collections that contain it. Removing a membership leaves the file intact;
-deleting the file from Files removes its memberships and derived knowledge.
-Agent-profile knowledge-base assignments enable the scoped `search_knowledge`
-tool. The generated client is the source for these REST contracts.
-
-File lists (including the add-files picker) and knowledge-base details show query
-failures with a Retry action. Cached files remain visible when a refresh fails;
-failed requests do not appear as empty search results. Knowledge-base management
-controls are available only after its details load successfully. Per-file
-processing-status queries also support retry, and regeneration failures produce
-an error notification.
+Projects and library pickers compose the shared FileManager. Adding a library file
+to a project creates a reference; removing the reference preserves its source and
+artifacts. Chat attachment scope follows the active branch and current project.
+Runtime policy derives `search_knowledge` availability from that live context.
+All server data uses generated clients and TanStack Query. Query errors expose
+Retry; cached files stay visible on refresh failure, and failures never appear as
+empty results. Processing actions report errors and support retry.
 
 ## Docker and migrations
 
@@ -125,7 +116,7 @@ in create/stream `files` payloads. Message chips carry immutable `file_id` snaps
 chat downloads and previews call generated chat-scoped endpoints with chat/file IDs.
 Library file views retain their owner-scoped library endpoints. Missing historical
 references render without download links. ChatInfo/NewChatRequest use `project_id`;
-obsolete folder chat actions/listing are removed. Project navigation and guarded
+Project navigation and guarded
 move controls are delivered in later workspace stories.
 
 ### Chat upload/send lifecycle

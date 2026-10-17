@@ -239,7 +239,7 @@ async def upload_files(
         # Canonical knowledge state is created with the file, before any
         # collection references it. Processing is queued separately so an
         # upload transaction remains bounded and atomic.
-        from asterism.domains.knowledge_base.service import ensure_file_knowledge_artifact
+        from asterism.domains.files.processing import ensure_file_knowledge_artifact
 
         for file in created:
             artifacts.append(await ensure_file_knowledge_artifact(file=file, session=session))
@@ -265,27 +265,14 @@ async def list_user_files(
     page_size: int = 50,
     sort_by: Literal["name", "kind", "date", "size"] = "name",
     query: str | None = None,
-    knowledge_base_id: uuid.UUID | None = None,
-    check_knowledge_base_id: uuid.UUID | None = None,
 ) -> UserFileList:
-    from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
-
     statement = select_owned_files(user_id=user_id, query=query, sort_by=sort_by)
-    if knowledge_base_id is not None:
-        statement = statement.where(
-            UserFileModel.id.in_(
-                select(KnowledgeBaseFileModel.file_id).where(
-                    KnowledgeBaseFileModel.knowledge_base_id == knowledge_base_id,
-                ),
-            )
-        )
     return await list_file_page(
         user_id=user_id,
         statement=statement,
         session=session,
         page=page,
         page_size=page_size,
-        check_knowledge_base_id=check_knowledge_base_id,
     )
 
 
@@ -439,20 +426,6 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
     )
 
 
-async def get_file_knowledge_bases(*, user_id: str, filename: str, session: AsyncSession):
-    from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel, KnowledgeBaseModel
-    from asterism.domains.knowledge_base.schemas import KnowledgeBase
-
-    file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    bases = await session.scalars(
-        select(KnowledgeBaseModel)
-        .join(KnowledgeBaseFileModel, KnowledgeBaseFileModel.knowledge_base_id == KnowledgeBaseModel.id)
-        .where(KnowledgeBaseFileModel.file_id == file.id, KnowledgeBaseModel.user_id == user_id)
-        .order_by(KnowledgeBaseModel.name),
-    )
-    return [KnowledgeBase.model_validate(base) for base in bases]
-
-
 async def _owned_file(*, user_id: str, filename: str, session: AsyncSession) -> UserFileModel:
     file = await session.scalar(
         select(UserFileModel).where(UserFileModel.user_id == user_id, UserFileModel.filename == filename),
@@ -495,7 +468,6 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
     from asterism.domains.chat.file_references import detach_deleted_file as detach_chat_file
     from asterism.domains.extraction.models import FileExtractionModel
     from asterism.domains.extraction.runtime import cancel_file_jobs
-    from asterism.domains.knowledge_base.models import KnowledgeBaseFileModel
     from asterism.domains.projects.file_references import detach_deleted_file
 
     await detach_chat_file(file_id=file_id, session=session)
@@ -509,7 +481,6 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
     )
     for artifact_id in artifact_ids:
         await cancel_file_jobs(artifact_id)
-    await session.execute(delete(KnowledgeBaseFileModel).where(KnowledgeBaseFileModel.file_id == file_id))
     await session.execute(delete(FileExtractionModel).where(FileExtractionModel.file_id == file_id))
 
 

@@ -16,8 +16,6 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/chat-models",
     "/e2e/chat-model-session",
     "/e2e/projects",
-    "/e2e/knowledge",
-    "/e2e/knowledge-captions",
   );
 }
 

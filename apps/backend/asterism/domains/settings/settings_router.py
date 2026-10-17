@@ -9,7 +9,7 @@ from asterism.db.dependencies import DBSessionDep
 from asterism.domains.agent.schemas import MainAgentConfiguration, MainAgentUpdate
 from asterism.domains.agent.service import get_main_agent, update_main_agent
 from asterism.domains.extraction.model_download import DownloadProgress
-from asterism.domains.knowledge_base.schemas import (
+from asterism.domains.files.processing_schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
     KnowledgeProcessingProfileUpdate,
@@ -379,7 +379,7 @@ async def update_captioning_configuration(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeCaptionConfiguration:
-    from asterism.domains.knowledge_base.service import update_captioning_configuration as update_configuration
+    from asterism.domains.files.processing import update_captioning_configuration as update_configuration
 
     return await update_configuration(payload=payload, session=session)
 
@@ -394,7 +394,7 @@ async def update_knowledge_processing_profile(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeReprocessSummary:
-    from asterism.domains.knowledge_base.service import update_processing_profile_and_reprocess
+    from asterism.domains.files.processing import update_processing_profile_and_reprocess
 
     return await update_processing_profile_and_reprocess(payload=payload, session=session)
 

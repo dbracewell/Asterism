@@ -2,7 +2,7 @@
 
 The knowledge subsystem uses separate stores for private retrieval and its
 locally provisioned model artifacts. Every eligible uploaded file has a
-file-owned artifact generation independent of knowledge-base membership. Image
+file-owned artifact generation independent of project/chat references. Image
 captioning is globally disabled by default. When an administrator enables it,
 generated captions are canonical file metadata and are indexed as draft text;
 users can regenerate a file's embedding and caption from the File Manager.
@@ -238,8 +238,7 @@ release-environment preflight targets, not an untested alternative runtime.
 
 `UserFile` is the immutable source revision. `FileKnowledgeArtifact` owns each
 derived generation, including extraction, chunks, embeddings, and canonical
-image captions. A `knowledge_base_files` row is only an ordered collection
-membership. Runtime retrieval resolves project/chat execution scope before searching and sends
+image captions. `project_files` and `chat_files` hold source references. Runtime retrieval resolves project/chat execution scope before searching and sends
 both owner and allowed file IDs to LanceDB; it never searches globally then
 filters in application code. Removing a membership preserves the file and its
 artifacts; deleting a file cancels work and removes memberships, artifacts,

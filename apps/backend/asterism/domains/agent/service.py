@@ -28,7 +28,6 @@ from .schemas import (
     SubAgentList,
     SubAgentTrace,
     SubAgentTraceCreate,
-    UserAgents,
 )
 
 
@@ -43,22 +42,6 @@ async def _ensure_valid_tools(
         profile.tools = [t for t in profile.tools if t in app_settings.active_tools]
         profile.tools = configurable_tools(profile.tools)
     return profile
-
-
-async def get_user_agents(
-    user_id: str,
-    session: AsyncSession | None = None,
-) -> UserAgents:
-    async with get_async_db_session(session) as session:
-        stmt = select_owned_agent_profiles(user_id)
-        results = await session.scalars(stmt)
-
-        agents_dict: dict[uuid.UUID, AgentProfile] = {}
-        for r in results:
-            profile = await _ensure_valid_tools(AgentProfile.model_validate(r), session=session)
-            agents_dict[r.id] = profile
-
-        return UserAgents(agents=agents_dict)
 
 
 async def get_agent_profile(

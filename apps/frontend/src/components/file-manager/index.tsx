@@ -4,7 +4,6 @@ import { FileManagerProvider } from "./context";
 import { FileList } from "./file-list";
 import {
   DeleteSelectedFilesSection,
-  KnowledgeBaseSection,
   Ribbon,
   RibbonSection,
   UploadFilesSection,
@@ -13,7 +12,6 @@ import {
 export {
   DeleteSelectedFilesSection,
   FileList,
-  KnowledgeBaseSection,
   FileManagerProvider as Provider,
   Ribbon,
   RibbonSection,

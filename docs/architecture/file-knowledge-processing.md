@@ -2,40 +2,39 @@
 
 This guide describes the implemented path from a user upload to searchable
 knowledge. It is intentionally file-owned: a `UserFileModel` has derived
-`FileKnowledgeArtifactModel` generations, while `KnowledgeBaseFileModel` only
-references a file and never initiates duplicate work.
+`FileExtractionModel` generations, while project/chat memberships only
+reference a file and never initiate duplicate work.
 
 ## Terminology
 
-| Term                              | Meaning in Asterism                                                                                                                                                                                                                                                               | Implemented representation                                                                      |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Source file**                   | The immutable, user-owned upload from which knowledge is derived. It owns the original bytes and identity, not the derived text, vectors, or caption.                                                                                                                             | `UserFileModel` plus bytes in `LocalFileStore`                                                  |
-| **Knowledge artifact**            | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: extraction result, chunk count, embedding readiness, canonical caption state, timestamps, and safe errors. This is the canonical meaning of _artifact_ in this guide. | `FileKnowledgeArtifactModel` / `file_knowledge_artifacts`                                       |
-| **Artifact generation**           | A monotonic version of a file's knowledge artifact. Reprocessing creates a new generation instead of modifying a usable one in place.                                                                                                                                             | `FileKnowledgeArtifactModel.generation` and `VectorChunk.artifact_generation`                   |
-| **Current artifact**              | The one ready artifact generation selected for a source file. A replacement becomes current only after its vectors are written successfully.                                                                                                                                      | `FileKnowledgeArtifactModel.is_current`, protected by a partial unique index                    |
-| **Processing policy**             | The single platform-wide extraction, chunking, embedding, and caption policy. Users cannot select a different model or policy per file or knowledge base.                                                                                                                         | Versioned `knowledge.processing` value in `ApplicationSettingsModel`                            |
-| **Profile generation / identity** | The profile's revision number and deterministic fingerprint, copied into each artifact to show which policy produced it. A changed identity queues a replacement artifact for each eligible library file.                                                                         | `processing_profile_generation`, `processing_profile_identity`                                  |
-| **Content cache**                 | Bounded converted text used as the input to chunking. It is source-file conversion state, distinct from the artifact's indexed vector rows.                                                                                                                                       | `UserFileModel.content_cache`, produced by `MarkItDownFileProcessor`                            |
-| **Chunk**                         | One bounded text excerpt, or the display content associated with a visual image embedding. A chunk has stable provenance within an artifact generation.                                                                                                                           | `VectorChunk` and a LanceDB `knowledge_chunks` row                                              |
-| **Embedding / vector**            | A normalized numeric representation of a chunk, caption, or image used for similarity search. Vectors are not relational artifact fields; their provenance links them to an artifact generation.                                                                                  | `OnnxClipEmbeddingProvider`, `LanceDbVectorStore`                                               |
-| **Canonical caption**             | The one derived caption associated with an image artifact, shared wherever that file is used. It may be generated or regenerated in Files; it is never per knowledge base.                                                                                                        | Artifact caption fields and one caption `VectorChunk`                                           |
-| **Knowledge base**                | A private, named collection used to curate which library files an agent may search. It does not own or duplicate a file's processing.                                                                                                                                             | `KnowledgeBaseModel`                                                                            |
-| **Membership**                    | An ordered relationship between a knowledge base and a source file. Removing it preserves the file and its knowledge artifact.                                                                                                                                                    | `KnowledgeBaseFileModel` / `knowledge_base_files`                                               |
-| **Allowed file IDs**              | The file IDs resolved from bases assigned to the active agent before a vector query is issued. This is the retrieval authorization boundary.                                                                                                                                      | `AgentKnowledgeBaseAssignmentModel` plus `LanceDbVectorStore.search(..., allowed_file_ids=...)` |
+| Term                              | Meaning in Asterism                                                                                                                                                                                                                                                               | Implemented representation                                                             |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Source file**                   | The immutable, user-owned upload from which knowledge is derived. It owns the original bytes and identity, not the derived text, vectors, or caption.                                                                                                                             | `UserFileModel` plus bytes in `LocalFileStore`                                         |
+| **Knowledge artifact**            | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: extraction result, chunk count, embedding readiness, canonical caption state, timestamps, and safe errors. This is the canonical meaning of _artifact_ in this guide. | `FileExtractionModel` / `file_extractions`                                             |
+| **Artifact generation**           | A monotonic version of a file's knowledge artifact. Reprocessing creates a new generation instead of modifying a usable one in place.                                                                                                                                             | `FileExtractionModel.generation` and `VectorChunk.artifact_generation`                 |
+| **Current artifact**              | The one ready artifact generation selected for a source file. A replacement becomes current only after its vectors are written successfully.                                                                                                                                      | `FileExtractionModel.is_current`, protected by a partial unique index                  |
+| **Processing policy**             | The single platform-wide extraction, chunking, embedding, and caption policy. Users cannot select a different model or policy per file.                                                                                                                                           | Versioned `knowledge.processing` value in `ApplicationSettingsModel`                   |
+| **Profile generation / identity** | The profile's revision number and deterministic fingerprint, copied into each artifact to show which policy produced it. A changed identity queues a replacement artifact for each eligible library file.                                                                         | `processing_profile_generation`, `processing_profile_identity`                         |
+| **Content cache**                 | Bounded converted text used as the input to chunking. It is source-file conversion state, distinct from the artifact's indexed vector rows.                                                                                                                                       | `UserFileModel.content_cache`, produced by `MarkItDownFileProcessor`                   |
+| **Chunk**                         | One bounded text excerpt, or the display content associated with a visual image embedding. A chunk has stable provenance within an artifact generation.                                                                                                                           | `VectorChunk` and a LanceDB `knowledge_chunks` row                                     |
+| **Embedding / vector**            | A normalized numeric representation of a chunk, caption, or image used for similarity search. Vectors are not relational artifact fields; their provenance links them to an artifact generation.                                                                                  | `OnnxClipEmbeddingProvider`, `LanceDbVectorStore`                                      |
+| **Canonical caption**             | The one derived caption associated with an image artifact, shared wherever that file is used. It may be generated or regenerated in Files; it is shared across project/chat references.                                                                                           | Artifact caption fields and one caption `VectorChunk`                                  |
+| **Membership**                    | A reference between a project or chat and a source file. Removing it preserves the file and its knowledge artifact.                                                                                                                                                               | `ProjectFileModel` / `ChatFileModel`                                                   |
+| **Allowed file IDs**              | The live execution file IDs resolved from project memberships and active-branch chat attachments. This is the retrieval authorization boundary.                                                                                                                                   | `ExecutionContextResolver` plus `LanceDbVectorStore.search(..., allowed_file_ids=...)` |
 
 ## Components and ownership
 
-| Concern           | Primary classes / functions                                    | Responsibility                                                                                                          |
-| ----------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| HTTP upload       | `file_router.upload_files`, `files.service.upload_files`       | Validates the request, writes source bytes, persists the source-file record, and queues work after commit.              |
-| Source bytes      | `FileStore`, `LocalFileStore`                                  | Owns bytes beneath `STORAGE_ROOT/files/{user_id}` and prevents path traversal.                                          |
-| File conversion   | `MarkItDownFileProcessor.ensure_processed`                     | Produces bounded text cache for text/document files; verifies file integrity and records safe file-content errors.      |
-| Artifact state    | `FileKnowledgeArtifactModel`, `ensure_file_knowledge_artifact` | Owns processing generation, profile fingerprint, status, extraction metadata, embeddings, and canonical caption fields. |
-| Processing queue  | `KnowledgeIngestionJobs`, `ingest_file_artifact`               | Runs at most one in-process job per artifact ID and promotes a generation only after vector writes succeed.             |
-| Embeddings        | `OnnxClipEmbeddingProvider`                                    | Lazily verifies and loads the pinned local ONNX CLIP bundle, then emits normalized text or image vectors.               |
-| Vectors           | `VectorChunk`, `LanceDbVectorStore`                            | Persists vectors keyed by user, file, artifact generation, and chunk ordinal.                                           |
-| Caption queue     | `KnowledgeCaptionJobs`, `_caption_file_artifact`               | Creates and indexes a canonical image caption after the image artifact is ready.                                        |
-| Caption providers | `LocalSmolVlm2CaptionProvider`, `_provider_caption_document`   | Uses a verified local bundle or the single administrator-selected vision provider.                                      |
+| Concern           | Primary classes / functions                                  | Responsibility                                                                                                          |
+| ----------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| HTTP upload       | `file_router.upload_files`, `files.service.upload_files`     | Validates the request, writes source bytes, persists the source-file record, and queues work after commit.              |
+| Source bytes      | `FileStore`, `LocalFileStore`                                | Owns bytes beneath `STORAGE_ROOT/files/{user_id}` and prevents path traversal.                                          |
+| File conversion   | `MarkItDownFileProcessor.ensure_processed`                   | Produces bounded text cache for text/document files; verifies file integrity and records safe file-content errors.      |
+| Artifact state    | `FileExtractionModel`, `ensure_file_knowledge_artifact`      | Owns processing generation, profile fingerprint, status, extraction metadata, embeddings, and canonical caption fields. |
+| Processing queue  | `KnowledgeIngestionJobs`, `ingest_file_artifact`             | Runs at most one in-process job per artifact ID and promotes a generation only after vector writes succeed.             |
+| Embeddings        | `OnnxClipEmbeddingProvider`                                  | Lazily verifies and loads the pinned local ONNX CLIP bundle, then emits normalized text or image vectors.               |
+| Vectors           | `VectorChunk`, `LanceDbVectorStore`                          | Persists vectors keyed by user, file, artifact generation, and chunk ordinal.                                           |
+| Caption queue     | `KnowledgeCaptionJobs`, `_caption_file_artifact`             | Creates and indexes a canonical image caption after the image artifact is ready.                                        |
+| Caption providers | `LocalSmolVlm2CaptionProvider`, `_provider_caption_document` | Uses a verified local bundle or the single administrator-selected vision provider.                                      |
 
 `runtime.py` constructs the process-lifetime services: `vector_store`,
 `embedding_provider`, `knowledge_ingestion_jobs`, `local_caption_provider`, and
@@ -65,7 +64,7 @@ sequenceDiagram
     FS->>Store: save(user_id, filename, content)
     FS->>DB: create UserFileModel
     FS->>DB: ensure_file_knowledge_artifact(file)
-    Note over DB: Create pending FileKnowledgeArtifactModel\nfor the active processing profile
+    Note over DB: Create pending FileExtractionModel\nfor the active processing profile
     FS->>DB: commit file and artifact
     FS->>Jobs: enqueue(user_id, file_id, artifact_id)
 
@@ -97,7 +96,7 @@ collision-suffixed name.
 `knowledge.processing` application setting. Its profile generation and deterministic
 identity are copied into the artifact. The artifact's unique `(file_id,
 generation)` pair and partial unique current-generation index make the source
-file—not a knowledge base—the unit of processing.
+file the unit of processing.
 
 The setting is parsed by `KnowledgeProcessingConfiguration`, with nested
 `KnowledgeProcessingCaptioningConfiguration`; the knowledge configuration
@@ -214,8 +213,7 @@ Caption-job restart recovery changes only `running` captions to `failed` with an
 `interrupted` error code. Safe error fields are persisted; source bytes and
 caption text are not written to logs by the caption path.
 
-Deleting a membership through `KnowledgeBaseFileModel` removes only the
-collection reference. Deleting a source file calls
+Removing a project membership removes only its source reference. Deleting a source file calls
 `files.service._remove_file_knowledge_records()` before removing the file row:
 it cancels ingestion work, removes every membership and artifact, deletes vectors
 best-effort after the database commit, and finally removes source bytes. A job
@@ -224,40 +222,30 @@ knowledge state.
 
 ## Retrieval boundary
 
-The downstream [`search_knowledge`](../../apps/backend/asterism/domains/knowledge/search_tool.py)
-tool first resolves `AgentKnowledgeBaseAssignmentModel` and
-`KnowledgeBaseFileModel` rows to allowed file IDs. It then calls
-`LanceDbVectorStore.search()` with both `user_id` and `allowed_file_ids`.
-`LanceDbVectorStore` returns no results for an empty allowed set and has no
-unfiltered search mode, preserving the authorization boundary at the vector-store
-query rather than filtering global results in application code.
+The injected `RetrievalService` receives an execution scope ceiling. It intersects
+that ceiling with live project/chat authorization, then calls
+`LanceDbVectorStore.search()` with both `user_id` and `allowed_file_ids`. Empty
+allowed sets return no results. Before release, retrieval rechecks authorization
+and current artifact generations. Runtime file reads use the same scoped boundary.
+See [knowledge retrieval](knowledge-retrieval.md) for revocation and replay rules.
 
-## Knowledge-base file management
+## Project file management
 
-A knowledge base's page reuses the file explorer: `GET /files/?knowledge_base_id=`
-lists only that base's files, and `DELETE /knowledge-bases/{id}/files` (body:
-`file_ids`) removes memberships without touching the library files or their
-artifacts. In this mode the explorer offers "remove from knowledge base" instead
-of file deletion. The explorer's sort order replaces the former manual ordering
-in the UI; the `position` column and reorder endpoint remain but are unused by
-the frontend.
-
-Adding files uses a dialog hosting the same explorer in picker mode (no delete,
-upload allowed). `GET /files/?check_knowledge_base_id=` marks each file with
-`in_checked_knowledge_base`, which the picker uses to make existing members
-unselectable. "Add selected" calls `POST /knowledge-bases/{id}/files/bulk`, which
-is atomic: an unknown or foreign file ID rejects the whole request, and files
-already in the base are skipped.
+The project page composes the shared file explorer. `GET /projects/{project_id}/files`
+returns owner-scoped, paginated memberships; POST adds existing library files and
+DELETE removes references while preserving their sources and artifacts. Upload
+creates a source and project membership. A library picker excludes existing
+members using file project metadata. Physical deletion remains a library action.
 
 ## File view and similar files
 
 `/files/{filename}` in the frontend shows a file's extracted content, caption,
-similar files, and containing knowledge bases. `GET /files/{filename}/similar`
+similar files, and containing projects. `GET /files/{filename}/similar`
 (`files.service.get_similar_files()`) reads the file's current-generation vectors,
 averages them into a normalized centroid, and searches the owner's other ready,
 current-generation files. Results are grouped by file using the best chunk, with
 cosine similarity derived from LanceDB's squared L2 distance over unit vectors.
-`GET /files/{filename}/knowledge-bases` lists the owner's containing bases.
+File metadata includes the owner's containing project summaries.
 
 ## Related guides
 

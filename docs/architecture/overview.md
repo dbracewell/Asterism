@@ -2,7 +2,7 @@
 
 Asterism is a pnpm workspace containing a Next.js 16 frontend and a Python 3.13+
 FastAPI backend. The browser talks to the backend only through the public,
-same-origin `/api/py` prefix; the backend handles chat jobs and execution, agent selection, files, folders and
+same-origin `/api/py` prefix; the backend handles chat jobs and execution, main-agent configuration, sub-agents, files, projects and
 search, settings, and tools.
 
 ## Topology
@@ -63,16 +63,16 @@ backend URL.
 
 ## Technology stack
 
-| Layer          | Implementation                                                                  |
-| -------------- | ------------------------------------------------------------------------------- |
-| Web UI         | Next.js 16, React 19, Tailwind CSS 4, shadcn/ui                                 |
-| Authentication | Better Auth with RS256 JWTs and JWKS                                            |
-| Backend        | FastAPI, Uvicorn, Pydantic                                                      |
-| Persistence    | SQLAlchemy async, SQLite 3.45+ in WAL mode with SQLite FTS5 chat/folder indexes |
-| API client     | Hey API generated from FastAPI OpenAPI                                          |
-| LLM runtime    | OpenAI Python SDK for OpenAI and compatible endpoints                           |
-| Files          | `FileStore` protocol, `LocalFileStore`, and MarkItDown conversion               |
-| Knowledge      | File-owned artifacts, LanceDB, pinned local CLIP, and optional image captioning |
+| Layer          | Implementation                                                                   |
+| -------------- | -------------------------------------------------------------------------------- |
+| Web UI         | Next.js 16, React 19, Tailwind CSS 4, shadcn/ui                                  |
+| Authentication | Better Auth with RS256 JWTs and JWKS                                             |
+| Backend        | FastAPI, Uvicorn, Pydantic                                                       |
+| Persistence    | SQLAlchemy async, SQLite 3.45+ in WAL mode with SQLite FTS5 chat/project indexes |
+| API client     | Hey API generated from FastAPI OpenAPI                                           |
+| LLM runtime    | OpenAI Python SDK for OpenAI and compatible endpoints                            |
+| Files          | `FileStore` protocol, `LocalFileStore`, and MarkItDown conversion                |
+| Knowledge      | File-owned artifacts, LanceDB, pinned local CLIP, and optional image captioning  |
 
 ## Workspace layout
 
@@ -116,20 +116,18 @@ asterism/
 
 ## Knowledge lifecycle
 
-1. A user upload creates an immutable library file and a pending, file-owned
-   artifact generation. A bounded background job converts text or embeds an
-   image, writes file/generation-keyed vectors, and promotes the generation only
-   after the vector write succeeds.
-2. A knowledge base stores an ordered reference to a library file. Adding the
-   same file to another base does not reprocess it. Removing the reference does
-   not delete the file; deleting the file removes all memberships, artifacts,
-   vectors, and source bytes.
-3. An agent's assigned bases resolve to allowed file IDs before `search_knowledge`
-   queries LanceDB. The query is filtered by both user and file IDs at the
-   storage boundary, so unassigned files are never searched.
-4. For image files, the platform-wide captioning setting may queue a canonical
-   caption. The File Manager exposes caption and processing actions; a
-   processing-profile update queues replacement generations for the library.
+1. An upload creates an immutable library file and a pending artifact generation.
+   Bounded background processing extracts text or embeds an image, writes
+   file/generation-keyed vectors, and promotes the generation after success.
+2. Projects and chats reference library files without repeat processing. Removing
+   a project reference preserves the source; physical deletion cancels work and
+   removes references, artifacts, vectors, and source bytes.
+3. The execution resolver bounds retrieval to current project memberships and
+   active-branch chat attachments. LanceDB filters by both owner and allowed file
+   IDs; the injected retrieval service rechecks live scope before releasing data.
+4. Administrators configure canonical image captions and processing policy.
+   Policy changes queue replacement generations while previous ready data remains
+   usable until replacements succeed.
 
 ## Related guides
 

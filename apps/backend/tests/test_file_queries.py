@@ -90,7 +90,7 @@ def test_query_layer_dependency_boundaries():
     root = Path(__file__).resolve().parents[1] / "asterism"
     for path, forbidden in [
         (root / "db/queries.py", ("asterism.domains",)),
-        (root / "domains/files/queries.py", ("asterism.domains.projects", "asterism.domains.knowledge_base")),
+        (root / "domains/files/queries.py", ("asterism.domains.projects",)),
     ]:
         tree = ast.parse(path.read_text())
         imports = [node.module or "" for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)]

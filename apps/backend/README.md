@@ -40,9 +40,10 @@ unknown or conflicting values require manual administration. See
 ## File knowledge processing
 
 An uploaded eligible `UserFile` receives a canonical, versioned
-`FileKnowledgeArtifact` and is processed independently of knowledge-base
-membership. Knowledge bases are ordered file collections; they neither own
-vectors nor trigger repeat extraction. Retrieval first resolves the active
+`FileKnowledgeArtifact` and is processed independently of project/chat
+references. File processing contracts and policy transitions live in
+`domains/files/processing_schemas.py` and `domains/files/processing.py`.
+Retrieval first resolves the active
 execution context to live project/chat file IDs, then supplies both that set and the
 authenticated owner to LanceDB.
 
@@ -235,9 +236,8 @@ contextual tool/retrieval/delegation authorization are implemented through
 US-26.1/26.2/26.3 and EPIC-29. Agent knowledge-base assignments are removed.
 The new scope reader is not a claim that every legacy runtime tool already uses it.
 
-Obsolete folder-chat routes, schemas, creation/list controls, and chat-derived folder
-search paths were removed with the binding. US-25.2 replaces folder title search
-with project name/description search. Folder entities remain until their later removal; project navigation remains EPIC-27. NewChatRequest rejects old
+Project name/description search and project navigation are supported.
+NewChatRequest rejects old
 `folder_id` and filename attachments; PATCH currently edits title only, with project
 moves exposed separately by US-25.2. Fresh initialization includes `chat_files`; reset disposable
 local data before running this new schema against an older development database.
@@ -427,8 +427,7 @@ bytes. No new retrieval engine or model download is introduced.
 
 Agent knowledge-base assignment table/API fields/endpoints and settings controls are
 removed. Initialize a fresh disposable development database before using this
-schema; the verified current database is not reset by the story workflow. Remaining
-standalone knowledge-base removal is scheduled for EPIC-28.
+schema; the verified current database is not reset by the story workflow. Standalone collection models, endpoints, and management UI are also removed.
 
 Execution and retrieval provenance, resume ceilings, delegated trace privacy, and
 future memory partitioning are documented in

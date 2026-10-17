@@ -120,10 +120,6 @@ class SubAgentList(BaseModel):
     page_size: int
 
 
-class UserAgents(BaseModel):
-    agents: dict[uuid.UUID, AgentProfile]
-
-
 class SubAgentTrace(BaseModel):
     context_provenance: ContextProvenance | None = None
     prompt_provenance: PromptProvenance | None = None

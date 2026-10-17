@@ -383,8 +383,7 @@ models, with bounded source-byte reads. See [knowledge retrieval](knowledge-retr
 
 Agent knowledge-base assignment storage, endpoints, response fields, and editing
 controls are removed; agents derive contextual retrieval through internal-tool
-policy. Standalone knowledge-base management remains for the later clean-cut
-removal story. The schema change requires fresh initialization; the current database
+policy. Standalone collection management, storage, and routes are also removed. The schema change requires fresh initialization; the current database
 is retained during story verification.
 
 ## Context provenance and memory isolation (US-26.4)

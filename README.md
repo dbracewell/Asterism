@@ -6,12 +6,13 @@ Asterism is a self-hosted, full-stack AI chat application. It combines a Next.js
 frontend with a FastAPI agent runtime, main-agent and delegated-worker profiles,
 capability-scoped tools, streaming chat, administrator-managed OpenAI-compatible
 models, and a file library. Every eligible upload is processed once into a
-file-owned knowledge artifact; private knowledge bases curate ordered references
-to those files for individual agents rather than duplicating processing.
+file-owned knowledge artifact; projects share references to those files without
+duplicating processing.
 
-Chats are pinned to the selected main agent at creation time. They support
+Each user has one model-free main-agent configuration. Chats select their models
+independently and record per-execution provenance. They support
 branching/regeneration, cancellation with retained partial output, reconnection to
-an in-process generation, folders, full-text search, and estimated context-window
+an in-process generation, projects, full-text search, and estimated context-window
 usage. Sub-agents run within their own tool allowlist and emit correlated live
 activity and persisted execution traces.
 
@@ -227,31 +228,24 @@ Documented package scripts are the supported entrypoints. Raw `next`, `uvicorn`,
 Open the app and complete the initial account setup using `ADMIN_PASSPHRASE`.
 Keep this passphrase private. The frontend and backend must use the same `SYSTEM_KEY`.
 
-## Files, knowledge bases, and captions
+## Files, project context, and captions
 
-The **Files** screen is the canonical workspace for uploaded files and their
-derived knowledge. Uploading an eligible file queues bounded extraction or image
-embedding automatically. Its status is `pending`, `processing`, `ready`,
-`failed`, or `canceled`; failed and canceled work can be retried from Files.
+**Files** is the canonical library for uploaded sources and derived knowledge.
+Eligible uploads automatically queue extraction or image embedding. Processing
+status is visible; failed or canceled work can be retried from Files.
 
-Create knowledge bases from **Knowledge**, then add existing library files or
-upload and add files there. A membership is only a reference: the same file can
-be used by several bases without duplicate extraction, embedding, or captioning.
-Removing a membership preserves the library file and its derived data. Deleting
-a file permanently removes its memberships, source bytes, artifacts, and vectors.
+Projects share references to library files. Chats combine current project files
+with attachments on their active message branch. Removing a project membership
+preserves the library source and artifacts; deleting the file removes references,
+source bytes, artifacts, and vectors. Runtime retrieval checks the authenticated
+owner and live execution file scope before querying and again before release.
 
-Assign knowledge bases to an agent in its profile. That assignment enables the
-agent's `search_knowledge` tool and restricts every retrieval query to the
-assigned bases' ready files.
-
-Image captions are canonical file metadata, managed in **Files**. The versioned
-`knowledge.processing` application setting is the one platform-wide processing
-policy: it includes extraction, chunking, embeddings, and captioning. Under
-**Settings → Admin Settings → Image Captioning**, administrators choose disabled,
-a configured vision provider, or a reviewed local caption model. Selecting an
-external provider sends source images to that provider; every policy change queues
-replacement generations for eligible files while current ready generations remain
-searchable until replacement succeeds.
+Image captions are canonical file metadata managed in **Files**. Administrators
+configure the single versioned `knowledge.processing` policy under **Settings →
+Admin Settings → Image Captioning**, choosing disabled, a vision provider, or a
+reviewed local model. An external provider receives source images when selected.
+Policy changes queue replacement generations while current ready generations
+remain searchable until replacement succeeds.
 
 ## Quality checks
 
