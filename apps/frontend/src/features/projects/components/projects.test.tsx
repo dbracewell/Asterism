@@ -32,6 +32,32 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["project", path],
     queryFn: () => mocks.get(path),
   }),
+  projectSubAgentGetManyOptions: () => ({
+    queryKey: ["selected-agents"],
+    queryFn: async () => ({
+      agents: [],
+      total: 0,
+      page: 1,
+      page_size: 10,
+      context_revision: 3,
+    }),
+  }),
+  projectSubAgentCandidatesOptions: () => ({
+    queryKey: ["candidate-agents"],
+    queryFn: async () => ({
+      agents: [],
+      total: 0,
+      page: 1,
+      page_size: 10,
+      context_revision: 3,
+    }),
+  }),
+  chatModelsListOptions: () => ({
+    queryKey: ["agent-models"],
+    queryFn: async () => [],
+  }),
+  projectSubAgentSelectManyMutation: () => ({ mutationFn: vi.fn() }),
+  projectSubAgentDeselectManyMutation: () => ({ mutationFn: vi.fn() }),
   projectCreateMutation: () => ({ mutationFn: mocks.create }),
   projectUpdateMutation: () => ({ mutationFn: mocks.update }),
   projectDeleteMutation: () => ({ mutationFn: mocks.remove }),

@@ -4942,6 +4942,55 @@ export type ProjectSubAgentSelectManyResponses = {
 export type ProjectSubAgentSelectManyResponse =
   ProjectSubAgentSelectManyResponses[keyof ProjectSubAgentSelectManyResponses];
 
+export type ProjectSubAgentCandidatesData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/projects/{project_id}/sub-agent-candidates";
+};
+
+export type ProjectSubAgentCandidatesErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ProjectSubAgentCandidatesError =
+  ProjectSubAgentCandidatesErrors[keyof ProjectSubAgentCandidatesErrors];
+
+export type ProjectSubAgentCandidatesResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectSubAgentList;
+};
+
+export type ProjectSubAgentCandidatesResponse =
+  ProjectSubAgentCandidatesResponses[keyof ProjectSubAgentCandidatesResponses];
+
 export type MainAgentGetData = {
   body?: never;
   path?: never;

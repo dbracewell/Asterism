@@ -43,7 +43,13 @@ function createTestCache() {
   });
   return cache;
 }
-export function ProjectsHarness({ view }: { view: string }) {
+export function ProjectsHarness({
+  view,
+  projectId = PROJECT_ID,
+}: {
+  view: string;
+  projectId?: string;
+}) {
   const [cache] = useState(createTestCache);
   return (
     <QueryClientProvider client={cache}>
@@ -55,7 +61,7 @@ export function ProjectsHarness({ view }: { view: string }) {
         </Sidebar>
         <SidebarInset>
           {view === "settings" ? (
-            <ProjectWorkspace projectId={PROJECT_ID} settings />
+            <ProjectWorkspace projectId={projectId} settings />
           ) : view === "overview" ? (
             <ProjectWorkspace projectId={PROJECT_ID} />
           ) : view === "general" ? (

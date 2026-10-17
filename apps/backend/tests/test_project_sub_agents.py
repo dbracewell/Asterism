@@ -416,3 +416,26 @@ async def test_revocation_cancels_pending_child_tool_work(project_api, monkeypat
     with pytest.raises(BadDataException):
         await asyncio.wait_for(task, 2)
     assert closed.is_set()
+
+
+@pytest.mark.asyncio
+async def test_candidates_exclude_selected_and_foreign_before_pagination(project_api):
+    client, _, _ = project_api
+    p, q = await create(client), await create(client, "Other")
+    z, a, b = await worker(client, "Z"), await worker(client, "A"), await worker(client, "B")
+    await worker(client, "Foreign", user="b")
+    assert (await change(client, p, [a["id"]])).status_code == 200
+    path = f"/projects/{p['id']}/sub-agent-candidates"
+    first = (await client.get(path, headers=auth(), params={"page_size": 1})).json()
+    second = (await client.get(path, headers=auth(), params={"page_size": 1, "page": 2})).json()
+    assert first["total"] == second["total"] == 2
+    assert first["context_revision"] == 2
+    assert first["agents"][0]["id"] == b["id"]
+    assert second["agents"][0]["id"] == z["id"]
+    other = (await client.get(f"/projects/{q['id']}/sub-agent-candidates", headers=auth())).json()
+    assert other["total"] == 3 and other["context_revision"] == 1
+    assert (await client.get(path, headers=auth("b"))).status_code == 404
+    assert (await client.get(path)).status_code == 401
+    assert (await client.get(path, headers=auth(), params={"page_size": 101})).status_code == 422
+    assert (await change(client, p, [a["id"]], revision=2, method="DELETE")).status_code == 200
+    assert (await client.get(path, headers=auth())).json()["total"] == 3

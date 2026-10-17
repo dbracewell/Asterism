@@ -12,6 +12,34 @@ const base = {
   updated_at: 1,
 };
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/py/projects/*/sub-agents?**", (route) =>
+    route.fulfill({
+      json: {
+        agents: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        context_revision: 3,
+      },
+    }),
+  );
+  await page.route("**/api/py/projects/*/sub-agent-candidates?**", (route) =>
+    route.fulfill({
+      json: {
+        agents: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        context_revision: 3,
+      },
+    }),
+  );
+  await page.route("**/api/py/chat/models", (route) =>
+    route.fulfill({ json: [] }),
+  );
+});
+
 test("browses Projects and General, searches, paginates, and offers scoped new chats", async ({
   page,
 }) => {
@@ -31,8 +59,9 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
       },
     });
   });
-  await page.route(`**/api/py/projects/${P}`, (route) =>
-    route.fulfill({ json: base }),
+  await page.route(
+    (url) => url.pathname === `/api/py/projects/${P}`,
+    (route) => route.fulfill({ json: base }),
   );
   const scopes: Array<string | null> = [];
   await page.route("**/api/py/chat/?**", (route) => {
@@ -104,28 +133,33 @@ test("edits project instructions with a revision guard and explains deletion", a
       json: { projects: [current], total: 1, page: 1, page_size: 5 },
     }),
   );
-  await page.route(`**/api/py/projects/${P}*`, (route) => {
-    if (route.request().method() === "PATCH") {
-      const body = route.request().postDataJSON();
-      updates.push(body);
-      current = { ...current, ...body, context_revision: 4 };
-    }
-    if (route.request().method() === "DELETE") {
-      expect(
-        new URL(route.request().url()).searchParams.get(
-          "expected_context_revision",
-        ),
-      ).toBe("4");
-    }
-    return route.fulfill({ json: current });
-  });
+  await page.route(
+    (url) => url.pathname === `/api/py/projects/${P}`,
+    (route) => {
+      if (route.request().method() === "PATCH") {
+        const body = route.request().postDataJSON();
+        updates.push(body);
+        current = { ...current, ...body, context_revision: 4 };
+      }
+      if (route.request().method() === "DELETE") {
+        expect(
+          new URL(route.request().url()).searchParams.get(
+            "expected_context_revision",
+          ),
+        ).toBe("4");
+      }
+      return route.fulfill({ json: current });
+    },
+  );
   await page.goto("/e2e/projects?view=settings");
   await expect(page.getByLabel("Project instructions")).toHaveValue(
     "Cite evidence",
   );
   await page.getByLabel("Project instructions").fill("Use concise citations");
   await page.getByRole("button", { name: "Save settings" }).click();
-  await expect(page.getByRole("status")).toHaveText(/Project settings saved/);
+  await expect(
+    page.getByRole("status").filter({ hasText: "Project settings saved" }),
+  ).toHaveText(/Project settings saved/);
   expect(updates).toEqual([
     {
       name: "Research",
@@ -162,8 +196,9 @@ test("moves a chat to General with explicit history transfer and updates its ide
       json: { projects: [base], total: 1, page: 1, page_size: 10 },
     }),
   );
-  await page.route(`**/api/py/projects/${P}`, (route) =>
-    route.fulfill({ json: base }),
+  await page.route(
+    (url) => url.pathname === `/api/py/projects/${P}`,
+    (route) => route.fulfill({ json: base }),
   );
   await page.route(`**/api/py/chat/${C}`, (route) =>
     route.fulfill({

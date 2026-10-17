@@ -53,7 +53,7 @@ The backend remains responsible for ownership and live authorization on all path
 
 ## Story boundary and verification
 
-Project sub-agent selection belongs to US-27.5. Agent settings are described below. Folder and standalone
+Chat model selection and project sub-agent selection are described below. Folder and standalone
 knowledge-base endpoints/routes remain for EPIC-28 cleanup, but folder navigation
 is no longer mounted in the app sidebar. No API/schema compatibility path or data
 reset is needed for this frontend story.
@@ -205,3 +205,57 @@ The test-only `/e2e/agent-settings` route composes the production pane with mock
 HTTP endpoints to exercise persistence, CRUD, pagination, unavailable bindings,
 and query failure recovery. Backend API/service tests independently verify actual
 owner isolation, singleton protection, fixed-model validation, and pagination.
+
+## Chat model selection and project delegation
+
+Draft/new chats start from the user's explicit default model without choosing an
+automatic replacement when it is missing or unavailable. Both draft and saved
+chat pickers use the generated live model catalog and display model/provider
+identity, image support, tool support, and context window. Unknown capabilities
+remain unknown. Cached catalog refresh failures are visible; failed verification
+blocks sends and regeneration. Main-agent configuration stays independent of model
+selection. Historical assistant turns show the immutable execution snapshot's
+model/provider and configuration revision, including when viewing older response
+versions after a model switch or catalog change.
+
+Saved model changes use the observed model revision and disable send/regenerate
+while the mutation is pending. Active generation and durable send acceptance also
+block switching. A rejected model mutation retains the current identity and
+requires an explicit generated chat refetch before another selection. Regeneration
+uses the chat's current server selection; the UI marks it busy immediately and
+never relabels earlier executions. General displays that it never delegates and
+exposes no sub-agent membership controls.
+
+Project settings compose an independent `ProjectSubAgents` section. Selected
+workers and candidates have separate bounded pages, fixed-model/provider labels,
+loading/failure/empty states, and explicit select/deselect actions. New projects
+have no selected workers. Membership changes use the generated atomic batch
+mutations with the revision observed by the corresponding list. Conflicts retain
+visible state, disable further mutations, and require explicit list reload.
+Global mutation-cache invalidation updates both lists and project metadata;
+unsaved project instruction drafts keep their original revision so they cannot
+overwrite intervening membership changes silently.
+
+`GET /projects/{project_id}/sub-agent-candidates` returns the same paginated shape
+as selected memberships: `agents`, `total`, `page`, `page_size`, and
+`context_revision`. It checks project ownership, composes the agent domain's
+owner-scoped select, filters to sub-agent definitions outside the project's
+selected set, and orders by name/ID before database pagination. Selected and
+candidate pages share a small project-specific response-enrichment function.
+This keeps already-selected or foreign definitions from consuming candidate pages.
+Unavailable models retain their explicit binding; new selection is disabled for
+those definitions, while an existing selection can be removed. Deleted definitions
+leave the project selections through the existing revocation boundary. Removing
+selection revokes active delegated access while retaining historical answers/files.
+
+Browser verification includes the production `AppPage` and `ChatSession` (with
+mocked HTTP/WebSocket boundaries) for draft choice, reopening a persisted choice,
+model switching, regeneration under the selected model, active-run disablement,
+and restoring an older response's original provenance. Project scenarios use the
+production settings page for two independent selections, conflict/reload,
+unavailable fixed models, deselection, and deletion. These test routes are available
+only under the test configuration profile. Backend integration tests independently
+verify real ownership, runtime General non-delegation, capability revocation,
+selection atomicity, execution snapshots, and candidate filtering before pagination.
+The browser harness does not invoke real provider services or authenticated user
+sessions against the real backend.

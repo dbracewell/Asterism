@@ -36,9 +36,9 @@ export default function AppPage() {
     staleTime: 0,
     retry: false,
   });
-  const modelAvailable = models.data?.some(
-    (model) => model.id === modelId && model.available,
-  );
+  const modelAvailable =
+    !models.error &&
+    models.data?.some((model) => model.id === modelId && model.available);
 
   return (
     <div className="from-primary/5 via-primary/15 relative flex flex-1 flex-col items-center justify-center gap-6 bg-radial-[at_50%_50%] via-5% to-transparent to-60% p-2 pt-12">
@@ -62,7 +62,7 @@ export default function AppPage() {
                 </span>
               </div>
               <ChatModelPicker value={modelId} onChange={setModelId} />
-              {models.data && !modelAvailable && (
+              {models.data && !models.error && !modelAvailable && (
                 <p className="text-destructive px-2 text-sm" role="alert">
                   Choose an available chat model before starting a chat.
                 </p>

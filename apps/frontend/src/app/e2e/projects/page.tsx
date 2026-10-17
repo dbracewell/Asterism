@@ -3,8 +3,14 @@ import { ProjectsHarness } from "./projects-harness";
 export default async function ProjectsTestPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; projectId?: string }>;
 }) {
   if (process.env.ASTERISM_CONFIG_PROFILE !== "test") notFound();
-  return <ProjectsHarness view={(await searchParams).view ?? "list"} />;
+  const params = await searchParams;
+  return (
+    <ProjectsHarness
+      view={params.view ?? "list"}
+      projectId={params.projectId}
+    />
+  );
 }

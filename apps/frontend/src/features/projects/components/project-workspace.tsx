@@ -14,7 +14,8 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { ProjectSubAgents } from "./project-sub-agents";
 import { ProjectFiles } from "./project-files";
 import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
@@ -87,7 +88,13 @@ export function ProjectWorkspace({
                 return result.isError ? undefined : result.data;
               }}
               disabled={project.isFetching || !!project.error}
-            />
+            >
+              <ProjectSubAgents
+                key={`agents-${projectId}`}
+                projectId={projectId}
+                disabled={project.isFetching || !!project.error}
+              />
+            </ProjectSettings>
           ) : (
             <>
               <WorkspaceChats key={projectId} projectId={projectId} />
@@ -104,10 +111,12 @@ function ProjectSettings({
   project,
   disabled,
   reload,
+  children,
 }: {
   project: Project;
   disabled: boolean;
   reload: () => Promise<Project | undefined>;
+  children?: ReactNode;
 }) {
   const router = useRouter();
   // Keep the revision paired with the user's draft. Background refetches must not
@@ -194,6 +203,7 @@ function ProjectSettings({
           </Button>
         </div>
       </form>
+      {children}
       <section
         className="flex flex-col items-start gap-3 border-t pt-6"
         aria-label="Delete project"

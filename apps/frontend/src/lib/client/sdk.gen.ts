@@ -249,6 +249,9 @@ import type {
   ProjectGetOneData,
   ProjectGetOneErrors,
   ProjectGetOneResponses,
+  ProjectSubAgentCandidatesData,
+  ProjectSubAgentCandidatesErrors,
+  ProjectSubAgentCandidatesResponses,
   ProjectSubAgentDeselectManyData,
   ProjectSubAgentDeselectManyErrors,
   ProjectSubAgentDeselectManyResponses,
@@ -1665,6 +1668,27 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * List Project Sub Agent Candidates
+   */
+  public projectSubAgentCandidates<ThrowOnError extends boolean = false>(
+    options: Options<ProjectSubAgentCandidatesData, ThrowOnError>,
+  ): RequestResult<
+    ProjectSubAgentCandidatesResponses,
+    ProjectSubAgentCandidatesErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ProjectSubAgentCandidatesResponses,
+      ProjectSubAgentCandidatesErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/sub-agent-candidates",
+      ...options,
     });
   }
 

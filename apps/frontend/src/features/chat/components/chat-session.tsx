@@ -33,6 +33,7 @@ import {
   messageUpdateMutation,
   chatMessageSendMutation,
   chatFileGetScopeOptions,
+  chatModelsListOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -78,6 +79,13 @@ export const ChatSession = ({
     staleTime: 0,
   });
 
+  const models = useQuery({
+    ...chatModelsListOptions({ client }),
+    enabled: !!session,
+    staleTime: 0,
+    retry: false,
+  });
+  const [isChangingModel, setIsChangingModel] = React.useState(false);
   const queryKey = chatSessionGetOneQueryKey({
     path: { chat_id: chatId },
   });
@@ -243,6 +251,7 @@ export const ChatSession = ({
           : [...prev.messages, accepted],
       };
     });
+    setIsProcessing(true);
     // Persistence acknowledgement precedes generation; reconnect can resume this same pending turn.
     sendJsonMessage({ type: "resume" });
   };
@@ -276,6 +285,23 @@ export const ChatSession = ({
   }
 
   const chatAgent = user.settings.main_agent;
+  const selectedModelAvailable =
+    !models.error &&
+    !!models.data?.some(
+      (model) => model.id === session.info.selected_model_id && model.available,
+    );
+  const interactionBusy =
+    isProcessing || sendMessage.isPending || isChangingModel;
+  function requestRegeneration(parentId?: string | null) {
+    if (
+      !selectedModelAvailable ||
+      interactionBusy ||
+      connectionStatus !== "Connected"
+    )
+      return;
+    setIsProcessing(true);
+    sendJsonMessage({ type: "regenerate", parent_message_id: parentId });
+  }
   const contextWindow =
     session.info.context_model?.context_window ??
     user.settings.models?.find(
@@ -309,6 +335,7 @@ export const ChatSession = ({
         <ExistingChatModelPicker
           info={session.info}
           disabled={isProcessing || sendMessage.isPending}
+          onPendingChange={setIsChangingModel}
           onSelected={(info) =>
             queryClient.setQueryData(queryKey, (previous?: Chat) =>
               previous
@@ -320,7 +347,7 @@ export const ChatSession = ({
         {session.info.resume_error && (
           <p role="alert">{session.info.resume_error}</p>
         )}
-        {!session.info.selected_model?.available && (
+        {models.data && !models.error && !selectedModelAvailable && (
           <p role="alert">
             Choose an available model to continue. Historical messages keep
             their original model.
@@ -336,7 +363,11 @@ export const ChatSession = ({
             chatId={chatId}
             key={message.id}
             message={message}
-            isProcessing={isProcessing}
+            isProcessing={interactionBusy}
+            canRegenerate={
+              selectedModelAvailable && connectionStatus === "Connected"
+            }
+            onRegenerate={requestRegeneration}
             sendJsonMessage={sendJsonMessage}
           />
         ))}
@@ -348,7 +379,9 @@ export const ChatSession = ({
           <MessageItem
             chatId={chatId}
             message={incomingMessage}
-            isProcessing={isProcessing}
+            isProcessing={interactionBusy}
+            canRegenerate={false}
+            onRegenerate={requestRegeneration}
             defaultShowThinking
             sendJsonMessage={sendJsonMessage}
           />
@@ -394,9 +427,9 @@ export const ChatSession = ({
                 : fileScope.data?.allowed_file_ids
             }
             disabled={
-              isProcessing ||
+              interactionBusy ||
               connectionStatus !== "Connected" ||
-              !session.info.selected_model?.available
+              !selectedModelAvailable
             }
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
@@ -516,12 +549,16 @@ const MessageItem = React.memo(
     isProcessing,
     message,
     defaultShowThinking = false,
+    canRegenerate,
+    onRegenerate,
     sendJsonMessage,
   }: {
     chatId: string;
     isProcessing: boolean;
     message: StreamingMessage;
     defaultShowThinking?: boolean;
+    canRegenerate: boolean;
+    onRegenerate: (parentId?: string | null) => void;
     sendJsonMessage: SendJsonMessage;
   }) => {
     const user = useUser();
@@ -664,6 +701,7 @@ const MessageItem = React.memo(
                         },
                       });
                     }}
+                    aria-label="Previous response version"
                     disabled={prevSiblingId == null || isProcessing}
                   >
                     <ChevronLeftIcon />
@@ -683,6 +721,7 @@ const MessageItem = React.memo(
                         },
                       });
                     }}
+                    aria-label="Next response version"
                     disabled={nextSiblingId == null || isProcessing}
                   >
                     <ChevronRightIcon />
@@ -695,12 +734,9 @@ const MessageItem = React.memo(
                   size="icon-sm"
                   variant="ghost"
                   className="rounded-full"
-                  onClick={() => {
-                    sendJsonMessage?.({
-                      type: "regenerate",
-                      parent_message_id: message.parent_message_id,
-                    });
-                  }}
+                  aria-label="Regenerate response"
+                  disabled={isProcessing || !canRegenerate}
+                  onClick={() => onRegenerate(message.parent_message_id)}
                 >
                   <RotateCwIcon />
                 </Button>

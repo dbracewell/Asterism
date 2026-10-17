@@ -9,9 +9,14 @@ import {
   ExecutionLabel,
 } from "./chat-model-picker";
 import { MessageExecution } from "@/lib/client";
-const mocks = vi.hoisted(() => ({ list: vi.fn(), update: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  list: vi.fn(),
+  update: vi.fn(),
+  get: vi.fn(),
+}));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   chatModelsListOptions: () => ({ queryKey: ["models"], queryFn: mocks.list }),
+  chatSessionGetOneOptions: () => ({ queryKey: ["chat"], queryFn: mocks.get }),
   chatModelUpdateMutation: () => ({ mutationFn: mocks.update }),
 }));
 const choices = [
@@ -136,4 +141,69 @@ it("labels historical output from its recorded snapshot", () => {
   expect(screen.getByLabelText("Executed model")).toHaveTextContent(
     "Original model · Original provider · configuration 2",
   );
+});
+
+it("shows explicit capabilities without inferring support from the model name", async () => {
+  mocks.list.mockResolvedValue([
+    {
+      ...choices[0],
+      supports_vision: true,
+      supports_tools: false,
+      context_window: 8192,
+    },
+  ]);
+  render(<ChatModelPicker value="a" onChange={vi.fn()} />, {
+    wrapper: wrapper(),
+  });
+  expect(await screen.findByText("Images supported")).toBeVisible();
+  expect(screen.getByText("Tools unsupported")).toBeVisible();
+  expect(screen.getByText("8,192 token context")).toBeVisible();
+});
+
+it("requires a successful reload after a model revision conflict", async () => {
+  mocks.update.mockRejectedValueOnce({ detail: "Selection changed" });
+  mocks.get.mockResolvedValue({
+    info: { id: "chat", selected_model_id: "b", model_revision: 8 },
+    messages: [],
+  });
+  const onSelected = vi.fn();
+  const onPendingChange = vi.fn();
+  render(
+    <ExistingChatModelPicker
+      info={{
+        id: "chat",
+        user_id: "owner",
+        created_at: 0,
+        updated_at: 0,
+        selected_model_id: "a",
+        model_revision: 1,
+      }}
+      disabled={false}
+      onSelected={onSelected}
+      onPendingChange={onPendingChange}
+    />,
+    { wrapper: wrapper() },
+  );
+  await waitFor(() =>
+    expect(screen.getByLabelText("Chat model")).toBeEnabled(),
+  );
+  await userEvent.click(screen.getByLabelText("Chat model"));
+  await userEvent.click(
+    screen.getByRole("option", { name: "Beta (Provider)" }),
+  );
+  expect(await screen.findByText(/Selection changed/)).toBeVisible();
+  expect(screen.getByLabelText("Chat model")).toBeDisabled();
+  expect(onPendingChange.mock.calls.map((call) => call[0])).toEqual([
+    true,
+    false,
+  ]);
+  await userEvent.click(
+    screen.getByRole("button", { name: "Reload chat model" }),
+  );
+  await waitFor(() =>
+    expect(onSelected).toHaveBeenCalledWith(
+      expect.objectContaining({ model_revision: 8 }),
+    ),
+  );
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });

@@ -1805,6 +1805,20 @@ export const zProjectSubAgentSelectManyPath = z.object({
  */
 export const zProjectSubAgentSelectManyResponse = zProjectSubAgentBatchResult;
 
+export const zProjectSubAgentCandidatesPath = z.object({
+  project_id: z.uuid(),
+});
+
+export const zProjectSubAgentCandidatesQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(10),
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectSubAgentCandidatesResponse = zProjectSubAgentList;
+
 /**
  * Successful Response
  */

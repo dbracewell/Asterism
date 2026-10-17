@@ -181,6 +181,27 @@ async def list_project_sub_agents(
     )
 
 
+@project_router.get(
+    "/{project_id}/sub-agent-candidates",
+    response_model=ProjectSubAgentList,
+    operation_id="projectSubAgentCandidates",
+)
+async def list_project_sub_agent_candidates(
+    project_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+) -> ProjectSubAgentList:
+    return await sub_agents.list_project_sub_agent_candidates(
+        user_id=user.id,
+        project_id=project_id,
+        session=db,
+        page=page,
+        page_size=page_size,
+    )
+
+
 @project_router.post(
     "/{project_id}/sub-agents",
     response_model=ProjectSubAgentBatchResult,

@@ -39,9 +39,14 @@ export function WorkspaceIdentity({ projectId }: { projectId: string | null }) {
   });
   if (!projectId)
     return (
-      <Link href="/general" className="text-sm hover:underline">
-        General
-      </Link>
+      <div className="flex flex-col gap-1">
+        <Link href="/general" className="text-sm hover:underline">
+          General
+        </Link>
+        <p className="text-muted-foreground text-xs">
+          General chats never delegate to sub-agents.
+        </p>
+      </div>
     );
   return (
     <div className="flex flex-col gap-2">

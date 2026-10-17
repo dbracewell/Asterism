@@ -249,6 +249,9 @@ import type {
   ProjectGetOneData,
   ProjectGetOneError,
   ProjectGetOneResponse,
+  ProjectSubAgentCandidatesData,
+  ProjectSubAgentCandidatesError,
+  ProjectSubAgentCandidatesResponse,
   ProjectSubAgentDeselectManyData,
   ProjectSubAgentDeselectManyError,
   ProjectSubAgentDeselectManyResponse,
@@ -2406,6 +2409,88 @@ export const projectSubAgentSelectManyMutation = (
   };
   return mutationOptions;
 };
+
+export const projectSubAgentCandidatesQueryKey = (
+  options: Options<ProjectSubAgentCandidatesData>,
+) => createQueryKey("projectSubAgentCandidates", options);
+
+/**
+ * List Project Sub Agent Candidates
+ */
+export const projectSubAgentCandidatesOptions = (
+  options: Options<ProjectSubAgentCandidatesData>,
+) =>
+  queryOptions<
+    ProjectSubAgentCandidatesResponse,
+    ProjectSubAgentCandidatesError,
+    ProjectSubAgentCandidatesResponse,
+    ReturnType<typeof projectSubAgentCandidatesQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .projectSubAgentCandidates({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: projectSubAgentCandidatesQueryKey(options),
+  });
+
+export const projectSubAgentCandidatesInfiniteQueryKey = (
+  options: Options<ProjectSubAgentCandidatesData>,
+): QueryKey<Options<ProjectSubAgentCandidatesData>> =>
+  createQueryKey("projectSubAgentCandidates", options, true);
+
+/**
+ * List Project Sub Agent Candidates
+ */
+export const projectSubAgentCandidatesInfiniteOptions = (
+  options: Options<ProjectSubAgentCandidatesData>,
+) =>
+  infiniteQueryOptions<
+    ProjectSubAgentCandidatesResponse,
+    ProjectSubAgentCandidatesError,
+    InfiniteData<ProjectSubAgentCandidatesResponse>,
+    QueryKey<Options<ProjectSubAgentCandidatesData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ProjectSubAgentCandidatesData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ProjectSubAgentCandidatesData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry
+          .get()
+          .projectSubAgentCandidates({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true,
+          });
+        return data;
+      },
+      queryKey: projectSubAgentCandidatesInfiniteQueryKey(options),
+    },
+  );
 
 export const mainAgentGetQueryKey = (options?: Options<MainAgentGetData>) =>
   createQueryKey("mainAgentGet", options);

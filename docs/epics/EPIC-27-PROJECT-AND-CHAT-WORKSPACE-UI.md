@@ -1,6 +1,6 @@
 # EPIC-27 — Project and chat workspace UI
 
-Status: In progress. US-27.1 was confirmed complete on 2026-10-16; US-27.2 was confirmed complete on 2026-10-16; US-27.3 was confirmed complete on 2026-10-16; US-27.4 was confirmed complete on 2026-10-17. US-27.5 remains pending.
+Status: Complete (user confirmed final story US-27.5 on 2026-10-17). US-27.1 was confirmed complete on 2026-10-16; US-27.2 was confirmed complete on 2026-10-16; US-27.3 was confirmed complete on 2026-10-16; US-27.4 was confirmed complete on 2026-10-17. US-27.5 was confirmed complete on 2026-10-17.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -303,12 +303,88 @@ As a user, I want to see and choose my chat model and select the sub-agents avai
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-27.1, US-27.4, EPIC-29, and US-26.1.
 
-- [ ] US-27.5-T1: Replace chat agent selection with an available-model picker and visible active model/provider identity; persist selection across reopen and show the actual model used on historical assistant turns. Handle no available models, revoked selections, loading/error states, and model capability differences.
-- [ ] US-27.5-T2: Support draft/new chat model choice and next-turn switching without changing main-agent properties; disable switching during active runs, and make regeneration use the chosen model without relabeling earlier turns.
-- [ ] US-27.5-T3: Add select/deselect controls for owned sub-agents in project settings with empty initial selection, fixed-model labels, and deletion/revocation feedback. General offers no sub-agent selection or delegation; use atomic generated membership hooks.
-- [ ] US-27.5-T4: Test two-model chats, reopen/regenerate/provenance, unavailable models, main-agent settings retained across model changes, two projects with different selected sub-agents, deselection, and General non-delegation in component and isolated E2E coverage.
+- [x] US-27.5-T1: Replace chat agent selection with an available-model picker and visible active model/provider identity; persist selection across reopen and show the actual model used on historical assistant turns. Handle no available models, revoked selections, loading/error states, and model capability differences.
+- [x] US-27.5-T2: Support draft/new chat model choice and next-turn switching without changing main-agent properties; disable switching during active runs, and make regeneration use the chosen model without relabeling earlier turns.
+- [x] US-27.5-T3: Add select/deselect controls for owned sub-agents in project settings with empty initial selection, fixed-model labels, and deletion/revocation feedback. General offers no sub-agent selection or delegation; use atomic generated membership hooks.
+- [x] US-27.5-T4: Test two-model chats, reopen/regenerate/provenance, unavailable models, main-agent settings retained across model changes, two projects with different selected sub-agents, deselection, and General non-delegation in component and isolated E2E coverage.
 
 **Acceptance:** Users always see the chat's selected model and can inspect available models; historical model labels remain accurate. Project-selected sub-agents are explicit and model-bound; automatic tool availability requires no user tool toggles.
+
+**Implementation and verification (2026-10-17):** Implemented on
+`feat/us-27.5-chat-model-project-agents`; user confirmed completion and authorized archive/commit/merge on 2026-10-17. Draft and saved chat pickers show live model/provider
+identity plus explicit image/tool support and context-window metadata. Unknown
+capabilities remain unknown. Missing or disabled selections retain their identity
+without fallback, and catalog verification failures block sends/regeneration.
+Saved model changes use the observed revision and require an explicit chat reload
+after a rejected mutation. Send, regenerate, and switching controls remain disabled
+through model-change/send acceptance and active-run windows. Regeneration uses the
+current selection while older response versions retain their recorded provenance.
+Main configuration and generation defaults remain independent of chat model choice.
+General visibly states it never delegates and offers no membership controls.
+
+Project settings now compose `ProjectSubAgents` before the deletion section.
+Selected and available workers have separate bounded pages, fixed-model/provider
+labels, empty/loading/initial-error/cached-refresh-error/retry states, and explicit
+revision-guarded select/deselect actions using generated atomic membership hooks.
+Conflicts require reload; unavailable fixed bindings remain visible and removable,
+and deleted definitions disappear through the existing revocation boundary.
+Global mutation invalidation refreshes both lists without manual per-mutation
+invalidations. The new owner-checked `/projects/{project_id}/sub-agent-candidates`
+endpoint excludes already-selected and foreign definitions before pagination;
+selected/candidate queries reuse the existing owner-scoped agent base select,
+shared database pagination, and a project-specific response-enrichment helper.
+See [workspace architecture](../architecture/project-workspaces.md).
+
+| Gate                                  | Result                                                                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend unit/integration suite        | 432 passed                                                                                                                                        |
+| Frontend unit/component suite         | 145 passed; seven added regressions; final project-composition checks passed 14/14                                                                |
+| Frontend migration tests              | 6 passed                                                                                                                                          |
+| Root configuration tests              | 29 passed                                                                                                                                         |
+| Backend/frontend lint                 | Passed                                                                                                                                            |
+| Configured backend/frontend typecheck | Passed                                                                                                                                            |
+| Backend static typing                 | Changed project modules: 0 errors; full repository: 10 pre-existing errors reproduced identically on unchanged HEAD                               |
+| Formatting                            | `pnpm format` passed; story documentation formatted separately                                                                                    |
+| Import cycles                         | 220 modules, 1037 internal imports; no cycles                                                                                                     |
+| Generated clients                     | Independent generation from served current OpenAPI matches all generated files after formatting                                                   |
+| Isolated Playwright                   | 29 passed without retries; final chat guard/draft checks 2/2 and final project layout/workflow checks 6/6 with retries disabled; runners exited 0 |
+| Frontend production build             | Passed                                                                                                                                            |
+| Visual review                         | Desktop and 390px mobile chat/project settings inspected; no horizontal overflow; project deletion follows membership settings                    |
+| Diff integrity                        | `git diff --check` passed                                                                                                                         |
+
+Browser coverage uses the production `AppPage`, `ChatSession`, picker, message
+provenance/branch controls, and project settings with mocked HTTP/WebSocket
+boundaries. It covers explicit draft selection/request forwarding, persisted
+selection after reload, model switching with unchanged historical labels,
+regeneration under the chosen model, disabled send/regenerate during pending model
+mutation, disabled switching during generation, and restoration of an older
+response's original model label. Project scenarios verify two independently scoped
+selections, revision conflicts/reload, unavailable models, deselection/deletion,
+and responsive layout. Existing backend integration tests independently verify real
+owner isolation, General non-delegation, actual execution snapshots, runtime
+revocation, atomic membership updates, and model-selection concurrency. New API
+coverage checks candidate ownership/exclusions before pagination and input bounds.
+The browser harness does not run complete authenticated sessions against the real
+backend or call external model providers.
+
+Initial focused browser verification found a cold chat-loading assertion timeout,
+a broad older project mock intercepting the new membership endpoints, an unscoped
+status assertion, and a delete mock that excluded its revision query string.
+The load assertion now allows bounded cold startup, endpoint matching is exact by
+pathname while accepting query strings, and status checks are scoped to saved
+feedback. Initial lint repaired an unescaped apostrophe and unused test imports.
+These failed runs are not counted as passes. Final visual review moved project
+membership settings above deletion controls through a composition slot; relevant
+unit/browser checks passed afterward. Managed test backends report exit 143 during
+intentional cleanup while the successful isolated runners exit 0. The full static
+checker output matches unchanged HEAD after normalizing paths; its errors remain
+in unrelated chat-controller/component-plugin modules. No migrations,
+compatibility shims, new UI dependencies, working-database reset, or live provider
+calls were introduced. The unrelated `core/config.py` edit remains untouched.
+
+The completed checklist is [archived](../archive/todo-completed-2026-10-17.md).
+EPIC-27 is confirmed complete. Next recommended story: US-28.1 — Remove folders
+and standalone knowledge bases.
 
 ## Shared definition of done
 

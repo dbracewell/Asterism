@@ -17,3 +17,21 @@ Changed backend agent files pass static analysis. Full backend static analysis r
 The current database and unrelated `core/config.py` edit were retained. No migration, compatibility shim, new UI dependency, or external model-provider call was introduced.
 
 Next recommended story: US-27.5 — Chat model picker and project sub-agent selection. EPIC-27 remains in progress.
+
+## US-27.5 — Chat model picker and project sub-agent selection
+
+User confirmed completion on 2026-10-17 and authorized archive, commit, and merge into `main`.
+
+- [x] US-27.5: Chat model picker and project sub-agent selection — confirmed complete 2026-10-17.
+  - [x] US-27.5-T1: Replace chat agent selection with an available-model picker and visible active model/provider identity; persist selection across reopen and show the actual model used on historical assistant turns. Handle no available models, revoked selections, loading/error states, and model capability differences.
+  - [x] US-27.5-T2: Support draft/new chat model choice and next-turn switching without changing main-agent properties; disable switching during active runs, and make regeneration use the chosen model without relabeling earlier turns.
+  - [x] US-27.5-T3: Add select/deselect controls for owned sub-agents in project settings with empty initial selection, fixed-model labels, and deletion/revocation feedback. General offers no sub-agent selection or delegation; use atomic generated membership hooks.
+  - [x] US-27.5-T4: Test two-model chats, reopen/regenerate/provenance, unavailable models, main-agent settings retained across model changes, two projects with different selected sub-agents, deselection, and General non-delegation in component and isolated E2E coverage.
+
+Verification: 432 backend tests, 145 frontend unit/component tests, 6 migration tests, 29 root configuration tests, and 29 isolated Playwright tests passed. Final chat guard/draft checks passed 2/2 and final project layout/workflow checks passed 6/6 with retries disabled. Lint, configured typechecks, formatting, production build, independent served-OpenAPI/generated-client consistency, import-cycle checks, and diff integrity passed. Desktop and 390px mobile chat/project layouts were inspected without horizontal overflow.
+
+Changed backend project modules pass static analysis. Full backend static analysis reports 10 pre-existing errors reproduced identically on unchanged HEAD. Browser tests use production UI with mocked HTTP/WebSocket boundaries; backend integration tests independently verify ownership, General non-delegation, model concurrency/provenance, atomic memberships, and candidate filtering before pagination. See [EPIC-27](../epics/EPIC-27-PROJECT-AND-CHAT-WORKSPACE-UI.md) for evidence and limitations.
+
+The current database and unrelated `core/config.py` edit were retained. No migration, compatibility shim, new UI dependency, or external model-provider call was introduced.
+
+EPIC-27 is confirmed complete. Next recommended story: US-28.1 — Remove folders and standalone knowledge bases.
