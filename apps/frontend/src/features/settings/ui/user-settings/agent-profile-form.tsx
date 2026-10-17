@@ -1,3 +1,4 @@
+"use client";
 import { SubAgentToolWarning } from "./sub-agent-tool-warning";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,16 +11,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel as Label,
+  FieldSet,
+  FieldLegend,
+} from "@/components/ui/field";
+import { Empty, EmptyDescription } from "@/components/ui/empty";
 import {
   Select,
   SelectContent,
   SelectItem,
+  SelectGroup,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useUser } from "@/features/auth/components/user-context";
 import { client } from "@/lib/api";
 import {
   MainAgentConfiguration,
@@ -28,6 +36,7 @@ import {
 } from "@/lib/client";
 import {
   mainAgentUpdateMutation,
+  chatModelsListOptions,
   subAgentCreateMutation,
   subAgentUpdateMutation,
   toolsGetActiveOptions,
@@ -52,8 +61,8 @@ export function MainAgentForm({
         <DialogHeader>
           <DialogTitle>Main configuration</DialogTitle>
           <DialogDescription>
-            Instructions and capabilities shared by your chats. Choose the chat
-            model separately in General settings.
+            Instructions and capabilities shared by your chats. Choose the model
+            separately for each chat.
           </DialogDescription>
         </DialogHeader>
         {open && (
@@ -122,7 +131,6 @@ function ConfigurationForm({
   subAgent?: boolean;
   complete: () => void;
 }) {
-  const user = useUser();
   const router = useRouter();
   const [name, setName] = useState(configuration?.name ?? "");
   const [description, setDescription] = useState(
@@ -140,7 +148,10 @@ function ConfigurationForm({
   const [maxTokens, setMaxTokens] = useState(
     configuration?.chat_parameters?.max_tokens?.toString() ?? "",
   );
-  const toolQuery = useQuery(toolsGetActiveOptions({ client }));
+  const toolQuery = useQuery({
+    ...toolsGetActiveOptions({ client }),
+    staleTime: 0,
+  });
   const mainMutation = useMutation(mainAgentUpdateMutation({ client }));
   const createMutation = useMutation(subAgentCreateMutation({ client }));
   const updateMutation = useMutation(subAgentUpdateMutation({ client }));
@@ -148,30 +159,78 @@ function ConfigurationForm({
     mainMutation.isPending ||
     createMutation.isPending ||
     updateMutation.isPending;
-  const available = user.settings.models ?? [];
+  const modelQuery = useQuery({
+    ...chatModelsListOptions({ client }),
+    enabled: subAgent,
+    staleTime: 0,
+  });
+  const available = modelQuery.data ?? [];
+  const [saveError, setSaveError] = useState(false);
+  const [defaults, setDefaults] = useState({
+    top_p: configuration?.chat_parameters?.top_p?.toString() ?? "",
+    presence_penalty:
+      configuration?.chat_parameters?.presence_penalty?.toString() ?? "",
+    frequency_penalty:
+      configuration?.chat_parameters?.frequency_penalty?.toString() ?? "",
+    seed: configuration?.chat_parameters?.seed?.toString() ?? "",
+  });
   const selectableTools =
     toolQuery.data?.items.filter((tool) => tool.policy !== "context_managed") ??
     [];
-  const missingTools = tools.filter(
+  const internalTools =
+    toolQuery.data?.items
+      .filter((tool) => tool.policy === "context_managed")
+      .map((tool) => tool.name) ?? [];
+  const ordinaryTools = tools.filter((tool) => !internalTools.includes(tool));
+  const missingTools = ordinaryTools.filter(
     (tool) => !selectableTools.some((item) => item.name === tool),
   );
   const invalidModel =
-    subAgent && !available.some((model) => model.id === modelId);
+    subAgent &&
+    (!available.some((model) => model.id === modelId && model.available) ||
+      modelQuery.isPending ||
+      modelQuery.isError);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (
+      pending ||
+      invalidModel ||
+      toolQuery.isPending ||
+      toolQuery.isError ||
+      missingTools.length ||
+      (subAgent && !name.trim())
+    )
+      return;
+    setSaveError(false);
     const body: MainAgentUpdate = {
       system_prompt: prompt,
       max_steps: maxSteps,
-      tools,
+      tools: ordinaryTools,
       chat_parameters: {
         ...configuration?.chat_parameters,
+        ...Object.fromEntries(
+          Object.entries(defaults)
+            .filter(
+              ([key, value]) =>
+                value !== "" ||
+                configuration?.chat_parameters?.[
+                  key as keyof typeof defaults
+                ] != null,
+            )
+            .map(([key, value]) => [key, value === "" ? null : Number(value)]),
+        ),
         temperature: temperature === "" ? null : Number(temperature),
         max_tokens: maxTokens === "" ? null : Number(maxTokens),
       },
     };
     try {
       if (subAgent) {
-        const subBody = { ...body, name, description, model_id: modelId };
+        const subBody = {
+          ...body,
+          name: name.trim(),
+          description,
+          model_id: modelId,
+        };
         if (configuration)
           await updateMutation.mutateAsync({
             path: { agent_id: configuration.id },
@@ -183,156 +242,258 @@ function ConfigurationForm({
       router.refresh();
       complete();
     } catch {
+      setSaveError(true);
       toast.error("Could not save configuration");
     }
   };
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
-      {subAgent && <SubAgentToolWarning />}
-      {subAgent && (
-        <>
-          <div>
-            <Label htmlFor="agent-name">Name</Label>
-            <Input
-              id="agent-name"
-              required
-              maxLength={200}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="agent-description">Description</Label>
-            <Textarea
-              id="agent-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="agent-model">Fixed model</Label>
-            <Select value={modelId} onValueChange={setModelId}>
-              <SelectTrigger id="agent-model">
-                <SelectValue placeholder="Select a model" />
-              </SelectTrigger>
-              <SelectContent>
-                {available.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.name} ({model.provider_name})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {invalidModel && (
-              <p role="alert" className="text-destructive text-sm">
-                Choose an available model. The saved binding remains until you
-                save a replacement.
-              </p>
+    <form onSubmit={submit}>
+      <FieldGroup>
+        <FieldSet disabled={pending}>
+          <FieldGroup>
+            {subAgent && <SubAgentToolWarning />}
+            {subAgent && (
+              <>
+                <Field>
+                  <Label htmlFor="agent-name">Name</Label>
+                  <Input
+                    id="agent-name"
+                    required
+                    maxLength={200}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <Label htmlFor="agent-description">Description</Label>
+                  <Textarea
+                    id="agent-description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <Label htmlFor="agent-model">Fixed model</Label>
+                  <Select
+                    value={modelId}
+                    onValueChange={setModelId}
+                    disabled={modelQuery.isPending || modelQuery.isError}
+                  >
+                    <SelectTrigger id="agent-model" aria-invalid={invalidModel}>
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {modelId &&
+                          !available.some((model) => model.id === modelId) && (
+                            <SelectItem value={modelId} disabled>
+                              {modelId} (unavailable)
+                            </SelectItem>
+                          )}
+                        {available.map((model) => (
+                          <SelectItem
+                            key={model.id}
+                            value={model.id}
+                            disabled={!model.available}
+                          >
+                            {model.name} ({model.provider_name})
+                            {!model.available ? " — unavailable" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {modelQuery.isPending && <p role="status">Loading models…</p>}
+                  {modelQuery.isError && (
+                    <Empty role="alert" className="flex-none p-3">
+                      <EmptyDescription>
+                        Could not {modelQuery.data ? "refresh" : "load"} models.{" "}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => void modelQuery.refetch()}
+                        >
+                          Retry models
+                        </Button>
+                      </EmptyDescription>
+                    </Empty>
+                  )}
+                  {modelQuery.data &&
+                    !available.some((model) => model.available) && (
+                      <p>
+                        No available models. Ask an administrator to enable one.
+                      </p>
+                    )}
+                  {invalidModel &&
+                    !modelQuery.isPending &&
+                    !modelQuery.isError && (
+                      <p role="alert" className="text-destructive text-sm">
+                        Choose an available model. The saved binding remains
+                        until you save a replacement.
+                      </p>
+                    )}
+                </Field>
+              </>
             )}
-          </div>
-        </>
-      )}
-      <div>
-        <Label htmlFor="agent-prompt">Instructions</Label>
-        <Textarea
-          id="agent-prompt"
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-        />
-      </div>
-      <div>
-        <Label htmlFor="agent-steps">Maximum steps</Label>
-        <Input
-          id="agent-steps"
-          type="number"
-          min={1}
-          max={100}
-          required
-          value={maxSteps}
-          onChange={(event) => setMaxSteps(Number(event.target.value))}
-        />
-      </div>
-      <div>
-        <Label htmlFor="agent-temperature">Temperature (optional)</Label>
-        <Input
-          id="agent-temperature"
-          type="number"
-          min={0}
-          max={2}
-          step="any"
-          value={temperature}
-          onChange={(event) => setTemperature(event.target.value)}
-        />
-      </div>
-      <div>
-        <Label htmlFor="agent-tokens">Maximum tokens (optional)</Label>
-        <Input
-          id="agent-tokens"
-          type="number"
-          min={1}
-          value={maxTokens}
-          onChange={(event) => setMaxTokens(event.target.value)}
-        />
-      </div>
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Allowed tools</legend>
-        {toolQuery.isPending && <p role="status">Loading tools…</p>}
-        {toolQuery.isError && (
-          <div role="alert">
-            Could not load tools.{" "}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void toolQuery.refetch()}
-            >
-              Retry
-            </Button>
-          </div>
+            <Field>
+              <Label htmlFor="agent-prompt">Instructions</Label>
+              <Textarea
+                id="agent-prompt"
+                value={prompt}
+                onChange={(event) => setPrompt(event.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="agent-steps">Maximum steps</Label>
+              <Input
+                id="agent-steps"
+                type="number"
+                min={1}
+                max={100}
+                required
+                value={maxSteps}
+                onChange={(event) => setMaxSteps(Number(event.target.value))}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="agent-temperature">Temperature (optional)</Label>
+              <Input
+                id="agent-temperature"
+                type="number"
+                min={0}
+                max={2}
+                step="any"
+                value={temperature}
+                onChange={(event) => setTemperature(event.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="agent-tokens">Maximum tokens (optional)</Label>
+              <Input
+                id="agent-tokens"
+                type="number"
+                min={1}
+                value={maxTokens}
+                onChange={(event) => setMaxTokens(event.target.value)}
+              />
+            </Field>
+            {(
+              [
+                ["top_p", "Top P (optional)", 0, 1, "any"],
+                [
+                  "presence_penalty",
+                  "Presence penalty (optional)",
+                  -2,
+                  2,
+                  "any",
+                ],
+                [
+                  "frequency_penalty",
+                  "Frequency penalty (optional)",
+                  -2,
+                  2,
+                  "any",
+                ],
+                ["seed", "Seed (optional)", undefined, undefined, "1"],
+              ] as const
+            ).map(([key, label, min, max, step]) => (
+              <Field key={key}>
+                <Label htmlFor={`agent-${key}`}>{label}</Label>
+                <Input
+                  id={`agent-${key}`}
+                  type="number"
+                  min={min}
+                  max={max}
+                  step={step}
+                  value={defaults[key]}
+                  onChange={(event) =>
+                    setDefaults({ ...defaults, [key]: event.target.value })
+                  }
+                />
+              </Field>
+            ))}
+            <p className="text-muted-foreground text-sm">
+              Generation defaults apply when supported by the selected model.
+              Leave a field blank to use its provider default.
+            </p>
+            <FieldSet>
+              <FieldLegend>Allowed tools</FieldLegend>
+              {toolQuery.isPending && <p role="status">Loading tools…</p>}
+              {toolQuery.isError && (
+                <Empty role="alert" className="flex-none p-3">
+                  <EmptyDescription>
+                    Could not load tools.{" "}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void toolQuery.refetch()}
+                    >
+                      Retry
+                    </Button>
+                  </EmptyDescription>
+                </Empty>
+              )}
+              {!toolQuery.isPending &&
+                !toolQuery.isError &&
+                selectableTools.length === 0 && (
+                  <p className="text-muted-foreground text-sm">
+                    No active tools.
+                  </p>
+                )}
+              {!toolQuery.isError &&
+                selectableTools.map((tool) => (
+                  <Label key={tool.name} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={tools.includes(tool.name)}
+                      onCheckedChange={(checked) =>
+                        setTools(
+                          checked
+                            ? [...tools, tool.name]
+                            : tools.filter((value) => value !== tool.name),
+                        )
+                      }
+                    />
+                    {tool.name}
+                  </Label>
+                ))}
+              {!toolQuery.isPending &&
+                !toolQuery.isError &&
+                missingTools.map((tool) => (
+                  <Label key={tool} className="flex items-center gap-2">
+                    <Checkbox
+                      checked
+                      onCheckedChange={() =>
+                        setTools(tools.filter((value) => value !== tool))
+                      }
+                    />
+                    {tool} (unavailable; remove to save)
+                  </Label>
+                ))}
+            </FieldSet>
+          </FieldGroup>
+        </FieldSet>
+        {saveError && (
+          <Empty role="alert" className="flex-none p-3">
+            <EmptyDescription>
+              Could not save configuration. Your edits are retained. Check the
+              model and tool availability, then try again.
+            </EmptyDescription>
+          </Empty>
         )}
-        {!toolQuery.isPending &&
-          !toolQuery.isError &&
-          selectableTools.length === 0 && (
-            <p className="text-muted-foreground text-sm">No active tools.</p>
-          )}
-        {selectableTools.map((tool) => (
-          <Label key={tool.name} className="flex items-center gap-2">
-            <Checkbox
-              checked={tools.includes(tool.name)}
-              onCheckedChange={(checked) =>
-                setTools(
-                  checked
-                    ? [...tools, tool.name]
-                    : tools.filter((value) => value !== tool.name),
-                )
-              }
-            />
-            {tool.name}
-          </Label>
-        ))}
-        {missingTools.map((tool) => (
-          <Label key={tool} className="flex items-center gap-2">
-            <Checkbox
-              checked
-              onCheckedChange={() =>
-                setTools(tools.filter((value) => value !== tool))
-              }
-            />
-            {tool} (unavailable; remove to save)
-          </Label>
-        ))}
-      </fieldset>
-      <Button
-        type="submit"
-        disabled={
-          pending ||
-          toolQuery.isPending ||
-          toolQuery.isError ||
-          invalidModel ||
-          missingTools.length > 0
-        }
-      >
-        {pending ? "Saving…" : "Save configuration"}
-      </Button>
+        <Button
+          type="submit"
+          disabled={
+            pending ||
+            toolQuery.isPending ||
+            toolQuery.isError ||
+            invalidModel ||
+            (subAgent && !name.trim()) ||
+            missingTools.length > 0
+          }
+        >
+          {pending ? "Saving…" : "Save configuration"}
+        </Button>
+      </FieldGroup>
     </form>
   );
 }

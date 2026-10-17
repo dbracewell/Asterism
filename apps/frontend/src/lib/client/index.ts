@@ -534,6 +534,7 @@ export type {
   SubAgentDeleteErrors,
   SubAgentDeleteResponse,
   SubAgentDeleteResponses,
+  SubAgentList,
   SubAgentsListData,
   SubAgentsListError,
   SubAgentsListErrors,

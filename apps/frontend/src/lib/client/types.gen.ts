@@ -2047,6 +2047,28 @@ export type SubAgentDefinition = {
 };
 
 /**
+ * SubAgentList
+ */
+export type SubAgentList = {
+  /**
+   * Items
+   */
+  items: Array<SubAgentDefinition>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
  * SubAgentTrace
  */
 export type SubAgentTrace = {
@@ -5916,7 +5938,16 @@ export type ComponentsByTypeResponse =
 export type SubAgentsListData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
   url: "/agents/sub-agents";
 };
 
@@ -5925,17 +5956,19 @@ export type SubAgentsListErrors = {
    * Not found
    */
   404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
 };
 
 export type SubAgentsListError = SubAgentsListErrors[keyof SubAgentsListErrors];
 
 export type SubAgentsListResponses = {
   /**
-   * Response Subagentslist
-   *
    * Successful Response
    */
-  200: Array<SubAgentDefinition>;
+  200: SubAgentList;
 };
 
 export type SubAgentsListResponse =

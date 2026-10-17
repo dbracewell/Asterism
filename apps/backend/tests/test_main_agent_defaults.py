@@ -14,6 +14,7 @@ from asterism.domains.agent.service import (
     get_main_agent,
     get_main_agent_profile,
     get_sub_agents,
+    list_sub_agents,
     save_sub_agent,
     update_main_agent,
 )
@@ -266,3 +267,28 @@ async def test_unknown_even_enabled_tool_is_rejected_and_no_sub_agent_count_limi
         )
         == 1
     )
+
+
+@pytest.mark.asyncio
+async def test_sub_agent_pages_filter_owner_before_pagination(main_agent_session):
+    session = main_agent_session
+    model = session.info["model"]
+    for owner, names in [("user-a", ["Zeta", "Alpha", "Alpha"]), ("user-b", ["Foreign"])]:
+        for name in names:
+            await save_sub_agent(owner, SubAgentCreate(name=name, model_id=model.id), session=session)
+    first = await list_sub_agents("user-a", session, page=1, page_size=2)
+    second = await list_sub_agents("user-a", session, page=2, page_size=2)
+    assert first.total == second.total == 3
+    assert [item.name for item in first.items] == ["Alpha", "Alpha"]
+    assert [item.name for item in second.items] == ["Zeta"]
+    assert first.items[0].id.int < first.items[1].id.int
+    assert not set(item.id for item in first.items) & set(item.id for item in second.items)
+    foreign = await list_sub_agents("user-b", session)
+    assert foreign.total == 1 and foreign.items[0].name == "Foreign"
+    model.is_active = False
+    await session.commit()
+    unavailable = await list_sub_agents("user-a", session)
+    assert all(not item.model_available and item.model_id == model.id for item in unavailable.items)
+    assert not (await list_sub_agents("user-a", session, page=4)).items
+    with pytest.raises(BadDataException):
+        await list_sub_agents("user-a", session, page=0)

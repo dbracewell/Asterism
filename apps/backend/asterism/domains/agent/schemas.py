@@ -113,6 +113,13 @@ class SubAgentDefinition(SubAgentCreate):
     config_revision: int = Field(default=1, ge=1)
 
 
+class SubAgentList(BaseModel):
+    items: list[SubAgentDefinition]
+    total: int
+    page: int
+    page_size: int
+
+
 class UserAgents(BaseModel):
     agents: dict[uuid.UUID, AgentProfile]
 

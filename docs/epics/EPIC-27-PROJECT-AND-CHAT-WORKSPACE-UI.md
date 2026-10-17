@@ -1,6 +1,6 @@
 # EPIC-27 — Project and chat workspace UI
 
-Status: In progress. US-27.1 was confirmed complete on 2026-10-16; US-27.2 was confirmed complete on 2026-10-16; US-27.3 was confirmed complete on 2026-10-16; US-27.4 is next. Later stories remain pending.
+Status: In progress. US-27.1 was confirmed complete on 2026-10-16; US-27.2 was confirmed complete on 2026-10-16; US-27.3 was confirmed complete on 2026-10-16; US-27.4 was confirmed complete on 2026-10-17. US-27.5 remains pending.
 
 Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-context-refactor.md). Product assumptions, module contracts, exclusions, and shared quality gates are defined there.
 
@@ -223,12 +223,79 @@ As a user, I want to configure my main agent and manage model-bound sub-agents i
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-29.1 and US-29.4.
 
-- [ ] US-27.4-T1: Replace multiple main-agent CRUD/default-selection UI with one main-agent settings form for instructions, ordinary capabilities, limits, and supported generation defaults; remove its model binding and agent selector.
-- [ ] US-27.4-T2: Provide sub-agent create/edit/delete/list UI with a required fixed-model selector, instructions, and allowed capabilities; support zero or many definitions with pagination and clear unavailable-model states.
-- [ ] US-27.4-T3: Consume generated settings/model/tool hooks using shadcn components; omit internal tools from selectable controls while preserving ordinary tool settings and admin configuration.
-- [ ] US-27.4-T4: Add component and Playwright tests for settings persistence, singleton UI, fixed-model sub-agent management, owner isolation, validation, and hidden internal tool controls.
+- [x] US-27.4-T1: Replace multiple main-agent CRUD/default-selection UI with one main-agent settings form for instructions, ordinary capabilities, limits, and supported generation defaults; remove its model binding and agent selector.
+- [x] US-27.4-T2: Provide sub-agent create/edit/delete/list UI with a required fixed-model selector, instructions, and allowed capabilities; support zero or many definitions with pagination and clear unavailable-model states.
+- [x] US-27.4-T3: Consume generated settings/model/tool hooks using shadcn components; omit internal tools from selectable controls while preserving ordinary tool settings and admin configuration.
+- [x] US-27.4-T4: Add component and Playwright tests for settings persistence, singleton UI, fixed-model sub-agent management, owner isolation, validation, and hidden internal tool controls.
 
 **Acceptance:** User settings expose one main-agent configuration and separate sub-agent management. Internal delegation/retrieval tools have no manual user toggles; sub-agent model binding remains visible.
+
+**Implementation (2026-10-17):** Implemented on `feat/us-27.4-agent-settings`;
+user confirmed completion and authorized archive/commit/merge on 2026-10-17. The singleton main
+editor now uses the generated live settings query and exposes all six supported
+generation defaults, ordinary capabilities, instructions, and bounded steps.
+There are no main-agent creation/deletion/default-selection or model-binding
+controls. Sub-agents use a separate generated paginated query, explicit fixed-model
+create/edit forms, model/provider labels, unavailable-binding feedback, and
+project-impact deletion confirmation. Context-managed tools are omitted from
+manual controls and payloads; ordinary unavailable tools require explicit removal.
+Admin configuration is unchanged.
+
+Loading, empty, initial failure, cached refresh failure, and retry states are
+separate. Save failures retain edits. Editors recheck live model/tool catalogs,
+block unavailable selections, and never choose a replacement model automatically.
+Global mutation invalidation refreshes the settings queries. The list endpoint
+returns `items/total/page/page_size` and applies ownership, sub-agent filtering,
+and deterministic name/ID ordering before database pagination and response
+enrichment. See [workspace architecture](../architecture/project-workspaces.md).
+
+| Gate                                  | Result                                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Backend unit/integration suite        | 431 passed                                                                                                            |
+| Frontend unit/component suite         | 138 passed, including four added form regressions                                                                     |
+| Frontend migration tests              | 6 passed                                                                                                              |
+| Root configuration tests              | 29 passed                                                                                                             |
+| Backend/frontend lint                 | Passed                                                                                                                |
+| Configured backend/frontend typecheck | Passed                                                                                                                |
+| Backend static typing                 | Changed agent files: 0 errors; full repository: 10 pre-existing errors, reproduced identically against unchanged HEAD |
+| Formatting                            | `pnpm format` passed                                                                                                  |
+| Import cycles                         | 220 modules, 1035 internal imports; no cycles                                                                         |
+| Generated clients                     | Independent generation from served OpenAPI matches after formatting                                                   |
+| Isolated Playwright                   | 26 passed without retries, runner exit 0; final settings-only screenshot check also passed 2/2 with retries disabled  |
+| Frontend production build             | Passed                                                                                                                |
+| Visual review                         | Desktop and 390px mobile settings plus the mobile editor inspected; no horizontal overflow                            |
+| Diff integrity                        | `git diff --check` passed                                                                                             |
+
+Component tests cover singleton controls, generation-default persistence and
+numeric validation, explicit fixed-model selection/editing, retained edits after
+save failure, tool/model failure recovery, and hidden internal controls. Browser
+coverage exercises the production pane with mocked generated-client HTTP endpoints:
+persistence, create/edit/delete, pagination, query denial/retry, unavailable saved
+bindings, and mobile layout. The older settings browser fixture was updated for
+live queries. Backend API/service tests independently verify actual two-user
+isolation, singleton protections, model/tool validation, owner-filtered pagination,
+deterministic equal-name ordering, and unavailable-model binding retention. Browser
+coverage does not exercise a complete authenticated workflow against the real backend.
+
+Initial verification repaired a stale array-shaped API assertion, the test-only
+proxy allowlist, an obsolete user-snapshot browser fixture, and a route-announcer
+alert locator collision. A pnpm automatic dependency reinstall removed local tool
+links and stalled under sandbox networking; restoring the unchanged lockfile with
+the exact pinned package manager and disabling automatic pre-run reinstall for
+verification repaired the environment. An initial browser startup also required
+local-port sandbox escalation. Interrupted/failed runs are not counted as passes.
+The final screenshot check disables animations to capture fully opened dialogs.
+The sandboxed production build stalled before compilation; a clean rerun with
+network/local-worker access passed. Managed test backends report exit 143 during
+intentional cleanup; both successful isolated runners exited 0.
+The standalone full static-check errors remain in unchanged chat-controller and
+component-plugin code; baseline output matches exactly after normalizing checkout
+paths. No migrations, compatibility shims, new UI dependencies, external model
+calls, or current-database reset were introduced. The unrelated `core/config.py`
+edit remains untouched. US-27.5 chat/project selection is still pending.
+
+The completed checklist is [archived](../archive/todo-completed-2026-10-17.md).
+Next recommended story: US-27.5 — Chat model picker and project sub-agent selection.
 
 ### US-27.5 — Chat model picker and project sub-agent selection
 

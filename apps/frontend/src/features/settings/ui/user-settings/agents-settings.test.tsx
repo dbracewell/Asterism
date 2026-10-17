@@ -3,27 +3,36 @@ import { render, screen } from "@testing-library/react";
 import { ReactNode } from "react";
 import { expect, it, vi } from "vitest";
 import { AgentsSettings } from "./agents-settings";
-vi.mock("@/features/auth/components/user-context", () => ({
-  useUser: () => ({
-    settings: {
-      main_agent: { id: "main" },
-      sub_agents: {
-        worker: {
+vi.mock("./agent-profile-form", () => ({
+  AgentProfileForm: () => <button>Create sub-agent</button>,
+  MainAgentForm: () => <button>Edit main configuration</button>,
+}));
+vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  mainAgentGetOptions: () => ({
+    queryKey: ["main"],
+    queryFn: async () => ({ id: "main" }),
+  }),
+  chatModelsListOptions: () => ({
+    queryKey: ["models"],
+    queryFn: async () => [],
+  }),
+  subAgentsListOptions: () => ({
+    queryKey: ["workers"],
+    queryFn: async () => ({
+      items: [
+        {
           id: "worker",
           name: "Research",
           description: "Facts",
           model_id: "fixed",
           model_available: false,
         },
-      },
-    },
+      ],
+      total: 1,
+      page: 1,
+      page_size: 10,
+    }),
   }),
-}));
-vi.mock("./agent-profile-form", () => ({
-  AgentProfileForm: () => <button>Create sub-agent</button>,
-  MainAgentForm: () => <button>Edit main configuration</button>,
-}));
-vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   subAgentDeleteMutation: () => ({ mutationFn: vi.fn() }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -34,10 +43,10 @@ function Wrapper({ children }: { children: ReactNode }) {
     </QueryClientProvider>
   );
 }
-it("shows one main editor and unavailable fixed-model workers without default/delete-main controls", () => {
+it("shows one main editor and unavailable fixed-model workers without default/delete-main controls", async () => {
   render(<AgentsSettings />, { wrapper: Wrapper });
   expect(
-    screen.getAllByRole("button", { name: "Edit main configuration" }),
+    await screen.findAllByRole("button", { name: "Edit main configuration" }),
   ).toHaveLength(1);
   expect(
     screen.queryByRole("button", { name: /default|Delete main/i }),
@@ -45,7 +54,7 @@ it("shows one main editor and unavailable fixed-model workers without default/de
   expect(screen.getByRole("region", { name: "Sub-agents" })).toHaveTextContent(
     "Research",
   );
-  expect(screen.getByRole("alert")).toHaveTextContent(
+  expect(await screen.findByRole("alert")).toHaveTextContent(
     "Fixed model unavailable",
   );
 });

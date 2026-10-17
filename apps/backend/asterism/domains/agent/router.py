@@ -1,13 +1,14 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from .schemas import SubAgentCreate, SubAgentDefinition, SubAgentTrace
-from .service import delete_agent_profile, get_sub_agent_traces_by_parent_message, get_sub_agents, save_sub_agent
+from .schemas import SubAgentCreate, SubAgentDefinition, SubAgentList, SubAgentTrace
+from .service import delete_agent_profile, get_sub_agent_traces_by_parent_message, save_sub_agent
+from .service import list_sub_agents as list_owned_sub_agents
 
 agents_router = APIRouter(
     prefix="/agents",
@@ -16,9 +17,14 @@ agents_router = APIRouter(
 )
 
 
-@agents_router.get("/sub-agents", response_model=list[SubAgentDefinition], operation_id="subAgentsList")
-async def list_sub_agents(user: AuthedUserDep, session: DBSessionDep) -> list[SubAgentDefinition]:
-    return await get_sub_agents(user.id, session)
+@agents_router.get("/sub-agents", response_model=SubAgentList, operation_id="subAgentsList")
+async def list_sub_agents(
+    user: AuthedUserDep,
+    session: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+) -> SubAgentList:
+    return await list_owned_sub_agents(user.id, session, page=page, page_size=page_size)
 
 
 @agents_router.post("/sub-agents", response_model=SubAgentDefinition, operation_id="subAgentCreate", status_code=201)

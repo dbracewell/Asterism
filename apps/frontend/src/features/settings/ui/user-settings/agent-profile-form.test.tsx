@@ -1,13 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReactNode } from "react";
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import { MainAgentForm, AgentProfileForm } from "./agent-profile-form";
 const mocks = vi.hoisted(() => ({
   mainSave: vi.fn().mockResolvedValue({}),
   create: vi.fn(),
   update: vi.fn(),
+  models: vi.fn().mockResolvedValue([
+    {
+      id: "model",
+      name: "Available",
+      provider_name: "Test",
+      available: true,
+    },
+  ]),
   tools: vi.fn().mockResolvedValue({ items: [] }),
 }));
 vi.mock("@/features/auth/components/user-context", () => ({
@@ -19,6 +27,10 @@ vi.mock("@/features/auth/components/user-context", () => ({
   }),
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  chatModelsListOptions: () => ({
+    queryKey: ["models"],
+    queryFn: mocks.models,
+  }),
   mainAgentUpdateMutation: () => ({ mutationFn: mocks.mainSave }),
   subAgentCreateMutation: () => ({ mutationFn: mocks.create }),
   subAgentUpdateMutation: () => ({ mutationFn: mocks.update }),
@@ -148,9 +160,160 @@ it("edits a sub-agent without offering obsolete knowledge-base assignments", asy
     { wrapper: Wrapper },
   );
   await screen.findByRole("dialog", { name: "Edit sub-agent" });
-  expect(screen.getByLabelText("Fixed model")).toHaveTextContent("Available");
+  await waitFor(() =>
+    expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
+      "Available (Test)",
+    ),
+  );
   expect(screen.queryByText(/knowledge bases/i)).not.toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: /save.*assignment/i }),
   ).not.toBeInTheDocument();
+});
+
+it("retains edits after a failed save and permits retry", async () => {
+  mocks.mainSave.mockRejectedValueOnce(new Error("Denied"));
+  render(
+    <MainAgentForm
+      configuration={{ id: "main", name: "Main", description: "" }}
+    />,
+    { wrapper: Wrapper },
+  );
+  await userEvent.click(
+    screen.getByRole("button", { name: "Edit main configuration" }),
+  );
+  await userEvent.type(screen.getByLabelText("Instructions"), "Keep my edits");
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Save configuration" }),
+  );
+  expect(
+    await screen.findByText(/Your edits are retained/),
+  ).toBeInTheDocument();
+  expect(screen.getByLabelText("Instructions")).toHaveValue("Keep my edits");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Save configuration" }),
+  );
+  expect(mocks.mainSave.mock.calls.at(-1)?.[0].body.system_prompt).toBe(
+    "Keep my edits",
+  );
+});
+
+it("blocks saving when models cannot refresh, without replacing the saved binding", async () => {
+  mocks.models.mockRejectedValueOnce(new Error("Offline"));
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={cache}>
+      <AgentProfileForm
+        profile={{
+          id: "worker",
+          name: "Worker",
+          model_id: "missing",
+          model_available: false,
+        }}
+        completeEditing={vi.fn()}
+      />
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByText(/Could not load models/)).toBeInTheDocument();
+  expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
+    "missing (unavailable)",
+  );
+  expect(
+    screen.getByRole("button", { name: "Save configuration" }),
+  ).toBeDisabled();
+  await userEvent.click(screen.getByRole("button", { name: "Retry models" }));
+  expect(await screen.findByText(/saved binding remains/)).toBeInTheDocument();
+});
+
+beforeEach(() => {
+  mocks.mainSave.mockReset().mockResolvedValue({});
+  mocks.models.mockReset().mockResolvedValue([
+    {
+      id: "model",
+      name: "Available",
+      provider_name: "Test",
+      available: true,
+    },
+  ]);
+  mocks.tools.mockReset().mockResolvedValue({ items: [] });
+});
+
+it("preserves ordinary tool selections through a catalog failure and retry", async () => {
+  mocks.tools.mockRejectedValueOnce(new Error("Offline"));
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={cache}>
+      <MainAgentForm
+        configuration={{
+          id: "main",
+          name: "Main",
+          description: "",
+          tools: ["web_fetch"],
+        }}
+      />
+    </QueryClientProvider>,
+  );
+  await userEvent.click(
+    screen.getByRole("button", { name: "Edit main configuration" }),
+  );
+  expect(await screen.findByText(/Could not load tools/)).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Save configuration" }),
+  ).toBeDisabled();
+  expect(screen.queryByText(/unavailable; remove/)).not.toBeInTheDocument();
+  mocks.tools.mockResolvedValue({
+    items: [{ name: "web_fetch", policy: "user_configurable" }],
+  });
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByLabelText("web_fetch")).toBeChecked();
+});
+
+it("saves edited fixed-model workers and validates numeric limits", async () => {
+  mocks.update.mockResolvedValue({});
+  render(
+    <AgentProfileForm
+      profile={{
+        id: "worker",
+        name: "Worker",
+        model_id: "model",
+        model_available: true,
+      }}
+      completeEditing={vi.fn()}
+    />,
+    { wrapper: Wrapper },
+  );
+  await waitFor(() =>
+    expect(screen.getByLabelText("Fixed model")).toHaveTextContent(
+      "Available (Test)",
+    ),
+  );
+  const steps = screen.getByLabelText("Maximum steps");
+  await userEvent.clear(steps);
+  await userEvent.type(steps, "0");
+  expect(steps).toBeInvalid();
+  await userEvent.click(
+    screen.getByRole("button", { name: "Save configuration" }),
+  );
+  expect(mocks.update).not.toHaveBeenCalled();
+  await userEvent.clear(steps);
+  await userEvent.type(steps, "9");
+  await userEvent.type(screen.getByLabelText("Seed (optional)"), "42");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Save configuration" }),
+  );
+  expect(mocks.update).toHaveBeenCalledWith(
+    expect.objectContaining({
+      path: { agent_id: "worker" },
+      body: expect.objectContaining({
+        model_id: "model",
+        max_steps: 9,
+        chat_parameters: expect.objectContaining({ seed: 42 }),
+      }),
+    }),
+    expect.anything(),
+  );
 });

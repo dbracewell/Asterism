@@ -944,6 +944,16 @@ export const zProjectSubAgentList = z.object({
 });
 
 /**
+ * SubAgentList
+ */
+export const zSubAgentList = z.object({
+  items: z.array(zSubAgentDefinition),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
  * SubAgentTrace
  */
 export const zSubAgentTrace = z.object({
@@ -2018,12 +2028,15 @@ export const zComponentsByTypePath = z.object({
  */
 export const zComponentsByTypeResponse = zComponentListResponse;
 
+export const zSubAgentsListQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(10),
+});
+
 /**
- * Response Subagentslist
- *
  * Successful Response
  */
-export const zSubAgentsListResponse = z.array(zSubAgentDefinition);
+export const zSubAgentsListResponse = zSubAgentList;
 
 export const zSubAgentCreateBody = zSubAgentCreate;
 

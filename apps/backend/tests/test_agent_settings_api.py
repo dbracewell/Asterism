@@ -56,11 +56,26 @@ async def test_main_settings_and_distinct_sub_agent_api_contracts(project_api):
     assert created.status_code == 201, created.text
     sub = created.json()
     assert sub["model_id"] == model_id and sub["model_available"]
-    assert (await client.get("/agents/sub-agents", headers=auth("b"))).json() == []
+    assert (await client.get("/agents/sub-agents", headers=auth("b"))).json() == {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 10,
+    }
+    own_page = (await client.get("/agents/sub-agents?page=1&page_size=1", headers=auth())).json()
+    assert own_page["total"] == 1 and own_page["items"][0]["id"] == sub["id"]
+    assert (await client.get("/agents/sub-agents?page=2&page_size=1", headers=auth())).json()["items"] == []
+    for query in ["page=0", "page_size=101", "page_size=0"]:
+        assert (await client.get(f"/agents/sub-agents?{query}", headers=auth())).status_code == 422
     path = f"/agents/sub-agents/{sub['id']}"
     assert (await client.put(path, headers=auth("b"), json=worker)).status_code == 401
     assert (await client.put(path, headers=auth(), json={**worker, "name": "Revised"})).json()["name"] == "Revised"
     assert (await client.put(f"/agents/sub-agents/{main['id']}", headers=auth(), json=worker)).status_code == 400
     assert (await client.delete(path, headers=auth("b"))).status_code == 401
     assert (await client.delete(path, headers=auth())).status_code == 200
-    assert (await client.get("/agents/sub-agents", headers=auth())).json() == []
+    assert (await client.get("/agents/sub-agents", headers=auth())).json() == {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 10,
+    }

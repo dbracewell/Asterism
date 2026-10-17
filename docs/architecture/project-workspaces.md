@@ -53,7 +53,7 @@ The backend remains responsible for ownership and live authorization on all path
 
 ## Story boundary and verification
 
-Sub-agent selection and settings belong to US-27.4/27.5. Folder and standalone
+Project sub-agent selection belongs to US-27.5. Agent settings are described below. Folder and standalone
 knowledge-base endpoints/routes remain for EPIC-28 cleanup, but folder navigation
 is no longer mounted in the app sidebar. No API/schema compatibility path or data
 reset is needed for this frontend story.
@@ -171,3 +171,37 @@ with different local files, reopen, model/branch changes, and desktop/mobile lay
 The harness does not run an authenticated full ChatSession/provider workflow; backend
 integration tests separately cover ownership, branches, durable receipts, and source
 lifecycle. No backend API/schema change or working-database reset is required.
+
+## Main configuration and sub-agent settings
+
+The Agents settings pane queries the singleton main configuration and a paginated
+owned sub-agent list through generated TanStack Query options. Main configuration
+has one editor and no model binding, creation, deletion, or default-agent controls.
+It edits instructions, the step limit, ordinary tools, and the six supported
+generation defaults: temperature, top P, presence/frequency penalties, maximum
+tokens, and seed. Blank values defer to the provider; defaults apply only when the
+selected execution model supports them.
+
+Sub-agent definitions have required explicit fixed-model bindings and separate
+create/edit/delete controls. Cards show the fixed model/provider, or its immutable
+ID when metadata is unavailable. Inactive/missing models retain their binding;
+saving requires choosing an available model, with no automatic replacement.
+Model and tool queries recheck on editor mount. Query failures expose retry;
+failed saves retain edits. Unavailable ordinary tools can be removed explicitly,
+while context-managed tools are excluded from manual controls and save payloads.
+Admin tool configuration remains independent.
+
+`GET /agents/sub-agents` returns `items`, `total`, `page`, and `page_size` (default
+10, maximum 100). The agent service composes the owner-scoped select, filters to
+sub-agents, and orders by name/ID before the shared database pagination helper.
+Only records in the page receive model-availability enrichment. User-settings
+snapshots remain separate from this browsing contract. Deletion confirms removal
+from project selections and loss of active delegation access, with history and
+files retained. Global mutation-cache invalidation refreshes settings queries.
+
+Component tests cover singleton controls, generation persistence/validation,
+fixed-model editing, failed saves/catalog queries, and hidden internal tools.
+The test-only `/e2e/agent-settings` route composes the production pane with mocked
+HTTP endpoints to exercise persistence, CRUD, pagination, unavailable bindings,
+and query failure recovery. Backend API/service tests independently verify actual
+owner isolation, singleton protection, fixed-model validation, and pagination.

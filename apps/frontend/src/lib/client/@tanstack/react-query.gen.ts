@@ -3339,6 +3339,56 @@ export const subAgentsListOptions = (options?: Options<SubAgentsListData>) =>
     queryKey: subAgentsListQueryKey(options),
   });
 
+export const subAgentsListInfiniteQueryKey = (
+  options?: Options<SubAgentsListData>,
+): QueryKey<Options<SubAgentsListData>> =>
+  createQueryKey("subAgentsList", options, true);
+
+/**
+ * List Sub Agents
+ */
+export const subAgentsListInfiniteOptions = (
+  options?: Options<SubAgentsListData>,
+) =>
+  infiniteQueryOptions<
+    SubAgentsListResponse,
+    SubAgentsListError,
+    InfiniteData<SubAgentsListResponse>,
+    QueryKey<Options<SubAgentsListData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SubAgentsListData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SubAgentsListData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().subAgentsList({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: subAgentsListInfiniteQueryKey(options),
+    },
+  );
+
 /**
  * Create Sub Agent
  */

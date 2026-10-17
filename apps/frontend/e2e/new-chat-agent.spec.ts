@@ -28,7 +28,8 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   );
   let saved: unknown;
   await page.route("**/api/py/settings/user/main-agent", (route) => {
-    saved = route.request().postDataJSON();
+    if (route.request().method() === "PUT")
+      saved = route.request().postDataJSON();
     return route.fulfill({
       json: {
         ...(saved as object),
@@ -38,6 +39,37 @@ test("edits the sole model-free main configuration and exposes unavailable worke
       },
     });
   });
+  await page.route("**/api/py/agents/sub-agents?**", (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          {
+            id: "44444444-4444-4444-8444-444444444444",
+            name: "Research worker",
+            model_id: "55555555-5555-4555-8555-555555555555",
+            model_available: false,
+            max_steps: 5,
+            tools: [],
+          },
+        ],
+        total: 1,
+        page: 1,
+        page_size: 10,
+      },
+    }),
+  );
+  await page.route("**/api/py/chat/models", (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: "22222222-2222-4222-8222-222222222222",
+          name: "Available model",
+          provider_name: "Test",
+          available: true,
+        },
+      ],
+    }),
+  );
   await page.goto("/e2e/new-chat-agent");
   await expect(
     page.getByRole("button", { name: "Edit main configuration" }),

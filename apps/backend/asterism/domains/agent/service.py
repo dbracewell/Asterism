@@ -11,6 +11,7 @@ from asterism.core.exceptions import (
     UnauthorizedException,
 )
 from asterism.db.database import get_async_db_session
+from asterism.db.queries import paginate_select
 from asterism.domains.llm.schemas import ChatCompletionParams
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
@@ -24,6 +25,7 @@ from .schemas import (
     MainAgentUpdate,
     SubAgentCreate,
     SubAgentDefinition,
+    SubAgentList,
     SubAgentTrace,
     SubAgentTraceCreate,
     UserAgents,
@@ -187,6 +189,25 @@ async def get_sub_agents(user_id: str, session: AsyncSession | None = None) -> l
             profile = AgentProfile.model_validate(row)
             definitions.append(await _sub_definition(profile, session))
         return definitions
+
+
+async def list_sub_agents(
+    user_id: str,
+    session: AsyncSession,
+    *,
+    page: int = 1,
+    page_size: int = 10,
+) -> SubAgentList:
+    result = await paginate_select(
+        statement=select_owned_agent_profiles(user_id)
+        .where(AgentProfileModel.sub_agent.is_(True))
+        .order_by(AgentProfileModel.name, AgentProfileModel.id),
+        session=session,
+        page=page,
+        page_size=page_size,
+    )
+    items = [await _sub_definition(AgentProfile.model_validate(row), session) for row in result.records]
+    return SubAgentList(items=items, total=result.total, page=page, page_size=page_size)
 
 
 async def save_sub_agent(
