@@ -21,13 +21,6 @@ def _file_secret(name: str) -> str:
     canonical = secrets_dir / name
     entries = {path.name for path in secrets_dir.iterdir()} if secrets_dir.exists() else set()
     has_canonical = name in entries
-    has_legacy = name.lower() in entries
-    if has_canonical and has_legacy:
-        raise ValueError(
-            f"Ambiguous file secret names for {name}; keep only the uppercase file",  # noqa: E501
-        )
-    if has_legacy:
-        raise ValueError(f"Legacy file secret name for {name}; rename it to uppercase")
     if not has_canonical:
         return ""
     return canonical.read_text().removesuffix("\n").removesuffix("\r")
