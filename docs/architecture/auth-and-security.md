@@ -48,6 +48,15 @@ resolve stored paths below that user's file root. Provider administration and ot
 administrator operations use the user's authenticated role; provider credentials are
 write-only in API responses.
 
+### Frontend theme and rendered-content boundaries
+
+US-31.1 confines theme reads to validated catalog IDs and independently authorizes
+editor actions against the server-side administrator session. The original review's
+harmless traversal probe is covered by isolated filesystem and HTTP regressions.
+The [theme trust boundary](#theme-trust-boundary) describes the current contract.
+[EPIC-31](../epics/EPIC-31-THEME-AND-CONTENT-TRUST-BOUNDARIES.md) still owns persistent
+custom storage and untrusted raw HTML in the shared Markdown renderer.
+
 ### Internal callbacks
 
 The backend event bus can POST to the Next.js `/api/stream` route for events such
@@ -73,3 +82,29 @@ requests, and filters emitted events by user ID for SSE subscribers.
 - [System overview](overview.md)
 - [Chat and WebSocket](chat-and-websocket.md)
 - [Tool authorization](tool-authorization.md)
+
+### Theme trust boundary
+
+Theme palettes are public presentation data: `/api/theme/list` lists validated
+catalog IDs and `/api/theme?name=<id>` returns a validated palette object. These
+reads support setup/sign-in as well as authenticated selection. Do not store
+secrets in theme files. Missing/malformed IDs return 400; unknown IDs return 404.
+
+The editor's `loadTheme` and `saveTheme` server actions independently obtain the
+BetterAuth session and require the exact `admin` role before filesystem access.
+Hiding the editor is not an authorization check. Layout helpers and catalog
+functions are `server-only` modules, not remotely callable server actions.
+
+The theme domain owns ID validation, strict runtime palette validation and
+resolved path containment. IDs contain only lowercase ASCII letters, digits,
+underscores and hyphens (1–80 characters, beginning with a letter or digit).
+Extensions, paths and encoded traversal are not IDs. Reads reject symlinks;
+existing writes must resolve to an existing catalog file, and new IDs are
+server-generated UUIDs created exclusively. Names are bounded nonempty display
+text; colors are an exact set of hex color fields. The deployment filesystem is
+trusted and must not be writable by untrusted local processes.
+
+Catalog reads currently read disk without a process-global cache. Saves await
+write completion and revalidate the layout. Custom storage ownership, atomic
+replacement, malformed-file isolation and editor retry behavior remain US-31.2;
+the present storage location is still `apps/frontend/public/themes`.

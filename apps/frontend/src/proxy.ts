@@ -3,7 +3,12 @@ import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-const publicRoutes = ["/sign-in", "/api/stream"];
+const publicRoutes = [
+  "/sign-in",
+  "/api/stream",
+  "/api/theme",
+  "/api/theme/list",
+];
 if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
   publicRoutes.push(
     "/e2e/sub-agent",

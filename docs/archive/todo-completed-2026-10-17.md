@@ -121,3 +121,24 @@ All nine previously failing agent-settings tests now pass. The full frontend sui
 Accessible names now identify agent actions and model fields. The shared picker derives its display from its controlled value and the current catalog, preserving absent model IDs as unavailable and never selecting a replacement during refresh. The duplicate empty-list create trigger was removed; model availability has accessible status text. Test assertions reflect current labels and layout while retaining binding, validation, retry, and permission-related behavior checks.
 
 See [EPIC-30](../epics/EPIC-30-PROVIDER-SETTINGS-EDITING.md) for verification details. This follow-up resolves the nine failures recorded during US-30.1. No backend/API changes, working-database reset, push, or remote CI result is claimed. No active EPIC-30 work remains.
+
+
+## US-31.1 — Confine and authorize theme operations
+
+The user confirmed completion on 2026-10-17, authorizing commit and local merge
+from `feat/us-31.1-theme-trust-boundaries`.
+
+- [x] Trace theme APIs/actions; enforce server-side administrator authorization and strict runtime validation.
+- [x] Constrain reads/writes to validated catalog IDs and resolved theme paths; reject traversal and symlink aliases/escapes.
+- [x] Test unauthenticated, ordinary-user and admin direct calls, malformed payloads, and normal listing/selection.
+- [x] Run frontend lint, types, formatting, tests and focused browser checks; update the security guide.
+- [x] Obtain user completion confirmation before commit and merge.
+
+Verification: 165 frontend tests, six isolated database-script checks and two
+focused browser checks passed without retries. The final focused security suite
+passed 30 tests. Lint, types and changed-file formatting passed. Production build
+passed with a documented Turbopack output-tracing warning. Full browser/backend
+gates were not run. See [verification evidence](../reviews/us-31.1-verification-2026-10-17.md).
+
+US-31.2 (durable theme storage) is next; US-31.3 remains pending. No working
+database reset, remote push or remote CI result is claimed.
