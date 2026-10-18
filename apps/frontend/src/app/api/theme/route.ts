@@ -1,27 +1,24 @@
-import { readFile } from "fs/promises";
+import {
+  readCatalogTheme,
+  ThemeNotFoundError,
+} from "@/features/theme/server/catalog";
+import { themeIdSchema } from "@/features/theme/schemas";
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
 
+// Public palette data is also needed on the sign-in/setup screens.
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const themeName = searchParams.get("name");
-  const filePath = path.join(
-    process.cwd(),
-    "public",
-    "themes",
-    `${themeName}.json`,
+  const id = themeIdSchema.safeParse(
+    new URL(request.url).searchParams.get("name"),
   );
+  if (!id.success)
+    return NextResponse.json({ message: "Invalid theme ID" }, { status: 400 });
   try {
-    const data = await readFile(filePath, "utf-8");
-    return NextResponse.json(data, { status: 200 });
-  } catch (error: unknown) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return NextResponse.json(
-        { message: `Theme does not exist: ${themeName}` },
-        { status: 404 },
-      );
-    }
+    return NextResponse.json(await readCatalogTheme(id.data));
+  } catch (error) {
+    const status = error instanceof ThemeNotFoundError ? 404 : 500;
+    return NextResponse.json(
+      { message: status === 404 ? "Unknown theme" : "Unable to read theme" },
+      { status },
+    );
   }
-
-  return NextResponse.json({ message: "Server Error" }, { status: 500 });
 }

@@ -1,23 +1,16 @@
-import type { Theme } from "@/features/theme/types";
-import * as fs from "fs/promises";
-import { readFile } from "fs/promises";
+import { getAllThemes } from "@/features/theme/server/catalog";
 import { NextResponse } from "next/server";
-import path from "path";
 
 export async function GET() {
-  const filePath = path.join(process.cwd(), "public", "themes");
   try {
-    const files = await fs.readdir(filePath);
-    const themeNames: Pick<Theme, "name" | "filename">[] = [];
-    for (const file of files) {
-      const data = JSON.parse(
-        await readFile(path.join(filePath, file), "utf-8"),
-      );
-      themeNames.push({ name: data.name, filename: file.replace(".json", "") });
-    }
-    return NextResponse.json(themeNames, { status: 200 });
-  } catch (error: unknown) {
-    console.log(error);
-    return NextResponse.json([], { status: 500 });
+    const themes = await getAllThemes();
+    return NextResponse.json(
+      Object.values(themes).map(({ name, filename }) => ({ name, filename })),
+    );
+  } catch {
+    return NextResponse.json(
+      { message: "Unable to list themes" },
+      { status: 500 },
+    );
   }
 }

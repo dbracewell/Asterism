@@ -1,22 +1,14 @@
-"use server";
+import "server-only";
 
 import {
   DEFAULT_FONT_SIZE,
   DEFAULT_THEME_NAME,
   FONT_SIZE_COOKIE,
   THEME_NAME_COOKIE,
-  THEME_REFRESH_COOKIE,
 } from "@/features/theme/constants";
 import { convertToCssVariables } from "@/features/theme/lib/utils";
-import { Theme } from "@/features/theme/types";
-import fs, { readFile } from "fs/promises";
+import { getAllThemes } from "./catalog";
 import { cookies } from "next/headers";
-import path from "path";
-import lightTheme from "../../../../public/themes/light.json";
-
-const globalForData = globalThis as unknown as {
-  themes: Record<string, Theme> | null;
-};
 
 export async function getTheme() {
   const cookieStore = await cookies();
@@ -25,13 +17,8 @@ export async function getTheme() {
   const fontSize =
     cookieStore.get(FONT_SIZE_COOKIE)?.value ?? DEFAULT_FONT_SIZE;
 
-  const shouldRefresh = cookieStore.has(THEME_REFRESH_COOKIE);
-  if (shouldRefresh) {
-    globalForData.themes = null;
-  }
-
   const allThemes = await getAllThemes();
-  if (allThemes[themeNameCookie] == null) {
+  if (!Object.hasOwn(allThemes, themeNameCookie)) {
     themeNameCookie = DEFAULT_THEME_NAME;
   }
   const currentTheme = allThemes[themeNameCookie];
@@ -47,36 +34,4 @@ export async function getTheme() {
     mode,
     allThemes,
   };
-}
-
-export async function getAllThemes() {
-  if (globalForData.themes) {
-    return globalForData.themes;
-  }
-
-  const filePath = path.join(process.cwd(), "public", "themes");
-
-  try {
-    const files = await fs.readdir(filePath);
-    const themes: Record<string, Theme> = {};
-    for (const file of files) {
-      if (!file.toLowerCase().endsWith(".json")) {
-        continue;
-      }
-      const data = JSON.parse(
-        await readFile(path.join(filePath, file), "utf-8"),
-      );
-      const fileName = file.slice(0, -5);
-      themes[fileName] = data;
-      themes[fileName]["filename"] = fileName;
-    }
-    globalForData.themes = themes;
-    return themes;
-  } catch (error: unknown) {
-    console.log(error);
-    globalForData.themes = {
-      light: { ...lightTheme, filename: "light.json", type: "light" },
-    };
-    return globalForData.themes;
-  }
 }

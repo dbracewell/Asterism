@@ -97,6 +97,12 @@ The combined deployment smoke test is documented in the root README.
 
 ## Quality and API generation
 
+US-31.1 confines public theme reads to validated catalog IDs and requires the
+server-side administrator role for editor actions. See the
+[theme trust boundary](../../docs/architecture/auth-and-security.md#theme-trust-boundary)
+and [verification evidence](../../docs/reviews/us-31.1-verification-2026-10-17.md).
+Theme edits still target `public/themes`; persistent custom storage remains US-31.2.
+
 For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install
 project runs before account creation. The authenticated workspace spec uses real
