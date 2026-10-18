@@ -8,13 +8,14 @@ import {
   updateSubAgentActivities,
 } from "@/features/chat/types";
 import { useState } from "react";
+import { ReadyState } from "react-use-websocket";
 
 const CHAT_ID = "11111111-1111-4111-8111-111111111111";
 
 export const SubAgentE2EHarness = () => {
   const [activities, setActivities] = useState<SubAgentActivity[]>([]);
   const [parentResponse, setParentResponse] = useState("");
-  const { sendJsonMessage } = useChatWebSocket({
+  const { sendJsonMessage, readyState } = useChatWebSocket({
     chatId: CHAT_ID,
     jwtToken: "e2e-token",
     onStreamStart: () => {
@@ -35,6 +36,7 @@ export const SubAgentE2EHarness = () => {
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-4 p-8">
       <h1 className="text-xl font-bold">Sub-agent stream verification</h1>
       <Button
+        disabled={readyState !== ReadyState.OPEN}
         onClick={() => {
           setActivities([]);
           sendJsonMessage({ type: "chat", message: "delegate" });

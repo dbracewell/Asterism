@@ -3,6 +3,7 @@ import { ChatFileContext } from "./chat-file-context";
 import { RetrievalCitations } from "./retrieval-citations";
 import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
 import { ExistingChatModelPicker, ExecutionLabel } from "./chat-model-picker";
+import { QueryError } from "@/components/query-error";
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { Badge } from "@/components/ui/badge";
@@ -262,16 +263,33 @@ export const ChatSession = ({
   );
 
   if (isLoading) {
-    return null;
+    return (
+      <div
+        role="status"
+        aria-label="Loading conversation"
+        className="flex min-h-0 min-w-0 flex-1 items-center justify-center"
+      >
+        <Spinner loadingMessage />
+      </div>
+    );
   }
 
-  if (error) {
-    throw error;
+  if (error && !session) {
+    return (
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto [overflow-wrap:anywhere]">
+        <QueryError
+          error={error}
+          message="Could not load conversation."
+          retry={refetch}
+          isRetrying={isFetching}
+        />
+      </div>
+    );
   }
 
   if (socketError) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-y-auto [overflow-wrap:anywhere]">
         <div className="bg-destructive/20 border-destructive flex flex-col items-center gap-4 rounded-lg border p-10">
           <h2 className="text-bold text-lg text-white">Unexpected Error</h2>
           <p className="text-destructive text-sm">{socketError}</p>
@@ -310,9 +328,13 @@ export const ChatSession = ({
     null;
 
   return (
-    <>
+    <div
+      className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col"
+      data-slot="chat-session"
+    >
       <section
-        className="no-scrollbar bg-background relative container mx-auto flex w-full max-w-[90%] flex-col overflow-y-auto p-2 py-10"
+        aria-label="Conversation history"
+        className="bg-background relative mx-auto flex min-h-0 w-full max-w-5xl min-w-0 flex-1 scroll-p-3 flex-col overflow-y-auto px-3 py-4 [overflow-wrap:anywhere] [&>*]:shrink-0"
         style={{ overflowAnchor: "auto" }}
         onScroll={(e) => {
           const scrollPosition =
@@ -328,6 +350,19 @@ export const ChatSession = ({
           }
         }}
       >
+        {error && (
+          <QueryError
+            error={error}
+            message="Could not refresh conversation. Showing saved messages."
+            retry={refetch}
+            isRetrying={isFetching}
+          />
+        )}
+        {!session.messages.length && (
+          <p role="status" className="text-muted-foreground py-4">
+            No messages yet. Write a message to begin.
+          </p>
+        )}
         <ChatWorkspace
           info={session.info}
           disabled={isProcessing || sendMessage.isPending}
@@ -392,14 +427,18 @@ export const ChatSession = ({
           style={{
             overflowAnchor: "auto",
             width: "100%",
-            marginBottom: `150px`,
+            height: "1px",
           }}
         />
       </section>
-      <div className="absolute right-1/2 bottom-3 mb-5 flex w-full max-w-3xl translate-x-1/2 flex-col bg-transparent md:max-w-full">
+      <div
+        data-slot="chat-composer"
+        className="flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 p-2"
+      >
         {isScrollable && (
           <Button
-            className="mx-auto mb-5 rounded-full"
+            className="mx-auto shrink-0 rounded-full"
+            aria-label="Jump to latest message"
             size="icon-lg"
             onClick={() => {
               preventAutoScrollRef.current = false;
@@ -410,7 +449,7 @@ export const ChatSession = ({
             <ArrowDownIcon />
           </Button>
         )}
-        <ChatInputContainer className="border-primary mx-auto w-full max-w-[80%] min-w-[80%] border">
+        <ChatInputContainer className="border-primary max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
           <ChatFileContext
             chatId={chatId}
             projectId={session.info.project_id ?? null}
@@ -436,7 +475,7 @@ export const ChatSession = ({
             requestScope={`${session.info.id}:${session.info.model_revision ?? 1}`}
             onSubmit={addUserMessage}
             bottomComponent={
-              <div className="flex w-full items-center justify-between gap-2 p-2">
+              <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2 p-2">
                 <ContextUsageProgress
                   usage={isFetching ? null : session.context_usage}
                   contextWindow={contextWindow}
@@ -460,7 +499,7 @@ export const ChatSession = ({
           />
         </ChatInputContainer>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -480,7 +519,7 @@ export const ContextUsageProgress = ({
 
   return (
     <div
-      className="flex items-center gap-2"
+      className="flex min-w-0 flex-wrap items-center gap-2"
       aria-label="Estimated saved conversation context"
     >
       <span className="text-muted-foreground text-xs">Saved context</span>
@@ -585,7 +624,7 @@ const MessageItem = React.memo(
     return (
       <div
         className={cn(
-          "mb-5 flex flex-col gap-1",
+          "mb-5 flex min-w-0 flex-col gap-1 [overflow-wrap:anywhere]",
           !!message.tool_calls && "mb-0!",
         )}
       >
@@ -648,9 +687,9 @@ const MessageItem = React.memo(
         <MarkdownViewer
           content={message.content}
           className={cn(
-            "flex w-full flex-1 flex-col",
+            "flex w-full min-w-0 flex-1 flex-col",
             message.role === "user" &&
-              "bg-accent text-accent-foreground ml-auto w-fit rounded-xl px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
+              "bg-accent text-accent-foreground ml-auto w-fit max-w-full rounded-xl px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
           )}
         />
         {!!message.tool_call_results?.length && (
@@ -670,7 +709,7 @@ const MessageItem = React.memo(
             message.status === "cancelled") && (
             <div
               className={cn(
-                "text-muted-foreground flex w-fit items-center gap-1 text-xs",
+                "text-muted-foreground flex w-fit max-w-full flex-wrap items-center gap-1 text-xs",
                 message.role === "user" && "ml-auto",
               )}
             >

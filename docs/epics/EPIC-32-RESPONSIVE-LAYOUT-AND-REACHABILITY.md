@@ -1,6 +1,6 @@
 # EPIC-32: Responsive layout and reachability
 
-Status: in progress; US-32.1, including reported mobile shell regressions, was confirmed complete on 2026-10-18. US-32.2 was confirmed complete on 2026-10-18; US-32.3 is recommended next. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F3, F4.
+Status: confirmed complete on 2026-10-18; US-32.1, US-32.2 and US-32.3 are confirmed complete. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F3, F4.
 
 ## Objective
 
@@ -54,6 +54,8 @@ Verification: [2026-10-18 evidence](../reviews/us-32.2-verification-2026-10-18.m
 
 ## US-32.3: Bound rich chat content and composer overlap
 
+Status: confirmed complete on 2026-10-18; checklist [archived](../archive/todo-completed-2026-10-18.md#us-323--rich-chat-content-and-composer-reachability).
+
 As a user, I want long responses and attachments to stay readable without hiding the last message.
 
 Estimate: 2–3 days. Dependencies: US-31.3 policy; can investigate beforehand.
@@ -64,7 +66,9 @@ Wide tables/code/math scroll locally. Long unbroken text and filenames do not ex
 
 Tasks:
 
-- [ ] Define renderer-level wrapping and local scroll policies for tables, code, math, images and long tokens.
-- [ ] Measure composer height or use flow layout so message clearance follows actual content instead of a fixed 150px reserve.
-- [ ] Test long tool arguments, citations, attachments and sidebar/panel combinations using synthetic stress content.
-- [ ] Add reachability assertions, screenshots and keyboard checks at mobile and nested desktop widths.
+- [x] Define renderer-level wrapping and local scroll policies for tables, code, math, images and long tokens.
+- [x] Measure composer height or use flow layout so message clearance follows actual content instead of a fixed 150px reserve.
+- [x] Test long tool arguments, citations, attachments and sidebar/panel combinations using synthetic stress content.
+- [x] Add reachability assertions, screenshots and keyboard checks at mobile and nested desktop widths.
+
+Verification: [2026-10-18 evidence](../reviews/us-32.3-verification-2026-10-18.md), including 81 isolated browser tests passing without retries. EPIC-32 is confirmed complete. EPIC-33 / US-33.1, repairing bundled palette mappings and contrast, is recommended next.

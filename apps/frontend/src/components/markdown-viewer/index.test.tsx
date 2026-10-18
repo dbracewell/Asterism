@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import MarkdownViewer from ".";
@@ -128,6 +128,39 @@ describe("shared Markdown trust boundary", () => {
       </TooltipProvider>,
     );
     expect(output.container.querySelector("img")).toBeNull();
+  });
+});
+
+describe("rich content navigation", () => {
+  it("keeps plain and highlighted code literal, separately copyable and keyboard navigable", () => {
+    const plain = "literal <input> & a very long token";
+    const highlighted = "const value = 'unchanged';";
+    const { container } = view(
+      `\`\`\`\n${plain}\n\`\`\`\n\n\`\`\`javascript\n${highlighted}\n\`\`\``,
+    );
+    const regions = screen.getAllByRole("region", { name: "Scrollable code" });
+    expect(regions).toHaveLength(2);
+    for (const [index, text] of [plain, highlighted].entries()) {
+      expect(regions[index]).toHaveAttribute("tabindex", "0");
+      expect(regions[index].querySelector("pre code")).toHaveTextContent(text);
+      fireEvent.click(
+        within(regions[index].parentElement!).getByRole("button"),
+      );
+      expect(clipboard).toHaveBeenLastCalledWith(text);
+    }
+    expect(container.querySelector("input")).toBeNull();
+  });
+  it("exposes table and generated math scroll areas to the keyboard without enabling HTML", () => {
+    const { container } = view(
+      "| A | B |\n|---|---|\n| one | two |\n\n$$\nx^2 + y^2\n$$",
+    );
+    expect(
+      screen.getByRole("region", { name: "Scrollable table" }),
+    ).toHaveAttribute("tabindex", "0");
+    expect(
+      screen.getByRole("region", { name: "Scrollable math" }),
+    ).toHaveAttribute("tabindex", "0");
+    expect(container.querySelector(".katex")).not.toBeNull();
   });
 });
 

@@ -57,6 +57,15 @@ fit below 250px. Dialogs share a dynamic viewport height cap and scroll through 
 content to their footer and close actions. See the
 [container and scroll contracts](../../docs/architecture/frontend-and-themes.md#settings-dialogs-and-file-panes-us-322).
 
+## Chat content and composer layout
+
+Chat history and the composer share normal flow. The composer has a bounded scroll
+area for expanded context and attachments, so it cannot cover the last response.
+Wide Markdown tables, code and math scroll locally with keyboard focus; long text,
+filenames and tool arguments wrap. Query failures expose retry and distinguish an
+initial failure from a failed refresh of saved messages. See the
+[chat layout contract](../../docs/architecture/frontend-and-themes.md#rich-chat-content-and-composer-clearance-us-323).
+
 ## Mobile workspace layout
 
 The workspace shell fills the dynamic viewport. A full-width sticky mobile header

@@ -3,8 +3,8 @@ import { CopyButton } from "@/components/copy-button";
 import { useTheme } from "@/features/theme/components/theme-context";
 import { cn } from "@/lib/utils";
 import "katex/dist/katex.min.css";
-import { ClassAttributes, HTMLAttributes } from "react";
-import ReactMarkdown, { ExtraProps } from "react-markdown";
+import { isValidElement, type HTMLAttributes } from "react";
+import ReactMarkdown from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import rehypeKatex from "rehype-katex";
@@ -12,13 +12,8 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { markdownMathOptions, markdownUrlTransform } from "./policy";
 
-export interface MarkdownCodeProps
-  extends
-    HTMLAttributes<HTMLElement>,
-    ClassAttributes<HTMLElement>,
-    ExtraProps {
-  inline?: boolean;
-}
+const scrollRegion =
+  "min-w-0 max-w-full overflow-x-auto overscroll-x-contain scroll-p-2 focus-visible:outline-2 focus-visible:outline-ring";
 
 const MarkdownViewer = ({
   content,
@@ -31,9 +26,13 @@ const MarkdownViewer = ({
 }) => {
   const globalTheme = useTheme();
   const syntaxTheme = globalTheme.currentThemeType === "dark" ? vs2015 : vs;
-
   return (
-    <div className={cn("prose prose-asterism max-w-none", className)}>
+    <div
+      className={cn(
+        "prose prose-asterism max-w-full min-w-0 [overflow-wrap:anywhere]",
+        className,
+      )}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         skipHtml
@@ -41,7 +40,6 @@ const MarkdownViewer = ({
         rehypePlugins={[[rehypeKatex, markdownMathOptions]]}
         components={{
           a({ href, children, node, ...props }) {
-            // The AST node is renderer metadata, not a DOM attribute.
             void node;
             if (!href) return <span>{children}</span>;
             return (
@@ -57,57 +55,94 @@ const MarkdownViewer = ({
               </span>
             );
           },
-          code({
-            inline,
-            className,
-            children,
-            node,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            ref,
-            ...props
-          }: MarkdownCodeProps) {
+          table({ children, node, ...props }) {
             void node;
-            const contentString = String(children).replace(/\n$/, "");
-            const match = /language-(\w+)/.exec(className || "");
-            const language = match ? match[1] : "";
-
-            if (!inline && match) {
-              return (
+            return (
+              <div
+                role="region"
+                aria-label="Scrollable table"
+                tabIndex={0}
+                className={scrollRegion}
+              >
+                <table {...props} className="w-max min-w-full">
+                  {children}
+                </table>
+              </div>
+            );
+          },
+          span({ children, className, node, ...props }) {
+            void node;
+            // Only the fixed KaTeX plugin can create these spans; raw HTML stays disabled.
+            const math = className?.split(" ").includes("katex");
+            return (
+              <span
+                {...props}
+                className={cn(
+                  className,
+                  math &&
+                    `${scrollRegion} inline-block overflow-y-hidden align-middle`,
+                )}
+                style={
+                  math ? { ...props.style, textAlign: "start" } : props.style
+                }
+                {...(math
+                  ? {
+                      role: "region",
+                      "aria-label": "Scrollable math",
+                      tabIndex: 0,
+                    }
+                  : {})}
+              >
+                {children}
+              </span>
+            );
+          },
+          pre({ children }) {
+            const code = isValidElement<HTMLAttributes<HTMLElement>>(children)
+              ? children.props
+              : null;
+            const text = String(code?.children ?? "").replace(/\n$/, "");
+            const language = /language-([\w-]+)/.exec(
+              code?.className ?? "",
+            )?.[1];
+            return (
+              <div className="not-prose max-w-full min-w-0 rounded-md border">
+                <div className="flex items-center justify-between gap-2 px-2 pt-1 text-xs font-normal">
+                  <span>{language ?? "Code"}</span>
+                  <CopyButton text={text} />
+                </div>
                 <div
-                  className="flex flex-col overflow-auto"
-                  style={{
-                    backgroundColor:
-                      (syntaxTheme.hljs.background as string) || "transparent",
-                  }}
+                  role="region"
+                  aria-label="Scrollable code"
+                  tabIndex={0}
+                  className={scrollRegion}
                 >
-                  <div className="flex items-center justify-between px-2 pt-1 text-xs font-normal">
-                    <div>{language}</div>
-                    <CopyButton text={contentString} />
-                  </div>
                   <SyntaxHighlighter
                     suppressHydrationWarning
-                    {...props}
                     style={syntaxTheme}
-                    language={language}
-                    PreTag="div"
+                    language={language ?? "text"}
+                    PreTag="pre"
                     customStyle={{
-                      flex: 1,
                       margin: 0,
                       fontSize: codeFontSize ?? globalTheme.fontSize,
                       borderTopLeftRadius: 0,
                       borderTopRightRadius: 0,
+                      width: "max-content",
+                      minWidth: "100%",
                     }}
                   >
-                    {contentString}
+                    {text}
                   </SyntaxHighlighter>
                 </div>
-              );
-            }
-
+              </div>
+            );
+          },
+          code({ children, node, ...props }) {
+            void node;
             return (
               <code
-                className="px-1.5 py-0.5 text-sm whitespace-pre-wrap before:content-none after:content-none"
                 {...props}
+                className="px-1.5 py-0.5 text-sm whitespace-pre-wrap before:content-none after:content-none"
               >
                 {children}
               </code>
@@ -120,5 +155,4 @@ const MarkdownViewer = ({
     </div>
   );
 };
-
 export default MarkdownViewer;

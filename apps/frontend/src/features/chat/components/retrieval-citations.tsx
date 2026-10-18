@@ -47,7 +47,7 @@ export function RetrievalCitations({
   return (
     <section
       aria-label="Retrieved sources"
-      className="flex flex-col gap-2 py-2 text-xs"
+      className="flex min-w-0 flex-col gap-2 py-2 text-xs [overflow-wrap:anywhere]"
     >
       <h3 className="font-medium">Retrieved sources</h3>
       {unique.slice(0, visible).map((item, index) => (

@@ -27,18 +27,18 @@ export const SubAgentActivityPanel = ({
   return (
     <section
       aria-label="Sub-agent activity"
-      className="mb-4 flex w-full flex-col gap-2"
+      className="mb-4 flex w-full min-w-0 flex-col gap-2"
     >
       {activities.map((activity) => (
         <article
           key={activity.executionId}
           data-testid={`sub-agent-${activity.executionId}`}
           className={cn(
-            "bg-muted/60 border-border overflow-auto rounded-xl border px-3 py-2 text-sm",
+            "bg-muted/60 border-border min-w-0 rounded-xl border px-3 py-2 text-sm [overflow-wrap:anywhere]",
             activity.status === "error" && "border-destructive/60",
           )}
         >
-          <header className="flex items-center gap-2 font-medium">
+          <header className="flex flex-wrap items-center gap-2 font-medium">
             <BotIcon className="size-4" aria-hidden="true" />
             <span>{activity.name}</span>
             {activity.depth > 1 && (

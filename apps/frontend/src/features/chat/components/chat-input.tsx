@@ -72,7 +72,7 @@ export const ChatInputContainer = ({
   return (
     <div
       className={cn(
-        "bg-background mx-auto flex w-full max-w-[80%] flex-col overflow-clip rounded-[10px] border",
+        "bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col rounded-[10px] border",
         className,
       )}
     >
@@ -290,7 +290,7 @@ export const ChatInput = ({
   return (
     <form
       className={cn(
-        "bg-input/70 text-foreground flex overflow-clip rounded-[inherit]",
+        "bg-input/70 text-foreground relative flex min-w-0 shrink-0 rounded-[inherit]",
         className,
       )}
       onDragLeave={() => setIsDragOver(false)}
@@ -310,11 +310,11 @@ export const ChatInput = ({
       }}
     >
       <div
-        className="flex flex-1 flex-col"
+        className="flex min-w-0 flex-1 flex-col [overflow-wrap:anywhere]"
         onClick={() => textareaRef.current?.focus()}
       >
         <div
-          className="relative flex max-h-40 flex-wrap items-center gap-2 overflow-y-auto p-1"
+          className="relative flex min-w-0 flex-wrap items-center gap-2 p-1"
           aria-live="polite"
         >
           <input
@@ -357,7 +357,7 @@ export const ChatInput = ({
           )}
           {attachedFiles.map((file) => (
             <Badge
-              className="group bg-background relative h-7 max-w-56 rounded-lg! px-1 text-[13px]"
+              className="group bg-background relative h-7 max-w-full min-w-0 rounded-lg! px-1 text-[13px]"
               key={file.id}
               variant={file.state === "failed" ? "destructive" : "outline"}
             >
@@ -396,7 +396,7 @@ export const ChatInput = ({
           ))}
         </div>
         {!!attachedFiles.length && (
-          <div className="flex max-h-40 flex-col gap-2 overflow-y-auto px-2 text-xs">
+          <div className="flex min-w-0 flex-col gap-2 px-2 text-xs">
             <p>
               Draft attachments are staged until you send. Removing or
               discarding keeps the library files. Saved context estimates
@@ -450,7 +450,7 @@ export const ChatInput = ({
           .filter((file) => file.state === "failed")
           .map((file) => (
             <p
-              className="text-destructive px-2 pb-1 text-xs"
+              className="text-destructive px-2 pb-1 text-xs [overflow-wrap:anywhere]"
               key={`${file.id}-error`}
               role="alert"
             >
@@ -495,26 +495,22 @@ export const ChatInput = ({
         {bottomComponent}
       </div>
       {isProcessing && onStop ? (
-        <button
+        <Button
           type="button"
-          className={cn(
-            "bg-destructive/10 flex items-center border-l px-1 [&_svg]:size-4",
-            "hover:bg-destructive/90 hover:text-white",
-          )}
+          variant="destructive"
+          size="icon"
+          className="m-1 shrink-0 self-end"
           aria-label="Stop generating"
           onClick={onStop}
         >
-          <IconPlayerStop size={16} />
-        </button>
+          <IconPlayerStop />
+        </Button>
       ) : (
-        <button
+        <Button
           type="submit"
-          className={cn(
-            "bg-secondary text-secondary-foreground flex items-center border-l px-1 [&_svg]:size-4",
-            "hover:bg-primary/80 hover:text-primary-foreground",
-            "disabled:hover:bg-secondary disabled:hover:text-secondary-foreground disabled:opacity-50",
-            !hasPrompt && "hidden",
-          )}
+          variant="secondary"
+          size="icon"
+          className={cn("m-1 shrink-0 self-end", !hasPrompt && "hidden")}
           disabled={isDisabled}
           aria-label="Send message"
           onClick={(event) => {
@@ -522,8 +518,8 @@ export const ChatInput = ({
             void submitPrompt();
           }}
         >
-          <IconArrowUp size={16} />
-        </button>
+          <IconArrowUp />
+        </Button>
       )}
       <div
         className={cn(

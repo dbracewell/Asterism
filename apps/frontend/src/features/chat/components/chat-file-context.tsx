@@ -43,10 +43,15 @@ export function ChatFileContext({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="flex max-h-[40vh] flex-col overflow-auto border-b p-2 text-xs"
+      className="flex min-w-0 shrink-0 flex-col border-b p-2 text-xs [overflow-wrap:anywhere]"
     >
       <CollapsibleTrigger asChild>
-        <Button type="button" size="sm" variant="ghost">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-auto min-w-0 whitespace-normal"
+        >
           Files in context ·{" "}
           {projectId ? "Project + this chat" : "General · this chat only"}
         </Button>
@@ -165,7 +170,7 @@ function FileScopeGroup({
         />
       ))}
       {files.length > 5 && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -361,7 +366,7 @@ function DraftProjectFiles({ projectId }: { projectId: string | null }) {
           {files.data.files.map((file) => (
             <div key={file.id}>
               <Link
-                className="underline"
+                className="break-all underline"
                 href={`/files/${encodeURIComponent(file.filename)}`}
               >
                 {file.original_name}
@@ -370,7 +375,7 @@ function DraftProjectFiles({ projectId }: { projectId: string | null }) {
             </div>
           ))}
           {(files.data.total ?? 0) > 5 && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="sm"

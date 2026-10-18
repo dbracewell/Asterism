@@ -78,5 +78,6 @@ panel, scoped citation component and plain-text file preview with synthetic data
 
 [US-31.3 verification](../reviews/us-31.3-verification-2026-10-18.md) records executed
 gates and limitations. This policy closes the content trust boundary. Rich-content
-wrapping, nested scroll areas and composer clearance remain US-32.3; unrestricted
-HTML is not a prerequisite for that layout work.
+wrapping and local keyboard-scroll areas, with composer clearance, are implemented
+under [US-32.3](frontend-and-themes.md#rich-chat-content-and-composer-clearance-us-323).
+They preserve this trust policy; unrestricted HTML is not a prerequisite for layout.

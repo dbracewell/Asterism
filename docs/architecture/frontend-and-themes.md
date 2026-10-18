@@ -51,13 +51,58 @@ relies on child panels owning scroll areas with shrinking flex content. This mak
 owns its own scroll area, described below. The workspace bounds its shell to
 `100dvh`; its main inset scrolls ordinary pages while specialized panels retain
 their own scroll areas. The mobile header stays full-width at the top.
-Settings, Theme Editor, file panes and dialogs follow the container and scroll
-contracts below. Chat still uses a fixed tail reserve beneath its floating composer.
+Settings, Theme Editor, file panes, dialogs and chat follow the container and
+scroll contracts below.
 
 The pending contract in [EPIC-32](../epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
 requires controls and final content to remain reachable across short/narrow windows,
 nested panes, long content and enlarged text. `scrollWidth <= clientWidth` alone
 cannot detect clipped vertical content or controls hidden by `overflow: hidden`.
+
+### Rich chat content and composer clearance (US-32.3)
+
+`ChatSession` uses a shrinking column with two flow siblings: the conversation
+history and composer. History owns vertical scrolling and has no fixed tail
+reserve. The composer can occupy at most 60% of the available session height;
+its input container owns scrolling through expanded saved context, staged files,
+errors, multiline input and controls. Its jump-to-latest button remains outside
+that inner scroll area. History retains the remaining space, so composer growth
+cannot cover the final message or response actions. Both areas shrink horizontally,
+with a shared 64rem maximum width. Existing stream follow/manual-scroll locking
+and persistence/model/scope boundaries remain in place; no resize observer or
+new scrolling framework is introduced.
+
+The shared Markdown renderer wraps prose, links, inline code and omitted-image
+labels at long tokens. Tables and fenced code have bounded horizontal scroll
+regions, keyboard focus and visible focus outlines. Each code block (including
+unlabelled fences) keeps literal text and a separate copy header, so horizontal
+scrolling does not move its copy action out of reach. KaTeX's generated `.katex`
+spans get bounded, keyboard-focusable horizontal scroll areas and start alignment
+to keep the first term accessible. Raw HTML, automatic Markdown images, URL and
+math security settings remain governed by the [content policy](markdown-content.md).
+Authorized image attachments remain separate application components.
+
+Message/version actions, thinking/tool arguments, sub-agent activity, citation
+metadata, attachment names and file-context controls wrap within their owners.
+The file context and queued-attachment sections flow through the composer's scroll
+area rather than imposing independent viewport-based height caps. Send/stop use
+existing fixed-size buttons; they do not stretch to the full attachment-list height.
+New-chat composition retains ordinary workspace-page scrolling.
+
+Conversation loading has a named status. Initial query failures have a local
+retry action; a failed background refresh retains saved messages with an explicit
+warning and retry. Empty chats have an explicit start message. Scope refreshes
+continue to fail closed: unverified cached file-scope links are withheld rather
+than treated as authorization. All server-state operations continue through the
+generated clients and TanStack Query.
+
+`chat-reachability.spec.ts` uses production chat/renderer/composer components with
+synthetic long tokens, code, tables, equations, tool arguments, citations and files.
+It exercises 320/390/768/1440px windows, 300px heights, 640px/320px panes beside
+synthetic side panels, 200% text, multiline drafts and expanded context. It checks
+actual horizontal keyboard scrolling, focus/hit testing, final actions, loading,
+empty/failure/cached-refresh states and manual-history position during streaming.
+Existing authenticated mobile-shell tests additionally cover the actual sidebar.
 
 ### Settings, dialogs and file panes (US-32.2)
 
@@ -151,8 +196,8 @@ its own vertical scroll area. Project pagination wraps to avoid widening a narro
 page. The existing File Manager list and chat history retain local scrolling.
 The mobile browser regression uses real authentication and production routes with
 synthetic API content to check these owners, actual touch navigation and wheel
-scrolling. Specialized narrow panes, tall dialogs, rich-content overflow and
-composer clearance under expanded content remain the subsequent EPIC-32 stories.
+scrolling. US-32.2 and US-32.3 extend these contracts to narrow settings/file
+panes, tall dialogs, rich-content overflow and expanded composer content.
 
 ## Theme and component consistency
 

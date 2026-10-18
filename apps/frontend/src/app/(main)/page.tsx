@@ -51,7 +51,7 @@ export default function AppPage() {
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
       <WorkspaceIdentity projectId={projectId} />
-      <ChatInputContainer className="border-0">
+      <ChatInputContainer className="max-w-5xl border-0">
         <AnimatedBorder
           childContainerClassName="rounded-t-none"
           borderComponent={

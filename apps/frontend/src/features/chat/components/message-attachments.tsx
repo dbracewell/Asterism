@@ -30,7 +30,7 @@ export function MessageAttachments({
         ) {
           return (
             <Badge
-              className="h-auto max-w-64 text-left whitespace-normal"
+              className="h-auto max-w-full min-w-0 text-left [overflow-wrap:anywhere] whitespace-normal"
               key={file.file_id}
               variant="destructive"
             >
@@ -62,7 +62,7 @@ export function MessageAttachments({
         }
         return (
           <Badge
-            className="h-auto max-w-64 gap-1 text-left whitespace-normal"
+            className="h-auto max-w-full min-w-0 gap-1 text-left [overflow-wrap:anywhere] whitespace-normal"
             key={file.file_id}
             variant="outline"
           >
@@ -72,7 +72,7 @@ export function MessageAttachments({
               {formatSize(file.size)}
             </span>
             <APIDownload
-              className="underline"
+              className="min-w-0 break-all underline"
               filename={file.filename}
               fileId={file.file_id}
               chatId={chatId}

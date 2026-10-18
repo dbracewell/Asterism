@@ -112,3 +112,30 @@ no-TTY failure is distinguished from the passing direct formatting checks in the
 
 The working database was untouched. No push or deployment is claimed. EPIC-32
 remains in progress; US-32.3 is recommended next.
+
+## US-32.3 — Rich chat content and composer reachability
+
+The user confirmed completion on 2026-10-18, authorizing commit and local merge
+from `feat/us-32.3-rich-chat-reachability`.
+
+- [x] US-32.3: Bound rich chat content and composer overlap — confirmed complete. [Evidence](../reviews/us-32.3-verification-2026-10-18.md)
+  - [x] Define renderer-level wrapping and local scroll policies for tables, code, math, images and long tokens.
+  - [x] Measure composer height or use flow layout so message clearance follows actual content instead of a fixed 150px reserve.
+  - [x] Test long tool arguments, citations, attachments and sidebar/panel combinations using synthetic stress content.
+  - [x] Add reachability assertions, screenshots and keyboard checks at mobile and nested desktop widths.
+
+Conversation history and the bounded composer share normal flow. Wide Markdown
+content scrolls locally, long text and filenames wrap, and response actions remain
+reachable with expanded file context and a multiline draft. Loading, empty, error,
+cached-refresh, streaming and file-scope states retain their intended behavior.
+
+Verification passed: frontend lint/types, direct formatting checks, production build,
+223 frontend tests, six auth database-script checks, backend lint/types/compileall,
+437 backend tests, 30 root configuration checks, and 81 isolated Chromium tests
+with retries disabled. The [verification report](../reviews/us-32.3-verification-2026-10-18.md)
+separates initial failed runs and the root formatting wrapper limitation from
+passing final checks.
+
+The working database was untouched. No remote CI, push or deployment is claimed.
+EPIC-32 is confirmed complete; EPIC-33 / US-33.1, repairing bundled palette
+mappings and contrast, is recommended next.

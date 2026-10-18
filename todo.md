@@ -4,15 +4,7 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31, US-32.1 and US-32.2 are confirmed complete; their checklists are archived above. **US-32.3 is recommended next**; no story is currently active. Execute one story at a time; obtain completion confirmation before merge.
-
-## [EPIC-32: Responsive layout and reachability](docs/epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
-
-- [ ] US-32.3: Bound rich chat content and composer overlap
-  - [ ] Define renderer-level wrapping and local scroll policies for tables, code, math, images and long tokens.
-  - [ ] Measure composer height or use flow layout so message clearance follows actual content instead of a fixed 150px reserve.
-  - [ ] Test long tool arguments, citations, attachments and sidebar/panel combinations using synthetic stress content.
-  - [ ] Add reachability assertions, screenshots and keyboard checks at mobile and nested desktop widths.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. No story is active. EPIC-33 / US-33.1 is recommended next. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
