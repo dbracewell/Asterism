@@ -1,31 +1,39 @@
 "use server";
-import { randomUUID } from "node:crypto";
-import { writeFile } from "node:fs/promises";
 import { revalidatePath } from "next/cache";
-import { themeIdSchema, themeSaveSchema } from "../schemas";
+import { themeIdSchema } from "../schemas";
+import type { ThemeSaveResult } from "../results";
 import { requireThemeAdmin } from "./authorization";
-import { getAllThemes, readCatalogTheme, themePath } from "./catalog";
+import { getThemeRepository, readCatalogTheme } from "./catalog";
+import { ThemeRepositoryError } from "./repository";
 
 export async function loadTheme(id: string) {
   await requireThemeAdmin();
   return readCatalogTheme(themeIdSchema.parse(id));
 }
 
-export async function saveTheme(input: unknown) {
+export async function saveTheme(input: unknown): Promise<ThemeSaveResult> {
   await requireThemeAdmin();
-  const { filename, ...theme } = themeSaveSchema.parse(input);
-  const id = filename || randomUUID();
-  if (filename) {
-    await readCatalogTheme(id);
-  } else {
-    const themes = await getAllThemes();
-    if (Object.values(themes).some((entry) => entry.name === theme.name)) {
-      throw new Error("Theme name already exists");
+  let theme;
+  try {
+    theme = await getThemeRepository().save(input);
+  } catch (error) {
+    if (error instanceof ThemeRepositoryError) {
+      return { ok: false, error: { code: error.code, message: error.message } };
     }
+    return {
+      ok: false,
+      error: {
+        code: "STORAGE_ERROR",
+        message:
+          "Theme could not be saved. Your edits are still here; try again.",
+      },
+    };
   }
-  const { target } = await themePath(id);
-  await writeFile(target, JSON.stringify(theme, null, 2), {
-    flag: filename ? "w" : "wx",
-  });
-  revalidatePath("/");
+  // Persistence has committed. A refresh error must not misreport a failed write.
+  try {
+    revalidatePath("/", "layout");
+  } catch {
+    console.error("Theme saved, but layout revalidation failed");
+  }
+  return { ok: true, theme };
 }

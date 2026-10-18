@@ -1,3 +1,4 @@
+"use client";
 import { CopyButton } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,6 +7,7 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTheme } from "@/features/theme/components/theme-context";
-import { loadTheme, saveTheme } from "@/features/theme/server/actions";
+import { saveTheme } from "@/features/theme/server/actions";
 import { Theme } from "@/features/theme/types";
 import { prettyText } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -34,14 +36,26 @@ import {
   PlusIcon,
   SaveIcon,
 } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Controller, ControllerRenderProps, useForm } from "react-hook-form";
 import z from "zod";
+import { useMutation } from "@tanstack/react-query";
+import {
+  themeColorsSchema as ThemeColorsSchema,
+  themeDataSchema,
+  themeIdSchema,
+} from "@/features/theme/schemas";
 
 export const ThemeEditor = () => {
   const { lightThemes, darkThemes } = useTheme();
   const [theme, setTheme] = useState<Theme | null>(null);
+  const [selection, setSelection] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const chooseTheme = (next: Theme) => {
+    setTheme(next);
+    setSelection((value) => value + 1);
+  };
 
   return (
     <div className="flex h-full flex-1 flex-col">
@@ -51,9 +65,10 @@ export const ThemeEditor = () => {
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Add provider"
+          aria-label="New theme"
+          disabled={isSaving}
           className="absolute top-0 right-0"
-          onClick={() => setTheme(prepareFormData({}))}
+          onClick={() => chooseTheme(prepareFormData({}))}
         >
           <PlusIcon />
         </Button>
@@ -69,7 +84,8 @@ export const ThemeEditor = () => {
                 <ThemeButton
                   key={t.filename}
                   theme={t}
-                  setTheme={setTheme}
+                  setTheme={chooseTheme}
+                  disabled={isSaving}
                   currentTheme={theme?.name}
                 />
               ))}
@@ -85,7 +101,8 @@ export const ThemeEditor = () => {
                 <ThemeButton
                   key={t.filename}
                   theme={t}
-                  setTheme={setTheme}
+                  setTheme={chooseTheme}
+                  disabled={isSaving}
                   currentTheme={theme?.name}
                 />
               ))}
@@ -93,7 +110,12 @@ export const ThemeEditor = () => {
           )}
         </div>
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          <ThemeForm theme={theme ?? undefined} setTheme={setTheme} />
+          <ThemeForm
+            key={selection}
+            theme={theme ?? undefined}
+            setTheme={setTheme}
+            setIsSaving={setIsSaving}
+          />
         </div>
       </div>
     </div>
@@ -104,6 +126,7 @@ const ThemeButton = ({
   theme,
   setTheme,
   currentTheme,
+  disabled,
 }: {
   theme: {
     name: string;
@@ -112,7 +135,9 @@ const ThemeButton = ({
   };
   setTheme: (theme: Theme) => void;
   currentTheme?: string;
+  disabled: boolean;
 }) => {
+  const { getTheme } = useTheme();
   return (
     <div className="flex items-center justify-between gap-1">
       <Button
@@ -121,8 +146,9 @@ const ThemeButton = ({
           currentTheme === theme.name && "bg-accent text-accent-foreground",
         )}
         variant="ghost"
-        onClick={async () => {
-          const t = await loadTheme(theme.filename);
+        disabled={disabled}
+        onClick={() => {
+          const t = getTheme(theme.filename);
           setTheme(t);
         }}
       >
@@ -130,9 +156,11 @@ const ThemeButton = ({
       </Button>
       <Button
         size="icon-xs"
+        aria-label={`Duplicate ${theme.name}`}
         variant="ghost"
-        onClick={async () => {
-          const t = await loadTheme(theme.filename);
+        disabled={disabled}
+        onClick={() => {
+          const t = getTheme(theme.filename);
           setTheme({
             ...t,
             filename: "",
@@ -145,40 +173,6 @@ const ThemeButton = ({
     </div>
   );
 };
-
-const hexColor = z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, {
-  message: "Invalid hex color",
-});
-
-const ThemeColorsSchema = z.object({
-  background: hexColor,
-  foreground: hexColor,
-  card: hexColor,
-  "card-foreground": hexColor,
-  popover: hexColor,
-  "popover-foreground": hexColor,
-  primary: hexColor,
-  "primary-foreground": hexColor,
-  secondary: hexColor,
-  "secondary-foreground": hexColor,
-  muted: hexColor,
-  "muted-foreground": hexColor,
-  accent: hexColor,
-  "accent-foreground": hexColor,
-  "sidebar-foreground": hexColor,
-  "sidebar-primary": hexColor,
-  "sidebar-primary-foreground": hexColor,
-  "sidebar-accent": hexColor,
-  "sidebar-accent-foreground": hexColor,
-
-  destructive: hexColor,
-  border: hexColor,
-  input: hexColor,
-  ring: hexColor,
-  sidebar: hexColor,
-  "sidebar-border": hexColor,
-  "sidebar-ring": hexColor,
-});
 
 const ThemeGroups = [
   { background: "background" },
@@ -200,11 +194,8 @@ const ThemeGroups = [
   { background: "ring" },
 ];
 
-const ThemeSchema = z.object({
-  name: z.string().trim().min(1, "A theme name is require"),
-  filename: z.string(),
-  type: z.enum(["dark", "light"]),
-  colors: ThemeColorsSchema,
+const ThemeSchema = themeDataSchema.extend({
+  filename: z.union([themeIdSchema, z.literal("")]),
 });
 
 type ThemeFormValues = z.infer<typeof ThemeSchema>;
@@ -229,9 +220,11 @@ const prepareFormData = ({ theme }: { theme?: Theme }) => {
 const ThemeForm = ({
   theme,
   setTheme,
+  setIsSaving,
 }: {
   theme?: Theme;
   setTheme: (theme: Theme) => void;
+  setIsSaving: (saving: boolean) => void;
 }) => {
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(ThemeSchema),
@@ -248,13 +241,30 @@ const ThemeForm = ({
     });
   }, [theme, reset]);
 
-  const [isPending, startTransition] = useTransition();
-
-  const onSubmit = (values: ThemeFormValues) => {
-    startTransition(async () => {
-      await saveTheme(values);
-    });
-  };
+  const { refresh } = useTheme();
+  const save = useMutation({
+    mutationFn: async (values: ThemeFormValues) => {
+      let result;
+      try {
+        result = await saveTheme(values);
+      } catch {
+        throw new Error(
+          "Theme could not be saved. Your edits are still here; try again.",
+        );
+      }
+      if (!result.ok) throw new Error(result.error.message);
+      return result.theme;
+    },
+    onMutate: () => setIsSaving(true),
+    onSuccess: (saved) => {
+      setTheme(saved);
+      reset(saved);
+      refresh();
+    },
+    onSettled: () => setIsSaving(false),
+  });
+  const isPending = save.isPending;
+  const onSubmit = (values: ThemeFormValues) => save.mutate(values);
 
   if (theme == null) {
     return (
@@ -276,7 +286,10 @@ const ThemeForm = ({
       id="form-theme"
       className="flex min-h-0 flex-1 flex-col p-2"
     >
-      <div className="@container flex flex-1 flex-col overflow-y-auto">
+      <FieldSet
+        disabled={isPending}
+        className="@container flex flex-1 flex-col overflow-y-auto"
+      >
         <Input type="hidden" {...register("filename")} />
         <FieldGroup>
           <Controller
@@ -376,15 +389,24 @@ const ThemeForm = ({
             ))}
           </div>
         </FieldGroup>
-      </div>
+      </FieldSet>
+      {save.isError && <FieldError errors={[save.error]} />}
+      {save.isSuccess && !form.formState.isDirty && (
+        <p role="status" className="text-muted-foreground text-sm">
+          Theme saved.
+        </p>
+      )}
       <div className="mt-2 flex items-center justify-end gap-2">
         <Button type="submit" disabled={isPending || !form.formState.isDirty}>
           {isPending ? (
-            <LoaderCircleIcon className="animate-spin" />
+            <LoaderCircleIcon
+              data-icon="inline-start"
+              className="animate-spin"
+            />
           ) : (
-            <SaveIcon />
+            <SaveIcon data-icon="inline-start" />
           )}
-          Save
+          {isPending ? "Saving…" : save.isError ? "Retry save" : "Save"}
         </Button>
       </div>
     </form>

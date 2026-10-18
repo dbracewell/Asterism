@@ -71,10 +71,16 @@ async def test_fresh_and_isolated_reset_initialization_include_projects(tmp_path
 
 
 @pytest.mark.asyncio
-async def test_reset_discards_originals_and_vectors_but_preserves_models(tmp_path, monkeypatch):
+async def test_reset_discards_originals_and_vectors_but_preserves_models_and_themes(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "storage_root", tmp_path)
     monkeypatch.setattr(config, "db_url", f"sqlite+aiosqlite:///{tmp_path / 'database.db'}")
-    roots = [config.files_root, config.knowledge_root, config.knowledge_models_root, config.local_caption_models_root]
+    roots = [
+        config.files_root,
+        config.knowledge_root,
+        config.knowledge_models_root,
+        config.local_caption_models_root,
+        config.storage_root / "themes",
+    ]
     for root in roots:
         root.mkdir(parents=True)
         (root / "canary").write_bytes(b"original")

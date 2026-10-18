@@ -17,23 +17,22 @@ selection. Syntax highlighting currently chooses VS/VS2015 by light/dark type.
 
 ## Theme files and editing
 
-Bundled palettes live in [`public/themes`](../../apps/frontend/public/themes).
-The server-only catalog validates JSON with the theme domain's strict runtime
-schema and assigns validated filename stems as catalog IDs. Reads resolve paths
-inside the theme root and reject symlinks. The loader reads disk without a shared
-process cache; an unknown selection cookie falls back to Light using an own-key
-lookup.
+Bundled palettes live in [`features/theme/bundled`](../../apps/frontend/src/features/theme/bundled)
+and are statically imported into the application. The theme repository composes
+these read-only defaults with validated custom files under `STORAGE_ROOT/themes`.
+Saving a bundled ID creates a persistent override; new palettes use server-generated
+IDs. Each save writes and syncs a temporary file and atomically renames it into place.
+Malformed files are isolated individually. No process-global palette cache exists.
 
-Theme Editor reads/writes through administrator-authorized server actions.
-`/api/theme` and `/api/theme/list` expose validated public palette data, including
-to setup/sign-in. These paths do not use the backend FileStore. Existing writes
-require catalog membership; new IDs are generated server-side. Save validates
-names, IDs and hex colors before I/O, awaits the write and revalidates the layout.
-See the [theme trust boundary](auth-and-security.md#theme-trust-boundary).
+Theme Editor uses an administrator-authorized server action and TanStack mutation.
+Failures retain the draft with a retry action; success returns the persisted ID,
+refreshes the catalog and resets dirty state. Public catalog APIs support setup,
+sign-in and ordinary selection with `Cache-Control: no-store`. Missing custom IDs
+resolve to Light without a saved-preference refresh loop.
 
-**Remaining gaps (US-31.2):** custom edits still target `public/themes` rather than
-configured persistent storage. Atomic replacement, isolated malformed-file errors,
-container ownership/persistence and editor retry feedback need a defined contract.
+See [theme storage and lifecycle](theme-storage.md) for schema, single-writer
+ownership, backup/reset, container permissions and cache freshness. The
+[theme trust boundary](auth-and-security.md#theme-trust-boundary) documents access.
 
 ## Layout and scrolling
 

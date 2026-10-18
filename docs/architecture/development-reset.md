@@ -65,11 +65,14 @@ manually to bypass target review.
 | Auth `BETTER_AUTH_DB_PATH`, default `STORAGE_ROOT/users.db` | Delete selected database and sidecars; initialize using pinned Better Auth CLI                           |
 | `STORAGE_ROOT/files`                                        | Remove original uploaded bytes, including sharded source keys                                            |
 | `STORAGE_ROOT/knowledge`                                    | Remove derived extraction/vector storage                                                                 |
+| `STORAGE_ROOT/themes`                                     | Preserve administrator-created themes and bundled-palette overrides                                      |
 | `STORAGE_ROOT/models/knowledge-clip`                        | Preserve reusable embedding model bundle                                                                 |
 | `STORAGE_ROOT/models/captioning-smolvlm2`                   | Preserve reusable local caption model bundle                                                             |
 
 Bundle integrity is still verified when providers load them. Preserving bytes does
 not enable captioning, restore provider credentials, or waive model verification.
+Theme reset is separate: stop the app and remove only the reviewed `themes` directory
+when explicitly desired; see [theme lifecycle](theme-storage.md#permissions-backup-and-reset).
 Do not delete `STORAGE_ROOT` or run `docker compose down -v` as a substitute when
 model-bundle retention is required. For container-backed development, stop the
 container and use an environment/dependency setup that resolves the same mounted

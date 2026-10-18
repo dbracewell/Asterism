@@ -6,6 +6,7 @@ export async function GET() {
     const themes = await getAllThemes();
     return NextResponse.json(
       Object.values(themes).map(({ name, filename }) => ({ name, filename })),
+      { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
     return NextResponse.json(
@@ -14,3 +15,5 @@ export async function GET() {
     );
   }
 }
+
+export const dynamic = "force-dynamic";

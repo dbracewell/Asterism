@@ -24,7 +24,8 @@ history is preserved in the dated files under [`docs/archive`](docs/archive).
 The [2026-10-17 codebase review](docs/reviews/2026-10-17-codebase-review.md)
 assesses architecture, UI reachability, theme contrast and known trust-boundary
 defects. Its [quality roadmap](docs/plans/post-refactor-quality-roadmap.md) defines
-pending EPIC-31–EPIC-35; the recommended next story is US-31.1 (theme access).
+EPIC-31–EPIC-35. US-31.1 and US-31.2 are confirmed complete; US-31.3
+(untrusted Markdown HTML) is recommended next.
 Current theme editing, placeholder admin panes and the unimplemented separate
 persona/default-profile policy are described in the
 [frontend/theme guide](docs/architecture/frontend-and-themes.md).
@@ -162,14 +163,16 @@ upgrades. Do not expose internal ports 3001 or 8000.
 
 ### Storage and lifecycle
 
-`/storage` contains `users.db`, `database.db`, and uploaded files. Auth migrations
+`/storage` contains `users.db`, `database.db`, uploaded files, and custom themes
+under `themes` (see [theme lifecycle](docs/architecture/theme-storage.md)). Auth migrations
 run on each startup using the bundled, pinned official Better Auth CLI and explicit
 `src/lib/auth-cli.ts` configuration (no startup downloads). The backend initializer runs on every startup, creating missing model tables and
 search indexes without upgrading incompatible existing tables. Backend data is not
 automatically migrated or reset. Bind mounts must
 be writable by UID **10001**. Back up databases before upgrades. For an intentional clean development cutover,
 follow [initialization and reset](docs/architecture/development-reset.md); full reset
-removes relational/source/vector data while preserving downloaded model bundles.
+removes relational/source/vector data while preserving downloaded model bundles
+and administrator theme customization.
 
 Never use `docker compose down -v` unless deleting all persisted data is intentional.
 

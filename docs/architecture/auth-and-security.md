@@ -54,8 +54,8 @@ US-31.1 confines theme reads to validated catalog IDs and independently authoriz
 editor actions against the server-side administrator session. The original review's
 harmless traversal probe is covered by isolated filesystem and HTTP regressions.
 The [theme trust boundary](#theme-trust-boundary) describes the current contract.
-[EPIC-31](../epics/EPIC-31-THEME-AND-CONTENT-TRUST-BOUNDARIES.md) still owns persistent
-custom storage and untrusted raw HTML in the shared Markdown renderer.
+[EPIC-31](../epics/EPIC-31-THEME-AND-CONTENT-TRUST-BOUNDARIES.md) still owns
+untrusted raw HTML in the shared Markdown renderer; persistent custom storage is described in the [theme lifecycle](theme-storage.md).
 
 ### Internal callbacks
 
@@ -99,12 +99,14 @@ The theme domain owns ID validation, strict runtime palette validation and
 resolved path containment. IDs contain only lowercase ASCII letters, digits,
 underscores and hyphens (1–80 characters, beginning with a letter or digit).
 Extensions, paths and encoded traversal are not IDs. Reads reject symlinks;
-existing writes must resolve to an existing catalog file, and new IDs are
-server-generated UUIDs created exclusively. Names are bounded nonempty display
+existing writes must identify a validated catalog member, and new IDs are
+server-generated UUIDs. Bundled IDs create overrides only in persistent storage. Names are bounded nonempty display
 text; colors are an exact set of hex color fields. The deployment filesystem is
 trusted and must not be writable by untrusted local processes.
 
-Catalog reads currently read disk without a process-global cache. Saves await
-write completion and revalidate the layout. Custom storage ownership, atomic
-replacement, malformed-file isolation and editor retry behavior remain US-31.2;
-the present storage location is still `apps/frontend/public/themes`.
+Catalog reads validate files individually without a process-global cache. Custom
+palettes and overrides live under `STORAGE_ROOT/themes`; bundled defaults are static
+imports. Saves await a synced temporary file and atomic rename before returning
+success, then revalidate the layout. Failures retain editable drafts with retry.
+See [theme storage and lifecycle](theme-storage.md) for ownership, freshness,
+backup/reset and container permissions.

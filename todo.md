@@ -2,17 +2,12 @@
 
 Completed Projects/Chat Context and provider-settings work remains in the existing archives. This checklist contains the pending findings from the [2026-10-17 review](docs/reviews/2026-10-17-codebase-review.md). See the [sequenced roadmap](docs/plans/post-refactor-quality-roadmap.md).
 
-Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
+Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-US-31.1 is confirmed complete; its checklist is [archived](docs/archive/todo-completed-2026-10-17.md#us-311--confine-and-authorize-theme-operations). No story is active. Recommended next: **US-31.2**. Execute one story at a time; obtain completion confirmation before merge.
+US-31.1 and US-31.2 are confirmed complete; their checklists are archived above. No story is active. Recommended next: **US-31.3**. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-31: Theme and content trust boundaries](docs/epics/EPIC-31-THEME-AND-CONTENT-TRUST-BOUNDARIES.md)
 
-- [ ] US-31.2: Persist theme edits reliably
-  - [ ] Define a small theme repository for bundled defaults and persisted custom themes under configured storage; use a clean-cut schema without migration or legacy shims.
-  - [ ] Await atomic saves, return typed errors, isolate malformed files, and define bounded cache invalidation across supported processes.
-  - [ ] Test write failure, invalid JSON, duplicate names, cache refresh and restart/container persistence using isolated storage.
-  - [ ] Document backup/reset ownership and verify container permissions plus UI failure/retry.
 - [ ] US-31.3: Constrain untrusted Markdown HTML
   - [ ] Decide allowed HTML, URL schemes and remote-image behavior; keep the policy owned by the shared renderer.
   - [ ] Remove unrestricted raw HTML or sanitize it with the chosen schema after appropriate transforms; preserve approved KaTeX output.
