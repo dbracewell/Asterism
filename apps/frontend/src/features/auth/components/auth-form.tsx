@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { installApp } from "@/features/auth/server/actions";
 
@@ -33,16 +34,29 @@ export function AuthForm({
   const [adminPassKey, setAdminPassKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.focus();
+      errorRef.current?.scrollIntoView({ block: "start" });
+    }
+  }, [error]);
+  const showError = (message: string) => {
+    setError(message);
+    // Repeated identical validation failures still return focus to the summary.
+    errorRef.current?.focus();
+    errorRef.current?.scrollIntoView({ block: "start" });
+  };
   const safeRedirect = referer && !referer.includes("sign-in") ? referer : "/";
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
-      setError("Email and Password Required");
+      showError("Email and Password Required");
       return;
     }
     if (view === "install" && (!name.trim() || !adminPassKey.trim())) {
-      setError("Name and Admin Passkey required");
+      showError("Name and Admin Passkey required");
       return;
     }
 
@@ -64,7 +78,7 @@ export function AuthForm({
               // Hard navigation to ensure server receives the new cookie
               window.location.href = safeRedirect ?? "/";
             },
-            onError: (ctx) => setError(ctx.error.message || "Failed to login"),
+            onError: (ctx) => showError(ctx.error.message || "Failed to login"),
           },
         );
       } else {
@@ -79,14 +93,14 @@ export function AuthForm({
           window.location.href = safeRedirect ?? "/";
         } catch (error) {
           if (error instanceof Error) {
-            setError(error.message || "Failed to install");
+            showError(error.message || "Failed to install");
           } else {
-            setError("Failed to install");
+            showError("Failed to install");
           }
         }
       }
     } catch {
-      setError("An unexpected error occurred.");
+      showError("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -154,10 +168,14 @@ export function AuthForm({
 
   return (
     <div
-      className={cn("flex w-full max-w-lg flex-col gap-6", className)}
+      className={cn("flex w-full max-w-lg min-w-0 flex-col gap-6", className)}
       {...props}
     >
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={handleSubmit}
+        aria-label={view === "install" ? "Administrator setup" : "Sign in"}
+        aria-describedby={error ? "auth-error" : undefined}
+      >
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="flex items-center justify-center gap-1">
@@ -170,9 +188,14 @@ export function AuthForm({
             </FieldDescription>
           </div>
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            <FieldError
+              ref={errorRef}
+              id="auth-error"
+              tabIndex={-1}
+              className="scroll-mt-6 rounded-md wrap-anywhere outline-offset-4 focus-visible:outline-2"
+            >
               {error}
-            </div>
+            </FieldError>
           )}
           {view === "install" && (
             <Field>
@@ -212,7 +235,7 @@ export function AuthForm({
           </Field>
           {view === "install" && (
             <Field>
-              <FieldLabel htmlFor="name">Admin Passkey</FieldLabel>
+              <FieldLabel htmlFor="adminPasskey">Admin Passkey</FieldLabel>
               <Input
                 id="adminPasskey"
                 type="password"

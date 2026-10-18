@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { authViewports, exerciseAuth } from "./support/auth-reachability";
 
 test("fresh installation renders administrator setup form", async ({
   page,
@@ -12,3 +13,14 @@ test("fresh installation renders administrator setup form", async ({
   await expect(page.getByText("Admin Passkey", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign up" })).toBeVisible();
 });
+
+// These cases run only in the fresh-install dependency project, before any
+// account-creating Chromium specs. Failed setup validation creates no users.
+test.use({ hasTouch: true });
+for (const scenario of authViewports) {
+  test(`setup controls, errors and keyboard focus at ${scenario.width}x${scenario.height}, ${(scenario.fontSize / 16) * 100}% text`, async ({
+    page,
+  }, info) => {
+    await exerciseAuth(page, scenario, true, info);
+  });
+}

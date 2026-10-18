@@ -113,7 +113,7 @@ export function ProjectList() {
               ))}
             </ul>
           )}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="outline"
               disabled={page === 1 || projects.isFetching}

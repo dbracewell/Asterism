@@ -1,6 +1,6 @@
 # EPIC-32: Responsive layout and reachability
 
-Status: proposed / pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F3, F4.
+Status: in progress; US-32.1, including reported mobile shell regressions, was confirmed complete on 2026-10-18. US-32.2 is recommended next. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F3, F4.
 
 ## Objective
 
@@ -12,19 +12,24 @@ Implementation stays within the owning domain/component. Preserve existing autho
 
 ## US-32.1: Make short-screen authentication reachable
 
+Status: confirmed complete on 2026-10-18; checklist [archived](../archive/todo-completed-2026-10-18.md#us-321--authentication-and-mobile-workspace-reachability).
+
 As a user, I want setup and login controls reachable in a short or keyboard-reduced viewport.
 
 Estimate: 1–2 days. Dependencies: None.
 
 Acceptance criteria:
 
-At 320px and 390px widths, 300px and normal heights, and enlarged text, fields, errors and submit controls remain reachable by touch/scroll and keyboard. Authentication owns scrolling without breaking the workspace shell. No global horizontal clipping hides content.
+At 320px and 390px widths, 300px and normal heights, and enlarged text, fields, errors and submit controls remain reachable by touch/scroll and keyboard. Authentication owns scrolling without breaking the workspace shell. No global horizontal clipping hides content. Follow-up acceptance from the mobile report: the sidebar opens with one tap, the header spans the viewport without content covering it, and authenticated pages retain usable scroll owners.
 
 Tasks:
 
-- [ ] Give authentication pages a dynamic-height and scroll contract while preserving workspace-specific scroll ownership.
-- [ ] Add short-screen/landscape and enlarged-text browser cases with submit/validation reachability checks.
-- [ ] Check focus visibility and keyboard navigation, and update the frontend layout guide.
+- [x] Give authentication pages a dynamic-height and scroll contract while preserving workspace-specific scroll ownership.
+- [x] Add short-screen/landscape and enlarged-text browser cases with submit/validation reachability checks.
+- [x] Check focus visibility and keyboard navigation, and update the frontend layout guide.
+- [x] Repair reported mobile sidebar, header and page-scroll regressions; verify authenticated mobile routes.
+
+Verification: [2026-10-18 evidence](../reviews/us-32.1-verification-2026-10-18.md).
 
 ## US-32.2: Make settings, dialogs and file panes fit their containers
 

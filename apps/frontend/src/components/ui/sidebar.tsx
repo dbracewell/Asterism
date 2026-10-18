@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import Cookies from "js-cookie";
 import { PanelLeftIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Slot } from "radix-ui";
 import React from "react";
 
@@ -42,6 +42,7 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -69,7 +70,12 @@ function SidebarProvider({
 }) {
   const isMobile = useIsMobile();
   const router = useRouter();
+  const pathname = usePathname();
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
   const [openMobile, setOpenMobile] = React.useState(false);
+  React.useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname]);
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
 
@@ -123,6 +129,7 @@ function SidebarProvider({
       openMobile,
       setOpenMobile,
       toggleSidebar,
+      triggerRef,
     }),
     [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar],
   );
@@ -158,7 +165,8 @@ const Sidebar = ({
   width?: string;
   dragClassName?: string;
 }) => {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const { isMobile, state, openMobile, setOpenMobile, triggerRef } =
+    useSidebar();
   const [isResizing, setIsResizing] = React.useState(false);
   const [localWidth, setLocalWidth] = React.useState(width);
   const setSideBarWidth = useSideBarWidth((state) => state.setSideBarWidth);
@@ -207,7 +215,13 @@ const Sidebar = ({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) min-w-0 p-2 [&>button]:hidden"
+          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) max-w-[calc(100vw-2rem)] min-w-0 p-2 [&>button]:hidden"
+          onCloseAutoFocus={(event) => {
+            if (triggerRef.current) {
+              event.preventDefault();
+              triggerRef.current.focus();
+            }
+          }}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -219,7 +233,7 @@ const Sidebar = ({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
         </SheetContent>
       </Sheet>
     );
@@ -234,7 +248,7 @@ const Sidebar = ({
         data-side={side}
         data-slot="sidebar"
         className={cn(
-          "group peer text-sidebar-foreground bg-sidebar hidden h-full min-w-0 flex-col border-r md:flex",
+          "group peer text-sidebar-foreground bg-sidebar hidden h-full min-w-0 shrink-0 flex-col border-r md:flex",
           state === "expanded" ? "pl-1" : "bg-background text-muted-foreground",
           className,
         )}
@@ -249,7 +263,7 @@ const Sidebar = ({
       {state === "expanded" && (
         <div
           className={cn(
-            "bg-sidebar-border h-full w-0.75 cursor-col-resize",
+            "bg-sidebar-border h-full w-0.75 shrink-0 cursor-col-resize",
             dragClassName,
           )}
           onMouseDown={(e) => {
@@ -267,17 +281,15 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, triggerRef } = useSidebar();
 
   return (
     <Button
+      ref={triggerRef}
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
       className={cn("size-8! [&_svg:not([class*='size-'])]:size-6!", className)}
-      onTouchEnd={() => {
-        toggleSidebar();
-      }}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -350,14 +362,14 @@ const SidebarHeader = ({
   children,
   ...props
 }: React.ComponentProps<"div">) => {
-  const { state } = useSidebar();
+  const { state, isMobile } = useSidebar();
   return (
     <div
       data-slot="sidebar-header"
       data-sidebar="header"
       className={cn(
         "flex items-center justify-between",
-        state === "collapsed" && "justify-center",
+        state === "collapsed" && !isMobile && "justify-center",
         className,
       )}
       {...props}

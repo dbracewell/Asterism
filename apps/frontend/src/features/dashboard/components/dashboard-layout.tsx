@@ -28,14 +28,19 @@ export const DashboardLayout = async ({
     <UserProvider user={user}>
       <ThemeCheck />
       <UpdateTimeZone />
-      <SidebarProvider defaultOpen={defaultOpen}>
+      <SidebarProvider
+        defaultOpen={defaultOpen}
+        className="h-dvh min-h-0 flex-none"
+      >
         <AppSidebar
           sidebarWidth={sidebarWidth}
           navSessionsOpen={navSessionsOpen}
         />
-        <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
           <MobileSidebarTrigger />
-          {children}
+          <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col">
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </UserProvider>
