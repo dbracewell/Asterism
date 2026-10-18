@@ -76,10 +76,10 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   ).toHaveCount(1);
   await expect(page.getByRole("button", { name: /default/i })).toHaveCount(0);
   await expect(
-    page.getByRole("region", { name: "Sub-agents" }).getByRole("alert"),
+    page.getByRole("region", { name: "Sub-agents" }).getByRole("status"),
   ).toContainText("Fixed model unavailable");
   await page.getByRole("button", { name: "Edit main configuration" }).click();
-  await expect(page.getByLabel("Fixed model")).toHaveCount(0);
+  await expect(page.getByLabel("Model", { exact: true })).toHaveCount(0);
   await expect(
     page.getByRole("dialog").getByText(/knowledge bases/i),
   ).toHaveCount(0);
@@ -100,15 +100,20 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   expect(saved).not.toHaveProperty("model_id");
   expect(saved).toMatchObject({ tools: [] });
   await page.getByRole("button", { name: "Edit Research worker" }).click();
-  await expect(page.getByLabel("Fixed model")).toBeVisible();
+  await expect(page.getByLabel("Model", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("dialog").getByText(/knowledge bases/i),
   ).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Save configuration" }),
   ).toBeDisabled();
-  await page.getByLabel("Fixed model").click();
-  await page.getByRole("option", { name: "Available model (Test)" }).click();
+  await expect(page.getByLabel("Model", { exact: true })).toContainText(
+    "55555555-5555-4555-8555-555555555555 (unavailable)",
+  );
+  await page.getByLabel("Model", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Available model", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Save configuration" }),
   ).toBeEnabled();

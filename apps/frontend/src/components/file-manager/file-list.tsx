@@ -36,7 +36,7 @@ export const FileList = () => {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="@container/files flex min-h-0 min-w-0 flex-1 flex-col">
       {!!filesError && (
         <QueryError
           error={filesError}
@@ -53,9 +53,9 @@ export const FileList = () => {
         <div className="bg-card flex min-h-0 w-full min-w-0 flex-1 flex-col">
           <div
             className={cn(
-              "min-h-0 w-full min-w-0 gap-1 overflow-y-auto px-4 py-2",
+              "min-h-0 w-full min-w-0 flex-1 scroll-p-2 gap-1 overflow-y-auto px-4 py-2",
               view === "grid"
-                ? "grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] grid-rows-[fit-content(200px)] gap-3"
+                ? "grid grid-cols-[repeat(auto-fit,minmax(min(100%,250px),1fr))] grid-rows-[fit-content(200px)] gap-3"
                 : "flex flex-col",
             )}
           >
@@ -89,10 +89,10 @@ export const FileList = () => {
                   }
                 }}
                 className={cn(
-                  "hover:bg-accent/50 hover:text-accent-foreground flex items-center gap-1 rounded-lg p-2 select-none focus:outline-none",
+                  "hover:bg-accent/50 hover:text-accent-foreground focus-visible:ring-ring flex min-w-0 items-center gap-1 rounded-lg p-2 select-none focus-visible:ring-2 focus-visible:outline-none",
                   view === "grid"
                     ? "bg-background text-foreground flex-col border"
-                    : "flex-wrap sm:flex-nowrap",
+                    : "flex-wrap @3xl/files:flex-nowrap",
                   view === "list" &&
                     index % 2 === 1 &&
                     "bg-background text-foreground",
@@ -147,12 +147,9 @@ export const FileList = () => {
                       {file.original_name}
                     </h4>
                   </div>
-                  <div className="text-muted-foreground flex w-full items-center gap-4 truncate text-xs capitalize">
+                  <div className="text-muted-foreground flex w-full flex-wrap items-center justify-center gap-1 text-xs capitalize">
                     <span
-                      className={cn(
-                        view === "grid" && "flex-1 text-center",
-                        view === "grid" && mode === "normal" && "-mr-10",
-                      )}
+                      className={cn(view === "grid" && "flex-1 text-center")}
                     >
                       {file.kind} · {formatFileSize(file.size, 2, false)}
                       {!isSelectable(file) && (
@@ -186,7 +183,9 @@ export const FileList = () => {
                 {mode === "normal" && (
                   <div
                     className={cn(
-                      view === "list" && "w-full sm:w-auto sm:max-w-[55%]",
+                      "max-w-full min-w-0",
+                      view === "list" &&
+                        "w-full @3xl/files:w-auto @3xl/files:max-w-[55%]",
                     )}
                   >
                     <KnowledgeStatus
@@ -199,7 +198,6 @@ export const FileList = () => {
               </article>
             ))}
           </div>
-          <div className="flex flex-1" />
         </div>
       )}
     </div>

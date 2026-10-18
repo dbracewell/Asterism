@@ -4,7 +4,7 @@ import { UserSettings } from "@/features/settings/ui/user-settings";
 
 export const UserSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
   return (
-    <TabsContent value="user" className="min-h-0">
+    <TabsContent value="user" className="min-h-0 min-w-0">
       <SettingsCard
         settings={UserSettings}
         defaultTab={defaultTab}

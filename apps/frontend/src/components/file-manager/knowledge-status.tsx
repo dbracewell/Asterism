@@ -60,7 +60,7 @@ export function KnowledgeStatus({
   const captionStatus = data?.caption.status ?? "none";
   const busy = regenerate.isPending || isActive(data);
   return (
-    <div className="flex flex-wrap items-center gap-1 text-xs">
+    <div className="flex min-w-0 flex-wrap items-center gap-1 text-xs [&_[data-slot=badge]]:max-w-full [&_[data-slot=badge]]:[overflow-wrap:anywhere] [&_[data-slot=badge]]:whitespace-normal">
       {error && (
         <QueryError
           error={error}

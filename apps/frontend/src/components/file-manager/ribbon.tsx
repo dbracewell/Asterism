@@ -29,7 +29,7 @@ import { toast } from "sonner";
 
 export const Ribbon = ({ children }: { children?: ReactNode }) => {
   return (
-    <div className="flex min-h-0 flex-col gap-2">
+    <div className="flex min-w-0 shrink-0 flex-col gap-2">
       <div className="divide-border flex flex-wrap items-center divide-x border-b py-2 pr-0.5">
         <ViewSection />
         <SortSection />
@@ -49,9 +49,11 @@ type RibbonSectionProps = {
 
 export const RibbonSection = ({ title, children }: RibbonSectionProps) => {
   return (
-    <div className="flex flex-col items-center gap-0.5 border-l px-2">
+    <div className="flex max-w-full min-w-0 flex-col items-center gap-0.5 border-l px-2">
       <div className="text-muted-foreground text-center text-xs">{title}</div>
-      <div className="flex items-center gap-1">{children}</div>
+      <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
+        {children}
+      </div>
     </div>
   );
 };

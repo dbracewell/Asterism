@@ -2,22 +2,25 @@
 
 Source: [codebase review, 2026-10-17](../reviews/2026-10-17-codebase-review.md).
 US-31.1 is confirmed complete on 2026-10-17 and US-31.2 on 2026-10-18.
-US-31.3 is confirmed complete on 2026-10-18, closing EPIC-31. US-32.1, including the reported mobile sidebar/header/scrolling repair, is confirmed complete on 2026-10-18. US-32.2 is recommended next; other stories remain proposed/pending.
+US-31.3 is confirmed complete on 2026-10-18, closing EPIC-31. US-32.1, including the reported mobile sidebar/header/scrolling repair, is confirmed complete on 2026-10-18. US-32.2 is confirmed complete on 2026-10-18; US-32.3 is recommended next. Other stories remain proposed/pending.
 The live task checklist is [`todo.md`](../../todo.md); completed history remains
 archived. This roadmap does not reopen completed refactor/provider epics.
 
 ## Recommended sequence
 
-| Order | Stories                   | Reason / dependency                                                                                                                                         |
-| ----- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | US-31.1, US-31.2, US-31.3 | Fix confirmed filesystem traversal/admin authorization, reliable theme persistence, then rich-content trust.                                                |
-| 2     | US-32.1, US-32.2, US-32.3 | Make setup reachable, harden nested settings/file/dialog layouts, then chat content and composer clearance. US-32.3 follows the renderer policy in US-31.3. |
-| 3     | US-33.1, US-33.2, US-33.3 | Correct palette roles, unify labels/status/typography, then enforce a rendered matrix using the hardened layouts.                                           |
-| 4     | US-34.1, US-34.2, US-34.3 | Remove unbounded search candidates, make module/deployment assumptions enforceable and reconcile browser contracts. Pull US-34.3 forward to restore CI.     |
-| 5     | US-35.1, US-35.2          | Make placeholder navigation honest, then implement separate persona/default-profile foundations as a product milestone.                                     |
+| Order | Stories                   | Reason / dependency                                                                                                                                                     |
+| ----- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | US-31.1, US-31.2, US-31.3 | Fix confirmed filesystem traversal/admin authorization, reliable theme persistence, then rich-content trust.                                                            |
+| 2     | US-32.1, US-32.2, US-32.3 | Make setup reachable, harden nested settings/file/dialog layouts, then chat content and composer clearance. US-32.3 follows the renderer policy in US-31.3.             |
+| 3     | US-33.1, US-33.2, US-33.3 | Correct palette roles, unify labels/status/typography, then enforce a rendered matrix using the hardened layouts.                                                       |
+| 4     | US-34.1, US-34.2, US-34.3 | Remove unbounded search candidates, make module/deployment assumptions enforceable and reconcile browser contracts. Retain US-34.3 for explicit contract audit/closure. |
+| 5     | US-35.1, US-35.2          | Make placeholder navigation honest, then implement separate persona/default-profile foundations as a product milestone.                                                 |
 
-US-35.1 is a small cleanup that can be pulled forward. US-34.3 tracks the two
-observed full-suite failures; restoring CI is appropriate before expanding visual-test coverage.
+US-35.1 is a small cleanup that can be pulled forward. US-34.3 tracks the original two
+observed full-suite failures. US-32.2 verification reconciled the remaining stale
+unavailable-model/picker selectors and recorded [72 passing isolated browser tests](../reviews/us-32.2-verification-2026-10-18.md)
+without retries. US-34.3 remains pending explicit contract audit/closure; the suite
+is no longer recorded as currently failing.
 Only one story is implemented at a time, even where dependencies permit reordering.
 
 ## Scope and ownership

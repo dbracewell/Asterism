@@ -167,7 +167,7 @@ function CreateProjectDialog() {
       <DialogTrigger asChild>
         <Button>New project</Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>New project</DialogTitle>
           <DialogDescription>

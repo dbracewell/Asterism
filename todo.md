@@ -4,15 +4,10 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and US-32.1 are confirmed complete; their checklists are archived above. **US-32.2 is recommended next**; no story is currently active. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31, US-32.1 and US-32.2 are confirmed complete; their checklists are archived above. **US-32.3 is recommended next**; no story is currently active. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-32: Responsive layout and reachability](docs/epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
 
-- [ ] US-32.2: Make settings, dialogs and file panes fit their containers
-  - [ ] Audit actual flex/grid minimums, SettingsCard, Theme Editor and file grid; use shrinkable content and container-based adaptation where appropriate.
-  - [ ] Define dialog height/scroll ownership and inspect every production dialog caller with long validation content.
-  - [ ] Preserve unrelated settings URL parameters through the shared search-param helper.
-  - [ ] Add browser tests at 320/390/768/1440px, 640px nested panes and short heights; verify hidden overflow and focused actions, not just scrollWidth.
 - [ ] US-32.3: Bound rich chat content and composer overlap
   - [ ] Define renderer-level wrapping and local scroll policies for tables, code, math, images and long tokens.
   - [ ] Measure composer height or use flow layout so message clearance follows actual content instead of a fixed 150px reserve.

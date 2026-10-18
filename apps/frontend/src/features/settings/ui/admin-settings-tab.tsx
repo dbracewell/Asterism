@@ -5,7 +5,7 @@ import { SettingsCard } from "@/features/settings/ui/setttings-card";
 
 export const AdminSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
   return (
-    <TabsContent value="admin" className="min-h-0 overflow-hidden">
+    <TabsContent value="admin" className="min-h-0 min-w-0 overflow-hidden">
       <SettingsCard
         settings={getLazyAdminSettingsSections()}
         defaultTab={defaultTab}

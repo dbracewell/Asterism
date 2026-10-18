@@ -59,7 +59,7 @@ export function MainAgentForm({
           <PencilIcon />
         </DialogTrigger>
       </Hint>
-      <DialogContent className="flex h-full max-h-[90vh] max-w-[90vw]! flex-col">
+      <DialogContent className="@container/agent sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Main configuration</DialogTitle>
           <DialogDescription>
@@ -107,7 +107,7 @@ export function AgentProfileForm({
           <PlusIcon />
         </DialogTrigger>
       </Hint>
-      <DialogContent className="flex h-full max-h-[90vh] w-full max-w-[90vw]! flex-col">
+      <DialogContent className="@container/agent sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>
             {profile ? "Edit sub-agent" : "Create sub-agent"}
@@ -255,7 +255,7 @@ function ConfigurationForm({
   };
   return (
     <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-      <FieldGroup className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <FieldGroup className="flex min-w-0 flex-1 flex-col">
         <FieldSet disabled={pending} className="flex flex-1 flex-col gap-4">
           <FieldGroup>
             {subAgent && <SubAgentToolWarning />}
@@ -354,7 +354,7 @@ function ConfigurationForm({
               <h1 className="text-muted-foreground text-sm">
                 Generation Settings
               </h1>
-              <FieldSet className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+              <FieldSet className="grid grid-cols-1 gap-2 @xl/agent:grid-cols-2 @4xl/agent:grid-cols-3">
                 <Field>
                   <Label htmlFor="agent-temperature">Temperature</Label>
                   <Input
@@ -402,7 +402,7 @@ function ConfigurationForm({
                 ))}
               </FieldSet>
             </div>
-            <FieldSet className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <FieldSet className="grid grid-cols-1 gap-2 @xl/agent:grid-cols-2 @4xl/agent:grid-cols-3 @6xl/agent:grid-cols-4">
               <FieldLegend>Allowed tools</FieldLegend>
               {toolQuery.isPending && <p role="status">Loading tools…</p>}
               {toolQuery.isError && (

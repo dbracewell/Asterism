@@ -17,6 +17,7 @@ vi.mock("@/hooks/use-mobile", () => ({
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/settings",
+  useSearchParams: () => new URLSearchParams("keep=one&keep=two&t=admin"),
   useRouter: () => ({ replace: mocks.replace }),
 }));
 
@@ -68,7 +69,7 @@ describe("SettingsCard", () => {
     expect(mocks.paneRendered).toHaveBeenCalledTimes(2);
     expect(mocks.paneRendered).toHaveBeenLastCalledWith("second");
     expect(mocks.replace).toHaveBeenCalledWith(
-      "/settings?t=admin&setting=second",
+      "/settings?keep=one&keep=two&t=admin&setting=second",
     );
   });
 

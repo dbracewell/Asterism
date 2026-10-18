@@ -34,7 +34,7 @@ export function LibraryFilePicker({
           Attach library files
         </Button>
       </DialogTrigger>
-      <DialogContent className="flex h-[80vh] flex-col sm:max-w-5xl">
+      <DialogContent className="flex h-[80dvh] flex-col sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Attach library files to this chat</DialogTitle>
           <DialogDescription>
@@ -43,25 +43,27 @@ export function LibraryFilePicker({
           </DialogDescription>
         </DialogHeader>
         {open && (
-          <FileManager.Provider
-            mode="picker"
-            actions={actions}
-            isSelectable={(file) =>
-              !excludedIds.includes(file.id) &&
-              !file.projects?.some((project) => project.id === projectId)
-            }
-            unavailableReason="Already attached or available in this chat"
-          >
-            <FileManager.Ribbon>
-              <PickSelection
-                onPick={async (files) => {
-                  await onPick(files);
-                  setOpen(false);
-                }}
-              />
-            </FileManager.Ribbon>
-            <FileManager.FileList />
-          </FileManager.Provider>
+          <div className="min-h-80 flex-1">
+            <FileManager.Provider
+              mode="picker"
+              actions={actions}
+              isSelectable={(file) =>
+                !excludedIds.includes(file.id) &&
+                !file.projects?.some((project) => project.id === projectId)
+              }
+              unavailableReason="Already attached or available in this chat"
+            >
+              <FileManager.Ribbon>
+                <PickSelection
+                  onPick={async (files) => {
+                    await onPick(files);
+                    setOpen(false);
+                  }}
+                />
+              </FileManager.Ribbon>
+              <FileManager.FileList />
+            </FileManager.Provider>
+          </div>
         )}
       </DialogContent>
     </Dialog>

@@ -1,10 +1,9 @@
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Types } from "@/features/settings/types";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { cn } from "@/lib/utils";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const SettingsCard = ({
   name,
@@ -15,9 +14,18 @@ export const SettingsCard = ({
   settings: Types;
   defaultTab?: string;
 }) => {
-  const isMobile = useIsMobile();
-  const router = useRouter();
-  const pathname = usePathname();
+  const { setSearchParams } = useReadWriteSearchParams();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isNarrow, setIsNarrow] = useState(true);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setIsNarrow(entry.contentRect.width < 640);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
   const defaultSection = settings
     .filter((setting) => setting.type === "section")
     .find((setting) => setting.isDefault)?.value;
@@ -38,33 +46,40 @@ export const SettingsCard = ({
 
   return (
     <Tabs
-      orientation={isMobile ? "horizontal" : "vertical"}
+      ref={containerRef}
+      orientation={isNarrow ? "horizontal" : "vertical"}
       value={activeSection}
       onValueChange={(value) => {
         setActiveSection(value);
-        router.replace(`${pathname}?t=${name}&setting=${value}`);
+        setSearchParams({ t: name, setting: value });
       }}
       className={cn(
-        "flex h-full min-h-0 flex-1 overflow-clip",
-        isMobile ? "flex-col" : "flex-row",
+        "flex h-full min-h-0 min-w-0 flex-1",
+        isNarrow ? "flex-col" : "flex-row",
       )}
     >
       <TabsList
         className={cn(
-          "rounded-none bg-transparent!",
-          isMobile ? "h-fit! max-w-full" : "w-40",
+          "max-h-full min-h-0 max-w-full shrink-0 justify-start rounded-none bg-transparent!",
+          isNarrow
+            ? "h-fit! w-full overflow-x-auto p-1"
+            : "w-40 overflow-y-auto p-1",
         )}
       >
         <div
           className={cn(
-            "bg-card flex min-h-0 flex-col items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-md border p-2",
-            isMobile ? "flex-row" : "w-full",
+            "bg-card flex flex-col items-center gap-0.5 rounded-md border p-2",
+            isNarrow ? "flex-row" : "w-full",
           )}
         >
           {settings.map((setting, i) => {
             if (setting.type === "section") {
               return (
-                <TabsTrigger key={setting.value} value={setting.value}>
+                <TabsTrigger
+                  className="shrink-0"
+                  key={setting.value}
+                  value={setting.value}
+                >
                   {setting.icon}
                   <span>{setting.label}</span>
                 </TabsTrigger>
@@ -73,7 +88,7 @@ export const SettingsCard = ({
             return (
               <Separator
                 key={i}
-                orientation={isMobile ? "vertical" : "horizontal"}
+                orientation={isNarrow ? "vertical" : "horizontal"}
                 className="my-2"
               />
             );

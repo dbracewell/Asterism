@@ -58,7 +58,7 @@ export const ThemeEditor = () => {
   };
 
   return (
-    <div className="flex h-full flex-1 flex-col">
+    <div className="@container/theme flex min-w-0 flex-1 flex-col">
       <div className="relative flex items-center gap-2 border-b pb-2">
         <h1 className="text-base font-bold">Theme Editor</h1>
         <Button
@@ -73,8 +73,8 @@ export const ThemeEditor = () => {
           <PlusIcon />
         </Button>
       </div>
-      <div className="flex h-full min-h-0 flex-1 items-start gap-2 overflow-hidden">
-        <div className="flex h-full w-60 flex-col gap-1 overflow-y-auto py-2">
+      <div className="flex min-w-0 flex-1 flex-col items-stretch gap-2 @3xl/theme:flex-row">
+        <div className="flex max-h-60 min-w-0 shrink-0 flex-col gap-1 overflow-y-auto py-2 @3xl/theme:max-h-none @3xl/theme:w-60">
           {lightThemes.length > 0 && (
             <div className="flex flex-col gap-0.5">
               <h2 className="text-muted-foreground text-sm font-medium">
@@ -109,7 +109,7 @@ export const ThemeEditor = () => {
             </div>
           )}
         </div>
-        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col">
           <ThemeForm
             key={selection}
             theme={theme ?? undefined}
@@ -142,7 +142,7 @@ const ThemeButton = ({
     <div className="flex items-center justify-between gap-1">
       <Button
         className={cn(
-          "flex-1 justify-start! truncate rounded-md p-0.5! text-left! text-xs",
+          "min-w-0 flex-1 justify-start! truncate rounded-md p-0.5! text-left! text-xs",
           currentTheme === theme.name && "bg-accent text-accent-foreground",
         )}
         variant="ghost"
@@ -270,7 +270,7 @@ const ThemeForm = ({
     return (
       <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
         <PaletteIcon className="text-muted-foreground/30 size-10" />
-        <h4 className="w-sm text-center text-xl">
+        <h4 className="max-w-full text-center text-xl">
           Select a current theme or create a new one.
         </h4>
         <Button onClick={() => setTheme(prepareFormData({}))}>
@@ -284,11 +284,11 @@ const ThemeForm = ({
     <form
       onSubmit={handleSubmit(onSubmit)}
       id="form-theme"
-      className="flex min-h-0 flex-1 flex-col p-2"
+      className="flex min-w-0 flex-1 flex-col p-2"
     >
       <FieldSet
         disabled={isPending}
-        className="@container flex flex-1 flex-col overflow-y-auto"
+        className="@container flex min-w-0 flex-1 flex-col"
       >
         <Input type="hidden" {...register("filename")} />
         <FieldGroup>

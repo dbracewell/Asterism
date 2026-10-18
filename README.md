@@ -26,7 +26,8 @@ assesses architecture, UI reachability, theme contrast and known trust-boundary
 defects. Its [quality roadmap](docs/plans/post-refactor-quality-roadmap.md) defines
 EPIC-31–EPIC-35. EPIC-31 and US-32.1 (authentication and mobile workspace
 reachability) are confirmed complete. US-32.2, covering nested settings/file panes
-and dialog reachability, is recommended next. The shared
+and dialog reachability, is confirmed complete. US-32.3 (rich chat content and
+composer clearance) is recommended next. The shared
 [content policy](docs/architecture/markdown-content.md) defines allowed Markdown,
 links, resources and math.
 Current theme editing, placeholder admin panes and the unimplemented separate

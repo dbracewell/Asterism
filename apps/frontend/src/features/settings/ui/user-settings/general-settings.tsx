@@ -13,10 +13,10 @@ export const GeneralSettings = () => {
   const { setTheme } = useTheme();
 
   return (
-    <div className="flex flex-1 flex-col gap-y-8 p-2">
+    <div className="@container/general flex min-w-0 flex-1 flex-col gap-y-8 p-2">
       <div className="flex flex-col gap-3">
         <h1 className="border-b pb-2 text-base font-bold">Appearance</h1>
-        <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-3">
+        <div className="grid min-w-0 grid-cols-1 items-center gap-x-2 gap-y-3 @sm/general:grid-cols-[auto_minmax(0,1fr)]">
           <h2>Theme</h2>
           <ThemeSelector
             disabled={isUpdatingUserSetting}
@@ -46,7 +46,7 @@ export const GeneralSettings = () => {
         <h1 className="border-b pb-2 text-base font-bold">Default Model</h1>
         <div className="flex flex-col items-start gap-2">
           <ModelSelector
-            className="w-40! sm:w-80!"
+            className="w-full max-w-80 min-w-0"
             value={userSettings.default_model_id ?? undefined}
             onValueChange={(v) => {
               updateSetting("default_model_id", v);

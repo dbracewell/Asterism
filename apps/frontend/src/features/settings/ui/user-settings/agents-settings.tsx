@@ -206,10 +206,10 @@ function SubAgentCard({
     confirmVariant: "destructive",
   });
   return (
-    <Card className="flex h-80! w-60! max-w-60! flex-col">
+    <Card className="flex h-80 w-60 max-w-full min-w-0 flex-col">
       <Dialog />
       <CardHeader>
-        <CardTitle className="wrap-break-word">{agent.name}</CardTitle>
+        <CardTitle className="[overflow-wrap:anywhere]">{agent.name}</CardTitle>
         <CardDescription className="flex items-center justify-between">
           <p className="text-muted-foreground truncate text-xs">{modelLabel}</p>
           <span role="status">

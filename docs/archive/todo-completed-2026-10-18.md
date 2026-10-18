@@ -85,3 +85,30 @@ repairs, coverage and physical-device/full-suite/remote-CI limitations.
 
 The working database was untouched. No push or deployment is claimed. EPIC-32
 remains in progress; US-32.2 is recommended next.
+
+## US-32.2 — Settings, dialogs and file-pane responsiveness
+
+The user confirmed completion on 2026-10-18, authorizing commit and local merge
+from `feat/us-32.2-settings-dialog-file-responsiveness`.
+
+- [x] US-32.2: Make settings, dialogs and file panes fit their containers — confirmed complete. [Evidence](../reviews/us-32.2-verification-2026-10-18.md)
+  - [x] Audit actual flex/grid minimums, SettingsCard, Theme Editor and file grid; use shrinkable content and container-based adaptation where appropriate.
+  - [x] Define dialog height/scroll ownership and inspect every production dialog caller with long validation content.
+  - [x] Preserve unrelated settings URL parameters through the shared search-param helper.
+  - [x] Add browser tests at 320/390/768/1440px, 640px nested panes and short heights; verify hidden overflow and focused actions, not just scrollWidth.
+
+Settings navigation and Theme Editor adapt to container width, unrelated URL
+parameters survive section changes, file cards/actions/pagination fit narrow panes,
+and dialogs expose scrollable content and close/footer controls. Tab keyboard
+orientation follows the layout. Picker bodies reserve usable height while ordinary
+workspace file panes shrink without overlapping their footer.
+
+Verification passed: frontend lint/types, direct formatting checks, production build,
+221 frontend tests, six auth database-script checks, backend lint/types/compileall,
+437 backend tests, 30 root configuration checks, and the full isolated Chromium
+suite with 72 passes and retries disabled. The root formatting wrapper's pnpm
+no-TTY failure is distinguished from the passing direct formatting checks in the
+[verification report](../reviews/us-32.2-verification-2026-10-18.md).
+
+The working database was untouched. No push or deployment is claimed. EPIC-32
+remains in progress; US-32.3 is recommended next.

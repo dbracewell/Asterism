@@ -51,6 +51,8 @@ Tasks:
 
 ## US-34.3: Reconcile full browser contracts after agent-settings changes
 
+Current evidence: [US-32.2 verification](../reviews/us-32.2-verification-2026-10-18.md) reconciled the remaining stale unavailable-model/controlled-picker selectors and recorded 72 passing isolated browser tests without retries. This story remains pending explicit contract audit/closure; the original failures below are historical.
+
 As a maintainer, I want the full browser suite to protect current accessible UI
 behavior without obsolete selectors masking functional regressions.
 

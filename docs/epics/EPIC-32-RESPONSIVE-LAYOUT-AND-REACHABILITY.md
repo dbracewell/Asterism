@@ -1,6 +1,6 @@
 # EPIC-32: Responsive layout and reachability
 
-Status: in progress; US-32.1, including reported mobile shell regressions, was confirmed complete on 2026-10-18. US-32.2 is recommended next. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F3, F4.
+Status: in progress; US-32.1, including reported mobile shell regressions, was confirmed complete on 2026-10-18. US-32.2 was confirmed complete on 2026-10-18; US-32.3 is recommended next. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F3, F4.
 
 ## Objective
 
@@ -33,6 +33,8 @@ Verification: [2026-10-18 evidence](../reviews/us-32.1-verification-2026-10-18.m
 
 ## US-32.2: Make settings, dialogs and file panes fit their containers
 
+Status: confirmed complete on 2026-10-18; checklist [archived](../archive/todo-completed-2026-10-18.md#us-322--settings-dialogs-and-file-pane-responsiveness).
+
 As a user, I want all actions available in narrow panes even on a wide display.
 
 Estimate: 2–3 days. Dependencies: US-32.1 establishes the layout contract.
@@ -43,10 +45,12 @@ Theme Editor stacks or adapts to pane width; file grids fit below 250px content 
 
 Tasks:
 
-- [ ] Audit actual flex/grid minimums, SettingsCard, Theme Editor and file grid; use shrinkable content and container-based adaptation where appropriate.
-- [ ] Define dialog height/scroll ownership and inspect every production dialog caller with long validation content.
-- [ ] Preserve unrelated settings URL parameters through the shared search-param helper.
-- [ ] Add browser tests at 320/390/768/1440px, 640px nested panes and short heights; verify hidden overflow and focused actions, not just scrollWidth.
+- [x] Audit actual flex/grid minimums, SettingsCard, Theme Editor and file grid; use shrinkable content and container-based adaptation where appropriate.
+- [x] Define dialog height/scroll ownership and inspect every production dialog caller with long validation content.
+- [x] Preserve unrelated settings URL parameters through the shared search-param helper.
+- [x] Add browser tests at 320/390/768/1440px, 640px nested panes and short heights; verify hidden overflow and focused actions, not just scrollWidth.
+
+Verification: [2026-10-18 evidence](../reviews/us-32.2-verification-2026-10-18.md), including 72 isolated browser tests passing without retries.
 
 ## US-32.3: Bound rich chat content and composer overlap
 

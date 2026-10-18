@@ -51,14 +51,57 @@ relies on child panels owning scroll areas with shrinking flex content. This mak
 owns its own scroll area, described below. The workspace bounds its shell to
 `100dvh`; its main inset scrolls ordinary pages while specialized panels retain
 their own scroll areas. The mobile header stays full-width at the top.
-Dialogs have caller-specific scroll limits rather than a universal height policy.
-The file grid and Theme Editor retain fixed minimum dimensions needing narrow-pane
-verification. Chat uses a fixed tail reserve beneath its floating composer.
+Settings, Theme Editor, file panes and dialogs follow the container and scroll
+contracts below. Chat still uses a fixed tail reserve beneath its floating composer.
 
 The pending contract in [EPIC-32](../epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
 requires controls and final content to remain reachable across short/narrow windows,
 nested panes, long content and enlarged text. `scrollWidth <= clientWidth` alone
 cannot detect clipped vertical content or controls hidden by `overflow: hidden`.
+
+### Settings, dialogs and file panes (US-32.2)
+
+`SettingsCard` observes its own content width: below 640px its section tabs form a
+horizontally scrollable strip; at larger widths its 160px navigation column scrolls
+vertically. The Radix orientation follows that arrangement for arrow-key navigation.
+Both navigation and active content can shrink, and the active pane owns vertical
+scrolling. Section changes use `useReadWriteSearchParams`, preserving unrelated
+parameters, including repeated values, while updating `t` and `setting`. General
+Settings stacks appearance controls and bounds its model selector to the pane;
+sub-agent cards shrink within their parent.
+
+Theme Editor uses a named CSS container. Its theme list and form stack until the
+editor itself reaches 48rem, independent of viewport width. The stacked theme list
+has a 15rem scroll limit; the form flows in the settings pane so its last field,
+validation and Save action remain reachable. Color fields adapt to their own width.
+
+The file grid uses `minmax(min(100%,250px),1fr)` tracks. File cards and processing
+status can shrink; names truncate within the card while open/download controls wrap
+instead of sharing clipped metadata. Project badges wrap long names. List rows
+switch to a single row only when their own container reaches 48rem. The ribbon's
+sections, controls and pagination footer wrap, and file selection has a visible keyboard focus ring.
+The file list owns scrolling within the available height. Picker bodies reserve
+at least 20rem for their ribbon, files and footer; short dialogs scroll their
+outer content to expose that body. Ordinary workspace file panes can shrink to
+their actual remaining height without overlapping the footer.
+
+Shared `DialogContent` and `AlertDialogContent` own vertical scrolling and are capped
+at `calc(100dvh - 2rem)`, with horizontal gutters and wrapping long messages. Ordinary
+dialogs use content-sized grid rows, so long validation does not compress away the
+footer. The close button remains reachable by returning to the top or keyboard focus;
+footers scroll with the content. Agent forms use that outer scroll owner rather than
+an independently scrolling form, and their columns follow the dialog container width.
+Library/project file pickers retain a flex layout with an 80dvh preferred height,
+subject to the shared cap; their headers/ribbons do not shrink. Image previews fit
+within the same dynamic-height limit. All production callers were inspected: main
+configuration, sub-agent create/edit, project create, chat move, project/library file
+pickers, image preview, and the reusable confirmation dialog.
+
+Browser regressions in `settings-responsiveness.spec.ts` cover 320/390/768/1440px
+viewports, 300px heights, and 640px/240px nested panes. They assert focus and center
+hit testing after scrolling, dialog footer/close reachability, duplicate URL parameter
+preservation, and file open/download/regenerate actions. These are browser layout
+checks, not a certification of physical device keyboard behavior.
 
 ### Authentication viewport and focus contract (US-32.1)
 

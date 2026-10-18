@@ -114,7 +114,7 @@ const ImageContent = ({
             />
           </button>
         </DialogTrigger>
-        <DialogContent className="flex max-h-[95vh]! max-w-[95vw]! items-center justify-center border-0! p-0">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] max-w-[95vw]! items-center justify-center border-0! p-0">
           <DialogTitle className="sr-only">{alt}</DialogTitle>
           <Button
             variant="ghost"
@@ -129,7 +129,7 @@ const ImageContent = ({
           <img
             src={data.thumbnail}
             alt={alt}
-            className="max-h-[95vh] max-w-full rounded-md object-contain"
+            className="max-h-[calc(100dvh-2rem)] max-w-full rounded-md object-contain"
           />
         </DialogContent>
       </Dialog>

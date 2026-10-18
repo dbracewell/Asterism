@@ -222,9 +222,28 @@ for (const width of [320, 390]) {
     await page.mouse.move(width / 2, 220);
     await page.mouse.wheel(0, 10000);
     await expect(lastFile).toBeInViewport();
-    // A card can be taller than this short pane. Scroll back slightly to expose
-    // its action above the processing-status text, using the real scroll owner.
-    await page.mouse.wheel(0, -10);
+    // Center the action in its actual scroll owner; metadata wrapping changes
+    // the required wheel distance as the pane narrows.
+    const wheelDelta = await lastFile.evaluate((node) => {
+      let owner = node.parentElement;
+      while (owner) {
+        if (
+          /(auto|scroll)/.test(getComputedStyle(owner).overflowY) &&
+          owner.scrollHeight > owner.clientHeight
+        )
+          break;
+        owner = owner.parentElement;
+      }
+      if (!owner) throw new Error("File action has no scroll owner");
+      const box = node.getBoundingClientRect();
+      const bounds = owner.getBoundingClientRect();
+      return (
+        box.top +
+        box.height / 2 -
+        (Math.max(0, bounds.top) + Math.min(innerHeight, bounds.bottom)) / 2
+      );
+    });
+    await page.mouse.wheel(0, wheelDelta);
     await expect(lastFile).toBeInViewport({ ratio: 1 });
     expect(
       await lastFile.evaluate((node) => {

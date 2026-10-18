@@ -49,6 +49,14 @@ layout resizing for supporting virtual keyboards while retaining browser zoom.
 See the
 [frontend layout guide](../../docs/architecture/frontend-and-themes.md#authentication-viewport-and-focus-contract-us-321).
 
+## Settings, dialogs and file panes
+
+Settings section navigation follows the pane width and preserves unrelated URL
+parameters. Theme Editor stacks its list and form in narrow containers; file grids
+fit below 250px. Dialogs share a dynamic viewport height cap and scroll through long
+content to their footer and close actions. See the
+[container and scroll contracts](../../docs/architecture/frontend-and-themes.md#settings-dialogs-and-file-panes-us-322).
+
 ## Mobile workspace layout
 
 The workspace shell fills the dynamic viewport. A full-width sticky mobile header
