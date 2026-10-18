@@ -102,8 +102,11 @@ for theme loading, scroll ownership and current-versus-planned settings. The
 [2026-10-17 review](../../docs/reviews/2026-10-17-codebase-review.md) records
 the original theme trust defects, short-screen setup clipping and palette contrast
 failures. US-31.1 now validates public palette reads and requires administrator
-authorization in editor actions; the remaining findings belong to EPIC-31–EPIC-33. Theme edits currently target `public/themes`, without a supported
-persistent custom-theme storage contract.
+authorization in editor actions. US-31.2 stores custom palettes/overrides under
+`STORAGE_ROOT/themes`, keeps bundled defaults read-only, atomically saves edits,
+and retains failed drafts for retry. See [theme storage and lifecycle](../../docs/architecture/theme-storage.md)
+for backup/reset and the single-writer deployment contract. Remaining findings
+belong to EPIC-31–EPIC-33.
 
 For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install

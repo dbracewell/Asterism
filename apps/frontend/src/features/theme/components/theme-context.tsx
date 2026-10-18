@@ -2,7 +2,6 @@
 import {
   FONT_SIZE_COOKIE,
   THEME_NAME_COOKIE,
-  THEME_REFRESH_COOKIE,
 } from "@/features/theme/constants";
 import { Theme } from "@/features/theme/types";
 import Cookies from "js-cookie";
@@ -104,7 +103,6 @@ export const ThemeProvider = ({
   );
 
   const refresh = useCallback(() => {
-    Cookies.set(THEME_REFRESH_COOKIE, "yes");
     router.refresh();
   }, [router]);
 

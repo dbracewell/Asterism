@@ -22,6 +22,8 @@ responses, full-text chat search, and user-owned file attachments.
 
 Additional guides:
 
+- [Theme storage and lifecycle](theme-storage.md): read-only defaults, persistent
+  overrides, atomic saves, single-writer ownership, backup and reset.
 - [Frontend layout, themes, and product surface](frontend-and-themes.md): current
   theme ownership, scrolling constraints, unfinished settings and known trust gaps.
 - [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md) and

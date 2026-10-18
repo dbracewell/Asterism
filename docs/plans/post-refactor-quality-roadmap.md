@@ -1,8 +1,8 @@
 # Post-refactor quality roadmap
 
 Source: [codebase review, 2026-10-17](../reviews/2026-10-17-codebase-review.md).
-US-31.1 is confirmed complete on 2026-10-17. No story is active; US-31.2 is
-recommended next. Other stories below remain proposed/pending.
+US-31.1 is confirmed complete on 2026-10-17 and US-31.2 on 2026-10-18.
+No story is active; US-31.3 is recommended next. Other stories remain proposed/pending.
 The live task checklist is [`todo.md`](../../todo.md); completed history remains
 archived. This roadmap does not reopen completed refactor/provider epics.
 

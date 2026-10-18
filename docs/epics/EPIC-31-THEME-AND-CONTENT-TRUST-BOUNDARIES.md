@@ -1,6 +1,6 @@
 # EPIC-31: Theme and content trust boundaries
 
-Status: in progress; US-31.1 confirmed complete on 2026-10-17; US-31.2 and US-31.3 pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F1, F2.
+Status: in progress; US-31.1 confirmed complete on 2026-10-17; US-31.2 confirmed complete on 2026-10-18; US-31.3 pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F1, F2.
 
 ## Objective
 
@@ -35,16 +35,18 @@ As an administrator, I want a successful theme save to survive process/container
 
 Estimate: 2–3 days. Dependencies: US-31.1.
 
+Implementation verified and user-confirmed complete on 2026-10-18. See [verification evidence](../reviews/us-31.2-verification-2026-10-18.md) and [storage decision/lifecycle](../architecture/theme-storage.md).
+
 Acceptance criteria:
 
 The theme repository has an explicit writable storage owner separate from bundled defaults. Writes are awaited and atomic; failures retain edits with retry and never report success. Readers validate files individually and cache invalidation is explicit. Container replacement preserves custom themes.
 
 Tasks:
 
-- [ ] Define a small theme repository for bundled defaults and persisted custom themes under configured storage; use a clean-cut schema without migration or legacy shims.
-- [ ] Await atomic saves, return typed errors, isolate malformed files, and define bounded cache invalidation across supported processes.
-- [ ] Test write failure, invalid JSON, duplicate names, cache refresh and restart/container persistence using isolated storage.
-- [ ] Document backup/reset ownership and verify container permissions plus UI failure/retry.
+- [x] Define a small theme repository for bundled defaults and persisted custom themes under configured storage; use a clean-cut schema without migration or legacy shims.
+- [x] Await atomic saves, return typed errors, isolate malformed files, and define bounded cache invalidation across supported processes.
+- [x] Test write failure, invalid JSON, duplicate names, cache refresh and restart/container persistence using isolated storage.
+- [x] Document backup/reset ownership and verify container permissions plus UI failure/retry.
 
 ## US-31.3: Constrain untrusted Markdown HTML
 

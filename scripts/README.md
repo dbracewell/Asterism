@@ -166,3 +166,19 @@ workspace pnpm scripts instead of calling the launcher directly.
 The module also exports the portable parser, root loader, scope filtering, argument
 parsing, legacy-file detection, and subprocess runner for tests and other repository
 tools.
+
+### `check-theme-storage-container.mjs`
+
+Verifies the actual theme repository in a disposable test layer on the locally
+available `asterism:local` runtime image. Requires Docker and installed frontend
+dependencies; optional `THEME_TEST_RUNTIME_IMAGE` selects another local application
+runtime image. It makes no network requests during the image build or container runs.
+
+```bash
+node scripts/check-theme-storage-container.mjs
+```
+
+Three fresh containers run as UID/GID `10001` with a read-only application filesystem
+and share a newly created test volume. The check saves, replaces and reads a palette,
+verifies default assets are immutable and removes its own image, volume and temporary
+artifacts. No existing application data is used. See [theme lifecycle](../docs/architecture/theme-storage.md).

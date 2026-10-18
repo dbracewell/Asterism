@@ -1,4 +1,3 @@
-import { THEME_REFRESH_COOKIE } from "@/features/theme/constants";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -21,6 +20,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/chat-models",
     "/e2e/chat-model-session",
     "/e2e/projects",
+    "/e2e/themes",
   );
 }
 
@@ -46,10 +46,6 @@ export async function proxy(request: NextRequest) {
   } else if (session && pathname === "/sign-in") {
     // Is logged in and trying to reach the sign-in page, redirect to app
     response = NextResponse.redirect(new URL("/", externalOrigin));
-  }
-
-  if (request.cookies.get(THEME_REFRESH_COOKIE)?.value != null) {
-    response.cookies.delete(THEME_REFRESH_COOKIE);
   }
 
   return response;

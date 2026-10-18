@@ -10,15 +10,19 @@ import { useEffect } from "react";
 
 export const ThemeCheck = () => {
   const user = useUser();
-  const { currentTheme, setTheme, fontSize, setFontSize } = useTheme();
+  const { currentTheme, allThemes, setTheme, fontSize, setFontSize } =
+    useTheme();
+  // An isolated malformed/deleted custom palette must not cause refresh loops.
+  const desiredTheme = allThemes.some(
+    (theme) => theme.filename === user.settings.theme,
+  )
+    ? user.settings.theme!
+    : DEFAULT_THEME_NAME;
   const router = useRouter();
 
   useEffect(() => {
-    if (
-      user.settings.theme !== currentTheme ||
-      user.settings.font_size !== fontSize
-    ) {
-      setTheme(user.settings.theme ?? DEFAULT_THEME_NAME);
+    if (desiredTheme !== currentTheme || user.settings.font_size !== fontSize) {
+      setTheme(desiredTheme);
       setFontSize(user.settings.font_size ?? DEFAULT_FONT_SIZE);
       router.refresh();
     }
@@ -29,7 +33,7 @@ export const ThemeCheck = () => {
     setFontSize,
     setTheme,
     user.settings.font_size,
-    user.settings.theme,
+    desiredTheme,
   ]);
 
   return null;
