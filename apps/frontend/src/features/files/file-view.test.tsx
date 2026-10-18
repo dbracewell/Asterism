@@ -118,3 +118,18 @@ it("keeps project memberships visible when processing artifacts cannot load", as
   await userEvent.click(screen.getByRole("button", { name: "Retry" }));
   expect(await screen.findByText("Recovered")).toBeInTheDocument();
 });
+
+it("keeps adversarial extracted HTML and captions as literal text", async () => {
+  const payload =
+    '<img src="/untrusted-markdown/file" onerror="alert(1)"><form action="/steal">secret</form>';
+  api.fileKnowledgeGetStatus.mockResolvedValue({
+    data: {
+      status: "ready",
+      extracted_content: payload,
+      caption: { status: "accepted", text: payload },
+    },
+  });
+  const { container } = renderView();
+  expect(await screen.findAllByText(payload)).toHaveLength(2);
+  expect(container.querySelector("img,form,[onerror]")).toBeNull();
+});

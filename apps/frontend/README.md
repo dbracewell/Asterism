@@ -105,8 +105,10 @@ failures. US-31.1 now validates public palette reads and requires administrator
 authorization in editor actions. US-31.2 stores custom palettes/overrides under
 `STORAGE_ROOT/themes`, keeps bundled defaults read-only, atomically saves edits,
 and retains failed drafts for retry. See [theme storage and lifecycle](../../docs/architecture/theme-storage.md)
-for backup/reset and the single-writer deployment contract. Remaining findings
-belong to EPIC-31–EPIC-33.
+for backup/reset and the single-writer deployment contract. US-31.3 disables raw
+Markdown HTML and automatic image resources, limits links and constrains KaTeX;
+see the [content policy](../../docs/architecture/markdown-content.md). Layout and
+contrast remediation remains in EPIC-32–EPIC-33.
 
 For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install

@@ -34,6 +34,15 @@ See [theme storage and lifecycle](theme-storage.md) for schema, single-writer
 ownership, backup/reset, container permissions and cache freshness. The
 [theme trust boundary](auth-and-security.md#theme-trust-boundary) documents access.
 
+## Rich-content trust
+
+Main/user chat messages and sub-agent replies share `MarkdownViewer`. It disables
+raw HTML, permits an explicit subset of link URLs, and renders Markdown images as
+omitted-image text without loading them. KaTeX math uses `trust: false`, strict
+validation and bounded size/expansion. Fenced code, GFM and scoped citations remain
+supported. File extracted text/captions remain literal React text. See the
+[Markdown and file-content policy](markdown-content.md) for the exact contract.
+
 ## Layout and scrolling
 
 Global CSS suppresses body overflow and the body uses `h-screen`. The workspace
