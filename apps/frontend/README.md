@@ -97,11 +97,13 @@ The combined deployment smoke test is documented in the root README.
 
 ## Quality and API generation
 
-US-31.1 confines public theme reads to validated catalog IDs and requires the
-server-side administrator role for editor actions. See the
-[theme trust boundary](../../docs/architecture/auth-and-security.md#theme-trust-boundary)
-and [verification evidence](../../docs/reviews/us-31.1-verification-2026-10-17.md).
-Theme edits still target `public/themes`; persistent custom storage remains US-31.2.
+See [Frontend layout, themes, and product surface](../../docs/architecture/frontend-and-themes.md)
+for theme loading, scroll ownership and current-versus-planned settings. The
+[2026-10-17 review](../../docs/reviews/2026-10-17-codebase-review.md) records
+the original theme trust defects, short-screen setup clipping and palette contrast
+failures. US-31.1 now validates public palette reads and requires administrator
+authorization in editor actions; the remaining findings belong to EPIC-31–EPIC-33. Theme edits currently target `public/themes`, without a supported
+persistent custom-theme storage contract.
 
 For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install

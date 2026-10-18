@@ -1,0 +1,621 @@
+{
+  "method": "WCAG sRGB relative luminance; opaque theme tokens, no alpha/state compositing. Ten paired text roles per theme; threshold 4.5:1. Not a rendered accessibility conformance test.",
+  "themes": [
+    {
+      "theme": "catppuccin-latte-mauve",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 7.062,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 7.062,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 7.062,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 4.7881,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 5.1726,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 4.0503,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 5.1726,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 6.8664,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 4.7881,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 7.062,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 7.062
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 1.5633
+        }
+      ]
+    },
+    {
+      "theme": "catppuccin-mocha",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 11.3411,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 11.3411,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 11.3411,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 9.1671,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 8.6935,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 7.1001,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 8.6935,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 11.5995,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 9.1671,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 11.3411,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 11.3411
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 1.8389
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 17.6172,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 17.9393,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 15.3103,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 7.5372,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 12.914,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 8.4587,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 12.914,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 15.3103,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 2.462,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 12.914,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 4.0953
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 3.559
+        }
+      ]
+    },
+    {
+      "theme": "dracula",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 13.3591,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 14.814,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 13.3591,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 5.9031,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 8.5851,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 4.0868,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 8.5851,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 14.814,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 5.9031,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 8.5851,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 13.3591
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 1.7256
+        }
+      ]
+    },
+    {
+      "theme": "flowers",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 13.424,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 14.8101,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 12.5243,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 3.3321,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 6.8974,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 4.108,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 2.2994,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 12.3048,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 3.3321,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 10.7478,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 3.0202
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 2.7684
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 18.2303,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 17.4659,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 18.2303,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 4.7194,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 14.4138,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 4.0499,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 14.4138,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 17.6172,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 3.3583,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 14.4138,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 2.5346
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 2.4494
+        }
+      ]
+    },
+    {
+      "theme": "one_dark",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 6.5677,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 7.222,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 7.222,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 5.9241,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 4.5813,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 2.0295,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 9.7652,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 7.222,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 5.9241,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 6.113,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 4.3303
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 4.7617
+        }
+      ]
+    },
+    {
+      "theme": "ucf-knights",
+      "text_pairs": [
+        {
+          "foreground": "foreground",
+          "background": "background",
+          "ratio": 21.0,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "card-foreground",
+          "background": "card",
+          "ratio": 18.7337,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "popover-foreground",
+          "background": "popover",
+          "ratio": 18.7337,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "primary-foreground",
+          "background": "primary",
+          "ratio": 13.6084,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "secondary-foreground",
+          "background": "secondary",
+          "ratio": 7.8315,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "muted-foreground",
+          "background": "muted",
+          "ratio": 3.0833,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "accent-foreground",
+          "background": "accent",
+          "ratio": 4.3333,
+          "passes_normal_text": false
+        },
+        {
+          "foreground": "sidebar-foreground",
+          "background": "sidebar",
+          "ratio": 21.0,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-primary-foreground",
+          "background": "sidebar-primary",
+          "ratio": 13.6084,
+          "passes_normal_text": true
+        },
+        {
+          "foreground": "sidebar-accent-foreground",
+          "background": "sidebar-accent",
+          "ratio": 15.91,
+          "passes_normal_text": true
+        }
+      ],
+      "opaque_focus_pairs": [
+        {
+          "foreground": "ring",
+          "background": "background",
+          "ratio": 13.6084
+        },
+        {
+          "foreground": "sidebar-ring",
+          "background": "sidebar",
+          "ratio": 13.6084
+        }
+      ]
+    }
+  ]
+}

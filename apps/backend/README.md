@@ -40,7 +40,7 @@ unknown or conflicting values require manual administration. See
 ## File knowledge processing
 
 An uploaded eligible `UserFile` receives a canonical, versioned
-`FileKnowledgeArtifact` and is processed independently of project/chat
+`FileExtractionModel` (the persisted knowledge artifact) and is processed independently of project/chat
 references. File processing contracts and policy transitions live in
 `domains/files/processing_schemas.py` and `domains/files/processing.py`.
 Retrieval first resolves the active
@@ -89,6 +89,13 @@ pnpm --filter @asterism/backend test
 ```
 
 ## Architecture documentation
+
+The supported runtime is a single coordinated backend process with SQLite.
+Chat jobs and membership guards are process-local; PostgreSQL JSONB column types
+do not supply a complete PostgreSQL initializer/search adapter. FileStore and
+VectorStore are explicit seams, with FileStore still returning a local `Path`.
+The [2026-10-17 review](../../docs/reviews/2026-10-17-codebase-review.md)
+records these limits and the pending database-side search work in EPIC-34.
 
 Comprehensive system design guides and Mermaid sequence diagrams are available in the [`/architecture`](../../docs/architecture/README.md) directory:
 

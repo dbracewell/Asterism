@@ -1,6 +1,6 @@
 # EPIC-31: Theme and content trust boundaries
 
-Status: in progress; US-31.1 confirmed complete on 2026-10-17; US-31.2 and US-31.3 pending. Source: 2026-10-17 codebase review, F1, F2.
+Status: in progress; US-31.1 confirmed complete on 2026-10-17; US-31.2 and US-31.3 pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F1, F2.
 
 ## Objective
 

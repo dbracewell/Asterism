@@ -1,0 +1,61 @@
+# EPIC-32: Responsive layout and reachability
+
+Status: proposed / pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F3, F4.
+
+## Objective
+
+Establish explicit scroll ownership and test content reachability, not only document width.
+
+## Ownership and delivery
+
+Implementation stays within the owning domain/component. Preserve existing authorization, shared mutation-cache invalidation and generated API contracts. Use fresh initialization for schema changes; no migrations, compatibility shims or live-database resets. Work on one story at a time, create its feature branch, complete relevant lint/type/format/test gates, synchronize generated clients when contracts change, document behavior and obtain user confirmation before merge.
+
+## US-32.1: Make short-screen authentication reachable
+
+As a user, I want setup and login controls reachable in a short or keyboard-reduced viewport.
+
+Estimate: 1–2 days. Dependencies: None.
+
+Acceptance criteria:
+
+At 320px and 390px widths, 300px and normal heights, and enlarged text, fields, errors and submit controls remain reachable by touch/scroll and keyboard. Authentication owns scrolling without breaking the workspace shell. No global horizontal clipping hides content.
+
+Tasks:
+
+- [ ] Give authentication pages a dynamic-height and scroll contract while preserving workspace-specific scroll ownership.
+- [ ] Add short-screen/landscape and enlarged-text browser cases with submit/validation reachability checks.
+- [ ] Check focus visibility and keyboard navigation, and update the frontend layout guide.
+
+## US-32.2: Make settings, dialogs and file panes fit their containers
+
+As a user, I want all actions available in narrow panes even on a wide display.
+
+Estimate: 2–3 days. Dependencies: US-32.1 establishes the layout contract.
+
+Acceptance criteria:
+
+Theme Editor stacks or adapts to pane width; file grids fit below 250px content width. Tall dialogs expose footer/close controls. Settings navigation retains unrelated URL parameters. Existing provider/agent behavior remains intact.
+
+Tasks:
+
+- [ ] Audit actual flex/grid minimums, SettingsCard, Theme Editor and file grid; use shrinkable content and container-based adaptation where appropriate.
+- [ ] Define dialog height/scroll ownership and inspect every production dialog caller with long validation content.
+- [ ] Preserve unrelated settings URL parameters through the shared search-param helper.
+- [ ] Add browser tests at 320/390/768/1440px, 640px nested panes and short heights; verify hidden overflow and focused actions, not just scrollWidth.
+
+## US-32.3: Bound rich chat content and composer overlap
+
+As a user, I want long responses and attachments to stay readable without hiding the last message.
+
+Estimate: 2–3 days. Dependencies: US-31.3 policy; can investigate beforehand.
+
+Acceptance criteria:
+
+Wide tables/code/math scroll locally. Long unbroken text and filenames do not expand/clamp away application controls. The final message and actions remain reachable with a multiline composer and expanded file context. Browser checks cover empty, loading, failure and cached-refresh states.
+
+Tasks:
+
+- [ ] Define renderer-level wrapping and local scroll policies for tables, code, math, images and long tokens.
+- [ ] Measure composer height or use flow layout so message clearance follows actual content instead of a fixed 150px reserve.
+- [ ] Test long tool arguments, citations, attachments and sidebar/panel combinations using synthetic stress content.
+- [ ] Add reachability assertions, screenshots and keyboard checks at mobile and nested desktop widths.

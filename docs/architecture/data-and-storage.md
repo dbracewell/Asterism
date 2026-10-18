@@ -130,7 +130,9 @@ graph TD
 
 Asterism provides type-safe JSON serialization directly into SQLite columns using [`JSONB_COLUMN`](../../apps/backend/asterism/db/columns.py):
 
-- Supports SQLite 3.45+ native `JSONB` binary formats where supported, falling back cleanly to text JSON.
+- Uses SQLite 3.45+ `jsonb()` on writes and `json()` on reads. Older SQLite is not
+  supported by a text fallback. A PostgreSQL JSONB column variant exists, but the
+  application initializer and full-text search currently require SQLite.
 - Built-in integration with **Pydantic `TypeAdapter`**, ensuring stored JSON is validated and deserialized directly into strong domain types (such as `list[ToolCall]`, `list[ToolResult]`, and `ChatCompletionParams`).
 
 ---
@@ -138,7 +140,8 @@ Asterism provides type-safe JSON serialization directly into SQLite columns usin
 ## User file storage and model input
 
 Uploaded bytes pass through the `FileStore` protocol; `LocalFileStore` currently
-places them below `{storage_root}/files/{user_id}`. The `user_files` table records
+places them below `{storage_root}/files/{encoded_user_id}/{shard1}/{shard2}/{file_id}/source{extension}`.
+Consumers pass opaque keys through the adapter and do not reconstruct paths. The `user_files` table records
 ownership, sanitized and original names, MIME/kind classification, SHA-256, and a
 bounded processing cache. `messages.files` stores typed snapshots/references rather
 than a relational foreign key, so deleting a file removes its bytes and row without

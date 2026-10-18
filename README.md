@@ -3,7 +3,7 @@
 [![CI](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml/badge.svg)](https://github.com/dbracewell/Asterism/actions/workflows/ci.yml)
 
 Asterism is a self-hosted, full-stack AI chat application. It combines a Next.js
-frontend with a FastAPI agent runtime, main-agent and delegated-worker profiles,
+frontend with a FastAPI agent runtime, a main-agent configuration and delegated-worker definitions,
 capability-scoped tools, streaming chat, administrator-managed OpenAI-compatible
 models, and a file library. Every eligible upload is processed once into a
 file-owned knowledge artifact; projects share references to those files without
@@ -19,8 +19,15 @@ activity and persisted execution traces.
 ## Architecture
 
 Active and pending work is tracked in [`todo.md`](todo.md). Completed checklist
-history through 2026-10-14 is preserved in the
-[completed work archive](docs/archive/todo-completed-2026-10-14.md).
+history is preserved in the dated files under [`docs/archive`](docs/archive).
+
+The [2026-10-17 codebase review](docs/reviews/2026-10-17-codebase-review.md)
+assesses architecture, UI reachability, theme contrast and known trust-boundary
+defects. Its [quality roadmap](docs/plans/post-refactor-quality-roadmap.md) defines
+pending EPIC-31–EPIC-35; the recommended next story is US-31.1 (theme access).
+Current theme editing, placeholder admin panes and the unimplemented separate
+persona/default-profile policy are described in the
+[frontend/theme guide](docs/architecture/frontend-and-themes.md).
 
 The implementation-oriented architecture guides are in
 [`architecture/`](docs/architecture/README.md):

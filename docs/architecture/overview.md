@@ -63,6 +63,14 @@ backend URL.
 
 ## Technology stack
 
+The supported deployment uses one coordinated backend process and a SQLite
+database. Chat jobs, membership-change guards, queues and caches are process-local;
+additional workers or replicas require a shared coordination design. PostgreSQL
+column variants and SQLAlchemy do not establish full database portability:
+initialization and FTS search currently require SQLite. FileStore and VectorStore
+provide explicit seams, although FileStore's `Path` return type remains local-disk
+specific. See the [2026-10-17 assessment](../reviews/2026-10-17-codebase-review.md).
+
 | Layer          | Implementation                                                                   |
 | -------------- | -------------------------------------------------------------------------------- |
 | Web UI         | Next.js 16, React 19, Tailwind CSS 4, shadcn/ui                                  |

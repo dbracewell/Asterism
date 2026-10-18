@@ -22,6 +22,12 @@ responses, full-text chat search, and user-owned file attachments.
 
 Additional guides:
 
+- [Frontend layout, themes, and product surface](frontend-and-themes.md): current
+  theme ownership, scrolling constraints, unfinished settings and known trust gaps.
+- [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md) and
+  [quality roadmap](../plans/post-refactor-quality-roadmap.md): architecture/UI
+  findings, verification evidence and pending EPIC-31–EPIC-35.
+
 - [Execution context and module boundaries](execution-context.md): trace project/chat
   readers into Agent, RuntimeFileReader, and RetrievalService.
 - [Project and chat workspaces](project-workspaces.md): settings, membership UI,
