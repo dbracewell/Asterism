@@ -22,6 +22,8 @@ responses, full-text chat search, and user-owned file attachments.
 
 Additional guides:
 
+- [Markdown and file-content trust](markdown-content.md): raw HTML disabled,
+  explicit link/resource policy, constrained math, files and citations.
 - [Theme storage and lifecycle](theme-storage.md): read-only defaults, persistent
   overrides, atomic saves, single-writer ownership, backup and reset.
 - [Frontend layout, themes, and product surface](frontend-and-themes.md): current

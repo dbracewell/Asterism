@@ -1,6 +1,6 @@
 # EPIC-31: Theme and content trust boundaries
 
-Status: in progress; US-31.1 confirmed complete on 2026-10-17; US-31.2 confirmed complete on 2026-10-18; US-31.3 pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F1, F2.
+Status: confirmed complete on 2026-10-18. US-31.1 was confirmed on 2026-10-17; US-31.2 and US-31.3 on 2026-10-18. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F1, F2.
 
 ## Objective
 
@@ -54,13 +54,17 @@ As a reader, I want chat and file content to render without taking control of ap
 
 Estimate: 1–2 days. Dependencies: None; coordinate with US-32.3.
 
+Implementation verified and user-confirmed complete on 2026-10-18. See [verification evidence](../reviews/us-31.3-verification-2026-10-18.md) and [content policy](../architecture/markdown-content.md).
+
 Acceptance criteria:
 
 Document an explicit allowed Markdown/HTML/URL/resource policy. Raw HTML is disabled or sanitized with a maintained allowlist compatible with required math. Unsafe styling, embedded forms/frames and URLs are blocked. Existing fenced code, citations and approved math remain usable.
 
 Tasks:
 
-- [ ] Decide allowed HTML, URL schemes and remote-image behavior; keep the policy owned by the shared renderer.
-- [ ] Remove unrestricted raw HTML or sanitize it with the chosen schema after appropriate transforms; preserve approved KaTeX output.
-- [ ] Add adversarial rendering tests for overlay styles, raw forms/frames, image requests and dangerous URLs alongside normal Markdown/math.
-- [ ] Run browser regressions for rich chat/file content and document the trust boundary.
+- [x] Decide allowed HTML, URL schemes and remote-image behavior; keep the policy owned by the shared renderer.
+- [x] Remove unrestricted raw HTML or sanitize it with the chosen schema after appropriate transforms; preserve approved KaTeX output.
+- [x] Add adversarial rendering tests for overlay styles, raw forms/frames, image requests and dangerous URLs alongside normal Markdown/math.
+- [x] Run browser regressions for rich chat/file content and document the trust boundary.
+
+EPIC-31 is complete. Recommended next: [EPIC-32](EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md), starting with US-32.1 (short-screen authentication reachability).

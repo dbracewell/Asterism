@@ -4,15 +4,7 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-US-31.1 and US-31.2 are confirmed complete; their checklists are archived above. No story is active. Recommended next: **US-31.3**. Execute one story at a time; obtain completion confirmation before merge.
-
-## [EPIC-31: Theme and content trust boundaries](docs/epics/EPIC-31-THEME-AND-CONTENT-TRUST-BOUNDARIES.md)
-
-- [ ] US-31.3: Constrain untrusted Markdown HTML
-  - [ ] Decide allowed HTML, URL schemes and remote-image behavior; keep the policy owned by the shared renderer.
-  - [ ] Remove unrestricted raw HTML or sanitize it with the chosen schema after appropriate transforms; preserve approved KaTeX output.
-  - [ ] Add adversarial rendering tests for overlay styles, raw forms/frames, image requests and dangerous URLs alongside normal Markdown/math.
-  - [ ] Run browser regressions for rich chat/file content and document the trust boundary.
+EPIC-31 is confirmed complete; all three story checklists are archived above. No story is active. Recommended next: **US-32.1** (short-screen authentication reachability). Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-32: Responsive layout and reachability](docs/epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
 

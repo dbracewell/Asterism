@@ -24,8 +24,10 @@ history is preserved in the dated files under [`docs/archive`](docs/archive).
 The [2026-10-17 codebase review](docs/reviews/2026-10-17-codebase-review.md)
 assesses architecture, UI reachability, theme contrast and known trust-boundary
 defects. Its [quality roadmap](docs/plans/post-refactor-quality-roadmap.md) defines
-EPIC-31–EPIC-35. US-31.1 and US-31.2 are confirmed complete; US-31.3
-(untrusted Markdown HTML) is recommended next.
+EPIC-31–EPIC-35. EPIC-31 is confirmed complete; EPIC-32 / US-32.1
+(short-screen authentication reachability) is recommended next. The shared
+[content policy](docs/architecture/markdown-content.md) defines allowed Markdown,
+links, resources and math.
 Current theme editing, placeholder admin panes and the unimplemented separate
 persona/default-profile policy are described in the
 [frontend/theme guide](docs/architecture/frontend-and-themes.md).

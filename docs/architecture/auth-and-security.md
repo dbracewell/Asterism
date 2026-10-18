@@ -54,8 +54,10 @@ US-31.1 confines theme reads to validated catalog IDs and independently authoriz
 editor actions against the server-side administrator session. The original review's
 harmless traversal probe is covered by isolated filesystem and HTTP regressions.
 The [theme trust boundary](#theme-trust-boundary) describes the current contract.
-[EPIC-31](../epics/EPIC-31-THEME-AND-CONTENT-TRUST-BOUNDARIES.md) still owns
-untrusted raw HTML in the shared Markdown renderer; persistent custom storage is described in the [theme lifecycle](theme-storage.md).
+The shared renderer now disables raw HTML, blocks automatic content resources
+and limits link schemes and KaTeX extensions. See the
+[Markdown and file-content policy](markdown-content.md); persistent custom storage
+is described in the [theme lifecycle](theme-storage.md).
 
 ### Internal callbacks
 
