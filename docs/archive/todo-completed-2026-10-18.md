@@ -64,3 +64,24 @@ EPIC-31 is confirmed complete: US-31.1, US-31.2 and US-31.3 are finished.
 Recommended next: EPIC-32 / US-32.1, short-screen authentication reachability.
 No deployment, remote push or remote CI result is claimed. The working database
 was untouched.
+
+## US-32.1 — Authentication and mobile workspace reachability
+
+The user confirmed completion on 2026-10-18, authorizing commit and local merge
+from `feat/us-32.1-authentication-reachability`.
+
+- [x] US-32.1: Make short-screen authentication reachable
+  - [x] Give authentication pages a dynamic-height and scroll contract while preserving workspace-specific scroll ownership.
+  - [x] Add short-screen/landscape and enlarged-text browser cases with submit/validation reachability checks.
+  - [x] Check focus visibility and keyboard navigation, and update the frontend layout guide.
+  - [x] Repair reported mobile sidebar, header and page-scroll regressions; verify authenticated mobile routes.
+
+Verification passed: frontend lint, TypeScript, formatting, production build,
+221 unit tests, six database-script checks and 51 relevant isolated browser checks
+with retries disabled. Authentication, sidebar touch/keyboard dismissal, full-width
+mobile header and page/pane scrolling are covered. See the
+[verification report](../reviews/us-32.1-verification-2026-10-18.md) for failed-run
+repairs, coverage and physical-device/full-suite/remote-CI limitations.
+
+The working database was untouched. No push or deployment is claimed. EPIC-32
+remains in progress; US-32.2 is recommended next.

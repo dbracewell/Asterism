@@ -4,14 +4,10 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 is confirmed complete; all three story checklists are archived above. No story is active. Recommended next: **US-32.1** (short-screen authentication reachability). Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and US-32.1 are confirmed complete; their checklists are archived above. **US-32.2 is recommended next**; no story is currently active. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-32: Responsive layout and reachability](docs/epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
 
-- [ ] US-32.1: Make short-screen authentication reachable
-  - [ ] Give authentication pages a dynamic-height and scroll contract while preserving workspace-specific scroll ownership.
-  - [ ] Add short-screen/landscape and enlarged-text browser cases with submit/validation reachability checks.
-  - [ ] Check focus visibility and keyboard navigation, and update the frontend layout guide.
 - [ ] US-32.2: Make settings, dialogs and file panes fit their containers
   - [ ] Audit actual flex/grid minimums, SettingsCard, Theme Editor and file grid; use shrinkable content and container-based adaptation where appropriate.
   - [ ] Define dialog height/scroll ownership and inspect every production dialog caller with long validation content.
@@ -32,7 +28,7 @@ EPIC-31 is confirmed complete; all three story checklists are archived above. No
   - [ ] Retain machine-readable contrast evidence and verify screenshots for every bundled theme.
 - [ ] US-33.2: Unify semantic states, labels and typography
   - [ ] Replace feature-specific red/green/white states with documented semantic variants; avoid blindly rewriting library overlays.
-  - [ ] Correct Theme Editor add/duplicate names, setup passkey label association and General settings control labels; inspect related icon actions.
+  - [ ] Audit Theme Editor add/duplicate names and General settings control labels; preserve the setup passkey association repaired in US-32.1 and inspect related icon actions.
   - [ ] Fix undefined prose variables and global font overrides; map syntax highlighting deliberately to theme families.
   - [ ] Add reduced-motion behavior and verify focus, effective pointer target sizes and keyboard navigation across representative flows.
 - [ ] US-33.3: Enforce a theme and layout review matrix

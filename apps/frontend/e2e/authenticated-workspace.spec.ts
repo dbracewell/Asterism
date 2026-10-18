@@ -426,9 +426,22 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     );
     expect((await api("GET", `/files/info/${file.filename}`)).id).toBe(file.id);
     await page.goto("/settings?t=user&setting=agents");
+    const mainConfiguration = page.getByRole("region", {
+      name: "Main configuration",
+      exact: true,
+    });
     await expect(
-      page.getByRole("heading", { name: "Main configuration", exact: true }),
+      mainConfiguration.getByRole("heading", {
+        name: "Main Agent",
+        exact: true,
+      }),
     ).toBeVisible();
+    await expect(
+      mainConfiguration.getByRole("button", {
+        name: "Edit main configuration",
+        exact: true,
+      }),
+    ).toBeEnabled();
     expect(failures).toEqual([]);
   } finally {
     await second?.close();

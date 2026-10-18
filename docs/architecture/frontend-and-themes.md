@@ -47,8 +47,10 @@ supported. File extracted text/captions remain literal React text. See the
 
 Global CSS suppresses body overflow and the body uses `h-screen`. The workspace
 relies on child panels owning scroll areas with shrinking flex content. This makes
-`min-h-0`, `min-w-0` and explicit scroll ownership essential. Authentication does
-not currently own a scroll area and clips setup controls in a short viewport.
+`min-h-0`, `min-w-0` and explicit scroll ownership essential. Authentication now
+owns its own scroll area, described below. The workspace bounds its shell to
+`100dvh`; its main inset scrolls ordinary pages while specialized panels retain
+their own scroll areas. The mobile header stays full-width at the top.
 Dialogs have caller-specific scroll limits rather than a universal height policy.
 The file grid and Theme Editor retain fixed minimum dimensions needing narrow-pane
 verification. Chat uses a fixed tail reserve beneath its floating composer.
@@ -57,6 +59,57 @@ The pending contract in [EPIC-32](../epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHAB
 requires controls and final content to remain reachable across short/narrow windows,
 nested panes, long content and enlarged text. `scrollWidth <= clientWidth` alone
 cannot detect clipped vertical content or controls hidden by `overflow: hidden`.
+
+### Authentication viewport and focus contract (US-32.1)
+
+The `(auth)` route layout owns a `100dvh` scroll container with padding and scroll
+padding. It uses vertical auto margins on the nonshrinking form: shorter forms
+center, while taller forms start at the padded top and remain scrollable to the
+last control. Form width/minimums and wrapping error text keep content within the
+viewport without an authentication-level horizontal `hidden`/`clip` rule. The root
+body rules remain unchanged.
+
+The auth route exports `interactiveWidget: "resizes-content"` through Next.js
+viewport metadata. Supporting browsers can resize the layout viewport when a
+virtual keyboard opens; the route does not disable zoom or cap the scale. Browser
+behavior is platform-dependent; see [Chrome's viewport behavior](https://developer.chrome.com/blog/viewport-resize-behavior).
+Tests simulate reduced viewport sizes rather than certifying physical iOS/Android
+keyboard behavior.
+
+Auth errors use the existing semantic `FieldError`. A new or repeated error returns
+focus to the summary and scrolls its start into view. It wraps unbroken server
+messages, is described by the named form, and has a visible keyboard outline.
+Tab continues from the summary through the fields to submit, preserving entered
+values. The setup passkey label now targets the passkey input. Setup remains
+available only with zero users; role/session checks and auth persistence are
+unchanged.
+
+Browser coverage exercises setup and login at 320/390px widths, 300/800px heights,
+100%/200% root text size, and 640×300 landscape with both text sizes. It checks
+keyboard order, focus rings and clearance, hit testing, actual wheel scroll and
+touch submission, validation errors, a long message, viewport shrink/recovery and
+successful login in disposable storage. See [verification evidence](../reviews/us-32.1-verification-2026-10-18.md).
+
+### Mobile workspace shell
+
+The dashboard uses a dynamic-height, nonshrinking sidebar provider and a shrinkable
+main inset with vertical scrolling and an isolated page-content stacking context.
+The mobile header is a full-width sticky grid:
+its title cannot overlap the sidebar trigger, and both open/close controls have
+44px touch targets. The sidebar uses a single click handler for touch, mouse and
+keyboard activation, avoiding the former touch-end plus synthesized-click double
+toggle. Mobile navigation closes the drawer; dismissal restores focus to the
+trigger and releases the modal interaction lock. The mobile close button omits the
+desktop expansion tooltip so Escape dismisses the drawer directly.
+
+Sidebar navigation can scroll between its header and user footer. Ordinary project
+and General pages scroll in the main inset; SettingsCard gives the selected pane
+its own vertical scroll area. Project pagination wraps to avoid widening a narrow
+page. The existing File Manager list and chat history retain local scrolling.
+The mobile browser regression uses real authentication and production routes with
+synthetic API content to check these owners, actual touch navigation and wheel
+scrolling. Specialized narrow panes, tall dialogs, rich-content overflow and
+composer clearance under expanded content remain the subsequent EPIC-32 stories.
 
 ## Theme and component consistency
 

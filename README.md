@@ -24,8 +24,9 @@ history is preserved in the dated files under [`docs/archive`](docs/archive).
 The [2026-10-17 codebase review](docs/reviews/2026-10-17-codebase-review.md)
 assesses architecture, UI reachability, theme contrast and known trust-boundary
 defects. Its [quality roadmap](docs/plans/post-refactor-quality-roadmap.md) defines
-EPIC-31–EPIC-35. EPIC-31 is confirmed complete; EPIC-32 / US-32.1
-(short-screen authentication reachability) is recommended next. The shared
+EPIC-31–EPIC-35. EPIC-31 and US-32.1 (authentication and mobile workspace
+reachability) are confirmed complete. US-32.2, covering nested settings/file panes
+and dialog reachability, is recommended next. The shared
 [content policy](docs/architecture/markdown-content.md) defines allowed Markdown,
 links, resources and math.
 Current theme editing, placeholder admin panes and the unimplemented separate

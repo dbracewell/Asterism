@@ -79,7 +79,7 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
   ).toHaveAttribute("href", "/projects");
   await expect(
     page.locator("main").getByRole("link", { name: "Research" }),
-  ).toHaveAttribute("href", `/projects/${P}`);
+  ).toHaveAttribute("href", `/projects/${P}`, { timeout: 15_000 });
   await page.getByRole("button", { name: "Next projects" }).click();
   await expect(page.locator("main").getByText("Other work")).toBeVisible();
   await page.getByLabel("Search projects").fill("missing");

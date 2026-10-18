@@ -40,7 +40,7 @@ Feature errors/statuses use shared semantic roles; icon actions and inputs have 
 Tasks:
 
 - [ ] Replace feature-specific red/green/white states with documented semantic variants; avoid blindly rewriting library overlays.
-- [ ] Correct Theme Editor add/duplicate names, setup passkey label association and General settings control labels; inspect related icon actions.
+- [ ] Audit Theme Editor add/duplicate names and General settings control labels; preserve the setup passkey association repaired in US-32.1 and inspect related icon actions.
 - [ ] Fix undefined prose variables and global font overrides; map syntax highlighting deliberately to theme families.
 - [ ] Add reduced-motion behavior and verify focus, effective pointer target sizes and keyboard navigation across representative flows.
 

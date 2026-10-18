@@ -31,8 +31,10 @@ export default async function Home({ searchParams }: HomePageProps) {
   const view = userCount > 0 ? "login" : "install";
 
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <AuthForm view={view} referer={formParams.redirect} />
-    </div>
+    <AuthForm
+      className="my-auto shrink-0"
+      view={view}
+      referer={formParams.redirect}
+    />
   );
 }

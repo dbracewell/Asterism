@@ -15,7 +15,7 @@ export const AppSidebar = async ({
   return (
     <Sidebar width={sidebarWidth} className="overflow-hidden!">
       <AppSidebarHeader />
-      <SidebarContent className="flex min-h-0 flex-1 flex-col pt-2">
+      <SidebarContent className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-2">
         {/*<NavProfileSelector />*/}
         <NavActions />
         <div className="flex min-h-0 flex-1 flex-col">

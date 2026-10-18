@@ -39,6 +39,25 @@ intentionally recreate auth storage, stop the app, run
 
 Open `http://localhost:3000`. Next.js allows only one dev process per app directory.
 
+## Authentication layout
+
+Setup and login share a route-scoped dynamic-height scroll container. Small forms
+center; taller forms scroll through the final action, including at 200% text size.
+Validation failures focus a wrapping summary without discarding input. Keyboard
+scroll padding keeps focus rings visible. Auth-only viewport metadata requests
+layout resizing for supporting virtual keyboards while retaining browser zoom.
+See the
+[frontend layout guide](../../docs/architecture/frontend-and-themes.md#authentication-viewport-and-focus-contract-us-321).
+
+## Mobile workspace layout
+
+The workspace shell fills the dynamic viewport. A full-width sticky mobile header
+opens the sidebar with one tap; its title does not overlap the trigger. Drawer
+navigation dismisses it, and closing restores focus and normal page interaction.
+Main pages scroll in the workspace inset, Settings panes scroll locally, and
+sidebar navigation scrolls between its header and user footer. See the
+[mobile shell contract](../../docs/architecture/frontend-and-themes.md#mobile-workspace-shell).
+
 ## LLM provider administration
 
 Administrators configure providers under **Settings → Admin Settings → Providers**.
