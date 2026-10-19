@@ -408,8 +408,10 @@ function ConfigurationForm({
               <FieldLegend>Allowed tools</FieldLegend>
               {toolQuery.isPending && (
                 <div role="status" className="flex items-center gap-2 p-2">
-                  <Spinner className="size-4" />
-                  <span className="text-muted-foreground text-sm">Loading tools…</span>
+                  <Spinner size={16} />
+                  <span className="text-muted-foreground text-sm">
+                    Loading tools…
+                  </span>
                 </div>
               )}
               {toolQuery.isError && (
