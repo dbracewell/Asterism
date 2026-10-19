@@ -13,6 +13,7 @@ from asterism.domains.files.models import FileContentStatus
 
 from .attachments import bind_message_files, resolve_file_references
 from .branches import active_branch
+from .jobs import chat_jobs
 from .models import (
     ChatModel,
     MessageModel,
@@ -88,31 +89,37 @@ async def update_message(
     payload: UpdateMessageRequest,
     session: AsyncSession | None = None,
 ) -> Message:
-    async with get_async_db_session(session) as session:
-        await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
-        await _owned_message(user_id=user_id, chat_id=chat_id, message_id=message_id, session=session)
-        if payload.active_child_id is not None:
-            child = await _owned_message(
-                user_id=user_id,
-                chat_id=chat_id,
-                message_id=payload.active_child_id,
-                session=session,
+    with chat_jobs.guard_idle_change(chat_id):
+        async with get_async_db_session(session) as session:
+            await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
+            await _owned_message(user_id=user_id, chat_id=chat_id, message_id=message_id, session=session)
+            if payload.active_child_id is not None:
+                child = await _owned_message(
+                    user_id=user_id,
+                    chat_id=chat_id,
+                    message_id=payload.active_child_id,
+                    session=session,
+                )
+                if child.parent_message_id != message_id:
+                    raise BadDataException("Active child must be a direct child of this message")
+            values = payload.model_dump(exclude_unset=True)
+            if "tool_results" in values:
+                tool_results = values.pop("tool_results")
+                if "tool_call_results" not in values:
+                    values["tool_call_results"] = tool_results
+            update_stmt = (
+                update(MessageModel)
+                .where(
+                    MessageModel.id == message_id,
+                    MessageModel.user_id == user_id,
+                    MessageModel.chat_id == chat_id,
+                )
+                .values(**values)
+                .returning(MessageModel)
             )
-            if child.parent_message_id != message_id:
-                raise BadDataException("Active child must be a direct child of this message")
-        update_stmt = (
-            update(MessageModel)
-            .where(
-                MessageModel.id == message_id,
-                MessageModel.user_id == user_id,
-                MessageModel.chat_id == chat_id,
-            )
-            .values(**payload.model_dump(exclude_unset=True))
-            .returning(MessageModel)
-        )
-        message = await session.scalar(update_stmt)
-        await session.commit()
-        return Message.model_validate(message)
+            message = await session.scalar(update_stmt)
+            await session.commit()
+            return Message.model_validate(message)
 
 
 async def update_chat(

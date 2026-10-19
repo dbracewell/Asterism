@@ -11,6 +11,7 @@ from asterism.domains.tools.schemas import SearchArgs
 from .fetch import fetch_markdown
 
 logger = get_logger("WEB_SEARCH")
+_RESEARCH_FETCH_SEMAPHORE = asyncio.Semaphore(5)
 
 
 @tool_registry.tool(
@@ -45,11 +46,16 @@ async def web_search(
         return f"Web search failed: {str(e)}"
 
 
+async def _fetch_search_result(url: str):
+    async with _RESEARCH_FETCH_SEMAPHORE:
+        return await fetch_markdown(url)
+
+
 async def _research(search_results: list[SearchResult]) -> str:
     # We capture exceptions instead of rethrowing them, because fetching
     # is messy and may be legit problems that are not fixable with another
     # call. Instead swallow them, ignore them, and move on
-    tasks = [safe_async_call(fetch_markdown(sr.url)) for sr in search_results]
+    tasks = [safe_async_call(_fetch_search_result(sr.url)) for sr in search_results]
     documents = await asyncio.gather(*tasks)
 
     content = "\n\n".join(doc.to_llm_context() for doc in documents if not isinstance(doc, Exception))

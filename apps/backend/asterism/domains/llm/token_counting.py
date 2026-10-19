@@ -26,4 +26,4 @@ def estimate_text_tokens(text: str, model_name: str | None = None) -> int:
     This is intentionally only used before a provider call. Provider-reported
     usage remains authoritative after a completion.
     """
-    return len(_encoding(model_name).encode(text))
+    return len(_encoding(model_name).encode(text, disallowed_special=()))

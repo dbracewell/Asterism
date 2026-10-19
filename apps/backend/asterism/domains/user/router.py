@@ -1,3 +1,5 @@
+import hmac
+
 from fastapi import APIRouter
 
 import asterism.domains.user.service as user_service
@@ -27,7 +29,10 @@ async def create_user(
     user: OptionalAuthedUser,
     session: DBSessionDep,
 ) -> bool:
-    can_add = (user and user.role == "admin") or (payload.system_key and payload.system_key == config.system_key)
+    has_valid_system_key = bool(
+        payload.system_key and config.system_key and hmac.compare_digest(payload.system_key, config.system_key),
+    )
+    can_add = bool((user and user.role == "admin") or has_valid_system_key)
     if not can_add:
         raise UnauthorizedException()
     return await user_service.create_user(

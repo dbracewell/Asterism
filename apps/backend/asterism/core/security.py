@@ -1,8 +1,9 @@
-from typing import Annotated, Literal, cast
+from typing import Annotated, Literal
 
 import jwt
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import ValidationError
 
 from asterism.core import config
 
@@ -19,7 +20,10 @@ jwks_client = jwt.PyJWKClient(
 )
 
 
-security = HTTPBearer(auto_error=False)
+def _require_non_empty_claim(value: object) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise UnauthorizedException()
+    return value
 
 
 def verify_jwks_token(token: str) -> AuthedUser:
@@ -32,19 +36,34 @@ def verify_jwks_token(token: str) -> AuthedUser:
             audience=config.jwt_audience,
             issuer=config.jwt_issuer,
         )
+        if not isinstance(payload, dict):
+            raise UnauthorizedException()
 
-        user_id = payload.get("id")
-        if not user_id:
+        raw_id = payload.get("id")
+        raw_sub = payload.get("sub")
+        if raw_id is not None and raw_sub is not None and raw_id != raw_sub:
+            raise UnauthorizedException()
+
+        user_id = _require_non_empty_claim(raw_id if raw_id is not None else raw_sub)
+        email = _require_non_empty_claim(payload.get("email"))
+        name = _require_non_empty_claim(payload.get("name"))
+        role = payload.get("role")
+        if role not in ("user", "admin"):
+            raise UnauthorizedException()
+        role_literal: Literal["user", "admin"] = "admin" if role == "admin" else "user"
+
+        timezone = payload.get("timezone")
+        if timezone is not None and not isinstance(timezone, str):
             raise UnauthorizedException()
 
         return AuthedUser(
-            id=str(user_id),
-            email=str(payload.get("email")),
-            name=str(payload.get("name")),
-            role=cast(Literal["user", "admin"], payload.get("role")),
-            timezone=payload.get("timezone"),
+            id=user_id,
+            email=email,
+            name=name,
+            role=role_literal,
+            timezone=timezone,
         )
-    except jwt.PyJWTError as exc:
+    except (jwt.PyJWTError, ValidationError) as exc:
         raise UnauthorizedException() from exc
 
 

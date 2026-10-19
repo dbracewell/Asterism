@@ -1,6 +1,11 @@
 "use client";
 
 import MarkdownViewer from "@/components/markdown-viewer";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { SubAgentActivity } from "@/features/chat/types";
 import { cn } from "@/lib/utils";
 import {
@@ -61,12 +66,16 @@ export const SubAgentActivityPanel = ({
           </header>
 
           {activity.thinking && (
-            <details className="text-muted-foreground mt-2">
-              <summary>Thinking</summary>
-              <p className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap">
-                {activity.thinking}
-              </p>
-            </details>
+            <Collapsible className="text-muted-foreground mt-2">
+              <CollapsibleTrigger className="hover:text-foreground cursor-pointer text-xs font-medium">
+                Thinking
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <p className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                  {activity.thinking}
+                </p>
+              </CollapsibleContent>
+            </Collapsible>
           )}
 
           {activity.toolCalls.length > 0 && (

@@ -1,5 +1,4 @@
 import abc
-import asyncio
 
 import httpx
 from pydantic import BaseModel, ConfigDict
@@ -32,7 +31,6 @@ class Brave(WebsearchComponent[BraveSearchConfig]):
 
     async def __call__(self, args: SearchArgs) -> list[SearchResult]:
         search_results: list[SearchResult] = []
-        page = 1
 
         try:
             async with httpx.AsyncClient() as client:
@@ -54,8 +52,8 @@ class Brave(WebsearchComponent[BraveSearchConfig]):
                 if not response.is_success:
                     return []
 
-                results = response.json()["web"]["results"]
-                for index, result in enumerate(results):
+                results = response.json().get("web", {}).get("results", [])
+                for index, result in enumerate(results, start=1):
                     search_results.append(
                         SearchResult(
                             title=result["title"],
@@ -64,9 +62,6 @@ class Brave(WebsearchComponent[BraveSearchConfig]):
                             relevance_score=1 / index,
                         ),
                     )
-
-                await asyncio.sleep(1)
-                page += 1
 
         except httpx.HTTPError as e:
             DEFAULT_LOGGER.error(f"Error fetching search results: {e}")

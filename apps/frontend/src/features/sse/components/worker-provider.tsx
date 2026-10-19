@@ -11,8 +11,29 @@ export default function WorkerProvider({
   const workerRef = useRef<SharedWorker | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined" || typeof SharedWorker === "undefined")
-      return;
+    if (typeof window === "undefined") return;
+
+    if (typeof SharedWorker === "undefined") {
+      const eventSource = new EventSource("/api/stream");
+      eventSource.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
+          try {
+            eventRouter(parsed);
+          } catch (err) {
+            console.error(err);
+          }
+        } catch {
+          console.error("Unable to parse SSE message", event.data);
+        }
+      };
+      eventSource.onerror = (err) => {
+        console.error("SSE connection error", err);
+      };
+      return () => {
+        eventSource.close();
+      };
+    }
 
     const worker = new SharedWorker("/sse-worker.js");
     workerRef.current = worker;

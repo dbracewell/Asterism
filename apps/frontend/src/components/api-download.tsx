@@ -1,4 +1,6 @@
 import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { useState } from "react";
 
@@ -62,14 +64,19 @@ export const APIDownload = ({
   }
 
   return (
-    <a
-      href="#"
-      className={className}
-      onClick={handleClick}
-      aria-busy={loading}
-      aria-label={`Download ${filename}`}
+    <Button
+      variant="link"
+      asChild
+      className={cn("h-auto p-0 font-normal", className)}
     >
-      {loading ? "Loading…" : (linkText ?? filename)}
-    </a>
+      <a
+        href="#"
+        onClick={handleClick}
+        aria-busy={loading}
+        aria-label={`Download ${filename}`}
+      >
+        {loading ? "Loading…" : (linkText ?? filename)}
+      </a>
+    </Button>
   );
 };

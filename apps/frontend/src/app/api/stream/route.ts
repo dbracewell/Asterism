@@ -1,5 +1,7 @@
-import { getCurrentUser } from "@/features/auth/server/actions";
+import { getCurrentUser } from "@/features/auth/server/session";
 import {
+  MAX_SSE_LISTENERS,
+  MAX_SSE_LISTENERS_PER_USER,
   sseEmitter,
   sseListenerCount,
   subscribeSse,
@@ -7,6 +9,7 @@ import {
 import { checkRateLimit, clientIpKey } from "@/features/sse/lib/rate-limiter";
 import { EventMessage, EventMessageSchema } from "@/features/sse/schemas";
 import { getAuth } from "@/lib/auth";
+import { matchesAdminPassphrase } from "@/lib/auth-core";
 import { getFrontendServerConfig } from "@/lib/server-config";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -15,7 +18,7 @@ export async function OPTIONS() {
     {},
     {
       headers: {
-        "Access-Control-Allow-Origin": "http://localhost:8000",
+        "Access-Control-Allow-Origin": getFrontendServerConfig().publicUrl,
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "*",
       },
@@ -26,24 +29,40 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   const session = await getAuth().api.getSession({ headers: req.headers });
   const systemKey = req.headers.get("x-asterism-system-key");
+  const isAuthorizedSystem = matchesAdminPassphrase(
+    systemKey,
+    getFrontendServerConfig().systemKey,
+  );
 
-  if (
-    !session &&
-    (!systemKey || systemKey !== getFrontendServerConfig().systemKey)
-  ) {
+  if (!session?.user && !isAuthorizedSystem) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  if (!checkRateLimit(clientIpKey(req.headers.get("x-forwarded-for")))) {
+  const rateKey = isAuthorizedSystem
+    ? clientIpKey(req.headers.get("x-forwarded-for"))
+    : `user:${session!.user.id}`;
+
+  if (!checkRateLimit(rateKey)) {
     return NextResponse.json(
       { message: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } },
     );
   }
 
-  const { success, data } = EventMessageSchema.safeParse(await req.json());
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ message: "Bad Request Body" }, { status: 400 });
+  }
+
+  const { success, data } = EventMessageSchema.safeParse(body);
   if (success) {
-    sseEmitter.emit("message", data);
+    // Non-system callers can only emit events scoped to their own user ID.
+    const scopedMessage: EventMessage = isAuthorizedSystem
+      ? data
+      : { ...data, userId: session!.user.id };
+    sseEmitter.emit("message", scopedMessage);
     return NextResponse.json({ message: "Event accepted" }, { status: 200 });
   }
   return NextResponse.json({ message: "Bad Request Body" }, { status: 400 });
@@ -51,7 +70,10 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  if (sseListenerCount() >= 50) {
+  if (
+    sseListenerCount() >= MAX_SSE_LISTENERS ||
+    sseListenerCount(user.id) >= MAX_SSE_LISTENERS_PER_USER
+  ) {
     return NextResponse.json(
       { message: "SSE capacity reached" },
       { status: 503 },
@@ -95,7 +117,7 @@ export async function GET(req: NextRequest) {
       };
 
       try {
-        unsubscribe = subscribeSse(onMessage);
+        unsubscribe = subscribeSse(onMessage, user.id);
         if (!unsubscribe) {
           cleanup();
           return;

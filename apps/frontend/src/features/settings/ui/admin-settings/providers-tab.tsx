@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
+import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -776,7 +776,14 @@ export function ProvidersTab({
   }
 
   if (providerSettings.isError || settings == null) {
-    return <p role="alert">Provider settings could not be loaded.</p>;
+    return (
+      <QueryError
+        error={providerSettings.error}
+        message="Provider settings could not be loaded."
+        retry={() => providerSettings.refetch()}
+        isRetrying={providerSettings.isRefetching}
+      />
+    );
   }
 
   return <ProvidersForm appSettings={settings} />;

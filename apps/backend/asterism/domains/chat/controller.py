@@ -91,9 +91,6 @@ class ChatController:
                 tool_id = str(cmd.get("tool_id"))
                 is_approved = cmd.get("approved", False)
                 self.orchestrator.resolve_tool_approval(tool_id, is_approved)
-                if cmd.get("always_allow"):
-                    self.tasks.spawn(self.orchestrator.save_always_allow_preference(tool_id))
-
                 await self.queue.put({"type": "tool_update", "id": tool_id})
                 continue  # Skip putting this in the sequential queue
 

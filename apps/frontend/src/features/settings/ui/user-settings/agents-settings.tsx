@@ -1,5 +1,6 @@
 "use client";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
+import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -72,10 +73,11 @@ export const AgentsSettings = () => {
             <h2 className="text-lg font-semibold">Main Agent</h2>
             {main.isPending && <p role="status">Loading main configuration…</p>}
             {main.isError && (
-              <QueryFailure
-                cached={!!main.data}
-                label="main configuration"
+              <QueryError
+                error={main.error}
+                message="Could not load main configuration."
                 retry={() => void main.refetch()}
+                isRetrying={main.isRefetching}
               />
             )}
             {main.data && <MainAgentForm configuration={main.data} />}
@@ -100,10 +102,11 @@ export const AgentsSettings = () => {
           </p>
           {agents.isPending && <p role="status">Loading sub-agents…</p>}
           {agents.isError && (
-            <QueryFailure
-              cached={!!agents.data}
-              label="sub-agents"
+            <QueryError
+              error={agents.error}
+              message="Could not load sub-agents."
               retry={() => void agents.refetch()}
+              isRetrying={agents.isRefetching}
             />
           )}
           {agents.data?.total === 0 && (
@@ -120,10 +123,11 @@ export const AgentsSettings = () => {
             <p>No sub-agents on this page. Use Previous to return.</p>
           )}
           {models.isError && (
-            <QueryFailure
-              cached={!!models.data}
-              label="model names"
+            <QueryError
+              error={models.error}
+              message="Could not load model names."
               retry={() => void models.refetch()}
+              isRetrying={models.isRefetching}
             />
           )}
           <div className="flex min-h-0 flex-wrap gap-4 overflow-y-auto">
@@ -255,27 +259,5 @@ function SubAgentCard({
         </Hint>
       </CardFooter>
     </Card>
-  );
-}
-
-function QueryFailure({
-  cached,
-  label,
-  retry,
-}: {
-  cached: boolean;
-  label: string;
-  retry: () => void;
-}) {
-  return (
-    <Empty role="alert" className="flex-none p-3">
-      <EmptyDescription>
-        Could not {cached ? "refresh" : "load"} {label}.
-        {cached ? " Showing saved data." : ""}
-        <Button type="button" variant="outline" onClick={retry}>
-          Retry {label}
-        </Button>
-      </EmptyDescription>
-    </Empty>
   );
 }

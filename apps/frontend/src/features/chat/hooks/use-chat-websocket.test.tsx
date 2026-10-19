@@ -1,8 +1,18 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { useChatWebSocket } from "./use-chat-websocket";
 
-const socket = vi.hoisted(() => vi.fn());
+const { socket, getTokenMock } = vi.hoisted(() => ({
+  socket: vi.fn(),
+  getTokenMock: vi.fn(),
+}));
+
+vi.mock("@/lib/auth-client", () => ({
+  authClient: {
+    token: getTokenMock,
+  },
+}));
+
 vi.mock("react-use-websocket", () => ({
   default: (...args: unknown[]) => {
     socket(...args);
@@ -10,7 +20,10 @@ vi.mock("react-use-websocket", () => ({
   },
 }));
 
-beforeEach(() => socket.mockClear());
+beforeEach(() => {
+  socket.mockClear();
+  getTokenMock.mockReset();
+});
 
 it("uses the browser host for chat sockets without URL configuration", () => {
   renderHook(() =>
@@ -21,6 +34,25 @@ it("uses the browser host for chat sockets without URL configuration", () => {
   expect(url.protocol).toBe("ws:");
   expect(url.pathname).toBe("/api/py/chat/stream/chat-1");
   expect(url.searchParams.get("token")).toBe("test-token");
+});
+
+it("refreshes the JWT token when the WebSocket closes before reconnecting", async () => {
+  getTokenMock.mockResolvedValueOnce({ data: { token: "refreshed-token" } });
+
+  renderHook(() =>
+    useChatWebSocket({ chatId: "chat-1", jwtToken: "initial-token" }),
+  );
+
+  const options = socket.mock.calls.at(-1)?.[1] as {
+    onClose: () => void;
+  };
+  await act(async () => {
+    options.onClose();
+  });
+
+  const latestUrl = new URL(socket.mock.calls.at(-1)?.[0]);
+  expect(getTokenMock).toHaveBeenCalledTimes(1);
+  expect(latestUrl.searchParams.get("token")).toBe("refreshed-token");
 });
 
 it("forwards typed sub-agent packets without replacing the parent stream", () => {
@@ -87,4 +119,52 @@ it("carries the executed model snapshot into the streaming assistant message", (
     model_id: execution.model.id,
     execution,
   });
+});
+
+it("batches rapid delta events using the 50ms flush throttle", () => {
+  vi.useFakeTimers();
+  try {
+    const onStreamUpdate = vi.fn();
+    renderHook(() =>
+      useChatWebSocket({
+        chatId: "chat-1",
+        jwtToken: "test-token",
+        onStreamUpdate,
+      }),
+    );
+
+    const options = socket.mock.calls.at(-1)?.[1] as {
+      onMessage: (event: { data: string }) => void;
+    };
+
+    options.onMessage({
+      data: JSON.stringify({
+        type: "delta",
+        content: "Hello",
+        thinking: "",
+      }),
+    });
+    options.onMessage({
+      data: JSON.stringify({
+        type: "delta",
+        content: "Hello world",
+        thinking: "",
+      }),
+    });
+
+    expect(onStreamUpdate).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(onStreamUpdate).toHaveBeenCalledTimes(1);
+    expect(onStreamUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "Hello world",
+      }),
+    );
+  } finally {
+    vi.useRealTimers();
+  }
 });

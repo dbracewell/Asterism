@@ -16,6 +16,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 
@@ -208,9 +209,11 @@ export const ChatInput = ({
           });
           return uploaded.id;
         } catch (error) {
+          const message = uploadErrorMessage(error);
+          toast.error(`Upload failed for ${attachment.name}: ${message}`);
           updateFile(attachment.id, {
             state: "failed",
-            error: uploadErrorMessage(error),
+            error: message,
           });
           return null;
         }
@@ -255,7 +258,10 @@ export const ChatInput = ({
     const files = [...new Set(uploadedIds)];
     try {
       // Uploads are library sources; no partial message is accepted after an upload failure.
-      if (uploadedIds.length !== attachedFiles.length) return;
+      if (uploadedIds.length !== attachedFiles.length) {
+        toast.error("Failed to upload all attachments. Please retry.");
+        return;
+      }
       const signature = JSON.stringify({
         prompt: prompt.trim(),
         files,

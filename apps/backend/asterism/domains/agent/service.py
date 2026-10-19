@@ -59,7 +59,7 @@ async def get_agent_profile(
         return profile
 
 
-async def provision_main_agent(user_id: str, session: AsyncSession) -> None:
+async def provision_main_agent(user_id: str, session: AsyncSession) -> bool:
     """Idempotent provisioning inside the user's transaction, protected by a unique index."""
     existing = await session.scalar(
         select(AgentProfileModel.id).where(
@@ -68,7 +68,7 @@ async def provision_main_agent(user_id: str, session: AsyncSession) -> None:
         ),
     )
     if existing is not None:
-        return
+        return False
     if await session.get(UserModel, user_id) is None:
         raise NotFoundException("User not found")
     await session.execute(
@@ -87,6 +87,7 @@ async def provision_main_agent(user_id: str, session: AsyncSession) -> None:
         )
         .on_conflict_do_nothing(index_elements=["user_id"], index_where=text("sub_agent = false")),
     )
+    return True
 
 
 async def get_main_agent_profile(user_id: str, session: AsyncSession | None = None) -> AgentProfile:

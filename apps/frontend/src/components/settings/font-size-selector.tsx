@@ -29,7 +29,7 @@ export const FontSizeSelector = ({
 
   return (
     <Select
-      defaultValue={value}
+      value={value}
       disabled={disabled}
       onValueChange={(size) => {
         setFontSize(size);

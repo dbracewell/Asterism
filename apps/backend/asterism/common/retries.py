@@ -58,8 +58,10 @@ def retry_async_gen[**P, T, X](
             last_exception: Exception = ValueError("No exception raised during retries, but exceeded max retries.")
 
             for attempt in range(max_retries + 1):
+                yielded_any = False
                 try:
                     async for item in func(*args, **kwargs):
+                        yielded_any = True
                         yield item
                     return
                 except must_raise as me:
@@ -67,6 +69,9 @@ def retry_async_gen[**P, T, X](
                     return
                 except Exception as e:
                     last_exception = e
+                    if yielded_any:
+                        yield on_exceed_attempts(e)
+                        return
                     if attempt < max_retries:
                         await asyncio.sleep(delay_base**attempt)
 

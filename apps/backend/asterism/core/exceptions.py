@@ -21,3 +21,8 @@ class UnauthorizedException(CodedException):
 class NotFoundException(CodedException):
     def __init__(self, message: str = "Resource not found"):
         super().__init__(404, message)
+
+
+class ConflictException(CodedException):
+    def __init__(self, message: str = "Conflict"):
+        super().__init__(409, message)

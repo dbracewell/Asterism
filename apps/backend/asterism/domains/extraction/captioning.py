@@ -283,7 +283,8 @@ async def caption(
                 artifact.caption_text = result.text
                 artifact.caption_source = KnowledgeCaptionMode(result.source.value)
                 artifact.caption_model = result.model
-                artifact.caption_status = KnowledgeCaptionStatus.DRAFT
+                artifact.caption_status = KnowledgeCaptionStatus.READY
+                artifact.text_embeddings_ready = True
                 artifact.caption_error_code = None
                 artifact.caption_error_reason = None
             except Exception as error:

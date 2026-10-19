@@ -1,14 +1,104 @@
+import asyncio
+import ipaddress
 import re
+import socket
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 import markdownify
 from bs4 import BeautifulSoup
-from playwright.async_api import async_playwright
+from playwright.async_api import Route, async_playwright
 
 from asterism.common.log import get_logger
 from asterism.core.schemas import Document
 
 logger = get_logger("FETCH")
+
+_MAX_REDIRECTS = 5
+_PLAYWRIGHT_SEMAPHORE = asyncio.Semaphore(2)
+_FORBIDDEN_HOSTNAMES = {"localhost", "localhost.localdomain"}
+_FORBIDDEN_HOST_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
+
+
+class UnsafeFetchUrlError(ValueError):
+    """Raised when a URL targets a non-public host, IP address, or disallowed scheme."""
+
+
+def _is_public_ip(raw_ip: str) -> bool:
+    ip = ipaddress.ip_address(raw_ip)
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
+        ip = ip.ipv4_mapped
+    return (
+        ip.is_global
+        and not ip.is_private
+        and not ip.is_loopback
+        and not ip.is_link_local
+        and not ip.is_multicast
+        and not ip.is_reserved
+        and not ip.is_unspecified
+    )
+
+
+def _resolve_host_ips(hostname: str, port: int) -> list[str]:
+    addr_info = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+    ips: list[str] = []
+    for entry in addr_info:
+        sockaddr = entry[4]
+        ip_str = sockaddr[0]
+        if ip_str not in ips:
+            ips.append(ip_str)
+    return ips
+
+
+async def validate_public_http_url(raw_url: str) -> str:
+    candidate = raw_url.strip()
+    if not candidate:
+        raise UnsafeFetchUrlError("URL must not be empty.")
+    if "://" not in candidate:
+        candidate = f"http://{candidate}"
+
+    parsed = urlsplit(candidate)
+    scheme = parsed.scheme.lower()
+    if scheme not in ("http", "https"):
+        raise UnsafeFetchUrlError(f"Unsupported URL scheme '{parsed.scheme}'. Only http and https are allowed.")
+
+    if parsed.username is not None or parsed.password is not None:
+        raise UnsafeFetchUrlError("URLs with embedded credentials are not allowed.")
+
+    hostname = (parsed.hostname or "").strip().rstrip(".").lower()
+    if not hostname:
+        raise UnsafeFetchUrlError("URL must include a valid hostname.")
+
+    if hostname in _FORBIDDEN_HOSTNAMES or hostname.endswith(_FORBIDDEN_HOST_SUFFIXES):
+        raise UnsafeFetchUrlError(f"Host '{hostname}' is not allowed.")
+
+    try:
+        port = parsed.port or (443 if scheme == "https" else 80)
+    except ValueError as exc:
+        raise UnsafeFetchUrlError("URL contains an invalid port.") from exc
+
+    try:
+        literal_ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        literal_ip = None
+
+    if literal_ip is not None:
+        if not _is_public_ip(str(literal_ip)):
+            raise UnsafeFetchUrlError(f"IP address '{literal_ip}' is not a public routable address.")
+    else:
+        try:
+            resolved_ips = await asyncio.to_thread(_resolve_host_ips, hostname, port)
+        except socket.gaierror as exc:
+            raise UnsafeFetchUrlError(f"Could not resolve hostname '{hostname}'.") from exc
+
+        if not resolved_ips:
+            raise UnsafeFetchUrlError(f"Hostname '{hostname}' did not resolve to any address.")
+
+        for ip_str in resolved_ips:
+            if not _is_public_ip(ip_str):
+                raise UnsafeFetchUrlError(f"Hostname '{hostname}' resolved to non-public IP address '{ip_str}'.")
+
+    return urlunsplit((scheme, parsed.netloc, parsed.path or "/", parsed.query, ""))
 
 
 def extract_clean_markdown(html: Document) -> Document:
@@ -33,31 +123,6 @@ def extract_clean_markdown(html: Document) -> Document:
         )
     else:
         raise MarkdownExtractorException()
-
-
-# def extract_clean_markdown(
-#     raw_html: str,
-#     include_images: bool = False,
-# ) -> str:
-#     """
-#     Extracts core article content from raw HTML and converts it to clean Markdown
-#     while stripping away navigation, boilerplate, and ads.
-#     """
-#     extracted_content = trafilatura.extract(
-#         raw_html,
-#         output_format="markdown",
-#         include_formatting=True,
-#         include_links=True,
-#         include_images=include_images,
-#         include_tables=True,
-#         favor_recall=False,
-#     )
-
-#     if extracted_content:
-#         print(extracted_content)
-#         return extracted_content
-#     else:
-#         return "Error: Could not extract meaningful text or content from this page structure."
 
 
 _HTML_TAGS_TO_REMOVE = [
@@ -87,24 +152,40 @@ class MarkdownExtractorException(Exception):
         super().__init__(message)
 
 
+async def _guard_playwright_route(route: Route) -> None:
+    try:
+        await validate_public_http_url(route.request.url)
+    except UnsafeFetchUrlError:
+        await route.abort("accessdenied")
+        return
+    await route.continue_()
+
+
 async def _js_site_fetch(url: str) -> tuple[str, str]:
     """
     Fetches a web page using Playwright to handle JavaScript-rendered content.
     Returns the raw HTML and MIME type of the page.
     """
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+    validated_url = await validate_public_http_url(url)
+    async with _PLAYWRIGHT_SEMAPHORE:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            try:
+                page = await browser.new_page()
+                await page.route("**/*", _guard_playwright_route)
 
-        response = await page.goto(
-            url=url,
-            timeout=5000,
-            wait_until="networkidle",
-        )
-        raw_html = await page.content()
-        mime_type = response.headers.get("content-type", "text/html").split(";")[0]  # type: ignore
-        await browser.close()
-        return raw_html, mime_type
+                response = await page.goto(
+                    url=validated_url,
+                    timeout=5000,
+                    wait_until="networkidle",
+                )
+                if response is None:
+                    raise httpx.RequestError(f"Playwright navigation returned no response for {validated_url}")
+                raw_html = await page.content()
+                mime_type = response.headers.get("content-type", "text/html").split(";")[0]
+                return raw_html, mime_type
+            finally:
+                await browser.close()
 
 
 def possible_js_page(html_page: str) -> bool:
@@ -131,28 +212,40 @@ async def fetch_page(
 ) -> Document:
     """Fetches a web page and returns its content as a Document object."""
 
-    if not url.startswith("http"):
-        url = "http://" + url
+    current_url = await validate_public_http_url(url)
 
     html_page: str = ""
     mime_type: str = "text/html"
     if force_playwright:
-        html_page, mime_type = await _js_site_fetch(url)
+        html_page, mime_type = await _js_site_fetch(current_url)
     else:
         async with httpx.AsyncClient(
             timeout=timeout,
-            follow_redirects=True,
+            follow_redirects=False,
         ) as client:
-            response = await client.get(
-                url,
-                headers=_FETCH_HEADERS,
-                timeout=timeout,
-            )
-            response.raise_for_status
+            response: httpx.Response | None = None
+            for _ in range(_MAX_REDIRECTS + 1):
+                response = await client.get(
+                    current_url,
+                    headers=_FETCH_HEADERS,
+                    timeout=timeout,
+                )
+                if response.is_redirect:
+                    location = response.headers.get("location")
+                    if not location:
+                        break
+                    current_url = await validate_public_http_url(urljoin(current_url, location))
+                    continue
+                break
+            else:
+                raise httpx.TooManyRedirects(f"Exceeded {_MAX_REDIRECTS} redirects while fetching {url}")
+
+            assert response is not None
+            response.raise_for_status()
             mime_type = response.headers.get("Content-Type", "text/html").split(";")[0]
             html_page = response.text
             if len(html_page) < threshold_for_playwright or possible_js_page(html_page):
-                html_page, mime_type = await _js_site_fetch(url)
+                html_page, mime_type = await _js_site_fetch(current_url)
 
     soup = BeautifulSoup(html_page, "html.parser")
     for tag in soup(_HTML_TAGS_TO_REMOVE):
@@ -163,7 +256,7 @@ async def fetch_page(
     return Document(
         content=html_page,
         mime_type=mime_type,
-        metadata={"source": url},
+        metadata={"source": current_url},
     )
 
 

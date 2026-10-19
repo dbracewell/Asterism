@@ -24,7 +24,8 @@ async def initialize_search_index(connection: AsyncConnection) -> None:
         "INSERT INTO chat_search(chat_id, user_id, title, content) "
         "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
         "coalesce(group_concat(messages.content, ' '), '') FROM chats "
-        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.id; END",
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.id "
+        "GROUP BY chats.id; END",
         "CREATE TRIGGER IF NOT EXISTS chat_search_chats_ad AFTER DELETE ON chats BEGIN "
         "DELETE FROM chat_search WHERE chat_id = old.id; END",
         "CREATE TRIGGER IF NOT EXISTS chat_search_messages_ai AFTER INSERT ON messages BEGIN "
@@ -32,19 +33,22 @@ async def initialize_search_index(connection: AsyncConnection) -> None:
         "INSERT INTO chat_search(chat_id, user_id, title, content) "
         "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
         "coalesce(group_concat(messages.content, ' '), '') FROM chats "
-        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.chat_id; END",
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.chat_id "
+        "GROUP BY chats.id; END",
         "CREATE TRIGGER IF NOT EXISTS chat_search_messages_au AFTER UPDATE OF content ON messages BEGIN "
         "DELETE FROM chat_search WHERE chat_id = new.chat_id; "
         "INSERT INTO chat_search(chat_id, user_id, title, content) "
         "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
         "coalesce(group_concat(messages.content, ' '), '') FROM chats "
-        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.chat_id; END",
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = new.chat_id "
+        "GROUP BY chats.id; END",
         "CREATE TRIGGER IF NOT EXISTS chat_search_messages_ad AFTER DELETE ON messages BEGIN "
         "DELETE FROM chat_search WHERE chat_id = old.chat_id; "
         "INSERT INTO chat_search(chat_id, user_id, title, content) "
         "SELECT chats.id, chats.user_id, coalesce(chats.title, ''), "
         "coalesce(group_concat(messages.content, ' '), '') FROM chats "
-        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = old.chat_id; END",
+        "LEFT JOIN messages ON messages.chat_id = chats.id WHERE chats.id = old.chat_id "
+        "GROUP BY chats.id; END",
         "CREATE TRIGGER IF NOT EXISTS project_search_ai AFTER INSERT ON projects BEGIN "
         "INSERT INTO project_search(project_id, user_id, name, description) "
         "VALUES (new.id, new.user_id, new.name, new.description); END",

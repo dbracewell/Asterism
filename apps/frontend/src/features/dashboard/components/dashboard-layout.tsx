@@ -1,6 +1,6 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import UserProvider from "@/features/auth/components/user-context";
-import { getCurrentUser } from "@/features/auth/server/actions";
+import { getCurrentUser } from "@/features/auth/server/session";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
 import { MobileSidebarTrigger } from "@/features/dashboard/components/mobile-sidebar-trigger";
 import { ThemeCheck } from "@/features/dashboard/components/theme-check";

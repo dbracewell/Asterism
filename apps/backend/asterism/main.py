@@ -113,7 +113,9 @@ async def validation_exception_handler(
 ):
     error_message = []
     for error in exc.errors():
-        error_message.append(f"{error['msg']}: {error['input']}")
+        loc = ".".join(str(part) for part in error.get("loc", ()))
+        msg = error.get("msg", "Validation error")
+        error_message.append(f"{loc}: {msg}" if loc else str(msg))
     error_response = ErrorDetail(
         code=422,
         detail=json.dumps("\n".join(error_message)),

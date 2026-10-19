@@ -1,12 +1,19 @@
 import { render } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
-const { state, setTheme, refresh } = vi.hoisted(() => ({
-  state: { saved: "broken-custom", current: "light" },
+const { state, setTheme, setFontSize, refresh } = vi.hoisted(() => ({
+  state: {
+    saved: "broken-custom",
+    current: "light",
+    savedFontSize: undefined as string | undefined,
+  },
   setTheme: vi.fn(),
+  setFontSize: vi.fn(),
   refresh: vi.fn(),
 }));
 vi.mock("@/features/auth/components/user-context", () => ({
-  useUser: () => ({ settings: { theme: state.saved, font_size: "16px" } }),
+  useUser: () => ({
+    settings: { theme: state.saved, font_size: state.savedFontSize },
+  }),
 }));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
@@ -14,7 +21,7 @@ vi.mock("@/features/theme/components/theme-context", () => ({
     allThemes: [{ filename: "light" }, { filename: "valid-custom" }],
     setTheme,
     fontSize: "16px",
-    setFontSize: vi.fn(),
+    setFontSize,
   }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
@@ -23,6 +30,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   state.current = "light";
   state.saved = "broken-custom";
+  state.savedFontSize = undefined;
 });
 it("does not refresh repeatedly when the saved custom theme is unavailable", () => {
   const view = render(<ThemeCheck />);
@@ -38,4 +46,13 @@ it("applies valid saved custom themes and restores Light when an override disapp
   state.saved = "removed-custom";
   view.rerender(<ThemeCheck />);
   expect(setTheme).toHaveBeenLastCalledWith("light");
+});
+
+it("does not trigger a refresh loop when user.settings.font_size is undefined", () => {
+  state.saved = "light";
+  state.savedFontSize = undefined;
+  const view = render(<ThemeCheck />);
+  view.rerender(<ThemeCheck />);
+  expect(setFontSize).not.toHaveBeenCalled();
+  expect(refresh).not.toHaveBeenCalled();
 });

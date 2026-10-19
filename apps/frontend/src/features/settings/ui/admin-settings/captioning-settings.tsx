@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -115,14 +116,17 @@ function CaptioningSettingsPane() {
         )}
       </div>
 
-      <fieldset className="space-y-2" disabled={update.isPending}>
-        <legend className="font-medium">Mode</legend>
+      <FieldSet className="space-y-2" disabled={update.isPending}>
+        <FieldLegend className="font-medium">Mode</FieldLegend>
         {[
           ["disabled", "Disabled"],
           ["provider", "Configured vision provider"],
           ["local", "Local SmolVLM2 (CPU)"],
         ].map(([mode, label]) => (
-          <label className="flex items-center gap-2" key={mode}>
+          <Label
+            className="flex cursor-pointer items-center gap-2 font-normal"
+            key={mode}
+          >
             <input
               type="radio"
               name="captioning-mode"
@@ -140,9 +144,9 @@ function CaptioningSettingsPane() {
               }}
             />
             {label}
-          </label>
+          </Label>
         ))}
-      </fieldset>
+      </FieldSet>
 
       {draftMode === "provider" && (
         <div className="space-y-2">

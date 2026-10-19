@@ -3,19 +3,21 @@ import {
   InstallUserSchema,
   InstallUserSchemaType,
 } from "@/features/auth/schemas";
-import { User } from "@/features/auth/types";
-import { getApiClient } from "@/lib/api-server";
 import { getAuth } from "@/lib/auth";
-import { getFrontendServerConfig } from "@/lib/server-config";
 import { BACKEND_API_URL } from "@/lib/backend-url";
+import { getFrontendServerConfig } from "@/lib/server-config";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { cache } from "react";
+import { countUsers } from "./session";
 
 export const installApp = async (data: InstallUserSchemaType) => {
   const parsed = InstallUserSchema.safeParse(data);
   if (!parsed.success) {
     throw Error(parsed.error.message);
+  }
+
+  const existingUsers = await countUsers();
+  if (existingUsers > 0) {
+    throw Error("Application is already installed");
   }
 
   let user;
@@ -27,55 +29,41 @@ export const installApp = async (data: InstallUserSchemaType) => {
       query: { adminKey: parsed.data.adminKey, install: true },
     });
   } catch (error: unknown) {
-    throw Error(JSON.stringify(error));
+    throw Error(error instanceof Error ? error.message : JSON.stringify(error));
   }
 
-  const result = await fetch(`${BACKEND_API_URL}/users/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${user.token}`,
-    },
-    body: JSON.stringify({
-      user_id: user.user.id,
-      system_key: getFrontendServerConfig().systemKey,
-    }),
-  });
+  try {
+    const result = await fetch(`${BACKEND_API_URL}/users/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify({
+        user_id: user.user.id,
+        system_key: getFrontendServerConfig().systemKey,
+      }),
+    });
 
-  if (!result.ok) {
-    const error = await result.json();
-    console.log(error);
-    throw Error(error["detail"]);
+    if (!result.ok) {
+      let detail = "Failed to provision user in backend";
+      try {
+        const errorBody = await result.json();
+        if (errorBody?.detail) {
+          detail = String(errorBody.detail);
+        }
+      } catch {
+        // Ignore JSON parse errors on non-JSON failure responses
+      }
+      throw Error(detail);
+    }
+  } catch (error: unknown) {
+    try {
+      const context = await getAuth().$context;
+      await context.internalAdapter.deleteUser(user.user.id);
+    } catch {
+      // Best-effort rollback so failed backend provisioning does not brick install
+    }
+    throw error instanceof Error ? error : Error(String(error));
   }
 };
-
-export const getCurrentUser = cache(async () => {
-  const headersList = await headers();
-  const session = await getAuth().api.getSession({
-    headers: headersList,
-  });
-  if (!session?.user || session.user.role == null) {
-    redirect("/");
-  }
-
-  const api = await getApiClient();
-  const settings = await api.userSettingsGet({
-    throwOnError: true,
-  });
-
-  return {
-    id: session.user.id,
-    role: session.user.role,
-    name: session.user.name,
-    email: session.user.email,
-    settings: settings.data,
-  } as User;
-});
-
-export const getUserCount = cache(async () => {
-  const context = await getAuth().$context;
-  return await context.adapter.count({
-    model: "user",
-    where: [],
-  });
-});

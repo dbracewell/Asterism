@@ -186,7 +186,12 @@ class ToolRegistry:
         retrieval_service: RetrievalService | None = None,
         file_reader: RuntimeFileReader | None = None,
     ) -> ToolResult:
-        llm_tool = self.registry[tool_call.function.name]
+        llm_tool = self.registry.get(tool_call.function.name)
+        if llm_tool is None:
+            return ToolRegistry._exception_to_tool_result(
+                ValueError(f"Tool '{tool_call.function.name}' is not recognized or available"),
+                tool_call,
+            )
 
         @async_retry(
             max_retries=max_retries,

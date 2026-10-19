@@ -9,6 +9,7 @@ from pydantic import (
     JsonValue,
     PositiveInt,
     SecretStr,
+    field_serializer,
     model_validator,
 )
 
@@ -19,6 +20,7 @@ from .provider_types import (
     ProviderType,
     normalize_provider_base_url,
 )
+from .secrets import redact_component_parameters
 
 
 class Llm(BaseModel):
@@ -109,6 +111,10 @@ class LlmDisplayInfo(BaseModel):
 class ComponentProviderParameters(BaseModel):
     name: str
     parameters: dict[str, str] = Field(default_factory=dict)
+
+    @field_serializer("parameters", when_used="json")
+    def _redact_secrets_for_json(self, parameters: dict[str, str]) -> dict[str, str]:
+        return redact_component_parameters(parameters)
 
 
 class Setting(BaseModel):

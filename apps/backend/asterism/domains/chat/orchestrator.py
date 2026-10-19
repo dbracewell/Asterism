@@ -275,9 +275,6 @@ class ChatOrchestrator:
         if future and not future.done():
             future.set_result(approved)
 
-    async def save_always_allow_preference(self, tool_id: str) -> None:
-        pass
-
     async def _build_agent_messages(self) -> list[LLMMessage]:
         ids = {file.file_id for message in self.chat.messages for file in message.files}
         payloads = {}

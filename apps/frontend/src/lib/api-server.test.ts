@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { getClient } from "./api-server";
 
+vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({ createClient: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   getAuth: () => ({

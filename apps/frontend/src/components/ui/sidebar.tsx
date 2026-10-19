@@ -188,10 +188,8 @@ const Sidebar = ({
     (e: MouseEvent) => {
       if (isResizing) {
         const newWidth = Math.min(Math.max(e.clientX, 200), 500);
-        if (newWidth >= 300) {
-          setLocalWidth(`${newWidth}px`);
-          setSideBarWidth(`${newWidth}px`);
-        }
+        setLocalWidth(`${newWidth}px`);
+        setSideBarWidth(`${newWidth}px`);
       }
     },
     [isResizing, setSideBarWidth],

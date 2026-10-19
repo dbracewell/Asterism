@@ -1,7 +1,6 @@
 "use client";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
-import WorkerProvider from "@/features/sse/components/worker-provider";
 import {
   MutationCache,
   QueryClient,
@@ -24,9 +23,7 @@ const queryClient = new QueryClient({
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <WorkerProvider>
-        <TooltipProvider>{children}</TooltipProvider>
-      </WorkerProvider>
+      <TooltipProvider>{children}</TooltipProvider>
     </QueryClientProvider>
   );
 }

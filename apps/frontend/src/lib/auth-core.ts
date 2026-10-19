@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { betterAuth } from "better-auth";
@@ -6,6 +7,18 @@ import { admin, jwt } from "better-auth/plugins";
 import Database from "better-sqlite3";
 
 import { getFrontendServerConfig } from "./server-config-core";
+
+export function matchesAdminPassphrase(
+  candidate: unknown,
+  configured: string,
+): boolean {
+  if (typeof candidate !== "string" || !candidate || !configured) {
+    return false;
+  }
+  const candidateDigest = createHash("sha256").update(candidate).digest();
+  const configuredDigest = createHash("sha256").update(configured).digest();
+  return timingSafeEqual(candidateDigest, configuredDigest);
+}
 
 function createAuth() {
   const config = getFrontendServerConfig();
@@ -53,15 +66,33 @@ function createAuth() {
       user: {
         create: {
           before: async (user, ctx) => {
-            let role = "user";
-            const adminKey = ctx!.query?.adminKey;
-            const install = ctx!.query?.install;
-            if (adminKey === config.adminPassphrase) {
-              role = "admin";
-            }
-            if (install && role !== "admin") {
+            const adminKey = ctx?.query?.adminKey;
+            const requestedRole = ctx?.query?.role;
+            const hasValidAdminKey = matchesAdminPassphrase(
+              adminKey,
+              config.adminPassphrase,
+            );
+            const sessionRole = (
+              ctx?.context as
+                | { session?: { user?: { role?: string } } }
+                | undefined
+            )?.session?.user?.role;
+            const isAuthorizedAdmin =
+              hasValidAdminKey || sessionRole === "admin";
+
+            if (!isAuthorizedAdmin) {
               throw new Error("Invalid admin key");
             }
+
+            const role =
+              requestedRole === "user"
+                ? "user"
+                : hasValidAdminKey
+                  ? "admin"
+                  : user.role === "admin"
+                    ? "admin"
+                    : "user";
+
             return {
               data: {
                 ...user,

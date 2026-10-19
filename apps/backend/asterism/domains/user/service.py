@@ -7,7 +7,8 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.agent.service import provision_main_agent
 from asterism.domains.user.models import UserModel
 
-_user_cache = TTLCache[str, bool](maxsize=100, ttl=3600)
+_user_cache = TTLCache[str, bool](maxsize=1000, ttl=3600)
+_user_initialized_cache = TTLCache[str, bool](maxsize=1000, ttl=3600)
 
 
 async def create_user(
@@ -21,6 +22,7 @@ async def create_user(
             await provision_main_agent(user_id, session)
             await session.commit()
             _user_cache[user_id] = True
+            _user_initialized_cache[user_id] = True
             return True
         except IntegrityError:
             await session.rollback()
@@ -28,6 +30,7 @@ async def create_user(
                 raise
             await initialize_user_settings(user_id, session)
             _user_cache[user_id] = True
+            _user_initialized_cache[user_id] = True
             return False
 
 
@@ -48,6 +51,8 @@ async def ensure_user(
     user_id: str,
     session: AsyncSession | None = None,
 ) -> None:
+    if _user_initialized_cache.get(user_id):
+        return
     async with get_async_db_session(session) as session:
         user = await user_exists(user_id=user_id, session=session)
         if user:
@@ -55,8 +60,14 @@ async def ensure_user(
                 user_id=user_id,
                 session=session,
             )
+            _user_initialized_cache[user_id] = True
             return
         await create_user(user_id, session)
+
+
+def clear_user_cache() -> None:
+    _user_cache.clear()
+    _user_initialized_cache.clear()
 
 
 async def initialize_user_settings(
@@ -64,8 +75,9 @@ async def initialize_user_settings(
     session: AsyncSession | None = None,
 ) -> None:
     async with get_async_db_session(session) as session:
-        await provision_main_agent(user_id, session)
-        await session.commit()
+        created = await provision_main_agent(user_id, session)
+        if created:
+            await session.commit()
 
 
 async def delete_user(
@@ -77,4 +89,5 @@ async def delete_user(
         await session.execute(stmt)
         await session.commit()
         _user_cache.pop(user_id, None)
+        _user_initialized_cache.pop(user_id, None)
         return True

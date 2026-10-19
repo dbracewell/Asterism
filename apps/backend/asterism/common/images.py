@@ -3,10 +3,16 @@ import io
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
+MAX_THUMBNAIL_IMAGE_PIXELS = 25_000_000
+Image.MAX_IMAGE_PIXELS = MAX_THUMBNAIL_IMAGE_PIXELS
+
 
 def generate_thumbnail(content: bytes) -> str | None:
     try:
         with Image.open(io.BytesIO(content)) as img:
+            orig_w, orig_h = img.size
+            if orig_w <= 0 or orig_h <= 0 or orig_w * orig_h > MAX_THUMBNAIL_IMAGE_PIXELS:
+                return None
             img = ImageOps.exif_transpose(img)
             img = img.convert("RGB")
             orig_w, orig_h = img.size
@@ -21,5 +27,5 @@ def generate_thumbnail(content: bytes) -> str | None:
             thumbnail_img.save(buffered, format="jpeg")
             encoded_img = base64.b64encode(buffered.getvalue()).decode("utf-8")
             return f"data:image/jpeg;base64,{encoded_img}"
-    except (UnidentifiedImageError, OSError):
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError):
         return None

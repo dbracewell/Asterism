@@ -77,13 +77,19 @@ export const ThemeProvider = ({
     [allThemes],
   );
 
-  const setFontSize = useCallback((fontSize: string) => {
-    try {
-      Cookies.set(FONT_SIZE_COOKIE, fontSize);
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+  const setFontSize = useCallback(
+    (fontSize: string) => {
+      try {
+        Cookies.set(FONT_SIZE_COOKIE, fontSize, {
+          expires: 365,
+        });
+        router.refresh();
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [router],
+  );
 
   const getTheme = useCallback(
     (themeFileName: string) => {

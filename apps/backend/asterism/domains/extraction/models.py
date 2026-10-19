@@ -22,9 +22,7 @@ class FileKnowledgeArtifactStatus(StrEnum):
 class KnowledgeCaptionStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
-    DRAFT = "draft"
-    ACCEPTED = "accepted"
-    CLEARED = "cleared"
+    READY = "ready"
     FAILED = "failed"
     CANCELED = "canceled"
 

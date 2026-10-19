@@ -214,6 +214,13 @@ const ParameterForm = ({
                   ) : (
                     <Input
                       {...field}
+                      type={
+                        /^(api_key|secret|token|password)$|_(api_key|secret|token|password)$/i.test(
+                          name,
+                        )
+                          ? "password"
+                          : "text"
+                      }
                       onChange={(e) => {
                         field.onChange(e);
                         processChange();

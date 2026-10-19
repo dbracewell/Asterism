@@ -1,7 +1,8 @@
 import { AgentEventSchema, AgentSubAgentEvent } from "@/features/chat/schemas";
 import { StreamingMessage } from "@/features/chat/types";
-import { Message } from "@/lib/client";
+import { authClient } from "@/lib/auth-client";
 import { chatWebSocketUrl } from "@/lib/backend-url";
+import { Message } from "@/lib/client";
 import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
@@ -47,6 +48,7 @@ export const useChatWebSocket = ({
   onStatusChange,
   onSubAgentEvent,
 }: UseChatWebSocketProps) => {
+  const [activeToken, setActiveToken] = React.useState(jwtToken);
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const streamingMessageRef = React.useRef<StreamingMessage | null>(null);
@@ -58,6 +60,10 @@ export const useChatWebSocket = ({
   const onStatusChangeRef = React.useRef(onStatusChange);
   const onSubAgentEventRef = React.useRef(onSubAgentEvent);
   const statusRef = React.useRef(false);
+
+  React.useEffect(() => {
+    setActiveToken(jwtToken);
+  }, [jwtToken]);
 
   React.useEffect(() => {
     onStreamStartRef.current = onStreamStart;
@@ -86,10 +92,21 @@ export const useChatWebSocket = ({
     };
   }, []);
 
+  const refreshToken = React.useCallback(async () => {
+    try {
+      const { data } = await authClient.token();
+      if (!didUnmount.current && data?.token) {
+        setActiveToken(data.token);
+      }
+    } catch {
+      // Keep the existing token if the refresh endpoint is unreachable.
+    }
+  }, []);
+
   const wsEndpoint = useMemo(() => {
     if (typeof window === "undefined") return null;
-    return chatWebSocketUrl(window.location.origin, chatId, jwtToken);
-  }, [jwtToken, chatId]);
+    return chatWebSocketUrl(window.location.origin, chatId, activeToken);
+  }, [activeToken, chatId]);
 
   const scheduleFlush = React.useCallback(() => {
     if (flushTimerRef.current) return;
@@ -104,6 +121,31 @@ export const useChatWebSocket = ({
   const { sendJsonMessage, readyState } = useWebSocket(wsEndpoint, {
     shouldReconnect: () => {
       return !didUnmount.current;
+    },
+    onClose: () => {
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      if (statusRef.current) {
+        statusRef.current = false;
+        onStatusChangeRef.current?.(false);
+      }
+      streamingMessageRef.current = null;
+      if (!didUnmount.current) {
+        void refreshToken();
+      }
+    },
+    onError: () => {
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      if (statusRef.current) {
+        statusRef.current = false;
+        onStatusChangeRef.current?.(false);
+      }
+      streamingMessageRef.current = null;
     },
     reconnectAttempts: 10,
     reconnectInterval: 3000,
@@ -154,6 +196,15 @@ export const useChatWebSocket = ({
       }
 
       if (msgContent.type === "error") {
+        if (flushTimerRef.current) {
+          clearTimeout(flushTimerRef.current);
+          flushTimerRef.current = null;
+        }
+        if (statusRef.current) {
+          statusRef.current = false;
+          onStatusChangeRef.current?.(false);
+        }
+        streamingMessageRef.current = null;
         onStreamErrorRef.current?.(msgContent.content);
         return;
       }
@@ -166,7 +217,6 @@ export const useChatWebSocket = ({
         };
         streamingMessageRef.current = pendingMessage;
         onStreamStartRef.current?.(pendingMessage);
-        scheduleFlush();
       }
 
       if (msgContent.type === "tool_call") {
@@ -228,7 +278,7 @@ export const useChatWebSocket = ({
           thinking: msgContent.thinking,
           content: msgContent.content,
         };
-        onStreamUpdateRef.current?.(streamingMessageRef.current);
+        scheduleFlush();
       }
 
       if (msgContent.type === "complete") {

@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/features/dashboard/components/dashboard-layout";
+import WorkerProvider from "@/features/sse/components/worker-provider";
 import React from "react";
 
 export default async function AppLayout({
@@ -6,5 +7,9 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <WorkerProvider>
+      <DashboardLayout>{children}</DashboardLayout>
+    </WorkerProvider>
+  );
 }

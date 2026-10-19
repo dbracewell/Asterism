@@ -7,7 +7,7 @@ import { QueryError } from "@/components/query-error";
 import { buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { formatFileSize } from "@/lib/formatters";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { ExternalLink, FileIcon } from "lucide-react";
 import Link from "next/link";
 

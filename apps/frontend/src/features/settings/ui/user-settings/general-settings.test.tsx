@@ -25,7 +25,9 @@ describe("General settings labels", () => {
     render(<GeneralSettings />);
     expect(screen.getByRole("combobox", { name: "Theme" })).toBeEnabled();
     expect(screen.getByRole("combobox", { name: "Font Size" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Default Model" })).toBeEnabled();
+    expect(
+      screen.getByRole("combobox", { name: "Default Model" }),
+    ).toBeEnabled();
     expect(
       screen.getByRole("checkbox", { name: "Show Thinking" }),
     ).not.toBeChecked();

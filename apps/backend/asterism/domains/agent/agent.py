@@ -558,5 +558,8 @@ class Agent:
                             generation_duration_ms=event.generation_duration_ms,
                         )
 
-                        if event.finish_reason == "stop":
+                        # A turn without tool calls is final. Do not rely on the
+                        # provider's finish_reason: local servers often send None,
+                        # and "length"/"content_filter" must not re-prompt the model.
+                        if not event.tool_calls:
                             return

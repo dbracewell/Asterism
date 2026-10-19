@@ -1,15 +1,16 @@
 import uuid
 from typing import Any, cast
 
-from pydantic import JsonValue
+from pydantic import JsonValue, ValidationError
 from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, noload, selectinload
 
 from asterism.common.log import get_logger
 from asterism.core.events import EventType, NoArgEvent, event_bus
-from asterism.core.exceptions import BadDataException, NotFoundException
+from asterism.core.exceptions import BadDataException, ConflictException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.settings.provider_types import ModelCapabilitySource
@@ -23,6 +24,7 @@ from .models import (
 from .schemas import (
     ApplicationSettings,
     BulkUpdateSettingRequest,
+    ComponentProviderParameters,
     Llm,
     LlmDisplayInfo,
     LlmWithProvider,
@@ -36,11 +38,18 @@ from .schemas import (
     ToolSettings,
     UserSettings,
 )
+from .secrets import (
+    REDACTED_SECRET,
+    decrypt_component_provider_dict,
+    encrypt_component_provider_dict,
+)
 from .tool_settings import get_tool_settings as get_tool_settings
 
 logger = get_logger("Settings")
 
-_REDACTED_API_KEY = "**********"
+_REDACTED_API_KEY = REDACTED_SECRET
+_COMPONENT_PROVIDER_KEYS = {"web_search_provider", "image_search_provider"}
+_APP_SETTING_KEYS = frozenset(ApplicationSettings.model_fields.keys())
 
 
 def _provider_api_key(provider: ProviderInfo, existing_api_key: str | None = None) -> str:
@@ -491,7 +500,11 @@ async def replace_provider_models(
         from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
 
         await ensure_captioning_selection_is_valid(session=session)
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError as exc:
+            await session.rollback()
+            raise ConflictException("Cannot remove model currently in use by an agent or project") from exc
 
     settings = await get_provider_settings(session)
     summary = next((item for item in settings.llm_providers if item.id == provider_id), None)
@@ -545,14 +558,28 @@ async def update_tool_settings(
     settings: ToolSettings,
     session: AsyncSession | None = None,
 ) -> ToolSettings:
-    values = {
-        "active_tools": settings.active_tools,
-        "web_search_provider": settings.web_search_provider.model_dump() if settings.web_search_provider else None,
-        "image_search_provider": settings.image_search_provider.model_dump()
-        if settings.image_search_provider
-        else None,
-    }
     async with get_async_db_session(session) as session:
+        existing_rows = {
+            row.key: row.value
+            for row in (
+                await session.scalars(
+                    select(ApplicationSettingsModel).where(
+                        ApplicationSettingsModel.key.in_(_COMPONENT_PROVIDER_KEYS),
+                    ),
+                )
+            ).all()
+        }
+        values = {
+            "active_tools": settings.active_tools,
+            "web_search_provider": encrypt_component_provider_dict(
+                settings.web_search_provider.model_dump() if settings.web_search_provider else None,
+                cast(dict[str, Any] | None, existing_rows.get("web_search_provider")),
+            ),
+            "image_search_provider": encrypt_component_provider_dict(
+                settings.image_search_provider.model_dump() if settings.image_search_provider else None,
+                cast(dict[str, Any] | None, existing_rows.get("image_search_provider")),
+            ),
+        }
         for key, value in values.items():
             stmt = (
                 insert(ApplicationSettingsModel)
@@ -574,7 +601,10 @@ async def get_app_settings(
     async with get_async_db_session(session) as session:
         stmt = select(ApplicationSettingsModel)
         result = await session.scalars(stmt)
-        full: dict[str, Any] = {row.key: row.value for row in result.all()}
+        full: dict[str, Any] = {
+            row.key: (decrypt_component_provider_dict(row.value) if row.key in _COMPONENT_PROVIDER_KEYS else row.value)
+            for row in result.all()
+        }
 
         if "active_tools" not in full:
             full["active_tools"] = []
@@ -590,11 +620,59 @@ async def get_app_settings(
         return new_setting
 
 
+def _validate_app_setting_key(key: str) -> None:
+    if key not in _APP_SETTING_KEYS:
+        raise BadDataException(f"Unsupported application setting key: {key}")
+
+
+def _parse_llm_providers_setting(value: JsonValue) -> list[Provider]:
+    if not isinstance(value, list):
+        raise BadDataException("Invalid value for application setting 'llm_providers'")
+    try:
+        return [Provider.model_validate(item) for item in value]
+    except ValidationError as exc:
+        raise BadDataException("Invalid value for application setting 'llm_providers'") from exc
+
+
+def _validate_non_provider_app_setting(
+    key: str,
+    value: JsonValue,
+) -> tuple[JsonValue, ComponentProviderParameters | None]:
+    if key == "draft_model_id":
+        if value == "" or value is None:
+            return None, None
+        if not isinstance(value, str):
+            raise BadDataException("Invalid value for application setting 'draft_model_id'")
+        try:
+            return str(uuid.UUID(value)), None
+        except ValueError as exc:
+            raise BadDataException("Invalid value for application setting 'draft_model_id'") from exc
+
+    if key in _COMPONENT_PROVIDER_KEYS:
+        if value is None:
+            return None, None
+        if not isinstance(value, dict):
+            raise BadDataException(f"Invalid value for application setting '{key}'")
+        try:
+            validated = ComponentProviderParameters.model_validate(value)
+        except ValidationError as exc:
+            raise BadDataException(f"Invalid value for application setting '{key}'") from exc
+        return value, validated
+
+    if key == "active_tools":
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            raise BadDataException("Invalid value for application setting 'active_tools'")
+        return cast(JsonValue, list(value)), None
+
+    raise BadDataException(f"Unsupported application setting key: {key}")
+
+
 async def upsert_app_setting(
     key: str,
     value: JsonValue,
     session: AsyncSession | None = None,
 ) -> Setting:
+    _validate_app_setting_key(key)
     if key == "draft_model_id" and value == "":
         value = None
     if value is None:
@@ -605,28 +683,47 @@ async def upsert_app_setting(
         draft_model_updated = False
 
         if key == "llm_providers":
-            llm_providers = [Provider(**d) for d in cast(list, value) or []]
+            llm_providers = _parse_llm_providers_setting(value)
             await bulk_upsert_providers(
                 llm_providers,
                 session=session,
             )
-            return Setting(key=key, value=value)
+            await session.commit()
+            redacted = [
+                Provider.model_validate(p).model_dump(mode="json") for p in await get_all_providers(session=session)
+            ]
+            return Setting(key=key, value=redacted)
 
+        normalized_value, validated_component = _validate_non_provider_app_setting(key, value)
         if key == "draft_model_id":
             draft_model_updated = True
+
+        stored_value: JsonValue = normalized_value
+        response_value: JsonValue = normalized_value
+        if validated_component is not None:
+            existing_val = await session.scalar(
+                select(ApplicationSettingsModel.value).where(ApplicationSettingsModel.key == key),
+            )
+            stored_value = encrypt_component_provider_dict(
+                validated_component.model_dump(),
+                cast(dict[str, Any] | None, existing_val),
+            )
+            response_value = ComponentProviderParameters.model_validate(
+                decrypt_component_provider_dict(stored_value),
+            ).model_dump(mode="json")
 
         stmt = (
             insert(ApplicationSettingsModel)
             .values(
                 {
-                    "value": value,
+                    "value": stored_value,
                     "key": key,
                 },
             )
             .on_conflict_do_update(
                 index_elements=["key"],
                 set_={
-                    "value": value,
+                    "value": stored_value,
                 },
             )
         )
@@ -636,13 +733,16 @@ async def upsert_app_setting(
         if draft_model_updated:
             event_bus.emit(NoArgEvent(type=EventType.DRAFT_MODEL_UPDATED))
 
-        return Setting(key=key, value=value)
+        return Setting(key=key, value=response_value)
 
 
 async def delete_app_setting(
     key: str,
     session: AsyncSession | None = None,
 ) -> None:
+    _validate_app_setting_key(key)
+    if key in ("llm_providers", "active_tools"):
+        raise BadDataException(f"Cannot delete required application setting '{key}'")
     async with get_async_db_session(session) as session:
         stmt = delete(ApplicationSettingsModel).where(ApplicationSettingsModel.key == key)
         await session.execute(stmt)
@@ -653,36 +753,48 @@ async def bulk_update_app_setting(
     updates: BulkUpdateSettingRequest,
     session: AsyncSession | None = None,
 ) -> ApplicationSettings:
+    for key in updates.values:
+        _validate_app_setting_key(key)
+
     async with get_async_db_session(session) as session:
         draft_model_updated = False
 
         for key, value in updates.values.items():
             # Special case that the llm providers are being updated
             if key == "llm_providers":
-                llm_providers = [Provider(**d) for d in cast(list, value) or []]
+                llm_providers = _parse_llm_providers_setting(value)
                 await bulk_upsert_providers(
                     llm_providers,
                     session=session,
                 )
                 continue
 
+            normalized_value, validated_component = _validate_non_provider_app_setting(key, value)
             if key == "draft_model_id":
                 draft_model_updated = True
-                if value == "":
-                    value = None
+
+            stored_value: JsonValue = normalized_value
+            if validated_component is not None:
+                existing_val = await session.scalar(
+                    select(ApplicationSettingsModel.value).where(ApplicationSettingsModel.key == key),
+                )
+                stored_value = encrypt_component_provider_dict(
+                    validated_component.model_dump(),
+                    cast(dict[str, Any] | None, existing_val),
+                )
 
             stmt = (
                 insert(ApplicationSettingsModel)
                 .values(
                     {
-                        "value": value,
+                        "value": stored_value,
                         "key": key,
                     },
                 )
                 .on_conflict_do_update(
                     index_elements=["key"],
                     set_={
-                        "value": value,
+                        "value": stored_value,
                     },
                 )
             )
@@ -858,6 +970,10 @@ async def bulk_upsert_providers(
     for delete_id in set(existing_providers.keys()).difference(processed_providers):
         await _ensure_provider_unbound(delete_id, session)
         await session.execute(delete(ProviderModel).where(ProviderModel.id == delete_id))
+
+    from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
+
+    await ensure_captioning_selection_is_valid(session=session)
 
 
 def _merge_models(

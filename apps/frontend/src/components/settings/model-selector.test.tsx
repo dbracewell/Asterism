@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { expect, it, vi } from "vitest";
 import { ModelSelector } from "./model-selector";
@@ -18,9 +19,7 @@ it("tracks the saved binding as models load, refresh, disappear, and the value c
   const { rerender } = render(
     <ModelSelector value="alpha" onValueChange={onChange} />,
   );
-  expect(screen.getByRole("button", { expanded: false })).toHaveTextContent(
-    "alpha (unavailable)",
-  );
+  expect(screen.getByRole("combobox")).toHaveTextContent("alpha (unavailable)");
   rerender(
     <ModelSelector
       value="alpha"
@@ -28,9 +27,7 @@ it("tracks the saved binding as models load, refresh, disappear, and the value c
       onValueChange={onChange}
     />,
   );
-  expect(screen.getByRole("button", { expanded: false })).toHaveTextContent(
-    "Alpha",
-  );
+  expect(screen.getByRole("combobox")).toHaveTextContent("Alpha");
   rerender(
     <ModelSelector
       value="beta"
@@ -38,9 +35,7 @@ it("tracks the saved binding as models load, refresh, disappear, and the value c
       onValueChange={onChange}
     />,
   );
-  expect(screen.getByRole("button", { expanded: false })).toHaveTextContent(
-    "Beta",
-  );
+  expect(screen.getByRole("combobox")).toHaveTextContent("Beta");
   rerender(
     <ModelSelector
       value="beta"
@@ -49,14 +44,13 @@ it("tracks the saved binding as models load, refresh, disappear, and the value c
       onValueChange={onChange}
     />,
   );
-  expect(screen.getByRole("button", { expanded: false })).toHaveTextContent(
-    "beta (unavailable)",
-  );
-  expect(screen.getByRole("button", { expanded: false })).toBeDisabled();
+  expect(screen.getByRole("combobox")).toHaveTextContent("beta (unavailable)");
+  expect(screen.getByRole("combobox")).toBeDisabled();
   expect(onChange).not.toHaveBeenCalled();
 });
 
-it("keeps an explicitly selected model when the menu closes", () => {
+it("keeps an explicitly selected model when the menu closes", async () => {
+  const user = userEvent.setup();
   function Picker() {
     const [value, setValue] = useState<string>();
     return (
@@ -73,8 +67,8 @@ it("keeps an explicitly selected model when the menu closes", () => {
   }
   render(<Picker />);
   expect(screen.getByLabelText("Model")).toHaveTextContent("Select a model");
-  fireEvent.click(screen.getByLabelText("Model"));
-  fireEvent.click(screen.getByRole("button", { name: "Beta" }));
+  await user.click(screen.getByLabelText("Model"));
+  await user.click(screen.getByRole("option", { name: "Beta" }));
   expect(screen.getByLabelText("Model")).toHaveTextContent("Beta");
   expect(screen.getByLabelText("Model")).toHaveAttribute(
     "aria-expanded",

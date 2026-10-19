@@ -6,6 +6,7 @@ import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -171,7 +172,7 @@ function ScopedNavChatSessions({
       <div className="flex items-center justify-between px-2 pb-1">
         {selectionMode ? (
           <>
-            <label className="flex items-center gap-2 text-xs">
+            <Label className="flex items-center gap-2 text-xs">
               <Checkbox
                 aria-label="Select all visible chats"
                 checked={
@@ -187,7 +188,7 @@ function ScopedNavChatSessions({
                 }
               />
               {selectedIds.size} selected
-            </label>
+            </Label>
             <div className="flex gap-1">
               <Button
                 aria-label="Delete selected chats"

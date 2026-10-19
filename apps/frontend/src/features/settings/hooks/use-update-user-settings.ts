@@ -4,7 +4,7 @@ import {
   userSettingsBulkUpdateMutation,
   userSettingUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { client } from "@/lib/client/client.gen";
+import { client } from "@/lib/api";
 import { prettyText } from "@/lib/formatters";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";

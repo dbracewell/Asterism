@@ -15,6 +15,8 @@ class SearchArgs(BaseModel):
     )
     limit: int = Field(
         default=5,
+        ge=1,
+        le=10,
         description="The maximum number of search results to return",
         title="Limit",
     )

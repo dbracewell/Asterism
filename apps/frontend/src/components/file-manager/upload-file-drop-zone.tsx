@@ -3,7 +3,7 @@ import { useFileManager } from "@/components/file-manager/context";
 import { useUploadFiles } from "@/components/file-manager/hooks";
 import { Spinner } from "@/components/ui/spinner";
 import { IconCirclePlus } from "@tabler/icons-react";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 export const UploadFileDropZone = ({

@@ -26,12 +26,14 @@ from asterism.domains.settings.schemas import (
 from asterism.domains.settings.service import (
     bulk_update_app_setting,
     bulk_upsert_providers,
+    delete_app_setting,
     get_all_providers,
     get_app_settings,
     get_provider_settings,
     get_tool_settings,
     update_provider_settings,
     update_tool_settings,
+    upsert_app_setting,
 )
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -496,3 +498,139 @@ async def test_initialization_creates_current_schema_and_is_repeatable(tmp_path,
         "created_at",
         "updated_at",
     }.issubset(user_file_columns)
+
+
+@pytest.mark.asyncio
+async def test_provider_and_tool_api_keys_are_encrypted_at_rest_and_redacted_in_json(tmp_path):
+    database = tmp_path / "encrypted-secrets.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    provider_id = uuid.uuid4()
+    provider_settings = ProviderSettings(
+        llm_providers=[
+            ProviderSummary(
+                id=provider_id,
+                provider_type=ProviderType.GENERIC_OPENAI,
+                name="Local",
+                base_url="http://localhost:8080/v1",
+                api_key="super-secret-provider-key",
+            ),
+        ],
+    )
+    tool_settings = ToolSettings(
+        active_tools=["web_search"],
+        web_search_provider=ComponentProviderParameters(
+            name="Brave",
+            parameters={"api_key": "super-secret-brave-key", "safe_search": "moderate"},
+        ),
+    )
+
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        await update_provider_settings(provider_settings, session)
+        persisted_tools = await update_tool_settings(tool_settings, session)
+
+        # Runtime Python callers receive decrypted secrets, while JSON serialization redacts them.
+        assert persisted_tools.web_search_provider is not None
+        assert persisted_tools.web_search_provider.parameters["api_key"] == "super-secret-brave-key"
+        json_payload = persisted_tools.model_dump(mode="json")
+        assert json_payload["web_search_provider"]["parameters"]["api_key"] == "**********"
+        assert json_payload["web_search_provider"]["parameters"]["safe_search"] == "moderate"
+
+        # Submitting the redacted placeholder back preserves the existing stored secret.
+        redacted_tools = ToolSettings.model_validate(json_payload)
+        preserved_tools = await update_tool_settings(redacted_tools, session)
+        assert preserved_tools.web_search_provider is not None
+        assert preserved_tools.web_search_provider.parameters["api_key"] == "super-secret-brave-key"
+
+    with sqlite3.connect(database) as connection:
+        raw_provider_key = connection.execute("SELECT api_key FROM providers").fetchone()[0]
+        raw_web_search_text = connection.execute(
+            "SELECT json(value) FROM app_settings WHERE key = 'web_search_provider'",
+        ).fetchone()[0]
+
+    assert raw_provider_key.startswith("enc:v1:")
+    assert "super-secret-provider-key" not in raw_provider_key
+    assert "enc:v1:" in raw_web_search_text
+    assert "super-secret-brave-key" not in raw_web_search_text
+
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_generic_app_setting_mutations_validate_schema_and_captioning_policy(tmp_path):
+    database = tmp_path / "validated-app-settings.db"
+    engine = create_async_engine(f"sqlite+aiosqlite:///{database}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    provider_id = uuid.uuid4()
+    model_id = uuid.uuid4()
+    provider = Provider(
+        id=provider_id,
+        provider_type=ProviderType.GENERIC_OPENAI,
+        name="Vision",
+        base_url="http://localhost:8080/v1",
+        api_key="secret",
+        models=[
+            Llm(
+                id=model_id,
+                provider_id=provider_id,
+                name="vision-model",
+                is_active=True,
+                supports_vision=True,
+                vision_source=ModelCapabilitySource.MANUAL,
+            ),
+        ],
+    )
+
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        await bulk_upsert_providers([provider], session)
+        await session.commit()
+        await update_captioning_configuration(
+            payload=KnowledgeCaptionConfigurationUpdate(mode="provider", provider_model_id=model_id),
+            session=session,
+        )
+
+        # Reject unknown keys and malformed values across upsert, bulk update, and delete
+        with pytest.raises(BadDataException, match="Unsupported application setting key"):
+            await upsert_app_setting("unknown_key", "value", session)
+
+        with pytest.raises(BadDataException, match="Unsupported application setting key"):
+            await delete_app_setting("unknown_key", session)
+
+        with pytest.raises(BadDataException, match="Cannot delete required application setting"):
+            await delete_app_setting("active_tools", session)
+
+        with pytest.raises(BadDataException, match="Invalid value for application setting 'draft_model_id'"):
+            await upsert_app_setting("draft_model_id", "not-a-uuid", session)
+
+        with pytest.raises(BadDataException, match="Invalid value for application setting 'active_tools'"):
+            await upsert_app_setting("active_tools", "not-a-list", session)
+
+        with pytest.raises(BadDataException, match="Invalid value for application setting 'web_search_provider'"):
+            await bulk_update_app_setting(
+                BulkUpdateSettingRequest(values={"web_search_provider": {"parameters": "bad"}}),
+                session,
+            )
+
+        # Reject removing the selected captioning provider via generic app setting endpoints
+        with pytest.raises(BadDataException, match="selected for image captioning"):
+            await upsert_app_setting("llm_providers", [], session)
+        await session.rollback()
+
+        with pytest.raises(BadDataException, match="selected for image captioning"):
+            await bulk_update_app_setting(
+                BulkUpdateSettingRequest(values={"llm_providers": []}),
+                session,
+            )
+        await session.rollback()
+
+        # App settings remain valid and loadable
+        settings = await get_app_settings(session)
+        assert len(settings.llm_providers) == 1
+
+    await engine.dispose()

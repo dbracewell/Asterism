@@ -49,7 +49,7 @@ beforeEach(() => {
     data: {
       status: "ready",
       extracted_content: "hello extracted world",
-      caption: { status: "accepted", text: "A short caption" },
+      caption: { status: "ready", text: "A short caption" },
     },
   });
   api.fileSimilarGetMany.mockResolvedValue({
@@ -126,7 +126,7 @@ it("keeps adversarial extracted HTML and captions as literal text", async () => 
     data: {
       status: "ready",
       extracted_content: payload,
-      caption: { status: "accepted", text: payload },
+      caption: { status: "ready", text: payload },
     },
   });
   const { container } = renderView();

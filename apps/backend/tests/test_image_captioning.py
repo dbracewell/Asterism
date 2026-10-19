@@ -101,3 +101,112 @@ def test_local_caption_request_is_a_path_reference_not_image_bytes(tmp_path: Pat
         max_caption_chars=1,
     )
     assert request.image_path.name == "image.png"
+
+
+@pytest.mark.asyncio
+async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrieval(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from contextlib import asynccontextmanager
+
+    from asterism.db.base import Base
+    from asterism.domains.extraction.caption_schemas import CaptionResult
+    from asterism.domains.extraction.captioning import caption
+    from asterism.domains.extraction.models import (
+        FileExtractionModel,
+        FileKnowledgeArtifactStatus,
+        KnowledgeCaptionStatus,
+    )
+    from asterism.domains.files.models import FileKind, UserFileModel
+    from asterism.domains.retrieval.service import RetrievalArtifact
+    from asterism.domains.user.models import UserModel
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'caption-ready.db'}")
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as session:
+        session.add(UserModel(id="user-1"))
+        file = UserFileModel(
+            storage_key=str(uuid.uuid4()),
+            user_id="user-1",
+            filename="chart.png",
+            original_name="chart.png",
+            size=128,
+            mime_type="image/png",
+            kind=FileKind.IMAGE,
+            sha256="a" * 64,
+        )
+        session.add(file)
+        await session.flush()
+
+        artifact = FileExtractionModel(
+            user_id="user-1",
+            file_id=file.id,
+            generation=1,
+            processing_profile_generation=1,
+            processing_profile_identity="b" * 64,
+            status=FileKnowledgeArtifactStatus.READY,
+            is_current=True,
+            text_embeddings_ready=False,
+            visual_embedding_ready=True,
+            caption_status=KnowledgeCaptionStatus.PENDING,
+        )
+        session.add(artifact)
+        await session.commit()
+
+        file_id = file.id
+        artifact_id = artifact.id
+
+    @asynccontextmanager
+    async def session_factory():
+        async with sessions() as db_session:
+            yield db_session
+
+    added_chunks = []
+
+    class FakeVectorStore:
+        async def delete_chunk(self, **_kwargs: object) -> None:
+            return None
+
+        async def add(self, chunks: list[object]) -> None:
+            added_chunks.extend(chunks)
+
+    class FakeEmbeddingProvider:
+        async def embed_text(self, _texts: list[str]) -> list[list[float]]:
+            return [[0.5, 0.5]]
+
+    async def fake_caption(*_args: object, **_kwargs: object) -> CaptionResult:
+        return CaptionResult(
+            text="A bar chart of quarterly revenue",
+            source=CaptionMode.LOCAL,
+            model="local/smolvlm2",
+        )
+
+    monkeypatch.setattr("asterism.domains.extraction.captioning.get_async_db_session", session_factory)
+    monkeypatch.setattr("asterism.domains.extraction.captioning.vector_store", FakeVectorStore())
+    monkeypatch.setattr("asterism.domains.extraction.captioning.embedding_provider", FakeEmbeddingProvider())
+    monkeypatch.setattr("asterism.domains.extraction.captioning._caption", fake_caption)
+
+    await caption("user-1", file_id, artifact_id)
+
+    async with sessions() as session:
+        updated = await session.get(FileExtractionModel, artifact_id)
+        assert updated is not None
+        assert updated.caption_status == KnowledgeCaptionStatus.READY
+        assert updated.caption_text == "A bar chart of quarterly revenue"
+        assert updated.text_embeddings_ready is True
+        retrieval_artifact = RetrievalArtifact(
+            file_id=updated.file_id,
+            generation=updated.generation,
+            status=updated.status,
+            text_embeddings_ready=updated.text_embeddings_ready,
+            caption_text=updated.caption_text,
+        )
+        assert retrieval_artifact.ready is True
+
+    assert len(added_chunks) == 1
+    await engine.dispose()

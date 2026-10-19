@@ -215,7 +215,7 @@ async def upload_files(
             mime_type = detect_mime_type(filename, content)
 
             file_kind = classify_file(filename, mime_type)
-            thumbnail = generate_thumbnail(content) if file_kind is FileKind.IMAGE else None
+            thumbnail = await asyncio.to_thread(generate_thumbnail, content) if file_kind is FileKind.IMAGE else None
 
             file_id = uuid.uuid4()
             storage_key = store.save(user_id, file_id, Path(original_name).suffix, content)

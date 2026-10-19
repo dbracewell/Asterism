@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { client } from "@/lib/api";
+import { api, client } from "@/lib/api";
 import {
   chatFileGetInfoOptions,
   fileGetFileInfoOptions,
@@ -19,6 +19,7 @@ import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { UserFile, ErrorDetail } from "@/lib/client";
 
 import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type ImageProps = {
   filename: string;
@@ -59,7 +60,15 @@ const ChatImage = ({
       path: { chat_id: chatId, file_id: fileId },
     }),
   );
-  return <ImageContent {...props} result={result} />;
+  return (
+    <ImageContent {...props} chatId={chatId} fileId={fileId} result={result} />
+  );
+};
+
+type ImageContentProps = ImageProps & {
+  chatId?: string;
+  fileId?: string;
+  result: UseQueryResult<UserFile, ErrorDetail>;
 };
 
 const ImageContent = ({
@@ -68,8 +77,58 @@ const ImageContent = ({
   height = "auto",
   zoomable = false,
   className,
+  chatId,
+  fileId,
+  filename,
   result: { data, isLoading, error },
-}: ImageProps & { result: UseQueryResult<UserFile, ErrorDetail> }) => {
+}: ImageContentProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
+  const [isLoadingFull, setIsLoadingFull] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || fullImageUrl) return;
+    let active = true;
+    let objectUrl: string | null = null;
+    setIsLoadingFull(true);
+
+    const fetchFull = async () => {
+      try {
+        const { data: fileData } =
+          chatId && fileId
+            ? await api.chatFileDownload({
+                path: { chat_id: chatId, file_id: fileId },
+              })
+            : await api.fileGetOne({ path: { filename } });
+        if (!fileData || !active) return;
+        const blob = fileData instanceof Blob ? fileData : new Blob([fileData]);
+        objectUrl = URL.createObjectURL(blob);
+        if (active) {
+          setFullImageUrl(objectUrl);
+        } else {
+          URL.revokeObjectURL(objectUrl);
+        }
+      } catch (e) {
+        console.error("Failed to load full image", e);
+      } finally {
+        if (active) setIsLoadingFull(false);
+      }
+    };
+
+    void fetchFull();
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [isOpen, fullImageUrl, chatId, fileId, filename]);
+
+  useEffect(() => {
+    return () => {
+      if (fullImageUrl) URL.revokeObjectURL(fullImageUrl);
+    };
+  }, [fullImageUrl]);
+
   if (error) {
     return (
       <div
@@ -113,7 +172,7 @@ const ImageContent = ({
 
   if (zoomable) {
     return (
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button
             variant="outline"
@@ -131,13 +190,18 @@ const ImageContent = ({
             />
           </Button>
         </DialogTrigger>
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] max-w-[95vw]! items-center justify-center border-0! p-0">
+        <DialogContent className="relative flex max-h-[calc(100dvh-2rem)] max-w-[95vw]! items-center justify-center border-0! p-0">
           <DialogTitle className="sr-only">{alt}</DialogTitle>
           <DialogDescription className="sr-only">
             Enlarged image preview.
           </DialogDescription>
+          {isLoadingFull && !fullImageUrl && (
+            <div className="bg-background/50 absolute inset-0 flex items-center justify-center">
+              <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+            </div>
+          )}
           <img
-            src={data.thumbnail}
+            src={fullImageUrl ?? data.thumbnail}
             alt={alt}
             className="max-h-[calc(100dvh-2rem)] max-w-full rounded-md object-contain"
           />

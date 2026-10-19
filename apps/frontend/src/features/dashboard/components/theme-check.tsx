@@ -18,22 +18,30 @@ export const ThemeCheck = () => {
   )
     ? user.settings.theme!
     : DEFAULT_THEME_NAME;
+  const desiredFontSize = user.settings.font_size ?? DEFAULT_FONT_SIZE;
   const router = useRouter();
 
   useEffect(() => {
-    if (desiredTheme !== currentTheme || user.settings.font_size !== fontSize) {
-      setTheme(desiredTheme);
-      setFontSize(user.settings.font_size ?? DEFAULT_FONT_SIZE);
+    const themeNeedsUpdate = desiredTheme !== currentTheme;
+    const fontSizeNeedsUpdate = desiredFontSize !== fontSize;
+
+    if (themeNeedsUpdate || fontSizeNeedsUpdate) {
+      if (themeNeedsUpdate) {
+        setTheme(desiredTheme);
+      }
+      if (fontSizeNeedsUpdate) {
+        setFontSize(desiredFontSize);
+      }
       router.refresh();
     }
   }, [
     currentTheme,
+    desiredFontSize,
+    desiredTheme,
     fontSize,
     router,
     setFontSize,
     setTheme,
-    user.settings.font_size,
-    desiredTheme,
   ]);
 
   return null;

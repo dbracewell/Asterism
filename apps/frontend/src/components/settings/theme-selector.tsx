@@ -32,7 +32,7 @@ export const ThemeSelector = ({
   return (
     <div className="flex items-center gap-2">
       <Select
-        defaultValue={value}
+        value={value}
         disabled={disabled}
         onValueChange={(name) => {
           onChange?.(name);

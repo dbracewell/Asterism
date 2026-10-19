@@ -153,6 +153,36 @@ async def test_estimate_matches_actual_provider_payload_and_general_omits_projec
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("finish_reason", ["stop", "length", "content_filter", None])
+async def test_reply_without_tool_calls_ends_the_loop_for_any_finish_reason(project_api, monkeypatch, finish_reason):
+    client, _, _ = project_api
+    chat = await new_chat(client)
+    chat_id = uuid.UUID(chat["info"]["id"])
+    agent = Agent(
+        profile=await get_main_agent_profile("a"),
+        user=AuthedUser(id="a", email="a@x.test", name="A", role="user"),
+        session=await get_one(chat_id, "a"),
+        model_id=uuid.UUID(A),
+    )
+    messages = await ChatOrchestrator(agent)._build_agent_messages()
+    calls = 0
+
+    class Client:
+        async def chat(self, messages, tools, **kwargs):
+            nonlocal calls
+            calls += 1
+            yield LLMEvent(type=LLMEventType.COMPLETE, content="Done", finish_reason=finish_reason)
+
+    monkeypatch.setattr(agent, "_get_client", AsyncMock(return_value=Client()))
+    await agent.prepare_execution(uuid.UUID(chat["messages"][0]["id"]))
+    await agent.prepare_execution_scope()
+    events = [event async for event in agent.run(messages)]
+
+    assert calls == 1
+    assert [event.content for event in events if event.type == "complete"] == ["Done"]
+
+
+@pytest.mark.asyncio
 async def test_delegated_scope_keeps_turn_project_instructions_and_separate_agent_role(project_api, monkeypatch):
     from test_project_sub_agents import runtime_setup
 

@@ -1,5 +1,8 @@
-import { AuthForm } from "@/features/auth/components/auth-form";
-import { getUserCount } from "@/features/auth/server/actions";
+import {
+  AuthForm,
+  sanitizeRedirectPath,
+} from "@/features/auth/components/auth-form";
+import { getUserCount } from "@/features/auth/server/session";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -34,7 +37,7 @@ export default async function Home({ searchParams }: HomePageProps) {
     <AuthForm
       className="my-auto shrink-0"
       view={view}
-      referer={formParams.redirect}
+      referer={sanitizeRedirectPath(formParams.redirect)}
     />
   );
 }

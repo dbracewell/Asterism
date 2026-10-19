@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
-import { AuthForm } from "./auth-form";
+import { AuthForm, sanitizeRedirectPath } from "./auth-form";
 
 const { installApp, signIn } = vi.hoisted(() => ({
   installApp: vi.fn(),
@@ -78,4 +78,26 @@ it("focuses a rejected login without changing authentication behavior", async ()
     "Invalid email or password",
   );
   expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+});
+it("rejects external, protocol-relative, and javascript redirect targets", () => {
+  expect(sanitizeRedirectPath("https://evil.example/phish")).toBe("/");
+  expect(sanitizeRedirectPath("//evil.example/phish")).toBe("/");
+  expect(sanitizeRedirectPath("/\\evil.example/phish")).toBe("/");
+  expect(sanitizeRedirectPath("javascript:alert(1)")).toBe("/");
+  expect(sanitizeRedirectPath("/sign-in?redirect=/")).toBe("/");
+  expect(sanitizeRedirectPath("/c/123?tab=files#top")).toBe(
+    "/c/123?tab=files#top",
+  );
+});
+it("passes sanitized callbackURL to signIn.email", async () => {
+  signIn.mockResolvedValueOnce(undefined);
+  render(<AuthForm view="login" referer="https://evil.example/steal" />);
+  fillCredentials();
+  fireEvent.click(screen.getByRole("button", { name: "Login" }));
+  expect(signIn).toHaveBeenCalledWith(
+    expect.objectContaining({
+      callbackURL: "/",
+    }),
+    expect.any(Object),
+  );
 });

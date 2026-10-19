@@ -22,6 +22,32 @@ interface AuthFormProps extends React.ComponentProps<"div"> {
   referer?: string;
 }
 
+export function sanitizeRedirectPath(referer?: string): string {
+  if (!referer) return "/";
+  const trimmed = referer.trim();
+  if (
+    !trimmed.startsWith("/") ||
+    trimmed.startsWith("//") ||
+    trimmed.includes("\\") ||
+    trimmed.startsWith("/sign-in")
+  ) {
+    return "/";
+  }
+  try {
+    const parsed = new URL(trimmed, "http://localhost");
+    if (
+      parsed.origin !== "http://localhost" ||
+      parsed.pathname === "/sign-in" ||
+      parsed.pathname.startsWith("/sign-in/")
+    ) {
+      return "/";
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "/";
+  }
+}
+
 export function AuthForm({
   className,
   view = "login",
@@ -47,7 +73,7 @@ export function AuthForm({
     errorRef.current?.focus();
     errorRef.current?.scrollIntoView({ block: "start" });
   };
-  const safeRedirect = referer && !referer.includes("sign-in") ? referer : "/";
+  const safeRedirect = sanitizeRedirectPath(referer);
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,14 +95,14 @@ export function AuthForm({
           {
             email: email.trim(),
             password: password.trim(),
-            callbackURL: referer ?? "/",
+            callbackURL: safeRedirect,
           },
           {
             onRequest: () => setLoading(true),
             onSuccess: () => {
               toast.success("Signed in successfully");
               // Hard navigation to ensure server receives the new cookie
-              window.location.href = safeRedirect ?? "/";
+              window.location.href = safeRedirect;
             },
             onError: (ctx) => showError(ctx.error.message || "Failed to login"),
           },
@@ -90,7 +116,7 @@ export function AuthForm({
             adminKey: adminPassKey.trim(),
           });
           toast.success("Instance setup complete");
-          window.location.href = safeRedirect ?? "/";
+          window.location.href = safeRedirect;
         } catch (error) {
           if (error instanceof Error) {
             showError(error.message || "Failed to install");
@@ -105,66 +131,6 @@ export function AuthForm({
       setLoading(false);
     }
   };
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!email.trim() || !password.trim()) {
-  //     setError("Email and Password Required");
-  //     return;
-  //   }
-  //   if (view === "install" && (!name.trim() || !adminPassKey.trim())) {
-  //     setError("Name and Admin Passkey required");
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   setError(null);
-
-  //   try {
-  //     if (view === "login") {
-  //       await authClient.signIn.email(
-  //         {
-  //           email: email.trim(),
-  //           password: password.trim(),
-  //           callbackURL: referer ?? "/",
-  //         },
-  //         {
-  //           onSuccess: () => {
-  //             toast.success("Signedin");
-  //             window.location.href = referer ?? "/";
-  //           },
-  //           onRequest: () => setLoading(true),
-  //           onError: (ctx) => setError(ctx.error.message || "Failed to login"),
-  //         },
-  //       );
-  //     } else {
-  //       await authClient.signUp.email(
-  //         {
-  //           email: email.trim(),
-  //           password: password.trim(),
-  //           name: name.trim(),
-  //           callbackURL: referer ?? "/",
-  //         },
-  //         {
-  //           query: {
-  //             adminKey: adminPassKey.trim(),
-  //           },
-  //           onSuccess: () => {
-  //             toast.success("Account created");
-  //             window.location.href = referer ?? "/";
-  //           },
-  //           onRequest: () => setLoading(true),
-  //           onError: (ctx) =>
-  //             setError(ctx.error.message || "Failed to sign up"),
-  //         },
-  //       );
-  //     }
-  //   } catch {
-  //     setError("An unexpected error occurred.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   return (
     <div

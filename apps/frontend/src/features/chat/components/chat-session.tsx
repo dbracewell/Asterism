@@ -36,14 +36,21 @@ import {
   chatFileGetScopeOptions,
   chatModelsListOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   RotateCwIcon,
+  XIcon,
 } from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -91,7 +98,7 @@ export const ChatSession = ({
     path: { chat_id: chatId },
   });
 
-  const sessionLoadedRef = React.useRef(false);
+  const loadedSessionIdRef = React.useRef<string | null>(null);
   const setSession = useActiveChatSession((state) => state.setSession);
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const [incomingMessage, setIncomingMessage] =
@@ -105,17 +112,23 @@ export const ChatSession = ({
   const [socketError, setSocketError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!sessionLoadedRef.current && session) {
-      sessionLoadedRef.current = true;
+    if (!session) return;
+    if (loadedSessionIdRef.current !== session.info.id) {
+      loadedSessionIdRef.current = session.info.id;
       setSession({ id: session.info.id, title: session.info.title ?? null });
       messageListRef.current?.scrollIntoView({ behavior: "instant" });
       setIncomingMessage(null);
+    } else {
+      setSession({ id: session.info.id, title: session.info.title ?? null });
     }
+  }, [session, setSession]);
+
+  React.useEffect(() => {
     return () => {
       setSession({ id: null, title: null });
-      sessionLoadedRef.current = false;
+      loadedSessionIdRef.current = null;
     };
-  }, [session, setSession]);
+  }, [chatId, setSession]);
 
   useSubscribeEvent({
     type: "chat-session:update",
@@ -166,6 +179,7 @@ export const ChatSession = ({
     },
     onStreamError: (error) => {
       setIsProcessing(false);
+      setIncomingMessage(null);
       setSocketError(error);
     },
     onRegenerate: () => {
@@ -219,6 +233,7 @@ export const ChatSession = ({
     draftId?: string;
   }) => {
     if (!session) throw new Error("Chat is not loaded. Please retry.");
+    setSocketError(null);
     if (pendingSend.current?.requestId !== requestId) {
       pendingSend.current = {
         requestId,
@@ -283,19 +298,6 @@ export const ChatSession = ({
           retry={refetch}
           isRetrying={isFetching}
         />
-      </div>
-    );
-  }
-
-  if (socketError) {
-    return (
-      <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-y-auto [overflow-wrap:anywhere]">
-        <div className="bg-destructive/10 border-destructive flex flex-col items-center gap-4 rounded-lg border p-10">
-          <h2 className="text-destructive text-lg font-bold">
-            Unexpected Error
-          </h2>
-          <p className="text-destructive text-sm">{socketError}</p>
-        </div>
       </div>
     );
   }
@@ -450,6 +452,23 @@ export const ChatSession = ({
           >
             <ArrowDownIcon />
           </Button>
+        )}
+        {socketError && (
+          <div
+            role="alert"
+            className="bg-destructive/10 border-destructive text-destructive mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+          >
+            <p className="min-w-0 flex-1">{socketError}</p>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setSocketError(null)}
+              aria-label="Dismiss error"
+              className="text-destructive hover:bg-destructive/20 h-6 w-6 shrink-0"
+            >
+              <XIcon className="size-4" />
+            </Button>
+          </div>
         )}
         <ChatInputContainer className="border-primary max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
           <ChatFileContext
@@ -638,40 +657,47 @@ const MessageItem = React.memo(
           <ExecutionLabel execution={message.execution} />
         )}
         {userShowThinking && (
-          <details
+          <Collapsible
             open={showThinking}
-            onClick={(e) => {
-              e.preventDefault();
-              setShowThinking((prev) => !prev);
-            }}
+            onOpenChange={setShowThinking}
             className={cn(
               "text-muted-foreground bg-muted rounded-xl p-2 text-sm",
               !message.thinking && "hidden",
             )}
           >
-            <summary>
-              Thinking{" "}
-              {message.tool_calls && (
-                <>({formatPlural(message.tool_calls.length, "tool call")})</>
+            <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between text-left font-medium">
+              <span>
+                Thinking{" "}
+                {message.tool_calls && (
+                  <>({formatPlural(message.tool_calls.length, "tool call")})</>
+                )}
+              </span>
+              <ChevronDownIcon
+                className={cn(
+                  "size-4 shrink-0 transition-transform duration-200",
+                  showThinking && "rotate-180",
+                )}
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <p
+                ref={thinkingRef}
+                className="max-h-50 overflow-y-auto whitespace-pre-wrap select-text"
+                style={{ overflowAnchor: "auto" }}
+              >
+                {message.thinking ?? ""}
+              </p>
+              {message.tool_calls && message.tool_calls.length > 0 && (
+                <h4 className="mt-0.5 font-bold">Tools</h4>
               )}
-            </summary>
-            <p
-              ref={thinkingRef}
-              className="max-h-50 overflow-y-auto whitespace-pre-wrap"
-              style={{ overflowAnchor: "auto" }}
-            >
-              {message.thinking ?? ""}
-            </p>
-            {message.tool_calls && message.tool_calls.length > 0 && (
-              <h4 className="mt-0.5 font-bold">Tools</h4>
-            )}
-            {message.tool_calls?.map((tc) => (
-              <div key={tc.id}>
-                • {tc.function.name}{" "}
-                {tc.function.arguments !== "{}" && tc.function.arguments}
-              </div>
-            ))}
-          </details>
+              {message.tool_calls?.map((tc) => (
+                <div key={tc.id}>
+                  • {tc.function.name}{" "}
+                  {tc.function.arguments !== "{}" && tc.function.arguments}
+                </div>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         )}
         {message.needsPermission &&
           message.needsPermission.map((t) => (

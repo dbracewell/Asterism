@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { getAuth } from "@/lib/auth";
 import { BACKEND_API_URL } from "@/lib/backend-url";

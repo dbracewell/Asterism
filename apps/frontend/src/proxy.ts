@@ -1,4 +1,5 @@
 import { getAuth } from "@/lib/auth";
+import { getFrontendServerConfig } from "@/lib/server-config-core";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -36,9 +37,7 @@ export async function proxy(request: NextRequest) {
 
   let response = NextResponse.next();
 
-  const proto = request.headers.get("x-forwarded-proto") ?? "http";
-  const host = request.headers.get("x-forwarded-host") ?? request.nextUrl.host;
-  const externalOrigin = `${proto}://${host}`;
+  const externalOrigin = getFrontendServerConfig().publicUrl;
   const pathname = request.nextUrl.pathname.trim();
 
   if (!session && !publicRoutes.includes(pathname)) {

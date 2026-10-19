@@ -258,17 +258,20 @@ class StreamHandler[T: BaseModel]:
             tc_chunk: ChoiceDeltaToolCall
             for tc_chunk in delta.tool_calls:
                 idx = tc_chunk.index
-                if idx not in self.tool_calls_dict and tc_chunk.id:
-                    self.tool_calls_dict[idx] = {
-                        "id": tc_chunk.id,
+                entry = self.tool_calls_dict.setdefault(
+                    idx,
+                    {
+                        "id": tc_chunk.id or f"call_{idx}",
                         "name": "",
                         "arguments": "",
-                    }
+                    },
+                )
+                if tc_chunk.id:
+                    entry["id"] = tc_chunk.id
                 if tc_chunk.function and tc_chunk.function.name:
-                    self.tool_calls_dict[idx]["name"] = tc_chunk.function.name
-
+                    entry["name"] = tc_chunk.function.name
                 if tc_chunk.function and tc_chunk.function.arguments:
-                    self.tool_calls_dict[idx]["arguments"] += tc_chunk.function.arguments
+                    entry["arguments"] += tc_chunk.function.arguments
 
 
 class LLMClient(LLMClientProtocol):

@@ -28,7 +28,7 @@ const artifact = {
   text_embeddings_ready: true,
   visual_embedding_ready: true,
   caption: {
-    status: "accepted",
+    status: "ready",
     source: "provider",
     model: "caption-model",
     text: "A diagram",
@@ -81,7 +81,7 @@ test("shows canonical processing state and confirms the full impact before file 
     page.getByRole("link", { name: "Open diagram.png" }),
   ).toHaveAttribute("href", "/files/diagram.png");
   await expect(page.getByText("Embedding: ready")).toBeVisible();
-  await expect(page.getByText("Caption: accepted")).toBeVisible();
+  await expect(page.getByText("Caption: ready")).toBeVisible();
   await expect(page.getByRole("link", { name: "References" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit caption" })).toHaveCount(
     0,

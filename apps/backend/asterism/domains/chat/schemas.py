@@ -114,6 +114,7 @@ class UpdateMessageRequest(BaseModel):
     active_child_id: uuid.UUID | None = Field(default=None)
     status: MessageStatus | None = Field(default=None)
     tool_results: list[ToolResult] | None = Field(default=None)
+    tool_call_results: list[ToolResult] | None = Field(default=None)
 
 
 class ChatContextModel(BaseModel):

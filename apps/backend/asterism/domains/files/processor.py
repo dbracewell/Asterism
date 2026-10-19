@@ -64,13 +64,30 @@ class MarkItDownFileProcessor:
             await session.commit()
             return file
 
-        digest = await asyncio.to_thread(sha256_file, path)
-        if digest != file.sha256:
-            file.sha256 = digest
-            file.size = path.stat().st_size
-            file.content_status = FileContentStatus.PENDING
-            file.content_error = None
-            file.content_cache = None
+        stat = path.stat()
+        file_modified = stat.st_size != file.size
+        if file_modified:
+            digest = await asyncio.to_thread(sha256_file, path)
+            if digest != file.sha256:
+                file.sha256 = digest
+                file.size = stat.st_size
+                file.content_status = FileContentStatus.PENDING
+                file.content_error = None
+                file.content_cache = None
+
+        if (
+            file.content_status is not FileContentStatus.PENDING
+            and not (
+                file.content_status is FileContentStatus.FAILED
+                and file.content_error == "File is too large to process"
+                and file.size <= config.max_process_file_size_bytes
+            )
+            and file.sha256
+        ):
+            return file
+
+        if not file_modified and not file.sha256:
+            file.sha256 = await asyncio.to_thread(sha256_file, path)
 
         # A configured processing limit can be raised after an upload. Retry the
         # deterministic size failure when the file is attached again instead of

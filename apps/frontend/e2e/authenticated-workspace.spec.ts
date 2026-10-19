@@ -119,9 +119,7 @@ test("authenticated project and General chats preserve scope, provenance, and ow
   let second: BrowserContext | undefined;
   try {
     async function register(client: BrowserContext, admin = false) {
-      const query = admin
-        ? `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}`
-        : "";
+      const query = `?adminKey=${encodeURIComponent(process.env.ADMIN_PASSPHRASE!)}&role=${admin ? "admin" : "user"}`;
       const signup = await client.request.post(
         `/api/auth/sign-up/email${query}`,
         {

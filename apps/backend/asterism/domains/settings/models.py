@@ -9,6 +9,7 @@ from asterism.db.columns import JSONB_COLUMN
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
 from .provider_types import ModelCapabilitySource, ProviderType
+from .secrets import EncryptedText
 
 
 def _enum_values(enum_type):
@@ -41,7 +42,7 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         nullable=False,
     )
     api_key: Mapped[str] = mapped_column(
-        Text,
+        EncryptedText,
         nullable=False,
     )
     models: Mapped[list["LLMModel"]] = relationship(
