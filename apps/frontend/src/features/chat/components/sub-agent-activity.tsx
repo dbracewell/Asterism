@@ -51,7 +51,7 @@ export const SubAgentActivityPanel = ({
                 <LoaderCircleIcon className="size-3 animate-spin" />
               )}
               {activity.status === "completed" && (
-                <CircleCheckIcon className="size-3 text-green-600" />
+                <CircleCheckIcon className="text-primary size-3" />
               )}
               {activity.status === "error" && (
                 <CircleXIcon className="text-destructive size-3" />

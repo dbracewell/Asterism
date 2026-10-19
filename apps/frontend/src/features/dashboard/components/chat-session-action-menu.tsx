@@ -1,7 +1,9 @@
+import { Button } from "@/components/ui/button";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -30,18 +32,22 @@ export const ChatSessionActionMenu = ({
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         {button ? (
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Chat actions"
             className={cn(
-              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground opacity-0 group-hover/item:opacity-100",
+              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground opacity-0 group-focus-within/item:opacity-100 group-hover/item:opacity-100 focus-visible:opacity-100",
               isOpen && "opacity-100",
             )}
           >
             <EllipsisIcon className="size-4" />
-          </button>
+          </Button>
         ) : (
           <SidebarMenuAction
+            aria-label="Chat actions"
             className={cn(
-              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground opacity-0 group-hover/item:opacity-100",
+              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground opacity-0 group-focus-within/item:opacity-100 group-hover/item:opacity-100 focus-visible:opacity-100",
               isOpen && "opacity-100",
             )}
           >
@@ -50,20 +56,22 @@ export const ChatSessionActionMenu = ({
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem
-          disabled={isDeleting}
-          onClick={async () => {
-            if (await confirm()) {
-              deleteChatSession({
-                path: {
-                  chat_id,
-                },
-              });
-            }
-          }}
-        >
-          <Trash2Icon /> Delete
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={isDeleting}
+            onClick={async () => {
+              if (await confirm()) {
+                deleteChatSession({
+                  path: {
+                    chat_id,
+                  },
+                });
+              }
+            }}
+          >
+            <Trash2Icon /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
       <Dialog />
     </DropdownMenu>

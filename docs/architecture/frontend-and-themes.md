@@ -207,14 +207,51 @@ panes, tall dialogs, rich-content overflow and expanded composer content.
 Semantic variables cover text/surface, primary/secondary/muted/accent, destructive,
 border/input/ring and sidebar roles. Chart defaults remain in global CSS rather
 than the theme JSON contract. Shared shadcn components consume these variables;
-some feature-level errors/statuses still use fixed colors. Focus and destructive
-states use opacity, so raw token contrast measurements are only a first check.
+image/download failures, required indicators, chat errors and connection/delegation
+statuses now consume semantic roles. Errors use `destructive`; connected/completed
+indicators use `primary` with explicit status text. Context usage adds Normal,
+Elevated and Near limit text rather than relying on yellow/red alone. Library
+overlay scrims retain their own styles. AnimatedBorder pairs its inner background
+with foreground, preventing text from inheriting the outer primary foreground. Focus and destructive states use opacity,
+so raw token contrast measurements are only a first check.
 
 The [dated review](../reviews/2026-10-17-codebase-review.md) records 12 failing
 normal-text pairs across seven of eight bundled themes and palette-source links.
 [EPIC-33](../epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md) owns corrections,
 source attribution, composited-state checks, accessible labels, code typography
 and reduced motion. Source fidelity permits documented accessibility adaptations.
+
+## Typography, labels and motion (US-33.2)
+
+Inter is inherited from the document instead of being applied to every element.
+The workspace and authentication ASTERISM wordmarks deliberately retain Montserrat
+through the existing `font-monsterrat` utility. The logo link/icon can shrink
+inside the header while the full wordmark and mobile close target stay separate. Inline code, fenced code and syntax
+spans use Geist Mono; KaTeX keeps its own typography. Prose counters use the defined
+muted foreground and code backgrounds use literal `transparent`. See the
+[syntax palette mapping](markdown-content.md#code-typography-and-syntax-palettes).
+
+General settings associate Theme, Font Size, Show Thinking and Default Model with
+their controls. Theme Editor creation/duplication names and setup passkey labels
+remain intact. Theme color triggers and hex inputs are named, and hex inputs
+retain the shared focus/invalid styles. Copy, image enlargement, sidebar creation and chat menus have
+accessible names. Sidebar actions become visible on keyboard focus within the
+row/group as well as on hover. The image preview has a named dialog and description;
+the unused download icon was removed because it had no action.
+
+Icon Button variants and sidebar menu actions have a 24 CSS pixel minimum, including
+at the smallest selectable 12px root font. Checkbox/switch primitives retain their
+existing expanded hit areas. Pointer review uses center hit testing and actual
+bounds at narrow/desktop sizes; this is scoped evidence, not a claim that every
+application target meets an accessibility standard. Neighboring sidebar actions
+remain separate controls with their existing spacing.
+
+`prefers-reduced-motion: reduce` disables CSS animation, transitions and smooth
+scrolling, including pseudo-elements and the animated composer border. The scroll
+mask is removed in that mode. Loading/status text stays present, and dialogs still
+open, close with Escape and return focus. These changes preserve auth, settings
+persistence and Markdown trust boundaries. [Verification](../reviews/us-33.2-verification-2026-10-19.md)
+records the executed gates and scope; the broader review matrix remains US-33.3.
 
 ## Current versus planned product surface
 

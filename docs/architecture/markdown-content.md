@@ -67,6 +67,29 @@ route. Neither a Markdown link nor a citation label grants file permission;
 server-side authorization still governs access. Existing authorized attachment
 image components are not controlled by untrusted Markdown source URLs.
 
+## Code typography and syntax palettes
+
+Inline code uses Geist Mono, and fenced code sets the same font on `pre`, lets
+`code` inherit it and preserves inheritance through highlighted spans. Ordinary
+text inherits Inter; the Montserrat logo stays separate. The renderer directly
+imports these installed Highlight.js style modules:
+
+| Application theme                   | Syntax palette                                      |
+| ----------------------------------- | --------------------------------------------------- |
+| Dracula                             | Dracula                                             |
+| One Dark                            | Atom One Dark                                       |
+| Catppuccin Latte Mauve, Flowers     | Atom One Light                                      |
+| Light                               | Visual Studio light                                 |
+| Dark, Catppuccin Mocha, UCF Knights | Visual Studio 2015 dark                             |
+| Custom theme IDs                    | Visual Studio light/dark according to declared type |
+
+The Catppuccin, Flowers and UCF mappings are deliberate related light/dark
+adaptations, not exact source-theme syntax reproductions. Custom themes do not
+supply executable highlighter styles. This mapping documents identity and type;
+syntax token contrast has not been certified for every language/token combination.
+It preserves the literal-code copy path, local horizontal scrolling and existing
+Markdown/KaTeX security policy.
+
 ## Verification and remaining work
 
 Unit tests exercise raw overlays/forms/frames/media, dangerous and entity-encoded

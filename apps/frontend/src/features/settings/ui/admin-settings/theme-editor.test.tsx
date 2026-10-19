@@ -48,6 +48,22 @@ function show() {
 beforeEach(() => vi.clearAllMocks());
 
 describe("theme save feedback", () => {
+  it("names creation and duplication actions and opens a named copy draft", () => {
+    show();
+    expect(screen.getByRole("button", { name: "New theme" })).toBeEnabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: `Duplicate ${light.name}` }),
+    );
+    expect(screen.getByLabelText("Name")).toHaveValue(`${light.name} Copy`);
+  });
+  it("names standalone color controls and their hex inputs", () => {
+    show();
+    fireEvent.click(screen.getByRole("button", { name: light.name }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Border color" }));
+    expect(
+      screen.getByRole("textbox", { name: "Border hex color" }),
+    ).toHaveValue(light.colors.border);
+  });
   it("retains failed edits, disables switching during retry, and refreshes only after success", async () => {
     const { invalidated } = show();
     fireEvent.click(screen.getByRole("button", { name: light.name }));

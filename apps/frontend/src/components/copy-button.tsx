@@ -33,6 +33,7 @@ export const CopyButton = ({
   return (
     <Hint asChild hint="Copy">
       <Button
+        aria-label={copied ? "Copied" : "Copy"}
         variant={variant}
         size={size}
         disabled={copied || disabled}

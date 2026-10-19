@@ -14,7 +14,7 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const novaSquare = Montserrat({
+const montserrat = Montserrat({
   subsets: ["latin"],
   variable: "--font-monsterrat",
   weight: ["400", "500", "600", "700"],
@@ -50,7 +50,7 @@ export default async function RootLayout({
         geistMono.variable,
         "font-sans",
         inter.variable,
-        novaSquare.variable,
+        montserrat.variable,
       )}
       suppressHydrationWarning
     >

@@ -56,7 +56,7 @@ export const CollapsibleSidebarGroup = ({
                 <span className="ml-2">{label}</span>
               </SidebarGroupLabel>
             </CollapsibleTrigger>
-            <div className="flex opacity-0 group-hover/label:opacity-100">
+            <div className="flex opacity-0 group-focus-within/label:opacity-100 group-hover/label:opacity-100">
               <>
                 {secondaryMenuActionLabel && (
                   <Button
@@ -87,6 +87,7 @@ export const CollapsibleSidebarGroup = ({
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  aria-label={`Add to ${label}`}
                   onClick={() => {
                     handleOpenChange(true);
                     onMenuActionClick();

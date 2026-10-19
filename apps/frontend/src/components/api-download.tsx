@@ -55,9 +55,9 @@ export const APIDownload = ({
 
   if (error) {
     return (
-      <a className="text-red-500">
+      <span role="alert" className="text-destructive">
         Failed to retrieve <span className="font-bold">{filename}</span>
-      </a>
+      </span>
     );
   }
 

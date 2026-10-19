@@ -79,7 +79,7 @@ The scoped [verification report](../reviews/us-33.1-verification-2026-10-18.md)
 links all eight screenshots and machine-readable results. This is evidence for the
 bundled palettes and the reviewed components, not whole-application accessibility
 certification or validation of user-authored themes. Feature-specific colors,
-syntax highlighting and typography remain US-33.2 work; the wider reusable review
+syntax highlighting and typography are covered by the [US-33.2 implementation](frontend-and-themes.md#typography-labels-and-motion-us-332); the wider reusable review
 matrix and explicit CI policy remain US-33.3 work.
 
 The [2026-10-19 select-readability follow-up](../reviews/us-33.1-select-readability-2026-10-19.md)

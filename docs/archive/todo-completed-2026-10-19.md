@@ -32,3 +32,29 @@ commands, initial failures, evidence and scope limitations.
 The working database was untouched. No remote CI, push or deployment is claimed.
 EPIC-33 remains in progress; US-33.2, unifying semantic states, labels and
 typography, is recommended next.
+
+## US-33.2 — Semantic states, labels and typography
+
+The user confirmed completion on 2026-10-19, authorizing archive, commit and local
+merge from `feat/us-33.2-semantic-states-and-typography`. The ASTERISM wordmark
+retains `font-monsterrat` (Montserrat), including the responsive sidebar header.
+
+- [x] US-33.2: Unify semantic states, labels and typography — confirmed complete. [Evidence](../reviews/us-33.2-verification-2026-10-19.md)
+  - [x] Replace feature-specific red/green/white states with documented semantic variants; avoid blindly rewriting library overlays.
+  - [x] Audit Theme Editor add/duplicate names and General settings control labels; preserve the setup passkey association repaired in US-32.1 and inspect related icon actions.
+  - [x] Fix undefined prose variables and global font overrides; map syntax highlighting deliberately to theme families.
+  - [x] Add reduced-motion behavior and verify focus, effective pointer target sizes and keyboard navigation across representative flows.
+
+Semantic feature states, associated settings/color-input labels, named icon actions,
+keyboard-visible sidebar controls, inherited body/code fonts, syntax palette mapping
+and reduced motion are implemented and documented.
+
+Final quality gates passed: lint, typecheck, formatting, production build, 437 backend
+tests, 228 frontend tests, six auth database-script checks and 30 root configuration
+checks. The complete isolated browser run passed 95 tests without retries; after the
+last AnimatedBorder foreground pairing correction, the final isolated semantic and
+all-eight-theme contrast gate passed 25 tests without retries. The full 95-case suite
+was not repeated after that final pairing. See the evidence for diagnostics and scope.
+
+The working database was untouched. No remote CI, push or deployment is claimed.
+EPIC-33 remains in progress; US-33.3, the theme/layout review matrix, is recommended next.

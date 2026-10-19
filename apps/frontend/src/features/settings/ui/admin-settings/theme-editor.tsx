@@ -426,6 +426,7 @@ export const PopoverPicker = ({
   isInvalid,
   name,
 }: ColorInputProps) => {
+  const colorLabel = prettyText(field.name.replace(/^colors\./, ""));
   // A color input is temporarily invalid while the user is typing. Avoid
   // parsing that intermediate value so the picker remains usable.
   let textColor = "#000000";
@@ -439,7 +440,7 @@ export const PopoverPicker = ({
 
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger aria-label={`Edit ${colorLabel} color`}>
         <div
           className="bg-background flex h-10 w-full items-center justify-center text-xs"
           style={{
@@ -463,7 +464,9 @@ export const PopoverPicker = ({
             <Input
               {...field}
               required
-              className="focus-visible: focus-visible:border-border h-10 border text-base! ring-transparent! outline-transparent!"
+              aria-label={`${colorLabel} hex color`}
+              aria-invalid={isInvalid}
+              className="h-10"
               pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
               onKeyDown={(e) => {
                 const allowedKeys = [

@@ -290,8 +290,10 @@ export const ChatSession = ({
   if (socketError) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-y-auto [overflow-wrap:anywhere]">
-        <div className="bg-destructive/20 border-destructive flex flex-col items-center gap-4 rounded-lg border p-10">
-          <h2 className="text-bold text-lg text-white">Unexpected Error</h2>
+        <div className="bg-destructive/10 border-destructive flex flex-col items-center gap-4 rounded-lg border p-10">
+          <h2 className="text-destructive text-lg font-bold">
+            Unexpected Error
+          </h2>
           <p className="text-destructive text-sm">{socketError}</p>
         </div>
       </div>
@@ -483,12 +485,13 @@ export const ChatSession = ({
                 <div className={cn("flex items-center gap-1 text-xs")}>
                   {connectionStatus && (
                     <div
+                      aria-hidden="true"
                       title={connectionStatus}
                       className={cn(
                         "size-2 rounded-full pt-0.5",
                         connectionStatus === "Connected"
-                          ? "border-green-900 bg-green-500"
-                          : "border-red-900 bg-red-500",
+                          ? "border-primary bg-primary"
+                          : "border-destructive bg-destructive",
                       )}
                     />
                   )}
@@ -555,24 +558,27 @@ export const ContextUsageMeter = ({
   );
   const state =
     percent >= 90 ? "critical" : percent >= 70 ? "warning" : "normal";
-  const color =
+  const color = state === "critical" ? "bg-destructive" : "bg-primary";
+  const status =
     state === "critical"
-      ? "bg-destructive"
+      ? "Near limit"
       : state === "warning"
-        ? "bg-yellow-500"
-        : "bg-primary";
+        ? "Elevated"
+        : "Normal";
 
   return (
     <div className="mb-1 px-1" aria-label="Estimated context usage">
       <div className="text-muted-foreground mb-1 flex justify-between text-xs">
         <span>Estimated context usage</span>
-        <span>{percent}%</span>
+        <span>
+          {status} · {percent}%
+        </span>
       </div>
       <div
         aria-valuemax={100}
         aria-valuemin={0}
         aria-valuenow={percent}
-        aria-valuetext={`${percent}% estimated context usage`}
+        aria-valuetext={`${percent}% estimated context usage: ${status}`}
         className="bg-muted h-1.5 overflow-hidden rounded-full"
         role="progressbar"
       >

@@ -24,7 +24,7 @@ export const AnimatedBorder = ({
       {borderComponent}
       <div
         className={cn(
-          "bg-background rounded-[inherit]",
+          "bg-background text-foreground rounded-[inherit]",
           childContainerClassName,
         )}
       >

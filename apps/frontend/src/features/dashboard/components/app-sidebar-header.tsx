@@ -35,7 +35,7 @@ export const AppSidebarHeader = () => {
   return (
     <SidebarHeader
       style={{ height: "var(--header-height)" }}
-      className="shrink-0 overflow-clip"
+      className="shrink-0 gap-2 overflow-clip"
     >
       {expanded && <FullLogo />}
       {isMobile ? (

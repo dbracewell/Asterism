@@ -4,15 +4,10 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 is confirmed complete and archived above. No story is active; US-33.2 is recommended next. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. No story is active; US-33.3 is recommended next. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
-- [ ] US-33.2: Unify semantic states, labels and typography
-  - [ ] Replace feature-specific red/green/white states with documented semantic variants; avoid blindly rewriting library overlays.
-  - [ ] Audit Theme Editor add/duplicate names and General settings control labels; preserve the setup passkey association repaired in US-32.1 and inspect related icon actions.
-  - [ ] Fix undefined prose variables and global font overrides; map syntax highlighting deliberately to theme families.
-  - [ ] Add reduced-motion behavior and verify focus, effective pointer target sizes and keyboard navigation across representative flows.
 - [ ] US-33.3: Enforce a theme and layout review matrix
   - [ ] Add deterministic theme-schema and contrast checks based on unrounded luminance ratios.
   - [ ] Create a compact component/state fixture covering controls, focus, errors, typography and adversarial content using existing shadcn components.

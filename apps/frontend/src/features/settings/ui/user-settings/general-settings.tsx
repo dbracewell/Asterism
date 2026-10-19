@@ -1,6 +1,7 @@
 import { FontSizeSelector } from "@/components/settings/font-size-selector";
 import { ModelSelector } from "@/components/settings/model-selector";
 import { ThemeSelector } from "@/components/settings/theme-selector";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useUser } from "@/features/auth/components/user-context";
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
@@ -17,8 +18,9 @@ export const GeneralSettings = () => {
       <div className="flex flex-col gap-3">
         <h1 className="border-b pb-2 text-base font-bold">Appearance</h1>
         <div className="grid min-w-0 grid-cols-1 items-center gap-x-2 gap-y-3 @sm/general:grid-cols-[auto_minmax(0,1fr)]">
-          <h2>Theme</h2>
+          <Label htmlFor="general-theme">Theme</Label>
           <ThemeSelector
+            id="general-theme"
             disabled={isUpdatingUserSetting}
             currentTheme={user.settings.theme}
             onChange={(theme) => {
@@ -26,14 +28,16 @@ export const GeneralSettings = () => {
               setTheme(theme);
             }}
           />
-          <h2>Font Size</h2>
+          <Label htmlFor="general-font-size">Font Size</Label>
           <FontSizeSelector
+            id="general-font-size"
             disabled={isUpdatingUserSetting}
             currentSize={user.settings.font_size}
             onChange={(size) => updateSetting("font_size", size, false)}
           />
-          <h2>Show Thinking</h2>
+          <Label htmlFor="general-show-thinking">Show Thinking</Label>
           <Checkbox
+            id="general-show-thinking"
             checked={user.settings.show_thinking ?? false}
             disabled={isUpdatingUserSetting}
             onCheckedChange={(checked) => {
@@ -43,9 +47,12 @@ export const GeneralSettings = () => {
         </div>
       </div>
       <div className="flex flex-col gap-3">
-        <h1 className="border-b pb-2 text-base font-bold">Default Model</h1>
+        <h1 className="border-b pb-2 text-base font-bold">
+          <Label htmlFor="general-default-model">Default Model</Label>
+        </h1>
         <div className="flex flex-col items-start gap-2">
           <ModelSelector
+            id="general-default-model"
             className="w-full max-w-80 min-w-0"
             value={userSettings.default_model_id ?? undefined}
             onValueChange={(v) => {

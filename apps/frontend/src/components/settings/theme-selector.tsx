@@ -12,6 +12,7 @@ import {
 import { useTheme } from "@/features/theme/components/theme-context";
 
 interface ThemeSelectorProps {
+  id?: string;
   currentTheme?: string;
   onChange?: (theme: string) => void;
   updateTheme?: boolean;
@@ -19,6 +20,7 @@ interface ThemeSelectorProps {
 }
 
 export const ThemeSelector = ({
+  id,
   currentTheme,
   onChange,
   disabled,
@@ -36,7 +38,7 @@ export const ThemeSelector = ({
           onChange?.(name);
         }}
       >
-        <SelectTrigger className="min-w-40">
+        <SelectTrigger id={id} className="min-w-40">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-80 overflow-y-auto" position="popper">

@@ -1,9 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -16,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { UserFile, ErrorDetail } from "@/lib/client";
 
-import { DownloadIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 type ImageProps = {
   filename: string;
@@ -70,7 +72,10 @@ const ImageContent = ({
 }: ImageProps & { result: UseQueryResult<UserFile, ErrorDetail> }) => {
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500">
+      <div
+        role="alert"
+        className="border-destructive bg-destructive/10 text-destructive rounded-lg border p-4"
+      >
         Failed to load image
       </div>
     );
@@ -78,21 +83,29 @@ const ImageContent = ({
 
   if (isLoading || !data) {
     return (
-      <div
-        className="flex animate-pulse items-center justify-center rounded-lg bg-gray-100"
+      <Skeleton
+        role="status"
+        aria-label="Loading image"
+        className="flex items-center justify-center rounded-lg"
         style={{
-          width: width === "auto" ? "32" : "auto",
-          height: height === "auto" ? "32" : "auto",
+          width: width === "auto" ? 32 : width,
+          height: height === "auto" ? 32 : height,
         }}
       >
-        <Loader2 className="animate-spin text-gray-400" />
-      </div>
+        <Loader2
+          aria-hidden="true"
+          className="text-muted-foreground animate-spin"
+        />
+      </Skeleton>
     );
   }
 
   if (!data.thumbnail) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500">
+      <div
+        role="alert"
+        className="border-destructive bg-destructive/10 text-destructive rounded-lg border p-4"
+      >
         No thumbnail available for this image
       </div>
     );
@@ -102,7 +115,11 @@ const ImageContent = ({
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <button className="border-border focus-visible:ring-ring overflow-hidden rounded-md border text-white focus-visible:ring-2 focus-visible:outline-none">
+          <Button
+            variant="outline"
+            aria-label={`Enlarge ${alt}`}
+            className="h-auto min-h-[24px] min-w-[24px] overflow-hidden p-0"
+          >
             <img
               src={data.thumbnail}
               alt={alt}
@@ -112,20 +129,13 @@ const ImageContent = ({
               }}
               className="cursor-zoom-in object-cover transition-opacity hover:opacity-90"
             />
-          </button>
+          </Button>
         </DialogTrigger>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] max-w-[95vw]! items-center justify-center border-0! p-0">
           <DialogTitle className="sr-only">{alt}</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            // onClick={handleDownload}
-            title="Download Image"
-            className="absolute top-2 right-20"
-          >
-            <DownloadIcon className="h-4 w-4" />
-          </Button>
-
+          <DialogDescription className="sr-only">
+            Enlarged image preview.
+          </DialogDescription>
           <img
             src={data.thumbnail}
             alt={alt}

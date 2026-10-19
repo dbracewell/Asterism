@@ -6,7 +6,7 @@ import "katex/dist/katex.min.css";
 import { isValidElement, type HTMLAttributes } from "react";
 import ReactMarkdown from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter";
-import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { syntaxTheme } from "./syntax-theme";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -25,7 +25,10 @@ const MarkdownViewer = ({
   codeFontSize?: string;
 }) => {
   const globalTheme = useTheme();
-  const syntaxTheme = globalTheme.currentThemeType === "dark" ? vs2015 : vs;
+  const codeTheme = syntaxTheme(
+    globalTheme.currentTheme,
+    globalTheme.currentThemeType,
+  );
   return (
     <div
       className={cn(
@@ -119,10 +122,12 @@ const MarkdownViewer = ({
                 >
                   <SyntaxHighlighter
                     suppressHydrationWarning
-                    style={syntaxTheme}
+                    style={codeTheme}
                     language={language ?? "text"}
                     PreTag="pre"
+                    codeTagProps={{ style: { fontFamily: "inherit" } }}
                     customStyle={{
+                      fontFamily: "var(--font-geist-mono), monospace",
                       margin: 0,
                       fontSize: codeFontSize ?? globalTheme.fontSize,
                       borderTopLeftRadius: 0,
@@ -142,7 +147,7 @@ const MarkdownViewer = ({
             return (
               <code
                 {...props}
-                className="px-1.5 py-0.5 text-sm whitespace-pre-wrap before:content-none after:content-none"
+                className="px-1.5 py-0.5 font-mono text-sm whitespace-pre-wrap before:content-none after:content-none"
               >
                 {children}
               </code>

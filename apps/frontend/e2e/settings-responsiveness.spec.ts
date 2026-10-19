@@ -153,7 +153,7 @@ for (const { width, height, pane } of [
     for (const control of await page.getByRole("combobox").all())
       await reachable(control);
     await reachable(
-      page.getByRole("button", { name: "Select a model...", exact: true }),
+      page.getByRole("button", { name: "Default Model", exact: true }),
     );
     expect(
       await page

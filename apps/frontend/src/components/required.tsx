@@ -11,7 +11,7 @@ export const Required = ({
   return (
     <div className="flex items-center gap-1">
       {children}
-      <span className={cn("size-4 text-red-600", className)}>*</span>
+      <span className={cn("text-destructive size-4", className)}>*</span>
     </div>
   );
 };

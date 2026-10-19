@@ -144,8 +144,11 @@ and retains failed drafts for retry. See [theme storage and lifecycle](../../doc
 for backup/reset and the single-writer deployment contract. US-31.3 disables raw
 Markdown HTML and automatic image resources, limits links and constrains KaTeX;
 see the [content policy](../../docs/architecture/markdown-content.md). EPIC-32 layout work is complete. US-33.1 repairs bundled palette and shared
-control contrast; the remaining semantic-state and typography work stays in
-US-33.2, with the broader review matrix in US-33.3.
+control contrast. US-33.2 adds semantic feature states, named settings/icon controls,
+inherited body typography, Geist Mono code and reduced motion while preserving
+`font-monsterrat` for the ASTERISM wordmark. See [typography, labels and motion](../../docs/architecture/frontend-and-themes.md#typography-labels-and-motion-us-332)
+and the [syntax mapping](../../docs/architecture/markdown-content.md#code-typography-and-syntax-palettes).
+The broader review matrix remains US-33.3.
 
 For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install

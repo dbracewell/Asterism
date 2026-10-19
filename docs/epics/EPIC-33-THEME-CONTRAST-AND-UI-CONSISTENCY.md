@@ -1,6 +1,6 @@
 # EPIC-33: Theme contrast and UI consistency
 
-Status: in progress; US-33.1 was confirmed complete on 2026-10-19; US-33.2 and US-33.3 remain pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F5, F6.
+Status: in progress; US-33.1 was confirmed complete on 2026-10-19; US-33.2 was confirmed complete on 2026-10-19; US-33.3 remains pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F5, F6.
 
 ## Objective
 
@@ -45,10 +45,12 @@ Feature errors/statuses use shared semantic roles; icon actions and inputs have 
 
 Tasks:
 
-- [ ] Replace feature-specific red/green/white states with documented semantic variants; avoid blindly rewriting library overlays.
-- [ ] Audit Theme Editor add/duplicate names and General settings control labels; preserve the setup passkey association repaired in US-32.1 and inspect related icon actions.
-- [ ] Fix undefined prose variables and global font overrides; map syntax highlighting deliberately to theme families.
-- [ ] Add reduced-motion behavior and verify focus, effective pointer target sizes and keyboard navigation across representative flows.
+- [x] Replace feature-specific red/green/white states with documented semantic variants; avoid blindly rewriting library overlays.
+- [x] Audit Theme Editor add/duplicate names and General settings control labels; preserve the setup passkey association repaired in US-32.1 and inspect related icon actions.
+- [x] Fix undefined prose variables and global font overrides; map syntax highlighting deliberately to theme families.
+- [x] Add reduced-motion behavior and verify focus, effective pointer target sizes and keyboard navigation across representative flows.
+
+Implementation and verification are complete, preserving `font-monsterrat` for the ASTERISM logo. See [verification and scope](../reviews/us-33.2-verification-2026-10-19.md). The user confirmed completion on 2026-10-19, authorizing commit and local merge. The completed checklist is [archived](../archive/todo-completed-2026-10-19.md#us-332--semantic-states-labels-and-typography).
 
 ## US-33.3: Enforce a theme and layout review matrix
 

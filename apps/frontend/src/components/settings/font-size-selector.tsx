@@ -3,6 +3,7 @@
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -10,12 +11,14 @@ import {
 import { useTheme } from "@/features/theme/components/theme-context";
 
 interface FontSizeSelectorProps {
+  id?: string;
   currentSize?: string;
   onChange?: (size: string) => void;
   disabled?: boolean;
 }
 
 export const FontSizeSelector = ({
+  id,
   currentSize,
   onChange,
   disabled,
@@ -33,15 +36,17 @@ export const FontSizeSelector = ({
         onChange?.(size);
       }}
     >
-      <SelectTrigger>
+      <SelectTrigger id={id}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {[12, 14, 16, 18, 20].map((fs) => (
-          <SelectItem value={`${fs}px`} key={fs}>
-            {fs}
-          </SelectItem>
-        ))}
+        <SelectGroup>
+          {[12, 14, 16, 18, 20].map((fs) => (
+            <SelectItem value={`${fs}px`} key={fs}>
+              {fs}
+            </SelectItem>
+          ))}
+        </SelectGroup>
       </SelectContent>
     </Select>
   );

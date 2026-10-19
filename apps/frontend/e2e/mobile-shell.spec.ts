@@ -91,6 +91,30 @@ for (const width of [320, 390]) {
     await trigger.tap();
     const sidebar = page.getByRole("dialog", { name: "Sidebar", exact: true });
     await expect(sidebar).toBeVisible();
+    const brand = sidebar.getByRole("heading", { name: "ASTERISM" });
+    expect(
+      await brand.evaluate((el) => getComputedStyle(el).fontFamily),
+    ).toMatch(/Montserrat/);
+    const headerBounds = await sidebar.evaluate((el) => {
+      const heading = el.querySelector("h1")!.getBoundingClientRect();
+      const close = el
+        .querySelector('[aria-label="Close sidebar"]')!
+        .getBoundingClientRect();
+      return {
+        wordmarkRight: heading.right,
+        closeLeft: close.left,
+        closeRight: close.right,
+        sidebarRight: el.getBoundingClientRect().right,
+        closeWidth: close.width,
+      };
+    });
+    expect(headerBounds.wordmarkRight).toBeLessThanOrEqual(
+      headerBounds.closeLeft,
+    );
+    expect(headerBounds.closeRight).toBeLessThanOrEqual(
+      headerBounds.sidebarRight,
+    );
+    expect(headerBounds.closeWidth).toBeGreaterThanOrEqual(44);
     await expect(
       sidebar.getByRole("link", { name: "Files", exact: true }),
     ).toBeVisible();
@@ -127,7 +151,7 @@ for (const width of [320, 390]) {
     await next.tap();
     await page.goto("/settings");
     const model = page.getByRole("button", {
-      name: "Select a model...",
+      name: "Default Model",
       exact: true,
     });
     await expect(model).toBeAttached();
@@ -264,7 +288,16 @@ for (const width of [320, 390]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 300 });
+    await page.route("**/api/py/chat/models", (route) =>
+      route.fulfill({ json: [] }),
+    );
     await page.goto("/");
+    // The empty-model notice adds composer height after the initial query settles.
+    await expect(
+      page.getByText(
+        "No available models. Ask an administrator to enable one.",
+      ),
+    ).toBeAttached();
     const message = page.getByRole("textbox", { name: "Message", exact: true });
     await expect(message).toBeAttached();
     await page.mouse.move(width / 2, 220);
