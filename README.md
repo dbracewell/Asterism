@@ -29,7 +29,7 @@ authentication, mobile workspace, settings, file panes, dialogs and rich chat
 content reachability. EPIC-33 / US-33.1, repairing bundled palette mappings and
 contrast, is confirmed complete, including the select-text repair. US-33.2, unifying
 semantic states, labels and typography, is confirmed complete;
-the Montserrat logo is preserved. US-33.3, the theme/layout review matrix, is recommended next. Palette sources and control contrast are documented in
+the Montserrat logo is preserved. US-33.3, the theme/layout review matrix, is implemented and verified, awaiting completion confirmation. Palette sources and control contrast are documented in
 the [bundled palette guide](docs/architecture/bundled-theme-palettes.md). The shared
 [content policy](docs/architecture/markdown-content.md) defines allowed Markdown,
 links, resources and math.

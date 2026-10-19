@@ -4,14 +4,14 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. No story is active; US-33.3 is recommended next. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
 - [ ] US-33.3: Enforce a theme and layout review matrix
-  - [ ] Add deterministic theme-schema and contrast checks based on unrounded luminance ratios.
-  - [ ] Create a compact component/state fixture covering controls, focus, errors, typography and adversarial content using existing shadcn components.
-  - [ ] Integrate rendered accessibility and overflow/reachability cases into CI and document the manual review matrix.
+  - [x] Add deterministic theme-schema and contrast checks based on unrounded luminance ratios.
+  - [x] Create a compact component/state fixture covering controls, focus, errors, typography and adversarial content using existing shadcn components.
+  - [x] Integrate rendered accessibility and overflow/reachability cases into CI and document the manual review matrix.
 
 ## [EPIC-34: Query bounds and architecture guardrails](docs/epics/EPIC-34-QUERY-BOUNDS-AND-ARCHITECTURE-GUARDRAILS.md)
 

@@ -1,5 +1,13 @@
 "use client";
 
+import { FullLogo } from "@/components/full-logo";
+import MarkdownViewer from "@/components/markdown-viewer";
+import {
+  adversarialMarkdown,
+  fencedCode,
+  normalMarkdown,
+} from "@/components/markdown-viewer/test-content";
+import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { useState } from "react";
 import { AnimatedBorder } from "@/components/animated-border";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
@@ -27,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -47,13 +56,19 @@ import { useTheme } from "@/features/theme/components/theme-context";
 // cookie-selected theme. No substitute component colors or fixture-only CSS.
 export function ThemeContrastHarness() {
   const { currentTheme } = useTheme();
+  const { getSearchParam } = useReadWriteSearchParams();
+  const pane = Number(getSearchParam("pane")) || 1440;
   const [chatModel, setChatModel] = useState("contrast-model");
   return (
-    <main className="h-dvh overflow-auto p-6" data-testid="palette-review">
+    <main
+      className="@container/review h-dvh min-w-0 scroll-p-3 overflow-auto p-4"
+      style={{ width: `min(100%, ${pane}px)` }}
+      data-testid="palette-review"
+    >
       <h1 className="mb-4 text-xl font-semibold">
         Palette review: {currentTheme}
       </h1>
-      <div className="grid gap-6 md:grid-cols-[220px_1fr]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 @3xl/review:grid-cols-[220px_minmax(0,1fr)]">
         <SidebarProvider className="min-h-0">
           <aside
             className="bg-sidebar text-sidebar-foreground w-full rounded-lg p-4"
@@ -82,7 +97,7 @@ export function ThemeContrastHarness() {
             </p>
           </aside>
         </SidebarProvider>
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Settings and actions</CardTitle>
             <CardDescription data-contrast="card-muted">
@@ -120,7 +135,7 @@ export function ThemeContrastHarness() {
                 <Link href="/e2e/theme-contrast">Project badge</Link>
               </Badge>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-4 @xl/review:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="review-input">Project name</Label>
                 <Input
@@ -142,9 +157,11 @@ export function ThemeContrastHarness() {
                     <SelectValue placeholder="Choose a model" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="review" data-contrast="select-option">
-                      Review model
-                    </SelectItem>
+                    <SelectGroup>
+                      <SelectItem value="review" data-contrast="select-option">
+                        Review model
+                      </SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
                 <Label htmlFor="review-search">Search</Label>
@@ -173,20 +190,20 @@ export function ThemeContrastHarness() {
                 </div>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid min-w-0 grid-cols-1 gap-4 @3xl/review:grid-cols-3">
               <div
                 data-testid="appearance-theme"
                 className="flex flex-col gap-2"
               >
-                <p>Theme</p>
-                <ThemeSelector currentTheme={currentTheme} />
+                <Label htmlFor="review-theme">Theme</Label>
+                <ThemeSelector id="review-theme" currentTheme={currentTheme} />
               </div>
               <div
                 data-testid="appearance-size"
                 className="flex flex-col gap-2"
               >
-                <p>Text size</p>
-                <FontSizeSelector />
+                <Label htmlFor="review-size">Text size</Label>
+                <FontSizeSelector id="review-size" />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="review-settings-model">Main model</Label>
@@ -229,7 +246,7 @@ export function ThemeContrastHarness() {
               </ChatInputContainer>
             </div>
             <Tabs defaultValue="general">
-              <TabsList>
+              <TabsList className="max-w-full overflow-x-auto">
                 <TabsTrigger value="general" data-contrast="tab-selected">
                   General
                 </TabsTrigger>
@@ -244,11 +261,15 @@ export function ThemeContrastHarness() {
               <p className="text-muted-foreground" data-contrast="muted">
                 Muted labels on a muted surface
               </p>
-              <Button variant="destructive" data-contrast="destructive-muted">
+              <Button
+                variant="destructive"
+                className="h-auto min-h-7 whitespace-normal"
+                data-contrast="destructive-muted"
+              >
                 Remove attachment
               </Button>
             </div>
-            <p className="text-destructive" data-contrast="error">
+            <p role="alert" className="text-destructive" data-contrast="error">
               Could not save. Try again.
             </p>
             <div
@@ -257,6 +278,33 @@ export function ThemeContrastHarness() {
             >
               Popover content uses its paired text role.
             </div>
+            <section
+              aria-label="Typography and content review"
+              className="min-w-0"
+            >
+              <FullLogo />
+              <div
+                role="region"
+                aria-label="Review rich content"
+                tabIndex={0}
+                className="focus-visible:outline-ring max-h-64 min-w-0 overflow-auto rounded border p-2 focus-visible:outline-2"
+              >
+                <MarkdownViewer
+                  content={
+                    normalMarkdown +
+                    "\n" +
+                    fencedCode +
+                    "\n" +
+                    adversarialMarkdown +
+                    "\n" +
+                    "long-content-".repeat(80) +
+                    "\n\n| Wide value | Result |\n| --- | --- |\n| " +
+                    "column".repeat(60) +
+                    " | 42 |"
+                  }
+                />
+              </div>
+            </section>
           </CardContent>
         </Card>
       </div>

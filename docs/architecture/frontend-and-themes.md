@@ -251,7 +251,9 @@ scrolling, including pseudo-elements and the animated composer border. The scrol
 mask is removed in that mode. Loading/status text stays present, and dialogs still
 open, close with Escape and return focus. These changes preserve auth, settings
 persistence and Markdown trust boundaries. [Verification](../reviews/us-33.2-verification-2026-10-19.md)
-records the executed gates and scope; the broader review matrix remains US-33.3.
+records the executed gates and scope. The [US-33.3 review matrix](theme-layout-review-matrix.md)
+extends these fixtures with per-bundle schema/contrast gates, container/height/text
+coverage, zero-retry CI execution and retained browser evidence.
 
 ## Current versus planned product surface
 
@@ -272,6 +274,7 @@ navigation from the future persona foundation; memory activation needs separate 
 Use frontend unit tests for state/labels, the root isolated E2E runner for real
 auth/backend/socket flows and fixture browser tests for targeted UI stress cases.
 The runner requires ports 3000, 3100 and 8000 free and creates disposable storage.
-Existing E2E coverage includes responsive provider/agent controls; a complete
-theme/height/container matrix remains pending. See [scripts](../../scripts/README.md)
+Existing E2E coverage includes responsive provider/agent controls; the
+[theme/layout matrix](theme-layout-review-matrix.md) defines automated coverage and
+remaining manual/device checks. See [scripts](../../scripts/README.md)
 and the [review evidence](../reviews/2026-10-17-codebase-review.md).

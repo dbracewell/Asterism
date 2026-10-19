@@ -106,7 +106,10 @@ test("shares explorer controls for project membership, library picking, upload, 
   ).toHaveCount(0);
   await explorer.getByRole("button", { name: "Add library files" }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("Already in this project")).toBeVisible();
+  const existingFile = dialog.getByRole("button", { name: /shared\.txt/ });
+  await expect(existingFile).toBeVisible();
+  await expect(existingFile).toBeDisabled();
+  await expect(existingFile).toContainText("Already in this project");
   await dialog.getByRole("button", { name: "Select all files" }).click();
   await dialog.getByRole("button", { name: "Add selected (1)" }).click();
   await expect(dialog).toHaveCount(0);

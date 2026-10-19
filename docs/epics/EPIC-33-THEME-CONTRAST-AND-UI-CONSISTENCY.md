@@ -1,6 +1,6 @@
 # EPIC-33: Theme contrast and UI consistency
 
-Status: in progress; US-33.1 was confirmed complete on 2026-10-19; US-33.2 was confirmed complete on 2026-10-19; US-33.3 remains pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F5, F6.
+Status: in progress; US-33.1 was confirmed complete on 2026-10-19; US-33.2 was confirmed complete on 2026-10-19; US-33.3 is implemented and verified, awaiting completion confirmation. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F5, F6.
 
 ## Objective
 
@@ -64,6 +64,6 @@ CI checks every bundled theme schema/text pair and representative rendered state
 
 Tasks:
 
-- [ ] Add deterministic theme-schema and contrast checks based on unrounded luminance ratios.
-- [ ] Create a compact component/state fixture covering controls, focus, errors, typography and adversarial content using existing shadcn components.
-- [ ] Integrate rendered accessibility and overflow/reachability cases into CI and document the manual review matrix.
+- [x] Add deterministic theme-schema and contrast checks based on unrounded luminance ratios.
+- [x] Create a compact component/state fixture covering controls, focus, errors, typography and adversarial content using existing shadcn components.
+- [x] Integrate rendered accessibility and overflow/reachability cases into CI and document the manual review matrix.

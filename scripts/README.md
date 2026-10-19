@@ -182,3 +182,14 @@ Three fresh containers run as UID/GID `10001` with a read-only application files
 and share a newly created test volume. The check saves, replaces and reads a palette,
 verifies default assets are immutable and removes its own image, volume and temporary
 artifacts. No existing application data is used. See [theme lifecycle](../docs/architecture/theme-storage.md).
+
+## Theme and layout review evidence
+
+The isolated browser runner includes the [theme/layout review matrix](../docs/architecture/theme-layout-review-matrix.md),
+with all bundled palettes, short viewports, narrow containers and enlarged text.
+Use `--retries=0` for deterministic final verification (also the Playwright default).
+The Playwright HTML report is under `apps/frontend/playwright-report`; JSON results,
+per-case geometry/contrast evidence and screenshots are under
+`apps/frontend/test-results`. Failures retain traces with zero retries. CI uploads
+these generated directories as `frontend-ui-review` even when tests fail, retaining
+them for seven days. Working data must not be used for these artifact-producing runs.

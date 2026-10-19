@@ -1,96 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { writeFile } from "node:fs/promises";
 
-const themes = [
-  "catppuccin-latte-mauve",
-  "catppuccin-mocha",
-  "dark",
-  "dracula",
-  "flowers",
-  "light",
-  "one_dark",
-  "ucf-knights",
-];
-
-// Resolve modern browser color spaces through canvas, then composite ancestor
-// backgrounds in sRGB. Keep the unrounded ratio for threshold decisions.
-async function measure(
-  page: Page,
-  id: string,
-  kind: "text" | "placeholder" | "border" | "ring" | "fill" | "glyph" = "text",
-) {
-  return page
-    .locator(
-      id === "switch-thumb"
-        ? '[data-contrast="switch"] [data-slot="switch-thumb"]'
-        : `[data-contrast="${id}"]`,
-    )
-    .evaluate((element, kind) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 1;
-      const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-      const rgba = (css: string) => {
-        if (!CSS.supports("color", css))
-          throw new Error(`Unsupported computed color: ${css}`);
-        ctx.clearRect(0, 0, 1, 1);
-        ctx.fillStyle = css;
-        ctx.fillRect(0, 0, 1, 1);
-        return [...ctx.getImageData(0, 0, 1, 1).data].map((v) => v / 255);
-      };
-      const over = (front: number[], back: number[]) =>
-        front
-          .slice(0, 3)
-          .map((v, i) => v * front[3] + back[i] * (1 - front[3]))
-          .concat(1);
-      function background(node: Element | null): number[] {
-        return node
-          ? over(
-              rgba(getComputedStyle(node).backgroundColor),
-              background(node.parentElement),
-            )
-          : [1, 1, 1, 1];
-      }
-      const style = getComputedStyle(element);
-      const backdrop = background(element);
-      const color =
-        kind === "fill"
-          ? style.backgroundColor
-          : kind === "placeholder"
-            ? getComputedStyle(element, "::placeholder").color
-            : kind === "border"
-              ? style.borderTopColor
-              : kind === "ring"
-                ? style.getPropertyValue("--tw-ring-color")
-                : style.color;
-      const bg =
-        kind === "border" || kind === "ring" || kind === "fill"
-          ? background(element.parentElement)
-          : backdrop;
-      const fg = over(
-        rgba(color),
-        kind === "ring" || kind === "fill" ? bg : backdrop,
-      );
-      const luminance = (rgb: number[]) =>
-        rgb
-          .slice(0, 3)
-          .reduce(
-            (sum, v, i) =>
-              sum +
-              (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4) *
-                [0.2126, 0.7152, 0.0722][i],
-            0,
-          );
-      const [low, high] = [luminance(fg), luminance(bg)].sort((a, b) => a - b);
-      return {
-        kind,
-        color,
-        foreground: fg,
-        background: bg,
-        ratio: (high + 0.05) / (low + 0.05),
-        shadow: kind === "ring" ? style.boxShadow : undefined,
-      };
-    }, kind);
-}
+import { themes } from "./support/theme-matrix";
+import { measure } from "./support/contrast";
+import { contrastRatio, themeTextPairs } from "../src/features/theme/contrast";
 
 for (const theme of themes) {
   test(`${theme}: paired roles and rendered controls`, async ({
@@ -195,45 +108,12 @@ for (const theme of themes) {
       results.push({ id, state, threshold, ...result });
     }
     // Same ten paired roles as the original audit, measured without rounding.
-    const opaque = await page.evaluate(
-      (colors) => {
-        const lum = (hex: string) =>
-          [1, 3, 5].reduce((sum, offset, i) => {
-            const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
-            return (
-              sum +
-              (value <= 0.04045
-                ? value / 12.92
-                : ((value + 0.055) / 1.055) ** 2.4) *
-                [0.2126, 0.7152, 0.0722][i]
-            );
-          }, 0);
-        return [
-          "background",
-          "card",
-          "popover",
-          "primary",
-          "secondary",
-          "muted",
-          "accent",
-          "sidebar",
-          "sidebar-primary",
-          "sidebar-accent",
-        ].map((bg) => {
-          const fg = bg === "background" ? "foreground" : `${bg}-foreground`;
-          const [lo, hi] = [lum(colors[fg]), lum(colors[bg])].sort(
-            (a, b) => a - b,
-          );
-          return {
-            id: `${fg}/${bg}`,
-            ratio: (hi + 0.05) / (lo + 0.05),
-            threshold: 4.5,
-            state: "opaque pair",
-          };
-        });
-      },
-      palette.colors as Record<string, string>,
-    );
+    const opaque = themeTextPairs.map(([fg, bg]) => ({
+      id: `${fg}/${bg}`,
+      ratio: contrastRatio(palette.colors[fg], palette.colors[bg]),
+      threshold: 4.5,
+      state: "opaque pair",
+    }));
     results.push(...opaque);
     for (const id of [
       "primary",

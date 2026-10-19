@@ -111,21 +111,30 @@ export function ModelCapabilities({ model }: { model: ChatModelChoice }) {
       aria-label="Selected model capabilities"
       className="flex flex-wrap gap-2"
     >
-      <Badge variant="secondary">
+      <Badge
+        variant="secondary"
+        className="h-auto max-w-full whitespace-normal"
+      >
         {model.supports_vision === true
           ? "Images supported"
           : model.supports_vision === false
             ? "Text only"
             : "Image support unknown"}
       </Badge>
-      <Badge variant="secondary">
+      <Badge
+        variant="secondary"
+        className="h-auto max-w-full whitespace-normal"
+      >
         {model.supports_tools === true
           ? "Tools supported"
           : model.supports_tools === false
             ? "Tools unsupported"
             : "Tool support unknown"}
       </Badge>
-      <Badge variant="secondary">
+      <Badge
+        variant="secondary"
+        className="h-auto max-w-full whitespace-normal"
+      >
         {model.context_window
           ? `${model.context_window.toLocaleString()} token context`
           : "Context window unknown"}

@@ -10,11 +10,16 @@ export default defineConfig({
   // The isolated backend and Next development server share the GitHub runner.
   // Serial CI execution avoids resource contention during fresh setup.
   workers: process.env.CI ? 1 : undefined,
-  retries: process.env.CI ? 2 : 0,
-  reporter: "list",
+  retries: 0,
+  reporter: [
+    ["list"],
+    ["html", { outputFolder: "playwright-report", open: "never" }],
+    ["json", { outputFile: "test-results/results.json" }],
+  ],
   use: {
     baseURL: "http://localhost:3100",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   webServer: {
     command:

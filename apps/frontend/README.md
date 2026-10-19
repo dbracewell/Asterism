@@ -148,7 +148,9 @@ control contrast. US-33.2 adds semantic feature states, named settings/icon cont
 inherited body typography, Geist Mono code and reduced motion while preserving
 `font-monsterrat` for the ASTERISM wordmark. See [typography, labels and motion](../../docs/architecture/frontend-and-themes.md#typography-labels-and-motion-us-332)
 and the [syntax mapping](../../docs/architecture/markdown-content.md#code-typography-and-syntax-palettes).
-The broader review matrix remains US-33.3.
+US-33.3 extends these fixtures with all-theme schema/contrast gates and a
+container/height/text-size browser matrix; see the [review matrix](../../docs/architecture/theme-layout-review-matrix.md)
+for exact coverage, artifact locations, manual review and exceptions.
 
 For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install

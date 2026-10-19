@@ -2,7 +2,7 @@
 
 Source: [codebase review, 2026-10-17](../reviews/2026-10-17-codebase-review.md).
 US-31.1 is confirmed complete on 2026-10-17 and US-31.2 on 2026-10-18.
-US-31.3 is confirmed complete on 2026-10-18, closing EPIC-31. US-32.1, including the reported mobile sidebar/header/scrolling repair, is confirmed complete on 2026-10-18. US-32.2 and US-32.3 are confirmed complete on 2026-10-18, closing EPIC-32. EPIC-33 / US-33.1, including the select-readability follow-up, is confirmed complete on 2026-10-19. US-33.2 is confirmed complete on 2026-10-19, preserving the Montserrat wordmark. US-33.3 is recommended next. Other stories remain proposed/pending.
+US-31.3 is confirmed complete on 2026-10-18, closing EPIC-31. US-32.1, including the reported mobile sidebar/header/scrolling repair, is confirmed complete on 2026-10-18. US-32.2 and US-32.3 are confirmed complete on 2026-10-18, closing EPIC-32. EPIC-33 / US-33.1, including the select-readability follow-up, is confirmed complete on 2026-10-19. US-33.2 is confirmed complete on 2026-10-19, preserving the Montserrat wordmark. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. Other stories remain proposed/pending.
 The live task checklist is [`todo.md`](../../todo.md); completed history remains
 archived. This roadmap does not reopen completed refactor/provider epics.
 

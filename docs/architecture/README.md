@@ -22,6 +22,8 @@ responses, full-text chat search, and user-owned file attachments.
 
 Additional guides:
 
+- [Theme and layout review matrix](theme-layout-review-matrix.md): automated palette/state/container gates, retained CI evidence, manual checks and exception policy.
+
 - [Markdown and file-content trust](markdown-content.md): raw HTML disabled,
   explicit link/resource policy, constrained math, files and citations.
 - [Theme storage and lifecycle](theme-storage.md): read-only defaults, persistent
