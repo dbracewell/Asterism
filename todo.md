@@ -2,17 +2,12 @@
 
 Completed Projects/Chat Context and provider-settings work remains in the existing archives. This checklist contains the pending findings from the [2026-10-17 review](docs/reviews/2026-10-17-codebase-review.md). See the [sequenced roadmap](docs/plans/post-refactor-quality-roadmap.md).
 
-Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
+Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. No story is active. EPIC-33 / US-33.1 is recommended next. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 is confirmed complete and archived above. No story is active; US-33.2 is recommended next. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
-- [ ] US-33.1: Repair bundled palette mappings and contrast
-  - [ ] Create a source/role mapping for Dracula, One Dark and Catppuccin; establish whether Black & Gold intends official branding and identify local-only palettes.
-  - [ ] Adjust all 12 measured failing text pairs in public/themes; use canonical surfaces where appropriate and document deviations needed for readability.
-  - [ ] Check input identification, focus rings, selected/hover states, destructive tints, sidebar and muted labels with composited colors.
-  - [ ] Retain machine-readable contrast evidence and verify screenshots for every bundled theme.
 - [ ] US-33.2: Unify semantic states, labels and typography
   - [ ] Replace feature-specific red/green/white states with documented semantic variants; avoid blindly rewriting library overlays.
   - [ ] Audit Theme Editor add/duplicate names and General settings control labels; preserve the setup passkey association repaired in US-32.1 and inspect related icon actions.

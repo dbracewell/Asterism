@@ -72,7 +72,7 @@ export const ChatInputContainer = ({
   return (
     <div
       className={cn(
-        "bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col rounded-[10px] border",
+        "border-input focus-within:border-ring focus-within:ring-ring bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col rounded-[10px] border focus-within:ring-2",
         className,
       )}
     >
@@ -290,7 +290,7 @@ export const ChatInput = ({
   return (
     <form
       className={cn(
-        "bg-input/70 text-foreground relative flex min-w-0 shrink-0 rounded-[inherit]",
+        "bg-muted/70 text-foreground relative flex min-w-0 shrink-0 rounded-[inherit]",
         className,
       )}
       onDragLeave={() => setIsDragOver(false)}

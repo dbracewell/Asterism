@@ -33,7 +33,7 @@ export const FontSizeSelector = ({
         onChange?.(size);
       }}
     >
-      <SelectTrigger className="bg-input!">
+      <SelectTrigger>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

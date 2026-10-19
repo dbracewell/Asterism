@@ -1,4 +1,5 @@
 "use client";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import useClickOutside from "@/hooks/use-clickoutside";
 import { LlmDisplayInfo } from "@/lib/client";
@@ -75,7 +76,7 @@ export const ModelSelector = ({
   return (
     <div
       ref={divRef}
-      className={cn("bg-input/30 relative z-400 flex flex-col", className)}
+      className={cn("bg-muted relative z-400 flex flex-col", className)}
     >
       <Button
         id={id}
@@ -98,7 +99,7 @@ export const ModelSelector = ({
       <div
         id={menuId}
         className={cn(
-          "bg-input",
+          "bg-popover text-popover-foreground",
           "absolute right-0 left-0 z-1000 flex-1 flex-col text-xs",
           "min-h-40 items-start justify-start border",
           "pb-0.5 text-sm transition-all",
@@ -116,8 +117,8 @@ export const ModelSelector = ({
             open={open}
           />
         )}
-        <div className="bg-input w-full pt-2 shadow-2xl">
-          <div className="bg-input flex max-h-40 w-full flex-col overflow-y-auto px-0.5">
+        <div className="bg-popover w-full pt-2 shadow-2xl">
+          <div className="bg-popover flex max-h-40 w-full flex-col overflow-y-auto px-0.5">
             {modelOptions.map((model) => (
               <Button
                 type="button"
@@ -167,17 +168,17 @@ const FilterInput = ({
   return (
     <div
       className={cn(
-        "bg-input/30 text-muted-foreground top-0 z-10 flex w-full items-center justify-between border-b",
+        "bg-muted text-muted-foreground top-0 z-10 flex w-full items-center justify-between border-b",
         distance < 100 ? "border-t" : "border-b",
       )}
     >
-      <input
+      <Input
         aria-label="Filter models"
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         placeholder="Filter..."
         className={cn(
-          "focus-visible:border-border sticky top-0 z-10 w-full border-0 p-1 text-xs! ring-0 outline-0 transition-all focus-visible:ring-0 focus-visible:outline-0",
+          "sticky top-0 z-10 w-full p-1 text-xs!",
           distance < 100 && open ? "rounded-t-none" : open && "rounded-b-none",
         )}
       />

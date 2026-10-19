@@ -13,20 +13,20 @@
     "secondary": "#ccd0da",
     "secondary-foreground": "#4c4f69",
     "muted": "#ccd0da",
-    "muted-foreground": "#5c5f77",
+    "muted-foreground": "#4c4f69",
     "accent": "#ccd0da",
     "accent-foreground": "#4c4f69",
-    "destructive": "#d20f39",
+    "destructive": "#800820",
     "border": "#bcc0cc",
-    "input": "#bcc0cc",
+    "input": "#6c6f85",
     "ring": "#4c4f69",
-    "sidebar": "#ebeef3",
+    "sidebar": "#e6e9ef",
     "sidebar-foreground": "#4c4f69",
     "sidebar-primary": "#8839ef",
     "sidebar-primary-foreground": "#eff1f5",
     "sidebar-accent": "#eff1f5",
     "sidebar-accent-foreground": "#4c4f69",
     "sidebar-border": "#bcc0cc",
-    "sidebar-ring": "#bcc0cc"
+    "sidebar-ring": "#8839ef"
   }
 }

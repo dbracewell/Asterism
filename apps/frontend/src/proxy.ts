@@ -21,6 +21,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/chat-model-session",
     "/e2e/projects",
     "/e2e/themes",
+    "/e2e/theme-contrast",
     "/e2e/responsiveness",
     "/e2e/chat-reachability",
     "/e2e/markdown",

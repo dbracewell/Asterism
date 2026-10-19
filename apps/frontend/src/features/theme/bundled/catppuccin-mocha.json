@@ -16,17 +16,17 @@
     "muted-foreground": "#bac2de",
     "accent": "#313244",
     "accent-foreground": "#cdd6f4",
-    "destructive": "#f38ba8",
+    "destructive": "#f2cdcd",
     "border": "#45475a",
-    "input": "#45475a",
+    "input": "#9399b2",
     "ring": "#cdd6f4",
-    "sidebar": "#1c1c2c",
+    "sidebar": "#181825",
     "sidebar-foreground": "#cdd6f4",
     "sidebar-primary": "#b4befe",
     "sidebar-primary-foreground": "#1e1e2e",
     "sidebar-accent": "#1e1e2e",
     "sidebar-accent-foreground": "#cdd6f4",
     "sidebar-border": "#45475a",
-    "sidebar-ring": "#45475a"
+    "sidebar-ring": "#b4befe"
   }
 }

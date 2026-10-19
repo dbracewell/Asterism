@@ -4,7 +4,7 @@
   "colors": {
     "background": "#282a36",
     "foreground": "#f8f8f2",
-    "card": "#21222c",
+    "card": "#282a36",
     "card-foreground": "#f8f8f2",
     "popover": "#282a36",
     "popover-foreground": "#f8f8f2",
@@ -13,7 +13,7 @@
     "secondary": "#44475a",
     "secondary-foreground": "#f8f8f2",
     "muted": "#44475a",
-    "muted-foreground": "#a3adc9",
+    "muted-foreground": "#bfc7df",
     "accent": "#44475a",
     "accent-foreground": "#f8f8f2",
     "sidebar-foreground": "#f8f8f2",
@@ -21,12 +21,12 @@
     "sidebar-primary-foreground": "#282a36",
     "sidebar-accent": "#44475a",
     "sidebar-accent-foreground": "#f8f8f2",
-    "destructive": "#ff5555",
+    "destructive": "#ffe0e0",
     "border": "#44475a",
-    "input": "#44475a",
+    "input": "#a3adc9",
     "ring": "#f8f8f2",
-    "sidebar": "#21222c",
+    "sidebar": "#282a36",
     "sidebar-border": "#44475a",
-    "sidebar-ring": "#44475a"
+    "sidebar-ring": "#bd93f9"
   }
 }

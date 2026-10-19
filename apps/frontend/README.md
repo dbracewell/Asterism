@@ -143,8 +143,9 @@ authorization in editor actions. US-31.2 stores custom palettes/overrides under
 and retains failed drafts for retry. See [theme storage and lifecycle](../../docs/architecture/theme-storage.md)
 for backup/reset and the single-writer deployment contract. US-31.3 disables raw
 Markdown HTML and automatic image resources, limits links and constrains KaTeX;
-see the [content policy](../../docs/architecture/markdown-content.md). Layout and
-contrast remediation remains in EPIC-32–EPIC-33.
+see the [content policy](../../docs/architecture/markdown-content.md). EPIC-32 layout work is complete. US-33.1 repairs bundled palette and shared
+control contrast; the remaining semantic-state and typography work stays in
+US-33.2, with the broader review matrix in US-33.3.
 
 For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install
@@ -179,3 +180,12 @@ The correct architecture links are under [`docs/architecture`](../../docs/archit
 Dated story notes are preserved in the
 [documentation history archive](../../docs/archive/us-28.2-documentation-history-2026-10-17.md).
 Use the runtime and operator guides above for current contracts.
+
+### Bundled palette contrast
+
+The eight bundled themes retain documented source palettes and accessibility
+adaptations. Shared controls use distinct input boundaries, opaque focus rings and
+readable hover/selected states. See the [palette mapping and review contract](../../docs/architecture/bundled-theme-palettes.md).
+The test-only `/e2e/theme-contrast` route exercises production controls with each
+cookie-selected theme; `e2e/theme-contrast.spec.ts` records text, boundary and focus
+ratios plus screenshots. Custom theme overrides are not rewritten or certified.

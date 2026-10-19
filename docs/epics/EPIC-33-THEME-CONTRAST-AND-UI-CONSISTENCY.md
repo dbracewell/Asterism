@@ -1,6 +1,6 @@
 # EPIC-33: Theme contrast and UI consistency
 
-Status: proposed / pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F5, F6.
+Status: in progress; US-33.1 was confirmed complete on 2026-10-19; US-33.2 and US-33.3 remain pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F5, F6.
 
 ## Objective
 
@@ -12,6 +12,8 @@ Implementation stays within the owning domain/component. Preserve existing autho
 
 ## US-33.1: Repair bundled palette mappings and contrast
 
+Status: confirmed complete on 2026-10-19, including the select-readability follow-up; checklist [archived](../archive/todo-completed-2026-10-19.md#us-331--bundled-palette-mappings-and-contrast).
+
 As a user, I want every bundled theme to provide readable text and recognizable controls.
 
 Estimate: 2–3 days. Dependencies: None for bundled files; custom editing depends on EPIC-31.
@@ -22,10 +24,14 @@ All eight bundled themes pass normal-text paired-role checks at 4.5:1 and render
 
 Tasks:
 
-- [ ] Create a source/role mapping for Dracula, One Dark and Catppuccin; establish whether Black & Gold intends official branding and identify local-only palettes.
-- [ ] Adjust all 12 measured failing text pairs in public/themes; use canonical surfaces where appropriate and document deviations needed for readability.
-- [ ] Check input identification, focus rings, selected/hover states, destructive tints, sidebar and muted labels with composited colors.
-- [ ] Retain machine-readable contrast evidence and verify screenshots for every bundled theme.
+- [x] Create a source/role mapping for Dracula, One Dark and Catppuccin; establish whether Black & Gold intends official branding and identify local-only palettes.
+- [x] Adjust all 12 measured failing text pairs in features/theme/bundled; use canonical surfaces where appropriate and document deviations needed for readability.
+- [x] Check input identification, focus rings, selected/hover states, destructive tints, sidebar and muted labels with composited colors.
+- [x] Retain machine-readable contrast evidence and verify screenshots for every bundled theme.
+
+Verification: [2026-10-18 evidence](../reviews/us-33.1-verification-2026-10-18.md), including 80 paired text roles, 632 rendered-state checks and 89 full isolated browser tests passing without retries.
+
+Follow-up: [2026-10-19 select readability](../reviews/us-33.1-select-readability-2026-10-19.md); the shared select now owns its foreground inside colored parent panels, with 19 focused browser checks passing without retries across all eight palettes.
 
 ## US-33.2: Unify semantic states, labels and typography
 

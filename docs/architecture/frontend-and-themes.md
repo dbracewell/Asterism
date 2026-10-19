@@ -34,6 +34,9 @@ See [theme storage and lifecycle](theme-storage.md) for schema, single-writer
 ownership, backup/reset, container permissions and cache freshness. The
 [theme trust boundary](auth-and-security.md#theme-trust-boundary) documents access.
 
+Bundled palette sources, semantic mappings, accessibility deviations and the
+rendered control contract are documented in [bundled theme palettes](bundled-theme-palettes.md).
+
 ## Rich-content trust
 
 Main/user chat messages and sub-agent replies share `MarkdownViewer`. It disables
@@ -54,7 +57,7 @@ their own scroll areas. The mobile header stays full-width at the top.
 Settings, Theme Editor, file panes, dialogs and chat follow the container and
 scroll contracts below.
 
-The pending contract in [EPIC-32](../epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
+The completed contract in [EPIC-32](../epics/EPIC-32-RESPONSIVE-LAYOUT-AND-REACHABILITY.md)
 requires controls and final content to remain reachable across short/narrow windows,
 nested panes, long content and enlarged text. `scrollWidth <= clientWidth` alone
 cannot detect clipped vertical content or controls hidden by `overflow: hidden`.

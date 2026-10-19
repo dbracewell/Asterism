@@ -8,8 +8,8 @@
     "card-foreground": "#fbfbfb",
     "popover": "#212229",
     "popover-foreground": "#fbfbfb",
-    "primary": "#1a4b9e",
-    "primary-foreground": "#eff5ff",
+    "primary": "#8eaeff",
+    "primary-foreground": "#14151a",
     "secondary": "#2d2f36",
     "secondary-foreground": "#fbfbfb",
     "muted": "#2d2f36",
@@ -17,16 +17,16 @@
     "accent": "#2d2f36",
     "accent-foreground": "#fbfbfb",
     "sidebar-foreground": "#fbfbfb",
-    "sidebar-primary": "#487ae6",
-    "sidebar-primary-foreground": "#2f3f7a",
+    "sidebar-primary": "#8eaeff",
+    "sidebar-primary-foreground": "#14151a",
     "sidebar-accent": "#2d2f36",
     "sidebar-accent-foreground": "#fbfbfb",
-    "destructive": "#e9584e",
+    "destructive": "#ff9991",
     "border": "#2e3038",
-    "input": "#212229",
-    "ring": "#757782",
+    "input": "#9295a5",
+    "ring": "#a9acc0",
     "sidebar": "#212229",
     "sidebar-border": "#2e3038",
-    "sidebar-ring": "#757782"
+    "sidebar-ring": "#a9acc0"
   }
 }

@@ -27,7 +27,9 @@ defects. Its [quality roadmap](docs/plans/post-refactor-quality-roadmap.md) defi
 EPIC-31–EPIC-35. EPIC-31 and EPIC-32 are confirmed complete, including
 authentication, mobile workspace, settings, file panes, dialogs and rich chat
 content reachability. EPIC-33 / US-33.1, repairing bundled palette mappings and
-contrast, is recommended next. The shared
+contrast, is confirmed complete, including the select-text repair. US-33.2, unifying
+semantic states, labels and typography, is recommended next. Palette sources and control contrast are documented in
+the [bundled palette guide](docs/architecture/bundled-theme-palettes.md). The shared
 [content policy](docs/architecture/markdown-content.md) defines allowed Markdown,
 links, resources and math.
 Current theme editing, placeholder admin panes and the unimplemented separate

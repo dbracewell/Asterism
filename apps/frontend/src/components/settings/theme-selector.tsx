@@ -36,7 +36,7 @@ export const ThemeSelector = ({
           onChange?.(name);
         }}
       >
-        <SelectTrigger className="bg-input! min-w-40">
+        <SelectTrigger className="min-w-40">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-80 overflow-y-auto" position="popper">
