@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { SettingsCard } from "@/features/settings/ui/setttings-card";
+import { SettingsCard } from "@/features/settings/ui/settings-card";
 import { ThemeEditor } from "@/features/settings/ui/admin-settings/theme-editor";
 import { MainAgentForm } from "@/features/settings/ui/user-settings/agent-profile-form";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";

@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Types } from "@/features/settings/types";
@@ -76,12 +77,26 @@ export const SettingsCard = ({
             if (setting.type === "section") {
               return (
                 <TabsTrigger
-                  className="shrink-0"
+                  className={cn(
+                    "shrink-0",
+                    isNarrow ? "" : "w-full justify-between gap-2",
+                  )}
                   key={setting.value}
                   value={setting.value}
+                  disabled={setting.disabled}
                 >
-                  {setting.icon}
-                  <span>{setting.label}</span>
+                  <span className="flex items-center gap-2">
+                    {setting.icon}
+                    <span>{setting.label}</span>
+                  </span>
+                  {setting.badge && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-auto px-1.5 py-0 text-[10px] font-normal"
+                    >
+                      {setting.badge}
+                    </Badge>
+                  )}
                 </TabsTrigger>
               );
             }

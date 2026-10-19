@@ -103,7 +103,7 @@
     @apply bg-background text-foreground;
   }
 
-  tr:nth-child(even) * {
+  tr:nth-child(even) {
     @apply bg-accent text-accent-foreground;
   }
 

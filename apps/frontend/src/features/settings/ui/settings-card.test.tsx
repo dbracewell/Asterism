@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Types } from "@/features/settings/types";
-import { SettingsCard } from "./setttings-card";
+import { SettingsCard } from "./settings-card";
 
 const mocks = vi.hoisted(() => ({
   paneRendered: vi.fn(),
@@ -93,5 +93,20 @@ describe("SettingsCard", () => {
 
     expect(screen.queryByTestId("first-pane")).not.toBeInTheDocument();
     expect(screen.getByTestId("second-pane")).toBeInTheDocument();
+  });
+
+  it("renders a badge when provided on a section", () => {
+    const settingsWithBadge: Types = [
+      {
+        type: "section",
+        label: "Upcoming",
+        value: "upcoming",
+        badge: "Planned",
+        icon: null,
+        settingsPane: <div>Upcoming pane</div>,
+      },
+    ];
+    render(<SettingsCard name="admin" settings={settingsWithBadge} />);
+    expect(screen.getByText("Planned")).toBeInTheDocument();
   });
 });

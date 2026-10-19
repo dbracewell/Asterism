@@ -1,7 +1,7 @@
 "use client";
 import { TabsContent } from "@/components/ui/tabs";
 import { getLazyAdminSettingsSections } from "@/features/settings/ui/admin-settings/lazy-sections";
-import { SettingsCard } from "@/features/settings/ui/setttings-card";
+import { SettingsCard } from "@/features/settings/ui/settings-card";
 
 export const AdminSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {
   return (

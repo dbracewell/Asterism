@@ -1,5 +1,5 @@
 import { TabsContent } from "@/components/ui/tabs";
-import { SettingsCard } from "@/features/settings/ui/setttings-card";
+import { SettingsCard } from "@/features/settings/ui/settings-card";
 import { UserSettings } from "@/features/settings/ui/user-settings";
 
 export const UserSettingsTab = ({ defaultTab }: { defaultTab?: string }) => {

@@ -17,7 +17,7 @@ vi.mock("@/features/settings/ui/admin-settings/lazy-sections", () => ({
   ],
 }));
 
-vi.mock("@/features/settings/ui/setttings-card", () => ({
+vi.mock("@/features/settings/ui/settings-card", () => ({
   SettingsCard: ({ settings }: { settings: { settingsPane: ReactNode }[] }) =>
     settings[0]?.settingsPane,
 }));

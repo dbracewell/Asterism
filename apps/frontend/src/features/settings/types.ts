@@ -8,6 +8,8 @@ export type SettingsSection = {
   isDefault?: boolean;
   icon: React.ReactNode;
   settingsPane: React.ReactNode;
+  badge?: string;
+  disabled?: boolean;
 };
 
 export type SeparatorSection = {

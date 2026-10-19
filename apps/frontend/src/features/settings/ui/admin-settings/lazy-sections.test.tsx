@@ -43,4 +43,17 @@ describe("getLazyAdminSettingsSections", () => {
     expect(mocks.rendered).toHaveBeenCalledOnce();
     expect(mocks.rendered).toHaveBeenCalledWith(0);
   });
+
+  it("includes planned badges and corrected labels for unfinished surfaces", () => {
+    const sections = getLazyAdminSettingsSections();
+    const codeExec = sections.find(
+      (section) =>
+        section.type === "section" && section.value === "code-execution",
+    );
+    expect(codeExec?.type).toBe("section");
+    if (codeExec?.type === "section") {
+      expect(codeExec.label).toBe("Code Execution");
+      expect(codeExec.badge).toBe("Planned");
+    }
+  });
 });

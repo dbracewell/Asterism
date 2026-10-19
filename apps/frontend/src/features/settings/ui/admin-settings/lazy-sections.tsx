@@ -109,6 +109,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Groups",
     value: "group-settings",
     icon: <IconUsersGroup />,
+    badge: "Planned",
     settingsPane: pane("Groups", <GroupSettings />),
   },
   {
@@ -116,6 +117,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Users",
     value: "user-permissions",
     icon: <IconUserShield />,
+    badge: "Planned",
     settingsPane: pane("Users", <UserPermissionsSettings />),
   },
   { type: "separator" },
@@ -131,6 +133,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Image Generation",
     value: "image-generation",
     icon: <IconImageGeneration />,
+    badge: "Planned",
     settingsPane: pane("Image Generation", <ImageGenSettings />),
   },
   {
@@ -142,10 +145,11 @@ export const getLazyAdminSettingsSections = (): Types => [
   },
   {
     type: "section",
-    label: "Code Exection",
-    value: "code-exection",
+    label: "Code Execution",
+    value: "code-execution",
     icon: <CodeIcon />,
-    settingsPane: pane("Code Exection", <CodeExecutionSettings />),
+    badge: "Planned",
+    settingsPane: pane("Code Execution", <CodeExecutionSettings />),
   },
   { type: "separator" },
   {
@@ -153,6 +157,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Export",
     value: "export",
     icon: <IconDatabaseExport />,
+    badge: "Planned",
     settingsPane: pane("Export", <ExportSettings />),
   },
 ];

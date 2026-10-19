@@ -27,7 +27,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Asterism",
-  description: "Where will your curiousity lead you today?",
+  description: "Where will your curiosity lead you today?",
 };
 
 export default async function RootLayout({

@@ -440,7 +440,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ---
 
-### 3.4 Global CSS Rule Breaks Badges/Code Inside Even Table Rows, Plus Typos & Fake Admin Tabs
+### 3.4 [FIXED] Global CSS Rule Breaks Badges/Code Inside Even Table Rows, Plus Typos & Fake Admin Tabs
 
 - **Where**:
   - [globals.css](file:///Users/david/prj/asterism/apps/frontend/src/app/globals.css#L106)
