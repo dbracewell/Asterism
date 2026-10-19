@@ -1,9 +1,11 @@
 "use client";
 import { HelpIcon } from "@/components/help-icon";
+import { QueryError } from "@/components/query-error";
 import { Required } from "@/components/required";
 import { ModelSelector } from "@/components/settings/model-selector";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -404,20 +406,21 @@ function ConfigurationForm({
             </div>
             <FieldSet className="grid grid-cols-1 gap-2 @xl/agent:grid-cols-2 @4xl/agent:grid-cols-3 @6xl/agent:grid-cols-4">
               <FieldLegend>Allowed tools</FieldLegend>
-              {toolQuery.isPending && <p role="status">Loading tools…</p>}
+              {toolQuery.isPending && (
+                <div role="status" className="flex items-center gap-2 p-2">
+                  <Spinner className="size-4" />
+                  <span className="text-muted-foreground text-sm">Loading tools…</span>
+                </div>
+              )}
               {toolQuery.isError && (
-                <Empty role="alert" className="flex-none p-3">
-                  <EmptyDescription>
-                    Could not load tools.{" "}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => void toolQuery.refetch()}
-                    >
-                      Retry
-                    </Button>
-                  </EmptyDescription>
-                </Empty>
+                <div className="col-span-full">
+                  <QueryError
+                    error={toolQuery.error}
+                    message="Could not load tools."
+                    retry={() => void toolQuery.refetch()}
+                    isRetrying={toolQuery.isRefetching}
+                  />
+                </div>
               )}
               {!toolQuery.isPending &&
                 !toolQuery.isError &&

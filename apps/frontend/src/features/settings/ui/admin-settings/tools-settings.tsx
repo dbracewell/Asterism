@@ -241,7 +241,14 @@ export const ToolsSettings = ({
     return <Spinner />;
   }
   if (toolSettingsQuery.isError || settings == null) {
-    return <p role="alert">Tool settings could not be loaded.</p>;
+    return (
+      <QueryError
+        error={toolSettingsQuery.error}
+        message="Tool settings could not be loaded."
+        retry={() => toolSettingsQuery.refetch()}
+        isRetrying={toolSettingsQuery.isRefetching}
+      />
+    );
   }
 
   return <ToolsSettingsForm appSettings={settings} />;
