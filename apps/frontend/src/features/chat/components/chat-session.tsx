@@ -17,7 +17,6 @@ import {
 } from "@/features/chat/components/chat-input";
 import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
-import { useActiveChatSession } from "@/features/chat/hooks/use-active-chat-session";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import {
   connectionStatusMap,
@@ -99,7 +98,6 @@ export const ChatSession = ({
   });
 
   const loadedSessionIdRef = React.useRef<string | null>(null);
-  const setSession = useActiveChatSession((state) => state.setSession);
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const [incomingMessage, setIncomingMessage] =
     React.useState<StreamingMessage | null>(null);
@@ -115,27 +113,23 @@ export const ChatSession = ({
     if (!session) return;
     if (loadedSessionIdRef.current !== session.info.id) {
       loadedSessionIdRef.current = session.info.id;
-      setSession({ id: session.info.id, title: session.info.title ?? null });
       messageListRef.current?.scrollIntoView({ behavior: "instant" });
       setIncomingMessage(null);
-    } else {
-      setSession({ id: session.info.id, title: session.info.title ?? null });
     }
-  }, [session, setSession]);
+  }, [session]);
 
   React.useEffect(() => {
     return () => {
-      setSession({ id: null, title: null });
       loadedSessionIdRef.current = null;
     };
-  }, [chatId, setSession]);
+  }, [chatId]);
 
   useSubscribeEvent({
     type: "chat-session:update",
     handler: (payload) => {
       if (payload.session_id !== chatId || !payload.title) return;
 
-      // Keep the source query synchronized as well as the header store.
+      // Keep the source query synchronized.
       // Otherwise a later refetch can replace the just-received title with
       // the stale null value returned when the chat was first created.
       queryClient.setQueryData(queryKey, (previous?: Chat) =>
@@ -146,7 +140,6 @@ export const ChatSession = ({
             }
           : previous,
       );
-      setSession({ id: payload.session_id, title: payload.title });
     },
   });
 
@@ -549,60 +542,6 @@ export const ContextUsageProgress = ({
       <span className="text-muted-foreground text-xs select-none">
         {percent}%
       </span>
-    </div>
-  );
-};
-
-export const ContextUsageMeter = ({
-  usage,
-  contextWindow,
-}: {
-  usage: Chat["context_usage"];
-  contextWindow: number | null;
-}) => {
-  if (!usage) return null;
-
-  if (!contextWindow) {
-    return (
-      <p className="text-muted-foreground mb-1 text-center text-xs">
-        Estimated input: {usage.input_tokens.toLocaleString()} tokens · Context
-        window unknown
-      </p>
-    );
-  }
-
-  const percent = Math.min(
-    100,
-    Math.round((usage.total_tokens / contextWindow) * 100),
-  );
-  const state =
-    percent >= 90 ? "critical" : percent >= 70 ? "warning" : "normal";
-  const color = state === "critical" ? "bg-destructive" : "bg-primary";
-  const status =
-    state === "critical"
-      ? "Near limit"
-      : state === "warning"
-        ? "Elevated"
-        : "Normal";
-
-  return (
-    <div className="mb-1 px-1" aria-label="Estimated context usage">
-      <div className="text-muted-foreground mb-1 flex justify-between text-xs">
-        <span>Estimated context usage</span>
-        <span>
-          {status} · {percent}%
-        </span>
-      </div>
-      <div
-        aria-valuemax={100}
-        aria-valuemin={0}
-        aria-valuenow={percent}
-        aria-valuetext={`${percent}% estimated context usage: ${status}`}
-        className="bg-muted h-1.5 overflow-hidden rounded-full"
-        role="progressbar"
-      >
-        <div className={cn("h-full", color)} style={{ width: `${percent}%` }} />
-      </div>
     </div>
   );
 };

@@ -16,7 +16,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSideBarWidth } from "@/features/dashboard/hooks/use-sidebar-width";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
@@ -169,7 +168,6 @@ const Sidebar = ({
     useSidebar();
   const [isResizing, setIsResizing] = React.useState(false);
   const [localWidth, setLocalWidth] = React.useState(width);
-  const setSideBarWidth = useSideBarWidth((state) => state.setSideBarWidth);
   React.useEffect(() => setLocalWidth(width), [width]);
 
   const startResizing = React.useCallback(() => {
@@ -179,20 +177,18 @@ const Sidebar = ({
   const stopResizing = React.useCallback(() => {
     if (isResizing) {
       setIsResizing(false);
-      setSideBarWidth(localWidth);
       Cookies.set(SIDEBAR_WIDTH_COOKIE_NAME, `${localWidth}`);
     }
-  }, [isResizing, localWidth, setSideBarWidth]);
+  }, [isResizing, localWidth]);
 
   const resize = React.useCallback(
     (e: MouseEvent) => {
       if (isResizing) {
         const newWidth = Math.min(Math.max(e.clientX, 200), 500);
         setLocalWidth(`${newWidth}px`);
-        setSideBarWidth(`${newWidth}px`);
       }
     },
-    [isResizing, setSideBarWidth],
+    [isResizing],
   );
 
   React.useEffect(() => {

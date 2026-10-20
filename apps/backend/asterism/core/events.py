@@ -20,9 +20,6 @@ MAX_EVENT_HANDLER_TASKS = 100
 class EventType(StrEnum):
     SYSTEM_START = "system_start"
     SYSTEM_STOP = "system_stop"
-    TOOL_CREATED = "tool_created"
-    TOOL_UPDATED = "tool_updated"
-    TOOL_DELETED = "tool_deleted"
     DRAFT_MODEL_UPDATED = "draft_model_updated"
     WEBHOOK_CHAT_UPDATE = "chat-session:update"
 
