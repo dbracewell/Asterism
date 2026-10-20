@@ -1,13 +1,13 @@
 "use client";
-import { ChatFileContext } from "./chat-file-context";
-import { RetrievalCitations } from "./retrieval-citations";
-import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
-import { ExistingChatModelPicker, ExecutionLabel } from "./chat-model-picker";
-import { QueryError } from "@/components/query-error";
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
-import { Badge } from "@/components/ui/badge";
+import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/features/auth/components/user-context";
@@ -24,22 +24,18 @@ import {
   SubAgentActivity,
   updateSubAgentActivities,
 } from "@/features/chat/types";
+import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import { Chat, Message } from "@/lib/client";
 import {
+  chatFileGetScopeOptions,
+  chatMessageSendMutation,
+  chatModelsListOptions,
   chatSessionGetOneOptions,
   chatSessionGetOneQueryKey,
   messageUpdateMutation,
-  chatMessageSendMutation,
-  chatFileGetScopeOptions,
-  chatModelsListOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +49,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
+import { ChatFileContext } from "./chat-file-context";
+import { ExecutionLabel, ExistingChatModelPicker } from "./chat-model-picker";
+import { RetrievalCitations } from "./retrieval-citations";
 
 const SCROLL_BOTTOM_THRESHOLD = 200;
 const AUTO_SCROLL_LOCK_THRESHOLD = 16;
@@ -284,7 +283,7 @@ export const ChatSession = ({
 
   if (error && !session) {
     return (
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto [overflow-wrap:anywhere]">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto wrap-anywhere">
         <QueryError
           error={error}
           message="Could not load conversation."
@@ -299,7 +298,6 @@ export const ChatSession = ({
     return <Spinner />;
   }
 
-  const chatAgent = user.settings.main_agent;
   const selectedModelAvailable =
     !models.error &&
     !!models.data?.some(
@@ -331,7 +329,7 @@ export const ChatSession = ({
     >
       <section
         aria-label="Conversation history"
-        className="bg-background relative mx-auto flex min-h-0 w-full max-w-5xl min-w-0 flex-1 scroll-p-3 flex-col overflow-y-auto px-3 py-4 [overflow-wrap:anywhere] [&>*]:shrink-0"
+        className="bg-background relative mx-auto flex min-h-0 w-full min-w-0 flex-1 scroll-p-3 flex-col overflow-y-auto px-3 py-4 wrap-anywhere *:shrink-0"
         style={{ overflowAnchor: "auto" }}
         onScroll={(e) => {
           const scrollPosition =
@@ -385,39 +383,37 @@ export const ChatSession = ({
             their original model.
           </p>
         )}
-        {chatAgent && (
-          <Badge className="mb-3 w-fit" variant="secondary">
-            Agent: {chatAgent.name}
-          </Badge>
-        )}
-        {session.messages.map((message) => (
-          <MessageItem
-            chatId={chatId}
-            key={message.id}
-            message={message}
-            isProcessing={interactionBusy}
-            canRegenerate={
-              selectedModelAvailable && connectionStatus === "Connected"
-            }
-            onRegenerate={requestRegeneration}
-            sendJsonMessage={sendJsonMessage}
-          />
-        ))}
-        {!incomingMessage &&
-          session.messages.length > 0 &&
-          session.messages[0].status === "pending" && <Loading />}
-        <SubAgentActivityPanel activities={subAgentActivities} />
-        {incomingMessage && (
-          <MessageItem
-            chatId={chatId}
-            message={incomingMessage}
-            isProcessing={interactionBusy}
-            canRegenerate={false}
-            onRegenerate={requestRegeneration}
-            defaultShowThinking
-            sendJsonMessage={sendJsonMessage}
-          />
-        )}
+        <div className="mx-auto max-w-5xl">
+          {session.messages.map((message) => (
+            <MessageItem
+              chatId={chatId}
+              key={message.id}
+              message={message}
+              isProcessing={interactionBusy}
+              canRegenerate={
+                selectedModelAvailable && connectionStatus === "Connected"
+              }
+              onRegenerate={requestRegeneration}
+              sendJsonMessage={sendJsonMessage}
+            />
+          ))}
+
+          {!incomingMessage &&
+            session.messages.length > 0 &&
+            session.messages[0].status === "pending" && <Loading />}
+          <SubAgentActivityPanel activities={subAgentActivities} />
+          {incomingMessage && (
+            <MessageItem
+              chatId={chatId}
+              message={incomingMessage}
+              isProcessing={interactionBusy}
+              canRegenerate={false}
+              onRegenerate={requestRegeneration}
+              defaultShowThinking
+              sendJsonMessage={sendJsonMessage}
+            />
+          )}
+        </div>
         <div
           ref={messageListRef}
           className="shrink-0"
@@ -584,11 +580,10 @@ const MessageItem = React.memo(
         client,
       }),
     });
-
     return (
       <div
         className={cn(
-          "mb-5 flex min-w-0 flex-col gap-1 [overflow-wrap:anywhere]",
+          "mb-5 flex min-w-0 flex-col gap-1 wrap-anywhere",
           !!message.tool_calls && "mb-0!",
         )}
       >
