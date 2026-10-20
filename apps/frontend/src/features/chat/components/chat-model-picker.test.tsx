@@ -8,6 +8,7 @@ import {
   ExistingChatModelPicker,
   ExecutionLabel,
 } from "./chat-model-picker";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { MessageExecution } from "@/lib/client";
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -28,7 +29,9 @@ function wrapper(
 ) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <TooltipProvider>{children}</TooltipProvider>
+      </QueryClientProvider>
     );
   };
 }

@@ -55,4 +55,3 @@ class JobManager[**P](abc.ABC):
                 return_exceptions=True,
             )
         self._tasks.clear()
-
