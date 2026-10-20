@@ -1,7 +1,5 @@
-import {
-  AuthForm,
-  sanitizeRedirectPath,
-} from "@/features/auth/components/auth-form";
+import { AuthForm } from "@/features/auth/components/auth-form";
+import { sanitizeRedirectPath } from "@/features/auth/redirect";
 import { getUserCount } from "@/features/auth/server/session";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
