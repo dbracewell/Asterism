@@ -72,8 +72,32 @@ def post_webhook(
             "payload": payload,
             "userId": user_id,
         },
+        timeout=5.0,
     )
     response.raise_for_status()
+
+
+async def post_webhook_async(
+    event_type: str,
+    payload: dict[str, Any],
+    user_id: str | None = None,
+) -> None:
+    """
+    Asynchronously post a webhook to the frontend with a non-blocking HTTP client.
+    """
+    import httpx
+
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.post(
+            url=f"{config.frontend_internal_url}/api/stream",
+            headers={"x-asterism-system-key": config.system_key},
+            json={
+                "type": event_type,
+                "payload": payload,
+                "userId": user_id,
+            },
+        )
+        response.raise_for_status()
 
 
 class EventBus:
@@ -103,38 +127,57 @@ class EventBus:
 
         return decorator
 
-    def _spawn[T: BaseModel](self, handler: EventHandler[T], event: Event[T]) -> None:
+    def _spawn_task(
+        self,
+        factory: Callable[[], Coroutine[Any, Any, Any]],
+        name: str = "task",
+    ) -> None:
         if self._shutting_down or len(self._tasks) >= MAX_EVENT_HANDLER_TASKS:
             self.dropped_handler_dispatches += 1
-            self.logger.warning("Event handler dispatch dropped due to lifecycle capacity")
+            self.logger.warning("Event dispatch dropped due to lifecycle capacity: %s", name)
             return
 
         async def run() -> None:
             try:
-                await handler(event)
+                await factory()
             except asyncio.CancelledError:
                 raise
             except Exception:
-                # Event payloads can contain user data; never include an
-                # exception string or event in this process-lifetime log.
-                self.logger.exception("Event handler failed")
+                self.logger.exception("Event dispatch failed: %s", name)
 
         task = asyncio.create_task(run())
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
 
+    def _spawn[T: BaseModel](self, handler: EventHandler[T], event: Event[T]) -> None:
+        self._spawn_task(lambda: handler(event), name=f"handler::{event.type.name}")
+
     def emit[T: BaseModel](self, event: Event[T]) -> None:
         if event.type.name.startswith("WEBHOOK_"):
             if event.payload is None:
                 raise ValueError("Websockets require a payload")
+            payload = event.payload.model_dump(mode="json")
+            user_id = event.user_id
+            event_type = event.type.value
             try:
-                post_webhook(
-                    event_type=event.type.value,
-                    payload=event.payload.model_dump(mode="json"),
-                    user_id=event.user_id,
+                asyncio.get_running_loop()
+                self._spawn_task(
+                    lambda: post_webhook_async(
+                        event_type=event_type,
+                        payload=payload,
+                        user_id=user_id,
+                    ),
+                    name=f"webhook::{event_type}",
                 )
-            except Exception as error:
-                self.logger.error("Event webhook delivery failed: %s", error)
+            except RuntimeError:
+                try:
+                    post_webhook(
+                        event_type=event_type,
+                        payload=payload,
+                        user_id=user_id,
+                    )
+                except Exception as error:
+                    self.logger.error("Event webhook delivery failed: %s", error)
 
         for handler in self.handlers[event.type].values():
             self._spawn(handler, event)

@@ -535,7 +535,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ### 4.6 Other Backend & Frontend Code Smells
 
-- **Webhooks and JWKS fetches block the main async event loop**:
+- **[FIXED] Webhooks and JWKS fetches block the main async event loop**:
   - **Where**: [events.py](file:///Users/david/prj/asterism/apps/backend/asterism/core/events.py#L54-L76) (`post_webhook`) and [security.py](file:///Users/david/prj/asterism/apps/backend/asterism/core/security.py#L35) (`verify_jwks_token`).
   - **Problem**: `post_webhook` uses synchronous `requests.post(url)` with **no timeout** directly on the async event loop. If a webhook server hangs, the entire backend freezes for all users.
   - **Fix**: Use `httpx.AsyncClient(timeout=5.0)` (or `asyncio.to_thread` with a timeout) for webhooks and JWKS key lookups.

@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from typing import Annotated, Literal
 
@@ -89,7 +90,7 @@ async def chat(
     token: str = Query(...),
 ) -> None:
     try:
-        user = verify_jwks_token(token)
+        user = await asyncio.to_thread(verify_jwks_token, token)
     except UnauthorizedException:
         await websocket.close(code=1008, reason="Unauthorized")
         return

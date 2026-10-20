@@ -192,9 +192,7 @@ class Agent:
                 project_snapshot
                 if project_snapshot is not None
                 else (
-                    await read_project_scope_snapshot(
-                        user_id=self.user.id, project_id=chat_snap.project_id, session=db
-                    )
+                    await read_project_scope_snapshot(user_id=self.user.id, project_id=chat_snap.project_id, session=db)
                     if chat_snap.project_id
                     else None
                 )

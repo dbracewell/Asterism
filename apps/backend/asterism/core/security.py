@@ -17,6 +17,7 @@ jwks_client = jwt.PyJWKClient(
     cache_keys=True,
     cache_jwk_set=True,
     lifespan=3600,
+    timeout=5,
 )
 
 
