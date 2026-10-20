@@ -5,8 +5,8 @@ import uuid
 from pathlib import Path
 
 import pytest
-from asterism.db.base import Base
 from asterism.db.database import set_sqlite_pragma
+from asterism.db.model_registry import Base
 from asterism.domains.extraction.models import FileExtractionModel
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel
@@ -198,7 +198,7 @@ def test_source_and_owner_deletion_cascade_memberships(project_session, target):
 
 def test_extraction_has_no_project_or_chat_model_imports():
     extraction = Path(__file__).parents[1] / "asterism" / "domains" / "extraction"
-    forbidden = ("asterism.domains.projects", "asterism.domains.chat", "asterism.db.base")
+    forbidden = ("asterism.domains.projects", "asterism.domains.chat", "asterism.db.model_registry")
 
     def is_forbidden(module):
         return any(module == name or module.startswith(name + ".") for name in forbidden)

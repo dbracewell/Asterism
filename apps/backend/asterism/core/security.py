@@ -1,3 +1,10 @@
+"""JWT authentication for backend API routes.
+
+Tokens are issued by the frontend's BetterAuth instance and verified here
+against its JWKS endpoint (RS256, with issuer/audience pinned to the public URL).
+FastAPI dependencies expose the resolved :class:`AuthedUser` to route handlers.
+"""
+
 from typing import Annotated, Literal
 
 import jwt
@@ -10,6 +17,8 @@ from asterism.core import config
 from .exceptions import UnauthorizedException
 from .schemas import AuthedUser
 
+# Bearer scheme that returns None (instead of a 403) when no header is present,
+# so callers can decide between "unauthenticated" and "invalid token".
 security = HTTPBearer(auto_error=False)
 
 jwks_client = jwt.PyJWKClient(
@@ -22,12 +31,34 @@ jwks_client = jwt.PyJWKClient(
 
 
 def _require_non_empty_claim(value: object) -> str:
+    """Coerce a JWT claim to a non-empty string.
+
+    Args:
+        value: The raw claim value from the decoded token payload.
+
+    Raises:
+        UnauthorizedException: If the claim is missing, not a string, or blank.
+    """
     if not isinstance(value, str) or not value.strip():
         raise UnauthorizedException()
     return value
 
 
 def verify_jwks_token(token: str) -> AuthedUser:
+    """Verify a BetterAuth-issued JWT and resolve the authenticated user.
+
+    Checks signature (via JWKS), issuer, audience, and required claims
+    (id/sub, email, name, role). The ``id`` and ``sub`` claims must agree when both are present.
+
+    Args:
+        token: Raw JWT string from the Authorization header.
+
+    Returns:
+        The resolved :class:`AuthedUser`.
+
+    Raises:
+        UnauthorizedException: If any part of verification or claim extraction fails.
+    """
     try:
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
@@ -36,6 +67,7 @@ def verify_jwks_token(token: str) -> AuthedUser:
             algorithms=["RS256"],
             audience=config.jwt_audience,
             issuer=config.jwt_issuer,
+            options={"require": ["exp"]},
         )
         if not isinstance(payload, dict):
             raise UnauthorizedException()
@@ -74,6 +106,17 @@ def verify_jwks(
         Depends(security),
     ],
 ) -> AuthedUser:
+    """FastAPI dependency requiring a valid bearer token.
+
+    Args:
+        credentials: Parsed ``Authorization: Bearer <token>`` header, if present.
+
+    Returns:
+        The resolved :class:`AuthedUser`.
+
+    Raises:
+        UnauthorizedException: If no credentials are provided or the token is invalid.
+    """
     if not credentials:
         raise UnauthorizedException()
     return verify_jwks_token(credentials.credentials)
@@ -88,6 +131,14 @@ def optional_auth(
         Depends(security),
     ],
 ) -> AuthedUser | None:
+    """FastAPI dependency accepting an optional bearer token.
+
+    Args:
+        credentials: Parsed ``Authorization: Bearer <token>`` header, if present.
+
+    Returns:
+        The resolved :class:`AuthedUser`, or None when no token is provided or it is invalid.
+    """
     if not credentials:
         return None
     try:

@@ -6,7 +6,7 @@ from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, Unique
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
-from asterism.db.columns import JSONB_COLUMN
+from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.llm.schemas import ChatCompletionParams
 
@@ -66,12 +66,12 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
         default=5,
     )
     chat_parameters: Mapped[ChatCompletionParams] = mapped_column(
-        JSONB_COLUMN(),
+        jsonb_type(TypeAdapter(ChatCompletionParams)),
         nullable=False,
         default=dict,
     )
     tools: Mapped[list[str]] = mapped_column(
-        JSONB_COLUMN(),
+        jsonb_type(TypeAdapter(list[str])),
         nullable=False,
         default=list,
     )
@@ -80,11 +80,11 @@ class AgentProfileModel(Base, UuidPrimaryKeyMixin):
 class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     __tablename__ = "sub_agent_traces"
     context_provenance: Mapped[ContextProvenance | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(ContextProvenance)),
+        jsonb_type(TypeAdapter(ContextProvenance)),
         nullable=True,
     )
     prompt_provenance: Mapped[PromptProvenance | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(PromptProvenance)),
+        jsonb_type(TypeAdapter(PromptProvenance)),
         nullable=True,
     )
 
@@ -116,7 +116,7 @@ class SubAgentTraceModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=True,
     )
     message_roles: Mapped[list[str]] = mapped_column(
-        JSONB_COLUMN(),
+        jsonb_type(),
         nullable=False,
         default=list,
     )

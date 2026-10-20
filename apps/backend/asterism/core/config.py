@@ -1,3 +1,14 @@
+"""Runtime configuration for the Asterism backend.
+
+A single pydantic-settings ``Config`` instance (exported as ``config``) is built
+at import time from environment variables and validated against the active
+configuration profile. Profile tiers:
+
+- ``development`` / ``production`` — full runtimes; strict PUBLIC_URL/SYSTEM_KEY rules.
+- ``backend-init`` / ``reset`` — runtime profiles that touch storage but skip key rules.
+- ``auth-migrate`` / ``build`` / ``test`` / ``codegen`` — non-runtime profiles with relaxed checks.
+"""
+
 import os
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -5,10 +16,12 @@ from urllib.parse import urlsplit
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Docker-managed secrets directory (populated in containers; absent locally).
 secrets_dir = Path("/run/secrets")
 _FULL_RUNTIME_PROFILES = {"development", "production"}
 _RUNTIME_PROFILES = _FULL_RUNTIME_PROFILES | {"backend-init", "reset"}
 _PROFILES = _RUNTIME_PROFILES | {"auth-migrate", "build", "test", "codegen"}
+# Known placeholder prefixes that must never reach a full runtime.
 _PLACEHOLDER_PREFIXES = (
     "replace-with-",
     "build-only-placeholder",
@@ -18,15 +31,24 @@ _PLACEHOLDER_PREFIXES = (
 
 
 def _file_secret(name: str) -> str:
+    """Read a secret from the Docker secrets directory.
+
+    Args:
+        name: Name of the secret file under ``/run/secrets``.
+
+    Returns:
+        The file's contents with trailing line endings stripped, or "" when the
+        secret is not mounted (e.g., local development).
+    """
     canonical = secrets_dir / name
-    entries = {path.name for path in secrets_dir.iterdir()} if secrets_dir.exists() else set()
-    has_canonical = name in entries
-    if not has_canonical:
+    try:
+        return canonical.read_text().removesuffix("\n").removesuffix("\r")
+    except FileNotFoundError:
         return ""
-    return canonical.read_text().removesuffix("\n").removesuffix("\r")
 
 
 def default_allowed_tools() -> list[str]:
+    """Return the built-in tools enabled for agents by default."""
     return [
         "get_user_name",
         "get_current_timestamp",
@@ -35,6 +57,18 @@ def default_allowed_tools() -> list[str]:
 
 
 def _valid_origin(value: str, production: bool) -> bool:
+    """Check whether *value* is a well-formed browser-facing origin.
+
+    Must be an absolute http(s) URL with no credentials, path, query, fragment,
+    or trailing slash. In production, non-loopback hosts must use https.
+
+    Args:
+        value: Candidate origin string (e.g., ``https://app.example.com``).
+        production: Whether the strict https requirement applies.
+
+    Returns:
+        True when the origin is acceptable for the given environment.
+    """
     parsed = urlsplit(value)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         return False
@@ -47,10 +81,17 @@ def _valid_origin(value: str, production: bool) -> bool:
 
 
 class ConfigValidationError(RuntimeError):
-    pass
+    """Raised when the active configuration is invalid for its profile."""
 
 
 class Config(BaseSettings):
+    """Typed, validated application settings loaded from environment variables.
+
+    Every field can be overridden via an uppercase env var (e.g., ``STORAGE_ROOT``).
+    A module-level instance is created and runtime-validated at import time so
+    misconfiguration fails fast before the app serves traffic.
+    """
+
     system_key: str = Field(default_factory=lambda: _file_secret("SYSTEM_KEY"))
     """System key used for signing JWTs and other internal secrets (value redacted)."""
 
@@ -109,7 +150,7 @@ class Config(BaseSettings):
     """Maximum retrieval results a knowledge search tool call may request."""
 
     max_knowledge_allowed_files: int = 1_000
-    """Maximum retrieval results a knowledge search tool call may request."""
+    """Maximum number of files a single knowledge search query may be scoped to."""
 
     max_knowledge_result_bytes: int = 16 * 1024
     """Maximum UTF-8 bytes returned by one knowledge search tool call."""
@@ -152,6 +193,12 @@ class Config(BaseSettings):
 
     @model_validator(mode="after")
     def finalize(self):
+        """Derive dependent defaults after fields are loaded.
+
+        Resolves ``storage_root`` to an absolute path, falls back to a SQLite
+        database inside it when ``db_url`` is unset, and defaults the CORS
+        allowlist to the public URL.
+        """
         if self.config_profile in _RUNTIME_PROFILES and not self.storage_root.is_absolute():
             raise ValueError("STORAGE_ROOT must be an absolute path")
         self.storage_root = self.storage_root.resolve()
@@ -163,6 +210,15 @@ class Config(BaseSettings):
         return self
 
     def validate_runtime(self) -> None:
+        """Validate the configuration against the active profile's rules.
+
+        Applies profile-aware checks (PUBLIC_URL origin shape, SYSTEM_KEY
+        presence/strength for full runtimes) plus range and cross-field bounds
+        on every tunable limit.
+
+        Raises:
+            ConfigValidationError: If any value is unknown, out of range, or unsafe for the profile.
+        """
         if self.config_profile not in _PROFILES:
             raise ConfigValidationError(f"ASTERISM_CONFIG_PROFILE is unknown: {self.config_profile}")
         if self.config_profile not in _RUNTIME_PROFILES:
@@ -237,6 +293,7 @@ class Config(BaseSettings):
             raise ConfigValidationError("DB_URL must use SQLite with an absolute path (URL redacted)")
 
     def prepare_storage(self) -> None:
+        """Create the storage root and all derived subdirectories if they do not exist."""
         self.storage_root.mkdir(exist_ok=True, parents=True)
         self.files_root.mkdir(exist_ok=True, parents=True)
         self.knowledge_root.mkdir(exist_ok=True, parents=True)
@@ -245,41 +302,53 @@ class Config(BaseSettings):
 
     @property
     def jwt_issuer(self) -> str:
+        """JWT ``iss`` claim: the public frontend URL."""
         return self.public_url
 
     @property
     def jwt_audience(self) -> str:
+        """JWT ``aud`` claim: the public frontend URL."""
         return self.public_url
 
     @property
     def frontend_internal_url(self) -> str:
-        # Next.js in development, nginx in the combined container.
+        """Loopback URL of the frontend as seen from the backend process.
+
+        Served by Next.js in development and by nginx in the combined container.
+        """
         return "http://127.0.0.1:3000"
 
     @property
     def jwks_url(self) -> str:
+        """BetterAuth JWKS endpoint used to verify frontend-issued JWTs."""
         return f"{self.frontend_internal_url}/api/auth/jwks"
 
     @computed_field
     @property
     def files_root(self) -> Path:
+        """Directory for user-uploaded and generated files."""
         return self.storage_root / "files"
 
     @computed_field
     @property
     def knowledge_root(self) -> Path:
+        """Directory for the LanceDB vector store and knowledge artifacts."""
         return self.storage_root / "knowledge"
 
     @computed_field
     @property
     def knowledge_models_root(self) -> Path:
+        """Directory for the pinned CLIP embedding model bundle."""
         return self.storage_root / "models" / "knowledge-clip"
 
     @computed_field
     @property
     def local_caption_models_root(self) -> Path:
+        """Directory for the local SmolVLM2 captioning model bundle."""
         return self.storage_root / "models" / "captioning-smolvlm2"
 
 
+# Single process-wide instance; constructed and validated at import time so bad
+# configuration fails before the application starts serving.
 config = Config()
 config.validate_runtime()

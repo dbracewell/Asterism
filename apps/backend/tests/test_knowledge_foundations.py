@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from asterism.core.config import Config, ConfigValidationError
-from asterism.db.base import Base
+from asterism.db.model_registry import Base
 from asterism.domains.extraction.embedding import EmbeddingProviderError, OnnxClipEmbeddingProvider, embedding_model
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
 from asterism.domains.extraction.schemas import FileKnowledgeArtifact

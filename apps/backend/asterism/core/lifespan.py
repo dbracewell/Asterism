@@ -1,3 +1,6 @@
+"""FastAPI lifespan wiring: ordered startup of all subsystems and their teardown."""
+
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -20,14 +23,21 @@ logger = get_logger("ASTERISM")
 
 
 async def init_system() -> None:
+    """Bring up all backend subsystems in dependency order.
+
+    Validates configuration, prepares storage directories, initializes the
+    database session manager and knowledge runtime, loads the event-bus handler
+    module manifest, then loads built-in components/tools into the tool registry.
+    """
     config.validate_runtime()
     config.prepare_storage()
     get_draft_model()
-    db_session_manager.init()
+    await db_session_manager.init()
     logger.info("Database session manager initialized.")
     await initialize_knowledge_runtime()
     logger.info("Knowledge vector store initialized.")
     logger.info("Loading tools and components...")
+    from asterism.core import event_handlers  # noqa: F401 - event-bus handler module manifest
     from asterism.domains.components.builtin import load_builtin_components
     from asterism.domains.tools.builtin import load_builtin_tools
 
@@ -36,13 +46,26 @@ async def init_system() -> None:
 
     tools = await tool_registry.active_tools()
     logger.info(f"{len(tools.items)} tools available.")
+    logger.info(
+        "Event handlers registered: %s",
+        {t.value: sorted(h.__qualname__ for h in handlers.values()) for t, handlers in event_bus.handlers.items()},
+    )
     logger.info("Tools and components loaded.")
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """FastAPI lifespan handler: starts the system before serving and tears everything down after.
+
+    Teardown order is the reverse of startup: event bus, chat jobs, knowledge
+    runtime, LLM HTTP clients, then the database session manager.
+
+    Args:
+        app: The FastAPI application instance (unused beyond context).
+    """
     logger.info("Asterism backend starting up...")
     await init_system()
+    event_bus.emit(NoArgEvent(type=EventType.SYSTEM_START))
     yield
     event_bus.emit(NoArgEvent(type=EventType.SYSTEM_STOP))
     await event_bus.shutdown()
@@ -50,4 +73,4 @@ async def lifespan(app: FastAPI):
     await shutdown_knowledge_runtime()
     await close_openai_clients()
     await db_session_manager.close()
-    logger.info("Asterism backend shutting up...")
+    logger.info("Asterism backend shutting down...")

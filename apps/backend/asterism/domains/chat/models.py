@@ -18,7 +18,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from asterism.common.enums import enum_values
 from asterism.core.config import default_allowed_tools
 from asterism.db.base_model import Base
-from asterism.db.columns import JSONB_COLUMN
+from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.llm.schemas import ToolCall, ToolResult
@@ -47,7 +47,7 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     # Retain unavailable/deleted selections instead of retargeting the chat.
     selected_model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     selected_model_snapshot: Mapped[ChatModelChoice | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(ChatModelChoice)),
+        jsonb_type(TypeAdapter(ChatModelChoice)),
         nullable=True,
     )
     model_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -56,7 +56,7 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=True,
     )
     allowed_tools: Mapped[list[str]] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(list[str])),
+        jsonb_type(TypeAdapter(list[str])),
         nullable=False,
         default=default_allowed_tools,
     )
@@ -94,15 +94,15 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=True,
     )
     execution: Mapped[MessageExecution | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(MessageExecution)),
+        jsonb_type(TypeAdapter(MessageExecution)),
         nullable=True,
     )
     pending_prompt: Mapped[PromptSnapshot | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(PromptSnapshot)),
+        jsonb_type(TypeAdapter(PromptSnapshot)),
         nullable=True,
     )
     pending_execution: Mapped[MessageExecution | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(MessageExecution)),
+        jsonb_type(TypeAdapter(MessageExecution)),
         nullable=True,
     )
     status: Mapped[MessageStatus] = mapped_column(
@@ -137,15 +137,15 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         default="",
     )
     tool_calls: Mapped[list[ToolCall] | None] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(list[ToolCall])),
+        jsonb_type(TypeAdapter(list[ToolCall])),
         nullable=True,
     )
     tool_call_results: Mapped[list[ToolResult | None]] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(list[ToolResult])),
+        jsonb_type(TypeAdapter(list[ToolResult])),
         nullable=True,
     )
     files: Mapped[list[MessageFileReference]] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(list[MessageFileReference])),
+        jsonb_type(TypeAdapter(list[MessageFileReference])),
         nullable=False,
         default=list,
     )

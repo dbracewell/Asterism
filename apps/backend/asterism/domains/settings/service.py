@@ -608,11 +608,9 @@ async def get_app_settings(
 
         if "active_tools" not in full:
             full["active_tools"] = []
-        if full.get("draft_model_id") == "":
-            # Recover settings written by older clients that represented an
-            # unselected draft model as an empty form value.
-            full["draft_model_id"] = None
 
+        # Legacy "" values written by older clients for an unselected draft
+        # model are already normalized to None by the JSON column type.
         new_setting = ApplicationSettings.model_validate(full)
         providers = await get_all_providers(session)
         new_setting.llm_providers = [Provider.model_validate(p) for p in providers]

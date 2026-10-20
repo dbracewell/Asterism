@@ -7,15 +7,15 @@ def search[T](
     match: Callable[[T], bool],
     reverse: bool = False,
 ) -> T | None:
-    """
-    Search for an item in a sequence that matches a given condition.
-    If reverse is True, the search is performed in reverse order.
-    Returns the first matching item, or None if no match is found.
+    """Search for the first item in a sequence that matches a condition.
 
-    args:
-        items: A sequence of items to search through.
-        match: A callable that takes an item and returns True if it matches the condition.
-        reverse: If True, search the sequence in reverse order.
+    Args:
+        items: The sequence of items to search through.
+        match: Predicate called with each item; returns True when the item matches.
+        reverse: When True, search from the end of the sequence toward the start.
+
+    Returns:
+        The first matching item, or None if no item matches.
     """
     seq: Sequence[T] | Iterator[T] = items if not reverse else reversed[T](items)
     return next((item for item in seq if match(item)), None)
@@ -26,15 +26,15 @@ def index_of[T](
     match: Callable[[T], bool],
     reverse: bool = False,
 ) -> int:
-    """
-    Find the index of an item in a sequence that matches a given condition.
-    If reverse is True, the search is performed in reverse order.
-    Returns the index of the first matching item, or -1 if no match is found.
+    """Find the index of the first item in a sequence that matches a condition.
 
-    args:
-        items: A sequence of items to search through.
-        match: A callable that takes an item and returns True if it matches the condition.
-        reverse: If True, search the sequence in reverse order.
+    Args:
+        items: The sequence of items to search through.
+        match: Predicate called with each item; returns True when the item matches.
+        reverse: When True, search from the end of the sequence toward the start.
+
+    Returns:
+        The index of the first matching item, or -1 if no item matches.
     """
     start: int = 0
     stop: int = len(items)

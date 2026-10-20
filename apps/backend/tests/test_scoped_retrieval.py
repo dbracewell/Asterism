@@ -383,7 +383,7 @@ async def test_inline_attachment_revocation_blocks_provider_call(context_runtime
 
 @pytest.mark.asyncio
 async def test_obsolete_agent_assignment_api_schema_and_runtime_fields_are_absent(context_runtime):
-    from asterism.db.base import Base
+    from asterism.db.model_registry import Base
     from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration, SubAgentDefinition
     from asterism.main import app
 

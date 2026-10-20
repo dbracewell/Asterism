@@ -24,7 +24,7 @@ construction, execution/enrichment, and mutations separate. Do not add workspace
 flags to the general library listing function.
 
 Project/file/extraction models do not import the aggregate model registry.
-`db.base` is the registration root used for fresh initialization. Agent scope and
+`db.model_registry` is the registration root used for fresh initialization. Agent scope and
 prompt types do not query project tables. The chat composition roots inject
 readers; domain policy stays at the storage/service boundary that owns it.
 

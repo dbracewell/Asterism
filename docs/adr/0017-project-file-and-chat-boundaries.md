@@ -144,7 +144,7 @@ Owner-scoped base selects belong in the owning `queries.py`. Callers add members
 search, and ordering before pagination; returned-page enrichment and lifecycle
 mutations are separate functions. Shared database helpers contain only neutral
 query mechanics. Project/file/extraction models do not import workspace aggregates;
-`db.base` registers models at initialization, outside ingestion.
+`db.model_registry` (formerly `db.base`) registers models at initialization, outside ingestion.
 
 Backend initialization creates the current schema and FTS indexes. Breaking changes
 use explicit disposable resets, without data migrations, compatibility routes,

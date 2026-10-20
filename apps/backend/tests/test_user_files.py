@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
-from asterism.db.base import Base
+from asterism.db.model_registry import Base
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.chat.schemas import Chat, ChatInfo, Message, MessageFileReference, MessageStatus
 from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus

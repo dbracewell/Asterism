@@ -4,7 +4,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from asterism.db.base import Base
+from asterism.db.model_registry import Base
 from asterism.domains.chat.search_index import initialize_search_index
 from asterism.main import app
 from sqlalchemy import text

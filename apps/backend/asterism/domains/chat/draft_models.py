@@ -7,7 +7,7 @@ from sqlalchemy import ForeignKey, ForeignKeyConstraint, Integer, String, Unique
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
-from asterism.db.columns import JSONB_COLUMN
+from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
 
@@ -17,7 +17,7 @@ class ChatDraftModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     chat_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     selected_file_ids: Mapped[list[uuid.UUID]] = mapped_column(
-        JSONB_COLUMN(TypeAdapter(list[uuid.UUID])),
+        jsonb_type(TypeAdapter(list[uuid.UUID])),
         nullable=False,
         default=list,
     )

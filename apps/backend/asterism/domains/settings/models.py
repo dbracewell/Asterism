@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Index, Intege
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from asterism.db.base_model import Base
-from asterism.db.columns import JSONB_COLUMN
+from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
 from .provider_types import ModelCapabilitySource, ProviderType
@@ -147,7 +147,7 @@ class UserSettingModel(Base, TimestampMixin):
         String,
         primary_key=True,
     )
-    value: Mapped[JsonValue] = mapped_column(JSONB_COLUMN())
+    value: Mapped[JsonValue] = mapped_column(jsonb_type())
 
 
 class ApplicationSettingsModel(Base, TimestampMixin):
@@ -157,4 +157,4 @@ class ApplicationSettingsModel(Base, TimestampMixin):
         String,
         primary_key=True,
     )
-    value: Mapped[JsonValue] = mapped_column(JSONB_COLUMN())
+    value: Mapped[JsonValue] = mapped_column(jsonb_type())

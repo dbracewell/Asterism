@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import pytest
 import pytest_asyncio
 from asterism.core import config
-from asterism.db.base import Base
+from asterism.db.model_registry import Base
 from asterism.domains.extraction.ingestion import ingest_file
 from asterism.domains.extraction.model_download import DownloadNotReadyError
 from asterism.domains.extraction.models import FileKnowledgeArtifactStatus

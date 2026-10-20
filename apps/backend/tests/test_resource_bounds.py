@@ -1,5 +1,6 @@
 import asyncio
 import time
+import types
 
 import pytest
 from asterism.common.cache import SlidingTTLCache
@@ -8,6 +9,7 @@ from asterism.core.events import (
     EventBus,
     EventType,
     NoArgEvent,
+    event_bus,
 )
 from asterism.domains.llm.token_counting import (
     _encoding,
@@ -90,6 +92,35 @@ async def test_event_bus_suppresses_handler_failure_and_cancels_on_shutdown():
     await bus.shutdown()
     assert cancelled.is_set()
     assert bus.pending_task_count == 0
+
+
+def test_event_handler_manifest_registers_expected_handlers():
+    # Importing the manifest must guarantee every @event_bus.on handler module is loaded.
+    import asterism.core.event_handlers  # noqa: F401
+
+    assert {h.__module__ for h in event_bus.handlers[EventType.DRAFT_MODEL_UPDATED].values()} == {
+        "asterism.domains.llm.draft"
+    }
+
+
+def test_event_bus_handler_registration_is_idempotent_and_rejects_key_collisions():
+    bus = EventBus()
+
+    @bus.on(EventType.SYSTEM_START)
+    async def handler(_event):
+        pass
+
+    # Re-registering the same function object is a no-op.
+    bus.on(EventType.SYSTEM_START)(handler)
+    assert len(bus.handlers[EventType.SYSTEM_START]) == 1
+
+    # A *different* function object with the same module::qualname must raise, not overwrite.
+    clone = types.FunctionType(handler.__code__, handler.__globals__, handler.__name__)
+    clone.__qualname__ = handler.__qualname__
+    assert clone is not handler
+
+    with pytest.raises(RuntimeError, match="Duplicate event handler"):
+        bus.on(EventType.SYSTEM_START)(clone)
 
 
 @pytest.mark.asyncio

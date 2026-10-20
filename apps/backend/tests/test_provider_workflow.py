@@ -4,7 +4,7 @@ from unittest.mock import call, patch
 import httpx
 import pytest
 from asterism.core.exceptions import NotFoundException
-from asterism.db.base import Base
+from asterism.db.model_registry import Base
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.settings.discovery import (
     OpenAIProviderDiscovery,

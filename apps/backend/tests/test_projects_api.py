@@ -7,9 +7,9 @@ import pytest
 import pytest_asyncio
 from asterism.core.exceptions import CodedException, UnauthorizedException
 from asterism.core.schemas import AuthedUser
-from asterism.db.base import Base
 from asterism.db.database import set_sqlite_pragma
 from asterism.db.dependencies import get_db_session
+from asterism.db.model_registry import Base
 from asterism.domains.extraction.models import FileExtractionModel
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.store import LocalFileStore

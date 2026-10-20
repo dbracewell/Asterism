@@ -2,8 +2,8 @@ import uuid
 
 import pytest
 import pytest_asyncio
-from asterism.db.base import Base
 from asterism.db.database import set_sqlite_pragma
+from asterism.db.model_registry import Base
 from asterism.domains.chat.models import ChatFileModel, ChatModel, MessageModel
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.projects.models import ProjectModel

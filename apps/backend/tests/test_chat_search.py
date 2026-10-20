@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from asterism.db.base import Base
+from asterism.db.model_registry import Base
 from asterism.domains.chat.models import ChatModel, MessageModel
 from asterism.domains.chat.schemas import MessageStatus, SearchMatchSource, SearchResultKind
 from asterism.domains.chat.search_index import initialize_search_index

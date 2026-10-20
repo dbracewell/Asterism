@@ -110,7 +110,7 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
 ) -> None:
     from contextlib import asynccontextmanager
 
-    from asterism.db.base import Base
+    from asterism.db.model_registry import Base
     from asterism.domains.extraction.caption_schemas import CaptionResult
     from asterism.domains.extraction.captioning import caption
     from asterism.domains.extraction.models import (

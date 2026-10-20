@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from asterism.core.schemas import AuthedUser
-from asterism.db.base import Base
+from asterism.db.model_registry import Base
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.router import get_traces_for_parent_message

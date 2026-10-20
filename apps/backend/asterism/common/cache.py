@@ -12,6 +12,7 @@ class SlidingTTLCache[K, V](TTLCache[K, V]):
 
     @override
     def __getitem__(self, key: K, cache_getitem=TTLCache.__getitem__) -> V:  # pyright: ignore[reportUnknownMemberType, reportUnknownParameterType, reportMissingParameterType]
+        """Return the value for *key*, refreshing its TTL so recently used entries survive."""
         value: V = cast(V, cache_getitem(self, key))
         self.__setitem__(key, value)
         return value
