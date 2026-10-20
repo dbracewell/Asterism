@@ -15,7 +15,7 @@ export async function countUsers(): Promise<number> {
   });
 }
 
-export const getCurrentUser = cache(async () => {
+export const getCurrentUser = cache(async (): Promise<User> => {
   const headersList = await headers();
   const session = await getAuth().api.getSession({
     headers: headersList,
@@ -29,13 +29,18 @@ export const getCurrentUser = cache(async () => {
     throwOnError: true,
   });
 
+  const sessionUser = session.user as typeof session.user & {
+    timezone?: string;
+  };
+
   return {
-    id: session.user.id,
-    role: session.user.role,
-    name: session.user.name,
-    email: session.user.email,
+    id: sessionUser.id,
+    role: sessionUser.role as "admin" | "user",
+    name: sessionUser.name,
+    email: sessionUser.email,
+    timezone: sessionUser.timezone ?? "UTC",
     settings: settings.data,
-  } as User;
+  };
 });
 
 export const getUserCount = cache(countUsers);

@@ -475,7 +475,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ---
 
-### 4.2 Every Page Load Sends a `POST` Request to Update Your Timezone
+### 4.2 [FIXED] Every Page Load Sends a `POST` Request to Update Your Timezone
 
 - **Where**:
   - [features/auth/server/actions.ts](file:///Users/david/prj/asterism/apps/frontend/src/features/auth/server/actions.ts#L66-L72) (`getCurrentUser`)
