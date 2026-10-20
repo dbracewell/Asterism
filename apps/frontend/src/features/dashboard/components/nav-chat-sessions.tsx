@@ -85,14 +85,14 @@ function ScopedNavChatSessions({
   });
   const bulkDelete = useMutation({
     ...chatSessionBulkDeleteMutation({ client }),
-    onSuccess: async (result) => {
+    meta: {
+      invalidates: [chatSessionGetManyQueryKey()],
+    },
+    onSuccess: (result) => {
       const deleted = new Set(result.deleted_chat_ids);
       if (deleted.has(pathname.split("/").at(-1) ?? "")) router.push("/");
       setSelectedIds(new Set());
       setSelectionMode(false);
-      await queryClient.invalidateQueries({
-        queryKey: chatSessionGetManyQueryKey(),
-      });
       toast.success(
         `Deleted ${result.deleted_chat_ids.length} chat${result.deleted_chat_ids.length === 1 ? "" : "s"}`,
       );

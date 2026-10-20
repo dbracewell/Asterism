@@ -13,11 +13,26 @@ import { useEffect, useRef } from "react";
 /** A lazy server draft owns staging; it never grants runtime scope before acceptance. */
 export function useAttachmentDraft(chatId?: string) {
   const queryClient = useQueryClient();
-  const create = useMutation(chatDraftCreateMutation({ client }));
-  const add = useMutation(chatDraftAddFilesMutation({ client }));
-  const remove = useMutation(chatDraftRemoveFilesMutation({ client }));
-  const discard = useMutation(chatDraftDiscardMutation({ client }));
-  const upload = useMutation(chatDraftUploadMutation({ client }));
+  const create = useMutation({
+    ...chatDraftCreateMutation({ client }),
+    meta: { skipGlobalInvalidation: true },
+  });
+  const add = useMutation({
+    ...chatDraftAddFilesMutation({ client }),
+    meta: { skipGlobalInvalidation: true },
+  });
+  const remove = useMutation({
+    ...chatDraftRemoveFilesMutation({ client }),
+    meta: { skipGlobalInvalidation: true },
+  });
+  const discard = useMutation({
+    ...chatDraftDiscardMutation({ client }),
+    meta: { skipGlobalInvalidation: true },
+  });
+  const upload = useMutation({
+    ...chatDraftUploadMutation({ client }),
+    meta: { skipGlobalInvalidation: true },
+  });
   const draft = useRef<Promise<string> | null>(null);
   const id = useRef<string | undefined>(undefined);
   const discardAsync = discard.mutateAsync;

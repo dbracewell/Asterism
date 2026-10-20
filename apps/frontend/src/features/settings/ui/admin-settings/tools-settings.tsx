@@ -20,12 +20,11 @@ import {
   appToolSettingsUpdateMutation,
   toolsGetAllOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
-  const queryClient = useQueryClient();
   const [filter, setFilter] = useState("");
   const [filterActive, setFilterActive] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -38,10 +37,10 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
     ...appToolSettingsUpdateMutation({
       client,
     }),
+    meta: {
+      invalidates: [appToolSettingsGetQueryKey({ client })],
+    },
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: appToolSettingsGetQueryKey({ client }),
-      });
       toast.success("Settings saved");
     },
     onError: () => toast.error("Failed to save. Please try again."),

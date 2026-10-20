@@ -1,6 +1,7 @@
 "use client";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { handleMutationSuccess } from "@/lib/mutation-cache";
 import {
   MutationCache,
   QueryClient,
@@ -9,8 +10,8 @@ import {
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
-    onSuccess: () => {
-      queryClient.invalidateQueries();
+    onSuccess: (_data, _variables, _context, mutation) => {
+      handleMutationSuccess(queryClient, mutation);
     },
   }),
   defaultOptions: {

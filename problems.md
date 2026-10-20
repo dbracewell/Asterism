@@ -501,7 +501,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ---
 
-### 4.4 Every Mutation Refetches Everything in the App (While Some Mutations Refetch Twice)
+### 4.4 [FIXED] Every Mutation Refetches Everything in the App (While Some Mutations Refetch Twice)
 
 - **Where**:
   - [providers.tsx](file:///Users/david/prj/asterism/apps/frontend/src/app/providers.tsx#L12-L16)

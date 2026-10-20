@@ -4,7 +4,7 @@ import {
   chatSessionDeleteMutation,
   chatSessionGetManyQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { toast } from "sonner";
@@ -12,19 +12,18 @@ import { toast } from "sonner";
 export const useChatSessionCrud = () => {
   const router = useRouter();
   const pathName = usePathname();
-  const queryClient = useQueryClient();
 
   const createChatSession = useMutation({
     ...chatSessionCreateMutation({
       client: client,
     }),
-    onSuccess: async (data) => {
+    meta: {
+      invalidates: [chatSessionGetManyQueryKey()],
+    },
+    onSuccess: (data) => {
       // The sidebar query is already mounted when a new chat is created.
       // Refresh it before navigating so the subsequent title-update event has
       // a cache entry to update rather than being discarded.
-      await queryClient.invalidateQueries({
-        queryKey: chatSessionGetManyQueryKey(),
-      });
       router.push(`/c/${data.info.id}`);
     },
     onError: () =>
@@ -35,15 +34,13 @@ export const useChatSessionCrud = () => {
     ...chatSessionDeleteMutation({
       client: client,
     }),
+    meta: {
+      invalidates: [chatSessionGetManyQueryKey()],
+    },
     onMutate: (variables) => {
       if (pathName.endsWith(`/c/${variables.path.chat_id}`)) {
         router.push("/");
       }
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: chatSessionGetManyQueryKey(),
-      });
     },
     onError: () =>
       toast.error("Failed to delete chat session. Please try again."),
