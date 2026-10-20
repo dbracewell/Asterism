@@ -4,6 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import AppPage from "./page";
 const mocks = vi.hoisted(() => ({
+  models: [
+    { id: "model", available: true },
+    { id: "other", available: true },
+  ],
   createChatSession: vi.fn(),
   getProject: vi.fn(async () => ({ id: "project", name: "Research" })),
   user: {
@@ -27,10 +31,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   chatModelsListOptions: () => ({
     queryKey: ["models"],
-    queryFn: async () => [
-      { id: "model", available: true },
-      { id: "other", available: true },
-    ],
+    queryFn: async () => mocks.models,
   }),
 }));
 vi.mock("@/features/chat/components/chat-model-picker", () => ({
@@ -49,48 +50,40 @@ vi.mock("@/features/chat/components/chat-model-picker", () => ({
       <option value="">Choose</option>
       <option value="model">Model A</option>
       <option value="other">Model B</option>
+      <option value="only">Only model</option>
     </select>
   ),
 }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("project_id=project"),
 }));
-vi.mock("@/components/animated-border", () => ({
-  AnimatedBorder: ({
-    borderComponent,
-    children,
-  }: {
-    borderComponent: React.ReactNode;
-    children: React.ReactNode;
-  }) => (
-    <>
-      {borderComponent}
-      {children}
-    </>
-  ),
-}));
 vi.mock("@/components/logo", () => ({ default: () => null }));
 vi.mock("@/features/chat/components/chat-input", () => ({
   ChatInput: ({
     onSubmit,
     disabled,
+    modelSelector,
   }: {
     onSubmit: (value: unknown) => void;
     disabled: boolean;
+    modelSelector: React.ReactNode;
   }) => (
-    <button
-      disabled={disabled}
-      onClick={() =>
-        onSubmit({
-          prompt: "Hello",
-          files: [],
-          requestId: "request",
-          draftId: "staged-draft",
-        })
-      }
-    >
-      Start chat
-    </button>
+    <>
+      {modelSelector}
+      <button
+        disabled={disabled}
+        onClick={() =>
+          onSubmit({
+            prompt: "Hello",
+            files: [],
+            requestId: "request",
+            draftId: "staged-draft",
+          })
+        }
+      >
+        Start chat
+      </button>
+    </>
   ),
   ChatInputContainer: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
@@ -149,4 +142,27 @@ it("blocks new-chat sends when the selected project is unavailable and recovers 
     "href",
     "/projects/project",
   );
+});
+
+it("preselects the only available model when nothing is chosen", async () => {
+  mocks.user.settings.default_model_id = undefined as unknown as string;
+  mocks.models = [
+    { id: "offline", available: false },
+    { id: "only", available: true },
+  ];
+  mocks.createChatSession.mockClear();
+  renderPage();
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Start chat" })).toBeEnabled(),
+  );
+  expect(screen.getByLabelText("Chat model")).toHaveValue("only");
+  await userEvent.click(screen.getByRole("button", { name: "Start chat" }));
+  expect(mocks.createChatSession).toHaveBeenCalledWith({
+    body: expect.objectContaining({ model_id: "only" }),
+  });
+  mocks.models = [
+    { id: "model", available: true },
+    { id: "other", available: true },
+  ];
+  mocks.user.settings.default_model_id = "model";
 });

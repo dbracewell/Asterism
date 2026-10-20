@@ -1,22 +1,33 @@
 /* eslint-disable @next/next/no-img-element */
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
 import { Textarea } from "@/components/ui/textarea";
 import type { UserFile } from "@/lib/client";
 import { useAttachmentDraft } from "../hooks/use-attachment-draft";
-import { LibraryFilePicker } from "@/components/file-manager/library-file-picker";
-import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
+import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { cn } from "@/lib/utils";
 import {
-  IconArrowUp,
-  IconCirclePlus,
-  IconPaperclip,
-  IconPlayerStop,
-  IconPlus,
-  IconX,
-} from "@tabler/icons-react";
+  AlertCircleIcon,
+  ArrowUpIcon,
+  FileTextIcon,
+  LoaderCircleIcon,
+  RefreshCwIcon,
+  SquareIcon,
+  Trash2Icon,
+  UploadCloudIcon,
+  XIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AttachMenu, type AttachAction } from "./attach-menu";
+import { ChatFileContext } from "./chat-file-context";
+import {
+  canReadClipboard,
+  captureScreenshot,
+  isCancelledCapture,
+  nameClipboardFile,
+  readClipboard,
+} from "../lib/capture";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 
@@ -43,8 +54,11 @@ interface AttachedFile {
   sourceId?: string;
 }
 
-export type ChatInput2Props = {
-  bottomComponent?: React.JSX.Element;
+export type ChatInputProps = {
+  /** Rendered in the toolbar after the attach menu, e.g. a model selector. */
+  modelSelector?: React.ReactNode;
+  /** Compact indicators shown in the toolbar beside the send button. */
+  status?: React.ReactNode;
   onSubmit: (data: {
     prompt: string;
     files: string[];
@@ -52,6 +66,10 @@ export type ChatInput2Props = {
     draftId?: string;
   }) => void | Promise<unknown>;
   requestScope?: string;
+  /** Changes when the saved file scope may have changed (branch, model). */
+  scopeKey?: string;
+  /** Blocks removing saved attachments in the files dialog. */
+  scopeLocked?: boolean;
   chatId?: string;
   projectId?: string | null;
   savedFileIds?: string[];
@@ -73,7 +91,7 @@ export const ChatInputContainer = ({
   return (
     <div
       className={cn(
-        "border-input focus-within:border-ring focus-within:ring-ring bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col rounded-[10px] border focus-within:ring-2",
+        "border-input focus-within:border-ring focus-within:ring-ring bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col rounded-2xl border shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-2",
         className,
       )}
     >
@@ -83,9 +101,12 @@ export const ChatInputContainer = ({
 };
 
 export const ChatInput = ({
-  bottomComponent,
+  modelSelector,
+  status,
   onSubmit,
   requestScope,
+  scopeKey,
+  scopeLocked,
   chatId,
   projectId,
   savedFileIds = [],
@@ -95,10 +116,12 @@ export const ChatInput = ({
   isProcessing,
   placeholder,
   className,
-}: ChatInput2Props) => {
+}: ChatInputProps) => {
   const draft = useAttachmentDraft(chatId);
   const [isStaging, setIsStaging] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -290,252 +313,338 @@ export const ChatInput = ({
     }
   };
 
+  const controlsDisabled = !!disabled || isSubmitting || isStaging;
+
+  const updatePrompt = (value: string) => {
+    setPrompt(value);
+    const lines = Math.min(8, value.split(/\n/).length);
+    if (lines !== numberOfLinesRef.current) {
+      numberOfLinesRef.current = lines;
+      onLineNumberChange?.(lines);
+    }
+  };
+
+  const insertText = (text: string) => {
+    const element = textareaRef.current;
+    const start = element?.selectionStart ?? prompt.length;
+    const end = element?.selectionEnd ?? start;
+    updatePrompt(prompt.slice(0, start) + text + prompt.slice(end));
+    element?.focus();
+  };
+
+  const pasteFromClipboard = async () => {
+    if (!canReadClipboard()) {
+      toast.error("Clipboard access is unavailable. Paste into the message.");
+      return;
+    }
+    try {
+      const { files, text } = await readClipboard();
+      if (files.length) addFiles(files);
+      if (text) insertText(text);
+      if (!files.length && !text) toast.info("The clipboard is empty.");
+    } catch {
+      toast.error("Clipboard access was blocked. Paste into the message.");
+    }
+  };
+
+  const takeScreenshot = async () => {
+    try {
+      addFiles([await captureScreenshot()]);
+    } catch (error) {
+      if (!isCancelledCapture(error))
+        toast.error("Could not take a screenshot.");
+    }
+  };
+
+  const handleAttach = (action: AttachAction) => {
+    if (action === "upload") fileInputRef.current?.click();
+    else if (action === "library") setLibraryOpen(true);
+    else if (action === "context") setContextOpen(true);
+    else if (action === "paste") void pasteFromClipboard();
+    else void takeScreenshot();
+  };
+
   const hasPrompt = prompt.trim().length > 0;
   const isDisabled = disabled || isSubmitting || isStaging || !hasPrompt;
 
+  const retryable = attachedFiles.some(
+    (file) => file.state === "queued" || file.state === "failed",
+  );
+
   return (
-    <form
-      className={cn(
-        "bg-muted/70 text-foreground relative flex min-w-0 shrink-0 rounded-[inherit]",
-        className,
-      )}
-      onDragLeave={() => setIsDragOver(false)}
-      onDragOver={(event) => {
-        event.preventDefault();
-        setIsDragOver(true);
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        setIsDragOver(false);
-        if (!disabled && !isSubmitting && !isStaging)
-          addFiles(Array.from(event.dataTransfer.files));
-      }}
-      onSubmit={(event) => {
-        event.preventDefault();
-        void submitPrompt();
-      }}
-    >
-      <div
-        className="flex min-w-0 flex-1 flex-col [overflow-wrap:anywhere]"
-        onClick={() => textareaRef.current?.focus()}
-      >
-        <div
-          className="relative flex min-w-0 flex-wrap items-center gap-2 p-1"
-          aria-live="polite"
-        >
-          <input
-            aria-label="Choose attachments"
-            className="sr-only"
-            multiple
-            onChange={(event) => {
-              if (!disabled && !submittingRef.current)
-                addFiles(Array.from(event.target.files ?? []));
-              event.target.value = "";
-            }}
-            ref={fileInputRef}
-            type="file"
-          />
-          <Button
-            aria-label="Add attachments"
-            disabled={disabled || isSubmitting || isStaging}
-            onClick={() => fileInputRef.current?.click()}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <IconPlus />
-          </Button>
-          <LibraryFilePicker
-            disabled={disabled || isSubmitting || isStaging}
-            excludedIds={[
-              ...savedFileIds,
-              ...attachedFiles.flatMap((file) =>
-                file.sourceId ? [file.sourceId] : [],
-              ),
-            ]}
-            projectId={projectId}
-            onPick={pickFiles}
-          />
-          {!!attachedFiles.length && (
-            <span className="text-muted-foreground text-xs">
-              Next message · this chat only
-            </span>
-          )}
-          {attachedFiles.map((file) => (
-            <Badge
-              className="group bg-background relative h-7 max-w-full min-w-0 rounded-lg! px-1 text-[13px]"
-              key={file.id}
-              variant={file.state === "failed" ? "destructive" : "outline"}
-            >
-              {file.preview ? (
-                <img
-                  alt=""
-                  className="h-5 w-5 rounded object-cover"
-                  src={file.preview}
-                />
-              ) : (
-                <IconPaperclip size={14} />
-              )}
-              <span className="truncate px-1">{file.name}</span>
-              {file.state === "uploading" && (
-                <span className="text-xs">Uploading…</span>
-              )}
-              {file.state === "queued" && (
-                <span className="text-xs">Queued</span>
-              )}
-              {file.state === "ready" && <span className="text-xs">Ready</span>}
-              {file.state === "failed" && (
-                <span className="text-xs">Failed</span>
-              )}
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label={`Remove ${file.name}`}
-                className="ml-auto rounded-full p-0.5 focus-visible:outline"
-                disabled={disabled || isSubmitting || isStaging}
-                onClick={() => removeFile(file.id)}
-                type="button"
-              >
-                <IconX size={13} />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-        {!!attachedFiles.length && (
-          <div className="flex min-w-0 flex-col gap-2 px-2 text-xs">
-            <p>
-              Draft attachments are staged until you send. Removing or
-              discarding keeps the library files. Saved context estimates
-              exclude these unsent attachments.
-            </p>
-            {attachedFiles
-              .filter((file) => file.source)
-              .map((file) => (
-                <div key={file.id} aria-label={`Processing ${file.name}`}>
-                  <span>{file.name}</span>
-                  <KnowledgeStatus
-                    filename={file.source!.filename}
-                    projects={[]}
-                  />
-                </div>
-              ))}
-            <div className="flex flex-wrap gap-2">
-              {attachedFiles.some(
-                (file) => file.state === "queued" || file.state === "failed",
-              ) && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={disabled || isSubmitting || isStaging}
-                  onClick={async () => {
-                    setIsStaging(true);
-                    try {
-                      await stageUploads();
-                    } finally {
-                      setIsStaging(false);
-                    }
-                  }}
-                >
-                  Upload / retry attachments
-                </Button>
-              )}
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={disabled || isSubmitting || isStaging}
-                onClick={discardAttachments}
-              >
-                Discard attachments
-              </Button>
-            </div>
-          </div>
-        )}
-        {attachedFiles
-          .filter((file) => file.state === "failed")
-          .map((file) => (
-            <p
-              className="text-destructive px-2 pb-1 text-xs [overflow-wrap:anywhere]"
-              key={`${file.id}-error`}
-              role="alert"
-            >
-              {file.name}: {file.error}
-            </p>
-          ))}
-        {sendError && (
-          <p role="alert" className="text-destructive px-2 text-xs">
-            {sendError}
-          </p>
-        )}
-        <Textarea
-          disabled={disabled || isSubmitting || isStaging}
-          aria-label="Message"
-          ref={textareaRef}
-          value={prompt}
-          onChange={(event) => {
-            setPrompt(event.target.value);
-            const lines = Math.min(8, event.target.value.split(/\n/).length);
-            if (lines !== numberOfLinesRef.current) {
-              numberOfLinesRef.current = lines;
-              onLineNumberChange?.(lines);
-            }
-          }}
-          className={cn(
-            "box-border rounded-none! border-0 bg-transparent! p-2! ring-0 outline-0",
-            "focus-visible:ring-0 focus-visible:outline-0",
-            "max-h-40! min-h-7!",
-          )}
-          onKeyDown={(event) => {
-            if (
-              event.key === "Enter" &&
-              !event.shiftKey &&
-              !event.nativeEvent.isComposing
-            ) {
-              event.preventDefault();
-              if (!isDisabled) void submitPrompt();
-            }
-          }}
-          placeholder={placeholder}
-        />
-        {bottomComponent}
-      </div>
-      {isProcessing && onStop ? (
-        <Button
-          type="button"
-          variant="destructive"
-          size="icon"
-          className="m-1 shrink-0 self-end"
-          aria-label="Stop generating"
-          onClick={onStop}
-        >
-          <IconPlayerStop />
-        </Button>
-      ) : (
-        <Button
-          type="submit"
-          variant="secondary"
-          size="icon"
-          className={cn("m-1 shrink-0 self-end", !hasPrompt && "hidden")}
-          disabled={isDisabled}
-          aria-label="Send message"
-          onClick={(event) => {
-            event.preventDefault();
-            void submitPrompt();
-          }}
-        >
-          <IconArrowUp />
-        </Button>
-      )}
-      <div
+    <>
+      <form
         className={cn(
-          "border-border bg-muted text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-dashed text-sm",
-          isDragOver ? "opacity-100" : "opacity-0",
+          "bg-muted/70 text-foreground relative flex min-w-0 shrink-0 flex-col rounded-[inherit]",
+          className,
         )}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            setIsDragOver(false);
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragOver(false);
+          if (!controlsDisabled) addFiles(Array.from(event.dataTransfer.files));
+        }}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submitPrompt();
+        }}
       >
-        <IconCirclePlus className="mr-1" size={16} />
-        Drop files here to add as attachments
-      </div>
-    </form>
+        <input
+          aria-label="Choose attachments"
+          className="sr-only"
+          multiple
+          onChange={(event) => {
+            if (!disabled && !submittingRef.current)
+              addFiles(Array.from(event.target.files ?? []));
+            event.target.value = "";
+          }}
+          ref={fileInputRef}
+          tabIndex={-1}
+          type="file"
+        />
+        <div
+          className="flex min-w-0 flex-col [overflow-wrap:anywhere]"
+          onClick={(event) => {
+            if (!(event.target as HTMLElement).closest("button,a,input,[role]"))
+              textareaRef.current?.focus();
+          }}
+        >
+          {!!attachedFiles.length && (
+            <div
+              className="flex min-w-0 flex-wrap items-center gap-2 px-3 pt-3"
+              aria-live="polite"
+            >
+              {attachedFiles.map((file) => (
+                <AttachmentChip
+                  key={file.id}
+                  file={file}
+                  disabled={controlsDisabled}
+                  onRemove={() => removeFile(file.id)}
+                />
+              ))}
+              <div className="ml-auto flex items-center gap-0.5">
+                {retryable && (
+                  <Hint hint="Upload now">
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label="Upload / retry attachments"
+                      disabled={controlsDisabled}
+                      onClick={async () => {
+                        setIsStaging(true);
+                        try {
+                          await stageUploads();
+                        } finally {
+                          setIsStaging(false);
+                        }
+                      }}
+                    >
+                      <RefreshCwIcon />
+                    </Button>
+                  </Hint>
+                )}
+                <Hint hint="Discard attachments">
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Discard attachments"
+                    disabled={controlsDisabled}
+                    onClick={discardAttachments}
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </Hint>
+              </div>
+            </div>
+          )}
+          {attachedFiles
+            .filter((file) => file.state === "failed")
+            .map((file) => (
+              <p
+                className="text-destructive flex items-start gap-1.5 px-3 pt-2 text-xs"
+                key={`${file.id}-error`}
+                role="alert"
+              >
+                <AlertCircleIcon className="mt-px size-3.5 shrink-0" />
+                <span>
+                  {file.name}: {file.error}
+                </span>
+              </p>
+            ))}
+          {sendError && (
+            <p
+              role="alert"
+              className="text-destructive flex items-start gap-1.5 px-3 pt-2 text-xs"
+            >
+              <AlertCircleIcon className="mt-px size-3.5 shrink-0" />
+              <span>{sendError}</span>
+            </p>
+          )}
+          <Textarea
+            disabled={controlsDisabled}
+            aria-label="Message"
+            ref={textareaRef}
+            value={prompt}
+            onChange={(event) => updatePrompt(event.target.value)}
+            onPaste={(event) => {
+              const files = Array.from(event.clipboardData.files);
+              if (files.length && !event.clipboardData.getData("text/plain")) {
+                event.preventDefault();
+                addFiles(files.map(nameClipboardFile));
+              }
+            }}
+            className={cn(
+              "box-border rounded-none! border-0 bg-transparent! px-4! pt-3.5! pb-2! shadow-none ring-0 outline-0",
+              "focus-visible:ring-0 focus-visible:outline-0",
+              "max-h-48! min-h-14!",
+            )}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing
+              ) {
+                event.preventDefault();
+                if (!isDisabled) void submitPrompt();
+              }
+            }}
+            placeholder={placeholder}
+          />
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-1 px-2 pb-2">
+          <AttachMenu disabled={controlsDisabled} onAction={handleAttach} />
+          {modelSelector}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {status}
+            {isProcessing && onStop ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon-lg"
+                className="rounded-full"
+                aria-label="Stop generating"
+                onClick={onStop}
+              >
+                <SquareIcon className="fill-current" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                size="icon-lg"
+                className="rounded-full"
+                disabled={isDisabled}
+                aria-label="Send message"
+                onClick={(event) => {
+                  event.preventDefault();
+                  void submitPrompt();
+                }}
+              >
+                <ArrowUpIcon />
+              </Button>
+            )}
+          </div>
+        </div>
+        <div
+          aria-hidden="true"
+          className={cn(
+            "border-primary/60 bg-background/85 text-foreground pointer-events-none absolute inset-0 z-20 flex items-center justify-center gap-2 rounded-[inherit] border-2 border-dashed text-sm font-medium backdrop-blur-sm transition-opacity",
+            isDragOver ? "opacity-100" : "opacity-0",
+          )}
+        >
+          <UploadCloudIcon className="size-4" />
+          Drop files to attach
+        </div>
+      </form>
+      <LibraryFilePickerDialog
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        projectId={projectId}
+        excludedIds={[
+          ...savedFileIds,
+          ...attachedFiles.flatMap((file) =>
+            file.sourceId ? [file.sourceId] : [],
+          ),
+        ]}
+        onPick={pickFiles}
+      />
+      <ChatFileContext
+        open={contextOpen}
+        onOpenChange={setContextOpen}
+        chatId={chatId}
+        projectId={projectId ?? null}
+        scopeKey={scopeKey}
+        disabled={scopeLocked}
+      />
+    </>
   );
 };
+
+const statusLabel: Record<UploadState, string> = {
+  queued: "Queued",
+  uploading: "Uploading…",
+  ready: "Ready",
+  failed: "Failed",
+};
+
+const AttachmentChip = ({
+  file,
+  disabled,
+  onRemove,
+}: {
+  file: AttachedFile;
+  disabled: boolean;
+  onRemove: () => void;
+}) => (
+  <div
+    className={cn(
+      "flex max-w-full min-w-0 items-center gap-2 rounded-xl border p-1 pr-1.5 text-xs",
+      file.state === "failed" ? "border-destructive" : "border-border",
+    )}
+  >
+    <span className="bg-background text-foreground flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
+      {file.preview ? (
+        <img alt="" className="size-full object-cover" src={file.preview} />
+      ) : (
+        <FileTextIcon className="size-4" />
+      )}
+    </span>
+    <span className="flex min-w-0 flex-col leading-tight">
+      <span className="max-w-40 truncate font-medium sm:max-w-56">
+        {file.name}
+      </span>
+      <span
+        className={cn(
+          "flex items-center gap-1",
+          file.state === "failed"
+            ? "text-destructive"
+            : "text-muted-foreground",
+        )}
+      >
+        {file.state === "uploading" && (
+          <LoaderCircleIcon className="size-3 animate-spin" />
+        )}
+        {statusLabel[file.state]}
+      </span>
+    </span>
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      aria-label={`Remove ${file.name}`}
+      className="rounded-full"
+      disabled={disabled}
+      onClick={onRemove}
+      type="button"
+    >
+      <XIcon />
+    </Button>
+  </div>
+);

@@ -63,6 +63,14 @@ function setup(element: React.ReactNode) {
     qc,
   };
 }
+async function openFromLibrary() {
+  await userEvent.click(
+    screen.getByRole("button", { name: "Add attachments" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("menuitem", { name: "From library" }),
+  );
+}
 const scope = (chatId = "a") => ({
   chat_id: chatId,
   project_id: "p",
@@ -126,9 +134,8 @@ beforeEach(() => {
   api.chatDraftDiscard.mockResolvedValue({ data: { id: "draft" } });
 });
 it("separates shared project files and active chat attachments with scoped links", async () => {
-  setup(<ChatFileContext chatId="a" projectId="p" />);
-  await userEvent.click(
-    screen.getByRole("button", { name: /Files in context/ }),
+  setup(
+    <ChatFileContext open onOpenChange={() => {}} chatId="a" projectId="p" />,
   );
   const shared = within(
     await screen.findByRole("region", { name: "Project files" }),
@@ -147,18 +154,14 @@ it("separates shared project files and active chat attachments with scoped links
   expect(api.projectFileAddMany).not.toHaveBeenCalled();
 });
 it("keeps General empty of project files and does not load library metadata", async () => {
-  setup(<ChatFileContext projectId={null} />);
-  await userEvent.click(
-    screen.getByRole("button", { name: /Files in context/ }),
-  );
+  setup(<ChatFileContext open onOpenChange={() => {}} projectId={null} />);
   expect(screen.getByText(/General has no project files/)).toBeInTheDocument();
   expect(api.fileGetMany).not.toHaveBeenCalled();
   expect(api.projectFileGetMany).not.toHaveBeenCalled();
 });
 it("removes only local membership after confirmation and adds to a project only when explicitly clicked", async () => {
-  setup(<ChatFileContext chatId="a" projectId="p" />);
-  await userEvent.click(
-    screen.getByRole("button", { name: /Files in context/ }),
+  setup(
+    <ChatFileContext open onOpenChange={() => {}} chatId="a" projectId="p" />,
   );
   await userEvent.click(
     await screen.findByRole("button", { name: "Add to project" }),
@@ -186,15 +189,24 @@ it("removes only local membership after confirmation and adds to a project only 
 });
 it("rechecks scope on branch changes and refuses to show stale scope during a failed refresh", async () => {
   const rendered = setup(
-    <ChatFileContext chatId="a" projectId="p" scopeKey="branch-one" />,
-  );
-  await userEvent.click(
-    screen.getByRole("button", { name: /Files in context/ }),
+    <ChatFileContext
+      open
+      onOpenChange={() => {}}
+      chatId="a"
+      projectId="p"
+      scopeKey="branch-one"
+    />,
   );
   await screen.findByText("a.txt");
   api.chatFileGetScope.mockRejectedValue({ detail: "Scope changed" });
   rendered.rerender(
-    <ChatFileContext chatId="a" projectId="p" scopeKey="branch-two" />,
+    <ChatFileContext
+      open
+      onOpenChange={() => {}}
+      chatId="a"
+      projectId="p"
+      scopeKey="branch-two"
+    />,
   );
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Could not verify current file scope",
@@ -212,9 +224,7 @@ it("rechecks scope on branch changes and refuses to show stale scope during a fa
 it("stages explicit library picks for one draft and sends that draft without upload or project promotion", async () => {
   const send = vi.fn();
   setup(<ChatInput chatId="a" projectId="p" onSubmit={send} />);
-  await userEvent.click(
-    screen.getByRole("button", { name: "Attach library files" }),
-  );
+  await openFromLibrary();
   const dialog = within(screen.getByRole("dialog"));
   await userEvent.click(
     await dialog.findByRole("button", { name: /library.txt/ }),
@@ -222,7 +232,7 @@ it("stages explicit library picks for one draft and sends that draft without upl
   await userEvent.click(
     dialog.getByRole("button", { name: "Attach selected (1)" }),
   );
-  await screen.findByText("Next message · this chat only");
+  await screen.findByLabelText("Remove library.txt");
   await userEvent.type(screen.getByLabelText("Message"), "Read it");
   await userEvent.click(screen.getByLabelText("Send message"));
   await waitFor(() =>
@@ -311,9 +321,7 @@ it("blocks an unconfirmed server-side draft selection and allows explicit discar
     data: { file_ids: ["library", "unconfirmed"], unavailable_file_ids: [] },
   });
   setup(<ChatInput chatId="a" onSubmit={send} />);
-  await userEvent.click(
-    screen.getByRole("button", { name: "Attach library files" }),
-  );
+  await openFromLibrary();
   const picker = within(screen.getByRole("dialog"));
   await userEvent.click(
     await picker.findByRole("button", { name: /library.txt/ }),
@@ -321,7 +329,7 @@ it("blocks an unconfirmed server-side draft selection and allows explicit discar
   await userEvent.click(
     picker.getByRole("button", { name: "Attach selected (1)" }),
   );
-  await screen.findByText("Next message · this chat only");
+  await screen.findByLabelText("Remove library.txt");
   await userEvent.type(
     screen.getByLabelText("Message"),
     "Use only what I picked",

@@ -9,37 +9,36 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import type { UserFile } from "@/lib/client";
 import { useState } from "react";
 
 const actions = { upload: false, delete: false, regenerate: false };
-export function LibraryFilePicker({
-  excludedIds,
-  disabled,
-  projectId,
-  onPick,
-}: {
+
+type LibraryFilePickerProps = {
   excludedIds: string[];
   projectId?: string | null;
   disabled?: boolean;
   onPick: (files: UserFile[]) => Promise<void>;
+};
+
+export function LibraryFilePickerDialog({
+  excludedIds,
+  projectId,
+  onPick,
+  open,
+  onOpenChange,
+}: Omit<LibraryFilePickerProps, "disabled"> & {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button type="button" size="sm" variant="outline" disabled={disabled}>
-          Attach library files
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[80dvh] flex-col sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Attach library files to this chat</DialogTitle>
+          <DialogTitle>Attach library files</DialogTitle>
           <DialogDescription>
-            Choose files for the next message. They stay local to this chat
-            unless you explicitly add them to a project.
+            Selected files are attached to this chat only.
           </DialogDescription>
         </DialogHeader>
         {open && (
@@ -57,7 +56,7 @@ export function LibraryFilePicker({
                 <PickSelection
                   onPick={async (files) => {
                     await onPick(files);
-                    setOpen(false);
+                    onOpenChange(false);
                   }}
                 />
               </FileManager.Ribbon>
@@ -67,6 +66,27 @@ export function LibraryFilePicker({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function LibraryFilePicker({
+  disabled,
+  ...props
+}: LibraryFilePickerProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+      >
+        Attach library files
+      </Button>
+      <LibraryFilePickerDialog {...props} open={open} onOpenChange={setOpen} />
+    </>
   );
 }
 function PickSelection({

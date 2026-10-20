@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const P = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -189,18 +189,24 @@ test("keeps General isolated and shows two project chats with different local at
       json: { info: { id: chat }, messages: messages[chat] },
     });
   });
-  const openContext = async () => {
-    const trigger = page.getByRole("button", { name: /Files in context/ });
-    // A cold route can render its trigger before hydration attaches handlers.
-    // Repeat only while closed, then assert the controlled panel is open.
+  const contextDialog = page.getByRole("dialog", { name: "Files in context" });
+  // A cold route can render the menu before hydration attaches handlers.
+  // Repeat only until the chosen item has opened its dialog.
+  const chooseFromMenu = async (item: string, dialog: Locator) => {
     await expect(async () => {
-      if ((await trigger.getAttribute("aria-expanded")) !== "true") {
-        await trigger.click();
+      if (!(await dialog.isVisible())) {
+        await page.getByRole("button", { name: "Add attachments" }).click();
+        await page
+          .getByRole("menuitem", { name: item })
+          .click({ timeout: 2000 });
       }
-      await expect(trigger).toHaveAttribute("aria-expanded", "true", {
-        timeout: 1000,
-      });
+      await expect(dialog).toBeVisible({ timeout: 1000 });
     }).toPass({ timeout: 10000 });
+  };
+  const openContext = () => chooseFromMenu("Files in context", contextDialog);
+  const closeContext = async () => {
+    await page.keyboard.press("Escape");
+    await expect(contextDialog).toHaveCount(0);
   };
   general = true;
   await page.goto(`/e2e/files?scope=general&chat=${A}`);
@@ -211,6 +217,7 @@ test("keeps General isolated and shows two project chats with different local at
   await expect(
     page.getByRole("region", { name: "Chat attachments" }),
   ).toContainText("No saved attachments");
+  await closeContext();
   general = false;
   await page.goto(`/e2e/files?scope=project&chat=${A}`);
   await openContext();
@@ -219,21 +226,24 @@ test("keeps General isolated and shows two project chats with different local at
       .getByRole("region", { name: "Project files" })
       .getByRole("link", { name: "shared.txt" }),
   ).toHaveAttribute("href", `/c/${A}/files/${SHARED}`);
-  await page.getByRole("button", { name: "Attach library files" }).click();
+  await closeContext();
   const picker = page.getByRole("dialog");
+  await chooseFromMenu("From library", picker);
   await expect(picker.getByText(/Already attached or available/)).toBeVisible();
   await picker.getByRole("button", { name: /library.txt/ }).click();
   await picker.getByRole("button", { name: "Attach selected (1)" }).click();
   await expect(picker).toHaveCount(0);
-  await expect(page.getByText("Next message · this chat only")).toBeVisible();
+  await expect(page.getByLabel("Remove library.txt")).toBeVisible();
   await page.getByRole("button", { name: "Switch test model" }).click();
   await page.getByLabel("Message", { exact: true }).fill("Use my local file");
   await page.getByLabel("Send message").click();
+  await openContext();
   await expect(
     page
       .getByRole("region", { name: "Chat attachments" })
       .getByRole("link", { name: "library.txt" }),
   ).toBeVisible();
+  await closeContext();
   expect(sends[0]).toMatchObject({
     draft_id: "draft-1",
     files: [LIBRARY],
@@ -246,11 +256,14 @@ test("keeps General isolated and shows two project chats with different local at
   await expect(
     page.getByRole("region", { name: "Chat attachments" }),
   ).toContainText("library.txt");
+  await closeContext();
   alternate = true;
   await page.getByRole("button", { name: "Switch test branch" }).click();
+  await openContext();
   await expect(
     page.getByRole("region", { name: "Chat attachments" }),
   ).toContainText("No saved attachments");
+  await closeContext();
   alternate = false;
   await page.goto(`/e2e/files?scope=project&chat=${B}`);
   await openContext();

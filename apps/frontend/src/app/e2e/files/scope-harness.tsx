@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChatFileContext } from "@/features/chat/components/chat-file-context";
 import {
   ChatInput,
   ChatInputContainer,
@@ -60,17 +59,13 @@ export function ChatFileScopeHarness({
         </section>
       ))}
       <ChatInputContainer className="max-w-full">
-        <ChatFileContext
-          chatId={chat}
-          projectId={workspace === "general" ? null : P}
-          scopeKey={`${branch}:${revision}`}
-          disabled={send.isPending}
-        />
         <ChatInput
           key={chat}
           chatId={chat}
           projectId={workspace === "general" ? null : P}
           requestScope={`${chat}:${revision}:${branch}`}
+          scopeKey={`${branch}:${revision}`}
+          scopeLocked={send.isPending}
           disabled={send.isPending}
           onSubmit={async ({ prompt, files, requestId, draftId }) => {
             await send.mutateAsync({

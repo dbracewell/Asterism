@@ -1,17 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Badge } from "@/components/ui/badge";
 import { QueryError } from "@/components/query-error";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModelSelector } from "@/components/settings/model-selector";
+import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
 import { ChatInfo, ChatModelChoice, MessageExecution } from "@/lib/client";
 import {
@@ -19,9 +11,24 @@ import {
   chatModelUpdateMutation,
   chatSessionGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { ImageIcon, WrenchIcon } from "lucide-react";
 import { toast } from "sonner";
 
+const NOTICE_CLASS = "order-last w-full basis-full px-2 text-xs";
+
+const compactTokens = (tokens: number) =>
+  tokens >= 1_000_000
+    ? `${(tokens / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`
+    : tokens >= 1_000
+      ? `${Math.round(tokens / 1_000)}K`
+      : String(tokens);
+
+/**
+ * Composer-toolbar model selector. Renders as a fragment so the selector sits
+ * inline while status notices wrap onto their own row of a flex-wrap parent.
+ */
 export function ChatModelPicker({
   value,
   onChange,
@@ -41,50 +48,37 @@ export function ChatModelPicker({
   const choices = query.data ?? [];
   const selected = choices.find((choice) => choice.id === value);
   return (
-    <Field data-invalid={!!value && !!query.data && !selected?.available}>
-      <FieldLabel htmlFor="chat-model">Chat model</FieldLabel>
-      <Select
+    <>
+      <ModelSelector
+        id="chat-model"
+        variant="inline"
+        aria-label="Chat model"
+        aria-invalid={!!value && !!query.data && !selected?.available}
+        showProvider
         value={value}
         onValueChange={onChange}
+        availableModels={choices}
+        savedLabel={savedLabel}
         disabled={disabled || !query.data}
-      >
-        <SelectTrigger
-          id="chat-model"
-          aria-label="Chat model"
-          aria-invalid={!!value && !!query.data && !selected?.available}
-        >
-          <SelectValue placeholder="Choose a model" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {value && !selected && (
-              <SelectItem value={value} disabled>
-                {savedLabel ?? value} (unavailable)
-              </SelectItem>
-            )}
-            {choices.map((choice) => (
-              <SelectItem
-                key={choice.id}
-                value={choice.id}
-                disabled={!choice.available}
-              >
-                {choice.name} ({choice.provider_name})
-                {!choice.available ? " — unavailable" : ""}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      />
       {selected && <ModelCapabilities model={selected} />}
-      {query.isPending && <p role="status">Loading models…</p>}
+      {query.isPending && (
+        <p role="status" className="sr-only">
+          Loading models…
+        </p>
+      )}
       {query.isError && (
-        <p role="alert">
+        <p
+          role="alert"
+          className={cn(NOTICE_CLASS, "text-destructive flex items-center")}
+        >
           {query.data
             ? "Could not refresh models. Showing cached choices."
-            : "Could not load models."}{" "}
+            : "Could not load models."}
           <Button
             type="button"
-            variant="outline"
+            size="sm"
+            variant="ghost"
             onClick={() => void query.refetch()}
           >
             Retry
@@ -92,53 +86,63 @@ export function ChatModelPicker({
         </p>
       )}
       {query.data && !choices.some((choice) => choice.available) && (
-        <p role="status">
+        <p role="status" className={cn(NOTICE_CLASS, "text-muted-foreground")}>
           No available models. Ask an administrator to enable one.
         </p>
       )}
       {value && query.data && !selected?.available && (
-        <p role="alert">
+        <p role="alert" className={cn(NOTICE_CLASS, "text-destructive")}>
           Selected model is unavailable. Choose an available replacement.
         </p>
       )}
-    </Field>
+    </>
   );
 }
 
 export function ModelCapabilities({ model }: { model: ChatModelChoice }) {
+  const labels = [
+    model.supports_vision === true
+      ? "Images supported"
+      : model.supports_vision === false
+        ? "Text only"
+        : "Image support unknown",
+    model.supports_tools === true
+      ? "Tools supported"
+      : model.supports_tools === false
+        ? "Tools unsupported"
+        : "Tool support unknown",
+    model.context_window
+      ? `${model.context_window.toLocaleString()} token context`
+      : "Context window unknown",
+  ];
   return (
     <div
       aria-label="Selected model capabilities"
-      className="flex flex-wrap gap-2"
+      title={labels.join(" · ")}
+      className="text-muted-foreground flex items-center gap-1.5 px-1 text-xs"
     >
-      <Badge
-        variant="secondary"
-        className="h-auto max-w-full whitespace-normal"
-      >
-        {model.supports_vision === true
-          ? "Images supported"
-          : model.supports_vision === false
-            ? "Text only"
-            : "Image support unknown"}
-      </Badge>
-      <Badge
-        variant="secondary"
-        className="h-auto max-w-full whitespace-normal"
-      >
-        {model.supports_tools === true
-          ? "Tools supported"
-          : model.supports_tools === false
-            ? "Tools unsupported"
-            : "Tool support unknown"}
-      </Badge>
-      <Badge
-        variant="secondary"
-        className="h-auto max-w-full whitespace-normal"
-      >
-        {model.context_window
-          ? `${model.context_window.toLocaleString()} token context`
-          : "Context window unknown"}
-      </Badge>
+      {model.supports_vision === true && (
+        <Hint hint="Vision support">
+          <ImageIcon aria-hidden="true" className="size-4" />
+        </Hint>
+      )}
+      {model.supports_tools === true && (
+        <Hint hint="Tool calling support">
+          <WrenchIcon aria-hidden="true" className="size-4" />
+        </Hint>
+      )}
+      {!!model.context_window && (
+        <Hint hint="Context length">
+          <span aria-hidden="true" className="tabular-nums select-none">
+            {compactTokens(model.context_window)}
+          </span>
+        </Hint>
+      )}
+      <span className="sr-only">
+        {labels.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </span>
     </div>
   );
 }
@@ -170,7 +174,7 @@ export function ExistingChatModelPicker({
       ),
   });
   return (
-    <div className="flex flex-col gap-3">
+    <>
       <ChatModelPicker
         value={info.selected_model_id ?? ""}
         savedLabel={
@@ -195,12 +199,16 @@ export function ExistingChatModelPicker({
         }
       />
       {mutation.error && (
-        <div role="alert" className="flex flex-col items-start gap-2">
+        <div
+          role="alert"
+          className={cn(NOTICE_CLASS, "text-destructive flex items-center")}
+        >
           <p>
             {mutation.error.detail ?? "Could not change model."} Reload the chat
             model before trying again.
           </p>
           <Button
+            size="sm"
             variant="outline"
             disabled={disabled || current.isFetching}
             onClick={async () => {
@@ -216,20 +224,22 @@ export function ExistingChatModelPicker({
         </div>
       )}
       {mutation.error && current.error && (
-        <QueryError
-          error={current.error}
-          message="Could not reload the chat model."
-          retry={async () => {
-            const result = await current.refetch();
-            if (result.data && !result.isError) {
-              onSelected(result.data.info);
-              mutation.reset();
-            }
-          }}
-          isRetrying={current.isFetching}
-        />
+        <div className={NOTICE_CLASS}>
+          <QueryError
+            error={current.error}
+            message="Could not reload the chat model."
+            retry={async () => {
+              const result = await current.refetch();
+              if (result.data && !result.isError) {
+                onSelected(result.data.info);
+                mutation.reset();
+              }
+            }}
+            isRetrying={current.isFetching}
+          />
+        </div>
       )}
-    </div>
+    </>
   );
 }
 

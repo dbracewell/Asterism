@@ -1,8 +1,7 @@
 "use client";
-import { ChatFileContext } from "@/features/chat/components/chat-file-context";
 import { WorkspaceIdentity } from "@/features/projects/components/chat-workspace";
 import { projectGetOneOptions } from "@/lib/client/@tanstack/react-query.gen";
-import { AnimatedBorder } from "@/components/animated-border";
+import { Badge } from "@/components/ui/badge";
 import Constellation from "@/components/logo";
 import { useUser } from "@/features/auth/components/user-context";
 import {
@@ -30,12 +29,19 @@ export default function AppPage() {
   });
   const workspaceAvailable = !projectId || (!!project.data && !project.error);
   const main = user.settings.main_agent;
-  const [modelId, setModelId] = useState(user.settings.default_model_id ?? "");
+  const [chosenModelId, setChosenModelId] = useState(
+    user.settings.default_model_id ?? "",
+  );
   const models = useQuery({
     ...chatModelsListOptions({ client }),
     staleTime: 0,
     retry: false,
   });
+  const availableModels = models.data?.filter((model) => model.available);
+  // With no explicit choice or default, a lone available model is preselected.
+  const modelId =
+    chosenModelId ||
+    (availableModels?.length === 1 ? availableModels[0].id : "");
   const modelAvailable =
     !models.error &&
     models.data?.some((model) => model.id === modelId && model.available);
@@ -51,33 +57,20 @@ export default function AppPage() {
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
       <WorkspaceIdentity projectId={projectId} />
-      <ChatInputContainer className="max-w-5xl border-0">
-        <AnimatedBorder
-          childContainerClassName="rounded-t-none"
-          borderComponent={
-            <div className="flex flex-col gap-1 p-2">
-              <div className="bg-primary/80 text-primary-foreground border-primary/50 flex w-fit items-center justify-start gap-2 rounded-lg border p-0.5">
-                <span className="flex items-center gap-1 text-sm font-medium">
-                  <BotIcon className="size-4" /> {main.name}
-                </span>
-              </div>
-              <ChatModelPicker value={modelId} onChange={setModelId} />
-              {models.data && !models.error && !modelAvailable && (
-                <p className="text-destructive px-2 text-sm" role="alert">
-                  Choose an available chat model before starting a chat.
-                </p>
-              )}
-            </div>
-          }
-        >
-          <ChatFileContext projectId={projectId} />
+      <Badge variant="secondary" className="h-6 gap-1.5 px-2.5 text-xs">
+        <BotIcon /> {main.name}
+      </Badge>
+      <div className="flex w-full max-w-4xl flex-col gap-2">
+        <ChatInputContainer>
           <ChatInput
             key={projectId ?? "general"}
             projectId={projectId}
-            className="rounded-t-none!"
-            placeholder="Where will your curiosity lead you today?"
+            placeholder="Ask anything…"
             disabled={!modelAvailable || !workspaceAvailable}
             requestScope={`${main.id}:${modelId || "none"}:${searchParams.get("project_id") ?? "general"}`}
+            modelSelector={
+              <ChatModelPicker value={modelId} onChange={setChosenModelId} />
+            }
             onSubmit={({ prompt, files, requestId, draftId }) => {
               if (!modelAvailable || !workspaceAvailable)
                 throw new Error(
@@ -95,8 +88,13 @@ export default function AppPage() {
               });
             }}
           />
-        </AnimatedBorder>
-      </ChatInputContainer>
+        </ChatInputContainer>
+        {models.data && !models.error && !modelAvailable && (
+          <p className="text-destructive px-2 text-sm" role="alert">
+            Choose an available chat model before starting a chat.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

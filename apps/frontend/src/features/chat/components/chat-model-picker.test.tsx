@@ -63,7 +63,7 @@ it("changes a chat using the observed revision and never edits main settings", a
   );
   await userEvent.click(screen.getByLabelText("Chat model"));
   await userEvent.click(
-    screen.getByRole("option", { name: "Beta (Provider)" }),
+    await screen.findByRole("option", { name: "Beta (Provider)" }),
   );
   expect(mocks.update.mock.calls[0][0]).toEqual({
     path: { chat_id: "chat" },
@@ -189,7 +189,7 @@ it("requires a successful reload after a model revision conflict", async () => {
   );
   await userEvent.click(screen.getByLabelText("Chat model"));
   await userEvent.click(
-    screen.getByRole("option", { name: "Beta (Provider)" }),
+    await screen.findByRole("option", { name: "Beta (Provider)" }),
   );
   expect(await screen.findByText(/Selection changed/)).toBeVisible();
   expect(screen.getByLabelText("Chat model")).toBeDisabled();

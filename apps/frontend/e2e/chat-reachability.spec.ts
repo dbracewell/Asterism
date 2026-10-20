@@ -232,10 +232,14 @@ for (const { width, height, pane, enlarged } of [
         (node) => node.scrollWidth <= node.clientWidth + 1,
       ),
     ).toBe(true);
-    await page.getByRole("button", { name: /Files in context/ }).click();
+    await page.getByRole("button", { name: "Add attachments" }).click();
+    await page.getByRole("menuitem", { name: "Files in context" }).click();
+    const context = page.getByRole("dialog", { name: "Files in context" });
     await expect(
-      page.getByRole("region", { name: "Chat attachments", exact: true }),
+      context.getByRole("region", { name: "Chat attachments", exact: true }),
     ).toContainText(filename);
+    await page.keyboard.press("Escape");
+    await expect(context).toHaveCount(0);
     await page
       .getByLabel("Message", { exact: true })
       .fill(Array(8).fill("A multiline composer draft").join("\n"));
@@ -447,34 +451,41 @@ test("file context loading, failure and cached-refresh failure keep scope links 
       : route.fulfill({ json: scope });
   });
   await page.goto("/e2e/chat-reachability");
-  await page.getByRole("button", { name: /Files in context/ }).click();
+  const context = page.getByRole("dialog", { name: "Files in context" });
+  const openContext = async () => {
+    await page.getByRole("button", { name: "Add attachments" }).click();
+    await page.getByRole("menuitem", { name: "Files in context" }).click();
+  };
+  await openContext();
   await expect(
     page.getByText("Updating file scope…", { exact: true }),
   ).toBeAttached();
   state = "failed";
   release();
-  const composer = page.locator('[data-slot="chat-composer"]');
-  await expect(composer.getByRole("alert")).toContainText(
+  await expect(context.getByRole("alert")).toContainText(
     "Could not verify current file scope.",
   );
   state = "ready";
-  await reachable(composer.getByRole("button", { name: "Retry", exact: true }));
-  await composer.getByRole("button", { name: "Retry", exact: true }).click();
+  await reachable(context.getByRole("button", { name: "Retry", exact: true }));
+  await context.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(
-    composer.getByRole("link", { name: filename, exact: true }),
+    context.getByRole("link", { name: filename, exact: true }),
   ).toBeAttached();
   state = "failed";
+  await page.keyboard.press("Escape");
+  await expect(context).toHaveCount(0);
   await page
     .getByRole("button", { name: "Refresh file scope", exact: true })
     .click();
-  await expect(composer.getByRole("alert")).toContainText(
+  await openContext();
+  await expect(context.getByRole("alert")).toContainText(
     "Could not verify current file scope.",
   );
   await expect(
-    composer.getByRole("link", { name: filename, exact: true }),
+    context.getByRole("link", { name: filename, exact: true }),
   ).toHaveCount(0);
-  await reachable(composer.getByRole("button", { name: "Retry", exact: true }));
+  await reachable(context.getByRole("button", { name: "Retry", exact: true }));
   expect(
-    await composer.evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+    await context.evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
   ).toBe(true);
 });

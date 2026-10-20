@@ -208,12 +208,13 @@ for (const theme of themes) {
       name: "Alternative chat model (Synthetic provider)",
       exact: true,
     });
-    await alternative.focus();
+    await alternative.hover();
     await alternative.evaluate((el) =>
       el.setAttribute("data-contrast", "chat-option"),
     );
-    await check("chat-option", "focused option");
-    await page.keyboard.press("Enter");
+    await page.waitForTimeout(250);
+    await check("chat-option", "highlighted option");
+    await alternative.click();
     await expect(chatSelect).toHaveText(
       "Alternative chat model (Synthetic provider)",
     );

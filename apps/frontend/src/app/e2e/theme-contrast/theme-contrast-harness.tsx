@@ -223,16 +223,7 @@ export function ThemeContrastHarness() {
               </div>
             </div>
             <div data-testid="chat-panel">
-              <AnimatedBorder
-                borderComponent={
-                  <div className="flex flex-col gap-1 p-2">
-                    <ChatModelPicker
-                      value={chatModel}
-                      onChange={setChatModel}
-                    />
-                  </div>
-                }
-              >
+              <AnimatedBorder>
                 <p className="text-foreground p-2">New chat panel</p>
               </AnimatedBorder>
             </div>
@@ -242,6 +233,12 @@ export function ThemeContrastHarness() {
                   requestScope="palette-review"
                   onSubmit={() => {}}
                   placeholder="Write a message"
+                  modelSelector={
+                    <ChatModelPicker
+                      value={chatModel}
+                      onChange={setChatModel}
+                    />
+                  }
                 />
               </ChatInputContainer>
             </div>

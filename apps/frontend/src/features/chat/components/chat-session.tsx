@@ -49,7 +49,6 @@ import {
 } from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
-import { ChatFileContext } from "./chat-file-context";
 import { ExecutionLabel, ExistingChatModelPicker } from "./chat-model-picker";
 import { RetrievalCitations } from "./retrieval-citations";
 
@@ -362,18 +361,6 @@ export const ChatSession = ({
           info={session.info}
           disabled={isProcessing || sendMessage.isPending}
         />
-        <ExistingChatModelPicker
-          info={session.info}
-          disabled={isProcessing || sendMessage.isPending}
-          onPendingChange={setIsChangingModel}
-          onSelected={(info) =>
-            queryClient.setQueryData(queryKey, (previous?: Chat) =>
-              previous
-                ? { ...previous, info: { ...previous.info, ...info } }
-                : previous,
-            )
-          }
-        />
         {session.info.resume_error && (
           <p role="alert">{session.info.resume_error}</p>
         )}
@@ -459,13 +446,7 @@ export const ChatSession = ({
             </Button>
           </div>
         )}
-        <ChatInputContainer className="border-primary max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
-          <ChatFileContext
-            chatId={chatId}
-            projectId={session.info.project_id ?? null}
-            scopeKey={`${session.info.model_revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
-            disabled={isProcessing || sendMessage.isPending}
-          />
+        <ChatInputContainer className="max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
           <ChatInput
             key={chatId}
             chatId={chatId}
@@ -483,29 +464,31 @@ export const ChatSession = ({
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
             requestScope={`${session.info.id}:${session.info.model_revision ?? 1}`}
+            scopeKey={`${session.info.model_revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
+            scopeLocked={isProcessing || sendMessage.isPending}
             onSubmit={addUserMessage}
-            bottomComponent={
-              <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2 p-2">
+            modelSelector={
+              <ExistingChatModelPicker
+                info={session.info}
+                disabled={isProcessing || sendMessage.isPending}
+                onPendingChange={setIsChangingModel}
+                onSelected={(info) =>
+                  queryClient.setQueryData(queryKey, (previous?: Chat) =>
+                    previous
+                      ? { ...previous, info: { ...previous.info, ...info } }
+                      : previous,
+                  )
+                }
+              />
+            }
+            status={
+              <>
                 <ContextUsageProgress
                   usage={isFetching ? null : session.context_usage}
                   contextWindow={contextWindow}
                 />
-                <div className={cn("flex items-center gap-1 text-xs")}>
-                  {connectionStatus && (
-                    <div
-                      aria-hidden="true"
-                      title={connectionStatus}
-                      className={cn(
-                        "size-2 rounded-full pt-0.5",
-                        connectionStatus === "Connected"
-                          ? "border-primary bg-primary"
-                          : "border-destructive bg-destructive",
-                      )}
-                    />
-                  )}
-                  {connectionStatus}
-                </div>
-              </div>
+                <ConnectionIndicator status={connectionStatus} />
+              </>
             }
           />
         </ChatInputContainer>
@@ -530,13 +513,40 @@ export const ContextUsageProgress = ({
 
   return (
     <div
-      className="flex min-w-0 flex-wrap items-center gap-2"
+      className="flex items-center gap-1.5"
       aria-label="Estimated saved conversation context"
+      title={`Saved context: ${percent}%`}
     >
-      <span className="text-muted-foreground text-xs">Saved context</span>
-      <Progress value={percent} max={100} className="h-2 w-10" />
-      <span className="text-muted-foreground text-xs select-none">
+      <Progress
+        value={percent}
+        max={100}
+        className="bg-background h-1.5 w-10"
+      />
+      <span className="text-muted-foreground text-xs tabular-nums select-none">
         {percent}%
+      </span>
+    </div>
+  );
+};
+
+const ConnectionIndicator = ({ status }: { status?: string }) => {
+  if (!status) return null;
+  const connected = status === "Connected";
+  return (
+    <div
+      role="status"
+      title={status}
+      className="flex items-center gap-1.5 text-xs"
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "size-2 rounded-full",
+          connected ? "bg-primary" : "bg-destructive",
+        )}
+      />
+      <span className={connected ? "sr-only" : "text-muted-foreground"}>
+        {status}
       </span>
     </div>
   );

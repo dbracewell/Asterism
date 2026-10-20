@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { expect, it, vi } from "vitest";
@@ -68,10 +68,51 @@ it("keeps an explicitly selected model when the menu closes", async () => {
   render(<Picker />);
   expect(screen.getByLabelText("Model")).toHaveTextContent("Select a model");
   await user.click(screen.getByLabelText("Model"));
-  await user.click(screen.getByRole("option", { name: "Beta" }));
+  await user.click(await screen.findByRole("option", { name: "Beta" }));
   expect(screen.getByLabelText("Model")).toHaveTextContent("Beta");
   expect(screen.getByLabelText("Model")).toHaveAttribute(
     "aria-expanded",
     "false",
+  );
+});
+
+it("lists only available models and filters them by name or provider", async () => {
+  const user = userEvent.setup();
+  render(
+    <ModelSelector
+      aria-label="Model"
+      value="alpha"
+      onValueChange={vi.fn()}
+      availableModels={[
+        ...models,
+        { ...models[1], id: "gamma", name: "Gamma", available: false },
+        { ...models[1], id: "delta", name: "Delta", provider_name: "Other" },
+      ]}
+    />,
+  );
+  await user.click(screen.getByLabelText("Model"));
+  expect(await screen.findAllByRole("option")).toHaveLength(3);
+  expect(
+    screen.queryByRole("option", { name: "Gamma" }),
+  ).not.toBeInTheDocument();
+  await user.type(screen.getByPlaceholderText("Search models…"), "other");
+  await waitFor(() => expect(screen.getAllByRole("option")).toHaveLength(1));
+  expect(screen.getByRole("option", { name: "Delta" })).toBeVisible();
+});
+
+it("keeps an unavailable saved model visible without listing it", () => {
+  render(
+    <ModelSelector
+      aria-label="Model"
+      value="gamma"
+      onValueChange={vi.fn()}
+      availableModels={[
+        ...models,
+        { ...models[1], id: "gamma", name: "Gamma", available: false },
+      ]}
+    />,
+  );
+  expect(screen.getByLabelText("Model")).toHaveTextContent(
+    "Gamma (unavailable)",
   );
 });

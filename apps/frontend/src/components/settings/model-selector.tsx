@@ -1,59 +1,145 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { LlmDisplayInfo } from "@/lib/client";
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from "@/components/ui/combobox";
+import type { ChatModelChoice, LlmDisplayInfo } from "@/lib/client";
 import { cn } from "@/lib/utils";
+
+export type ModelOption = LlmDisplayInfo | ChatModelChoice;
 
 type ModelSelectorProps = {
   id?: string;
   value?: string;
   onValueChange: (model: string) => void;
-  availableModels?: LlmDisplayInfo[];
+  availableModels?: ModelOption[];
   className?: string;
   align?: "center" | "start" | "end" | undefined;
   disabled?: boolean;
+  /** `inline` is a borderless pill for toolbars such as the chat composer. */
+  variant?: "field" | "inline";
+  /** Append the provider name to each model. */
+  showProvider?: boolean;
+  /** Label for a saved value that is no longer selectable. */
+  savedLabel?: string;
+  "aria-label"?: string;
+  "aria-invalid"?: boolean;
 };
 
+const isAvailable = (model: ModelOption) =>
+  !("available" in model) || model.available;
+
+const matches = (model: ModelOption, query: string) =>
+  `${model.name} ${model.provider_name}`
+    .toLowerCase()
+    .includes(query.trim().toLowerCase());
+
+const ModelLabel = ({
+  model,
+  showProvider,
+}: {
+  model: ModelOption;
+  showProvider: boolean;
+}) => (
+  <span className="truncate">
+    {model.name}{" "}
+    {showProvider && (
+      <span className="text-muted-foreground">({model.provider_name})</span>
+    )}
+  </span>
+);
+
+/**
+ * Searchable model picker. Unavailable models are never listed; a saved value
+ * that is no longer selectable stays visible, marked unavailable, until the
+ * user explicitly picks another model.
+ */
 export const ModelSelector = ({
   id,
   value,
   onValueChange,
   availableModels,
   className,
+  align = "start",
   disabled = false,
+  variant = "field",
+  showProvider = false,
+  savedLabel,
+  "aria-label": ariaLabel,
+  "aria-invalid": ariaInvalid,
 }: ModelSelectorProps) => {
-  const selectedModel = availableModels?.find((model) => model.id === value);
+  const selectable = (availableModels ?? []).filter(isAvailable);
+  const selected = selectable.find((model) => model.id === value) ?? null;
+  const known = availableModels?.find((model) => model.id === value);
+  const inline = variant === "inline";
 
   return (
-    <Select
-      value={value ?? ""}
-      onValueChange={onValueChange}
+    <Combobox
+      items={selectable}
+      value={selected}
+      onValueChange={(model: ModelOption | null) => {
+        if (model) onValueChange(model.id);
+      }}
+      itemToStringLabel={(model: ModelOption) => model.name}
+      itemToStringValue={(model: ModelOption) => model.id}
+      isItemEqualToValue={(a: ModelOption, b: ModelOption) => a.id === b.id}
+      filter={matches}
       disabled={disabled}
     >
-      <SelectTrigger id={id} className={cn("w-full", className)}>
-        <SelectValue placeholder="Select a model..." />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          {value && !selectedModel && (
-            <SelectItem value={value} disabled>
-              {value} (unavailable)
-            </SelectItem>
+      <ComboboxTrigger
+        id={id}
+        aria-label={ariaLabel}
+        aria-invalid={ariaInvalid}
+        render={
+          <Button
+            type="button"
+            variant={inline ? "ghost" : "outline"}
+            className={cn(
+              "min-w-0 justify-between gap-1.5 font-normal",
+              inline
+                ? "data-popup-open:bg-muted h-8 max-w-full rounded-full px-3 font-medium"
+                : "w-full",
+              className,
+            )}
+          />
+        }
+      >
+        <span className="min-w-0 truncate text-left">
+          {selected ? (
+            <ModelLabel model={selected} showProvider={showProvider} />
+          ) : value ? (
+            `${savedLabel ?? known?.name ?? value} (unavailable)`
+          ) : (
+            <span className="text-muted-foreground">Select a model...</span>
           )}
-          {availableModels?.map((model) => (
-            <SelectItem key={model.id} value={model.id}>
-              {model.name}
-            </SelectItem>
-          ))}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+        </span>
+      </ComboboxTrigger>
+      <ComboboxContent
+        side={inline ? "top" : "bottom"}
+        align={align === "center" ? "center" : align}
+        className="w-80 max-w-[calc(100vw-2rem)]"
+      >
+        <ComboboxInput
+          showTrigger={false}
+          placeholder="Search models…"
+          className="has-[[data-slot=input-group-control]:focus-visible]:ring-0"
+        />
+        <ComboboxEmpty>No models found.</ComboboxEmpty>
+        <ComboboxList>
+          {(model: ModelOption) => (
+            <ComboboxItem key={model.id} value={model} className="pr-7">
+              <ModelLabel model={model} showProvider={showProvider} />
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 };

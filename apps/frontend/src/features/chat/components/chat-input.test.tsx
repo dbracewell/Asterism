@@ -41,6 +41,10 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryFn: async () => ({ status: "ready", caption: { status: null } }),
   }),
   fileKnowledgeRegenerateMutation: () => ({ mutationFn: vi.fn() }),
+  projectFileGetManyOptions: () => ({
+    queryKey: ["project-files"],
+    queryFn: async () => ({ files: [], total: 0 }),
+  }),
 }));
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -211,4 +215,47 @@ it("cleans queued preview resources on removal and abandonment without uploading
   rendered.unmount();
   expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
   expect(fileUpload).not.toHaveBeenCalled();
+});
+
+it("offers upload, library, paste, screenshot and files in context from the add menu", async () => {
+  const user = userEvent.setup();
+  render(<ChatInput onSubmit={vi.fn()} />);
+  await user.click(screen.getByRole("button", { name: "Add attachments" }));
+  for (const name of [
+    "Upload files",
+    "From library",
+    "Paste from clipboard",
+    "Take screenshot",
+    "Files in context",
+  ])
+    expect(await screen.findByRole("menuitem", { name })).toBeVisible();
+  await user.click(screen.getByRole("menuitem", { name: "Files in context" }));
+  expect(
+    await screen.findByRole("dialog", { name: "Files in context" }),
+  ).toBeVisible();
+  expect(screen.queryByText(/Next message/)).not.toBeInTheDocument();
+});
+
+it("opens the file chooser from the upload menu item", async () => {
+  const user = userEvent.setup();
+  render(<ChatInput onSubmit={vi.fn()} />);
+  const click = vi.spyOn(HTMLInputElement.prototype, "click");
+  await user.click(screen.getByRole("button", { name: "Add attachments" }));
+  await user.click(
+    await screen.findByRole("menuitem", { name: "Upload files" }),
+  );
+  expect(click).toHaveBeenCalledOnce();
+});
+
+it("attaches pasted images with distinct names and leaves pasted text alone", () => {
+  render(<ChatInput onSubmit={vi.fn()} />);
+  const image = new File(["x"], "image.png", { type: "image/png" });
+  fireEvent.paste(screen.getByLabelText("Message"), {
+    clipboardData: { files: [image], getData: () => "" },
+  });
+  expect(screen.getByLabelText(/^Remove pasted-image-.*\.png$/)).toBeVisible();
+  fireEvent.paste(screen.getByLabelText("Message"), {
+    clipboardData: { files: [image], getData: () => "copied text" },
+  });
+  expect(screen.getAllByLabelText(/^Remove /)).toHaveLength(1);
 });

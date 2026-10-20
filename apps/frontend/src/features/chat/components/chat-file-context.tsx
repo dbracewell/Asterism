@@ -16,10 +16,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { QueryError } from "@/components/query-error";
 import { KnowledgeStatus } from "@/components/file-manager/knowledge-status";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
@@ -28,42 +30,33 @@ export const scopedFileHref = (chatId: string, fileId: string) =>
   `/c/${encodeURIComponent(chatId)}/files/${encodeURIComponent(fileId)}`;
 
 export function ChatFileContext({
+  open,
+  onOpenChange,
   chatId,
   projectId,
   scopeKey,
   disabled,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   chatId?: string;
   projectId: string | null;
   scopeKey?: string;
   disabled?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <Collapsible
-      open={open}
-      onOpenChange={setOpen}
-      className="flex min-w-0 shrink-0 flex-col border-b p-2 text-xs [overflow-wrap:anywhere]"
-    >
-      <CollapsibleTrigger asChild>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-auto min-w-0 whitespace-normal"
-        >
-          Files in context ·{" "}
-          {projectId ? "Project + this chat" : "General · this chat only"}
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <p className="text-muted-foreground py-2">
-          Project files are shared. Chat attachments apply only to the active
-          branch of this conversation. Historical answers may retain information
-          after removal.
-        </p>
-        {open &&
-          (chatId ? (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85dvh] sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Files in context</DialogTitle>
+          <DialogDescription>
+            {projectId
+              ? "Project files shared with every chat, plus attachments in this chat."
+              : "Only attachments in this chat are available."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex min-w-0 flex-col gap-1 text-xs">
+          {chatId ? (
             <SavedFileContext
               key={`${chatId}:${scopeKey}`}
               chatId={chatId}
@@ -71,9 +64,16 @@ export function ChatFileContext({
             />
           ) : (
             <DraftProjectFiles key={projectId} projectId={projectId} />
-          ))}
-      </CollapsibleContent>
-    </Collapsible>
+          )}
+        </div>
+        {chatId && (
+          <p className="text-muted-foreground text-xs">
+            Attachments apply to the active branch of this conversation. Earlier
+            answers may retain information after removal.
+          </p>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 function SavedFileContext({
@@ -234,7 +234,7 @@ function ScopedFileRow({
     );
   if (!file.data) return <p role="status">Loading file…</p>;
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded border p-2">
+    <div className="bg-card flex flex-wrap items-center gap-2 rounded-lg border p-2.5">
       <Link
         className="break-all underline"
         href={scopedFileHref(chatId, fileId)}
@@ -347,9 +347,9 @@ function DraftProjectFiles({ projectId }: { projectId: string | null }) {
     <div className="flex flex-col gap-2">
       <h3 className="font-medium">Project files</h3>
       {!projectId ? (
-        <p>
-          General has no project files. Only explicitly attached files will be
-          available.
+        <p className="text-muted-foreground">
+          General has no project files. Files you attach are added to this chat
+          when the message is sent.
         </p>
       ) : files.error ? (
         <QueryError
@@ -398,11 +398,6 @@ function DraftProjectFiles({ projectId }: { projectId: string | null }) {
           )}
         </>
       )}
-      <h3 className="font-medium">Chat attachments</h3>
-      <p>
-        New selections below become local attachments only when the message is
-        accepted.
-      </p>
     </div>
   );
 }
