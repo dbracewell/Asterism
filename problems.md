@@ -591,7 +591,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ---
 
-### 5.3 130+ Lines of Unreachable Code Behind an Early `return` in `domains/llm/helpers.py`
+### 5.3 [FIXED] 130+ Lines of Unreachable Code Behind an Early `return` in `domains/llm/helpers.py`
 
 - **Where**: [helpers.py](file:///Users/david/prj/asterism/apps/backend/asterism/domains/llm/helpers.py#L23-L55) and [helpers.py](file:///Users/david/prj/asterism/apps/backend/asterism/domains/llm/helpers.py#L67-L151)
 - **What the problem is**:
