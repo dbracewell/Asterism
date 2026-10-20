@@ -13,7 +13,7 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -280,7 +280,14 @@ function ModelCatalog({
 
   const models = catalog.data?.models ?? [];
 
+  const isFirstSearchRender = useRef(true);
   useEffect(() => {
+    if (isFirstSearchRender.current) {
+      // The mount-time run only resets state to its initial values, and firing
+      // it late would wipe pagination the user already navigated to.
+      isFirstSearchRender.current = false;
+      return;
+    }
     const timer = window.setTimeout(() => {
       setQuery(searchInput.trim());
       setCursor(null);
