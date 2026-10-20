@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from contextlib import asynccontextmanager
 from io import BytesIO
@@ -149,6 +150,16 @@ async def test_delete_is_user_scoped_and_download_remains_available(file_session
 
     response = await get_user_file("user-a", filename, session=file_session)
     assert response.path == await source_path(file_session, uploaded.files[0])
+    content_hash = hashlib.sha256(b"content").hexdigest()
+    assert response.headers["Cache-Control"] == "private, no-cache"
+    assert response.headers["ETag"] == f'"{content_hash}"'
+
+    # Verify 304 Not Modified when ETag matches
+    not_modified = await get_user_file("user-a", filename, session=file_session, if_none_match=f'"{content_hash}"')
+    assert not_modified.status_code == 304
+    assert not_modified.headers["ETag"] == f'"{content_hash}"'
+    assert not_modified.headers["Cache-Control"] == "private, no-cache"
+
     path = response.path
     deleted = await delete_user_file(user_id="user-a", filename=filename, session=file_session)
     assert deleted.filename == filename

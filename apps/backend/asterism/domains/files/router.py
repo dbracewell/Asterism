@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, File, Query, UploadFile, status
+from fastapi import APIRouter, File, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
 
 import asterism.domains.files.service as file_service
@@ -201,6 +201,7 @@ async def get_similar_files(
     },
 )
 async def get_file(
+    request: Request,
     user: AuthedUserDep,
     filename: str,
     db: DBSessionDep,
@@ -209,4 +210,5 @@ async def get_file(
         user_id=user.id,
         filename=filename,
         session=db,
+        if_none_match=request.headers.get("if-none-match"),
     )

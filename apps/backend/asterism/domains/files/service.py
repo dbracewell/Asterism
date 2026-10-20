@@ -8,7 +8,7 @@ from typing import Literal
 
 import filetype
 from fastapi import UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -94,7 +94,8 @@ async def get_user_file(
     user_id: str,
     filename: str,
     session: AsyncSession | None = None,
-) -> FileResponse:
+    if_none_match: str | None = None,
+) -> Response:
     if not filename or Path(filename).name != filename or "/" in filename or "\\" in filename:
         raise BadDataException("Access to file is denied")
     async with get_async_db_session(session) as session:
@@ -102,11 +103,23 @@ async def get_user_file(
         requested_path = get_file_store().open(user_id, file.storage_key)
         if not requested_path.is_file():
             raise NotFoundException("Access to file is denied")
+
+        etag = f'"{file.sha256}"'
+        headers = {
+            "Cache-Control": "private, no-cache",
+            "ETag": etag,
+        }
+
+        if if_none_match:
+            client_tags = [tag.strip() for tag in if_none_match.split(",")]
+            if etag in client_tags or file.sha256 in client_tags or "*" in client_tags:
+                return Response(status_code=304, headers=headers)
+
         return FileResponse(
             path=requested_path,
             filename=file.original_name,
             media_type=file.mime_type,
-            headers={"Cache-Control": "private, max-age=31536000, immutable"},
+            headers=headers,
         )
 
 
