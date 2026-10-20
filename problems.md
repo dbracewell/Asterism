@@ -489,7 +489,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ---
 
-### 4.3 Defining `<Dialog>` Inside `useConfirmationDialog` Destroys and Recreates the Modal on Every Render
+### 4.3 [FIXED] Defining `<Dialog>` Inside `useConfirmationDialog` Destroys and Recreates the Modal on Every Render
 
 - **Where**: [confirmation-dialog.tsx](file:///Users/david/prj/asterism/apps/frontend/src/components/confirmation-dialog.tsx#L46-L67)
 - **What the problem is**:

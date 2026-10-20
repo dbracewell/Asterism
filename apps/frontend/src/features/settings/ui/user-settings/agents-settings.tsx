@@ -203,7 +203,7 @@ function SubAgentCard({
     },
     onError: () => toast.error("Could not delete sub-agent"),
   });
-  const { confirm, Dialog } = useConfirmationDialog({
+  const { confirm, dialog } = useConfirmationDialog({
     title: `Delete ${agent.name}`,
     description:
       "Delete this sub-agent definition and remove it from all projects? Active delegations will lose access. Chat history and files are retained.",
@@ -211,7 +211,7 @@ function SubAgentCard({
   });
   return (
     <Card className="flex h-80 w-60 max-w-full min-w-0 flex-col">
-      <Dialog />
+      {dialog}
       <CardHeader>
         <CardTitle className="[overflow-wrap:anywhere]">{agent.name}</CardTitle>
         <CardDescription className="flex items-center justify-between">

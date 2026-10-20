@@ -228,7 +228,7 @@ export const DeleteSelectedFilesSection = () => {
     setIsMutating,
   } = useFileManager();
 
-  const { confirm: confirmDelete, Dialog: DeleteConfirmation } =
+  const { confirm: confirmDelete, dialog: deleteConfirmationDialog } =
     useConfirmationDialog({
       title: "Delete selected files?",
       description:
@@ -271,7 +271,7 @@ export const DeleteSelectedFilesSection = () => {
   if (!actions.delete) return null;
   return (
     <RibbonSection title="Delete">
-      <DeleteConfirmation />
+      {deleteConfirmationDialog}
       <Hint hint="Delete selected files" side="top" asChild>
         <Button
           aria-label="Delete selected files"

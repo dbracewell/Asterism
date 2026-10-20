@@ -36,7 +36,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   chatSessionBulkDeleteMutation: () => ({ mutationFn: vi.fn() }),
 }));
 vi.mock("@/components/confirmation-dialog", () => ({
-  useConfirmationDialog: () => ({ confirm: vi.fn(), Dialog: () => null }),
+  useConfirmationDialog: () => ({ confirm: vi.fn(), dialog: null }),
 }));
 vi.mock("./chat-session-action-menu", () => ({
   ChatSessionActionMenu: () => null,

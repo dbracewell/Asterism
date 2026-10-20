@@ -77,7 +77,7 @@ function ScopedNavChatSessions({
   const router = useRouter();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const { confirm, Dialog } = useConfirmationDialog({
+  const { confirm, dialog } = useConfirmationDialog({
     title: `Delete ${selectedIds.size} chat${selectedIds.size === 1 ? "" : "s"}?`,
     description:
       "This permanently deletes the selected chats and their messages.",
@@ -285,7 +285,7 @@ function ScopedNavChatSessions({
           </Button>
         </div>
       )}
-      <Dialog />
+      {dialog}
     </CollapsibleSidebarGroup>
   );
 }

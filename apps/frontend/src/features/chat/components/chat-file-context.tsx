@@ -218,7 +218,7 @@ function ScopedFileRow({
     retry: false,
   });
   const remove = useMutation(chatFileRemoveMutation({ client }));
-  const { confirm, Dialog } = useConfirmationDialog({
+  const { confirm, dialog } = useConfirmationDialog({
     title: "Remove this chat attachment?",
     description:
       "This removes local access across this chat's branches. The library file, processing artifacts, and project memberships remain. Historical messages keep their attachment snapshot.",
@@ -257,7 +257,7 @@ function ScopedFileRow({
           >
             Remove chat attachment
           </Button>
-          <Dialog />
+          {dialog}
           {projectId && !alreadyShared && (
             <AddAttachmentToProject
               projectId={projectId}

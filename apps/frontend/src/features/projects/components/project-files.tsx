@@ -106,7 +106,7 @@ function ProjectMembershipActions({ projectId }: { projectId: string }) {
       dispatch({ property: "page", value: 1 });
     },
   });
-  const { confirm, Dialog: Confirmation } = useConfirmationDialog({
+  const { confirm, dialog: confirmationDialog } = useConfirmationDialog({
     title: "Remove selected files from this project?",
     description:
       "Only this project's memberships are removed. Library files, processing artifacts, other projects, and chat-local attachments remain. Future turns lose project access to these files; historical answers may retain information.",
@@ -139,7 +139,7 @@ function ProjectMembershipActions({ projectId }: { projectId: string }) {
       >
         Remove from project
       </Button>
-      <Confirmation />
+      {confirmationDialog}
       {remove.error && (
         <QueryError
           error={remove.error}

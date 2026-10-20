@@ -134,7 +134,7 @@ function ProjectSettings({
     ...projectDeleteMutation({ client }),
     onSuccess: () => router.push("/general"),
   });
-  const { confirm, Dialog } = useConfirmationDialog({
+  const { confirm, dialog } = useConfirmationDialog({
     title: `Delete ${project.name}?`,
     description:
       "Chats will move to General with their history and local attachments. Project file memberships and instructions will be removed; library files will remain. Active runs will be canceled. Historical answers may still contain project information.",
@@ -233,7 +233,7 @@ function ProjectSettings({
           {remove.isPending ? "Deleting…" : "Delete project"}
         </Button>
       </section>
-      <Dialog />
+      {dialog}
     </>
   );
 }

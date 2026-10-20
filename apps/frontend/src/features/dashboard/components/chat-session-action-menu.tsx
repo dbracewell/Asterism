@@ -22,7 +22,7 @@ export const ChatSessionActionMenu = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { deleteChatSession, isDeleting } = useChatSessionCrud();
-  const { confirm, Dialog } = useConfirmationDialog({
+  const { confirm, dialog } = useConfirmationDialog({
     title: "Delete chat?",
     description: "This permanently deletes this chat and its messages.",
     confirmVariant: "destructive",
@@ -73,7 +73,7 @@ export const ChatSessionActionMenu = ({
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
-      <Dialog />
+      {dialog}
     </DropdownMenu>
   );
 };
