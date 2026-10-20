@@ -1,10 +1,8 @@
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 
 from asterism.common.log import get_logger
-from asterism.common.package_walker import load_decorators
 from asterism.core import config
 from asterism.db.database import db_session_manager
 from asterism.domains.chat.jobs import chat_jobs
@@ -30,14 +28,12 @@ async def init_system() -> None:
     await initialize_knowledge_runtime()
     logger.info("Knowledge vector store initialized.")
     logger.info("Loading tools and components...")
-    load_decorators(
-        str(Path(__file__).parent.parent),
-        target_decorators=(
-            "tool_registry.tool",
-            "component_registry.register",
-            "event_bus.on",
-        ),
-    )
+    from asterism.domains.components.builtin import load_builtin_components
+    from asterism.domains.tools.builtin import load_builtin_tools
+
+    load_builtin_components()
+    load_builtin_tools()
+
     tools = await tool_registry.active_tools()
     logger.info(f"{len(tools.items)} tools available.")
     logger.info("Tools and components loaded.")

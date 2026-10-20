@@ -577,7 +577,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ---
 
-### 5.2 Custom AST Source-Code Scanner Just to Import 8 Built-In Files (Which Re-Executes Already-Loaded Modules!)
+### 5.2 [FIXED] Custom AST Source-Code Scanner Just to Import 8 Built-In Files (Which Re-Executes Already-Loaded Modules!)
 
 - **Where**:
   - [package_walker.py](file:///Users/david/prj/asterism/apps/backend/asterism/common/package_walker.py#L1-L68) (`load_decorators`)
