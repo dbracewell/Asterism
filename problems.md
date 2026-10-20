@@ -460,7 +460,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ## 4. Code Smells (Messy Patterns, Hidden Traps & N+1 Queries)
 
-### 4.1 Opening the File Manager Fires Up to 101 Separate Requests at Once (N+1 Query Storm)
+### 4.1 [FIXED] Opening the File Manager Fires Up to 101 Separate Requests at Once (N+1 Query Storm)
 
 - **Where**:
   - [file-list.tsx](file:///Users/david/prj/asterism/apps/frontend/src/components/file-manager/file-list.tsx#L104-L111) and [file-list.tsx](file:///Users/david/prj/asterism/apps/frontend/src/components/file-manager/file-list.tsx#L191-L195)

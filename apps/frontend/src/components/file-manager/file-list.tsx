@@ -106,6 +106,7 @@ export const FileList = () => {
                     className="shrink-0 rounded object-cover"
                     filename={file.filename}
                     alt={file.original_name}
+                    thumbnail={file.thumbnail}
                     width={view === "grid" ? 64 : 32}
                     height={view === "grid" ? 64 : 32}
                   />
@@ -191,6 +192,7 @@ export const FileList = () => {
                     <KnowledgeStatus
                       filename={file.filename}
                       projects={file.projects ?? []}
+                      initialData={file.knowledge}
                       canRegenerate={actions.regenerate}
                     />
                   </div>

@@ -2,6 +2,8 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from asterism.domains.extraction.schemas import FileKnowledgeArtifact
+
 from .models import FileContentStatus, FileKind
 
 
@@ -28,6 +30,7 @@ class UserFile(BaseModel):
     updated_at: int
     thumbnail: str | None
     projects: list[FileProjectSummary] = Field(default_factory=list)
+    knowledge: FileKnowledgeArtifact | None = None
 
 
 class UserFileList(BaseModel):

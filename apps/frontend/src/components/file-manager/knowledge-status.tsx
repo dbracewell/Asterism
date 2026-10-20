@@ -15,7 +15,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import type { FileProjectSummary } from "@/lib/client";
+import type { FileKnowledgeArtifact, FileProjectSummary } from "@/lib/client";
 import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,20 +41,27 @@ const isActive = (artifact?: {
 export function KnowledgeStatus({
   filename,
   projects,
+  initialData,
   canRegenerate = true,
 }: {
   filename: string;
   projects: FileProjectSummary[];
+  initialData?: FileKnowledgeArtifact | null;
   canRegenerate?: boolean;
 }) {
   const { data, error, isFetching, refetch } = useQuery({
     ...fileKnowledgeGetStatusOptions({ client, path: { filename } }),
+    initialData: initialData ?? undefined,
+    staleTime: initialData && !isActive(initialData) ? 30_000 : 0,
     // No push channel exists; poll only while work is in flight.
     refetchInterval: (query) =>
       isActive(query.state.data) ? POLL_INTERVAL_MS : false,
   });
   const regenerate = useMutation({
     ...fileKnowledgeRegenerateMutation({ client }),
+    onSuccess: () => {
+      void refetch();
+    },
     onError: () => toast.error("Unable to regenerate embedding and caption."),
   });
   const captionStatus = data?.caption.status ?? "none";

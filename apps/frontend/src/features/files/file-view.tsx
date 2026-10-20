@@ -60,6 +60,7 @@ export function FileView({ filename }: { filename: string }) {
             className="shrink-0 rounded object-cover"
             filename={file.filename}
             alt={file.original_name}
+            thumbnail={file.thumbnail}
             width={96}
             height={96}
           />

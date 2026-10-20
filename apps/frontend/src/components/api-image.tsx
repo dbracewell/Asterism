@@ -28,6 +28,7 @@ type ImageProps = {
   height?: number | string;
   zoomable?: boolean;
   className?: string;
+  thumbnail?: string | null;
 };
 
 export const APIImage = ({
@@ -43,9 +44,24 @@ export const APIImage = ({
   );
 
 const LibraryImage = (props: ImageProps) => {
-  const result = useQuery(
-    fileGetFileInfoOptions({ client, path: { filename: props.filename } }),
-  );
+  const result = useQuery({
+    ...fileGetFileInfoOptions({ client, path: { filename: props.filename } }),
+    enabled: props.thumbnail === undefined,
+  });
+  if (props.thumbnail !== undefined) {
+    const directResult = {
+      data: props.thumbnail
+        ? ({
+            filename: props.filename,
+            original_name: props.alt ?? "Generated image",
+            thumbnail: props.thumbnail,
+          } as UserFile)
+        : null,
+      isLoading: false,
+      error: null,
+    } as unknown as UseQueryResult<UserFile, ErrorDetail>;
+    return <ImageContent {...props} result={directResult} />;
+  }
   return <ImageContent {...props} result={result} />;
 };
 

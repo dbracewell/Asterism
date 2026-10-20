@@ -954,6 +954,7 @@ export const zUpdateMessageRequest = z.object({
   active_child_id: z.uuid().nullish(),
   status: zMessageStatus.nullish(),
   tool_results: z.array(zToolResult).nullish(),
+  tool_call_results: z.array(zToolResult).nullish(),
 });
 
 /**
@@ -979,6 +980,7 @@ export const zUserFile = z.object({
   updated_at: z.int(),
   thumbnail: z.string().nullable(),
   projects: z.array(zFileProjectSummary).optional(),
+  knowledge: zFileKnowledgeArtifact.nullish(),
 });
 
 /**
