@@ -6,18 +6,15 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
   "aiosqlite>=0.22.1",
-  "asyncpg>=0.31.0",
   "beautifulsoup4>=4.15.0",
-  "bm25s>=0.3.10",
   "cachetools>=7.1.4",
   "fastapi>=0.136.3",
   "filetype>=1.2.0",
   "html-to-markdown>=3.10.2",
+  "httpx>=0.28.0",
   "huggingface-hub>=1.25",
   "lancedb>=0.29.2,<0.30",
-  "llama-cpp-python>=0.3.34",
   "markitdown[docx,pdf,pptx,xls,xlsx]>=0.1.7,<0.2",
-  "networkx>=3.6.1",
   "num2words>=0.5.14",
   "onnxruntime>=1.20,<2",
   "openai>=2.38.0",
@@ -26,10 +23,8 @@ dependencies = [
   "pydantic>=2.13.4",
   "pydantic-settings>=2.15.0",
   "pyjwt[crypto]>=2.13.0",
-  "pystemmer>=3.1.0",
   "python-multipart>=0.0.20",
   "requests>=2.34.2",
-  "scikit-learn>=1.9.0",
   "sqlalchemy[asyncio]>=2.0.50",
   "tiktoken>=0.14.0",
   "torch>=2.13.0",
@@ -37,7 +32,6 @@ dependencies = [
   "transformers>=5.14.1",
   "truststore>=0.10.4",
   "uvicorn[standard]>=0.48.0",
-  "websocket>=0.2.1",
 ]
 
 [dependency-groups]
@@ -45,8 +39,6 @@ dev = [
   "ruff>=0.15.15",
   "pytest>=8.4.0",
   "pytest-asyncio>=1.1.0",
-  "httpx>=0.28.0",
-  "httpx2>=2.3.0",
   "basedpyright>=1.40.1",
 ]
 

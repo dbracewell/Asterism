@@ -559,7 +559,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ## 5. Overengineering & Dead Weight (Unused Code & Unnecessary Complexity)
 
-### 5.1 388 Lines of Unused Retrieval Code + 8 Heavy Unused Python Packages (`llama-cpp-python`, `scikit-learn`, etc.)
+### 5.1 [FIXED] 388 Lines of Unused Retrieval Code + 8 Heavy Unused Python Packages (`llama-cpp-python`, `scikit-learn`, etc.)
 
 - **Where**:
   - [tools/builtin/retrieval.py](file:///Users/david/prj/asterism/apps/backend/asterism/domains/tools/builtin/retrieval.py#L1-L388)
