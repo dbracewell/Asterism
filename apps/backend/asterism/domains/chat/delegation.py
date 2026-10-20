@@ -15,18 +15,30 @@ from asterism.domains.settings.models import LLMModel
 
 from .models import ChatModel
 
+_UNSET = object()
+
 
 async def resolve_delegation_scope(
     *,
     user_id: str,
     chat_id: uuid.UUID,
     session: AsyncSession | None = None,
+    project_id: uuid.UUID | None | object = _UNSET,
 ) -> DelegationScope | None:
+    if project_id is None:
+        return None
     async with get_async_db_session(session) as session:
-        chat = await session.get(ChatModel, chat_id)
-        if chat is None or chat.user_id != user_id or chat.project_id is None:
+        effective_project_id: uuid.UUID | None
+        if project_id is not _UNSET:
+            effective_project_id = project_id  # pyright: ignore[reportAssignmentType]
+        else:
+            chat = await session.get(ChatModel, chat_id)
+            if chat is None or chat.user_id != user_id or chat.project_id is None:
+                return None
+            effective_project_id = chat.project_id
+        if effective_project_id is None:
             return None
-        project = await get_project(user_id=user_id, project_id=chat.project_id, session=session)
+        project = await get_project(user_id=user_id, project_id=effective_project_id, session=session)
         ids = frozenset(await session.scalars(selected_agent_ids(user_id=user_id, project_id=project.id)))
         return DelegationScope(
             chat_id=chat_id, project_id=project.id, context_revision=project.context_revision, agent_ids=ids

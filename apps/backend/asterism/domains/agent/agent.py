@@ -12,7 +12,13 @@ from asterism.common.log import get_logger
 from asterism.core.config import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.core.schemas import AuthedUser
-from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity, resolve_execution_scope
+from asterism.domains.agent.execution_scope import (
+    ChatScopeSnapshot,
+    ExecutionScope,
+    ModelIdentity,
+    ProjectScopeSnapshot,
+    resolve_execution_scope,
+)
 from asterism.domains.chat.schemas import Chat, MessageExecution
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import (
@@ -90,6 +96,8 @@ class Agent:
         self.user_files: list[str] = list(user_files) if user_files else []
         self.parent_message_id: uuid.UUID | None = parent_message_id
         self.messages: list[LLMMessage] = []
+        self.chat_scope_snapshot: ChatScopeSnapshot | None = None
+        self.project_scope_snapshot: ProjectScopeSnapshot | None = None
         if call_stack is not None:
             self.call_stack: list[uuid.UUID] = list(call_stack)
         elif self.profile.id is not None:
@@ -109,16 +117,42 @@ class Agent:
             self._client = None
         self.model_id = model_id
 
-    async def prepare_execution(self, message_id: uuid.UUID, *, restart: bool = False) -> MessageExecution:
+    async def prepare_execution(
+        self,
+        message_id: uuid.UUID,
+        *,
+        restart: bool = False,
+        chat_snapshot: ChatScopeSnapshot | None = None,
+        project_snapshot: ProjectScopeSnapshot | None = None,
+    ) -> MessageExecution:
         from asterism.domains.chat.execution import prepare_execution, read_execution_prompt
 
         if self.profile.sub_agent:
             raise BadDataException("Sub-agents retain their fixed model binding")
+        if chat_snapshot is None:
+            from asterism.db.database import get_async_db_session
+            from asterism.domains.chat.scope import read_chat_scope_snapshot, read_project_scope_snapshot
+
+            async with get_async_db_session() as session:
+                chat_snapshot = await read_chat_scope_snapshot(
+                    user_id=self.user.id, chat_id=self.session.info.id, session=session
+                )
+                project_snapshot = (
+                    await read_project_scope_snapshot(
+                        user_id=self.user.id, project_id=chat_snapshot.project_id, session=session
+                    )
+                    if chat_snapshot.project_id
+                    else None
+                )
+        self.chat_scope_snapshot = chat_snapshot
+        self.project_scope_snapshot = project_snapshot
         execution = await prepare_execution(
             user_id=self.user.id,
             chat_id=self.session.info.id,
             message_id=message_id,
             restart=restart,
+            chat_snapshot=self.chat_scope_snapshot,
+            project_snapshot=self.project_scope_snapshot,
         )
         self.apply_execution(execution)
         self.prompt_snapshot = await read_execution_prompt(
@@ -141,42 +175,65 @@ class Agent:
         )
         self.max_steps = self.profile.max_steps
 
-    async def prepare_execution_scope(self) -> ExecutionScope:
+    async def prepare_execution_scope(
+        self,
+        *,
+        chat_snapshot: ChatScopeSnapshot | None = None,
+        project_snapshot: ProjectScopeSnapshot | None = None,
+    ) -> ExecutionScope:
         from asterism.db.database import get_async_db_session
         from asterism.domains.chat.scope import read_chat_scope_snapshot, read_project_scope_snapshot
 
-        await self.resolve_tools(reset=not self.profile.sub_agent)
-        executed_model = None
-        if self.model_id is not None:
+        async with get_async_db_session() as db:
+            chat_snap = chat_snapshot or await read_chat_scope_snapshot(
+                user_id=self.user.id, chat_id=self.session.info.id, session=db
+            )
+            project_snap = (
+                project_snapshot
+                if project_snapshot is not None
+                else (
+                    await read_project_scope_snapshot(
+                        user_id=self.user.id, project_id=chat_snap.project_id, session=db
+                    )
+                    if chat_snap.project_id
+                    else None
+                )
+            )
+            self.chat_scope_snapshot = chat_snap
+            self.project_scope_snapshot = project_snap
+
+            await self.resolve_tools(reset=not self.profile.sub_agent)
+            executed_model = None
+            if self.model_id is not None:
+                if self.execution is not None:
+                    choice = self.execution.model
+                    executed_model = ModelIdentity(id=choice.id, provider_id=choice.provider_id, name=choice.name)
+                elif self.execution_scope is not None and self.execution_scope.executed_model is not None:
+                    executed_model = self.execution_scope.executed_model
+                else:
+                    executed_model = ModelIdentity(id=self.model_id)
+            selected_choice = self.session.info.selected_model
+            selected_model = (
+                ModelIdentity(
+                    id=selected_choice.id,
+                    provider_id=selected_choice.provider_id,
+                    name=selected_choice.name,
+                )
+                if selected_choice is not None
+                else None
+            )
             if self.execution is not None:
                 choice = self.execution.model
-                executed_model = ModelIdentity(id=choice.id, provider_id=choice.provider_id, name=choice.name)
-            elif self.execution_scope is not None and self.execution_scope.executed_model is not None:
-                executed_model = self.execution_scope.executed_model
-            else:
-                executed_model = ModelIdentity(id=self.model_id)
-        selected_choice = self.session.info.selected_model
-        selected_model = (
-            ModelIdentity(
-                id=selected_choice.id,
-                provider_id=selected_choice.provider_id,
-                name=selected_choice.name,
-            )
-            if selected_choice is not None
-            else None
-        )
-        if self.execution is not None:
-            choice = self.execution.model
-            selected_model = ModelIdentity(id=choice.id, provider_id=choice.provider_id, name=choice.name)
-        if self.profile.sub_agent and self.execution_scope is not None:
-            selected_model = self.execution_scope.selected_model
-
-        async with get_async_db_session() as db:
+                selected_model = ModelIdentity(id=choice.id, provider_id=choice.provider_id, name=choice.name)
+            if self.profile.sub_agent and self.execution_scope is not None:
+                selected_model = self.execution_scope.selected_model
 
             async def chat_reader():
-                return await read_chat_scope_snapshot(user_id=self.user.id, chat_id=self.session.info.id, session=db)
+                return chat_snap
 
             async def project_reader(project_id: uuid.UUID):
+                if project_snap is not None and project_snap.project_id == project_id:
+                    return project_snap
                 return await read_project_scope_snapshot(user_id=self.user.id, project_id=project_id, session=db)
 
             scope = await resolve_execution_scope(
@@ -347,6 +404,8 @@ class Agent:
             profile=self.profile,
             model_id=self.model_id,
             ceiling=None if reset else self.tool_scope,
+            chat_snapshot=self.chat_scope_snapshot,
+            project_snapshot=self.project_scope_snapshot,
         )
         if self.execution_scope is not None:
             self.effective_tools = [
@@ -399,6 +458,8 @@ class Agent:
                 profile=self.profile,
                 model_id=self.model_id,
                 ceiling=self.tool_scope,
+                chat_snapshot=self.chat_scope_snapshot,
+                project_snapshot=self.project_scope_snapshot,
             )
         return snapshot.text
 

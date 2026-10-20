@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
+from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
@@ -17,6 +18,7 @@ from .models import ChatModel, MessageModel
 from .prompt_composition import build_prompt_snapshot
 from .queries import select_owned_messages
 from .schemas import MessageExecution
+from .scope import read_chat_scope_snapshot, read_project_scope_snapshot
 
 
 async def prepare_execution(
@@ -26,6 +28,8 @@ async def prepare_execution(
     message_id: uuid.UUID,
     restart: bool = False,
     session: AsyncSession | None = None,
+    chat_snapshot: ChatScopeSnapshot | None = None,
+    project_snapshot: ProjectScopeSnapshot | None = None,
 ) -> MessageExecution:
     async with get_async_db_session(session) as session:
         try:
@@ -62,6 +66,20 @@ async def prepare_execution(
                 if chat.selected_model_id is None:
                     raise CodedException(409, "Choose a chat model before generating")
                 choice = await require_chat_model(chat.selected_model_id, session)
+                chat_snap = chat_snapshot or await read_chat_scope_snapshot(
+                    user_id=user_id, chat_id=chat_id, session=session
+                )
+                project_snap = (
+                    project_snapshot
+                    if project_snapshot is not None
+                    else (
+                        await read_project_scope_snapshot(
+                            user_id=user_id, project_id=chat_snap.project_id, session=session
+                        )
+                        if chat_snap.project_id
+                        else None
+                    )
+                )
                 prompt = await build_prompt_snapshot(
                     user_id=user_id,
                     chat_id=chat_id,
@@ -70,6 +88,8 @@ async def prepare_execution(
                     ),
                     model_id=choice.id,
                     session=session,
+                    chat_snapshot=chat_snap,
+                    project_snapshot=project_snap,
                 )
                 message.pending_prompt = prompt
                 execution = MessageExecution(
@@ -80,7 +100,12 @@ async def prepare_execution(
                     configuration=current,
                 )
                 execution.context = await build_execution_provenance(
-                    user_id=user_id, chat_id=chat_id, execution=execution, session=session
+                    user_id=user_id,
+                    chat_id=chat_id,
+                    execution=execution,
+                    session=session,
+                    chat_snapshot=chat_snap,
+                    project_snapshot=project_snap,
                 )
                 message.pending_execution = execution
             await session.commit()

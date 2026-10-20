@@ -517,7 +517,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
 
 ---
 
-### 4.5 Starting One Chat Turn Queries the Entire Chat History 5+ Times in a Row
+### 4.5 [FIXED] Starting One Chat Turn Queries the Entire Chat History 5+ Times in a Row
 
 - **Where**:
   - [orchestrator.py](file:///Users/david/prj/asterism/apps/backend/asterism/domains/chat/orchestrator.py#L401-L403) (`run_agent`)

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException
 from asterism.db.database import get_async_db_session
+from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.settings.models import LLMModel
@@ -25,6 +26,8 @@ async def resolve_effective_tools(
     model_id: uuid.UUID | None,
     ceiling: ContextToolScope | None = None,
     session: AsyncSession | None = None,
+    chat_snapshot: ChatScopeSnapshot | None = None,
+    project_snapshot: ProjectScopeSnapshot | None = None,
 ) -> tuple[list[str], ContextToolScope | None]:
     if model_id is None:
         return [], None
@@ -42,7 +45,13 @@ async def resolve_effective_tools(
             if model.supports_tools is True
             else set()
         )
-        files = await resolve_chat_file_scope(user_id=user_id, chat_id=chat_id, session=db)
+        files = await resolve_chat_file_scope(
+            user_id=user_id,
+            chat_id=chat_id,
+            session=db,
+            chat_snapshot=chat_snapshot,
+            project_snapshot=project_snapshot,
+        )
         if ceiling is None:
             # Children must inherit a ceiling; they cannot resolve a wider one.
             if profile.sub_agent:
@@ -54,7 +63,9 @@ async def resolve_effective_tools(
                 caller_agent_id=profile.id,
                 model_id=model_id,
                 file_ids=frozenset(files.allowed_file_ids),
-                delegation=await resolve_delegation_scope(user_id=user_id, chat_id=chat_id, session=db),
+                delegation=await resolve_delegation_scope(
+                    user_id=user_id, chat_id=chat_id, session=db, project_id=files.project_id
+                ),
             )
         if (ceiling.user_id, ceiling.chat_id, ceiling.caller_agent_id, ceiling.model_id) != (
             user_id,

@@ -5,6 +5,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.db.database import get_async_db_session
+from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.prompts import PromptComposer, PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.tools.context import ContextToolScope
@@ -22,19 +23,32 @@ async def build_prompt_snapshot(
     model_id: uuid.UUID | None,
     session: AsyncSession | None = None,
     ceiling: ContextToolScope | None = None,
+    chat_snapshot: ChatScopeSnapshot | None = None,
+    project_snapshot: ProjectScopeSnapshot | None = None,
 ) -> PromptSnapshot:
     async with get_async_db_session(session) as db:
-        chat = await read_chat_scope_snapshot(user_id=user_id, chat_id=chat_id, session=db)
+        chat = chat_snapshot or await read_chat_scope_snapshot(user_id=user_id, chat_id=chat_id, session=db)
         project = (
-            await read_project_scope_snapshot(user_id=user_id, project_id=chat.project_id, session=db)
-            if chat.project_id
-            else None
+            project_snapshot
+            if project_snapshot is not None
+            else (
+                await read_project_scope_snapshot(user_id=user_id, project_id=chat.project_id, session=db)
+                if chat.project_id
+                else None
+            )
         )
         project_id = project.project_id if project else None
         revision = project.prompt_revision if project else None
         instructions = project.system_prompt if project else ""
         tools, scope = await resolve_effective_tools(
-            user_id=user_id, chat_id=chat_id, profile=profile, model_id=model_id, ceiling=ceiling, session=db
+            user_id=user_id,
+            chat_id=chat_id,
+            profile=profile,
+            model_id=model_id,
+            ceiling=ceiling,
+            session=db,
+            chat_snapshot=chat,
+            project_snapshot=project,
         )
         runtime = await build_runtime_prompt(
             user_id=user_id,

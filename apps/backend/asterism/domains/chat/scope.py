@@ -22,12 +22,18 @@ async def resolve_chat_file_scope(
     user_id: str,
     chat_id: uuid.UUID,
     session: AsyncSession,
+    chat_snapshot: ChatScopeSnapshot | None = None,
+    project_snapshot: ProjectScopeSnapshot | None = None,
 ) -> ChatFileScope:
-    chat = await read_chat_scope_snapshot(user_id=user_id, chat_id=chat_id, session=session)
+    chat = chat_snapshot or await read_chat_scope_snapshot(user_id=user_id, chat_id=chat_id, session=session)
     project = (
-        await read_project_scope_snapshot(user_id=user_id, project_id=chat.project_id, session=session)
-        if chat.project_id is not None
-        else None
+        project_snapshot
+        if project_snapshot is not None
+        else (
+            await read_project_scope_snapshot(user_id=user_id, project_id=chat.project_id, session=session)
+            if chat.project_id is not None
+            else None
+        )
     )
     provenance: dict[uuid.UUID, tuple[set[str], list[uuid.UUID]]] = {}
     for file in (*chat.files, *(project.files if project else ())):
