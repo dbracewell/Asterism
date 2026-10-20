@@ -101,7 +101,9 @@ class LocalSmolVlm2CaptionProvider:
 
     async def initialize(self) -> None:
         if self._model is None or self._processor is None:
-            await asyncio.to_thread(self._initialize_sync)
+            async with self._semaphore:
+                if self._model is None or self._processor is None:
+                    await asyncio.to_thread(self._initialize_sync)
 
     def _caption_sync(self, request: CaptionRequest) -> str:
         if self._model is None or self._processor is None:

@@ -120,3 +120,43 @@ def test_missing_promoted_root_recovers_previous_verified_bundle(tmp_path: Path)
     status = _service(tmp_path / "knowledge-clip").progress()
     assert status.status == "ready"
     assert status.bundle_sha256 == expected
+
+
+def test_manifest_verification_is_cached(tmp_path: Path):
+    from asterism.domains.extraction import model_download
+
+    _write_verified_bundle(tmp_path)
+    service = _service(tmp_path)
+
+    with patch.object(
+        model_download, "_verify_manifest_uncached", wraps=model_download._verify_manifest_uncached
+    ) as mock_uncached:
+        assert service.progress().status == "ready"
+        assert mock_uncached.call_count == 1
+
+        # Second progress call should hit cache and NOT invoke _verify_manifest_uncached
+        assert service.progress().status == "ready"
+        assert mock_uncached.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_embedding_provider_concurrent_initialize_once(tmp_path: Path):
+    from asterism.domains.extraction.embedding import OnnxClipEmbeddingProvider
+
+    provider = OnnxClipEmbeddingProvider(tmp_path, pinned_model=embedding_model)
+
+    call_count = 0
+
+    def fake_initialize_sync():
+        nonlocal call_count
+        call_count += 1
+        provider._session = "fake_session"  # type: ignore
+
+    with patch.object(provider, "_initialize_sync", side_effect=fake_initialize_sync):
+        await asyncio.gather(
+            provider.initialize(),
+            provider.initialize(),
+            provider.initialize(),
+        )
+
+    assert call_count == 1

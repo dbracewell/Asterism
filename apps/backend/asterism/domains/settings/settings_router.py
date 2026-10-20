@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query
@@ -448,7 +449,7 @@ async def delete_app_setting(
 async def get_knowledge_embedding_status(user: AdminUserDep) -> DownloadProgress:
     from asterism.domains.extraction.embedding import embedding_download_service
 
-    return embedding_download_service.progress()
+    return await asyncio.to_thread(embedding_download_service.progress)
 
 
 @settings_router.get(
@@ -462,7 +463,7 @@ async def get_caption_model_status(
 ) -> DownloadProgress:
     from asterism.domains.extraction.captioning import captioning_download_service
 
-    return captioning_download_service.progress()
+    return await asyncio.to_thread(captioning_download_service.progress)
 
 
 @settings_router.post(

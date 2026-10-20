@@ -76,7 +76,9 @@ class OnnxClipEmbeddingProvider:
 
     async def initialize(self) -> None:
         if self._session is None:
-            await asyncio.to_thread(self._initialize_sync)
+            async with self._semaphore:
+                if self._session is None:
+                    await asyncio.to_thread(self._initialize_sync)
 
     def _require_ready(self) -> tuple[ort.InferenceSession, CLIPTokenizerFast, CLIPImageProcessorPil]:
         if self._session is None or self._tokenizer is None or self._image_processor is None:

@@ -1,5 +1,6 @@
 """Lifecycle-owned knowledge storage services."""
 
+import asyncio
 import uuid
 
 from asterism.common.job_queue import JobManager
@@ -99,6 +100,7 @@ async def initialize_knowledge_runtime() -> None:
         return
 
     embedding_download_service.on_bundle_ready = lambda _: resume_ingestion_jobs()
+    await asyncio.to_thread(embedding_download_service._ensure_checked)
     if embedding_download_service.is_ready():
         await resume_ingestion_jobs()
     else:

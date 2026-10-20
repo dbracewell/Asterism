@@ -89,14 +89,35 @@ def write_manifest(model_root: Path, model: PinnedModel) -> str:
     return sha256_file(destination)
 
 
-def verify_manifest(model_root: Path, model: PinnedModel) -> bool:
-    """Verify the integrity of all regular files under *model_root* against the manifest.
+_manifest_cache: dict[tuple[Path, int, int, str, str, tuple[tuple[str, int, int], ...]], bool] = {}
+_manifest_cache_lock = threading.Lock()
 
-    Returns ``True`` if the manifest is present and all files match their expected
-    SHA-256 digests.  Returns ``False`` if the manifest is missing or any file fails
-    verification.
-    """
-    root = model_root.resolve()
+
+def _get_bundle_fingerprint(root: Path) -> tuple[tuple[str, int, int], ...] | None:
+    manifest_path = root / MANIFEST_FILENAME
+    if not manifest_path.is_file():
+        return None
+    try:
+        manifest_bytes = manifest_path.read_bytes()
+        manifest = json.loads(manifest_bytes)
+        files = manifest.get("files")
+        if not isinstance(files, dict) or not files:
+            return None
+        fingerprint: list[tuple[str, int, int]] = []
+        for relative_path in sorted(files.keys()):
+            if not isinstance(relative_path, str):
+                return None
+            path = (root / relative_path).resolve()
+            if root not in path.parents or not path.is_file() or path.is_symlink():
+                return None
+            st = path.stat()
+            fingerprint.append((relative_path, st.st_size, st.st_mtime_ns))
+        return tuple(fingerprint)
+    except Exception:
+        return None
+
+
+def _verify_manifest_uncached(root: Path, model: PinnedModel) -> bool:
     manifest_path = root / MANIFEST_FILENAME
     if not manifest_path.is_file() or manifest_path.stat().st_size > MAX_MANIFEST_BYTES:
         return False
@@ -137,6 +158,47 @@ def verify_manifest(model_root: Path, model: PinnedModel) -> bool:
         return False
 
 
+def verify_manifest(model_root: Path, model: PinnedModel) -> bool:
+    """Verify that a model bundle directory matches its pinned manifest.
+
+    Returns ``True`` if the manifest is present and all files match their expected
+    SHA-256 digests.  Returns ``False`` if the manifest is missing or any file fails
+    verification. Results are cached by directory and file stat fingerprints to prevent
+    redundant multi-hundred-megabyte disk hashing.
+    """
+    root = model_root.resolve()
+    manifest_path = root / MANIFEST_FILENAME
+    if not manifest_path.is_file() or manifest_path.stat().st_size > MAX_MANIFEST_BYTES:
+        return False
+
+    fingerprint = _get_bundle_fingerprint(root)
+    if fingerprint is None:
+        return False
+
+    try:
+        st_manifest = manifest_path.stat()
+    except OSError:
+        return False
+
+    cache_key = (
+        root,
+        st_manifest.st_size,
+        st_manifest.st_mtime_ns,
+        model.id,
+        model.revision,
+        fingerprint,
+    )
+
+    with _manifest_cache_lock:
+        if cache_key in _manifest_cache:
+            return _manifest_cache[cache_key]
+
+    result = _verify_manifest_uncached(root, model)
+    with _manifest_cache_lock:
+        _manifest_cache[cache_key] = result
+    return result
+
+
 class DownloadNotReadyError(RuntimeError):
     """Expected transient state while automatic provisioning is in progress."""
 
@@ -150,10 +212,20 @@ class ModelDownloadService:
 
     def __post_init__(self) -> None:
         self.model_root = self.model_root.resolve()
+
+    def _migrate_previous_if_needed(self) -> None:
         previous_root = self.model_root.with_name(f"{self.model_root.name}.previous")
-        if not self.model_root.exists() and verify_manifest(previous_root, self.pinned_model):
+        if (
+            not self.model_root.exists()
+            and previous_root.exists()
+            and verify_manifest(previous_root, self.pinned_model)
+        ):
             previous_root.replace(self.model_root)
-        self._check_existing_bundle()
+
+    def _ensure_checked(self) -> None:
+        if self.state.status == "idle":
+            self._migrate_previous_if_needed()
+            self._check_existing_bundle()
 
     def _check_existing_bundle(self) -> None:
         """Mark an existing bundle ready only after full pinned-manifest verification."""
@@ -278,6 +350,7 @@ class ModelDownloadService:
             return
 
     def progress(self) -> DownloadProgress:
+        self._ensure_checked()
         downloading = self.state.status in {"downloading", "verifying"}
         self.model_root.resolve().mkdir(exist_ok=True, parents=True)
         manifest = self.model_root / MANIFEST_FILENAME
@@ -290,6 +363,7 @@ class ModelDownloadService:
         )
 
     def is_ready(self) -> bool:
+        self._ensure_checked()
         return self.state.status == "ready"
 
     async def shutdown(self) -> None:
