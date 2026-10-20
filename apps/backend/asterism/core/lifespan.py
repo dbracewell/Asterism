@@ -12,6 +12,7 @@ from asterism.domains.extraction.runtime import (
     initialize_knowledge_runtime,
     shutdown_knowledge_runtime,
 )
+from asterism.domains.llm.client import close_openai_clients
 from asterism.domains.llm.draft import get_draft_model
 from asterism.domains.tools.registry import tool_registry
 
@@ -51,5 +52,6 @@ async def lifespan(app: FastAPI):
     await event_bus.shutdown()
     await chat_jobs.shutdown()
     await shutdown_knowledge_runtime()
+    await close_openai_clients()
     await db_session_manager.close()
     logger.info("Asterism backend shutting up...")

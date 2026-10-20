@@ -539,7 +539,7 @@ This document explains the security issues, bugs, frontend inconsistencies, code
   - **Where**: [events.py](file:///Users/david/prj/asterism/apps/backend/asterism/core/events.py#L54-L76) (`post_webhook`) and [security.py](file:///Users/david/prj/asterism/apps/backend/asterism/core/security.py#L35) (`verify_jwks_token`).
   - **Problem**: `post_webhook` uses synchronous `requests.post(url)` with **no timeout** directly on the async event loop. If a webhook server hangs, the entire backend freezes for all users.
   - **Fix**: Use `httpx.AsyncClient(timeout=5.0)` (or `asyncio.to_thread` with a timeout) for webhooks and JWKS key lookups.
-- **WebSocket connections hold a database session open for hours & leak `AsyncOpenAI` clients**:
+- **[FIXED] WebSocket connections hold a database session open for hours & leak `AsyncOpenAI` clients**:
   - **Where**: [chat/router.py](file:///Users/david/prj/asterism/apps/backend/asterism/domains/chat/router.py#L88-L130) and [llm/client.py](file:///Users/david/prj/asterism/apps/backend/asterism/domains/llm/client.py#L66-L290).
   - **Problem**: The WebSocket route injects `session: DBSessionDep`, keeping a SQLAlchemy session open for the entire time a chat tab is open, even though it's only used for the first 20ms during connection setup. Also, every `Agent` creates a new `AsyncOpenAI` HTTP connection pool and never closes it, and `llm_request_limiter` ([llm/client.py](file:///Users/david/prj/asterism/apps/backend/asterism/domains/llm/client.py#L66)) is defined but never actually used!
   - **Fix**: Open a short `async with get_async_db_session() as session:` block only for the WebSocket handshake, share/close `AsyncOpenAI` clients, and use `async with llm_request_limiter.acquire():` in `LLMClient`.

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -142,27 +143,29 @@ class StreamHandler[T: BaseModel]:
         self,
         stream: AsyncGenerator[ChatCompletionChunk | BaseException | None, None],
     ) -> AsyncGenerator[LLMEvent, None]:
+        try:
+            async for chunk in stream:
+                if not chunk:
+                    yield LLMEvent(
+                        type=LLMEventType.ERROR,
+                        content="Received empty chunk from LLM stream.",
+                        exception=ValueError("Empty chunk received."),
+                    )
+                    return
+                if isinstance(chunk, BaseException):
+                    yield LLMEvent(
+                        type=LLMEventType.ERROR,
+                        content=str(chunk),
+                        exception=chunk,
+                    )
+                    return
+                if hasattr(chunk, "usage") and chunk.usage is not None:
+                    self.usage = chunk.usage
 
-        async for chunk in stream:
-            if not chunk:
-                yield LLMEvent(
-                    type=LLMEventType.ERROR,
-                    content="Received empty chunk from LLM stream.",
-                    exception=ValueError("Empty chunk received."),
-                )
-                return
-            if isinstance(chunk, BaseException):
-                yield LLMEvent(
-                    type=LLMEventType.ERROR,
-                    content=str(chunk),
-                    exception=chunk,
-                )
-                return
-            if hasattr(chunk, "usage") and chunk.usage is not None:
-                self.usage = chunk.usage
-
-            async for event in self._handle_chunk(chunk):
-                yield event
+                async for event in self._handle_chunk(chunk):
+                    yield event
+        finally:
+            await stream.aclose()
 
         parsed = None
         self.content = self.content.strip()
@@ -274,22 +277,51 @@ class StreamHandler[T: BaseModel]:
                     entry["arguments"] += tc_chunk.function.arguments
 
 
+_shared_openai_clients: dict[tuple[str, str], AsyncOpenAI] = {}
+_shared_openai_clients_lock = threading.Lock()
+
+
+def get_shared_openai_client(base_url: str, api_key: str) -> AsyncOpenAI:
+    key = (base_url, api_key)
+    with _shared_openai_clients_lock:
+        client = _shared_openai_clients.get(key)
+        if client is None:
+            client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=base_url,
+                timeout=120.0,
+            )
+            _shared_openai_clients[key] = client
+        return client
+
+
+async def close_openai_clients() -> None:
+    with _shared_openai_clients_lock:
+        clients = list(_shared_openai_clients.values())
+        _shared_openai_clients.clear()
+    for client in clients:
+        await client.close()
+
+
 class LLMClient(LLMClientProtocol):
     def __init__(
         self,
         model_name: str,
         api_key: SecretStr | str,
         base_url: str,
+        client: AsyncOpenAI | None = None,
     ) -> None:
         self.max_retries: int = 3
         self.api_key = api_key if isinstance(api_key, SecretStr) else SecretStr(api_key)
         self.base_url: str = base_url
         self.model_name: str = model_name
-        self._client = AsyncOpenAI(
-            api_key=self.api_key.get_secret_value(),
+        self._client = client or get_shared_openai_client(
             base_url=self.base_url,
-            timeout=120.0,
+            api_key=self.api_key.get_secret_value(),
         )
+
+    async def close(self) -> None:
+        await self._client.close()
 
     def _prepare_completion_params[T: BaseModel](
         self,
@@ -392,13 +424,14 @@ class LLMClient(LLMClientProtocol):
             delay_base=3,
         )
         async def async_chat_impl(**kwargs):
-            response = await self._client.chat.completions.create(
-                stream=True,
-                stream_options={"include_usage": True},
-                **kwargs,
-            )
-            async for chunk in response:
-                yield chunk
+            async with llm_request_limiter.acquire():
+                response = await self._client.chat.completions.create(
+                    stream=True,
+                    stream_options={"include_usage": True},
+                    **kwargs,
+                )
+                async for chunk in response:
+                    yield chunk
 
         handler = StreamHandler(response_model=response_model)
         async for event in handler.process(async_chat_impl(**completion_args)):

@@ -11,6 +11,7 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import UnauthorizedException
 from asterism.core.schemas import ErrorDetail
 from asterism.core.security import verify_jwks_token
+from asterism.db.database import db_session_manager
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.agent.agent import Agent
 from asterism.domains.chat.connection import WebSocketConnection
@@ -86,7 +87,6 @@ async def select_draft_model(
 async def chat(
     websocket: WebSocket,
     chat_id: uuid.UUID,
-    session: DBSessionDep,
     token: str = Query(...),
 ) -> None:
     try:
@@ -95,25 +95,28 @@ async def chat(
         await websocket.close(code=1008, reason="Unauthorized")
         return
 
-    chat_session = await chat_service.get_one(
-        chat_id=chat_id,
-        user_id=user.id,
-        session=session,
-    )
-    if chat_session.info.agent_id is None:
-        await websocket.close(
-            code=1008,
-            reason="This chat has no assigned main agent",
+    async with db_session_manager.session() as session:
+        chat_session = await chat_service.get_one(
+            chat_id=chat_id,
+            user_id=user.id,
+            session=session,
         )
-        return
+        if chat_session.info.agent_id is None:
+            await websocket.close(
+                code=1008,
+                reason="This chat has no assigned main agent",
+            )
+            return
 
-    agent: Agent = Agent(
-        model_id=chat_session.info.selected_model_id,
-        profile=await agent_service.get_agent_profile(
+        profile = await agent_service.get_agent_profile(
             user_id=user.id,
             agent_id=chat_session.info.agent_id,
             session=session,
-        ),
+        )
+
+    agent: Agent = Agent(
+        model_id=chat_session.info.selected_model_id,
+        profile=profile,
         user=user,
         session=chat_session,
         logger=get_logger("ChatSession"),

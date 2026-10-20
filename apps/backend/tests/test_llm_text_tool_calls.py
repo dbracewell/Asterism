@@ -138,3 +138,66 @@ def test_provider_payload_omits_tools_without_an_explicit_effective_set():
     client = LLMClient(model_name="model", api_key="key", base_url="http://example.test")
     for tools in (None, []):
         assert "tools" not in client._prepare_completion_params(messages=[LLMMessage.user("Hello")], tools=tools)
+
+
+@pytest.mark.asyncio
+async def test_shared_openai_clients_reuse_and_shutdown():
+    from asterism.domains.llm.client import (
+        close_openai_clients,
+        get_shared_openai_client,
+    )
+
+    client1 = get_shared_openai_client("http://example.test", "key1")
+    client2 = get_shared_openai_client("http://example.test", "key1")
+    client3 = get_shared_openai_client("http://other.test", "key1")
+
+    assert client1 is client2
+    assert client1 is not client3
+
+    await close_openai_clients()
+
+    # After close, dict is cleared, new request creates a fresh client
+    client4 = get_shared_openai_client("http://example.test", "key1")
+    assert client4 is not client1
+    await close_openai_clients()
+
+
+@pytest.mark.asyncio
+async def test_llm_client_chat_acquires_request_limiter(monkeypatch):
+    from asterism.domains.llm.client import llm_request_limiter
+
+    acquired = False
+
+    orig_acquire = llm_request_limiter.acquire
+
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def track_acquire():
+        nonlocal acquired
+        acquired = True
+        async with orig_acquire():
+            yield
+
+    monkeypatch.setattr(llm_request_limiter, "acquire", track_acquire)
+
+    client = LLMClient(model_name="model", api_key="key", base_url="http://example.test")
+
+    async def fake_chunks():
+        yield SimpleNamespace(
+            choices=[SimpleNamespace(delta=SimpleNamespace(content="hi", tool_calls=None), finish_reason="stop")],
+            usage=None,
+        )
+
+    class FakeCompletions:
+        async def create(self, **kwargs):
+            return fake_chunks()
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    monkeypatch.setattr(client._client, "chat", FakeChat())
+
+    events = [event async for event in client.chat(messages=[LLMMessage.user("hi")])]
+    assert acquired is True
+    assert any(e.type == LLMEventType.COMPLETE for e in events)
