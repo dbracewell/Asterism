@@ -1,3 +1,11 @@
+"""Processing-policy transitions and knowledge-artifact generations.
+
+The policy itself is persisted by :mod:`asterism.domains.settings.knowledge`;
+this module owns the *transition* — applying a new policy, creating the
+replacement artifact generations, and scheduling the durable reprocessing
+jobs.
+"""
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,6 +37,14 @@ async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncS
 
     A pending replacement is deliberately *not* current: retrieval can retain
     an older ready generation until processing succeeds.
+
+    Args:
+        file: The file that should have a knowledge artifact.
+        session: Active async session; the new row is added but not committed.
+
+    Returns:
+        The existing artifact for the current policy generation, or a newly
+        added pending artifact with the next generation number.
     """
     _, configuration = await _load_processing_configuration(session=session)
     existing = await session.scalar(
@@ -61,7 +77,15 @@ async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncS
 
 
 def _with_resolved_identity(configuration: KnowledgeProcessingConfiguration) -> KnowledgeProcessingConfiguration:
-    """Return a policy whose identity covers every processing-relevant input."""
+    """Return a policy whose identity covers every processing-relevant input.
+
+    Args:
+        configuration: The policy to fingerprint.
+
+    Returns:
+        A copy of *configuration* whose ``identity`` is recomputed from its
+        extraction, chunking, embedding and captioning inputs.
+    """
     identity = _processing_identity(
         extraction_policy=configuration.extraction_policy,
         chunking_policy=configuration.chunking_policy,
@@ -82,6 +106,14 @@ async def _transition_processing_configuration(
     Scheduling deliberately happens only after commit.  If scheduling is
     interrupted, the persisted pending generations are restart-recoverable and
     a ready current generation remains available for retrieval.
+
+    Args:
+        candidate: The desired policy. Its identity is recomputed here.
+        session: Active async session; the transaction is committed here.
+
+    Returns:
+        A summary of the new profile and how many files were queued for
+        reprocessing.
     """
     setting, current = await _load_processing_configuration(session=session)
     candidate = _with_resolved_identity(candidate)
@@ -114,7 +146,19 @@ async def update_processing_profile_and_reprocess(
     payload: KnowledgeProcessingProfileUpdate,
     session: AsyncSession,
 ) -> KnowledgeReprocessSummary:
-    """Apply a processing-policy edit through the one transition path."""
+    """Apply a processing-policy edit through the one transition path.
+
+    Args:
+        payload: The new policy identifiers.
+        session: Active async session; the transaction is committed here.
+
+    Returns:
+        A summary of the new profile and how many files were queued for
+        reprocessing.
+
+    Raises:
+        BadDataException: If the stored setting cannot be loaded or persisted.
+    """
     _, current = await _load_processing_configuration(session=session)
     return await _transition_processing_configuration(
         candidate=current.model_copy(
@@ -134,6 +178,19 @@ async def update_captioning_configuration(
     payload: KnowledgeCaptionConfigurationUpdate,
     session: AsyncSession,
 ) -> KnowledgeCaptionConfiguration:
+    """Apply a captioning edit through the processing-policy transition path.
+
+    Args:
+        payload: The requested captioning mode and provider model.
+        session: Active async session; the transaction is committed here.
+
+    Returns:
+        The active captioning configuration with its last-update timestamp.
+
+    Raises:
+        BadDataException: If the requested mode/model combination is not
+            eligible, or the policy cannot be persisted.
+    """
     models = list(await session.scalars(select(LLMModel)))
     try:
         selected = CaptioningConfiguration(

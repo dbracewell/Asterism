@@ -155,6 +155,15 @@ class Config(BaseSettings):
     max_knowledge_result_bytes: int = 16 * 1024
     """Maximum UTF-8 bytes returned by one knowledge search tool call."""
 
+    knowledge_generation_retention: int = 1
+    """Superseded knowledge-artifact generations kept per file (0 keeps only the current one).
+
+    Every processing-policy change mints a new artifact generation for the
+    whole library, and each generation owns its own chunk vectors. Retention
+    bounds that growth: the current generation plus this many superseded
+    generations are kept, and the rest (rows and vectors) are pruned.
+    """
+
     public_url: str = "http://localhost:3000"
     """The public URL of the Asterism frontend, used for JWT issuer and audience."""
 
@@ -283,6 +292,8 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_KNOWLEDGE_ALLOWED_FILES must be from 1 to 10000")
         if not 1_024 <= self.max_knowledge_result_bytes <= 1_000_000:
             raise ConfigValidationError("MAX_KNOWLEDGE_RESULT_BYTES must be from 1024 to 1000000")
+        if not 0 <= self.knowledge_generation_retention <= 10:
+            raise ConfigValidationError("KNOWLEDGE_GENERATION_RETENTION must be from 0 to 10")
         if not 1 <= self.max_concurrent_llm_requests <= 128:
             raise ConfigValidationError("MAX_CONCURRENT_LLM_REQUESTS must be from 1 to 128")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(

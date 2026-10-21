@@ -170,7 +170,10 @@ operations; a file artifact produces at most 200 chunks of 1,000 characters with
 150-character overlap. Retrieval accepts at most 10 results and returns at most
 16 KiB of excerpts. Source file conversion remains bounded by
 `MAX_PROCESS_FILE_SIZE_BYTES` (100 MiB), `MAX_CONVERTED_CHARS` (100,000), and
-`FILE_CONVERSION_TIMEOUT_S` (60 seconds). Operators may tune the documented
+`FILE_CONVERSION_TIMEOUT_S` (60 seconds). Superseded artifact generations are
+bounded by `KNOWLEDGE_GENERATION_RETENTION` (1 by default): the current
+generation plus that many superseded generations are kept per file, and the rest
+are pruned together with their vectors. Operators may tune the documented
 configuration values only within their validated ranges and must reserve at
 least 1.25 GiB RSS per embedding worker.
 
@@ -212,6 +215,11 @@ assignments, their table/API/schema fields, and settings controls have been remo
 Standalone collection management remains until EPIC-28. No migration or fallback is
 provided; fresh development schema initialization is required. Already delivered or
 persisted message text cannot be withdrawn from a model's past context.
+
+Only the current artifact generation is reported for a file, so the file library
+and knowledge retrieval always agree on which generation a file is using. A
+file that has never been processed has no current generation yet; the generation
+still being built is reported for it instead.
 
 ## Benchmark record
 

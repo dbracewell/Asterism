@@ -171,6 +171,11 @@ database permits one current generation per file. A pending replacement cannot
 displace a ready generation; it becomes current only after processing and its
 vector writes complete.
 
+Superseded generations are bounded by `KNOWLEDGE_GENERATION_RETENTION`: the
+current generation plus that many superseded generations are kept per file, and
+the remaining rows and their vectors are pruned. Without this bound every
+processing-policy change would grow the relational and vector stores forever.
+
 `project_files` and `chat_files` hold references, without processing state,
 vectors, or caption fields. The execution resolver derives a bounded allowed-file
 set from current project memberships and active-branch chat references. Retrieval
