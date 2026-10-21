@@ -21,6 +21,7 @@ file_session = _file_session
 BACKEND_ROOT = Path(__file__).resolve().parents[1] / "asterism"
 KNOWLEDGE_ROOT = BACKEND_ROOT / "domains" / "knowledge"
 SETTINGS_ROOT = BACKEND_ROOT / "domains" / "settings"
+FILES_ROOT = BACKEND_ROOT / "domains" / "files"
 
 
 def _imported_modules(path: Path) -> list[str]:
@@ -55,13 +56,45 @@ def test_knowledge_policy_modules_do_not_import_files():
     """The policy modules must not reach into the files domain.
 
     The processing policy owns the artifacts it creates, so it never needs the
-    source-file tables. The remaining knowledge modules still read source
-    files; EPIC-38 US-38.4 injects that reader instead.
+    source-file tables.
     """
     for name in ("policy.py", "processing.py", "processing_schemas.py", "router.py"):
         path = KNOWLEDGE_ROOT / name
         for module in _imported_modules(path):
             assert not module.startswith("asterism.domains.files"), path
+
+
+def test_knowledge_domain_does_not_import_files():
+    """No module under the knowledge domain may import the files domain.
+
+    The dependency direction is one-way: the files domain depends on the
+    knowledge domain, never the other way round. The knowledge domain reads
+    its sources through the injected reader in ``knowledge/sources.py``.
+    """
+    for path in sorted(KNOWLEDGE_ROOT.glob("*.py")):
+        for module in _imported_modules(path):
+            assert not module.startswith("asterism.domains.files"), path
+
+
+def test_files_domain_does_not_reach_into_knowledge_internals():
+    """The files domain consumes the knowledge domain's published service.
+
+    It may use the published artifact service and the API schema, but it must
+    not reach into the artifact model, the artifact queries, or the ingestion
+    runtime.
+    """
+    forbidden = (
+        "asterism.domains.knowledge.models",
+        "asterism.domains.knowledge.queries",
+        "asterism.domains.knowledge.runtime",
+        "asterism.domains.knowledge.processing",
+        "asterism.domains.knowledge.extractions",
+        "asterism.domains.knowledge.ingestion",
+        "asterism.domains.knowledge.vector_store",
+    )
+    for path in sorted(FILES_ROOT.glob("*.py")):
+        for module in _imported_modules(path):
+            assert not module.startswith(forbidden), path
 
 
 @pytest.mark.asyncio

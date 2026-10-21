@@ -3,16 +3,17 @@ from enum import StrEnum
 from pathlib import Path
 from uuid import UUID
 
-from asterism.domains.files.schemas import UserFile
 from asterism.domains.settings.provider_types import ModelCapabilitySource
 from asterism.domains.settings.schemas import Llm
+
+from .sources import SourceFile
 
 
 @dataclass(frozen=True)
 class CaptionRequest:
     revision_id: UUID
     image_path: Path
-    file: UserFile
+    file: SourceFile
     max_image_bytes: int
     max_caption_chars: int
 

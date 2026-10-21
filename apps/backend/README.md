@@ -52,6 +52,13 @@ its captioning — is a `FileKnowledgeExtractionModel` row with its own status,
 provider, model, safe errors, and kind-specific payload. The API reports them
 as an `extractions` map keyed by kind. The artifact row keeps the denormalized
 `searchable` aggregate so retrieval stays a single-row read.
+
+The dependency between the two domains runs one way. The files domain uses the
+knowledge domain's published artifact service (`knowledge/artifacts.py`) and
+never reaches into the artifact model, the artifact queries, or the ingestion
+runtime. The knowledge domain reads its sources through the narrow contract in
+`knowledge/sources.py`, whose implementation the files domain provides
+(`files/sources.py`) and the application installs at startup.
 Retrieval first resolves the active
 execution context to live project/chat file IDs, then supplies both that set and the
 authenticated owner to LanceDB.

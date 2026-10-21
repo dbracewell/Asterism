@@ -10,9 +10,11 @@ Layering (each module owns exactly one responsibility):
 - ``models``           – SQLAlchemy table and enums for the persisted artifact.
 - ``schemas``          – Pydantic response models returned by the HTTP API.
 - ``queries``          – Composable, owner-scoped select builders.
+- ``artifacts``        – The published reads and lifecycle for file artifacts.
 - ``processing_schemas`` – Pydantic models for the processing policy/profile.
 - ``policy``           – Processing-policy persistence and validation.
 - ``processing``       – Processing-policy transitions and artifact generations.
+- ``sources``          – The narrow contract for reading source files.
 - ``caption_schemas``  – Pydantic models for the captioning configuration.
 - ``captioning``       – Caption providers and the local captioning bundle.
 - ``embedding``        – Embedding providers and the local ONNX bundle.
@@ -26,10 +28,9 @@ Layering (each module owns exactly one responsibility):
 - ``router``           – FastAPI transport for the knowledge admin surfaces.
 
 Ownership invariant: every artifact belongs to exactly one user and one file,
-and every read is scoped by ``user_id`` at the query boundary. The files domain
-depends on this package; this package reaches back into the files domain for
-source access, which EPIC-38 (US-38.4) resolves by injecting the source
-reader into ingestion. The policy modules do not import the files domain at
-all: the files a policy change reprocesses are derived from this domain's own
-artifact table.
+and every read is scoped by ``user_id`` at the query boundary. The dependency
+direction is one-way: the files domain depends on this package, and this
+package never imports the files domain. Sources are read through the narrow
+contract in ``sources.py``, whose implementation the files domain provides;
+the application installs it at startup.
 """

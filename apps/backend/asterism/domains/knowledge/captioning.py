@@ -16,8 +16,6 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.db.mixins import get_unix_timestamp
-from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.files.store import get_file_store
 from asterism.domains.knowledge.embedding import embedding_provider
 from asterism.domains.knowledge.models import (
     FileKnowledgeArtifactModel,
@@ -41,6 +39,7 @@ from .caption_schemas import (
     CaptionResult,
 )
 from .model_download import ModelDownloadService, PinnedModel, verify_manifest
+from .sources import SourceContent, SourceUnavailableError, get_source_reader
 
 logger = get_logger("CAPTION_PROCESSING")
 
@@ -254,14 +253,8 @@ async def caption(
                     FileKnowledgeArtifactModel.file_id == file_id,
                 ),
             )
-            file = await session.scalar(
-                select(UserFileModel).where(
-                    UserFileModel.id == file_id,
-                    UserFileModel.user_id == user_id,
-                ),
-            )
 
-            if artifact is None or file is None:
+            if artifact is None:
                 return
 
             captioning = await session.scalar(
@@ -278,19 +271,31 @@ async def caption(
             captioning.started_at = get_unix_timestamp()
             await session.commit()
             try:
+                try:
+                    source = await get_source_reader().read_source(
+                        file_id=file_id,
+                        user_id=user_id,
+                        session=session,
+                    )
+                except SourceUnavailableError as error:
+                    # The image cannot be read, so it cannot be captioned.
+                    raise CaptioningError(
+                        CaptionErrorCode.IMAGE_INVALID,
+                        "Image file is unavailable",
+                    ) from error
                 result = await asyncio.wait_for(
-                    _caption(artifact=artifact, file=file),
+                    _caption(artifact=artifact, source=source),
                     timeout=config.file_conversion_timeout_s,
                 )
                 vector = (await embedding_provider.embed_text([result.text]))[0]
-                chunk_id = hashlib.sha256(f"{file.id}:{artifact.generation}:caption".encode()).hexdigest()
+                chunk_id = hashlib.sha256(f"{file_id}:{artifact.generation}:caption".encode()).hexdigest()
                 await vector_store.delete_chunk(user_id=user_id, chunk_id=chunk_id)
                 await vector_store.add(
                     [
                         VectorChunk(
                             chunk_id,
                             user_id,
-                            str(file.id),
+                            str(file_id),
                             artifact.generation,
                             artifact.chunk_count,
                             "caption",
@@ -329,19 +334,14 @@ async def caption(
         return
 
 
-async def _caption(artifact: FileKnowledgeArtifactModel, file: UserFileModel) -> CaptionResult:
-    if file.kind is not FileKind.IMAGE:
+async def _caption(artifact: FileKnowledgeArtifactModel, source: SourceContent) -> CaptionResult:
+    if not source.file.is_image:
         logger.error(f"File artifact {artifact.id} is not an image and cannot be captioned")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Only image documents can be captioned")
 
-    try:
-        image_path = get_file_store().open(artifact.user_id, file.storage_key)
-    except ValueError as error:
-        logger.error(f"Image file ({file.id}) is unavailable: {error}")
-        raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Image file is unavailable") from error
-
+    image_path = source.file.path
     if not image_path.is_file() or image_path.stat().st_size > config.max_vision_image_bytes:
-        logger.error(f"Image file ({file.id}) is unavailable or exceeds the size limit")
+        logger.error(f"Image file ({source.file.id}) is unavailable or exceeds the size limit")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Image file is unavailable or exceeds the size limit")
 
     async with get_async_db_session() as session:
@@ -353,7 +353,7 @@ async def _caption(artifact: FileKnowledgeArtifactModel, file: UserFileModel) ->
 
     request = CaptionRequest(
         revision_id=artifact.id,
-        file=file,
+        file=source.file,
         image_path=image_path,
         max_image_bytes=config.max_vision_image_bytes,
         max_caption_chars=config.max_caption_chars,

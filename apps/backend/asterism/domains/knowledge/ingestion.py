@@ -11,9 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.db.mixins import get_unix_timestamp
-from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
-from asterism.domains.files.processor import ensure_file_processed
-from asterism.domains.files.store import get_file_store
 from asterism.domains.knowledge.policy import get_captioning_configuration
 
 from .embedding import EmbeddingProvider, EmbeddingProviderError, embedding_provider
@@ -27,6 +24,7 @@ from .models import (
     KnowledgeExtractionStatus,
 )
 from .retention import prune_superseded_generations
+from .sources import SourceContent, SourceReader, get_source_reader
 from .vector_store import VectorChunk, vector_store
 
 logger = logging.getLogger(__name__)
@@ -111,17 +109,16 @@ def _artifact_chunk_id(artifact: FileKnowledgeArtifactModel, ordinal: int) -> st
 
 
 async def embed_file(
-    processed: UserFileModel,
+    source: SourceContent,
     *,
     provider: EmbeddingProvider = embedding_provider,
 ) -> tuple[list[list[float]], list[str], bool]:
-    if processed.kind is FileKind.IMAGE:
-        path = get_file_store().open(processed.user_id, processed.storage_key)
-        contents = [f"Image file: {processed.original_name}"]
-        vectors = await provider.embed_image([path])
+    if source.file.is_image:
+        contents = [f"Image file: {source.file.name}"]
+        vectors = await provider.embed_image([source.file.path])
         visual_ready = True
     else:
-        contents = chunk_text(processed.content_cache or "")
+        contents = chunk_text(source.text or "")
         vectors = await provider.embed_text(contents)
         visual_ready = False
 
@@ -146,19 +143,12 @@ async def ingest(
                     FileKnowledgeArtifactModel.file_id == file_id,
                 ),
             )
-            file = await session.scalar(
-                select(UserFileModel).where(
-                    UserFileModel.id == file_id,
-                    UserFileModel.user_id == user_id,
-                ),
-            )
-
-            if artifact is None or file is None:
+            if artifact is None:
                 return
 
             await ingest_file(
                 artifact=artifact,
-                file=file,
+                reader=get_source_reader(),
                 session=session,
                 on_caption_request=on_caption_request,
             )
@@ -171,7 +161,7 @@ async def ingest(
 async def ingest_file(
     *,
     artifact: FileKnowledgeArtifactModel,
-    file: UserFileModel,
+    reader: SourceReader,
     session: AsyncSession,
     on_caption_request: Callable[[str, uuid.UUID, uuid.UUID], None] = lambda *_: None,
     provider: EmbeddingProvider = embedding_provider,
@@ -199,27 +189,29 @@ async def ingest_file(
 
     stage = KnowledgeExtractionKind.TEXT_EXTRACTION
     try:
-        processed = await ensure_file_processed(file=file, session=session)
-        if processed.content_status is not FileContentStatus.READY:
-            raise KnowledgeArtifactError(processed.content_error or "The file could not be processed")
-
-        # The text extraction is finished once the file has been converted.
+        # Reading the source is the text extraction: it converts the stored
+        # bytes into the text the embedding is built from.
+        source = await reader.read_source(
+            file_id=artifact.file_id,
+            user_id=artifact.user_id,
+            session=session,
+        )
         if text_extraction is not None:
             text_extraction.status = KnowledgeExtractionStatus.READY
             text_extraction.provider = TEXT_EXTRACTION_PROVIDER
             text_extraction.payload = {
-                "content": processed.content_cache if processed.kind is not FileKind.IMAGE else None
+                "content": source.text if not source.file.is_image else None
             }
             text_extraction.completed_at = get_unix_timestamp()
 
         stage = KnowledgeExtractionKind.EMBEDDING
-        vectors, contents, visual_ready = await embed_file(processed, provider=provider)
+        vectors, contents, visual_ready = await embed_file(source, provider=provider)
 
         chunks: Sequence[VectorChunk] = [
             VectorChunk(
                 id=_artifact_chunk_id(artifact, ordinal),
-                user_id=processed.user_id,
-                file_id=str(processed.id),
+                user_id=source.file.user_id,
+                file_id=str(source.file.id),
                 artifact_generation=artifact.generation,
                 chunk_ordinal=ordinal,
                 kind="text",
@@ -229,8 +221,8 @@ async def ingest_file(
             for ordinal, (content, vector) in enumerate(zip(contents, vectors, strict=True))
         ]
         await store.delete_file_generation(
-            user_id=processed.user_id,
-            file_id=str(processed.id),
+            user_id=source.file.user_id,
+            file_id=str(source.file.id),
             artifact_generation=artifact.generation,
         )
         await store.add(chunks)
@@ -238,7 +230,7 @@ async def ingest_file(
         current_status = await session.scalar(
             select(FileKnowledgeArtifactModel.status).where(
                 FileKnowledgeArtifactModel.id == artifact.id,
-                FileKnowledgeArtifactModel.file_id == processed.id,
+                FileKnowledgeArtifactModel.file_id == source.file.id,
             ),
         )
 
@@ -247,8 +239,8 @@ async def ingest_file(
 
         if current_status is KnowledgeExtractionStatus.CANCELED:
             await store.delete_file_generation(
-                user_id=processed.user_id,
-                file_id=str(processed.id),
+                user_id=source.file.user_id,
+                file_id=str(source.file.id),
                 artifact_generation=artifact.generation,
             )
             await session.refresh(artifact)
@@ -269,12 +261,15 @@ async def ingest_file(
     except Exception as error:
         try:
             await store.delete_file_generation(
-                user_id=file.user_id,
-                file_id=str(file.id),
+                user_id=artifact.user_id,
+                file_id=str(artifact.file_id),
                 artifact_generation=artifact.generation,
             )
         except Exception:
-            logger.exception("Could not remove partial file knowledge vectors", extra={"file_id": str(file.id)})
+            logger.exception(
+                "Could not remove partial file knowledge vectors",
+                extra={"file_id": str(artifact.file_id)},
+            )
         artifact.status = KnowledgeExtractionStatus.FAILED
         artifact.error_code = "processing_failed"
         artifact.error_reason = (
@@ -295,8 +290,8 @@ async def ingest_file(
         # This generation is settled and superseded; enforce the retention
         # window so dead generations cannot accumulate.
         await prune_superseded_generations(
-            user_id=file.user_id,
-            file_id=file.id,
+            user_id=artifact.user_id,
+            file_id=artifact.file_id,
             session=session,
             store=store,
         )
@@ -304,26 +299,29 @@ async def ingest_file(
 
     await session.execute(
         update(FileKnowledgeArtifactModel)
-        .where(FileKnowledgeArtifactModel.file_id == file.id, FileKnowledgeArtifactModel.is_current.is_(True))
+        .where(
+            FileKnowledgeArtifactModel.file_id == source.file.id,
+            FileKnowledgeArtifactModel.is_current.is_(True),
+        )
         .values(is_current=False),
     )
     artifact.status = KnowledgeExtractionStatus.READY
     artifact.is_current = True
     artifact.chunk_count = len(chunks)
-    artifact.searchable = processed.kind is not FileKind.IMAGE
+    artifact.searchable = not source.file.is_image
     artifact.completed_at = get_unix_timestamp()
 
     if embedding is not None:
         embedding.status = KnowledgeExtractionStatus.READY
         embedding.provider = EMBEDDING_PROVIDER
         embedding.payload = {
-            "text_ready": processed.kind is not FileKind.IMAGE,
+            "text_ready": not source.file.is_image,
             "visual_ready": visual_ready,
         }
         embedding.completed_at = get_unix_timestamp()
 
     caption_requested = False
-    if processed.kind is FileKind.IMAGE:
+    if source.file.is_image:
         caption_configuration = await get_captioning_configuration(session=session)
         caption_requested = caption_configuration.mode != KnowledgeCaptionMode.DISABLED.value
     await sync_captioning_extraction(
@@ -344,6 +342,6 @@ async def ingest_file(
     )
 
     if caption_requested:
-        on_caption_request(artifact.user_id, file.id, artifact.id)
+        on_caption_request(artifact.user_id, source.file.id, artifact.id)
 
     return artifact

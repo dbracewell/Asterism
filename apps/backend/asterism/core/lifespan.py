@@ -9,6 +9,7 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import db_session_manager
 from asterism.domains.chat.jobs import chat_jobs
+from asterism.domains.files.sources import FileSourceReader
 from asterism.domains.knowledge.runtime import (
     initialize_knowledge_runtime,
     shutdown_knowledge_runtime,
@@ -35,7 +36,9 @@ async def init_system() -> None:
     get_draft_model()
     await db_session_manager.init()
     logger.info("Database session manager initialized.")
-    await initialize_knowledge_runtime()
+    # The knowledge domain reads its sources through the files domain's
+    # reader; this is where the two are composed.
+    await initialize_knowledge_runtime(FileSourceReader())
     logger.info("Knowledge vector store initialized.")
     logger.info("Loading tools and components...")
     from asterism.core import event_handlers  # noqa: F401 - event-bus handler module manifest
