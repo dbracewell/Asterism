@@ -4,7 +4,7 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. US-38.1 and US-38.2 are confirmed complete and merged into `main`. US-38.3 and US-38.4 are implemented and verified on their feature branches, awaiting completion confirmation. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. US-38.1 through US-38.4 are confirmed complete and merged into `main`. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
@@ -78,14 +78,14 @@ EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above.
   - [x] Remove the deferred cross-domain imports that exist only to break the settings/files cycle.
   - [x] Verify the OpenAPI contract is unchanged for the moved endpoints and regenerate the client if the operation grouping changed.
   - [x] Run backend lint, type checks and the full test suite.
-- [ ] US-38.3: Model derived facets as first-class rows
+- [x] US-38.3: Model derived facets as first-class rows
   - [x] Add the extraction-kind enum and the linking table with a unique `(artifact_id, kind)` constraint.
   - [x] Replace the parallel artifact and caption status vocabularies with one status vocabulary for every kind.
   - [x] Move the caption's flat columns, the text content and the embedding readiness flags into per-kind rows; keep a denormalized searchable aggregate on the artifact row for the retrieval path.
   - [x] Model payloads as a discriminated union keyed by kind, validated at the application boundary.
   - [x] Replace the flat API fields with a map of extractions; regenerate the typed client and update the file manager and file view to render the per-kind statuses.
   - [x] Add retrieval, file-library and file-view regressions for the new shape.
-- [ ] US-38.4: Make the dependency direction explicit
+- [x] US-38.4: Make the dependency direction explicit
   - [x] Publish a narrow artifact reader/service in the knowledge domain and route the files domain's knowledge operations through it.
   - [x] Replace the files domain's deferred imports of the artifact model, artifact queries and ingestion runtime.
   - [x] Inject the source reader into ingestion, mirroring the existing injected embedding provider, vector store and caption request hook.
