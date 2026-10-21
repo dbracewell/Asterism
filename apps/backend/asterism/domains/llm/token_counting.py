@@ -1,4 +1,9 @@
-"""Token estimation for pre-request context-window protection."""
+"""Token estimation for pre-request context-window protection.
+
+Estimates only — used to bound prompt size *before* a provider call (e.g. when
+trimming delegated sub-agent context). After a completion, the usage block
+reported by the provider is authoritative and this module is not consulted.
+"""
 
 from functools import lru_cache
 
@@ -7,6 +12,12 @@ import tiktoken
 
 @lru_cache(maxsize=128)
 def _encoding(model_name: str | None) -> tiktoken.Encoding:
+    """Resolve a tiktoken encoding for a model, falling back to cl100k_base.
+
+    Unknown/None model names (most local servers) use the GPT-3.5-era
+    cl100k_base encoding as a generic approximation. Results are cached per
+    distinct model name (bounded to 128 entries).
+    """
     if model_name:
         try:
             return tiktoken.encoding_for_model(model_name)

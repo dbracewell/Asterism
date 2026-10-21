@@ -10,6 +10,15 @@ from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
 
 class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
+    """A user-owned project: metadata plus a ``context_revision`` optimistic token.
+
+    The revision is bumped only when the *execution context* changes — i.e. the
+    file membership or ``system_prompt`` changes. Pure metadata edits (name,
+    description) deliberately do not advance it, so clients can retry metadata
+    updates without re-reading after unrelated churn. Membership and prompt
+    writers compare-and-set on this column to detect concurrent context changes.
+    """
+
     __tablename__ = "projects"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -20,6 +29,8 @@ class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
 
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="uq_projects_user_name"),
+        # Redundant with the primary key on its own, but required so child tables
+        # can reference (id, user_id) as a composite foreign key on any backend.
         UniqueConstraint("id", "user_id", name="uq_projects_id_user"),
         CheckConstraint("length(trim(name)) > 0 AND length(name) <= 255", name="ck_projects_name"),
         CheckConstraint("context_revision >= 1", name="ck_projects_context_revision"),
@@ -34,6 +45,9 @@ class ProjectFileModel(Base, TimestampMixin):
 
     project_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     file_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    # Denormalized owner, not a standalone FK: it exists so both composite
+    # foreign keys can pin the row to one user and cascade on project/file/
+    # user deletion without touching source files or extraction data.
     user_id: Mapped[str] = mapped_column(String, nullable=False)
 
     __table_args__ = (
@@ -60,7 +74,11 @@ class ProjectSubAgentModel(Base, TimestampMixin):
 
     project_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     agent_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    # Denormalized owner, mirroring ProjectFileModel.user_id for the composite FKs.
     user_id: Mapped[str] = mapped_column(String, nullable=False)
+    # Constant-true role flag: SQL foreign keys cannot reference a column set
+    # with a literal value, so this column carries the ``sub_agent = true``
+    # constant into the composite FK (and is pinned by ck_project_sub_agent_role).
     sub_agent: Mapped[bool] = mapped_column(nullable=False, default=True, server_default="1")
 
     __table_args__ = (

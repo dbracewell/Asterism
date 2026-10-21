@@ -16,6 +16,12 @@ async def file_project_summaries(
     file_ids: list[uuid.UUID],
     session: AsyncSession,
 ) -> dict[uuid.UUID, list[FileProjectSummary]]:
+    """Map each requested file to the owned projects that attach it.
+
+    Consumed by the files domain's listing so a file row can show which of the
+    caller's projects reference it. Files with no memberships are simply absent
+    from the result; ordering within a list follows project name then id.
+    """
     rows = await session.execute(
         select(ProjectFileModel.file_id, ProjectModel)
         .join(ProjectModel, ProjectModel.id == ProjectFileModel.project_id)
@@ -33,6 +39,12 @@ async def file_project_summaries(
 
 
 async def detach_deleted_file(*, user_id: str, file_id: uuid.UUID, session: AsyncSession) -> None:
+    """Remove one deleted file from every project that attached it.
+
+    Called by the files domain inside the source-deletion transaction (no commit
+    here; the caller owns commit/rollback). Every affected project's context
+    revision advances exactly once so in-flight project writes observe the change.
+    """
     # Serialize against membership writes before removing their references. Each
     # affected project's context changes once, in the source deletion transaction.
     await session.execute(

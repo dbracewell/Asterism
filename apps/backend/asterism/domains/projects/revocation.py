@@ -9,7 +9,13 @@ from .models import ProjectModel, ProjectSubAgentModel
 
 
 async def revoke_agent_projects(*, user_id: str, agent_id: uuid.UUID, session: AsyncSession) -> None:
-    """Advance affected projects in the definition deletion transaction; FK cleans links."""
+    """Drop an agent's project selections when its definition is deleted.
+
+    Called by the agent domain inside the definition-deletion transaction (no
+    commit here). The composite FK cascades away the ``project_sub_agents`` rows;
+    this function only advances each affected project's context revision so
+    in-flight project writes detect that their selection set just changed.
+    """
     await session.execute(
         update(ProjectModel)
         .where(

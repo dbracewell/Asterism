@@ -27,6 +27,7 @@ async def list_project_sub_agents(
     page: int = 1,
     page_size: int = 50,
 ) -> ProjectSubAgentList:
+    """Paginated list of the sub-agent definitions selected on an owned project."""
     project = await _owned_project(user_id=user_id, project_id=project_id, session=session)
     statement = select_owned_agent_profiles(user_id).where(
         AgentProfileModel.sub_agent.is_(True),
@@ -49,6 +50,11 @@ async def list_project_sub_agent_candidates(
     page: int = 1,
     page_size: int = 10,
 ) -> ProjectSubAgentList:
+    """Paginated list of the caller's sub-agents NOT yet selected on the project.
+
+    Complements :func:`list_project_sub_agents` for picker UIs; both share the
+    project's context revision so a batch write can be optimistically guarded.
+    """
     project = await _owned_project(user_id=user_id, project_id=project_id, session=session)
     statement = (
         select_owned_agent_profiles(user_id)
@@ -67,6 +73,11 @@ async def _agent_page(
     revision: int,
     session: AsyncSession,
 ) -> ProjectSubAgentList:
+    """Wrap one paginated profile query in the project-scoped list schema.
+
+    Enriches each row with live model availability via the agent domain's
+    ``_sub_definition`` (a cross-domain private import kept for now).
+    """
     definitions = [await _sub_definition(AgentProfile.model_validate(row), session) for row in result.records]
     return ProjectSubAgentList(
         context_revision=revision,
@@ -85,6 +96,13 @@ async def change_project_sub_agents(
     remove: bool,
     session: AsyncSession,
 ) -> ProjectSubAgentBatchResult:
+    """Select (``remove=False``) or deselect (``remove=True``) sub-agents atomically.
+
+    Every id must be one of the caller's *sub-agent* definitions — main-agent
+    ids and foreign ids are rejected with 404, so a selection can never grant
+    delegation to anything but an owned sub-agent. Idempotent per id; only real
+    flips bump the project's context revision. All-or-nothing on failure.
+    """
     ids = sorted(set(payload.agent_ids), key=str)
     try:
         project = await _write_project(

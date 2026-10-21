@@ -1,3 +1,12 @@
+"""HTTP surface for the projects domain.
+
+Thin translation layer: every handler authenticates via ``AuthedUserDep``,
+injects the request-scoped session, and delegates to :mod:`service` or
+:mod:`sub_agents`. All endpoints are owner-scoped; foreign project ids 404.
+Batch membership writes (files, sub-agents) take a JSON body carrying the
+client's last seen ``context_revision`` for optimistic concurrency.
+"""
+
 import uuid
 from typing import Literal
 
@@ -37,6 +46,7 @@ project_router = APIRouter(
     responses={409: {"model": ErrorDetail}},
 )
 async def create_project(payload: ProjectCreate, user: AuthedUserDep, db: DBSessionDep) -> Project:
+    """Create a project; 409 if the name is already taken for this user."""
     return await service.create_project(user_id=user.id, payload=payload, session=db)
 
 
@@ -49,6 +59,7 @@ async def list_projects(
     sort_by: ProjectSort = Query(default="name"),
     query: str | None = Query(default=None, max_length=10_000, description="Literal search of name and description"),
 ) -> ProjectList:
+    """List the caller's projects with pagination, sort, and substring search."""
     return await service.list_projects(
         user_id=user.id,
         session=db,
@@ -61,6 +72,7 @@ async def list_projects(
 
 @project_router.get("/{project_id}", response_model=Project, operation_id="projectGetOne")
 async def get_project(project_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> Project:
+    """Read one of the caller's projects (404 if missing or not owned)."""
     return await service.get_project(user_id=user.id, project_id=project_id, session=db)
 
 
@@ -76,6 +88,7 @@ async def update_project(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> Project:
+    """Partially update a project; 409 on stale revision or name collision."""
     return await service.update_project(user_id=user.id, project_id=project_id, payload=payload, session=db)
 
 
@@ -91,6 +104,7 @@ async def delete_project(
     db: DBSessionDep,
     expected_context_revision: int = Query(ge=1, description="Context revision from the last project read"),
 ) -> Project:
+    """Delete a project after cancelling its chats' active runs; 409 on stale revision."""
     return await service.delete_project(
         user_id=user.id,
         project_id=project_id,
@@ -109,6 +123,7 @@ async def list_project_files(
     sort_by: Literal["name", "kind", "date", "size"] = Query(default="name"),
     query: str | None = Query(default=None, max_length=10_000),
 ) -> UserFileList:
+    """List the files attached to a project using the files domain's listing semantics."""
     return await service.list_project_files(
         user_id=user.id,
         project_id=project_id,
@@ -132,6 +147,7 @@ async def add_project_files(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> ProjectFileBatchResult:
+    """Attach files to a project; idempotent per file id, 409 on stale revision."""
     return await service.change_project_files(
         user_id=user.id,
         project_id=project_id,
@@ -153,6 +169,7 @@ async def remove_project_files(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> ProjectFileBatchResult:
+    """Detach files from a project; idempotent per file id, 409 on stale revision."""
     return await service.change_project_files(
         user_id=user.id,
         project_id=project_id,
@@ -172,6 +189,7 @@ async def list_project_sub_agents(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
 ) -> ProjectSubAgentList:
+    """List the sub-agent definitions currently selected on a project."""
     return await sub_agents.list_project_sub_agents(
         user_id=user.id,
         project_id=project_id,
@@ -193,6 +211,7 @@ async def list_project_sub_agent_candidates(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
 ) -> ProjectSubAgentList:
+    """List the caller's sub-agents not yet selected on a project (picker source)."""
     return await sub_agents.list_project_sub_agent_candidates(
         user_id=user.id,
         project_id=project_id,
@@ -214,6 +233,7 @@ async def select_project_sub_agents(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> ProjectSubAgentBatchResult:
+    """Select sub-agents on a project; 404 for non-owned or main-agent ids, 409 on stale revision."""
     return await sub_agents.change_project_sub_agents(
         user_id=user.id, project_id=project_id, payload=payload, remove=False, session=db
     )
@@ -231,6 +251,7 @@ async def deselect_project_sub_agents(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> ProjectSubAgentBatchResult:
+    """Deselect sub-agents from a project; 409 on stale revision."""
     return await sub_agents.change_project_sub_agents(
         user_id=user.id, project_id=project_id, payload=payload, remove=True, session=db
     )

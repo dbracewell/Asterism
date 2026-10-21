@@ -14,10 +14,17 @@ from .models import ProjectFileModel, ProjectModel
 from .queries import select_owned_projects
 from .schemas import Project, ProjectCreate, ProjectFileBatch, ProjectFileBatchResult, ProjectList, ProjectUpdate
 
+# Sort keys accepted by list_projects; mirrored by the router's Literal.
 ProjectSort = Literal["name", "created", "updated"]
 
 
 async def _owned_project(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> ProjectModel:
+    """Fetch a project row proving ownership, or 404 without leaking existence.
+
+    Foreign and missing ids are indistinguishable to the caller. Uses
+    ``populate_existing`` so a row already in the identity map is refreshed
+    from the database before mutation decisions are made on it.
+    """
     project = await session.scalar(
         select_owned_projects(user_id=user_id)
         .where(ProjectModel.id == project_id)
@@ -29,6 +36,7 @@ async def _owned_project(*, user_id: str, project_id: uuid.UUID, session: AsyncS
 
 
 async def create_project(*, user_id: str, payload: ProjectCreate, session: AsyncSession) -> Project:
+    """Create a project; the unique (user, name) constraint maps to a 409."""
     project = ProjectModel(user_id=user_id, **payload.model_dump())
     session.add(project)
     try:
@@ -40,6 +48,7 @@ async def create_project(*, user_id: str, payload: ProjectCreate, session: Async
 
 
 async def get_project(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> Project:
+    """Read one owned project as the wire model (404 if missing/foreign)."""
     return Project.model_validate(await _owned_project(user_id=user_id, project_id=project_id, session=session))
 
 
@@ -52,6 +61,13 @@ async def list_projects(
     sort_by: ProjectSort = "name",
     query: str | None = None,
 ) -> ProjectList:
+    """Paginated, optionally searched list of the caller's projects.
+
+    ``query`` is a literal case-insensitive substring matched against name and
+    description (wildcards are escaped, not interpreted). Pagination/sort bounds
+    are re-checked here even though the router already constrains them, so the
+    service stays safe for non-HTTP callers.
+    """
     if page < 1 or not 1 <= page_size <= 100:
         raise BadDataException("Invalid pagination")
     orders = {
@@ -89,11 +105,21 @@ async def _write_project(
     advance_revision: bool,
     session: AsyncSession,
 ) -> ProjectModel:
+    """Compare-and-set write on ``context_revision``; does not commit.
+
+    Issues a single conditional UPDATE (``WHERE context_revision = expected``)
+    so a concurrent context change makes it match zero rows and surface as a
+    409 instead of silently losing the update. Callers that pass neither
+    changes nor a revision bump use this purely to take the optimistic lock
+    before mutating membership rows in the same transaction.
+    """
     current = await _owned_project(user_id=user_id, project_id=project_id, session=session)
     values = dict(changes)
     values["context_revision"] = (
         ProjectModel.context_revision + 1 if advance_revision else ProjectModel.context_revision
     )
+    # A pure lock acquisition must not touch updated_at: pin it to the current
+    # value so the column's onupdate default does not bump the audit timestamp.
     if not changes and not advance_revision:
         values["updated_at"] = current.updated_at
     project = await session.scalar(
@@ -143,8 +169,15 @@ async def update_project(
     payload: ProjectUpdate,
     session: AsyncSession,
 ) -> Project:
+    """Apply a partial metadata/prompt update under the optimistic revision check.
+
+    Only fields that actually differ from the current row are written; a
+    ``system_prompt`` change is what advances the context revision (name and
+    description edits never do). A stale revision or a name collision yields 409.
+    """
     current = await _owned_project(user_id=user_id, project_id=project_id, session=session)
     changes = payload.model_dump(exclude_unset=True, exclude={"expected_context_revision"})
+    # Drop no-op fields so the UPDATE (and updated_at) only reflect real edits.
     changes = {key: value for key, value in changes.items() if value != getattr(current, key)}
     prompt_changed = "system_prompt" in changes
     try:
@@ -184,8 +217,12 @@ async def delete_project(
     current = await _owned_project(user_id=user_id, project_id=project_id, session=session)
     if current.context_revision != expected_context_revision:
         raise CodedException(409, "Project context changed; reload the project and retry")
+    # Cancel in-memory runtime jobs before any row is touched; cancelled runs
+    # persist their own terminal state later through separate sessions.
     await retire_project_chat_runs(user_id=user_id, project_id=project_id, session=session)
     try:
+        # Lock-only compare-and-set: pins the revision so a concurrent context
+        # change between the check above and the DELETE below fails here (409).
         await _write_project(
             user_id=user_id,
             project_id=project_id,
@@ -220,8 +257,16 @@ async def change_project_files(
     remove: bool,
     session: AsyncSession,
 ) -> ProjectFileBatchResult:
+    """Add (``remove=False``) or remove (``remove=True``) file memberships atomically.
+
+    The batch is idempotent per id: ids already in the desired state are reported
+    as unchanged and do not bump the context revision. All-or-nothing — any
+    validation failure rolls back the whole transaction, so a stale revision can
+    never leave partial memberships behind.
+    """
     from asterism.domains.files.service import validate_owned_file_ids
 
+    # Dedupe and order deterministically (UUID string order) for stable results.
     ids = sorted(set(payload.file_ids), key=str)
     try:
         # Acquire the project write lock and compare the revision before reading
@@ -291,6 +336,12 @@ async def list_project_files(
     sort_by: Literal["name", "kind", "date", "size"] = "name",
     query: str | None = None,
 ) -> UserFileList:
+    """Paginated list of the files currently attached to an owned project.
+
+    Reuses the files domain's listing machinery (sort/search/page semantics);
+    this function only contributes the project-membership filter and the
+    ownership check. Lazy imports keep the dependency direction one-way.
+    """
     from asterism.domains.files.listing import list_file_page
     from asterism.domains.files.models import UserFileModel
     from asterism.domains.files.queries import select_owned_files

@@ -1,3 +1,15 @@
+"""OpenAI-compatible chat-completion client and streaming event pipeline.
+
+``LLMClient`` wraps the async OpenAI SDK against any OpenAI-compatible endpoint
+(identified by ``base_url`` + API key). It streams chunks through
+:class:`StreamHandler`, which accumulates text/thinking/tool-call deltas into
+terminal :class:`~asterism.domains.llm.schemas.LLMEvent` events, with bounded
+retries before the first chunk and a process-wide concurrency cap on provider
+calls. A small pool of shared ``AsyncOpenAI`` HTTP clients (keyed by endpoint +
+key) avoids re-creating connection pools per request; teardown happens in the
+app lifespan via :func:`close_openai_clients`.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -50,13 +62,19 @@ logger = get_logger("LLM_CLIENT")
 
 
 class LLMRequestLimiter:
-    """Process-wide cap for provider calls, held for the full response stream."""
+    """Process-wide cap for provider calls, held for the full response stream.
+
+    The slot is acquired before the HTTP request and released only after the
+    stream is fully consumed (or closed), so the limit bounds concurrent
+    *in-flight generations*, not just concurrent request starts.
+    """
 
     def __init__(self, limit: int):
         self._semaphore = asyncio.Semaphore(limit)
 
     @asynccontextmanager
     async def acquire(self):
+        """Hold one concurrency slot for the duration of the context."""
         await self._semaphore.acquire()
         try:
             yield
@@ -64,8 +82,12 @@ class LLMRequestLimiter:
             self._semaphore.release()
 
 
+# Module-level singleton sized from config (validated 1..128 at startup).
 llm_request_limiter = LLMRequestLimiter(config.max_concurrent_llm_requests)
 
+# Some providers emit tool calls as literal text with spaces inside the angle
+# brackets; the pattern matches exactly that shape (case-insensitive, any JSON
+# payload between the tags).
 _TEXT_TOOL_CALL_PATTERN = re.compile(
     r"<tool_call>\s*(\{.*?\})\s*</tool_call>",
     flags=re.DOTALL | re.IGNORECASE,
@@ -78,6 +100,15 @@ def extract_text_tool_calls(content: str) -> tuple[str, list[ToolCall]]:
     Some providers stream ``<tool_call>{...}</tool_call>`` in assistant text
     instead of populating ``delta.tool_calls``. Parsed calls still pass through
     the normal approval policy before execution.
+
+    Args:
+        content: Raw accumulated assistant text from a completed stream.
+
+    Returns:
+        ``(clean_content, calls)``. Every successfully parsed tag is removed
+        from the text; malformed tags (bad JSON, missing/blank name, non-dict
+        payload, or unparseable string arguments) are left in place and ignored.
+        When nothing parses, returns the input unchanged with an empty list.
     """
     calls: list[ToolCall] = []
     parsed_spans: list[tuple[int, int]] = []
@@ -131,6 +162,26 @@ def extract_text_tool_calls(content: str) -> tuple[str, list[ToolCall]]:
 
 @dataclass
 class StreamHandler[T: BaseModel]:
+    """Stateful reducer that turns raw provider chunks into ``LLMEvent`` streams.
+
+    One handler instance serves exactly one completion. It accumulates text and
+    thinking deltas, assembles multi-chunk tool calls by index, captures the
+    final usage block, and emits delta events while streaming plus a single
+    terminal event (``COMPLETE`` or ``ERROR``) at the end.
+
+    Fields:
+        thinking: Accumulated reasoning/thinking text from the stream.
+        content: Accumulated assistant text.
+        final_finish_reason: Last non-None finish reason seen on any choice.
+        usage: Provider-reported token usage (from the final chunk when the
+            provider includes it).
+        started_at: Monotonic timestamp used to report generation duration.
+        tool_calls_dict: Partial tool calls keyed by provider index; name and
+            argument fragments are concatenated across chunks.
+        response_model: When set, the final text is validated into this model
+            (after stripping markdown fences) and attached as ``parsed``.
+    """
+
     thinking: str = ""
     content: str = ""
     final_finish_reason: Optional[FinishReason] = None
@@ -143,6 +194,13 @@ class StreamHandler[T: BaseModel]:
         self,
         stream: AsyncGenerator[ChatCompletionChunk | BaseException | None, None],
     ) -> AsyncGenerator[LLMEvent, None]:
+        """Consume a chunk stream and yield ``LLMEvent``s.
+
+        The input may yield an exception object (instead of raising) when the
+        retry wrapper gives up mid-stream; that is surfaced as an ``ERROR``
+        event. On any error path the terminal ``COMPLETE``/validation block is
+        skipped, but the underlying stream is always closed.
+        """
         try:
             async for chunk in stream:
                 if not chunk:
@@ -171,6 +229,9 @@ class StreamHandler[T: BaseModel]:
         self.content = self.content.strip()
         self.thinking = self.thinking.strip()
 
+        # Structured-output mode: models often wrap JSON in markdown fences, so
+        # strip a single leading/trailing fence pair before validation. A
+        # validation failure is terminal (ERROR event) — no retry here.
         if self.response_model:
             try:
                 clean_content = re.sub(
@@ -195,6 +256,10 @@ class StreamHandler[T: BaseModel]:
                     type=LLMEventType.ERROR,
                 )
 
+        # Assemble provider-native tool calls from the per-index fragments. If
+        # the model produced none, fall back to recovering calls that were
+        # emitted as literal text (some local providers) and treat the turn as
+        # a tool-call turn so the agent loop keeps going.
         tool_calls: list[ToolCall] = [
             ToolCall(
                 id=tc_dict["id"],
@@ -229,6 +294,14 @@ class StreamHandler[T: BaseModel]:
         )
 
     async def _handle_chunk(self, chunk: ChatCompletionChunk) -> AsyncGenerator[LLMEvent, None]:
+        """Fold one provider chunk into accumulated state, yielding delta events.
+
+        Handles reasoning (``reasoning_content``), text, and tool-call deltas.
+        Delta events carry the *accumulated* (stripped) content, not just the
+        increment, so consumers can render absolute state. Tool-call fragments
+        are merged into ``tool_calls_dict`` by provider index; chunks without
+        choices (usage-only finals) are ignored here.
+        """
         if not hasattr(chunk, "choices") or not chunk.choices:
             return
 
@@ -277,11 +350,23 @@ class StreamHandler[T: BaseModel]:
                     entry["arguments"] += tc_chunk.function.arguments
 
 
+# Process-wide pool of AsyncOpenAI clients keyed by (base_url, api_key) so that
+# repeated LLMClient construction for the same provider reuses one HTTP
+# connection pool. Entries are only removed at shutdown; a rotated API key or
+# deleted provider leaves its entry until then.
 _shared_openai_clients: dict[tuple[str, str], AsyncOpenAI] = {}
 _shared_openai_clients_lock = threading.Lock()
 
 
 def get_shared_openai_client(base_url: str, api_key: str) -> AsyncOpenAI:
+    """Return the shared ``AsyncOpenAI`` client for an endpoint + key pair.
+
+    Args:
+        base_url: Provider root URL (OpenAI-compatible API).
+        api_key: Plain-text API key; also part of the cache key.
+
+    Creates the client on first use with a fixed 120s request timeout.
+    """
     key = (base_url, api_key)
     with _shared_openai_clients_lock:
         client = _shared_openai_clients.get(key)
@@ -296,6 +381,7 @@ def get_shared_openai_client(base_url: str, api_key: str) -> AsyncOpenAI:
 
 
 async def close_openai_clients() -> None:
+    """Close and clear every pooled provider client (app-shutdown hook)."""
     with _shared_openai_clients_lock:
         clients = list(_shared_openai_clients.values())
         _shared_openai_clients.clear()
@@ -304,6 +390,13 @@ async def close_openai_clients() -> None:
 
 
 class LLMClient(LLMClientProtocol):
+    """Chat-completion client bound to one model on one OpenAI-compatible endpoint.
+
+    Thin wrapper over ``AsyncOpenAI`` that normalizes provider streams into
+    ``LLMEvent``s, applies the process-wide concurrency cap, and retries the
+    request (bounded, pre-first-chunk only) on transient failures.
+    """
+
     def __init__(
         self,
         model_name: str,
@@ -311,6 +404,16 @@ class LLMClient(LLMClientProtocol):
         base_url: str,
         client: AsyncOpenAI | None = None,
     ) -> None:
+        """Bind a model to an endpoint.
+
+        Args:
+            model_name: Model identifier sent as the ``model`` request field.
+            api_key: Provider API key (str or SecretStr; stored as SecretStr).
+            base_url: OpenAI-compatible endpoint root.
+            client: Optional pre-built ``AsyncOpenAI``; when omitted, a shared
+                pooled client for (base_url, api_key) is used — note that
+                :meth:`close` on such a client closes the *shared* pool entry.
+        """
         self.max_retries: int = 3
         self.api_key = api_key if isinstance(api_key, SecretStr) else SecretStr(api_key)
         self.base_url: str = base_url
@@ -321,6 +424,12 @@ class LLMClient(LLMClientProtocol):
         )
 
     async def close(self) -> None:
+        """Close the underlying HTTP client.
+
+        Warning: when this instance was built without an explicit ``client``,
+        ``self._client`` is a *shared* pooled client, so this also closes the
+        pool entry for every other LLMClient on the same endpoint + key.
+        """
         await self._client.close()
 
     def _prepare_completion_params[T: BaseModel](
@@ -330,7 +439,22 @@ class LLMClient(LLMClientProtocol):
         response_model: Type[T] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
     ) -> dict[str, Any]:
+        """Build the provider request payload for one completion.
 
+        Args:
+            messages: Normalized conversation to send (copied, not mutated).
+            tools: Tool *names* to expose; resolved to JSON schemas via the
+                tool registry (omitted when the list is empty/None).
+            response_model: When set, enables strict ``json_schema`` response
+                format derived from the model's Pydantic schema.
+            **kwargs: Optional completion parameters (temperature, top_p, ...)
+                forwarded to the provider; caller-provided values win over the
+                defaults applied here.
+
+        Returns:
+            Keyword arguments for ``chat.completions.create`` (without the
+            streaming flags, which are added by :meth:`chat`).
+        """
         completion_args: dict[str, Any] = {
             "model": self.model_name,
             **kwargs,
@@ -342,12 +466,15 @@ class LLMClient(LLMClientProtocol):
         # callers migrate from the former provider-specific option.
         completion_args.pop("thinking_budget_tokens", None)
 
+        # Default seed to wall-clock seconds unless the caller pins one; keeps
+        # a single request stable across retries while varying between requests.
         if "seed" not in completion_args:
             completion_args["seed"] = int(time.time())
 
         if response_model:
 
             def clean_schema(raw_schema: Any) -> Any:
+                """Recursively drop ``title`` keys (required by strict JSON mode)."""
                 if isinstance(raw_schema, dict):
                     raw_schema.pop("title", None)
                     for key, value in list(raw_schema.items()):
@@ -381,6 +508,12 @@ class LLMClient(LLMClientProtocol):
         response_model: Type[T] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
     ) -> LLMEvent[T]:
+        """Non-streaming convenience around :meth:`chat`.
+
+        Discards delta events and returns the terminal ``COMPLETE`` event.
+        Raises a plain ``Exception`` on ``ERROR`` events or when the stream
+        produces no completion at all (e.g. empty message list).
+        """
         last_event: LLMEvent[T] | None = None
 
         async for event in self.chat(
@@ -406,6 +539,14 @@ class LLMClient(LLMClientProtocol):
         response_model: Type[T] | None = None,
         **kwargs: Unpack[ChatCompletionParams],
     ) -> AsyncGenerator[LLMEvent[T], None]:
+        """Stream a chat completion as ``LLMEvent``s.
+
+        Yields delta events while tokens arrive, then exactly one terminal
+        event (``COMPLETE`` or ``ERROR``). With an empty ``messages`` list it
+        yields nothing at all. The provider request is retried up to
+        ``max_retries`` times with exponential backoff, but only while no chunk
+        has been emitted yet; later failures surface as an ``ERROR`` event.
+        """
 
         if len(messages) == 0:
             return
@@ -424,6 +565,12 @@ class LLMClient(LLMClientProtocol):
             delay_base=3,
         )
         async def async_chat_impl(**kwargs):
+            """One provider attempt under the global concurrency cap.
+
+            On exhausted/aborted retries this yields the exception object
+            itself (rather than raising), which ``StreamHandler.process`` turns
+            into an ``ERROR`` event.
+            """
             async with llm_request_limiter.acquire():
                 response = await self._client.chat.completions.create(
                     stream=True,
