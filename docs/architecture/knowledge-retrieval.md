@@ -209,7 +209,7 @@ every provider request. Image bytes are bounded by both metadata and actual read
 size; non-vision models receive an explicit notice. File and retrieval content stay
 in user/tool messages as task data.
 
-User library APIs and background extraction/captioning retain their owner-scoped
+User library APIs and background knowledge ingestion/captioning retain their owner-scoped
 management roles; they are not agent execution reads. Agent knowledge-base
 assignments, their table/API/schema fields, and settings controls have been removed.
 Standalone collection management remains until EPIC-28. No migration or fallback is
@@ -243,7 +243,7 @@ release-environment preflight targets, not an untested alternative runtime.
 ## File-centric processing
 
 `UserFile` is the immutable source revision. `FileKnowledgeArtifact` owns each
-derived generation, including extraction, chunks, embeddings, and canonical
+derived generation, including the text extraction, chunks, embeddings, and canonical
 image captions. `project_files` and `chat_files` hold source references. Runtime retrieval resolves project/chat execution scope before searching and sends
 both owner and allowed file IDs to LanceDB; it never searches globally then
 filters in application code. Removing a membership preserves the file and its

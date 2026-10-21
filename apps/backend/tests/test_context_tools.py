@@ -18,8 +18,8 @@ from asterism.domains.chat.models import ChatModel
 from asterism.domains.chat.retrieval import create_retrieval_service
 from asterism.domains.chat.schemas import Chat, ChatInfo
 from asterism.domains.chat.tool_policy import require_internal_tool, resolve_effective_tools
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
 from asterism.domains.files.models import FileKind, UserFileModel
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
 from asterism.domains.projects.models import ProjectFileModel
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
 from asterism.domains.tools.builtin.search_knowledge import SearchKnowledgeArgs, search_knowledge
@@ -85,7 +85,7 @@ async def add_file(r, *, project=True, status="ready", owner="a"):
             db.add(ProjectFileModel(project_id=uuid.UUID(r.p["id"]), user_id=owner, file_id=f.id))
         if status is not None:
             db.add(
-                FileExtractionModel(
+                FileKnowledgeArtifactModel(
                     user_id=owner,
                     file_id=f.id,
                     generation=1,

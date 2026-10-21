@@ -30,9 +30,9 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-from asterism.domains.extraction.queries import select_newest_file_artifact
-from asterism.domains.extraction.schemas import FileKnowledgeArtifact
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.queries import select_newest_file_artifact
+from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
 from .listing import describe_files, file_knowledge_summaries, list_file_page
 from .models import FileContentStatus, FileKind, UserFileModel
@@ -386,7 +386,7 @@ async def upload_files(
         for filename in saved:
             store.delete(user_id, filename)
         raise
-    from asterism.domains.extraction.runtime import start_file_ingestion_job
+    from asterism.domains.knowledge.runtime import start_file_ingestion_job
 
     for file, artifact in zip(created, artifacts, strict=True):
         if artifact.status.value in {"pending", "failed"}:
@@ -477,7 +477,7 @@ async def regenerate_file_knowledge(*, user_id: str, filename: str, session: Asy
     Raises:
         NotFoundException: If the file or its artifact does not exist.
     """
-    from asterism.domains.extraction.runtime import cancel_file_jobs, start_file_ingestion_job
+    from asterism.domains.knowledge.runtime import cancel_file_jobs, start_file_ingestion_job
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     artifact = await session.scalar(select_newest_file_artifact(file.id))
@@ -517,7 +517,7 @@ async def cancel_file_knowledge_processing(*, user_id: str, filename: str, sessi
     Raises:
         NotFoundException: If the file or its artifact does not exist.
     """
-    from asterism.domains.extraction.runtime import cancel_file_jobs
+    from asterism.domains.knowledge.runtime import cancel_file_jobs
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     artifact = await session.scalar(select_newest_file_artifact(file.id))
@@ -559,14 +559,14 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
     Raises:
         NotFoundException: If the query file does not exist.
     """
-    from asterism.domains.extraction.runtime import vector_store
+    from asterism.domains.knowledge.runtime import vector_store
 
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
     current = await session.scalar(
-        select(FileExtractionModel).where(
-            FileExtractionModel.file_id == file.id,
-            FileExtractionModel.is_current.is_(True),
-            FileExtractionModel.status == FileKnowledgeArtifactStatus.READY,
+        select(FileKnowledgeArtifactModel).where(
+            FileKnowledgeArtifactModel.file_id == file.id,
+            FileKnowledgeArtifactModel.is_current.is_(True),
+            FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
         ),
     )
     if current is None:
@@ -592,11 +592,11 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
         str(file_id): generation
         for file_id, generation in (
             await session.execute(
-                select(FileExtractionModel.file_id, FileExtractionModel.generation).where(
-                    FileExtractionModel.user_id == user_id,
-                    FileExtractionModel.file_id != file.id,
-                    FileExtractionModel.is_current.is_(True),
-                    FileExtractionModel.status == FileKnowledgeArtifactStatus.READY,
+                select(FileKnowledgeArtifactModel.file_id, FileKnowledgeArtifactModel.generation).where(
+                    FileKnowledgeArtifactModel.user_id == user_id,
+                    FileKnowledgeArtifactModel.file_id != file.id,
+                    FileKnowledgeArtifactModel.is_current.is_(True),
+                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
                 ),
             )
         ).all()
@@ -684,7 +684,7 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     )
     if file is None:
         raise NotFoundException("File not found")
-    from asterism.domains.extraction.runtime import vector_store
+    from asterism.domains.knowledge.runtime import vector_store
 
     response = (await describe_files(user_id=user_id, files=[file], session=session))[0]
     await _remove_file_knowledge_records(file_id=file.id, session=session)
@@ -719,8 +719,8 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
             owns the transaction).
     """
     from asterism.domains.chat.file_references import detach_deleted_file as detach_chat_file
-    from asterism.domains.extraction.models import FileExtractionModel
-    from asterism.domains.extraction.runtime import cancel_file_jobs
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+    from asterism.domains.knowledge.runtime import cancel_file_jobs
     from asterism.domains.projects.file_references import detach_deleted_file
 
     await detach_chat_file(file_id=file_id, session=session)
@@ -729,12 +729,12 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
         await detach_deleted_file(user_id=source.user_id, file_id=file_id, session=session)
     artifact_ids = list(
         await session.scalars(
-            select(FileExtractionModel.id).where(FileExtractionModel.file_id == file_id),
+            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file_id),
         ),
     )
     for artifact_id in artifact_ids:
         await cancel_file_jobs(artifact_id)
-    await session.execute(delete(FileExtractionModel).where(FileExtractionModel.file_id == file_id))
+    await session.execute(delete(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file_id))
 
 
 async def delete_user_files(
@@ -785,7 +785,7 @@ async def delete_user_files(
             logger.warning("Could not remove stored source for deleted file", extra={"storage_key": storage_key})
 
     if deleted_files:
-        from asterism.domains.extraction.runtime import vector_store
+        from asterism.domains.knowledge.runtime import vector_store
 
         for file in deleted_files:
             try:

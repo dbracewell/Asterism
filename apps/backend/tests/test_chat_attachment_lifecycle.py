@@ -591,7 +591,7 @@ async def test_dispatch_failure_preserves_source_and_collision_retry_reuses_id(p
             raise RuntimeError("Dispatch unavailable")
 
         with monkeypatch.context() as patch:
-            patch.setattr("asterism.domains.extraction.runtime.start_file_ingestion_job", fail_dispatch)
+            patch.setattr("asterism.domains.knowledge.runtime.start_file_ingestion_job", fail_dispatch)
             with pytest.raises(RuntimeError, match="Dispatch unavailable"):
                 await upload_files(
                     user_id="a",

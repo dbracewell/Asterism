@@ -10,7 +10,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from asterism.domains.extraction.schemas import FileKnowledgeArtifact
+from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
 from .models import FileContentStatus, FileKind
 

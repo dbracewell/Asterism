@@ -3,14 +3,14 @@ import uuid
 from pathlib import Path
 
 import pytest
-from asterism.domains.extraction.caption_schemas import (
+from asterism.domains.knowledge.caption_schemas import (
     CaptionErrorCode,
     CaptioningConfiguration,
     CaptioningError,
     CaptionMode,
     CaptionRequest,
 )
-from asterism.domains.extraction.captioning import LocalSmolVlm2CaptionProvider, bounded_caption, caption_model
+from asterism.domains.knowledge.captioning import LocalSmolVlm2CaptionProvider, bounded_caption, caption_model
 from asterism.domains.settings.provider_types import ModelCapabilitySource
 
 
@@ -111,14 +111,14 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
     from contextlib import asynccontextmanager
 
     from asterism.db.model_registry import Base
-    from asterism.domains.extraction.caption_schemas import CaptionResult
-    from asterism.domains.extraction.captioning import caption
-    from asterism.domains.extraction.models import (
-        FileExtractionModel,
+    from asterism.domains.files.models import FileKind, UserFileModel
+    from asterism.domains.knowledge.caption_schemas import CaptionResult
+    from asterism.domains.knowledge.captioning import caption
+    from asterism.domains.knowledge.models import (
+        FileKnowledgeArtifactModel,
         FileKnowledgeArtifactStatus,
         KnowledgeCaptionStatus,
     )
-    from asterism.domains.files.models import FileKind, UserFileModel
     from asterism.domains.retrieval.service import RetrievalArtifact
     from asterism.domains.user.models import UserModel
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -143,7 +143,7 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
         session.add(file)
         await session.flush()
 
-        artifact = FileExtractionModel(
+        artifact = FileKnowledgeArtifactModel(
             user_id="user-1",
             file_id=file.id,
             generation=1,
@@ -186,15 +186,15 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
             model="local/smolvlm2",
         )
 
-    monkeypatch.setattr("asterism.domains.extraction.captioning.get_async_db_session", session_factory)
-    monkeypatch.setattr("asterism.domains.extraction.captioning.vector_store", FakeVectorStore())
-    monkeypatch.setattr("asterism.domains.extraction.captioning.embedding_provider", FakeEmbeddingProvider())
-    monkeypatch.setattr("asterism.domains.extraction.captioning._caption", fake_caption)
+    monkeypatch.setattr("asterism.domains.knowledge.captioning.get_async_db_session", session_factory)
+    monkeypatch.setattr("asterism.domains.knowledge.captioning.vector_store", FakeVectorStore())
+    monkeypatch.setattr("asterism.domains.knowledge.captioning.embedding_provider", FakeEmbeddingProvider())
+    monkeypatch.setattr("asterism.domains.knowledge.captioning._caption", fake_caption)
 
     await caption("user-1", file_id, artifact_id)
 
     async with sessions() as session:
-        updated = await session.get(FileExtractionModel, artifact_id)
+        updated = await session.get(FileKnowledgeArtifactModel, artifact_id)
         assert updated is not None
         assert updated.caption_status == KnowledgeCaptionStatus.READY
         assert updated.caption_text == "A bar chart of quarterly revenue"

@@ -58,7 +58,7 @@ async def user_service_env(tmp_path, monkeypatch):
 
     monkeypatch.setattr("asterism.domains.user.service.get_async_db_session", session_context)
     vectors = FakeVectorStore()
-    monkeypatch.setattr("asterism.domains.extraction.vector_store.vector_store", vectors)
+    monkeypatch.setattr("asterism.domains.knowledge.vector_store.vector_store", vectors)
     # files_root is a read-only property derived from storage_root.
     monkeypatch.setattr(config, "storage_root", tmp_path)
 
@@ -150,7 +150,7 @@ async def user_api(tmp_path, monkeypatch):
 
     monkeypatch.setattr("asterism.domains.user.service.get_async_db_session", session_context)
     vectors = FakeVectorStore()
-    monkeypatch.setattr("asterism.domains.extraction.vector_store.vector_store", vectors)
+    monkeypatch.setattr("asterism.domains.knowledge.vector_store.vector_store", vectors)
     # files_root is a read-only property derived from storage_root.
     monkeypatch.setattr(config, "storage_root", tmp_path)
 

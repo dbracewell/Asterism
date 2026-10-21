@@ -263,8 +263,8 @@ async def delete_user(
 
     # Non-relational cleanup is best-effort: a failure here orphans storage
     # but must not undo the authoritative relational deletion.
-    from asterism.domains.extraction.vector_store import vector_store
     from asterism.domains.files.store import get_file_store
+    from asterism.domains.knowledge.vector_store import vector_store
 
     try:
         get_file_store().delete_user(user_id)

@@ -18,7 +18,7 @@ async function confirmed() {
   console.log(`- authentication: ${authPath}`);
   console.log(`- backend: ${backendPath}`);
   console.log(`- original files: ${join(storageRoot, "files")}`);
-  console.log(`- extraction storage: ${join(storageRoot, "knowledge")}`);
+  console.log(`- knowledge storage: ${join(storageRoot, "knowledge")}`);
   if (assumeYes) return true;
   if (!process.stdin.isTTY) return false;
   const prompt = createInterface({

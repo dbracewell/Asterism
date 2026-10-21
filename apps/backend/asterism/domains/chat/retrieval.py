@@ -5,9 +5,9 @@ from collections.abc import Awaitable, Callable
 from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ExecutionScope
-from asterism.domains.extraction.models import FileExtractionModel
-from asterism.domains.extraction.queries import select_current_owned_artifacts
-from asterism.domains.extraction.runtime import embedding_provider, vector_store
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+from asterism.domains.knowledge.queries import select_current_owned_artifacts
+from asterism.domains.knowledge.runtime import embedding_provider, vector_store
 from asterism.domains.retrieval.service import RetrievalArtifact, RetrievalLimits, RetrievalService, RetrievalSnapshot
 from asterism.domains.tools.context import ContextToolScope
 
@@ -35,7 +35,7 @@ def create_retrieval_service(
                     text_embeddings_ready=artifact.text_embeddings_ready,
                 )
                 for artifact in await db.scalars(
-                    select_current_owned_artifacts(scope.user_id).where(FileExtractionModel.file_id.in_(ids))
+                    select_current_owned_artifacts(scope.user_id).where(FileKnowledgeArtifactModel.file_id.in_(ids))
                 )
             )
         return RetrievalSnapshot(authorized.files, artifacts, authorized.context_revision)

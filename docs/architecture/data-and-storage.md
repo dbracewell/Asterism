@@ -62,7 +62,7 @@ erDiagram
     chats ||--o{ chat_files : references
     user_files ||--o{ project_files : supplies
     user_files ||--o{ chat_files : supplies
-    user_files ||--o{ file_extractions : derives
+    user_files ||--o{ file_knowledge_artifacts : derives
     messages ||--o{ sub_agent_traces : records
     agent_profiles ||--o{ sub_agent_traces : executes
     providers ||--o{ models : provides
@@ -164,8 +164,8 @@ as non-vision. See [LLM providers](llm-providers.md#file-input-capability-gating
 
 ## File-owned knowledge artifacts
 
-`file_extractions` holds the versioned derived state for an immutable
-`user_files` revision: extraction cache, chunk/embedding readiness, canonical
+`file_knowledge_artifacts` holds the versioned derived state for an immutable
+`user_files` revision: text-extraction cache, chunk/embedding readiness, canonical
 caption metadata, safe error state, and whether the generation is current. The
 database permits one current generation per file. A pending replacement cannot
 displace a ready generation; it becomes current only after processing and its
@@ -194,7 +194,7 @@ source bytes; project membership deletion removes only the relationship. See
 
 Chats bind to zero or one owned project, with General represented by null. ProjectFile
 and ChatFile are unique owner-consistent references to independent source rows; they do
-not own bytes or extraction generations. Message JSON attachment snapshots include
+not own bytes or knowledge generations. Message JSON attachment snapshots include
 immutable file IDs and metadata, so source deletion cannot make an old filename refer
 to a later upload. Composite keys constrain message and branch-edge ownership.
 
@@ -235,6 +235,6 @@ Socket generation resumes persisted pending messages after reloading current his
 scope. Cancellation is terminal but preserves references; regeneration uses the current
 persisted branch/memberships. Response-only file availability prevents historical snapshots
 from authorizing removed/deleted files. Project membership is independent of local removal.
-Extraction bytes/state remain owned by Files/Extraction. No migration or old API fallback
+Knowledge bytes/state remain owned by Files/Knowledge. No migration or old API fallback
 is added. Execution snapshots preserve the recorded ceiling and recheck live access;
 see [agent runtime](agent-runtime.md).

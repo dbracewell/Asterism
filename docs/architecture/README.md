@@ -117,6 +117,6 @@ flowchart TD
 - Backend lifespan: [`asterism.core.lifespan:lifespan`](../../apps/backend/asterism/core/lifespan.py)
 - Chat jobs and transport: [`ChatJobManager`](../../apps/backend/asterism/domains/chat/jobs.py) and [`ChatController`](../../apps/backend/asterism/domains/chat/controller.py)
 - Agent loop: [`Agent`](../../apps/backend/asterism/domains/agent/agent.py)
-- Knowledge runtime: [`runtime.py`](../../apps/backend/asterism/domains/extraction/runtime.py)
+- Knowledge runtime: [`runtime.py`](../../apps/backend/asterism/domains/knowledge/runtime.py)
 - Tool registry: [`tool_registry`](../../apps/backend/asterism/domains/tools/registry.py)
 - Frontend chat hook: [`useChatWebSocket`](../../apps/frontend/src/features/chat/hooks/use-chat-websocket.tsx)

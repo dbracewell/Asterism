@@ -7,9 +7,10 @@ from typing import Protocol
 
 import numpy as np
 import onnxruntime as ort
-from asterism.core import config
 from PIL import Image
 from transformers import CLIPImageProcessorPil, CLIPTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
+
+from asterism.core import config
 
 from .model_download import (
     ModelDownloadService,

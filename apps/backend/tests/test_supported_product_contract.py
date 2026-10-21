@@ -37,7 +37,7 @@ async def test_fresh_schema_and_search_have_no_obsolete_collections(tmp_path: Pa
         "chat_send_receipts",
         "agent_profiles",
         "user_files",
-        "file_extractions",
+        "file_knowledge_artifacts",
         "chat_search",
         "project_search",
         "chat_search_chats_ai",

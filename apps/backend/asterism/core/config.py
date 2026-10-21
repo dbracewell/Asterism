@@ -110,8 +110,8 @@ class Config(BaseSettings):
     file_conversion_timeout_s: int = 60
     """The maximum time (in seconds) to wait for a file conversion to complete."""
 
-    max_concurrent_extractions: int = 4
-    """Maximum simultaneous document extraction jobs."""
+    max_concurrent_knowledge_jobs: int = 4
+    """Maximum simultaneous knowledge ingestion and caption jobs."""
 
     max_vision_image_bytes: int = 10 * 1024 * 1024
     """The maximum size of an image that can be processed for vision tasks (in bytes)."""
@@ -267,8 +267,8 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_EMBEDDINGS must be from 1 to 16")
         if not 1 <= self.max_concurrent_knowledge_vector_operations <= 16:
             raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_VECTOR_OPERATIONS must be from 1 to 16")
-        if not 1 <= self.max_concurrent_extractions <= 16:
-            raise ConfigValidationError("MAX_CONCURRENT_EXTRACTIONS must be from 1 to 16")
+        if not 1 <= self.max_concurrent_knowledge_jobs <= 16:
+            raise ConfigValidationError("MAX_CONCURRENT_KNOWLEDGE_JOBS must be from 1 to 16")
         if self.local_caption_model_bundle_sha256 and (
             len(self.local_caption_model_bundle_sha256) != 64
             or any(char not in "0123456789abcdef" for char in self.local_caption_model_bundle_sha256.lower())

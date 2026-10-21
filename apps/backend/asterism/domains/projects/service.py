@@ -1,4 +1,4 @@
-"""Owner-scoped project lifecycle; sources and extraction stay outside this domain."""
+"""Owner-scoped project lifecycle; sources and knowledge stay outside this domain."""
 
 import uuid
 from typing import Literal

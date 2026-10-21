@@ -30,7 +30,7 @@ need separately; reset is destructive and is not a transactional backup/restore.
 1. Review `STORAGE_ROOT`, optional `DB_URL`, and optional `BETTER_AUTH_DB_PATH` in
    the environment/root `.env`. Process environment takes precedence over `.env`.
    SQLite paths must be absolute. An override can select a database outside
-   `STORAGE_ROOT`; it does not relocate the files and extraction directories.
+   `STORAGE_ROOT`; it does not relocate the files and knowledge directories.
 2. Run the root command, which validates configuration and prints resolved targets:
 
    ```bash
@@ -38,7 +38,7 @@ need separately; reset is destructive and is not a transactional backup/restore.
    ```
 
 3. Verify all four targets: authentication database, backend database, original
-   files, and extraction storage. Type `RESET` only when they are the intended
+   files, and knowledge storage. Type `RESET` only when they are the intended
    disposable development targets. A noninteractive invocation cancels unless
    `--yes` is explicitly supplied. For an already reviewed scripted target:
 
@@ -64,7 +64,7 @@ manually to bypass target review.
 | Backend `DB_URL`, default `STORAGE_ROOT/database.db`        | Delete SQLite file and `-wal`, `-shm`, `-journal` sidecars; create fresh model schema and search indexes |
 | Auth `BETTER_AUTH_DB_PATH`, default `STORAGE_ROOT/users.db` | Delete selected database and sidecars; initialize using pinned Better Auth CLI                           |
 | `STORAGE_ROOT/files`                                        | Remove original uploaded bytes, including sharded source keys                                            |
-| `STORAGE_ROOT/knowledge`                                    | Remove derived extraction/vector storage                                                                 |
+| `STORAGE_ROOT/knowledge`                                    | Remove derived knowledge/vector storage                                                                 |
 | `STORAGE_ROOT/themes`                                     | Preserve administrator-created themes and bundled-palette overrides                                      |
 | `STORAGE_ROOT/models/knowledge-clip`                        | Preserve reusable embedding model bundle                                                                 |
 | `STORAGE_ROOT/models/captioning-smolvlm2`                   | Preserve reusable local caption model bundle                                                             |

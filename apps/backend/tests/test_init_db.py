@@ -62,7 +62,7 @@ async def test_fresh_and_isolated_reset_initialization_include_projects(tmp_path
         await initialize_database(reset=reset, assume_yes=True)
         with sqlite3.connect(database) as connection:
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-            assert {"projects", "project_files", "chat_files", "user_files", "file_extractions"} <= tables
+            assert {"projects", "project_files", "chat_files", "user_files", "file_knowledge_artifacts"} <= tables
             assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
             if not reset:
                 connection.execute("CREATE TABLE reset_canary (value TEXT)")

@@ -4,11 +4,11 @@ from pathlib import Path
 import pytest
 from asterism.core.config import Config, ConfigValidationError
 from asterism.db.model_registry import Base
-from asterism.domains.extraction.embedding import EmbeddingProviderError, OnnxClipEmbeddingProvider, embedding_model
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-from asterism.domains.extraction.schemas import FileKnowledgeArtifact
-from asterism.domains.extraction.vector_store import LanceDbVectorStore, VectorChunk
 from asterism.domains.files.models import FileKind, UserFileModel
+from asterism.domains.knowledge.embedding import EmbeddingProviderError, OnnxClipEmbeddingProvider, embedding_model
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
+from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -67,7 +67,7 @@ async def test_knowledge_schema_is_created_from_models(tmp_path: Path):
         }
     await engine.dispose()
     assert {
-        "file_extractions",
+        "file_knowledge_artifacts",
     } <= tables
     assert "agent_knowledge_base_assignments" not in tables
     assert "knowledge_documents" not in tables
@@ -100,7 +100,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
         await session.flush()
         session.add_all(
             [
-                FileExtractionModel(
+                FileKnowledgeArtifactModel(
                     user_id="user-a",
                     file_id=user_file.id,
                     generation=1,
@@ -109,7 +109,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     status=FileKnowledgeArtifactStatus.READY,
                     is_current=True,
                 ),
-                FileExtractionModel(
+                FileKnowledgeArtifactModel(
                     user_id="user-a",
                     file_id=user_file.id,
                     generation=2,
@@ -122,9 +122,9 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
         )
         await session.commit()
         artifact = await session.scalar(
-            select(FileExtractionModel).where(
-                FileExtractionModel.file_id == user_file.id,
-                FileExtractionModel.generation == 1,
+            select(FileKnowledgeArtifactModel).where(
+                FileKnowledgeArtifactModel.file_id == user_file.id,
+                FileKnowledgeArtifactModel.generation == 1,
             ),
         )
         assert artifact is not None
@@ -139,7 +139,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
             "accepted_at": None,
         }
 
-        duplicate_current = FileExtractionModel(
+        duplicate_current = FileKnowledgeArtifactModel(
             user_id="user-a",
             file_id=user_file.id,
             generation=3,

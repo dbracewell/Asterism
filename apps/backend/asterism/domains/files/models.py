@@ -3,7 +3,7 @@
 The row is the authoritative record of *what was uploaded*; the bytes live in
 the file store and are addressed by the opaque ``storage_key``. Derived state
 (converted text, thumbnail, knowledge artifacts) is kept on the row or in the
-extraction domain, never inside the store.
+knowledge domain, never inside the store.
 """
 
 import enum

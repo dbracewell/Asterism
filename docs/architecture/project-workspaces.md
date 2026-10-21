@@ -99,7 +99,7 @@ repeated or rolled back by deleting the files.
 Removal confirmation explains that the library source, processing artifacts, other
 projects, and chat-local attachments remain. Future turns lose project membership
 access while historical answers may retain information. Physical deletion confirms
-removal of project/chat memberships and derived extractions, captions, and vectors.
+removal of project/chat memberships and derived knowledge, captions, and vectors.
 The backend continues to enforce ownership, revision, and live scope boundaries.
 
 Additional component tests cover shared memberships, project-local query parameters,

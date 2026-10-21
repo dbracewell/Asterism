@@ -232,7 +232,7 @@ export const DeleteSelectedFilesSection = () => {
     useConfirmationDialog({
       title: "Delete selected files?",
       description:
-        "This permanently removes the selected files, every project and chat membership, and all derived extractions, captions, and vectors.",
+        "This permanently removes the selected files, every project and chat membership, and all derived knowledge, captions, and vectors.",
       confirmVariant: "destructive",
     });
 

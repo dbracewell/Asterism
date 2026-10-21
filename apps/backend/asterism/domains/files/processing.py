@@ -10,10 +10,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException
-from asterism.domains.extraction.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-from asterism.domains.extraction.runtime import start_file_ingestion_job
 from asterism.domains.files.models import UserFileModel
+from asterism.domains.knowledge.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.runtime import start_file_ingestion_job
 from asterism.domains.settings.knowledge import (
     _load_processing_configuration,
     _processing_identity,
@@ -32,7 +32,7 @@ from .processing_schemas import (
 )
 
 
-async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncSession) -> FileExtractionModel:
+async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncSession) -> FileKnowledgeArtifactModel:
     """Create the one pending canonical artifact for a newly eligible file.
 
     A pending replacement is deliberately *not* current: retrieval can retain
@@ -48,22 +48,22 @@ async def ensure_file_knowledge_artifact(*, file: UserFileModel, session: AsyncS
     """
     _, configuration = await _load_processing_configuration(session=session)
     existing = await session.scalar(
-        select(FileExtractionModel).where(
-            FileExtractionModel.file_id == file.id,
-            FileExtractionModel.processing_profile_generation == configuration.generation,
+        select(FileKnowledgeArtifactModel).where(
+            FileKnowledgeArtifactModel.file_id == file.id,
+            FileKnowledgeArtifactModel.processing_profile_generation == configuration.generation,
         ),
     )
     if existing is not None:
         return existing
     generation = (
         await session.scalar(
-            select(func.max(FileExtractionModel.generation)).where(
-                FileExtractionModel.file_id == file.id,
+            select(func.max(FileKnowledgeArtifactModel.generation)).where(
+                FileKnowledgeArtifactModel.file_id == file.id,
             ),
         )
         or 0
     ) + 1
-    artifact = FileExtractionModel(
+    artifact = FileKnowledgeArtifactModel(
         user_id=file.user_id,
         file_id=file.id,
         generation=generation,

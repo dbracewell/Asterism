@@ -1,12 +1,13 @@
 import uuid
 from enum import StrEnum
 
-from asterism.common.enums import enum_values
-from asterism.db.base_model import Base
-from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from sqlalchemy import Boolean, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.expression import true
+
+from asterism.common.enums import enum_values
+from asterism.db.base_model import Base
+from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
 
 class FileKnowledgeArtifactStatus(StrEnum):
@@ -33,8 +34,8 @@ class KnowledgeCaptionMode(StrEnum):
     LOCAL = "local"
 
 
-class FileExtractionModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
-    __tablename__ = "file_extractions"
+class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "file_knowledge_artifacts"
 
     user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),

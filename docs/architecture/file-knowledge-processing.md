@@ -2,7 +2,7 @@
 
 This guide describes the implemented path from a user upload to searchable
 knowledge. It is intentionally file-owned: a `UserFileModel` has derived
-`FileExtractionModel` generations, while project/chat memberships only
+`FileKnowledgeArtifactModel` generations, while project/chat memberships only
 reference a file and never initiate duplicate work.
 
 ## Terminology
@@ -10,11 +10,11 @@ reference a file and never initiate duplicate work.
 | Term                              | Meaning in Asterism                                                                                                                                                                                                                                                               | Implemented representation                                                             |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **Source file**                   | The immutable, user-owned upload from which knowledge is derived. It owns the original bytes and identity, not the derived text, vectors, or caption.                                                                                                                             | `UserFileModel` plus bytes in `LocalFileStore`                                         |
-| **Knowledge artifact**            | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: extraction result, chunk count, embedding readiness, canonical caption state, timestamps, and safe errors. This is the canonical meaning of _artifact_ in this guide. | `FileExtractionModel` / `file_extractions`                                             |
-| **Artifact generation**           | A monotonic version of a file's knowledge artifact. Reprocessing creates a new generation instead of modifying a usable one in place.                                                                                                                                             | `FileExtractionModel.generation` and `VectorChunk.artifact_generation`                 |
-| **Current artifact**              | The one ready artifact generation selected for a source file. A replacement becomes current only after its vectors are written successfully.                                                                                                                                      | `FileExtractionModel.is_current`, protected by a partial unique index                  |
-| **Reported artifact**             | The artifact generation an API reports for a file: the current generation when one exists (the generation retrieval serves), otherwise the newest generation (the one still being built).                                                                                                                                  | `extraction.queries.select_file_artifacts` plus the files domain's `file_knowledge_summaries` |
-| **Generation retention**          | The window of superseded artifact generations kept per file. The current generation plus `KNOWLEDGE_GENERATION_RETENTION` superseded generations are kept; the rest are pruned with their vectors.                                                                                                                          | `KNOWLEDGE_GENERATION_RETENTION` plus `extraction.retention.prune_superseded_generations` |
+| **Knowledge artifact**            | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: extraction result, chunk count, embedding readiness, canonical caption state, timestamps, and safe errors. This is the canonical meaning of _artifact_ in this guide. | `FileKnowledgeArtifactModel` / `file_knowledge_artifacts`                                             |
+| **Artifact generation**           | A monotonic version of a file's knowledge artifact. Reprocessing creates a new generation instead of modifying a usable one in place.                                                                                                                                             | `FileKnowledgeArtifactModel.generation` and `VectorChunk.artifact_generation`                 |
+| **Current artifact**              | The one ready artifact generation selected for a source file. A replacement becomes current only after its vectors are written successfully.                                                                                                                                      | `FileKnowledgeArtifactModel.is_current`, protected by a partial unique index                  |
+| **Reported artifact**             | The artifact generation an API reports for a file: the current generation when one exists (the generation retrieval serves), otherwise the newest generation (the one still being built).                                                                                                                                  | `knowledge.queries.select_file_artifacts` plus the files domain's `file_knowledge_summaries` |
+| **Generation retention**          | The window of superseded artifact generations kept per file. The current generation plus `KNOWLEDGE_GENERATION_RETENTION` superseded generations are kept; the rest are pruned with their vectors.                                                                                                                          | `KNOWLEDGE_GENERATION_RETENTION` plus `knowledge.retention.prune_superseded_generations` |
 | **Processing policy**             | The single platform-wide extraction, chunking, embedding, and caption policy. Users cannot select a different model or policy per file.                                                                                                                                           | Versioned `knowledge.processing` value in `ApplicationSettingsModel`                   |
 | **Profile generation / identity** | The profile's revision number and deterministic fingerprint, copied into each artifact to show which policy produced it. A changed identity queues a replacement artifact for each eligible library file.                                                                         | `processing_profile_generation`, `processing_profile_identity`                         |
 | **Content cache**                 | Bounded converted text used as the input to chunking. It is source-file conversion state, distinct from the artifact's indexed vector rows.                                                                                                                                       | `UserFileModel.content_cache`, produced by `MarkItDownFileProcessor`                   |
@@ -31,7 +31,7 @@ reference a file and never initiate duplicate work.
 | HTTP upload       | `file_router.upload_files`, `files.service.upload_files`     | Validates the request, writes source bytes, persists the source-file record, and queues work after commit.              |
 | Source bytes      | `FileStore`, `LocalFileStore`                                | Owns bytes beneath `STORAGE_ROOT/files/{user_id}` and prevents path traversal.                                          |
 | File conversion   | `MarkItDownFileProcessor.ensure_processed`                   | Produces bounded text cache for text/document files; verifies file integrity and records safe file-content errors.      |
-| Artifact state    | `FileExtractionModel`, `ensure_file_knowledge_artifact`      | Owns processing generation, profile fingerprint, status, extraction metadata, embeddings, and canonical caption fields. |
+| Artifact state    | `FileKnowledgeArtifactModel`, `ensure_file_knowledge_artifact`      | Owns processing generation, profile fingerprint, status, extraction metadata, embeddings, and canonical caption fields. |
 | Processing queue  | `KnowledgeIngestionJobs`, `ingest_file_artifact`             | Runs at most one in-process job per artifact ID and promotes a generation only after vector writes succeed.             |
 | Embeddings        | `OnnxClipEmbeddingProvider`                                  | Lazily verifies and loads the pinned local ONNX CLIP bundle, then emits normalized text or image vectors.               |
 | Vectors           | `VectorChunk`, `LanceDbVectorStore`                          | Persists vectors keyed by user, file, artifact generation, and chunk ordinal.                                           |
@@ -66,7 +66,7 @@ sequenceDiagram
     FS->>Store: save(user_id, filename, content)
     FS->>DB: create UserFileModel
     FS->>DB: ensure_file_knowledge_artifact(file)
-    Note over DB: Create pending FileExtractionModel\nfor the active processing profile
+    Note over DB: Create pending FileKnowledgeArtifactModel\nfor the active processing profile
     FS->>DB: commit file and artifact
     FS->>Jobs: enqueue(user_id, file_id, artifact_id)
 
@@ -154,7 +154,7 @@ as current.
 
 Every processing-policy change mints a new generation for the whole library, and
 each generation owns its own chunk vectors. Without a bound those generations
-accumulate indefinitely, so `extraction.retention.prune_superseded_generations()`
+accumulate indefinitely, so `knowledge.retention.prune_superseded_generations()`
 enforces a window after each generation settles (it is promoted to ready, or it
 fails terminally):
 

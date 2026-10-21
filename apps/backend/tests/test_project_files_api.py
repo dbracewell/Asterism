@@ -3,9 +3,9 @@ import uuid
 
 import pytest
 from asterism.core import config
-from asterism.domains.extraction.models import FileExtractionModel
 from asterism.domains.files.models import UserFileModel
 from asterism.domains.files.store import get_file_store
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 from asterism.domains.projects.models import ProjectFileModel
 from sqlalchemy import select
 from test_projects_api import auth, create
@@ -34,21 +34,21 @@ async def change(client, project, ids, revision=1, method="POST", user="a"):
 async def test_shared_sources_no_copy_no_processing_and_membership_summaries(project_api, monkeypatch):
     client, sessions, tmp_path = project_api
     monkeypatch.setattr(config, "storage_root", tmp_path)
-    monkeypatch.setattr("asterism.domains.extraction.runtime.start_file_ingestion_job", lambda **_: True)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.start_file_ingestion_job", lambda **_: True)
     first, second = await create(client, "First"), await create(client, "Second")
     file = await upload(client)
     async with sessions() as session:
         source = await session.get(UserFileModel, uuid.UUID(file["id"]))
         key = source.storage_key
         path = get_file_store().open("a", key)
-        artifacts = list(await session.scalars(select(FileExtractionModel.id)))
+        artifacts = list(await session.scalars(select(FileKnowledgeArtifactModel.id)))
     # Membership operations must not access bytes or enqueue extraction.
     monkeypatch.setattr(
         "asterism.domains.files.service.get_file_store",
         lambda: pytest.fail("Membership changed physical storage"),
     )
     monkeypatch.setattr(
-        "asterism.domains.extraction.runtime.start_file_ingestion_job",
+        "asterism.domains.knowledge.runtime.start_file_ingestion_job",
         lambda **_: pytest.fail("Membership reprocessed source"),
     )
     for project in (first, second):
@@ -76,7 +76,7 @@ async def test_shared_sources_no_copy_no_processing_and_membership_summaries(pro
     async with sessions() as session:
         source = await session.get(UserFileModel, uuid.UUID(file["id"]))
         assert source.storage_key == key
-        assert list(await session.scalars(select(FileExtractionModel.id))) == artifacts
+        assert list(await session.scalars(select(FileKnowledgeArtifactModel.id))) == artifacts
     assert path.read_bytes() == b"original bytes"
     assert len(list(config.files_root.rglob("source.*"))) == 1
 
@@ -163,7 +163,9 @@ async def test_listing_pagination_search_owner_auth_validation_and_deletion_clea
         assert (
             list(
                 await session.scalars(
-                    select(FileExtractionModel.id).where(FileExtractionModel.file_id == uuid.UUID(ids[0])),
+                    select(FileKnowledgeArtifactModel.id).where(
+                        FileKnowledgeArtifactModel.file_id == uuid.UUID(ids[0])
+                    ),
                 ),
             )
             == []

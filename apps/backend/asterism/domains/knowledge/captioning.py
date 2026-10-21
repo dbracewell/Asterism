@@ -9,21 +9,22 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from PIL import Image
+from sqlalchemy import select
+
 from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import get_async_db_session
-from asterism.domains.extraction.embedding import embedding_provider
-from asterism.domains.extraction.models import FileExtractionModel, KnowledgeCaptionMode, KnowledgeCaptionStatus
-from asterism.domains.extraction.vector_store import VectorChunk, vector_store
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.processing_schemas import KnowledgeCaptionConfiguration
 from asterism.domains.files.store import get_file_store
+from asterism.domains.knowledge.embedding import embedding_provider
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeCaptionMode, KnowledgeCaptionStatus
+from asterism.domains.knowledge.vector_store import VectorChunk, vector_store
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
 from asterism.domains.settings.knowledge import get_captioning_configuration
 from asterism.domains.settings.service import get_model_and_provider
-from PIL import Image
-from sqlalchemy import select
 
 from .caption_schemas import (
     CaptionErrorCode,
@@ -241,10 +242,10 @@ async def caption(
     try:
         async with get_async_db_session() as session:
             artifact = await session.scalar(
-                select(FileExtractionModel).where(
-                    FileExtractionModel.id == artifact_id,
-                    FileExtractionModel.user_id == user_id,
-                    FileExtractionModel.file_id == file_id,
+                select(FileKnowledgeArtifactModel).where(
+                    FileKnowledgeArtifactModel.id == artifact_id,
+                    FileKnowledgeArtifactModel.user_id == user_id,
+                    FileKnowledgeArtifactModel.file_id == file_id,
                 ),
             )
             file = await session.scalar(
@@ -309,7 +310,7 @@ async def caption(
         return
 
 
-async def _caption(artifact: FileExtractionModel, file: UserFileModel) -> CaptionResult:
+async def _caption(artifact: FileKnowledgeArtifactModel, file: UserFileModel) -> CaptionResult:
     if file.kind is not FileKind.IMAGE:
         logger.error(f"File artifact {artifact.id} is not an image and cannot be captioned")
         raise CaptioningError(CaptionErrorCode.IMAGE_INVALID, "Only image documents can be captioned")

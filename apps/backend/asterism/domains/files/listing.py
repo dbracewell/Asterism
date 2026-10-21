@@ -11,8 +11,8 @@ from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.db.queries import paginate_select
-from asterism.domains.extraction.queries import select_file_artifacts
-from asterism.domains.extraction.schemas import FileKnowledgeArtifact
+from asterism.domains.knowledge.queries import select_file_artifacts
+from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
 from .models import UserFileModel
 from .schemas import UserFile, UserFileList

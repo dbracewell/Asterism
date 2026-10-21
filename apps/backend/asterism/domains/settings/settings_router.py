@@ -17,13 +17,13 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.agent.schemas import MainAgentConfiguration, MainAgentUpdate
 from asterism.domains.agent.service import get_main_agent, update_main_agent
-from asterism.domains.extraction.model_download import DownloadProgress
 from asterism.domains.files.processing_schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeCaptionConfigurationUpdate,
     KnowledgeProcessingProfileUpdate,
     KnowledgeReprocessSummary,
 )
+from asterism.domains.knowledge.model_download import DownloadProgress
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from .discovery import (
@@ -480,7 +480,7 @@ async def delete_app_setting(
 )
 async def get_knowledge_embedding_status(user: AdminUserDep) -> DownloadProgress:
     """Return the readiness/download progress of the knowledge embedding bundle."""
-    from asterism.domains.extraction.embedding import embedding_download_service
+    from asterism.domains.knowledge.embedding import embedding_download_service
 
     return await asyncio.to_thread(embedding_download_service.progress)
 
@@ -495,7 +495,7 @@ async def get_caption_model_status(
     user: AdminUserDep,
 ) -> DownloadProgress:
     """Return the download/readiness progress of the local caption model."""
-    from asterism.domains.extraction.captioning import captioning_download_service
+    from asterism.domains.knowledge.captioning import captioning_download_service
 
     return await asyncio.to_thread(captioning_download_service.progress)
 
@@ -514,7 +514,7 @@ async def start_caption_model_download(
     user: AdminUserDep,
 ) -> DownloadProgress:
     """Start the local caption model download (409 if one is already running)."""
-    from asterism.domains.extraction.captioning import captioning_download_service
+    from asterism.domains.knowledge.captioning import captioning_download_service
 
     try:
         return await captioning_download_service.start_download()
@@ -532,6 +532,6 @@ async def cancel_caption_model_download(
     user: AdminUserDep,
 ) -> DownloadProgress:
     """Cancel an in-progress local caption model download."""
-    from asterism.domains.extraction.captioning import captioning_download_service
+    from asterism.domains.knowledge.captioning import captioning_download_service
 
     return await captioning_download_service.cancel_download()
