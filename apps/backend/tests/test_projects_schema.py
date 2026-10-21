@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from asterism.db.database import set_sqlite_pragma
 from asterism.db.model_registry import Base
-from asterism.domains.extraction.models import FileExtractionModel
 from asterism.domains.files.models import FileKind, UserFileModel
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel
 from asterism.domains.user.models import UserModel
 from sqlalchemy import create_engine, delete, event, select, update
@@ -150,14 +150,14 @@ def test_shared_file_and_generations_survive_membership_and_project_deletion(pro
         [
             ProjectFileModel(project_id=project.id, file_id=file.id, user_id="a"),
             ProjectFileModel(project_id=other.id, file_id=file.id, user_id="a"),
-            FileExtractionModel(
+            FileKnowledgeArtifactModel(
                 user_id="a",
                 file_id=file.id,
                 generation=1,
                 processing_profile_generation=1,
                 processing_profile_identity="a" * 64,
             ),
-            FileExtractionModel(
+            FileKnowledgeArtifactModel(
                 user_id="a",
                 file_id=file.id,
                 generation=2,
@@ -174,7 +174,7 @@ def test_shared_file_and_generations_survive_membership_and_project_deletion(pro
     project_session.commit()
     assert project_session.scalars(select(ProjectFileModel)).all() == []
     assert project_session.get(UserFileModel, file.id) is not None
-    assert len(project_session.scalars(select(FileExtractionModel)).all()) == 2
+    assert len(project_session.scalars(select(FileKnowledgeArtifactModel)).all()) == 2
 
 
 @pytest.mark.parametrize("target", ["file", "user"])
@@ -196,14 +196,14 @@ def test_source_and_owner_deletion_cascade_memberships(project_session, target):
         assert project_session.scalars(select(ProjectModel)).all() == []
 
 
-def test_extraction_has_no_project_or_chat_model_imports():
-    extraction = Path(__file__).parents[1] / "asterism" / "domains" / "extraction"
+def test_knowledge_has_no_project_or_chat_model_imports():
+    knowledge = Path(__file__).parents[1] / "asterism" / "domains" / "knowledge"
     forbidden = ("asterism.domains.projects", "asterism.domains.chat", "asterism.db.model_registry")
 
     def is_forbidden(module):
         return any(module == name or module.startswith(name + ".") for name in forbidden)
 
-    for path in extraction.rglob("*.py"):
+    for path in knowledge.rglob("*.py"):
         for node in ast.walk(ast.parse(path.read_text())):
             if isinstance(node, ast.ImportFrom):
                 assert not is_forbidden(node.module or ""), path

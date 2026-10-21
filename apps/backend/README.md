@@ -40,7 +40,7 @@ unknown or conflicting values require manual administration. See
 ## File knowledge processing
 
 An uploaded eligible `UserFile` receives a canonical, versioned
-`FileExtractionModel` (the persisted knowledge artifact) and is processed independently of project/chat
+`FileKnowledgeArtifactModel` (the persisted knowledge artifact) and is processed independently of project/chat
 references. File processing contracts and policy transitions live in
 `domains/files/processing_schemas.py` and `domains/files/processing.py`.
 Retrieval first resolves the active

@@ -9,13 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException
-from asterism.domains.extraction.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
 from asterism.domains.files.processing_schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeProcessingCaptioningConfiguration,
     KnowledgeProcessingConfiguration,
     KnowledgeProcessingProfile,
 )
+from asterism.domains.knowledge.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
 
 from .models import ApplicationSettingsModel, LLMModel
 

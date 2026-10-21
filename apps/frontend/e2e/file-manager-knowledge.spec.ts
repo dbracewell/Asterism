@@ -101,7 +101,7 @@ test("shows canonical processing state and confirms the full impact before file 
   await expect(page.getByText("Delete selected files?")).toBeVisible();
   await expect(
     page.getByText(
-      "This permanently removes the selected files, every project and chat membership, and all derived extractions, captions, and vectors.",
+      "This permanently removes the selected files, every project and chat membership, and all derived knowledge, captions, and vectors.",
     ),
   ).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();

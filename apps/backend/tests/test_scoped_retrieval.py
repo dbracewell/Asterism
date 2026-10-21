@@ -16,10 +16,10 @@ from asterism.domains.chat.retrieval import create_retrieval_service
 from asterism.domains.chat.runtime_files import create_runtime_file_reader
 from asterism.domains.chat.schemas import Chat, MessageStatus
 from asterism.domains.chat.tool_policy import resolve_effective_tools
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-from asterism.domains.extraction.vector_store import LanceDbVectorStore, VectorChunk, VectorSearchResult
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.store import get_file_store
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk, VectorSearchResult
 from asterism.domains.retrieval.service import RetrievalLimits, RetrievalService
 from sqlalchemy import delete, update
 from test_context_tools import add_file, make_execution_scope
@@ -124,7 +124,9 @@ async def test_foreign_matches_limits_caption_and_utf8_budget(context_runtime, m
     fid = await add_file(r)
     async with r.sessions() as db:
         await db.execute(
-            update(FileExtractionModel).where(FileExtractionModel.file_id == fid).values(caption_text="ééé")
+            update(FileKnowledgeArtifactModel)
+            .where(FileKnowledgeArtifactModel.file_id == fid)
+            .values(caption_text="ééé")
         )
         await db.commit()
     scope, ceiling = await execution(r)
@@ -166,7 +168,9 @@ async def test_ready_without_text_embeddings_reports_not_searchable(context_runt
     fid = await add_file(r)
     async with r.sessions() as db:
         await db.execute(
-            update(FileExtractionModel).where(FileExtractionModel.file_id == fid).values(text_embeddings_ready=False)
+            update(FileKnowledgeArtifactModel)
+            .where(FileKnowledgeArtifactModel.file_id == fid)
+            .values(text_embeddings_ready=False)
         )
         await db.commit()
     scope, ceiling = await execution(r)
@@ -191,10 +195,12 @@ async def test_replacement_during_vector_search_never_releases_a_new_or_old_gene
     async def search(*args, **kwargs):
         async with r.sessions() as db:
             await db.execute(
-                update(FileExtractionModel).where(FileExtractionModel.file_id == fid).values(is_current=False)
+                update(FileKnowledgeArtifactModel)
+                .where(FileKnowledgeArtifactModel.file_id == fid)
+                .values(is_current=False)
             )
             db.add(
-                FileExtractionModel(
+                FileKnowledgeArtifactModel(
                     user_id="a",
                     file_id=fid,
                     generation=2,

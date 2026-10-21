@@ -1,8 +1,10 @@
 # EPIC-38: Knowledge pipeline structure
 
-Status: proposed / pending. Source: the files-domain review of 2026-10-21 and
+Status: in progress. US-38.1 confirmed complete and merged into `main`;
+US-38.2 to US-38.5 pending. Source: the files-domain review of 2026-10-21 and
 the follow-up architecture discussion on the knowledge pipeline's domain
-ownership, naming, and data model.
+ownership, naming, and data model. The naming and boundary decisions are
+recorded in [ADR-0018](../adr/0018-knowledge-domain-naming-and-boundary.md).
 
 ## Objective
 

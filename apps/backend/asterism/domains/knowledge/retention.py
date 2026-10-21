@@ -19,12 +19,13 @@ unreachable orphans that nothing can ever reclaim.
 import uuid
 from collections.abc import Sequence
 
-from asterism.common.log import get_logger
-from asterism.core import config
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-from asterism.domains.extraction.vector_store import VectorStore, vector_store
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from asterism.common.log import get_logger
+from asterism.core import config
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.vector_store import VectorStore, vector_store
 
 logger = get_logger("KnowledgeRetention")
 
@@ -89,11 +90,11 @@ async def prune_superseded_generations(
     rows = (
         await session.execute(
             select(
-                FileExtractionModel.id,
-                FileExtractionModel.generation,
-                FileExtractionModel.status,
-                FileExtractionModel.is_current,
-            ).where(FileExtractionModel.file_id == file_id),
+                FileKnowledgeArtifactModel.id,
+                FileKnowledgeArtifactModel.generation,
+                FileKnowledgeArtifactModel.status,
+                FileKnowledgeArtifactModel.is_current,
+            ).where(FileKnowledgeArtifactModel.file_id == file_id),
         )
     ).all()
     if not rows:
@@ -127,7 +128,7 @@ async def prune_superseded_generations(
             )
             continue
         await session.execute(
-            delete(FileExtractionModel).where(FileExtractionModel.id == row.id),
+            delete(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.id == row.id),
         )
         removed += 1
     if removed:

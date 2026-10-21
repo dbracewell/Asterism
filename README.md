@@ -218,7 +218,7 @@ linked against SQLite **3.45+** (the backend uses JSONB functions).
    ```
 
    Both initialization commands preserve existing data. To intentionally delete and
-   recreate both local SQLite databases and clear disposable source/extraction storage, run `pnpm reset:db`, inspect the displayed
+   recreate both local SQLite databases and clear disposable source/knowledge storage, run `pnpm reset:db`, inspect the displayed
    absolute targets, and type `RESET`. Noninteractive execution is canceled unless
    `pnpm reset:db -- --yes` is supplied explicitly. Reset supports only validated
    local SQLite targets; back up any data you need first.
@@ -257,7 +257,7 @@ Keep this passphrase private. The frontend and backend must use the same `SYSTEM
 ## Files, project context, and captions
 
 **Files** is the canonical library for uploaded sources and derived knowledge.
-Eligible uploads automatically queue extraction or image embedding. Processing
+Eligible uploads automatically queue knowledge ingestion or image embedding. Processing
 status is visible; failed or canceled work can be retried from Files.
 
 Projects share references to library files. Chats combine current project files

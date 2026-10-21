@@ -5,6 +5,9 @@ import logging
 import uuid
 from collections.abc import Callable, Sequence
 
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.db.mixins import get_unix_timestamp
@@ -12,13 +15,11 @@ from asterism.domains.files.models import FileContentStatus, FileKind, UserFileM
 from asterism.domains.files.processor import ensure_file_processed
 from asterism.domains.files.store import get_file_store
 from asterism.domains.settings.knowledge import get_captioning_configuration
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from .embedding import EmbeddingProvider, EmbeddingProviderError, embedding_provider
 from .model_download import DownloadNotReadyError
 from .models import (
-    FileExtractionModel,
+    FileKnowledgeArtifactModel,
     FileKnowledgeArtifactStatus,
     KnowledgeCaptionMode,
     KnowledgeCaptionStatus,
@@ -33,8 +34,8 @@ class KnowledgeIngestionError(RuntimeError):
     """A document could not safely be made searchable."""
 
 
-class ExtractionError(RuntimeError):
-    pass
+class KnowledgeArtifactError(RuntimeError):
+    """A source file could not be read well enough to derive knowledge from it."""
 
 
 def chunk_text(text: str) -> list[str]:
@@ -51,7 +52,7 @@ def chunk_text(text: str) -> list[str]:
     return chunks
 
 
-def _artifact_chunk_id(artifact: FileExtractionModel, ordinal: int) -> str:
+def _artifact_chunk_id(artifact: FileKnowledgeArtifactModel, ordinal: int) -> str:
     source = f"{artifact.file_id}:{artifact.generation}:{ordinal}".encode()
     return hashlib.sha256(source).hexdigest()
 
@@ -86,10 +87,10 @@ async def ingest(
     try:
         async with get_async_db_session() as session:
             artifact = await session.scalar(
-                select(FileExtractionModel).where(
-                    FileExtractionModel.id == artifact_id,
-                    FileExtractionModel.user_id == user_id,
-                    FileExtractionModel.file_id == file_id,
+                select(FileKnowledgeArtifactModel).where(
+                    FileKnowledgeArtifactModel.id == artifact_id,
+                    FileKnowledgeArtifactModel.user_id == user_id,
+                    FileKnowledgeArtifactModel.file_id == file_id,
                 ),
             )
             file = await session.scalar(
@@ -103,7 +104,7 @@ async def ingest(
                 return
 
             await ingest_file(
-                extraction=artifact,
+                artifact=artifact,
                 file=file,
                 session=session,
                 on_caption_request=on_caption_request,
@@ -116,36 +117,36 @@ async def ingest(
 
 async def ingest_file(
     *,
-    extraction: FileExtractionModel,
+    artifact: FileKnowledgeArtifactModel,
     file: UserFileModel,
     session: AsyncSession,
     on_caption_request: Callable[[str, uuid.UUID, uuid.UUID], None] = lambda *_: None,
     provider: EmbeddingProvider = embedding_provider,
     store=vector_store,
-) -> FileExtractionModel:
+) -> FileKnowledgeArtifactModel:
 
-    if extraction.status in (FileKnowledgeArtifactStatus.READY, FileKnowledgeArtifactStatus.CANCELED):
-        return extraction
+    if artifact.status in (FileKnowledgeArtifactStatus.READY, FileKnowledgeArtifactStatus.CANCELED):
+        return artifact
 
-    extraction.status = FileKnowledgeArtifactStatus.PROCESSING
-    extraction.error_code = None
-    extraction.error_reason = None
-    extraction.started_at = get_unix_timestamp()
+    artifact.status = FileKnowledgeArtifactStatus.PROCESSING
+    artifact.error_code = None
+    artifact.error_reason = None
+    artifact.started_at = get_unix_timestamp()
     await session.commit()
 
     try:
         processed = await ensure_file_processed(file=file, session=session)
         if processed.content_status is not FileContentStatus.READY:
-            raise ExtractionError(processed.content_error or "The file could not be processed")
+            raise KnowledgeArtifactError(processed.content_error or "The file could not be processed")
 
         vectors, contents, visual_ready = await embed_file(processed, provider=provider)
 
         chunks: Sequence[VectorChunk] = [
             VectorChunk(
-                id=_artifact_chunk_id(extraction, ordinal),
+                id=_artifact_chunk_id(artifact, ordinal),
                 user_id=processed.user_id,
                 file_id=str(processed.id),
-                artifact_generation=extraction.generation,
+                artifact_generation=artifact.generation,
                 chunk_ordinal=ordinal,
                 kind="text",
                 content=content,
@@ -156,14 +157,14 @@ async def ingest_file(
         await store.delete_file_generation(
             user_id=processed.user_id,
             file_id=str(processed.id),
-            artifact_generation=extraction.generation,
+            artifact_generation=artifact.generation,
         )
         await store.add(chunks)
 
         current_status = await session.scalar(
-            select(FileExtractionModel.status).where(
-                FileExtractionModel.id == extraction.id,
-                FileExtractionModel.file_id == processed.id,
+            select(FileKnowledgeArtifactModel.status).where(
+                FileKnowledgeArtifactModel.id == artifact.id,
+                FileKnowledgeArtifactModel.file_id == processed.id,
             ),
         )
 
@@ -174,35 +175,35 @@ async def ingest_file(
             await store.delete_file_generation(
                 user_id=processed.user_id,
                 file_id=str(processed.id),
-                artifact_generation=extraction.generation,
+                artifact_generation=artifact.generation,
             )
-            await session.refresh(extraction)
-            return extraction
+            await session.refresh(artifact)
+            return artifact
 
     except DownloadNotReadyError:
-        extraction.status = FileKnowledgeArtifactStatus.PENDING
-        extraction.error_code = "embedding_bundle_pending"
-        extraction.error_reason = "Knowledge embedding bundle is still provisioning"
-        extraction.started_at = None
+        artifact.status = FileKnowledgeArtifactStatus.PENDING
+        artifact.error_code = "embedding_bundle_pending"
+        artifact.error_reason = "Knowledge embedding bundle is still provisioning"
+        artifact.started_at = None
         await session.commit()
-        return extraction
+        return artifact
     except Exception as error:
         try:
             await store.delete_file_generation(
                 user_id=file.user_id,
                 file_id=str(file.id),
-                artifact_generation=extraction.generation,
+                artifact_generation=artifact.generation,
             )
         except Exception:
             logger.exception("Could not remove partial file knowledge vectors", extra={"file_id": str(file.id)})
-        extraction.status = FileKnowledgeArtifactStatus.FAILED
-        extraction.error_code = "processing_failed"
-        extraction.error_reason = (
+        artifact.status = FileKnowledgeArtifactStatus.FAILED
+        artifact.error_code = "processing_failed"
+        artifact.error_reason = (
             str(error)[:512]
             if isinstance(error, (KnowledgeIngestionError, EmbeddingProviderError))
             else "Knowledge processing failed; check the server logs"
         )
-        extraction.completed_at = None
+        artifact.completed_at = None
         await session.commit()
         # This generation is settled and superseded; enforce the retention
         # window so dead generations cannot accumulate.
@@ -212,39 +213,39 @@ async def ingest_file(
             session=session,
             store=store,
         )
-        return extraction
+        return artifact
 
     await session.execute(
-        update(FileExtractionModel)
-        .where(FileExtractionModel.file_id == file.id, FileExtractionModel.is_current.is_(True))
+        update(FileKnowledgeArtifactModel)
+        .where(FileKnowledgeArtifactModel.file_id == file.id, FileKnowledgeArtifactModel.is_current.is_(True))
         .values(is_current=False),
     )
-    extraction.status = FileKnowledgeArtifactStatus.READY
-    extraction.is_current = True
-    extraction.extracted_content = processed.content_cache if processed.kind is not FileKind.IMAGE else None
-    extraction.chunk_count = len(chunks)
-    extraction.text_embeddings_ready = processed.kind is not FileKind.IMAGE
-    extraction.visual_embedding_ready = visual_ready
-    extraction.completed_at = get_unix_timestamp()
+    artifact.status = FileKnowledgeArtifactStatus.READY
+    artifact.is_current = True
+    artifact.extracted_content = processed.content_cache if processed.kind is not FileKind.IMAGE else None
+    artifact.chunk_count = len(chunks)
+    artifact.text_embeddings_ready = processed.kind is not FileKind.IMAGE
+    artifact.visual_embedding_ready = visual_ready
+    artifact.completed_at = get_unix_timestamp()
 
     caption_requested = False
     if processed.kind is FileKind.IMAGE:
         caption_configuration = await get_captioning_configuration(session=session)
         caption_requested = caption_configuration.mode != KnowledgeCaptionMode.DISABLED.value
-        extraction.caption_status = KnowledgeCaptionStatus.PENDING if caption_requested else None
+        artifact.caption_status = KnowledgeCaptionStatus.PENDING if caption_requested else None
 
     await session.commit()
 
     # The promoted generation supersedes the older ones. Prune the ones
     # outside the retention window now that the promotion is durable.
     await prune_superseded_generations(
-        user_id=extraction.user_id,
-        file_id=extraction.file_id,
+        user_id=artifact.user_id,
+        file_id=artifact.file_id,
         session=session,
         store=store,
     )
 
     if caption_requested:
-        on_caption_request(extraction.user_id, file.id, extraction.id)
+        on_caption_request(artifact.user_id, file.id, artifact.id)
 
-    return extraction
+    return artifact

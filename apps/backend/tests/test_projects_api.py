@@ -10,9 +10,9 @@ from asterism.core.schemas import AuthedUser
 from asterism.db.database import set_sqlite_pragma
 from asterism.db.dependencies import get_db_session
 from asterism.db.model_registry import Base
-from asterism.domains.extraction.models import FileExtractionModel
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.store import LocalFileStore
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel
 from asterism.domains.projects.service import advance_context_revision
 from asterism.domains.settings.models import LLMModel, ProviderModel
@@ -330,7 +330,7 @@ async def test_deletion_retains_shared_source_bytes_and_extraction(project_api):
             [ProjectFileModel(project_id=uuid.UUID(p["id"]), file_id=file.id, user_id="a") for p in (first, second)],
         )
         session.add(
-            FileExtractionModel(
+            FileKnowledgeArtifactModel(
                 user_id="a",
                 file_id=file.id,
                 generation=1,
@@ -345,7 +345,7 @@ async def test_deletion_retains_shared_source_bytes_and_extraction(project_api):
     ).status_code == 200
     async with sessions() as session:
         assert await session.get(UserFileModel, file_id) is not None
-        assert len((await session.scalars(select(FileExtractionModel))).all()) == 1
+        assert len((await session.scalars(select(FileKnowledgeArtifactModel))).all()) == 1
         memberships = (await session.scalars(select(ProjectFileModel))).all()
         assert [m.project_id for m in memberships] == [uuid.UUID(second["id"])]
     assert store.open("a", source_key).read_bytes() == b"keep these original bytes"

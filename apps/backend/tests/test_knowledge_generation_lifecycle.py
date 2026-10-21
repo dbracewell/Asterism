@@ -15,10 +15,10 @@ import pytest
 import pytest_asyncio
 from asterism.core import config
 from asterism.db.model_registry import Base
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-from asterism.domains.extraction.retention import generations_to_prune, prune_superseded_generations
 from asterism.domains.files.listing import describe_files
 from asterism.domains.files.models import FileKind, UserFileModel
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.retention import generations_to_prune, prune_superseded_generations
 from asterism.domains.user.models import UserModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -61,8 +61,8 @@ def _artifact(
     status: FileKnowledgeArtifactStatus,
     is_current: bool,
     user_id: str = "user-a",
-) -> FileExtractionModel:
-    return FileExtractionModel(
+) -> FileKnowledgeArtifactModel:
+    return FileKnowledgeArtifactModel(
         user_id=user_id,
         file_id=file_id,
         generation=generation,
@@ -154,7 +154,7 @@ async def test_prune_removes_superseded_rows_and_their_vectors(lifecycle_session
     assert store.deleted == [("user-a", str(file.id), 1)]
     remaining = list(
         await lifecycle_session.scalars(
-            select(FileExtractionModel.generation).where(FileExtractionModel.file_id == file.id),
+            select(FileKnowledgeArtifactModel.generation).where(FileKnowledgeArtifactModel.file_id == file.id),
         ),
     )
     assert sorted(remaining) == [2, 3]
@@ -187,7 +187,7 @@ async def test_prune_keeps_the_current_generation_and_in_flight_work(lifecycle_s
     assert store.deleted == [("user-a", str(file.id), 1)]
     remaining = sorted(
         await lifecycle_session.scalars(
-            select(FileExtractionModel.generation).where(FileExtractionModel.file_id == file.id),
+            select(FileKnowledgeArtifactModel.generation).where(FileKnowledgeArtifactModel.file_id == file.id),
         ),
     )
     assert remaining == [2, 3]
@@ -220,7 +220,7 @@ async def test_prune_keeps_the_row_when_the_vectors_cannot_be_removed(lifecycle_
     assert removed == 0
     remaining = sorted(
         await lifecycle_session.scalars(
-            select(FileExtractionModel.generation).where(FileExtractionModel.file_id == file.id),
+            select(FileKnowledgeArtifactModel.generation).where(FileKnowledgeArtifactModel.file_id == file.id),
         ),
     )
     assert remaining == [1, 2]
@@ -261,7 +261,9 @@ async def test_prune_uses_the_configured_retention_window(lifecycle_session, mon
 
 def test_one_current_generation_index_is_declared_for_every_partial_index_dialect():
     index = next(
-        item for item in FileExtractionModel.__table__.indexes if item.name == "uq_file_knowledge_artifacts_one_current"
+        item
+        for item in FileKnowledgeArtifactModel.__table__.indexes
+        if item.name == "uq_file_knowledge_artifacts_one_current"
     )
     assert index.unique is True
     # The invariant must not silently disappear on the next storage adapter.
@@ -334,9 +336,9 @@ async def test_reporting_falls_back_to_the_newest_generation_before_one_is_curre
 
 @pytest.mark.asyncio
 async def test_promoting_a_generation_prunes_the_superseded_ones(lifecycle_session, tmp_path, monkeypatch):
-    from asterism.domains.extraction.ingestion import ingest_file
     from asterism.domains.files.models import FileContentStatus
     from asterism.domains.files.store import get_file_store
+    from asterism.domains.knowledge.ingestion import ingest_file
 
     monkeypatch.setattr(config, "storage_root", tmp_path)
     monkeypatch.setattr(config, "knowledge_generation_retention", 0)
@@ -383,7 +385,7 @@ async def test_promoting_a_generation_prunes_the_superseded_ones(lifecycle_sessi
 
     store = RecordingVectorStore()
     promoted = await ingest_file(
-        extraction=replacement,
+        artifact=replacement,
         file=file,
         session=lifecycle_session,
         provider=FakeEmbeddings(),
@@ -400,7 +402,7 @@ async def test_promoting_a_generation_prunes_the_superseded_ones(lifecycle_sessi
     ]
     remaining = sorted(
         await lifecycle_session.scalars(
-            select(FileExtractionModel.generation).where(FileExtractionModel.file_id == file.id),
+            select(FileKnowledgeArtifactModel.generation).where(FileKnowledgeArtifactModel.file_id == file.id),
         ),
     )
     assert remaining == [2]

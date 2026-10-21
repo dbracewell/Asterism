@@ -11,8 +11,6 @@ from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.model_registry import Base
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.chat.schemas import Chat, ChatInfo, Message, MessageFileReference, MessageStatus
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus
-from asterism.domains.extraction.vector_store import LanceDbVectorStore, VectorChunk
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.processor import MarkItDownFileProcessor
 from asterism.domains.files.service import (
@@ -27,6 +25,8 @@ from asterism.domains.files.service import (
     upload_files,
 )
 from asterism.domains.files.store import get_file_store
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk
 from asterism.domains.llm.schemas import ImageUrlContentPart, text_content
 from asterism.domains.user.models import UserModel
 from openpyxl import Workbook
@@ -80,7 +80,7 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
     assert uploaded.files[2].mime_type == "image/png"
     artifacts = list(
         await file_session.scalars(
-            select(FileExtractionModel).where(FileExtractionModel.user_id == "user-a"),
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.user_id == "user-a"),
         ),
     )
     assert {(artifact.file_id, artifact.status, artifact.is_current) for artifact in artifacts} == {
@@ -177,13 +177,13 @@ async def test_delete_file_cancels_artifacts_and_removes_vectors_and_bytes(file_
             self.deleted.append((user_id, file_id))
 
     vectors = FakeVectors()
-    monkeypatch.setattr("asterism.domains.extraction.runtime.vector_store", vectors)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.vector_store", vectors)
     cancelled: list[str] = []
 
     async def cancel_jobs(artifact_id):
         cancelled.append(str(artifact_id))
 
-    monkeypatch.setattr("asterism.domains.extraction.runtime.cancel_file_jobs", cancel_jobs)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.cancel_file_jobs", cancel_jobs)
 
     uploaded = await upload_files(
         user_id="user-a",
@@ -192,7 +192,7 @@ async def test_delete_file_cancels_artifacts_and_removes_vectors_and_bytes(file_
     )
     file = uploaded.files[0]
     artifact = await file_session.scalar(
-        select(FileExtractionModel).where(FileExtractionModel.file_id == file.id),
+        select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id),
     )
     assert artifact is not None
     path = await source_path(file_session, file)
@@ -202,7 +202,7 @@ async def test_delete_file_cancels_artifacts_and_removes_vectors_and_bytes(file_
     assert vectors.deleted == [("user-a", str(file.id))]
     assert (
         await file_session.scalar(
-            select(FileExtractionModel.id).where(FileExtractionModel.file_id == file.id),
+            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file.id),
         )
         is None
     )
@@ -221,8 +221,8 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
         enqueued.append(str(artifact_id))
         return True
 
-    monkeypatch.setattr("asterism.domains.extraction.runtime.cancel_file_jobs", cancel_jobs)
-    monkeypatch.setattr("asterism.domains.extraction.runtime.start_file_ingestion_job", start_ingestion_job)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.cancel_file_jobs", cancel_jobs)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.start_file_ingestion_job", start_ingestion_job)
     monkeypatch.setattr("asterism.domains.files.processing.start_file_ingestion_job", start_ingestion_job)
     uploaded = await upload_files(
         user_id="user-a",
@@ -244,7 +244,7 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
 @pytest.mark.asyncio
 async def test_similar_files_rank_by_cosine_and_stay_user_scoped(file_session, monkeypatch, tmp_path):
     store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
-    monkeypatch.setattr("asterism.domains.extraction.runtime.vector_store", store)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.vector_store", store)
     uploaded = await upload_files(
         user_id="user-a",
         uploads=[_upload(name, name.encode()) for name in ("src.txt", "near.txt", "far.txt", "stale.txt")],
@@ -262,7 +262,7 @@ async def test_similar_files_rank_by_cosine_and_stay_user_scoped(file_session, m
     owners = {"theirs.txt": "user-b"}
     for name, vector in vectors.items():
         artifact = await file_session.scalar(
-            select(FileExtractionModel).where(FileExtractionModel.file_id == by_name[name].id),
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == by_name[name].id),
         )
         assert artifact is not None
         artifact.status = FileKnowledgeArtifactStatus.READY
@@ -559,7 +559,7 @@ async def test_upload_batch_failure_rolls_back_sources_and_metadata(file_session
         )
     assert list(config.files_root.rglob("source.*")) == []
     assert await file_session.scalar(select(UserFileModel.id)) is None
-    assert await file_session.scalar(select(FileExtractionModel.id)) is None
+    assert await file_session.scalar(select(FileKnowledgeArtifactModel.id)) is None
 
 
 @pytest.mark.asyncio

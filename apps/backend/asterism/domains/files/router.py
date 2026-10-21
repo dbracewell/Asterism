@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 import asterism.domains.files.service as file_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
-from asterism.domains.extraction.schemas import FileKnowledgeArtifact
+from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .schemas import SimilarFileList, UserFile, UserFileList

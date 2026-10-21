@@ -4,7 +4,7 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. US-38.1 is confirmed complete and merged into `main`. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
@@ -66,12 +66,12 @@ EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above.
 
 ## [EPIC-38: Knowledge pipeline structure](docs/epics/EPIC-38-KNOWLEDGE-PIPELINE-STRUCTURE.md)
 
-- [ ] US-38.1: Name the knowledge domain for what it holds
-  - [ ] Rename `domains/extraction` to `domains/knowledge`, the artifact model to `FileKnowledgeArtifactModel` and the table to `file_knowledge_artifacts`.
-  - [ ] Update all backend, test and documentation references, including the frontend's generated client types.
-  - [ ] Re-check the vocabulary: no "extraction" may remain as a domain, package, table or model name.
-  - [ ] Record ADR-0018 covering the domain boundary, the vocabulary decision and the rejected alternatives.
-  - [ ] Run backend lint, type checks and the full test suite; verify a fresh database initialization creates the renamed table.
+- [x] US-38.1: Name the knowledge domain for what it holds
+  - [x] Rename `domains/extraction` to `domains/knowledge`, the artifact model to `FileKnowledgeArtifactModel` and the table to `file_knowledge_artifacts`.
+  - [x] Update all backend, test and documentation references, including the frontend's generated client types.
+  - [x] Re-check the vocabulary: no "extraction" may remain as a domain, package, table or model name.
+  - [x] Record ADR-0018 covering the domain boundary, the vocabulary decision and the rejected alternatives.
+  - [x] Run backend lint, type checks and the full test suite; verify a fresh database initialization creates the renamed table.
 - [ ] US-38.2: Give the processing policy one owner
   - [ ] Move the processing-policy schemas, persistence and transitions from `files` and `settings` into the knowledge domain.
   - [ ] Move the knowledge admin endpoints to a knowledge router, preserving their URLs, operation ids and response shapes.

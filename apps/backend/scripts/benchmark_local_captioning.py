@@ -18,8 +18,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from asterism.domains.extraction.captioning import CaptionRequest, local_caption_provider
 from asterism.domains.files.schemas import UserFile
+from asterism.domains.knowledge.captioning import CaptionRequest, local_caption_provider
 from PIL import Image
 
 

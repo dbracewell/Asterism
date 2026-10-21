@@ -12,7 +12,7 @@ alone never grants an execution access to a file.
 | `projects`   | Private flat projects, context revision, file and sub-agent memberships                 | `queries.py`, lifecycle services, project scope reader           |
 | `chat`       | Project binding, model selection, messages/branches, drafts, receipts, local references | Owner-checked scope readers and runtime composition roots        |
 | `files`      | Immutable sources, metadata, opaque storage keys, processing-policy transitions         | `FileStore`, `RuntimeFileReader`, owned base selects             |
-| `extraction` | Derived generations, embeddings, captions, vector adapter, bounded jobs                 | Artifact queries, embedding/vector interfaces                    |
+| `knowledge`  | Derived generations, embeddings, captions, vector adapter, bounded jobs                 | Artifact queries, embedding/vector interfaces                    |
 | `agent`      | Main/sub configuration, immutable execution scope, prompts, bounded loop                | Injected scope, client, file reader, retrieval service           |
 | `retrieval`  | Authorized bounded search and citations                                                 | `RetrievalService` with injected live scope, embeddings, vectors |
 | `tools`      | Registry, ordinary capability catalog, internal tool adapters                           | Server-derived `ContextToolScope` and invocation checks          |
@@ -23,7 +23,7 @@ page. Shared `db/queries.py` handles domain-neutral pagination only. Keep query
 construction, execution/enrichment, and mutations separate. Do not add workspace
 flags to the general library listing function.
 
-Project/file/extraction models do not import the aggregate model registry.
+Project/file/knowledge models do not import the aggregate model registry.
 `db.model_registry` is the registration root used for fresh initialization. Agent scope and
 prompt types do not query project tables. The chat composition roots inject
 readers; domain policy stays at the storage/service boundary that owns it.

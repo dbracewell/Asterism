@@ -3,14 +3,19 @@
 import asyncio
 import uuid
 
+from sqlalchemy import select, update
+
 from asterism.common.job_queue import JobManager
 from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import get_async_db_session
-from asterism.domains.extraction.embedding import embedding_download_service, embedding_provider
-from asterism.domains.extraction.ingestion import ingest
-from asterism.domains.extraction.models import FileExtractionModel, FileKnowledgeArtifactStatus, KnowledgeCaptionStatus
-from sqlalchemy import select, update
+from asterism.domains.knowledge.embedding import embedding_download_service, embedding_provider
+from asterism.domains.knowledge.ingestion import ingest
+from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeArtifactStatus,
+    KnowledgeCaptionStatus,
+)
 
 from .captioning import caption, captioning_download_service, local_caption_provider
 from .vector_store import vector_store
@@ -19,7 +24,7 @@ logger = get_logger("KNOWLEDGE-RUNTIME")
 
 
 job_manager = JobManager(
-    max_concurrency=config.max_concurrent_extractions,
+    max_concurrency=config.max_concurrent_knowledge_jobs,
 )
 
 
@@ -56,8 +61,8 @@ async def recover_interrupted() -> None:
     """Make interrupted work explicitly retryable after a restart."""
     async with get_async_db_session() as session:
         await session.execute(
-            update(FileExtractionModel)
-            .where(FileExtractionModel.status == FileKnowledgeArtifactStatus.PROCESSING)
+            update(FileKnowledgeArtifactModel)
+            .where(FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.PROCESSING)
             .values(
                 status=FileKnowledgeArtifactStatus.PENDING,
                 error_code="interrupted",
@@ -66,8 +71,8 @@ async def recover_interrupted() -> None:
             ),
         )
         await session.execute(
-            update(FileExtractionModel)
-            .where(FileExtractionModel.caption_status == KnowledgeCaptionStatus.RUNNING)
+            update(FileKnowledgeArtifactModel)
+            .where(FileKnowledgeArtifactModel.caption_status == KnowledgeCaptionStatus.RUNNING)
             .values(caption_status=KnowledgeCaptionStatus.FAILED, caption_error_code="interrupted"),
         )
         await session.commit()
@@ -77,8 +82,8 @@ async def resume_ingestion_jobs() -> None:
     async with get_async_db_session() as session:
         artifacts = list(
             await session.scalars(
-                select(FileExtractionModel).where(
-                    FileExtractionModel.status == FileKnowledgeArtifactStatus.PENDING,
+                select(FileKnowledgeArtifactModel).where(
+                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.PENDING,
                 ),
             ),
         )

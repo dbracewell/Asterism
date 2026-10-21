@@ -20,9 +20,9 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException, CodedException
 from asterism.domains.agent.context_provenance import ContextProvenance, describe_context
 from asterism.domains.agent.execution_scope import ExecutionScope, FileProvenance
-from asterism.domains.extraction.embedding import EmbeddingProvider
-from asterism.domains.extraction.models import FileKnowledgeArtifactStatus
-from asterism.domains.extraction.vector_store import VectorSearchResult, VectorStore
+from asterism.domains.knowledge.embedding import EmbeddingProvider
+from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.vector_store import VectorSearchResult, VectorStore
 
 logger = get_logger("RETRIEVAL")
 
@@ -33,10 +33,10 @@ class RetrievalArtifact:
 
     Attributes:
         file_id: The file this artifact belongs to.
-        generation: Artifact generation (increments on re-extraction); used to
+        generation: Artifact generation (increments on re-ingestion); used to
             discard vector matches produced by an older generation than the
             one currently authorized.
-        status: Lifecycle status of the extraction artifact (pending/ready/...).
+        status: Lifecycle status of the knowledge artifact (pending/ready/...).
         text_embeddings_ready: Whether the text chunks are embedded and
             searchable; a READY artifact can still lack text embeddings.
     """
@@ -397,7 +397,7 @@ class RetrievalService:
 
         A match is kept only if it survives every cross-check below; otherwise
         it is silently dropped (never an error), since stale matches are the
-        expected outcome of a concurrent revocation or re-extraction.
+        expected outcome of a concurrent revocation or re-ingestion.
 
         Args:
             scope: Execution scope; the match's owner must equal its user.
@@ -424,7 +424,7 @@ class RetrievalService:
             # Drop the match unless: it belongs to this user, the file is still
             # authorized and ready in the fresh snapshot, its generation matches
             # both the stored chunk and the pre-search read (catches a
-            # re-extraction between reads), and the byte budget/top_k remain.
+            # re-ingestion between reads), and the byte budget/top_k remain.
             if (
                 match.user_id != scope.user_id
                 or artifact is None

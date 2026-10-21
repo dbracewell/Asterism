@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from asterism.domains.extraction.embedding import embedding_model
-from asterism.domains.extraction.model_download import MANIFEST_FILENAME, ModelDownloadService
+from asterism.domains.knowledge.embedding import embedding_model
+from asterism.domains.knowledge.model_download import MANIFEST_FILENAME, ModelDownloadService
 
 PINNED_MODEL_ID = embedding_model.id
 PINNED_REVISION = embedding_model.revision
@@ -123,7 +123,7 @@ def test_missing_promoted_root_recovers_previous_verified_bundle(tmp_path: Path)
 
 
 def test_manifest_verification_is_cached(tmp_path: Path):
-    from asterism.domains.extraction import model_download
+    from asterism.domains.knowledge import model_download
 
     _write_verified_bundle(tmp_path)
     service = _service(tmp_path)
@@ -141,7 +141,7 @@ def test_manifest_verification_is_cached(tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_embedding_provider_concurrent_initialize_once(tmp_path: Path):
-    from asterism.domains.extraction.embedding import OnnxClipEmbeddingProvider
+    from asterism.domains.knowledge.embedding import OnnxClipEmbeddingProvider
 
     provider = OnnxClipEmbeddingProvider(tmp_path, pinned_model=embedding_model)
 

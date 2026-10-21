@@ -3,7 +3,7 @@
 Creates missing tables, installs the chat full-text search indexes, and seeds
 the ``active_tools`` application setting. With ``--reset`` it first deletes the
 local SQLite database (plus WAL/SHM/journal sidecar files) and the disposable
-source/extraction storage trees; model bundles are never touched.
+source/knowledge storage trees; model bundles are never touched.
 
 Per project policy the dev database is disposable: this tool deletes instead of
 migrating, and ``create_all`` re-initializes the schema from current models.
@@ -79,7 +79,7 @@ def confirmed_reset(path: Path, assume_yes: bool) -> bool:
         return False
     print(f"Backend database selected for deletion: {path}")
     print(f"Disposable source storage selected for deletion: {config.files_root}")
-    print(f"Disposable extraction storage selected for deletion: {config.knowledge_root}")
+    print(f"Disposable knowledge storage selected for deletion: {config.knowledge_root}")
     return input("Type RESET to continue: ") == "RESET"
 
 
@@ -92,7 +92,7 @@ async def initialize_database(*, reset: bool = False, assume_yes: bool = False) 
     session manager so callers (e.g. tests) start from a clean slate.
 
     Args:
-        reset: Delete the SQLite database and source/extraction storage first.
+        reset: Delete the SQLite database and source/knowledge storage first.
         assume_yes: Bypass the interactive RESET confirmation (use with care).
     """
     config.validate_runtime()
@@ -142,7 +142,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Delete the selected SQLite database, original files, and extraction storage; preserve model bundles.",
+        help="Delete the selected SQLite database, original files, and knowledge storage; preserve model bundles.",
     )
     parser.add_argument(
         "--yes",

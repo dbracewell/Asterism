@@ -121,7 +121,7 @@ class RuntimeFileReader:
             file = await self.process_file(file, db)
             kind, key, mime_type, size = file.kind, file.storage_key, file.mime_type, file.size
             text, error = file.content_cache, file.content_error
-        # Processing may await remote/local extraction; do not release a revoked cache.
+        # Processing may await remote/local knowledge derivation; do not release a revoked cache.
         await self.validate_files(scope, ids)
         if kind != FileKind.IMAGE:
             # An empty source is still an attached source: distinguish "no

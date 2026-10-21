@@ -8,6 +8,7 @@ from typing import Literal, Protocol
 
 import lancedb
 import pyarrow as pa
+
 from asterism.core import config
 
 
@@ -27,9 +28,9 @@ class VectorChunk:
     Attributes:
         id: Stable chunk identifier (content-addressed per generation).
         user_id: Owner of the chunk; every query is constrained by it.
-        file_id: File the chunk was extracted from.
-        artifact_generation: Extraction generation the chunk belongs to.
-        chunk_ordinal: Position of the chunk within its extraction run.
+        file_id: File the chunk was derived from.
+        artifact_generation: Artifact generation the chunk belongs to.
+        chunk_ordinal: Position of the chunk within its ingestion run.
         kind: Chunk provenance ("text" or "caption").
         content: Stored text used for excerpts and match enrichment.
         vector: L2-normalized embedding in the store's configured dimension.
@@ -53,8 +54,8 @@ class VectorSearchResult:
         id: Stable chunk identifier of the matching chunk.
         user_id: Owner of the matching chunk.
         file_id: File the matching chunk belongs to.
-        artifact_generation: Extraction generation the chunk was stored under.
-        chunk_ordinal: Position of the chunk within its extraction run.
+        artifact_generation: Artifact generation the chunk was stored under.
+        chunk_ordinal: Position of the chunk within its ingestion run.
         kind: Chunk provenance ("text" or "caption") stored with the chunk.
         content: Stored text of the matching chunk.
         score: Raw LanceDB squared-L2 distance; lower is closer (not a similarity).

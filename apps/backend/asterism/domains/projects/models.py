@@ -39,7 +39,7 @@ class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
 
 
 class ProjectFileModel(Base, TimestampMixin):
-    """Unordered membership; deleting it never deletes source or extraction data."""
+    """Unordered membership; deleting it never deletes source or knowledge data."""
 
     __tablename__ = "project_files"
 
@@ -47,7 +47,7 @@ class ProjectFileModel(Base, TimestampMixin):
     file_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     # Denormalized owner, not a standalone FK: it exists so both composite
     # foreign keys can pin the row to one user and cascade on project/file/
-    # user deletion without touching source files or extraction data.
+    # user deletion without touching source files or knowledge data.
     user_id: Mapped[str] = mapped_column(String, nullable=False)
 
     __table_args__ = (

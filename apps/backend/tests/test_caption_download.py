@@ -8,8 +8,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from asterism.domains.extraction.captioning import caption_model
-from asterism.domains.extraction.model_download import (
+from asterism.domains.knowledge.captioning import caption_model
+from asterism.domains.knowledge.model_download import (
     MANIFEST_FILENAME,
     DownloadProgress,
     ModelDownloadService,
@@ -170,7 +170,7 @@ class TestDownloadLifecycle:
         assert service.progress().status == "idle"
 
         with patch(
-            "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
+            "asterism.domains.knowledge.model_download.ModelDownloadService._download_sync",
         ) as mock:
             # Simulate the download writing files + manifest
             def do_download():
@@ -196,7 +196,7 @@ class TestDownloadLifecycle:
         service = caption_download_service(tmp_path)
 
         with patch(
-            "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
+            "asterism.domains.knowledge.model_download.ModelDownloadService._download_sync",
         ) as mock:
             mock.side_effect = RuntimeError("Network error")
 
@@ -217,7 +217,7 @@ class TestDownloadLifecycle:
 
         # First attempt fails
         with patch(
-            "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
+            "asterism.domains.knowledge.model_download.ModelDownloadService._download_sync",
         ) as mock:
             mock.side_effect = RuntimeError("First failure")
             await service.start_download()
@@ -229,7 +229,7 @@ class TestDownloadLifecycle:
 
         # Second attempt succeeds
         with patch(
-            "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
+            "asterism.domains.knowledge.model_download.ModelDownloadService._download_sync",
         ) as mock:
 
             def do_download():
@@ -252,7 +252,7 @@ class TestDownloadLifecycle:
         hold = asyncio.Event()
 
         with patch(
-            "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
+            "asterism.domains.knowledge.model_download.ModelDownloadService._download_sync",
         ) as mock:
 
             async def slow_download():
@@ -339,7 +339,7 @@ class TestBundleReadyCallback:
         service = caption_download_service(tmp_path, on_bundle_ready=callback)
 
         with patch(
-            "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
+            "asterism.domains.knowledge.model_download.ModelDownloadService._download_sync",
         ) as mock:
 
             def do_download():
@@ -362,7 +362,7 @@ class TestBundleReadyCallback:
         service = caption_download_service(tmp_path, on_bundle_ready=callback)
 
         with patch(
-            "asterism.domains.extraction.model_download.ModelDownloadService._download_sync",
+            "asterism.domains.knowledge.model_download.ModelDownloadService._download_sync",
         ) as mock:
             mock.side_effect = RuntimeError("fail")
             await service.start_download()
@@ -417,7 +417,7 @@ class TestCaptionModelEndpoints:
     async def test_get_status_endpoint(self, admin_user):
         from asterism.domains.settings.settings_router import get_caption_model_status
 
-        with patch("asterism.domains.extraction.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
             mock_service.progress.return_value = DownloadProgress(status="idle")
             result = await get_caption_model_status(user=admin_user)
             assert result.status == "idle"
@@ -426,7 +426,7 @@ class TestCaptionModelEndpoints:
     async def test_start_download_endpoint(self, admin_user):
         from asterism.domains.settings.settings_router import start_caption_model_download
 
-        with patch("asterism.domains.extraction.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
             mock_service.start_download = AsyncMock(return_value=DownloadProgress(status="downloading"))
             result = await start_caption_model_download(user=admin_user)
             assert result.status == "downloading"
@@ -436,7 +436,7 @@ class TestCaptionModelEndpoints:
         from asterism.domains.settings.settings_router import start_caption_model_download
         from fastapi import HTTPException
 
-        with patch("asterism.domains.extraction.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
             mock_service.start_download = AsyncMock(side_effect=RuntimeError("A download is already in progress"))
             with pytest.raises(HTTPException) as exc:
                 await start_caption_model_download(user=admin_user)
@@ -447,7 +447,7 @@ class TestCaptionModelEndpoints:
     async def test_cancel_download_endpoint(self, admin_user):
         from asterism.domains.settings.settings_router import cancel_caption_model_download
 
-        with patch("asterism.domains.extraction.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
             mock_service.cancel_download = AsyncMock(return_value=DownloadProgress(status="idle"))
             result = await cancel_caption_model_download(user=admin_user)
             assert result.status == "idle"

@@ -90,7 +90,7 @@ bytes and permissions. Restore it under the new deployment's `STORAGE_ROOT`, ens
 UID `10001` owns the directory/files, and then start the application. Keep the named
 volume attached when recreating a container. `docker compose down -v` deletes it.
 
-`pnpm reset:db` resets auth/backend databases and source/extraction storage but
+`pnpm reset:db` resets auth/backend databases and source/knowledge storage but
 **preserves custom themes**, just as it preserves model bundles. To deliberately
 reset theme customization, stop the app and separately remove only the reviewed
 `STORAGE_ROOT/themes` directory. This removes custom palettes and bundled overrides;

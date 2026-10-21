@@ -1,11 +1,11 @@
-"""Owner-scoped extraction selects; callers narrow file IDs before execution."""
+"""Owner-scoped knowledge artifact selects; callers narrow file IDs before execution."""
 
 import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import Select, select
 
-from .models import FileExtractionModel
+from .models import FileKnowledgeArtifactModel
 
 
 def select_current_owned_artifacts(user_id: str):
@@ -17,13 +17,13 @@ def select_current_owned_artifacts(user_id: str):
     Returns:
         A select over the owner's current artifact generations.
     """
-    return select(FileExtractionModel).where(
-        FileExtractionModel.user_id == user_id,
-        FileExtractionModel.is_current.is_(True),
+    return select(FileKnowledgeArtifactModel).where(
+        FileKnowledgeArtifactModel.user_id == user_id,
+        FileKnowledgeArtifactModel.is_current.is_(True),
     )
 
 
-def select_file_artifacts(file_ids: Sequence[uuid.UUID]) -> Select[tuple[FileExtractionModel]]:
+def select_file_artifacts(file_ids: Sequence[uuid.UUID]) -> Select[tuple[FileKnowledgeArtifactModel]]:
     """Select every artifact generation of the given files, newest first.
 
     Args:
@@ -34,13 +34,13 @@ def select_file_artifacts(file_ids: Sequence[uuid.UUID]) -> Select[tuple[FileExt
         generation number so the first row per file is its newest generation.
     """
     return (
-        select(FileExtractionModel)
-        .where(FileExtractionModel.file_id.in_(file_ids))
-        .order_by(FileExtractionModel.generation.desc())
+        select(FileKnowledgeArtifactModel)
+        .where(FileKnowledgeArtifactModel.file_id.in_(file_ids))
+        .order_by(FileKnowledgeArtifactModel.generation.desc())
     )
 
 
-def select_newest_file_artifact(file_id: uuid.UUID) -> Select[tuple[FileExtractionModel]]:
+def select_newest_file_artifact(file_id: uuid.UUID) -> Select[tuple[FileKnowledgeArtifactModel]]:
     """Select the newest artifact generation of one file.
 
     Args:
@@ -50,8 +50,8 @@ def select_newest_file_artifact(file_id: uuid.UUID) -> Select[tuple[FileExtracti
         A select limited to the highest generation number of that file.
     """
     return (
-        select(FileExtractionModel)
-        .where(FileExtractionModel.file_id == file_id)
-        .order_by(FileExtractionModel.generation.desc())
+        select(FileKnowledgeArtifactModel)
+        .where(FileKnowledgeArtifactModel.file_id == file_id)
+        .order_by(FileKnowledgeArtifactModel.generation.desc())
         .limit(1)
     )

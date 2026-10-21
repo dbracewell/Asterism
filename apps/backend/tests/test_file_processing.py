@@ -5,16 +5,16 @@ import pytest
 import pytest_asyncio
 from asterism.core import config
 from asterism.db.model_registry import Base
-from asterism.domains.extraction.ingestion import ingest_file
-from asterism.domains.extraction.model_download import DownloadNotReadyError
-from asterism.domains.extraction.models import FileKnowledgeArtifactStatus
-from asterism.domains.extraction.runtime import recover_interrupted
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.processing import update_captioning_configuration, update_processing_profile_and_reprocess
 from asterism.domains.files.processing_schemas import (
     KnowledgeCaptionConfigurationUpdate,
     KnowledgeProcessingProfileUpdate,
 )
+from asterism.domains.knowledge.ingestion import ingest_file
+from asterism.domains.knowledge.model_download import DownloadNotReadyError
+from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.runtime import recover_interrupted
 from asterism.domains.settings.knowledge import get_captioning_configuration
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.user.models import UserModel
@@ -35,7 +35,7 @@ async def processing_session(tmp_path, monkeypatch):
         async def delete_file_generation(self, **_):
             pass
 
-    monkeypatch.setattr("asterism.domains.extraction.runtime.vector_store", FakeVectorStore())
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.vector_store", FakeVectorStore())
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     async with sessions() as session:
         session.add_all([UserModel(id="user-a"), UserModel(id="user-b")])
@@ -116,9 +116,9 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
     )
     processing_session.add(file)
     await processing_session.flush()
-    from asterism.domains.extraction.models import FileExtractionModel
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 
-    ready = FileExtractionModel(
+    ready = FileKnowledgeArtifactModel(
         user_id="user-a",
         file_id=file.id,
         generation=1,
@@ -140,7 +140,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
     )
     artifacts = list(
         await processing_session.scalars(
-            select(FileExtractionModel).where(FileExtractionModel.file_id == file.id),
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id),
         ),
     )
     assert result.queued_file_count == 1
@@ -166,7 +166,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
 
     replacement = next(item for item in artifacts if item.generation == 2)
     failed = await ingest_file(
-        extraction=replacement,
+        artifact=replacement,
         file=file,
         session=processing_session,
         provider=FailingEmbeddings(),
@@ -204,9 +204,9 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(proc
     )
     processing_session.add(file)
     await processing_session.flush()
-    from asterism.domains.extraction.models import FileExtractionModel
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 
-    ready = FileExtractionModel(
+    ready = FileKnowledgeArtifactModel(
         user_id=file.user_id,
         file_id=file.id,
         generation=1,
@@ -224,7 +224,7 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(proc
     )
     artifacts = list(
         await processing_session.scalars(
-            select(FileExtractionModel).where(FileExtractionModel.file_id == file.id),
+            select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file.id),
         ),
     )
     replacement = next(item for item in artifacts if item.generation == 2)
@@ -239,7 +239,7 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(proc
         session=processing_session,
     )
     assert no_op.updated_at == updated.updated_at
-    assert len(list(await processing_session.scalars(select(FileExtractionModel)))) == 2
+    assert len(list(await processing_session.scalars(select(FileKnowledgeArtifactModel)))) == 2
 
 
 @pytest.mark.asyncio
@@ -307,7 +307,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
 
     vectors = FakeVectors()
     indexed = await ingest_file(
-        extraction=artifact,
+        artifact=artifact,
         file=file,
         session=processing_session,
         provider=FakeEmbeddings(),
@@ -317,7 +317,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     assert len(vectors.chunks) == 1
     # A ready immutable revision is a no-op rather than generating duplicate chunks.
     await ingest_file(
-        extraction=indexed,
+        artifact=indexed,
         file=file,
         session=processing_session,
         provider=FakeEmbeddings(),
@@ -341,9 +341,9 @@ async def test_restart_recovery_makes_processing_artifact_retryable(processing_s
     )
     processing_session.add(file)
     await processing_session.flush()
-    from asterism.domains.extraction.models import FileExtractionModel
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 
-    artifact = FileExtractionModel(
+    artifact = FileKnowledgeArtifactModel(
         user_id="user-a",
         file_id=file.id,
         generation=1,
@@ -358,7 +358,7 @@ async def test_restart_recovery_makes_processing_artifact_retryable(processing_s
     async def session_factory():
         yield processing_session
 
-    monkeypatch.setattr("asterism.domains.extraction.runtime.get_async_db_session", session_factory)
+    monkeypatch.setattr("asterism.domains.knowledge.runtime.get_async_db_session", session_factory)
     await recover_interrupted()
     await processing_session.refresh(artifact)
     assert artifact.status is FileKnowledgeArtifactStatus.PENDING
@@ -381,9 +381,9 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
     )
     processing_session.add(file)
     await processing_session.flush()
-    from asterism.domains.extraction.models import FileExtractionModel
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 
-    artifact = FileExtractionModel(
+    artifact = FileKnowledgeArtifactModel(
         user_id="user-a",
         file_id=file.id,
         generation=1,
@@ -397,7 +397,7 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
     async def already_processed(*, file, session):
         return file
 
-    monkeypatch.setattr("asterism.domains.extraction.ingestion.ensure_file_processed", already_processed)
+    monkeypatch.setattr("asterism.domains.knowledge.ingestion.ensure_file_processed", already_processed)
 
     class WaitingEmbeddings:
         async def embed_text(self, _):
@@ -414,7 +414,7 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
             raise AssertionError("no vectors are added while provisioning")
 
     result = await ingest_file(
-        extraction=artifact,
+        artifact=artifact,
         file=file,
         session=processing_session,
         provider=WaitingEmbeddings(),
