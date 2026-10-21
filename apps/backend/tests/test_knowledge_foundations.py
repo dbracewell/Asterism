@@ -19,9 +19,9 @@ async def test_lancedb_filters_by_owner_and_allowed_file_and_deletes(tmp_path: P
     store = LanceDbVectorStore(tmp_path / "vectors", dimension=2, max_concurrency=1)
     await store.add(
         [
-            VectorChunk("one", "user-a", "file-a", 1, 0, "private", [1.0, 0.0]),
-            VectorChunk("two", "user-a", "file-b", 1, 0, "other file", [0.9, 0.1]),
-            VectorChunk("three", "user-b", "file-a", 1, 0, "other user", [1.0, 0.0]),
+            VectorChunk("one", "user-a", "file-a", 1, 0, "text", "private", [1.0, 0.0]),
+            VectorChunk("two", "user-a", "file-b", 1, 0, "caption", "other file", [0.9, 0.1]),
+            VectorChunk("three", "user-b", "file-a", 1, 0, "text", "other user", [1.0, 0.0]),
         ],
     )
 
@@ -49,7 +49,7 @@ async def test_lancedb_filters_by_owner_and_allowed_file_and_deletes(tmp_path: P
 async def test_lancedb_rejects_wrong_dimension(tmp_path: Path):
     store = LanceDbVectorStore(tmp_path / "vectors", dimension=2)
     with pytest.raises(ValueError, match="dimension"):
-        await store.add([VectorChunk("one", "user", "file", 1, 0, "text", [1.0])])
+        await store.add([VectorChunk("one", "user", "file", 1, 0, "text", "body", [1.0])])
     with pytest.raises(ValueError, match="dimension"):
         await store.search([1.0], user_id="user", allowed_file_ids=["file"], limit=1)
 

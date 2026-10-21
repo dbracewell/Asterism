@@ -1,4 +1,5 @@
 import uuid
+from types import SimpleNamespace
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -149,6 +150,10 @@ class TestSubAgentProfileAuthorization:
             patch(
                 "asterism.domains.agent.agent.Agent._get_client",
                 new=AsyncMock(return_value=mock_llm),
+            ),
+            patch(
+                "asterism.domains.settings.service.get_app_settings",
+                new=AsyncMock(return_value=SimpleNamespace(active_tools=["search"])),
             ),
         ):
             result = await sub_agent(ctx)

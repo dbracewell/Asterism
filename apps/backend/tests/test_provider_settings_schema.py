@@ -36,6 +36,7 @@ from asterism.domains.settings.service import (
     upsert_app_setting,
 )
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
@@ -201,9 +202,13 @@ async def test_empty_draft_model_form_value_is_normalized_and_recovered(tmp_path
             session,
         )
         assert updated.draft_model_id is None
-        stored = await session.get(ApplicationSettingsModel, "draft_model_id")
-        assert stored is not None
-        assert stored.value is None
+        # Clearing the draft deletes its row: the value column is NOT NULL and
+        # an absent row means "no draft selected". (A SELECT, not session.get,
+        # so the identity map cannot return the pre-delete instance.)
+        stored = await session.scalar(
+            select(ApplicationSettingsModel).where(ApplicationSettingsModel.key == "draft_model_id")
+        )
+        assert stored is None
 
     await engine.dispose()
 

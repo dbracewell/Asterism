@@ -144,7 +144,7 @@ async def test_internal_tools_hidden_from_users_admin_metadata_and_forged_settin
     r = context_runtime
     assert r.profile.tools == []
     monkeypatch.setattr(
-        "asterism.domains.tools.registry.settings_service.get_app_settings",
+        "asterism.domains.tools.router.get_app_settings",
         AsyncMock(return_value=SimpleNamespace(active_tools=["sub_agent", "search_knowledge", "web_search"])),
     )
     active = (await r.client.get("/tools/active", headers=auth())).json()
@@ -237,7 +237,13 @@ async def test_retrieval_ready_pending_failed_unavailable_and_ceiling(context_ru
     embed = AsyncMock(return_value=[[0.1]])
     matches = [
         SimpleNamespace(
-            user_id="a", file_id=str(fid), artifact_generation=gen, id="chunk", score=1.0, content="évidence"
+            user_id="a",
+            file_id=str(fid),
+            artifact_generation=gen,
+            id="chunk",
+            kind="text",
+            score=1.0,
+            content="évidence",
         )
         for fid, gen in [(ids[0], 1), (ids[0], 0), (ids[1], 1), (unrelated, 1), (foreign, 1)]
     ]
@@ -295,7 +301,13 @@ async def test_file_revocation_during_retrieval_never_queries_or_returns_revoked
         await revoke()
         return [
             SimpleNamespace(
-                user_id="a", file_id=str(fid), artifact_generation=1, id="chunk", score=1.0, content="PRIVATE"
+                user_id="a",
+                file_id=str(fid),
+                artifact_generation=1,
+                id="chunk",
+                kind="text",
+                score=1.0,
+                content="PRIVATE",
             )
         ]
 
@@ -357,6 +369,7 @@ async def test_general_attachment_retrieval_no_delegation_and_unavailable_servic
         user=r.user,
         client=MagicMock(),
         session=r.chat,
+        app_settings=SimpleNamespace(active_tools=["sub_agent", "search_knowledge"]),
         max_retries=0,
     )
     assert "unavailable" in direct.content

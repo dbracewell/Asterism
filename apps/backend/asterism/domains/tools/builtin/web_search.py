@@ -1,4 +1,7 @@
+"""web_search tool: search the web and return fetched result pages as Markdown."""
+
 import asyncio
+from typing import Any
 
 from asterism.common.concurrency import safe_async_call
 from asterism.common.log import get_logger
@@ -12,6 +15,11 @@ from .fetch import fetch_markdown
 
 logger = get_logger("WEB_SEARCH")
 _RESEARCH_FETCH_SEMAPHORE = asyncio.Semaphore(5)
+# Output bounds so one tool call cannot flood the model context: at most this
+# many pages, each capped per page, with a cap on the joined result.
+_MAX_RESULTS_PER_SEARCH = 10
+_MAX_CHARS_PER_RESULT = 8_000
+_MAX_TOTAL_CHARS = 40_000
 
 
 @tool_registry.tool(
@@ -22,10 +30,16 @@ _RESEARCH_FETCH_SEMAPHORE = asyncio.Semaphore(5)
 )
 async def web_search(
     ctx: ToolContext[SearchArgs],
-) -> str:
+) -> str | dict[str, Any]:
+    """Run a provider web search, then fetch each result page for context.
+
+    Returns concatenated Markdown of the top results; missing-provider and
+    search failures are returned as ``{"error": ...}`` dicts so the model can
+    react to them instead of the call raising.
+    """
     provider = ctx.app_settings.web_search_provider
     if not provider:
-        return "No web search provider configured."
+        return {"error": "No web search provider configured."}
 
     try:
         web_search_component = await component_registry.get_component(
@@ -34,7 +48,7 @@ async def web_search(
             provider.parameters,
         )
     except Exception as e:
-        return f"Failed to initialize web search provider: {str(e)}"
+        return {"error": f"Failed to initialize web search provider: {str(e)}"}
 
     try:
         search_results = await web_search_component(ctx.args)
@@ -43,7 +57,7 @@ async def web_search(
         )
         return await _research(search_results)
     except Exception as e:
-        return f"Web search failed: {str(e)}"
+        return {"error": f"Web search failed: {str(e)}"}
 
 
 async def _fetch_search_result(url: str):
@@ -52,12 +66,37 @@ async def _fetch_search_result(url: str):
 
 
 async def _research(search_results: list[SearchResult]) -> str:
-    # We capture exceptions instead of rethrowing them, because fetching
-    # is messy and may be legit problems that are not fixable with another
-    # call. Instead swallow them, ignore them, and move on
-    tasks = [safe_async_call(_fetch_search_result(sr.url)) for sr in search_results]
+    """Fetch result pages (bounded by semaphore) and join their Markdown.
+
+    Result URLs are de-duplicated, each page is capped at
+    ``_MAX_CHARS_PER_RESULT`` characters, and the joined output is capped at
+    ``_MAX_TOTAL_CHARS`` so a single tool call cannot flood the context.
+    Per-URL fetch failures are swallowed (safe_async_call returns the
+    exception instance, which is filtered out here) because fetching is messy
+    and one bad page should not kill the whole batch.
+    """
+    unique_results: list[SearchResult] = []
+    seen_urls: set[str] = set()
+    for result in search_results[:_MAX_RESULTS_PER_SEARCH]:
+        if result.url not in seen_urls:
+            seen_urls.add(result.url)
+            unique_results.append(result)
+
+    tasks = [safe_async_call(_fetch_search_result(sr.url)) for sr in unique_results]
     documents = await asyncio.gather(*tasks)
 
-    content = "\n\n".join(doc.to_llm_context() for doc in documents if not isinstance(doc, Exception))
+    sections: list[str] = []
+    total_chars = 0
+    for doc in documents:
+        if isinstance(doc, Exception):
+            continue
+        budget = min(_MAX_CHARS_PER_RESULT, _MAX_TOTAL_CHARS - total_chars)
+        if budget <= 0:
+            break
+        text = doc.to_llm_context()
+        if len(text) > budget:
+            text = f"{text[:budget]}\n[Content truncated.]"
+        sections.append(text)
+        total_chars += len(text)
 
-    return content.strip()
+    return "\n\n".join(sections).strip()

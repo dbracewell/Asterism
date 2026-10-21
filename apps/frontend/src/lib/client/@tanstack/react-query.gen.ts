@@ -240,6 +240,9 @@ import type {
   UserDeleteData,
   UserDeleteError,
   UserDeleteResponse,
+  UserListUsersData,
+  UserListUsersError,
+  UserListUsersResponse,
   UserSettingDeleteData,
   UserSettingDeleteError,
   UserSettingsBulkUpdateData,
@@ -1901,6 +1904,8 @@ export const mainAgentGetQueryKey = (options?: Options<MainAgentGetData>) =>
 
 /**
  * Read Main Agent
+ *
+ * Return the caller's main-agent configuration.
  */
 export const mainAgentGetOptions = (options?: Options<MainAgentGetData>) =>
   queryOptions<
@@ -1923,6 +1928,8 @@ export const mainAgentGetOptions = (options?: Options<MainAgentGetData>) =>
 
 /**
  * Write Main Agent
+ *
+ * Replace the caller's main-agent configuration and return the stored result.
  */
 export const mainAgentUpdateMutation = (
   options?: Partial<Options<MainAgentUpdateData>>,
@@ -1954,6 +1961,8 @@ export const userSettingsGetQueryKey = (
 
 /**
  * Get all user settings
+ *
+ * Return the caller's full settings aggregate.
  */
 export const userSettingsGetOptions = (
   options?: Options<UserSettingsGetData>,
@@ -1978,6 +1987,8 @@ export const userSettingsGetOptions = (
 
 /**
  * Bulk update multiple user settings
+ *
+ * Apply several user setting updates atomically.
  */
 export const userSettingsBulkUpdateMutation = (
   options?: Partial<Options<UserSettingsBulkUpdateData>>,
@@ -2005,6 +2016,8 @@ export const userSettingsBulkUpdateMutation = (
 
 /**
  * Delete a single user setting by key
+ *
+ * Delete one user setting.
  */
 export const userSettingDeleteMutation = (
   options?: Partial<Options<UserSettingDeleteData>>,
@@ -2032,6 +2045,8 @@ export const userSettingDeleteMutation = (
 
 /**
  * Update a single user setting by key
+ *
+ * Set one user setting (a ``null`` value deletes it).
  */
 export const userSettingUpdateMutation = (
   options?: Partial<Options<UserSettingUpdateData>>,
@@ -2059,6 +2074,8 @@ export const userSettingUpdateMutation = (
 
 /**
  * Discover provider models and capabilities
+ *
+ * Run model discovery against a candidate endpoint without persisting anything.
  */
 export const appProviderModelsDiscoverMutation = (
   options?: Partial<Options<AppProviderModelsDiscoverData>>,
@@ -2092,6 +2109,8 @@ export const appProviderSettingsGetQueryKey = (
 
 /**
  * Get provider settings
+ *
+ * Return provider summaries plus the selected draft model.
  */
 export const appProviderSettingsGetOptions = (
   options?: Options<AppProviderSettingsGetData>,
@@ -2116,6 +2135,8 @@ export const appProviderSettingsGetOptions = (
 
 /**
  * Replace provider settings
+ *
+ * Replace the full provider list (missing providers are deleted).
  */
 export const appProviderSettingsUpdateMutation = (
   options?: Partial<Options<AppProviderSettingsUpdateData>>,
@@ -2149,6 +2170,8 @@ export const appProviderModelsListQueryKey = (
 
 /**
  * Search a provider's models
+ *
+ * Return one page of the provider's models, optionally filtered by name substring.
  */
 export const appProviderModelsListOptions = (
   options: Options<AppProviderModelsListData>,
@@ -2178,6 +2201,8 @@ export const appProviderModelsListInfiniteQueryKey = (
 
 /**
  * Search a provider's models
+ *
+ * Return one page of the provider's models, optionally filtered by name substring.
  */
 export const appProviderModelsListInfiniteOptions = (
   options: Options<AppProviderModelsListData>,
@@ -2226,6 +2251,8 @@ export const appProviderModelsListInfiniteOptions = (
 
 /**
  * Update one provider model
+ *
+ * Replace one model's flags and capabilities.
  */
 export const appProviderModelUpdateMutation = (
   options?: Partial<Options<AppProviderModelUpdateData>>,
@@ -2253,6 +2280,8 @@ export const appProviderModelUpdateMutation = (
 
 /**
  * Discover and synchronize a provider's model catalog
+ *
+ * Discover the provider's models and persist the merged catalog.
  */
 export const appProviderModelsDiscoverAndSyncMutation = (
   options?: Partial<Options<AppProviderModelsDiscoverAndSyncData>>,
@@ -2286,6 +2315,8 @@ export const appCaptioningProviderModelsGetQueryKey = (
 
 /**
  * Get active discovered vision models for captioning
+ *
+ * List active vision-capable models eligible for image captioning.
  */
 export const appCaptioningProviderModelsGetOptions = (
   options?: Options<AppCaptioningProviderModelsGetData>,
@@ -2316,6 +2347,8 @@ export const appToolSettingsGetQueryKey = (
 
 /**
  * Get tool settings
+ *
+ * Return enabled tools and component provider selections.
  */
 export const appToolSettingsGetOptions = (
   options?: Options<AppToolSettingsGetData>,
@@ -2340,6 +2373,8 @@ export const appToolSettingsGetOptions = (
 
 /**
  * Replace tool settings
+ *
+ * Replace tool settings (component provider parameters are encrypted at rest).
  */
 export const appToolSettingsUpdateMutation = (
   options?: Partial<Options<AppToolSettingsUpdateData>>,
@@ -2371,7 +2406,7 @@ export const appSettingsGetQueryKey = (options?: Options<AppSettingsGetData>) =>
 /**
  * Get all application settings
  *
- * @deprecated
+ * Return the full application settings aggregate.
  */
 export const appSettingsGetOptions = (options?: Options<AppSettingsGetData>) =>
   queryOptions<
@@ -2394,6 +2429,8 @@ export const appSettingsGetOptions = (options?: Options<AppSettingsGetData>) =>
 
 /**
  * Bulk update multiple application settings
+ *
+ * Apply several application setting updates in one transaction.
  */
 export const appSettingsBulkUpdateMutation = (
   options?: Partial<Options<AppSettingsBulkUpdateData>>,
@@ -2425,6 +2462,8 @@ export const appCaptioningGetQueryKey = (
 
 /**
  * Get image captioning configuration
+ *
+ * Return the image captioning mode and selected provider model.
  */
 export const appCaptioningGetOptions = (
   options?: Options<AppCaptioningGetData>,
@@ -2449,6 +2488,8 @@ export const appCaptioningGetOptions = (
 
 /**
  * Set image captioning mode and selected provider model
+ *
+ * Set the image captioning mode and selected provider model.
  */
 export const appCaptioningUpdateMutation = (
   options?: Partial<Options<AppCaptioningUpdateData>>,
@@ -2476,6 +2517,8 @@ export const appCaptioningUpdateMutation = (
 
 /**
  * Update Knowledge Processing Profile
+ *
+ * Update the knowledge processing profile and reprocess affected files.
  */
 export const appKnowledgeProcessingProfileUpdateMutation = (
   options?: Partial<Options<AppKnowledgeProcessingProfileUpdateData>>,
@@ -2505,6 +2548,8 @@ export const appKnowledgeProcessingProfileUpdateMutation = (
 
 /**
  * Delete a single application setting by key
+ *
+ * Delete one application setting (required keys cannot be deleted).
  */
 export const appSettingDeleteMutation = (
   options?: Partial<Options<AppSettingDeleteData>>,
@@ -2532,6 +2577,8 @@ export const appSettingDeleteMutation = (
 
 /**
  * Update a single application setting by key
+ *
+ * Set one application setting by key (a ``null`` value deletes it).
  */
 export const appSettingUpdateMutation = (
   options?: Partial<Options<AppSettingUpdateData>>,
@@ -2563,6 +2610,8 @@ export const appKnowledgeEmbeddingStatusQueryKey = (
 
 /**
  * Get automatic knowledge embedding bundle readiness
+ *
+ * Return the readiness/download progress of the knowledge embedding bundle.
  */
 export const appKnowledgeEmbeddingStatusOptions = (
   options?: Options<AppKnowledgeEmbeddingStatusData>,
@@ -2593,6 +2642,8 @@ export const appCaptionModelStatusQueryKey = (
 
 /**
  * Get local caption model download/readiness status
+ *
+ * Return the download/readiness progress of the local caption model.
  */
 export const appCaptionModelStatusOptions = (
   options?: Options<AppCaptionModelStatusData>,
@@ -2617,6 +2668,8 @@ export const appCaptionModelStatusOptions = (
 
 /**
  * Start downloading the local caption model
+ *
+ * Start the local caption model download (409 if one is already running).
  */
 export const appCaptionModelDownloadMutation = (
   options?: Partial<Options<AppCaptionModelDownloadData>>,
@@ -2646,6 +2699,8 @@ export const appCaptionModelDownloadMutation = (
 
 /**
  * Cancel an active local caption model download
+ *
+ * Cancel an in-progress local caption model download.
  */
 export const appCaptionModelCancelMutation = (
   options?: Partial<Options<AppCaptionModelCancelData>>,
@@ -2671,8 +2726,66 @@ export const appCaptionModelCancelMutation = (
   return mutationOptions;
 };
 
+export const userListUsersQueryKey = (options?: Options<UserListUsersData>) =>
+  createQueryKey("userListUsers", options);
+
+/**
+ * List all user ids (admin only)
+ *
+ * Return the sorted ids of all existing users.
+ *
+ * The users table stores ids only (identity details live in BetterAuth), so
+ * this is the full extent of what an admin can enumerate.
+ *
+ * Args:
+ * user: The authenticated admin caller.
+ * session: The database session for performing database operations.
+ *
+ * Returns:
+ * The sorted list of user ids.
+ */
+export const userListUsersOptions = (options?: Options<UserListUsersData>) =>
+  queryOptions<
+    UserListUsersResponse,
+    UserListUsersError,
+    UserListUsersResponse,
+    ReturnType<typeof userListUsersQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().userListUsers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: userListUsersQueryKey(options),
+  });
+
 /**
  * Create a new user with a given user ID
+ *
+ * Provision a user row plus its main-agent configuration.
+ *
+ * Authorization is satisfied by either of two independent credentials:
+ * an authenticated admin JWT, or a valid ``system_key`` matching the
+ * server's configured secret. A request may present both; only one is
+ * required. The body returns ``true`` when the row was newly created and
+ * ``false`` when the user already existed (their settings are still
+ * re-provisioned idempotently).
+ *
+ * Args:
+ * payload: The requested user id and optional system key.
+ * user: The authenticated caller, or None for unauthenticated/system-key calls.
+ * session: The database session for performing database operations.
+ *
+ * Returns:
+ * True if the user was created, False if they already existed.
+ *
+ * Raises:
+ * UnauthorizedException: If neither credential is valid.
+ * ConflictException: If the id belongs to a deleted (tombstoned) user.
  */
 export const userCreateUserMutation = (
   options?: Partial<Options<UserCreateUserData>>,
@@ -2700,6 +2813,24 @@ export const userCreateUserMutation = (
 
 /**
  * Delete a user
+ *
+ * Permanently delete a user (row, tombstone, files, and vectors).
+ *
+ * Admin-only via :data:`AdminUserDep`, and an admin may not delete their
+ * own account — doing so would cascade-delete their data while their live
+ * JWT keeps them able to re-enter the system.
+ *
+ * Args:
+ * user_id: The id of the user to delete (may differ from the caller).
+ * user: The authenticated admin caller, guaranteed to have a DB row.
+ * session: The database session for performing database operations.
+ *
+ * Returns:
+ * True when the user was deleted.
+ *
+ * Raises:
+ * ForbiddenException: If the caller tries to delete their own account.
+ * NotFoundException: If no such user exists.
  */
 export const userDeleteMutation = (
   options?: Partial<Options<UserDeleteData>>,
@@ -2730,6 +2861,8 @@ export const toolsGetActiveQueryKey = (options?: Options<ToolsGetActiveData>) =>
 
 /**
  * Get all active tools
+ *
+ * Return the user-configurable tools currently enabled by admin policy.
  */
 export const toolsGetActiveOptions = (options?: Options<ToolsGetActiveData>) =>
   queryOptions<
@@ -2754,7 +2887,9 @@ export const toolsGetAllQueryKey = (options?: Options<ToolsGetAllData>) =>
   createQueryKey("toolsGetAll", options);
 
 /**
- * Get all  tools
+ * Get all tools
+ *
+ * Return every registered tool (admin-only), including internal ones.
  */
 export const toolsGetAllOptions = (options?: Options<ToolsGetAllData>) =>
   queryOptions<

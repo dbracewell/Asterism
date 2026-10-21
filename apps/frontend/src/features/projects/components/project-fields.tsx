@@ -26,6 +26,7 @@ export function ProjectFields({
         <Input
           id="project-name"
           required
+          data-1p-ignore
           maxLength={255}
           value={value.name}
           disabled={disabled}

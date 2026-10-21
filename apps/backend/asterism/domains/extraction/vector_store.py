@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol
 
 import lancedb
 import pyarrow as pa
@@ -15,24 +15,57 @@ class VectorStoreError(RuntimeError):
     """A vector-store operation could not be completed safely."""
 
 
+# Chunk provenance: extracted body text or an image caption. Stored explicitly
+# so consumers never have to guess a chunk's kind from its content.
+ChunkKind = Literal["text", "caption"]
+
+
 @dataclass(frozen=True)
 class VectorChunk:
+    """One knowledge chunk and its embedding, ready to be stored.
+
+    Attributes:
+        id: Stable chunk identifier (content-addressed per generation).
+        user_id: Owner of the chunk; every query is constrained by it.
+        file_id: File the chunk was extracted from.
+        artifact_generation: Extraction generation the chunk belongs to.
+        chunk_ordinal: Position of the chunk within its extraction run.
+        kind: Chunk provenance ("text" or "caption").
+        content: Stored text used for excerpts and match enrichment.
+        vector: L2-normalized embedding in the store's configured dimension.
+    """
+
     id: str
     user_id: str
     file_id: str
     artifact_generation: int
     chunk_ordinal: int
+    kind: ChunkKind
     content: str
     vector: list[float]
 
 
 @dataclass(frozen=True)
 class VectorSearchResult:
+    """One vector-search match with its raw store score.
+
+    Attributes:
+        id: Stable chunk identifier of the matching chunk.
+        user_id: Owner of the matching chunk.
+        file_id: File the matching chunk belongs to.
+        artifact_generation: Extraction generation the chunk was stored under.
+        chunk_ordinal: Position of the chunk within its extraction run.
+        kind: Chunk provenance ("text" or "caption") stored with the chunk.
+        content: Stored text of the matching chunk.
+        score: Raw LanceDB squared-L2 distance; lower is closer (not a similarity).
+    """
+
     id: str
     user_id: str
     file_id: str
     artifact_generation: int
     chunk_ordinal: int
+    kind: ChunkKind
     content: str
     score: float
 
@@ -64,6 +97,8 @@ class VectorStore(Protocol):
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None: ...
 
+    async def delete_user(self, *, user_id: str) -> None: ...
+
     async def delete_chunk(self, *, user_id: str, chunk_id: str) -> None: ...
 
     async def close(self) -> None: ...
@@ -94,6 +129,7 @@ class LanceDbVectorStore:
                 pa.field("file_id", pa.string(), nullable=False),
                 pa.field("artifact_generation", pa.int32(), nullable=False),
                 pa.field("chunk_ordinal", pa.int32(), nullable=False),
+                pa.field("kind", pa.string(), nullable=False),
                 pa.field("content", pa.string(), nullable=False),
                 pa.field("vector", pa.list_(pa.float32(), self._dimension), nullable=False),
             ],
@@ -130,6 +166,8 @@ class LanceDbVectorStore:
                 raise ValueError("Knowledge vector chunk identifiers must be non-empty")
             if chunk.artifact_generation < 1 or chunk.chunk_ordinal < 0:
                 raise ValueError("Knowledge vector chunk provenance is invalid")
+            if chunk.kind not in ("text", "caption"):
+                raise ValueError("Knowledge vector chunk kind must be 'text' or 'caption'")
 
     async def add(self, chunks: Sequence[VectorChunk]) -> None:
         if not chunks:
@@ -183,6 +221,7 @@ class LanceDbVectorStore:
                 file_id=str(row["file_id"]),
                 artifact_generation=int(row["artifact_generation"]),
                 chunk_ordinal=int(row["chunk_ordinal"]),
+                kind=str(row["kind"]),
                 content=str(row["content"]),
                 score=float(row["_distance"]),
             )
@@ -227,6 +266,10 @@ class LanceDbVectorStore:
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None:
         await self._delete(f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)}")
+
+    async def delete_user(self, *, user_id: str) -> None:
+        """Remove every knowledge chunk owned by a user (user deletion path)."""
+        await self._delete(f"user_id = {self._quote(user_id)}")
 
     async def delete_chunk(self, *, user_id: str, chunk_id: str) -> None:
         await self._delete(f"user_id = {self._quote(user_id)} AND id = {self._quote(chunk_id)}")

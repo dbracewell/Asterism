@@ -1,3 +1,11 @@
+"""sub_agent tool: delegate a task to one of the chat's selected sub-agents.
+
+Enforces cycle and depth limits from the agent call stack, reauthorizes the
+live delegation before starting and while the child runs, forwards a bounded
+slice of parent context, streams child events through the caller's event sink,
+and persists an audit trace for every delegation.
+"""
+
 import asyncio
 import hashlib
 import inspect
@@ -15,10 +23,21 @@ from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.token_counting import estimate_text_tokens
+from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
 from asterism.domains.tools.registry import ToolContext, tool_registry
 
 
 class SubAgentArgs(BaseModel):
+    """Model arguments for a delegation request.
+
+    Attributes:
+        agent_id: Id of the sub-agent definition to delegate to; must be one
+            of the chat's live selected delegation targets.
+        prompt: The task statement handed to the sub-agent.
+        parent_context: Optional additional context or instructions from the
+            caller, forwarded inside an untrusted-data block.
+    """
+
     agent_id: uuid.UUID
     prompt: str
     parent_context: str | None = Field(
@@ -28,6 +47,16 @@ class SubAgentArgs(BaseModel):
 
 
 def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
+    """Assemble the bounded "forwarded parent context" block for a child agent.
+
+    Combines caller notes, uploaded file names, and a recent conversation
+    window (each capped by config), then shrinks the body until the whole block
+    fits the configured token budget. The block is wrapped in untrusted-data
+    delimiters so the child treats it as data, not instructions.
+
+    Returns:
+        The delimited context block, or None when nothing is worth forwarding.
+    """
     from asterism.core.config import config
 
     sections: list[str] = []
@@ -42,9 +71,9 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
         sections.append(f"### Available User Files\n{files_str}")
 
     # 3. Recent conversation window
-    if ctx.session and getattr(ctx.session, "messages", None):
-        max_messages = getattr(config, "sub_agent_context_window_messages", 10)
-        max_tokens = getattr(config, "sub_agent_context_window_tokens", 4000)
+    if ctx.session and ctx.session.messages:
+        max_messages = config.sub_agent_context_window_messages
+        max_tokens = config.sub_agent_context_window_tokens
 
         selected_messages = []
         accumulated_tokens = 0
@@ -58,7 +87,7 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
             if accumulated_tokens + msg_tokens > max_tokens:
                 break
 
-            role = getattr(msg, "role", "user").capitalize()
+            role = msg.role.capitalize()
             selected_messages.append(f"[{role}]: {msg_content}")
             accumulated_tokens += msg_tokens
 
@@ -84,18 +113,32 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
     return prefix + body + suffix
 
 
+# How often to re-check live authorization while the child produces no events
+# (e.g. during a long LLM call). Authorization state lives in the database and
+# there is no push signal for revocation, so some polling is unavoidable; this
+# interval bounds both revocation latency and the DB round-trip rate.
+_AUTH_POLL_INTERVAL = 0.5
+
+
 async def _authorized_events(
     events: AsyncGenerator[AgentEvent, None],
     check: Callable[[], Awaitable[None]],
 ) -> AsyncGenerator[AgentEvent, None]:
-    """Cancel even a silent/in-flight child when its live authorization is revoked."""
+    """Yield child events, re-checking live authorization while the child is silent.
+
+    While the pending event read is in flight, ``check`` is re-run every
+    ``_AUTH_POLL_INTERVAL`` seconds so a revoked delegation cancels even a
+    silent/in-flight child; a failing check propagates out of this generator.
+    """
     pending = None
     try:
         while True:
             await check()
             pending = asyncio.create_task(anext(events))
             while not pending.done():
-                await asyncio.wait({pending}, timeout=0.1)
+                await asyncio.wait({pending}, timeout=_AUTH_POLL_INTERVAL)
+                if pending.done():
+                    break
                 await check()
             try:
                 event = pending.result()
@@ -110,12 +153,33 @@ async def _authorized_events(
         await events.aclose()
 
 
+async def _emit(
+    event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None,
+    envelope: SubAgentEventEnvelope,
+) -> None:
+    """Forward ``envelope`` to the caller's sink, if one was provided.
+
+    Sinks may be sync or async; an awaitable return is awaited so event
+    ordering into the caller's stream is preserved.
+    """
+    if event_sink is None:
+        return
+    result = event_sink(envelope)
+    if inspect.isawaitable(result):
+        await result
+
+
 @tool_registry.tool(
     description="Hands of work to a sub agent to perform.",
 )
 async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
-    """
-    Hands of work to a sub agent to perform.
+    """Delegate ``args.prompt`` to a selected sub-agent and return its final answer.
+
+    Steps: reject recursion cycles and depth overruns, reauthorize the live
+    delegation, narrow the execution scope for the child, run the child agent
+    while polling authorization between events, forward selected events to the
+    caller's sink, persist an audit trace, and return the child's completion or
+    error text.
     """
     from asterism.core.config import config
     from asterism.domains.agent.approval import AllowlistApprovalPolicy
@@ -166,8 +230,13 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         )
 
     try:
+        # invoke_tool already authorized "sub_agent" via its generic
+        # context-managed gate; we call require_internal_tool again because the
+        # returned parent scope is needed below (scope narrowing, tool_scope
+        # replacement) and must reflect live state. The duplicated DB
+        # round-trips are deliberate defense in depth.
         parent_scope = await require_internal_tool(
-            name="sub_agent", user_id=ctx.user.id, chat_id=ctx.session.info.id, scope=ctx.tool_scope
+                name="sub_agent", user_id=ctx.user.id, chat_id=ctx.session.info.id, scope=ctx.tool_scope
         )
         agent_profile = await require_delegation_target(
             user_id=ctx.user.id,
@@ -185,18 +254,16 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             type=AgentEventType.ERROR,
             content=f"Delegation rejected: {exc}",
         )
-        if ctx.event_sink:
-            res = ctx.event_sink(
-                SubAgentEventEnvelope(
-                    execution_id=execution_id,
-                    sub_agent_id=target_id,
-                    sub_agent_name="Unknown sub-agent",
-                    depth=len(ctx.call_stack),
-                    event=error,
-                ),
-            )
-            if inspect.isawaitable(res):
-                await res
+        await _emit(
+            ctx.event_sink,
+            SubAgentEventEnvelope(
+                execution_id=execution_id,
+                sub_agent_id=target_id,
+                sub_agent_name="Unknown sub-agent",
+                depth=len(ctx.call_stack),
+                event=error,
+            ),
+        )
         return error.content
 
     # Authorization to invoke `sub_agent` belongs to the parent. Once
@@ -213,6 +280,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
 
     sub_profile = agent_profile.model_copy(update={"tools": allowed_tools})
 
+    # Prefer the live execution scope; fall back to one rebuilt from the tool ceiling.
     parent_execution = ctx.execution_scope or ExecutionScope(
         user_id=parent_scope.user_id,
         user_profile_id=None,
@@ -224,7 +292,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         executed_model=ModelIdentity(id=parent_scope.model_id),
         eligible_sub_agent_ids=(parent_scope.delegation.agent_ids if parent_scope.delegation else frozenset())
         | {target_id},
-        effective_internal_tools=frozenset({"sub_agent", "search_knowledge"}),
+        effective_internal_tools=frozenset(INTERNAL_TOOL_NAMES),
         active_branch_message_ids=(),
         configuration_revision=1,
         prompt_revision=parent_scope.delegation.context_revision if parent_scope.delegation else None,
@@ -241,7 +309,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     child_call_stack = [*ctx.call_stack, target_id]
 
     parent_msg_id = ctx.parent_message_id
-    if parent_msg_id is None and ctx.session and getattr(ctx.session, "messages", None):
+    if parent_msg_id is None and ctx.session.messages:
         parent_msg_id = ctx.session.messages[-1].id
 
     async def check_authorization() -> None:
@@ -310,19 +378,20 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                 step_count += 1
                 total_tokens += event.total_tokens or 0
 
-            if ctx.event_sink and event.type in forwarded_types:
-                envelope = SubAgentEventEnvelope(
-                    execution_id=execution_id,
-                    sub_agent_id=target_id,
-                    sub_agent_name=agent_profile.name,
-                    depth=len(ctx.call_stack),
-                    event=event,
+            if event.type in forwarded_types:
+                await _emit(
+                    ctx.event_sink,
+                    SubAgentEventEnvelope(
+                        execution_id=execution_id,
+                        sub_agent_id=target_id,
+                        sub_agent_name=agent_profile.name,
+                        depth=len(ctx.call_stack),
+                        event=event,
+                    ),
                 )
-                res = ctx.event_sink(envelope)
-                if inspect.isawaitable(res):
-                    await res
-        if not received_event and ctx.event_sink:
-            res = ctx.event_sink(
+        if not received_event:
+            await _emit(
+                ctx.event_sink,
                 SubAgentEventEnvelope(
                     execution_id=execution_id,
                     sub_agent_id=target_id,
@@ -331,8 +400,6 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                     event=last_response,
                 ),
             )
-            if inspect.isawaitable(res):
-                await res
     except Exception as exc:
         last_response = AgentEvent(
             type=AgentEventType.ERROR,
@@ -343,18 +410,16 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             execution_id,
             agent_profile.name,
         )
-        if ctx.event_sink:
-            res = ctx.event_sink(
-                SubAgentEventEnvelope(
-                    execution_id=execution_id,
-                    sub_agent_id=target_id,
-                    sub_agent_name=agent_profile.name,
-                    depth=len(ctx.call_stack),
-                    event=last_response,
-                ),
-            )
-            if inspect.isawaitable(res):
-                await res
+        await _emit(
+            ctx.event_sink,
+            SubAgentEventEnvelope(
+                execution_id=execution_id,
+                sub_agent_id=target_id,
+                sub_agent_name=agent_profile.name,
+                depth=len(ctx.call_stack),
+                event=last_response,
+            ),
+        )
 
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     logger.info(
@@ -373,7 +438,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         from asterism.domains.agent.schemas import SubAgentTraceCreate
         from asterism.domains.agent.service import create_sub_agent_trace
 
-        message_roles = [m.role for m in getattr(agent, "messages", sub_agent_messages) if m.role != "system"]
+        message_roles = [m.role for m in agent.messages if m.role != "system"]
         trace_data = SubAgentTraceCreate(
             context_provenance=describe_context(agent.execution_scope or child_scope),
             prompt_provenance=agent.prompt_snapshot.provenance if agent.prompt_snapshot else None,

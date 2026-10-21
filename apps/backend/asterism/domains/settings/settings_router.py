@@ -1,3 +1,11 @@
+"""FastAPI routes for all settings surfaces under ``/settings``.
+
+Route groups: user settings (any authenticated user), application/provider/tool
+settings (admin only), image captioning configuration, and local model download
+controls. More specific paths are declared before the generic ``/app/{key}``
+routes so FastAPI's first-match ordering resolves them correctly.
+"""
+
 import asyncio
 import uuid
 
@@ -39,6 +47,7 @@ from .schemas import (
     UserSettings,
 )
 
+# Stateless discovery instance shared across requests (clients are created per call).
 provider_discovery = OpenAIProviderDiscovery()
 
 settings_router = APIRouter(
@@ -48,8 +57,17 @@ settings_router = APIRouter(
 )
 
 
+def _discovery_http_error(exc: ProviderDiscoveryError) -> HTTPException:
+    """Map a categorized discovery failure onto its declared HTTP response."""
+    return HTTPException(
+        status_code=exc.status_code,
+        detail=f"{exc.category}: {exc.detail}",
+    )
+
+
 @settings_router.get("/user/main-agent", response_model=MainAgentConfiguration, operation_id="mainAgentGet")
 async def read_main_agent(user: AuthedUserDep, session: DBSessionDep) -> MainAgentConfiguration:
+    """Return the caller's main-agent configuration."""
     return await get_main_agent(user.id, session)
 
 
@@ -59,6 +77,7 @@ async def write_main_agent(
     user: AuthedUserDep,
     session: DBSessionDep,
 ) -> MainAgentConfiguration:
+    """Replace the caller's main-agent configuration and return the stored result."""
     return await update_main_agent(user.id, payload, session)
 
 
@@ -72,6 +91,7 @@ async def get_user_settings(
     user: AuthedUserDep,
     session: DBSessionDep,
 ) -> UserSettings:
+    """Return the caller's full settings aggregate."""
     return await settings_service.get_user_settings(
         user_id=user.id,
         session=session,
@@ -90,6 +110,7 @@ async def update_user_setting(
     user: AuthedUserDep,
     session: DBSessionDep,
 ) -> Setting:
+    """Set one user setting (a ``null`` value deletes it)."""
     return await settings_service.upsert_user_setting(
         user_id=user.id,
         key=key,
@@ -108,6 +129,7 @@ async def delete_user_setting(
     user: AuthedUserDep,
     session: DBSessionDep,
 ) -> None:
+    """Delete one user setting."""
     await settings_service.delete_user_setting(
         user_id=user.id,
         key=key,
@@ -126,6 +148,7 @@ async def bulk_update_user_settings(
     user: AuthedUserDep,
     session: DBSessionDep,
 ) -> UserSettings:
+    """Apply several user setting updates atomically."""
     return await settings_service.bulk_upsert_user_settings(
         user_id=user.id,
         updates=updates,
@@ -152,13 +175,11 @@ async def discover_provider_models(
     request: ProviderDiscoveryRequest,
     user: AdminUserDep,
 ) -> ProviderDiscoveryResponse:
+    """Run model discovery against a candidate endpoint without persisting anything."""
     try:
         return await provider_discovery.discover(request)
     except ProviderDiscoveryError as exc:
-        raise HTTPException(
-            status_code=exc.status_code,
-            detail=f"{exc.category}: {exc.detail}",
-        ) from exc
+        raise _discovery_http_error(exc) from exc
 
 
 @settings_router.get(
@@ -171,6 +192,7 @@ async def get_provider_settings(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> ProviderSettings:
+    """Return provider summaries plus the selected draft model."""
     return await settings_service.get_provider_settings(session=session)
 
 
@@ -185,6 +207,7 @@ async def update_provider_settings(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> ProviderSettings:
+    """Replace the full provider list (missing providers are deleted)."""
     return await settings_service.update_provider_settings(
         settings=settings,
         session=session,
@@ -205,6 +228,7 @@ async def list_provider_models(
     cursor: uuid.UUID | None = None,
     limit: int = Query(default=50, ge=1, le=50),
 ) -> ProviderModelsPage:
+    """Return one page of the provider's models, optionally filtered by name substring."""
     return await settings_service.get_provider_models(
         provider_id=provider_id,
         query=query,
@@ -227,6 +251,7 @@ async def update_provider_model(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> Llm:
+    """Replace one model's flags and capabilities."""
     return await settings_service.update_provider_model(
         provider_id=provider_id,
         model_id=model_id,
@@ -250,6 +275,7 @@ async def discover_and_sync_provider_models(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> ProviderSummary:
+    """Discover the provider's models and persist the merged catalog."""
     provider = await settings_service.get_provider_for_discovery(provider_id, session)
     try:
         discovery = await provider_discovery.discover(
@@ -262,10 +288,7 @@ async def discover_and_sync_provider_models(
             ),
         )
     except ProviderDiscoveryError as exc:
-        raise HTTPException(
-            status_code=exc.status_code,
-            detail=f"{exc.category}: {exc.detail}",
-        ) from exc
+        raise _discovery_http_error(exc) from exc
 
     return await settings_service.replace_provider_models(
         provider_id,
@@ -284,6 +307,7 @@ async def get_captioning_provider_models(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> list[LlmDisplayInfo]:
+    """List active vision-capable models eligible for image captioning."""
     return await settings_service.get_captioning_models(session=session)
 
 
@@ -297,6 +321,7 @@ async def get_tool_settings(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> ToolSettings:
+    """Return enabled tools and component provider selections."""
     return await settings_service.get_tool_settings(session=session)
 
 
@@ -311,6 +336,7 @@ async def update_tool_settings(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> ToolSettings:
+    """Replace tool settings (component provider parameters are encrypted at rest)."""
     return await settings_service.update_tool_settings(
         settings=settings,
         session=session,
@@ -322,12 +348,12 @@ async def update_tool_settings(
     response_model=ApplicationSettings,
     operation_id="appSettingsGet",
     summary="Get all application settings",
-    deprecated=True,
 )
 async def get_app_settings(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> ApplicationSettings:
+    """Return the full application settings aggregate."""
     return await settings_service.get_app_settings(session=session)
 
 
@@ -342,6 +368,7 @@ async def bulk_update_app_settings(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> ApplicationSettings:
+    """Apply several application setting updates in one transaction."""
     return await settings_service.bulk_update_app_setting(
         updates=updates,
         session=session,
@@ -363,6 +390,7 @@ async def get_captioning_configuration(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeCaptionConfiguration:
+    """Return the image captioning mode and selected provider model."""
     from asterism.domains.settings.knowledge import get_captioning_configuration as get_configuration
 
     return await get_configuration(session=session)
@@ -380,6 +408,7 @@ async def update_captioning_configuration(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeCaptionConfiguration:
+    """Set the image captioning mode and selected provider model."""
     from asterism.domains.files.processing import update_captioning_configuration as update_configuration
 
     return await update_configuration(payload=payload, session=session)
@@ -395,6 +424,7 @@ async def update_knowledge_processing_profile(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> KnowledgeReprocessSummary:
+    """Update the knowledge processing profile and reprocess affected files."""
     from asterism.domains.files.processing import update_processing_profile_and_reprocess
 
     return await update_processing_profile_and_reprocess(payload=payload, session=session)
@@ -412,6 +442,7 @@ async def update_app_setting(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> Setting:
+    """Set one application setting by key (a ``null`` value deletes it)."""
     return await settings_service.upsert_app_setting(
         key=key,
         value=value.value,
@@ -429,6 +460,7 @@ async def delete_app_setting(
     user: AdminUserDep,
     session: DBSessionDep,
 ) -> None:
+    """Delete one application setting (required keys cannot be deleted)."""
     await settings_service.delete_app_setting(
         key,
         session=session,
@@ -447,6 +479,7 @@ async def delete_app_setting(
     summary="Get automatic knowledge embedding bundle readiness",
 )
 async def get_knowledge_embedding_status(user: AdminUserDep) -> DownloadProgress:
+    """Return the readiness/download progress of the knowledge embedding bundle."""
     from asterism.domains.extraction.embedding import embedding_download_service
 
     return await asyncio.to_thread(embedding_download_service.progress)
@@ -461,6 +494,7 @@ async def get_knowledge_embedding_status(user: AdminUserDep) -> DownloadProgress
 async def get_caption_model_status(
     user: AdminUserDep,
 ) -> DownloadProgress:
+    """Return the download/readiness progress of the local caption model."""
     from asterism.domains.extraction.captioning import captioning_download_service
 
     return await asyncio.to_thread(captioning_download_service.progress)
@@ -479,6 +513,7 @@ async def get_caption_model_status(
 async def start_caption_model_download(
     user: AdminUserDep,
 ) -> DownloadProgress:
+    """Start the local caption model download (409 if one is already running)."""
     from asterism.domains.extraction.captioning import captioning_download_service
 
     try:
@@ -496,6 +531,7 @@ async def start_caption_model_download(
 async def cancel_caption_model_download(
     user: AdminUserDep,
 ) -> DownloadProgress:
+    """Cancel an in-progress local caption model download."""
     from asterism.domains.extraction.captioning import captioning_download_service
 
     return await captioning_download_service.cancel_download()

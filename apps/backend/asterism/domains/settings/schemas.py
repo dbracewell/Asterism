@@ -1,3 +1,11 @@
+"""Pydantic schemas for settings API payloads and ORM-to-API mapping.
+
+``Llm``/``ProviderInfo`` double as response models (``from_attributes=True``)
+and request validation. Capability provenance is normalized in validators so
+the invariants "value missing ⇒ source UNKNOWN" and "value present with no
+source ⇒ MANUAL" hold on every object that leaves the service layer.
+"""
+
 from __future__ import annotations
 
 import uuid
@@ -23,7 +31,25 @@ from .provider_types import (
 from .secrets import redact_component_parameters
 
 
+def normalize_capability_source(
+    value: int | bool | None,
+    source: ModelCapabilitySource,
+) -> ModelCapabilitySource:
+    """Coerce a capability value/source pair into a consistent state.
+
+    A missing value has no provenance (``UNKNOWN``); a present value that
+    claims no provenance must have been entered by hand (``MANUAL``).
+    """
+    if value is None:
+        return ModelCapabilitySource.UNKNOWN
+    if source == ModelCapabilitySource.UNKNOWN:
+        return ModelCapabilitySource.MANUAL
+    return source
+
+
 class Llm(BaseModel):
+    """A provider model with capability flags and their provenance."""
+
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     name: str
@@ -38,30 +64,27 @@ class Llm(BaseModel):
 
     @model_validator(mode="after")
     def normalize_capability_sources(self) -> "Llm":
-        self.context_window_source = self._normalized_source(
+        """Keep every capability value/source pair consistent (see :func:`normalize_capability_source`)."""
+        self.context_window_source = normalize_capability_source(
             self.context_window,
             self.context_window_source,
         )
-        self.vision_source = self._normalized_source(
+        self.vision_source = normalize_capability_source(
             self.supports_vision,
             self.vision_source,
         )
-        self.tools_source = Llm._normalized_source(self.supports_tools, self.tools_source)
+        self.tools_source = normalize_capability_source(self.supports_tools, self.tools_source)
         return self
-
-    @staticmethod
-    def _normalized_source(
-        value: int | bool | None,
-        source: ModelCapabilitySource,
-    ) -> ModelCapabilitySource:
-        if value is None:
-            return ModelCapabilitySource.UNKNOWN
-        if source == ModelCapabilitySource.UNKNOWN:
-            return ModelCapabilitySource.MANUAL
-        return source
 
 
 class ProviderInfo(BaseModel):
+    """Provider identity and connection details without its model list.
+
+    ``api_key`` is a :class:`SecretStr`, so JSON serialization redacts it to
+    ``**********`` automatically; the service layer treats that exact string as
+    "keep the existing stored key" on updates (see ``service._provider_api_key``).
+    """
+
     model_config = ConfigDict(from_attributes=True)
     name: str
     base_url: str
@@ -71,6 +94,7 @@ class ProviderInfo(BaseModel):
 
     @model_validator(mode="after")
     def normalize_base_url(self) -> "ProviderInfo":
+        """Re-normalize the base URL so stored/returned values match runtime form."""
         self.base_url = normalize_provider_base_url(
             self.provider_type,
             self.base_url,
@@ -79,12 +103,14 @@ class ProviderInfo(BaseModel):
 
 
 class LlmWithProvider(Llm):
-    model_config: ConfigDict = ConfigDict(from_attributes=True)
+    """A model plus its provider (used to resolve a concrete model for execution)."""
+
     provider: ProviderInfo
 
 
 class Provider(ProviderInfo):
-    model_config = ConfigDict(from_attributes=True)
+    """Full provider configuration including its models."""
+
     models: list["Llm"]
 
 
@@ -96,6 +122,8 @@ class ProviderSummary(ProviderInfo):
 
 
 class LlmDisplayInfo(BaseModel):
+    """Flat, denormalized model view (includes ``provider_name``) for pickers and lists."""
+
     id: uuid.UUID
     name: str
     provider_id: uuid.UUID
@@ -109,6 +137,12 @@ class LlmDisplayInfo(BaseModel):
 
 
 class ComponentProviderParameters(BaseModel):
+    """A named component provider (e.g. web search) plus its string parameters.
+
+    JSON serialization redacts values whose keys look like secrets, so API
+    responses never echo stored credentials.
+    """
+
     name: str
     parameters: dict[str, str] = Field(default_factory=dict)
 
@@ -118,19 +152,31 @@ class ComponentProviderParameters(BaseModel):
 
 
 class Setting(BaseModel):
+    """A single key/value setting row."""
+
     key: str
     value: JsonValue
 
 
 class UpdateSettingValue(BaseModel):
+    """Payload for updating one setting by key (``value`` of ``None`` deletes it)."""
+
     value: JsonValue
 
 
 class BulkUpdateSettingRequest(BaseModel):
+    """Payload for updating several settings at once, keyed by setting name."""
+
     values: dict[str, JsonValue]
 
 
 class UserSettings(BaseModel):
+    """Aggregate of one user's settings as returned by ``GET /settings/user``.
+
+    ``main_agent``/``sub_agents`` are injected by the service from the agent
+    domain; ``models`` is the list of all active models across providers.
+    """
+
     theme: str = Field(default="light")
     font_size: str = Field(default="16px")
     models: list[LlmDisplayInfo] = Field(default_factory=list[LlmDisplayInfo])
@@ -141,6 +187,8 @@ class UserSettings(BaseModel):
 
 
 class ApplicationSettings(BaseModel):
+    """Aggregate of global application settings (admin view)."""
+
     llm_providers: list[Provider] = Field(default_factory=list)
     draft_model_id: uuid.UUID | None = None
     web_search_provider: ComponentProviderParameters | None = None
@@ -149,18 +197,24 @@ class ApplicationSettings(BaseModel):
 
 
 class ProviderSettings(BaseModel):
+    """Provider landing-page payload: provider summaries plus the selected draft model."""
+
     llm_providers: list[ProviderSummary] = Field(default_factory=list)
     draft_model_id: uuid.UUID | None = None
     draft_model: LlmDisplayInfo | None = None
 
 
 class ProviderModelsPage(BaseModel):
+    """One keyset-paginated page of a provider's models (``next_cursor`` is a model id)."""
+
     models: list[Llm] = Field(default_factory=list)
     next_cursor: str | None = None
     total: int = 0
 
 
 class ProviderModelUpdate(BaseModel):
+    """Full-replacement payload for one model's flags and capabilities."""
+
     is_active: bool
     context_window: PositiveInt | None = None
     supports_vision: bool | None = None
@@ -171,19 +225,22 @@ class ProviderModelUpdate(BaseModel):
 
     @model_validator(mode="after")
     def normalize_capability_sources(self) -> "ProviderModelUpdate":
-        self.context_window_source = Llm._normalized_source(
+        """Keep every capability value/source pair consistent (see :func:`normalize_capability_source`)."""
+        self.context_window_source = normalize_capability_source(
             self.context_window,
             self.context_window_source,
         )
-        self.vision_source = Llm._normalized_source(
+        self.vision_source = normalize_capability_source(
             self.supports_vision,
             self.vision_source,
         )
-        self.tools_source = Llm._normalized_source(self.supports_tools, self.tools_source)
+        self.tools_source = normalize_capability_source(self.supports_tools, self.tools_source)
         return self
 
 
 class ToolSettings(BaseModel):
+    """Admin tool configuration: enabled tools plus component provider selections."""
+
     web_search_provider: ComponentProviderParameters | None = None
     image_search_provider: ComponentProviderParameters | None = None
     active_tools: list[str] = Field(default_factory=list)

@@ -1,4 +1,6 @@
-from typing import cast
+"""image_search tool: web image search backed by an admin-configured provider."""
+
+from typing import Any
 
 from asterism.common.log import get_logger
 from asterism.domains.components.builtin.base_search import SearchResult
@@ -19,33 +21,34 @@ logger = get_logger("IMAGE_SEARCH")
 )
 async def image_search(
     ctx: ToolContext[SearchArgs],
-) -> dict:
+) -> dict[str, Any]:
+    """Search for images using the admin-configured provider component.
+
+    Returns a ``{url: title}`` mapping on success and an ``{"error": ...}``
+    dict when no provider is configured or the search fails, so failures stay
+    visible to the model.
+    """
     provider = ctx.app_settings.image_search_provider
     if not provider:
-        return {
-            "status": "error",
-            "message": "No image search provider configured.",
-        }
+        return {"error": "No image search provider configured."}
 
     try:
-        image_search_component: ImageSearchComponent = cast(
-            ImageSearchComponent,
-            await component_registry.get_component(
-                ComponentType.ImageSearch,
-                provider.name,
-                provider.parameters,
-            ),
+        component = await component_registry.get_component(
+            ComponentType.ImageSearch,
+            provider.name,
+            provider.parameters,
         )
     except Exception as e:
         logger.error(
             f"Image search failed for provider={provider.name} query={ctx.args.query}: {str(e)}",
         )
-        return {"status": "error", "message": str(e)}
+        return {"error": str(e)}
+
+    if not isinstance(component, ImageSearchComponent):
+        return {"error": f"Provider '{provider.name}' is not an image search provider."}
 
     try:
-        search_results: list[SearchResult] = await image_search_component(
-            ctx.args,
-        )
+        search_results: list[SearchResult] = await component(ctx.args)
         logger.debug(
             f"provider={provider.name} query={ctx.args.query} results in {len(search_results)} results",
         )
@@ -54,4 +57,4 @@ async def image_search(
         logger.error(
             f"Image search failed for provider={provider.name} query={ctx.args.query}: {str(e)}",
         )
-        return {"status": "error", "message": str(e)}
+        return {"error": str(e)}

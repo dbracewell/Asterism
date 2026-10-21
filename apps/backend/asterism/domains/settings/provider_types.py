@@ -1,17 +1,29 @@
+"""Provider type enums and base-URL normalization shared by schemas, models, and discovery."""
+
 from enum import StrEnum
 from urllib.parse import urlsplit, urlunsplit
 
 from pydantic_core import PydanticCustomError
 
+# Pinned first-party endpoint; client-supplied URLs are ignored for OPENAI providers.
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 
 
 class ProviderType(StrEnum):
+    """Supported provider flavors.
+
+    ``OPENAI`` is the first-party API (base URL pinned server-side);
+    ``GENERIC_OPENAI`` is any OpenAI-compatible endpoint (public or local) with
+    a client-supplied base URL.
+    """
+
     OPENAI = "openai"
     GENERIC_OPENAI = "generic_openai"
 
 
 class ModelCapabilitySource(StrEnum):
+    """Provenance of a model capability value (context window, vision, tools)."""
+
     CATALOG = "catalog"
     PROVIDER = "provider"
     MANUAL = "manual"
@@ -54,6 +66,7 @@ def normalize_provider_base_url(provider_type: ProviderType, base_url: str) -> s
             "Base URL must not contain a query string or fragment",
         )
 
+    # urlsplit strips brackets from IPv6 hostnames; restore them for reassembly.
     hostname = parsed.hostname.lower()
     if ":" in hostname and not hostname.startswith("["):
         hostname = f"[{hostname}]"

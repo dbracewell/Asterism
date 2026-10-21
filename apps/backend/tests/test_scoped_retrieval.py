@@ -39,13 +39,14 @@ async def execution(r):
     return make_execution_scope(r, ceiling), ceiling
 
 
-def match(fid, *, owner="a", generation=1, content="Evidence", ordinal=0):
+def match(fid, *, owner="a", generation=1, content="Evidence", ordinal=0, kind="text"):
     return VectorSearchResult(
         id=f"{fid}-{ordinal}",
         user_id=owner,
         file_id=str(fid),
         artifact_generation=generation,
         chunk_ordinal=ordinal,
+        kind=kind,
         content=content,
         score=0.1,
     )
@@ -82,6 +83,7 @@ async def test_database_vector_prefilter_and_result_provenance(context_runtime, 
                 file_id=str(fid),
                 artifact_generation=1,
                 chunk_ordinal=0,
+                kind="text",
                 content=content,
                 vector=[1.0, 0.0],
             )
@@ -102,6 +104,8 @@ async def test_database_vector_prefilter_and_result_provenance(context_runtime, 
     )
     result = await service.search(scope, query="evidence", top_k=5)
     assert {hit.file_id for hit in result.results} == {project, local}
+    # Query vectors are identical to the stored unit vectors: distance 0 -> similarity 1.
+    assert all(hit.score == pytest.approx(1.0) for hit in result.results)
     assert "PRIVATE" not in result.model_dump_json()
     shared = next(hit for hit in result.results if hit.file_id == project)
     assert shared.sources == ("project", "chat") and shared.message_ids == (r.chat.messages[0].id,)
@@ -131,7 +135,7 @@ async def test_foreign_matches_limits_caption_and_utf8_budget(context_runtime, m
             return_value=[
                 match(fid, owner="b", content="PRIVATE"),
                 match(fid, generation=0),
-                match(fid, content="ééé"),
+                match(fid, content="ééé", kind="caption"),
                 match(fid, ordinal=1),
             ]
         )
@@ -144,13 +148,33 @@ async def test_foreign_matches_limits_caption_and_utf8_budget(context_runtime, m
     )
     result = await service.search(scope, query="caption", top_k=2)
     assert [(hit.match_kind, hit.excerpt) for hit in result.results] == [("caption", "éé"), ("text", "E")]
+    # Mocked store distance 0.1 over unit vectors -> similarity 1 - 0.1 / 2.
+    assert all(hit.score == pytest.approx(0.95) for hit in result.results)
     assert vectors.search.call_args.kwargs == {"user_id": "a", "allowed_file_ids": [str(fid)], "limit": 2}
     embeddings.embed_text.reset_mock()
-    assert "configured limit" in (await service.search(scope, query="caption", top_k=3)).message
-    embeddings.embed_text.assert_not_called()
+    clamped = await service.search(scope, query="caption", top_k=3)
+    assert clamped.message is None
+    assert [(hit.match_kind, hit.excerpt) for hit in clamped.results] == [("caption", "éé"), ("text", "E")]
     for invalid in [replace(scope, allowed_file_ids=frozenset()), replace(scope, effective_internal_tools=frozenset())]:
         with pytest.raises(BadDataException):
             await service.search(invalid, query="caption")
+
+
+@pytest.mark.asyncio
+async def test_ready_without_text_embeddings_reports_not_searchable(context_runtime):
+    r = context_runtime
+    fid = await add_file(r)
+    async with r.sessions() as db:
+        await db.execute(
+            update(FileExtractionModel).where(FileExtractionModel.file_id == fid).values(text_embeddings_ready=False)
+        )
+        await db.commit()
+    scope, ceiling = await execution(r)
+    root = create_retrieval_service(ceiling=ceiling)
+    result = await root.search(scope, query="anything")
+    assert result.results == [] and "No searchable artifacts" in result.message
+    # The file exists but its text was never embedded: a distinct state, not "unavailable".
+    assert [state["status"] for state in result.file_states] == ["not_searchable"]
 
 
 @pytest.mark.asyncio

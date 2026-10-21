@@ -1,6 +1,7 @@
 """Original source storage. Keys are opaque to consumers; only this adapter resolves paths."""
 
 import re
+import shutil
 import uuid
 from pathlib import Path
 from typing import Protocol
@@ -13,6 +14,8 @@ class FileStore(Protocol):
     def open(self, user_id: str, storage_key: str) -> Path: ...
 
     def delete(self, user_id: str, storage_key: str) -> None: ...
+
+    def delete_user(self, user_id: str) -> None: ...
 
 
 class LocalFileStore:
@@ -68,6 +71,14 @@ class LocalFileStore:
 
     def delete(self, user_id: str, storage_key: str) -> None:
         self._path(user_id, storage_key).unlink(missing_ok=True)
+
+    def delete_user(self, user_id: str) -> None:
+        """Remove every stored source for a user (their whole owner shard)."""
+        owner_dir = (self.root / self._owner(user_id)).resolve()
+        # The owner name is URL-quoted and non-empty by construction, but keep
+        # the containment check so a future owner scheme cannot escape root.
+        owner_dir.relative_to(self.root)
+        shutil.rmtree(owner_dir, ignore_errors=True)
 
 
 def get_file_store() -> FileStore:

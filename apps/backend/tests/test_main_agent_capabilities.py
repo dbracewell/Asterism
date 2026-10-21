@@ -1,4 +1,5 @@
 import uuid
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -24,6 +25,10 @@ async def test_chat_permission_cannot_grant_unassigned_main_capability(main_agen
     )
     invoke = AsyncMock()
     monkeypatch.setattr("asterism.domains.agent.agent.tool_registry.invoke_tool", invoke)
+    monkeypatch.setattr(
+        "asterism.domains.settings.service.get_app_settings",
+        AsyncMock(return_value=SimpleNamespace(active_tools=["web_fetch"])),
+    )
     call = ToolCall.model_validate(
         {
             "id": "unassigned",

@@ -1,3 +1,11 @@
+"""Shared web-fetching pipeline used by the web_fetch and web_search tools.
+
+Validates URLs against SSRF rules (public hosts/IPs only, http/https only, no
+embedded credentials), fetches with plain HTTP first and falls back to a
+headless browser for short or JavaScript-rendered pages, then converts HTML to
+clean Markdown.
+"""
+
 import asyncio
 import ipaddress
 import re
@@ -7,7 +15,7 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 import httpx
 import markdownify
 from bs4 import BeautifulSoup
-from playwright.async_api import Route, async_playwright
+from playwright.async_api import Browser, Playwright, Route, async_playwright
 
 from asterism.common.log import get_logger
 from asterism.core.schemas import Document
@@ -19,12 +27,47 @@ _PLAYWRIGHT_SEMAPHORE = asyncio.Semaphore(2)
 _FORBIDDEN_HOSTNAMES = {"localhost", "localhost.localdomain"}
 _FORBIDDEN_HOST_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
 
+_HTML_TAGS_TO_REMOVE = [
+    "script",
+    "style",
+    "link",
+    "noscript",
+    "iframe",
+    "nav",
+    "footer",
+    "aside",
+    "header",
+    "form",
+    "input",
+    "button",
+    "select",
+    "textarea",
+]
+
+# Pooled headless-browser state shared by all JavaScript fetches (see
+# _acquire_browser); released via close_fetch_browser during app teardown.
+_playwright_instance: Playwright | None = None
+_browser: Browser | None = None
+_browser_lock = asyncio.Lock()
+
 
 class UnsafeFetchUrlError(ValueError):
     """Raised when a URL targets a non-public host, IP address, or disallowed scheme."""
 
 
+class MarkdownExtractorException(Exception):
+    """Raised when no readable content remains after HTML-to-Markdown conversion."""
+
+    def __init__(self, message: str = "Failed to extract markdown") -> None:
+        super().__init__(message)
+
+
 def _is_public_ip(raw_ip: str) -> bool:
+    """Return True when the IP is publicly routable (SSRF guard).
+
+    IPv4-mapped IPv6 addresses are unwrapped first so ``::ffff:127.0.0.1``
+    style literals cannot slip past the checks.
+    """
     ip = ipaddress.ip_address(raw_ip)
     if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
         ip = ip.ipv4_mapped
@@ -40,6 +83,15 @@ def _is_public_ip(raw_ip: str) -> bool:
 
 
 def _resolve_host_ips(hostname: str, port: int) -> list[str]:
+    """Resolve a hostname to its unique IP addresses (blocking; run in a thread).
+
+    Args:
+        hostname: Host to resolve.
+        port: Port used for the address lookup (affects some resolvers/records).
+
+    Returns:
+        De-duplicated list of IP strings, possibly empty.
+    """
     addr_info = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
     ips: list[str] = []
     for entry in addr_info:
@@ -51,6 +103,21 @@ def _resolve_host_ips(hostname: str, port: int) -> list[str]:
 
 
 async def validate_public_http_url(raw_url: str) -> str:
+    """Validate that a URL points at a public http/https resource.
+
+    Rejects non-http(s) schemes, embedded credentials, localhost-style
+    hostnames, and any hostname (or literal IP) that does not resolve to
+    exclusively public addresses.
+
+    Args:
+        raw_url: The URL as supplied (may lack a scheme).
+
+    Returns:
+        A normalized URL string safe to fetch.
+
+    Raises:
+        UnsafeFetchUrlError: When any SSRF-relevant check fails.
+    """
     candidate = raw_url.strip()
     if not candidate:
         raise UnsafeFetchUrlError("URL must not be empty.")
@@ -102,6 +169,20 @@ async def validate_public_http_url(raw_url: str) -> str:
 
 
 def extract_clean_markdown(html: Document) -> Document:
+    """Convert an HTML Document to clean Markdown.
+
+    Strips non-content tags (scripts, nav, forms, ...), converts the remainder
+    with markdownify, and collapses blank lines.
+
+    Args:
+        html: The fetched page as a Document with an HTML body.
+
+    Returns:
+        A new text/markdown Document carrying the source metadata.
+
+    Raises:
+        MarkdownExtractorException: When no readable content remains.
+    """
     soup = BeautifulSoup(html.content, "html.parser")
     for tag in soup(_HTML_TAGS_TO_REMOVE):
         tag.decompose()
@@ -125,40 +206,70 @@ def extract_clean_markdown(html: Document) -> Document:
         raise MarkdownExtractorException()
 
 
-_HTML_TAGS_TO_REMOVE = [
-    "script",
-    "style",
-    "link",
-    "noscript",
-    "iframe",
-    "nav",
-    "footer",
-    "aside",
-    "header",
-    "form",
-    "input",
-    "button",
-    "select",
-    "textarea",
-]
-
 _FETCH_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",  # noqa: E501
 }
 
 
-class MarkdownExtractorException(Exception):
-    def __init__(self, message: str = "Failed to extract markdown") -> None:
-        super().__init__(message)
-
-
 async def _guard_playwright_route(route: Route) -> None:
+    """Playwright route handler that re-applies SSRF validation to every request.
+
+    Aborts sub-requests (images, scripts, XHRs) whose URL would leave the
+    public web, so a fetched page cannot drag the browser into internal hosts.
+    """
     try:
         await validate_public_http_url(route.request.url)
     except UnsafeFetchUrlError:
         await route.abort("accessdenied")
         return
     await route.continue_()
+
+
+def _browser_is_connected(browser: Browser) -> bool:
+    """Report whether the pooled browser is still usable (crashes raise)."""
+    try:
+        return browser.is_connected()
+    except Exception:
+        return False
+
+
+async def _release_pool() -> None:
+    """Close the pooled browser and Playwright session, best effort."""
+    global _playwright_instance, _browser
+    if _browser is not None:
+        try:
+            await _browser.close()
+        except Exception:
+            pass
+        _browser = None
+    if _playwright_instance is not None:
+        try:
+            await _playwright_instance.stop()
+        except Exception:
+            pass
+        _playwright_instance = None
+
+
+async def _acquire_browser() -> Browser:
+    """Return the pooled headless Chromium browser, launching it on first use.
+
+    One browser is shared across all JavaScript fetches (a fresh page is
+    created per fetch) instead of launching a new browser per call; a dead or
+    disconnected browser is relaunched transparently.
+    """
+    global _playwright_instance, _browser
+    async with _browser_lock:
+        if _browser is None or not _browser_is_connected(_browser):
+            await _release_pool()
+            _playwright_instance = await async_playwright().start()
+            _browser = await _playwright_instance.chromium.launch(headless=True)
+        return _browser
+
+
+async def close_fetch_browser() -> None:
+    """Shut down the pooled Playwright browser; called during app teardown."""
+    async with _browser_lock:
+        await _release_pool()
 
 
 async def _js_site_fetch(url: str) -> tuple[str, str]:
@@ -168,24 +279,23 @@ async def _js_site_fetch(url: str) -> tuple[str, str]:
     """
     validated_url = await validate_public_http_url(url)
     async with _PLAYWRIGHT_SEMAPHORE:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            try:
-                page = await browser.new_page()
-                await page.route("**/*", _guard_playwright_route)
+        browser = await _acquire_browser()
+        page = await browser.new_page()
+        try:
+            await page.route("**/*", _guard_playwright_route)
 
-                response = await page.goto(
-                    url=validated_url,
-                    timeout=5000,
-                    wait_until="networkidle",
-                )
-                if response is None:
-                    raise httpx.RequestError(f"Playwright navigation returned no response for {validated_url}")
-                raw_html = await page.content()
-                mime_type = response.headers.get("content-type", "text/html").split(";")[0]
-                return raw_html, mime_type
-            finally:
-                await browser.close()
+            response = await page.goto(
+                url=validated_url,
+                timeout=5000,
+                wait_until="networkidle",
+            )
+            if response is None:
+                raise httpx.RequestError(f"Playwright navigation returned no response for {validated_url}")
+            raw_html = await page.content()
+            mime_type = response.headers.get("content-type", "text/html").split(";")[0]
+            return raw_html, mime_type
+        finally:
+            await page.close()
 
 
 def possible_js_page(html_page: str) -> bool:
@@ -223,6 +333,8 @@ async def fetch_page(
             timeout=timeout,
             follow_redirects=False,
         ) as client:
+            # Redirects are followed manually so every hop's target is re-validated;
+            # a 302 to an internal host must be rejected, not transparently followed.
             response: httpx.Response | None = None
             for _ in range(_MAX_REDIRECTS + 1):
                 response = await client.get(
@@ -240,10 +352,13 @@ async def fetch_page(
             else:
                 raise httpx.TooManyRedirects(f"Exceeded {_MAX_REDIRECTS} redirects while fetching {url}")
 
-            assert response is not None
+            if response is None:
+                raise httpx.RequestError(f"No response received while fetching {url}")
             response.raise_for_status()
             mime_type = response.headers.get("Content-Type", "text/html").split(";")[0]
             html_page = response.text
+            # Short bodies (often JS shells) and known JS-framework markers are
+            # refetched in a headless browser to capture rendered content.
             if len(html_page) < threshold_for_playwright or possible_js_page(html_page):
                 html_page, mime_type = await _js_site_fetch(current_url)
 
@@ -264,12 +379,8 @@ async def fetch_markdown(
     url: str,
     timeout: float = 5.0,
     threshold_for_playwright: int = 250,
-    include_images: bool = False,
 ) -> Document:
-    """
-    Fetches a web page and returns its content as a Document object in Markdown format.
-    If include_images is True, images will be included in the Markdown output.
-    """
+    """Fetch a web page and return its content as a Markdown Document."""
 
     html_page = await fetch_page(url, timeout, threshold_for_playwright)
     extracted = extract_clean_markdown(html_page)

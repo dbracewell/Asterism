@@ -1,22 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ComputerIcon,
-  LoaderCircleIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  SaveIcon,
-  Trash2Icon,
-  XIcon,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,7 +39,24 @@ import {
   appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { zProviderType } from "@/lib/client/zod.gen";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ComputerIcon,
+  LoaderCircleIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  SaveIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 export const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
@@ -706,6 +706,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                     </FieldLabel>
                     <FieldContent>
                       <Input
+                        data-1p-ignore
                         id={`provider-name-${index}`}
                         {...register(`llm_providers.${index}.name`)}
                       />
@@ -718,6 +719,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                     </FieldLabel>
                     <FieldContent>
                       <Input
+                        data-1p-ignore
                         id={`provider-base-url-${index}`}
                         placeholder="https://api.example.com/v1"
                         {...register(`llm_providers.${index}.base_url`)}
@@ -731,6 +733,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                     </FieldLabel>
                     <FieldContent>
                       <Input
+                        data-1p-ignore
                         id={`provider-api-key-${index}`}
                         type="password"
                         {...register(`llm_providers.${index}.api_key`)}

@@ -1,3 +1,12 @@
+"""Provider model discovery over the OpenAI-compatible ``/models`` endpoint.
+
+Safeguards: no redirects (credentials must not follow a redirect), a hard
+response size cap, bounded timeouts, and error mapping to safe, categorized
+messages that never echo upstream response bodies. For first-party OpenAI,
+capability values come from the versioned local catalog instead of provider
+metadata.
+"""
+
 from __future__ import annotations
 
 import uuid
@@ -28,11 +37,19 @@ from .schemas import Llm
 
 logger = get_logger("ProviderDiscovery")
 
+# Hard cap on upstream model-list payloads (checked via content-length and stream size).
 MAX_DISCOVERY_RESPONSE_BYTES = 2 * 1024 * 1024
 DISCOVERY_TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
 
 class ProviderDiscoveryRequest(BaseModel):
+    """Inputs for one discovery run.
+
+    ``api_key`` is write-only in the OpenAPI schema; ``existing_models`` carries
+    the current catalog so results can be merged without clobbering manual
+    metadata or model identity.
+    """
+
     provider_type: ProviderType
     base_url: str = ""
     api_key: SecretStr = Field(
@@ -50,6 +67,8 @@ class ProviderDiscoveryRequest(BaseModel):
 
 
 class ProviderDiscoveryResponse(BaseModel):
+    """Merged model list plus non-fatal warnings and, for OpenAI, the catalog version."""
+
     models: list[Llm]
     catalog_version: str | None = None
     warnings: list[str] = Field(default_factory=list)
@@ -66,6 +85,8 @@ class ProviderDiscoveryError(Exception):
 
 
 class ProviderDiscovery(Protocol):
+    """Structural interface so discovery can be substituted in tests."""
+
     async def discover(
         self,
         request: ProviderDiscoveryRequest,
@@ -77,6 +98,8 @@ class _DiscoveryResponseTooLarge(Exception):
 
 
 class _SizeLimitedStream(httpx.AsyncByteStream):
+    """Streaming wrapper that raises :class:`_DiscoveryResponseTooLarge` past the byte cap."""
+
     def __init__(self, stream: httpx.AsyncByteStream) -> None:
         self._stream = stream
         self._size = 0
@@ -93,6 +116,7 @@ class _SizeLimitedStream(httpx.AsyncByteStream):
 
 
 async def _limit_response_size(response: httpx.Response) -> None:
+    """httpx response hook: reject oversized responses before the body is read."""
     content_length = response.headers.get("content-length")
     if content_length is not None:
         try:
@@ -110,6 +134,7 @@ class OpenAIProviderDiscovery:
         self,
         http_client_factory: Callable[[], httpx.AsyncClient] | None = None,
     ) -> None:
+        """Args: ``http_client_factory`` overrides the default client (used by tests)."""
         self._http_client_factory = http_client_factory or (
             lambda: httpx.AsyncClient(
                 timeout=DISCOVERY_TIMEOUT,
@@ -122,6 +147,11 @@ class OpenAIProviderDiscovery:
         self,
         request: ProviderDiscoveryRequest,
     ) -> ProviderDiscoveryResponse:
+        """Run discovery for one provider and merge the result with its existing catalog.
+
+        Raises:
+            ProviderDiscoveryError: with a safe, categorized detail on any failure.
+        """
         base_url = normalize_provider_base_url(
             request.provider_type,
             request.base_url,
@@ -145,6 +175,10 @@ class OpenAIProviderDiscovery:
         warnings: list[str] = []
         discovered: list[Llm] = []
         seen_ids: set[str] = set()
+        # Plain "unknown" capabilities are aggregated into summary lines after
+        # the loop; only conflicts are worth naming a specific model for.
+        unknown_context_count = 0
+        unknown_vision_count = 0
 
         for raw_model in raw_models:
             model_id = raw_model.get("id")
@@ -159,6 +193,8 @@ class OpenAIProviderDiscovery:
                 continue
             seen_ids.add(model_id)
 
+            context_conflict = False
+            vision_conflict = False
             if request.provider_type == ProviderType.OPENAI:
                 capabilities = get_openai_capabilities(model_id)
                 context_window = capabilities.context_window if capabilities is not None else None
@@ -183,14 +219,11 @@ class OpenAIProviderDiscovery:
                 if vision_conflict:
                     warnings.append(f"{model_id}: conflicting vision metadata; left unknown.")
 
-            if context_window is None and not any(
-                warning.startswith(f"{model_id}: conflicting context") for warning in warnings
-            ):
-                warnings.append(f"{model_id}: context window is unknown.")
-            if supports_vision is None and not any(
-                warning.startswith(f"{model_id}: conflicting vision") for warning in warnings
-            ):
-                warnings.append(f"{model_id}: vision support is unknown.")
+            # Conflicts were already reported per model above; count the rest.
+            if context_window is None and not context_conflict:
+                unknown_context_count += 1
+            if supports_vision is None and not vision_conflict:
+                unknown_vision_count += 1
 
             discovered.append(
                 Llm(
@@ -208,6 +241,11 @@ class OpenAIProviderDiscovery:
                     vision_source=vision_source,
                 ),
             )
+
+        if unknown_context_count:
+            warnings.append(f"{unknown_context_count} model(s) have an unknown context window.")
+        if unknown_vision_count:
+            warnings.append(f"{unknown_vision_count} model(s) have unknown vision support.")
 
         merged = merge_discovered_models(
             request.existing_models,
@@ -234,6 +272,7 @@ class OpenAIProviderDiscovery:
         base_url: str,
         api_key: SecretStr,
     ) -> list[dict[str, object]]:
+        """Fetch the raw ``/models`` list, mapping SDK errors to :class:`ProviderDiscoveryError`."""
         http_client = self._http_client_factory()
         client = AsyncOpenAI(
             api_key=api_key.get_secret_value(),
@@ -306,6 +345,7 @@ class OpenAIProviderDiscovery:
 
 
 def _has_cause(error: BaseException, error_type: type[BaseException]) -> bool:
+    """Walk ``__cause__``/``__context__`` chains looking for ``error_type`` (httpx wraps stream errors)."""
     current: BaseException | None = error
     while current is not None:
         if isinstance(current, error_type):
@@ -317,6 +357,11 @@ def _has_cause(error: BaseException, error_type: type[BaseException]) -> bool:
 def _extract_context_window(
     model: dict[str, object],
 ) -> tuple[int | None, bool]:
+    """Collect positive integer context-window hints from known metadata keys.
+
+    Returns the value when exactly one distinct hint exists, else
+    ``(None, True)`` on conflicting hints or ``(None, False)`` when none were present.
+    """
     values: set[int] = set()
     for key in (
         "context_window",
@@ -333,6 +378,11 @@ def _extract_context_window(
 
 
 def _extract_vision(model: dict[str, object]) -> tuple[bool | None, bool]:
+    """Derive vision support from explicit flags, ``capabilities.vision``, and input modalities.
+
+    Conflicting signals yield ``(None, True)``; a single consistent signal yields
+    its value; no signal yields ``(None, False)``.
+    """
     values: set[bool] = set()
     explicit = model.get("supports_vision")
     if isinstance(explicit, bool):
@@ -364,7 +414,13 @@ def merge_discovered_models(
     discovered_models: list[Llm],
     draft_model_id: uuid.UUID | None = None,
 ) -> list[Llm]:
-    """Merge refresh results without replacing identity or manual metadata."""
+    """Merge refresh results without replacing identity or manual metadata.
+
+    Models are matched by name: kept rows retain their id/provider/activation,
+    MANUAL capability values win over fresh data, and a missing discovered value
+    falls back to the stored one. The draft model is re-appended if the provider
+    temporarily omitted it.
+    """
     existing_by_name = {model.name: model for model in existing_models}
     merged: list[Llm] = []
     for discovered in discovered_models:

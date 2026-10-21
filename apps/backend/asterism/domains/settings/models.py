@@ -1,3 +1,15 @@
+"""ORM models for LLM providers, provider models, and key/value settings tables.
+
+Two table families live here:
+
+- ``providers`` / ``models``: admin-managed LLM provider configuration and the
+  models each provider exposes, including capability flags and the provenance
+  (``*_source``) of each capability value.
+- ``user_settings`` / ``app_settings``: untyped JSON key/value stores; the
+  allowed keys and their shapes are validated in :mod:`service`, not by the
+  database schema.
+"""
+
 import uuid
 
 from pydantic import JsonValue
@@ -13,12 +25,21 @@ from .secrets import EncryptedText
 
 
 def _enum_values(enum_type):
+    """Return the stored string values of a StrEnum (used to name CHECK constraints)."""
     return [member.value for member in enum_type]
 
 
 class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
+    """An LLM provider endpoint configured by an admin (table ``providers``).
+
+    ``api_key`` is encrypted at rest via :class:`EncryptedText`; reads return
+    the decrypted value, so callers must treat it as a secret and redact it in
+    API responses (see :class:`ProviderInfo`).
+    """
+
     __tablename__ = "providers"
 
+    # Provider flavor; OPENAI pins the base URL server-side (see provider_types).
     provider_type: Mapped[ProviderType] = mapped_column(
         Enum(
             ProviderType,
@@ -32,6 +53,7 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         default=ProviderType.GENERIC_OPENAI,
         server_default=ProviderType.GENERIC_OPENAI.value,
     )
+    # Display name; unique across all providers.
     name: Mapped[str] = mapped_column(
         Text,
         nullable=False,
@@ -41,6 +63,7 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         Text,
         nullable=False,
     )
+    # Encrypted at rest; decrypted transparently on read.
     api_key: Mapped[str] = mapped_column(
         EncryptedText,
         nullable=False,
@@ -54,6 +77,15 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
 
 
 class LLMModel(Base, UuidPrimaryKeyMixin):
+    """A model exposed by a provider (table ``models``).
+
+    Capability columns (``context_window``, ``supports_vision``,
+    ``supports_tools``) are paired with provenance enums (``*_source``) that
+    record where each value came from: catalog, provider metadata, manual admin
+    edit, or unknown. Discovery merges preserve MANUAL values over fresh
+    provider data (see :func:`discovery.merge_discovered_models`).
+    """
+
     __tablename__ = "models"
     __table_args__ = (
         CheckConstraint(
@@ -63,6 +95,7 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
         Index("ix_models_provider_name_id", "provider_id", "name", "id"),
     )
 
+    # The provider's model identifier (e.g. "gpt-4o"); unique per provider via the index above.
     name: Mapped[str] = mapped_column(
         Text,
         nullable=False,
@@ -121,13 +154,11 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
         default=ModelCapabilitySource.UNKNOWN,
         server_default=ModelCapabilitySource.UNKNOWN.value,
     )
+    # No single-column index: lookups by provider_id are covered by the leading
+    # column of ix_models_provider_name_id.
     provider_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey(
-            column="providers.id",
-            ondelete="CASCADE",
-        ),
+        ForeignKey(ProviderModel.id, ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
 
     provider: Mapped[ProviderModel] = relationship(
@@ -137,6 +168,13 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
 
 
 class UserSettingModel(Base, TimestampMixin):
+    """One row per (user, setting key) in ``user_settings``.
+
+    ``value`` is untyped JSON; the whitelist of keys and their shapes is
+    enforced in :func:`service._validate_user_setting`, not by the schema.
+    Composite primary key ``(user_id, key)``.
+    """
+
     __tablename__ = "user_settings"
 
     user_id: Mapped[str] = mapped_column(
@@ -147,14 +185,25 @@ class UserSettingModel(Base, TimestampMixin):
         String,
         primary_key=True,
     )
-    value: Mapped[JsonValue] = mapped_column(jsonb_type())
+    # Explicit NOT NULL: JsonValue is a union containing None, so the annotation
+    # alone would leave the column nullable. Clearing a setting deletes its row.
+    value: Mapped[JsonValue] = mapped_column(jsonb_type(), nullable=False)
 
 
 class ApplicationSettingsModel(Base, TimestampMixin):
+    """Global application settings as JSON rows keyed by name (``app_settings``).
+
+    Keys include ``llm_providers``, ``draft_model_id``, component provider
+    selections (with encrypted parameter values), ``active_tools``, and the
+    knowledge processing policy. Key validation lives in :mod:`service`.
+    """
+
     __tablename__ = "app_settings"
 
     key: Mapped[str] = mapped_column(
         String,
         primary_key=True,
     )
-    value: Mapped[JsonValue] = mapped_column(jsonb_type())
+    # Explicit NOT NULL: JsonValue is a union containing None, so the annotation
+    # alone would leave the column nullable. Clearing a setting deletes its row.
+    value: Mapped[JsonValue] = mapped_column(jsonb_type(), nullable=False)

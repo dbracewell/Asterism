@@ -26,7 +26,7 @@ from asterism.domains.settings.service import (
     update_provider_settings,
     upsert_user_setting,
 )
-from asterism.domains.user.service import create_user, delete_user, ensure_user
+from asterism.domains.user.service import UserCreateOutcome, create_user, delete_user, ensure_user
 from pydantic import ValidationError
 from sqlalchemy import event, func, select
 from sqlalchemy.exc import IntegrityError
@@ -74,7 +74,8 @@ async def test_provision_without_models_and_concurrent_creation(main_agent_sessi
         async with session.info["sessions"]() as other:
             return await create_user("race", other)
 
-    assert sorted(await asyncio.gather(create(), create())) == [False, True]
+    outcomes = sorted(await asyncio.gather(create(), create()))
+    assert outcomes == [UserCreateOutcome.ALREADY_EXISTS, UserCreateOutcome.CREATED]
     for _ in range(2):
         await ensure_user("race", session)
     assert (

@@ -12,6 +12,8 @@ OPENAI_MODEL_CATALOG_VERSION = "2026-03-01"
 
 @dataclass(frozen=True)
 class CatalogCapabilities:
+    """Known capability facts for one catalogued OpenAI model family."""
+
     context_window: int | None
     supports_vision: bool | None
 

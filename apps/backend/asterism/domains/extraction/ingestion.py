@@ -146,6 +146,7 @@ async def ingest_file(
                 file_id=str(processed.id),
                 artifact_generation=extraction.generation,
                 chunk_ordinal=ordinal,
+                kind="text",
                 content=content,
                 vector=vector,
             )

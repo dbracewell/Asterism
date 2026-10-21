@@ -204,7 +204,6 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
             generation=updated.generation,
             status=updated.status,
             text_embeddings_ready=updated.text_embeddings_ready,
-            caption_text=updated.caption_text,
         )
         assert retrieval_artifact.ready is True
 

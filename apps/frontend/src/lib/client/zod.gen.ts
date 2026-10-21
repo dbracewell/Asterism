@@ -111,6 +111,11 @@ export const zChatUpdateRequest = z.object({
 
 /**
  * ComponentProviderParameters
+ *
+ * A named component provider (e.g. web search) plus its string parameters.
+ *
+ * JSON serialization redacts values whose keys look like secrets, so API
+ * responses never echo stored credentials.
  */
 export const zComponentProviderParameters = z.object({
   name: z.string(),
@@ -155,6 +160,14 @@ export const zConfigurationProvenance = z.object({
  * CreateUserRequest
  *
  * Request model for creating a new user.
+ *
+ * Attributes:
+ * user_id: The stable identifier to provision. Must match the id claim
+ * of the BetterAuth token this user will present; Asterism stores no
+ * other identity data.
+ * system_key: Optional shared secret (``SYSTEM_KEY``) that lets an
+ * unauthenticated caller create users. When omitted, the caller must
+ * be an authenticated admin.
  */
 export const zCreateUserRequest = z.object({
   user_id: z.string(),
@@ -182,6 +195,8 @@ export const zDownloadProgress = z.object({
 
 /**
  * ErrorDetail
+ *
+ * Standard error response body: a message plus its HTTP status code.
  */
 export const zErrorDetail = z.object({
   detail: z.string(),
@@ -236,6 +251,8 @@ export const zJsonValue = z.unknown();
 
 /**
  * BulkUpdateSettingRequest
+ *
+ * Payload for updating several settings at once, keyed by setting name.
  */
 export const zBulkUpdateSettingRequest = z.object({
   values: z.record(z.string(), zJsonValue),
@@ -377,6 +394,8 @@ export const zMessageStatus = z.enum(["pending", "completed", "cancelled"]);
 
 /**
  * ModelCapabilitySource
+ *
+ * Provenance of a model capability value (context window, vision, tools).
  */
 export const zModelCapabilitySource = z.enum([
   "catalog",
@@ -415,6 +434,8 @@ export const zChatModelChoice = z.object({
 
 /**
  * Llm
+ *
+ * A provider model with capability flags and their provenance.
  */
 export const zLlm = z.object({
   id: z.uuid(),
@@ -431,6 +452,8 @@ export const zLlm = z.object({
 
 /**
  * LlmDisplayInfo
+ *
+ * Flat, denormalized model view (includes ``provider_name``) for pickers and lists.
  */
 export const zLlmDisplayInfo = z.object({
   id: z.uuid(),
@@ -627,6 +650,8 @@ export const zChatInfoList = z.object({
 
 /**
  * ProviderDiscoveryResponse
+ *
+ * Merged model list plus non-fatal warnings and, for OpenAI, the catalog version.
  */
 export const zProviderDiscoveryResponse = z.object({
   models: z.array(zLlm),
@@ -636,6 +661,8 @@ export const zProviderDiscoveryResponse = z.object({
 
 /**
  * ProviderModelUpdate
+ *
+ * Full-replacement payload for one model's flags and capabilities.
  */
 export const zProviderModelUpdate = z.object({
   is_active: z.boolean(),
@@ -649,6 +676,8 @@ export const zProviderModelUpdate = z.object({
 
 /**
  * ProviderModelsPage
+ *
+ * One keyset-paginated page of a provider's models (``next_cursor`` is a model id).
  */
 export const zProviderModelsPage = z.object({
   models: z.array(zLlm).optional(),
@@ -658,11 +687,19 @@ export const zProviderModelsPage = z.object({
 
 /**
  * ProviderType
+ *
+ * Supported provider flavors.
+ *
+ * ``OPENAI`` is the first-party API (base URL pinned server-side);
+ * ``GENERIC_OPENAI`` is any OpenAI-compatible endpoint (public or local) with
+ * a client-supplied base URL.
  */
 export const zProviderType = z.enum(["openai", "generic_openai"]);
 
 /**
  * Provider
+ *
+ * Full provider configuration including its models.
  */
 export const zProvider = z.object({
   name: z.string(),
@@ -674,6 +711,8 @@ export const zProvider = z.object({
 
 /**
  * ApplicationSettings
+ *
+ * Aggregate of global application settings (admin view).
  */
 export const zApplicationSettings = z.object({
   llm_providers: z.array(zProvider).optional(),
@@ -685,6 +724,12 @@ export const zApplicationSettings = z.object({
 
 /**
  * ProviderDiscoveryRequest
+ *
+ * Inputs for one discovery run.
+ *
+ * ``api_key`` is write-only in the OpenAPI schema; ``existing_models`` carries
+ * the current catalog so results can be merged without clobbering manual
+ * metadata or model identity.
  */
 export const zProviderDiscoveryRequest = z.object({
   provider_type: zProviderType,
@@ -710,6 +755,8 @@ export const zProviderSummary = z.object({
 
 /**
  * ProviderSettings
+ *
+ * Provider landing-page payload: provider summaries plus the selected draft model.
  */
 export const zProviderSettings = z.object({
   llm_providers: z.array(zProviderSummary).optional(),
@@ -780,6 +827,8 @@ export const zSearchResultList = z.object({
 
 /**
  * Setting
+ *
+ * A single key/value setting row.
  */
 export const zSetting = z.object({
   key: z.string(),
@@ -869,11 +918,22 @@ export const zToolCall = z.object({
 
 /**
  * ToolPolicy
+ *
+ * How a tool's availability is authorized at runtime.
  */
 export const zToolPolicy = z.enum(["user_configurable", "context_managed"]);
 
 /**
  * ToolInfo
+ *
+ * Catalog entry describing one tool to the frontend.
+ *
+ * Attributes:
+ * name: Registered tool name (matches settings/allowlist entries).
+ * description: Model/user-facing description.
+ * component_type: Component backing the tool, when it wraps one.
+ * policy: Authorization policy; internal tools are CONTEXT_MANAGED and
+ * hidden from user capability pickers.
  */
 export const zToolInfo = z.object({
   name: z.string(),
@@ -884,6 +944,8 @@ export const zToolInfo = z.object({
 
 /**
  * ToolInfoList
+ *
+ * Envelope for tool catalog responses; items are sorted by name.
  */
 export const zToolInfoList = z.object({
   items: z.array(zToolInfo),
@@ -938,6 +1000,8 @@ export const zChat = z.object({
 
 /**
  * ToolSettings
+ *
+ * Admin tool configuration: enabled tools plus component provider selections.
  */
 export const zToolSettings = z.object({
   web_search_provider: zComponentProviderParameters.nullish(),
@@ -959,6 +1023,8 @@ export const zUpdateMessageRequest = z.object({
 
 /**
  * UpdateSettingValue
+ *
+ * Payload for updating one setting by key (``value`` of ``None`` deletes it).
  */
 export const zUpdateSettingValue = z.object({
   value: zJsonValue,
@@ -1010,6 +1076,11 @@ export const zUserFileList = z.object({
 
 /**
  * UserSettings
+ *
+ * Aggregate of one user's settings as returned by ``GET /settings/user``.
+ *
+ * ``main_agent``/``sub_agents`` are injected by the service from the agent
+ * domain; ``models`` is the list of all active models across providers.
  */
 export const zUserSettings = z.object({
   theme: z.string().optional().default("light"),
@@ -1023,6 +1094,8 @@ export const zUserSettings = z.object({
 
 /**
  * Provider
+ *
+ * Full provider configuration including its models.
  */
 export const zProviderWritable = z.object({
   name: z.string(),
@@ -1035,6 +1108,8 @@ export const zProviderWritable = z.object({
 
 /**
  * ApplicationSettings
+ *
+ * Aggregate of global application settings (admin view).
  */
 export const zApplicationSettingsWritable = z.object({
   llm_providers: z.array(zProviderWritable).optional(),
@@ -1046,6 +1121,12 @@ export const zApplicationSettingsWritable = z.object({
 
 /**
  * ProviderDiscoveryRequest
+ *
+ * Inputs for one discovery run.
+ *
+ * ``api_key`` is write-only in the OpenAPI schema; ``existing_models`` carries
+ * the current catalog so results can be merged without clobbering manual
+ * metadata or model identity.
  */
 export const zProviderDiscoveryRequestWritable = z.object({
   provider_type: zProviderType,
@@ -1073,6 +1154,8 @@ export const zProviderSummaryWritable = z.object({
 
 /**
  * ProviderSettings
+ *
+ * Provider landing-page payload: provider summaries plus the selected draft model.
  */
 export const zProviderSettingsWritable = z.object({
   llm_providers: z.array(zProviderSummaryWritable).optional(),
@@ -1726,6 +1809,13 @@ export const zAppCaptionModelDownloadResponse = zDownloadProgress;
  * Successful Response
  */
 export const zAppCaptionModelCancelResponse = zDownloadProgress;
+
+/**
+ * Response Userlistusers
+ *
+ * Successful Response
+ */
+export const zUserListUsersResponse = z.array(z.string());
 
 export const zUserCreateUserBody = zCreateUserRequest;
 

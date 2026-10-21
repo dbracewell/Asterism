@@ -43,6 +43,13 @@ class NotFoundException(CodedException):
         super().__init__(404, message)
 
 
+class ForbiddenException(CodedException):
+    """HTTP 403: the caller is authenticated but not allowed to perform the action."""
+
+    def __init__(self, message: str = "Forbidden"):
+        super().__init__(403, message)
+
+
 class ConflictException(CodedException):
     """HTTP 409: the request conflicts with the current state of the resource."""
 

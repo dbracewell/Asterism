@@ -361,12 +361,14 @@ class Agent:
             ceiling=self.tool_scope,
             check_active=self.authorization_check,
         )
+        app_settings = await settings_service.get_app_settings()
         tasks = [
             tool_registry.invoke_tool(
                 tool_call=auth.tool,
                 user=self.user,
                 session=self.session,
                 client=await self._get_client(),
+                app_settings=app_settings,
                 user_message=user_message or "",
                 user_files=self.user_files,
                 call_stack=self.call_stack,

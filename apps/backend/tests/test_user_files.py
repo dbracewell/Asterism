@@ -268,7 +268,7 @@ async def test_similar_files_rank_by_cosine_and_stay_user_scoped(file_session, m
         artifact.status = FileKnowledgeArtifactStatus.READY
         artifact.is_current = name != "stale.txt"
         await store.add(
-            [VectorChunk(f"{name}-0", owners.get(name, "user-a"), str(by_name[name].id), 1, 0, name, vector)],
+            [VectorChunk(f"{name}-0", owners.get(name, "user-a"), str(by_name[name].id), 1, 0, "text", name, vector)],
         )
     await file_session.commit()
 

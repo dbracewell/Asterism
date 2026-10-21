@@ -277,6 +277,7 @@ async def caption(
                             str(file.id),
                             artifact.generation,
                             artifact.chunk_count,
+                            "caption",
                             result.text,
                             vector,
                         ),
