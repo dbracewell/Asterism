@@ -23,6 +23,7 @@ from .models import (
     KnowledgeCaptionMode,
     KnowledgeCaptionStatus,
 )
+from .retention import prune_superseded_generations
 from .vector_store import VectorChunk, vector_store
 
 logger = logging.getLogger(__name__)
@@ -203,6 +204,14 @@ async def ingest_file(
         )
         extraction.completed_at = None
         await session.commit()
+        # This generation is settled and superseded; enforce the retention
+        # window so dead generations cannot accumulate.
+        await prune_superseded_generations(
+            user_id=file.user_id,
+            file_id=file.id,
+            session=session,
+            store=store,
+        )
         return extraction
 
     await session.execute(
@@ -225,6 +234,15 @@ async def ingest_file(
         extraction.caption_status = KnowledgeCaptionStatus.PENDING if caption_requested else None
 
     await session.commit()
+
+    # The promoted generation supersedes the older ones. Prune the ones
+    # outside the retention window now that the promotion is durable.
+    await prune_superseded_generations(
+        user_id=extraction.user_id,
+        file_id=extraction.file_id,
+        session=session,
+        store=store,
+    )
 
     if caption_requested:
         on_caption_request(extraction.user_id, file.id, extraction.id)

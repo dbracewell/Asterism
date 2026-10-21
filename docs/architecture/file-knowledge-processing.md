@@ -13,6 +13,8 @@ reference a file and never initiate duplicate work.
 | **Knowledge artifact**            | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: extraction result, chunk count, embedding readiness, canonical caption state, timestamps, and safe errors. This is the canonical meaning of _artifact_ in this guide. | `FileExtractionModel` / `file_extractions`                                             |
 | **Artifact generation**           | A monotonic version of a file's knowledge artifact. Reprocessing creates a new generation instead of modifying a usable one in place.                                                                                                                                             | `FileExtractionModel.generation` and `VectorChunk.artifact_generation`                 |
 | **Current artifact**              | The one ready artifact generation selected for a source file. A replacement becomes current only after its vectors are written successfully.                                                                                                                                      | `FileExtractionModel.is_current`, protected by a partial unique index                  |
+| **Reported artifact**             | The artifact generation an API reports for a file: the current generation when one exists (the generation retrieval serves), otherwise the newest generation (the one still being built).                                                                                                                                  | `extraction.queries.select_file_artifacts` plus the files domain's `file_knowledge_summaries` |
+| **Generation retention**          | The window of superseded artifact generations kept per file. The current generation plus `KNOWLEDGE_GENERATION_RETENTION` superseded generations are kept; the rest are pruned with their vectors.                                                                                                                          | `KNOWLEDGE_GENERATION_RETENTION` plus `extraction.retention.prune_superseded_generations` |
 | **Processing policy**             | The single platform-wide extraction, chunking, embedding, and caption policy. Users cannot select a different model or policy per file.                                                                                                                                           | Versioned `knowledge.processing` value in `ApplicationSettingsModel`                   |
 | **Profile generation / identity** | The profile's revision number and deterministic fingerprint, copied into each artifact to show which policy produced it. A changed identity queues a replacement artifact for each eligible library file.                                                                         | `processing_profile_generation`, `processing_profile_identity`                         |
 | **Content cache**                 | Bounded converted text used as the input to chunking. It is source-file conversion state, distinct from the artifact's indexed vector rows.                                                                                                                                       | `UserFileModel.content_cache`, produced by `MarkItDownFileProcessor`                   |
@@ -141,6 +143,38 @@ file generation. It writes replacement vectors before clearing the old artifact'
 ready generation searchable but can never expose a partially indexed generation
 as current.
 
+## Generation retention
+
+Every processing-policy change mints a new generation for the whole library, and
+each generation owns its own chunk vectors. Without a bound those generations
+accumulate indefinitely, so `extraction.retention.prune_superseded_generations()`
+enforces a window after each generation settles (it is promoted to ready, or it
+fails terminally):
+
+- The current generation is never pruned; it is what retrieval serves.
+- Generations whose work is still in flight (`pending`/`processing`) are never
+  pruned, so a running worker is never pulled out from under itself.
+- The newest `KNOWLEDGE_GENERATION_RETENTION` superseded generations are kept
+  (`1` by default, `0` keeps only the current generation).
+
+Vectors are removed before the row that describes them. A row without vectors
+stays addressable and the next prune retries it, whereas vectors without a row
+would be unreachable orphans that nothing could reclaim.
+
+## Which generation an API reports
+
+File metadata and `GET /files/{filename}/knowledge` report the file's
+*reported artifact*: the current generation when one exists, and otherwise the
+newest generation. The current generation is what retrieval serves, so the UI
+and retrieval agree on which generation a file is using; a file that has never
+been processed has no current generation yet, so the generation still being
+built is reported instead.
+
+`regenerate` and `cancel` act on the *newest* generation rather than the
+reported one, because they act on processing work: retrying a failed
+replacement, and cancelling an in-flight replacement without disturbing the
+generation that is currently serving the file.
+
 ## Caption generation
 
 Caption work starts only after an image artifact reaches `ready` and the global
@@ -247,7 +281,8 @@ similar files, and containing projects. `GET /files/{filename}/similar`
 averages them into a normalized centroid, and searches the owner's other ready,
 current-generation files. Results are grouped by file using the best chunk, with
 cosine similarity derived from LanceDB's squared L2 distance over unit vectors.
-File metadata includes the owner's containing project summaries.
+File metadata includes the owner's containing project summaries and the file's
+reported knowledge artifact.
 
 ## Related guides
 

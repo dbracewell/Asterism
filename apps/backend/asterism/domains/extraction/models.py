@@ -162,10 +162,15 @@ class FileExtractionModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
             "updated_at",
         ),
         Index(
+            # At most one current generation per file, enforced by the
+            # database. The predicate is declared for every dialect that
+            # supports partial unique indexes, so the invariant does not
+            # silently disappear on the next storage adapter.
             "uq_file_knowledge_artifacts_one_current",
             "file_id",
             unique=True,
             sqlite_where=(is_current == true()),
+            postgresql_where=(is_current == true()),
         ),
     )
 

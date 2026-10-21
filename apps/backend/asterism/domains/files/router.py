@@ -1,3 +1,9 @@
+"""HTTP transport for the file domain.
+
+Every route is authenticated and user-scoped: the ``user_id`` used for every
+lookup comes from the auth dependency, never from the request body or path.
+"""
+
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Query, Request, UploadFile, status
@@ -21,6 +27,7 @@ file_router = APIRouter(
         404: {"description": "Not found", "model": ErrorDetail},
     },
 )
+"""Router exposing the caller's own file library."""
 
 
 @file_router.post(
@@ -34,6 +41,17 @@ async def upload_files(
     db: DBSessionDep,
     files: Annotated[list[UploadFile], File(description="Files to upload")],
 ) -> UserFileList:
+    """Upload one or more files into the caller's library.
+
+    Args:
+        user: The authenticated caller.
+        db: Request-scoped database session.
+        files: Uploaded files; each is sanitized, de-duplicated and stored.
+
+    Returns:
+        The files that now exist for the caller. Uploading a file that already
+        exists with identical name and content reuses the existing row.
+    """
     return await file_service.upload_files(user_id=user.id, uploads=files, session=db)
 
 
@@ -51,6 +69,19 @@ async def list_files(
     sort_by: Literal["name", "kind", "date", "size"] = Query(default="name", pattern="^(name|kind|date|size)$"),
     query: str | None = Query(default=None, description="Search query to filter files by name"),
 ) -> UserFileList:
+    """List the caller's files.
+
+    Args:
+        user: The authenticated caller.
+        db: Request-scoped database session.
+        page: 1-based page number.
+        page_size: Number of files per page (1..100).
+        sort_by: Primary ordering key.
+        query: Optional case-insensitive substring filter on the file name.
+
+    Returns:
+        One page of the caller's files with project and knowledge context.
+    """
     return await file_service.list_user_files(
         user_id=user.id,
         session=db,
@@ -72,6 +103,18 @@ async def delete_man_files(
     filenames: list[str],
     session: DBSessionDep,
 ) -> UserFileList:
+    """Delete several files from the caller's library.
+
+    Args:
+        user: The authenticated caller.
+        filenames: Display names of the files to delete. Unknown names are
+            ignored rather than reported as errors.
+        session: Request-scoped database session.
+
+    Returns:
+        The files that were deleted, with the context they had at deletion
+        time.
+    """
     return await file_service.delete_user_files(
         user_id=user.id,
         filenames=filenames,
@@ -90,6 +133,16 @@ async def get_file_info(
     filename: str,
     session: DBSessionDep,
 ) -> UserFile:
+    """Get metadata for one of the caller's files.
+
+    Args:
+        user: The authenticated caller.
+        filename: Display name of the file.
+        session: Request-scoped database session.
+
+    Returns:
+        The file's metadata, including its project and knowledge context.
+    """
     return await file_service.get_user_file_info(
         user_id=user.id,
         filename=filename,
@@ -108,6 +161,16 @@ async def delete_file(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> UserFile:
+    """Delete one file from the caller's library.
+
+    Args:
+        filename: Display name of the file to delete.
+        user: The authenticated caller.
+        db: Request-scoped database session.
+
+    Returns:
+        The deleted file's metadata as it was just before deletion.
+    """
     return await file_service.delete_user_file(
         user_id=user.id,
         filename=filename,
@@ -126,6 +189,16 @@ async def get_file_knowledge_status(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> FileKnowledgeArtifact:
+    """Get the knowledge-artifact status for one of the caller's files.
+
+    Args:
+        filename: Display name of the file.
+        user: The authenticated caller.
+        db: Request-scoped database session.
+
+    Returns:
+        The newest knowledge artifact for the file.
+    """
     return await file_service.get_file_knowledge_status(
         user_id=user.id,
         filename=filename,
@@ -144,6 +217,16 @@ async def regenerate_file_knowledge(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> FileKnowledgeArtifact:
+    """Re-run knowledge processing for one of the caller's files.
+
+    Args:
+        filename: Display name of the file.
+        user: The authenticated caller.
+        db: Request-scoped database session.
+
+    Returns:
+        The artifact that was reset to ``pending`` and re-queued.
+    """
     return await file_service.regenerate_file_knowledge(
         user_id=user.id,
         filename=filename,
@@ -162,6 +245,16 @@ async def cancel_file_knowledge_processing(
     user: AuthedUserDep,
     db: DBSessionDep,
 ) -> FileKnowledgeArtifact:
+    """Cancel in-flight knowledge processing for one of the caller's files.
+
+    Args:
+        filename: Display name of the file.
+        user: The authenticated caller.
+        db: Request-scoped database session.
+
+    Returns:
+        The artifact in its current (possibly canceled) state.
+    """
     return await file_service.cancel_file_knowledge_processing(
         user_id=user.id,
         filename=filename,
@@ -181,6 +274,17 @@ async def get_similar_files(
     db: DBSessionDep,
     limit: int = Query(default=5, ge=1, le=20),
 ) -> SimilarFileList:
+    """Find the caller's files most similar to one of their files.
+
+    Args:
+        filename: Display name of the query file.
+        user: The authenticated caller.
+        db: Request-scoped database session.
+        limit: Maximum number of similar files to return (1..20).
+
+    Returns:
+        Ranked similar files with their cosine similarity score.
+    """
     return await file_service.get_similar_files(user_id=user.id, filename=filename, session=db, limit=limit)
 
 
@@ -206,6 +310,18 @@ async def get_file(
     filename: str,
     db: DBSessionDep,
 ):
+    """Download the original bytes of one of the caller's files.
+
+    Args:
+        request: The incoming request, used for conditional-request headers.
+        user: The authenticated caller.
+        filename: Display name of the file.
+        db: Request-scoped database session.
+
+    Returns:
+        A ``200`` file response, or a ``304`` when the client's ``ETag``
+        already matches the stored content.
+    """
     return await file_service.get_user_file(
         user_id=user.id,
         filename=filename,

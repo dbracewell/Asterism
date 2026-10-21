@@ -43,3 +43,14 @@ EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above.
   - [ ] Implement fresh-initialized schema/service invariants, atomic provisioning and owner-scoped persona lifecycle with race/authorization tests; no migrations or compatibility paths.
   - [ ] Expose typed APIs, regenerate Hey clients and implement profile selection/settings through TanStack Query and existing UI components.
   - [ ] Test prompt/provenance integration, default/delete races, cross-owner denial and unavailable/error states; document memory as future work and run all relevant gates.
+
+## [EPIC-36: Knowledge generation lifecycle](docs/epics/EPIC-36-KNOWLEDGE-GENERATION-LIFECYCLE.md)
+
+- [x] US-36.1: Bound, port, and align knowledge generations
+  - [x] Add `KNOWLEDGE_GENERATION_RETENTION` (0–10, default 1) with runtime validation.
+  - [x] Add `extraction/retention.py` with a pure retention rule and the pruning routine; delete vectors before the rows that describe them, and keep a row when its vectors cannot be removed so the deletion retries.
+  - [x] Prune after a generation settles (promoted to ready, or terminally failed) in the ingestion path.
+  - [x] Declare the one-current-generation partial unique index for SQLite and PostgreSQL.
+  - [x] Report the current generation (falling back to the newest when no generation is current yet) from file metadata and the knowledge-status endpoint.
+  - [x] Cover the retention rule, pruning, dialect declaration and reporting with tests; run backend lint, type checks and the full test suite.
+  - [x] Document the retention window and the reported-artifact rule in the file-knowledge, retrieval and data-storage architecture guides.
