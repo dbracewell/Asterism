@@ -124,7 +124,12 @@ class RuntimeFileReader:
         # Processing may await remote/local extraction; do not release a revoked cache.
         await self.validate_files(scope, ids)
         if kind != FileKind.IMAGE:
-            return FileModelInput(text=text) if text else FileModelInput(reason=error or "file type is unsupported")
+            # An empty source is still an attached source: distinguish "no
+            # cached text" from "cached empty text" so an empty file is not
+            # reported as an unsupported type.
+            if text is not None:
+                return FileModelInput(text=text)
+            return FileModelInput(reason=error or "file type is unsupported")
         if not supports_vision:
             return FileModelInput(reason="model does not support image input")
         if size > self.max_image_bytes:

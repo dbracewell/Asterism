@@ -54,3 +54,12 @@ EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above.
   - [x] Report the current generation (falling back to the newest when no generation is current yet) from file metadata and the knowledge-status endpoint.
   - [x] Cover the retention rule, pruning, dialect declaration and reporting with tests; run backend lint, type checks and the full test suite.
   - [x] Document the retention window and the reported-artifact rule in the file-knowledge, retrieval and data-storage architecture guides.
+
+## [EPIC-37: Files domain correctness](docs/epics/EPIC-37-FILES-DOMAIN-CORRECTNESS.md)
+
+- [x] US-37.1: Correct content-cache invalidation, empty-file reporting, delete robustness, and schema cleanup
+  - [x] Verify the stored source's digest on every read and invalidate the cached conversion when it no longer matches.
+  - [x] Distinguish "no cached text" from "cached empty text" in the runtime read result, and treat an empty attachment as attached in the chat orchestrator.
+  - [x] Guard the stored-source removal that runs after the delete commit, and log the previously silent swallowed failures.
+  - [x] Drop the redundant `user_files` index and document why the composite unique constraint must stay.
+  - [x] Add regression tests for each fix, verify they fail against the pre-fix implementation, and run the backend and frontend gates.

@@ -8,7 +8,7 @@ extraction domain, never inside the store.
 
 import enum
 
-from sqlalchemy import Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Enum, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.common.enums import enum_values
@@ -161,8 +161,15 @@ class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     """``data:image/jpeg;base64,...`` preview for image files, else ``None``."""
 
     __table_args__ = (
+        # Composite foreign keys from chat_files, chat_draft_files and
+        # project_files reference (id, user_id). SQLite only accepts a
+        # foreign key whose parent columns are the primary key or carry a
+        # unique constraint, so this one is required even though ``id`` alone
+        # is already unique.
         UniqueConstraint("id", "user_id", name="uq_user_files_id_user"),
         # A user's library cannot contain two files with the same display name.
+        # The implicit unique index this constraint creates also serves the
+        # owner-scoped lookups, so no separate index on the same columns is
+        # needed.
         UniqueConstraint("user_id", "filename", name="uq_user_files_user_filename"),
-        Index("idx_user_files_user_filename", "user_id", "filename"),
     )

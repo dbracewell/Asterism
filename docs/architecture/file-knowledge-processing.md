@@ -112,12 +112,19 @@ administrator update replaces a malformed value with a valid version-1 setting.
 
 ## Processing branches
 
-For text and document files, `MarkItDownFileProcessor` checks the persisted
+For text and document files, `MarkItDownFileProcessor` verifies the persisted
 SHA-256, enforces `MAX_PROCESS_FILE_SIZE_BYTES`, runs conversion in a worker
 thread with `FILE_CONVERSION_TIMEOUT_S`, and truncates output to
 `MAX_CONVERTED_CHARS`. `chunk_text()` creates deterministic overlapping chunks
 using `KNOWLEDGE_CHUNK_SIZE_CHARS` and `KNOWLEDGE_CHUNK_OVERLAP_CHARS`; it rejects
 empty content and chunk counts above `MAX_KNOWLEDGE_CHUNKS_PER_DOCUMENT`.
+
+The recorded SHA-256 is the authority on the stored bytes. The store writes
+sources exclusively, so the bytes only change when something outside the system
+rewrote them; the processor re-verifies the digest on every read and drops the
+cached conversion when it no longer matches. A replaced source therefore cannot
+serve stale content to a model, and the download `ETag` always describes the
+bytes that are actually stored.
 
 For image files, the artifact does not need text conversion. `ingest_file_artifact()`
 embeds the local file path as one visual vector and records the display string

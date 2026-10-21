@@ -417,6 +417,7 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
         uploads=[
             _upload("photo.png", b"\x89PNG\r\n\x1a\nimage"),
             _upload("report.pdf", b"not-a-real-pdf"),
+            _upload("empty.txt", b""),
         ],
         session=file_session,
     )
@@ -521,6 +522,10 @@ async def test_uploaded_image_and_document_build_vision_gated_model_input(file_s
     vision_message = (await orchestrator._build_agent_messages())[0]
     assert any(isinstance(part, ImageUrlContentPart) for part in vision_message.content)  # type: ignore[union-attr]
     assert "Converted PDF" in text_content(vision_message)
+    # An empty source is still an attached source: it must not be reported as
+    # missing or unsupported.
+    assert "### Attached file: empty.txt" in text_content(vision_message)
+    assert "not included" not in text_content(vision_message)
 
     async def model_without_vision(**_):
         return SimpleNamespace(supports_vision=False)

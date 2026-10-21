@@ -299,7 +299,9 @@ class ChatOrchestrator:
                     execution_scope, file_id, supports_vision=model.supports_vision is True
                 )
                 payloads[file_id] = payload
-                if payload.text or payload.image_url:
+                # An empty source is still an attached source: presence is what
+                # matters, not whether the extracted text has content.
+                if payload.text is not None or payload.image_url is not None:
                     loaded.add(file_id)
             input_ids = frozenset(loaded)
 
@@ -319,9 +321,9 @@ class ChatOrchestrator:
                     payload = payloads.get(reference.file_id)
                     if payload is None:
                         parts.append(TextContentPart(text=f'(attached file "{reference.name}" is no longer available)'))
-                    elif payload.image_url:
+                    elif payload.image_url is not None:
                         parts.append(ImageUrlContentPart(image_url=ImageUrlContent(url=payload.image_url)))
-                    elif payload.text:
+                    elif payload.text is not None:
                         parts.append(TextContentPart(text=f"### Attached file: {reference.name}\n{payload.text}"))
                     else:
                         parts.append(

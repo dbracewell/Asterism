@@ -136,29 +136,27 @@ class MarkItDownFileProcessor:
             return file
 
         stat = path.stat()
-        file_modified = stat.st_size != file.size
-        if file_modified:
-            digest = await asyncio.to_thread(sha256_file, path)
-            if digest != file.sha256:
-                file.sha256 = digest
-                file.size = stat.st_size
-                file.content_status = FileContentStatus.PENDING
-                file.content_error = None
-                file.content_cache = None
+        # The recorded digest is the authority on the stored bytes. The store
+        # writes sources exclusively, so the bytes only change when something
+        # outside the system rewrote them — and a stale cache would then be
+        # served to the model while the download ETag still advertised the
+        # old content. Verifying the digest is bounded, streams off the event
+        # loop, and is the only check that catches a replaced source whose
+        # length did not change.
+        digest = await asyncio.to_thread(sha256_file, path)
+        if digest != file.sha256:
+            file.sha256 = digest
+            file.size = stat.st_size
+            file.content_status = FileContentStatus.PENDING
+            file.content_error = None
+            file.content_cache = None
 
-        if (
-            file.content_status is not FileContentStatus.PENDING
-            and not (
-                file.content_status is FileContentStatus.FAILED
-                and file.content_error == "File is too large to process"
-                and file.size <= config.max_process_file_size_bytes
-            )
-            and file.sha256
+        if file.content_status is not FileContentStatus.PENDING and not (
+            file.content_status is FileContentStatus.FAILED
+            and file.content_error == "File is too large to process"
+            and file.size <= config.max_process_file_size_bytes
         ):
             return file
-
-        if not file_modified and not file.sha256:
-            file.sha256 = await asyncio.to_thread(sha256_file, path)
 
         # A configured processing limit can be raised after an upload. Retry the
         # deterministic size failure when the file is attached again instead of

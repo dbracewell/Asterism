@@ -26,6 +26,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.images import generate_thumbnail
+from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
@@ -39,6 +40,8 @@ from .processor import ensure_file_processed as ensure_file_processed
 from .queries import select_owned_files
 from .schemas import SimilarFile, SimilarFileList, UserFile, UserFileList
 from .store import get_file_store as get_file_store
+
+logger = get_logger("FilesService")
 
 _DENIED_EXTENSIONS = {
     ".app",
@@ -693,8 +696,13 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     except Exception:
         # Database/source deletion remains authoritative; a restarted worker
         # cannot restore vectors because its file/artifact row is gone.
-        pass
-    get_file_store().delete(user_id, file.storage_key)
+        logger.warning("Could not remove knowledge vectors for deleted file", extra={"file_id": str(file_id)})
+    try:
+        get_file_store().delete(user_id, file.storage_key)
+    except Exception:
+        # The row is already gone, so the deletion succeeded. A source that
+        # cannot be removed must not turn a completed delete into a failure.
+        logger.warning("Could not remove stored source for deleted file", extra={"file_id": str(file_id)})
     return response
 
 
@@ -774,7 +782,7 @@ async def delete_user_files(
             store.delete(user_id, storage_key)
         except Exception:
             # If the file is missing from the store, we still want to return a successful response.
-            pass
+            logger.warning("Could not remove stored source for deleted file", extra={"storage_key": storage_key})
 
     if deleted_files:
         from asterism.domains.extraction.runtime import vector_store
@@ -783,7 +791,7 @@ async def delete_user_files(
             try:
                 await vector_store.delete_file(user_id=user_id, file_id=str(file.id))
             except Exception:
-                pass
+                logger.warning("Could not remove knowledge vectors for deleted file", extra={"file_id": str(file.id)})
 
     return UserFileList(files=deleted_files)
 
