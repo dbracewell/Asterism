@@ -53,7 +53,7 @@ export const FileList = () => {
         <div className="bg-card flex min-h-0 w-full min-w-0 flex-1 flex-col">
           <div
             className={cn(
-              "min-h-0 w-full min-w-0 flex-1 scroll-p-2 gap-1 overflow-y-auto px-4 py-2",
+              "min-h-0 w-full min-w-0 scroll-p-2 gap-1 overflow-y-auto px-4 py-2",
               view === "grid"
                 ? "grid grid-cols-[repeat(auto-fit,minmax(min(100%,250px),1fr))] grid-rows-[fit-content(200px)] gap-3"
                 : "flex flex-col",
@@ -200,6 +200,7 @@ export const FileList = () => {
               </article>
             ))}
           </div>
+          <div className="flex flex-1"></div>
         </div>
       )}
     </div>
