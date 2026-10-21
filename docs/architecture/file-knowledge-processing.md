@@ -32,6 +32,7 @@ reference a file and never initiate duplicate work.
 | Source bytes      | `FileStore`, `LocalFileStore`                                | Owns bytes beneath `STORAGE_ROOT/files/{user_id}` and prevents path traversal.                                          |
 | File conversion   | `MarkItDownFileProcessor.ensure_processed`                   | Produces bounded text cache for text/document files; verifies file integrity and records safe file-content errors.      |
 | Artifact state    | `FileKnowledgeArtifactModel`, `ensure_file_knowledge_artifact`      | Owns processing generation, profile fingerprint, status, extraction metadata, embeddings, and canonical caption fields. |
+| Processing policy | `knowledge/policy.py`, `knowledge/processing.py`              | Owns the policy's schema, persistence, and transitions, including the replacement generations a policy change queues. |
 | Processing queue  | `KnowledgeIngestionJobs`, `ingest_file_artifact`             | Runs at most one in-process job per artifact ID and promotes a generation only after vector writes succeed.             |
 | Embeddings        | `OnnxClipEmbeddingProvider`                                  | Lazily verifies and loads the pinned local ONNX CLIP bundle, then emits normalized text or image vectors.               |
 | Vectors           | `VectorChunk`, `LanceDbVectorStore`                          | Persists vectors keyed by user, file, artifact generation, and chunk ordinal.                                           |
@@ -101,14 +102,21 @@ generation)` pair and partial unique current-generation index make the source
 file the unit of processing.
 
 The setting is parsed by `KnowledgeProcessingConfiguration`, with nested
-`KnowledgeProcessingCaptioningConfiguration`; the knowledge configuration
-service (including `get_captioning_configuration()`,
-`update_captioning_configuration()`, and
-`update_processing_profile_and_reprocess()`) is the only domain path that
-interprets or persists it. The legacy `KnowledgeCaptionConfigurationModel` and
-`KnowledgeProcessingProfileModel` tables no longer exist. A missing or malformed
-value resolves to the deterministic disabled-captioning default; the next typed
-administrator update replaces a malformed value with a valid version-1 setting.
+`KnowledgeProcessingCaptioningConfiguration`. The knowledge domain owns the
+policy end to end: `knowledge/policy.py` persists and validates the stored
+value, and `knowledge/processing.py` owns the only transition path
+(`get_captioning_configuration()`, `update_captioning_configuration()`, and
+`update_processing_profile_and_reprocess()`). The legacy
+`KnowledgeCaptionConfigurationModel` and `KnowledgeProcessingProfileModel`
+tables no longer exist. A missing or malformed value resolves to the
+deterministic disabled-captioning default; the next typed administrator update
+replaces a malformed value with a valid version-1 setting.
+
+The knowledge admin surfaces are served by `knowledge/router.py` at their
+existing `/settings/app/...` URLs and operation ids. The settings domain calls
+the captioning-selection guard through the interface it owns
+(`settings/captioning_guard.py`); the knowledge domain registers the
+implementation, so neither domain imports the other.
 
 ## Processing branches
 

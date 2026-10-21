@@ -4,7 +4,7 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. US-38.1 is confirmed complete and merged into `main`. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. US-38.1 is confirmed complete and merged into `main`. US-38.2 is implemented and verified on `feat/us-38.2-processing-policy-owner`, awaiting completion confirmation. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
@@ -73,11 +73,11 @@ EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above.
   - [x] Record ADR-0018 covering the domain boundary, the vocabulary decision and the rejected alternatives.
   - [x] Run backend lint, type checks and the full test suite; verify a fresh database initialization creates the renamed table.
 - [ ] US-38.2: Give the processing policy one owner
-  - [ ] Move the processing-policy schemas, persistence and transitions from `files` and `settings` into the knowledge domain.
-  - [ ] Move the knowledge admin endpoints to a knowledge router, preserving their URLs, operation ids and response shapes.
-  - [ ] Remove the deferred cross-domain imports that exist only to break the settings/files cycle.
-  - [ ] Verify the OpenAPI contract is unchanged for the moved endpoints and regenerate the client if the operation grouping changed.
-  - [ ] Run backend lint, type checks and the full test suite.
+  - [x] Move the processing-policy schemas, persistence and transitions from `files` and `settings` into the knowledge domain.
+  - [x] Move the knowledge admin endpoints to a knowledge router, preserving their URLs, operation ids and response shapes.
+  - [x] Remove the deferred cross-domain imports that exist only to break the settings/files cycle.
+  - [x] Verify the OpenAPI contract is unchanged for the moved endpoints and regenerate the client if the operation grouping changed.
+  - [x] Run backend lint, type checks and the full test suite.
 - [ ] US-38.3: Model derived facets as first-class rows
   - [ ] Add the extraction-kind enum and the linking table with a unique `(artifact_id, kind)` constraint.
   - [ ] Replace the parallel artifact and caption status vocabularies with one status vocabulary for every kind.

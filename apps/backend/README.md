@@ -41,8 +41,11 @@ unknown or conflicting values require manual administration. See
 
 An uploaded eligible `UserFile` receives a canonical, versioned
 `FileKnowledgeArtifactModel` (the persisted knowledge artifact) and is processed independently of project/chat
-references. File processing contracts and policy transitions live in
-`domains/files/processing_schemas.py` and `domains/files/processing.py`.
+references. The knowledge-processing policy — its schemas, its persistence, and
+its transitions — is owned end to end by `domains/knowledge/`, in
+`processing_schemas.py`, `policy.py`, and `processing.py`. The knowledge admin
+surfaces are served by `domains/knowledge/router.py` at their existing
+`/settings/app/...` URLs.
 Retrieval first resolves the active
 execution context to live project/chat file IDs, then supplies both that set and the
 authenticated owner to LanceDB.

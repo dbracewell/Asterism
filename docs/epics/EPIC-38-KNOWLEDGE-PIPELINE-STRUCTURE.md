@@ -1,7 +1,8 @@
 # EPIC-38: Knowledge pipeline structure
 
 Status: in progress. US-38.1 confirmed complete and merged into `main`;
-US-38.2 to US-38.5 pending. Source: the files-domain review of 2026-10-21 and
+US-38.2 implemented on `feat/us-38.2-processing-policy-owner`; US-38.3 to
+US-38.5 pending. Source: the files-domain review of 2026-10-21 and
 the follow-up architecture discussion on the knowledge pipeline's domain
 ownership, naming, and data model. The naming and boundary decisions are
 recorded in [ADR-0018](../adr/0018-knowledge-domain-naming-and-boundary.md).
@@ -136,15 +137,27 @@ are unchanged.
 
 Tasks:
 
-- [ ] Move the processing-policy schemas, persistence and transitions from
+- [x] Move the processing-policy schemas, persistence and transitions from
       `files` and `settings` into the knowledge domain.
-- [ ] Move the knowledge admin endpoints to a knowledge router, preserving
+- [x] Move the knowledge admin endpoints to a knowledge router, preserving
       their URLs, operation ids and response shapes.
-- [ ] Remove the deferred cross-domain imports that exist only to break the
+- [x] Remove the deferred cross-domain imports that exist only to break the
       settings/files cycle.
-- [ ] Verify the OpenAPI contract is unchanged for the moved endpoints and
+- [x] Verify the OpenAPI contract is unchanged for the moved endpoints and
       regenerate the client if the operation grouping changed.
-- [ ] Run backend lint, type checks and the full test suite.
+- [x] Run backend lint, type checks and the full test suite.
+
+Notes: the policy moved as three modules — `knowledge/processing_schemas.py`,
+`knowledge/policy.py`, and `knowledge/processing.py` — and the admin endpoints
+are served by `knowledge/router.py`. Two crossings needed a published
+interface rather than an import. The settings domain owns the
+captioning-selection guard it needs (`settings/captioning_guard.py`) and the
+knowledge domain registers the implementation, so neither domain imports the
+other. The knowledge domain derives the files a policy change reprocesses from
+its own artifact table, so the policy modules never import the files domain.
+The OpenAPI tag stays `settings` because it names the public URL resource
+group; only the order of the paths in the document changes, so the generated
+client's content is unchanged.
 
 ## US-38.3: Model derived facets as first-class rows
 

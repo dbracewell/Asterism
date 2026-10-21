@@ -14,7 +14,7 @@ from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.files.processor import ensure_file_processed
 from asterism.domains.files.store import get_file_store
-from asterism.domains.settings.knowledge import get_captioning_configuration
+from asterism.domains.knowledge.policy import get_captioning_configuration
 
 from .embedding import EmbeddingProvider, EmbeddingProviderError, embedding_provider
 from .model_download import DownloadNotReadyError

@@ -415,28 +415,28 @@ class TestCaptionModelEndpoints:
 
     @pytest.mark.asyncio
     async def test_get_status_endpoint(self, admin_user):
-        from asterism.domains.settings.settings_router import get_caption_model_status
+        from asterism.domains.knowledge.router import get_caption_model_status
 
-        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.router.captioning_download_service") as mock_service:
             mock_service.progress.return_value = DownloadProgress(status="idle")
             result = await get_caption_model_status(user=admin_user)
             assert result.status == "idle"
 
     @pytest.mark.asyncio
     async def test_start_download_endpoint(self, admin_user):
-        from asterism.domains.settings.settings_router import start_caption_model_download
+        from asterism.domains.knowledge.router import start_caption_model_download
 
-        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.router.captioning_download_service") as mock_service:
             mock_service.start_download = AsyncMock(return_value=DownloadProgress(status="downloading"))
             result = await start_caption_model_download(user=admin_user)
             assert result.status == "downloading"
 
     @pytest.mark.asyncio
     async def test_start_download_endpoint_conflict(self, admin_user):
-        from asterism.domains.settings.settings_router import start_caption_model_download
+        from asterism.domains.knowledge.router import start_caption_model_download
         from fastapi import HTTPException
 
-        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.router.captioning_download_service") as mock_service:
             mock_service.start_download = AsyncMock(side_effect=RuntimeError("A download is already in progress"))
             with pytest.raises(HTTPException) as exc:
                 await start_caption_model_download(user=admin_user)
@@ -445,9 +445,9 @@ class TestCaptionModelEndpoints:
 
     @pytest.mark.asyncio
     async def test_cancel_download_endpoint(self, admin_user):
-        from asterism.domains.settings.settings_router import cancel_caption_model_download
+        from asterism.domains.knowledge.router import cancel_caption_model_download
 
-        with patch("asterism.domains.knowledge.captioning.captioning_download_service") as mock_service:
+        with patch("asterism.domains.knowledge.router.captioning_download_service") as mock_service:
             mock_service.cancel_download = AsyncMock(return_value=DownloadProgress(status="idle"))
             result = await cancel_caption_model_download(user=admin_user)
             assert result.status == "idle"

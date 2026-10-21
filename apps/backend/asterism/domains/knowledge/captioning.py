@@ -16,14 +16,14 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import get_async_db_session
 from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.files.processing_schemas import KnowledgeCaptionConfiguration
 from asterism.domains.files.store import get_file_store
 from asterism.domains.knowledge.embedding import embedding_provider
 from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeCaptionMode, KnowledgeCaptionStatus
+from asterism.domains.knowledge.policy import get_captioning_configuration
+from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfiguration
 from asterism.domains.knowledge.vector_store import VectorChunk, vector_store
 from asterism.domains.llm.client import LLMClient
 from asterism.domains.llm.schemas import ImageUrlContent, ImageUrlContentPart, LLMMessage, TextContentPart
-from asterism.domains.settings.knowledge import get_captioning_configuration
 from asterism.domains.settings.service import get_model_and_provider
 
 from .caption_schemas import (

@@ -223,7 +223,7 @@ async def test_file_knowledge_status_cancel_and_retry_reuse_one_generation(file_
 
     monkeypatch.setattr("asterism.domains.knowledge.runtime.cancel_file_jobs", cancel_jobs)
     monkeypatch.setattr("asterism.domains.knowledge.runtime.start_file_ingestion_job", start_ingestion_job)
-    monkeypatch.setattr("asterism.domains.files.processing.start_file_ingestion_job", start_ingestion_job)
+    monkeypatch.setattr("asterism.domains.knowledge.processing.start_file_ingestion_job", start_ingestion_job)
     uploaded = await upload_files(
         user_id="user-a",
         uploads=[_upload("retry.txt", b"retry me")],

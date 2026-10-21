@@ -6,16 +6,19 @@ import pytest_asyncio
 from asterism.core import config
 from asterism.db.model_registry import Base
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
-from asterism.domains.files.processing import update_captioning_configuration, update_processing_profile_and_reprocess
-from asterism.domains.files.processing_schemas import (
-    KnowledgeCaptionConfigurationUpdate,
-    KnowledgeProcessingProfileUpdate,
-)
 from asterism.domains.knowledge.ingestion import ingest_file
 from asterism.domains.knowledge.model_download import DownloadNotReadyError
 from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.policy import get_captioning_configuration
+from asterism.domains.knowledge.processing import (
+    update_captioning_configuration,
+    update_processing_profile_and_reprocess,
+)
+from asterism.domains.knowledge.processing_schemas import (
+    KnowledgeCaptionConfigurationUpdate,
+    KnowledgeProcessingProfileUpdate,
+)
 from asterism.domains.knowledge.runtime import recover_interrupted
-from asterism.domains.settings.knowledge import get_captioning_configuration
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.user.models import UserModel
 from sqlalchemy import select
@@ -101,7 +104,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
 
     jobs = FakeJobs()
     monkeypatch.setattr(
-        "asterism.domains.files.processing.start_file_ingestion_job",
+        "asterism.domains.knowledge.processing.start_file_ingestion_job",
         lambda **kwargs: jobs.enqueue(**kwargs),
     )
     file = UserFileModel(
@@ -189,7 +192,7 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(proc
 
     jobs = FakeJobs()
     monkeypatch.setattr(
-        "asterism.domains.files.processing.start_file_ingestion_job",
+        "asterism.domains.knowledge.processing.start_file_ingestion_job",
         lambda **kwargs: jobs.enqueue(**kwargs),
     )
     file = UserFileModel(
@@ -266,9 +269,13 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
 
     file.storage_key = get_file_store().save("user-a", file.id, ".txt", b"hello world")
     await processing_session.commit()
-    from asterism.domains.files.processing import ensure_file_knowledge_artifact
+    from asterism.domains.knowledge.processing import ensure_file_knowledge_artifact
 
-    artifact = await ensure_file_knowledge_artifact(file=file, session=processing_session)
+    artifact = await ensure_file_knowledge_artifact(
+        file_id=file.id,
+        user_id=file.user_id,
+        session=processing_session,
+    )
     await processing_session.commit()
 
     class FakeEmbeddings:

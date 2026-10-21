@@ -1,4 +1,14 @@
-"""Processing-policy persistence and validation, independent of worker lifecycles."""
+"""Processing-policy persistence and validation, independent of worker lifecycles.
+
+The knowledge domain owns the whole processing policy: its schema, its
+persistence, and its transitions. This module owns the *state* half — reading
+and writing the versioned ``knowledge.processing`` application setting — while
+:mod:`asterism.domains.knowledge.processing` owns the *transition* half.
+
+The stored value is an application setting row, so this module reads the
+settings domain's table. That is the allowed direction: the knowledge domain
+depends on the settings domain, never the other way round.
+"""
 
 import hashlib
 import json
@@ -9,22 +19,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException
-from asterism.domains.files.processing_schemas import (
+from asterism.domains.knowledge.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
+from asterism.domains.settings.captioning_guard import configure_captioning_selection_guard
+from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
+
+from .processing_schemas import (
     KnowledgeCaptionConfiguration,
     KnowledgeProcessingCaptioningConfiguration,
     KnowledgeProcessingConfiguration,
     KnowledgeProcessingProfile,
 )
-from asterism.domains.knowledge.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
 
-from .models import ApplicationSettingsModel, LLMModel
-
-logger = get_logger("SettingsKnowledge")
+logger = get_logger("KnowledgePolicy")
 
 KNOWLEDGE_PROCESSING_SETTING_KEY = "knowledge.processing"
 
 
-def _processing_identity(
+def processing_identity(
     *,
     extraction_policy: str,
     chunking_policy: str,
@@ -43,11 +54,11 @@ def _processing_identity(
     return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
-def _default_processing_configuration() -> KnowledgeProcessingConfiguration:
+def default_processing_configuration() -> KnowledgeProcessingConfiguration:
     """Build the built-in default processing configuration (used when no setting row exists)."""
     captioning = KnowledgeProcessingCaptioningConfiguration()
     return KnowledgeProcessingConfiguration(
-        identity=_processing_identity(
+        identity=processing_identity(
             extraction_policy="text-extraction-v1",
             chunking_policy="bounded-chunking-v1",
             embedding_model="onnx-clip-v1",
@@ -62,14 +73,14 @@ def _default_processing_configuration() -> KnowledgeProcessingConfiguration:
     )
 
 
-async def _load_processing_configuration(
+async def load_processing_configuration(
     *,
     session: AsyncSession,
 ) -> tuple[ApplicationSettingsModel | None, KnowledgeProcessingConfiguration]:
     """Read the versioned setting, falling back safely for missing or invalid values."""
     setting = await session.get(ApplicationSettingsModel, KNOWLEDGE_PROCESSING_SETTING_KEY)
     if setting is None:
-        return None, _default_processing_configuration()
+        return None, default_processing_configuration()
     try:
         return setting, KnowledgeProcessingConfiguration.model_validate(setting.value)
     except ValidationError as error:
@@ -79,10 +90,10 @@ async def _load_processing_configuration(
             "Stored knowledge processing configuration is invalid; using built-in defaults",
             extra={"error": str(error)},
         )
-        return setting, _default_processing_configuration()
+        return setting, default_processing_configuration()
 
 
-def _profile_from_configuration(
+def profile_from_configuration(
     configuration: KnowledgeProcessingConfiguration,
     *,
     updated_at: int,
@@ -99,7 +110,7 @@ def _profile_from_configuration(
     )
 
 
-def _save_processing_configuration(
+def save_processing_configuration(
     *,
     setting: ApplicationSettingsModel | None,
     configuration: KnowledgeProcessingConfiguration,
@@ -122,7 +133,7 @@ def _save_processing_configuration(
 
 async def get_captioning_configuration(*, session: AsyncSession) -> KnowledgeCaptionConfiguration:
     """Return the captioning mode/model selection with its last-update timestamp (0 when never stored)."""
-    setting, configuration = await _load_processing_configuration(session=session)
+    setting, configuration = await load_processing_configuration(session=session)
     return KnowledgeCaptionConfiguration(
         mode=configuration.captioning.mode,
         provider_model_id=configuration.captioning.provider_model_id,
@@ -138,7 +149,7 @@ async def ensure_captioning_selection_is_valid(*, session: AsyncSession) -> None
     The join to the provider mirrors that old scan — a model whose provider row
     was removed earlier in this same transaction counts as gone.
     """
-    _, configuration = await _load_processing_configuration(session=session)
+    _, configuration = await load_processing_configuration(session=session)
     provider_model_id = configuration.captioning.provider_model_id
     selected = None
     if provider_model_id is not None:
@@ -154,3 +165,17 @@ async def ensure_captioning_selection_is_valid(*, session: AsyncSession) -> None
         raise BadDataException(
             "Cannot remove or make ineligible the provider model selected for image captioning",
         ) from error
+
+
+class _CaptioningSelectionGuard:
+    """Adapts the knowledge-domain check to the settings-domain guard interface."""
+
+    async def validate(self, *, session: AsyncSession) -> None:
+        await ensure_captioning_selection_is_valid(session=session)
+
+
+# The settings domain owns the guard interface and calls it before every
+# provider or model mutation. Registering here means the protection is active
+# wherever the knowledge domain is used, without the settings domain ever
+# importing the knowledge package.
+configure_captioning_selection_guard(_CaptioningSelectionGuard())
