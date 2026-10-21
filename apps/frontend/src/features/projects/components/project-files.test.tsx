@@ -72,7 +72,12 @@ beforeEach(() => {
     data: page([file("member", true), file("new")]),
   });
   api.fileKnowledgeGetStatus.mockResolvedValue({
-    data: { status: "failed", caption: { status: null } },
+    data: {
+      status: "failed",
+      extractions: {
+        embedding: { kind: "embedding", status: "failed" },
+      },
+    },
   });
   api.projectFileAddMany.mockResolvedValue({ data: { context_revision: 4 } });
   api.projectFileRemoveMany.mockResolvedValue({

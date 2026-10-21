@@ -15,10 +15,16 @@ from sqlalchemy import select
 from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import get_async_db_session
+from asterism.db.mixins import get_unix_timestamp
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.store import get_file_store
 from asterism.domains.knowledge.embedding import embedding_provider
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeCaptionMode, KnowledgeCaptionStatus
+from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeExtractionModel,
+    KnowledgeExtractionKind,
+    KnowledgeExtractionStatus,
+)
 from asterism.domains.knowledge.policy import get_captioning_configuration
 from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfiguration
 from asterism.domains.knowledge.vector_store import VectorChunk, vector_store
@@ -258,9 +264,18 @@ async def caption(
             if artifact is None or file is None:
                 return
 
-            if artifact.caption_status not in {KnowledgeCaptionStatus.PENDING, KnowledgeCaptionStatus.FAILED}:
+            captioning = await session.scalar(
+                select(FileKnowledgeExtractionModel).where(
+                    FileKnowledgeExtractionModel.artifact_id == artifact.id,
+                    FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.CAPTIONING,
+                ),
+            )
+            if captioning is None:
                 return
-            artifact.caption_status = KnowledgeCaptionStatus.RUNNING
+            if captioning.status not in {KnowledgeExtractionStatus.PENDING, KnowledgeExtractionStatus.FAILED}:
+                return
+            captioning.status = KnowledgeExtractionStatus.RUNNING
+            captioning.started_at = get_unix_timestamp()
             await session.commit()
             try:
                 result = await asyncio.wait_for(
@@ -284,25 +299,29 @@ async def caption(
                         ),
                     ],
                 )
-                artifact.caption_text = result.text
-                artifact.caption_source = KnowledgeCaptionMode(result.source.value)
-                artifact.caption_model = result.model
-                artifact.caption_status = KnowledgeCaptionStatus.READY
-                artifact.text_embeddings_ready = True
-                artifact.caption_error_code = None
-                artifact.caption_error_reason = None
+                captioning.status = KnowledgeExtractionStatus.READY
+                captioning.provider = result.source.value
+                captioning.model = result.model
+                captioning.payload = {"text": result.text}
+                captioning.error_code = None
+                captioning.error_reason = None
+                captioning.completed_at = get_unix_timestamp()
+                # A caption makes the generation searchable, which is the
+                # denormalized aggregate the retrieval path reads.
+                artifact.searchable = True
             except Exception as error:
-                artifact.caption_status = KnowledgeCaptionStatus.FAILED
-                artifact.caption_error_code = (
+                captioning.status = KnowledgeExtractionStatus.FAILED
+                captioning.error_code = (
                     error.code.value
                     if isinstance(error, CaptioningError)
                     else "timeout"
                     if isinstance(error, TimeoutError)
                     else "provider_failure"
                 )
-                artifact.caption_error_reason = (
+                captioning.error_reason = (
                     str(error) if isinstance(error, CaptioningError) else "Image captioning failed; check server logs"
                 )
+                captioning.completed_at = get_unix_timestamp()
                 logger.exception("Image captioning failed")
             await session.commit()
     except Exception:

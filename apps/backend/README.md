@@ -46,6 +46,12 @@ its transitions — is owned end to end by `domains/knowledge/`, in
 `processing_schemas.py`, `policy.py`, and `processing.py`. The knowledge admin
 surfaces are served by `domains/knowledge/router.py` at their existing
 `/settings/app/...` URLs.
+
+Each derived output of a source file — its text extraction, its embedding, and
+its captioning — is a `FileKnowledgeExtractionModel` row with its own status,
+provider, model, safe errors, and kind-specific payload. The API reports them
+as an `extractions` map keyed by kind. The artifact row keeps the denormalized
+`searchable` aggregate so retrieval stays a single-row read.
 Retrieval first resolves the active
 execution context to live project/chat file IDs, then supplies both that set and the
 authenticated owner to LanceDB.

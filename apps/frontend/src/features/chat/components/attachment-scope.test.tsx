@@ -91,7 +91,7 @@ beforeEach(() => {
     Promise.resolve({ data: file(path.file_id) }),
   );
   api.fileKnowledgeGetStatus.mockResolvedValue({
-    data: { status: "pending", caption: { status: null } },
+    data: { status: "pending", extractions: {} },
   });
   api.fileGetMany.mockResolvedValue({
     data: { files: [file("library")], total: 1 },

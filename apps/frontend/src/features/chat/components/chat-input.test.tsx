@@ -38,7 +38,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   chatDraftDiscardMutation: () => ({ mutationFn: async () => ({}) }),
   fileKnowledgeGetStatusOptions: () => ({
     queryKey: ["processing"],
-    queryFn: async () => ({ status: "ready", caption: { status: null } }),
+    queryFn: async () => ({ status: "ready", extractions: {} }),
   }),
   fileKnowledgeRegenerateMutation: () => ({ mutationFn: vi.fn() }),
   projectFileGetManyOptions: () => ({

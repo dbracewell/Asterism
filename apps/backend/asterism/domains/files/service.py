@@ -30,10 +30,17 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.extractions import (
+    describe_artifact,
+    load_artifact_extractions,
+)
+from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactModel,
+    KnowledgeExtractionKind,
+    KnowledgeExtractionStatus,
+)
 from asterism.domains.knowledge.processing import ensure_file_knowledge_artifact
 from asterism.domains.knowledge.queries import select_newest_file_artifact
-from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
 from .listing import describe_files, file_knowledge_summaries, list_file_page
 from .models import FileContentStatus, FileKind, UserFileModel
@@ -489,18 +496,37 @@ async def regenerate_file_knowledge(*, user_id: str, filename: str, session: Asy
     if artifact is None:
         raise NotFoundException("Knowledge processing record not found")
     await cancel_file_jobs(artifact.id)
-    artifact.status = FileKnowledgeArtifactStatus.PENDING
+    artifact.status = KnowledgeExtractionStatus.PENDING
     artifact.error_code = None
     artifact.error_reason = None
     artifact.started_at = None
     artifact.completed_at = None
-    artifact.caption_text = None
-    artifact.caption_status = None
-    artifact.caption_error_code = None
-    artifact.caption_error_reason = None
+    # The derived outputs are produced again from scratch. The caption only
+    # exists for images whose captioning is enabled, so it is removed here
+    # and recreated by the ingestion when it applies.
+    extractions = await load_artifact_extractions(artifact_id=artifact.id, session=session)
+    for kind, extraction in extractions.items():
+        if kind is KnowledgeExtractionKind.CAPTIONING:
+            await session.delete(extraction)
+            continue
+        extraction.status = KnowledgeExtractionStatus.PENDING
+        extraction.provider = None
+        extraction.model = None
+        extraction.error_code = None
+        extraction.error_reason = None
+        extraction.payload = None
+        extraction.started_at = None
+        extraction.completed_at = None
     await session.commit()
     start_file_ingestion_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
-    return FileKnowledgeArtifact.model_validate(artifact)
+    return describe_artifact(
+        artifact,
+        [
+            extraction
+            for kind, extraction in extractions.items()
+            if kind is not KnowledgeExtractionKind.CAPTIONING
+        ],
+    )
 
 
 async def cancel_file_knowledge_processing(*, user_id: str, filename: str, session: AsyncSession):
@@ -528,13 +554,14 @@ async def cancel_file_knowledge_processing(*, user_id: str, filename: str, sessi
     artifact = await session.scalar(select_newest_file_artifact(file.id))
     if artifact is None:
         raise NotFoundException("Knowledge processing record not found")
-    if artifact.status in {FileKnowledgeArtifactStatus.PENDING, FileKnowledgeArtifactStatus.PROCESSING}:
+    if artifact.status in {KnowledgeExtractionStatus.PENDING, KnowledgeExtractionStatus.RUNNING}:
         await cancel_file_jobs(artifact.id)
-        artifact.status = FileKnowledgeArtifactStatus.CANCELED
+        artifact.status = KnowledgeExtractionStatus.CANCELED
         artifact.error_code = "canceled"
         artifact.error_reason = "Processing canceled by user"
         await session.commit()
-    return FileKnowledgeArtifact.model_validate(artifact)
+    extractions = await load_artifact_extractions(artifact_id=artifact.id, session=session)
+    return describe_artifact(artifact, list(extractions.values()))
 
 
 _SIMILARITY_MAX_SOURCE_VECTORS = 256
@@ -571,7 +598,7 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
         select(FileKnowledgeArtifactModel).where(
             FileKnowledgeArtifactModel.file_id == file.id,
             FileKnowledgeArtifactModel.is_current.is_(True),
-            FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
+            FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.READY,
         ),
     )
     if current is None:
@@ -601,7 +628,7 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
                     FileKnowledgeArtifactModel.user_id == user_id,
                     FileKnowledgeArtifactModel.file_id != file.id,
                     FileKnowledgeArtifactModel.is_current.is_(True),
-                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.READY,
+                    FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.READY,
                 ),
             )
         ).all()

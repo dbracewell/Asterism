@@ -45,7 +45,7 @@ implemented and the name must not be read as promising one.
 
 The word "extraction" survives only where it names a single derived output of a
 source file: the text-extraction policy (`extraction_policy`, `text-extraction-v1`),
-the `extracted_content` column holding the extracted text, and the extraction
+the extracted text carried by the text-extraction output, and the extraction
 stage named in a processing pipeline description. It no longer names a domain, a
 package, a table, a model, or a configuration key.
 

@@ -17,7 +17,7 @@ from asterism.core import config
 from asterism.db.model_registry import Base
 from asterism.domains.files.listing import describe_files
 from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
 from asterism.domains.knowledge.retention import generations_to_prune, prune_superseded_generations
 from asterism.domains.user.models import UserModel
 from sqlalchemy import select
@@ -58,7 +58,7 @@ def _artifact(
     *,
     file_id: uuid.UUID,
     generation: int,
-    status: FileKnowledgeArtifactStatus,
+    status: KnowledgeExtractionStatus,
     is_current: bool,
     user_id: str = "user-a",
 ) -> FileKnowledgeArtifactModel:
@@ -95,10 +95,10 @@ def _file(session, *, name: str = "report.txt") -> UserFileModel:
 
 def test_retention_rule_keeps_current_plus_window():
     generations = [
-        (1, False, FileKnowledgeArtifactStatus.READY),
-        (2, False, FileKnowledgeArtifactStatus.READY),
-        (3, False, FileKnowledgeArtifactStatus.READY),
-        (4, True, FileKnowledgeArtifactStatus.READY),
+        (1, False, KnowledgeExtractionStatus.READY),
+        (2, False, KnowledgeExtractionStatus.READY),
+        (3, False, KnowledgeExtractionStatus.READY),
+        (4, True, KnowledgeExtractionStatus.READY),
     ]
     assert generations_to_prune(generations, keep_previous=1) == [1, 2]
     assert generations_to_prune(generations, keep_previous=2) == [1]
@@ -108,10 +108,10 @@ def test_retention_rule_keeps_current_plus_window():
 
 def test_retention_rule_never_prunes_in_flight_work():
     generations = [
-        (1, False, FileKnowledgeArtifactStatus.READY),
-        (2, False, FileKnowledgeArtifactStatus.PROCESSING),
-        (3, False, FileKnowledgeArtifactStatus.PENDING),
-        (4, True, FileKnowledgeArtifactStatus.READY),
+        (1, False, KnowledgeExtractionStatus.READY),
+        (2, False, KnowledgeExtractionStatus.RUNNING),
+        (3, False, KnowledgeExtractionStatus.PENDING),
+        (4, True, KnowledgeExtractionStatus.READY),
     ]
     # Generations 2 and 3 are still running, so they survive a zero window.
     assert generations_to_prune(generations, keep_previous=0) == [1]
@@ -119,7 +119,7 @@ def test_retention_rule_never_prunes_in_flight_work():
 
 
 def test_retention_rule_ignores_files_without_superseded_generations():
-    assert generations_to_prune([(1, True, FileKnowledgeArtifactStatus.READY)], keep_previous=1) == []
+    assert generations_to_prune([(1, True, KnowledgeExtractionStatus.READY)], keep_previous=1) == []
 
 
 # --------------------------------------------------------------------------
@@ -132,9 +132,9 @@ async def test_prune_removes_superseded_rows_and_their_vectors(lifecycle_session
     file = _file(lifecycle_session)
     await lifecycle_session.flush()
     for generation, status, is_current in (
-        (1, FileKnowledgeArtifactStatus.READY, False),
-        (2, FileKnowledgeArtifactStatus.READY, False),
-        (3, FileKnowledgeArtifactStatus.READY, True),
+        (1, KnowledgeExtractionStatus.READY, False),
+        (2, KnowledgeExtractionStatus.READY, False),
+        (3, KnowledgeExtractionStatus.READY, True),
     ):
         lifecycle_session.add(
             _artifact(file_id=file.id, generation=generation, status=status, is_current=is_current),
@@ -165,9 +165,9 @@ async def test_prune_keeps_the_current_generation_and_in_flight_work(lifecycle_s
     file = _file(lifecycle_session)
     await lifecycle_session.flush()
     for generation, status, is_current in (
-        (1, FileKnowledgeArtifactStatus.READY, False),
-        (2, FileKnowledgeArtifactStatus.PENDING, False),
-        (3, FileKnowledgeArtifactStatus.READY, True),
+        (1, KnowledgeExtractionStatus.READY, False),
+        (2, KnowledgeExtractionStatus.PENDING, False),
+        (3, KnowledgeExtractionStatus.READY, True),
     ):
         lifecycle_session.add(
             _artifact(file_id=file.id, generation=generation, status=status, is_current=is_current),
@@ -198,8 +198,8 @@ async def test_prune_keeps_the_row_when_the_vectors_cannot_be_removed(lifecycle_
     file = _file(lifecycle_session)
     await lifecycle_session.flush()
     for generation, status, is_current in (
-        (1, FileKnowledgeArtifactStatus.READY, False),
-        (2, FileKnowledgeArtifactStatus.READY, True),
+        (1, KnowledgeExtractionStatus.READY, False),
+        (2, KnowledgeExtractionStatus.READY, True),
     ):
         lifecycle_session.add(
             _artifact(file_id=file.id, generation=generation, status=status, is_current=is_current),
@@ -232,10 +232,10 @@ async def test_prune_uses_the_configured_retention_window(lifecycle_session, mon
     file = _file(lifecycle_session)
     await lifecycle_session.flush()
     for generation, status, is_current in (
-        (1, FileKnowledgeArtifactStatus.READY, False),
-        (2, FileKnowledgeArtifactStatus.READY, False),
-        (3, FileKnowledgeArtifactStatus.READY, False),
-        (4, FileKnowledgeArtifactStatus.READY, True),
+        (1, KnowledgeExtractionStatus.READY, False),
+        (2, KnowledgeExtractionStatus.READY, False),
+        (3, KnowledgeExtractionStatus.READY, False),
+        (4, KnowledgeExtractionStatus.READY, True),
     ):
         lifecycle_session.add(
             _artifact(file_id=file.id, generation=generation, status=status, is_current=is_current),
@@ -284,7 +284,7 @@ async def test_reporting_prefers_the_current_generation_over_a_newer_pending_one
         _artifact(
             file_id=file.id,
             generation=1,
-            status=FileKnowledgeArtifactStatus.READY,
+            status=KnowledgeExtractionStatus.READY,
             is_current=True,
         ),
     )
@@ -292,7 +292,7 @@ async def test_reporting_prefers_the_current_generation_over_a_newer_pending_one
         _artifact(
             file_id=file.id,
             generation=2,
-            status=FileKnowledgeArtifactStatus.PENDING,
+            status=KnowledgeExtractionStatus.PENDING,
             is_current=False,
         ),
     )
@@ -304,7 +304,7 @@ async def test_reporting_prefers_the_current_generation_over_a_newer_pending_one
     # UI must report too.
     assert described[0].knowledge.generation == 1
     assert described[0].knowledge.is_current is True
-    assert described[0].knowledge.status == FileKnowledgeArtifactStatus.READY
+    assert described[0].knowledge.status == KnowledgeExtractionStatus.READY
 
 
 @pytest.mark.asyncio
@@ -315,7 +315,7 @@ async def test_reporting_falls_back_to_the_newest_generation_before_one_is_curre
         _artifact(
             file_id=file.id,
             generation=1,
-            status=FileKnowledgeArtifactStatus.PENDING,
+            status=KnowledgeExtractionStatus.PENDING,
             is_current=False,
         ),
     )
@@ -326,7 +326,7 @@ async def test_reporting_falls_back_to_the_newest_generation_before_one_is_curre
     # Nothing is serving the file yet, so the generation still being built is
     # the one that represents it.
     assert described[0].knowledge.generation == 1
-    assert described[0].knowledge.status == FileKnowledgeArtifactStatus.PENDING
+    assert described[0].knowledge.status == KnowledgeExtractionStatus.PENDING
 
 
 # --------------------------------------------------------------------------
@@ -362,13 +362,13 @@ async def test_promoting_a_generation_prunes_the_superseded_ones(lifecycle_sessi
     superseded = _artifact(
         file_id=file.id,
         generation=1,
-        status=FileKnowledgeArtifactStatus.READY,
+        status=KnowledgeExtractionStatus.READY,
         is_current=True,
     )
     replacement = _artifact(
         file_id=file.id,
         generation=2,
-        status=FileKnowledgeArtifactStatus.PENDING,
+        status=KnowledgeExtractionStatus.PENDING,
         is_current=False,
     )
     lifecycle_session.add_all([superseded, replacement])
@@ -392,7 +392,7 @@ async def test_promoting_a_generation_prunes_the_superseded_ones(lifecycle_sessi
         store=store,
     )
 
-    assert promoted.status is FileKnowledgeArtifactStatus.READY
+    assert promoted.status is KnowledgeExtractionStatus.READY
     assert promoted.is_current is True
     # Generation 2 is cleared before its vectors are written, then the
     # superseded generation 1 is pruned with its vectors.

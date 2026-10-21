@@ -8,7 +8,7 @@ from asterism.db.model_registry import Base
 from asterism.domains.files.models import FileContentStatus, FileKind, UserFileModel
 from asterism.domains.knowledge.ingestion import ingest_file
 from asterism.domains.knowledge.model_download import DownloadNotReadyError
-from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import KnowledgeExtractionStatus
 from asterism.domains.knowledge.policy import get_captioning_configuration
 from asterism.domains.knowledge.processing import (
     update_captioning_configuration,
@@ -127,7 +127,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
         generation=1,
         processing_profile_generation=1,
         processing_profile_identity="a" * 64,
-        status=FileKnowledgeArtifactStatus.READY,
+        status=KnowledgeExtractionStatus.READY,
         is_current=True,
     )
     processing_session.add(ready)
@@ -148,8 +148,8 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
     )
     assert result.queued_file_count == 1
     assert {(item.generation, item.status, item.is_current) for item in artifacts} == {
-        (1, FileKnowledgeArtifactStatus.READY, True),
-        (2, FileKnowledgeArtifactStatus.PENDING, False),
+        (1, KnowledgeExtractionStatus.READY, True),
+        (2, KnowledgeExtractionStatus.PENDING, False),
     }
     assert jobs.enqueued == [next(item.id for item in artifacts if item.generation == 2)]
 
@@ -175,7 +175,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
         provider=FailingEmbeddings(),
         store=FakeVectors(),
     )
-    assert failed.status is FileKnowledgeArtifactStatus.FAILED
+    assert failed.status is KnowledgeExtractionStatus.FAILED
     await processing_session.refresh(ready)
     assert ready.is_current
 
@@ -215,7 +215,7 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(proc
         generation=1,
         processing_profile_generation=1,
         processing_profile_identity="a" * 64,
-        status=FileKnowledgeArtifactStatus.READY,
+        status=KnowledgeExtractionStatus.READY,
         is_current=True,
     )
     processing_session.add(ready)
@@ -320,7 +320,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
         provider=FakeEmbeddings(),
         store=vectors,
     )
-    assert indexed.status is FileKnowledgeArtifactStatus.READY
+    assert indexed.status is KnowledgeExtractionStatus.READY
     assert len(vectors.chunks) == 1
     # A ready immutable revision is a no-op rather than generating duplicate chunks.
     await ingest_file(
@@ -356,7 +356,7 @@ async def test_restart_recovery_makes_processing_artifact_retryable(processing_s
         generation=1,
         processing_profile_generation=1,
         processing_profile_identity="a" * 64,
-        status=FileKnowledgeArtifactStatus.PROCESSING,
+        status=KnowledgeExtractionStatus.RUNNING,
     )
     processing_session.add(artifact)
     await processing_session.commit()
@@ -368,7 +368,7 @@ async def test_restart_recovery_makes_processing_artifact_retryable(processing_s
     monkeypatch.setattr("asterism.domains.knowledge.runtime.get_async_db_session", session_factory)
     await recover_interrupted()
     await processing_session.refresh(artifact)
-    assert artifact.status is FileKnowledgeArtifactStatus.PENDING
+    assert artifact.status is KnowledgeExtractionStatus.PENDING
     assert artifact.error_code == "interrupted"
 
 
@@ -396,7 +396,7 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
         generation=1,
         processing_profile_generation=1,
         processing_profile_identity="b" * 64,
-        status=FileKnowledgeArtifactStatus.PENDING,
+        status=KnowledgeExtractionStatus.PENDING,
     )
     processing_session.add(artifact)
     await processing_session.commit()
@@ -427,5 +427,5 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
         provider=WaitingEmbeddings(),
         store=Vectors(),
     )
-    assert result.status is FileKnowledgeArtifactStatus.PENDING
+    assert result.status is KnowledgeExtractionStatus.PENDING
     assert result.error_code == "embedding_bundle_pending"

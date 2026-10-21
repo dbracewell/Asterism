@@ -20,7 +20,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException
 from asterism.domains.knowledge.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeExtractionModel,
+    KnowledgeExtractionKind,
+    KnowledgeExtractionStatus,
+)
 from asterism.domains.knowledge.runtime import start_file_ingestion_job
 from asterism.domains.settings.models import LLMModel
 
@@ -106,15 +111,27 @@ async def ensure_file_knowledge_artifact(
         or 0
     ) + 1
     artifact = FileKnowledgeArtifactModel(
+        id=uuid.uuid4(),
         user_id=user_id,
         file_id=file_id,
         generation=generation,
         processing_profile_generation=configuration.generation,
         processing_profile_identity=configuration.identity,
-        status=FileKnowledgeArtifactStatus.PENDING,
+        status=KnowledgeExtractionStatus.PENDING,
         is_current=False,
     )
     session.add(artifact)
+    # The text extraction and the embedding are derived from every source
+    # file, so both start pending with the artifact. The caption only applies
+    # to images, so its row is created when the ingestion knows the kind.
+    for kind in (KnowledgeExtractionKind.TEXT_EXTRACTION, KnowledgeExtractionKind.EMBEDDING):
+        session.add(
+            FileKnowledgeExtractionModel(
+                artifact_id=artifact.id,
+                kind=kind,
+                status=KnowledgeExtractionStatus.PENDING,
+            )
+        )
     return artifact
 
 

@@ -116,11 +116,13 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
     from asterism.domains.knowledge.captioning import caption
     from asterism.domains.knowledge.models import (
         FileKnowledgeArtifactModel,
-        FileKnowledgeArtifactStatus,
-        KnowledgeCaptionStatus,
+        FileKnowledgeExtractionModel,
+        KnowledgeExtractionKind,
+        KnowledgeExtractionStatus,
     )
     from asterism.domains.retrieval.service import RetrievalArtifact
     from asterism.domains.user.models import UserModel
+    from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'caption-ready.db'}")
@@ -144,18 +146,24 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
         await session.flush()
 
         artifact = FileKnowledgeArtifactModel(
+            id=uuid.uuid4(),
             user_id="user-1",
             file_id=file.id,
             generation=1,
             processing_profile_generation=1,
             processing_profile_identity="b" * 64,
-            status=FileKnowledgeArtifactStatus.READY,
+            status=KnowledgeExtractionStatus.READY,
             is_current=True,
-            text_embeddings_ready=False,
-            visual_embedding_ready=True,
-            caption_status=KnowledgeCaptionStatus.PENDING,
+            searchable=False,
         )
         session.add(artifact)
+        session.add(
+            FileKnowledgeExtractionModel(
+                artifact_id=artifact.id,
+                kind=KnowledgeExtractionKind.CAPTIONING,
+                status=KnowledgeExtractionStatus.PENDING,
+            )
+        )
         await session.commit()
 
         file_id = file.id
@@ -196,14 +204,23 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
     async with sessions() as session:
         updated = await session.get(FileKnowledgeArtifactModel, artifact_id)
         assert updated is not None
-        assert updated.caption_status == KnowledgeCaptionStatus.READY
-        assert updated.caption_text == "A bar chart of quarterly revenue"
-        assert updated.text_embeddings_ready is True
+        captioning = await session.scalar(
+            select(FileKnowledgeExtractionModel).where(
+                FileKnowledgeExtractionModel.artifact_id == artifact_id,
+                FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.CAPTIONING,
+            )
+        )
+        assert captioning is not None
+        assert captioning.status == KnowledgeExtractionStatus.READY
+        assert captioning.payload == {"text": "A bar chart of quarterly revenue"}
+        assert captioning.provider == "local"
+        assert captioning.model == "local/smolvlm2"
+        assert updated.searchable is True
         retrieval_artifact = RetrievalArtifact(
             file_id=updated.file_id,
             generation=updated.generation,
             status=updated.status,
-            text_embeddings_ready=updated.text_embeddings_ready,
+            searchable=updated.searchable,
         )
         assert retrieval_artifact.ready is True
 

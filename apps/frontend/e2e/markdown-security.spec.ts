@@ -35,10 +35,17 @@ test("untrusted replies and file text cannot install HTML or load resources; mat
       return route.fulfill({
         json: {
           status: "ready",
-          extracted_content: adversarialMarkdown,
-          caption: {
-            status: "accepted",
-            text: '<img src="/untrusted-markdown/caption">',
+          extractions: {
+            text_extraction: {
+              kind: "text_extraction",
+              status: "ready",
+              payload: { content: adversarialMarkdown },
+            },
+            captioning: {
+              kind: "captioning",
+              status: "ready",
+              payload: { text: '<img src="/untrusted-markdown/caption">' },
+            },
           },
         },
       });

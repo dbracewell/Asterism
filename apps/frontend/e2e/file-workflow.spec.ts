@@ -57,7 +57,7 @@ test.beforeEach(async ({ page }) => {
     }),
   );
   await page.route("**/api/py/files/*/knowledge", (route) =>
-    route.fulfill({ json: { status: "ready", caption: { status: null } } }),
+    route.fulfill({ json: { status: "ready", extractions: {} } }),
   );
 });
 

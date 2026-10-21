@@ -1,26 +1,36 @@
 import uuid
 from enum import StrEnum
 
-from sqlalchemy import Boolean, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from pydantic import JsonValue
+from sqlalchemy import Boolean, Enum, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.expression import true
 
 from asterism.common.enums import enum_values
 from asterism.db.base_model import Base
+from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
 
-class FileKnowledgeArtifactStatus(StrEnum):
-    """Lifecycle of one immutable derived-artifact generation."""
+class KnowledgeExtractionKind(StrEnum):
+    """The derived outputs a source file can produce.
 
-    PENDING = "pending"
-    PROCESSING = "processing"
-    READY = "ready"
-    FAILED = "failed"
-    CANCELED = "canceled"
+    The set is closed: every kind gets its own status, provider, model, safe
+    errors, and payload, so adding an output does not reshape the artifact.
+    """
+
+    TEXT_EXTRACTION = "text_extraction"
+    EMBEDDING = "embedding"
+    CAPTIONING = "captioning"
 
 
-class KnowledgeCaptionStatus(StrEnum):
+class KnowledgeExtractionStatus(StrEnum):
+    """One lifecycle vocabulary shared by a generation and by every kind.
+
+    A generation is ``running`` while it is being produced, and so is a single
+    derived output while its own work is in flight.
+    """
+
     PENDING = "pending"
     RUNNING = "running"
     READY = "ready"
@@ -35,6 +45,13 @@ class KnowledgeCaptionMode(StrEnum):
 
 
 class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
+    """One versioned generation of a file's derived knowledge.
+
+    The row owns the generation's identity, its lifecycle, and the
+    denormalized aggregate the retrieval path reads. The derived outputs
+    themselves live in :class:`FileKnowledgeExtractionModel`, one row per kind.
+    """
+
     __tablename__ = "file_knowledge_artifacts"
 
     user_id: Mapped[str] = mapped_column(
@@ -64,73 +81,35 @@ class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         nullable=False,
         default=1,
     )
-    status: Mapped[FileKnowledgeArtifactStatus] = mapped_column(
+    status: Mapped[KnowledgeExtractionStatus] = mapped_column(
         Enum(
-            FileKnowledgeArtifactStatus,
+            KnowledgeExtractionStatus,
             values_callable=enum_values,
             native_enum=False,
             create_constraint=True,
         ),
         nullable=False,
-        default=FileKnowledgeArtifactStatus.PENDING,
+        default=KnowledgeExtractionStatus.PENDING,
     )
     is_current: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
         default=False,
     )
-    extracted_content: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
+    searchable: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
     )
+    """Denormalized retrieval aggregate: the generation has searchable text.
+
+    Text chunks make it searchable, and so does a caption. It stays on the
+    artifact row so the retrieval hot path remains a single-row read.
+    """
     chunk_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=0,
-    )
-    text_embeddings_ready: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False,
-    )
-    visual_embedding_ready: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False,
-    )
-    caption_status: Mapped[KnowledgeCaptionStatus | None] = mapped_column(
-        Enum(
-            KnowledgeCaptionStatus,
-            values_callable=enum_values,
-            native_enum=False,
-            create_constraint=True,
-        ),
-        nullable=True,
-    )
-    caption_source: Mapped[KnowledgeCaptionMode | None] = mapped_column(
-        Enum(
-            KnowledgeCaptionMode,
-            values_callable=enum_values,
-            native_enum=False,
-            create_constraint=True,
-        ),
-        nullable=True,
-    )
-    caption_model: Mapped[str | None] = mapped_column(
-        String(512),
-        nullable=True,
-    )
-    caption_text: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-    caption_error_code: Mapped[str | None] = mapped_column(
-        String(64),
-        nullable=True,
-    )
-    caption_error_reason: Mapped[str | None] = mapped_column(
-        String(512),
-        nullable=True,
     )
     error_code: Mapped[str | None] = mapped_column(
         String(64),
@@ -175,16 +154,80 @@ class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         ),
     )
 
-    @property
-    def caption(self) -> dict[str, str | int | None]:
-        """Expose canonical caption fields as the API's stable nested shape."""
-        return {
-            "status": self.caption_status.value if self.caption_status is not None else None,
-            "source": self.caption_source.value if self.caption_source is not None else None,
-            "model": self.caption_model,
-            "text": self.caption_text,
-            "error_code": self.caption_error_code,
-            "error_reason": self.caption_error_reason,
-            "generated_at": self.completed_at,
-            "accepted_at": None,
-        }
+
+class FileKnowledgeExtractionModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
+    """One derived output of a knowledge artifact.
+
+    Each artifact owns at most one row per kind. The row carries that output's
+    own status, the provider and model that produced it, its safe errors, and
+    its kind-specific payload.
+    """
+
+    __tablename__ = "file_knowledge_extractions"
+
+    artifact_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("file_knowledge_artifacts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    kind: Mapped[KnowledgeExtractionKind] = mapped_column(
+        Enum(
+            KnowledgeExtractionKind,
+            values_callable=enum_values,
+            native_enum=False,
+            create_constraint=True,
+        ),
+        nullable=False,
+    )
+    status: Mapped[KnowledgeExtractionStatus] = mapped_column(
+        Enum(
+            KnowledgeExtractionStatus,
+            values_callable=enum_values,
+            native_enum=False,
+            create_constraint=True,
+        ),
+        nullable=False,
+        default=KnowledgeExtractionStatus.PENDING,
+    )
+    provider: Mapped[str | None] = mapped_column(
+        String(512),
+        nullable=True,
+    )
+    model: Mapped[str | None] = mapped_column(
+        String(512),
+        nullable=True,
+    )
+    error_code: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+    )
+    error_reason: Mapped[str | None] = mapped_column(
+        String(512),
+        nullable=True,
+    )
+    payload: Mapped[JsonValue | None] = mapped_column(
+        jsonb_type(),
+        nullable=True,
+    )
+    """The kind-specific result. Validated per kind at the application boundary."""
+    started_at: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+    completed_at: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "artifact_id",
+            "kind",
+            name="uq_file_knowledge_extractions_artifact_kind",
+        ),
+        Index(
+            "idx_file_knowledge_extractions_artifact_status",
+            "artifact_id",
+            "status",
+        ),
+    )

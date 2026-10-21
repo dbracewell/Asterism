@@ -48,7 +48,7 @@ test("keeps General isolated and shows two project chats with different local at
     if (route.request().url().includes("/knowledge")) {
       if (route.request().method() === "POST") regenerated++;
       return route.fulfill({
-        json: { status: "ready", caption: { status: null } },
+        json: { status: "ready", extractions: {} },
       });
     }
     return route.fulfill({
