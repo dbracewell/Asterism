@@ -24,17 +24,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
 from asterism.core import config
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
 from asterism.domains.knowledge.vector_store import VectorStore, vector_store
 
 logger = get_logger("KnowledgeRetention")
 
-_IN_FLIGHT_STATUSES = (FileKnowledgeArtifactStatus.PENDING, FileKnowledgeArtifactStatus.PROCESSING)
+_IN_FLIGHT_STATUSES = (KnowledgeExtractionStatus.PENDING, KnowledgeExtractionStatus.RUNNING)
 """Generation states whose work may still be running; never pruned."""
 
 
 def generations_to_prune(
-    generations: Sequence[tuple[int, bool, FileKnowledgeArtifactStatus]],
+    generations: Sequence[tuple[int, bool, KnowledgeExtractionStatus]],
     *,
     keep_previous: int,
 ) -> list[int]:

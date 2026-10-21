@@ -63,6 +63,7 @@ erDiagram
     user_files ||--o{ project_files : supplies
     user_files ||--o{ chat_files : supplies
     user_files ||--o{ file_knowledge_artifacts : derives
+    file_knowledge_artifacts ||--o{ file_knowledge_extractions : produces
     messages ||--o{ sub_agent_traces : records
     agent_profiles ||--o{ sub_agent_traces : executes
     providers ||--o{ models : provides
@@ -165,11 +166,17 @@ as non-vision. See [LLM providers](llm-providers.md#file-input-capability-gating
 ## File-owned knowledge artifacts
 
 `file_knowledge_artifacts` holds the versioned derived state for an immutable
-`user_files` revision: text-extraction cache, chunk/embedding readiness, canonical
-caption metadata, safe error state, and whether the generation is current. The
+`user_files` revision: its lifecycle, the denormalized searchable aggregate, the
+chunk count, safe error state, and whether the generation is current. The
 database permits one current generation per file. A pending replacement cannot
 displace a ready generation; it becomes current only after processing and its
 vector writes complete.
+
+`file_knowledge_extractions` holds one row per derived output of an artifact —
+its text extraction, its embedding, and its captioning. Each row owns that
+output's own status, the provider and model that produced it, its safe errors,
+and its kind-specific payload. The database permits at most one row per
+`(artifact_id, kind)`, and removing an artifact removes its outputs.
 
 Superseded generations are bounded by `KNOWLEDGE_GENERATION_RETENTION`: the
 current generation plus that many superseded generations are kept per file, and

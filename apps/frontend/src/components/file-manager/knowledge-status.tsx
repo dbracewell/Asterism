@@ -16,6 +16,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import type { FileKnowledgeArtifact, FileProjectSummary } from "@/lib/client";
+import { extractionStatus, hasActiveExtraction } from "@/lib/knowledge";
 import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,20 +24,11 @@ type BadgeVariant = "secondary" | "destructive" | "outline";
 
 const variantFor = (status: string): BadgeVariant => {
   if (status === "failed") return "destructive";
-  if (status === "ready" || status === "accepted") return "secondary";
+  if (status === "ready") return "secondary";
   return "outline";
 };
 
 const POLL_INTERVAL_MS = 2000;
-
-const isActive = (artifact?: {
-  status: string;
-  caption: { status?: string | null };
-}) =>
-  artifact?.status === "pending" ||
-  artifact?.status === "processing" ||
-  artifact?.caption.status === "pending" ||
-  artifact?.caption.status === "running";
 
 export function KnowledgeStatus({
   filename,
@@ -52,10 +44,10 @@ export function KnowledgeStatus({
   const { data, error, isFetching, refetch } = useQuery({
     ...fileKnowledgeGetStatusOptions({ client, path: { filename } }),
     initialData: initialData ?? undefined,
-    staleTime: initialData && !isActive(initialData) ? 30_000 : 0,
+    staleTime: initialData && !hasActiveExtraction(initialData) ? 30_000 : 0,
     // No push channel exists; poll only while work is in flight.
     refetchInterval: (query) =>
-      isActive(query.state.data) ? POLL_INTERVAL_MS : false,
+      hasActiveExtraction(query.state.data) ? POLL_INTERVAL_MS : false,
   });
   const regenerate = useMutation({
     ...fileKnowledgeRegenerateMutation({ client }),
@@ -64,8 +56,9 @@ export function KnowledgeStatus({
     },
     onError: () => toast.error("Unable to regenerate embedding and caption."),
   });
-  const captionStatus = data?.caption.status ?? "none";
-  const busy = regenerate.isPending || isActive(data);
+  const embeddingStatus = extractionStatus(data?.extractions, "embedding");
+  const captionStatus = extractionStatus(data?.extractions, "captioning");
+  const busy = regenerate.isPending || hasActiveExtraction(data);
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1 text-xs [&_[data-slot=badge]]:max-w-full [&_[data-slot=badge]]:[overflow-wrap:anywhere] [&_[data-slot=badge]]:whitespace-normal">
       {error && (
@@ -79,8 +72,8 @@ export function KnowledgeStatus({
       {!data && !error && <span role="status">Loading processing status…</span>}
       {data && (
         <>
-          <Badge variant={variantFor(data.status)}>
-            Embedding: {data.status}
+          <Badge variant={variantFor(embeddingStatus)}>
+            Embedding: {embeddingStatus}
           </Badge>
           <Badge variant={variantFor(captionStatus)}>
             Caption: {captionStatus}

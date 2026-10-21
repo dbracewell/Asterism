@@ -19,7 +19,7 @@ from asterism.domains.chat.retrieval import create_retrieval_service
 from asterism.domains.chat.schemas import Chat, ChatInfo
 from asterism.domains.chat.tool_policy import require_internal_tool, resolve_effective_tools
 from asterism.domains.files.models import FileKind, UserFileModel
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
 from asterism.domains.projects.models import ProjectFileModel
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
 from asterism.domains.tools.builtin.search_knowledge import SearchKnowledgeArgs, search_knowledge
@@ -91,9 +91,9 @@ async def add_file(r, *, project=True, status="ready", owner="a"):
                     generation=1,
                     processing_profile_generation=1,
                     processing_profile_identity="a" * 64,
-                    status=FileKnowledgeArtifactStatus(status),
+                    status=KnowledgeExtractionStatus(status),
                     is_current=True,
-                    text_embeddings_ready=status == "ready",
+                    searchable=status == "ready",
                 )
             )
         await db.commit()

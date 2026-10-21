@@ -80,7 +80,12 @@ test("shares explorer controls for project membership, library picking, upload, 
     if (route.request().url().includes("/knowledge")) {
       if (route.request().method() === "POST") regenerations++;
       return route.fulfill({
-        json: { status: "failed", caption: { status: null } },
+        json: {
+          status: "failed",
+          extractions: {
+            embedding: { kind: "embedding", status: "failed" },
+          },
+        },
       });
     }
     if (route.request().method() === "DELETE") libraryDeletes++;

@@ -85,6 +85,59 @@ export type BulkUpdateSettingRequest = {
 };
 
 /**
+ * Captioning
+ *
+ * The captioning output of one artifact.
+ */
+export type Captioning = {
+  /**
+   * Kind
+   */
+  kind: "captioning";
+  status: KnowledgeExtractionStatus;
+  /**
+   * Provider
+   */
+  provider?: string | null;
+  /**
+   * Model
+   */
+  model?: string | null;
+  /**
+   * Error Code
+   */
+  error_code?: string | null;
+  /**
+   * Error Reason
+   */
+  error_reason?: string | null;
+  payload?: CaptioningPayload;
+  /**
+   * Started At
+   */
+  started_at?: number | null;
+  /**
+   * Completed At
+   */
+  completed_at?: number | null;
+};
+
+/**
+ * CaptioningPayload
+ *
+ * The caption derived from an image.
+ *
+ * Attributes:
+ * text: The caption text, or ``None`` when none was produced.
+ */
+export type CaptioningPayload = {
+  /**
+   * Text
+   */
+  text?: string | null;
+};
+
+/**
  * Chat
  */
 export type Chat = {
@@ -624,6 +677,64 @@ export type DownloadStatus =
   | "failed";
 
 /**
+ * Embedding
+ *
+ * The embedding output of one artifact.
+ */
+export type Embedding = {
+  /**
+   * Kind
+   */
+  kind: "embedding";
+  status: KnowledgeExtractionStatus;
+  /**
+   * Provider
+   */
+  provider?: string | null;
+  /**
+   * Model
+   */
+  model?: string | null;
+  /**
+   * Error Code
+   */
+  error_code?: string | null;
+  /**
+   * Error Reason
+   */
+  error_reason?: string | null;
+  payload?: EmbeddingPayload;
+  /**
+   * Started At
+   */
+  started_at?: number | null;
+  /**
+   * Completed At
+   */
+  completed_at?: number | null;
+};
+
+/**
+ * EmbeddingPayload
+ *
+ * The embedding state of one source file.
+ *
+ * Attributes:
+ * text_ready: Whether the text chunks are embedded and searchable.
+ * visual_ready: Whether the file's visual embedding is ready.
+ */
+export type EmbeddingPayload = {
+  /**
+   * Text Ready
+   */
+  text_ready?: boolean;
+  /**
+   * Visual Ready
+   */
+  visual_ready?: boolean;
+};
+
+/**
  * ErrorDetail
  *
  * Standard error response body: a message plus its HTTP status code.
@@ -641,18 +752,32 @@ export type ErrorDetail = {
 
 /**
  * FileContentStatus
+ *
+ * Lifecycle of the converted-content cache held by a :class:`UserFileModel`.
+ *
+ * ``PENDING`` is the initial state of every upload. The processor moves a
+ * file to ``READY`` once usable content is cached, to ``UNSUPPORTED`` when the
+ * kind cannot be converted at all, and to ``FAILED`` for transient or
+ * deterministic failures (missing bytes, too large, conversion error).
  */
 export type FileContentStatus = "pending" | "ready" | "unsupported" | "failed";
 
 /**
  * FileKind
+ *
+ * Coarse classification that decides how a source is converted and read.
+ *
+ * The kind is derived at upload time from the detected MIME type and the
+ * filename suffix, and it drives :mod:`asterism.domains.files.processor`:
+ * images are passed to a vision model as binary data, text is read directly,
+ * documents are converted, and everything else is treated as unsupported.
  */
 export type FileKind = "image" | "text" | "document" | "other";
 
 /**
  * FileKnowledgeArtifact
  *
- * A versioned, file-owned generation of extracted knowledge.
+ * A versioned, file-owned generation of derived knowledge.
  */
 export type FileKnowledgeArtifact = {
   /**
@@ -679,31 +804,15 @@ export type FileKnowledgeArtifact = {
    * Contract Version
    */
   contract_version: number;
-  /**
-   * Status
-   */
-  status: "pending" | "processing" | "ready" | "failed" | "canceled";
+  status: KnowledgeExtractionStatus;
   /**
    * Is Current
    */
   is_current: boolean;
   /**
-   * Extracted Content
-   */
-  extracted_content?: string | null;
-  /**
    * Chunk Count
    */
   chunk_count: number;
-  /**
-   * Text Embeddings Ready
-   */
-  text_embeddings_ready: boolean;
-  /**
-   * Visual Embedding Ready
-   */
-  visual_embedding_ready: boolean;
-  caption: KnowledgeCaptionMetadata;
   /**
    * Error Code
    */
@@ -728,10 +837,33 @@ export type FileKnowledgeArtifact = {
    * Updated At
    */
   updated_at: number;
+  /**
+   * Extractions
+   */
+  extractions?: {
+    [key: string]:
+      | ({
+          kind: "text_extraction";
+        } & TextExtraction)
+      | ({
+          kind: "embedding";
+        } & Embedding)
+      | ({
+          kind: "captioning";
+        } & Captioning);
+  };
 };
 
 /**
  * FileProjectSummary
+ *
+ * A project that references a file, as shown next to that file.
+ *
+ * Attributes:
+ * id: Project identifier.
+ * name: Human-readable project name.
+ * context_revision: Monotonic counter bumped whenever the project's
+ * derived context changes. Clients use it to detect staleness.
  */
 export type FileProjectSummary = {
   /**
@@ -750,6 +882,11 @@ export type FileProjectSummary = {
 
 /**
  * Function
+ *
+ * A named function invocation with its arguments as a JSON *string*.
+ *
+ * Matches the OpenAI wire shape: ``arguments`` is always serialized text that
+ * callers must ``json.loads`` before use.
  */
 export type Function = {
   /**
@@ -796,6 +933,14 @@ export type JsonValue = unknown;
 
 /**
  * KnowledgeCaptionConfiguration
+ *
+ * Captioning selection as reported to administrators.
+ *
+ * Attributes:
+ * mode: Active captioning mode.
+ * provider_model_id: Selected provider model, if any.
+ * updated_at: Last-write time of the persisted setting (Unix seconds),
+ * or ``0`` when the setting has never been stored.
  */
 export type KnowledgeCaptionConfiguration = {
   /**
@@ -814,6 +959,13 @@ export type KnowledgeCaptionConfiguration = {
 
 /**
  * KnowledgeCaptionConfigurationUpdate
+ *
+ * Administrator edit of the captioning selection.
+ *
+ * Attributes:
+ * mode: Requested captioning mode.
+ * provider_model_id: Requested provider model; required for
+ * ``provider`` mode and rejected for ``disabled``.
  */
 export type KnowledgeCaptionConfigurationUpdate = {
   /**
@@ -827,47 +979,35 @@ export type KnowledgeCaptionConfigurationUpdate = {
 };
 
 /**
- * KnowledgeCaptionMetadata
+ * KnowledgeExtractionStatus
+ *
+ * One lifecycle vocabulary shared by a generation and by every kind.
+ *
+ * A generation is ``running`` while it is being produced, and so is a single
+ * derived output while its own work is in flight.
  */
-export type KnowledgeCaptionMetadata = {
-  /**
-   * Status
-   */
-  status?: string | null;
-  /**
-   * Source
-   */
-  source?: string | null;
-  /**
-   * Model
-   */
-  model?: string | null;
-  /**
-   * Text
-   */
-  text?: string | null;
-  /**
-   * Error Code
-   */
-  error_code?: string | null;
-  /**
-   * Error Reason
-   */
-  error_reason?: string | null;
-  /**
-   * Generated At
-   */
-  generated_at?: number | null;
-  /**
-   * Accepted At
-   */
-  accepted_at?: number | null;
-};
+export type KnowledgeExtractionStatus =
+  | "pending"
+  | "running"
+  | "ready"
+  | "failed"
+  | "canceled";
 
 /**
  * KnowledgeProcessingProfile
  *
  * The globally active processing policy recorded by every artifact.
+ *
+ * Attributes:
+ * generation: Monotonic version of the policy. Every artifact records
+ * the generation it was produced under.
+ * identity: SHA-256 fingerprint (64 hex characters) of every
+ * processing-relevant input.
+ * extraction_policy: Identifier of the text-extraction strategy.
+ * chunking_policy: Identifier of the chunking strategy.
+ * embedding_model: Identifier of the embedding model.
+ * captioning_policy: Identifier of the captioning strategy.
+ * updated_at: Last-write time of the persisted setting (Unix seconds).
  */
 export type KnowledgeProcessingProfile = {
   /**
@@ -902,6 +1042,17 @@ export type KnowledgeProcessingProfile = {
 
 /**
  * KnowledgeProcessingProfileUpdate
+ *
+ * Administrator edit of the processing policy.
+ *
+ * Every field is required: an update replaces the policy as a whole rather
+ * than patching individual keys.
+ *
+ * Attributes:
+ * extraction_policy: Identifier of the text-extraction strategy.
+ * chunking_policy: Identifier of the chunking strategy.
+ * embedding_model: Identifier of the embedding model.
+ * captioning_policy: Identifier of the captioning strategy.
  */
 export type KnowledgeProcessingProfileUpdate = {
   /**
@@ -924,6 +1075,13 @@ export type KnowledgeProcessingProfileUpdate = {
 
 /**
  * KnowledgeReprocessSummary
+ *
+ * Outcome of a processing-policy transition.
+ *
+ * Attributes:
+ * profile: The policy that is now active.
+ * queued_file_count: Number of files whose artifact generation was
+ * replaced and scheduled for reprocessing.
  */
 export type KnowledgeReprocessSummary = {
   profile: KnowledgeProcessingProfile;
@@ -1273,6 +1431,8 @@ export type NewChatRequest = {
 
 /**
  * Project
+ *
+ * Read model for a project, including its current context revision.
  */
 export type Project = {
   /**
@@ -1307,6 +1467,8 @@ export type Project = {
 
 /**
  * ProjectCreate
+ *
+ * Payload for creating a project; description/prompt default to empty text.
  */
 export type ProjectCreate = {
   /**
@@ -1325,6 +1487,8 @@ export type ProjectCreate = {
 
 /**
  * ProjectFileBatch
+ *
+ * Add/remove batch of file memberships; duplicates are collapsed server-side.
  */
 export type ProjectFileBatch = {
   /**
@@ -1339,6 +1503,11 @@ export type ProjectFileBatch = {
 
 /**
  * ProjectFileBatchResult
+ *
+ * Outcome of a file batch: the new revision and which ids actually flipped.
+ *
+ * ``changed_file_ids`` are ids whose membership state changed (added or removed);
+ * ``unchanged_file_ids`` were already in the desired state, so no revision bump.
  */
 export type ProjectFileBatchResult = {
   /**
@@ -1357,6 +1526,8 @@ export type ProjectFileBatchResult = {
 
 /**
  * ProjectList
+ *
+ * One page of projects with the pre-pagination total.
  */
 export type ProjectList = {
   /**
@@ -1379,6 +1550,8 @@ export type ProjectList = {
 
 /**
  * ProjectSubAgentBatch
+ *
+ * Select/deselect batch of sub-agent definitions; duplicates collapsed server-side.
  */
 export type ProjectSubAgentBatch = {
   /**
@@ -1393,6 +1566,8 @@ export type ProjectSubAgentBatch = {
 
 /**
  * ProjectSubAgentBatchResult
+ *
+ * Outcome of a sub-agent batch; mirrors :class:`ProjectFileBatchResult`.
  */
 export type ProjectSubAgentBatchResult = {
   /**
@@ -1411,6 +1586,11 @@ export type ProjectSubAgentBatchResult = {
 
 /**
  * ProjectSubAgentList
+ *
+ * One page of selected (or candidate) sub-agent definitions for a project.
+ *
+ * ``context_revision`` is the project's revision at read time, so clients can
+ * pass it back as the expected revision on a subsequent batch write.
  */
 export type ProjectSubAgentList = {
   /**
@@ -1437,6 +1617,11 @@ export type ProjectSubAgentList = {
 
 /**
  * ProjectUpdate
+ *
+ * Partial project update guarded by an optimistic ``expected_context_revision``.
+ *
+ * Only fields present in the payload are written; omitted fields are untouched.
+ * An empty string clears text, but explicit JSON null is rejected.
  */
 export type ProjectUpdate = {
   /**
@@ -1772,6 +1957,13 @@ export type Setting = {
 
 /**
  * SimilarFile
+ *
+ * One file ranked against a query file by embedding similarity.
+ *
+ * Attributes:
+ * file: The matching file.
+ * score: Cosine similarity between the query file's centroid direction
+ * and the candidate's best-matching chunk, clamped to ``[-1, 1]``.
  */
 export type SimilarFile = {
   file: UserFile;
@@ -1785,6 +1977,11 @@ export type SimilarFile = {
 
 /**
  * SimilarFileList
+ *
+ * Ranked list of files similar to a query file.
+ *
+ * Attributes:
+ * files: Candidates ordered by descending similarity score.
  */
 export type SimilarFileList = {
   /**
@@ -1954,7 +2151,65 @@ export type SubAgentTrace = {
 };
 
 /**
+ * TextExtraction
+ *
+ * The text-extraction output of one artifact.
+ */
+export type TextExtraction = {
+  /**
+   * Kind
+   */
+  kind: "text_extraction";
+  status: KnowledgeExtractionStatus;
+  /**
+   * Provider
+   */
+  provider?: string | null;
+  /**
+   * Model
+   */
+  model?: string | null;
+  /**
+   * Error Code
+   */
+  error_code?: string | null;
+  /**
+   * Error Reason
+   */
+  error_reason?: string | null;
+  payload?: TextExtractionPayload;
+  /**
+   * Started At
+   */
+  started_at?: number | null;
+  /**
+   * Completed At
+   */
+  completed_at?: number | null;
+};
+
+/**
+ * TextExtractionPayload
+ *
+ * The text derived from a source file.
+ *
+ * Attributes:
+ * content: The converted plain text, or ``None`` when the conversion
+ * produced nothing.
+ */
+export type TextExtractionPayload = {
+  /**
+   * Content
+   */
+  content?: string | null;
+};
+
+/**
  * ToolCall
+ *
+ * One provider-requested tool invocation (OpenAI-compatible shape).
+ *
+ * The stable ``id`` links the call to its later ``tool``-role result message.
  */
 export type ToolCall = {
   /**
@@ -2014,6 +2269,14 @@ export type ToolPolicy = "user_configurable" | "context_managed";
 
 /**
  * ToolResult
+ *
+ * Outcome of executing one tool call, fed back to the model as a ``tool`` message.
+ *
+ * Fields:
+ * content: Textual result presented to the model (may be an error notice).
+ * raw_result: Unprocessed return value from the tool implementation.
+ * is_empty: True when the tool produced no usable output (e.g. rejected).
+ * tool_call: The originating call, used to bind the result message by id.
  */
 export type ToolResult = {
   /**
@@ -2083,6 +2346,23 @@ export type UpdateSettingValue = {
 
 /**
  * UserFile
+ *
+ * Public representation of one file in the caller's library.
+ *
+ * Attributes:
+ * id: File identifier.
+ * filename: Unique display name inside the caller's library.
+ * original_name: The sanitized name the client uploaded.
+ * size: Size in bytes of the stored source.
+ * mime_type: Detected MIME type.
+ * kind: Classification driving conversion and model input.
+ * content_status: State of the converted-content cache.
+ * content_error: Reason for a failed/unsupported conversion, if any.
+ * created_at: Creation time as whole Unix seconds.
+ * updated_at: Last update time as whole Unix seconds.
+ * thumbnail: Data-URL preview for images, else ``None``.
+ * projects: Projects that currently attach this file.
+ * knowledge: Latest knowledge artifact for this file, if one exists.
  */
 export type UserFile = {
   /**
@@ -2132,6 +2412,14 @@ export type UserFile = {
 
 /**
  * UserFileList
+ *
+ * A page of files plus the pagination envelope.
+ *
+ * Attributes:
+ * files: Files on this page.
+ * total: Total number of matching files across all pages.
+ * page: 1-based page number that was returned.
+ * page_size: Number of files requested per page.
  */
 export type UserFileList = {
   /**
@@ -4227,6 +4515,211 @@ export type ProjectSubAgentCandidatesResponses = {
 export type ProjectSubAgentCandidatesResponse =
   ProjectSubAgentCandidatesResponses[keyof ProjectSubAgentCandidatesResponses];
 
+export type AppCaptioningGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/captioning";
+};
+
+export type AppCaptioningGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type AppCaptioningGetError =
+  AppCaptioningGetErrors[keyof AppCaptioningGetErrors];
+
+export type AppCaptioningGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: KnowledgeCaptionConfiguration;
+};
+
+export type AppCaptioningGetResponse =
+  AppCaptioningGetResponses[keyof AppCaptioningGetResponses];
+
+export type AppCaptioningUpdateData = {
+  body: KnowledgeCaptionConfigurationUpdate;
+  path?: never;
+  query?: never;
+  url: "/settings/app/captioning";
+};
+
+export type AppCaptioningUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type AppCaptioningUpdateError =
+  AppCaptioningUpdateErrors[keyof AppCaptioningUpdateErrors];
+
+export type AppCaptioningUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: KnowledgeCaptionConfiguration;
+};
+
+export type AppCaptioningUpdateResponse =
+  AppCaptioningUpdateResponses[keyof AppCaptioningUpdateResponses];
+
+export type AppKnowledgeProcessingProfileUpdateData = {
+  body: KnowledgeProcessingProfileUpdate;
+  path?: never;
+  query?: never;
+  url: "/settings/app/knowledge-processing-profile";
+};
+
+export type AppKnowledgeProcessingProfileUpdateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type AppKnowledgeProcessingProfileUpdateError =
+  AppKnowledgeProcessingProfileUpdateErrors[keyof AppKnowledgeProcessingProfileUpdateErrors];
+
+export type AppKnowledgeProcessingProfileUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: KnowledgeReprocessSummary;
+};
+
+export type AppKnowledgeProcessingProfileUpdateResponse =
+  AppKnowledgeProcessingProfileUpdateResponses[keyof AppKnowledgeProcessingProfileUpdateResponses];
+
+export type AppKnowledgeEmbeddingStatusData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/knowledge-embedding/status";
+};
+
+export type AppKnowledgeEmbeddingStatusErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type AppKnowledgeEmbeddingStatusError =
+  AppKnowledgeEmbeddingStatusErrors[keyof AppKnowledgeEmbeddingStatusErrors];
+
+export type AppKnowledgeEmbeddingStatusResponses = {
+  /**
+   * Successful Response
+   */
+  200: DownloadProgress;
+};
+
+export type AppKnowledgeEmbeddingStatusResponse =
+  AppKnowledgeEmbeddingStatusResponses[keyof AppKnowledgeEmbeddingStatusResponses];
+
+export type AppCaptionModelStatusData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/caption-model/status";
+};
+
+export type AppCaptionModelStatusErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type AppCaptionModelStatusError =
+  AppCaptionModelStatusErrors[keyof AppCaptionModelStatusErrors];
+
+export type AppCaptionModelStatusResponses = {
+  /**
+   * Successful Response
+   */
+  200: DownloadProgress;
+};
+
+export type AppCaptionModelStatusResponse =
+  AppCaptionModelStatusResponses[keyof AppCaptionModelStatusResponses];
+
+export type AppCaptionModelDownloadData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/caption-model/download";
+};
+
+export type AppCaptionModelDownloadErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Download already in progress
+   */
+  409: ErrorDetail;
+};
+
+export type AppCaptionModelDownloadError =
+  AppCaptionModelDownloadErrors[keyof AppCaptionModelDownloadErrors];
+
+export type AppCaptionModelDownloadResponses = {
+  /**
+   * Successful Response
+   */
+  202: DownloadProgress;
+};
+
+export type AppCaptionModelDownloadResponse =
+  AppCaptionModelDownloadResponses[keyof AppCaptionModelDownloadResponses];
+
+export type AppCaptionModelCancelData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/caption-model/cancel";
+};
+
+export type AppCaptionModelCancelErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type AppCaptionModelCancelError =
+  AppCaptionModelCancelErrors[keyof AppCaptionModelCancelErrors];
+
+export type AppCaptionModelCancelResponses = {
+  /**
+   * Successful Response
+   */
+  200: DownloadProgress;
+};
+
+export type AppCaptionModelCancelResponse =
+  AppCaptionModelCancelResponses[keyof AppCaptionModelCancelResponses];
+
 export type MainAgentGetData = {
   body?: never;
   path?: never;
@@ -4791,99 +5284,6 @@ export type AppSettingsBulkUpdateResponses = {
 export type AppSettingsBulkUpdateResponse =
   AppSettingsBulkUpdateResponses[keyof AppSettingsBulkUpdateResponses];
 
-export type AppCaptioningGetData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/settings/app/captioning";
-};
-
-export type AppCaptioningGetErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-};
-
-export type AppCaptioningGetError =
-  AppCaptioningGetErrors[keyof AppCaptioningGetErrors];
-
-export type AppCaptioningGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: KnowledgeCaptionConfiguration;
-};
-
-export type AppCaptioningGetResponse =
-  AppCaptioningGetResponses[keyof AppCaptioningGetResponses];
-
-export type AppCaptioningUpdateData = {
-  body: KnowledgeCaptionConfigurationUpdate;
-  path?: never;
-  query?: never;
-  url: "/settings/app/captioning";
-};
-
-export type AppCaptioningUpdateErrors = {
-  /**
-   * Bad Request
-   */
-  400: ErrorDetail;
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type AppCaptioningUpdateError =
-  AppCaptioningUpdateErrors[keyof AppCaptioningUpdateErrors];
-
-export type AppCaptioningUpdateResponses = {
-  /**
-   * Successful Response
-   */
-  200: KnowledgeCaptionConfiguration;
-};
-
-export type AppCaptioningUpdateResponse =
-  AppCaptioningUpdateResponses[keyof AppCaptioningUpdateResponses];
-
-export type AppKnowledgeProcessingProfileUpdateData = {
-  body: KnowledgeProcessingProfileUpdate;
-  path?: never;
-  query?: never;
-  url: "/settings/app/knowledge-processing-profile";
-};
-
-export type AppKnowledgeProcessingProfileUpdateErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Validation Error
-   */
-  422: ErrorDetail;
-};
-
-export type AppKnowledgeProcessingProfileUpdateError =
-  AppKnowledgeProcessingProfileUpdateErrors[keyof AppKnowledgeProcessingProfileUpdateErrors];
-
-export type AppKnowledgeProcessingProfileUpdateResponses = {
-  /**
-   * Successful Response
-   */
-  200: KnowledgeReprocessSummary;
-};
-
-export type AppKnowledgeProcessingProfileUpdateResponse =
-  AppKnowledgeProcessingProfileUpdateResponses[keyof AppKnowledgeProcessingProfileUpdateResponses];
-
 export type AppSettingDeleteData = {
   body?: never;
   path: {
@@ -4952,118 +5352,6 @@ export type AppSettingUpdateResponses = {
 
 export type AppSettingUpdateResponse =
   AppSettingUpdateResponses[keyof AppSettingUpdateResponses];
-
-export type AppKnowledgeEmbeddingStatusData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/settings/app/knowledge-embedding/status";
-};
-
-export type AppKnowledgeEmbeddingStatusErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-};
-
-export type AppKnowledgeEmbeddingStatusError =
-  AppKnowledgeEmbeddingStatusErrors[keyof AppKnowledgeEmbeddingStatusErrors];
-
-export type AppKnowledgeEmbeddingStatusResponses = {
-  /**
-   * Successful Response
-   */
-  200: DownloadProgress;
-};
-
-export type AppKnowledgeEmbeddingStatusResponse =
-  AppKnowledgeEmbeddingStatusResponses[keyof AppKnowledgeEmbeddingStatusResponses];
-
-export type AppCaptionModelStatusData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/settings/app/caption-model/status";
-};
-
-export type AppCaptionModelStatusErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-};
-
-export type AppCaptionModelStatusError =
-  AppCaptionModelStatusErrors[keyof AppCaptionModelStatusErrors];
-
-export type AppCaptionModelStatusResponses = {
-  /**
-   * Successful Response
-   */
-  200: DownloadProgress;
-};
-
-export type AppCaptionModelStatusResponse =
-  AppCaptionModelStatusResponses[keyof AppCaptionModelStatusResponses];
-
-export type AppCaptionModelDownloadData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/settings/app/caption-model/download";
-};
-
-export type AppCaptionModelDownloadErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-  /**
-   * Download already in progress
-   */
-  409: ErrorDetail;
-};
-
-export type AppCaptionModelDownloadError =
-  AppCaptionModelDownloadErrors[keyof AppCaptionModelDownloadErrors];
-
-export type AppCaptionModelDownloadResponses = {
-  /**
-   * Successful Response
-   */
-  202: DownloadProgress;
-};
-
-export type AppCaptionModelDownloadResponse =
-  AppCaptionModelDownloadResponses[keyof AppCaptionModelDownloadResponses];
-
-export type AppCaptionModelCancelData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/settings/app/caption-model/cancel";
-};
-
-export type AppCaptionModelCancelErrors = {
-  /**
-   * Not found
-   */
-  404: ErrorDetail;
-};
-
-export type AppCaptionModelCancelError =
-  AppCaptionModelCancelErrors[keyof AppCaptionModelCancelErrors];
-
-export type AppCaptionModelCancelResponses = {
-  /**
-   * Successful Response
-   */
-  200: DownloadProgress;
-};
-
-export type AppCaptionModelCancelResponse =
-  AppCaptionModelCancelResponses[keyof AppCaptionModelCancelResponses];
 
 export type UserListUsersData = {
   body?: never;

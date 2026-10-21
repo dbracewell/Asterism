@@ -21,7 +21,7 @@ from asterism.core.exceptions import BadDataException, CodedException
 from asterism.domains.agent.context_provenance import ContextProvenance, describe_context
 from asterism.domains.agent.execution_scope import ExecutionScope, FileProvenance
 from asterism.domains.knowledge.embedding import EmbeddingProvider
-from asterism.domains.knowledge.models import FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import KnowledgeExtractionStatus
 from asterism.domains.knowledge.vector_store import VectorSearchResult, VectorStore
 
 logger = get_logger("RETRIEVAL")
@@ -37,19 +37,20 @@ class RetrievalArtifact:
             discard vector matches produced by an older generation than the
             one currently authorized.
         status: Lifecycle status of the knowledge artifact (pending/ready/...).
-        text_embeddings_ready: Whether the text chunks are embedded and
-            searchable; a READY artifact can still lack text embeddings.
+        searchable: Whether the generation has searchable text. A READY
+            artifact can still lack it: an image becomes searchable once its
+            caption lands.
     """
 
     file_id: uuid.UUID
     generation: int
-    status: FileKnowledgeArtifactStatus
-    text_embeddings_ready: bool
+    status: KnowledgeExtractionStatus
+    searchable: bool
 
     @property
     def ready(self) -> bool:
-        """True when the artifact is READY and its text embeddings are searchable."""
-        return self.status == FileKnowledgeArtifactStatus.READY and self.text_embeddings_ready
+        """True when the artifact is READY and its content is searchable."""
+        return self.status == KnowledgeExtractionStatus.READY and self.searchable
 
 
 @dataclass(frozen=True)
@@ -157,7 +158,7 @@ def _file_status(artifact: RetrievalArtifact | None) -> str:
     """
     if artifact is None:
         return "unavailable"
-    if artifact.status == FileKnowledgeArtifactStatus.READY and not artifact.text_embeddings_ready:
+    if artifact.status == KnowledgeExtractionStatus.READY and not artifact.searchable:
         # The file exists and was extracted, but its text was never embedded
         # (embedding failed or the provider is pending); report that state
         # instead of implying the file does not exist.

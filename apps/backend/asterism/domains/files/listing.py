@@ -11,6 +11,8 @@ from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.db.queries import paginate_select
+from asterism.domains.knowledge.extractions import describe_artifact, load_extractions
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 from asterism.domains.knowledge.queries import select_file_artifacts
 from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
@@ -30,6 +32,9 @@ async def file_knowledge_summaries(
     never been processed has no current generation yet, so its newest
     generation is reported instead — that is the one still being built.
 
+    Only the reported generations are described, and only their derived
+    outputs are loaded: a discarded generation never reaches the response.
+
     Args:
         file_ids: Files to look up. An empty list returns an empty mapping.
         session: Active async session; no commit happens here.
@@ -41,19 +46,25 @@ async def file_knowledge_summaries(
     if not file_ids:
         return {}
     artifacts = (await session.scalars(select_file_artifacts(file_ids))).all()
-    current: dict[uuid.UUID, FileKnowledgeArtifact] = {}
-    newest: dict[uuid.UUID, FileKnowledgeArtifact] = {}
+    current: dict[uuid.UUID, FileKnowledgeArtifactModel] = {}
+    newest: dict[uuid.UUID, FileKnowledgeArtifactModel] = {}
     for artifact in artifacts:
-        described = FileKnowledgeArtifact.model_validate(artifact)
         # The select orders by descending generation, so the first artifact
         # seen for a file is its newest generation.
-        newest.setdefault(artifact.file_id, described)
+        newest.setdefault(artifact.file_id, artifact)
         if artifact.is_current:
-            current[artifact.file_id] = described
-    summaries: dict[uuid.UUID, FileKnowledgeArtifact] = {}
-    for file_id, artifact in newest.items():
-        summaries[file_id] = current[file_id] if file_id in current else artifact
-    return summaries
+            current[artifact.file_id] = artifact
+    reported = {
+        file_id: current.get(file_id, artifact) for file_id, artifact in newest.items()
+    }
+    extractions = await load_extractions(
+        artifact_ids=[artifact.id for artifact in reported.values()],
+        session=session,
+    )
+    return {
+        file_id: describe_artifact(artifact, extractions.get(artifact.id, []))
+        for file_id, artifact in reported.items()
+    }
 
 
 async def describe_files(*, user_id: str, files: list[UserFileModel], session: AsyncSession) -> list[UserFile]:

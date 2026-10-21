@@ -142,7 +142,7 @@ async function fixtures(page: Page) {
     }),
   );
   await page.route("**/api/py/files/source.txt/knowledge", (route) =>
-    route.fulfill({ json: { status: "ready", caption: { status: "none" } } }),
+    route.fulfill({ json: { status: "ready", extractions: {} } }),
   );
   await page.routeWebSocket(`**/api/py/chat/stream/${C}?**`, (socket) => {
     transport.socket = socket;

@@ -18,10 +18,15 @@ from asterism.domains.chat.schemas import Chat, MessageStatus
 from asterism.domains.chat.tool_policy import resolve_effective_tools
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.files.store import get_file_store
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import (
+    FileKnowledgeArtifactModel,
+    FileKnowledgeExtractionModel,
+    KnowledgeExtractionKind,
+    KnowledgeExtractionStatus,
+)
 from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk, VectorSearchResult
 from asterism.domains.retrieval.service import RetrievalLimits, RetrievalService
-from sqlalchemy import delete, update
+from sqlalchemy import delete, select, update
 from test_context_tools import add_file, make_execution_scope
 from test_context_tools import context_runtime as _context_runtime
 from test_project_sub_agents import change
@@ -123,10 +128,16 @@ async def test_foreign_matches_limits_caption_and_utf8_budget(context_runtime, m
     r = context_runtime
     fid = await add_file(r)
     async with r.sessions() as db:
-        await db.execute(
-            update(FileKnowledgeArtifactModel)
-            .where(FileKnowledgeArtifactModel.file_id == fid)
-            .values(caption_text="ééé")
+        artifact_id = await db.scalar(
+            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == fid)
+        )
+        db.add(
+            FileKnowledgeExtractionModel(
+                artifact_id=artifact_id,
+                kind=KnowledgeExtractionKind.CAPTIONING,
+                status=KnowledgeExtractionStatus.READY,
+                payload={"text": "ééé"},
+            )
         )
         await db.commit()
     scope, ceiling = await execution(r)
@@ -170,7 +181,7 @@ async def test_ready_without_text_embeddings_reports_not_searchable(context_runt
         await db.execute(
             update(FileKnowledgeArtifactModel)
             .where(FileKnowledgeArtifactModel.file_id == fid)
-            .values(text_embeddings_ready=False)
+            .values(searchable=False)
         )
         await db.commit()
     scope, ceiling = await execution(r)
@@ -206,9 +217,9 @@ async def test_replacement_during_vector_search_never_releases_a_new_or_old_gene
                     generation=2,
                     processing_profile_generation=1,
                     processing_profile_identity="a" * 64,
-                    status=FileKnowledgeArtifactStatus.READY,
+                    status=KnowledgeExtractionStatus.READY,
                     is_current=True,
-                    text_embeddings_ready=True,
+                    searchable=True,
                 )
             )
             await db.commit()

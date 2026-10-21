@@ -5,7 +5,7 @@ from collections.abc import Sequence
 
 from sqlalchemy import Select, select
 
-from .models import FileKnowledgeArtifactModel
+from .models import FileKnowledgeArtifactModel, FileKnowledgeExtractionModel
 
 
 def select_current_owned_artifacts(user_id: str):
@@ -54,4 +54,20 @@ def select_newest_file_artifact(file_id: uuid.UUID) -> Select[tuple[FileKnowledg
         .where(FileKnowledgeArtifactModel.file_id == file_id)
         .order_by(FileKnowledgeArtifactModel.generation.desc())
         .limit(1)
+    )
+
+
+def select_artifact_extractions(
+    artifact_ids: Sequence[uuid.UUID],
+) -> Select[tuple[FileKnowledgeExtractionModel]]:
+    """Select the derived outputs of the given artifacts.
+
+    Args:
+        artifact_ids: Artifacts whose outputs are selected.
+
+    Returns:
+        A select over the extraction rows of those artifacts.
+    """
+    return select(FileKnowledgeExtractionModel).where(
+        FileKnowledgeExtractionModel.artifact_id.in_(artifact_ids)
     )

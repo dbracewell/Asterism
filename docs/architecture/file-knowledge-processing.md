@@ -10,7 +10,8 @@ reference a file and never initiate duplicate work.
 | Term                              | Meaning in Asterism                                                                                                                                                                                                                                                               | Implemented representation                                                             |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **Source file**                   | The immutable, user-owned upload from which knowledge is derived. It owns the original bytes and identity, not the derived text, vectors, or caption.                                                                                                                             | `UserFileModel` plus bytes in `LocalFileStore`                                         |
-| **Knowledge artifact**            | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: extraction result, chunk count, embedding readiness, canonical caption state, timestamps, and safe errors. This is the canonical meaning of _artifact_ in this guide. | `FileKnowledgeArtifactModel` / `file_knowledge_artifacts`                                             |
+| **Knowledge artifact**            | The complete, versioned set of derived knowledge for one source-file revision under one processing profile: its generation, its lifecycle, the denormalized searchable aggregate, and one derived output per kind. This is the canonical meaning of _artifact_ in this guide. | `FileKnowledgeArtifactModel` / `file_knowledge_artifacts`                                             |
+| **Derived output (extraction)**   | One derived output of a source file — its text extraction, its embeddings, or its caption. Each has its own status, provider, model, safe errors, and kind-specific payload, so adding an output does not reshape the artifact. | `FileKnowledgeExtractionModel` / `file_knowledge_extractions`, one row per `(artifact_id, kind)` |
 | **Artifact generation**           | A monotonic version of a file's knowledge artifact. Reprocessing creates a new generation instead of modifying a usable one in place.                                                                                                                                             | `FileKnowledgeArtifactModel.generation` and `VectorChunk.artifact_generation`                 |
 | **Current artifact**              | The one ready artifact generation selected for a source file. A replacement becomes current only after its vectors are written successfully.                                                                                                                                      | `FileKnowledgeArtifactModel.is_current`, protected by a partial unique index                  |
 | **Reported artifact**             | The artifact generation an API reports for a file: the current generation when one exists (the generation retrieval serves), otherwise the newest generation (the one still being built).                                                                                                                                  | `knowledge.queries.select_file_artifacts` plus the files domain's `file_knowledge_summaries` |
@@ -20,7 +21,8 @@ reference a file and never initiate duplicate work.
 | **Content cache**                 | Bounded converted text used as the input to chunking. It is source-file conversion state, distinct from the artifact's indexed vector rows.                                                                                                                                       | `UserFileModel.content_cache`, produced by `MarkItDownFileProcessor`                   |
 | **Chunk**                         | One bounded text excerpt, or the display content associated with a visual image embedding. A chunk has stable provenance within an artifact generation.                                                                                                                           | `VectorChunk` and a LanceDB `knowledge_chunks` row                                     |
 | **Embedding / vector**            | A normalized numeric representation of a chunk, caption, or image used for similarity search. Vectors are not relational artifact fields; their provenance links them to an artifact generation.                                                                                  | `OnnxClipEmbeddingProvider`, `LanceDbVectorStore`                                      |
-| **Canonical caption**             | The one derived caption associated with an image artifact, shared wherever that file is used. It may be generated or regenerated in Files; it is shared across project/chat references.                                                                                           | Artifact caption fields and one caption `VectorChunk`                                  |
+| **Searchable aggregate**          | Whether a generation has searchable text. Text chunks make it searchable, and so does a caption. It is denormalized on the artifact row so the retrieval hot path stays a single-row read.                                                                                            | `FileKnowledgeArtifactModel.searchable`                                               |
+| **Canonical caption**             | The one derived caption associated with an image artifact, shared wherever that file is used. It may be generated or regenerated in Files; it is shared across project/chat references.                                                                                           | The captioning derived output and one caption `VectorChunk`                              |
 | **Membership**                    | A reference between a project or chat and a source file. Removing it preserves the file and its knowledge artifact.                                                                                                                                                               | `ProjectFileModel` / `ChatFileModel`                                                   |
 | **Allowed file IDs**              | The live execution file IDs resolved from project memberships and active-branch chat attachments. This is the retrieval authorization boundary.                                                                                                                                   | `ExecutionContextResolver` plus `LanceDbVectorStore.search(..., allowed_file_ids=...)` |
 
@@ -31,7 +33,8 @@ reference a file and never initiate duplicate work.
 | HTTP upload       | `file_router.upload_files`, `files.service.upload_files`     | Validates the request, writes source bytes, persists the source-file record, and queues work after commit.              |
 | Source bytes      | `FileStore`, `LocalFileStore`                                | Owns bytes beneath `STORAGE_ROOT/files/{user_id}` and prevents path traversal.                                          |
 | File conversion   | `MarkItDownFileProcessor.ensure_processed`                   | Produces bounded text cache for text/document files; verifies file integrity and records safe file-content errors.      |
-| Artifact state    | `FileKnowledgeArtifactModel`, `ensure_file_knowledge_artifact`      | Owns processing generation, profile fingerprint, status, extraction metadata, embeddings, and canonical caption fields. |
+| Artifact state    | `FileKnowledgeArtifactModel`, `ensure_file_knowledge_artifact`      | Owns processing generation, profile fingerprint, lifecycle, the searchable aggregate, and the chunk count. |
+| Derived outputs   | `FileKnowledgeExtractionModel`, `knowledge/extractions.py`         | Owns one row per derived output — its status, provider, model, safe errors, and kind-specific payload. |
 | Processing policy | `knowledge/policy.py`, `knowledge/processing.py`              | Owns the policy's schema, persistence, and transitions, including the replacement generations a policy change queues. |
 | Processing queue  | `KnowledgeIngestionJobs`, `ingest_file_artifact`             | Runs at most one in-process job per artifact ID and promotes a generation only after vector writes succeed.             |
 | Embeddings        | `OnnxClipEmbeddingProvider`                                  | Lazily verifies and loads the pinned local ONNX CLIP bundle, then emits normalized text or image vectors.               |
@@ -67,12 +70,13 @@ sequenceDiagram
     FS->>Store: save(user_id, filename, content)
     FS->>DB: create UserFileModel
     FS->>DB: ensure_file_knowledge_artifact(file)
-    Note over DB: Create pending FileKnowledgeArtifactModel\nfor the active processing profile
+    Note over DB: Create pending FileKnowledgeArtifactModel\nplus its text-extraction and embedding outputs
     FS->>DB: commit file and artifact
     FS->>Jobs: enqueue(user_id, file_id, artifact_id)
 
     Jobs->>Ingest: ingest_file_artifact(...)
-    Ingest->>DB: artifact.status = processing
+    Ingest->>DB: artifact.status = running
+    Ingest->>DB: text extraction and embedding outputs = running
     alt text or document file
         Ingest->>Convert: ensure_processed(file, session)
         Convert->>Store: open and verify source bytes
@@ -207,9 +211,9 @@ sequenceDiagram
     participant Embed as OnnxClipEmbeddingProvider
     participant Vectors as LanceDbVectorStore
 
-    Ingest->>DB: artifact.caption_status = pending
+    Ingest->>DB: captioning output = pending
     Ingest->>Jobs: enqueue(user_id, file_id, artifact_id)
-    Jobs->>DB: caption_status = running
+    Jobs->>DB: captioning output = running
     Jobs->>Run: runner(artifact, file)
     Run->>DB: get_captioning_configuration()
     alt mode = local
@@ -221,8 +225,13 @@ sequenceDiagram
     Jobs->>Embed: embed_text([caption])
     Jobs->>Vectors: delete_chunk(caption chunk ID)
     Jobs->>Vectors: add(caption VectorChunk)
-    Jobs->>DB: caption_status = draft; persist text, source, model
+    Jobs->>DB: captioning output = ready; persist payload, provider, model
+    Jobs->>DB: artifact.searchable = true
 ```
+
+The caption is a *derived output*: the captioning row owns its own status,
+provider, model, safe errors, and payload. A caption also makes the generation
+searchable, which is the denormalized aggregate the retrieval path reads.
 
 `_caption_file_artifact()` verifies that the artifact is an image, the source
 exists, and its bytes are within `MAX_VISION_IMAGE_BYTES`. It then uses exactly
@@ -242,25 +251,29 @@ local or disabled captioning, which transitions `knowledge.processing` and
 queues replacement generations before the provider or model can be removed.
 
 `KnowledgeCaptionJobs` bounds concurrent captions, embeds a successful caption,
-and stores it as `draft` canonical metadata. The caption vector uses the next
+and stores it as the captioning derived output. The caption vector uses the next
 chunk ordinal (`artifact.chunk_count`) and a deterministic chunk ID based on the
 file and artifact generation. Users cannot edit or clear a caption; regenerating
-a file (`files.service.regenerate_file_knowledge()`) resets its artifact to
-`pending` and reprocesses both the embedding and the caption.
+a file (`files.service.regenerate_file_knowledge()`) resets its artifact and its
+derived outputs to `pending` and reprocesses both the embedding and the caption.
 
 ## State, retry, and deletion rules
 
-`FileKnowledgeArtifactStatus` moves from `pending` to `processing` to `ready`,
-or to `failed`/`canceled`. `KnowledgeIngestionJobs.recover_interrupted()` changes
-interrupted `processing` rows to retryable `pending` rows at startup; regenerate
-and cancel API actions are implemented by `regenerate_file_knowledge()` and
-`cancel_file_knowledge_processing()`.
+`KnowledgeExtractionStatus` is the one lifecycle vocabulary. It moves from
+`pending` to `running` to `ready`, or to `failed`/`canceled`. The artifact row
+uses it for the generation as a whole, and every derived output uses it for
+itself. `KnowledgeIngestionJobs.recover_interrupted()` changes interrupted
+`running` artifacts to retryable `pending` rows at startup, and interrupted
+`running` captioning outputs to `failed` with an `interrupted` error code;
+regenerate and cancel API actions are implemented by
+`regenerate_file_knowledge()` and `cancel_file_knowledge_processing()`.
 
-`KnowledgeCaptionStatus` is independent of artifact readiness: it can be
-`pending`, `running`, `draft`, `accepted`, `cleared`, `failed`, or `canceled`.
-Caption-job restart recovery changes only `running` captions to `failed` with an
-`interrupted` error code. Safe error fields are persisted; source bytes and
-caption text are not written to logs by the caption path.
+A derived output's status is independent of the artifact's: a generation is
+`ready` once its embedding is written, while its captioning output may still be
+`pending` or `running`. The output that was in flight when the work failed is
+the one marked `failed`; the outputs that never ran keep their `pending` state.
+Safe error fields are persisted; source bytes and caption text are not written
+to logs by the caption path.
 
 Removing a project membership removes only its source reference. Deleting a source file calls
 `files.service._remove_file_knowledge_records()` before removing the file row:
@@ -291,7 +304,10 @@ members using file project metadata. Physical deletion remains a library action.
 ## File view and similar files
 
 `/files/{filename}` in the frontend shows a file's extracted content, caption,
-similar files, and containing projects. `GET /files/{filename}/similar`
+similar files, and containing projects. The content comes from the text
+extraction output's payload and the caption from the captioning output's
+payload; the file manager's badges show each output's own status.
+`GET /files/{filename}/similar`
 (`files.service.get_similar_files()`) reads the file's current-generation vectors,
 averages them into a normalized centroid, and searches the owner's other ready,
 current-generation files. Results are grouped by file using the best chunk, with

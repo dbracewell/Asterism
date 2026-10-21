@@ -35,9 +35,18 @@ describe("KnowledgeStatus", () => {
       status: "ready",
       is_current: true,
       chunk_count: 5,
-      text_embeddings_ready: true,
-      visual_embedding_ready: true,
-      caption: { status: "ready" },
+      extractions: {
+        embedding: {
+          kind: "embedding",
+          status: "ready",
+          payload: { text_ready: true, visual_ready: true },
+        },
+        captioning: {
+          kind: "captioning",
+          status: "ready",
+          payload: { text: "A diagram" },
+        },
+      },
       created_at: 100,
       updated_at: 100,
     };

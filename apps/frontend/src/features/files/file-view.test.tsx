@@ -29,6 +29,11 @@ const file = (id: string, name: string) => ({
   projects: [{ id: "p-1", name: "References" }],
 });
 
+const artifact = (
+  extractions: Record<string, unknown>,
+  status = "ready",
+) => ({ status, extractions });
+
 function renderView() {
   return render(
     <QueryClientProvider
@@ -46,11 +51,23 @@ beforeEach(() => {
   ApiClient.__registry.set(api as never);
   api.fileGetFileInfo.mockResolvedValue({ data: file("1", "notes.txt") });
   api.fileKnowledgeGetStatus.mockResolvedValue({
-    data: {
-      status: "ready",
-      extracted_content: "hello extracted world",
-      caption: { status: "ready", text: "A short caption" },
-    },
+    data: artifact({
+      text_extraction: {
+        kind: "text_extraction",
+        status: "ready",
+        payload: { content: "hello extracted world" },
+      },
+      embedding: {
+        kind: "embedding",
+        status: "ready",
+        payload: { text_ready: true, visual_ready: false },
+      },
+      captioning: {
+        kind: "captioning",
+        status: "ready",
+        payload: { text: "A short caption" },
+      },
+    }),
   });
   api.fileSimilarGetMany.mockResolvedValue({
     data: { files: [{ file: file("2", "other.txt"), score: 0.8123 }] },
@@ -81,7 +98,7 @@ it("goes back through the Next.js router", async () => {
 
 it("shows empty states when nothing is available", async () => {
   api.fileKnowledgeGetStatus.mockResolvedValue({
-    data: { status: "pending", caption: { status: null, text: null } },
+    data: artifact({}, "pending"),
   });
   api.fileSimilarGetMany.mockResolvedValue({ data: { files: [] } });
   api.fileGetFileInfo.mockResolvedValue({
@@ -113,7 +130,13 @@ it("keeps project memberships visible when processing artifacts cannot load", as
   );
   expect(screen.queryByText("No caption.")).not.toBeInTheDocument();
   api.fileKnowledgeGetStatus.mockResolvedValue({
-    data: { status: "ready", caption: { text: "Recovered" } },
+    data: artifact({
+      captioning: {
+        kind: "captioning",
+        status: "ready",
+        payload: { text: "Recovered" },
+      },
+    }),
   });
   await userEvent.click(screen.getByRole("button", { name: "Retry" }));
   expect(await screen.findByText("Recovered")).toBeInTheDocument();
@@ -123,11 +146,18 @@ it("keeps adversarial extracted HTML and captions as literal text", async () => 
   const payload =
     '<img src="/untrusted-markdown/file" onerror="alert(1)"><form action="/steal">secret</form>';
   api.fileKnowledgeGetStatus.mockResolvedValue({
-    data: {
-      status: "ready",
-      extracted_content: payload,
-      caption: { status: "ready", text: payload },
-    },
+    data: artifact({
+      text_extraction: {
+        kind: "text_extraction",
+        status: "ready",
+        payload: { content: payload },
+      },
+      captioning: {
+        kind: "captioning",
+        status: "ready",
+        payload: { text: payload },
+      },
+    }),
   });
   const { container } = renderView();
   expect(await screen.findAllByText(payload)).toHaveLength(2);

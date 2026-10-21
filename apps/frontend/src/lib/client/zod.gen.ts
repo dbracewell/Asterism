@@ -31,6 +31,18 @@ export const zBulkDeleteChatResponse = z.object({
 });
 
 /**
+ * CaptioningPayload
+ *
+ * The caption derived from an image.
+ *
+ * Attributes:
+ * text: The caption text, or ``None`` when none was produced.
+ */
+export const zCaptioningPayload = z.object({
+  text: z.string().max(10000).nullish(),
+});
+
+/**
  * ChatContextUsage
  */
 export const zChatContextUsage = z.object({
@@ -194,6 +206,20 @@ export const zDownloadProgress = z.object({
 });
 
 /**
+ * EmbeddingPayload
+ *
+ * The embedding state of one source file.
+ *
+ * Attributes:
+ * text_ready: Whether the text chunks are embedded and searchable.
+ * visual_ready: Whether the file's visual embedding is ready.
+ */
+export const zEmbeddingPayload = z.object({
+  text_ready: z.boolean().optional().default(false),
+  visual_ready: z.boolean().optional().default(false),
+});
+
+/**
  * ErrorDetail
  *
  * Standard error response body: a message plus its HTTP status code.
@@ -205,6 +231,13 @@ export const zErrorDetail = z.object({
 
 /**
  * FileContentStatus
+ *
+ * Lifecycle of the converted-content cache held by a :class:`UserFileModel`.
+ *
+ * ``PENDING`` is the initial state of every upload. The processor moves a
+ * file to ``READY`` once usable content is cached, to ``UNSUPPORTED`` when the
+ * kind cannot be converted at all, and to ``FAILED`` for transient or
+ * deterministic failures (missing bytes, too large, conversion error).
  */
 export const zFileContentStatus = z.enum([
   "pending",
@@ -215,11 +248,26 @@ export const zFileContentStatus = z.enum([
 
 /**
  * FileKind
+ *
+ * Coarse classification that decides how a source is converted and read.
+ *
+ * The kind is derived at upload time from the detected MIME type and the
+ * filename suffix, and it drives :mod:`asterism.domains.files.processor`:
+ * images are passed to a vision model as binary data, text is read directly,
+ * documents are converted, and everything else is treated as unsupported.
  */
 export const zFileKind = z.enum(["image", "text", "document", "other"]);
 
 /**
  * FileProjectSummary
+ *
+ * A project that references a file, as shown next to that file.
+ *
+ * Attributes:
+ * id: Project identifier.
+ * name: Human-readable project name.
+ * context_revision: Monotonic counter bumped whenever the project's
+ * derived context changes. Clients use it to detect staleness.
  */
 export const zFileProjectSummary = z.object({
   id: z.uuid(),
@@ -229,6 +277,11 @@ export const zFileProjectSummary = z.object({
 
 /**
  * Function
+ *
+ * A named function invocation with its arguments as a JSON *string*.
+ *
+ * Matches the OpenAI wire shape: ``arguments`` is always serialized text that
+ * callers must ``json.loads`` before use.
  */
 export const zFunction = z.object({
   name: z.string(),
@@ -260,6 +313,14 @@ export const zBulkUpdateSettingRequest = z.object({
 
 /**
  * KnowledgeCaptionConfiguration
+ *
+ * Captioning selection as reported to administrators.
+ *
+ * Attributes:
+ * mode: Active captioning mode.
+ * provider_model_id: Selected provider model, if any.
+ * updated_at: Last-write time of the persisted setting (Unix seconds),
+ * or ``0`` when the setting has never been stored.
  */
 export const zKnowledgeCaptionConfiguration = z.object({
   mode: z.string(),
@@ -269,6 +330,13 @@ export const zKnowledgeCaptionConfiguration = z.object({
 
 /**
  * KnowledgeCaptionConfigurationUpdate
+ *
+ * Administrator edit of the captioning selection.
+ *
+ * Attributes:
+ * mode: Requested captioning mode.
+ * provider_model_id: Requested provider model; required for
+ * ``provider`` mode and rejected for ``disabled``.
  */
 export const zKnowledgeCaptionConfigurationUpdate = z.object({
   mode: z.enum(["disabled", "provider", "local"]),
@@ -276,50 +344,70 @@ export const zKnowledgeCaptionConfigurationUpdate = z.object({
 });
 
 /**
- * KnowledgeCaptionMetadata
+ * KnowledgeExtractionStatus
+ *
+ * One lifecycle vocabulary shared by a generation and by every kind.
+ *
+ * A generation is ``running`` while it is being produced, and so is a single
+ * derived output while its own work is in flight.
  */
-export const zKnowledgeCaptionMetadata = z.object({
-  status: z.string().nullish(),
-  source: z.string().nullish(),
+export const zKnowledgeExtractionStatus = z.enum([
+  "pending",
+  "running",
+  "ready",
+  "failed",
+  "canceled",
+]);
+
+/**
+ * Captioning
+ *
+ * The captioning output of one artifact.
+ */
+export const zCaptioning = z.object({
+  kind: z.literal("captioning"),
+  status: zKnowledgeExtractionStatus,
+  provider: z.string().nullish(),
   model: z.string().nullish(),
-  text: z.string().max(10000).nullish(),
   error_code: z.string().nullish(),
   error_reason: z.string().nullish(),
-  generated_at: z.int().nullish(),
-  accepted_at: z.int().nullish(),
+  payload: zCaptioningPayload.optional(),
+  started_at: z.int().nullish(),
+  completed_at: z.int().nullish(),
 });
 
 /**
- * FileKnowledgeArtifact
+ * Embedding
  *
- * A versioned, file-owned generation of extracted knowledge.
+ * The embedding output of one artifact.
  */
-export const zFileKnowledgeArtifact = z.object({
-  id: z.uuid(),
-  file_id: z.uuid(),
-  generation: z.int().gte(1),
-  processing_profile_generation: z.int().gte(1),
-  processing_profile_identity: z.string().length(64),
-  contract_version: z.int().gte(1),
-  status: z.enum(["pending", "processing", "ready", "failed", "canceled"]),
-  is_current: z.boolean(),
-  extracted_content: z.string().nullish(),
-  chunk_count: z.int().gte(0),
-  text_embeddings_ready: z.boolean(),
-  visual_embedding_ready: z.boolean(),
-  caption: zKnowledgeCaptionMetadata,
+export const zEmbedding = z.object({
+  kind: z.literal("embedding"),
+  status: zKnowledgeExtractionStatus,
+  provider: z.string().nullish(),
+  model: z.string().nullish(),
   error_code: z.string().nullish(),
   error_reason: z.string().nullish(),
+  payload: zEmbeddingPayload.optional(),
   started_at: z.int().nullish(),
   completed_at: z.int().nullish(),
-  created_at: z.int(),
-  updated_at: z.int(),
 });
 
 /**
  * KnowledgeProcessingProfile
  *
  * The globally active processing policy recorded by every artifact.
+ *
+ * Attributes:
+ * generation: Monotonic version of the policy. Every artifact records
+ * the generation it was produced under.
+ * identity: SHA-256 fingerprint (64 hex characters) of every
+ * processing-relevant input.
+ * extraction_policy: Identifier of the text-extraction strategy.
+ * chunking_policy: Identifier of the chunking strategy.
+ * embedding_model: Identifier of the embedding model.
+ * captioning_policy: Identifier of the captioning strategy.
+ * updated_at: Last-write time of the persisted setting (Unix seconds).
  */
 export const zKnowledgeProcessingProfile = z.object({
   generation: z.int().gte(1),
@@ -333,6 +421,17 @@ export const zKnowledgeProcessingProfile = z.object({
 
 /**
  * KnowledgeProcessingProfileUpdate
+ *
+ * Administrator edit of the processing policy.
+ *
+ * Every field is required: an update replaces the policy as a whole rather
+ * than patching individual keys.
+ *
+ * Attributes:
+ * extraction_policy: Identifier of the text-extraction strategy.
+ * chunking_policy: Identifier of the chunking strategy.
+ * embedding_model: Identifier of the embedding model.
+ * captioning_policy: Identifier of the captioning strategy.
  */
 export const zKnowledgeProcessingProfileUpdate = z.object({
   extraction_policy: z.string().min(1).max(128),
@@ -343,6 +442,13 @@ export const zKnowledgeProcessingProfileUpdate = z.object({
 
 /**
  * KnowledgeReprocessSummary
+ *
+ * Outcome of a processing-policy transition.
+ *
+ * Attributes:
+ * profile: The policy that is now active.
+ * queued_file_count: Number of files whose artifact generation was
+ * replaced and scheduled for reprocessing.
  */
 export const zKnowledgeReprocessSummary = z.object({
   profile: zKnowledgeProcessingProfile,
@@ -511,6 +617,8 @@ export const zNewChatRequest = z.object({
 
 /**
  * Project
+ *
+ * Read model for a project, including its current context revision.
  */
 export const zProject = z.object({
   id: z.uuid(),
@@ -524,6 +632,8 @@ export const zProject = z.object({
 
 /**
  * ProjectCreate
+ *
+ * Payload for creating a project; description/prompt default to empty text.
  */
 export const zProjectCreate = z.object({
   name: z.string().min(1).max(255),
@@ -533,6 +643,8 @@ export const zProjectCreate = z.object({
 
 /**
  * ProjectFileBatch
+ *
+ * Add/remove batch of file memberships; duplicates are collapsed server-side.
  */
 export const zProjectFileBatch = z.object({
   expected_context_revision: z.int().gte(1),
@@ -541,6 +653,11 @@ export const zProjectFileBatch = z.object({
 
 /**
  * ProjectFileBatchResult
+ *
+ * Outcome of a file batch: the new revision and which ids actually flipped.
+ *
+ * ``changed_file_ids`` are ids whose membership state changed (added or removed);
+ * ``unchanged_file_ids`` were already in the desired state, so no revision bump.
  */
 export const zProjectFileBatchResult = z.object({
   context_revision: z.int().gte(1),
@@ -550,6 +667,8 @@ export const zProjectFileBatchResult = z.object({
 
 /**
  * ProjectList
+ *
+ * One page of projects with the pre-pagination total.
  */
 export const zProjectList = z.object({
   projects: z.array(zProject),
@@ -560,6 +679,8 @@ export const zProjectList = z.object({
 
 /**
  * ProjectSubAgentBatch
+ *
+ * Select/deselect batch of sub-agent definitions; duplicates collapsed server-side.
  */
 export const zProjectSubAgentBatch = z.object({
   expected_context_revision: z.int().gte(1),
@@ -568,6 +689,8 @@ export const zProjectSubAgentBatch = z.object({
 
 /**
  * ProjectSubAgentBatchResult
+ *
+ * Outcome of a sub-agent batch; mirrors :class:`ProjectFileBatchResult`.
  */
 export const zProjectSubAgentBatchResult = z.object({
   context_revision: z.int().gte(1),
@@ -577,6 +700,11 @@ export const zProjectSubAgentBatchResult = z.object({
 
 /**
  * ProjectUpdate
+ *
+ * Partial project update guarded by an optimistic ``expected_context_revision``.
+ *
+ * Only fields present in the payload are written; omitted fields are untouched.
+ * An empty string clears text, but explicit JSON null is rejected.
  */
 export const zProjectUpdate = z.object({
   expected_context_revision: z.int().gte(1),
@@ -866,6 +994,11 @@ export const zSubAgentDefinition = z.object({
 
 /**
  * ProjectSubAgentList
+ *
+ * One page of selected (or candidate) sub-agent definitions for a project.
+ *
+ * ``context_revision`` is the project's revision at read time, so clients can
+ * pass it back as the expected revision on a subsequent batch write.
  */
 export const zProjectSubAgentList = z.object({
   context_revision: z.int().gte(1),
@@ -908,7 +1041,74 @@ export const zSubAgentTrace = z.object({
 });
 
 /**
+ * TextExtractionPayload
+ *
+ * The text derived from a source file.
+ *
+ * Attributes:
+ * content: The converted plain text, or ``None`` when the conversion
+ * produced nothing.
+ */
+export const zTextExtractionPayload = z.object({
+  content: z.string().nullish(),
+});
+
+/**
+ * TextExtraction
+ *
+ * The text-extraction output of one artifact.
+ */
+export const zTextExtraction = z.object({
+  kind: z.literal("text_extraction"),
+  status: zKnowledgeExtractionStatus,
+  provider: z.string().nullish(),
+  model: z.string().nullish(),
+  error_code: z.string().nullish(),
+  error_reason: z.string().nullish(),
+  payload: zTextExtractionPayload.optional(),
+  started_at: z.int().nullish(),
+  completed_at: z.int().nullish(),
+});
+
+/**
+ * FileKnowledgeArtifact
+ *
+ * A versioned, file-owned generation of derived knowledge.
+ */
+export const zFileKnowledgeArtifact = z.object({
+  id: z.uuid(),
+  file_id: z.uuid(),
+  generation: z.int().gte(1),
+  processing_profile_generation: z.int().gte(1),
+  processing_profile_identity: z.string().length(64),
+  contract_version: z.int().gte(1),
+  status: zKnowledgeExtractionStatus,
+  is_current: z.boolean(),
+  chunk_count: z.int().gte(0),
+  error_code: z.string().nullish(),
+  error_reason: z.string().nullish(),
+  started_at: z.int().nullish(),
+  completed_at: z.int().nullish(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  extractions: z
+    .record(
+      z.string(),
+      z.discriminatedUnion("kind", [
+        zTextExtraction.extend({ kind: z.literal("text_extraction") }),
+        zEmbedding.extend({ kind: z.literal("embedding") }),
+        zCaptioning.extend({ kind: z.literal("captioning") }),
+      ]),
+    )
+    .optional(),
+});
+
+/**
  * ToolCall
+ *
+ * One provider-requested tool invocation (OpenAI-compatible shape).
+ *
+ * The stable ``id`` links the call to its later ``tool``-role result message.
  */
 export const zToolCall = z.object({
   id: z.string(),
@@ -953,6 +1153,14 @@ export const zToolInfoList = z.object({
 
 /**
  * ToolResult
+ *
+ * Outcome of executing one tool call, fed back to the model as a ``tool`` message.
+ *
+ * Fields:
+ * content: Textual result presented to the model (may be an error notice).
+ * raw_result: Unprocessed return value from the tool implementation.
+ * is_empty: True when the tool produced no usable output (e.g. rejected).
+ * tool_call: The originating call, used to bind the result message by id.
  */
 export const zToolResult = z.object({
   content: z.string(),
@@ -1032,6 +1240,23 @@ export const zUpdateSettingValue = z.object({
 
 /**
  * UserFile
+ *
+ * Public representation of one file in the caller's library.
+ *
+ * Attributes:
+ * id: File identifier.
+ * filename: Unique display name inside the caller's library.
+ * original_name: The sanitized name the client uploaded.
+ * size: Size in bytes of the stored source.
+ * mime_type: Detected MIME type.
+ * kind: Classification driving conversion and model input.
+ * content_status: State of the converted-content cache.
+ * content_error: Reason for a failed/unsupported conversion, if any.
+ * created_at: Creation time as whole Unix seconds.
+ * updated_at: Last update time as whole Unix seconds.
+ * thumbnail: Data-URL preview for images, else ``None``.
+ * projects: Projects that currently attach this file.
+ * knowledge: Latest knowledge artifact for this file, if one exists.
  */
 export const zUserFile = z.object({
   id: z.uuid(),
@@ -1051,6 +1276,13 @@ export const zUserFile = z.object({
 
 /**
  * SimilarFile
+ *
+ * One file ranked against a query file by embedding similarity.
+ *
+ * Attributes:
+ * file: The matching file.
+ * score: Cosine similarity between the query file's centroid direction
+ * and the candidate's best-matching chunk, clamped to ``[-1, 1]``.
  */
 export const zSimilarFile = z.object({
   file: zUserFile,
@@ -1059,6 +1291,11 @@ export const zSimilarFile = z.object({
 
 /**
  * SimilarFileList
+ *
+ * Ranked list of files similar to a query file.
+ *
+ * Attributes:
+ * files: Candidates ordered by descending similarity score.
  */
 export const zSimilarFileList = z.object({
   files: z.array(zSimilarFile),
@@ -1066,6 +1303,14 @@ export const zSimilarFileList = z.object({
 
 /**
  * UserFileList
+ *
+ * A page of files plus the pagination envelope.
+ *
+ * Attributes:
+ * files: Files on this page.
+ * total: Total number of matching files across all pages.
+ * page: 1-based page number that was returned.
+ * page_size: Number of files requested per page.
  */
 export const zUserFileList = z.object({
   files: z.array(zUserFile),
@@ -1629,6 +1874,47 @@ export const zProjectSubAgentCandidatesResponse = zProjectSubAgentList;
 /**
  * Successful Response
  */
+export const zAppCaptioningGetResponse = zKnowledgeCaptionConfiguration;
+
+export const zAppCaptioningUpdateBody = zKnowledgeCaptionConfigurationUpdate;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptioningUpdateResponse = zKnowledgeCaptionConfiguration;
+
+export const zAppKnowledgeProcessingProfileUpdateBody =
+  zKnowledgeProcessingProfileUpdate;
+
+/**
+ * Successful Response
+ */
+export const zAppKnowledgeProcessingProfileUpdateResponse =
+  zKnowledgeReprocessSummary;
+
+/**
+ * Successful Response
+ */
+export const zAppKnowledgeEmbeddingStatusResponse = zDownloadProgress;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelStatusResponse = zDownloadProgress;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelDownloadResponse = zDownloadProgress;
+
+/**
+ * Successful Response
+ */
+export const zAppCaptionModelCancelResponse = zDownloadProgress;
+
+/**
+ * Successful Response
+ */
 export const zMainAgentGetResponse = zMainAgentConfiguration;
 
 export const zMainAgentUpdateBody = zMainAgentUpdate;
@@ -1754,27 +2040,6 @@ export const zAppSettingsBulkUpdateBody = zBulkUpdateSettingRequest;
  */
 export const zAppSettingsBulkUpdateResponse = zApplicationSettings;
 
-/**
- * Successful Response
- */
-export const zAppCaptioningGetResponse = zKnowledgeCaptionConfiguration;
-
-export const zAppCaptioningUpdateBody = zKnowledgeCaptionConfigurationUpdate;
-
-/**
- * Successful Response
- */
-export const zAppCaptioningUpdateResponse = zKnowledgeCaptionConfiguration;
-
-export const zAppKnowledgeProcessingProfileUpdateBody =
-  zKnowledgeProcessingProfileUpdate;
-
-/**
- * Successful Response
- */
-export const zAppKnowledgeProcessingProfileUpdateResponse =
-  zKnowledgeReprocessSummary;
-
 export const zAppSettingDeletePath = z.object({
   key: z.string(),
 });
@@ -1789,26 +2054,6 @@ export const zAppSettingUpdatePath = z.object({
  * Successful Response
  */
 export const zAppSettingUpdateResponse = zSetting;
-
-/**
- * Successful Response
- */
-export const zAppKnowledgeEmbeddingStatusResponse = zDownloadProgress;
-
-/**
- * Successful Response
- */
-export const zAppCaptionModelStatusResponse = zDownloadProgress;
-
-/**
- * Successful Response
- */
-export const zAppCaptionModelDownloadResponse = zDownloadProgress;
-
-/**
- * Successful Response
- */
-export const zAppCaptionModelCancelResponse = zDownloadProgress;
 
 /**
  * Response Userlistusers

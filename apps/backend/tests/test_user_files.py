@@ -25,7 +25,7 @@ from asterism.domains.files.service import (
     upload_files,
 )
 from asterism.domains.files.store import get_file_store
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
 from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk
 from asterism.domains.llm.schemas import ImageUrlContentPart, text_content
 from asterism.domains.user.models import UserModel
@@ -84,7 +84,7 @@ async def test_upload_deduplicates_classifies_and_scopes_files(file_session):
         ),
     )
     assert {(artifact.file_id, artifact.status, artifact.is_current) for artifact in artifacts} == {
-        (file.id, FileKnowledgeArtifactStatus.PENDING, False) for file in uploaded.files
+        (file.id, KnowledgeExtractionStatus.PENDING, False) for file in uploaded.files
     }
     assert (await source_path(file_session, uploaded.files[0])).read_bytes() == b"first"
     assert (await list_user_files(user_id="user-b", session=file_session)).files == []
@@ -265,7 +265,7 @@ async def test_similar_files_rank_by_cosine_and_stay_user_scoped(file_session, m
             select(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == by_name[name].id),
         )
         assert artifact is not None
-        artifact.status = FileKnowledgeArtifactStatus.READY
+        artifact.status = KnowledgeExtractionStatus.READY
         artifact.is_current = name != "stale.txt"
         await store.add(
             [VectorChunk(f"{name}-0", owners.get(name, "user-a"), str(by_name[name].id), 1, 0, "text", name, vector)],

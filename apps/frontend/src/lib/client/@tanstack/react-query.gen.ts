@@ -258,6 +258,18 @@ import type {
 
 /**
  * Delete Man Files
+ *
+ * Delete several files from the caller's library.
+ *
+ * Args:
+ * user: The authenticated caller.
+ * filenames: Display names of the files to delete. Unknown names are
+ * ignored rather than reported as errors.
+ * session: Request-scoped database session.
+ *
+ * Returns:
+ * The files that were deleted, with the context they had at deletion
+ * time.
  */
 export const fileDeleteManyMutation = (
   options?: Partial<Options<FileDeleteManyData>>,
@@ -328,6 +340,19 @@ export const fileGetManyQueryKey = (options?: Options<FileGetManyData>) =>
 
 /**
  * List Files
+ *
+ * List the caller's files.
+ *
+ * Args:
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ * page: 1-based page number.
+ * page_size: Number of files per page (1..100).
+ * sort_by: Primary ordering key.
+ * query: Optional case-insensitive substring filter on the file name.
+ *
+ * Returns:
+ * One page of the caller's files with project and knowledge context.
  */
 export const fileGetManyOptions = (options?: Options<FileGetManyData>) =>
   queryOptions<
@@ -389,6 +414,19 @@ export const fileGetManyInfiniteQueryKey = (
 
 /**
  * List Files
+ *
+ * List the caller's files.
+ *
+ * Args:
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ * page: 1-based page number.
+ * page_size: Number of files per page (1..100).
+ * sort_by: Primary ordering key.
+ * query: Optional case-insensitive substring filter on the file name.
+ *
+ * Returns:
+ * One page of the caller's files with project and knowledge context.
  */
 export const fileGetManyInfiniteOptions = (
   options?: Options<FileGetManyData>,
@@ -434,6 +472,17 @@ export const fileGetManyInfiniteOptions = (
 
 /**
  * Upload Files
+ *
+ * Upload one or more files into the caller's library.
+ *
+ * Args:
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ * files: Uploaded files; each is sanitized, de-duplicated and stored.
+ *
+ * Returns:
+ * The files that now exist for the caller. Uploading a file that already
+ * exists with identical name and content reuses the existing row.
  */
 export const fileUploadMutation = (
   options?: Partial<Options<FileUploadData>>,
@@ -465,6 +514,16 @@ export const fileGetFileInfoQueryKey = (
 
 /**
  * Get File Info
+ *
+ * Get metadata for one of the caller's files.
+ *
+ * Args:
+ * user: The authenticated caller.
+ * filename: Display name of the file.
+ * session: Request-scoped database session.
+ *
+ * Returns:
+ * The file's metadata, including its project and knowledge context.
  */
 export const fileGetFileInfoOptions = (options: Options<FileGetFileInfoData>) =>
   queryOptions<
@@ -487,6 +546,16 @@ export const fileGetFileInfoOptions = (options: Options<FileGetFileInfoData>) =>
 
 /**
  * Delete File
+ *
+ * Delete one file from the caller's library.
+ *
+ * Args:
+ * filename: Display name of the file to delete.
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ *
+ * Returns:
+ * The deleted file's metadata as it was just before deletion.
  */
 export const fileDeleteMutation = (
   options?: Partial<Options<FileDeleteData>>,
@@ -517,6 +586,18 @@ export const fileGetOneQueryKey = (options: Options<FileGetOneData>) =>
 
 /**
  * Get File
+ *
+ * Download the original bytes of one of the caller's files.
+ *
+ * Args:
+ * request: The incoming request, used for conditional-request headers.
+ * user: The authenticated caller.
+ * filename: Display name of the file.
+ * db: Request-scoped database session.
+ *
+ * Returns:
+ * A ``200`` file response, or a ``304`` when the client's ``ETag``
+ * already matches the stored content.
  */
 export const fileGetOneOptions = (options: Options<FileGetOneData>) =>
   queryOptions<
@@ -543,6 +624,16 @@ export const fileKnowledgeGetStatusQueryKey = (
 
 /**
  * Get File Knowledge Status
+ *
+ * Get the knowledge-artifact status for one of the caller's files.
+ *
+ * Args:
+ * filename: Display name of the file.
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ *
+ * Returns:
+ * The newest knowledge artifact for the file.
  */
 export const fileKnowledgeGetStatusOptions = (
   options: Options<FileKnowledgeGetStatusData>,
@@ -567,6 +658,16 @@ export const fileKnowledgeGetStatusOptions = (
 
 /**
  * Regenerate File Knowledge
+ *
+ * Re-run knowledge processing for one of the caller's files.
+ *
+ * Args:
+ * filename: Display name of the file.
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ *
+ * Returns:
+ * The artifact that was reset to ``pending`` and re-queued.
  */
 export const fileKnowledgeRegenerateMutation = (
   options?: Partial<Options<FileKnowledgeRegenerateData>>,
@@ -596,6 +697,16 @@ export const fileKnowledgeRegenerateMutation = (
 
 /**
  * Cancel File Knowledge Processing
+ *
+ * Cancel in-flight knowledge processing for one of the caller's files.
+ *
+ * Args:
+ * filename: Display name of the file.
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ *
+ * Returns:
+ * The artifact in its current (possibly canceled) state.
  */
 export const fileKnowledgeCancelMutation = (
   options?: Partial<Options<FileKnowledgeCancelData>>,
@@ -627,6 +738,17 @@ export const fileSimilarGetManyQueryKey = (
 
 /**
  * Get Similar Files
+ *
+ * Find the caller's files most similar to one of their files.
+ *
+ * Args:
+ * filename: Display name of the query file.
+ * user: The authenticated caller.
+ * db: Request-scoped database session.
+ * limit: Maximum number of similar files to return (1..20).
+ *
+ * Returns:
+ * Ranked similar files with their cosine similarity score.
  */
 export const fileSimilarGetManyOptions = (
   options: Options<FileSimilarGetManyData>,
@@ -1371,6 +1493,8 @@ export const projectGetManyQueryKey = (options?: Options<ProjectGetManyData>) =>
 
 /**
  * List Projects
+ *
+ * List the caller's projects with pagination, sort, and substring search.
  */
 export const projectGetManyOptions = (options?: Options<ProjectGetManyData>) =>
   queryOptions<
@@ -1398,6 +1522,8 @@ export const projectGetManyInfiniteQueryKey = (
 
 /**
  * List Projects
+ *
+ * List the caller's projects with pagination, sort, and substring search.
  */
 export const projectGetManyInfiniteOptions = (
   options?: Options<ProjectGetManyData>,
@@ -1443,6 +1569,8 @@ export const projectGetManyInfiniteOptions = (
 
 /**
  * Create Project
+ *
+ * Create a project; 409 if the name is already taken for this user.
  */
 export const projectCreateMutation = (
   options?: Partial<Options<ProjectCreateData>>,
@@ -1470,6 +1598,8 @@ export const projectCreateMutation = (
 
 /**
  * Delete Project
+ *
+ * Delete a project after cancelling its chats' active runs; 409 on stale revision.
  */
 export const projectDeleteMutation = (
   options?: Partial<Options<ProjectDeleteData>>,
@@ -1500,6 +1630,8 @@ export const projectGetOneQueryKey = (options: Options<ProjectGetOneData>) =>
 
 /**
  * Get Project
+ *
+ * Read one of the caller's projects (404 if missing or not owned).
  */
 export const projectGetOneOptions = (options: Options<ProjectGetOneData>) =>
   queryOptions<
@@ -1522,6 +1654,8 @@ export const projectGetOneOptions = (options: Options<ProjectGetOneData>) =>
 
 /**
  * Update Project
+ *
+ * Partially update a project; 409 on stale revision or name collision.
  */
 export const projectUpdateMutation = (
   options?: Partial<Options<ProjectUpdateData>>,
@@ -1549,6 +1683,8 @@ export const projectUpdateMutation = (
 
 /**
  * Remove Project Files
+ *
+ * Detach files from a project; idempotent per file id, 409 on stale revision.
  */
 export const projectFileRemoveManyMutation = (
   options?: Partial<Options<ProjectFileRemoveManyData>>,
@@ -1580,6 +1716,8 @@ export const projectFileGetManyQueryKey = (
 
 /**
  * List Project Files
+ *
+ * List the files attached to a project using the files domain's listing semantics.
  */
 export const projectFileGetManyOptions = (
   options: Options<ProjectFileGetManyData>,
@@ -1609,6 +1747,8 @@ export const projectFileGetManyInfiniteQueryKey = (
 
 /**
  * List Project Files
+ *
+ * List the files attached to a project using the files domain's listing semantics.
  */
 export const projectFileGetManyInfiniteOptions = (
   options: Options<ProjectFileGetManyData>,
@@ -1654,6 +1794,8 @@ export const projectFileGetManyInfiniteOptions = (
 
 /**
  * Add Project Files
+ *
+ * Attach files to a project; idempotent per file id, 409 on stale revision.
  */
 export const projectFileAddManyMutation = (
   options?: Partial<Options<ProjectFileAddManyData>>,
@@ -1681,6 +1823,8 @@ export const projectFileAddManyMutation = (
 
 /**
  * Deselect Project Sub Agents
+ *
+ * Deselect sub-agents from a project; 409 on stale revision.
  */
 export const projectSubAgentDeselectManyMutation = (
   options?: Partial<Options<ProjectSubAgentDeselectManyData>>,
@@ -1714,6 +1858,8 @@ export const projectSubAgentGetManyQueryKey = (
 
 /**
  * List Project Sub Agents
+ *
+ * List the sub-agent definitions currently selected on a project.
  */
 export const projectSubAgentGetManyOptions = (
   options: Options<ProjectSubAgentGetManyData>,
@@ -1743,6 +1889,8 @@ export const projectSubAgentGetManyInfiniteQueryKey = (
 
 /**
  * List Project Sub Agents
+ *
+ * List the sub-agent definitions currently selected on a project.
  */
 export const projectSubAgentGetManyInfiniteOptions = (
   options: Options<ProjectSubAgentGetManyData>,
@@ -1790,6 +1938,8 @@ export const projectSubAgentGetManyInfiniteOptions = (
 
 /**
  * Select Project Sub Agents
+ *
+ * Select sub-agents on a project; 404 for non-owned or main-agent ids, 409 on stale revision.
  */
 export const projectSubAgentSelectManyMutation = (
   options?: Partial<Options<ProjectSubAgentSelectManyData>>,
@@ -1823,6 +1973,8 @@ export const projectSubAgentCandidatesQueryKey = (
 
 /**
  * List Project Sub Agent Candidates
+ *
+ * List the caller's sub-agents not yet selected on a project (picker source).
  */
 export const projectSubAgentCandidatesOptions = (
   options: Options<ProjectSubAgentCandidatesData>,
@@ -1854,6 +2006,8 @@ export const projectSubAgentCandidatesInfiniteQueryKey = (
 
 /**
  * List Project Sub Agent Candidates
+ *
+ * List the caller's sub-agents not yet selected on a project (picker source).
  */
 export const projectSubAgentCandidatesInfiniteOptions = (
   options: Options<ProjectSubAgentCandidatesData>,
@@ -1898,6 +2052,218 @@ export const projectSubAgentCandidatesInfiniteOptions = (
       queryKey: projectSubAgentCandidatesInfiniteQueryKey(options),
     },
   );
+
+export const appCaptioningGetQueryKey = (
+  options?: Options<AppCaptioningGetData>,
+) => createQueryKey("appCaptioningGet", options);
+
+/**
+ * Get image captioning configuration
+ *
+ * Return the image captioning mode and selected provider model.
+ */
+export const appCaptioningGetOptions = (
+  options?: Options<AppCaptioningGetData>,
+) =>
+  queryOptions<
+    AppCaptioningGetResponse,
+    AppCaptioningGetError,
+    AppCaptioningGetResponse,
+    ReturnType<typeof appCaptioningGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().appCaptioningGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: appCaptioningGetQueryKey(options),
+  });
+
+/**
+ * Set image captioning mode and selected provider model
+ *
+ * Set the image captioning mode and selected provider model.
+ */
+export const appCaptioningUpdateMutation = (
+  options?: Partial<Options<AppCaptioningUpdateData>>,
+): UseMutationOptions<
+  AppCaptioningUpdateResponse,
+  AppCaptioningUpdateError,
+  Options<AppCaptioningUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppCaptioningUpdateResponse,
+    AppCaptioningUpdateError,
+    Options<AppCaptioningUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().appCaptioningUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Knowledge Processing Profile
+ *
+ * Update the knowledge processing profile and reprocess affected files.
+ */
+export const appKnowledgeProcessingProfileUpdateMutation = (
+  options?: Partial<Options<AppKnowledgeProcessingProfileUpdateData>>,
+): UseMutationOptions<
+  AppKnowledgeProcessingProfileUpdateResponse,
+  AppKnowledgeProcessingProfileUpdateError,
+  Options<AppKnowledgeProcessingProfileUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppKnowledgeProcessingProfileUpdateResponse,
+    AppKnowledgeProcessingProfileUpdateError,
+    Options<AppKnowledgeProcessingProfileUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .appKnowledgeProcessingProfileUpdate({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const appKnowledgeEmbeddingStatusQueryKey = (
+  options?: Options<AppKnowledgeEmbeddingStatusData>,
+) => createQueryKey("appKnowledgeEmbeddingStatus", options);
+
+/**
+ * Get automatic knowledge embedding bundle readiness
+ *
+ * Return the readiness/download progress of the knowledge embedding bundle.
+ */
+export const appKnowledgeEmbeddingStatusOptions = (
+  options?: Options<AppKnowledgeEmbeddingStatusData>,
+) =>
+  queryOptions<
+    AppKnowledgeEmbeddingStatusResponse,
+    AppKnowledgeEmbeddingStatusError,
+    AppKnowledgeEmbeddingStatusResponse,
+    ReturnType<typeof appKnowledgeEmbeddingStatusQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .appKnowledgeEmbeddingStatus({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: appKnowledgeEmbeddingStatusQueryKey(options),
+  });
+
+export const appCaptionModelStatusQueryKey = (
+  options?: Options<AppCaptionModelStatusData>,
+) => createQueryKey("appCaptionModelStatus", options);
+
+/**
+ * Get local caption model download/readiness status
+ *
+ * Return the download/readiness progress of the local caption model.
+ */
+export const appCaptionModelStatusOptions = (
+  options?: Options<AppCaptionModelStatusData>,
+) =>
+  queryOptions<
+    AppCaptionModelStatusResponse,
+    AppCaptionModelStatusError,
+    AppCaptionModelStatusResponse,
+    ReturnType<typeof appCaptionModelStatusQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().appCaptionModelStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: appCaptionModelStatusQueryKey(options),
+  });
+
+/**
+ * Start downloading the local caption model
+ *
+ * Start the local caption model download (409 if one is already running).
+ */
+export const appCaptionModelDownloadMutation = (
+  options?: Partial<Options<AppCaptionModelDownloadData>>,
+): UseMutationOptions<
+  AppCaptionModelDownloadResponse,
+  AppCaptionModelDownloadError,
+  Options<AppCaptionModelDownloadData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppCaptionModelDownloadResponse,
+    AppCaptionModelDownloadError,
+    Options<AppCaptionModelDownloadData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .appCaptionModelDownload({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Cancel an active local caption model download
+ *
+ * Cancel an in-progress local caption model download.
+ */
+export const appCaptionModelCancelMutation = (
+  options?: Partial<Options<AppCaptionModelCancelData>>,
+): UseMutationOptions<
+  AppCaptionModelCancelResponse,
+  AppCaptionModelCancelError,
+  Options<AppCaptionModelCancelData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppCaptionModelCancelResponse,
+    AppCaptionModelCancelError,
+    Options<AppCaptionModelCancelData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().appCaptionModelCancel({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const mainAgentGetQueryKey = (options?: Options<MainAgentGetData>) =>
   createQueryKey("mainAgentGet", options);
@@ -2456,96 +2822,6 @@ export const appSettingsBulkUpdateMutation = (
   return mutationOptions;
 };
 
-export const appCaptioningGetQueryKey = (
-  options?: Options<AppCaptioningGetData>,
-) => createQueryKey("appCaptioningGet", options);
-
-/**
- * Get image captioning configuration
- *
- * Return the image captioning mode and selected provider model.
- */
-export const appCaptioningGetOptions = (
-  options?: Options<AppCaptioningGetData>,
-) =>
-  queryOptions<
-    AppCaptioningGetResponse,
-    AppCaptioningGetError,
-    AppCaptioningGetResponse,
-    ReturnType<typeof appCaptioningGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().appCaptioningGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: appCaptioningGetQueryKey(options),
-  });
-
-/**
- * Set image captioning mode and selected provider model
- *
- * Set the image captioning mode and selected provider model.
- */
-export const appCaptioningUpdateMutation = (
-  options?: Partial<Options<AppCaptioningUpdateData>>,
-): UseMutationOptions<
-  AppCaptioningUpdateResponse,
-  AppCaptioningUpdateError,
-  Options<AppCaptioningUpdateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AppCaptioningUpdateResponse,
-    AppCaptioningUpdateError,
-    Options<AppCaptioningUpdateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().appCaptioningUpdate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update Knowledge Processing Profile
- *
- * Update the knowledge processing profile and reprocess affected files.
- */
-export const appKnowledgeProcessingProfileUpdateMutation = (
-  options?: Partial<Options<AppKnowledgeProcessingProfileUpdateData>>,
-): UseMutationOptions<
-  AppKnowledgeProcessingProfileUpdateResponse,
-  AppKnowledgeProcessingProfileUpdateError,
-  Options<AppKnowledgeProcessingProfileUpdateData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AppKnowledgeProcessingProfileUpdateResponse,
-    AppKnowledgeProcessingProfileUpdateError,
-    Options<AppKnowledgeProcessingProfileUpdateData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry
-        .get()
-        .appKnowledgeProcessingProfileUpdate({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 /**
  * Delete a single application setting by key
  *
@@ -2594,128 +2870,6 @@ export const appSettingUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().appSettingUpdate({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const appKnowledgeEmbeddingStatusQueryKey = (
-  options?: Options<AppKnowledgeEmbeddingStatusData>,
-) => createQueryKey("appKnowledgeEmbeddingStatus", options);
-
-/**
- * Get automatic knowledge embedding bundle readiness
- *
- * Return the readiness/download progress of the knowledge embedding bundle.
- */
-export const appKnowledgeEmbeddingStatusOptions = (
-  options?: Options<AppKnowledgeEmbeddingStatusData>,
-) =>
-  queryOptions<
-    AppKnowledgeEmbeddingStatusResponse,
-    AppKnowledgeEmbeddingStatusError,
-    AppKnowledgeEmbeddingStatusResponse,
-    ReturnType<typeof appKnowledgeEmbeddingStatusQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry
-        .get()
-        .appKnowledgeEmbeddingStatus({
-          ...options,
-          ...queryKey[0],
-          signal,
-          throwOnError: true,
-        });
-      return data;
-    },
-    queryKey: appKnowledgeEmbeddingStatusQueryKey(options),
-  });
-
-export const appCaptionModelStatusQueryKey = (
-  options?: Options<AppCaptionModelStatusData>,
-) => createQueryKey("appCaptionModelStatus", options);
-
-/**
- * Get local caption model download/readiness status
- *
- * Return the download/readiness progress of the local caption model.
- */
-export const appCaptionModelStatusOptions = (
-  options?: Options<AppCaptionModelStatusData>,
-) =>
-  queryOptions<
-    AppCaptionModelStatusResponse,
-    AppCaptionModelStatusError,
-    AppCaptionModelStatusResponse,
-    ReturnType<typeof appCaptionModelStatusQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().appCaptionModelStatus({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: appCaptionModelStatusQueryKey(options),
-  });
-
-/**
- * Start downloading the local caption model
- *
- * Start the local caption model download (409 if one is already running).
- */
-export const appCaptionModelDownloadMutation = (
-  options?: Partial<Options<AppCaptionModelDownloadData>>,
-): UseMutationOptions<
-  AppCaptionModelDownloadResponse,
-  AppCaptionModelDownloadError,
-  Options<AppCaptionModelDownloadData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AppCaptionModelDownloadResponse,
-    AppCaptionModelDownloadError,
-    Options<AppCaptionModelDownloadData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry
-        .get()
-        .appCaptionModelDownload({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Cancel an active local caption model download
- *
- * Cancel an in-progress local caption model download.
- */
-export const appCaptionModelCancelMutation = (
-  options?: Partial<Options<AppCaptionModelCancelData>>,
-): UseMutationOptions<
-  AppCaptionModelCancelResponse,
-  AppCaptionModelCancelError,
-  Options<AppCaptionModelCancelData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AppCaptionModelCancelResponse,
-    AppCaptionModelCancelError,
-    Options<AppCaptionModelCancelData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await ApiClient.__registry.get().appCaptionModelCancel({
         ...options,
         ...fnOptions,
         throwOnError: true,

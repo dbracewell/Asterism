@@ -32,7 +32,7 @@ def create_retrieval_service(
                     file_id=artifact.file_id,
                     generation=artifact.generation,
                     status=artifact.status,
-                    text_embeddings_ready=artifact.text_embeddings_ready,
+                    searchable=artifact.searchable,
                 )
                 for artifact in await db.scalars(
                     select_current_owned_artifacts(scope.user_id).where(FileKnowledgeArtifactModel.file_id.in_(ids))

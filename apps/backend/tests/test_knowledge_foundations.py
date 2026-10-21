@@ -6,7 +6,7 @@ from asterism.core.config import Config, ConfigValidationError
 from asterism.db.model_registry import Base
 from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.knowledge.embedding import EmbeddingProviderError, OnnxClipEmbeddingProvider, embedding_model
-from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
 from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk
 from sqlalchemy import select, text
@@ -106,7 +106,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     generation=1,
                     processing_profile_generation=1,
                     processing_profile_identity="b" * 64,
-                    status=FileKnowledgeArtifactStatus.READY,
+                    status=KnowledgeExtractionStatus.READY,
                     is_current=True,
                 ),
                 FileKnowledgeArtifactModel(
@@ -115,7 +115,7 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     generation=2,
                     processing_profile_generation=2,
                     processing_profile_identity="c" * 64,
-                    status=FileKnowledgeArtifactStatus.PROCESSING,
+                    status=KnowledgeExtractionStatus.RUNNING,
                     is_current=False,
                 ),
             ],
@@ -128,16 +128,15 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
             ),
         )
         assert artifact is not None
-        assert FileKnowledgeArtifact.model_validate(artifact).caption.model_dump() == {
-            "status": None,
-            "source": None,
-            "model": None,
-            "text": None,
-            "error_code": None,
-            "error_reason": None,
-            "generated_at": None,
-            "accepted_at": None,
-        }
+        # The artifact no longer carries flat caption columns or the
+        # overloaded embedding booleans: it reports its derived outputs as a
+        # map keyed by kind.
+        described = FileKnowledgeArtifact.model_validate(artifact)
+        assert described.extractions == {}
+        assert not hasattr(described, "caption")
+        assert not hasattr(described, "extracted_content")
+        assert not hasattr(described, "text_embeddings_ready")
+        assert not hasattr(described, "visual_embedding_ready")
 
         duplicate_current = FileKnowledgeArtifactModel(
             user_id="user-a",

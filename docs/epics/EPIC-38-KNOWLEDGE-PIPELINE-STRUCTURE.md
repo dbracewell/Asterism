@@ -1,7 +1,7 @@
 # EPIC-38: Knowledge pipeline structure
 
-Status: in progress. US-38.1 confirmed complete and merged into `main`;
-US-38.2 implemented on `feat/us-38.2-processing-policy-owner`; US-38.3 to
+Status: in progress. US-38.1 and US-38.2 confirmed complete and merged into
+`main`; US-38.3 implemented on `feat/us-38.3-extraction-facets`; US-38.4 and
 US-38.5 pending. Source: the files-domain review of 2026-10-21 and
 the follow-up architecture discussion on the knowledge pipeline's domain
 ownership, naming, and data model. The naming and boundary decisions are
@@ -181,19 +181,29 @@ overloaded embedding booleans.
 
 Tasks:
 
-- [ ] Add the extraction-kind enum and the linking table with a unique
+- [x] Add the extraction-kind enum and the linking table with a unique
       `(artifact_id, kind)` constraint.
-- [ ] Replace the parallel artifact and caption status vocabularies with one
+- [x] Replace the parallel artifact and caption status vocabularies with one
       status vocabulary for every kind.
-- [ ] Move the caption's flat columns, the text content and the embedding
+- [x] Move the caption's flat columns, the text content and the embedding
       readiness flags into per-kind rows; keep a denormalized searchable
       aggregate on the artifact row for the retrieval path.
-- [ ] Model payloads as a discriminated union keyed by kind, validated at the
+- [x] Model payloads as a discriminated union keyed by kind, validated at the
       application boundary.
-- [ ] Replace the flat API fields with a map of extractions; regenerate the
+- [x] Replace the flat API fields with a map of extractions; regenerate the
       typed client and update the file manager and file view to render the
       per-kind statuses.
-- [ ] Add retrieval, file-library and file-view regressions for the new shape.
+- [x] Add retrieval, file-library and file-view regressions for the new shape.
+
+Notes: the derived outputs live in `file_knowledge_extractions`, one row per
+`(artifact_id, kind)`, and the artifact keeps the denormalized `searchable`
+aggregate the retrieval path reads. `KnowledgeExtractionStatus` is the single
+vocabulary: `pending | running | ready | failed | canceled`, where `running`
+replaces the artifact's `processing` and the caption's `running`. The API
+reports `extractions` as a map keyed by kind whose values are a union
+discriminated by `kind`, so adding an output does not change the artifact's
+schema. The typed client is regenerated; the file manager and file view read
+each output's status and payload.
 
 ## US-38.4: Make the dependency direction explicit
 

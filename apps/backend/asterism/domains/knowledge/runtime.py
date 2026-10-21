@@ -13,8 +13,9 @@ from asterism.domains.knowledge.embedding import embedding_download_service, emb
 from asterism.domains.knowledge.ingestion import ingest
 from asterism.domains.knowledge.models import (
     FileKnowledgeArtifactModel,
-    FileKnowledgeArtifactStatus,
-    KnowledgeCaptionStatus,
+    FileKnowledgeExtractionModel,
+    KnowledgeExtractionKind,
+    KnowledgeExtractionStatus,
 )
 
 from .captioning import caption, captioning_download_service, local_caption_provider
@@ -62,18 +63,25 @@ async def recover_interrupted() -> None:
     async with get_async_db_session() as session:
         await session.execute(
             update(FileKnowledgeArtifactModel)
-            .where(FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.PROCESSING)
+            .where(FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.RUNNING)
             .values(
-                status=FileKnowledgeArtifactStatus.PENDING,
+                status=KnowledgeExtractionStatus.PENDING,
                 error_code="interrupted",
                 error_reason="Processing interrupted by restart; retry queued",
                 started_at=None,
             ),
         )
         await session.execute(
-            update(FileKnowledgeArtifactModel)
-            .where(FileKnowledgeArtifactModel.caption_status == KnowledgeCaptionStatus.RUNNING)
-            .values(caption_status=KnowledgeCaptionStatus.FAILED, caption_error_code="interrupted"),
+            update(FileKnowledgeExtractionModel)
+            .where(
+                FileKnowledgeExtractionModel.status == KnowledgeExtractionStatus.RUNNING,
+                FileKnowledgeExtractionModel.kind == KnowledgeExtractionKind.CAPTIONING,
+            )
+            .values(
+                status=KnowledgeExtractionStatus.FAILED,
+                error_code="interrupted",
+                error_reason="Captioning interrupted by restart; retry queued",
+            ),
         )
         await session.commit()
 
@@ -83,7 +91,7 @@ async def resume_ingestion_jobs() -> None:
         artifacts = list(
             await session.scalars(
                 select(FileKnowledgeArtifactModel).where(
-                    FileKnowledgeArtifactModel.status == FileKnowledgeArtifactStatus.PENDING,
+                    FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.PENDING,
                 ),
             ),
         )

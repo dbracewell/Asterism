@@ -314,6 +314,18 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Delete Man Files
+   *
+   * Delete several files from the caller's library.
+   *
+   * Args:
+   * user: The authenticated caller.
+   * filenames: Display names of the files to delete. Unknown names are
+   * ignored rather than reported as errors.
+   * session: Request-scoped database session.
+   *
+   * Returns:
+   * The files that were deleted, with the context they had at deletion
+   * time.
    */
   public fileDeleteMany<ThrowOnError extends boolean = false>(
     options: Options<FileDeleteManyData, ThrowOnError>,
@@ -339,6 +351,19 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * List Files
+   *
+   * List the caller's files.
+   *
+   * Args:
+   * user: The authenticated caller.
+   * db: Request-scoped database session.
+   * page: 1-based page number.
+   * page_size: Number of files per page (1..100).
+   * sort_by: Primary ordering key.
+   * query: Optional case-insensitive substring filter on the file name.
+   *
+   * Returns:
+   * One page of the caller's files with project and knowledge context.
    */
   public fileGetMany<ThrowOnError extends boolean = false>(
     options?: Options<FileGetManyData, ThrowOnError>,
@@ -356,6 +381,17 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Upload Files
+   *
+   * Upload one or more files into the caller's library.
+   *
+   * Args:
+   * user: The authenticated caller.
+   * db: Request-scoped database session.
+   * files: Uploaded files; each is sanitized, de-duplicated and stored.
+   *
+   * Returns:
+   * The files that now exist for the caller. Uploading a file that already
+   * exists with identical name and content reuses the existing row.
    */
   public fileUpload<ThrowOnError extends boolean = false>(
     options: Options<FileUploadData, ThrowOnError>,
@@ -378,6 +414,16 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Get File Info
+   *
+   * Get metadata for one of the caller's files.
+   *
+   * Args:
+   * user: The authenticated caller.
+   * filename: Display name of the file.
+   * session: Request-scoped database session.
+   *
+   * Returns:
+   * The file's metadata, including its project and knowledge context.
    */
   public fileGetFileInfo<ThrowOnError extends boolean = false>(
     options: Options<FileGetFileInfoData, ThrowOnError>,
@@ -399,6 +445,16 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Delete File
+   *
+   * Delete one file from the caller's library.
+   *
+   * Args:
+   * filename: Display name of the file to delete.
+   * user: The authenticated caller.
+   * db: Request-scoped database session.
+   *
+   * Returns:
+   * The deleted file's metadata as it was just before deletion.
    */
   public fileDelete<ThrowOnError extends boolean = false>(
     options: Options<FileDeleteData, ThrowOnError>,
@@ -416,6 +472,18 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Get File
+   *
+   * Download the original bytes of one of the caller's files.
+   *
+   * Args:
+   * request: The incoming request, used for conditional-request headers.
+   * user: The authenticated caller.
+   * filename: Display name of the file.
+   * db: Request-scoped database session.
+   *
+   * Returns:
+   * A ``200`` file response, or a ``304`` when the client's ``ETag``
+   * already matches the stored content.
    */
   public fileGetOne<ThrowOnError extends boolean = false>(
     options: Options<FileGetOneData, ThrowOnError>,
@@ -433,6 +501,16 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Get File Knowledge Status
+   *
+   * Get the knowledge-artifact status for one of the caller's files.
+   *
+   * Args:
+   * filename: Display name of the file.
+   * user: The authenticated caller.
+   * db: Request-scoped database session.
+   *
+   * Returns:
+   * The newest knowledge artifact for the file.
    */
   public fileKnowledgeGetStatus<ThrowOnError extends boolean = false>(
     options: Options<FileKnowledgeGetStatusData, ThrowOnError>,
@@ -454,6 +532,16 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Regenerate File Knowledge
+   *
+   * Re-run knowledge processing for one of the caller's files.
+   *
+   * Args:
+   * filename: Display name of the file.
+   * user: The authenticated caller.
+   * db: Request-scoped database session.
+   *
+   * Returns:
+   * The artifact that was reset to ``pending`` and re-queued.
    */
   public fileKnowledgeRegenerate<ThrowOnError extends boolean = false>(
     options: Options<FileKnowledgeRegenerateData, ThrowOnError>,
@@ -475,6 +563,16 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Cancel File Knowledge Processing
+   *
+   * Cancel in-flight knowledge processing for one of the caller's files.
+   *
+   * Args:
+   * filename: Display name of the file.
+   * user: The authenticated caller.
+   * db: Request-scoped database session.
+   *
+   * Returns:
+   * The artifact in its current (possibly canceled) state.
    */
   public fileKnowledgeCancel<ThrowOnError extends boolean = false>(
     options: Options<FileKnowledgeCancelData, ThrowOnError>,
@@ -496,6 +594,17 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Get Similar Files
+   *
+   * Find the caller's files most similar to one of their files.
+   *
+   * Args:
+   * filename: Display name of the query file.
+   * user: The authenticated caller.
+   * db: Request-scoped database session.
+   * limit: Maximum number of similar files to return (1..20).
+   *
+   * Returns:
+   * Ranked similar files with their cosine similarity score.
    */
   public fileSimilarGetMany<ThrowOnError extends boolean = false>(
     options: Options<FileSimilarGetManyData, ThrowOnError>,
@@ -1041,6 +1150,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * List Projects
+   *
+   * List the caller's projects with pagination, sort, and substring search.
    */
   public projectGetMany<ThrowOnError extends boolean = false>(
     options?: Options<ProjectGetManyData, ThrowOnError>,
@@ -1062,6 +1173,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Create Project
+   *
+   * Create a project; 409 if the name is already taken for this user.
    */
   public projectCreate<ThrowOnError extends boolean = false>(
     options: Options<ProjectCreateData, ThrowOnError>,
@@ -1083,6 +1196,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Delete Project
+   *
+   * Delete a project after cancelling its chats' active runs; 409 on stale revision.
    */
   public projectDelete<ThrowOnError extends boolean = false>(
     options: Options<ProjectDeleteData, ThrowOnError>,
@@ -1100,6 +1215,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Get Project
+   *
+   * Read one of the caller's projects (404 if missing or not owned).
    */
   public projectGetOne<ThrowOnError extends boolean = false>(
     options: Options<ProjectGetOneData, ThrowOnError>,
@@ -1117,6 +1234,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Update Project
+   *
+   * Partially update a project; 409 on stale revision or name collision.
    */
   public projectUpdate<ThrowOnError extends boolean = false>(
     options: Options<ProjectUpdateData, ThrowOnError>,
@@ -1138,6 +1257,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Remove Project Files
+   *
+   * Detach files from a project; idempotent per file id, 409 on stale revision.
    */
   public projectFileRemoveMany<ThrowOnError extends boolean = false>(
     options: Options<ProjectFileRemoveManyData, ThrowOnError>,
@@ -1163,6 +1284,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * List Project Files
+   *
+   * List the files attached to a project using the files domain's listing semantics.
    */
   public projectFileGetMany<ThrowOnError extends boolean = false>(
     options: Options<ProjectFileGetManyData, ThrowOnError>,
@@ -1184,6 +1307,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Add Project Files
+   *
+   * Attach files to a project; idempotent per file id, 409 on stale revision.
    */
   public projectFileAddMany<ThrowOnError extends boolean = false>(
     options: Options<ProjectFileAddManyData, ThrowOnError>,
@@ -1209,6 +1334,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Deselect Project Sub Agents
+   *
+   * Deselect sub-agents from a project; 409 on stale revision.
    */
   public projectSubAgentDeselectMany<ThrowOnError extends boolean = false>(
     options: Options<ProjectSubAgentDeselectManyData, ThrowOnError>,
@@ -1234,6 +1361,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * List Project Sub Agents
+   *
+   * List the sub-agent definitions currently selected on a project.
    */
   public projectSubAgentGetMany<ThrowOnError extends boolean = false>(
     options: Options<ProjectSubAgentGetManyData, ThrowOnError>,
@@ -1255,6 +1384,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * Select Project Sub Agents
+   *
+   * Select sub-agents on a project; 404 for non-owned or main-agent ids, 409 on stale revision.
    */
   public projectSubAgentSelectMany<ThrowOnError extends boolean = false>(
     options: Options<ProjectSubAgentSelectManyData, ThrowOnError>,
@@ -1280,6 +1411,8 @@ export class ApiClient extends HeyApiClient {
 
   /**
    * List Project Sub Agent Candidates
+   *
+   * List the caller's sub-agents not yet selected on a project (picker source).
    */
   public projectSubAgentCandidates<ThrowOnError extends boolean = false>(
     options: Options<ProjectSubAgentCandidatesData, ThrowOnError>,
@@ -1295,6 +1428,177 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/sub-agent-candidates",
+      ...options,
+    });
+  }
+
+  /**
+   * Get image captioning configuration
+   *
+   * Return the image captioning mode and selected provider model.
+   */
+  public appCaptioningGet<ThrowOnError extends boolean = false>(
+    options?: Options<AppCaptioningGetData, ThrowOnError>,
+  ): RequestResult<
+    AppCaptioningGetResponses,
+    AppCaptioningGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AppCaptioningGetResponses,
+      AppCaptioningGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/captioning",
+      ...options,
+    });
+  }
+
+  /**
+   * Set image captioning mode and selected provider model
+   *
+   * Set the image captioning mode and selected provider model.
+   */
+  public appCaptioningUpdate<ThrowOnError extends boolean = false>(
+    options: Options<AppCaptioningUpdateData, ThrowOnError>,
+  ): RequestResult<
+    AppCaptioningUpdateResponses,
+    AppCaptioningUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      AppCaptioningUpdateResponses,
+      AppCaptioningUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/captioning",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Update Knowledge Processing Profile
+   *
+   * Update the knowledge processing profile and reprocess affected files.
+   */
+  public appKnowledgeProcessingProfileUpdate<
+    ThrowOnError extends boolean = false,
+  >(
+    options: Options<AppKnowledgeProcessingProfileUpdateData, ThrowOnError>,
+  ): RequestResult<
+    AppKnowledgeProcessingProfileUpdateResponses,
+    AppKnowledgeProcessingProfileUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      AppKnowledgeProcessingProfileUpdateResponses,
+      AppKnowledgeProcessingProfileUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/knowledge-processing-profile",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get automatic knowledge embedding bundle readiness
+   *
+   * Return the readiness/download progress of the knowledge embedding bundle.
+   */
+  public appKnowledgeEmbeddingStatus<ThrowOnError extends boolean = false>(
+    options?: Options<AppKnowledgeEmbeddingStatusData, ThrowOnError>,
+  ): RequestResult<
+    AppKnowledgeEmbeddingStatusResponses,
+    AppKnowledgeEmbeddingStatusErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AppKnowledgeEmbeddingStatusResponses,
+      AppKnowledgeEmbeddingStatusErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/knowledge-embedding/status",
+      ...options,
+    });
+  }
+
+  /**
+   * Get local caption model download/readiness status
+   *
+   * Return the download/readiness progress of the local caption model.
+   */
+  public appCaptionModelStatus<ThrowOnError extends boolean = false>(
+    options?: Options<AppCaptionModelStatusData, ThrowOnError>,
+  ): RequestResult<
+    AppCaptionModelStatusResponses,
+    AppCaptionModelStatusErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AppCaptionModelStatusResponses,
+      AppCaptionModelStatusErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/caption-model/status",
+      ...options,
+    });
+  }
+
+  /**
+   * Start downloading the local caption model
+   *
+   * Start the local caption model download (409 if one is already running).
+   */
+  public appCaptionModelDownload<ThrowOnError extends boolean = false>(
+    options?: Options<AppCaptionModelDownloadData, ThrowOnError>,
+  ): RequestResult<
+    AppCaptionModelDownloadResponses,
+    AppCaptionModelDownloadErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      AppCaptionModelDownloadResponses,
+      AppCaptionModelDownloadErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/caption-model/download",
+      ...options,
+    });
+  }
+
+  /**
+   * Cancel an active local caption model download
+   *
+   * Cancel an in-progress local caption model download.
+   */
+  public appCaptionModelCancel<ThrowOnError extends boolean = false>(
+    options?: Options<AppCaptionModelCancelData, ThrowOnError>,
+  ): RequestResult<
+    AppCaptionModelCancelResponses,
+    AppCaptionModelCancelErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      AppCaptionModelCancelResponses,
+      AppCaptionModelCancelErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/caption-model/cancel",
       ...options,
     });
   }
@@ -1719,85 +2023,6 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
-   * Get image captioning configuration
-   *
-   * Return the image captioning mode and selected provider model.
-   */
-  public appCaptioningGet<ThrowOnError extends boolean = false>(
-    options?: Options<AppCaptioningGetData, ThrowOnError>,
-  ): RequestResult<
-    AppCaptioningGetResponses,
-    AppCaptioningGetErrors,
-    ThrowOnError
-  > {
-    return (options?.client ?? this.client).get<
-      AppCaptioningGetResponses,
-      AppCaptioningGetErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/settings/app/captioning",
-      ...options,
-    });
-  }
-
-  /**
-   * Set image captioning mode and selected provider model
-   *
-   * Set the image captioning mode and selected provider model.
-   */
-  public appCaptioningUpdate<ThrowOnError extends boolean = false>(
-    options: Options<AppCaptioningUpdateData, ThrowOnError>,
-  ): RequestResult<
-    AppCaptioningUpdateResponses,
-    AppCaptioningUpdateErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).put<
-      AppCaptioningUpdateResponses,
-      AppCaptioningUpdateErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/settings/app/captioning",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
-   * Update Knowledge Processing Profile
-   *
-   * Update the knowledge processing profile and reprocess affected files.
-   */
-  public appKnowledgeProcessingProfileUpdate<
-    ThrowOnError extends boolean = false,
-  >(
-    options: Options<AppKnowledgeProcessingProfileUpdateData, ThrowOnError>,
-  ): RequestResult<
-    AppKnowledgeProcessingProfileUpdateResponses,
-    AppKnowledgeProcessingProfileUpdateErrors,
-    ThrowOnError
-  > {
-    return (options.client ?? this.client).put<
-      AppKnowledgeProcessingProfileUpdateResponses,
-      AppKnowledgeProcessingProfileUpdateErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/settings/app/knowledge-processing-profile",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-  }
-
-  /**
    * Delete a single application setting by key
    *
    * Delete one application setting (required keys cannot be deleted).
@@ -1844,98 +2069,6 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
-    });
-  }
-
-  /**
-   * Get automatic knowledge embedding bundle readiness
-   *
-   * Return the readiness/download progress of the knowledge embedding bundle.
-   */
-  public appKnowledgeEmbeddingStatus<ThrowOnError extends boolean = false>(
-    options?: Options<AppKnowledgeEmbeddingStatusData, ThrowOnError>,
-  ): RequestResult<
-    AppKnowledgeEmbeddingStatusResponses,
-    AppKnowledgeEmbeddingStatusErrors,
-    ThrowOnError
-  > {
-    return (options?.client ?? this.client).get<
-      AppKnowledgeEmbeddingStatusResponses,
-      AppKnowledgeEmbeddingStatusErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/settings/app/knowledge-embedding/status",
-      ...options,
-    });
-  }
-
-  /**
-   * Get local caption model download/readiness status
-   *
-   * Return the download/readiness progress of the local caption model.
-   */
-  public appCaptionModelStatus<ThrowOnError extends boolean = false>(
-    options?: Options<AppCaptionModelStatusData, ThrowOnError>,
-  ): RequestResult<
-    AppCaptionModelStatusResponses,
-    AppCaptionModelStatusErrors,
-    ThrowOnError
-  > {
-    return (options?.client ?? this.client).get<
-      AppCaptionModelStatusResponses,
-      AppCaptionModelStatusErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/settings/app/caption-model/status",
-      ...options,
-    });
-  }
-
-  /**
-   * Start downloading the local caption model
-   *
-   * Start the local caption model download (409 if one is already running).
-   */
-  public appCaptionModelDownload<ThrowOnError extends boolean = false>(
-    options?: Options<AppCaptionModelDownloadData, ThrowOnError>,
-  ): RequestResult<
-    AppCaptionModelDownloadResponses,
-    AppCaptionModelDownloadErrors,
-    ThrowOnError
-  > {
-    return (options?.client ?? this.client).post<
-      AppCaptionModelDownloadResponses,
-      AppCaptionModelDownloadErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/settings/app/caption-model/download",
-      ...options,
-    });
-  }
-
-  /**
-   * Cancel an active local caption model download
-   *
-   * Cancel an in-progress local caption model download.
-   */
-  public appCaptionModelCancel<ThrowOnError extends boolean = false>(
-    options?: Options<AppCaptionModelCancelData, ThrowOnError>,
-  ): RequestResult<
-    AppCaptionModelCancelResponses,
-    AppCaptionModelCancelErrors,
-    ThrowOnError
-  > {
-    return (options?.client ?? this.client).post<
-      AppCaptionModelCancelResponses,
-      AppCaptionModelCancelErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/settings/app/caption-model/cancel",
-      ...options,
     });
   }
 

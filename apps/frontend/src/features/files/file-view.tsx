@@ -18,6 +18,7 @@ import {
   fileSimilarGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { formatFileSize } from "@/lib/formatters";
+import { extractionOf, extractionStatus } from "@/lib/knowledge";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -43,6 +44,12 @@ export function FileView({ filename }: { filename: string }) {
 
   const file = info.data;
   const artifact = knowledge.data;
+  const captionText = extractionOf(artifact?.extractions, "captioning")?.payload
+    ?.text;
+  const extractedContent = extractionOf(
+    artifact?.extractions,
+    "text_extraction",
+  )?.payload?.content;
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
       <Button
@@ -75,9 +82,11 @@ export function FileView({ filename }: { filename: string }) {
           </p>
           {artifact && (
             <div className="mt-2 flex gap-1">
-              <Badge variant="outline">Embedding: {artifact.status}</Badge>
               <Badge variant="outline">
-                Caption: {artifact.caption.status ?? "none"}
+                Embedding: {extractionStatus(artifact.extractions, "embedding")}
+              </Badge>
+              <Badge variant="outline">
+                Caption: {extractionStatus(artifact.extractions, "captioning")}
               </Badge>
             </div>
           )}
@@ -99,8 +108,8 @@ export function FileView({ filename }: { filename: string }) {
         <CardContent>
           {knowledge.isPending ? (
             <p role="status">Loading caption…</p>
-          ) : knowledge.error && !artifact ? null : artifact?.caption.text ? (
-            <p>{artifact.caption.text}</p>
+          ) : knowledge.error && !artifact ? null : captionText ? (
+            <p>{captionText}</p>
           ) : (
             <p className="text-muted-foreground">No caption.</p>
           )}
@@ -114,10 +123,9 @@ export function FileView({ filename }: { filename: string }) {
         <CardContent>
           {knowledge.isPending ? (
             <p role="status">Loading content…</p>
-          ) : knowledge.error &&
-            !artifact ? null : artifact?.extracted_content ? (
+          ) : knowledge.error && !artifact ? null : extractedContent ? (
             <pre className="bg-muted max-h-96 overflow-auto rounded p-3 text-sm whitespace-pre-wrap">
-              {artifact.extracted_content}
+              {extractedContent}
             </pre>
           ) : (
             <p className="text-muted-foreground">

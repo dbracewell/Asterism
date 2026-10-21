@@ -189,7 +189,7 @@ test("file grid and actions fit a 240px pane on a desktop viewport", async ({
     }),
   );
   await page.route("**/api/py/files/report.txt/knowledge", (route) =>
-    route.fulfill({ json: { status: "ready", caption: { status: "none" } } }),
+    route.fulfill({ json: { status: "ready", extractions: {} } }),
   );
   await page.goto("/e2e/responsiveness?pane=240&setting=files");
   await page.getByRole("button", { name: "Icon view" }).click();
