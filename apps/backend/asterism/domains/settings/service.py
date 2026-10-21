@@ -8,7 +8,9 @@ Conventions:
 - API keys round-trip redacted: responses serialize :class:`SecretStr` to
   ``**********``, and writes that echo that sentinel keep the stored key.
 - Provider/model edits that could orphan the selected captioning model call
-  :func:`knowledge.ensure_captioning_selection_is_valid` before commit.
+  :func:`asterism.domains.settings.captioning_guard.get_captioning_selection_guard`
+  before commit. The knowledge domain owns that selection and registers the
+  implementation; the settings domain never imports the knowledge package.
 """
 
 import uuid
@@ -27,6 +29,7 @@ from asterism.core.exceptions import BadDataException, ConflictException, NotFou
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.models import AgentProfileModel
 
+from .captioning_guard import get_captioning_selection_guard
 from .models import (
     ApplicationSettingsModel,
     LLMModel,
@@ -387,9 +390,7 @@ async def update_provider_settings(
         # cascade-owned models).  The selected captioner is part of the global
         # processing policy, so reject that edit rather than leaving a stored
         # policy pointing at a missing or ineligible model.
-        from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
-
-        await ensure_captioning_selection_is_valid(session=session)
+        await get_captioning_selection_guard().validate(session=session)
 
         if draft_model_id is not None:
             draft_model = await session.scalar(
@@ -510,9 +511,7 @@ async def update_provider_model(
         model.vision_source = update.vision_source
         await session.flush()
 
-        from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
-
-        await ensure_captioning_selection_is_valid(session=session)
+        await get_captioning_selection_guard().validate(session=session)
 
         draft_model_id = await session.scalar(
             select(ApplicationSettingsModel.value).where(
@@ -575,9 +574,7 @@ async def replace_provider_models(
             raise NotFoundException(f"Provider id {provider_id} not found in database")
         provider.models = _merge_models(models, provider.models)
 
-        from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
-
-        await ensure_captioning_selection_is_valid(session=session)
+        await get_captioning_selection_guard().validate(session=session)
         try:
             await session.commit()
         except IntegrityError as exc:
@@ -1079,9 +1076,7 @@ async def bulk_upsert_providers(
 
     await _delete_missing_providers(set(existing_providers), processed_providers, session)
 
-    from asterism.domains.settings.knowledge import ensure_captioning_selection_is_valid
-
-    await ensure_captioning_selection_is_valid(session=session)
+    await get_captioning_selection_guard().validate(session=session)
 
 
 def _merge_models(

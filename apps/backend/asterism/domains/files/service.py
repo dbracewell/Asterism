@@ -31,6 +31,7 @@ from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, FileKnowledgeArtifactStatus
+from asterism.domains.knowledge.processing import ensure_file_knowledge_artifact
 from asterism.domains.knowledge.queries import select_newest_file_artifact
 from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
@@ -376,10 +377,14 @@ async def upload_files(
         # Canonical knowledge state is created with the file, before any
         # collection references it. Processing is queued separately so an
         # upload transaction remains bounded and atomic.
-        from asterism.domains.files.processing import ensure_file_knowledge_artifact
-
         for file in created:
-            artifacts.append(await ensure_file_knowledge_artifact(file=file, session=session))
+            artifacts.append(
+                await ensure_file_knowledge_artifact(
+                    file_id=file.id,
+                    user_id=file.user_id,
+                    session=session,
+                )
+            )
         await session.commit()
     except (Exception, asyncio.CancelledError):
         await session.rollback()

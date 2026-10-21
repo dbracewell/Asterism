@@ -1,12 +1,16 @@
 """FastAPI routes for all settings surfaces under ``/settings``.
 
 Route groups: user settings (any authenticated user), application/provider/tool
-settings (admin only), image captioning configuration, and local model download
-controls. More specific paths are declared before the generic ``/app/{key}``
-routes so FastAPI's first-match ordering resolves them correctly.
+settings (admin only), and the generic application-setting key routes. More
+specific paths are declared before the generic ``/app/{key}`` routes so
+FastAPI's first-match ordering resolves them correctly.
+
+The knowledge administration surfaces (captioning configuration, the processing
+profile, and the model-bundle download controls) are served by the knowledge
+domain's own router at the same URLs; see
+:mod:`asterism.domains.knowledge.router`.
 """
 
-import asyncio
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query
@@ -17,13 +21,6 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.agent.schemas import MainAgentConfiguration, MainAgentUpdate
 from asterism.domains.agent.service import get_main_agent, update_main_agent
-from asterism.domains.files.processing_schemas import (
-    KnowledgeCaptionConfiguration,
-    KnowledgeCaptionConfigurationUpdate,
-    KnowledgeProcessingProfileUpdate,
-    KnowledgeReprocessSummary,
-)
-from asterism.domains.knowledge.model_download import DownloadProgress
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from .discovery import (
@@ -376,58 +373,8 @@ async def bulk_update_app_settings(
 
 
 # ---------------------------------------------------------------------------
-# Image captioning (admin only)
+# Single application setting by key (admin only)
 # ---------------------------------------------------------------------------
-
-
-@settings_router.get(
-    "/app/captioning",
-    response_model=KnowledgeCaptionConfiguration,
-    operation_id="appCaptioningGet",
-    summary="Get image captioning configuration",
-)
-async def get_captioning_configuration(
-    user: AdminUserDep,
-    session: DBSessionDep,
-) -> KnowledgeCaptionConfiguration:
-    """Return the image captioning mode and selected provider model."""
-    from asterism.domains.settings.knowledge import get_captioning_configuration as get_configuration
-
-    return await get_configuration(session=session)
-
-
-@settings_router.put(
-    "/app/captioning",
-    response_model=KnowledgeCaptionConfiguration,
-    operation_id="appCaptioningUpdate",
-    summary="Set image captioning mode and selected provider model",
-    responses={400: {"model": ErrorDetail}},
-)
-async def update_captioning_configuration(
-    payload: KnowledgeCaptionConfigurationUpdate,
-    user: AdminUserDep,
-    session: DBSessionDep,
-) -> KnowledgeCaptionConfiguration:
-    """Set the image captioning mode and selected provider model."""
-    from asterism.domains.files.processing import update_captioning_configuration as update_configuration
-
-    return await update_configuration(payload=payload, session=session)
-
-
-@settings_router.put(
-    "/app/knowledge-processing-profile",
-    response_model=KnowledgeReprocessSummary,
-    operation_id="appKnowledgeProcessingProfileUpdate",
-)
-async def update_knowledge_processing_profile(
-    payload: KnowledgeProcessingProfileUpdate,
-    user: AdminUserDep,
-    session: DBSessionDep,
-) -> KnowledgeReprocessSummary:
-    """Update the knowledge processing profile and reprocess affected files."""
-    from asterism.domains.files.processing import update_processing_profile_and_reprocess
-
-    return await update_processing_profile_and_reprocess(payload=payload, session=session)
 
 
 @settings_router.put(
@@ -465,73 +412,3 @@ async def delete_app_setting(
         key,
         session=session,
     )
-
-
-# ---------------------------------------------------------------------------
-# Local caption model download (admin only)
-# ---------------------------------------------------------------------------
-
-
-@settings_router.get(
-    "/app/knowledge-embedding/status",
-    response_model=DownloadProgress,
-    operation_id="appKnowledgeEmbeddingStatus",
-    summary="Get automatic knowledge embedding bundle readiness",
-)
-async def get_knowledge_embedding_status(user: AdminUserDep) -> DownloadProgress:
-    """Return the readiness/download progress of the knowledge embedding bundle."""
-    from asterism.domains.knowledge.embedding import embedding_download_service
-
-    return await asyncio.to_thread(embedding_download_service.progress)
-
-
-@settings_router.get(
-    "/app/caption-model/status",
-    response_model=DownloadProgress,
-    operation_id="appCaptionModelStatus",
-    summary="Get local caption model download/readiness status",
-)
-async def get_caption_model_status(
-    user: AdminUserDep,
-) -> DownloadProgress:
-    """Return the download/readiness progress of the local caption model."""
-    from asterism.domains.knowledge.captioning import captioning_download_service
-
-    return await asyncio.to_thread(captioning_download_service.progress)
-
-
-@settings_router.post(
-    "/app/caption-model/download",
-    response_model=DownloadProgress,
-    operation_id="appCaptionModelDownload",
-    summary="Start downloading the local caption model",
-    status_code=202,
-    responses={
-        409: {"description": "Download already in progress", "model": ErrorDetail},
-    },
-)
-async def start_caption_model_download(
-    user: AdminUserDep,
-) -> DownloadProgress:
-    """Start the local caption model download (409 if one is already running)."""
-    from asterism.domains.knowledge.captioning import captioning_download_service
-
-    try:
-        return await captioning_download_service.start_download()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-
-
-@settings_router.post(
-    "/app/caption-model/cancel",
-    response_model=DownloadProgress,
-    operation_id="appCaptionModelCancel",
-    summary="Cancel an active local caption model download",
-)
-async def cancel_caption_model_download(
-    user: AdminUserDep,
-) -> DownloadProgress:
-    """Cancel an in-progress local caption model download."""
-    from asterism.domains.knowledge.captioning import captioning_download_service
-
-    return await captioning_download_service.cancel_download()

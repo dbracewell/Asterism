@@ -11,8 +11,8 @@ alone never grants an execution access to a file.
 | ------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `projects`   | Private flat projects, context revision, file and sub-agent memberships                 | `queries.py`, lifecycle services, project scope reader           |
 | `chat`       | Project binding, model selection, messages/branches, drafts, receipts, local references | Owner-checked scope readers and runtime composition roots        |
-| `files`      | Immutable sources, metadata, opaque storage keys, processing-policy transitions         | `FileStore`, `RuntimeFileReader`, owned base selects             |
-| `knowledge`  | Derived generations, embeddings, captions, vector adapter, bounded jobs                 | Artifact queries, embedding/vector interfaces                    |
+| `files`      | Immutable sources, metadata, opaque storage keys                       | `FileStore`, `RuntimeFileReader`, owned base selects             |
+| `knowledge`  | Derived generations, embeddings, captions, vector adapter, bounded jobs, the whole processing policy | Artifact queries, embedding/vector interfaces, policy transitions |
 | `agent`      | Main/sub configuration, immutable execution scope, prompts, bounded loop                | Injected scope, client, file reader, retrieval service           |
 | `retrieval`  | Authorized bounded search and citations                                                 | `RetrievalService` with injected live scope, embeddings, vectors |
 | `tools`      | Registry, ordinary capability catalog, internal tool adapters                           | Server-derived `ContextToolScope` and invocation checks          |

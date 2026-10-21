@@ -6,8 +6,8 @@ from asterism.core import config
 from asterism.core.exceptions import BadDataException
 from asterism.db.init_db import initialize_database
 from asterism.db.model_registry import Base
-from asterism.domains.files.processing import update_captioning_configuration
-from asterism.domains.files.processing_schemas import KnowledgeCaptionConfigurationUpdate
+from asterism.domains.knowledge.processing import update_captioning_configuration
+from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfigurationUpdate
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.settings.provider_types import (
     OPENAI_BASE_URL,

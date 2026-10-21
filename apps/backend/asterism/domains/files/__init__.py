@@ -10,13 +10,14 @@ Layering (each module owns exactly one responsibility):
 - ``listing``          – Executes a composed query and enriches only the
                          returned page with project/knowledge summaries.
 - ``processor``        – Converts a stored source into cached plain text.
-- ``processing``       – Knowledge-processing policy transitions and artifact
-                         generations (the policy itself lives in
-                         ``asterism.domains.settings.knowledge``).
-- ``processing_schemas`` – Pydantic models for the processing policy/profile.
 - ``service``          – Use-case orchestration (upload, list, delete, …).
 - ``router``           – FastAPI transport layer.
 - ``runtime_access``   – Model-facing reads, gated by live execution scope.
+
+The knowledge-processing policy — its schema, persistence, and transitions —
+belongs to the knowledge domain (``asterism.domains.knowledge``), not to this
+one. This domain creates a file's first knowledge artifact through the
+knowledge domain's published entry point.
 
 Ownership invariant: every persisted source belongs to exactly one user, and
 every read is scoped by ``user_id`` at the query boundary. Runtime access adds

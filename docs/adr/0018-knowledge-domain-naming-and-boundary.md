@@ -77,11 +77,11 @@ either. The dependency direction becomes one-way.
 This ADR fixes the naming and the boundary. The boundary is realized by the
 remaining stories of
 [EPIC-38](../epics/EPIC-38-KNOWLEDGE-PIPELINE-STRUCTURE.md): the processing
-policy moves to the knowledge domain (US-38.2), derived facets become
-first-class rows (US-38.3), and the dependency direction becomes explicit through
-a published artifact reader and an injected source reader (US-38.4). Until
-US-38.4 lands, `knowledge` still reaches into `files` for source access; that is
-a known, tracked boundary and not a regression.
+policy moves to the knowledge domain (US-38.2, complete), derived facets become
+first-class rows (US-38.3), and the dependency direction becomes explicit
+through a published artifact reader and an injected source reader (US-38.4).
+Until US-38.4 lands, `knowledge` still reaches into `files` for source access;
+that is a known, tracked boundary and not a regression.
 
 ### Rejected alternatives
 
@@ -116,6 +116,16 @@ The HTTP contract is unchanged by the rename. The API exposes the Pydantic schem
 table name are not part of the OpenAPI document. The generated frontend client
 therefore requires no regeneration.
 
+US-38.2 keeps the same guarantee for the endpoints it moves. The knowledge
+admin surfaces are served by the knowledge domain's router at their existing
+URLs, operation ids, response shapes, and OpenAPI tag. The tag stays
+`settings` because it names the public API resource group, which follows the
+URL prefix; the owning module is an implementation detail that the OpenAPI
+document does not publish. The only difference in the OpenAPI document is the
+order in which the paths appear, because the knowledge router is registered
+before the settings router so its more specific paths are matched first. The
+generated client's content is therefore unchanged.
+
 ## Consequences and evidence
 
 New work lands in `asterism/domains/knowledge/`, and the artifact vocabulary
@@ -127,7 +137,9 @@ facet's own row or field instead.
 The rename is verified by the backend lint, type-check, and full test suite; by a
 fresh database initialization that creates `file_knowledge_artifacts`; and by an
 AST import-boundary test that keeps the knowledge package free of project, chat,
-and model-registry imports. The current implementation is traced in
+and model-registry imports. US-38.2 adds two more boundary tests: the settings
+domain imports no knowledge module at any level, and the knowledge policy
+modules import no files module. The current implementation is traced in
 [file knowledge processing](../architecture/file-knowledge-processing.md),
 [data model and storage](../architecture/data-and-storage.md), and
 [knowledge retrieval](../architecture/knowledge-retrieval.md).

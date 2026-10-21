@@ -38,6 +38,11 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "src/lib/client/**",
     "src/components/ui/**",
+    // Playwright's generated report and traces are build output, not source.
+    // Without these, running the E2E suite before the lint gate makes it
+    // fail on the report's bundled assets.
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 
