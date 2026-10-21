@@ -63,3 +63,35 @@ EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above.
   - [x] Guard the stored-source removal that runs after the delete commit, and log the previously silent swallowed failures.
   - [x] Drop the redundant `user_files` index and document why the composite unique constraint must stay.
   - [x] Add regression tests for each fix, verify they fail against the pre-fix implementation, and run the backend and frontend gates.
+
+## [EPIC-38: Knowledge pipeline structure](docs/epics/EPIC-38-KNOWLEDGE-PIPELINE-STRUCTURE.md)
+
+- [ ] US-38.1: Name the knowledge domain for what it holds
+  - [ ] Rename `domains/extraction` to `domains/knowledge`, the artifact model to `FileKnowledgeArtifactModel` and the table to `file_knowledge_artifacts`.
+  - [ ] Update all backend, test and documentation references, including the frontend's generated client types.
+  - [ ] Re-check the vocabulary: no "extraction" may remain as a domain, package, table or model name.
+  - [ ] Record ADR-0018 covering the domain boundary, the vocabulary decision and the rejected alternatives.
+  - [ ] Run backend lint, type checks and the full test suite; verify a fresh database initialization creates the renamed table.
+- [ ] US-38.2: Give the processing policy one owner
+  - [ ] Move the processing-policy schemas, persistence and transitions from `files` and `settings` into the knowledge domain.
+  - [ ] Move the knowledge admin endpoints to a knowledge router, preserving their URLs, operation ids and response shapes.
+  - [ ] Remove the deferred cross-domain imports that exist only to break the settings/files cycle.
+  - [ ] Verify the OpenAPI contract is unchanged for the moved endpoints and regenerate the client if the operation grouping changed.
+  - [ ] Run backend lint, type checks and the full test suite.
+- [ ] US-38.3: Model derived facets as first-class rows
+  - [ ] Add the extraction-kind enum and the linking table with a unique `(artifact_id, kind)` constraint.
+  - [ ] Replace the parallel artifact and caption status vocabularies with one status vocabulary for every kind.
+  - [ ] Move the caption's flat columns, the text content and the embedding readiness flags into per-kind rows; keep a denormalized searchable aggregate on the artifact row for the retrieval path.
+  - [ ] Model payloads as a discriminated union keyed by kind, validated at the application boundary.
+  - [ ] Replace the flat API fields with a map of extractions; regenerate the typed client and update the file manager and file view to render the per-kind statuses.
+  - [ ] Add retrieval, file-library and file-view regressions for the new shape.
+- [ ] US-38.4: Make the dependency direction explicit
+  - [ ] Publish a narrow artifact reader/service in the knowledge domain and route the files domain's knowledge operations through it.
+  - [ ] Replace the files domain's deferred imports of the artifact model, artifact queries and ingestion runtime.
+  - [ ] Inject the source reader into ingestion, mirroring the existing injected embedding provider, vector store and caption request hook.
+  - [ ] Add an import-boundary test that fails when a knowledge module imports the files domain at module level.
+- [ ] US-38.5: Retire the dead caption review contract and reconcile the docs
+  - [ ] Decide and record the disposition of the caption review lifecycle: implement it as per-extraction states, or remove it from the product and the documentation.
+  - [ ] Remove the never-written caption review fields and make the generation timestamp describe the extraction rather than the artifact.
+  - [ ] Correct the caption state names in the file-knowledge, retrieval and data-storage architecture guides.
+  - [ ] Run the full backend and frontend gates and the documentation checks.
