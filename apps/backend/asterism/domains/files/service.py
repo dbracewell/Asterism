@@ -22,7 +22,7 @@ from typing import Literal
 import filetype
 from fastapi import UploadFile
 from fastapi.responses import FileResponse, Response
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.images import generate_thumbnail
@@ -30,17 +30,15 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
-from asterism.domains.knowledge.extractions import (
-    describe_artifact,
-    load_artifact_extractions,
+from asterism.domains.knowledge.artifacts import (
+    cancel_processing,
+    delete_file_vectors,
+    ensure_artifact,
+    remove_artifacts,
+    reset_for_reprocessing,
+    similar_files,
+    start_ingestion,
 )
-from asterism.domains.knowledge.models import (
-    FileKnowledgeArtifactModel,
-    KnowledgeExtractionKind,
-    KnowledgeExtractionStatus,
-)
-from asterism.domains.knowledge.processing import ensure_file_knowledge_artifact
-from asterism.domains.knowledge.queries import select_newest_file_artifact
 
 from .listing import describe_files, file_knowledge_summaries, list_file_page
 from .models import FileContentStatus, FileKind, UserFileModel
@@ -386,7 +384,7 @@ async def upload_files(
         # upload transaction remains bounded and atomic.
         for file in created:
             artifacts.append(
-                await ensure_file_knowledge_artifact(
+                await ensure_artifact(
                     file_id=file.id,
                     user_id=file.user_id,
                     session=session,
@@ -398,11 +396,8 @@ async def upload_files(
         for filename in saved:
             store.delete(user_id, filename)
         raise
-    from asterism.domains.knowledge.runtime import start_file_ingestion_job
-
     for file, artifact in zip(created, artifacts, strict=True):
-        if artifact.status.value in {"pending", "failed"}:
-            start_file_ingestion_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
+        start_ingestion(user_id=user_id, file_id=file.id, artifact=artifact)
     return UserFileList(files=await describe_files(user_id=user_id, files=created, session=session))
 
 
@@ -489,44 +484,11 @@ async def regenerate_file_knowledge(*, user_id: str, filename: str, session: Asy
     Raises:
         NotFoundException: If the file or its artifact does not exist.
     """
-    from asterism.domains.knowledge.runtime import cancel_file_jobs, start_file_ingestion_job
-
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    artifact = await session.scalar(select_newest_file_artifact(file.id))
+    artifact = await reset_for_reprocessing(file_id=file.id, session=session)
     if artifact is None:
         raise NotFoundException("Knowledge processing record not found")
-    await cancel_file_jobs(artifact.id)
-    artifact.status = KnowledgeExtractionStatus.PENDING
-    artifact.error_code = None
-    artifact.error_reason = None
-    artifact.started_at = None
-    artifact.completed_at = None
-    # The derived outputs are produced again from scratch. The caption only
-    # exists for images whose captioning is enabled, so it is removed here
-    # and recreated by the ingestion when it applies.
-    extractions = await load_artifact_extractions(artifact_id=artifact.id, session=session)
-    for kind, extraction in extractions.items():
-        if kind is KnowledgeExtractionKind.CAPTIONING:
-            await session.delete(extraction)
-            continue
-        extraction.status = KnowledgeExtractionStatus.PENDING
-        extraction.provider = None
-        extraction.model = None
-        extraction.error_code = None
-        extraction.error_reason = None
-        extraction.payload = None
-        extraction.started_at = None
-        extraction.completed_at = None
-    await session.commit()
-    start_file_ingestion_job(user_id=user_id, file_id=file.id, artifact_id=artifact.id)
-    return describe_artifact(
-        artifact,
-        [
-            extraction
-            for kind, extraction in extractions.items()
-            if kind is not KnowledgeExtractionKind.CAPTIONING
-        ],
-    )
+    return artifact
 
 
 async def cancel_file_knowledge_processing(*, user_id: str, filename: str, session: AsyncSession):
@@ -548,20 +510,11 @@ async def cancel_file_knowledge_processing(*, user_id: str, filename: str, sessi
     Raises:
         NotFoundException: If the file or its artifact does not exist.
     """
-    from asterism.domains.knowledge.runtime import cancel_file_jobs
-
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    artifact = await session.scalar(select_newest_file_artifact(file.id))
+    artifact = await cancel_processing(file_id=file.id, session=session)
     if artifact is None:
         raise NotFoundException("Knowledge processing record not found")
-    if artifact.status in {KnowledgeExtractionStatus.PENDING, KnowledgeExtractionStatus.RUNNING}:
-        await cancel_file_jobs(artifact.id)
-        artifact.status = KnowledgeExtractionStatus.CANCELED
-        artifact.error_code = "canceled"
-        artifact.error_reason = "Processing canceled by user"
-        await session.commit()
-    extractions = await load_artifact_extractions(artifact_id=artifact.id, session=session)
-    return describe_artifact(artifact, list(extractions.values()))
+    return artifact
 
 
 _SIMILARITY_MAX_SOURCE_VECTORS = 256
@@ -591,63 +544,13 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
     Raises:
         NotFoundException: If the query file does not exist.
     """
-    from asterism.domains.knowledge.runtime import vector_store
-
     file = await _owned_file(user_id=user_id, filename=filename, session=session)
-    current = await session.scalar(
-        select(FileKnowledgeArtifactModel).where(
-            FileKnowledgeArtifactModel.file_id == file.id,
-            FileKnowledgeArtifactModel.is_current.is_(True),
-            FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.READY,
-        ),
-    )
-    if current is None:
-        return SimilarFileList(files=[])
-    source_vectors = await vector_store.get_file_vectors(
+    ranked = await similar_files(
         user_id=user_id,
-        file_id=str(file.id),
-        artifact_generation=current.generation,
-        limit=_SIMILARITY_MAX_SOURCE_VECTORS,
+        file_id=file.id,
+        limit=limit,
+        session=session,
     )
-    if not source_vectors:
-        return SimilarFileList(files=[])
-
-    # Embeddings are unit-length, so the normalized mean is the file's centroid direction.
-    dimension = len(source_vectors[0])
-    centroid = [sum(vector[index] for vector in source_vectors) / len(source_vectors) for index in range(dimension)]
-    norm = sum(value * value for value in centroid) ** 0.5
-    if norm == 0:
-        return SimilarFileList(files=[])
-    centroid = [value / norm for value in centroid]
-
-    candidates = {
-        str(file_id): generation
-        for file_id, generation in (
-            await session.execute(
-                select(FileKnowledgeArtifactModel.file_id, FileKnowledgeArtifactModel.generation).where(
-                    FileKnowledgeArtifactModel.user_id == user_id,
-                    FileKnowledgeArtifactModel.file_id != file.id,
-                    FileKnowledgeArtifactModel.is_current.is_(True),
-                    FileKnowledgeArtifactModel.status == KnowledgeExtractionStatus.READY,
-                ),
-            )
-        ).all()
-    }
-    if not candidates:
-        return SimilarFileList(files=[])
-    hits = await vector_store.search(
-        centroid,
-        user_id=user_id,
-        allowed_file_ids=list(candidates),
-        limit=limit * _SIMILARITY_CHUNKS_PER_RESULT,
-    )
-    # LanceDB reports squared L2 distance; for unit vectors cosine = 1 - d / 2.
-    best: dict[str, float] = {}
-    for hit in hits:
-        if candidates.get(hit.file_id) != hit.artifact_generation:
-            continue
-        best[hit.file_id] = max(best.get(hit.file_id, -1.0), min(1.0, max(-1.0, 1 - hit.score / 2)))
-    ranked = sorted(best.items(), key=lambda item: item[1], reverse=True)[:limit]
     if not ranked:
         return SimilarFileList(files=[])
     models = {
@@ -655,7 +558,7 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
         for model in await session.scalars(
             select(UserFileModel).where(
                 UserFileModel.user_id == user_id,
-                UserFileModel.id.in_([uuid.UUID(file_id) for file_id, _ in ranked]),
+                UserFileModel.id.in_([candidate for candidate, _ in ranked]),
             ),
         )
     }
@@ -668,7 +571,11 @@ async def get_similar_files(*, user_id: str, filename: str, session: AsyncSessio
         )
     }
     return SimilarFileList(
-        files=[SimilarFile(file=summaries[file_id], score=score) for file_id, score in ranked if file_id in models],
+        files=[
+            SimilarFile(file=summaries[str(candidate)], score=score)
+            for candidate, score in ranked
+            if str(candidate) in models
+        ],
     )
 
 
@@ -716,15 +623,13 @@ async def delete_user_file(*, user_id: str, filename: str, session: AsyncSession
     )
     if file is None:
         raise NotFoundException("File not found")
-    from asterism.domains.knowledge.runtime import vector_store
-
     response = (await describe_files(user_id=user_id, files=[file], session=session))[0]
     await _remove_file_knowledge_records(file_id=file.id, session=session)
     file_id = file.id
     await session.delete(file)
     await session.commit()
     try:
-        await vector_store.delete_file(user_id=user_id, file_id=str(file_id))
+        await delete_file_vectors(user_id=user_id, file_id=file_id)
     except Exception:
         # Database/source deletion remains authoritative; a restarted worker
         # cannot restore vectors because its file/artifact row is gone.
@@ -751,22 +656,13 @@ async def _remove_file_knowledge_records(*, file_id: uuid.UUID, session: AsyncSe
             owns the transaction).
     """
     from asterism.domains.chat.file_references import detach_deleted_file as detach_chat_file
-    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
-    from asterism.domains.knowledge.runtime import cancel_file_jobs
     from asterism.domains.projects.file_references import detach_deleted_file
 
     await detach_chat_file(file_id=file_id, session=session)
     source = await session.get(UserFileModel, file_id)
     if source is not None:
         await detach_deleted_file(user_id=source.user_id, file_id=file_id, session=session)
-    artifact_ids = list(
-        await session.scalars(
-            select(FileKnowledgeArtifactModel.id).where(FileKnowledgeArtifactModel.file_id == file_id),
-        ),
-    )
-    for artifact_id in artifact_ids:
-        await cancel_file_jobs(artifact_id)
-    await session.execute(delete(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == file_id))
+    await remove_artifacts(file_id=file_id, session=session)
 
 
 async def delete_user_files(
@@ -817,11 +713,9 @@ async def delete_user_files(
             logger.warning("Could not remove stored source for deleted file", extra={"storage_key": storage_key})
 
     if deleted_files:
-        from asterism.domains.knowledge.runtime import vector_store
-
         for file in deleted_files:
             try:
-                await vector_store.delete_file(user_id=user_id, file_id=str(file.id))
+                await delete_file_vectors(user_id=user_id, file_id=file.id)
             except Exception:
                 logger.warning("Could not remove knowledge vectors for deleted file", extra={"file_id": str(file.id)})
 

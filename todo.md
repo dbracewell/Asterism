@@ -4,7 +4,7 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. US-38.1 and US-38.2 are confirmed complete and merged into `main`. US-38.3 is implemented and verified on `feat/us-38.3-extraction-facets`, awaiting completion confirmation. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3 is implemented and verified, awaiting completion confirmation on `feat/us-33.3-theme-layout-review-matrix`. US-38.1 and US-38.2 are confirmed complete and merged into `main`. US-38.3 and US-38.4 are implemented and verified on their feature branches, awaiting completion confirmation. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
 
@@ -86,10 +86,10 @@ EPIC-31 and EPIC-32 are confirmed complete; their checklists are archived above.
   - [x] Replace the flat API fields with a map of extractions; regenerate the typed client and update the file manager and file view to render the per-kind statuses.
   - [x] Add retrieval, file-library and file-view regressions for the new shape.
 - [ ] US-38.4: Make the dependency direction explicit
-  - [ ] Publish a narrow artifact reader/service in the knowledge domain and route the files domain's knowledge operations through it.
-  - [ ] Replace the files domain's deferred imports of the artifact model, artifact queries and ingestion runtime.
-  - [ ] Inject the source reader into ingestion, mirroring the existing injected embedding provider, vector store and caption request hook.
-  - [ ] Add an import-boundary test that fails when a knowledge module imports the files domain at module level.
+  - [x] Publish a narrow artifact reader/service in the knowledge domain and route the files domain's knowledge operations through it.
+  - [x] Replace the files domain's deferred imports of the artifact model, artifact queries and ingestion runtime.
+  - [x] Inject the source reader into ingestion, mirroring the existing injected embedding provider, vector store and caption request hook.
+  - [x] Add an import-boundary test that fails when a knowledge module imports the files domain at module level.
 - [ ] US-38.5: Retire the dead caption review contract and reconcile the docs
   - [ ] Decide and record the disposition of the caption review lifecycle: implement it as per-extraction states, or remove it from the product and the documentation.
   - [ ] Remove the never-written caption review fields and make the generation timestamp describe the extraction rather than the artifact.

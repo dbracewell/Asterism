@@ -19,6 +19,7 @@ from asterism.domains.knowledge.models import (
 )
 
 from .captioning import caption, captioning_download_service, local_caption_provider
+from .sources import SourceReader, configure_source_reader
 from .vector_store import vector_store
 
 logger = get_logger("KNOWLEDGE-RUNTIME")
@@ -103,8 +104,14 @@ async def resume_ingestion_jobs() -> None:
             )
 
 
-async def initialize_knowledge_runtime() -> None:
-    """Create/open LanceDB and make interrupted jobs explicitly retryable."""
+async def initialize_knowledge_runtime(source: SourceReader) -> None:
+    """Install the source reader, open LanceDB, and make interrupted jobs retryable.
+
+    Args:
+        source: The reader that supplies the source files this domain derives
+            knowledge from.
+    """
+    configure_source_reader(source)
     await vector_store.initialize()
     await recover_interrupted()
 

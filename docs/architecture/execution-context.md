@@ -11,8 +11,8 @@ alone never grants an execution access to a file.
 | ------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `projects`   | Private flat projects, context revision, file and sub-agent memberships                 | `queries.py`, lifecycle services, project scope reader           |
 | `chat`       | Project binding, model selection, messages/branches, drafts, receipts, local references | Owner-checked scope readers and runtime composition roots        |
-| `files`      | Immutable sources, metadata, opaque storage keys                       | `FileStore`, `RuntimeFileReader`, owned base selects             |
-| `knowledge`  | Derived generations, embeddings, captions, vector adapter, bounded jobs, the whole processing policy | Artifact queries, embedding/vector interfaces, policy transitions |
+| `files`      | Immutable sources, metadata, opaque storage keys, source reading for the knowledge domain | `FileStore`, `RuntimeFileReader`, owned base selects, the source reader |
+| `knowledge`  | Derived generations, embeddings, captions, vector adapter, bounded jobs, the whole processing policy | Artifact queries, the published artifact service, embedding/vector interfaces, policy transitions |
 | `agent`      | Main/sub configuration, immutable execution scope, prompts, bounded loop                | Injected scope, client, file reader, retrieval service           |
 | `retrieval`  | Authorized bounded search and citations                                                 | `RetrievalService` with injected live scope, embeddings, vectors |
 | `tools`      | Registry, ordinary capability catalog, internal tool adapters                           | Server-derived `ContextToolScope` and invocation checks          |
@@ -27,6 +27,15 @@ Project/file/knowledge models do not import the aggregate model registry.
 `db.model_registry` is the registration root used for fresh initialization. Agent scope and
 prompt types do not query project tables. The chat composition roots inject
 readers; domain policy stays at the storage/service boundary that owns it.
+
+The knowledge and files domains depend on each other in one direction only. The
+files domain consumes the knowledge domain's published artifact service
+(`knowledge/artifacts.py`) and never reaches into the artifact model, the
+artifact queries, or the ingestion runtime. The knowledge domain never imports
+the files domain: it reads its sources through the narrow contract in
+`knowledge/sources.py`, whose implementation the files domain provides and the
+application installs at startup. An import-boundary test enforces both
+directions.
 
 ## Trace one turn
 

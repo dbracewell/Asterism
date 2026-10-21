@@ -122,6 +122,7 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
     )
     from asterism.domains.retrieval.service import RetrievalArtifact
     from asterism.domains.user.models import UserModel
+    from knowledge_doubles import FakeSourceReader
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -198,6 +199,10 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
     monkeypatch.setattr("asterism.domains.knowledge.captioning.vector_store", FakeVectorStore())
     monkeypatch.setattr("asterism.domains.knowledge.captioning.embedding_provider", FakeEmbeddingProvider())
     monkeypatch.setattr("asterism.domains.knowledge.captioning._caption", fake_caption)
+    monkeypatch.setattr(
+        "asterism.domains.knowledge.captioning.get_source_reader",
+        lambda: FakeSourceReader(is_image=True, name="chart.png", mime_type="image/png"),
+    )
 
     await caption("user-1", file_id, artifact_id)
 

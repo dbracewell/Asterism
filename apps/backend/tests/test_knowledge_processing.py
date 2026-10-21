@@ -19,8 +19,10 @@ from asterism.domains.knowledge.processing_schemas import (
     KnowledgeProcessingProfileUpdate,
 )
 from asterism.domains.knowledge.runtime import recover_interrupted
+from asterism.domains.knowledge.sources import SourceUnavailableError
 from asterism.domains.settings.models import ApplicationSettingsModel
 from asterism.domains.user.models import UserModel
+from knowledge_doubles import FakeSourceReader
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -90,6 +92,62 @@ async def test_malformed_processing_setting_falls_back_and_is_healed_by_an_updat
     assert setting.value["schema_version"] == 1
     assert setting.value["generation"] == 2
     assert setting.value["identity"] == result.profile.identity
+
+
+@pytest.mark.asyncio
+async def test_a_source_that_cannot_be_read_fails_the_artifact(processing_session):
+    """A conversion failure fails the artifact instead of leaving it pending.
+
+    The source is read inside the ingestion's guarded section, so a file that
+    cannot be converted is a failure of the generation rather than work that
+    silently never finishes.
+    """
+    file = UserFileModel(
+        storage_key=str(uuid.uuid4()),
+        user_id="user-a",
+        filename="unreadable.txt",
+        original_name="unreadable.txt",
+        size=1,
+        mime_type="text/plain",
+        kind=FileKind.TEXT,
+        sha256="c" * 64,
+    )
+    processing_session.add(file)
+    await processing_session.flush()
+    from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
+
+    artifact = FileKnowledgeArtifactModel(
+        id=uuid.uuid4(),
+        user_id="user-a",
+        file_id=file.id,
+        generation=1,
+        processing_profile_generation=1,
+        processing_profile_identity="a" * 64,
+        status=KnowledgeExtractionStatus.PENDING,
+    )
+    processing_session.add(artifact)
+    await processing_session.commit()
+
+    class UnreadableSource:
+        async def read_source(self, *, file_id, user_id, session):
+            raise SourceUnavailableError("The file could not be processed")
+
+    class FakeVectors:
+        async def delete_file_generation(self, **_):
+            pass
+
+        async def add(self, _):
+            raise AssertionError("a failed source must not write vectors")
+
+    result = await ingest_file(
+        artifact=artifact,
+        reader=UnreadableSource(),
+        session=processing_session,
+        store=FakeVectors(),
+    )
+
+    assert result.status is KnowledgeExtractionStatus.FAILED
+    assert result.error_code == "processing_failed"
 
 
 @pytest.mark.asyncio
@@ -170,7 +228,7 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
     replacement = next(item for item in artifacts if item.generation == 2)
     failed = await ingest_file(
         artifact=replacement,
-        file=file,
+        reader=FakeSourceReader(),
         session=processing_session,
         provider=FailingEmbeddings(),
         store=FakeVectors(),
@@ -315,7 +373,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     vectors = FakeVectors()
     indexed = await ingest_file(
         artifact=artifact,
-        file=file,
+        reader=FakeSourceReader(),
         session=processing_session,
         provider=FakeEmbeddings(),
         store=vectors,
@@ -325,7 +383,7 @@ async def test_ingestion_indexes_text_idempotently_and_never_marks_partial_work_
     # A ready immutable revision is a no-op rather than generating duplicate chunks.
     await ingest_file(
         artifact=indexed,
-        file=file,
+        reader=FakeSourceReader(),
         session=processing_session,
         provider=FakeEmbeddings(),
         store=vectors,
@@ -401,11 +459,6 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
     processing_session.add(artifact)
     await processing_session.commit()
 
-    async def already_processed(*, file, session):
-        return file
-
-    monkeypatch.setattr("asterism.domains.knowledge.ingestion.ensure_file_processed", already_processed)
-
     class WaitingEmbeddings:
         async def embed_text(self, _):
             raise DownloadNotReadyError("provisioning")
@@ -422,7 +475,7 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
 
     result = await ingest_file(
         artifact=artifact,
-        file=file,
+        reader=FakeSourceReader(),
         session=processing_session,
         provider=WaitingEmbeddings(),
         store=Vectors(),

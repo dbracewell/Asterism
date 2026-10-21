@@ -1,8 +1,8 @@
 # EPIC-38: Knowledge pipeline structure
 
 Status: in progress. US-38.1 and US-38.2 confirmed complete and merged into
-`main`; US-38.3 implemented on `feat/us-38.3-extraction-facets`; US-38.4 and
-US-38.5 pending. Source: the files-domain review of 2026-10-21 and
+`main`; US-38.3 and US-38.4 implemented on their feature branches; US-38.5
+pending. Source: the files-domain review of 2026-10-21 and
 the follow-up architecture discussion on the knowledge pipeline's domain
 ownership, naming, and data model. The naming and boundary decisions are
 recorded in [ADR-0018](../adr/0018-knowledge-domain-naming-and-boundary.md).
@@ -222,14 +222,26 @@ under `knowledge` imports `files` at module level.
 
 Tasks:
 
-- [ ] Publish a narrow artifact reader/service in the knowledge domain and
+- [x] Publish a narrow artifact reader/service in the knowledge domain and
       route the files domain's knowledge operations through it.
-- [ ] Replace the files domain's deferred imports of the artifact model,
+- [x] Replace the files domain's deferred imports of the artifact model,
       artifact queries and ingestion runtime.
-- [ ] Inject the source reader into ingestion, mirroring the existing
+- [x] Inject the source reader into ingestion, mirroring the existing
       injected embedding provider, vector store and caption request hook.
-- [ ] Add an import-boundary test that fails when a knowledge module imports
+- [x] Add an import-boundary test that fails when a knowledge module imports
       the files domain at module level.
+
+Notes: the knowledge domain publishes `knowledge/artifacts.py`, the one service
+the files domain uses for a file's knowledge: it creates the first artifact,
+reports the representative generation, resets and cancels processing, removes
+artifacts, and ranks similar files. The files domain's deferred imports of the
+artifact model, the artifact queries, and the ingestion runtime are gone. The
+knowledge domain reads its sources through the narrow contract in
+`knowledge/sources.py`; the files domain provides the implementation
+(`files/sources.py`), and the application installs it at startup. Two
+import-boundary tests enforce the direction: no knowledge module imports the
+files domain, and the files domain reaches into neither the artifact model, the
+artifact queries, nor the ingestion runtime.
 
 ## US-38.5: Retire the dead caption review contract and reconcile the docs
 

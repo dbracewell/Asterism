@@ -33,8 +33,10 @@ reference a file and never initiate duplicate work.
 | HTTP upload       | `file_router.upload_files`, `files.service.upload_files`     | Validates the request, writes source bytes, persists the source-file record, and queues work after commit.              |
 | Source bytes      | `FileStore`, `LocalFileStore`                                | Owns bytes beneath `STORAGE_ROOT/files/{user_id}` and prevents path traversal.                                          |
 | File conversion   | `MarkItDownFileProcessor.ensure_processed`                   | Produces bounded text cache for text/document files; verifies file integrity and records safe file-content errors.      |
+| Source reading    | `knowledge/sources.py`, `files/sources.py`                 | The narrow contract the knowledge domain reads its sources through; the files domain provides the implementation.    |
 | Artifact state    | `FileKnowledgeArtifactModel`, `ensure_file_knowledge_artifact`      | Owns processing generation, profile fingerprint, lifecycle, the searchable aggregate, and the chunk count. |
 | Derived outputs   | `FileKnowledgeExtractionModel`, `knowledge/extractions.py`         | Owns one row per derived output — its status, provider, model, safe errors, and kind-specific payload. |
+| Published service | `knowledge/artifacts.py`                                   | The one service the files domain uses for a file's knowledge: create, report, reset, cancel, remove, and rank similar files. |
 | Processing policy | `knowledge/policy.py`, `knowledge/processing.py`              | Owns the policy's schema, persistence, and transitions, including the replacement generations a policy change queues. |
 | Processing queue  | `KnowledgeIngestionJobs`, `ingest_file_artifact`             | Runs at most one in-process job per artifact ID and promotes a generation only after vector writes succeed.             |
 | Embeddings        | `OnnxClipEmbeddingProvider`                                  | Lazily verifies and loads the pinned local ONNX CLIP bundle, then emits normalized text or image vectors.               |
@@ -44,9 +46,28 @@ reference a file and never initiate duplicate work.
 
 `runtime.py` constructs the process-lifetime services: `vector_store`,
 `embedding_provider`, `knowledge_ingestion_jobs`, `local_caption_provider`, and
-`knowledge_caption_jobs`. `initialize_knowledge_runtime()` opens LanceDB and
-makes interrupted jobs retryable; `shutdown_knowledge_runtime()` cancels jobs and
-releases model and database resources.
+`knowledge_caption_jobs`. `initialize_knowledge_runtime()` installs the source
+reader, opens LanceDB, and makes interrupted jobs retryable;
+`shutdown_knowledge_runtime()` cancels jobs and releases model and database
+resources.
+
+## Dependency direction
+
+The knowledge and files domains depend on each other in one direction only.
+
+The files domain uses the knowledge domain's published artifact service
+(`knowledge/artifacts.py`) for everything it needs to know about a file's
+knowledge: creating the first artifact, reporting the representative
+generation, resetting and cancelling processing, removing artifacts, and
+ranking similar files. It never reaches into the artifact model, the artifact
+queries, or the ingestion runtime.
+
+The knowledge domain never imports the files domain. It reads its sources
+through the narrow contract in `knowledge/sources.py` — a source file's
+identity, its MIME type, whether it is an image, its bytes path, and its
+converted text. The files domain provides the implementation
+(`files/sources.py`), and the application installs it at startup, where the two
+domains are composed. An import-boundary test enforces both directions.
 
 ## Upload to ready artifact
 

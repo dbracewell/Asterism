@@ -20,6 +20,7 @@ from asterism.domains.files.models import FileKind, UserFileModel
 from asterism.domains.knowledge.models import FileKnowledgeArtifactModel, KnowledgeExtractionStatus
 from asterism.domains.knowledge.retention import generations_to_prune, prune_superseded_generations
 from asterism.domains.user.models import UserModel
+from knowledge_doubles import FakeSourceReader
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -386,7 +387,7 @@ async def test_promoting_a_generation_prunes_the_superseded_ones(lifecycle_sessi
     store = RecordingVectorStore()
     promoted = await ingest_file(
         artifact=replacement,
-        file=file,
+        reader=FakeSourceReader(),
         session=lifecycle_session,
         provider=FakeEmbeddings(),
         store=store,
