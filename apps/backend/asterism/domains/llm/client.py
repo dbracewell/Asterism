@@ -47,7 +47,6 @@ from asterism.core.config import config
 from asterism.domains.llm.typedefs import FinishReason
 from asterism.domains.tools.registry import tool_registry
 
-from .helpers import format_messages_for_model
 from .schemas import (
     ChatCompletionParams,
     Function,
@@ -498,7 +497,7 @@ class LLMClient(LLMClientProtocol):
             )
 
         msg_copy = messages.copy()
-        completion_args["messages"] = format_messages_for_model(msg_copy)
+        completion_args["messages"] = [msg.to_api_message() for msg in msg_copy]
         return completion_args
 
     async def generate[T: BaseModel](

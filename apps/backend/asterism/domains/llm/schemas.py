@@ -61,13 +61,6 @@ class ChatCompletionParams(TypedDict):
     timeout: NotRequired[float | None]
 
 
-class DraftModel(BaseModel):
-    """Draft-file descriptor (repository + file path). Currently unused."""
-
-    repo_id: str
-    filename: str
-
-
 class LLMEventType(StrEnum):
     """Kinds of events emitted while streaming a chat completion.
 
