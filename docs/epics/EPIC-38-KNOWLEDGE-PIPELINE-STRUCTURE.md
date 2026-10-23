@@ -1,7 +1,9 @@
 # EPIC-38: Knowledge pipeline structure
 
-Status: in progress. US-38.1 through US-38.4 confirmed complete and merged into
-`main`; US-38.5 pending. Source: the files-domain review of 2026-10-21 and
+Status: confirmed complete (2026-10-23). US-38.1 through US-38.5 are confirmed
+complete and merged into local `main`. The completed
+checklist is [archived](../archive/todo-completed-2026-10-23.md).
+Source: the files-domain review of 2026-10-21 and
 the follow-up architecture discussion on the knowledge pipeline's domain
 ownership, naming, and data model. The naming and boundary decisions are
 recorded in [ADR-0018](../adr/0018-knowledge-domain-naming-and-boundary.md).
@@ -21,7 +23,7 @@ Three problems shape this epic:
    reaching into another module's private functions.
 2. **The domain is named for one of its facets.** The package is `extraction`
    and the table is `file_extractions`, but the artifact holds a text
-   extraction, an embedding projection *and* a generated caption. Meanwhile the
+   extraction, an embedding projection _and_ a generated caption. Meanwhile the
    product, the configuration keys, the admin UI and the documentation already
    call the whole thing "knowledge".
 3. **The storage cannot express the runtime.** The artifact row carries seven
@@ -35,19 +37,19 @@ derived output (a facet).**
 
 The measured cost is asymmetric, and that decides it:
 
-| Word | Repo-wide occurrences | What the rename would cost |
-| --- | --- | --- |
-| `knowledge` | ~1200 (366 backend, 350 frontend, 321 docs, 165 tests) | Renaming this is the 1200-change job |
-| `extraction` | ~475 (208 backend, 7 frontend, 115 docs, 145 tests) | Renaming this is ~95 import sites + ~130 model/table references |
+| Word         | Repo-wide occurrences                                  | What the rename would cost                                      |
+| ------------ | ------------------------------------------------------ | --------------------------------------------------------------- |
+| `knowledge`  | ~1200 (366 backend, 350 frontend, 321 docs, 165 tests) | Renaming this is the 1200-change job                            |
+| `extraction` | ~475 (208 backend, 7 frontend, 115 docs, 145 tests)    | Renaming this is ~95 import sites + ~130 model/table references |
 
-The existing ~1200 `knowledge` references are already *correct* — they name the
+The existing ~1200 `knowledge` references are already _correct_ — they name the
 config keys (`knowledge.processing`, `KNOWLEDGE_*`), the admin surface, the
 storage root and the retrieval hits. The **domain** was the outlier. Renaming
 `domains/extraction` → `domains/knowledge` therefore makes every existing
 reference consistent, at roughly a tenth of the cost of the alternative.
 
-"Knowledge" here means *the platform's derived, retrievable knowledge about a
-file* — not asserted facts, entities or relations. The domain documentation
+"Knowledge" here means _the platform's derived, retrievable knowledge about a
+file_ — not asserted facts, entities or relations. The domain documentation
 states this explicitly so the name is not read as promising a knowledge graph.
 
 Rejected alternatives, and why:
@@ -57,7 +59,7 @@ Rejected alternatives, and why:
   models, routers, storage adapters, providers and business rules, and already
   depends on `db`, `core` and other domains. Moving it into `common` would
   make `common` a non-leaf and would not remove a single cycle.
-- **`file_processing` / `processing`.** Generic, and it names the *operation*
+- **`file_processing` / `processing`.** Generic, and it names the _operation_
   rather than the durable result. "Processing kind" for a caption is a
   category error: a caption is an output, not a step.
 - **`derivation` / `analysis`.** More precise than "knowledge" and less
@@ -108,15 +110,15 @@ naming and boundary decision is recorded in an ADR.
 
 Tasks:
 
-- [ ] Rename `domains/extraction` to `domains/knowledge`, the artifact model to
+- [x] Rename `domains/extraction` to `domains/knowledge`, the artifact model to
       `FileKnowledgeArtifactModel` and the table to `file_knowledge_artifacts`.
-- [ ] Update all backend, test and documentation references, including the
+- [x] Update all backend, test and documentation references, including the
       frontend's generated client types.
-- [ ] Re-check the vocabulary: no "extraction" may remain as a domain, package,
+- [x] Re-check the vocabulary: no "extraction" may remain as a domain, package,
       table or model name.
-- [ ] Record ADR-0018 covering the domain boundary, the vocabulary decision
+- [x] Record ADR-0018 covering the domain boundary, the vocabulary decision
       and the rejected alternatives.
-- [ ] Run backend lint, type checks and the full test suite; verify a fresh
+- [x] Run backend lint, type checks and the full test suite; verify a fresh
       database initialization creates the renamed table.
 
 ## US-38.2: Give the processing policy one owner
@@ -259,11 +261,29 @@ ownership, vocabulary and extraction model.
 
 Tasks:
 
-- [ ] Decide and record the disposition of the caption review lifecycle:
+- [x] Decide and record the disposition of the caption review lifecycle:
       implement it as per-extraction states, or remove it from the product
       and the documentation.
-- [ ] Remove the never-written caption review fields and make the generation
+- [x] Remove the never-written caption review fields and make the generation
       timestamp describe the extraction rather than the artifact.
-- [ ] Correct the caption state names in the file-knowledge, retrieval and
+- [x] Correct the caption state names in the file-knowledge, retrieval and
       data-storage architecture guides.
-- [ ] Run the full backend and frontend gates and the documentation checks.
+- [x] Run the full backend and frontend gates and the documentation checks.
+
+Disposition (US-38.5): retire the unused caption review lifecycle. Captions use
+the shared extraction processing states and are indexed on successful generation;
+there is no review gate or caption edit/clear action. US-38.3 already removed
+`accepted_at` and `generated_at`; the API reports the captioning extraction's own
+`started_at` and `completed_at`, independently of artifact ingestion timestamps.
+This story reconciles the architecture guides and affected README descriptions.
+
+Verification (2026-10-23): root `pnpm lint`, `pnpm typecheck`, `pnpm test`,
+and `pnpm format` completed successfully. Tests: 531 backend, 352 frontend,
+6 frontend migration checks, and 30 root configuration checks. The extraction
+suite includes a regression that reports caption execution timestamps separately
+from artifact ingestion timestamps and omits the retired review fields.
+Prettier checks pass for all changed Markdown files; all 97 local link targets
+in those files exist, and `git diff --check` and `pnpm check:workspace-tasks`
+pass. Unrelated formatting produced by the root formatter was discarded.
+No runtime/schema/client changes were needed. Browser E2E was not rerun for this
+documentation and regression-test story; the earlier E2E failures are not a pass.

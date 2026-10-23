@@ -266,8 +266,9 @@ preserves the library source and artifacts; deleting the file removes references
 source bytes, artifacts, and vectors. Runtime retrieval checks the authenticated
 owner and live execution file scope before querying and again before release.
 
-Image captions are canonical file metadata managed in **Files**. Administrators
-configure the single versioned `knowledge.processing` policy under **Settings →
+Image captions are derived outputs managed in **Files**. Successful captions are
+indexed automatically; users can regenerate a file's embedding and caption.
+Administrators configure the single versioned `knowledge.processing` policy under **Settings →
 Admin Settings → Image Captioning**, choosing disabled, a vision provider, or a
 reviewed local model. An external provider receives source images when selected.
 Policy changes queue replacement generations while current ready generations

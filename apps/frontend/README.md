@@ -89,9 +89,10 @@ preserved on refresh. See
 ## Files and project context
 
 **Files** manages uploaded sources, processing status, and canonical image captions.
-Users can retry failed work or edit, clear, and regenerate captions. Regeneration
-discloses when an external provider may receive the image. Administrators select
-captioning through the single versioned `knowledge.processing` policy; policy
+Users can retry failed work and regenerate a file's embedding and caption.
+Captions become searchable after successful generation without an approval step.
+Regeneration discloses when an external provider may receive the image.
+Administrators select captioning through the single versioned `knowledge.processing` policy; policy
 changes queue replacements while existing ready generations remain searchable.
 
 Projects and library pickers compose the shared FileManager. Adding a library file
