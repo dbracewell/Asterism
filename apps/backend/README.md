@@ -63,9 +63,12 @@ Retrieval first resolves the active
 execution context to live project/chat file IDs, then supplies both that set and the
 authenticated owner to LanceDB.
 
-The File API exposes artifact status plus retry/cancel processing and image
-caption edit, clear, and regeneration actions. The versioned
-`knowledge.processing` application setting is the canonical platform-wide policy;
+The File API exposes artifact and per-extraction status plus regeneration and
+cancel-processing actions. Regeneration reprocesses the embedding and caption.
+Captions are indexed after successful generation; there is no approval workflow.
+The captioning extraction reports its own `started_at` and `completed_at` times.
+
+The versioned `knowledge.processing` application setting is the canonical platform-wide policy;
 typed processing and captioning endpoints both transition that one value and queue
 replacement generations for the eligible library. Only a completed generation
 becomes current, so a failed replacement does not replace a usable artifact. See

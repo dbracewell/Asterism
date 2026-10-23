@@ -176,7 +176,13 @@ vector writes complete.
 its text extraction, its embedding, and its captioning. Each row owns that
 output's own status, the provider and model that produced it, its safe errors,
 and its kind-specific payload. The database permits at most one row per
-`(artifact_id, kind)`, and removing an artifact removes its outputs.
+`(artifact_id, kind)`, and removing an artifact removes its outputs. Both artifacts
+and their outputs use `KnowledgeExtractionStatus` (`pending | running | ready |
+failed | canceled`). Each extraction owns nullable `started_at` and `completed_at`
+Unix timestamps, separate from the artifact's ingestion timestamps. The captioning
+payload contains `text`; a successful caption is indexed immediately without a
+review lifecycle or acceptance timestamp. The API exposes it under
+`extractions.captioning`, including its own status and execution timestamps.
 
 Superseded generations are bounded by `KNOWLEDGE_GENERATION_RETENTION`: the
 current generation plus that many superseded generations are kept per file, and

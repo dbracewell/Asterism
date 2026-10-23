@@ -4,8 +4,12 @@ The knowledge subsystem uses separate stores for private retrieval and its
 locally provisioned model artifacts. Every eligible uploaded file has a
 file-owned artifact generation independent of project/chat references. Image
 captioning is globally disabled by default. When an administrator enables it,
-generated captions are canonical file metadata and are indexed as draft text;
-users can regenerate a file's embedding and caption from the File Manager.
+generated captions are stored in the artifact's `captioning` extraction and
+indexed as soon as caption generation and vector storage succeed. Captioning uses
+the shared `pending | running | ready | failed | canceled` processing statuses;
+there is no caption approval step. Users can regenerate a file's embedding and
+caption from the File Manager. See the [caption lifecycle](file-knowledge-processing.md#caption-generation)
+for the per-extraction timestamps and regeneration behavior.
 Image CLIP vectors remain independently indexed throughout.
 
 | Data                                                        | Owner                | Storage                                                 |

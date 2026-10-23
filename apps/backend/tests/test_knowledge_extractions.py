@@ -174,9 +174,7 @@ async def test_removing_an_artifact_removes_its_derived_outputs(extraction_sessi
 
     assert (
         await extraction_session.scalars(
-            select(FileKnowledgeExtractionModel).where(
-                FileKnowledgeExtractionModel.artifact_id == artifact.id
-            )
+            select(FileKnowledgeExtractionModel).where(FileKnowledgeExtractionModel.artifact_id == artifact.id)
         )
     ).all() == []
 
@@ -231,6 +229,39 @@ async def test_the_file_library_reports_the_extractions_map(extraction_session):
 
 
 @pytest.mark.asyncio
+async def test_caption_reports_its_own_execution_times(extraction_session):
+    """Caption completion can follow ingestion without inheriting its times."""
+    file = await _upload(extraction_session, kind=FileKind.IMAGE)
+    artifact = await _artifact(extraction_session, file, started_at=100, completed_at=110)
+    extraction_session.add(
+        FileKnowledgeExtractionModel(
+            artifact_id=artifact.id,
+            kind=KnowledgeExtractionKind.CAPTIONING,
+            status=KnowledgeExtractionStatus.READY,
+            payload={"text": "A red square"},
+            started_at=120,
+            completed_at=140,
+        )
+    )
+    await extraction_session.commit()
+
+    reported = await get_file_knowledge_status(
+        user_id="user-a",
+        filename=file.filename,
+        session=extraction_session,
+    )
+
+    assert reported is not None
+    assert (reported.started_at, reported.completed_at) == (100, 110)
+    caption = reported.extractions["captioning"].model_dump(mode="json")
+    assert caption["started_at"] == 120
+    assert caption["completed_at"] == 140
+    assert caption["status"] == "ready"
+    assert "generated_at" not in caption
+    assert "accepted_at" not in caption
+
+
+@pytest.mark.asyncio
 async def test_retrieval_reads_only_the_artifact_row(extraction_session):
     """The retrieval hot path stays a single-row read.
 
@@ -255,9 +286,7 @@ async def test_retrieval_reads_only_the_artifact_row(extraction_session):
     # The artifact has no extraction rows at all.
     assert (
         await extraction_session.scalars(
-            select(FileKnowledgeExtractionModel).where(
-                FileKnowledgeExtractionModel.artifact_id == artifact.id
-            )
+            select(FileKnowledgeExtractionModel).where(FileKnowledgeExtractionModel.artifact_id == artifact.id)
         )
     ).all() == []
 
