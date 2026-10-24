@@ -74,6 +74,27 @@ are persisted, but an interrupted provider connection is not durable. See
 [resource lifecycle contracts](../adr/adr-0016-memory-resource-contracts.md#operations) for
 bounds and cleanup ownership.
 
+## Capacity and overload
+
+The backend admits at most 32 active chat-work slots (four per owner), and 128
+controller reservations/connections (16 per owner), by default. A work slot covers
+generation, title work and approval waits for one chat. Controller admission
+precedes history/Agent allocation; work admission precedes task creation. Both
+checks reject immediately without a capacity waiting queue.
+
+Overload sends an `error` packet with `code: 503`,
+`error_code: "chat_capacity"` and `retryable: true`. Connection saturation closes
+with 1013; work saturation leaves the control channel open for retry, cancellation
+and approvals. The client displays the error and retains its bounded reconnect
+policy. REST acceptance can leave a pending turn: retry resume/reconnect rather
+than creating another message.
+
+Disconnects release controller capacity while active work continues. Work releases
+after generation, title work and approvals end, including failure/cancellation;
+deletion and shutdown await cleanup. See [ADR-0020](../adr/0020-chat-capacity-admission.md)
+for environment settings, ranges, accounting and separate knowledge/model gates.
+These are process-local count limits, not load certification or byte limits.
+
 ## Socket commands and packets
 
 Client commands:

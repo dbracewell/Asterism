@@ -49,8 +49,9 @@ It is configuration enforcement, not a distributed singleton lock.
 - The frontend SSE bridge also uses local listeners and rate-limit state. This
   decision does not certify multiple frontend replicas.
 
-Global admission limits for active chat jobs/controllers remain **US-34.4**.
-Worker validation does not implement those limits, bound all queue admission,
+US-34.4 adds finite active-chat/controller admission in
+[ADR-0020](0020-chat-capacity-admission.md). Worker validation alone does not
+implement admission limits, bound all queue admission,
 make SQLite multi-writer coordination safe, or provide horizontal scaling.
 
 ### SQLite is the implemented relational/search adapter

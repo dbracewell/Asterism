@@ -182,6 +182,11 @@ class Config(BaseSettings):
     max_sub_agent_depth: int = 3
     """The maximum depth of sub-agent calls to prevent infinite recursion."""
 
+    max_active_chat_jobs: int = 32
+    max_active_chat_jobs_per_user: int = 4
+    max_chat_controllers: int = 128
+    max_chat_controllers_per_user: int = 16
+
     max_concurrent_llm_requests: int = 8
     """Maximum concurrent streaming requests across all configured LLM providers."""
 
@@ -294,6 +299,14 @@ class Config(BaseSettings):
             raise ConfigValidationError("MAX_KNOWLEDGE_RESULT_BYTES must be from 1024 to 1000000")
         if not 0 <= self.knowledge_generation_retention <= 10:
             raise ConfigValidationError("KNOWLEDGE_GENERATION_RETENTION must be from 0 to 10")
+        if not 1 <= self.max_active_chat_jobs <= 256:
+            raise ConfigValidationError("MAX_ACTIVE_CHAT_JOBS must be from 1 to 256")
+        if not 1 <= self.max_active_chat_jobs_per_user <= self.max_active_chat_jobs:
+            raise ConfigValidationError("MAX_ACTIVE_CHAT_JOBS_PER_USER must be from 1 to MAX_ACTIVE_CHAT_JOBS")
+        if not 1 <= self.max_chat_controllers <= 512:
+            raise ConfigValidationError("MAX_CHAT_CONTROLLERS must be from 1 to 512")
+        if not 1 <= self.max_chat_controllers_per_user <= self.max_chat_controllers:
+            raise ConfigValidationError("MAX_CHAT_CONTROLLERS_PER_USER must be from 1 to MAX_CHAT_CONTROLLERS")
         if not 1 <= self.max_concurrent_llm_requests <= 128:
             raise ConfigValidationError("MAX_CONCURRENT_LLM_REQUESTS must be from 1 to 128")
         if self.config_profile in _FULL_RUNTIME_PROFILES and any(

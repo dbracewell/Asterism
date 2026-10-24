@@ -168,3 +168,38 @@ it("batches rapid delta events using the 50ms flush throttle", () => {
     vi.useRealTimers();
   }
 });
+
+it("surfaces retryable capacity errors and retains bounded reconnects", () => {
+  const onStreamError = vi.fn();
+  const onStatusChange = vi.fn();
+  const onStreamComplete = vi.fn();
+  renderHook(() =>
+    useChatWebSocket({
+      chatId: "chat-1",
+      jwtToken: "test-token",
+      onStreamError,
+      onStatusChange,
+      onStreamComplete,
+    }),
+  );
+  const options = socket.mock.calls.at(-1)?.[1];
+  options.onMessage({
+    data: JSON.stringify({ type: "status", is_processing: true }),
+  });
+  const content = "Chat capacity is full. Retry shortly.";
+  options.onMessage({
+    data: JSON.stringify({
+      type: "error",
+      code: 503,
+      error_code: "chat_capacity",
+      retryable: true,
+      content,
+    }),
+  });
+  expect(onStreamError).toHaveBeenCalledWith(content);
+  expect(onStatusChange).toHaveBeenLastCalledWith(false);
+  expect(onStreamComplete).not.toHaveBeenCalled();
+  expect(options.reconnectAttempts).toBe(10);
+  expect(options.reconnectInterval).toBe(3000);
+  expect(options.shouldReconnect({ code: 1013 })).toBe(true);
+});

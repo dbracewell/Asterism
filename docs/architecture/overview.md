@@ -113,7 +113,8 @@ asterism/
    request receipts, and revision-checked model selection. The chat uses the user's
    singleton main configuration; project binding is optional. Draft consumption,
    local references, history, and receipt commit atomically.
-4. A WebSocket attaches a controller to the process-local chat job and resumes
+4. A WebSocket reserves owner/global controller capacity before history/Agent
+   allocation, then attaches a controller to the process-local chat job and resumes
    persisted pending work. The execution root records model/configuration, composed
    prompt, branch/project/file/target ceilings, and provenance, then injects live
    file/retrieval providers into Agent. See [execution context](execution-context.md).

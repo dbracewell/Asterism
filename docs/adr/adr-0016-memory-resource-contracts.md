@@ -97,7 +97,7 @@ than a process-global cleanup interval.
 
 A backend restart deliberately cancels in-process chat generation and does not
 resume it. Operators can investigate resource pressure using content-free
-aggregate counters: `ChatJobManager.count`, `message_queue_count()`, a queue's
+aggregate counters: `ChatJobManager.count`, `active_count`, `controller_count`, `message_queue_count()`, a queue's
 `dropped_packets`, `encoding_cache_size()`, EventBus `pending_task_count` and
 `dropped_handler_dispatches`, SSE listener count, and rate-limit entry count.
 
@@ -107,3 +107,10 @@ rate-limit entries. Queue and event overflow discard old packets or handler
 dispatches respectively; SSE and rate-limit overflow reject the new connection
 or request. These diagnostics intentionally exclude user content, attachment
 metadata, prompts, tokens, event payloads, and secrets.
+
+US-34.4 adds finite chat-work and controller admission: defaults are 32 active
+chats/four per owner and 128 controllers/16 per owner, with immediate retryable
+overload. A work slot includes title tasks and approval waits; disconnect releases
+only the controller while work continues. Configuration, release ownership and
+the separate knowledge/model gates are specified in
+[ADR-0020](0020-chat-capacity-admission.md).

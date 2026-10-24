@@ -14,6 +14,7 @@ from asterism.core.security import verify_jwks_token
 from asterism.db.database import db_session_manager
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.agent.agent import Agent
+from asterism.domains.chat.capacity import ChatCapacityError
 from asterism.domains.chat.connection import WebSocketConnection
 from asterism.domains.chat.controller import ChatController
 from asterism.domains.chat.jobs import chat_jobs
@@ -95,42 +96,58 @@ async def chat(
         await websocket.close(code=1008, reason="Unauthorized")
         return
 
-    async with db_session_manager.session() as session:
-        chat_session = await chat_service.get_one(
-            chat_id=chat_id,
-            user_id=user.id,
-            session=session,
-        )
-        if chat_session.info.agent_id is None:
-            await websocket.close(
-                code=1008,
-                reason="This chat has no assigned main agent",
+    # Reserve before loading history or constructing an agent/controller.
+    try:
+        admission = chat_jobs.admit_controller(user.id)
+    except ChatCapacityError as error:
+        await websocket.accept()
+        await websocket.send_json(error.packet())
+        await websocket.close(code=1013, reason="Chat capacity is full; retry shortly")
+        return
+
+    job = None
+    try:
+        async with db_session_manager.session() as session:
+            chat_session = await chat_service.get_one(
+                chat_id=chat_id,
+                user_id=user.id,
+                session=session,
             )
-            return
+            if chat_session.info.agent_id is None:
+                await websocket.close(
+                    code=1008,
+                    reason="This chat has no assigned main agent",
+                )
+                return
 
-        profile = await agent_service.get_agent_profile(
-            user_id=user.id,
-            agent_id=chat_session.info.agent_id,
-            session=session,
+            profile = await agent_service.get_agent_profile(
+                user_id=user.id,
+                agent_id=chat_session.info.agent_id,
+                session=session,
+            )
+
+        agent: Agent = Agent(
+            model_id=chat_session.info.selected_model_id,
+            profile=profile,
+            user=user,
+            session=chat_session,
+            logger=get_logger("ChatSession"),
+            allowed_tools=chat_session.info.allowed_tools,
         )
 
-    agent: Agent = Agent(
-        model_id=chat_session.info.selected_model_id,
-        profile=profile,
-        user=user,
-        session=chat_session,
-        logger=get_logger("ChatSession"),
-        allowed_tools=chat_session.info.allowed_tools,
-    )
+        job = chat_jobs.get_or_create(chat_id, ChatOrchestrator(agent), user_id=user.id)
+        controller = ChatController(
+            chat_id=chat_id,
+            connection=WebSocketConnection(websocket=websocket),
+            job=job,
+            admission=admission,
+        )
 
-    job = chat_jobs.get_or_create(chat_id, ChatOrchestrator(agent))
-    controller = ChatController(
-        chat_id=chat_id,
-        connection=WebSocketConnection(websocket=websocket),
-        job=job,
-    )
-
-    await controller.run()
+        await controller.run()
+    finally:
+        admission.release()
+        if job is not None:
+            await chat_jobs.retire_if_idle(chat_id, job)
 
 
 @chat_router.post(

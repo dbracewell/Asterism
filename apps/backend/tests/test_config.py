@@ -62,3 +62,30 @@ def test_secret_validation_error_is_redacted(tmp_path):
         settings.validate_runtime()
     assert "SYSTEM_KEY" in str(error.value)
     assert canary not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "limits",
+    [
+        {"max_active_chat_jobs": 0},
+        {"max_active_chat_jobs": 257},
+        {"max_active_chat_jobs_per_user": 0},
+        {"max_active_chat_jobs": 2, "max_active_chat_jobs_per_user": 3},
+        {"max_chat_controllers": 0},
+        {"max_chat_controllers": 513},
+        {"max_chat_controllers_per_user": 0},
+        {"max_chat_controllers": 2, "max_chat_controllers_per_user": 3},
+    ],
+)
+def test_chat_capacity_configuration_rejects_invalid_limits(tmp_path, limits):
+    settings = Config(config_profile="backend-init", storage_root=tmp_path, **limits)
+    with pytest.raises(ConfigValidationError):
+        settings.validate_runtime()
+    assert not (tmp_path / "files").exists()
+
+
+def test_chat_capacity_defaults_are_finite(tmp_path):
+    settings = Config(config_profile="backend-init", storage_root=tmp_path)
+    settings.validate_runtime()
+    assert (settings.max_active_chat_jobs, settings.max_active_chat_jobs_per_user) == (32, 4)
+    assert (settings.max_chat_controllers, settings.max_chat_controllers_per_user) == (128, 16)

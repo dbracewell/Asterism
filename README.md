@@ -65,6 +65,11 @@ access. [ADR-0017](docs/adr/0017-project-file-and-chat-boundaries.md) records cu
 accepted contracts. [Memory isolation](docs/architecture/context-isolation.md)
 distinguishes implemented provenance/key boundaries from future memory storage.
 
+Chat work and connections have [finite admission limits](docs/adr/0020-chat-capacity-admission.md):
+defaults are 32 active chat-work slots (four per owner) and 128 controllers (16 per
+owner). Saturation returns a retryable socket error; reconnecting preserves active
+work. These process-local limits are separate from model/knowledge concurrency.
+
 ## Configuration
 
 Copy the shared example to the repository root and replace the placeholder secrets:

@@ -8,8 +8,9 @@ from fastapi import WebSocketDisconnect
 from asterism.common.log import get_logger
 from asterism.core.tasks import BackgroundTaskManager
 from asterism.domains.agent.schemas import AgentEventType
+from asterism.domains.chat.capacity import ChatCapacityError
 from asterism.domains.chat.connection import Connection
-from asterism.domains.chat.jobs import ChatJob, chat_jobs
+from asterism.domains.chat.jobs import ChatJob, ControllerAdmission, chat_jobs
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.orchestrator import ChatOrchestrator
 
@@ -20,9 +21,11 @@ class ChatController:
         chat_id: uuid.UUID,
         connection: Connection,
         job: ChatJob,
+        admission: ControllerAdmission,
     ):
         self.chat_id: uuid.UUID = chat_id
         self.connection: Connection = connection
+        self.admission = admission
         self.job = job
         self.manager = job.manager or chat_jobs
         # Controller jobs are constructed with the concrete chat orchestrator;
@@ -38,22 +41,23 @@ class ChatController:
         return get_message_queue(self.chat_id)
 
     async def run(self) -> None:
-        await self.connection.accept()
-        self.manager.attach(self.chat_id, self.job)
-        self._is_running = True
-
-        # Start background workers
-        self.tasks.spawn(self.connection.heartbeat_loop())
-        self.job.start_title_generation()
-        self.tasks.spawn(self._status_loop())
-        self.tasks.spawn(self._message_queue_processing_loop())
-
         command_tasks: list[asyncio.Task[None]] = []
         try:
-            # The generation task belongs to the chat job, not this socket.
-            # Disconnecting a browser must therefore only stop this controller.
-            if self.queue.qsize() == 0 and not self.job.is_active:
-                self.job.start(self.orchestrator.resume_pending_turn())
+            await self.connection.accept()
+            self.manager.attach(self.chat_id, self.job, self.admission)
+            self._is_running = True
+            self.tasks.spawn(self.connection.heartbeat_loop())
+            self.tasks.spawn(self._status_loop())
+            self.tasks.spawn(self._message_queue_processing_loop())
+
+            # Work survives controller disconnects. Admission fails immediately;
+            # retain the control channel so clients can retry or cancel.
+            try:
+                if self.queue.qsize() == 0 and not self.job.is_active:
+                    self.job.start(self.orchestrator.resume_pending_turn())
+                self.job.start_title_generation()
+            except ChatCapacityError as error:
+                await self.connection.send_json(error.packet())
 
             command_tasks = [
                 asyncio.create_task(self._accept_commands_loop()),
@@ -78,7 +82,7 @@ class ChatController:
             if command_tasks:
                 await asyncio.gather(*command_tasks, return_exceptions=True)
             await self.tasks.shutdown()
-            await self.manager.detach(self.chat_id, self.job)
+            await self.manager.detach(self.chat_id, self.job, self.admission)
 
     async def _accept_commands_loop(self) -> None:
         while self._is_running:
@@ -118,6 +122,8 @@ class ChatController:
                 except asyncio.CancelledError:
                     raise
 
+            except ChatCapacityError as error:
+                await self.connection.send_json(error.packet())
             finally:
                 self.inbound_commands.task_done()
 

@@ -1,0 +1,59 @@
+{
+  "story": "US-34.4",
+  "date": "2026-10-24",
+  "base": "3a30036",
+  "backend_tests": {
+    "passed": 614
+  },
+  "frontend_unit": {
+    "passed": 353,
+    "files": 49
+  },
+  "auth_database_checks": {
+    "passed": 6
+  },
+  "root_configuration_checks": {
+    "passed": 30
+  },
+  "lint": "passed",
+  "typing_before_browser": "passed; basedpyright zero errors and warnings; compileall and tsc passed",
+  "changed_python_format": {
+    "files": 11,
+    "status": "passed"
+  },
+  "broad_backend_format": {
+    "status": "failed on seven pre-existing untouched files"
+  },
+  "browser_initial": {
+    "passed": 122,
+    "failed": 1,
+    "retries": 0,
+    "failure": "New overload fixture returned stale pending REST state after completion/refetch; fixture repaired"
+  },
+  "browser_focused": {
+    "startTime": "2026-10-24T11:24:20.828Z",
+    "duration": 20613.118,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "browser_final": {
+    "status": "passed",
+    "runner_exit_code": 0,
+    "workers": 1,
+    "retries": 0,
+    "stats": {
+      "startTime": "2026-10-24T11:25:06.913Z",
+      "duration": 313371.534,
+      "expected": 123,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "single_attempt_passes": 123,
+    "reporter_errors": 0,
+    "unhandled_page_errors": 0
+  },
+  "typing_after_browser": "passed; basedpyright zero errors and warnings; compileall and tsc passed"
+}

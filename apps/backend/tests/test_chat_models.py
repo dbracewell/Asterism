@@ -211,7 +211,9 @@ async def test_active_run_rejects_model_change_and_stale_send_but_replays_acknow
     client, sessions, _ = project_api
     chat = await new_chat(client)
     chat_id, parent = uuid.UUID(chat["info"]["id"]), uuid.UUID(chat["messages"][0]["id"])
-    job = chat_jobs.get_or_create(chat_id, SimpleNamespace(pending_approvals={}, cancel_active_generation=AsyncMock()))
+    job = chat_jobs.get_or_create(
+        chat_id, SimpleNamespace(pending_approvals={}, cancel_active_generation=AsyncMock()), user_id="a"
+    )
     blocker = asyncio.Event()
     job.start(blocker.wait())
     try:
@@ -356,7 +358,7 @@ async def test_selection_transaction_blocks_send_and_generation_until_commit(pro
             ),
         )
         await asyncio.wait_for(entered.wait(), 3)
-        job = chat_jobs.get_or_create(chat_id, SimpleNamespace(pending_approvals={}))
+        job = chat_jobs.get_or_create(chat_id, SimpleNamespace(pending_approvals={}), user_id="a")
         try:
             with pytest.raises(CodedException):
                 job.start(asyncio.sleep(0))

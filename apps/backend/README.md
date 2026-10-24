@@ -93,6 +93,17 @@ launching the backend. To intentionally recreate the configured local SQLite dat
 type `RESET`. A noninteractive reset is canceled unless the internal confirmed command
 is invoked through the root `pnpm reset:db -- --yes` workflow.
 
+## Chat admission
+
+Validated environment defaults are `MAX_ACTIVE_CHAT_JOBS=32`,
+`MAX_ACTIVE_CHAT_JOBS_PER_USER=4`, `MAX_CHAT_CONTROLLERS=128` and
+`MAX_CHAT_CONTROLLERS_PER_USER=16`. Work includes generation, title tasks and
+approval waits. Admission rejects immediately with a retryable socket error;
+controller saturation closes with 1013 before history/Agent allocation. Disconnect
+releases only the controller while work continues. See
+[ADR-0020](../../docs/adr/0020-chat-capacity-admission.md) for ranges, release
+ownership and the separate knowledge/model gates.
+
 ## Quality checks
 
 Backend `typecheck` runs full basedpyright followed by compileall; root and CI

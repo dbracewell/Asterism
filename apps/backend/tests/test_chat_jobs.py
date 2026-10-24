@@ -47,9 +47,9 @@ async def test_chat_job_is_shared_and_disconnect_safe():
         resume_pending_turn=run_agent,
         cancel_active_generation=cancel_active_generation,
     )
-    job = manager.get_or_create(chat_id, orchestrator)
+    job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")
     # A later WebSocket must attach to the first runtime, not replace it.
-    assert manager.get_or_create(chat_id, SimpleNamespace()) is job
+    assert manager.get_or_create(chat_id, SimpleNamespace(), user_id="user-a") is job
 
     task = job.start(orchestrator.run_agent())
     await started.wait()
@@ -73,7 +73,7 @@ async def test_title_generation_is_owned_once_by_the_chat_job():
         generated += 1
 
     orchestrator = SimpleNamespace(generate_chat_title=generate_chat_title)
-    job = manager.get_or_create(uuid.uuid4(), orchestrator)
+    job = manager.get_or_create(uuid.uuid4(), orchestrator, user_id="user-a")
 
     first = job.start_title_generation()
     second = job.start_title_generation()
@@ -115,10 +115,11 @@ async def test_controller_disconnect_does_not_cancel_the_chat_job():
         generate_chat_title=lambda: asyncio.sleep(0),
         is_active=False,
     )
-    job = manager.get_or_create(chat_id, orchestrator)
+    job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")
     controller = ChatController(
         chat_id=chat_id,
         connection=DisconnectingConnection(),
+        admission=manager.admit_controller("user-a"),
         job=job,
     )
 
@@ -427,7 +428,7 @@ async def test_explicit_job_cancel_finalizes_the_active_generation():
         resume_pending_turn=run_agent,
         cancel_active_generation=cancel_active_generation,
     )
-    job = manager.get_or_create(uuid.uuid4(), orchestrator)
+    job = manager.get_or_create(uuid.uuid4(), orchestrator, user_id="user-a")
     task = job.start(orchestrator.run_agent())
     await started.wait()
 
@@ -443,12 +444,13 @@ async def test_idle_job_and_its_queue_retire_after_last_controller_detaches():
     baseline = message_queue_count()
     chat_id = uuid.uuid4()
     orchestrator = SimpleNamespace(pending_approvals={})
-    job = manager.get_or_create(chat_id, orchestrator)
-    manager.attach(chat_id, job)
+    job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")
+    admission = manager.admit_controller("user-a")
+    manager.attach(chat_id, job, admission)
     queue = get_message_queue(chat_id)
     await queue.put({"type": "delta"})
 
-    await manager.detach(chat_id, job)
+    await manager.detach(chat_id, job, admission)
 
     assert manager.count == 0
     assert message_queue_count() == baseline
@@ -469,12 +471,13 @@ async def test_active_job_survives_disconnect_then_retires_on_completion():
         pending_approvals={},
         cancel_active_generation=lambda: asyncio.sleep(0),
     )
-    job = manager.get_or_create(chat_id, orchestrator)
-    manager.attach(chat_id, job)
+    job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")
+    admission = manager.admit_controller("user-a")
+    manager.attach(chat_id, job, admission)
     task = job.start(operation())
     await started.wait()
 
-    await manager.detach(chat_id, job)
+    await manager.detach(chat_id, job, admission)
     assert manager.count == 1
     assert job.is_active
 
@@ -501,7 +504,7 @@ async def test_retire_and_shutdown_cancel_work_and_discard_queues():
         pending_approvals={},
         cancel_active_generation=cancel_active_generation,
     )
-    job = manager.get_or_create(chat_id, orchestrator)
+    job = manager.get_or_create(chat_id, orchestrator, user_id="user-a")
     job.start(operation())
     await asyncio.sleep(0)
     await get_message_queue(chat_id).put({"type": "delta"})
@@ -511,7 +514,7 @@ async def test_retire_and_shutdown_cancel_work_and_discard_queues():
     assert manager.count == 0
     assert message_queue_count() == baseline
 
-    second = manager.get_or_create(uuid.uuid4(), orchestrator)
+    second = manager.get_or_create(uuid.uuid4(), orchestrator, user_id="user-a")
     second.start(operation())
     await manager.shutdown()
     assert manager.count == 0
@@ -552,10 +555,11 @@ async def test_duplicate_resume_during_generation_does_not_start_another_turn():
     async def resume():
         resumed.append(True)
 
-    job = manager.get_or_create(chat_id, SimpleNamespace(resume_pending_turn=resume))
-    manager.attach(chat_id, job)
+    job = manager.get_or_create(chat_id, SimpleNamespace(resume_pending_turn=resume), user_id="user-a")
+    admission = manager.admit_controller("user-a")
+    manager.attach(chat_id, job, admission)
     active = job.start(asyncio.sleep(30))
-    controller = ChatController(chat_id=chat_id, connection=SimpleNamespace(), job=job)
+    controller = ChatController(chat_id=chat_id, connection=SimpleNamespace(), job=job, admission=admission)
     controller._is_running = True
     commands = asyncio.create_task(controller._process_commands_loop())
     try:

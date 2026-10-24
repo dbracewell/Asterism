@@ -249,8 +249,10 @@ async def test_followup_receipts_guard_branch_active_runs_and_atomic_draft_consu
             pending_approvals={},
             cancel_active_generation=lambda: asyncio.sleep(0),
         ),
+        user_id="a",
     )
-    chat_jobs.attach(uuid.UUID(record["info"]["id"]), job)
+    admission = chat_jobs.admit_controller("a")
+    chat_jobs.attach(uuid.UUID(record["info"]["id"]), job, admission)
     task = job.start(asyncio.sleep(30))
     try:
         assert (await client.post(path, headers=auth(), json=payload)).status_code == 409
@@ -268,6 +270,7 @@ async def test_followup_receipts_guard_branch_active_runs_and_atomic_draft_consu
             await client.delete(f"/chat/{record['info']['id']}/files/{file['id']}", headers=auth())
         ).status_code == 409
     finally:
+        admission.release()
         await chat_jobs.retire(uuid.UUID(record["info"]["id"]))
     async with sessions() as session:
         assert await session.scalar(select(func.count()).select_from(MessageModel)) == 2

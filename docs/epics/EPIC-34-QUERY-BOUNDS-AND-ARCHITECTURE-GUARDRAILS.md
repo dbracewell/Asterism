@@ -1,7 +1,7 @@
 # EPIC-34: Query bounds and architecture guardrails
 
-Status: US-34.1 through US-34.3 confirmed complete on 2026-10-24.
-US-34.4 remains pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
+Status: EPIC-34 (US-34.1 through US-34.4) confirmed complete on 2026-10-24.
+Completed checklist history is [archived](../archive/todo-completed-2026-10-24.md). Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
 
 ## Objective
 
@@ -170,6 +170,10 @@ claim general multi-user load certification or distributed coordination.
 
 Tasks:
 
-- [ ] Record capacity units, global/per-owner limits, admission points and overload semantics; distinguish active chat work/controllers from existing knowledge/model gates and idle retirement.
-- [ ] Implement validated admission and bounded overload handling with capacity release on every terminal path; preserve reconnect and approval behavior.
-- [ ] Add saturation, concurrent admission, cancellation/disconnect/reconnect and release regressions; run backend gates and relevant browser/frontend checks and document limits.
+- [x] Record capacity units, global/per-owner limits, admission points and overload semantics; distinguish active chat work/controllers from existing knowledge/model gates and idle retirement.
+- [x] Implement validated admission and bounded overload handling with capacity release on every terminal path; preserve reconnect and approval behavior.
+- [x] Add saturation, concurrent admission, cancellation/disconnect/reconnect and release regressions; run backend gates and relevant browser/frontend checks and document limits.
+
+Implemented policy: [ADR-0020](../adr/0020-chat-capacity-admission.md).
+Evidence and current gate status:
+[US-34.4 verification](../reviews/us-34.4-verification-2026-10-24.md).

@@ -260,3 +260,92 @@ test("chooses a draft model explicitly and forwards it when starting a chat", as
   expect(created).not.toHaveProperty("agent_id");
   await expect(page).toHaveURL(/sign-in/);
 });
+
+test("shows capacity overload and recovers on a bounded reconnect without posting a duplicate turn", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  let chat: Chat = {
+    info: {
+      id: C,
+      user_id: "test",
+      title: "Capacity verification",
+      created_at: 0,
+      updated_at: 0,
+      selected_model_id: A,
+      selected_model: models[0],
+      model_revision: 1,
+      project_id: null,
+    },
+    messages: [
+      {
+        id: U,
+        role: "user",
+        created_at: 0,
+        status: "pending",
+        content: "Resume my saved request",
+      },
+    ],
+  };
+  let writes = 0;
+  await page.route(`**/api/py/chat/${C}/message`, (route) => {
+    writes++;
+    return route.fulfill({ status: 500 });
+  });
+  await page.route("**/api/py/chat/models", (route) =>
+    route.fulfill({ json: models }),
+  );
+  await page.route(`**/api/py/chat/${C}/files/context`, (route) =>
+    route.fulfill({
+      json: {
+        chat_id: C,
+        project_id: null,
+        allowed_file_ids: [],
+        local_file_ids: [],
+        project_file_ids: [],
+        unavailable_file_ids: [],
+        files: [],
+      },
+    }),
+  );
+  await page.route(`**/api/py/chat/${C}`, (route) =>
+    route.fulfill({ json: chat }),
+  );
+  let attempts = 0;
+  await page.routeWebSocket(`**/api/py/chat/stream/${C}?**`, (socket) => {
+    attempts++;
+    if (attempts === 1) {
+      socket.send(
+        JSON.stringify({
+          type: "error",
+          code: 503,
+          error_code: "chat_capacity",
+          retryable: true,
+          content: "Chat capacity is full. Retry shortly.",
+        }),
+      );
+      socket.close({ code: 1013, reason: "Retry shortly" });
+      return;
+    }
+    chat = {
+      ...chat,
+      messages: [
+        { ...chat.messages[0], status: "completed" },
+        { ...original, content: "Recovered saved response" },
+      ],
+    };
+    socket.send(
+      JSON.stringify({ type: "complete", last_messages: chat.messages }),
+    );
+    socket.send(JSON.stringify({ type: "status", is_processing: false }));
+  });
+  await page.goto("/e2e/chat-model-session");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Chat capacity is full" }),
+  ).toBeVisible();
+  await expect(page.getByText("Recovered saved response")).toBeVisible();
+  expect(attempts).toBe(2);
+  expect(writes).toBe(0);
+  expect(errors).toEqual([]);
+});

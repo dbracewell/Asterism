@@ -85,3 +85,21 @@ The user confirmed completion and authorized commit and local merge on 2026-10-2
         container worker-guard checks and changed-file formatting passed. Seven pre-existing
         broad formatting findings remain untouched. See the [verification record](../reviews/us-34.2-verification-2026-10-24.md)
         and [ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md) for scope and limits.
+
+## US-34.4 — Finite chat work and controller admission
+
+The user confirmed completion and authorized commit and local merge on 2026-10-24.
+EPIC-34 is confirmed complete.
+
+- [x] US-34.4: Bound admission of active chat jobs and controllers
+  - [x] Record capacity units, global/per-owner limits, admission points and overload semantics; distinguish active chat work/controllers from existing knowledge/model gates and idle retirement.
+  - [x] Implement validated admission and bounded overload handling with capacity release on every terminal path; preserve reconnect and approval behavior.
+  - [x] Add saturation, concurrent admission, cancellation/disconnect/reconnect and release regressions; run backend gates and relevant browser/frontend checks and document limits.
+
+Verification: 614 backend tests, 353 frontend unit tests, six auth database checks
+and 30 configuration checks passed. All 123 isolated browser cases passed with
+zero retries, skipped/flaky results or unhandled page errors. Root lint/types,
+changed-file formatting, workspace and documentation checks passed. The same
+seven pre-existing broad backend formatting findings remain untouched. See the
+[verification record](../reviews/us-34.4-verification-2026-10-24.md) and
+[ADR-0020](../adr/0020-chat-capacity-admission.md) for policy, diagnostics and limits.

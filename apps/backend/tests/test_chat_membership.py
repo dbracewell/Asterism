@@ -98,7 +98,7 @@ async def test_moves_reject_foreign_missing_invalid_and_active_runs(project_api)
         assert (await move(client, record, project_id)).status_code == 404
     assert (await move(client, record, None, "b")).status_code == 404
     project = await create(client)
-    job = chat_jobs.get_or_create(uuid.UUID(record["info"]["id"]), SimpleNamespace(pending_approvals={}))
+    job = chat_jobs.get_or_create(uuid.UUID(record["info"]["id"]), SimpleNamespace(pending_approvals={}), user_id="a")
     task = job.start(asyncio.sleep(30))
     try:
         assert (await move(client, record, project["id"])).status_code == 409
@@ -122,9 +122,10 @@ async def test_turn_start_and_second_move_are_blocked_until_move_commits(project
     record = await chat(client, await seed_agent(sessions))
     project = await create(client)
     chat_id = uuid.UUID(record["info"]["id"])
-    job = chat_jobs.get_or_create(chat_id, SimpleNamespace(pending_approvals={}))
+    job = chat_jobs.get_or_create(chat_id, SimpleNamespace(pending_approvals={}), user_id="a")
     # Keep the job resident while the test exercises its start gate.
-    chat_jobs.attach(chat_id, job)
+    admission = chat_jobs.admit_controller("a")
+    chat_jobs.attach(chat_id, job, admission)
     entered, release = asyncio.Event(), asyncio.Event()
     async with sessions() as session:
         commit = session.commit
@@ -150,6 +151,7 @@ async def test_turn_start_and_second_move_are_blocked_until_move_commits(project
         finally:
             release.set()
             await moving
+            admission.release()
             await chat_jobs.retire(chat_id)
 
 

@@ -177,6 +177,16 @@ pnpm --filter @asterism/frontend codegen
 
 The correct architecture links are under [`docs/architecture`](../../docs/architecture/README.md).
 
+## Chat capacity errors
+
+The chat error alert displays retryable capacity errors. Controller saturation
+closes with WebSocket code 1013; the existing reconnect policy allows ten attempts
+three seconds apart. Work saturation keeps the control channel open for an
+explicit resume/regenerate retry, cancellation or approval. A saved pending turn
+can resume after capacity frees; reconnecting does not post another message.
+See [chat admission](../../docs/adr/0020-chat-capacity-admission.md) for backend
+limits and accounting.
+
 ## Current runtime and operator guides
 
 - [Execution context and module boundaries](../../docs/architecture/execution-context.md)
