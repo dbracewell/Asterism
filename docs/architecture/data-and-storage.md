@@ -168,7 +168,9 @@ as non-vision. See [LLM providers](llm-providers.md#file-input-capability-gating
 `file_knowledge_artifacts` holds the versioned derived state for an immutable
 `user_files` revision: its lifecycle, the denormalized searchable aggregate, the
 chunk count, safe error state, and whether the generation is current. The
-database permits one current generation per file. A pending replacement cannot
+database permits one current generation per file. `processing_profile_generation`
+records the policy revision used for artifact reuse; the policy fingerprint stays
+in the `knowledge.processing` setting, rather than being duplicated per artifact. A pending replacement cannot
 displace a ready generation; it becomes current only after processing and its
 vector writes complete.
 

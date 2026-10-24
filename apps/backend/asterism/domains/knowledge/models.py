@@ -72,15 +72,6 @@ class FileKnowledgeArtifactModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         Integer,
         nullable=False,
     )
-    processing_profile_identity: Mapped[str] = mapped_column(
-        String(64),
-        nullable=False,
-    )
-    contract_version: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=1,
-    )
     status: Mapped[KnowledgeExtractionStatus] = mapped_column(
         Enum(
             KnowledgeExtractionStatus,

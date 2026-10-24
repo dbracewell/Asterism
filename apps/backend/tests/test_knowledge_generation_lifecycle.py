@@ -68,7 +68,6 @@ def _artifact(
         file_id=file_id,
         generation=generation,
         processing_profile_generation=generation,
-        processing_profile_identity="a" * 64,
         status=status,
         is_current=is_current,
     )

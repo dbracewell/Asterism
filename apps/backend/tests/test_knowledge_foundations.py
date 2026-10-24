@@ -105,7 +105,6 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     file_id=user_file.id,
                     generation=1,
                     processing_profile_generation=1,
-                    processing_profile_identity="b" * 64,
                     status=KnowledgeExtractionStatus.READY,
                     is_current=True,
                 ),
@@ -114,7 +113,6 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
                     file_id=user_file.id,
                     generation=2,
                     processing_profile_generation=2,
-                    processing_profile_identity="c" * 64,
                     status=KnowledgeExtractionStatus.RUNNING,
                     is_current=False,
                 ),
@@ -143,7 +141,6 @@ async def test_file_artifact_contract_keeps_one_current_generation_per_file(tmp_
             file_id=user_file.id,
             generation=3,
             processing_profile_generation=3,
-            processing_profile_identity="d" * 64,
             is_current=True,
         )
         session.add(duplicate_current)

@@ -77,7 +77,6 @@ async def _artifact(session, file, **overrides):
         file_id=file.id,
         generation=1,
         processing_profile_generation=1,
-        processing_profile_identity="a" * 64,
         status=KnowledgeExtractionStatus.READY,
         is_current=True,
         **overrides,
@@ -226,6 +225,9 @@ async def test_the_file_library_reports_the_extractions_map(extraction_session):
     assert isinstance(reported, FileKnowledgeArtifact)
     assert set(reported.extractions) == {"text_extraction"}
     assert reported.extractions["text_extraction"].payload.content == "hello world"
+    assert reported.processing_profile_generation == 1
+    assert "processing_profile_identity" not in reported.model_dump()
+    assert "contract_version" not in reported.model_dump()
 
 
 @pytest.mark.asyncio

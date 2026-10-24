@@ -90,7 +90,6 @@ async def add_file(r, *, project=True, status="ready", owner="a"):
                     file_id=f.id,
                     generation=1,
                     processing_profile_generation=1,
-                    processing_profile_identity="a" * 64,
                     status=KnowledgeExtractionStatus(status),
                     is_current=True,
                     searchable=status == "ready",

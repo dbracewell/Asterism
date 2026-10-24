@@ -1,6 +1,10 @@
 # EPIC-33: Theme contrast and UI consistency
 
-Status: in progress; US-33.1 was confirmed complete on 2026-10-19; US-33.2 was confirmed complete on 2026-10-19; US-33.3 is implemented and verified, awaiting completion confirmation. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F5, F6.
+Status: US-33.1 and US-33.2 confirmed complete on 2026-10-19. US-33.3 is
+implemented and merged into `main` (`70fcad8`, ancestry verified 2026-10-24);
+its older completion-confirmation metadata needs reconciliation, not another
+implementation story. Source: [2026-10-17 review](../reviews/2026-10-17-codebase-review.md), F5/F6;
+[current reassessment](../reviews/2026-10-24-open-epics-reassessment.md).
 
 ## Objective
 
@@ -53,6 +57,15 @@ Tasks:
 Implementation and verification are complete, preserving `font-monsterrat` for the ASTERISM logo. See [verification and scope](../reviews/us-33.2-verification-2026-10-19.md). The user confirmed completion on 2026-10-19, authorizing commit and local merge. The completed checklist is [archived](../archive/todo-completed-2026-10-19.md#us-332--semantic-states-labels-and-typography).
 
 ## US-33.3: Enforce a theme and layout review matrix
+
+Current-source status (2026-10-24): commit `70fcad8` is already an ancestor of
+`main`. Schema/contrast tests, rendered matrix, CI artifacts and the manual
+review guide are present. The [2026-10-19 verification record](../reviews/us-33.3-verification-2026-10-19.md)
+records 119 passing browser cases, but its opening "No commit, merge or push yet"
+line is stale as to commit/merge. Preserve that record as historical evidence;
+do not represent it as a current-tree browser run. Reconcile completion tracking
+without repeating the implementation or inferring a new user confirmation from
+git ancestry.
 
 As a maintainer, I want automated checks to catch visual accessibility regressions.
 

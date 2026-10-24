@@ -335,7 +335,6 @@ async def test_deletion_retains_shared_source_bytes_and_extraction(project_api):
                 file_id=file.id,
                 generation=1,
                 processing_profile_generation=1,
-                processing_profile_identity="a" * 64,
             ),
         )
         await session.commit()

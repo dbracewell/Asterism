@@ -110,8 +110,6 @@ class FileKnowledgeArtifact(BaseModel):
     file_id: uuid.UUID
     generation: int = Field(ge=1)
     processing_profile_generation: int = Field(ge=1)
-    processing_profile_identity: str = Field(min_length=64, max_length=64)
-    contract_version: int = Field(ge=1)
     status: KnowledgeExtractionStatus
     is_current: bool
     chunk_count: int = Field(ge=0)
