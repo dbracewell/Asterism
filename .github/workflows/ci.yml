@@ -88,6 +88,9 @@ jobs:
       - name: Verify Docker frontend build needs no dotenv or runtime secrets
         run: docker build --target frontend-build -t asterism-frontend-build-check .
 
+      - name: Verify single-worker backend container launch contract
+        run: pnpm test:container-launch
+
   frontend-e2e:
     name: Frontend E2E (Playwright)
     runs-on: ubuntu-latest

@@ -74,6 +74,11 @@ managed fixed-model sub-agent definitions. Chats retain independent model select
 messages record immutable execution provenance. Project memberships and local chat
 references authorize file context without duplicating source or artifact data.
 
+The [single-process/storage ADR](../adr/0019-single-process-runtime-and-storage-seams.md)
+records why SQLite/FTS initialization and FileStore's local `Path` are current
+implementation constraints, how process-local queues/guards limit deployment,
+and what future adapter work must preserve.
+
 ## Search indexes
 
 SQLite FTS5 virtual tables, `chat_search` and `project_search`, provide

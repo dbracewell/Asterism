@@ -5,13 +5,13 @@ pin the dependency direction that ownership implies, and the invariant the
 reprocess set relies on.
 """
 
-import ast
 from pathlib import Path
 
 import pytest
 from asterism.domains.files.service import upload_files
 from asterism.domains.knowledge.models import FileKnowledgeArtifactModel
 from asterism.domains.knowledge.processing import select_reprocess_targets
+from import_graph import imported_modules, within
 from sqlalchemy import select
 from test_user_files import _upload
 from test_user_files import file_session as _file_session
@@ -25,20 +25,7 @@ FILES_ROOT = BACKEND_ROOT / "domains" / "files"
 
 
 def _imported_modules(path: Path) -> list[str]:
-    """Return every module a file imports, including deferred function-local imports.
-
-    Deferred imports count: a cross-domain import that hides inside a function
-    still couples the two domains and still creates a cycle when it is
-    unwrapped.
-    """
-    tree = ast.parse(path.read_text())
-    modules: list[str] = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom):
-            modules.append(node.module or "")
-        elif isinstance(node, ast.Import):
-            modules.extend(alias.name for alias in node.names)
-    return modules
+    return imported_modules(path, BACKEND_ROOT)
 
 
 def test_settings_domain_does_not_import_knowledge():
@@ -47,9 +34,9 @@ def test_settings_domain_does_not_import_knowledge():
     The captioning-selection rule is knowledge-domain state, so the settings
     domain calls the guard it owns instead of importing the knowledge package.
     """
-    for path in sorted(SETTINGS_ROOT.glob("*.py")):
+    for path in sorted(SETTINGS_ROOT.rglob("*.py")):
         for module in _imported_modules(path):
-            assert not module.startswith("asterism.domains.knowledge"), path
+            assert not within(module, "asterism.domains.knowledge"), path
 
 
 def test_knowledge_policy_modules_do_not_import_files():
@@ -61,7 +48,7 @@ def test_knowledge_policy_modules_do_not_import_files():
     for name in ("policy.py", "processing.py", "processing_schemas.py", "router.py"):
         path = KNOWLEDGE_ROOT / name
         for module in _imported_modules(path):
-            assert not module.startswith("asterism.domains.files"), path
+            assert not within(module, "asterism.domains.files"), path
 
 
 def test_knowledge_domain_does_not_import_files():
@@ -71,9 +58,9 @@ def test_knowledge_domain_does_not_import_files():
     knowledge domain, never the other way round. The knowledge domain reads
     its sources through the injected reader in ``knowledge/sources.py``.
     """
-    for path in sorted(KNOWLEDGE_ROOT.glob("*.py")):
+    for path in sorted(KNOWLEDGE_ROOT.rglob("*.py")):
         for module in _imported_modules(path):
-            assert not module.startswith("asterism.domains.files"), path
+            assert not within(module, "asterism.domains.files"), path
 
 
 def test_files_domain_does_not_reach_into_knowledge_internals():
@@ -92,9 +79,9 @@ def test_files_domain_does_not_reach_into_knowledge_internals():
         "asterism.domains.knowledge.ingestion",
         "asterism.domains.knowledge.vector_store",
     )
-    for path in sorted(FILES_ROOT.glob("*.py")):
+    for path in sorted(FILES_ROOT.rglob("*.py")):
         for module in _imported_modules(path):
-            assert not module.startswith(forbidden), path
+            assert not any(within(module, boundary) for boundary in forbidden), path
 
 
 @pytest.mark.asyncio
@@ -118,3 +105,21 @@ async def test_every_uploaded_file_owns_a_knowledge_artifact(file_session):
     targets = await select_reprocess_targets(session=file_session)
     assert {target.file_id for target in targets} == {file.id for file in uploaded.files}
     assert {target.user_id for target in targets} == {"user-a"}
+
+
+@pytest.mark.parametrize("domain", ["knowledge", "settings"])
+def test_existing_domain_guards_detect_nested_relative_imports(tmp_path, monkeypatch, domain):
+    root = tmp_path / "asterism"
+    path = root / "domains" / domain / "nested" / "reader.py"
+    path.parent.mkdir(parents=True)
+    target = "files" if domain == "knowledge" else "knowledge"
+    path.write_text(f"def deferred():\n from ...{target} import service\n")
+    monkeypatch.setitem(globals(), "BACKEND_ROOT", root)
+    monkeypatch.setitem(globals(), f"{domain.upper()}_ROOT", root / "domains" / domain)
+    check = (
+        test_knowledge_domain_does_not_import_files
+        if domain == "knowledge"
+        else test_settings_domain_does_not_import_knowledge
+    )
+    with pytest.raises(AssertionError):
+        check()

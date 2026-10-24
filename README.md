@@ -18,6 +18,12 @@ activity and persisted execution traces. Chat/project full-text search composes
 owner and workspace scope in SQL before pagination and batches snippets only for
 the selected page; see the [search design](docs/architecture/data-and-storage.md#search-indexes).
 
+The supported deployment has one backend process and one application instance.
+Package and container launches reject `WEB_CONCURRENCY`/`UVICORN_WORKERS` unless
+unset or exactly `1`, and reject CLI worker counts other than one. Multiple
+replicas and bypassing the supported launcher are unsupported; see the
+[deployment/storage decision](docs/adr/0019-single-process-runtime-and-storage-seams.md).
+
 ## Architecture
 
 Active and pending work is tracked in [`todo.md`](todo.md). Completed checklist

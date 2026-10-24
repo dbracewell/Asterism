@@ -1,0 +1,69 @@
+{
+  "base_commit": "615fece",
+  "branch": "feat/us-34.2-architecture-deployment-guards",
+  "focused_tests": 52,
+  "clean_quality": {
+    "command": "pnpm ci:local:quality",
+    "no_runtime_dotenv": true,
+    "source_paths_exported": 830,
+    "frozen_installs": true,
+    "backend_tests": 590,
+    "frontend_unit_tests": 352,
+    "auth_migration_checks": 6,
+    "configuration_tests": 30,
+    "lint": "passed",
+    "typing": "passed",
+    "exit_code": 0,
+    "export_removed": true,
+    "log": "/private/tmp/asterism-us34.2-clean-quality.log",
+    "host_runtime": {
+      "node": "26.12.0",
+      "pnpm": "11.17.0",
+      "python": "3.13.13"
+    }
+  },
+  "container_guard": {
+    "checks_passed": 10,
+    "uvicorn": "0.51.0",
+    "scope": "worker guard before app startup"
+  },
+  "browser": {
+    "stats": {
+      "startTime": "2026-10-24T10:53:39.140Z",
+      "duration": 308686.054,
+      "expected": 122,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "unhandled_page_errors": 0,
+    "report_errors": [],
+    "runner_exit_code": 0
+  },
+  "formatting": {
+    "changed_python_files_passed": 7,
+    "unchanged_baseline_findings": [
+      "knowledge/artifacts.py",
+      "knowledge/extractions.py",
+      "knowledge/ingestion.py",
+      "knowledge/queries.py",
+      "retrieval/service.py",
+      "settings/service.py",
+      "tools/builtin/sub_agent.py"
+    ]
+  },
+  "cleanup": {
+    "original_docker_context_restored": "default",
+    "started_colima_profile_stopped": "metal-vm",
+    "test_containers_and_image_tags_removed": true
+  },
+  "limits": [
+    "local clean quality script is not hosted CI or OS/runtime parity",
+    "container fixture tests worker guard before application startup, not full app health",
+    "full production image build and full image smoke not run",
+    "static import statements only; arbitrary dynamic imports are not proven",
+    "external replicas and US-34.4 capacity admission remain unsupported/unimplemented"
+  ],
+  "post_browser_typing": "passed: zero backend errors/warnings; compileall and frontend TypeScript clean"
+}

@@ -22,6 +22,8 @@ responses, full-text chat search, and user-owned file attachments.
 
 Additional guides:
 
+- [ADR-0019: Single-process runtime and storage seams](../adr/0019-single-process-runtime-and-storage-seams.md): worker validation, named composition roots and current SQLite/FileStore/LanceDB limits.
+
 - [Theme and layout review matrix](theme-layout-review-matrix.md): automated palette/state/container gates, retained CI evidence, manual checks and exception policy.
 
 - [Markdown and file-content trust](markdown-content.md): raw HTML disabled,

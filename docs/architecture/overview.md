@@ -65,7 +65,10 @@ backend URL.
 
 The supported deployment uses one coordinated backend process and a SQLite
 database. Chat jobs, membership-change guards, queues and caches are process-local;
-additional workers or replicas require a shared coordination design. PostgreSQL
+the supported `asterism.serve` launcher rejects worker counts other than one
+and inherited `WEB_CONCURRENCY`/`UVICORN_WORKERS` values other than `1`. Multiple
+replicas remain unsupported and require a shared coordination design; local
+validation cannot detect external replicas. See [ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md). PostgreSQL
 column variants and SQLAlchemy do not establish full database portability:
 initialization and FTS search currently require SQLite. FileStore and VectorStore
 provide explicit seams, although FileStore's `Path` return type remains local-disk

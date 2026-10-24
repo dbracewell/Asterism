@@ -1,7 +1,7 @@
 # EPIC-34: Query bounds and architecture guardrails
 
-Status: US-34.1 and US-34.3 confirmed complete on 2026-10-24.
-US-34.2 and US-34.4 remain pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
+Status: US-34.1 through US-34.3 confirmed complete on 2026-10-24.
+US-34.4 remains pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
 
 ## Objective
 
@@ -54,6 +54,14 @@ Tasks:
 
 ## US-34.2: Make module and deployment limits enforceable
 
+Status (2026-10-24): implemented and verified on
+`feat/us-34.2-architecture-deployment-guards`; the user confirmed completion on
+2026-10-24 and authorized commit and local merge. [ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md)
+records the enforced launcher, named import exceptions and current storage seams.
+The [verification record](../reviews/us-34.2-verification-2026-10-24.md) separates
+52 focused cases, the clean-export quality run (590 backend / 352 frontend),
+122 zero-retry browser cases, ten Linux worker-guard checks and known limits.
+
 As a maintainer, I want architecture drift and unsupported worker/storage assumptions caught before release.
 
 Estimate: 1–2 days. Dependencies: EPIC-38 boundaries are implemented; coordinate neutral-query checks with US-34.1.
@@ -77,10 +85,10 @@ PostgreSQL adapter. Global active-job/controller admission belongs to US-34.4.
 
 Tasks:
 
-- [ ] Extend existing boundary tests for neutral query mechanics, domain readers and injected agent/retrieval paths; scan subpackages and allow named composition roots without duplicating EPIC-38 checks.
-- [ ] Enforce and test single-worker configuration in supported launch paths; document unsupported replicas and process-local jobs, guards, queues and caches.
-- [ ] Record a small ADR for storage portability seams, including FileStore local Path and database initialization/search, without speculative adapters or migrations.
-- [ ] Run gates in a clean CI-equivalent environment and keep architectural checks deterministic.
+- [x] Extend existing boundary tests for neutral query mechanics, domain readers and injected agent/retrieval paths; scan subpackages and allow named composition roots without duplicating EPIC-38 checks.
+- [x] Enforce and test single-worker configuration in supported launch paths; document unsupported replicas and process-local jobs, guards, queues and caches.
+- [x] Record a small ADR for storage portability seams, including FileStore local Path and database initialization/search, without speculative adapters or migrations.
+- [x] Run gates in a clean CI-equivalent environment and keep architectural checks deterministic.
 
 ## US-34.3: Establish the current browser baseline and reconcile live contracts
 

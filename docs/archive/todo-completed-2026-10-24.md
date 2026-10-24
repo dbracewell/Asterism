@@ -68,3 +68,20 @@ The user confirmed completion and authorized commit and local merge on 2026-10-2
         and changed-file formatting passed. Seven pre-existing broad backend formatting
         findings remain untouched. See the [verification record](../reviews/us-34.1-verification-2026-10-24.md)
         for query/bind-count evidence, diagnostics and limitations.
+
+## US-34.2 — Architecture and deployment guards
+
+The user confirmed completion and authorized commit and local merge on 2026-10-24.
+
+- [x] US-34.2: Make module and deployment limits enforceable
+  - [x] Extend existing boundary tests for neutral query mechanics, domain readers and injected agent/retrieval paths; scan subpackages and allow named composition roots without duplicating EPIC-38 checks.
+  - [x] Enforce and test single-worker configuration in supported launch paths; document unsupported replicas and process-local jobs, guards, queues and caches.
+  - [x] Record a small ADR for storage portability seams, including FileStore local Path and database initialization/search, without speculative adapters or migrations.
+  - [x] Run gates in a clean CI-equivalent environment and keep architectural checks deterministic.
+        Verification: 52 focused cases, 590 backend tests, 352 frontend unit tests,
+        six auth-migration checks and 30 configuration tests passed. The clean source
+        export passed frozen-install lint/types/tests; all 122 isolated browser cases
+        passed without retries, skips, flaky results or unhandled page errors. Ten Linux
+        container worker-guard checks and changed-file formatting passed. Seven pre-existing
+        broad formatting findings remain untouched. See the [verification record](../reviews/us-34.2-verification-2026-10-24.md)
+        and [ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md) for scope and limits.

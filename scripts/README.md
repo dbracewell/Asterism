@@ -193,3 +193,21 @@ per-case geometry/contrast evidence and screenshots are under
 `apps/frontend/test-results`. Failures retain traces with zero retries. CI uploads
 these generated directories as `frontend-ui-review` even when tests fail, retaining
 them for seven days. Working data must not be used for these artifact-producing runs.
+
+### Backend launch contract checks
+
+`pnpm test:container-launch` uses the project's Python through uv, requires a
+running Docker daemon, and builds a small temporary Python image with the locked
+Uvicorn version and actual backend launcher/entrypoint. It verifies default/explicit
+one-worker settings and rejection of invalid worker environments/CLI options before
+application dependencies, secrets or data initialization. Test-owned containers and
+the image tag are removed; base/build caches remain. CI runs this in the quality job.
+It is not the full application image smoke test.
+
+For a host-only check, run from the repository root:
+
+```bash
+uv run --project apps/backend python -m asterism.serve --check
+```
+
+The launcher enforces the [single-process contract](../docs/adr/0019-single-process-runtime-and-storage-seams.md).

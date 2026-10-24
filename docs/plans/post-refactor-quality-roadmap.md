@@ -30,27 +30,27 @@ work; optional profile/prompt/namespace types do not constitute a persona engine
 US-34.3 is confirmed complete on 2026-10-24, with commit and local merge
 authorized by the user. Its [current browser baseline](../reviews/us-34.3-verification-2026-10-24.md)
 passed all 122 cases without retries, skips, flaky results or unhandled page
-errors, after classifying and repairing the original 30 failures. US-34.1 is also confirmed complete; US-34.2 is the
-next recommended implementation story.
+errors, after classifying and repairing the original 30 failures. US-34.1 is also
+confirmed complete. US-34.2 was confirmed complete on 2026-10-24, authorizing
+commit and local merge; see [verification](../reviews/us-34.2-verification-2026-10-24.md)
+and [ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md).
+US-34.4 is the next recommended implementation story.
 
 ## Recommended sequence
 
-1. **US-34.2 — Finish architecture/deployment enforcement.** Extend existing
-   guards rather than repeat EPIC-38. Enforce supported single-worker launch
-   configuration and document storage/coordination seams honestly.
-2. **US-34.4 — Bound active work and controller admission.** This separates the
+1. **US-34.4 — Bound active work and controller admission.** This separates the
    capacity task formerly buried in US-34.2. Idle-job retirement and bounded
    per-connection queues do not cap simultaneous jobs/connections. Decide finite
    capacity/overload policy, implement it and verify capacity release.
-3. **US-35.1 — Finish planned-settings coverage and inventory.** Preserve the
+2. **US-35.1 — Finish planned-settings coverage and inventory.** Preserve the
    implemented Planned presentation; finish coverage/copy and README inventory.
    This small independent story can be pulled forward after the browser baseline.
-4. **US-35.2 — Persona/default-profile foundations.** Decide selection and
+3. **US-35.2 — Persona/default-profile foundations.** Decide selection and
    execution snapshot semantics before implementation. Preserve singleton
    main-agent, fixed sub-agent models and scope ceilings. Do not activate memory.
 
-Only one user story is implemented at a time. US-34.1 is confirmed complete;
-US-34.2 is next.
+Only one user story is implemented at a time. US-34.2 is confirmed complete;
+US-34.4 is next.
 
 ## Scope and ownership
 

@@ -1,6 +1,10 @@
 #!/bin/bash
 set -Eeuo pipefail
 
+# Reject unsupported worker overrides before secrets, migrations or storage writes.
+cd /app/apps/backend
+.venv/bin/python -m asterism.serve --check
+
 load_secret() {
     local name="$1" canonical="/run/secrets/$1" legacy="/run/secrets/${1,,}"
     if [[ -f "$canonical" && -f "$legacy" ]]; then
@@ -59,7 +63,7 @@ shutdown() {
 trap 'shutdown; exit 0' TERM INT
 
 env -u BETTER_AUTH_SECRET -u ADMIN_PASSPHRASE -u BETTER_AUTH_DB_PATH \
-    .venv/bin/uvicorn asterism.main:app --host 127.0.0.1 --port 8000 \
+    .venv/bin/python -m asterism.serve --host 127.0.0.1 --port 8000 \
     --proxy-headers --forwarded-allow-ips=127.0.0.1 &
 pids+=("$!")
 cd /app/apps/frontend

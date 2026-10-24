@@ -23,10 +23,7 @@ second_name = f"{name}-environment"
 volume = f"{name}-storage"
 second_volume = f"{name}-environment-storage"
 secret_volume = f"{name}-secrets"
-runtime_secrets = {
-    key: secrets.token_urlsafe(32)
-    for key in ("BETTER_AUTH_SECRET", "SYSTEM_KEY", "ADMIN_PASSPHRASE")
-}
+runtime_secrets = {key: secrets.token_urlsafe(32) for key in ("BETTER_AUTH_SECRET", "SYSTEM_KEY", "ADMIN_PASSPHRASE")}
 
 
 def docker(*args):
@@ -67,9 +64,7 @@ def start_container(container, storage, public_url, extra_arguments):
 
 
 def client(base, public_url):
-    opener = urllib.request.build_opener(
-        urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())
-    )
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
     public_host = urllib.parse.urlsplit(public_url).netloc
 
     def raw(path, data=None, token=None):
@@ -158,11 +153,7 @@ try:
         "sh",
         "-v",
         f"{secret_volume}:/run/secrets",
-        *(
-            argument
-            for key, value in runtime_secrets.items()
-            for argument in ("-e", f"{key}={value}")
-        ),
+        *(argument for key, value in runtime_secrets.items() for argument in ("-e", f"{key}={value}")),
         image,
         "-c",
         "for name in BETTER_AUTH_SECRET SYSTEM_KEY ADMIN_PASSPHRASE; do "
@@ -184,11 +175,7 @@ try:
             f"{volume}:/storage",
             "-e",
             "PUBLIC_URL=http://127.0.0.1:43123",
-            *(
-                argument
-                for key, value in rejected_secrets.items()
-                for argument in ("-e", f"{key}={value}")
-            ),
+            *(argument for key, value in rejected_secrets.items() for argument in ("-e", f"{key}={value}")),
             image,
         ],
         text=True,
@@ -264,7 +251,7 @@ from pathlib import Path
 for path in Path('/proc').glob('[0-9]*/cmdline'):
     try:
         args = path.read_bytes().split(b'\\0')
-        if any(arg.endswith(b'/uvicorn') for arg in args):
+        if b'asterism.serve' in args and b'-m' in args:
             environment = (path.parent / 'environ').read_bytes().split(b'\\0')
             names = {item.split(b'=', 1)[0] for item in environment if b'=' in item}
             if b'BETTER_AUTH_SECRET' in names or b'ADMIN_PASSPHRASE' in names:
@@ -290,9 +277,7 @@ else:
 
     second_public_url = "http://localhost:43210"
     environment_arguments = [
-        argument
-        for key, value in runtime_secrets.items()
-        for argument in ("-e", f"{key}={value}")
+        argument for key, value in runtime_secrets.items() for argument in ("-e", f"{key}={value}")
     ]
     second_base = start_container(
         second_name,
@@ -310,9 +295,7 @@ else:
         },
     )
     second_token = second_request("/api/auth/token")["token"]
-    second_claims = json.loads(
-        base64.urlsafe_b64decode(second_token.split(".")[1] + "==")
-    )
+    second_claims = json.loads(base64.urlsafe_b64decode(second_token.split(".")[1] + "=="))
     assert second_claims["iss"] == second_public_url
     assert second_claims["aud"] == second_public_url
     assert_no_secret_output(docker("logs", second_name))

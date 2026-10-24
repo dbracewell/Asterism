@@ -112,6 +112,16 @@ pnpm --filter @asterism/backend test
 ## Architecture documentation
 
 The supported runtime is a single coordinated backend process with SQLite.
+Package `dev:raw`/`start` and the container use `python -m asterism.serve`, which
+passes `workers=1` explicitly and rejects `WEB_CONCURRENCY` or `UVICORN_WORKERS`
+unless unset or exactly `1`. CLI `--workers`/`-w` accepts only one; reload and
+other unlisted server options are unsupported. Check worker settings without
+opening application storage with `uv run python -m asterism.serve --check` from
+this directory. The container runs that check before secrets/migrations. Multiple
+replicas, direct Uvicorn/Gunicorn launches and external process fan-out are
+unsupported; this guard cannot detect processes on other machines.
+See [ADR-0019](../../docs/adr/0019-single-process-runtime-and-storage-seams.md) for
+process-local jobs, queues, guards and caches and the explicit composition roots.
 Chat jobs and membership guards are process-local; PostgreSQL JSONB column types
 do not supply a complete PostgreSQL initializer/search adapter. FileStore and
 VectorStore are explicit seams, with FileStore still returning a local `Path`.
