@@ -1,9 +1,9 @@
 # EPIC-33: Theme contrast and UI consistency
 
-Status: US-33.1 and US-33.2 confirmed complete on 2026-10-19. US-33.3 is
-implemented and merged into `main` (`70fcad8`, ancestry verified 2026-10-24);
-its older completion-confirmation metadata needs reconciliation, not another
-implementation story. Source: [2026-10-17 review](../reviews/2026-10-17-codebase-review.md), F5/F6;
+Status: confirmed complete. US-33.1 and US-33.2 were confirmed on 2026-10-19;
+US-33.3 completion and documentation reconciliation were confirmed on 2026-10-24,
+authorizing commit and local merge. Its implementation is already merged into
+`main` (`70fcad8`, ancestry verified 2026-10-24). Source: [2026-10-17 review](../reviews/2026-10-17-codebase-review.md), F5/F6;
 [current reassessment](../reviews/2026-10-24-open-epics-reassessment.md).
 
 ## Objective
@@ -58,14 +58,18 @@ Implementation and verification are complete, preserving `font-monsterrat` for t
 
 ## US-33.3: Enforce a theme and layout review matrix
 
-Current-source status (2026-10-24): commit `70fcad8` is already an ancestor of
-`main`. Schema/contrast tests, rendered matrix, CI artifacts and the manual
-review guide are present. The [2026-10-19 verification record](../reviews/us-33.3-verification-2026-10-19.md)
-records 119 passing browser cases, but its opening "No commit, merge or push yet"
-line is stale as to commit/merge. Preserve that record as historical evidence;
-do not represent it as a current-tree browser run. Reconcile completion tracking
-without repeating the implementation or inferring a new user confirmation from
-git ancestry.
+Status (2026-10-24): implementation and historical verification are complete;
+commit `70fcad8` is already an ancestor of `main`. Completion tracking is now
+reconciled on `docs/us-33.3-completion-reconciliation`; the user confirmed
+completion on 2026-10-24 and authorized commit and local merge. Schema/contrast tests, rendered matrix, CI
+artifacts and the manual review guide remain present. The implementation checklist
+is [archived](../archive/todo-completed-2026-10-24.md#us-333--theme-and-layout-review-matrix).
+
+The [closeout record](../reviews/us-33.3-completion-reconciliation-2026-10-24.md)
+distinguishes the fresh 96-case palette check from the historical 119-case browser
+pass. The [2026-10-19 verification record](../reviews/us-33.3-verification-2026-10-19.md)
+is preserved as written; its opening pre-commit status is superseded by this
+record. A full current-tree browser baseline belongs to US-34.3.
 
 As a maintainer, I want automated checks to catch visual accessibility regressions.
 

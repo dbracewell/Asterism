@@ -11,7 +11,7 @@ EPIC-31 and EPIC-32, US-33.1/33.2 and US-38.1 through US-38.5 are confirmed
 complete. US-38.6 is confirmed complete and merged on 2026-10-24, together with
 this epic reassessment. It retains generation-based artifact reuse and
 policy fingerprint change detection while removing unused artifact metadata.
-US-33.3 is implemented and merged (`70fcad8`), despite stale completion metadata.
+US-33.3 is implemented and merged (`70fcad8`); its [completion reconciliation](../reviews/us-33.3-completion-reconciliation-2026-10-24.md) was confirmed on 2026-10-24, completing EPIC-33.
 US-36.1 (`f41d01b`) and US-37.1 (`6b123f8`) are implemented and merged too;
 reconcile their completion/archive records rather than reimplement them. This
 audit does not invent missing user confirmations. EPIC-38's published artifact
@@ -56,7 +56,8 @@ documents only and does not start US-34.3 or any other implementation story.
 ## Scope and ownership
 
 - [EPIC-33](../epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md): existing
-  theme/semantic/layout gates; reconcile the merged story's completion metadata.
+  theme/semantic/layout gates; confirmed complete, with completion records
+  reconciled on 2026-10-24.
 - [EPIC-34](../epics/EPIC-34-QUERY-BOUNDS-AND-ARCHITECTURE-GUARDRAILS.md):
   chat-domain search composition, additional architecture/deployment guards,
   current browser contracts and bounded active chat/controller admission.

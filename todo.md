@@ -4,14 +4,7 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. US-33.1 and US-33.2 are confirmed complete and archived above. US-33.3, US-36.1 and US-37.1 are already implemented and merged; their older completion/archive metadata needs reconciliation, not repeated implementation. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). US-34.3 now establishes the current browser baseline; the old agent-selector repairs are already present. Execute one story at a time; obtain completion confirmation before merge.
-
-## [EPIC-33: Theme contrast and UI consistency](docs/epics/EPIC-33-THEME-CONTRAST-AND-UI-CONSISTENCY.md)
-
-- [ ] US-33.3 (already merged; completion-record reconciliation only): Enforce a theme and layout review matrix
-  - [x] Add deterministic theme-schema and contrast checks based on unrounded luminance ratios.
-  - [x] Create a compact component/state fixture covering controls, focus, errors, typography and adversarial content using existing shadcn components.
-  - [x] Integrate rendered accessibility and overflow/reachability cases into CI and document the manual review matrix.
+EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. US-36.1 and US-37.1 are already implemented and merged; their older completion/archive metadata needs reconciliation, not repeated implementation. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). US-34.3 now establishes the current browser baseline; the old agent-selector repairs are already present. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-34: Query bounds and architecture guardrails](docs/epics/EPIC-34-QUERY-BOUNDS-AND-ARCHITECTURE-GUARDRAILS.md)
 
