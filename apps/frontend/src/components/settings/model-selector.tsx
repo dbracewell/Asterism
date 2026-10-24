@@ -117,9 +117,9 @@ export const ModelSelector = ({
             type="button"
             variant={inline ? "ghost" : "outline"}
             className={cn(
-              "min-w-0 justify-between gap-1.5 font-normal",
+              "border-input min-w-0 justify-between gap-1.5 rounded-md border font-normal",
               inline
-                ? "data-popup-open:bg-muted h-8 max-w-full rounded-full px-3 font-medium"
+                ? "data-popup-open:bg-muted h-8 max-w-full px-3 font-medium"
                 : "w-full",
               className,
             )}

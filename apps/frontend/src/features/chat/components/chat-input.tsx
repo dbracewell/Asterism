@@ -1,10 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
+import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import { Textarea } from "@/components/ui/textarea";
 import type { UserFile } from "@/lib/client";
-import { useAttachmentDraft } from "../hooks/use-attachment-draft";
-import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
@@ -19,8 +18,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AttachMenu, type AttachAction } from "./attach-menu";
-import { ChatFileContext } from "./chat-file-context";
+import { useAttachmentDraft } from "../hooks/use-attachment-draft";
 import {
   canReadClipboard,
   captureScreenshot,
@@ -28,6 +26,8 @@ import {
   nameClipboardFile,
   readClipboard,
 } from "../lib/capture";
+import { AttachMenu, type AttachAction } from "./attach-menu";
+import { ChatFileContext } from "./chat-file-context";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 

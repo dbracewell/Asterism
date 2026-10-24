@@ -25,6 +25,7 @@ import {
   updateSubAgentActivities,
 } from "@/features/chat/types";
 import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
+import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import { Chat, Message } from "@/lib/client";
@@ -49,12 +50,11 @@ import {
 } from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
+import { ExecutionLabel, ExistingChatModelPicker } from "./chat-model-picker";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
 } from "./chat-persona-picker";
-import { personaQueryOptions } from "@/features/settings/persona-queries";
-import { ExecutionLabel, ExistingChatModelPicker } from "./chat-model-picker";
 import { RetrievalCitations } from "./retrieval-citations";
 
 const SCROLL_BOTTOM_THRESHOLD = 200;
@@ -468,20 +468,19 @@ export const ChatSession = ({
       </section>
       <div
         data-slot="chat-composer"
-        className="flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 p-2"
+        className="flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 bg-transparent p-2"
       >
         {isScrollable && (
           <Button
             className="mx-auto shrink-0 rounded-full"
             aria-label="Jump to latest message"
-            size="icon-lg"
             onClick={() => {
               preventAutoScrollRef.current = false;
               setIsScrollable(false);
               messageListRef.current?.scrollIntoView({ behavior: "instant" });
             }}
           >
-            <ArrowDownIcon />
+            <ArrowDownIcon /> Scroll Down
           </Button>
         )}
         {socketError && (
@@ -590,7 +589,7 @@ export const ContextUsageProgress = ({
       <Progress
         value={percent}
         max={100}
-        className="bg-background h-1.5 w-10"
+        className="bg-background h-2.5 w-10"
       />
       <span className="text-muted-foreground text-xs tabular-nums select-none">
         {percent}%

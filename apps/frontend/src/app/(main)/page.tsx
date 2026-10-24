@@ -1,24 +1,23 @@
 "use client";
-import { WorkspaceIdentity } from "@/features/projects/components/chat-workspace";
-import { projectGetOneOptions } from "@/lib/client/@tanstack/react-query.gen";
-import { Badge } from "@/components/ui/badge";
 import Constellation from "@/components/logo";
 import { useUser } from "@/features/auth/components/user-context";
 import {
   ChatInput,
   ChatInputContainer,
 } from "@/features/chat/components/chat-input";
+import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import {
   ChatPersonaPicker,
   personaAvailable,
 } from "@/features/chat/components/chat-persona-picker";
-import { personaQueryOptions } from "@/features/settings/persona-queries";
-import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
+import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { client } from "@/lib/api";
-import { chatModelsListOptions } from "@/lib/client/@tanstack/react-query.gen";
+import {
+  chatModelsListOptions,
+  projectGetOneOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
-import { BotIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -65,10 +64,6 @@ export default function AppPage() {
       <h1 className="z-1 text-4xl font-bold">
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
-      <WorkspaceIdentity projectId={projectId} />
-      <Badge variant="secondary" className="h-6 gap-1.5 px-2.5 text-xs">
-        <BotIcon /> {main.name}
-      </Badge>
       <div className="flex w-full max-w-4xl flex-col gap-2">
         <ChatInputContainer>
           <ChatInput

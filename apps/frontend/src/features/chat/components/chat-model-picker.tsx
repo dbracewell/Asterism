@@ -111,9 +111,6 @@ export function ModelCapabilities({ model }: { model: ChatModelChoice }) {
       : model.supports_tools === false
         ? "Tools unsupported"
         : "Tool support unknown",
-    model.context_window
-      ? `${model.context_window.toLocaleString()} token context`
-      : "Context window unknown",
   ];
   return (
     <div
@@ -123,19 +120,12 @@ export function ModelCapabilities({ model }: { model: ChatModelChoice }) {
     >
       {model.supports_vision === true && (
         <Hint hint="Vision support">
-          <ImageIcon aria-hidden="true" className="size-4" />
+          <ImageIcon aria-hidden="true" className="size-5" />
         </Hint>
       )}
       {model.supports_tools === true && (
         <Hint hint="Tool calling support">
-          <WrenchIcon aria-hidden="true" className="size-4" />
-        </Hint>
-      )}
-      {!!model.context_window && (
-        <Hint hint="Context length">
-          <span aria-hidden="true" className="tabular-nums select-none">
-            {compactTokens(model.context_window)}
-          </span>
+          <WrenchIcon aria-hidden="true" className="size-5" />
         </Hint>
       )}
       <span className="sr-only">
