@@ -1,6 +1,9 @@
 # EPIC-36: Knowledge generation lifecycle
 
-Status: implemented. Source: generation-mechanism review of the files domain
+Status: implemented and merged (`f41d01b`, merge `37ee995`; ancestry verified
+2026-10-24). No new implementation gap identified by the
+[current-source assessment](../reviews/2026-10-24-open-epics-reassessment.md);
+completion confirmation/archive metadata remains to be reconciled. Source: generation-mechanism review of the files domain
 (2026-10-21) covering artifact generations, the "one current generation per
 file" invariant, and the artifact reported to the user interface.
 
@@ -21,16 +24,17 @@ unbounded, dialect-dependent, and ambiguous to the UI:
    partial unique index declared for SQLite only. The same invariant is
    expressed for PostgreSQL, so it does not silently disappear on the next
    storage adapter.
-3. File metadata and the knowledge-status endpoint reported the *newest*
-   generation while retrieval serves the *current* one, so the UI could show a
+3. File metadata and the knowledge-status endpoint reported the _newest_
+   generation while retrieval serves the _current_ one, so the UI could show a
    file as "pending" while it was already searchable.
 
 ## Ownership and delivery
 
 Implementation stays within the owning domain. The retention rule lives in the
-extraction domain (`extraction/retention.py`), the reported-artifact rule lives
-in the files domain (`files/listing.py`), and both are consumed by the
-existing service endpoints. Schema changes use fresh initialization; there are
+knowledge domain (`knowledge/retention.py`). After EPIC-38, representative
+artifact selection is published by `knowledge/artifacts.py` (`reported_artifacts`)
+using `knowledge/queries.py`; `files/listing.py` consumes that published service.
+Both behaviors are consumed by the existing service endpoints. Schema changes use fresh initialization; there are
 no migrations, compatibility shims, or live-database resets.
 
 ## US-36.1: Bound, port, and align knowledge generations
@@ -57,7 +61,7 @@ Tasks:
 
 - [x] Add `KNOWLEDGE_GENERATION_RETENTION` (0–10, default 1) with runtime
       validation.
-- [x] Add `extraction/retention.py` with a pure retention rule and the
+- [x] Add `knowledge/retention.py` with a pure retention rule and the
       pruning routine; delete vectors before the rows that describe them, and
       keep a row when its vectors cannot be removed so the deletion retries.
 - [x] Prune after a generation settles (promoted to ready, or terminally

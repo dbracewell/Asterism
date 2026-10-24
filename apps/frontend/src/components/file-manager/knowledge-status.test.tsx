@@ -30,8 +30,6 @@ describe("KnowledgeStatus", () => {
       file_id: "file-1",
       generation: 1,
       processing_profile_generation: 1,
-      processing_profile_identity: "a".repeat(64),
-      contract_version: 1,
       status: "ready",
       is_current: true,
       chunk_count: 5,

@@ -796,14 +796,6 @@ export type FileKnowledgeArtifact = {
    * Processing Profile Generation
    */
   processing_profile_generation: number;
-  /**
-   * Processing Profile Identity
-   */
-  processing_profile_identity: string;
-  /**
-   * Contract Version
-   */
-  contract_version: number;
   status: KnowledgeExtractionStatus;
   /**
    * Is Current

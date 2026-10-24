@@ -155,14 +155,12 @@ def test_shared_file_and_generations_survive_membership_and_project_deletion(pro
                 file_id=file.id,
                 generation=1,
                 processing_profile_generation=1,
-                processing_profile_identity="a" * 64,
             ),
             FileKnowledgeArtifactModel(
                 user_id="a",
                 file_id=file.id,
                 generation=2,
                 processing_profile_generation=1,
-                processing_profile_identity="a" * 64,
             ),
         ]
     )

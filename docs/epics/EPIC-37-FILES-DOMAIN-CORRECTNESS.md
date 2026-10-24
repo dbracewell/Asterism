@@ -1,6 +1,9 @@
 # EPIC-37: Files domain correctness
 
-Status: implemented. Source: the files-domain review of 2026-10-21
+Status: implemented and merged (`6b123f8`, ancestry verified 2026-10-24).
+No new implementation gap identified by the
+[current-source assessment](../reviews/2026-10-24-open-epics-reassessment.md);
+completion confirmation/archive metadata remains to be reconciled. Source: the files-domain review of 2026-10-21
 (`apps/backend/asterism/domains/files`), which reported 24 findings; this
 epic carries the four that were confirmed as defects worth fixing immediately.
 

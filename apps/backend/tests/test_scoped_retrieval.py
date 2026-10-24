@@ -179,9 +179,7 @@ async def test_ready_without_text_embeddings_reports_not_searchable(context_runt
     fid = await add_file(r)
     async with r.sessions() as db:
         await db.execute(
-            update(FileKnowledgeArtifactModel)
-            .where(FileKnowledgeArtifactModel.file_id == fid)
-            .values(searchable=False)
+            update(FileKnowledgeArtifactModel).where(FileKnowledgeArtifactModel.file_id == fid).values(searchable=False)
         )
         await db.commit()
     scope, ceiling = await execution(r)
@@ -216,7 +214,6 @@ async def test_replacement_during_vector_search_never_releases_a_new_or_old_gene
                     file_id=fid,
                     generation=2,
                     processing_profile_generation=1,
-                    processing_profile_identity="a" * 64,
                     status=KnowledgeExtractionStatus.READY,
                     is_current=True,
                     searchable=True,

@@ -122,7 +122,6 @@ async def test_a_source_that_cannot_be_read_fails_the_artifact(processing_sessio
         file_id=file.id,
         generation=1,
         processing_profile_generation=1,
-        processing_profile_identity="a" * 64,
         status=KnowledgeExtractionStatus.PENDING,
     )
     processing_session.add(artifact)
@@ -184,7 +183,6 @@ async def test_profile_change_queues_replacements_without_retiring_ready_generat
         file_id=file.id,
         generation=1,
         processing_profile_generation=1,
-        processing_profile_identity="a" * 64,
         status=KnowledgeExtractionStatus.READY,
         is_current=True,
     )
@@ -272,7 +270,6 @@ async def test_captioning_policy_change_uses_the_same_generation_transition(proc
         file_id=file.id,
         generation=1,
         processing_profile_generation=1,
-        processing_profile_identity="a" * 64,
         status=KnowledgeExtractionStatus.READY,
         is_current=True,
     )
@@ -413,7 +410,6 @@ async def test_restart_recovery_makes_processing_artifact_retryable(processing_s
         file_id=file.id,
         generation=1,
         processing_profile_generation=1,
-        processing_profile_identity="a" * 64,
         status=KnowledgeExtractionStatus.RUNNING,
     )
     processing_session.add(artifact)
@@ -453,7 +449,6 @@ async def test_embedding_provisioning_wait_leaves_artifact_pending(processing_se
         file_id=file.id,
         generation=1,
         processing_profile_generation=1,
-        processing_profile_identity="b" * 64,
         status=KnowledgeExtractionStatus.PENDING,
     )
     processing_session.add(artifact)

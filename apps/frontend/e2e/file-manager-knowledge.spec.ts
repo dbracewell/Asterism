@@ -20,8 +20,6 @@ const artifact = {
   file_id: imageFile.id,
   generation: 1,
   processing_profile_generation: 1,
-  processing_profile_identity: "default",
-  contract_version: 1,
   status: "ready",
   is_current: true,
   chunk_count: 1,

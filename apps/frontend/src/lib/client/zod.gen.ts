@@ -1080,8 +1080,6 @@ export const zFileKnowledgeArtifact = z.object({
   file_id: z.uuid(),
   generation: z.int().gte(1),
   processing_profile_generation: z.int().gte(1),
-  processing_profile_identity: z.string().length(64),
-  contract_version: z.int().gte(1),
   status: zKnowledgeExtractionStatus,
   is_current: z.boolean(),
   chunk_count: z.int().gte(0),

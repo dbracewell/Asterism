@@ -152,7 +152,6 @@ async def test_caption_job_transitions_directly_to_ready_and_enables_text_retrie
             file_id=file.id,
             generation=1,
             processing_profile_generation=1,
-            processing_profile_identity="b" * 64,
             status=KnowledgeExtractionStatus.READY,
             is_current=True,
             searchable=False,

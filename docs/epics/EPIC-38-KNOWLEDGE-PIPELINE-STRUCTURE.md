@@ -1,8 +1,9 @@
 # EPIC-38: Knowledge pipeline structure
 
-Status: confirmed complete (2026-10-23). US-38.1 through US-38.5 are confirmed
-complete and merged into local `main`. The completed
-checklist is [archived](../archive/todo-completed-2026-10-23.md).
+Status: confirmed complete. US-38.1 through US-38.5 were merged into local
+`main` on 2026-10-23; follow-up US-38.6 was confirmed and merged on 2026-10-24.
+Completed checklists: [2026-10-23](../archive/todo-completed-2026-10-23.md) and
+[2026-10-24](../archive/todo-completed-2026-10-24.md).
 Source: the files-domain review of 2026-10-21 and
 the follow-up architecture discussion on the knowledge pipeline's domain
 ownership, naming, and data model. The naming and boundary decisions are
@@ -287,3 +288,52 @@ in those files exist, and `git diff --check` and `pnpm check:workspace-tasks`
 pass. Unrelated formatting produced by the root formatter was discarded.
 No runtime/schema/client changes were needed. Browser E2E was not rerun for this
 documentation and regression-test story; the earlier E2E failures are not a pass.
+
+## US-38.6: Remove unused artifact metadata
+
+As a maintainer, I want persisted artifact fields to serve current behavior,
+so unused contract markers and duplicate fingerprints do not burden storage or APIs.
+
+Scope approved 2026-10-24 after tracing all three metadata fields. Keep
+`processing_profile_generation`: artifact creation queries it to reuse a result
+for the same policy revision. Remove the artifact's write-only
+`processing_profile_identity` and constant, unused `contract_version`. Keep the
+processing configuration's `identity`, which detects policy changes and drives
+revision increments and whole-library reprocessing.
+
+Acceptance criteria:
+
+Fresh initialization and API schemas contain only the retained policy generation
+metadata. The generated client and fixtures match the smaller API. Same-policy
+reuse, policy-change replacement and no-op updates retain their existing behavior.
+No migrations, compatibility fields or working-database reset are introduced.
+
+Tasks:
+
+- [x] Remove the two unused artifact columns, writes and API fields while retaining policy fingerprint change detection and generation-based artifact reuse.
+- [x] Regenerate the typed client and update backend/frontend fixtures and API contract assertions.
+- [x] Update current architecture/readme descriptions and reconcile the affected pending browser-fixture audit item.
+- [x] Run focused/full backend and frontend quality gates, fresh-schema/API checks and the affected isolated browser spec; record results.
+
+US-38.6 verification (2026-10-24):
+
+- Focused knowledge suites: 21 passed. Full root tests: 531 backend, 352 frontend,
+  six migration checks and 30 root configuration checks passed.
+- Root lint and formatting passed; unrelated formatter output in nine files was
+  discarded. Final root typecheck passed after browser teardown. Its first run
+  overlapped E2E startup and failed on missing generated `.next-e2e` type files;
+  that diagnostic run is not recorded as a pass.
+- Exported current OpenAPI without starting the app, regenerated the Hey API
+  client and formatted the generated output. Its final diff removes only the two
+  retired properties from generated TypeScript and Zod schemas.
+- Disposable fresh SQLite initialization and OpenAPI assertions verify both
+  retired fields are absent and `processing_profile_generation` remains.
+- Isolated `file-manager-knowledge.spec.ts` with `CI=1` and `--retries=0`:
+  12 passed (fresh-install prerequisite plus affected file-manager test), runner
+  exit 0. Backend cleanup's child exit 143 is expected teardown. This is focused
+  browser coverage, not the full baseline assigned to US-34.3.
+- Workspace-task, changed-Markdown formatting/local-link and diff checks passed.
+
+The user confirmed US-38.6 and merging the epic reassessment together on
+2026-10-24. The reassessment accounts for the superseded fingerprint fixture finding. No
+working database was reset and no compatibility migration was introduced.

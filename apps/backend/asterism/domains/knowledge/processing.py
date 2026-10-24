@@ -116,7 +116,6 @@ async def ensure_file_knowledge_artifact(
         file_id=file_id,
         generation=generation,
         processing_profile_generation=configuration.generation,
-        processing_profile_identity=configuration.identity,
         status=KnowledgeExtractionStatus.PENDING,
         is_current=False,
     )
