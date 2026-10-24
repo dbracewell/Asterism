@@ -2,7 +2,7 @@ import uuid
 from collections.abc import Sequence
 from typing import Protocol
 
-from sqlalchemy import text
+from sqlalchemy import Select, String, Uuid, column, literal_column, select, table, text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 
 
@@ -63,8 +63,10 @@ async def initialize_search_index(connection: AsyncConnection) -> None:
 
 
 class ChatSearchIndex(Protocol):
-    async def find_chat_ids(self, user_id: str, terms: Sequence[str]) -> list[uuid.UUID]: ...
-    async def find_project_ids(self, user_id: str, terms: Sequence[str]) -> set[uuid.UUID]: ...
+    """SQL ID relations composed into owned domain queries, never executed alone."""
+
+    def matching_chats(self, user_id: str, terms: Sequence[str]) -> Select[tuple[uuid.UUID]]: ...
+    def matching_projects(self, user_id: str, terms: Sequence[str]) -> Select[tuple[uuid.UUID]]: ...
 
 
 def _fts_query(terms: Sequence[str]) -> str:
@@ -72,28 +74,25 @@ def _fts_query(terms: Sequence[str]) -> str:
 
 
 class SqliteFtsSearchIndex:
-    """SQLite adapter for the database-neutral chat search contract."""
+    """Keep SQLite MATCH syntax behind composable, typed SQL ID relations."""
 
-    def __init__(self, session: AsyncSession):
-        self.session = session
-
-    async def find_chat_ids(self, user_id: str, terms: Sequence[str]) -> list[uuid.UUID]:
-        result = await self.session.scalars(
-            text("SELECT chat_id FROM chat_search WHERE user_id = :user_id AND chat_search MATCH :query"),
-            {"user_id": user_id, "query": _fts_query(terms)},
+    def matching_chats(self, user_id: str, terms: Sequence[str]) -> Select[tuple[uuid.UUID]]:
+        index = table("chat_search", column("chat_id", Uuid()), column("user_id", String()))
+        return select(index.c.chat_id).where(
+            index.c.user_id == user_id,
+            literal_column("chat_search").match(_fts_query(terms)),
         )
-        return [uuid.UUID(value) for value in result.all()]
 
-    async def find_project_ids(self, user_id: str, terms: Sequence[str]) -> set[uuid.UUID]:
-        result = await self.session.scalars(
-            text("SELECT project_id FROM project_search WHERE user_id = :user_id AND project_search MATCH :query"),
-            {"user_id": user_id, "query": _fts_query(terms)},
+    def matching_projects(self, user_id: str, terms: Sequence[str]) -> Select[tuple[uuid.UUID]]:
+        index = table("project_search", column("project_id", Uuid()), column("user_id", String()))
+        return select(index.c.project_id).where(
+            index.c.user_id == user_id,
+            literal_column("project_search").match(_fts_query(terms)),
         )
-        return {uuid.UUID(value) for value in result.all()}
 
 
 def search_index_for(session: AsyncSession) -> ChatSearchIndex:
     """Return the adapter for the active database dialect."""
     if session.bind is None or session.bind.dialect.name != "sqlite":
         raise RuntimeError("No full-text search adapter is configured for this database dialect")
-    return SqliteFtsSearchIndex(session)
+    return SqliteFtsSearchIndex()

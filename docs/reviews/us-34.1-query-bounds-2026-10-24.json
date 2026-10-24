@@ -1,0 +1,108 @@
+{
+  "base_commit": "d1c6719",
+  "query": "ocean",
+  "page_size": 7,
+  "buckets": [
+    "selected-scope owned content matches",
+    "other-scope owned title matches",
+    "foreign title matches"
+  ],
+  "measurements": [
+    {
+      "scope": "all",
+      "matches_per_bucket": 24,
+      "page_size": 7,
+      "total": 49,
+      "queries": 5,
+      "max_binds": 10,
+      "snippet_queries": 1
+    },
+    {
+      "scope": "all",
+      "matches_per_bucket": 1205,
+      "page_size": 7,
+      "total": 2411,
+      "queries": 5,
+      "max_binds": 10,
+      "snippet_queries": 1
+    },
+    {
+      "scope": "general",
+      "matches_per_bucket": 24,
+      "page_size": 7,
+      "total": 24,
+      "queries": 4,
+      "max_binds": 10,
+      "snippet_queries": 1
+    },
+    {
+      "scope": "general",
+      "matches_per_bucket": 1205,
+      "page_size": 7,
+      "total": 1205,
+      "queries": 4,
+      "max_binds": 10,
+      "snippet_queries": 1
+    },
+    {
+      "scope": "project",
+      "matches_per_bucket": 24,
+      "page_size": 7,
+      "total": 24,
+      "queries": 6,
+      "max_binds": 10,
+      "snippet_queries": 1
+    },
+    {
+      "scope": "project",
+      "matches_per_bucket": 1205,
+      "page_size": 7,
+      "total": 1205,
+      "queries": 6,
+      "max_binds": 10,
+      "snippet_queries": 1
+    }
+  ],
+  "original_implementation": {
+    "scope_regressions_failed": 3,
+    "observed_small_dataset_max_binds": [55, 54, 55],
+    "diagnostic_log": "/private/tmp/asterism-us34.1-before.log"
+  },
+  "checks": [
+    "constant query and bind counts as buckets grow from 24 to 1205",
+    "one snippet round trip for content-bearing selected pages",
+    "foreign and other-scope results excluded before pagination",
+    "stable second page and empty beyond-end page",
+    "no snippet query for empty or title-only pages"
+  ],
+  "formatting_baseline": {
+    "broad_check": "7 pre-existing failures; all unchanged from main",
+    "files": [
+      "apps/backend/asterism/domains/knowledge/artifacts.py",
+      "apps/backend/asterism/domains/knowledge/extractions.py",
+      "apps/backend/asterism/domains/knowledge/ingestion.py",
+      "apps/backend/asterism/domains/knowledge/queries.py",
+      "apps/backend/asterism/domains/retrieval/service.py",
+      "apps/backend/asterism/domains/settings/service.py",
+      "apps/backend/asterism/domains/tools/builtin/sub_agent.py"
+    ],
+    "changed_python_files": "4 passed"
+  },
+  "browser_gate": {
+    "command": "CI=1 pnpm_config_verify_deps_before_run=false UV_CACHE_DIR=/private/tmp/asterism-uv-cache node scripts/run-isolated-e2e.mjs --retries=0",
+    "stats": {
+      "startTime": "2026-10-24T10:19:44.104Z",
+      "duration": 307042.84500000003,
+      "expected": 122,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "runner_exit_code": 0,
+    "single_attempt_cases": 122,
+    "unhandled_page_errors": 0,
+    "report_errors": [],
+    "report": "apps/frontend/playwright-report/index.html",
+    "json": "apps/frontend/test-results/results.json"
+  }
+}

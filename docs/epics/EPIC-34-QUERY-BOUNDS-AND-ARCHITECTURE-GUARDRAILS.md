@@ -1,7 +1,7 @@
 # EPIC-34: Query bounds and architecture guardrails
 
-Status: US-34.3 confirmed complete on 2026-10-24;
-US-34.1, US-34.2 and US-34.4 remain pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
+Status: US-34.1 and US-34.3 confirmed complete on 2026-10-24.
+US-34.2 and US-34.4 remain pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
 
 ## Objective
 
@@ -9,7 +9,7 @@ Keep the domain architecture, remove unbounded search candidates, and enforce th
 
 Reassessed against `main` at `1e188a7` on 2026-10-24. See the
 [current-source assessment](../reviews/2026-10-24-open-epics-reassessment.md).
-US-34.1 remains a confirmed implementation gap. US-34.2 retains only guardrails
+US-34.1 now closes the indexed-search candidate materialization gap. US-34.2 retains only guardrails
 not already delivered by EPIC-38; active-job admission is separated into
 US-34.4. US-34.3 establishes the current browser baseline rather than repeating
 selector repairs already present in source. Story estimates are provisional;
@@ -20,6 +20,15 @@ re-estimate browser repair after the baseline run.
 Implementation stays within the owning domain/component. Preserve existing authorization, shared mutation-cache invalidation and generated API contracts. Use fresh initialization for schema changes; no migrations, compatibility shims or live-database resets. Work on one story at a time, create its feature branch, complete relevant lint/type/format/test gates, synchronize generated clients when contracts change, document behavior and obtain user confirmation before merge.
 
 ## US-34.1: Keep indexed search filtering and pagination in the database
+
+Status (2026-10-24): implemented and verified on
+`feat/us-34.1-bounded-chat-search`; the user confirmed completion on 2026-10-24
+and authorized commit and local merge. See the [verification record](../reviews/us-34.1-verification-2026-10-24.md)
+and [query-bound measurements](../reviews/us-34.1-query-bounds-2026-10-24.json).
+Matching stays in SQL; page snippets use one owner-filtered window query. Root
+lint/types/tests and all 122 isolated browser cases passed. Changed-file
+formatting passes; seven pre-existing broad backend formatting findings are
+recorded separately and remain untouched.
 
 As a user with many chats, I want search work to remain bounded by the selected scope and page.
 
@@ -38,10 +47,10 @@ matching and literal-term parsing remain intact.
 
 Tasks:
 
-- [ ] Replace ID-list results in `chat/search_index.py` with composable SQL match relations consumed by `chat/search.py`; keep owner-scoped queries in their domains and `db/queries.py` domain-neutral.
-- [ ] Apply owner/project/General filtering before pagination; batch only selected-page snippet enrichment.
-- [ ] Add large-match regressions and query/bind-count evidence for all/project/General scopes, plus cross-owner and deterministic-page tests.
-- [ ] Run backend lint, full static typing and tests; document query ownership and supported SQLite behavior.
+- [x] Replace ID-list results in `chat/search_index.py` with composable SQL match relations consumed by `chat/search.py`; keep owner-scoped queries in their domains and `db/queries.py` domain-neutral.
+- [x] Apply owner/project/General filtering before pagination; batch only selected-page snippet enrichment.
+- [x] Add large-match regressions and query/bind-count evidence for all/project/General scopes, plus cross-owner and deterministic-page tests.
+- [x] Run backend lint, full static typing and tests; document query ownership and supported SQLite behavior.
 
 ## US-34.2: Make module and deployment limits enforceable
 

@@ -116,7 +116,14 @@ Chat jobs and membership guards are process-local; PostgreSQL JSONB column types
 do not supply a complete PostgreSQL initializer/search adapter. FileStore and
 VectorStore are explicit seams, with FileStore still returning a local `Path`.
 The [2026-10-17 review](../../docs/reviews/2026-10-17-codebase-review.md)
-records these limits and the pending database-side search work in EPIC-34.
+records these limits. US-34.1 keeps chat/project FTS matches in composable SQL
+relations, applies owner/scope predicates before count/pagination, and batches one
+chronological owned-message snippet per selected content-matched chat. The
+[search design](../../docs/architecture/data-and-storage.md#search-indexes) and
+[query-bound measurements](../../docs/reviews/us-34.1-verification-2026-10-24.md)
+distinguish page-bounded application data and round trips from database scan work.
+SQLite is the only implemented search dialect; shared `db/queries.py` stays
+free of chat/project models and policy.
 
 Comprehensive system design guides and Mermaid sequence diagrams are available in the [`/architecture`](../../docs/architecture/README.md) directory:
 

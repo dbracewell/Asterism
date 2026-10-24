@@ -4,15 +4,10 @@ Completed Projects/Chat Context and provider-settings work remains in the existi
 
 Archives: [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
-EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. US-36.1 and US-37.1 are already implemented and merged; their older completion/archive metadata needs reconciliation, not repeated implementation. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). US-34.3 is confirmed complete and archived above, establishing the current browser baseline; the old agent-selector repairs are already present. Execute one story at a time; obtain completion confirmation before merge.
+EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. US-36.1 and US-37.1 are already implemented and merged; their older completion/archive metadata needs reconciliation, not repeated implementation. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). US-34.1 and US-34.3 are confirmed complete and archived above, including the current browser baseline; the old agent-selector repairs are already present. Execute one story at a time; obtain completion confirmation before merge.
 
 ## [EPIC-34: Query bounds and architecture guardrails](docs/epics/EPIC-34-QUERY-BOUNDS-AND-ARCHITECTURE-GUARDRAILS.md)
 
-- [ ] US-34.1: Keep indexed search filtering and pagination in the database
-  - [ ] Replace ID-list results in `chat/search_index.py` with composable SQL match relations consumed by `chat/search.py`; keep owner-scoped queries in their domains and `db/queries.py` domain-neutral.
-  - [ ] Apply owner/project/General filtering before pagination; batch only selected-page snippet enrichment.
-  - [ ] Add large-match regressions and query/bind-count evidence for all/project/General scopes, plus cross-owner and deterministic-page tests.
-  - [ ] Run backend lint, full static typing and tests; document query ownership and supported SQLite behavior.
 - [ ] US-34.2: Make module and deployment limits enforceable
   - [ ] Extend existing boundary tests for neutral query mechanics, domain readers and injected agent/retrieval paths; scan subpackages and allow named composition roots without duplicating EPIC-38 checks.
   - [ ] Enforce and test single-worker configuration in supported launch paths; document unsupported replicas and process-local jobs, guards, queues and caches.

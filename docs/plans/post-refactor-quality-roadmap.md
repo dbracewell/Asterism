@@ -18,8 +18,11 @@ audit does not invent missing user confirmations. EPIC-38's published artifact
 service, injected source reader, processing-policy ownership and boundary tests
 are the baseline for future work.
 
-EPIC-34 remains necessary: search still materializes all matching IDs before
-scope/pagination, and global active-chat/controller admission is absent.
+EPIC-34 remains active. US-34.1 now keeps indexed matching and scope/pagination
+in SQL and batches selected-page snippets; its [verification record](../reviews/us-34.1-verification-2026-10-24.md)
+records constant query/bind counts across growing match sets. The user confirmed
+completion and authorized commit and local merge on 2026-10-24. Global
+active-chat/controller admission remains absent.
 EPIC-35.1 is partly delivered: all five unfinished admin panes already have
 Planned badges and future-release descriptions. US-35.2 remains substantive new
 work; optional profile/prompt/namespace types do not constitute a persona engine.
@@ -27,31 +30,27 @@ work; optional profile/prompt/namespace types do not constitute a persona engine
 US-34.3 is confirmed complete on 2026-10-24, with commit and local merge
 authorized by the user. Its [current browser baseline](../reviews/us-34.3-verification-2026-10-24.md)
 passed all 122 cases without retries, skips, flaky results or unhandled page
-errors, after classifying and repairing the original 30 failures. US-34.1 is the
+errors, after classifying and repairing the original 30 failures. US-34.1 is also confirmed complete; US-34.2 is the
 next recommended implementation story.
 
 ## Recommended sequence
 
-1. **US-34.1 — Bound indexed search in SQL.** Retain chat-domain ownership,
-   owner/project/General filtering before count/page queries, deterministic mixed
-   ordering and page-only batched snippets. Existing page/scope tests are not
-   evidence of bounded match-sized memory or bind counts.
-2. **US-34.2 — Finish architecture/deployment enforcement.** Extend existing
+1. **US-34.2 — Finish architecture/deployment enforcement.** Extend existing
    guards rather than repeat EPIC-38. Enforce supported single-worker launch
    configuration and document storage/coordination seams honestly.
-3. **US-34.4 — Bound active work and controller admission.** This separates the
+2. **US-34.4 — Bound active work and controller admission.** This separates the
    capacity task formerly buried in US-34.2. Idle-job retirement and bounded
    per-connection queues do not cap simultaneous jobs/connections. Decide finite
    capacity/overload policy, implement it and verify capacity release.
-4. **US-35.1 — Finish planned-settings coverage and inventory.** Preserve the
+3. **US-35.1 — Finish planned-settings coverage and inventory.** Preserve the
    implemented Planned presentation; finish coverage/copy and README inventory.
    This small independent story can be pulled forward after the browser baseline.
-5. **US-35.2 — Persona/default-profile foundations.** Decide selection and
+4. **US-35.2 — Persona/default-profile foundations.** Decide selection and
    execution snapshot semantics before implementation. Preserve singleton
    main-agent, fixed sub-agent models and scope ceilings. Do not activate memory.
 
-Only one user story is implemented at a time. US-34.3 is confirmed complete;
-US-34.1 is next.
+Only one user story is implemented at a time. US-34.1 is confirmed complete;
+US-34.2 is next.
 
 ## Scope and ownership
 

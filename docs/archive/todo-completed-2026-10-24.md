@@ -52,3 +52,19 @@ The user confirmed completion and authorized commit and local merge on 2026-10-2
         Frontend lint/types, 352 unit tests, six auth-migration checks and scoped formatting
         passed. See the [verification record](../reviews/us-34.3-verification-2026-10-24.md)
         for the initial 30 failures, repairs, diagnostics and limits.
+
+## US-34.1 — Database-side indexed search and page snippets
+
+The user confirmed completion and authorized commit and local merge on 2026-10-24.
+
+- [x] US-34.1: Keep indexed search filtering and pagination in the database
+  - [x] Replace ID-list results in `chat/search_index.py` with composable SQL match relations consumed by `chat/search.py`; keep owner-scoped queries in their domains and `db/queries.py` domain-neutral.
+  - [x] Apply owner/project/General filtering before pagination; batch only selected-page snippet enrichment.
+  - [x] Add large-match regressions and query/bind-count evidence for all/project/General scopes, plus cross-owner and deterministic-page tests.
+  - [x] Run backend lint, full static typing and tests; document query ownership and supported SQLite behavior.
+        Verification: 543 backend tests, 352 frontend unit tests, six auth-migration
+        checks and 30 configuration tests passed. All 122 isolated browser cases passed
+        without retries, skips, flaky results or unhandled page errors. Root lint/types
+        and changed-file formatting passed. Seven pre-existing broad backend formatting
+        findings remain untouched. See the [verification record](../reviews/us-34.1-verification-2026-10-24.md)
+        for query/bind-count evidence, diagnostics and limitations.

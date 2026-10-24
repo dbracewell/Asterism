@@ -80,11 +80,35 @@ SQLite FTS5 virtual tables, `chat_search` and `project_search`, provide
 owner-scoped keyword search over chat titles/persisted message text and project
 names/descriptions. Project prompts, attachments and extracted file content are not
 indexed. Fresh initialization installs indexes and insert/update/delete triggers.
-The adapter accepts up to ten quoted word terms joined with `AND`; user input is
-never passed through as FTS syntax. The search service rechecks owner predicates,
-filters General/project chat scope before database pagination, sorts mixed results
-by updated time/kind/UUID, and enriches only the selected page with current project
-identity and snippets. Project search indexes names and descriptions.
+The service parses at most ten case-folded word terms; the adapter quotes and
+joins them with `AND`, so user input is never passed through as FTS syntax.
+`chat/search_index.py` exposes composable SQL ID selects through `ChatSearchIndex`.
+Its SQLite implementation owns `MATCH`; it does not execute the selects or return
+Python candidate-ID collections. Only SQLite has an implemented initializer and
+search adapter; the SQL contract does not imply PostgreSQL/MySQL support.
+
+`chat/search.py` composes those relations with owner-scoped base selects from
+`chat/queries.py` and `projects/queries.py`. Owner and General/project predicates
+are applied before the shared count/page relation is executed. General/project
+search excludes project results; explicit project scope requires an owned project,
+even for an empty query. Mixed results sort by updated time descending, kind and
+UUID ascending. `db/queries.py` remains domain-neutral and owns no search policy.
+
+Enrichment loads only selected-page chats and project identities. It requests
+snippets only for chats without an all-term title match. The owning chat query
+uses `row_number()` partitioned by chat, ordered by message timestamp and UUID,
+to return one owned message containing any term per requested chat in one round
+trip. All terms still have to match the chat's aggregate FTS document; they may
+span multiple messages. Title matches retain their title snippet. Empty and
+title-only pages issue no snippet query. The remaining expanded ID lists are
+bounded by the page size, never by the full match set.
+
+This bounds application candidate materialization, query round trips and bind
+counts, not total database work: exact counts, FTS matching, sorting and message
+ranking can scan many rows, and selected message bodies can be large. The current
+SQLite 3.45+ runtime supports the required FTS5 and window functions. See the
+[US-34.1 measurements](../reviews/us-34.1-verification-2026-10-24.md) for tested
+scope, dataset sizes and limits.
 
 ## Chat binding, context, and message tree
 

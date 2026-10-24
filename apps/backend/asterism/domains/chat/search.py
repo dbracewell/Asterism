@@ -4,7 +4,7 @@ import re
 import uuid
 from typing import Literal
 
-from sqlalchemy import func, literal, or_, select, union_all
+from sqlalchemy import func, literal, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException
@@ -13,10 +13,10 @@ from asterism.domains.projects.models import ProjectModel
 from asterism.domains.projects.queries import select_owned_projects
 from asterism.domains.projects.scope import require_owned_project
 
-from .models import ChatModel, MessageModel
-from .queries import select_owned_chats
+from .models import ChatModel
+from .queries import select_owned_chats, select_owned_message_snippets
 from .schemas import SearchMatchSource, SearchResult, SearchResultKind, SearchResultList
-from .search_index import search_index_for
+from .search_index import ChatSearchIndex, search_index_for
 
 SearchScope = Literal["all", "general", "project"]
 
@@ -49,13 +49,10 @@ async def search(
             await require_owned_project(user_id=user_id, project_id=project_id, session=session)
         if not terms:
             return SearchResultList(results=[], total=0, page=page, page_size=page_size)
-        index = search_index_for(session)
-        chat_ids = await index.find_chat_ids(user_id, terms)
-        project_ids = await index.find_project_ids(user_id, terms) if scope == "all" else set()
         matches = _select_matches(
             user_id=user_id,
-            chat_ids=chat_ids,
-            project_ids=project_ids,
+            index=search_index_for(session),
+            terms=terms,
             scope=scope,
             project_id=project_id,
         )
@@ -79,38 +76,63 @@ async def search(
 def _select_matches(
     *,
     user_id: str,
-    chat_ids: list[uuid.UUID],
-    project_ids: set[uuid.UUID],
+    index: ChatSearchIndex,
+    terms: list[str],
     scope: SearchScope,
     project_id: uuid.UUID | None,
 ):
-    chats = select_owned_chats(user_id=user_id).order_by(None).where(ChatModel.id.in_(chat_ids))
+    chats = (
+        select_owned_chats(user_id=user_id)
+        .order_by(None)
+        .where(
+            ChatModel.id.in_(index.matching_chats(user_id, terms)),
+        )
+    )
     if scope != "all":
         chats = chats.where(ChatModel.project_id == project_id)
-    projects = select_owned_projects(user_id=user_id).where(ProjectModel.id.in_(project_ids))
+    chat_matches = chats.with_only_columns(ChatModel.id, ChatModel.updated_at, literal("chat").label("kind"))
+    if scope != "all":
+        return chat_matches.subquery()
+    projects = select_owned_projects(user_id=user_id).where(
+        ProjectModel.id.in_(index.matching_projects(user_id, terms)),
+    )
     return union_all(
-        chats.with_only_columns(ChatModel.id, ChatModel.updated_at, literal("chat").label("kind")),
+        chat_matches,
         projects.with_only_columns(ProjectModel.id, ProjectModel.updated_at, literal("project").label("kind")),
     ).subquery()
 
 
 async def _enrich_page(*, user_id: str, rows, terms: list[str], session: AsyncSession) -> list[SearchResult]:
-    page_chats = {
-        chat.id: chat
-        for chat in await session.scalars(
-            select_owned_chats(user_id=user_id).where(
-                ChatModel.id.in_([row.id for row in rows if row.kind == "chat"]),
-            ),
-        )
-    }
+    if not rows:
+        return []
+    chat_ids = [row.id for row in rows if row.kind == "chat"]
+    page_chats: dict[uuid.UUID, ChatModel] = {}
+    if chat_ids:
+        page_chats = {
+            chat.id: chat
+            for chat in await session.scalars(select_owned_chats(user_id=user_id).where(ChatModel.id.in_(chat_ids)))
+        }
     metadata_ids = {chat.project_id for chat in page_chats.values() if chat.project_id is not None}
     metadata_ids.update(row.id for row in rows if row.kind == "project")
-    page_projects = {
-        project.id: project
-        for project in await session.scalars(
-            select_owned_projects(user_id=user_id).where(ProjectModel.id.in_(metadata_ids)),
+    page_projects: dict[uuid.UUID, ProjectModel] = {}
+    if metadata_ids:
+        page_projects = {
+            project.id: project
+            for project in await session.scalars(
+                select_owned_projects(user_id=user_id).where(ProjectModel.id.in_(metadata_ids)),
+            )
+        }
+    content_ids = [
+        chat.id
+        for chat in page_chats.values()
+        if not all(term in (chat.title or "Untitled chat").casefold() for term in terms)
+    ]
+    snippets: dict[uuid.UUID, str] = {}
+    if content_ids:
+        snippet_rows = await session.execute(
+            select_owned_message_snippets(user_id=user_id, chat_ids=content_ids, terms=terms),
         )
-    }
+        snippets = {chat_id: content for chat_id, content in snippet_rows}
     results = []
     for row in rows:
         if row.kind == "project":
@@ -134,21 +156,6 @@ async def _enrich_page(*, user_id: str, rows, terms: list[str], session: AsyncSe
         chat = page_chats[row.id]
         title = chat.title or "Untitled chat"
         title_match = all(term in title.casefold() for term in terms)
-        content = ""
-        if not title_match:
-            content = (
-                await session.scalar(
-                    select(MessageModel.content)
-                    .where(
-                        MessageModel.chat_id == chat.id,
-                        MessageModel.user_id == user_id,
-                        or_(*[MessageModel.content.icontains(term, autoescape=True) for term in terms]),
-                    )
-                    .order_by(MessageModel.created_at, MessageModel.id)
-                    .limit(1),
-                )
-                or ""
-            )
         project = page_projects.get(chat.project_id)
         results.append(
             SearchResult(
@@ -159,7 +166,7 @@ async def _enrich_page(*, user_id: str, rows, terms: list[str], session: AsyncSe
                 project_id=chat.project_id,
                 project_name=project.name if project else None,
                 match_source=SearchMatchSource.TITLE if title_match else SearchMatchSource.CONTENT,
-                snippet=title if title_match else _snippet(content, terms),
+                snippet=title if title_match else _snippet(snippets.get(chat.id, ""), terms),
             ),
         )
     return results
