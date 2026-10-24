@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { knowledgeArtifact } from "./support/knowledge-artifact";
+import { expect, test } from "./support/test";
 const P = "11111111-1111-4111-8111-111111111111";
 const project = {
   id: P,
@@ -9,10 +10,15 @@ const project = {
   created_at: 1,
   updated_at: 1,
 };
-const source = (id: string, member = false) => ({
-  id,
-  filename: `${id}.txt`,
-  original_name: `${id}.txt`,
+const fileIds: Record<string, string> = {
+  shared: "20000000-0000-4000-8000-000000000001",
+  new: "20000000-0000-4000-8000-000000000002",
+  uploaded: "20000000-0000-4000-8000-000000000003",
+};
+const source = (name: string, member = false) => ({
+  id: fileIds[name],
+  filename: `${name}.txt`,
+  original_name: `${name}.txt`,
   size: 10,
   mime_type: "text/plain",
   kind: "text",
@@ -24,7 +30,11 @@ const source = (id: string, member = false) => ({
   projects: member
     ? [
         { ...project },
-        { id: "other", name: "Other project", context_revision: 1 },
+        {
+          id: "30000000-0000-4000-8000-000000000001",
+          name: "Other project",
+          context_revision: 1,
+        },
       ]
     : [],
 });
@@ -57,7 +67,15 @@ test("shares explorer controls for project membership, library picking, upload, 
       const body = route.request().postDataJSON();
       writes.push({ method, body });
       expect(body.expected_context_revision).toBe(revision);
-      if (method === "POST") members.push(source(body.file_ids[0], true));
+      if (method === "POST")
+        members.push(
+          source(
+            Object.keys(fileIds).find(
+              (name) => fileIds[name] === body.file_ids[0],
+            )!,
+            true,
+          ),
+        );
       else members = members.filter((file) => !body.file_ids.includes(file.id));
       revision++;
       return route.fulfill({
@@ -80,12 +98,20 @@ test("shares explorer controls for project membership, library picking, upload, 
     if (route.request().url().includes("/knowledge")) {
       if (route.request().method() === "POST") regenerations++;
       return route.fulfill({
-        json: {
-          status: "failed",
-          extractions: {
-            embedding: { kind: "embedding", status: "failed" },
+        json: knowledgeArtifact(
+          fileIds[
+            new URL(route.request().url()).pathname
+              .split("/")
+              .at(-2)!
+              .replace(".txt", "")
+          ],
+          {
+            status: "failed",
+            extractions: {
+              embedding: { kind: "embedding", status: "failed" },
+            },
           },
-        },
+        ),
       });
     }
     if (route.request().method() === "DELETE") libraryDeletes++;
@@ -105,7 +131,7 @@ test("shares explorer controls for project membership, library picking, upload, 
   await expect(explorer.getByText("Embedding: failed")).toBeVisible();
   await expect(
     explorer.getByRole("link", { name: "Other project" }),
-  ).toHaveAttribute("href", "/projects/other");
+  ).toHaveAttribute("href", "/projects/30000000-0000-4000-8000-000000000001");
   await expect(
     explorer.getByRole("button", { name: "Delete selected files" }),
   ).toHaveCount(0);
@@ -119,7 +145,7 @@ test("shares explorer controls for project membership, library picking, upload, 
   await dialog.getByRole("button", { name: "Add selected (1)" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(explorer.getByText("new.txt", { exact: true })).toBeVisible();
-  expect(writes[0].body.file_ids).toEqual(["new"]);
+  expect(writes[0].body.file_ids).toEqual([fileIds.new]);
   expect(regenerations).toBe(0);
   await explorer.getByRole("button", { name: "Toggle Search" }).click();
   await explorer.getByRole("textbox", { name: "Search files" }).fill("shared");

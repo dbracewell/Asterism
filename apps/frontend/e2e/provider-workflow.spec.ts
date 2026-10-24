@@ -1,4 +1,4 @@
-import { expect, Page, test } from "@playwright/test";
+import { expect, Page, test } from "./support/test";
 
 const providerId = "20000000-0000-4000-8000-000000000001";
 

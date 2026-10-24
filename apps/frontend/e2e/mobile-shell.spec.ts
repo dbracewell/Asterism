@@ -1,4 +1,4 @@
-import { expect, request, test, type Page } from "@playwright/test";
+import { expect, request, test, type Page } from "./support/test";
 import { randomUUID } from "node:crypto";
 
 const email = `${randomUUID()}@example.test`;
@@ -150,7 +150,7 @@ for (const width of [320, 390]) {
     ).toBeLessThanOrEqual(width);
     await next.tap();
     await page.goto("/settings");
-    const model = page.getByRole("button", {
+    const model = page.getByRole("combobox", {
       name: "Default Model",
       exact: true,
     });
@@ -165,7 +165,7 @@ for (const width of [320, 390]) {
     await expect(model).toBeInViewport({ ratio: 1 });
     await model.tap();
     await expect(
-      page.getByRole("textbox", { name: "Filter models" }),
+      page.getByRole("combobox", { name: "Search models…", exact: true }),
     ).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),

@@ -1,4 +1,5 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { knowledgeArtifact } from "./support/knowledge-artifact";
+import { expect, test, type Locator } from "./support/test";
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const P = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -48,7 +49,13 @@ test("keeps General isolated and shows two project chats with different local at
     if (route.request().url().includes("/knowledge")) {
       if (route.request().method() === "POST") regenerated++;
       return route.fulfill({
-        json: { status: "ready", extractions: {} },
+        json: knowledgeArtifact(
+          sources.find(
+            (file) =>
+              new URL(route.request().url()).pathname ===
+              `/api/py/files/${file.filename}/knowledge`,
+          )!.id,
+        ),
       });
     }
     return route.fulfill({

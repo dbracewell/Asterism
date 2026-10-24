@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 
 test("edits the sole model-free main configuration and exposes unavailable worker bindings", async ({
   page,
@@ -64,6 +64,7 @@ test("edits the sole model-free main configuration and exposes unavailable worke
         {
           id: "22222222-2222-4222-8222-222222222222",
           name: "Available model",
+          provider_id: "66666666-6666-4666-8666-666666666666",
           provider_name: "Test",
           available: true,
         },
@@ -112,7 +113,7 @@ test("edits the sole model-free main configuration and exposes unavailable worke
   );
   await page.getByLabel("Model", { exact: true }).click();
   await page
-    .getByRole("button", { name: "Available model", exact: true })
+    .getByRole("option", { name: "Available model", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Save configuration" }),

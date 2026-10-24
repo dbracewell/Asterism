@@ -1,4 +1,4 @@
-import { expect, test, type BrowserContext } from "@playwright/test";
+import { expect, test, type BrowserContext } from "./support/test";
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 

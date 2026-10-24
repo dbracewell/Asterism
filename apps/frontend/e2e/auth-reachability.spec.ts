@@ -1,4 +1,4 @@
-import { expect, request, test } from "@playwright/test";
+import { expect, request, test } from "./support/test";
 import { randomUUID } from "node:crypto";
 import {
   authViewports,

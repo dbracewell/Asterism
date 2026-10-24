@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { knowledgeArtifact } from "./support/knowledge-artifact";
+import { expect, test } from "./support/test";
 import { adversarialMarkdown } from "../src/components/markdown-viewer/test-content";
 
 const FILE = "11111111-1111-4111-8111-111111111111";
@@ -33,8 +34,7 @@ test("untrusted replies and file text cannot install HTML or load resources; mat
     const pathname = new URL(route.request().url()).pathname;
     if (pathname.endsWith("/knowledge"))
       return route.fulfill({
-        json: {
-          status: "ready",
+        json: knowledgeArtifact(FILE, {
           extractions: {
             text_extraction: {
               kind: "text_extraction",
@@ -47,7 +47,7 @@ test("untrusted replies and file text cannot install HTML or load resources; mat
               payload: { text: '<img src="/untrusted-markdown/caption">' },
             },
           },
-        },
+        }),
       });
     if (pathname.endsWith("/similar"))
       return route.fulfill({ json: { files: [] } });

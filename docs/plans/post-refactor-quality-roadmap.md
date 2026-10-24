@@ -24,34 +24,34 @@ EPIC-35.1 is partly delivered: all five unfinished admin panes already have
 Planned badges and future-release descriptions. US-35.2 remains substantive new
 work; optional profile/prompt/namespace types do not constitute a persona engine.
 
+US-34.3 is confirmed complete on 2026-10-24, with commit and local merge
+authorized by the user. Its [current browser baseline](../reviews/us-34.3-verification-2026-10-24.md)
+passed all 122 cases without retries, skips, flaky results or unhandled page
+errors, after classifying and repairing the original 30 failures. US-34.1 is the
+next recommended implementation story.
+
 ## Recommended sequence
 
-1. **US-34.3 — Current browser baseline and contract reconciliation.** Run the
-   full isolated suite on the current tree, classify actual failures, and repair
-   demonstrated drift. The old Main Agent/unavailable-picker assertions are
-   already repaired. Check current knowledge extraction/status/regeneration
-   contracts as well as agent/model flows. Historical 72/119-case passes and
-   a later handoff's equal failure sets do not establish today's gate status.
-2. **US-34.1 — Bound indexed search in SQL.** Retain chat-domain ownership,
+1. **US-34.1 — Bound indexed search in SQL.** Retain chat-domain ownership,
    owner/project/General filtering before count/page queries, deterministic mixed
    ordering and page-only batched snippets. Existing page/scope tests are not
    evidence of bounded match-sized memory or bind counts.
-3. **US-34.2 — Finish architecture/deployment enforcement.** Extend existing
+2. **US-34.2 — Finish architecture/deployment enforcement.** Extend existing
    guards rather than repeat EPIC-38. Enforce supported single-worker launch
    configuration and document storage/coordination seams honestly.
-4. **US-34.4 — Bound active work and controller admission.** This separates the
+3. **US-34.4 — Bound active work and controller admission.** This separates the
    capacity task formerly buried in US-34.2. Idle-job retirement and bounded
    per-connection queues do not cap simultaneous jobs/connections. Decide finite
    capacity/overload policy, implement it and verify capacity release.
-5. **US-35.1 — Finish planned-settings coverage and inventory.** Preserve the
+4. **US-35.1 — Finish planned-settings coverage and inventory.** Preserve the
    implemented Planned presentation; finish coverage/copy and README inventory.
    This small independent story can be pulled forward after the browser baseline.
-6. **US-35.2 — Persona/default-profile foundations.** Decide selection and
+5. **US-35.2 — Persona/default-profile foundations.** Decide selection and
    execution snapshot semantics before implementation. Preserve singleton
    main-agent, fixed sub-agent models and scope ceilings. Do not activate memory.
 
-Only one user story is implemented at a time. This reassessment changes planning
-documents only and does not start US-34.3 or any other implementation story.
+Only one user story is implemented at a time. US-34.3 is confirmed complete;
+US-34.1 is next.
 
 ## Scope and ownership
 
@@ -73,8 +73,7 @@ documents only and does not start US-34.3 or any other implementation story.
 
 The original 26–43 engineer-day estimate included now-completed trust/layout work
 and is no longer an estimate of remaining effort. Use the revised story ranges;
-re-estimate browser work after the current baseline and persona work after its
-ADR. Capacity policy is an explicit decision in US-34.4, not a claim of load
+use the completed browser baseline and re-estimate persona work after its ADR. Capacity policy is an explicit decision in US-34.4, not a claim of load
 certification. Do not fold speculative horizontal scaling, PostgreSQL/MySQL,
 object storage or long-term memory into these stories.
 

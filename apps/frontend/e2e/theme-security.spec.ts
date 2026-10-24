@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 
 test("public catalog rejects traversal and preserves sign-in theme selection", async ({
   page,

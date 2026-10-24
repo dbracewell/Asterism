@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator } from "./support/test";
 
 async function target(control: Locator) {
   await control.scrollIntoViewIfNeeded();
@@ -139,7 +139,7 @@ for (const width of [320, 1280]) {
     await expect(theme).toBeVisible();
     await expect(size).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Default Model", exact: true }),
+      page.getByRole("combobox", { name: "Default Model", exact: true }),
     ).toBeVisible();
     await theme.focus();
     await page.keyboard.press("Enter");

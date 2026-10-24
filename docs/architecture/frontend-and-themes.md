@@ -139,6 +139,10 @@ dialogs use content-sized grid rows, so long validation does not compress away t
 footer. The close button remains reachable by returning to the top or keyboard focus;
 footers scroll with the content. Agent forms use that outer scroll owner rather than
 an independently scrolling form, and their columns follow the dialog container width.
+The searchable model picker portals inside its owning dialog and uses that dialog
+as its collision boundary, keeping pointer selection and search focus within the
+modal. Escape closes an open model popup and restores its trigger; a subsequent
+Escape closes the dialog. Pickers outside dialogs retain their body portal.
 Library/project file pickers retain a flex layout with an 80dvh preferred height,
 subject to the shared cap; their headers/ribbons do not shrink. Image previews fit
 within the same dynamic-height limit. All production callers were inspected: main

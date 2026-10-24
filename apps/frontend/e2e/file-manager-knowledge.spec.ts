@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test";
+import type { UserFile, FileKnowledgeArtifact } from "../src/lib/client";
+import { expect, test } from "./support/test";
 
-const imageFile = {
+const imageFile: UserFile = {
   id: "20000000-0000-4000-8000-000000000001",
   filename: "diagram.png",
   original_name: "diagram.png",
@@ -10,12 +11,18 @@ const imageFile = {
   content_status: "ready",
   content_error: null,
   thumbnail: null,
-  projects: [{ id: "p-1", name: "References", context_revision: 1 }],
+  projects: [
+    {
+      id: "30000000-0000-4000-8000-000000000001",
+      name: "References",
+      context_revision: 1,
+    },
+  ],
   created_at: 0,
   updated_at: 0,
 };
 
-const artifact = {
+const artifact: FileKnowledgeArtifact = {
   id: "40000000-0000-4000-8000-000000000001",
   file_id: imageFile.id,
   generation: 1,
@@ -94,6 +101,9 @@ test("shows canonical processing state and confirms the full impact before file 
   await expect(page.getByRole("button", { name: "Clear caption" })).toHaveCount(
     0,
   );
+  await expect(
+    page.getByRole("button", { name: /review caption/i }),
+  ).toHaveCount(0);
   await page
     .getByRole("button", {
       name: "Regenerate embedding and caption",

@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { knowledgeArtifact } from "./support/knowledge-artifact";
+import { expect, test } from "./support/test";
 
 const uploaded = {
   id: "10000000-0000-4000-8000-000000000001",
@@ -57,7 +58,7 @@ test.beforeEach(async ({ page }) => {
     }),
   );
   await page.route("**/api/py/files/*/knowledge", (route) =>
-    route.fulfill({ json: { status: "ready", extractions: {} } }),
+    route.fulfill({ json: knowledgeArtifact(uploaded.id) }),
   );
 });
 
@@ -127,7 +128,7 @@ test("keeps a failed upload visible and does not send the message", async ({
   await expect(page.getByLabel("Send message")).toBeEnabled();
   await page.getByLabel("Send message").click();
   await expect(
-    page.getByText("large.pdf: File exceeds upload limit"),
+    page.getByText("large.pdf: File exceeds upload limit", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Failed", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Send message")).toBeEnabled();

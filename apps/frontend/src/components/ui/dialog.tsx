@@ -51,6 +51,7 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onEscapeKeyDown,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
@@ -60,6 +61,17 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        onEscapeKeyDown={(event) => {
+          // Radix listens during capture; the Base UI combobox dismisses during
+          // bubbling. Let the inner popup consume Escape before this modal.
+          if (
+            event.target instanceof Element &&
+            event.target.closest('[data-slot="combobox-content"][data-open]')
+          ) {
+            event.preventDefault();
+          }
+          onEscapeKeyDown?.(event);
+        }}
         className={cn(
           "bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] min-w-0 -translate-x-1/2 -translate-y-1/2 scroll-p-4 auto-rows-min gap-4 overflow-y-auto overscroll-contain rounded-xl p-4 text-xs/relaxed [overflow-wrap:anywhere] ring-1 duration-100 outline-none sm:max-w-sm",
           className,

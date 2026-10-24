@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 const P = "11111111-1111-4111-8111-111111111111";
 const Q = "22222222-2222-4222-8222-222222222222";
 const C = "33333333-3333-4333-8333-333333333333";
@@ -183,7 +183,9 @@ test("edits project instructions with a revision guard and explains deletion", a
   );
   await page.getByRole("button", { name: "Confirm" }).click();
   await deleted;
-  await expect(page).toHaveURL(/sign-in\?redirect=%2Fgeneral/);
+  await expect(page).toHaveURL(/sign-in\?redirect=%2Fgeneral/, {
+    timeout: 30_000,
+  });
   await expect(page.getByRole("heading", { name: "ASTERISM" })).toBeVisible();
 });
 

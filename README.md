@@ -29,10 +29,13 @@ authentication, mobile workspace, settings, file panes, dialogs and rich chat
 content reachability. EPIC-33 / US-33.1, repairing bundled palette mappings and
 contrast, is confirmed complete, including the select-text repair. US-33.2, unifying
 semantic states, labels and typography, is confirmed complete;
-the Montserrat logo is preserved. US-33.3, the theme/layout review matrix, is implemented and verified, awaiting completion confirmation. Palette sources and control contrast are documented in
+the Montserrat logo is preserved. US-33.3, the theme/layout review matrix, is confirmed complete. Palette sources and control contrast are documented in
 the [bundled palette guide](docs/architecture/bundled-theme-palettes.md). The shared
 [content policy](docs/architecture/markdown-content.md) defines allowed Markdown,
 links, resources and math.
+US-34.3 establishes the [current browser baseline](docs/reviews/us-34.3-verification-2026-10-24.md):
+122 isolated cases passed without retries, with current model-picker/dialog
+behavior, file-knowledge fixtures and a shared unhandled-page-error gate.
 Current theme editing, placeholder admin panes and the unimplemented separate
 persona/default-profile policy are described in the
 [frontend/theme guide](docs/architecture/frontend-and-themes.md).

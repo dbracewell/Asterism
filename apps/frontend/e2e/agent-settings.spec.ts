@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 import type {
   MainAgentConfiguration,
   SubAgentDefinition,
@@ -13,7 +13,7 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   let main: MainAgentConfiguration = {
-    id: "main",
+    id: "44444444-4444-4444-8444-444444444444",
     name: "Main",
     description: "",
     system_prompt: "Original",
@@ -35,6 +35,7 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
         {
           id: modelId,
           name: "Worker model",
+          provider_id: modelId,
           provider_name: "Test provider",
           available: true,
         },
@@ -113,7 +114,7 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
   ).toBeDisabled();
   await dialog.getByLabel("Name", { exact: true }).fill("Researcher");
   await dialog.getByLabel("Model", { exact: true }).click();
-  await page.getByRole("button", { name: "Worker model", exact: true }).click();
+  await page.getByRole("option", { name: "Worker model", exact: true }).click();
   await dialog.getByLabel("Instructions").fill("Research carefully");
   await dialog.getByRole("button", { name: "Save configuration" }).click();
   await expect(dialog).toHaveCount(0);
@@ -177,7 +178,13 @@ test("browses pages and recovers query failures while retaining an unavailable b
 }) => {
   let fail = true;
   await page.route("**/api/py/settings/user/main-agent", (route) =>
-    route.fulfill({ json: { id: "main", name: "Main", description: "" } }),
+    route.fulfill({
+      json: {
+        id: "44444444-4444-4444-8444-444444444444",
+        name: "Main",
+        description: "",
+      },
+    }),
   );
   await page.route("**/api/py/chat/models", (route) =>
     route.fulfill({ json: [] }),
@@ -213,7 +220,10 @@ test("browses pages and recovers query failures while retaining an unavailable b
     page.getByRole("button", { name: "Next", exact: true }),
   ).toHaveCount(0);
   fail = false;
-  await page.getByRole("button", { name: "Retry sub-agents" }).click();
+  await page
+    .getByRole("region", { name: "Sub-agents", exact: true })
+    .getByRole("button", { name: "Retry", exact: true })
+    .click();
   await expect(page.getByText(modelId, { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(
@@ -229,3 +239,93 @@ test("browses pages and recovers query failures while retaining an unavailable b
   ).toBeDisabled();
   await expect(page.getByRole("dialog")).toContainText("No available models");
 });
+
+for (const viewport of [
+  { width: 1280, height: 720, enlarged: false },
+  { width: 320, height: 300, enlarged: false },
+  { width: 390, height: 600, enlarged: true },
+]) {
+  test(`model popup stays clickable and keyboard accessible inside a dialog at ${viewport.width}x${viewport.height}${viewport.enlarged ? " with 200% text" : ""}`, async ({
+    page,
+  }, info) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.setViewportSize(viewport);
+    await page.route("**/api/py/settings/user/main-agent", (route) =>
+      route.fulfill({ json: { id: workerId, name: "Main", description: "" } }),
+    );
+    await page.route("**/api/py/agents/sub-agents**", (route) =>
+      route.fulfill({ json: { items: [], total: 0, page: 1, page_size: 10 } }),
+    );
+    await page.route("**/api/py/tools/active", (route) =>
+      route.fulfill({ json: { items: [] } }),
+    );
+    await page.route("**/api/py/chat/models", (route) =>
+      route.fulfill({
+        json: Array.from({ length: 24 }, (_, i) => ({
+          id: `33333333-3333-4333-8333-${String(i + 1).padStart(12, "0")}`,
+          name: `Worker ${i + 1}`,
+          provider_id: modelId,
+          provider_name: "Test provider",
+          available: true,
+        })),
+      }),
+    );
+    await page.goto("/e2e/agent-settings");
+    if (viewport.enlarged) {
+      await page.addStyleTag({
+        content: "html { font-size: 200% !important; }",
+      });
+    }
+    await page
+      .getByRole("button", { name: "Create sub-agent", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", {
+      name: "Create sub-agent",
+      exact: true,
+    });
+    await dialog.getByLabel("Name", { exact: true }).fill("Popup verification");
+    const model = dialog.getByRole("combobox", { name: "Model", exact: true });
+    await expect(
+      dialog.getByRole("button", { name: "Save configuration" }),
+    ).toBeDisabled();
+    await model.click();
+    const search = dialog.getByRole("combobox", {
+      name: "Search models…",
+      exact: true,
+    });
+    await expect(search).toBeFocused();
+    await search.fill("Worker 24");
+    const option = dialog.getByRole("option", {
+      name: "Worker 24",
+      exact: true,
+    });
+    await expect(option).toBeInViewport({ ratio: 1 });
+    // A normal click exercises stacking, clipping and the modal pointer boundary.
+    await option.click();
+    await expect(model).toHaveText("Worker 24");
+    await expect(model).toBeFocused();
+    await expect(
+      dialog.getByRole("button", { name: "Save configuration" }),
+    ).toBeEnabled();
+    await page.keyboard.press("Enter");
+    await expect(search).toBeFocused();
+    await search.fill("Worker 23");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(model).toHaveText("Worker 23");
+    await expect(model).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(search).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+    await expect(model).toBeFocused();
+    await page.screenshot({ path: info.outputPath("model-dialog.png") });
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Create sub-agent", exact: true }),
+    ).toBeFocused();
+    expect(errors).toEqual([]);
+  });
+}

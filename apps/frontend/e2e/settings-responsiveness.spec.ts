@@ -1,4 +1,5 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { knowledgeArtifact } from "./support/knowledge-artifact";
+import { expect, test, type Locator } from "./support/test";
 
 // Hit testing catches controls clipped by ancestors even when the document fits.
 async function reachable(control: Locator) {
@@ -49,7 +50,7 @@ for (const { width, height, pane } of [
         json: {
           files: [
             {
-              id: "picker-file",
+              id: "20000000-0000-4000-8000-000000000002",
               filename: "picker.txt",
               original_name: "picker.txt",
               kind: "document",
@@ -153,7 +154,7 @@ for (const { width, height, pane } of [
     for (const control of await page.getByRole("combobox").all())
       await reachable(control);
     await reachable(
-      page.getByRole("button", { name: "Default Model", exact: true }),
+      page.getByRole("combobox", { name: "Default Model", exact: true }),
     );
     expect(
       await page
@@ -174,7 +175,7 @@ test("file grid and actions fit a 240px pane on a desktop viewport", async ({
       json: {
         files: [
           {
-            id: "file",
+            id: "20000000-0000-4000-8000-000000000001",
             filename: "report.txt",
             original_name: "verylongfilename".repeat(15) + ".txt",
             kind: "document",
@@ -189,7 +190,9 @@ test("file grid and actions fit a 240px pane on a desktop viewport", async ({
     }),
   );
   await page.route("**/api/py/files/report.txt/knowledge", (route) =>
-    route.fulfill({ json: { status: "ready", extractions: {} } }),
+    route.fulfill({
+      json: knowledgeArtifact("20000000-0000-4000-8000-000000000001"),
+    }),
   );
   await page.goto("/e2e/responsiveness?pane=240&setting=files");
   await page.getByRole("button", { name: "Icon view" }).click();

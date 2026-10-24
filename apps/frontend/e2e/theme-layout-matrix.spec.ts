@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator } from "./support/test";
 import { writeFile } from "node:fs/promises";
 import { measure } from "./support/contrast";
 import { reviewViewports, themes } from "./support/theme-matrix";

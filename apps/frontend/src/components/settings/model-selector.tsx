@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/combobox";
 import type { ChatModelChoice, LlmDisplayInfo } from "@/lib/client";
 import { cn } from "@/lib/utils";
+import { useRef, useState } from "react";
 
 export type ModelOption = LlmDisplayInfo | ChatModelChoice;
 
@@ -75,6 +76,10 @@ export const ModelSelector = ({
   "aria-label": ariaLabel,
   "aria-invalid": ariaInvalid,
 }: ModelSelectorProps) => {
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
+    null,
+  );
   const selectable = (availableModels ?? []).filter(isAvailable);
   const selected = selectable.find((model) => model.id === value) ?? null;
   const known = availableModels?.find((model) => model.id === value);
@@ -82,6 +87,15 @@ export const ModelSelector = ({
 
   return (
     <Combobox
+      onOpenChange={(open) => {
+        if (open) {
+          // Keep the popup inside a modal's focus/pointer boundary and stacking
+          // context. A body portal competes with the Radix dialog's focus trap.
+          setPortalContainer(
+            trigger.current?.closest<HTMLElement>('[role="dialog"]') ?? null,
+          );
+        }
+      }}
       items={selectable}
       value={selected}
       onValueChange={(model: ModelOption | null) => {
@@ -94,6 +108,7 @@ export const ModelSelector = ({
       disabled={disabled}
     >
       <ComboboxTrigger
+        ref={trigger}
         id={id}
         aria-label={ariaLabel}
         aria-invalid={ariaInvalid}
@@ -122,6 +137,8 @@ export const ModelSelector = ({
         </span>
       </ComboboxTrigger>
       <ComboboxContent
+        portalContainer={portalContainer}
+        collisionBoundary={portalContainer ?? undefined}
         side={inline ? "top" : "bottom"}
         align={align === "center" ? "center" : align}
         className="w-80 max-w-[calc(100vw-2rem)]"

@@ -38,3 +38,17 @@ including 119 isolated browser cases without retries, 24 layout records and
 744 rendered contrast checks. Fresh reconciliation: [2026-10-24 record](../reviews/us-33.3-completion-reconciliation-2026-10-24.md),
 including 96 passing palette unit cases. Historical browser evidence is not a
 current-tree browser result; US-34.3 owns that baseline.
+
+## US-34.3 — Current browser baseline and live contracts
+
+The user confirmed completion and authorized commit and local merge on 2026-10-24.
+
+- [x] US-34.3: Establish the current browser baseline and reconcile live contracts
+  - [x] Run and record the current full isolated suite without retries; classify failures against live code and retain existing agent/model contract coverage.
+  - [x] Reconcile demonstrated assertion/fixture drift and product defects, including EPIC-38 file-knowledge contracts and valid mocked response shapes, without weakening scope, ownership or accessibility checks.
+  - [x] Run affected focused specs and the full isolated suite without retries, plus frontend lint/types/tests; record actual outcomes, skip/flaky counts and update verification docs.
+        Verification: 122 full isolated browser cases and 72 focused cases passed without
+        retries, skips or flaky results. The full run recorded zero unhandled page errors.
+        Frontend lint/types, 352 unit tests, six auth-migration checks and scoped formatting
+        passed. See the [verification record](../reviews/us-34.3-verification-2026-10-24.md)
+        for the initial 30 failures, repairs, diagnostics and limits.

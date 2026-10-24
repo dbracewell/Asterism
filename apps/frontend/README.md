@@ -157,7 +157,13 @@ For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Its fresh-install
 project runs before account creation. The authenticated workspace spec uses real
 app APIs and sockets against a local model double; focused harness specs retain
-mocked boundaries. See [runner details](../../scripts/README.md#run-isolated-e2emjs).
+mocked boundaries. Every spec imports `test` from `e2e/support/test.ts` so unhandled
+page errors fail the run; keep that shared fixture when adding cases. Model-picker dialog regressions exercise pointer selection,
+search, keyboard replacement and Escape/focus return at desktop, short-phone and
+enlarged-text sizes. Knowledge mocks use the generated-contract response helper in
+`e2e/support/knowledge-artifact.ts`, including required generation/identity fields
+and the current `extractions` map. See [US-34.3 verification](../../docs/reviews/us-34.3-verification-2026-10-24.md)
+and [runner details](../../scripts/README.md#run-isolated-e2emjs).
 
 From the repository root:
 

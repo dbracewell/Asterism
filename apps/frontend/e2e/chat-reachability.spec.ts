@@ -1,10 +1,11 @@
+import { knowledgeArtifact } from "./support/knowledge-artifact";
 import {
   expect,
   test,
   type Locator,
   type Page,
   type WebSocketRoute,
-} from "@playwright/test";
+} from "./support/test";
 import type { Chat, ChatFileScope, ChatModelChoice } from "../src/lib/client";
 
 const C = "77777777-7777-4777-8777-777777777777";
@@ -142,7 +143,7 @@ async function fixtures(page: Page) {
     }),
   );
   await page.route("**/api/py/files/source.txt/knowledge", (route) =>
-    route.fulfill({ json: { status: "ready", extractions: {} } }),
+    route.fulfill({ json: knowledgeArtifact(F) }),
   );
   await page.routeWebSocket(`**/api/py/chat/stream/${C}?**`, (socket) => {
     transport.socket = socket;
@@ -220,10 +221,15 @@ for (const { width, height, pane, enlarged } of [
         .poll(() => region.evaluate((node) => node.scrollLeft))
         .toBeGreaterThan(0);
     }
-    const tool = history
-      .locator("details")
-      .filter({ hasText: "synthetic_tool" });
-    await tool.locator("summary").click();
+    const thinking = history.getByRole("button", {
+      name: "Thinking (1 tool call)",
+      exact: true,
+    });
+    await reachable(thinking);
+    await page.keyboard.press("Enter");
+    await expect(thinking).toHaveAttribute("aria-expanded", "true");
+    const tool = history.getByText(`• synthetic_tool`, { exact: false });
+    await expect(tool).toBeVisible();
     await expect(tool).toContainText(token);
     const download = history.getByRole("link", { name: "Download source.txt" });
     await reachable(download);

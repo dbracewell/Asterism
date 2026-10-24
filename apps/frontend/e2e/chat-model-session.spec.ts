@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 import type {
   Chat,
   ChatModelChoice,
@@ -212,7 +212,9 @@ test("reopens a saved model, switches and regenerates through the real chat comp
   await expect(page.getByText("Original Alpha answer")).toBeVisible();
   await expect(page.getByLabel("Executed model")).toContainText("Alpha");
   await expect(page.getByLabel("Chat model")).toContainText("Beta");
-  await expect(page.getByText("Agent: Main")).toBeVisible();
+  await expect(page.getByLabel("Executed model")).toHaveText(
+    "Alpha · Provider · configuration 1",
+  );
   expect(settingsWrites).toBe(0);
   await page.screenshot({
     path: "test-results/chat-model-desktop.png",

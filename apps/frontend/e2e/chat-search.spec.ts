@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 
 test("searches projects and chats, shows membership, and paginates", async ({
   page,

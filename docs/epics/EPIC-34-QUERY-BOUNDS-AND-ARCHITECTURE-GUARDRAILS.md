@@ -1,6 +1,7 @@
 # EPIC-34: Query bounds and architecture guardrails
 
-Status: proposed / pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
+Status: US-34.3 confirmed complete on 2026-10-24;
+US-34.1, US-34.2 and US-34.4 remain pending. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F7 and architecture assessment.
 
 ## Objective
 
@@ -74,6 +75,15 @@ Tasks:
 
 ## US-34.3: Establish the current browser baseline and reconcile live contracts
 
+Status (2026-10-24): implemented and verified on
+`feat/us-34.3-browser-baseline`; the user confirmed completion on 2026-10-24
+and authorized commit and local merge. The [verification record](../reviews/us-34.3-verification-2026-10-24.md)
+classifies the 89-pass/30-failure initial baseline and records the final
+122-pass, zero-retry full isolated gate, 72 focused cases and frontend checks.
+The repair includes modal model-popup pointer/focus/Escape behavior, current
+selectors and complete knowledge-artifact mocks. Scope, ownership, revocation,
+provenance and contrast thresholds remain asserted.
+
 Source audit (2026-10-24): `authenticated-workspace.spec.ts` already scopes the
 Main Agent heading to the Main configuration region. `new-chat-agent.spec.ts`
 already checks the unavailable fixed-model status, controlled picker, explicit
@@ -113,9 +123,9 @@ An unchanged failure set between branches is not a passing gate.
 
 Tasks:
 
-- [ ] Run and record the current full isolated suite without retries; classify failures against live code and retain existing agent/model contract coverage.
-- [ ] Reconcile demonstrated assertion/fixture drift and product defects, including EPIC-38 file-knowledge contracts and valid mocked response shapes, without weakening scope, ownership or accessibility checks.
-- [ ] Run affected focused specs and the full isolated suite without retries, plus frontend lint/types/tests; record actual outcomes, skip/flaky counts and update verification docs.
+- [x] Run and record the current full isolated suite without retries; classify failures against live code and retain existing agent/model contract coverage.
+- [x] Reconcile demonstrated assertion/fixture drift and product defects, including EPIC-38 file-knowledge contracts and valid mocked response shapes, without weakening scope, ownership or accessibility checks.
+- [x] Run affected focused specs and the full isolated suite without retries, plus frontend lint/types/tests; record actual outcomes, skip/flaky counts and update verification docs.
 
 ## US-34.4: Bound admission of active chat jobs and controllers
 

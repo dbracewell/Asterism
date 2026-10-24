@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 import { authViewports, exerciseAuth } from "./support/auth-reachability";
 
 test("fresh installation renders administrator setup form", async ({

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 import { writeFile } from "node:fs/promises";
 
 import { themes } from "./support/theme-matrix";
@@ -176,27 +176,34 @@ for (const theme of themes) {
       await page.waitForTimeout(250);
       await check(id, "hover");
     }
-    await page.locator('[data-contrast="settings-model"]').click();
+    const settingsModel = page.locator('[data-contrast="settings-model"]');
+    await settingsModel.click();
+    await expect(settingsModel).toHaveAttribute("aria-expanded", "true");
     const menuId = await page
       .locator('[data-contrast="settings-model"]')
       .getAttribute("aria-controls");
     const menu = page.locator(`[id="${menuId}"]`);
     await menu
-      .getByRole("button", { name: /Palette model/ })
+      .getByRole("option", { name: "Palette model", exact: true })
       .evaluate((el) => el.setAttribute("data-contrast", "settings-option"));
     await menu
-      .getByRole("textbox", { name: "Filter models" })
+      .getByRole("combobox", { name: "Search models…", exact: true })
       .evaluate((el) => el.setAttribute("data-contrast", "settings-filter"));
     await check("settings-option", "selected");
     await check("settings-filter", "rest", "placeholder");
     await page.locator('[data-contrast="settings-option"]').hover();
     await page.waitForTimeout(250);
     await check("settings-option", "hover");
-    await page.keyboard.press("Tab");
-    await page.locator('[data-contrast="settings-filter"]').focus();
+    // Tab dismisses this combobox. Keep the search input focused while switching
+    // to keyboard modality, then measure its actual focus state.
+    await page.keyboard.press("ArrowDown");
+    await expect(
+      page.locator('[data-contrast="settings-filter"]'),
+    ).toBeFocused();
     await page.waitForTimeout(250);
     await check("settings-filter", "keyboard focus", "ring");
-    await page.locator('[data-contrast="settings-model"]').click();
+    await page.keyboard.press("Escape");
+    await expect(settingsModel).toBeFocused();
     await page
       .locator('[data-contrast="composer-input"]')
       .fill("Palette draft");

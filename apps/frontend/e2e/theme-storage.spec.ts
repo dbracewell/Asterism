@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./support/test";
 import { randomUUID } from "node:crypto";
 import { chmod, readFile } from "node:fs/promises";
 import path from "node:path";

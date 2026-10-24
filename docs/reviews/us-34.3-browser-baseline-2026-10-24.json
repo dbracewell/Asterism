@@ -1,0 +1,1490 @@
+{
+  "baseline": {
+    "commit": "af3b8b6",
+    "stats": {
+      "startTime": "2026-10-24T07:29:03.432Z",
+      "duration": 770160.16,
+      "expected": 89,
+      "skipped": 0,
+      "unexpected": 30,
+      "flaky": 0
+    },
+    "report_errors": [],
+    "failures": [
+      {
+        "file": "agent-settings.spec.ts",
+        "title": "persists singleton settings and manages fixed-model sub-agents",
+        "status": "unexpected",
+        "classification": "stale retry/option selectors; corrected option reveals dialog popup defect",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "agent-settings.spec.ts",
+        "title": "browses pages and recovers query failures while retaining an unavailable binding",
+        "status": "unexpected",
+        "classification": "stale retry/option selectors; corrected option reveals dialog popup defect",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "chat-model-session.spec.ts",
+        "title": "reopens a saved model, switches and regenerates through the real chat component, and restores original provenance",
+        "status": "unexpected",
+        "classification": "retired Agent label; current executed-model/configuration provenance remains",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Agent: Main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 320x300 in 320px",
+        "status": "unexpected",
+        "classification": "retired details/summary markup; current collapsible trigger",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 390x800 in 390px",
+        "status": "unexpected",
+        "classification": "retired details/summary markup; current collapsible trigger",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 768x300 in 768px",
+        "status": "unexpected",
+        "classification": "retired details/summary markup; current collapsible trigger",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 1440x900 in 640px",
+        "status": "unexpected",
+        "classification": "retired details/summary markup; current collapsible trigger",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 1440x400 in 320px",
+        "status": "unexpected",
+        "classification": "retired details/summary markup; current collapsible trigger",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 390x600 in 390px at 200% text",
+        "status": "unexpected",
+        "classification": "retired details/summary markup; current collapsible trigger",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "file-workflow.spec.ts",
+        "title": "keeps a failed upload visible and does not send the message",
+        "status": "unexpected",
+        "classification": "ambiguous inline error/toast text",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('large.pdf: File exceeds upload limit')\nExpected: visible\nError: strict mode violation: getByText('large.pdf: File exceeds upload limit') resolved to 2 elements:\n    1) <span>large.pdf: File exceeds upload limit</span> aka getByText('large.pdf: File exceeds upload limit', { exact: true })\n    2) <div class=\"\" data-title=\"\">Upload failed for large.pdf: File exceeds upload \u2026</div> aka getByText('Upload failed for large.pdf:')"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "projects and settings scroll to their last controls at 320px",
+        "status": "unexpected",
+        "classification": "retired default-model button/search textbox roles",
+        "error": "Error: expect(locator).toBeAttached() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: attached\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "projects and settings scroll to their last controls at 390px",
+        "status": "unexpected",
+        "classification": "retired default-model button/search textbox roles",
+        "error": "Error: expect(locator).toBeAttached() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: attached\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "new-chat-agent.spec.ts",
+        "title": "edits the sole model-free main configuration and exposes unavailable worker bindings",
+        "status": "unexpected",
+        "classification": "stale option selector; corrected option reveals dialog popup defect",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "projects.spec.ts",
+        "title": "edits project instructions with a revision guard and explains deletion",
+        "status": "unexpected",
+        "classification": "cold sign-in compilation exceeds five-second navigation assertion",
+        "error": "Error: expect(page).toHaveURL(expected) failed\n\nExpected pattern: /sign-in\\?redirect=%2Fgeneral/\nReceived string:  \"http://localhost:3100/e2e/projects?view=settings\"\nTimeout: 5000ms"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "named settings and keyboard-visible sidebar actions at 320px",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "named settings and keyboard-visible sidebar actions at 1280px",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 320x300 in a 320px pane",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeEnabled() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: enabled\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 390x800 in a 390px pane",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeEnabled() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: enabled\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 768x300 in a 768px pane",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeEnabled() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: enabled\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 1440x900 in a 1440px pane",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeEnabled() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: enabled\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 1440x300 in a 640px pane",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeEnabled() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: enabled\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 1440x600 in a 240px pane",
+        "status": "unexpected",
+        "classification": "retired default-model button role",
+        "error": "Error: expect(locator).toBeEnabled() failed\n\nLocator: getByRole('button', { name: 'Default Model', exact: true })\nExpected: enabled\nTimeout: 5000ms\nError: element(s) not found"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "catppuccin-latte-mauve: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "catppuccin-mocha: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "dark: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "dracula: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "flowers: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "light: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "one_dark: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "ucf-knights: paired roles and rendered controls",
+        "status": "unexpected",
+        "classification": "retired option/search roles and asynchronous popup ID",
+        "error": "Test timeout of 30000ms exceeded."
+      }
+    ],
+    "command": "CI=1 pnpm_config_verify_deps_before_run=false UV_CACHE_DIR=/private/tmp/asterism-uv-cache node scripts/run-isolated-e2e.mjs --retries=0",
+    "runner_exit_code": 1,
+    "runner_cleanup_error": "kill EPERM during process-group existence probe after backend shutdown; browser result was already failing",
+    "artifacts": "/private/tmp/asterism-us34.3-baseline-artifacts/"
+  },
+  "diagnostics": [
+    {
+      "name": "selector repairs",
+      "passed": 54,
+      "failed": 10,
+      "reason": "two modal popup failures and eight stale search-focus sequences"
+    },
+    {
+      "name": "first portal repair",
+      "passed": 13,
+      "failed": 1,
+      "reason": "null portal container deferred mounting outside dialogs; corrected to undefined"
+    },
+    {
+      "name": "popup input and selection",
+      "passed": 14,
+      "failed": 3,
+      "reason": "new regressions exposed Escape dismissing both popup and parent dialog"
+    },
+    {
+      "name": "final affected specs",
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "runner_exit_code": 0,
+      "artifact": "/private/tmp/asterism-us34.3-focused-final.log"
+    }
+  ],
+  "final": {
+    "base_commit": "af3b8b6",
+    "branch": "feat/us-34.3-browser-baseline",
+    "tree": "verified implementation; user confirmed completion and authorized commit/local merge on 2026-10-24",
+    "command": "CI=1 pnpm_config_verify_deps_before_run=false UV_CACHE_DIR=/private/tmp/asterism-uv-cache node scripts/run-isolated-e2e.mjs --retries=0",
+    "stats": {
+      "startTime": "2026-10-24T07:59:26.109Z",
+      "duration": 304237.15499999997,
+      "expected": 122,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "runner_exit_code": 0,
+    "report_errors": [],
+    "retries": 0,
+    "unhandled_page_errors": 0,
+    "page_error_gate": "all specs use support/test.ts; a separate synthetic failing probe verified detection",
+    "cases": [
+      {
+        "file": "home.spec.ts",
+        "title": "fresh installation renders administrator setup form",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 320x300, 100% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 320x300, 200% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 320x800, 100% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 320x800, 200% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 390x300, 100% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 390x300, 200% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 390x800, 100% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 390x800, 200% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 640x300, 100% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "home.spec.ts",
+        "title": "setup controls, errors and keyboard focus at 640x300, 200% text",
+        "project": "fresh-install",
+        "status": "expected"
+      },
+      {
+        "file": "agent-settings.spec.ts",
+        "title": "persists singleton settings and manages fixed-model sub-agents",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "agent-settings.spec.ts",
+        "title": "browses pages and recovers query failures while retaining an unavailable binding",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "agent-settings.spec.ts",
+        "title": "model popup stays clickable and keyboard accessible inside a dialog at 1280x720",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "agent-settings.spec.ts",
+        "title": "model popup stays clickable and keyboard accessible inside a dialog at 320x300",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "agent-settings.spec.ts",
+        "title": "model popup stays clickable and keyboard accessible inside a dialog at 390x600 with 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 320x300, 100% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 320x300, 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 320x800, 100% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 320x800, 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 390x300, 100% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 390x300, 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 390x800, 100% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 390x800, 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 640x300, 100% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "login controls, errors and keyboard focus at 640x300, 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "a long unbroken login error wraps, scrolls and leaves fields/submit reachable",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "a focused login can shrink to a keyboard-sized viewport and recover",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "auth-reachability.spec.ts",
+        "title": "successful login remains reachable at 320x300 with 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "authenticated-workspace.spec.ts",
+        "title": "authenticated project and General chats preserve scope, provenance, and ownership",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-file-scope.spec.ts",
+        "title": "keeps General isolated and shows two project chats with different local attachments across reopen, model and branch changes",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-file-scope.spec.ts",
+        "title": "preserves retrieval provenance while revoked citations and source views fail closed",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-model-session.spec.ts",
+        "title": "reopens a saved model, switches and regenerates through the real chat component, and restores original provenance",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-model-session.spec.ts",
+        "title": "chooses a draft model explicitly and forwards it when starting a chat",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-models.spec.ts",
+        "title": "switches the selected model independently of historical provenance and disables changes during a run",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-models.spec.ts",
+        "title": "reports loading failures with retry and retains an unavailable selection without replacement",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 320x300 in 320px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 390x800 in 390px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 768x300 in 768px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 1440x900 in 640px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 1440x400 in 320px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "rich content and a grown composer fit 390x600 in 390px at 200% text",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "conversation loading, failure, empty and cached-refresh states keep retry and composer reachable",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "streaming preserves manual history position and jump/stop stay reachable beside a multiline draft",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-reachability.spec.ts",
+        "title": "file context loading, failure and cached-refresh failure keep scope links fail-closed and retry reachable",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "chat-search.spec.ts",
+        "title": "searches projects and chats, shows membership, and paginates",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "file-manager-knowledge.spec.ts",
+        "title": "shows canonical processing state and confirms the full impact before file deletion",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "file-workflow.spec.ts",
+        "title": "uploads, attaches, and renders a persisted file with a mocked reply",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "file-workflow.spec.ts",
+        "title": "keeps a failed upload visible and does not send the message",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "file-workflow.spec.ts",
+        "title": "retries a failed send with the same receipt key and no duplicate upload",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "markdown-security.spec.ts",
+        "title": "untrusted replies and file text cannot install HTML or load resources; math, code and citations survive",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "mobile sidebar opens with one tap and restores focus at 320px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "projects and settings scroll to their last controls at 320px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "mobile sidebar opens with one tap and restores focus at 390px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "projects and settings scroll to their last controls at 390px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "General and Files scroll after the mobile drawer closes at 320px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "new chat controls remain reachable at 320px and short height",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "saved chat history scrolls independently of its composer at 320px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "General and Files scroll after the mobile drawer closes at 390px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "new chat controls remain reachable at 390px and short height",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "mobile-shell.spec.ts",
+        "title": "saved chat history scrolls independently of its composer at 390px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "new-chat-agent.spec.ts",
+        "title": "edits the sole model-free main configuration and exposes unavailable worker bindings",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "project-files.spec.ts",
+        "title": "shares explorer controls for project membership, library picking, upload, filtering and removal",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "project-sub-agents.spec.ts",
+        "title": "selects workers separately for two projects, retains unavailable bindings, and recovers selection conflicts",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "projects.spec.ts",
+        "title": "browses Projects and General, searches, paginates, and offers scoped new chats",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "projects.spec.ts",
+        "title": "edits project instructions with a revision guard and explains deletion",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "projects.spec.ts",
+        "title": "moves a chat to General with explicit history transfer and updates its identity",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "projects.spec.ts",
+        "title": "creates a project with independent task instructions",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "projects.spec.ts",
+        "title": "retries failed project loading without showing a false empty state",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "provider-workflow.spec.ts",
+        "title": "does not mount a large catalog until it is opened",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "provider-workflow.spec.ts",
+        "title": "persists explicit tool-call support through the admin model control",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "provider-workflow.spec.ts",
+        "title": "keeps model capabilities and the shared Save inside a narrow panel at 390px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "provider-workflow.spec.ts",
+        "title": "keeps model capabilities and the shared Save inside a narrow panel at 1100px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "light: inherited fonts, semantic image states and motion",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "dracula: inherited fonts, semantic image states and motion",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "one_dark: inherited fonts, semantic image states and motion",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "catppuccin-latte-mauve: inherited fonts, semantic image states and motion",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "named settings and keyboard-visible sidebar actions at 320px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "semantic-ui.spec.ts",
+        "title": "named settings and keyboard-visible sidebar actions at 1280px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 320x300 in a 320px pane",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 390x800 in a 390px pane",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 768x300 in a 768px pane",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 1440x900 in a 1440px pane",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 1440x300 in a 640px pane",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "settings and dialogs remain reachable at 1440x600 in a 240px pane",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "settings-responsiveness.spec.ts",
+        "title": "file grid and actions fit a 240px pane on a desktop viewport",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "sub-agent.spec.ts",
+        "title": "shows delegated progress and the final parent response",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "sub-agent.spec.ts",
+        "title": "shows a delegated timeout while allowing a parent response",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "catppuccin-latte-mauve: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "catppuccin-mocha: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "dark: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "dracula: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "flowers: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "light: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "one_dark: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-contrast.spec.ts",
+        "title": "ucf-knights: paired roles and rendered controls",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "catppuccin-latte-mauve: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "catppuccin-latte-mauve: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "catppuccin-latte-mauve: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "catppuccin-mocha: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "catppuccin-mocha: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "catppuccin-mocha: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "dark: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "dark: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "dark: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "dracula: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "dracula: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "dracula: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "flowers: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "flowers: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "flowers: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "light: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "light: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "light: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "one_dark: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "one_dark: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "one_dark: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "ucf-knights: phone-short 320x300, pane 320, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "ucf-knights: desktop-narrow 1440x300, pane 240, text 16px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-layout-matrix.spec.ts",
+        "title": "ucf-knights: phone-large-text 390x600, pane 390, text 32px",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-security.spec.ts",
+        "title": "public catalog rejects traversal and preserves sign-in theme selection",
+        "project": "chromium",
+        "status": "expected"
+      },
+      {
+        "file": "theme-storage.spec.ts",
+        "title": "administrator saves persist and a real write failure retains edits for retry",
+        "project": "chromium",
+        "status": "expected"
+      }
+    ],
+    "rendered_contrast": [
+      {
+        "theme": "catppuccin-latte-mauve",
+        "checks": 93,
+        "failed": 0
+      },
+      {
+        "theme": "catppuccin-mocha",
+        "checks": 93,
+        "failed": 0
+      },
+      {
+        "theme": "dark",
+        "checks": 93,
+        "failed": 0
+      },
+      {
+        "theme": "dracula",
+        "checks": 93,
+        "failed": 0
+      },
+      {
+        "theme": "flowers",
+        "checks": 93,
+        "failed": 0
+      },
+      {
+        "theme": "light",
+        "checks": 93,
+        "failed": 0
+      },
+      {
+        "theme": "one_dark",
+        "checks": 93,
+        "failed": 0
+      },
+      {
+        "theme": "ucf-knights",
+        "checks": 93,
+        "failed": 0
+      }
+    ],
+    "layout_matrix": [
+      {
+        "theme": "catppuccin-mocha",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      },
+      {
+        "theme": "catppuccin-mocha",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "catppuccin-mocha",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "catppuccin-latte-mauve",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "catppuccin-latte-mauve",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "catppuccin-latte-mauve",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      },
+      {
+        "theme": "dark",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "dark",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      },
+      {
+        "theme": "dark",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "dracula",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "dracula",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "dracula",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      },
+      {
+        "theme": "flowers",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "flowers",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      },
+      {
+        "theme": "flowers",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "light",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      },
+      {
+        "theme": "light",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "light",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "one_dark",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "one_dark",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "one_dark",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      },
+      {
+        "theme": "ucf-knights",
+        "viewport": {
+          "name": "desktop-narrow",
+          "width": 1440,
+          "height": 300,
+          "pane": 240,
+          "fontSize": 16,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 240,
+          "scroll": 240,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "errors": []
+      },
+      {
+        "theme": "ucf-knights",
+        "viewport": {
+          "name": "phone-short",
+          "width": 320,
+          "height": 300,
+          "pane": 320,
+          "fontSize": 16,
+          "reducedMotion": false
+        },
+        "overflow": {
+          "client": 320,
+          "scroll": 320,
+          "document": 320,
+          "viewport": 320
+        },
+        "errors": []
+      },
+      {
+        "theme": "ucf-knights",
+        "viewport": {
+          "name": "phone-large-text",
+          "width": 390,
+          "height": 600,
+          "pane": 390,
+          "fontSize": 32,
+          "reducedMotion": true
+        },
+        "overflow": {
+          "client": 390,
+          "scroll": 390,
+          "document": 390,
+          "viewport": 390
+        },
+        "errors": []
+      }
+    ],
+    "report": "apps/frontend/playwright-report/index.html",
+    "results": "apps/frontend/test-results/results.json"
+  }
+}
