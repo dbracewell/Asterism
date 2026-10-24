@@ -1,0 +1,59 @@
+{
+  "story": "US-35.1",
+  "base": "fdcef51",
+  "date": "2026-10-24",
+  "backend_tests": 614,
+  "frontend_unit_tests": 360,
+  "frontend_test_files": 50,
+  "auth_database_checks": 6,
+  "root_configuration_checks": 30,
+  "lint": "passed",
+  "typing_before_browser": "passed",
+  "focused_browser": {
+    "stats": {
+      "startTime": "2026-10-24T12:25:08.378Z",
+      "duration": 41426.807,
+      "expected": 20,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "runner_exit_code": 0,
+    "coverage": "two planned-pane viewports, seven existing settings/file-pane cases and eleven fresh-install prerequisites"
+  },
+  "final_browser": {
+    "status": "passed",
+    "stats": {
+      "startTime": "2026-10-24T12:26:52.068Z",
+      "duration": 311915.787,
+      "expected": 125,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "workers": 1,
+    "retries": 0,
+    "runner_exit_code": 0,
+    "single_attempt_passes": 125,
+    "reporter_errors": 0,
+    "unhandled_page_errors": 0
+  },
+  "browser_before_horizontal_sizing_fix": {
+    "stats": {
+      "startTime": "2026-10-24T12:19:26.315Z",
+      "duration": 321305.691,
+      "expected": 123,
+      "skipped": 0,
+      "unexpected": 2,
+      "flaky": 0
+    },
+    "retries": 0,
+    "runner_exit_code": 1,
+    "reason": "Horizontal tab flex sizing compressed long navigation lists; failed two existing settings/file-grid cases"
+  },
+  "typing_after_browser": "passed; basedpyright zero errors and warnings; compileall and tsc passed",
+  "scoped_formatting": "passed",
+  "broad_backend_formatting": "seven pre-existing untouched Python files fail; no Python source changed",
+  "documentation_checks": "inventory consistency, local link targets, workspace task validation and git diff --check passed"
+}

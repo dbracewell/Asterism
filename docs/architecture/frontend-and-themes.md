@@ -261,10 +261,41 @@ coverage, zero-retry CI execution and retained browser evidence.
 
 ## Current versus planned product surface
 
-Providers/models, main/sub-agent settings, tool policy, theme editing and image
-captioning have implementation paths, with limitations recorded above. Groups,
-Users, Image Generation, Code Execution and Export settings currently render
-placeholder text; their navigation is not evidence of an operational settings API.
+Admin navigation retains five **Planned** badges and future-release explanations:
+Groups, Users, Image Generation, Code Execution and Export. These panes offer no
+configuration actions or placeholder API calls. Available panes remain discoverable
+and unbadged: Providers, Theme Editor, Tools and Image Captioning. User Settings
+provides General and Agents. Settings navigation wraps long labels alongside the
+badges and scrolls the entire focused tab into view; keyboard arrows follow the
+container's horizontal/vertical orientation and preserve unrelated URL parameters.
+
+| Capability           | Available now                                                         | Planned                                                           |
+| -------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                                 |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                                 |
+| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                                 |
+| Image captioning     | Admin captioning policy and file-processing integration               | —                                                                 |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls           |
+| Groups               | —                                                                     | Group management and group policy settings                        |
+| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow        |
+| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                          |
+| Export               | Individual file downloads                                             | Data/conversation export tools                                    |
+| Personas and memory  | Execution provenance and typed future memory boundaries               | Distinct persona/default-profile storage; long-term memory engine |
+
+The Users pane says that admin/user access checks already exist. Better Auth
+carries the role; verified JWTs and backend `AdminUserDep` enforce protected
+administration. Owner checks scope user data. The backend already lists user IDs,
+provisions a user/main configuration and deletes users with lifecycle cleanup;
+those routes are not the missing Users management screen. The Settings page
+withholds Admin Settings from ordinary users, including attempted admin deep links.
+Neither a role label in UI nor a Planned badge replaces server authorization.
+
+Image search, image captioning and ordinary file downloads do not activate image
+generation or bulk data/conversation export. Likewise, agent tools are not a
+sandboxed code execution environment. No administration endpoint, capability
+assignment or execution permission is introduced by these placeholder panes.
+[US-35.1 verification](../reviews/us-35.1-verification-2026-10-24.md) records the
+pane, role-visibility and keyboard/browser checks.
 
 The distinct persona/default-profile policy is not implemented by the main-agent
 configuration in `agent_profiles`. Current chat composition passes no persona layer

@@ -103,3 +103,21 @@ changed-file formatting, workspace and documentation checks passed. The same
 seven pre-existing broad backend formatting findings remain untouched. See the
 [verification record](../reviews/us-34.4-verification-2026-10-24.md) and
 [ADR-0020](../adr/0020-chat-capacity-admission.md) for policy, diagnostics and limits.
+
+## US-35.1 — Planned settings and capability documentation
+
+The user confirmed completion and authorized commit and local merge on 2026-10-24.
+
+- [x] US-35.1: Finish planned-settings coverage and capability documentation
+  - [x] Retain the implemented Planned badges, future-release panes and corrected labels delivered with US-33.2; no new placeholder navigation design is required.
+  - [x] Audit all five planned panes, correct remaining capability copy (including existing authorization versus planned Users administration), and cover badges/keyboard/accessibility without inventing APIs.
+  - [x] Add a current-versus-planned capability inventory to READMEs and product planning.
+
+Verification: 614 backend tests, 360 frontend unit tests, six auth database checks
+and 30 configuration checks passed. The final 125-case isolated browser run
+passed without retries, skips, flaky results or unhandled page errors. Twenty
+focused browser cases passed, including the corrected long-list settings
+regressions. Root lint/types and scoped formatting passed; seven pre-existing
+backend formatting findings remain untouched. See the
+[verification record](../reviews/us-35.1-verification-2026-10-24.md) for diagnostics,
+scope and screenshots. US-35.2 remains pending.

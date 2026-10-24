@@ -64,7 +64,7 @@ export const SettingsCard = ({
           "max-h-full min-h-0 max-w-full shrink-0 justify-start rounded-none bg-transparent!",
           isNarrow
             ? "h-fit! w-full overflow-x-auto p-1"
-            : "w-40 overflow-y-auto p-1",
+            : "w-52 overflow-y-auto p-1",
         )}
       >
         <div
@@ -78,16 +78,24 @@ export const SettingsCard = ({
               return (
                 <TabsTrigger
                   className={cn(
-                    "shrink-0",
+                    "flex-none",
                     isNarrow ? "" : "w-full justify-between gap-2",
                   )}
                   key={setting.value}
                   value={setting.value}
                   disabled={setting.disabled}
+                  onFocus={(event) => {
+                    event.currentTarget.scrollIntoView({
+                      block: "nearest",
+                      inline: "nearest",
+                    });
+                  }}
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex min-w-0 items-center gap-2">
                     {setting.icon}
-                    <span>{setting.label}</span>
+                    <span className="min-w-0 text-left wrap-anywhere whitespace-normal">
+                      {setting.label}
+                    </span>
                   </span>
                   {setting.badge && (
                     <Badge

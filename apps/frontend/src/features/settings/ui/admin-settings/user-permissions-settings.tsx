@@ -11,8 +11,9 @@ export const UserPermissionsSettings = () => {
       <EmptyHeader>
         <EmptyTitle>User Permissions</EmptyTitle>
         <EmptyDescription>
-          Role-based access control and user permission management are planned
-          for a future release.
+          Admin and user access checks are already enforced. User management
+          screens and permission policy controls are planned for a future
+          release.
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

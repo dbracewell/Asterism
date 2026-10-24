@@ -104,6 +104,33 @@ releases only the controller while work continues. See
 [ADR-0020](../../docs/adr/0020-chat-capacity-admission.md) for ranges, release
 ownership and the separate knowledge/model gates.
 
+## Current versus planned capabilities
+
+The admin navigation marks **Groups, Users, Image Generation, Code Execution and
+Export** as **Planned**. Their panes explain future scope and offer no configuration
+actions. Providers, Theme Editor, Tools and Image Captioning remain available;
+user settings expose General and Agents.
+
+| Capability           | Available now                                                         | Planned                                                           |
+| -------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                                 |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                                 |
+| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                                 |
+| Image captioning     | Admin captioning policy and file-processing integration               | —                                                                 |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls           |
+| Groups               | —                                                                     | Group management and group policy settings                        |
+| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow        |
+| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                          |
+| Export               | Individual file downloads                                             | Data/conversation export tools                                    |
+| Personas and memory  | Execution provenance and typed future memory boundaries               | Distinct persona/default-profile storage; long-term memory engine |
+
+The Users badge describes unfinished administration screens, not missing access
+control. Backend list/provision/delete routes already have authorization and
+lifecycle checks. Navigation visibility does not grant access. The optional
+profile prompt layer and typed memory keys do not implement persona storage or
+long-term memory. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
+and limits.
+
 ## Quality checks
 
 Backend `typecheck` runs full basedpyright followed by compileall; root and CI

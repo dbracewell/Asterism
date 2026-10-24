@@ -18,39 +18,33 @@ audit does not invent missing user confirmations. EPIC-38's published artifact
 service, injected source reader, processing-policy ownership and boundary tests
 are the baseline for future work.
 
-EPIC-34 remains active. US-34.1 now keeps indexed matching and scope/pagination
-in SQL and batches selected-page snippets; its [verification record](../reviews/us-34.1-verification-2026-10-24.md)
-records constant query/bind counts across growing match sets. The user confirmed
-completion and authorized commit and local merge on 2026-10-24. Global
-active-chat/controller admission remains absent.
-EPIC-35.1 is partly delivered: all five unfinished admin panes already have
-Planned badges and future-release descriptions. US-35.2 remains substantive new
-work; optional profile/prompt/namespace types do not constitute a persona engine.
+EPIC-34 is confirmed complete. US-34.1 keeps indexed matching and owner/workspace
+scope in SQL before pagination; US-34.2 enforces architecture and single-process
+deployment guards; US-34.3 restored the browser baseline. US-34.4 merged locally
+as `fdcef51`, adding finite global/per-owner work and controller admission with
+retryable overload and reconnect-safe release. See its
+[verification](../reviews/us-34.4-verification-2026-10-24.md) and
+[capacity decision](../adr/0020-chat-capacity-admission.md).
 
-US-34.3 is confirmed complete on 2026-10-24, with commit and local merge
-authorized by the user. Its [current browser baseline](../reviews/us-34.3-verification-2026-10-24.md)
-passed all 122 cases without retries, skips, flaky results or unhandled page
-errors, after classifying and repairing the original 30 failures. US-34.1 is also
-confirmed complete. US-34.2 was confirmed complete on 2026-10-24, authorizing
-commit and local merge; see [verification](../reviews/us-34.2-verification-2026-10-24.md)
-and [ADR-0019](../adr/0019-single-process-runtime-and-storage-seams.md).
-US-34.4 is the next recommended implementation story.
+US-35.1 is confirmed complete on 2026-10-24, with commit and local merge
+authorized by the user. The existing five Planned badges and explanations remain. Users copy
+now distinguishes real authorization/backend lifecycle from future management
+screens, and coverage checks keyboard access, complete label/badge visibility and
+available-pane discoverability. The current-versus-planned inventory is in the
+[product guide](../architecture/frontend-and-themes.md#current-versus-planned-product-surface)
+and all three READMEs. See [verification](../reviews/us-35.1-verification-2026-10-24.md).
+
+US-35.2 remains substantive new work; optional profile/prompt/namespace types do
+not constitute a persona engine.
 
 ## Recommended sequence
 
-1. **US-34.4 — Bound active work and controller admission.** This separates the
-   capacity task formerly buried in US-34.2. Idle-job retirement and bounded
-   per-connection queues do not cap simultaneous jobs/connections. Decide finite
-   capacity/overload policy, implement it and verify capacity release.
-2. **US-35.1 — Finish planned-settings coverage and inventory.** Preserve the
-   implemented Planned presentation; finish coverage/copy and README inventory.
-   This small independent story can be pulled forward after the browser baseline.
-3. **US-35.2 — Persona/default-profile foundations.** Decide selection and
+1. **US-35.2 — Persona/default-profile foundations.** Decide selection and
    execution snapshot semantics before implementation. Preserve singleton
    main-agent, fixed sub-agent models and scope ceilings. Do not activate memory.
 
-Only one user story is implemented at a time. US-34.2 is confirmed complete;
-US-34.4 is next.
+Only one user story is implemented at a time. US-35.1 is confirmed complete;
+US-35.2 is the next recommended story.
 
 ## Scope and ownership
 

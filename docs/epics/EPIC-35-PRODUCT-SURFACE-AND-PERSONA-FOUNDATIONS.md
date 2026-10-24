@@ -1,6 +1,6 @@
 # EPIC-35: Product surface and persona foundations
 
-Status: pending residual settings work and persona implementation; source reassessed 2026-10-24. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F8.
+Status: US-35.1 confirmed complete on 2026-10-24; US-35.2 pending; source reassessed 2026-10-24. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F8.
 
 ## Objective
 
@@ -34,8 +34,13 @@ placeholder administration APIs or activate image generation/code execution.
 Tasks:
 
 - [x] Retain the implemented Planned badges, future-release panes and corrected labels delivered with US-33.2; no new placeholder navigation design is required.
-- [ ] Audit all five planned panes, correct remaining capability copy (including existing authorization versus planned Users administration), and cover badges/keyboard/accessibility without inventing APIs.
-- [ ] Add a current-versus-planned capability inventory to READMEs and product planning.
+- [x] Audit all five planned panes, correct remaining capability copy (including existing authorization versus planned Users administration), and cover badges/keyboard/accessibility without inventing APIs.
+- [x] Add a current-versus-planned capability inventory to READMEs and product planning.
+
+Completed checklist history: [archive](../archive/todo-completed-2026-10-24.md#us-351--planned-settings-and-capability-documentation).
+Implementation inventory: [current versus planned product surface](../architecture/frontend-and-themes.md#current-versus-planned-product-surface).
+Verification: [US-35.1](../reviews/us-35.1-verification-2026-10-24.md).
+This story does not activate the distinct persona/default-profile policy below.
 
 ## US-35.2: Implement distinct user persona/default-profile foundations
 

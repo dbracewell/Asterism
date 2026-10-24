@@ -44,16 +44,26 @@ describe("getLazyAdminSettingsSections", () => {
     expect(mocks.rendered).toHaveBeenCalledWith(0);
   });
 
-  it("includes planned badges and corrected labels for unfinished surfaces", () => {
-    const sections = getLazyAdminSettingsSections();
-    const codeExec = sections.find(
-      (section) =>
-        section.type === "section" && section.value === "code-execution",
+  it("marks exactly the five unfinished panes as Planned and keeps available panes discoverable", () => {
+    const sections = getLazyAdminSettingsSections().filter(
+      (section) => section.type === "section",
     );
-    expect(codeExec?.type).toBe("section");
-    if (codeExec?.type === "section") {
-      expect(codeExec.label).toBe("Code Execution");
-      expect(codeExec.badge).toBe("Planned");
-    }
+    expect(
+      sections
+        .filter((section) => section.badge === "Planned")
+        .map((section) => section.label),
+    ).toEqual([
+      "Groups",
+      "Users",
+      "Image Generation",
+      "Code Execution",
+      "Export",
+    ]);
+    expect(
+      sections
+        .filter((section) => !section.badge)
+        .map((section) => section.label),
+    ).toEqual(["Providers", "Theme Editor", "Tools", "Image Captioning"]);
+    expect(sections.every((section) => !section.disabled)).toBe(true);
   });
 });
