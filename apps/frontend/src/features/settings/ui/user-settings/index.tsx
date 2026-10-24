@@ -1,7 +1,8 @@
 import { Types } from "@/features/settings/types";
 import { AgentsSettings } from "@/features/settings/ui/user-settings/agents-settings";
 import { GeneralSettings } from "@/features/settings/ui/user-settings/general-settings";
-import { BotIcon, Settings2Icon } from "lucide-react";
+import { PersonaSettings } from "./persona-settings";
+import { BotIcon, Settings2Icon, UserRoundIcon } from "lucide-react";
 
 export const UserSettings: Types = [
   {
@@ -11,6 +12,13 @@ export const UserSettings: Types = [
     isDefault: true,
     icon: <Settings2Icon />,
     settingsPane: <GeneralSettings />,
+  },
+  {
+    type: "section",
+    label: "Personas",
+    value: "personas",
+    icon: <UserRoundIcon />,
+    settingsPane: <PersonaSettings />,
   },
   {
     type: "section",

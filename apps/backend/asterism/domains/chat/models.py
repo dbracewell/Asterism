@@ -20,9 +20,10 @@ from asterism.core.config import default_allowed_tools
 from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
-from asterism.domains.agent.prompts import PromptSnapshot
+from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
+from .execution_models import ChatExecutionModel
 from .schemas import ChatModelChoice, MessageExecution, MessageFileReference, MessageStatus
 
 
@@ -34,6 +35,8 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         index=True,
         nullable=False,
     )
+    persona_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
+    persona_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("projects.id", ondelete="SET NULL"),
         index=True,
@@ -63,6 +66,12 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
 
     __table_args__ = (
         CheckConstraint("model_revision >= 1", name="chat_model_revision_positive"),
+        CheckConstraint("persona_revision >= 1", name="chat_persona_revision_positive"),
+        ForeignKeyConstraint(
+            ["persona_id", "user_id"],
+            ["user_personas.id", "user_personas.user_id"],
+            name="fk_chat_persona_owner",
+        ),
         UniqueConstraint("id", "user_id", name="uq_chats_id_user"),
         ForeignKeyConstraint(
             ["project_id", "user_id"],
@@ -93,16 +102,26 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     model_id: Mapped[uuid.UUID | None] = mapped_column(
         nullable=True,
     )
-    execution: Mapped[MessageExecution | None] = mapped_column(
-        jsonb_type(TypeAdapter(MessageExecution)),
+    execution_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey(
+            "chat_executions.id", name="fk_message_execution", use_alter=True, deferrable=True, initially="DEFERRED"
+        ),
         nullable=True,
+        index=True,
     )
-    pending_prompt: Mapped[PromptSnapshot | None] = mapped_column(
-        jsonb_type(TypeAdapter(PromptSnapshot)),
+    pending_execution_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey(
+            "chat_executions.id",
+            name="fk_message_pending_execution",
+            use_alter=True,
+            deferrable=True,
+            initially="DEFERRED",
+        ),
         nullable=True,
+        index=True,
     )
-    pending_execution: Mapped[MessageExecution | None] = mapped_column(
-        jsonb_type(TypeAdapter(MessageExecution)),
+    accepted_persona: Mapped[PersonaSnapshot | None] = mapped_column(
+        jsonb_type(TypeAdapter(PersonaSnapshot)),
         nullable=True,
     )
     status: Mapped[MessageStatus] = mapped_column(
@@ -172,6 +191,22 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     __table_args__ = (
         UniqueConstraint("id", "chat_id", "user_id", name="uq_messages_id_chat_user"),
         ForeignKeyConstraint(
+            ["execution_id", "chat_id", "user_id"],
+            ["chat_executions.id", "chat_executions.chat_id", "chat_executions.user_id"],
+            name="fk_message_execution_owner",
+            use_alter=True,
+            deferrable=True,
+            initially="DEFERRED",
+        ),
+        ForeignKeyConstraint(
+            ["pending_execution_id", "chat_id", "user_id"],
+            ["chat_executions.id", "chat_executions.chat_id", "chat_executions.user_id"],
+            name="fk_message_pending_execution_owner",
+            use_alter=True,
+            deferrable=True,
+            initially="DEFERRED",
+        ),
+        ForeignKeyConstraint(
             ["chat_id", "user_id"],
             ["chats.id", "chats.user_id"],
             ondelete="CASCADE",
@@ -188,6 +223,35 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
             name="fk_messages_active_child_scope",
         ),
     )
+
+    execution_record: Mapped[ChatExecutionModel | None] = relationship(
+        ChatExecutionModel,
+        foreign_keys=[execution_id, chat_id, user_id],
+        lazy="selectin",
+        viewonly=True,
+    )
+
+    pending_execution_record: Mapped[ChatExecutionModel | None] = relationship(
+        ChatExecutionModel,
+        foreign_keys=[pending_execution_id, chat_id, user_id],
+        lazy="selectin",
+        viewonly=True,
+    )
+
+    @property
+    def execution(self) -> MessageExecution | None:
+        record = self.execution_record if self.execution_id is not None else None
+        return record.execution.model_copy(deep=True) if record else None
+
+    @property
+    def pending_execution(self) -> MessageExecution | None:
+        record = self.pending_execution_record if self.pending_execution_id is not None else None
+        return record.execution.model_copy(deep=True) if record else None
+
+    @property
+    def pending_prompt(self) -> PromptSnapshot | None:
+        record = self.pending_execution_record if self.pending_execution_id is not None else None
+        return record.prompt.model_copy(deep=True) if record else None
 
     active_child: Mapped["MessageModel | None"] = relationship(
         "MessageModel",

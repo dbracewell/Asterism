@@ -114,6 +114,9 @@ import type {
   ChatModelUpdateData,
   ChatModelUpdateErrors,
   ChatModelUpdateResponses,
+  ChatPersonaUpdateData,
+  ChatPersonaUpdateErrors,
+  ChatPersonaUpdateResponses,
   ChatSearchData,
   ChatSearchErrors,
   ChatSearchResponses,
@@ -243,6 +246,24 @@ import type {
   UserListUsersData,
   UserListUsersErrors,
   UserListUsersResponses,
+  UserPersonaCreateData,
+  UserPersonaCreateErrors,
+  UserPersonaCreateResponses,
+  UserPersonaDeleteData,
+  UserPersonaDeleteErrors,
+  UserPersonaDeleteResponses,
+  UserPersonaGetData,
+  UserPersonaGetErrors,
+  UserPersonaGetResponses,
+  UserPersonaListData,
+  UserPersonaListErrors,
+  UserPersonaListResponses,
+  UserPersonaSetDefaultData,
+  UserPersonaSetDefaultErrors,
+  UserPersonaSetDefaultResponses,
+  UserPersonaUpdateData,
+  UserPersonaUpdateErrors,
+  UserPersonaUpdateResponses,
   UserSettingDeleteData,
   UserSettingDeleteErrors,
   UserSettingDeleteResponses,
@@ -687,6 +708,31 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/drafts/{draft_id}/model",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Select Chat Persona
+   */
+  public chatPersonaUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ChatPersonaUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ChatPersonaUpdateResponses,
+    ChatPersonaUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ChatPersonaUpdateResponses,
+      ChatPersonaUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/persona",
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -2179,6 +2225,144 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/users/{user_id}",
       ...options,
+    });
+  }
+
+  /**
+   * List Personas
+   */
+  public userPersonaList<ThrowOnError extends boolean = false>(
+    options?: Options<UserPersonaListData, ThrowOnError>,
+  ): RequestResult<
+    UserPersonaListResponses,
+    UserPersonaListErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      UserPersonaListResponses,
+      UserPersonaListErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/personas",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Persona
+   */
+  public userPersonaCreate<ThrowOnError extends boolean = false>(
+    options: Options<UserPersonaCreateData, ThrowOnError>,
+  ): RequestResult<
+    UserPersonaCreateResponses,
+    UserPersonaCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      UserPersonaCreateResponses,
+      UserPersonaCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/personas",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Default Persona
+   */
+  public userPersonaSetDefault<ThrowOnError extends boolean = false>(
+    options: Options<UserPersonaSetDefaultData, ThrowOnError>,
+  ): RequestResult<
+    UserPersonaSetDefaultResponses,
+    UserPersonaSetDefaultErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      UserPersonaSetDefaultResponses,
+      UserPersonaSetDefaultErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/personas/default",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete Persona
+   */
+  public userPersonaDelete<ThrowOnError extends boolean = false>(
+    options: Options<UserPersonaDeleteData, ThrowOnError>,
+  ): RequestResult<
+    UserPersonaDeleteResponses,
+    UserPersonaDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      UserPersonaDeleteResponses,
+      UserPersonaDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/personas/{persona_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Persona
+   */
+  public userPersonaGet<ThrowOnError extends boolean = false>(
+    options: Options<UserPersonaGetData, ThrowOnError>,
+  ): RequestResult<
+    UserPersonaGetResponses,
+    UserPersonaGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      UserPersonaGetResponses,
+      UserPersonaGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/personas/{persona_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Persona
+   */
+  public userPersonaUpdate<ThrowOnError extends boolean = false>(
+    options: Options<UserPersonaUpdateData, ThrowOnError>,
+  ): RequestResult<
+    UserPersonaUpdateResponses,
+    UserPersonaUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).patch<
+      UserPersonaUpdateResponses,
+      UserPersonaUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/users/personas/{persona_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

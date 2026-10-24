@@ -250,9 +250,17 @@ export function ExecutionLabel({
 }) {
   if (!execution) return null;
   return (
-    <p className="text-muted-foreground text-xs" aria-label="Executed model">
-      {execution.model.name} · {execution.model.provider_name} · configuration{" "}
-      {execution.configuration.config_revision}
-    </p>
+    <>
+      <p className="text-muted-foreground text-xs" aria-label="Executed model">
+        {execution.model.name} · {execution.model.provider_name} · configuration{" "}
+        {execution.configuration.config_revision}
+      </p>
+      <p
+        className="text-muted-foreground text-xs wrap-anywhere"
+        aria-label="Executed persona"
+      >
+        {execution.persona.name} · persona revision {execution.persona.revision}
+      </p>
+    </>
   );
 }

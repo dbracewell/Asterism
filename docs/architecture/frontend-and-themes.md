@@ -269,18 +269,18 @@ provides General and Agents. Settings navigation wraps long labels alongside the
 badges and scrolls the entire focused tab into view; keyboard arrows follow the
 container's horizontal/vertical orientation and preserve unrelated URL parameters.
 
-| Capability           | Available now                                                         | Planned                                                           |
-| -------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                                 |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                                 |
-| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                                 |
-| Image captioning     | Admin captioning policy and file-processing integration               | —                                                                 |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls           |
-| Groups               | —                                                                     | Group management and group policy settings                        |
-| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow        |
-| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                          |
-| Export               | Individual file downloads                                             | Data/conversation export tools                                    |
-| Personas and memory  | Execution provenance and typed future memory boundaries               | Distinct persona/default-profile storage; long-term memory engine |
+| Capability           | Available now                                                         | Planned                                                    |
+| -------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                          |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                          |
+| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                          |
+| Image captioning     | Admin captioning policy and file-processing integration               | —                                                          |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls    |
+| Groups               | —                                                                     | Group management and group policy settings                 |
+| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow |
+| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                   |
+| Export               | Individual file downloads                                             | Data/conversation export tools                             |
+| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs  | Long-term memory engine                                    |
 
 The Users pane says that admin/user access checks already exist. Better Auth
 carries the role; verified JWTs and backend `AdminUserDep` enforce protected
@@ -297,12 +297,14 @@ assignment or execution permission is introduced by these placeholder panes.
 [US-35.1 verification](../reviews/us-35.1-verification-2026-10-24.md) records the
 pane, role-visibility and keyboard/browser checks.
 
-The distinct persona/default-profile policy is not implemented by the main-agent
-configuration in `agent_profiles`. Current chat composition passes no persona layer
-and records `user_profile_id=None`. Typed memory namespace contracts exist, but
-there is no active long-term memory engine or automatic cross-chat summaries.
-[EPIC-35](../epics/EPIC-35-PRODUCT-SURFACE-AND-PERSONA-FOUNDATIONS.md) separates honest
-navigation from the future persona foundation; memory activation needs separate work.
+User Settings → Personas manages owned USER.md documents and the user default,
+separately from `agent_profiles`. Chat selectors support the current default or a
+fixed persona. Save uses revision checks; conflicts retain drafts until an explicit
+reload. Default and selected-chat deletion protections are enforced server-side.
+Accepted turns and historical execution labels preserve persona identity/revision.
+See [persona binding](../adr/0021-personas-and-execution-binding.md). Typed memory
+namespaces remain future contracts; no long-term memory engine or automatic
+cross-chat summaries are active.
 
 ## Verification entry points
 

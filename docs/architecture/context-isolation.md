@@ -35,16 +35,16 @@ snapshot for replay; provenance does not duplicate its instruction text.
 
 ## Audit of current reuse paths
 
-| Path                                        | Existing boundary / outcome                                                                                                                                                              |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Conversation history and title generation   | Owner-checked chat load and active branch; title generation uses that chat only. No sibling-chat assembly.                                                                               |
-| Private prompt and pending execution        | Stored on an owned message within one chat; project moves invalidate pending prompts. Resume retains recorded file/target ceilings; regeneration captures current scope.                 |
-| In-process jobs and outbound queues         | Keyed by globally unique chat ID after owner authorization; bounded and retired on lifecycle changes/deletion. Queued/history content follows the chat on a move.                        |
+| Path                                        | Existing boundary / outcome                                                                                                                                                             |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Conversation history and title generation   | Owner-checked chat load and active branch; title generation uses that chat only. No sibling-chat assembly.                                                                              |
+| Private prompt and pending execution        | Stored on an owned message within one chat; project moves invalidate pending prompts. Resume retains recorded file/target ceilings; regeneration captures current scope.                |
+| In-process jobs and outbound queues         | Keyed by globally unique chat ID after owner authorization; bounded and retired on lifecycle changes/deletion. Queued/history content follows the chat on a move.                       |
 | File conversion cache                       | Source-owned file ID; shared knowledge is a file artifact, not a conversation summary. Runtime reads check owner/live membership before and after processing and before provider calls. |
-| Embeddings/captions and vector results      | Source file ID, owner, current artifact generation; authorized file filter precedes vector query, and generation/authorization are checked before release.                               |
-| Web passage summarization/ranking           | Per-call inputs and local result lists; no persistent conversation cache or profile namespace.                                                                                           |
-| User-existence/JWT caches                   | Authentication metadata only; no project/chat text.                                                                                                                                      |
-| Long-term memory and conversation summaries | No active memory store, automatic memory writes/reads, persona-memory retrieval, or cross-chat conversation summary integration exists.                                                  |
+| Embeddings/captions and vector results      | Source file ID, owner, current artifact generation; authorized file filter precedes vector query, and generation/authorization are checked before release.                              |
+| Web passage summarization/ranking           | Per-call inputs and local result lists; no persistent conversation cache or profile namespace.                                                                                          |
+| User-existence/JWT caches                   | Authentication metadata only; no project/chat text.                                                                                                                                     |
+| Long-term memory and conversation summaries | No active memory store, automatic memory writes/reads, persona-memory retrieval, or cross-chat conversation summary integration exists.                                                 |
 
 ## Typed future boundary
 
@@ -71,3 +71,10 @@ messages. Later turns may therefore contain earlier project information through
 the transferred history, while live file/retrieval access follows the new scope.
 Future memory integration must retain the original namespace on existing entries;
 moves must never relabel old project-derived memory as another project's memory.
+
+Persona IDs and revisions are captured in execution provenance and inherited by
+children. Before provider work and output release, the runtime rechecks that the
+recorded persona still belongs to the user. USER.md cannot grant file, tool,
+delegation or memory access. Edits preserve accepted inputs; deletion requires
+explicit regeneration with an available persona. See
+[persona binding](../adr/0021-personas-and-execution-binding.md).

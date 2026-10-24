@@ -6,11 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
-from asterism.domains.agent.prompts import PromptComposer, PromptSnapshot
+from asterism.domains.agent.prompts import PersonaSnapshot, PromptComposer, PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.tools.context import ContextToolScope
 
 from .delegation import eligible_delegation_targets
+from .personas import read_pending_or_current_persona
 from .scope import read_chat_scope_snapshot, read_project_scope_snapshot
 from .tool_policy import resolve_effective_tools
 
@@ -23,6 +24,7 @@ async def build_prompt_snapshot(
     model_id: uuid.UUID | None,
     session: AsyncSession | None = None,
     ceiling: ContextToolScope | None = None,
+    persona_snapshot: PersonaSnapshot | None = None,
     chat_snapshot: ChatScopeSnapshot | None = None,
     project_snapshot: ProjectScopeSnapshot | None = None,
 ) -> PromptSnapshot:
@@ -58,7 +60,14 @@ async def build_prompt_snapshot(
             scope=scope,
             session=db,
         )
+        persona = persona_snapshot or await read_pending_or_current_persona(
+            user_id=user_id,
+            chat_id=chat_id,
+            branch_ids=chat.active_branch_message_ids,
+            session=db,
+        )
         return PromptComposer().snapshot(
+            profile_layer=persona.layer,
             agent_id=profile.id,
             agent_revision=profile.config_revision,
             agent_instructions=profile.system_prompt or "",

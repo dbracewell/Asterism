@@ -121,3 +121,20 @@ regressions. Root lint/types and scoped formatting passed; seven pre-existing
 backend formatting findings remain untouched. See the
 [verification record](../reviews/us-35.1-verification-2026-10-24.md) for diagnostics,
 scope and screenshots. US-35.2 remains pending.
+
+## [EPIC-35: Product surface and persona foundations](../epics/EPIC-35-PRODUCT-SURFACE-AND-PERSONA-FOUNDATIONS.md)
+
+- [x] US-35.2: Implement distinct user persona/default-profile foundations
+  - [x] Write an ADR for persona ownership, user-default versus chat selection, USER.md limits, edit/delete/default races and new-turn/resume/regeneration/delegation binding; distinguish it from `agent_profiles` and typed future memory namespaces.
+  - [x] Implement fresh-initialized schema/service invariants, atomic provisioning and owner-scoped persona lifecycle with race/authorization tests; no migrations or compatibility paths.
+  - [x] Expose typed APIs, regenerate Hey clients and implement profile selection/settings through TanStack Query and existing UI components.
+  - [x] Test immutable execution/prompt/provenance binding, edit/default/delete races, cross-owner denial, delegation ceilings and unavailable/error states; document memory as future work and run all relevant gates.
+
+The user confirmed completion and authorized commit and local merge on 2026-10-24.
+
+Verification: 640 backend tests, 373 frontend tests, six auth-migration checks,
+30 configuration checks, lint and type checks passed. The final isolated browser
+run passed 127 tests with zero retries, skips, unexpected or flaky results.
+Changed-file formatting and OpenAPI/client synchronization passed; seven untouched
+Python files retain baseline formatting issues. Working storage was not reset.
+EPIC-35 is confirmed complete. See the [verification record](../reviews/us-35.2-verification-2026-10-24.md).

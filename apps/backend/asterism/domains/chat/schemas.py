@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.agent.context_provenance import ContextProvenance
-from asterism.domains.agent.prompts import PromptProvenance
+from asterism.domains.agent.prompts import PersonaProvenance, PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
@@ -47,6 +47,7 @@ class ChatModelChoice(BaseModel):
 
 
 class MessageExecution(BaseModel):
+    persona: PersonaProvenance
     context: ContextProvenance | None = None
     prompt: PromptProvenance = Field(default_factory=PromptProvenance)
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
@@ -144,10 +145,13 @@ class ChatInfo(BaseModel):
     preview: str | None = Field(default=None)
     message_count: int | None = Field(default=None)
     context_model: ChatContextModel | None = Field(default=None)
+    persona_id: uuid.UUID | None = None
+    persona_revision: int = Field(default=1, ge=1)
     selected_model_id: uuid.UUID | None = None
     model_revision: int = Field(default=1, ge=1)
     selected_model: ChatModelChoice | None = None
     pending_execution: MessageExecution | None = None
+    pending_persona: PersonaProvenance | None = None
     resume_error: str | None = None
 
 
@@ -203,6 +207,7 @@ class BulkDeleteChatResponse(BaseModel):
 
 
 class NewChatRequest(BaseModel):
+    persona_id: uuid.UUID | None = None
     model_id: uuid.UUID
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID
@@ -272,3 +277,9 @@ class ChatDraftModelUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     model_id: uuid.UUID | None
     expected_model_id: uuid.UUID | None
+
+
+class ChatPersonaUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    persona_id: uuid.UUID | None
+    expected_persona_revision: int = Field(ge=1)

@@ -159,6 +159,13 @@ test("authenticated project and General chats preserve scope, provenance, and ow
       ).toBeTruthy();
       return response.json();
     };
+    const personaState = await api("GET", "/users/personas");
+    const firstPersona = personaState.profiles[0];
+    await api("PATCH", `/users/personas/${firstPersona.id}`, {
+      name: "Integrated persona",
+      user_md: "PERSONA_INSTRUCTIONS_352",
+      expected_revision: firstPersona.revision,
+    });
     const providerId = randomUUID();
     await api("PUT", "/settings/app/providers", {
       llm_providers: [
@@ -272,6 +279,19 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     expect(JSON.stringify(calls[0].messages)).toContain(
       "PROJECT_INSTRUCTIONS_283",
     );
+    expect(JSON.stringify(calls[0].messages)).toContain(
+      "PERSONA_INSTRUCTIONS_352",
+    );
+    expect(
+      saved.messages.find(
+        (message: { role: string }) => message.role === "assistant",
+      ).execution.persona,
+    ).toMatchObject({
+      id: firstPersona.id,
+      name: "Integrated persona",
+      revision: firstPersona.revision + 1,
+    });
+    expect(JSON.stringify(saved)).not.toContain("PERSONA_INSTRUCTIONS_352");
     const projectScope = await api("GET", `/chat/${projectChat}/files/context`);
     expect(projectScope.allowed_file_ids).toContain(file.id);
     const scopedSource = await context.request.get(
@@ -299,6 +319,24 @@ test("authenticated project and General chats preserve scope, provenance, and ow
         .getByText("Verified reply from Integrated A", { exact: true })
         .first(),
     ).toBeVisible();
+    const nextPersona = await api("POST", "/users/personas", {
+      name: "Later persona",
+      user_md: "PERSONA_LATER_352",
+    });
+    const beforeDefault = await api("GET", "/users/personas");
+    await api("PUT", "/users/personas/default", {
+      persona_id: nextPersona.id,
+      expected_default_revision: beforeDefault.default_revision,
+    });
+    const workerCalls = calls.filter((call) =>
+      JSON.stringify(call.messages).includes("Specialist role"),
+    );
+    expect(
+      workerCalls.every((call) =>
+        JSON.stringify(call.messages).includes("PERSONA_INSTRUCTIONS_352"),
+      ),
+    ).toBeTruthy();
+    await page.reload();
     await page.getByRole("combobox", { name: "Chat model" }).click();
     await page.getByRole("option", { name: /Integrated B/ }).click();
     await page
@@ -319,6 +357,19 @@ test("authenticated project and General chats preserve scope, provenance, and ow
         (message: { execution: { model: { name: string } } }) =>
           message.execution.model.name,
       );
+    const historyPersonas = saved.messages
+      .filter((message: { role: string }) => message.role === "assistant")
+      .map(
+        (message: { execution: { persona: { id: string } } }) =>
+          message.execution.persona.id,
+      );
+    expect(historyPersonas.at(-1)).toBe(nextPersona.id);
+    expect(
+      historyPersonas
+        .slice(0, -1)
+        .every((id: string) => id === firstPersona.id),
+    ).toBeTruthy();
+    expect(JSON.stringify(saved)).not.toContain("PERSONA_LATER_352");
     expect(historyModels.at(-1)).toBe("Integrated B");
     expect(
       historyModels
@@ -387,6 +438,7 @@ test("authenticated project and General chats preserve scope, provenance, and ow
       `/chat/${projectChat}`,
       `/chat/${generalChat}/files/context`,
       `/files/${file.filename}`,
+      `/users/personas/${firstPersona.id}`,
     ]) {
       const denied = await second.request.get(`/api/py${path}`, {
         headers: otherHeaders,

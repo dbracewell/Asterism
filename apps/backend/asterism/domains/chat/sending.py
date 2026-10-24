@@ -13,6 +13,7 @@ from asterism.core.exceptions import BadDataException, CodedException, NotFoundE
 from asterism.db.database import get_async_db_session
 from asterism.domains.projects.scope import require_owned_project
 from asterism.domains.user.models import UserModel
+from asterism.domains.user.personas import require_persona_access
 
 from .attachments import bind_message_files, resolve_file_references
 from .binding import resolve_main_agent_id
@@ -22,6 +23,7 @@ from .drafts import consume_draft, read_draft_file_ids
 from .jobs import chat_jobs
 from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
+from .personas import resolve_persona_snapshot
 from .queries import select_owned_chats, select_owned_messages
 from .schemas import Chat, ChatSendRequest, Message, MessageStatus, NewChatRequest
 
@@ -91,6 +93,11 @@ async def persist_user_send(
     message = MessageModel(
         user_id=user_id,
         chat_id=chat.id,
+        accepted_persona=await resolve_persona_snapshot(
+            user_id=user_id,
+            persona_id=chat.persona_id,
+            session=session,
+        ),
         content=payload.user_prompt,
         role="user",
         status=MessageStatus.PENDING,
@@ -161,10 +168,13 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
                 draft = await owned_draft(user_id=user_id, draft_id=payload.draft_id, session=session)
                 if draft.model_id is not None and draft.model_id != payload.model_id:
                     raise CodedException(409, "Draft model selection changed; reload before sending")
+            if payload.persona_id is not None:
+                await require_persona_access(user_id=user_id, persona_id=payload.persona_id, session=session)
             chat = ChatModel(
                 user_id=user_id,
                 agent_id=agent_id,
                 project_id=payload.project_id,
+                persona_id=payload.persona_id,
                 selected_model_id=payload.model_id,
                 selected_model_snapshot=choice,
             )

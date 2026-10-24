@@ -1,6 +1,6 @@
 # EPIC-35: Product surface and persona foundations
 
-Status: US-35.1 confirmed complete on 2026-10-24; US-35.2 pending; source reassessed 2026-10-24. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F8.
+Status: confirmed complete on 2026-10-24; both stories verified and authorized for local merge. Source: [2026-10-17 codebase review](../reviews/2026-10-17-codebase-review.md), F8.
 
 ## Objective
 
@@ -52,10 +52,10 @@ contracts. US-35.1 is independent and does not supply persona storage.
 
 Acceptance criteria:
 
-No persona table/service exists in the registered schema. `user/service.py`
-currently provisions only the singleton main-agent configuration; that is not a
+Pre-story baseline: no persona table/service existed in the registered schema. `user/service.py`
+previously provisioned only the singleton main-agent configuration; that is not a
 persona profile. The composer accepts an optional profile layer, but chat
-execution supplies `user_profile_id=None` and no persona layer. Typed context and
+execution supplied `user_profile_id=None` and no persona layer. Typed context and
 memory namespace fields are extension points, not an implemented persona store.
 
 Provisioning creates an owner-scoped persona in the same transaction as user and
@@ -76,7 +76,11 @@ automatic memory reads/writes, or cross-chat summaries are activated.
 
 Tasks:
 
-- [ ] Write an ADR for persona ownership, user-default versus chat selection, USER.md limits, edit/delete/default races and new-turn/resume/regeneration/delegation binding; distinguish it from `agent_profiles` and typed future memory namespaces.
-- [ ] Implement fresh-initialized schema/service invariants, atomic provisioning and owner-scoped persona lifecycle with race/authorization tests; no migrations or compatibility paths.
-- [ ] Expose typed APIs, regenerate Hey clients and implement profile selection/settings through TanStack Query and existing UI components.
-- [ ] Test immutable execution/prompt/provenance binding, edit/default/delete races, cross-owner denial, delegation ceilings and unavailable/error states; document memory as future work and run all relevant gates.
+- [x] Write an ADR for persona ownership, user-default versus chat selection, USER.md limits, edit/delete/default races and new-turn/resume/regeneration/delegation binding; distinguish it from `agent_profiles` and typed future memory namespaces.
+- [x] Implement fresh-initialized schema/service invariants, atomic provisioning and owner-scoped persona lifecycle with race/authorization tests; no migrations or compatibility paths.
+- [x] Expose typed APIs, regenerate Hey clients and implement profile selection/settings through TanStack Query and existing UI components.
+- [x] Test immutable execution/prompt/provenance binding, edit/default/delete races, cross-owner denial, delegation ceilings and unavailable/error states; document memory as future work and run all relevant gates.
+
+Implementation and verification completed on 2026-10-24; user confirmed completion and authorized commit and local merge. See [ADR-0021](../adr/0021-personas-and-execution-binding.md)
+and [verification](../reviews/us-35.2-verification-2026-10-24.md). EPIC-35 is confirmed complete; the completed checklist is archived under
+[2026-10-24](../archive/todo-completed-2026-10-24.md).

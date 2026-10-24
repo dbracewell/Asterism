@@ -1,3 +1,4 @@
+import { defaultPersonas } from "@/test/personas";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   createChatSession: vi.fn(),
   getProject: vi.fn(async () => ({ id: "project", name: "Research" })),
   user: {
+    id: "test",
     name: "Ada",
     settings: {
       main_agent: { id: "main", name: "Main agent" },
@@ -28,6 +30,10 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   projectGetOneOptions: () => ({
     queryKey: ["project"],
     queryFn: mocks.getProject,
+  }),
+  userPersonaListOptions: () => ({
+    queryKey: ["personas"],
+    queryFn: async () => defaultPersonas,
   }),
   chatModelsListOptions: () => ({
     queryKey: ["models"],
@@ -109,6 +115,7 @@ it("prefills only the explicit default, permits a different model, and sends it 
       request_id: "request",
       draft_id: "staged-draft",
       model_id: "other",
+      persona_id: null,
       project_id: "project",
       user_prompt: "Hello",
       files: [],

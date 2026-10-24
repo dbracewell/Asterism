@@ -1,3 +1,5 @@
+import { defaultPersonaProvenance } from "../src/test/personas";
+import { mockDefaultPersonas } from "./support/personas";
 import { expect, test } from "./support/test";
 import type {
   Chat,
@@ -5,6 +7,10 @@ import type {
   Message,
   MessageExecution,
 } from "../src/lib/client";
+test.beforeEach(async ({ page }) => {
+  await mockDefaultPersonas(page);
+});
+
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
 const C = "77777777-7777-4777-8777-777777777777";
@@ -33,6 +39,7 @@ const models: ChatModelChoice[] = [
   },
 ];
 const execution = (model: ChatModelChoice): MessageExecution => ({
+  persona: defaultPersonaProvenance,
   id: "44444444-4444-4444-8444-444444444444",
   request_message_id: U,
   model_revision: model.id === A ? 1 : 2,

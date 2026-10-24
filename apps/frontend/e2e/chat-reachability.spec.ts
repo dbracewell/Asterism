@@ -1,3 +1,4 @@
+import { mockDefaultPersonas } from "./support/personas";
 import { knowledgeArtifact } from "./support/knowledge-artifact";
 import {
   expect,
@@ -7,6 +8,10 @@ import {
   type WebSocketRoute,
 } from "./support/test";
 import type { Chat, ChatFileScope, ChatModelChoice } from "../src/lib/client";
+
+test.beforeEach(async ({ page }) => {
+  await mockDefaultPersonas(page);
+});
 
 const C = "77777777-7777-4777-8777-777777777777";
 const M = "11111111-1111-4111-8111-111111111111";

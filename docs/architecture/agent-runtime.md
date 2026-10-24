@@ -65,13 +65,13 @@ flowchart TD
 [PromptComposer](../../apps/backend/asterism/domains/agent/prompts.py) composes unique
 layers in this order:
 
-| Layer      | Authority and source                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------ |
-| `platform` | Mandatory platform rules and capability restrictions                                                   |
-| `agent`    | Versioned main or delegated role/instructions                                                          |
-| `profile`  | Optional explicit persona constraints; supported by composer, not an active persona-memory integration |
-| `project`  | Project task instructions and context revision, when applicable                                        |
-| `runtime`  | Server-authorized tool names and eligible target metadata; bounded to 8,000 characters                 |
+| Layer      | Authority and source                                                                   |
+| ---------- | -------------------------------------------------------------------------------------- |
+| `platform` | Mandatory platform rules and capability restrictions                                   |
+| `agent`    | Versioned main or delegated role/instructions                                          |
+| `profile`  | Accepted persona USER.md constraints; separate from memory                             |
+| `project`  | Project task instructions and context revision, when applicable                        |
+| `runtime`  | Server-authorized tool names and eligible target metadata; bounded to 8,000 characters |
 
 Agent role and explicit profile constraints remain authoritative; project text
 refines the task within them. User requests, files, retrieved excerpts, and forwarded
@@ -82,8 +82,12 @@ Estimation, main execution, delegation, and replay use the shared composition pa
 Private `PromptSnapshot` stores replay inputs; public `PromptProvenance` records
 composer revision plus source IDs/revisions/digests without instruction text.
 Project edits affect new turns/regeneration; resume uses its existing snapshot
-with current access rechecks. The profile layer is optional; current chat composition
-passes no persona layer and records `user_profile_id=None`.
+with current access rechecks. The profile layer uses the accepted persona snapshot
+and records `user_profile_id` plus its source revision. Default changes and edits
+affect new turns; regeneration explicitly captures current settings. Delegates
+inherit the same recorded persona. Private immutable `chat_executions` records
+preserve historical prompts, while public metadata contains identity and digests.
+See [ADR-0021](../adr/0021-personas-and-execution-binding.md).
 
 ## Bounded loop and streaming
 

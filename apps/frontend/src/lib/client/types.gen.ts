@@ -338,6 +338,14 @@ export type ChatInfo = {
   message_count?: number | null;
   context_model?: ChatContextModel | null;
   /**
+   * Persona Id
+   */
+  persona_id?: string | null;
+  /**
+   * Persona Revision
+   */
+  persona_revision?: number;
+  /**
    * Selected Model Id
    */
   selected_model_id?: string | null;
@@ -347,6 +355,7 @@ export type ChatInfo = {
   model_revision?: number;
   selected_model?: ChatModelChoice | null;
   pending_execution?: MessageExecution | null;
+  pending_persona?: PersonaProvenance | null;
   /**
    * Resume Error
    */
@@ -448,6 +457,20 @@ export type ChatMoveRequest = {
    * Project Id
    */
   project_id: string | null;
+};
+
+/**
+ * ChatPersonaUpdate
+ */
+export type ChatPersonaUpdate = {
+  /**
+   * Persona Id
+   */
+  persona_id: string | null;
+  /**
+   * Expected Persona Revision
+   */
+  expected_persona_revision: number;
 };
 
 /**
@@ -576,6 +599,10 @@ export type ContextProvenance = {
    * User Profile Id
    */
   user_profile_id: string | null;
+  /**
+   * User Profile Revision
+   */
+  user_profile_revision?: number | null;
   /**
    * Chat Id
    */
@@ -1307,6 +1334,7 @@ export type Message = {
  * MessageExecution
  */
 export type MessageExecution = {
+  persona: PersonaProvenance;
   context?: ContextProvenance | null;
   prompt?: PromptProvenance;
   /**
@@ -1396,6 +1424,10 @@ export type ModelProvenance = {
  */
 export type NewChatRequest = {
   /**
+   * Persona Id
+   */
+  persona_id?: string | null;
+  /**
    * Model Id
    */
   model_id: string;
@@ -1419,6 +1451,122 @@ export type NewChatRequest = {
    * Files
    */
   files?: Array<string>;
+};
+
+/**
+ * PersonaCollection
+ */
+export type PersonaCollection = {
+  /**
+   * Profiles
+   */
+  profiles: Array<PersonaProfile>;
+  /**
+   * Default Persona Id
+   */
+  default_persona_id: string;
+  /**
+   * Default Revision
+   */
+  default_revision: number;
+};
+
+/**
+ * PersonaDefaultUpdate
+ */
+export type PersonaDefaultUpdate = {
+  /**
+   * Persona Id
+   */
+  persona_id: string;
+  /**
+   * Expected Default Revision
+   */
+  expected_default_revision: number;
+};
+
+/**
+ * PersonaInput
+ */
+export type PersonaInput = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * User Md
+   */
+  user_md?: string;
+};
+
+/**
+ * PersonaProfile
+ */
+export type PersonaProfile = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * User Md
+   */
+  user_md: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+  /**
+   * Is Default
+   */
+  is_default: boolean;
+};
+
+/**
+ * PersonaProvenance
+ */
+export type PersonaProvenance = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Revision
+   */
+  revision: number;
+};
+
+/**
+ * PersonaUpdate
+ */
+export type PersonaUpdate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * User Md
+   */
+  user_md?: string;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
 };
 
 /**
@@ -3193,6 +3341,46 @@ export type ChatDraftModelUpdateResponses = {
 
 export type ChatDraftModelUpdateResponse =
   ChatDraftModelUpdateResponses[keyof ChatDraftModelUpdateResponses];
+
+export type ChatPersonaUpdateData = {
+  body: ChatPersonaUpdate;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/persona";
+};
+
+export type ChatPersonaUpdateErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatPersonaUpdateError =
+  ChatPersonaUpdateErrors[keyof ChatPersonaUpdateErrors];
+
+export type ChatPersonaUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatInfo;
+};
+
+export type ChatPersonaUpdateResponse =
+  ChatPersonaUpdateResponses[keyof ChatPersonaUpdateResponses];
 
 export type ChatSessionGetManyData = {
   body?: never;
@@ -5441,6 +5629,232 @@ export type UserDeleteResponses = {
 };
 
 export type UserDeleteResponse = UserDeleteResponses[keyof UserDeleteResponses];
+
+export type UserPersonaListData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/users/personas";
+};
+
+export type UserPersonaListErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type UserPersonaListError =
+  UserPersonaListErrors[keyof UserPersonaListErrors];
+
+export type UserPersonaListResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonaCollection;
+};
+
+export type UserPersonaListResponse =
+  UserPersonaListResponses[keyof UserPersonaListResponses];
+
+export type UserPersonaCreateData = {
+  body: PersonaInput;
+  path?: never;
+  query?: never;
+  url: "/users/personas";
+};
+
+export type UserPersonaCreateErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserPersonaCreateError =
+  UserPersonaCreateErrors[keyof UserPersonaCreateErrors];
+
+export type UserPersonaCreateResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonaProfile;
+};
+
+export type UserPersonaCreateResponse =
+  UserPersonaCreateResponses[keyof UserPersonaCreateResponses];
+
+export type UserPersonaSetDefaultData = {
+  body: PersonaDefaultUpdate;
+  path?: never;
+  query?: never;
+  url: "/users/personas/default";
+};
+
+export type UserPersonaSetDefaultErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserPersonaSetDefaultError =
+  UserPersonaSetDefaultErrors[keyof UserPersonaSetDefaultErrors];
+
+export type UserPersonaSetDefaultResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonaCollection;
+};
+
+export type UserPersonaSetDefaultResponse =
+  UserPersonaSetDefaultResponses[keyof UserPersonaSetDefaultResponses];
+
+export type UserPersonaDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Persona Id
+     */
+    persona_id: string;
+  };
+  query: {
+    /**
+     * Expected Revision
+     */
+    expected_revision: number;
+  };
+  url: "/users/personas/{persona_id}";
+};
+
+export type UserPersonaDeleteErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserPersonaDeleteError =
+  UserPersonaDeleteErrors[keyof UserPersonaDeleteErrors];
+
+export type UserPersonaDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonaCollection;
+};
+
+export type UserPersonaDeleteResponse =
+  UserPersonaDeleteResponses[keyof UserPersonaDeleteResponses];
+
+export type UserPersonaGetData = {
+  body?: never;
+  path: {
+    /**
+     * Persona Id
+     */
+    persona_id: string;
+  };
+  query?: never;
+  url: "/users/personas/{persona_id}";
+};
+
+export type UserPersonaGetErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserPersonaGetError =
+  UserPersonaGetErrors[keyof UserPersonaGetErrors];
+
+export type UserPersonaGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonaProfile;
+};
+
+export type UserPersonaGetResponse =
+  UserPersonaGetResponses[keyof UserPersonaGetResponses];
+
+export type UserPersonaUpdateData = {
+  body: PersonaUpdate;
+  path: {
+    /**
+     * Persona Id
+     */
+    persona_id: string;
+  };
+  query?: never;
+  url: "/users/personas/{persona_id}";
+};
+
+export type UserPersonaUpdateErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type UserPersonaUpdateError =
+  UserPersonaUpdateErrors[keyof UserPersonaUpdateErrors];
+
+export type UserPersonaUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: PersonaProfile;
+};
+
+export type UserPersonaUpdateResponse =
+  UserPersonaUpdateResponses[keyof UserPersonaUpdateResponses];
 
 export type ToolsGetActiveData = {
   body?: never;

@@ -46,24 +46,24 @@ Export** as **Planned**. Their panes explain future scope and offer no configura
 actions. Providers, Theme Editor, Tools and Image Captioning remain available;
 user settings expose General and Agents.
 
-| Capability           | Available now                                                         | Planned                                                           |
-| -------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                                 |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                                 |
-| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                                 |
-| Image captioning     | Admin captioning policy and file-processing integration               | —                                                                 |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls           |
-| Groups               | —                                                                     | Group management and group policy settings                        |
-| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow        |
-| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                          |
-| Export               | Individual file downloads                                             | Data/conversation export tools                                    |
-| Personas and memory  | Execution provenance and typed future memory boundaries               | Distinct persona/default-profile storage; long-term memory engine |
+| Capability           | Available now                                                         | Planned                                                    |
+| -------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                          |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                          |
+| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                          |
+| Image captioning     | Admin captioning policy and file-processing integration               | —                                                          |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls    |
+| Groups               | —                                                                     | Group management and group policy settings                 |
+| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow |
+| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                   |
+| Export               | Individual file downloads                                             | Data/conversation export tools                             |
+| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs  | Long-term memory engine                                    |
 
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
-lifecycle checks. Navigation visibility does not grant access. The optional
-profile prompt layer and typed memory keys do not implement persona storage or
-long-term memory. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
+lifecycle checks. Navigation visibility does not grant access. Persona settings manage separate USER.md instructions and one default; chats can
+follow that default or select a fixed persona. Accepted turns preserve their
+instructions and provenance. Long-term memory remains future work. See the [product-surface inventory](../../docs/architecture/frontend-and-themes.md#current-versus-planned-product-surface) for ownership
 and limits.
 
 ## Authentication layout
@@ -238,3 +238,18 @@ readable hover/selected states. See the [palette mapping and review contract](..
 The test-only `/e2e/theme-contrast` route exercises production controls with each
 cookie-selected theme; `e2e/theme-contrast.spec.ts` records text, boundary and focus
 ratios plus screenshots. Custom theme overrides are not rewritten or certified.
+
+## Personas
+
+User Settings → Personas manages up to 20 owned personas, each with a name and
+USER.md instructions. Choose one default; chats can follow it for each new message
+or keep an explicit selection. Save uses revision checks and retains drafts after
+conflicts. Choose another default and switch explicitly selected chats before
+deleting a persona. Accepted turns preserve their instructions; resume reuses them
+and regeneration captures current settings. Delegates inherit the recorded persona
+within their existing capability ceilings. No long-term memory engine is active.
+See [binding and storage limits](../../docs/adr/0021-personas-and-execution-binding.md).
+
+This schema requires fresh initialization. For an older development database, use
+the explicit reset workflow when ready to discard its data; story tests use
+disposable storage and do not reset the working database.

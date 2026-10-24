@@ -1,4 +1,6 @@
 "use client";
+import { defaultPersonaProvenance } from "@/test/personas";
+
 import { Button } from "@/components/ui/button";
 import {
   ExistingChatModelPicker,
@@ -14,6 +16,7 @@ const model = {
   available: true,
 };
 const historical: MessageExecution = {
+  persona: defaultPersonaProvenance,
   id: "44444444-4444-4444-8444-444444444444",
   request_message_id: "55555555-5555-4555-8555-555555555555",
   model_revision: 1,

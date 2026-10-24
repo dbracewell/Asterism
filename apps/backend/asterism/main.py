@@ -24,6 +24,7 @@ from asterism.domains.knowledge.router import knowledge_router
 from asterism.domains.projects.router import project_router
 from asterism.domains.settings.settings_router import settings_router
 from asterism.domains.tools.router import tools_router
+from asterism.domains.user.persona_router import persona_router
 from asterism.domains.user.router import user_router
 
 truststore.inject_into_ssl()
@@ -136,6 +137,7 @@ app.include_router(project_router)
 app.include_router(knowledge_router)
 app.include_router(settings_router)
 app.include_router(user_router)
+app.include_router(persona_router)
 app.include_router(tools_router)
 app.include_router(components_router)
 app.include_router(agents_router)

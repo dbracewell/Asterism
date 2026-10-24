@@ -2,12 +2,14 @@
 
 import uuid
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
 from asterism.core.exceptions import BadDataException
+
+from .prompts import PromptLayer
 
 
 class ConfigurationProvenance(BaseModel):
@@ -67,6 +69,8 @@ class ExecutionScope:
     allowed_file_ids: frozenset[uuid.UUID]
     file_provenance: tuple[FileProvenance, ...]
 
+    user_profile_revision: int | None = None
+    persona_layer: PromptLayer | None = field(default=None, repr=False)
     configuration_provenance: tuple[ConfigurationProvenance, ...] = ()
     selected_sub_agent_ids: frozenset[uuid.UUID] = frozenset()
     project_instructions: str = ""
@@ -98,6 +102,8 @@ class ExecutionScope:
             selected_sub_agent_ids=self.selected_sub_agent_ids or self.eligible_sub_agent_ids,
             user_id=self.user_id,
             user_profile_id=self.user_profile_id,
+            user_profile_revision=self.user_profile_revision,
+            persona_layer=self.persona_layer,
             agent_id=agent_id,
             is_sub_agent=True,
             chat_id=self.chat_id,

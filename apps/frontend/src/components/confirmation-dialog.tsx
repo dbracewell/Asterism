@@ -24,6 +24,9 @@ export interface ConfirmationDialogProps {
   cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  onCloseAutoFocus?: React.ComponentProps<
+    typeof AlertDialogContent
+  >["onCloseAutoFocus"];
 }
 
 export function ConfirmationDialog({
@@ -36,6 +39,7 @@ export function ConfirmationDialog({
   cancelText = "Cancel",
   onConfirm,
   onCancel,
+  onCloseAutoFocus,
 }: ConfirmationDialogProps) {
   const isConfirmingRef = useRef(false);
 
@@ -56,7 +60,7 @@ export function ConfirmationDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
@@ -89,9 +93,14 @@ export function useConfirmationDialog({
   cancelText?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const returnFocus = useRef<HTMLElement | null>(null);
   const resolver = useRef<((value: boolean) => void) | null>(null);
 
   const confirm = useCallback(() => {
+    returnFocus.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     setOpen(true);
     return new Promise<boolean>((resolve) => {
       resolver.current = resolve;
@@ -121,6 +130,13 @@ export function useConfirmationDialog({
       cancelText={cancelText}
       onConfirm={handleConfirm}
       onCancel={handleCancel}
+      onCloseAutoFocus={(event) => {
+        const target = returnFocus.current;
+        if (target?.isConnected && !target.matches(":disabled")) {
+          event.preventDefault();
+          target.focus();
+        }
+      }}
     />
   );
 

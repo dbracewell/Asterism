@@ -16,6 +16,7 @@ DB_COMPOSITION_ROOTS = {
     "asterism.db.model_registry": {
         "asterism.domains.agent.models",
         "asterism.domains.chat.models",
+        "asterism.domains.chat.execution_models",
         "asterism.domains.chat.draft_models",
         "asterism.domains.files.models",
         "asterism.domains.knowledge.models",
@@ -29,6 +30,7 @@ AGENT_CHAT_READERS = {
     "asterism.domains.chat.schemas.MessageExecution",
     "asterism.domains.chat.execution.prepare_execution",
     "asterism.domains.chat.execution.read_execution_prompt",
+    "asterism.domains.chat.personas.validate_persona_access",
     "asterism.domains.chat.scope.read_chat_scope_snapshot",
     "asterism.domains.chat.scope.read_project_scope_snapshot",
     "asterism.domains.chat.tool_policy.require_internal_tool",

@@ -49,6 +49,11 @@ import {
 } from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
+import {
+  ExistingChatPersonaPicker,
+  personaAvailable,
+} from "./chat-persona-picker";
+import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { ExecutionLabel, ExistingChatModelPicker } from "./chat-model-picker";
 import { RetrievalCitations } from "./retrieval-citations";
 
@@ -91,6 +96,14 @@ export const ChatSession = ({
     retry: false,
   });
   const [isChangingModel, setIsChangingModel] = React.useState(false);
+  const [isChangingPersona, setIsChangingPersona] = React.useState(false);
+  const personas = useQuery({
+    ...personaQueryOptions(user.id),
+    enabled: !!session,
+  });
+  const hasPersona =
+    !personas.error &&
+    personaAvailable(personas.data, session?.info.persona_id ?? null);
   const queryKey = chatSessionGetOneQueryKey({
     path: { chat_id: chatId },
   });
@@ -303,10 +316,26 @@ export const ChatSession = ({
       (model) => model.id === session.info.selected_model_id && model.available,
     );
   const interactionBusy =
-    isProcessing || sendMessage.isPending || isChangingModel;
+    isProcessing ||
+    sendMessage.isPending ||
+    isChangingModel ||
+    isChangingPersona;
+  const promptPersona =
+    session.info.pending_persona ??
+    personas.data?.profiles.find(
+      (profile) =>
+        profile.id ===
+        (session.info.persona_id ?? personas.data?.default_persona_id),
+    );
+  const pendingRequestId =
+    session.info.pending_execution?.request_message_id ??
+    session.messages.findLast(
+      (message) => message.role === "user" && message.status === "pending",
+    )?.id;
   function requestRegeneration(parentId?: string | null) {
     if (
       !selectedModelAvailable ||
+      !hasPersona ||
       interactionBusy ||
       connectionStatus !== "Connected"
     )
@@ -361,8 +390,34 @@ export const ChatSession = ({
           info={session.info}
           disabled={isProcessing || sendMessage.isPending}
         />
+        {session.info.pending_persona && (
+          <p
+            className="text-muted-foreground text-sm"
+            aria-label="Saved turn persona"
+          >
+            This response uses {session.info.pending_persona.name} (persona
+            revision {session.info.pending_persona.revision}).
+          </p>
+        )}
         {session.info.resume_error && (
-          <p role="alert">{session.info.resume_error}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p role="alert">{session.info.resume_error}</p>
+            {pendingRequestId && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={
+                  interactionBusy ||
+                  !hasPersona ||
+                  !selectedModelAvailable ||
+                  connectionStatus !== "Connected"
+                }
+                onClick={() => requestRegeneration(pendingRequestId)}
+              >
+                Regenerate with current settings
+              </Button>
+            )}
+          </div>
         )}
         {models.data && !models.error && !selectedModelAvailable && (
           <p role="alert">
@@ -459,27 +514,42 @@ export const ChatSession = ({
             disabled={
               interactionBusy ||
               connectionStatus !== "Connected" ||
-              !selectedModelAvailable
+              !selectedModelAvailable ||
+              !hasPersona
             }
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
-            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}`}
-            scopeKey={`${session.info.model_revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
+            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}`}
+            scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
             scopeLocked={isProcessing || sendMessage.isPending}
             onSubmit={addUserMessage}
             modelSelector={
-              <ExistingChatModelPicker
-                info={session.info}
-                disabled={isProcessing || sendMessage.isPending}
-                onPendingChange={setIsChangingModel}
-                onSelected={(info) =>
-                  queryClient.setQueryData(queryKey, (previous?: Chat) =>
-                    previous
-                      ? { ...previous, info: { ...previous.info, ...info } }
-                      : previous,
-                  )
-                }
-              />
+              <>
+                <ExistingChatModelPicker
+                  info={session.info}
+                  disabled={interactionBusy}
+                  onPendingChange={setIsChangingModel}
+                  onSelected={(info) =>
+                    queryClient.setQueryData(queryKey, (previous?: Chat) =>
+                      previous
+                        ? { ...previous, info: { ...previous.info, ...info } }
+                        : previous,
+                    )
+                  }
+                />
+                <ExistingChatPersonaPicker
+                  info={session.info}
+                  disabled={interactionBusy}
+                  onPendingChange={setIsChangingPersona}
+                  onSelected={(info) =>
+                    queryClient.setQueryData(queryKey, (previous?: Chat) =>
+                      previous
+                        ? { ...previous, info: { ...previous.info, ...info } }
+                        : previous,
+                    )
+                  }
+                />
+              </>
             }
             status={
               <>

@@ -46,8 +46,8 @@ Each user must always have:
 
 A profile includes:
 
-- A custom `USER.md` persona/instruction file
-- A dedicated profile memory namespace (short-term + long-term)
+- A custom `USER.md` persona/instruction document, stored in the database
+- A typed future profile memory namespace; no active long-term memory engine
 
 Users can create additional profiles, but the invariant above must always hold.
 
@@ -176,8 +176,10 @@ Current runtime behavior includes:
   memory store, automatic memory reads/writes, or sibling-chat summaries
 
 The persona/default-profile invariant is distinct from singleton agent settings.
-The prompt composer supports an optional profile layer; current chat composition
-passes no persona layer. Do not claim a persona memory engine is implemented.
+Chat composition includes the persona captured when a message was accepted.
+Resume preserves recorded instructions; regeneration captures the current selection.
+Children inherit the recorded layer. Persona access is rechecked live, and persona
+text grants no capabilities. Do not claim a persona memory engine is implemented.
 Future project-derived memory must partition by user/profile/project; General-derived
 memory partitions by user/profile/chat. Derived local summaries additionally key by
 source chat and scope revision. Keys never grant access; reauthorize reads/writes.

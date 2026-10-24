@@ -1,3 +1,4 @@
+import { defaultPersonaProvenance } from "@/test/personas";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -123,6 +124,7 @@ it("keeps cached choices visible on refresh failure and offers retry", async () 
 });
 it("labels historical output from its recorded snapshot", () => {
   const execution: MessageExecution = {
+    persona: defaultPersonaProvenance,
     id: "run",
     request_message_id: "message",
     model_revision: 1,

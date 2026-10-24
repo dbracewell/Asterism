@@ -8,6 +8,11 @@ import {
   ChatInput,
   ChatInputContainer,
 } from "@/features/chat/components/chat-input";
+import {
+  ChatPersonaPicker,
+  personaAvailable,
+} from "@/features/chat/components/chat-persona-picker";
+import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { client } from "@/lib/api";
@@ -32,6 +37,10 @@ export default function AppPage() {
   const [chosenModelId, setChosenModelId] = useState(
     user.settings.default_model_id ?? "",
   );
+  const [personaId, setPersonaId] = useState<string | null>(null);
+  const personas = useQuery(personaQueryOptions(user.id));
+  const hasPersona =
+    !personas.error && personaAvailable(personas.data, personaId);
   const models = useQuery({
     ...chatModelsListOptions({ client }),
     staleTime: 0,
@@ -66,13 +75,16 @@ export default function AppPage() {
             key={projectId ?? "general"}
             projectId={projectId}
             placeholder="Ask anything…"
-            disabled={!modelAvailable || !workspaceAvailable}
-            requestScope={`${main.id}:${modelId || "none"}:${searchParams.get("project_id") ?? "general"}`}
+            disabled={!modelAvailable || !workspaceAvailable || !hasPersona}
+            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${searchParams.get("project_id") ?? "general"}`}
             modelSelector={
-              <ChatModelPicker value={modelId} onChange={setChosenModelId} />
+              <>
+                <ChatModelPicker value={modelId} onChange={setChosenModelId} />
+                <ChatPersonaPicker value={personaId} onChange={setPersonaId} />
+              </>
             }
             onSubmit={({ prompt, files, requestId, draftId }) => {
-              if (!modelAvailable || !workspaceAvailable)
+              if (!modelAvailable || !workspaceAvailable || !hasPersona)
                 throw new Error(
                   "Choose an available model and workspace before sending.",
                 );
@@ -80,6 +92,7 @@ export default function AppPage() {
                 body: {
                   request_id: requestId,
                   model_id: modelId,
+                  persona_id: personaId,
                   project_id: projectId,
                   user_prompt: prompt,
                   files,

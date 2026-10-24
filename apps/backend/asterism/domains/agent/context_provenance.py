@@ -27,6 +27,7 @@ class ContextProvenance(BaseModel):
     model_config = ConfigDict(frozen=True)
     user_id: str
     user_profile_id: uuid.UUID | None
+    user_profile_revision: int | None = None
     chat_id: uuid.UUID
     project_id: uuid.UUID | None
     execution_id: uuid.UUID | None
@@ -101,6 +102,7 @@ def describe_context(scope: "ExecutionScope") -> ContextProvenance:
     source = {
         "user": scope.user_id,
         "profile": str(scope.user_profile_id),
+        "profile_revision": scope.user_profile_revision,
         "chat": str(scope.chat_id),
         "project": str(scope.project_id),
         "project_revision": scope.prompt_revision,
@@ -119,6 +121,7 @@ def describe_context(scope: "ExecutionScope") -> ContextProvenance:
     return ContextProvenance(
         user_id=scope.user_id,
         user_profile_id=scope.user_profile_id,
+        user_profile_revision=scope.user_profile_revision,
         chat_id=scope.chat_id,
         project_id=scope.project_id,
         execution_id=scope.execution_id,

@@ -282,3 +282,22 @@ from authorizing removed/deleted files. Project membership is independent of loc
 Knowledge bytes/state remain owned by Files/Knowledge. No migration or old API fallback
 is added. Execution snapshots preserve the recorded ceiling and recheck live access;
 see [agent runtime](agent-runtime.md).
+
+## Personas and execution records
+
+`user_personas` owns database-backed USER.md text. Each user has a non-null,
+owner-consistent default pointer; a fresh-schema trigger creates the initial
+Default persona during the user insert. Revision checks serialize lifecycle edits
+and default changes. Chat overrides reference the same owner, and selected/default
+personas cannot be deleted. Limits are 20 personas, 80 name characters and 16,000
+USER.md characters (64,000 UTF-8 bytes).
+
+Messages capture accepted persona inputs privately. Immutable `chat_executions`
+records hold public execution metadata and private prompt snapshots; separate
+response/request references preserve regeneration history. Composite keys enforce
+owner/chat scope, and database triggers reject record/input rewrites. Chat/user
+deletion cascades records. No USER.md content is serialized into public execution
+metadata or indexed by chat search. These are fresh-schema changes, with no
+migrations or compatibility stores. Use the explicit development reset for an old
+local database; tests use disposable storage. See
+[ADR-0021](../adr/0021-personas-and-execution-binding.md).

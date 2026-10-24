@@ -7,15 +7,15 @@ alone never grants an execution access to a file.
 
 ## Ownership and dependencies
 
-| Module       | Owns                                                                                    | Consumer boundary                                                |
-| ------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `projects`   | Private flat projects, context revision, file and sub-agent memberships                 | `queries.py`, lifecycle services, project scope reader           |
-| `chat`       | Project binding, model selection, messages/branches, drafts, receipts, local references | Owner-checked scope readers and runtime composition roots        |
-| `files`      | Immutable sources, metadata, opaque storage keys, source reading for the knowledge domain | `FileStore`, `RuntimeFileReader`, owned base selects, the source reader |
-| `knowledge`  | Derived generations, embeddings, captions, vector adapter, bounded jobs, the whole processing policy | Artifact queries, the published artifact service, embedding/vector interfaces, policy transitions |
-| `agent`      | Main/sub configuration, immutable execution scope, prompts, bounded loop                | Injected scope, client, file reader, retrieval service           |
-| `retrieval`  | Authorized bounded search and citations                                                 | `RetrievalService` with injected live scope, embeddings, vectors |
-| `tools`      | Registry, ordinary capability catalog, internal tool adapters                           | Server-derived `ContextToolScope` and invocation checks          |
+| Module      | Owns                                                                                                 | Consumer boundary                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `projects`  | Private flat projects, context revision, file and sub-agent memberships                              | `queries.py`, lifecycle services, project scope reader                                            |
+| `chat`      | Project binding, model selection, messages/branches, drafts, receipts, local references              | Owner-checked scope readers and runtime composition roots                                         |
+| `files`     | Immutable sources, metadata, opaque storage keys, source reading for the knowledge domain            | `FileStore`, `RuntimeFileReader`, owned base selects, the source reader                           |
+| `knowledge` | Derived generations, embeddings, captions, vector adapter, bounded jobs, the whole processing policy | Artifact queries, the published artifact service, embedding/vector interfaces, policy transitions |
+| `agent`     | Main/sub configuration, immutable execution scope, prompts, bounded loop                             | Injected scope, client, file reader, retrieval service                                            |
+| `retrieval` | Authorized bounded search and citations                                                              | `RetrievalService` with injected live scope, embeddings, vectors                                  |
+| `tools`     | Registry, ordinary capability catalog, internal tool adapters                                        | Server-derived `ContextToolScope` and invocation checks                                           |
 
 Build owner-scoped selects in the owning domain's `queries.py`. Apply membership,
 search, and sort predicates before database pagination, then enrich the returned
@@ -126,3 +126,17 @@ provenance or cache key is never an authorization grant.
 See [agent runtime](agent-runtime.md), [tool authorization](tool-authorization.md),
 [context and memory isolation](context-isolation.md), and
 [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md) for the remaining contracts.
+
+## Persona binding
+
+Each accepted user message captures an owned persona ID, name, revision and private
+USER.md input. Chat selection is either a fixed owned persona or the current user
+default. Resume uses captured inputs; regeneration captures current settings.
+Immutable `chat_executions` records store private prompts and public metadata.
+Messages separately reference their producing execution and any execution they
+start, preserving both when an assistant response is regenerated. Owner/chat
+composite foreign keys prevent cross-scope references. Public chat responses never
+serialize USER.md. Deleting a recorded persona revokes pending/running access;
+historical messages retain provenance. Children inherit the root persona without
+expanding capabilities. No memory store is activated. See
+[ADR-0021](../adr/0021-personas-and-execution-binding.md).

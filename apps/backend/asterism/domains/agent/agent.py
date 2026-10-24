@@ -76,7 +76,8 @@ class Agent:
         self.effective_tools: list[str] = []
         self._delegation_available = False
         self.delegation_scope = delegation_scope
-        self.authorization_check = authorization_check
+        self._external_authorization_check = authorization_check
+        self.authorization_check = self._check_authorization
         self.execution_scope = execution_scope
         self.file_input_authorization: Callable[[], Awaitable[None]] | None = None
         self.retrieval_service = retrieval_service
@@ -104,6 +105,18 @@ class Agent:
             self.call_stack = [self.profile.id]
         else:
             self.call_stack = []
+
+    async def _check_authorization(self) -> None:
+        if self._external_authorization_check:
+            await self._external_authorization_check()
+        persona_id = self.execution_scope.user_profile_id if self.execution_scope else None
+        if persona_id is None and self.prompt_snapshot is not None:
+            layer = next((layer for layer in self.prompt_snapshot.layers if layer.kind == "profile"), None)
+            persona_id = uuid.UUID(layer.source_id) if layer else None
+        if persona_id is not None:
+            from asterism.domains.chat.personas import validate_persona_access
+
+            await validate_persona_access(user_id=self.user.id, persona_id=persona_id)
 
     async def refresh_main_configuration(self) -> None:
         from .service import get_main_agent_profile
@@ -236,7 +249,13 @@ class Agent:
 
             scope = await resolve_execution_scope(
                 user_id=self.user.id,
-                user_profile_id=None,
+                user_profile_id=(
+                    self.execution.persona.id
+                    if self.execution
+                    else self.execution_scope.user_profile_id
+                    if self.execution_scope
+                    else None
+                ),
                 agent_id=self.profile.id,
                 is_sub_agent=self.profile.sub_agent,
                 chat_id=self.session.info.id,
@@ -247,6 +266,20 @@ class Agent:
                 chat_scope_reader=chat_reader,
                 project_scope_reader=project_reader,
             )
+        if self.execution is not None:
+            layer = (
+                next((layer for layer in self.prompt_snapshot.layers if layer.kind == "profile"), None)
+                if self.prompt_snapshot
+                else None
+            )
+            scope = replace(scope, user_profile_revision=self.execution.persona.revision, persona_layer=layer)
+        elif self.profile.sub_agent and self.execution_scope is not None:
+            scope = replace(
+                scope,
+                user_profile_revision=self.execution_scope.user_profile_revision,
+                persona_layer=self.execution_scope.persona_layer,
+            )
+
         if self.profile.sub_agent and self.execution_scope is not None:
             if (
                 scope.project_id != self.execution_scope.project_id
@@ -436,6 +469,7 @@ class Agent:
         if snapshot is None and self.execution_scope is not None and self.profile.sub_agent:
             scope = self.execution_scope
             snapshot = PromptComposer().snapshot(
+                profile_layer=scope.persona_layer,
                 agent_id=self.profile.id,
                 agent_revision=self.profile.config_revision,
                 agent_instructions=self.profile.system_prompt or "",

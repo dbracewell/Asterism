@@ -103,6 +103,14 @@ export const zChatMoveRequest = z.object({
 });
 
 /**
+ * ChatPersonaUpdate
+ */
+export const zChatPersonaUpdate = z.object({
+  persona_id: z.uuid().nullable(),
+  expected_persona_revision: z.int().gte(1),
+});
+
+/**
  * ChatSendRequest
  */
 export const zChatSendRequest = z.object({
@@ -589,6 +597,7 @@ export const zModelProvenance = z.object({
 export const zContextProvenance = z.object({
   user_id: z.string(),
   user_profile_id: z.uuid().nullable(),
+  user_profile_revision: z.int().nullish(),
   chat_id: z.uuid(),
   project_id: z.uuid().nullable(),
   execution_id: z.uuid().nullable(),
@@ -607,12 +616,69 @@ export const zContextProvenance = z.object({
  * NewChatRequest
  */
 export const zNewChatRequest = z.object({
+  persona_id: z.uuid().nullish(),
   model_id: z.uuid(),
   request_id: z.uuid(),
   draft_id: z.uuid().nullish(),
   user_prompt: z.string(),
   project_id: z.uuid().nullish(),
   files: z.array(z.uuid()).max(100).optional(),
+});
+
+/**
+ * PersonaDefaultUpdate
+ */
+export const zPersonaDefaultUpdate = z.object({
+  persona_id: z.uuid(),
+  expected_default_revision: z.int().gte(1),
+});
+
+/**
+ * PersonaInput
+ */
+export const zPersonaInput = z.object({
+  name: z.string().min(1).max(80),
+  user_md: z.string().max(16000).optional().default(""),
+});
+
+/**
+ * PersonaProfile
+ */
+export const zPersonaProfile = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  user_md: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  is_default: z.boolean(),
+});
+
+/**
+ * PersonaCollection
+ */
+export const zPersonaCollection = z.object({
+  profiles: z.array(zPersonaProfile),
+  default_persona_id: z.uuid(),
+  default_revision: z.int(),
+});
+
+/**
+ * PersonaProvenance
+ */
+export const zPersonaProvenance = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  revision: z.int().gte(1),
+});
+
+/**
+ * PersonaUpdate
+ */
+export const zPersonaUpdate = z.object({
+  name: z.string().min(1).max(80),
+  user_md: z.string().max(16000).optional().default(""),
+  expected_revision: z.int().gte(1),
 });
 
 /**
@@ -735,6 +801,7 @@ export const zPromptProvenance = z.object({
  * MessageExecution
  */
 export const zMessageExecution = z.object({
+  persona: zPersonaProvenance,
   context: zContextProvenance.nullish(),
   prompt: zPromptProvenance.optional(),
   id: z.uuid().optional(),
@@ -759,10 +826,13 @@ export const zChatInfo = z.object({
   preview: z.string().nullish(),
   message_count: z.int().nullish(),
   context_model: zChatContextModel.nullish(),
+  persona_id: z.uuid().nullish(),
+  persona_revision: z.int().gte(1).optional().default(1),
   selected_model_id: z.uuid().nullish(),
   model_revision: z.int().gte(1).optional().default(1),
   selected_model: zChatModelChoice.nullish(),
   pending_execution: zMessageExecution.nullish(),
+  pending_persona: zPersonaProvenance.nullish(),
   resume_error: z.string().nullish(),
 });
 
@@ -1531,6 +1601,17 @@ export const zChatDraftModelUpdatePath = z.object({
  */
 export const zChatDraftModelUpdateResponse = zChatDraft;
 
+export const zChatPersonaUpdateBody = zChatPersonaUpdate;
+
+export const zChatPersonaUpdatePath = z.object({
+  chat_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatPersonaUpdateResponse = zChatInfo;
+
 export const zChatSessionGetManyQuery = z.object({
   project_id: z.uuid().nullish(),
   page: z.int().gte(1).optional().default(1),
@@ -2079,6 +2160,58 @@ export const zUserDeletePath = z.object({
  * Successful Response
  */
 export const zUserDeleteResponse = z.boolean();
+
+/**
+ * Successful Response
+ */
+export const zUserPersonaListResponse = zPersonaCollection;
+
+export const zUserPersonaCreateBody = zPersonaInput;
+
+/**
+ * Successful Response
+ */
+export const zUserPersonaCreateResponse = zPersonaProfile;
+
+export const zUserPersonaSetDefaultBody = zPersonaDefaultUpdate;
+
+/**
+ * Successful Response
+ */
+export const zUserPersonaSetDefaultResponse = zPersonaCollection;
+
+export const zUserPersonaDeletePath = z.object({
+  persona_id: z.uuid(),
+});
+
+export const zUserPersonaDeleteQuery = z.object({
+  expected_revision: z.int().gte(1),
+});
+
+/**
+ * Successful Response
+ */
+export const zUserPersonaDeleteResponse = zPersonaCollection;
+
+export const zUserPersonaGetPath = z.object({
+  persona_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zUserPersonaGetResponse = zPersonaProfile;
+
+export const zUserPersonaUpdateBody = zPersonaUpdate;
+
+export const zUserPersonaUpdatePath = z.object({
+  persona_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zUserPersonaUpdateResponse = zPersonaProfile;
 
 /**
  * Successful Response

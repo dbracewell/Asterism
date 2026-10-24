@@ -11,10 +11,13 @@ from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectSco
 from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
+from asterism.domains.user.personas import require_owned_persona
 
 from .execution_context import build_execution_provenance
+from .execution_models import ChatExecutionModel
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
+from .personas import read_chat_persona_snapshot
 from .prompt_composition import build_prompt_snapshot
 from .queries import select_owned_messages
 from .schemas import MessageExecution
@@ -50,7 +53,7 @@ async def prepare_execution(
             current = MainAgentConfiguration.model_validate(await get_main_agent_profile(user_id, session))
             recorded = message.pending_execution
             if recorded is not None and not restart:
-                await validate_recorded_execution(recorded, current, session)
+                await validate_recorded_execution(recorded, current, session, user_id=user_id)
                 validate_prompt_snapshot(recorded, message.pending_prompt, chat.project_id)
                 if (
                     recorded.context is None
@@ -80,7 +83,19 @@ async def prepare_execution(
                         else None
                     )
                 )
+                persona = (
+                    await read_chat_persona_snapshot(user_id=user_id, chat_id=chat_id, session=session)
+                    if restart
+                    else message.accepted_persona
+                )
+                if persona is None:
+                    raise CodedException(409, "Accepted persona input is unavailable; regenerate")
+                try:
+                    await require_owned_persona(user_id=user_id, persona_id=persona.id, session=session)
+                except NotFoundException as error:
+                    raise CodedException(409, "Accepted persona is unavailable; regenerate") from error
                 prompt = await build_prompt_snapshot(
+                    persona_snapshot=persona,
                     user_id=user_id,
                     chat_id=chat_id,
                     profile=AgentProfile.model_validate(
@@ -91,8 +106,8 @@ async def prepare_execution(
                     chat_snapshot=chat_snap,
                     project_snapshot=project_snap,
                 )
-                message.pending_prompt = prompt
                 execution = MessageExecution(
+                    persona=persona.identity,
                     prompt=prompt.provenance,
                     request_message_id=message_id,
                     model=choice,
@@ -107,9 +122,21 @@ async def prepare_execution(
                     chat_snapshot=chat_snap,
                     project_snapshot=project_snap,
                 )
-                message.pending_execution = execution
+                record = ChatExecutionModel(
+                    id=execution.id,
+                    user_id=user_id,
+                    chat_id=chat_id,
+                    request_message_id=message_id,
+                    execution=execution,
+                    prompt=prompt,
+                )
+                session.add(record)
+                await session.flush()
+                message.pending_execution_id = record.id
+                await session.flush()
+                await session.refresh(message, ["pending_execution_record"])
             await session.commit()
-            return execution
+            return execution.model_copy(deep=True)
         except BaseException:
             await session.rollback()
             raise
@@ -119,7 +146,13 @@ async def validate_recorded_execution(
     recorded: MessageExecution,
     current: MainAgentConfiguration,
     session: AsyncSession,
+    *,
+    user_id: str,
 ):
+    try:
+        await require_owned_persona(user_id=user_id, persona_id=recorded.persona.id, session=session)
+    except NotFoundException as error:
+        raise CodedException(409, "Recorded persona is unavailable; regenerate with an available persona") from error
     choice = await require_chat_model(recorded.model.id, session)
     if (
         choice.name != recorded.model.name
@@ -153,3 +186,13 @@ def validate_prompt_snapshot(
         raise CodedException(409, "Recorded prompt is unavailable or changed; regenerate")
     if snapshot.project_id != project_id:
         raise CodedException(409, "Recorded prompt project changed; regenerate")
+
+    profile_layers = [layer for layer in snapshot.layers if layer.kind == "profile"]
+    if len(profile_layers) != 1 or (
+        profile_layers[0].source_id != str(execution.persona.id)
+        or profile_layers[0].revision != execution.persona.revision
+        or execution.context is None
+        or execution.context.user_profile_id != execution.persona.id
+        or execution.context.user_profile_revision != execution.persona.revision
+    ):
+        raise CodedException(409, "Recorded persona input is unavailable or changed; regenerate")

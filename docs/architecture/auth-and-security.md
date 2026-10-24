@@ -43,7 +43,7 @@ queries are owner-filtered and return the same 404 for foreign and missing ident
 ### User and administrator boundaries
 
 Backend services pass the authenticated user ID into queries for user-owned chats,
-messages, projects, files, main-agent configurations, sub-agent definitions, and settings. File routes additionally
+messages, projects, files, personas, main-agent configurations, sub-agent definitions, and settings. File routes additionally
 resolve stored paths below that user's file root. Provider administration and other
 administrator operations use the user's authenticated role; provider credentials are
 write-only in API responses.
@@ -112,3 +112,10 @@ imports. Saves await a synced temporary file and atomic rename before returning
 success, then revalidate the layout. Failures retain editable drafts with retry.
 See [theme storage and lifecycle](theme-storage.md) for ownership, freshness,
 backup/reset and container permissions.
+
+Persona lifecycle APIs always use the authenticated owner's ID, including for
+administrators. Foreign and missing identities return the same 404. Accepted
+persona snapshots guide output but grant no capabilities. Execution rechecks live
+owner/profile access before work and while releasing output, including delegated
+results. Public history contains identity/revision/digests; USER.md remains in
+owner-only persona settings and private server snapshots.

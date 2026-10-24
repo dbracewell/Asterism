@@ -1,6 +1,7 @@
 """HTTP endpoints for user lifecycle management (``/users``).
 
-Three operations exist: listing users, provisioning a new one, and deleting
+Persona lifecycle routes are defined separately in ``persona_router``.
+This router handles three operations: listing users, provisioning a new one, and deleting
 one. Creation is the only endpoint that can be reached without a JWT — it
 additionally accepts the shared ``SYSTEM_KEY`` secret so external tooling
 (e.g. the frontend's BetterAuth flow) can provision users out of band.

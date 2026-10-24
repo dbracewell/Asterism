@@ -34,17 +34,18 @@ available-pane discoverability. The current-versus-planned inventory is in the
 [product guide](../architecture/frontend-and-themes.md#current-versus-planned-product-surface)
 and all three READMEs. See [verification](../reviews/us-35.1-verification-2026-10-24.md).
 
-US-35.2 remains substantive new work; optional profile/prompt/namespace types do
-not constitute a persona engine.
+US-35.2 is implemented and verified, with completion and local merge authorized
+on 2026-10-24. EPIC-35 is confirmed complete. Owned persona CRUD/defaults, chat selection and immutable
+execution inputs are separate from agent configuration and future memory. See
+[ADR-0021](../adr/0021-personas-and-execution-binding.md).
 
 ## Recommended sequence
 
-1. **US-35.2 — Persona/default-profile foundations.** Decide selection and
-   execution snapshot semantics before implementation. Preserve singleton
-   main-agent, fixed sub-agent models and scope ceilings. Do not activate memory.
+1. Reconcile the already-merged US-36.1 and US-37.1 completion records; do not
+   repeat their implementations. Reassess the roadmap before choosing new work.
 
-Only one user story is implemented at a time. US-35.1 is confirmed complete;
-US-35.2 is the next recommended story.
+Only one user story is implemented at a time. EPIC-35 is confirmed complete;
+no new story has been started.
 
 ## Scope and ownership
 
@@ -66,7 +67,7 @@ US-35.2 is the next recommended story.
 
 The original 26–43 engineer-day estimate included now-completed trust/layout work
 and is no longer an estimate of remaining effort. Use the revised story ranges;
-use the completed browser baseline and re-estimate persona work after its ADR. Capacity policy is an explicit decision in US-34.4, not a claim of load
+use the completed browser baseline and the persona binding ADR. Capacity policy is an explicit decision in US-34.4, not a claim of load
 certification. Do not fold speculative horizontal scaling, PostgreSQL/MySQL,
 object storage or long-term memory into these stories.
 

@@ -42,7 +42,7 @@ async def add_message(
     session: AsyncSession | None = None,
 ) -> Message:
     async with get_async_db_session(session) as session:
-        await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
+        chat = await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
         if message.parent_message_id is not None:
             await _owned_message(
                 user_id=user_id,
@@ -55,11 +55,33 @@ async def add_message(
         files = await resolve_file_references(user_id=user_id, file_ids=message.files, session=session)
         await bind_message_files(user_id=user_id, chat_id=chat_id, files=files, session=session)
         new_message = MessageModel(
-            **message.model_dump(exclude={"active_child_id", "files"}),
+            **message.model_dump(exclude={"active_child_id", "files", "execution"}),
             files=files,
             user_id=user_id,
             chat_id=chat_id,
         )
+        if message.role == "user":
+            from .personas import resolve_persona_snapshot
+
+            new_message.accepted_persona = await resolve_persona_snapshot(
+                user_id=user_id,
+                persona_id=chat.persona_id,
+                session=session,
+            )
+        if message.execution is not None:
+            from .execution_models import ChatExecutionModel
+            from .queries import select_owned_executions
+
+            record = await session.scalar(
+                select_owned_executions(user_id=user_id, chat_id=chat_id)
+                .where(ChatExecutionModel.id == message.execution.id)
+                .execution_options(populate_existing=True)
+            )
+            if record is None:
+                raise NotFoundException("Execution not found")
+            if record.execution != message.execution:
+                raise BadDataException("Execution metadata changed")
+            new_message.execution_id = record.id
         session.add(new_message)
 
         if new_message.parent_message_id:
@@ -78,6 +100,9 @@ async def add_message(
             )
             await session.execute(stmt)
 
+        await session.flush()
+        if new_message.execution_id is not None:
+            await session.refresh(new_message, ["execution_record"])
         await session.commit()
         return Message.model_validate(new_message)
 
@@ -279,6 +304,10 @@ async def get_one(
             ),
             None,
         )
+        if pending is not None:
+            from .personas import describe_pending_persona
+
+            await describe_pending_persona(user_id=user_id, pending=pending, info=chat_info, session=session)
         if pending is not None and pending.pending_execution is not None:
             from asterism.core.exceptions import CodedException
             from asterism.domains.agent.schemas import MainAgentConfiguration
@@ -291,7 +320,7 @@ async def get_one(
             try:
                 current = MainAgentConfiguration.model_validate(await get_main_agent_profile(user_id, session))
                 validate_prompt_snapshot(execution, pending.pending_prompt, chat_info.project_id)
-                choice = await validate_recorded_execution(execution, current, session)
+                choice = await validate_recorded_execution(execution, current, session, user_id=user_id)
                 chat_info.context_model = ChatContextModel(
                     id=choice.id,
                     name=choice.name,

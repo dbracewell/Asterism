@@ -5,6 +5,7 @@ from collections.abc import Sequence
 
 from sqlalchemy import func, or_, select
 
+from .execution_models import ChatExecutionModel
 from .models import ChatModel, MessageModel
 
 
@@ -49,3 +50,10 @@ def select_owned_message_snippets(*, user_id: str, chat_ids: Sequence[uuid.UUID]
         .subquery()
     )
     return select(ranked.c.chat_id, ranked.c.content).where(ranked.c.position == 1)
+
+
+def select_owned_executions(*, user_id: str, chat_id: uuid.UUID):
+    return select(ChatExecutionModel).where(
+        ChatExecutionModel.user_id == user_id,
+        ChatExecutionModel.chat_id == chat_id,
+    )
