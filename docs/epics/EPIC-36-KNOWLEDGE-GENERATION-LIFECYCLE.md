@@ -1,9 +1,10 @@
 # EPIC-36: Knowledge generation lifecycle
 
-Status: implemented and merged (`f41d01b`, merge `37ee995`; ancestry verified
-2026-10-24). No new implementation gap identified by the
-[current-source assessment](../reviews/2026-10-24-open-epics-reassessment.md);
-completion confirmation/archive metadata remains to be reconciled. Source: generation-mechanism review of the files domain
+Status: complete; completion records reconciled at the user's request on
+2026-10-24. Implementation already merged (`f41d01b`, merge `37ee995`); ancestry and
+current focused regressions verified. See the [reconciliation record](../reviews/us-36.1-us-37.1-completion-reconciliation-2026-10-24.md)
+and [completed checklist](../archive/todo-completed-2026-10-24.md).
+Source: generation-mechanism review of the files domain
 (2026-10-21) covering artifact generations, the "one current generation per
 file" invariant, and the artifact reported to the user interface.
 

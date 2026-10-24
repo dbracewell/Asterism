@@ -138,3 +138,29 @@ run passed 127 tests with zero retries, skips, unexpected or flaky results.
 Changed-file formatting and OpenAPI/client synchronization passed; seven untouched
 Python files retain baseline formatting issues. Working storage was not reset.
 EPIC-35 is confirmed complete. See the [verification record](../reviews/us-35.2-verification-2026-10-24.md).
+
+## [EPIC-36: Knowledge generation lifecycle](../epics/EPIC-36-KNOWLEDGE-GENERATION-LIFECYCLE.md)
+
+- [x] US-36.1: Bound, port, and align knowledge generations
+  - [x] Add `KNOWLEDGE_GENERATION_RETENTION` (0–10, default 1) with runtime validation.
+  - [x] Add `knowledge/retention.py` with a pure retention rule and the pruning routine; delete vectors before the rows that describe them, and keep a row when its vectors cannot be removed so the deletion retries.
+  - [x] Prune after a generation settles (promoted to ready, or terminally failed) in the ingestion path.
+  - [x] Declare the one-current-generation partial unique index for SQLite and PostgreSQL.
+  - [x] Report the current generation (falling back to the newest when no generation is current yet) from file metadata and the knowledge-status endpoint.
+  - [x] Cover the retention rule, pruning, dialect declaration and reporting with tests; run backend lint, type checks and the full test suite.
+  - [x] Document the retention window and the reported-artifact rule in the file-knowledge, retrieval and data-storage architecture guides.
+
+## [EPIC-37: Files domain correctness](../epics/EPIC-37-FILES-DOMAIN-CORRECTNESS.md)
+
+- [x] US-37.1: Correct content-cache invalidation, empty-file reporting, delete robustness, and schema cleanup
+  - [x] Verify the stored source's digest on every read and invalidate the cached conversion when it no longer matches.
+  - [x] Distinguish "no cached text" from "cached empty text" in the runtime read result, and treat an empty attachment as attached in the chat orchestrator.
+  - [x] Guard the stored-source removal that runs after the delete commit, and log the previously silent swallowed failures.
+  - [x] Drop the redundant `user_files` index and document why the composite unique constraint must stay.
+  - [x] Add regression tests for each fix, verify they fail against the pre-fix implementation, and run the backend and frontend gates.
+
+Completion records reconciled at the user's explicit request on 2026-10-24.
+US-36.1 was already merged as `f41d01b` (merge `37ee995`), and US-37.1 as
+`6b123f8`; all three commits remain ancestors of local `main`. No original
+confirmation is inferred from ancestry. Current focused regressions: 16 passed.
+EPIC-36 and EPIC-37 are complete. See [reconciliation](../reviews/us-36.1-us-37.1-completion-reconciliation-2026-10-24.md).

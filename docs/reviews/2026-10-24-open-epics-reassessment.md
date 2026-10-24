@@ -6,6 +6,11 @@ and confirmed for merge with US-38.6 on 2026-10-24.
 This is a current-source and focused-regression assessment, not implementation
 of an open story or a new full browser/production certification.
 
+> Historical assessment: the findings and next-work sequence below describe the
+> baseline above. Subsequent stories are now complete; see the
+> [current roadmap](../plans/post-refactor-quality-roadmap.md) and the
+> [US-36.1/37.1 reconciliation](us-36.1-us-37.1-completion-reconciliation-2026-10-24.md).
+
 ## Decisions
 
 ### EPIC-33: reconcile merged work rather than implement it again

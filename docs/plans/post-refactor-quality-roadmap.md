@@ -1,6 +1,7 @@
 # Post-refactor quality roadmap
 
-Reassessed 2026-10-24 against `main` at `1e188a7`. Source: the
+Original reassessment: 2026-10-24 against `main` at `1e188a7`.
+Completion metadata refreshed against `main` at `7422222` on 2026-10-24. Source: the
 [original 2026-10-17 review](../reviews/2026-10-17-codebase-review.md) and the
 [current-source assessment](../reviews/2026-10-24-open-epics-reassessment.md).
 The live checklist is [`todo.md`](../../todo.md); completed history remains archived.
@@ -12,9 +13,10 @@ complete. US-38.6 is confirmed complete and merged on 2026-10-24, together with
 this epic reassessment. It retains generation-based artifact reuse and
 policy fingerprint change detection while removing unused artifact metadata.
 US-33.3 is implemented and merged (`70fcad8`); its [completion reconciliation](../reviews/us-33.3-completion-reconciliation-2026-10-24.md) was confirmed on 2026-10-24, completing EPIC-33.
-US-36.1 (`f41d01b`) and US-37.1 (`6b123f8`) are implemented and merged too;
-reconcile their completion/archive records rather than reimplement them. This
-audit does not invent missing user confirmations. EPIC-38's published artifact
+US-36.1 (`f41d01b`) and US-37.1 (`6b123f8`) were already implemented and merged.
+Their completion/checklist records are now reconciled at the user's request,
+completing EPIC-36 and EPIC-37; see the [record](../reviews/us-36.1-us-37.1-completion-reconciliation-2026-10-24.md).
+This reconciliation does not infer an original user confirmation from git history. EPIC-38's published artifact
 service, injected source reader, processing-policy ownership and boundary tests
 are the baseline for future work.
 
@@ -41,11 +43,13 @@ execution inputs are separate from agent configuration and future memory. See
 
 ## Recommended sequence
 
-1. Reconcile the already-merged US-36.1 and US-37.1 completion records; do not
-   repeat their implementations. Reassess the roadmap before choosing new work.
+All tracked stories in EPIC-31 through EPIC-38 are complete. No active or pending
+story remains in the live checklist. Reassess product priorities with the user
+before choosing the next epic; planned capabilities and long-term memory remain
+future work, rather than implicitly authorized implementation.
 
-Only one user story is implemented at a time. EPIC-35 is confirmed complete;
-no new story has been started.
+Only one user story is implemented at a time. This reconciliation starts no new
+implementation story.
 
 ## Scope and ownership
 
