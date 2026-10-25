@@ -11,6 +11,10 @@ export type ClientOptions = {
  */
 export type ApplicationSettings = {
   /**
+   * Skills Enabled
+   */
+  skills_enabled?: boolean;
+  /**
    * Llm Providers
    */
   llm_providers?: Array<Provider>;
@@ -702,6 +706,36 @@ export type DownloadStatus =
   | "verifying"
   | "ready"
   | "failed";
+
+/**
+ * EligibleSkillsPage
+ */
+export type EligibleSkillsPage = {
+  /**
+   * Items
+   */
+  items: Array<SkillSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+  /**
+   * Policy Enabled
+   */
+  policy_enabled: boolean;
+  /**
+   * Agent Revision
+   */
+  agent_revision: number;
+};
 
 /**
  * Embedding
@@ -2131,6 +2165,154 @@ export type SimilarFileList = {
 };
 
 /**
+ * Skill
+ */
+export type Skill = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+  /**
+   * Content
+   */
+  content: string;
+};
+
+/**
+ * SkillAssignmentUpdate
+ */
+export type SkillAssignmentUpdate = {
+  /**
+   * Skill Ids
+   */
+  skill_ids: Array<string>;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
+};
+
+/**
+ * SkillAssignments
+ */
+export type SkillAssignments = {
+  /**
+   * Skill Ids
+   */
+  skill_ids: Array<string>;
+  /**
+   * Revision
+   */
+  revision: number;
+};
+
+/**
+ * SkillCreate
+ */
+export type SkillCreate = {
+  /**
+   * Content
+   */
+  content: string;
+};
+
+/**
+ * SkillPage
+ */
+export type SkillPage = {
+  /**
+   * Items
+   */
+  items: Array<SkillSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * SkillPolicy
+ */
+export type SkillPolicy = {
+  /**
+   * Enabled
+   */
+  enabled?: boolean;
+};
+
+/**
+ * SkillSummary
+ */
+export type SkillSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * SkillUpdate
+ */
+export type SkillUpdate = {
+  /**
+   * Content
+   */
+  content: string;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
+};
+
+/**
  * SubAgentCreate
  */
 export type SubAgentCreate = {
@@ -2624,6 +2806,10 @@ export type UserSettings = {
  * Aggregate of global application settings (admin view).
  */
 export type ApplicationSettingsWritable = {
+  /**
+   * Skills Enabled
+   */
+  skills_enabled?: boolean;
   /**
    * Llm Providers
    */
@@ -4899,6 +5085,469 @@ export type AppCaptionModelCancelResponses = {
 
 export type AppCaptionModelCancelResponse =
   AppCaptionModelCancelResponses[keyof AppCaptionModelCancelResponses];
+
+export type SkillsPolicyGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/skills";
+};
+
+export type SkillsPolicyGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type SkillsPolicyGetError =
+  SkillsPolicyGetErrors[keyof SkillsPolicyGetErrors];
+
+export type SkillsPolicyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillPolicy;
+};
+
+export type SkillsPolicyGetResponse =
+  SkillsPolicyGetResponses[keyof SkillsPolicyGetResponses];
+
+export type SkillsPolicyUpdateData = {
+  body: SkillPolicy;
+  path?: never;
+  query?: never;
+  url: "/settings/app/skills";
+};
+
+export type SkillsPolicyUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillsPolicyUpdateError =
+  SkillsPolicyUpdateErrors[keyof SkillsPolicyUpdateErrors];
+
+export type SkillsPolicyUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillPolicy;
+};
+
+export type SkillsPolicyUpdateResponse =
+  SkillsPolicyUpdateResponses[keyof SkillsPolicyUpdateResponses];
+
+export type MainAgentSkillsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/user/main-agent/skills";
+};
+
+export type MainAgentSkillsGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type MainAgentSkillsGetError =
+  MainAgentSkillsGetErrors[keyof MainAgentSkillsGetErrors];
+
+export type MainAgentSkillsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillAssignments;
+};
+
+export type MainAgentSkillsGetResponse =
+  MainAgentSkillsGetResponses[keyof MainAgentSkillsGetResponses];
+
+export type MainAgentSkillsUpdateData = {
+  body: SkillAssignmentUpdate;
+  path?: never;
+  query?: never;
+  url: "/settings/user/main-agent/skills";
+};
+
+export type MainAgentSkillsUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MainAgentSkillsUpdateError =
+  MainAgentSkillsUpdateErrors[keyof MainAgentSkillsUpdateErrors];
+
+export type MainAgentSkillsUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillAssignments;
+};
+
+export type MainAgentSkillsUpdateResponse =
+  MainAgentSkillsUpdateResponses[keyof MainAgentSkillsUpdateResponses];
+
+export type SkillEligibleGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Query
+     */
+    query?: string;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/skills/eligible";
+};
+
+export type SkillEligibleGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillEligibleGetManyError =
+  SkillEligibleGetManyErrors[keyof SkillEligibleGetManyErrors];
+
+export type SkillEligibleGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: EligibleSkillsPage;
+};
+
+export type SkillEligibleGetManyResponse =
+  SkillEligibleGetManyResponses[keyof SkillEligibleGetManyResponses];
+
+export type SkillGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Query
+     */
+    query?: string;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/skills/";
+};
+
+export type SkillGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillGetManyError = SkillGetManyErrors[keyof SkillGetManyErrors];
+
+export type SkillGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: SkillPage;
+};
+
+export type SkillGetManyResponse =
+  SkillGetManyResponses[keyof SkillGetManyResponses];
+
+export type SkillCreateData = {
+  body: SkillCreate;
+  path?: never;
+  query?: never;
+  url: "/skills/";
+};
+
+export type SkillCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillCreateError = SkillCreateErrors[keyof SkillCreateErrors];
+
+export type SkillCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: Skill;
+};
+
+export type SkillCreateResponse =
+  SkillCreateResponses[keyof SkillCreateResponses];
+
+export type SkillDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Skill Id
+     */
+    skill_id: string;
+  };
+  query: {
+    /**
+     * Expected Revision
+     */
+    expected_revision: number;
+  };
+  url: "/skills/{skill_id}";
+};
+
+export type SkillDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillDeleteError = SkillDeleteErrors[keyof SkillDeleteErrors];
+
+export type SkillDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type SkillDeleteResponse =
+  SkillDeleteResponses[keyof SkillDeleteResponses];
+
+export type SkillGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Skill Id
+     */
+    skill_id: string;
+  };
+  query?: never;
+  url: "/skills/{skill_id}";
+};
+
+export type SkillGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillGetOneError = SkillGetOneErrors[keyof SkillGetOneErrors];
+
+export type SkillGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: Skill;
+};
+
+export type SkillGetOneResponse =
+  SkillGetOneResponses[keyof SkillGetOneResponses];
+
+export type SkillUpdateData = {
+  body: SkillUpdate;
+  path: {
+    /**
+     * Skill Id
+     */
+    skill_id: string;
+  };
+  query?: never;
+  url: "/skills/{skill_id}";
+};
+
+export type SkillUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SkillUpdateError = SkillUpdateErrors[keyof SkillUpdateErrors];
+
+export type SkillUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Skill;
+};
+
+export type SkillUpdateResponse =
+  SkillUpdateResponses[keyof SkillUpdateResponses];
 
 export type MainAgentGetData = {
   body?: never;

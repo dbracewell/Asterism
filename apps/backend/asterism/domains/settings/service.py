@@ -598,7 +598,8 @@ async def get_captioning_models(
                 await session.scalars(
                     # ``supports_vision=True`` already implies a non-UNKNOWN
                     # vision_source (schema normalization), so no source filter.
-                    select(LLMModel).where(
+                    select(LLMModel)
+                    .where(
                         LLMModel.is_active.is_(True),
                         LLMModel.supports_vision.is_(True),
                     )
@@ -740,6 +741,11 @@ def _validate_non_provider_app_setting(
         except ValidationError as exc:
             raise BadDataException(f"Invalid value for application setting '{key}'") from exc
         return value, validated
+
+    if key == "skills_enabled":
+        if type(value) is not bool:
+            raise BadDataException("Skills policy must be a boolean")
+        return value, None
 
     if key == "active_tools":
         if not isinstance(value, list) or not all(isinstance(item, str) for item in value):

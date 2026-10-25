@@ -71,8 +71,12 @@ retain fixed models and receive the same or narrower execution file scope.
 
 ## 2.4 Skills / Tools / MCP / Image Generation
 
+- Users own private SKILL.md-style skill documents and their CRUD lifecycle.
+  Skills require explicit assignment to the user's main-agent configuration;
+  admin `skills_enabled` policy controls eligibility and defaults to disabled.
+  Skill text never grants tools, file access, MCP, or delegation. Runtime skill
+  activation and the management UI are planned separately from this foundation.
 - **Admin** can add, update, enable/disable:
-  - Skills
   - Tools
   - MCP servers
   - Image generation providers/config

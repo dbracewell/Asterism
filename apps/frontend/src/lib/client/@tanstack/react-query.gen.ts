@@ -177,6 +177,12 @@ import type {
   MainAgentGetData,
   MainAgentGetError,
   MainAgentGetResponse,
+  MainAgentSkillsGetData,
+  MainAgentSkillsGetError,
+  MainAgentSkillsGetResponse,
+  MainAgentSkillsUpdateData,
+  MainAgentSkillsUpdateError,
+  MainAgentSkillsUpdateResponse,
   MainAgentUpdateData,
   MainAgentUpdateError,
   MainAgentUpdateResponse,
@@ -219,6 +225,30 @@ import type {
   ProjectUpdateData,
   ProjectUpdateError,
   ProjectUpdateResponse,
+  SkillCreateData,
+  SkillCreateError,
+  SkillCreateResponse,
+  SkillDeleteData,
+  SkillDeleteError,
+  SkillDeleteResponse,
+  SkillEligibleGetManyData,
+  SkillEligibleGetManyError,
+  SkillEligibleGetManyResponse,
+  SkillGetManyData,
+  SkillGetManyError,
+  SkillGetManyResponse,
+  SkillGetOneData,
+  SkillGetOneError,
+  SkillGetOneResponse,
+  SkillsPolicyGetData,
+  SkillsPolicyGetError,
+  SkillsPolicyGetResponse,
+  SkillsPolicyUpdateData,
+  SkillsPolicyUpdateError,
+  SkillsPolicyUpdateResponse,
+  SkillUpdateData,
+  SkillUpdateError,
+  SkillUpdateResponse,
   SubAgentCreateData,
   SubAgentCreateError,
   SubAgentCreateResponse,
@@ -2303,6 +2333,375 @@ export const appCaptionModelCancelMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().appCaptionModelCancel({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const skillsPolicyGetQueryKey = (
+  options?: Options<SkillsPolicyGetData>,
+) => createQueryKey("skillsPolicyGet", options);
+
+/**
+ * Get Policy
+ */
+export const skillsPolicyGetOptions = (
+  options?: Options<SkillsPolicyGetData>,
+) =>
+  queryOptions<
+    SkillsPolicyGetResponse,
+    SkillsPolicyGetError,
+    SkillsPolicyGetResponse,
+    ReturnType<typeof skillsPolicyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().skillsPolicyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: skillsPolicyGetQueryKey(options),
+  });
+
+/**
+ * Put Policy
+ */
+export const skillsPolicyUpdateMutation = (
+  options?: Partial<Options<SkillsPolicyUpdateData>>,
+): UseMutationOptions<
+  SkillsPolicyUpdateResponse,
+  SkillsPolicyUpdateError,
+  Options<SkillsPolicyUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SkillsPolicyUpdateResponse,
+    SkillsPolicyUpdateError,
+    Options<SkillsPolicyUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().skillsPolicyUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const mainAgentSkillsGetQueryKey = (
+  options?: Options<MainAgentSkillsGetData>,
+) => createQueryKey("mainAgentSkillsGet", options);
+
+/**
+ * Get Assignments
+ */
+export const mainAgentSkillsGetOptions = (
+  options?: Options<MainAgentSkillsGetData>,
+) =>
+  queryOptions<
+    MainAgentSkillsGetResponse,
+    MainAgentSkillsGetError,
+    MainAgentSkillsGetResponse,
+    ReturnType<typeof mainAgentSkillsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().mainAgentSkillsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: mainAgentSkillsGetQueryKey(options),
+  });
+
+/**
+ * Put Assignments
+ */
+export const mainAgentSkillsUpdateMutation = (
+  options?: Partial<Options<MainAgentSkillsUpdateData>>,
+): UseMutationOptions<
+  MainAgentSkillsUpdateResponse,
+  MainAgentSkillsUpdateError,
+  Options<MainAgentSkillsUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MainAgentSkillsUpdateResponse,
+    MainAgentSkillsUpdateError,
+    Options<MainAgentSkillsUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().mainAgentSkillsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const skillEligibleGetManyQueryKey = (
+  options?: Options<SkillEligibleGetManyData>,
+) => createQueryKey("skillEligibleGetMany", options);
+
+/**
+ * Eligible
+ */
+export const skillEligibleGetManyOptions = (
+  options?: Options<SkillEligibleGetManyData>,
+) =>
+  queryOptions<
+    SkillEligibleGetManyResponse,
+    SkillEligibleGetManyError,
+    SkillEligibleGetManyResponse,
+    ReturnType<typeof skillEligibleGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().skillEligibleGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: skillEligibleGetManyQueryKey(options),
+  });
+
+export const skillEligibleGetManyInfiniteQueryKey = (
+  options?: Options<SkillEligibleGetManyData>,
+): QueryKey<Options<SkillEligibleGetManyData>> =>
+  createQueryKey("skillEligibleGetMany", options, true);
+
+/**
+ * Eligible
+ */
+export const skillEligibleGetManyInfiniteOptions = (
+  options?: Options<SkillEligibleGetManyData>,
+) =>
+  infiniteQueryOptions<
+    SkillEligibleGetManyResponse,
+    SkillEligibleGetManyError,
+    InfiniteData<SkillEligibleGetManyResponse>,
+    QueryKey<Options<SkillEligibleGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SkillEligibleGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SkillEligibleGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().skillEligibleGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: skillEligibleGetManyInfiniteQueryKey(options),
+    },
+  );
+
+export const skillGetManyQueryKey = (options?: Options<SkillGetManyData>) =>
+  createQueryKey("skillGetMany", options);
+
+/**
+ * List Skills
+ */
+export const skillGetManyOptions = (options?: Options<SkillGetManyData>) =>
+  queryOptions<
+    SkillGetManyResponse,
+    SkillGetManyError,
+    SkillGetManyResponse,
+    ReturnType<typeof skillGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().skillGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: skillGetManyQueryKey(options),
+  });
+
+export const skillGetManyInfiniteQueryKey = (
+  options?: Options<SkillGetManyData>,
+): QueryKey<Options<SkillGetManyData>> =>
+  createQueryKey("skillGetMany", options, true);
+
+/**
+ * List Skills
+ */
+export const skillGetManyInfiniteOptions = (
+  options?: Options<SkillGetManyData>,
+) =>
+  infiniteQueryOptions<
+    SkillGetManyResponse,
+    SkillGetManyError,
+    InfiniteData<SkillGetManyResponse>,
+    QueryKey<Options<SkillGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SkillGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SkillGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().skillGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: skillGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create
+ */
+export const skillCreateMutation = (
+  options?: Partial<Options<SkillCreateData>>,
+): UseMutationOptions<
+  SkillCreateResponse,
+  SkillCreateError,
+  Options<SkillCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SkillCreateResponse,
+    SkillCreateError,
+    Options<SkillCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().skillCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete
+ */
+export const skillDeleteMutation = (
+  options?: Partial<Options<SkillDeleteData>>,
+): UseMutationOptions<
+  SkillDeleteResponse,
+  SkillDeleteError,
+  Options<SkillDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SkillDeleteResponse,
+    SkillDeleteError,
+    Options<SkillDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().skillDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const skillGetOneQueryKey = (options: Options<SkillGetOneData>) =>
+  createQueryKey("skillGetOne", options);
+
+/**
+ * Get One
+ */
+export const skillGetOneOptions = (options: Options<SkillGetOneData>) =>
+  queryOptions<
+    SkillGetOneResponse,
+    SkillGetOneError,
+    SkillGetOneResponse,
+    ReturnType<typeof skillGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().skillGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: skillGetOneQueryKey(options),
+  });
+
+/**
+ * Update
+ */
+export const skillUpdateMutation = (
+  options?: Partial<Options<SkillUpdateData>>,
+): UseMutationOptions<
+  SkillUpdateResponse,
+  SkillUpdateError,
+  Options<SkillUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SkillUpdateResponse,
+    SkillUpdateError,
+    Options<SkillUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().skillUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

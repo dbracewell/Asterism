@@ -28,6 +28,7 @@ from asterism.domains.settings.models import (  # noqa: F401
     ProviderModel,
     UserSettingModel,
 )
+from asterism.domains.skills.models import AgentSkillModel, SkillModel  # noqa: F401
 from asterism.domains.user.models import DeletedUserModel, PersonaProfileModel, UserModel  # noqa: F401
 
 from .base_model import Base  # noqa: F401

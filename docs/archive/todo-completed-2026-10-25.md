@@ -41,3 +41,24 @@ using alternate test-only ports to preserve the running development servers.
 Four existing full-unit failures remain documented. The last project-name
 follow-up was verified with focused unit/type/lint checks, not a new browser run.
 See the [US-39.2 verification record](../reviews/us-39.2-sidebar-verification-2026-10-25.md).
+
+## [EPIC-40 / US-40.1: Private skills foundation](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md#us-401-persist-and-authorize-private-skills)
+
+- [x] US-40.1: Persist and authorize private skills
+  - [x] Add skill storage, fresh initialization/registration, constraints, and bounded frontmatter/Markdown validation; reject unsupported executable/capability declarations rather than interpreting them.
+  - [x] Implement owner-scoped paginated/searchable CRUD and expected-revision updates in the skills domain; handle assignment cleanup on deletion without rewriting snapshots.
+  - [x] Add owner-consistent main-agent assignments and explicit admin skills-policy contracts; expose eligible skill metadata for the composer and regenerate typed clients.
+  - [x] Test ownership, uniqueness, validation, concurrent edits, deletion, policy/assignment eligibility, and fresh-schema initialization; document domain boundaries.
+
+The user confirmed US-40.1 completion and authorized local commit/merge on
+2026-10-25 after verification limits were reported. Delivered private skill
+storage/validation/CRUD, owner-consistent main-agent assignments, fail-closed
+admin policy, eligible discovery, synchronized clients, and architecture/docs.
+
+Verification: 683 backend tests passed, backend/frontend typechecks and lint
+passed, fresh schema/foreign-key integrity and six auth database checks passed.
+Four pre-existing frontend unit failures and six unchanged backend formatting
+failures remain documented. No browser suite or production build was run for
+this API-only foundation. See the
+[verification record](../reviews/us-40.1-skills-verification-2026-10-25.md).
+US-40.2 through US-40.4 remain planned; EPIC-40 is not complete.

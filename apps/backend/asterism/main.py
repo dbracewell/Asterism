@@ -23,6 +23,7 @@ from asterism.domains.files.router import file_router
 from asterism.domains.knowledge.router import knowledge_router
 from asterism.domains.projects.router import project_router
 from asterism.domains.settings.settings_router import settings_router
+from asterism.domains.skills.router import skills_router
 from asterism.domains.tools.router import tools_router
 from asterism.domains.user.persona_router import persona_router
 from asterism.domains.user.router import user_router
@@ -135,6 +136,7 @@ app.include_router(project_router)
 # /settings/app/... paths, and the knowledge ones are more specific than the
 # generic /settings/app/{key} routes.
 app.include_router(knowledge_router)
+app.include_router(skills_router)
 app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(persona_router)

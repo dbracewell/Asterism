@@ -913,6 +913,7 @@ export const zProvider = z.object({
  * Aggregate of global application settings (admin view).
  */
 export const zApplicationSettings = z.object({
+  skills_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProvider).optional(),
   draft_model_id: z.uuid().nullish(),
   web_search_provider: zComponentProviderParameters.nullish(),
@@ -1031,6 +1032,91 @@ export const zSearchResultList = z.object({
 export const zSetting = z.object({
   key: z.string(),
   value: zJsonValue,
+});
+
+/**
+ * Skill
+ */
+export const zSkill = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  content: z.string(),
+});
+
+/**
+ * SkillAssignmentUpdate
+ */
+export const zSkillAssignmentUpdate = z.object({
+  skill_ids: z.array(z.uuid()).max(100),
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * SkillAssignments
+ */
+export const zSkillAssignments = z.object({
+  skill_ids: z.array(z.uuid()),
+  revision: z.int(),
+});
+
+/**
+ * SkillCreate
+ */
+export const zSkillCreate = z.object({
+  content: z.string().min(1).max(65536),
+});
+
+/**
+ * SkillPolicy
+ */
+export const zSkillPolicy = z.object({
+  enabled: z.boolean().optional().default(false),
+});
+
+/**
+ * SkillSummary
+ */
+export const zSkillSummary = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * EligibleSkillsPage
+ */
+export const zEligibleSkillsPage = z.object({
+  items: z.array(zSkillSummary),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+  policy_enabled: z.boolean(),
+  agent_revision: z.int(),
+});
+
+/**
+ * SkillPage
+ */
+export const zSkillPage = z.object({
+  items: z.array(zSkillSummary),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
+ * SkillUpdate
+ */
+export const zSkillUpdate = z.object({
+  content: z.string().min(1).max(65536),
+  expected_revision: z.int().gte(1).lte(2147483647),
 });
 
 /**
@@ -1425,6 +1511,7 @@ export const zProviderWritable = z.object({
  * Aggregate of global application settings (admin view).
  */
 export const zApplicationSettingsWritable = z.object({
+  skills_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProviderWritable).optional(),
   draft_model_id: z.uuid().nullish(),
   web_search_provider: zComponentProviderParameters.nullish(),
@@ -1990,6 +2077,92 @@ export const zAppCaptionModelDownloadResponse = zDownloadProgress;
  * Successful Response
  */
 export const zAppCaptionModelCancelResponse = zDownloadProgress;
+
+/**
+ * Successful Response
+ */
+export const zSkillsPolicyGetResponse = zSkillPolicy;
+
+export const zSkillsPolicyUpdateBody = zSkillPolicy;
+
+/**
+ * Successful Response
+ */
+export const zSkillsPolicyUpdateResponse = zSkillPolicy;
+
+/**
+ * Successful Response
+ */
+export const zMainAgentSkillsGetResponse = zSkillAssignments;
+
+export const zMainAgentSkillsUpdateBody = zSkillAssignmentUpdate;
+
+/**
+ * Successful Response
+ */
+export const zMainAgentSkillsUpdateResponse = zSkillAssignments;
+
+export const zSkillEligibleGetManyQuery = z.object({
+  query: z.string().max(200).optional().default(""),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(10),
+});
+
+/**
+ * Successful Response
+ */
+export const zSkillEligibleGetManyResponse = zEligibleSkillsPage;
+
+export const zSkillGetManyQuery = z.object({
+  query: z.string().max(200).optional().default(""),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(10),
+});
+
+/**
+ * Successful Response
+ */
+export const zSkillGetManyResponse = zSkillPage;
+
+export const zSkillCreateBody = zSkillCreate;
+
+/**
+ * Successful Response
+ */
+export const zSkillCreateResponse = zSkill;
+
+export const zSkillDeletePath = z.object({
+  skill_id: z.uuid(),
+});
+
+export const zSkillDeleteQuery = z.object({
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Successful Response
+ */
+export const zSkillDeleteResponse = z.void();
+
+export const zSkillGetOnePath = z.object({
+  skill_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zSkillGetOneResponse = zSkill;
+
+export const zSkillUpdateBody = zSkillUpdate;
+
+export const zSkillUpdatePath = z.object({
+  skill_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zSkillUpdateResponse = zSkill;
 
 /**
  * Successful Response

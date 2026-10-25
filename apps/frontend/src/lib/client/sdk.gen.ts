@@ -177,6 +177,12 @@ import type {
   MainAgentGetData,
   MainAgentGetErrors,
   MainAgentGetResponses,
+  MainAgentSkillsGetData,
+  MainAgentSkillsGetErrors,
+  MainAgentSkillsGetResponses,
+  MainAgentSkillsUpdateData,
+  MainAgentSkillsUpdateErrors,
+  MainAgentSkillsUpdateResponses,
   MainAgentUpdateData,
   MainAgentUpdateErrors,
   MainAgentUpdateResponses,
@@ -219,6 +225,30 @@ import type {
   ProjectUpdateData,
   ProjectUpdateErrors,
   ProjectUpdateResponses,
+  SkillCreateData,
+  SkillCreateErrors,
+  SkillCreateResponses,
+  SkillDeleteData,
+  SkillDeleteErrors,
+  SkillDeleteResponses,
+  SkillEligibleGetManyData,
+  SkillEligibleGetManyErrors,
+  SkillEligibleGetManyResponses,
+  SkillGetManyData,
+  SkillGetManyErrors,
+  SkillGetManyResponses,
+  SkillGetOneData,
+  SkillGetOneErrors,
+  SkillGetOneResponses,
+  SkillsPolicyGetData,
+  SkillsPolicyGetErrors,
+  SkillsPolicyGetResponses,
+  SkillsPolicyUpdateData,
+  SkillsPolicyUpdateErrors,
+  SkillsPolicyUpdateResponses,
+  SkillUpdateData,
+  SkillUpdateErrors,
+  SkillUpdateResponses,
   SubAgentCreateData,
   SubAgentCreateErrors,
   SubAgentCreateResponses,
@@ -1646,6 +1676,212 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/caption-model/cancel",
       ...options,
+    });
+  }
+
+  /**
+   * Get Policy
+   */
+  public skillsPolicyGet<ThrowOnError extends boolean = false>(
+    options?: Options<SkillsPolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    SkillsPolicyGetResponses,
+    SkillsPolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      SkillsPolicyGetResponses,
+      SkillsPolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/skills",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Policy
+   */
+  public skillsPolicyUpdate<ThrowOnError extends boolean = false>(
+    options: Options<SkillsPolicyUpdateData, ThrowOnError>,
+  ): RequestResult<
+    SkillsPolicyUpdateResponses,
+    SkillsPolicyUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      SkillsPolicyUpdateResponses,
+      SkillsPolicyUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/skills",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Assignments
+   */
+  public mainAgentSkillsGet<ThrowOnError extends boolean = false>(
+    options?: Options<MainAgentSkillsGetData, ThrowOnError>,
+  ): RequestResult<
+    MainAgentSkillsGetResponses,
+    MainAgentSkillsGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      MainAgentSkillsGetResponses,
+      MainAgentSkillsGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/user/main-agent/skills",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Assignments
+   */
+  public mainAgentSkillsUpdate<ThrowOnError extends boolean = false>(
+    options: Options<MainAgentSkillsUpdateData, ThrowOnError>,
+  ): RequestResult<
+    MainAgentSkillsUpdateResponses,
+    MainAgentSkillsUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      MainAgentSkillsUpdateResponses,
+      MainAgentSkillsUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/user/main-agent/skills",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Eligible
+   */
+  public skillEligibleGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<SkillEligibleGetManyData, ThrowOnError>,
+  ): RequestResult<
+    SkillEligibleGetManyResponses,
+    SkillEligibleGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      SkillEligibleGetManyResponses,
+      SkillEligibleGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/eligible",
+      ...options,
+    });
+  }
+
+  /**
+   * List Skills
+   */
+  public skillGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<SkillGetManyData, ThrowOnError>,
+  ): RequestResult<SkillGetManyResponses, SkillGetManyErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      SkillGetManyResponses,
+      SkillGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/",
+      ...options,
+    });
+  }
+
+  /**
+   * Create
+   */
+  public skillCreate<ThrowOnError extends boolean = false>(
+    options: Options<SkillCreateData, ThrowOnError>,
+  ): RequestResult<SkillCreateResponses, SkillCreateErrors, ThrowOnError> {
+    return (options.client ?? this.client).post<
+      SkillCreateResponses,
+      SkillCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete
+   */
+  public skillDelete<ThrowOnError extends boolean = false>(
+    options: Options<SkillDeleteData, ThrowOnError>,
+  ): RequestResult<SkillDeleteResponses, SkillDeleteErrors, ThrowOnError> {
+    return (options.client ?? this.client).delete<
+      SkillDeleteResponses,
+      SkillDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/{skill_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get One
+   */
+  public skillGetOne<ThrowOnError extends boolean = false>(
+    options: Options<SkillGetOneData, ThrowOnError>,
+  ): RequestResult<SkillGetOneResponses, SkillGetOneErrors, ThrowOnError> {
+    return (options.client ?? this.client).get<
+      SkillGetOneResponses,
+      SkillGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/{skill_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update
+   */
+  public skillUpdate<ThrowOnError extends boolean = false>(
+    options: Options<SkillUpdateData, ThrowOnError>,
+  ): RequestResult<SkillUpdateResponses, SkillUpdateErrors, ThrowOnError> {
+    return (options.client ?? this.client).put<
+      SkillUpdateResponses,
+      SkillUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/skills/{skill_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

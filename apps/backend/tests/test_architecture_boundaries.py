@@ -22,6 +22,7 @@ DB_COMPOSITION_ROOTS = {
         "asterism.domains.knowledge.models",
         "asterism.domains.projects.models",
         "asterism.domains.settings.models",
+        "asterism.domains.skills.models",
         "asterism.domains.user.models",
     },
 }
@@ -58,6 +59,17 @@ def violations(root):
                 if source not in DB_COMPOSITION_ROOTS and any(within(target, name) for name in DB_COMPOSITION_ROOTS):
                     reason = "neutral database mechanics cannot import composition roots"
             elif within(source, "asterism.domains.agent"):
+                if any(
+                    within(target, boundary)
+                    for boundary in (
+                        "asterism.domains.skills.models",
+                        "asterism.domains.skills.queries",
+                        "asterism.domains.skills.service",
+                        "asterism.domains.skills.assignments",
+                        "asterism.domains.skills.policy",
+                    )
+                ):
+                    reason = "Agent consumes injected skill snapshots rather than skill storage or policy"
                 if within(target, "asterism.domains.chat"):
                     if source != "asterism.domains.agent.agent" or target not in AGENT_CHAT_READERS:
                         reason = "only the named Agent assembly module may wire published chat readers"
@@ -113,6 +125,8 @@ def test_recursive_runtime_and_neutral_query_boundaries():
         ("db/nested/queries.py", "from ..init_db import initialize_database"),
         ("db/model_registry.py", "from asterism.domains.chat.service import search"),
         ("domains/agent/nested/runtime.py", "from asterism.db.database import get_async_db_session"),
+        ("domains/agent/agent.py", "from ..skills.service import require_skill"),
+        ("domains/agent/nested/runtime.py", "from ...skills.models import SkillModel"),
         ("domains/agent/nested/runtime.py", "from ...chat.models import ChatModel"),
         ("domains/agent/agent.py", "from ..chat.queries import select_owned_chats"),
         ("domains/agent/agent.py", "from ..chat.scope import ChatModel"),

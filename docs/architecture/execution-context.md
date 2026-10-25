@@ -37,6 +37,14 @@ the files domain: it reads its sources through the narrow contract in
 application installs at startup. An import-boundary test enforces both
 directions.
 
+## Skills foundation
+
+The [private skills domain](skills.md) owns document CRUD and explicit main-agent
+assignments. Admin activation policy and owner/assignment checks govern eligible
+metadata discovery. Runtime skill activation is not implemented in US-40.1;
+no skill instructions enter the prompt yet. The Agent must consume future
+injected snapshots rather than query skill tables/services/policy directly.
+
 ## Trace one turn
 
 ```mermaid

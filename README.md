@@ -77,18 +77,19 @@ Export** as **Planned**. Their panes explain future scope and offer no configura
 actions. Providers, Theme Editor, Tools and Image Captioning remain available;
 user settings expose General and Agents.
 
-| Capability           | Available now                                                         | Planned                                                    |
-| -------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                          |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                          |
-| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                          |
-| Image captioning     | Admin captioning policy and file-processing integration               | —                                                          |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls    |
-| Groups               | —                                                                     | Group management and group policy settings                 |
-| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow |
-| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                   |
-| Export               | Individual file downloads                                             | Data/conversation export tools                             |
-| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs  | Long-term memory engine                                    |
+| Capability           | Available now                                                                           | Planned                                                     |
+| -------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection                            | —                                                           |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                   | —                                                           |
+| Skills               | Private CRUD/assignment/policy/discovery APIs ([contract](docs/architecture/skills.md)) | Skills management UI, slash commands and runtime activation |
+| Appearance           | User theme/font preferences; admin Theme Editor                                         | —                                                           |
+| Image captioning     | Admin captioning policy and file-processing integration                                 | —                                                           |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                      | Users management screens and permission-policy controls     |
+| Groups               | —                                                                                       | Group management and group policy settings                  |
+| Image Generation     | Image search and captioning are separate existing capabilities                          | Image-generation providers, models and generation workflow  |
+| Code Execution       | —                                                                                       | Sandboxed execution and runtime settings                    |
+| Export               | Individual file downloads                                                               | Data/conversation export tools                              |
+| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                    | Long-term memory engine                                     |
 
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
