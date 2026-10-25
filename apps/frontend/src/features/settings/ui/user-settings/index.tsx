@@ -1,8 +1,14 @@
 import { Types } from "@/features/settings/types";
 import { AgentsSettings } from "@/features/settings/ui/user-settings/agents-settings";
 import { GeneralSettings } from "@/features/settings/ui/user-settings/general-settings";
+import { SkillsSettings } from "@/features/skills/components/skills-settings";
 import { PersonaSettings } from "./persona-settings";
-import { BotIcon, Settings2Icon, UserRoundIcon } from "lucide-react";
+import {
+  BotIcon,
+  Settings2Icon,
+  UserRoundIcon,
+  BookOpenIcon,
+} from "lucide-react";
 
 export const UserSettings: Types = [
   {
@@ -19,6 +25,13 @@ export const UserSettings: Types = [
     value: "personas",
     icon: <UserRoundIcon />,
     settingsPane: <PersonaSettings />,
+  },
+  {
+    type: "section",
+    label: "Skills",
+    value: "skills",
+    icon: <BookOpenIcon />,
+    settingsPane: <SkillsSettings />,
   },
   {
     type: "section",

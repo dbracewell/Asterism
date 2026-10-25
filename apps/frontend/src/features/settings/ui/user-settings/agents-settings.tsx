@@ -1,4 +1,6 @@
 "use client";
+import { useUser } from "@/features/auth/components/user-context";
+import { MainAgentSkills } from "@/features/skills/components/main-agent-skills";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,7 @@ import { toast } from "sonner";
 import { AgentProfileForm, MainAgentForm } from "./agent-profile-form";
 
 export const AgentsSettings = () => {
+  const user = useUser();
   const [page, setPage] = useState(1);
 
   const [editingAgent, setEditingAgent] = useState<SubAgentDefinition | null>(
@@ -69,7 +72,7 @@ export const AgentsSettings = () => {
           aria-label="Main configuration"
           className="flex flex-col gap-3"
         >
-          <header className="flex items-center gap-3 border-b pb-2">
+          <header className="flex flex-wrap items-center gap-3 border-b pb-2">
             <h2 className="text-lg font-semibold">Main Agent</h2>
             {main.isPending && <p role="status">Loading main configuration…</p>}
             {main.isError && (
@@ -80,14 +83,19 @@ export const AgentsSettings = () => {
                 isRetrying={main.isRefetching}
               />
             )}
-            {main.data && <MainAgentForm configuration={main.data} />}
+            {main.data && (
+              <>
+                <MainAgentForm configuration={main.data} />
+                <MainAgentSkills owner={user.id} />
+              </>
+            )}
           </header>
         </section>
         <section
           aria-label="Sub-agents"
           className="flex min-h-0 flex-1 flex-col gap-3"
         >
-          <header className="flex items-center gap-3 border-b pb-2">
+          <header className="flex flex-wrap items-center gap-3 border-b pb-2">
             <h2 className="text-lg font-semibold">Sub-agents</h2>
             <AgentProfileForm
               profile={editingAgent}

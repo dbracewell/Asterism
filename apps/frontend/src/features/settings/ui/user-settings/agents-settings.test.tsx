@@ -4,6 +4,9 @@ import { render, screen } from "@testing-library/react";
 import { ReactNode } from "react";
 import { expect, it, vi } from "vitest";
 import { AgentsSettings } from "./agents-settings";
+vi.mock("@/features/auth/components/user-context", () => ({
+  useUser: () => ({ id: "tester" }),
+}));
 vi.mock("./agent-profile-form", () => ({
   AgentProfileForm: () => <button>Create sub-agent</button>,
   MainAgentForm: () => <button>Edit main configuration</button>,

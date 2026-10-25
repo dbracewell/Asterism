@@ -14,17 +14,11 @@ and 320px composer viewport failure remain recommended follow-up work; see the
 
 EPIC-39 (US-39.1 and US-39.2) is confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
-US-40.1 is confirmed complete and archived in the [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md); US-40.2 through US-40.4 remain planned. Existing model/persona unit-test assertions
+US-40.1 and US-40.2 are confirmed complete and archived in the [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md); US-40.3 and US-40.4 remain planned. Existing model/persona unit-test assertions
 and the 320px composer viewport failure remain recommended follow-up work; see
 [US-39.2 verification](docs/reviews/us-39.2-sidebar-verification-2026-10-25.md).
 
 ## [EPIC-40: User skills and chat slash commands](docs/epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md)
-
-- [ ] US-40.2: Manage skills in user settings
-  - [ ] Add the Skills settings route/navigation and generated-query list/detail flows with loading, failure/retry, empty, and cached-refresh states.
-  - [ ] Build create/edit/view/preview and confirmed-delete flows using existing shadcn components; preserve drafts and handle revision conflicts.
-  - [ ] Add owned-skill assignment controls to main-agent settings and explain unavailable/admin-disabled activation without granting policy through the UI.
-  - [ ] Verify CRUD, preview safety, search/pagination, assignments, keyboard access, and narrow/short layouts; update user-facing documentation.
 
 - [ ] US-40.3: Activate skills through recorded chat execution
   - [ ] Add branch-local ordered active-skill state and extend send/admission contracts, expected state revisions, and request fingerprints; atomically accept activation/removal/reorder/refresh changes and reject forged, stale, unassigned, or revoked selections.
@@ -40,4 +34,6 @@ and the 320px composer viewport failure remain recommended follow-up work; see
 
 US-40.1 verification and known baseline failures are recorded in the
 [verification report](docs/reviews/us-40.1-skills-verification-2026-10-25.md).
-No story is currently active. Next recommended: US-40.2, the Skills management UI.
+US-40.2 completion and verification are archived in the
+[2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
+US-40.3/40.4 have not started.

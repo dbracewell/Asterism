@@ -1,8 +1,8 @@
-# Private instruction skills — US-40.1
+# Private instruction skills — US-40.1 and US-40.2
 
-This foundation implements private document CRUD, main-agent assignments, admin
-activation policy, and eligible-skill discovery. The Skills editor/settings UI,
-slash commands, branch-local active skills, and runtime prompt snapshots are
+Private document CRUD, main-agent assignments, admin activation policy,
+eligible-skill discovery, and the Skills editor/settings UI are implemented.
+Slash commands, branch-local active skills, and runtime prompt snapshots are
 planned in [EPIC-40](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md).
 No runtime currently reads or executes these skill instructions.
 
@@ -24,8 +24,9 @@ The bounded parser reads scalar YAML nodes, without object construction. It
 rejects tags, anchors, aliases, sequences, nested mappings, duplicate keys,
 nonstring metadata, and unsupported declarations such as `allowed-tools` or
 `scripts`. Markdown body text is stored as instructions; it cannot grant tools,
-MCP, file access, delegation, or executable resources. UI preview sanitization
-belongs to US-40.2; storing a document does not render HTML or run code.
+MCP, file access, delegation, or executable resources. The UI preview uses the shared Markdown trust policy: raw HTML is skipped,
+unsafe URLs are removed, and remote images are omitted. Storing a document does
+not render HTML or run code.
 
 ## APIs and ownership
 
@@ -99,3 +100,36 @@ service. Fresh initialization imports both new models through `db.model_registry
 no data migrations, compatibility paths, or verification resets of working data
 are introduced. Generated Hey API types, SDK, queries and Zod schemas include the
 new routes and the application-policy field.
+
+## Settings UI and draft lifecycle
+
+`/settings?t=user&setting=skills` uses the existing settings navigation and URL
+utility, retaining unrelated/repeated query parameters. The list is searchable
+and paginated; create/detail dialogs edit canonical source and preview only the
+Markdown body. Source validation remains authoritative on the server. The UI
+also counts UTF-8 bytes and blocks oversized saves. Initial loading, initial
+failure/retry, empty/matching-empty, and cached refresh failure are distinct.
+
+Dirty source retains its original revision through query refreshes and mutation
+failures. A newer server revision produces a reload notice; explicit reload
+confirms discarding edits. A pristine editor can adopt newer query data, including
+when reopening immediately after a successful save. Save/delete controls wait
+for detail refresh to finish; deletion is confirmed and uses the loaded revision.
+Closing a dirty editor asks before discarding source. Deletion restores focus to
+New skill, and removing the last row of a later page returns to a valid page.
+
+Agents settings exposes a separate main-agent skill dialog with a bottom-right
+Save assignments action. Selection persists across result pages and search,
+including IDs outside the visible page. It submits only skill IDs plus the
+captured configuration revision; it never overwrites other main settings. Dirty
+selections survive background reads/conflicts until the user explicitly reloads
+or discards. Policy status is read through eligible discovery, so ordinary users
+do not call admin policy mutation endpoints. No policy editing UI is added here.
+
+All API state uses generated Hey API query/mutation options and TanStack Query.
+Owner-specific query-key fields prevent cache reuse between signed-in users while
+preserving generated prefixes for shared mutation-cache invalidation. The owner
+comes from authenticated user context, not a potentially stale main-agent query.
+An identity change closes and clears open drafts; it never carries private edits
+into another owner's session. Mutation metadata uses the existing shared
+invalidation handler without duplicate component-level invalidation calls.

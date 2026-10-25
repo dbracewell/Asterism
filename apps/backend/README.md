@@ -109,21 +109,21 @@ ownership and the separate knowledge/model gates.
 The admin navigation marks **Groups, Users, Image Generation, Code Execution and
 Export** as **Planned**. Their panes explain future scope and offer no configuration
 actions. Providers, Theme Editor, Tools and Image Captioning remain available;
-user settings expose General and Agents.
+user settings expose General, Personas, Skills, and Agents.
 
-| Capability           | Available now                                                                                 | Planned                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection                                  | —                                                           |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                         | —                                                           |
-| Skills               | Private CRUD/assignment/policy/discovery APIs ([contract](../../docs/architecture/skills.md)) | Skills management UI, slash commands and runtime activation |
-| Appearance           | User theme/font preferences; admin Theme Editor                                               | —                                                           |
-| Image captioning     | Admin captioning policy and file-processing integration                                       | —                                                           |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                            | Users management screens and permission-policy controls     |
-| Groups               | —                                                                                             | Group management and group policy settings                  |
-| Image Generation     | Image search and captioning are separate existing capabilities                                | Image-generation providers, models and generation workflow  |
-| Code Execution       | —                                                                                             | Sandboxed execution and runtime settings                    |
-| Export               | Individual file downloads                                                                     | Data/conversation export tools                              |
-| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                          | Long-term memory engine                                     |
+| Capability           | Available now                                                                                                                | Planned                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection                                                                 | —                                                          |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                                                        | —                                                          |
+| Skills               | Private skills editor/preview and main-agent assignment UI; CRUD/policy APIs ([contract](../../docs/architecture/skills.md)) | Slash commands and runtime activation                      |
+| Appearance           | User theme/font preferences; admin Theme Editor                                                                              | —                                                          |
+| Image captioning     | Admin captioning policy and file-processing integration                                                                      | —                                                          |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                           | Users management screens and permission-policy controls    |
+| Groups               | —                                                                                                                            | Group management and group policy settings                 |
+| Image Generation     | Image search and captioning are separate existing capabilities                                                               | Image-generation providers, models and generation workflow |
+| Code Execution       | —                                                                                                                            | Sandboxed execution and runtime settings                   |
+| Export               | Individual file downloads                                                                                                    | Data/conversation export tools                             |
+| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                                                         | Long-term memory engine                                    |
 
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
@@ -220,6 +220,7 @@ disposable storage and do not reset the working database.
 US-40.1 adds private `skills` documents and owner-consistent `agent_skills`
 assignments. Admin `skills_enabled` policy defaults to false. Source validation,
 revision-checked CRUD, main-agent assignment replacement, and eligible metadata
-pages are implemented; no runtime activation or Skills UI is available yet.
+pages are implemented. The frontend now provides the Skills editor/preview and
+assignment UI; runtime activation is not implemented yet.
 See the [skills contract](../../docs/architecture/skills.md) for endpoints, bounds,
 permissions, and fresh-schema behavior. Verification uses disposable storage.

@@ -62,3 +62,21 @@ failures remain documented. No browser suite or production build was run for
 this API-only foundation. See the
 [verification record](../reviews/us-40.1-skills-verification-2026-10-25.md).
 US-40.2 through US-40.4 remain planned; EPIC-40 is not complete.
+
+## [EPIC-40 / US-40.2: Skills management UI](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md#us-402-manage-skills-in-user-settings)
+
+- [x] US-40.2: Manage skills in user settings
+  - [x] Add the Skills settings route/navigation and generated-query list/detail flows with loading, failure/retry, empty, and cached-refresh states.
+  - [x] Build create/edit/view/preview and confirmed-delete flows using existing shadcn components; preserve drafts and handle revision conflicts.
+  - [x] Add owned-skill assignment controls to main-agent settings and explain unavailable/admin-disabled activation without granting policy through the UI.
+  - [x] Verify CRUD, preview safety, search/pagination, assignments, keyboard access, and narrow/short layouts; update user-facing documentation.
+
+The user confirmed completion and authorized local commit/merge on 2026-10-25.
+Delivered private Skills CRUD, safe Markdown preview, and independent main-agent
+assignments with owner-scoped caches and conflict-safe drafts.
+
+Verification: 21 focused component tests and 22 isolated browser checks passed;
+typecheck, lint, formatting, six auth database checks and production build passed.
+The four existing frontend unit failures remain documented in the
+[verification record](../reviews/us-40.2-skills-ui-verification-2026-10-25.md).
+US-40.3 and US-40.4 remain planned; EPIC-40 is not complete.

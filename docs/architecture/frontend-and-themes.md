@@ -315,3 +315,13 @@ Existing E2E coverage includes responsive provider/agent controls; the
 [theme/layout matrix](theme-layout-review-matrix.md) defines automated coverage and
 remaining manual/device checks. See [scripts](../../scripts/README.md)
 and the [review evidence](../reviews/2026-10-17-codebase-review.md).
+
+## Private skills settings (US-40.2)
+
+User Settings includes Skills: searchable/paginated private source documents,
+source/preview dialogs, and confirmed deletion. Agents includes a separate
+revision-checked main-agent skill-assignment dialog. Existing settings URL state
+and responsive container scrolling apply. Previews use the shared Markdown trust
+boundary; private query caches and drafts follow authenticated identity. Runtime
+activation/slash commands remain planned. See [skills](skills.md) for behavior,
+policy, owner-scoping, and draft/conflict contracts.

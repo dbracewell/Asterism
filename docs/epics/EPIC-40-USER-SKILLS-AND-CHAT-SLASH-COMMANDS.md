@@ -1,8 +1,8 @@
 # EPIC-40: User skills and chat slash commands
 
 Status: US-40.1 complete, user-confirmed on 2026-10-25 and approved for local
-merge. US-40.2 through US-40.4 remain planned. CRUD/assignment/policy/discovery APIs exist; UI and
-runtime activation remain planned. See the
+merge. US-40.2 is complete, user-confirmed on 2026-10-25 and approved for local merge; US-40.3 and US-40.4 remain planned. CRUD/assignment/policy/discovery APIs and the management UI exist;
+runtime activation remains planned. See the
 [US-40.1 verification record](../reviews/us-40.1-skills-verification-2026-10-25.md).
 
 ## Objective and first-version contract
@@ -139,6 +139,9 @@ admin policy determine activation eligibility without granting other powers.
 
 ## US-40.2: Manage skills in user settings
 
+Status: implemented on `feat/us-40.2-skills-settings`, awaiting user confirmation.
+See the [verification record](../reviews/us-40.2-skills-ui-verification-2026-10-25.md).
+
 As a user, I want to create, read, edit, preview, and delete my skill documents.
 
 Estimate: 1–1.5 days. Dependencies: US-40.1.
@@ -149,10 +152,10 @@ confirmed deletion. Errors preserve drafts; conflicts offer reload without
 silently overwriting edits. Main-agent settings manage assigned skills and show
 when admin policy prevents activation. Preview renders no executable HTML.
 
-- [ ] Add the Skills settings route/navigation and generated-query list/detail flows with loading, failure/retry, empty, and cached-refresh states.
-- [ ] Build create/edit/view/preview and confirmed-delete flows using existing shadcn components; preserve drafts and handle revision conflicts.
-- [ ] Add owned-skill assignment controls to main-agent settings and explain unavailable/admin-disabled activation without granting policy through the UI.
-- [ ] Verify CRUD, preview safety, search/pagination, assignments, keyboard access, and narrow/short layouts; update user-facing documentation.
+- [x] Add the Skills settings route/navigation and generated-query list/detail flows with loading, failure/retry, empty, and cached-refresh states.
+- [x] Build create/edit/view/preview and confirmed-delete flows using existing shadcn components; preserve drafts and handle revision conflicts.
+- [x] Add owned-skill assignment controls to main-agent settings and explain unavailable/admin-disabled activation without granting policy through the UI.
+- [x] Verify CRUD, preview safety, search/pagination, assignments, keyboard access, and narrow/short layouts; update user-facing documentation.
 
 ## US-40.3: Activate skills through recorded chat execution
 

@@ -74,8 +74,9 @@ retain fixed models and receive the same or narrower execution file scope.
 - Users own private SKILL.md-style skill documents and their CRUD lifecycle.
   Skills require explicit assignment to the user's main-agent configuration;
   admin `skills_enabled` policy controls eligibility and defaults to disabled.
-  Skill text never grants tools, file access, MCP, or delegation. Runtime skill
-  activation and the management UI are planned separately from this foundation.
+  Skill text never grants tools, file access, MCP, or delegation. User Settings
+  provides private skill editing/preview and main-agent assignment controls.
+  Runtime activation and slash commands remain planned.
 - **Admin** can add, update, enable/disable:
   - Tools
   - MCP servers

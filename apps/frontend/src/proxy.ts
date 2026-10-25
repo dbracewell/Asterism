@@ -13,6 +13,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
   publicRoutes.push(
     "/e2e/sub-agent",
     "/e2e/agent-settings",
+    "/e2e/skills",
     "/e2e/providers",
     "/e2e/planned-settings",
     "/e2e/files",
