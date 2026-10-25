@@ -9,10 +9,12 @@ export const AppSidebar = async ({
   sidebarWidth,
   navSessionsOpen,
   navProjectsOpen,
+  navGeneralQuickChatsOpen,
 }: {
   sidebarWidth?: string;
   navSessionsOpen: boolean;
   navProjectsOpen: boolean;
+  navGeneralQuickChatsOpen: boolean;
 }) => {
   return (
     <Sidebar width={sidebarWidth} className="overflow-hidden!">
@@ -23,9 +25,9 @@ export const AppSidebar = async ({
         <div className="flex min-h-0 flex-1 flex-col">
           <NavWorkspaces
             defaultProjectsOpen={navProjectsOpen}
-            defaultGeneralOpen={navSessionsOpen}
+            defaultGeneralOpen={navGeneralQuickChatsOpen}
           />
-          <NavChatSessions projectOnly defaultIsOpen={navSessionsOpen} />
+          <NavChatSessions defaultIsOpen={navSessionsOpen} />
         </div>
       </SidebarContent>
       <NavFooter />

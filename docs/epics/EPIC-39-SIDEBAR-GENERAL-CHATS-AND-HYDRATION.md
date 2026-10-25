@@ -1,6 +1,6 @@
 # EPIC-39: Sidebar General chats and hydration
 
-Status: complete; user-confirmed on 2026-10-25 and approved for local merge.
+Status: complete; US-39.1 and US-39.2 user-confirmed on 2026-10-25.
 Builds on the user's sidebar changes. See the
 [verification record](../reviews/us-39.1-sidebar-verification-2026-10-25.md) and
 [completed checklist](../archive/todo-completed-2026-10-25.md).
@@ -60,3 +60,31 @@ work; the user confirmed this story after the limits were reported.
 Scope: frontend sidebar only; reuse existing paginated chat APIs. No schema
 changes, data resets, or broader sidebar redesign are planned. Implement this
 story on a feature branch and obtain user confirmation before merging.
+
+## US-39.2: Restore workspace chat context and align navigation rows
+
+Status: complete; user-confirmed on 2026-10-25 and approved for local merge. See the
+[verification report](../reviews/us-39.2-sidebar-verification-2026-10-25.md) for
+passing focused gates and existing broader failures.
+
+Keep the five-chat General quick list, and restore the longer 50-chat paginated
+General list below Workspaces when General is selected, matching project-chat
+behavior. This supersedes US-39.1's requirement to omit the separate General list.
+General quick-list and workspace-list expansion preferences are independent.
+
+General and Projects must share toggle/text positioning and full-row active
+highlighting, including the toggle and action area. Links remain separate from
+toggle/action buttons, with accessible names and no nested interactive elements.
+
+- [x] Restore the scoped lower General list and persist its expansion independently of the quick list.
+- [x] Share the General/Projects row layout and apply active highlighting to the entire row.
+- [x] Verify both lists, route scoping, independent preferences, text alignment, highlighting, hydration, and collapsed/mobile behavior; update documentation.
+
+The lower project section uses the selected project's name, including cached
+renames and retryable metadata failures. Disclosure buttons do not gain a
+persistent fill solely from expansion; the selection action uses a checklist
+icon. Long labels truncate without crowding controls.
+
+Completion confirmed; checklist archived in the
+[2026-10-25 record](../archive/todo-completed-2026-10-25.md).
+No API or schema changes were required.

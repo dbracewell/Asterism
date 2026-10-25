@@ -96,7 +96,10 @@ initial failure from a failed refresh of saved messages. See the
 ## Sidebar navigation
 
 General has an expandable list of five chats per page alongside the five-project
-list. It stays scoped to General while browsing projects. Chat actions remain
+list. It stays scoped to General while browsing projects. A longer General chat
+list appears below Workspaces when General is selected, matching the scoped
+project-chat section. Both General lists expand independently. General and
+Projects share text alignment and full-row selection highlighting. Chat actions remain
 available, and deleting the last chat on a later page returns to a valid page.
 Persisted sidebar preferences are read on the server for consistent hydration;
 icon-collapse mode hides nested controls and empty-state text. See the

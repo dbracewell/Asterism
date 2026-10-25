@@ -20,3 +20,24 @@ existing 320px composer assertion; complete frontend Vitest passed 371 tests and
 failed four existing UI assertions. Those five failures reproduce on the starting
 commit and remain follow-up work, not passes. See the
 [verification record](../reviews/us-39.1-sidebar-verification-2026-10-25.md).
+
+## [EPIC-39 / US-39.2: Sidebar context and alignment](../epics/EPIC-39-SIDEBAR-GENERAL-CHATS-AND-HYDRATION.md#us-392-restore-workspace-chat-context-and-align-navigation-rows)
+
+- [x] US-39.2: Restore workspace chat context and align navigation rows.
+  - [x] Restore the scoped lower General list and persist its expansion independently of the quick list.
+  - [x] Share the General/Projects row layout and apply active highlighting to the entire row.
+  - [x] Verify both lists, route scoping, independent preferences, text alignment, highlighting, hydration, and collapsed/mobile behavior; update documentation.
+
+The user confirmed US-39.2 completion and authorized local merge on 2026-10-25.
+Final scope includes the longer General list, independent expansion preferences,
+shared full-row selection/alignment, unfilled expanded disclosure buttons,
+selection icon cleanup, scrolling repair, and project-name headings.
+
+Verification: seven focused sidebar unit tests, typecheck, focused lint, and
+formatting passed. Earlier story browser runs passed the new behavior cases,
+with the existing 320px composer failure retained in the broader 29-pass/1-fail
+result. Button follow-ups passed light/dark browser checks in disposable storage
+using alternate test-only ports to preserve the running development servers.
+Four existing full-unit failures remain documented. The last project-name
+follow-up was verified with focused unit/type/lint checks, not a new browser run.
+See the [US-39.2 verification record](../reviews/us-39.2-sidebar-verification-2026-10-25.md).

@@ -3,15 +3,28 @@
 The sidebar exposes General and Projects with expandable lists. General always
 queries chats with a null project ID and shows five chats per page, independently
 of the current workspace. Projects shows five projects per page. General retains
-its landing-page link and chat actions; its list is not repeated in a separate
-General-chats section. Previous/next controls disable at boundaries and while
+its landing-page link and chat actions. The quick list complements the longer
+50-chat paginated General section below Workspaces when General is selected;
+selecting a project shows its scoped longer chat list instead. Previous/next controls disable at boundaries and while
 fetching. Chat-list pages recover when deletion reduces the available page count.
+
+The lower project-chat section is headed by the selected project's name, read
+through the shared project-detail query. Renames update the cached heading; long
+names truncate without crowding the controls. General retains “General chats.”
+Project-name loading/failure remains explicit and retryable.
 
 The project-chat section follows the URL and the current chat's persisted project
 association; its pagination resets when that identity changes. While resolving an
 existing chat's workspace, the sidebar does not display cached General chats as
 though they belonged to that project. There is no separate browser-wide
 selected-project state.
+
+General and Projects use the same row component for consistent toggle/text
+alignment. Expansion alone does not fill disclosure buttons; hover and keyboard
+focus retain visible feedback. Selection highlights the full row, including the toggle and action
+area; the destination link and toggle remain separate controls. General's quick
+list uses `GENERAL_QUICK_CHATS_OPEN_COOKIE`, independently of the longer chat
+section's `SESSIONS_OPEN_COOKIE`; Projects uses `PROJECTS_OPEN_COOKIE`.
 
 The server reads persisted sidebar preferences and passes initial values into
 client components, so server markup and initial hydration agree. Cookie writes

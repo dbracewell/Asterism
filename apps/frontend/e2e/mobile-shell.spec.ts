@@ -1,5 +1,9 @@
 import { expect, request, test, type Page } from "./support/test";
-import { PROJECTS_OPEN_COOKIE } from "../src/features/dashboard/constants";
+import {
+  GENERAL_QUICK_CHATS_OPEN_COOKIE,
+  PROJECTS_OPEN_COOKIE,
+  SESSIONS_OPEN_COOKIE,
+} from "../src/features/dashboard/constants";
 import { randomUUID } from "node:crypto";
 
 const email = `${randomUUID()}@example.test`;
@@ -422,8 +426,13 @@ for (const projectsOpen of [false, true]) {
         url: "http://localhost:3100",
       },
       {
-        name: "asterism-sessions-open",
+        name: GENERAL_QUICK_CHATS_OPEN_COOKIE,
         value: "true",
+        url: "http://localhost:3100",
+      },
+      {
+        name: SESSIONS_OPEN_COOKIE,
+        value: "false",
         url: "http://localhost:3100",
       },
       { name: "sidebar_state", value: "true", url: "http://localhost:3100" },
@@ -507,3 +516,152 @@ for (const projectsOpen of [false, true]) {
     expect(hydrationErrors).toEqual([]);
   });
 }
+
+test("General quick chats and workspace context coexist with aligned full-row selection", async ({
+  page,
+  context,
+}) => {
+  const tokenResponse = await context.request.get(
+    "http://localhost:3100/api/auth/token",
+  );
+  expect(tokenResponse.ok()).toBeTruthy();
+  const { token } = await tokenResponse.json();
+  const themeResponse = await context.request.put(
+    "http://localhost:3100/api/py/settings/user/theme",
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { value: "dark" },
+    },
+  );
+  expect(themeResponse.ok()).toBeTruthy();
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await context.addCookies([
+    {
+      name: "asterism-custom-theme-name",
+      value: "dark",
+      url: "http://localhost:3100",
+    },
+    {
+      name: GENERAL_QUICK_CHATS_OPEN_COOKIE,
+      value: "true",
+      url: "http://localhost:3100",
+    },
+    { name: SESSIONS_OPEN_COOKIE, value: "true", url: "http://localhost:3100" },
+    {
+      name: PROJECTS_OPEN_COOKIE,
+      value: "false",
+      url: "http://localhost:3100",
+    },
+    { name: "sidebar_state", value: "true", url: "http://localhost:3100" },
+  ]);
+  await page.route("**/api/py/chat/?**", (route) => {
+    const url = new URL(route.request().url());
+    const size = Number(url.searchParams.get("page_size"));
+    const pageNumber = Number(url.searchParams.get("page"));
+    expect(url.searchParams.get("project_id")).toBeNull();
+    return route.fulfill({
+      json: {
+        chats: Array.from(
+          { length: size === 5 ? 5 : size === 50 ? 10 : 0 },
+          (_, i) => ({
+            id: `context-${pageNumber}-${i}`,
+            title: `Context chat ${pageNumber}-${i}`,
+          }),
+        ),
+        total: 51,
+        page: pageNumber,
+        page_size: size,
+      },
+    });
+  });
+  await page.goto("/general");
+  await expect(page.locator("body")).toHaveClass(/dark/);
+  const quick = page.getByRole("region", { name: "General", exact: true });
+  const contextList = page.getByRole("region", {
+    name: "General chats",
+    exact: true,
+  });
+  await expect(quick.getByRole("link", { name: /Context chat/ })).toHaveCount(
+    5,
+  );
+  await expect(
+    contextList.getByRole("link", { name: /Context chat/ }),
+  ).toHaveCount(10);
+  await expect(
+    contextList.getByRole("link", { name: "Context chat 1-9", exact: true }),
+  ).toBeVisible();
+  const generalRow = page.locator('[data-workspace-row="General"]');
+  const projectRow = page.locator('[data-workspace-row="Projects"]');
+  // Expansion is a disclosure state, not a selected/filled button state.
+  await expect(
+    projectRow.getByRole("button", { name: "Toggle Projects", exact: true }),
+  ).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await projectRow
+    .getByRole("button", { name: "Toggle Projects", exact: true })
+    .click();
+  await page.mouse.move(800, 100);
+  await generalRow.getByRole("link", { name: "General", exact: true }).focus();
+  await expect(
+    projectRow.getByRole("button", { name: "Toggle Projects", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    projectRow.getByRole("button", { name: "Toggle Projects", exact: true }),
+  ).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  const lowerLabel = await contextList
+    .locator('[data-slot="sidebar-group-label"]')
+    .boundingBox();
+  const lowerToggle = await contextList
+    .getByRole("button", { name: "Toggle General chats", exact: true })
+    .boundingBox();
+  expect(lowerLabel!.x).toBeCloseTo(lowerToggle!.x + lowerToggle!.width, 0);
+  await expect(
+    contextList.getByRole("button", { name: "Select chats", exact: true }),
+  ).toBeEnabled();
+  const generalText = await generalRow.locator("a span").boundingBox();
+  const projectText = await projectRow.locator("a span").boundingBox();
+  expect(generalText!.x).toBeCloseTo(projectText!.x, 0);
+  const generalBounds = await generalRow.boundingBox();
+  const projectBounds = await projectRow.boundingBox();
+  expect(generalBounds!.x).toBeCloseTo(projectBounds!.x, 0);
+  expect(generalBounds!.width).toBeCloseTo(projectBounds!.width, 0);
+  await expect(generalRow).toHaveAttribute("data-active", "true");
+  await expect(projectRow).toHaveAttribute("data-active", "false");
+  const rowColor = await generalRow.evaluate(
+    (el) => getComputedStyle(el).backgroundColor,
+  );
+  expect(rowColor).not.toBe("rgba(0, 0, 0, 0)");
+  await quick
+    .getByRole("button", { name: "Toggle General", exact: true })
+    .click();
+  await expect(quick.getByRole("link", { name: /Context chat/ })).toHaveCount(
+    0,
+  );
+  await expect(
+    contextList.getByRole("link", { name: /Context chat/ }),
+  ).toHaveCount(10);
+  await page.reload();
+  await expect(
+    quick.getByRole("button", { name: "Toggle General", exact: true }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await expect(
+    contextList.getByRole("link", { name: /Context chat/ }),
+  ).toHaveCount(10);
+  await contextList
+    .getByRole("button", { name: "Next chats", exact: true })
+    .click();
+  await expect(
+    contextList.getByRole("link", { name: "Context chat 2-0", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Collapse sidebar", exact: true })
+    .click();
+  await expect(
+    contextList.getByRole("button", { name: "Next chats", exact: true }),
+  ).toBeHidden();
+  await page
+    .getByRole("button", { name: "Expand sidebar", exact: true })
+    .click();
+  await expect(
+    contextList.getByRole("link", { name: "Context chat 2-0", exact: true }),
+  ).toBeVisible();
+});

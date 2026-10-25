@@ -13,7 +13,10 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
-import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
+import {
+  GENERAL_QUICK_CHATS_OPEN_COOKIE,
+  SESSIONS_OPEN_COOKIE,
+} from "@/features/dashboard/constants";
 import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
@@ -21,6 +24,7 @@ import {
   chatSessionBulkDeleteMutation,
   chatSessionGetManyOptions,
   chatSessionGetManyQueryKey,
+  projectGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -34,20 +38,11 @@ import { toast } from "sonner";
 export const NavChatSessions = ({
   defaultIsOpen,
   general = false,
-  projectOnly = false,
 }: {
   defaultIsOpen: boolean;
   general?: boolean;
-  projectOnly?: boolean;
 }) => {
   const workspace = useWorkspaceScope();
-  if (
-    projectOnly &&
-    !workspace.projectId &&
-    !workspace.pending &&
-    !workspace.error
-  )
-    return null;
   const scope = general
     ? { ...workspace, projectId: null, pending: false, error: null }
     : workspace;
@@ -87,6 +82,21 @@ function ScopedNavChatSessions({
     enabled: !workspace.pending && !workspace.error,
     retry: false,
   });
+
+  const project = useQuery({
+    ...projectGetOneOptions({
+      client,
+      path: { project_id: workspace.projectId ?? "" },
+    }),
+    enabled: !!workspace.projectId && !workspace.pending && !workspace.error,
+    retry: false,
+  });
+  const label = general
+    ? "General"
+    : workspace.projectId
+      ? (project.data?.name ??
+        (project.isPending ? "Loading project…" : "Project unavailable"))
+      : "General chats";
 
   useSubscribeEvent({
     type: "chat-session:update",
@@ -160,13 +170,7 @@ function ScopedNavChatSessions({
 
   return (
     <CollapsibleSidebarGroup
-      label={
-        general
-          ? "General"
-          : workspace.projectId
-            ? "Project chats"
-            : "General chats"
-      }
+      label={label}
       href={general ? "/general" : undefined}
       isActive={
         general &&
@@ -188,10 +192,12 @@ function ScopedNavChatSessions({
       secondaryMenuActionLabel={
         selectionMode ? "Exit chat selection" : "Select chats"
       }
-      cookieName={SESSIONS_OPEN_COOKIE}
+      cookieName={
+        general ? GENERAL_QUICK_CHATS_OPEN_COOKIE : SESSIONS_OPEN_COOKIE
+      }
       className={general ? "p-0" : "flex-1"}
     >
-      <div className="flex items-center justify-between px-2 pb-1 group-data-[collapsible=icon]:hidden">
+      <div className="flex shrink-0 items-center justify-between px-2 pb-1 group-data-[collapsible=icon]:hidden">
         {selectionMode ? (
           <>
             <Label className="flex items-center gap-2 text-xs">
@@ -229,6 +235,18 @@ function ScopedNavChatSessions({
           </>
         ) : null}
       </div>
+      {project.error && (
+        <QueryError
+          error={project.error}
+          message={
+            project.data
+              ? "Could not refresh project name."
+              : "Could not load project name."
+          }
+          retry={project.refetch}
+          isRetrying={project.isFetching}
+        />
+      )}
       {isPending && (
         <div role="status" aria-label="Loading chats">
           <Spinner size={24} />
@@ -253,7 +271,7 @@ function ScopedNavChatSessions({
       )}
       <SidebarMenu
         className={cn(
-          "min-h-0 w-full gap-0.5 select-none",
+          "min-h-0 w-full shrink-0 gap-0.5 select-none",
           general &&
             "border-sidebar-border ml-3 w-auto border-l pl-2 group-data-[collapsible=icon]:hidden",
         )}
@@ -297,7 +315,7 @@ function ScopedNavChatSessions({
         ))}
       </SidebarMenu>
       {(page > 1 || (data?.total ?? 0) > pageSize) && (
-        <div className="flex justify-between gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
+        <div className="flex shrink-0 justify-between gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
           <Button
             aria-label="Previous chats"
             disabled={page === 1 || isFetching}

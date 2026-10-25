@@ -1,5 +1,6 @@
 "use client";
 import { PROJECTS_OPEN_COOKIE } from "@/features/dashboard/constants";
+import { WorkspaceNavigationRow } from "@/features/dashboard/components/workspace-navigation-row";
 import { NavChatSessions } from "@/features/dashboard/components/nav-chat-sessions";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
-  sidebarMenuButtonVariants,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
@@ -19,7 +18,7 @@ import { client } from "@/lib/api";
 import { projectGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
 import cookies from "js-cookie";
-import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -54,35 +53,19 @@ export function NavWorkspaces({
         </SidebarMenuItem>
 
         <SidebarMenuItem>
-          <div
-            className={sidebarMenuButtonVariants({
-              className: "flex items-center",
-            })}
-            data-active={pathname === "/projects"}
-          >
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Toggle Projects"
-              aria-expanded={isProjectsVisible}
-              onClick={() => {
-                cookies.set(PROJECTS_OPEN_COOKIE, String(!isProjectsVisible), {
-                  path: "/",
-                  expires: 365,
-                });
-                setIsProjectVisible(!isProjectsVisible);
-              }}
-            >
-              {isProjectsVisible ? <ChevronDownIcon /> : <ChevronRightIcon />}
-            </Button>
-            <SidebarMenuButton
-              className="pl-0!"
-              asChild
-              isActive={pathname === "/projects"}
-            >
-              <Link href="/projects">Projects</Link>
-            </SidebarMenuButton>
-          </div>
+          <WorkspaceNavigationRow
+            label="Projects"
+            href="/projects"
+            open={isProjectsVisible}
+            active={pathname === "/projects"}
+            onToggle={() => {
+              cookies.set(PROJECTS_OPEN_COOKIE, String(!isProjectsVisible), {
+                path: "/",
+                expires: 365,
+              });
+              setIsProjectVisible(!isProjectsVisible);
+            }}
+          />
           {isProjectsVisible && (
             <>
               <SidebarMenuSub>

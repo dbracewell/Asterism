@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   projectId: null as string | null,
   pathname: "/",
   getChat: vi.fn(),
+  getProject: vi.fn(),
   event: undefined as undefined | (() => Promise<void>),
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
@@ -24,6 +25,10 @@ vi.mock("@/features/sse/hooks/use-subscribe-event", () => ({
   },
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  projectGetOneOptions: ({ path }: { path: { project_id: string } }) => ({
+    queryKey: ["project", path.project_id],
+    queryFn: () => mocks.getProject(path.project_id),
+  }),
   chatSessionGetOneOptions: () => ({
     queryKey: ["chat"],
     queryFn: mocks.getChat,
@@ -42,8 +47,17 @@ vi.mock("./chat-session-action-menu", () => ({
   ChatSessionActionMenu: () => null,
 }));
 vi.mock("./collapsible-sidebar-group", () => ({
-  CollapsibleSidebarGroup: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+  CollapsibleSidebarGroup: ({
+    children,
+    label,
+  }: {
+    children: React.ReactNode;
+    label: string;
+  }) => (
+    <div>
+      <h2>{label}</h2>
+      {children}
+    </div>
   ),
 }));
 vi.mock("@/components/ui/sidebar", () => ({
@@ -62,6 +76,7 @@ beforeEach(() => {
   mocks.projectId = null;
   mocks.pathname = "/";
   mocks.getChat.mockReset();
+  mocks.getProject.mockReset().mockResolvedValue({ name: "Research" });
   mocks.list.mockReset();
   mocks.event = undefined;
 });
@@ -266,4 +281,53 @@ it("distinguishes initial failure from cached refresh failure and supports retry
   expect(
     screen.getByRole("link", { name: "Saved General chat" }),
   ).toBeInTheDocument();
+});
+
+it("uses the selected project's name and reflects renames without changing chat scope", async () => {
+  mocks.projectId = "project-p";
+  mocks.list.mockResolvedValue({ chats: [], total: 0 });
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={cache}>
+      <NavChatSessions defaultIsOpen />
+    </QueryClientProvider>,
+  );
+  await screen.findByRole("heading", { name: "Research" });
+  expect(mocks.getProject).toHaveBeenCalledWith("project-p");
+  expect(
+    screen.queryByRole("heading", { name: "Project chats" }),
+  ).not.toBeInTheDocument();
+  await act(async () => {
+    cache.setQueryData(["project", "project-p"], { name: "COSC 1436" });
+  });
+  await screen.findByRole("heading", { name: "COSC 1436" });
+  expect(mocks.list).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 50,
+    project_id: "project-p",
+  });
+});
+
+it("retries unavailable project metadata without mislabeling it as General", async () => {
+  mocks.projectId = "project-p";
+  mocks.getProject.mockRejectedValue({ detail: "Temporarily unavailable" });
+  mocks.list.mockResolvedValue({ chats: [], total: 0 });
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <NavChatSessions defaultIsOpen />
+    </QueryClientProvider>,
+  );
+  await screen.findByRole("heading", { name: "Project unavailable" });
+  expect(
+    screen.queryByRole("heading", { name: "General chats" }),
+  ).not.toBeInTheDocument();
+  mocks.getProject.mockResolvedValue({ name: "COSC 1436" });
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  await screen.findByRole("heading", { name: "COSC 1436" });
 });
