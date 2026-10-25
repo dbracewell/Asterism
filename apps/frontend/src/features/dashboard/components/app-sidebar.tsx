@@ -8,9 +8,11 @@ import { NavWorkspaces } from "@/features/projects/components/nav-workspaces";
 export const AppSidebar = async ({
   sidebarWidth,
   navSessionsOpen,
+  navProjectsOpen,
 }: {
   sidebarWidth?: string;
   navSessionsOpen: boolean;
+  navProjectsOpen: boolean;
 }) => {
   return (
     <Sidebar width={sidebarWidth} className="overflow-hidden!">
@@ -19,8 +21,11 @@ export const AppSidebar = async ({
         {/*<NavProfileSelector />*/}
         <NavActions />
         <div className="flex min-h-0 flex-1 flex-col">
-          <NavWorkspaces />
-          <NavChatSessions defaultIsOpen={navSessionsOpen} />
+          <NavWorkspaces
+            defaultProjectsOpen={navProjectsOpen}
+            defaultGeneralOpen={navSessionsOpen}
+          />
+          <NavChatSessions projectOnly defaultIsOpen={navSessionsOpen} />
         </div>
       </SidebarContent>
       <NavFooter />

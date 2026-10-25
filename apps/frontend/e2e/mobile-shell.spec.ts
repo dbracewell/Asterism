@@ -1,4 +1,5 @@
 import { expect, request, test, type Page } from "./support/test";
+import { PROJECTS_OPEN_COOKIE } from "../src/features/dashboard/constants";
 import { randomUUID } from "node:crypto";
 
 const email = `${randomUUID()}@example.test`;
@@ -405,5 +406,104 @@ for (const width of [320, 390]) {
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(width);
+  });
+}
+
+for (const projectsOpen of [false, true]) {
+  test(`sidebar hydrates persisted Projects ${projectsOpen ? "open" : "closed"} and paginates General`, async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await context.addCookies([
+      {
+        name: PROJECTS_OPEN_COOKIE,
+        value: String(projectsOpen),
+        url: "http://localhost:3100",
+      },
+      {
+        name: "asterism-sessions-open",
+        value: "true",
+        url: "http://localhost:3100",
+      },
+      { name: "sidebar_state", value: "true", url: "http://localhost:3100" },
+    ]);
+    let empty = false;
+    await page.route("**/api/py/chat/?**", (route) => {
+      const url = new URL(route.request().url());
+      expect(url.searchParams.get("project_id")).toBeNull();
+      if (url.searchParams.get("page_size") !== "5") {
+        return route.fulfill({
+          json: { chats: [], total: 0, page: 1, page_size: 20 },
+        });
+      }
+      const pageNumber = Number(url.searchParams.get("page"));
+      return route.fulfill({
+        json: {
+          chats: empty
+            ? []
+            : Array.from({ length: pageNumber === 1 ? 5 : 1 }, (_, i) => ({
+                id: `general-${pageNumber}-${i}`,
+                title: `General chat ${pageNumber}-${i}`,
+              })),
+          total: empty ? 0 : 6,
+          page: pageNumber,
+          page_size: 5,
+        },
+      });
+    });
+    const hydrationErrors: string[] = [];
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        /hydrat|server rendered/i.test(message.text())
+      )
+        hydrationErrors.push(message.text());
+    });
+    await page.goto("/general");
+    const sidebar = page.locator('[data-slot="sidebar"]');
+    await expect(
+      page.getByRole("button", { name: "Toggle Projects", exact: true }),
+    ).toHaveAttribute("aria-expanded", String(projectsOpen));
+    await expect(
+      page.getByRole("link", { name: "General chat 1-4", exact: true }),
+    ).toBeVisible();
+    await expect(
+      sidebar.getByRole("button", { name: "Previous chats", exact: true }),
+    ).toBeDisabled();
+    await sidebar
+      .getByRole("button", { name: "Next chats", exact: true })
+      .click();
+    await expect(
+      page.getByRole("link", { name: "General chat 2-0", exact: true }),
+    ).toBeVisible();
+    await expect(
+      sidebar.getByRole("button", { name: "Next chats", exact: true }),
+    ).toBeDisabled();
+    await page.reload();
+    await expect(
+      page.getByRole("link", { name: "General chat 1-0", exact: true }),
+    ).toBeVisible();
+    empty = true;
+    await page.reload();
+    await expect(
+      sidebar.getByText("No chats yet.", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Collapse sidebar", exact: true })
+      .click();
+    await expect(
+      sidebar.getByText("No chats yet.", { exact: true }),
+    ).toBeHidden();
+    await expect(
+      page.getByRole("button", { name: "Toggle General", exact: true }),
+    ).toBeHidden();
+    await page
+      .getByRole("button", { name: "Expand sidebar", exact: true })
+      .click();
+    await expect(
+      sidebar.getByText("No chats yet.", { exact: true }),
+    ).toBeVisible();
+    expect(hydrationErrors).toEqual([]);
   });
 }

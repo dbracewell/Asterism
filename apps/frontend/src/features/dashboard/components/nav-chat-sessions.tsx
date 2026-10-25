@@ -23,6 +23,7 @@ import {
   chatSessionGetManyQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { IconMessage2, IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -32,15 +33,33 @@ import { toast } from "sonner";
 
 export const NavChatSessions = ({
   defaultIsOpen,
+  general = false,
+  projectOnly = false,
 }: {
   defaultIsOpen: boolean;
+  general?: boolean;
+  projectOnly?: boolean;
 }) => {
   const workspace = useWorkspaceScope();
+  if (
+    projectOnly &&
+    !workspace.projectId &&
+    !workspace.pending &&
+    !workspace.error
+  )
+    return null;
+  const scope = general
+    ? { ...workspace, projectId: null, pending: false, error: null }
+    : workspace;
   return (
     <ScopedNavChatSessions
-      key={workspace.projectId ?? "general"}
+      key={scope.projectId ?? "general"}
       defaultIsOpen={defaultIsOpen}
-      workspace={workspace}
+      workspace={scope}
+      general={general}
+      activeGeneral={
+        !workspace.pending && !workspace.error && !workspace.projectId
+      }
     />
   );
 };
@@ -48,14 +67,18 @@ export const NavChatSessions = ({
 function ScopedNavChatSessions({
   defaultIsOpen,
   workspace,
+  general,
+  activeGeneral,
 }: {
   defaultIsOpen: boolean;
   workspace: ReturnType<typeof useWorkspaceScope>;
+  general: boolean;
+  activeGeneral: boolean;
 }) {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const [page, setPage] = useState(1);
-  const pageSize = 50;
+  const pageSize = general ? 5 : 50;
   const { data, isPending, error, refetch, isFetching } = useQuery({
     ...chatSessionGetManyOptions({
       client: client,
@@ -77,6 +100,13 @@ function ScopedNavChatSessions({
   const router = useRouter();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Membership can shrink after either a row action or a bulk deletion.
+  const lastPage = data ? Math.max(1, Math.ceil(data.total / pageSize)) : page;
+  if (page > lastPage) {
+    setPage(lastPage);
+    setSelectedIds(new Set());
+  }
+
   const { confirm, dialog } = useConfirmationDialog({
     title: `Delete ${selectedIds.size} chat${selectedIds.size === 1 ? "" : "s"}?`,
     description:
@@ -128,31 +158,23 @@ function ScopedNavChatSessions({
       />
     );
 
-  if (error && !data)
-    return (
-      <QueryError
-        error={error}
-        message="Could not load workspace chats."
-        retry={refetch}
-        isRetrying={isFetching}
-      />
-    );
-  if (isPending || data == null) {
-    return (
-      <CollapsibleSidebarGroup
-        label={workspace.projectId ? "Project chats" : "General chats"}
-        defaultIsOpen={defaultIsOpen}
-        onMenuActionClick={() => {}}
-        cookieName={SESSIONS_OPEN_COOKIE}
-      >
-        <></>
-      </CollapsibleSidebarGroup>
-    );
-  }
-
   return (
     <CollapsibleSidebarGroup
-      label={workspace.projectId ? "Project chats" : "General chats"}
+      label={
+        general
+          ? "General"
+          : workspace.projectId
+            ? "Project chats"
+            : "General chats"
+      }
+      href={general ? "/general" : undefined}
+      isActive={
+        general &&
+        (pathname === "/general" ||
+          pathname === "/" ||
+          pathname.startsWith("/c/")) &&
+        activeGeneral
+      }
       defaultIsOpen={defaultIsOpen}
       onMenuActionClick={() =>
         router.push(
@@ -167,22 +189,22 @@ function ScopedNavChatSessions({
         selectionMode ? "Exit chat selection" : "Select chats"
       }
       cookieName={SESSIONS_OPEN_COOKIE}
-      className="flex-1"
+      className={general ? "p-0" : "flex-1"}
     >
-      <div className="flex items-center justify-between px-2 pb-1">
+      <div className="flex items-center justify-between px-2 pb-1 group-data-[collapsible=icon]:hidden">
         {selectionMode ? (
           <>
             <Label className="flex items-center gap-2 text-xs">
               <Checkbox
                 aria-label="Select all visible chats"
                 checked={
-                  data.chats.length > 0 &&
-                  selectedIds.size === data.chats.length
+                  (data?.chats.length ?? 0) > 0 &&
+                  selectedIds.size === (data?.chats.length ?? 0)
                 }
                 onCheckedChange={(checked) =>
                   setSelectedIds(
                     checked
-                      ? new Set(data.chats.map((chat) => chat.id))
+                      ? new Set(data?.chats.map((chat) => chat.id))
                       : new Set(),
                   )
                 }
@@ -207,19 +229,36 @@ function ScopedNavChatSessions({
           </>
         ) : null}
       </div>
+      {isPending && (
+        <div role="status" aria-label="Loading chats">
+          <Spinner size={24} />
+        </div>
+      )}
       {error && (
         <QueryError
           error={error}
-          message="Could not refresh chats. Showing saved results."
+          message={
+            data
+              ? "Could not refresh chats. Showing saved results."
+              : "Could not load workspace chats."
+          }
           retry={refetch}
           isRetrying={isFetching}
         />
       )}
-      {data.chats.length === 0 && (
-        <p className="text-muted-foreground px-2 text-sm">No chats yet.</p>
+      {data && data.chats.length === 0 && (
+        <p className="text-muted-foreground px-2 text-sm group-data-[collapsible=icon]:hidden">
+          No chats yet.
+        </p>
       )}
-      <SidebarMenu className="min-h-0 w-full gap-0.5 select-none">
-        {data.chats?.map((session, index) => (
+      <SidebarMenu
+        className={cn(
+          "min-h-0 w-full gap-0.5 select-none",
+          general &&
+            "border-sidebar-border ml-3 w-auto border-l pl-2 group-data-[collapsible=icon]:hidden",
+        )}
+      >
+        {data?.chats?.map((session, index) => (
           <SidebarMenuItem
             key={session.id}
             className={cn(
@@ -257,31 +296,31 @@ function ScopedNavChatSessions({
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
-      {(page > 1 || data.total > pageSize) && (
+      {(page > 1 || (data?.total ?? 0) > pageSize) && (
         <div className="flex justify-between gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
           <Button
             aria-label="Previous chats"
-            disabled={page === 1}
+            disabled={page === 1 || isFetching}
             size="sm"
-            variant="outline"
+            variant={general ? "ghost" : "outline"}
             onClick={() => {
               setPage((value) => value - 1);
               setSelectedIds(new Set());
             }}
           >
-            Previous
+            {general ? <ChevronUpIcon /> : "Previous"}
           </Button>
           <Button
             aria-label="Next chats"
-            disabled={page * pageSize >= data.total}
+            disabled={page * pageSize >= (data?.total ?? 0) || isFetching}
             size="sm"
-            variant="outline"
+            variant={general ? "ghost" : "outline"}
             onClick={() => {
               setPage((value) => value + 1);
               setSelectedIds(new Set());
             }}
           >
-            Next
+            {general ? <ChevronDownIcon /> : "Next"}
           </Button>
         </div>
       )}

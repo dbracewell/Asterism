@@ -1,6 +1,9 @@
 # EPIC-39: Sidebar General chats and hydration
 
-Status: planned. Builds on the user's current sidebar changes.
+Status: complete; user-confirmed on 2026-10-25 and approved for local merge.
+Builds on the user's sidebar changes. See the
+[verification record](../reviews/us-39.1-sidebar-verification-2026-10-25.md) and
+[completed checklist](../archive/todo-completed-2026-10-25.md).
 
 ## Objective
 
@@ -34,19 +37,25 @@ Acceptance criteria:
 
 Tasks:
 
-- [ ] Extend General in `NavWorkspaces` with a five-chat paginated list using
+- [x] Extend General in `NavWorkspaces` with a five-chat paginated list using
       generated API/TanStack Query hooks, explicit General scope, and existing
       shadcn sidebar patterns; reconcile `NavChatSessions` to avoid duplication.
-- [ ] Handle pagination boundaries, refreshes after chat mutations, and list
+- [x] Handle pagination boundaries, refreshes after chat mutations, and list
       loading/error/empty states while preserving existing chat actions.
-- [ ] Reproduce the hydration error and fix initial sidebar state rendering;
+- [x] Reproduce the hydration error and fix initial sidebar state rendering;
       inspect the `is_project_visible` browser-cookie initializer as a likely
       cause and verify persisted open and closed states.
-- [ ] Hide empty-state text and nested controls in icon-collapse mode and
+- [x] Hide empty-state text and nested controls in icon-collapse mode and
       verify keyboard access and mobile drawer behavior.
-- [ ] Add focused pagination/hydration/collapse regressions; run relevant lint,
+- [x] Add focused pagination/hydration/collapse regressions; run relevant lint,
       typecheck, formatting, unit tests, and browser checks, then update story
       status and documentation before requesting completion confirmation.
+
+Focused sidebar tests, typecheck, lint, formatting, build, and the isolated
+sidebar browser gate pass. The full frontend suite still has four failures
+reproduced at the starting commit; the 320px composer browser failure also
+reproduces there. These baseline failures remain explicitly documented follow-up
+work; the user confirmed this story after the limits were reported.
 
 Scope: frontend sidebar only; reuse existing paginated chat APIs. No schema
 changes, data resets, or broader sidebar redesign are planned. Implement this

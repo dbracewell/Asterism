@@ -1,11 +1,22 @@
 # Project workspaces (US-27.1–27.3)
 
-The sidebar exposes General and Projects. Workspace
-selection follows the URL and the current chat's persisted project association;
-there is no separate browser-wide selected-project state. Recent sidebar chats
-are queried for that workspace, and pagination resets when its identity changes.
-While resolving an existing chat's workspace, the sidebar does not display cached
-General chats as though they belonged to that project.
+The sidebar exposes General and Projects with expandable lists. General always
+queries chats with a null project ID and shows five chats per page, independently
+of the current workspace. Projects shows five projects per page. General retains
+its landing-page link and chat actions; its list is not repeated in a separate
+General-chats section. Previous/next controls disable at boundaries and while
+fetching. Chat-list pages recover when deletion reduces the available page count.
+
+The project-chat section follows the URL and the current chat's persisted project
+association; its pagination resets when that identity changes. While resolving an
+existing chat's workspace, the sidebar does not display cached General chats as
+though they belonged to that project. There is no separate browser-wide
+selected-project state.
+
+The server reads persisted sidebar preferences and passes initial values into
+client components, so server markup and initial hydration agree. Cookie writes
+happen on interaction. Icon-collapse mode hides nested controls and empty-state
+text, including “No chats yet.”, and removes those controls from keyboard access.
 
 ## Routes and actions
 

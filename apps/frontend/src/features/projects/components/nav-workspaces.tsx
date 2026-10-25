@@ -1,4 +1,6 @@
 "use client";
+import { PROJECTS_OPEN_COOKIE } from "@/features/dashboard/constants";
+import { NavChatSessions } from "@/features/dashboard/components/nav-chat-sessions";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,12 +26,17 @@ import { useState } from "react";
 import { useWorkspaceScope } from "../hooks/use-workspace-scope";
 const PAGE_SIZE = 5;
 
-export function NavWorkspaces() {
+export function NavWorkspaces({
+  defaultProjectsOpen = false,
+  defaultGeneralOpen = false,
+}: {
+  defaultProjectsOpen?: boolean;
+  defaultGeneralOpen?: boolean;
+}) {
   const pathname = usePathname();
   const scope = useWorkspaceScope();
-  const [isProjectsVisible, setIsProjectVisible] = useState(
-    cookies.get("is_project_visible") === "true",
-  );
+  const [isProjectsVisible, setIsProjectVisible] =
+    useState(defaultProjectsOpen);
   const [page, setPage] = useState(1);
   const projects = useQuery({
     ...projectGetManyOptions({
@@ -43,19 +50,7 @@ export function NavWorkspaces() {
       <SidebarGroupLabel>Workspaces</SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={
-              !scope.pending &&
-              !scope.error &&
-              !scope.projectId &&
-              (pathname === "/general" ||
-                pathname === "/" ||
-                pathname.startsWith("/c/"))
-            }
-          >
-            <Link href="/general">General</Link>
-          </SidebarMenuButton>
+          <NavChatSessions general defaultIsOpen={defaultGeneralOpen} />
         </SidebarMenuItem>
 
         <SidebarMenuItem>
@@ -65,15 +60,21 @@ export function NavWorkspaces() {
             })}
             data-active={pathname === "/projects"}
           >
-            <button
-              className="[&_>svg]:size-3!"
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Toggle Projects"
+              aria-expanded={isProjectsVisible}
               onClick={() => {
-                cookies.set("is_project_visible", String(!isProjectsVisible));
+                cookies.set(PROJECTS_OPEN_COOKIE, String(!isProjectsVisible), {
+                  path: "/",
+                  expires: 365,
+                });
                 setIsProjectVisible(!isProjectsVisible);
               }}
             >
               {isProjectsVisible ? <ChevronDownIcon /> : <ChevronRightIcon />}
-            </button>
+            </Button>
             <SidebarMenuButton
               className="pl-0!"
               asChild
@@ -112,7 +113,7 @@ export function NavWorkspaces() {
                 )}
               </SidebarMenuSub>
               {projects.data &&
-                (page > 1 || page <= projects.data.total / 5) && (
+                (page > 1 || projects.data.total > PAGE_SIZE) && (
                   <div className="ml-5 flex w-fit items-center justify-between">
                     <Button
                       size="sm"
@@ -127,7 +128,8 @@ export function NavWorkspaces() {
                       size="sm"
                       variant="ghost"
                       disabled={
-                        page * 5 >= projects.data.total || projects.isFetching
+                        page * PAGE_SIZE >= projects.data.total ||
+                        projects.isFetching
                       }
                       onClick={() => setPage(page + 1)}
                       aria-label="Next workspace page"

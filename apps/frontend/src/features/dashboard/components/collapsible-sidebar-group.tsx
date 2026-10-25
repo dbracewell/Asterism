@@ -8,10 +8,12 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import Cookie from "js-cookie";
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 export const CollapsibleSidebarGroup = ({
@@ -23,8 +25,12 @@ export const CollapsibleSidebarGroup = ({
   onSecondaryMenuActionClick,
   secondaryMenuActionLabel,
   className,
+  href,
+  isActive,
 }: {
   label: string;
+  href?: string;
+  isActive?: boolean;
   defaultIsOpen?: boolean;
   cookieName: string;
   children: React.ReactNode;
@@ -44,18 +50,27 @@ export const CollapsibleSidebarGroup = ({
     <SidebarGroup className={cn("flex overflow-hidden", className)}>
       <SidebarGroupContent className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
         <Collapsible
-          suppressHydrationWarning
           open={isOpen}
           onOpenChange={handleOpenChange}
           className="flex min-h-0 min-w-0 flex-1 flex-col"
         >
           <div className="group/label hover:bg-sidebar-accent flex w-full items-center rounded-md group-data-[collapsible=icon]:hidden">
-            <CollapsibleTrigger className="flex-1">
-              <SidebarGroupLabel className="flex-1 cursor-pointer select-none">
-                {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}{" "}
-                <span className="ml-2">{label}</span>
-              </SidebarGroupLabel>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Toggle ${label}`}
+              >
+                {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+              </Button>
             </CollapsibleTrigger>
+            {href ? (
+              <SidebarMenuButton asChild isActive={isActive}>
+                <Link href={href}>{label}</Link>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarGroupLabel className="flex-1">{label}</SidebarGroupLabel>
+            )}
             <div className="flex opacity-0 group-focus-within/label:opacity-100 group-hover/label:opacity-100">
               <>
                 {secondaryMenuActionLabel && (
@@ -98,7 +113,7 @@ export const CollapsibleSidebarGroup = ({
               </>
             </div>
           </div>
-          <CollapsibleContent className="mt-1 flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
+          <CollapsibleContent className="mt-1 flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto group-data-[collapsible=icon]:hidden">
             {children}
           </CollapsibleContent>
         </Collapsible>

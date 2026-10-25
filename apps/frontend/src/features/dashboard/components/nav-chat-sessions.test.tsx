@@ -118,7 +118,9 @@ it("keeps older chats reachable and refreshes paged membership after title event
       screen.queryByRole("link", { name: "Older chat" }),
     ).not.toBeInTheDocument(),
   );
-  expect(screen.getByRole("button", { name: "Previous chats" })).toBeEnabled();
+  expect(
+    screen.queryByRole("button", { name: "Previous chats" }),
+  ).not.toBeInTheDocument();
 });
 
 it("switches sidebar chats to the selected project and resets its pagination", async () => {
@@ -197,4 +199,71 @@ it("waits for persisted chat membership before querying sidebar chats", async ()
     page_size: 50,
     project_id: "persisted-project",
   });
+});
+
+it("keeps nested General scoped independently of the current project and requests five chats", async () => {
+  mocks.projectId = "current-project";
+  mocks.list.mockImplementation(({ page }) =>
+    Promise.resolve({
+      chats: [{ id: `general-${page}`, title: `General page ${page}` }],
+      total: 6,
+    }),
+  );
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <NavChatSessions general defaultIsOpen />
+    </QueryClientProvider>,
+  );
+  await screen.findByRole("link", { name: "General page 1" });
+  expect(mocks.list).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 5,
+    project_id: null,
+  });
+  await userEvent.click(screen.getByRole("button", { name: "Next chats" }));
+  await screen.findByRole("link", { name: "General page 2" });
+  expect(screen.getByRole("button", { name: "Next chats" })).toBeDisabled();
+  mocks.list.mockImplementation(({ page }) =>
+    Promise.resolve({
+      chats: page === 1 ? [{ id: "remaining", title: "Remaining" }] : [],
+      total: 5,
+    }),
+  );
+  await act(async () => {
+    await mocks.event?.();
+  });
+  await screen.findByRole("link", { name: "Remaining" });
+  expect(mocks.list).toHaveBeenLastCalledWith({
+    page: 1,
+    page_size: 5,
+    project_id: null,
+  });
+});
+
+it("distinguishes initial failure from cached refresh failure and supports retry", async () => {
+  mocks.list.mockRejectedValue({ detail: "Temporarily unavailable" });
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={cache}>
+      <NavChatSessions general defaultIsOpen />
+    </QueryClientProvider>,
+  );
+  await screen.findByText("Could not load workspace chats.");
+  expect(screen.queryByText("No chats yet.")).not.toBeInTheDocument();
+  mocks.list.mockResolvedValue({
+    chats: [{ id: "saved", title: "Saved General chat" }],
+    total: 1,
+  });
+  await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+  await screen.findByRole("link", { name: "Saved General chat" });
+  mocks.list.mockRejectedValue({ detail: "Refresh unavailable" });
+  await act(async () => {
+    await mocks.event?.();
+  });
+  await screen.findByText("Could not refresh chats. Showing saved results.");
+  expect(
+    screen.getByRole("link", { name: "Saved General chat" }),
+  ).toBeInTheDocument();
 });
