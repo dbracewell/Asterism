@@ -2,8 +2,8 @@ import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 import { AppSidebarHeader } from "@/features/dashboard/components/app-sidebar-header";
 import { NavActions } from "@/features/dashboard/components/nav-actions";
 import { NavChatSessions } from "@/features/dashboard/components/nav-chat-sessions";
-import { NavWorkspaces } from "@/features/projects/components/nav-workspaces";
 import { NavFooter } from "@/features/dashboard/components/nav-footer";
+import { NavWorkspaces } from "@/features/projects/components/nav-workspaces";
 
 export const AppSidebar = async ({
   sidebarWidth,

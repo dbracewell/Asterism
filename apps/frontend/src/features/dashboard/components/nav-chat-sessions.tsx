@@ -1,9 +1,7 @@
 "use client";
 
-import { Spinner } from "@/components/ui/spinner";
-import { QueryError } from "@/components/query-error";
-import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
+import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -12,9 +10,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Spinner } from "@/components/ui/spinner";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
 import { SESSIONS_OPEN_COOKIE } from "@/features/dashboard/constants";
+import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import {

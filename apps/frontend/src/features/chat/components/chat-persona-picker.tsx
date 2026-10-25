@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Hint } from "@/components/ui/hint";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useUser } from "@/features/auth/components/user-context";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { client } from "@/lib/api";
@@ -17,9 +17,8 @@ import {
   chatPersonaUpdateMutation,
   chatSessionGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { IconUserHeart } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckIcon } from "lucide-react";
+import { UserRoundIcon } from "lucide-react";
 
 export function personaAvailable(
   collection: PersonaCollection | undefined,
@@ -41,32 +40,48 @@ export function ChatPersonaPicker({
 }) {
   const user = useUser();
   const query = useQuery(personaQueryOptions(user.id));
-  const defaultId = query.data?.profiles.find(
+  const current = query.data?.profiles.find((profile) => profile.id === value);
+  const defaultName = query.data?.profiles.find(
     (profile) => profile.id === query.data?.default_persona_id,
-  )?.id;
+  )?.name;
   return (
     <>
-      <DropdownMenu>
-        <Hint asChild hint="User Persona">
-          <DropdownMenuTrigger value={value ?? defaultId ?? "default"}>
-            <IconUserHeart className="text-muted-foreground size-5" />
-          </DropdownMenuTrigger>
-        </Hint>
-        <DropdownMenuContent>
-          <DropdownMenuGroup>
+      <Select
+        value={value ?? "default"}
+        onValueChange={(next) => onChange(next === "default" ? null : next)}
+        disabled={disabled || !query.data}
+      >
+        <SelectTrigger
+          aria-label="Chat persona"
+          aria-invalid={!!query.data && !personaAvailable(query.data, value)}
+          className="max-w-full min-w-0 border-0! bg-transparent"
+        >
+          <UserRoundIcon className="text-muted-foreground" />
+          <SelectValue placeholder="Choose persona" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="default" disabled={!defaultName}>
+              {defaultName ?? "Default"}
+            </SelectItem>
+            {value && !current && (
+              <SelectItem value={value} disabled>
+                {query.isPending
+                  ? "Loading persona…"
+                  : query.data
+                    ? "Unavailable persona"
+                    : "Saved persona"}
+              </SelectItem>
+            )}
             {query.data?.profiles.map((profile) => (
-              <DropdownMenuItem
-                key={profile.id}
-                className="flex items-center justify-between"
-              >
-                {profile.name}{" "}
-                {(value === profile.id ||
-                  (value == null && profile.is_default)) && <CheckIcon />}
-              </DropdownMenuItem>
+              <SelectItem key={profile.id} value={profile.id}>
+                {profile.name}
+              </SelectItem>
             ))}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+
       {query.isPending && (
         <p role="status" className="sr-only">
           Loading personas…

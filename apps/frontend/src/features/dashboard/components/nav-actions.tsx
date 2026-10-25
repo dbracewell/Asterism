@@ -7,10 +7,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { IconMessage2Plus } from "@tabler/icons-react";
 import { FilesIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
-import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
 import { usePathname } from "next/navigation";
 
 export const NavActions = () => {
