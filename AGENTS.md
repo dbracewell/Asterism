@@ -76,7 +76,8 @@ retain fixed models and receive the same or narrower execution file scope.
   admin `skills_enabled` policy controls eligibility and defaults to disabled.
   Skill text never grants tools, file access, MCP, or delegation. User Settings
   provides private skill editing/preview and main-agent assignment controls.
-  Runtime activation and slash commands remain planned.
+  Chat acceptance pins ordered branch-local skill instructions and rechecks live
+  eligibility on execution/replay. Slash commands remain planned.
 - **Admin** can add, update, enable/disable:
   - Tools
   - MCP servers

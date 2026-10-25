@@ -89,10 +89,14 @@ async def persist_user_send(
     parent_id: uuid.UUID | None,
     session: AsyncSession,
 ) -> Chat:
+    from .skills import accept_skills
+
+    skills = await accept_skills(user_id=user_id, chat=chat, selection=payload.skills, session=session)
     await bind_message_files(user_id=user_id, chat_id=chat.id, files=files, session=session)
     message = MessageModel(
         user_id=user_id,
         chat_id=chat.id,
+        accepted_skills=skills,
         accepted_persona=await resolve_persona_snapshot(
             user_id=user_id,
             persona_id=chat.persona_id,
@@ -132,7 +136,7 @@ async def persist_user_send(
 
 
 async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSession | None = None) -> Chat:
-    if not payload.user_prompt.strip():
+    if not payload.user_prompt.strip() and not (payload.skills and payload.skills.skill_ids):
         raise BadDataException("User prompt cannot be empty")
     expected = fingerprint(payload)
     async with get_async_db_session(session) as session:
@@ -208,7 +212,7 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
 
 
 async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendRequest, session: AsyncSession) -> Message:
-    if not payload.user_prompt.strip():
+    if not payload.user_prompt.strip() and not (payload.skills and payload.skills.skill_ids):
         raise BadDataException("User prompt cannot be empty")
     expected = fingerprint(payload, chat_id=chat_id)
     try:

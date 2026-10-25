@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 import asterism.domains.agent.service as agent_service
 import asterism.domains.chat.service as chat_service
 from asterism.common.log import get_logger
-from asterism.core.exceptions import UnauthorizedException
+from asterism.core.exceptions import CodedException, UnauthorizedException
 from asterism.core.schemas import ErrorDetail
 from asterism.core.security import verify_jwks_token
 from asterism.db.database import db_session_manager
@@ -303,6 +303,7 @@ async def get_session(
         chat_session.info.agent_id is not None
         and chat_session.info.context_model is not None
         and not chat_session.info.resume_error
+        and all(skill.available for skill in chat_session.info.active_skills.skills)
     ):
         agent = Agent(
             model_id=chat_session.info.selected_model_id,
@@ -318,7 +319,14 @@ async def get_session(
         )
         if chat_session.info.pending_execution is not None:
             agent.apply_execution(chat_session.info.pending_execution)
-        chat_session.context_usage = await ChatOrchestrator(agent).estimate_context_usage()
+        try:
+            chat_session.context_usage = await ChatOrchestrator(agent).estimate_context_usage()
+        except CodedException as error:
+            # Live eligibility can change after metadata was read. History and
+            # removal controls remain available even when generation is blocked.
+            if error.code != 409:
+                raise
+            chat_session.info.resume_error = str(error)
     return chat_session
 
 

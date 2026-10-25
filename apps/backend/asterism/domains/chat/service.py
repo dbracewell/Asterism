@@ -61,8 +61,15 @@ async def add_message(
             chat_id=chat_id,
         )
         if message.role == "user":
-            from .personas import resolve_persona_snapshot
+            from asterism.domains.skills.activation import validate_snapshots
 
+            from .personas import resolve_persona_snapshot
+            from .skills import inherited_skills
+
+            new_message.accepted_skills = await inherited_skills(
+                user_id=user_id, chat_id=chat_id, parent_id=message.parent_message_id, session=session
+            )
+            await validate_snapshots(user_id, new_message.accepted_skills.snapshots, session)
             new_message.accepted_persona = await resolve_persona_snapshot(
                 user_id=user_id,
                 persona_id=chat.persona_id,
@@ -308,6 +315,14 @@ async def get_one(
             from .personas import describe_pending_persona
 
             await describe_pending_persona(user_id=user_id, pending=pending, info=chat_info, session=session)
+            if pending.role == "user" and pending.pending_execution is None:
+                from asterism.core.exceptions import CodedException
+                from asterism.domains.skills.activation import validate_snapshots
+
+                try:
+                    await validate_snapshots(user_id, pending.accepted_skills.snapshots, session)
+                except CodedException as error:
+                    chat_info.resume_error = str(error)
         if pending is not None and pending.pending_execution is not None:
             from asterism.core.exceptions import CodedException
             from asterism.domains.agent.schemas import MainAgentConfiguration

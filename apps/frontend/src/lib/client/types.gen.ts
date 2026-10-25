@@ -5,6 +5,50 @@ export type ClientOptions = {
 };
 
 /**
+ * ActiveSkill
+ */
+export type ActiveSkill = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Digest
+   */
+  digest: string;
+  /**
+   * Available
+   */
+  available?: boolean;
+  /**
+   * Update Available
+   */
+  update_available?: boolean;
+};
+
+/**
+ * ActiveSkillState
+ */
+export type ActiveSkillState = {
+  /**
+   * Revision
+   */
+  revision?: number;
+  /**
+   * Skills
+   */
+  skills?: Array<ActiveSkill>;
+};
+
+/**
  * ApplicationSettings
  *
  * Aggregate of global application settings (admin view).
@@ -300,6 +344,7 @@ export type ChatFileScope = {
  * ChatInfo
  */
 export type ChatInfo = {
+  active_skills?: ActiveSkillState;
   /**
    * Id
    */
@@ -481,6 +526,7 @@ export type ChatPersonaUpdate = {
  * ChatSendRequest
  */
 export type ChatSendRequest = {
+  skills?: SkillSelection | null;
   /**
    * Expected Model Revision
    */
@@ -1296,6 +1342,10 @@ export type Message = {
    * Tool Calls
    */
   tool_calls?: Array<ToolCall> | null;
+  /**
+   * Skills
+   */
+  skills?: Array<SkillIdentity>;
   execution?: MessageExecution | null;
   /**
    * Id
@@ -1368,6 +1418,10 @@ export type Message = {
  * MessageExecution
  */
 export type MessageExecution = {
+  /**
+   * Skills
+   */
+  skills?: Array<SkillIdentity>;
   persona: PersonaProvenance;
   context?: ContextProvenance | null;
   prompt?: PromptProvenance;
@@ -1457,6 +1511,7 @@ export type ModelProvenance = {
  * NewChatRequest
  */
 export type NewChatRequest = {
+  skills?: SkillSelection | null;
   /**
    * Persona Id
    */
@@ -1837,7 +1892,7 @@ export type PromptSource = {
   /**
    * Kind
    */
-  kind: "platform" | "agent" | "profile" | "project" | "runtime";
+  kind: "platform" | "agent" | "profile" | "project" | "skills" | "runtime";
   /**
    * Source Id
    */
@@ -2237,6 +2292,28 @@ export type SkillCreate = {
 };
 
 /**
+ * SkillIdentity
+ */
+export type SkillIdentity = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Digest
+   */
+  digest: string;
+};
+
+/**
  * SkillPage
  */
 export type SkillPage = {
@@ -2266,6 +2343,24 @@ export type SkillPolicy = {
    * Enabled
    */
   enabled?: boolean;
+};
+
+/**
+ * SkillSelection
+ */
+export type SkillSelection = {
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
+  /**
+   * Skill Ids
+   */
+  skill_ids: Array<string>;
+  /**
+   * Refresh Ids
+   */
+  refresh_ids?: Array<string>;
 };
 
 /**

@@ -59,3 +59,15 @@ WHEN NEW.accepted_persona IS NOT OLD.accepted_persona
 BEGIN SELECT RAISE(ABORT, 'Accepted persona input is immutable'); END
 """).execute_if(dialect="sqlite"),
 )
+
+
+event.listen(
+    Base.metadata,
+    "after_create",
+    DDL("""
+CREATE TRIGGER IF NOT EXISTS accepted_skills_immutable
+BEFORE UPDATE OF accepted_skills ON messages
+WHEN NEW.accepted_skills IS NOT OLD.accepted_skills
+BEGIN SELECT RAISE(ABORT, 'Accepted skill inputs are immutable'); END
+""").execute_if(dialect="sqlite"),
+)

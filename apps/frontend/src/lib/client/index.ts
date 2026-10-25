@@ -2,6 +2,8 @@
 
 export { ApiClient, type Options } from "./sdk.gen";
 export type {
+  ActiveSkill,
+  ActiveSkillState,
   AgentsGetSubAgentTracesData,
   AgentsGetSubAgentTracesError,
   AgentsGetSubAgentTracesErrors,
@@ -490,8 +492,10 @@ export type {
   SkillGetOneErrors,
   SkillGetOneResponse,
   SkillGetOneResponses,
+  SkillIdentity,
   SkillPage,
   SkillPolicy,
+  SkillSelection,
   SkillsPolicyGetData,
   SkillsPolicyGetError,
   SkillsPolicyGetErrors,

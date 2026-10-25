@@ -11,6 +11,7 @@ from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectSco
 from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
+from asterism.domains.skills.activation import validate_snapshots
 from asterism.domains.user.personas import require_owned_persona
 
 from .execution_context import build_execution_provenance
@@ -94,7 +95,10 @@ async def prepare_execution(
                     await require_owned_persona(user_id=user_id, persona_id=persona.id, session=session)
                 except NotFoundException as error:
                     raise CodedException(409, "Accepted persona is unavailable; regenerate") from error
+                skills = message.accepted_skills.snapshots
+                await validate_snapshots(user_id, skills, session)
                 prompt = await build_prompt_snapshot(
+                    skills=skills,
                     persona_snapshot=persona,
                     user_id=user_id,
                     chat_id=chat_id,
@@ -107,6 +111,7 @@ async def prepare_execution(
                     project_snapshot=project_snap,
                 )
                 execution = MessageExecution(
+                    skills=[item.identity for item in skills],
                     persona=persona.identity,
                     prompt=prompt.provenance,
                     request_message_id=message_id,
@@ -153,6 +158,10 @@ async def validate_recorded_execution(
         await require_owned_persona(user_id=user_id, persona_id=recorded.persona.id, session=session)
     except NotFoundException as error:
         raise CodedException(409, "Recorded persona is unavailable; regenerate with an available persona") from error
+    from .skills import recorded_skill_snapshots
+
+    snapshots = await recorded_skill_snapshots(user_id=user_id, execution=recorded, session=session)
+    await validate_snapshots(user_id, snapshots, session)
     choice = await require_chat_model(recorded.model.id, session)
     if (
         choice.name != recorded.model.name

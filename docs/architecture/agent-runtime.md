@@ -71,6 +71,7 @@ layers in this order:
 | `agent`    | Versioned main or delegated role/instructions                                          |
 | `profile`  | Accepted persona USER.md constraints; separate from memory                             |
 | `project`  | Project task instructions and context revision, when applicable                        |
+| `skills`   | Explicit ordered, pinned skill instructions; main-agent only                           |
 | `runtime`  | Server-authorized tool names and eligible target metadata; bounded to 8,000 characters |
 
 Agent role and explicit profile constraints remain authoritative; project text
@@ -87,6 +88,10 @@ and records `user_profile_id` plus its source revision. Default changes and edit
 affect new turns; regeneration explicitly captures current settings. Delegates
 inherit the same recorded persona. Private immutable `chat_executions` records
 preserve historical prompts, while public metadata contains identity and digests.
+Skills retain the source turn's pinned snapshots during regeneration as well as
+resume; changes require explicit accepted selection/refresh. Live owner, assignment
+and admin-policy checks run before generation and provider output. Delegates do
+not inherit parent activations. See the [skills contract](skills.md).
 See [ADR-0021](../adr/0021-personas-and-execution-binding.md).
 
 ## Bounded loop and streaming

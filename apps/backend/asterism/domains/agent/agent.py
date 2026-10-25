@@ -109,6 +109,10 @@ class Agent:
     async def _check_authorization(self) -> None:
         if self._external_authorization_check:
             await self._external_authorization_check()
+        if self.execution is not None and self.execution.skills and not self.profile.sub_agent:
+            from asterism.domains.chat.skills import validate_execution_skills
+
+            await validate_execution_skills(user_id=self.user.id, execution=self.execution)
         persona_id = self.execution_scope.user_profile_id if self.execution_scope else None
         if persona_id is None and self.prompt_snapshot is not None:
             layer = next((layer for layer in self.prompt_snapshot.layers if layer.kind == "profile"), None)

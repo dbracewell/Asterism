@@ -21,6 +21,7 @@ from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
+from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
 from .execution_models import ChatExecutionModel
@@ -36,6 +37,7 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
     )
     persona_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
+    skill_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     persona_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("projects.id", ondelete="SET NULL"),
@@ -65,6 +67,7 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
 
     __table_args__ = (
+        CheckConstraint("skill_revision >= 0", name="chat_skill_revision_nonnegative"),
         CheckConstraint("model_revision >= 1", name="chat_model_revision_positive"),
         CheckConstraint("persona_revision >= 1", name="chat_persona_revision_positive"),
         ForeignKeyConstraint(
@@ -119,6 +122,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         ),
         nullable=True,
         index=True,
+    )
+    accepted_skills: Mapped[AcceptedSkills] = mapped_column(
+        jsonb_type(TypeAdapter(AcceptedSkills)),
+        nullable=False,
+        default=AcceptedSkills,
     )
     accepted_persona: Mapped[PersonaSnapshot | None] = mapped_column(
         jsonb_type(TypeAdapter(PersonaSnapshot)),
@@ -237,6 +245,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         lazy="selectin",
         viewonly=True,
     )
+
+    @property
+    def skills(self) -> list[SkillIdentity]:
+        execution = self.execution
+        return execution.skills if execution is not None else [item.identity for item in self.accepted_skills.snapshots]
 
     @property
     def execution(self) -> MessageExecution | None:

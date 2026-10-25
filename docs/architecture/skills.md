@@ -1,10 +1,10 @@
-# Private instruction skills — US-40.1 and US-40.2
+# Private instruction skills — US-40.1 through US-40.3
 
 Private document CRUD, main-agent assignments, admin activation policy,
 eligible-skill discovery, and the Skills editor/settings UI are implemented.
-Slash commands, branch-local active skills, and runtime prompt snapshots are
-planned in [EPIC-40](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md).
-No runtime currently reads or executes these skill instructions.
+Chat acceptance and execution support pinned, ordered branch-local activations.
+Slash discovery and active-skill composer controls remain US-40.4 in
+[EPIC-40](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md).
 
 ## Document contract
 
@@ -73,8 +73,7 @@ Assignment replacement uses the main agent's configuration revision as its
 optimistic token and increments it atomically. Other main settings updates retain
 assignments. Deleting a skill cascades its assignments and increments affected
 main-agent revisions in the same transaction; a stale deletion rolls back both.
-Deleting a user cascades their skills/assignments. No chat/execution snapshots
-exist yet, and later snapshots must remain independent of this deletion cascade.
+Deleting a user cascades their skills/assignments. Accepted chat/execution snapshots are independent of this deletion cascade.
 
 `skills_enabled` is a strict-boolean application setting with a default of false.
 The typed policy endpoints are registered before generic settings routes. Generic
@@ -87,14 +86,14 @@ Eligible skills are the intersection of the caller's owned skills, explicit main
 assignments, and live enabled admin policy. Availability requires no model binding
 or tool support: these are instruction skills. Assignment/eligibility never adds
 tool permissions. Revoking policy hides eligibility without deleting documents or
-assignments. Agent runtime receives no new powers or skill prompt layer here.
+assignments. Skill instructions do not expand any runtime capability.
 
 ## Module and storage boundaries
 
 Document validation, owner-scoped base queries, lifecycle service, assignment
 service, and policy access are separate modules. The runtime cannot import skill
 storage/service/policy modules; the architecture guard enforces that boundary.
-Future chat composition roots will resolve and inject authorized typed snapshots.
+Chat composition roots resolve and inject authorized typed snapshots.
 Settings storage continues through SQLAlchemy and the existing application-setting
 service. Fresh initialization imports both new models through `db.model_registry`;
 no data migrations, compatibility paths, or verification resets of working data
@@ -133,3 +132,63 @@ comes from authenticated user context, not a potentially stale main-agent query.
 An identity change closes and clears open drafts; it never carries private edits
 into another owner's session. Mutation metadata uses the existing shared
 invalidation handler without duplicate component-level invalidation calls.
+
+## Branch-local activation and execution
+
+`POST /chat/` and `POST /chat/{id}/message` accept an optional `skills` object:
+
+```json
+{
+  "expected_revision": 0,
+  "skill_ids": ["00000000-0000-0000-0000-000000000001"],
+  "refresh_ids": []
+}
+```
+
+Omitting it retains the active branch's accepted set; providing it replaces the
+ordered set, including `skill_ids: []` to remove the last skill. Refresh IDs must
+be unique selected IDs. New activation/refresh resolves the current server-owned
+document. Retained IDs reuse their pinned canonical source, name and revision.
+Clients cannot supply source text, digests or revisions. An explicit nonempty
+selection permits a skill-only send with an empty user prompt.
+
+Acceptance, branch pointer updates, source-file binding, draft consumption and
+send receipts share one transaction. The request fingerprint includes selection,
+order, refreshes and the expected revision. Replaying the same request returns its
+original accepted message; reusing its ID with different inputs returns 409.
+Failed selection does not consume the draft or change accepted state.
+
+Each user message stores a private immutable `AcceptedSkills` value. A nonnegative
+chat counter allocates unique revisions for explicit replacements; unchanged
+follow-ups retain the revision. Reading the active branch finds its latest user
+turn's value, so branch switching restores that branch's set. Internal fork
+creation inherits its source ancestry, never the currently selected sibling.
+The existing parent-message check also rejects sends against a stale branch.
+New chats start empty and never inherit another chat/project's activations.
+
+At most eight active skills are allowed, each at most 65,536 UTF-8 bytes, with a
+131,072-byte aggregate source budget. Oversized selections return 422 before
+acceptance; instructions are never silently truncated. Ownership, main-agent
+assignment and admin policy are checked at acceptance and execution. Deleted,
+unassigned or policy-disabled skills block affected execution/follow-ups with 409
+and actionable removal guidance; an explicit replacement can remove them.
+
+`ChatInfo.active_skills` exposes revision plus ordered identity/digest metadata,
+`available`, and `update_available`. Messages and execution metadata expose IDs,
+pinned names, revisions and SHA-256 digests, without instruction source. History
+remains readable when a skill becomes unavailable; token estimation is skipped
+for unavailable state. Historical source remains protected by chat ownership.
+
+The prompt has one named `skills` layer after project and before runtime metadata;
+its entries preserve selected order. Platform/agent/profile/project constraints
+remain authoritative. Private execution prompts retain exact source. Resume and
+regeneration reuse the source turn's pinned skill snapshots; regeneration can
+capture other current settings without silently refreshing skills. A refreshed
+set requires an explicit accepted selection. Live checks also run before provider
+output and tool operations, so revocation during streaming blocks later output.
+Delegates receive their own prompt composition without the parent's skills.
+
+See [ADR-0023](../adr/0023-branch-local-skill-execution.md) for the storage and
+replay decision. Schema changes require fresh initialization; no migrations or
+working-data resets are performed. Pending composer selections, visible chips,
+and per-message skill display remain US-40.4.

@@ -8,6 +8,7 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.prompts import PersonaSnapshot, PromptComposer, PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile
+from asterism.domains.agent.skill_inputs import SkillSnapshot
 from asterism.domains.tools.context import ContextToolScope
 
 from .delegation import eligible_delegation_targets
@@ -24,6 +25,7 @@ async def build_prompt_snapshot(
     model_id: uuid.UUID | None,
     session: AsyncSession | None = None,
     ceiling: ContextToolScope | None = None,
+    skills: tuple[SkillSnapshot, ...] | None = None,
     persona_snapshot: PersonaSnapshot | None = None,
     chat_snapshot: ChatScopeSnapshot | None = None,
     project_snapshot: ProjectScopeSnapshot | None = None,
@@ -66,7 +68,15 @@ async def build_prompt_snapshot(
             branch_ids=chat.active_branch_message_ids,
             session=db,
         )
+        if skills is None:
+            from asterism.domains.skills.activation import validate_snapshots
+
+            from .skills import branch_skills
+
+            skills = () if profile.sub_agent else (await branch_skills(user_id, chat_id, db)).snapshots
+            await validate_snapshots(user_id, skills, db)
         return PromptComposer().snapshot(
+            skills=skills,
             profile_layer=persona.layer,
             agent_id=profile.id,
             agent_revision=profile.config_revision,

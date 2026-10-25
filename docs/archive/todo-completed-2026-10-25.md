@@ -80,3 +80,22 @@ typecheck, lint, formatting, six auth database checks and production build passe
 The four existing frontend unit failures remain documented in the
 [verification record](../reviews/us-40.2-skills-ui-verification-2026-10-25.md).
 US-40.3 and US-40.4 remain planned; EPIC-40 is not complete.
+
+## [EPIC-40 / US-40.3: Recorded skill execution](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md#us-403-activate-skills-through-recorded-chat-execution)
+
+- [x] US-40.3: Activate skills through recorded chat execution
+  - [x] Add branch-local ordered active-skill state and extend send/admission contracts, expected state revisions, and request fingerprints; atomically accept activation/removal/reorder/refresh changes and reject forged, stale, unassigned, or revoked selections.
+  - [x] Resolve and pin owner-scoped skill snapshots at activation, reuse eligible active snapshots on follow-up turns, and inject a bounded named prompt layer; enforce per-skill, count, and aggregate context limits with explicit errors.
+  - [x] Persist effective skill provenance on every turn; implement explicit refresh, branch restore/fork isolation, retry/resume/regeneration, and deletion/revocation handling without rewriting history or inheriting parent activation in sub-agents.
+  - [x] Test activation across follow-ups, last-skill removal, pinned revisions/refresh, stale tabs, branch isolation, idempotency, cross-user attempts, revocation, and unchanged tool/file/delegation boundaries; regenerate clients and document the contract.
+
+The user confirmed completion and authorized local commit/merge on 2026-10-25.
+Delivered ordered branch-local pinned skills, explicit refresh/removal, immutable
+execution provenance and live eligibility checks without delegated inheritance.
+
+Verification: 696 backend tests, both typechecks, lint, six auth database checks
+and import-cycle checks passed. The four existing frontend unit failures and six
+untouched backend formatting failures remain documented in the
+[verification record](../reviews/us-40.3-skill-execution-verification-2026-10-25.md).
+Browser E2E and production build were not run for this backend/API story.
+US-40.4 remains planned; EPIC-40 is not complete.

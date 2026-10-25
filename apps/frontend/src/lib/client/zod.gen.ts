@@ -3,6 +3,26 @@
 import * as z from "zod";
 
 /**
+ * ActiveSkill
+ */
+export const zActiveSkill = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  revision: z.int().gte(1),
+  digest: z.string(),
+  available: z.boolean().optional().default(true),
+  update_available: z.boolean().optional().default(false),
+});
+
+/**
+ * ActiveSkillState
+ */
+export const zActiveSkillState = z.object({
+  revision: z.int().gte(0).optional().default(0),
+  skills: z.array(zActiveSkill).optional(),
+});
+
+/**
  * Body_chatDraftUpload
  */
 export const zBodyChatDraftUpload = z.object({
@@ -108,18 +128,6 @@ export const zChatMoveRequest = z.object({
 export const zChatPersonaUpdate = z.object({
   persona_id: z.uuid().nullable(),
   expected_persona_revision: z.int().gte(1),
-});
-
-/**
- * ChatSendRequest
- */
-export const zChatSendRequest = z.object({
-  expected_model_revision: z.int().gte(1),
-  request_id: z.uuid(),
-  user_prompt: z.string().min(1),
-  parent_message_id: z.uuid().nullable(),
-  draft_id: z.uuid().nullish(),
-  files: z.array(z.uuid()).max(100).optional(),
 });
 
 /**
@@ -613,19 +621,6 @@ export const zContextProvenance = z.object({
 });
 
 /**
- * NewChatRequest
- */
-export const zNewChatRequest = z.object({
-  persona_id: z.uuid().nullish(),
-  model_id: z.uuid(),
-  request_id: z.uuid(),
-  draft_id: z.uuid().nullish(),
-  user_prompt: z.string(),
-  project_id: z.uuid().nullish(),
-  files: z.array(z.uuid()).max(100).optional(),
-});
-
-/**
  * PersonaDefaultUpdate
  */
 export const zPersonaDefaultUpdate = z.object({
@@ -783,7 +778,14 @@ export const zProjectUpdate = z.object({
  * PromptSource
  */
 export const zPromptSource = z.object({
-  kind: z.enum(["platform", "agent", "profile", "project", "runtime"]),
+  kind: z.enum([
+    "platform",
+    "agent",
+    "profile",
+    "project",
+    "skills",
+    "runtime",
+  ]),
   source_id: z.string(),
   revision: z.int(),
   digest: z.string(),
@@ -795,55 +797,6 @@ export const zPromptSource = z.object({
 export const zPromptProvenance = z.object({
   composer_revision: z.int().optional().default(1),
   sources: z.array(zPromptSource).optional().default([]),
-});
-
-/**
- * MessageExecution
- */
-export const zMessageExecution = z.object({
-  persona: zPersonaProvenance,
-  context: zContextProvenance.nullish(),
-  prompt: zPromptProvenance.optional(),
-  id: z.uuid().optional(),
-  request_message_id: z.uuid(),
-  model: zChatModelChoice,
-  model_revision: z.int().gte(1),
-  configuration: zMainAgentConfiguration,
-});
-
-/**
- * ChatInfo
- */
-export const zChatInfo = z.object({
-  id: z.uuid(),
-  user_id: z.string(),
-  created_at: z.int(),
-  updated_at: z.int(),
-  allowed_tools: z.array(z.string()).optional(),
-  title: z.string().nullish(),
-  project_id: z.uuid().nullish(),
-  agent_id: z.uuid().nullish(),
-  preview: z.string().nullish(),
-  message_count: z.int().nullish(),
-  context_model: zChatContextModel.nullish(),
-  persona_id: z.uuid().nullish(),
-  persona_revision: z.int().gte(1).optional().default(1),
-  selected_model_id: z.uuid().nullish(),
-  model_revision: z.int().gte(1).optional().default(1),
-  selected_model: zChatModelChoice.nullish(),
-  pending_execution: zMessageExecution.nullish(),
-  pending_persona: zPersonaProvenance.nullish(),
-  resume_error: z.string().nullish(),
-});
-
-/**
- * ChatInfoList
- */
-export const zChatInfoList = z.object({
-  chats: z.array(zChatInfo),
-  total: z.int().gte(0),
-  page: z.int().gte(1),
-  page_size: z.int().gte(1),
 });
 
 /**
@@ -1071,10 +1024,107 @@ export const zSkillCreate = z.object({
 });
 
 /**
+ * SkillIdentity
+ */
+export const zSkillIdentity = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  revision: z.int().gte(1),
+  digest: z.string(),
+});
+
+/**
+ * MessageExecution
+ */
+export const zMessageExecution = z.object({
+  skills: z.array(zSkillIdentity).optional(),
+  persona: zPersonaProvenance,
+  context: zContextProvenance.nullish(),
+  prompt: zPromptProvenance.optional(),
+  id: z.uuid().optional(),
+  request_message_id: z.uuid(),
+  model: zChatModelChoice,
+  model_revision: z.int().gte(1),
+  configuration: zMainAgentConfiguration,
+});
+
+/**
+ * ChatInfo
+ */
+export const zChatInfo = z.object({
+  active_skills: zActiveSkillState.optional(),
+  id: z.uuid(),
+  user_id: z.string(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  allowed_tools: z.array(z.string()).optional(),
+  title: z.string().nullish(),
+  project_id: z.uuid().nullish(),
+  agent_id: z.uuid().nullish(),
+  preview: z.string().nullish(),
+  message_count: z.int().nullish(),
+  context_model: zChatContextModel.nullish(),
+  persona_id: z.uuid().nullish(),
+  persona_revision: z.int().gte(1).optional().default(1),
+  selected_model_id: z.uuid().nullish(),
+  model_revision: z.int().gte(1).optional().default(1),
+  selected_model: zChatModelChoice.nullish(),
+  pending_execution: zMessageExecution.nullish(),
+  pending_persona: zPersonaProvenance.nullish(),
+  resume_error: z.string().nullish(),
+});
+
+/**
+ * ChatInfoList
+ */
+export const zChatInfoList = z.object({
+  chats: z.array(zChatInfo),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
+});
+
+/**
  * SkillPolicy
  */
 export const zSkillPolicy = z.object({
   enabled: z.boolean().optional().default(false),
+});
+
+/**
+ * SkillSelection
+ */
+export const zSkillSelection = z.object({
+  expected_revision: z.int().gte(0).lte(2147483647),
+  skill_ids: z.array(z.uuid()).max(8),
+  refresh_ids: z.array(z.uuid()).max(8).optional(),
+});
+
+/**
+ * ChatSendRequest
+ */
+export const zChatSendRequest = z.object({
+  skills: zSkillSelection.nullish(),
+  expected_model_revision: z.int().gte(1),
+  request_id: z.uuid(),
+  user_prompt: z.string(),
+  parent_message_id: z.uuid().nullable(),
+  draft_id: z.uuid().nullish(),
+  files: z.array(z.uuid()).max(100).optional(),
+});
+
+/**
+ * NewChatRequest
+ */
+export const zNewChatRequest = z.object({
+  skills: zSkillSelection.nullish(),
+  persona_id: z.uuid().nullish(),
+  model_id: z.uuid(),
+  request_id: z.uuid(),
+  draft_id: z.uuid().nullish(),
+  user_prompt: z.string(),
+  project_id: z.uuid().nullish(),
+  files: z.array(z.uuid()).max(100).optional(),
 });
 
 /**
@@ -1331,6 +1381,7 @@ export const zMessage = z.object({
   content: z.string(),
   thinking: z.string().nullish(),
   tool_calls: z.array(zToolCall).nullish(),
+  skills: z.array(zSkillIdentity).optional(),
   execution: zMessageExecution.nullish(),
   id: z.uuid(),
   status: zMessageStatus,

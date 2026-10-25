@@ -1,8 +1,8 @@
 # EPIC-40: User skills and chat slash commands
 
 Status: US-40.1 complete, user-confirmed on 2026-10-25 and approved for local
-merge. US-40.2 is complete, user-confirmed on 2026-10-25 and approved for local merge; US-40.3 and US-40.4 remain planned. CRUD/assignment/policy/discovery APIs and the management UI exist;
-runtime activation remains planned. See the
+merge. US-40.2 is complete, user-confirmed on 2026-10-25 and approved for local merge; US-40.3 is complete, user-confirmed on 2026-10-25 and approved for local merge; US-40.4 remains planned.
+CRUD/assignment/policy/discovery APIs, management UI, and recorded runtime activation exist. See the
 [US-40.1 verification record](../reviews/us-40.1-skills-verification-2026-10-25.md).
 
 ## Objective and first-version contract
@@ -139,7 +139,7 @@ admin policy determine activation eligibility without granting other powers.
 
 ## US-40.2: Manage skills in user settings
 
-Status: implemented on `feat/us-40.2-skills-settings`, awaiting user confirmation.
+Status: complete; checklist [archived](../archive/todo-completed-2026-10-25.md).
 See the [verification record](../reviews/us-40.2-skills-ui-verification-2026-10-25.md).
 
 As a user, I want to create, read, edit, preview, and delete my skill documents.
@@ -159,6 +159,8 @@ when admin policy prevents activation. Preview renders no executable HTML.
 
 ## US-40.3: Activate skills through recorded chat execution
 
+Status: complete; checklist [archived](../archive/todo-completed-2026-10-25.md).
+
 As a user, I want activated skills to continue across follow-ups, with consistent
 branch-local state and recorded provenance for every response.
 
@@ -172,10 +174,15 @@ retry/resume, regeneration, deletion/revocation, and duplicate requests follow t
 contract above. Every turn records its effective instructions. General/project
 isolation and independent delegated-agent authorization remain unchanged.
 
-- [ ] Add branch-local ordered active-skill state and extend send/admission contracts, expected state revisions, and request fingerprints; atomically accept activation/removal/reorder/refresh changes and reject forged, stale, unassigned, or revoked selections.
-- [ ] Resolve and pin owner-scoped skill snapshots at activation, reuse eligible active snapshots on follow-up turns, and inject a bounded named prompt layer; enforce per-skill, count, and aggregate context limits with explicit errors.
-- [ ] Persist effective skill provenance on every turn; implement explicit refresh, branch restore/fork isolation, retry/resume/regeneration, and deletion/revocation handling without rewriting history or inheriting parent activation in sub-agents.
-- [ ] Test activation across follow-ups, last-skill removal, pinned revisions/refresh, stale tabs, branch isolation, idempotency, cross-user attempts, revocation, and unchanged tool/file/delegation boundaries; regenerate clients and document the contract.
+- [x] Add branch-local ordered active-skill state and extend send/admission contracts, expected state revisions, and request fingerprints; atomically accept activation/removal/reorder/refresh changes and reject forged, stale, unassigned, or revoked selections.
+- [x] Resolve and pin owner-scoped skill snapshots at activation, reuse eligible active snapshots on follow-up turns, and inject a bounded named prompt layer; enforce per-skill, count, and aggregate context limits with explicit errors.
+- [x] Persist effective skill provenance on every turn; implement explicit refresh, branch restore/fork isolation, retry/resume/regeneration, and deletion/revocation handling without rewriting history or inheriting parent activation in sub-agents.
+- [x] Test activation across follow-ups, last-skill removal, pinned revisions/refresh, stale tabs, branch isolation, idempotency, cross-user attempts, revocation, and unchanged tool/file/delegation boundaries; regenerate clients and document the contract.
+
+Verification: 696 backend tests pass; both typechecks, lint, generated contracts,
+and six auth database checks pass. Existing four frontend unit assertions and six
+untouched backend formatting failures remain documented in the
+[US-40.3 verification record](../reviews/us-40.3-skill-execution-verification-2026-10-25.md).
 
 ## US-40.4: Discover and invoke skills from the chat input
 

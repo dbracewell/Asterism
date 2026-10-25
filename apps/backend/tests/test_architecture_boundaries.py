@@ -32,6 +32,7 @@ AGENT_CHAT_READERS = {
     "asterism.domains.chat.execution.prepare_execution",
     "asterism.domains.chat.execution.read_execution_prompt",
     "asterism.domains.chat.personas.validate_persona_access",
+    "asterism.domains.chat.skills.validate_execution_skills",
     "asterism.domains.chat.scope.read_chat_scope_snapshot",
     "asterism.domains.chat.scope.read_project_scope_snapshot",
     "asterism.domains.chat.tool_policy.require_internal_tool",
@@ -67,6 +68,7 @@ def violations(root):
                         "asterism.domains.skills.service",
                         "asterism.domains.skills.assignments",
                         "asterism.domains.skills.policy",
+                        "asterism.domains.skills.activation",
                     )
                 ):
                     reason = "Agent consumes injected skill snapshots rather than skill storage or policy"

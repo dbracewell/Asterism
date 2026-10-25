@@ -58,6 +58,7 @@ async def project_api(tmp_path, monkeypatch):
         "chat.delegation",
         "chat.prompt_composition",
         "chat.execution",
+        "chat.skills",
         "chat.service",
         "agent.service",
         "settings.service",

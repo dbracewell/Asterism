@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from asterism.domains.agent.context_provenance import ContextProvenance
 from asterism.domains.agent.prompts import PersonaProvenance, PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
+from asterism.domains.agent.skill_inputs import SkillIdentity
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
 from asterism.domains.settings.provider_types import ModelCapabilitySource
@@ -46,7 +47,25 @@ class ChatModelChoice(BaseModel):
     supports_tools: bool | None = None
 
 
+class SkillSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_revision: int = Field(ge=0, le=2_147_483_647)
+    skill_ids: list[uuid.UUID] = Field(max_length=8)
+    refresh_ids: list[uuid.UUID] = Field(default_factory=list, max_length=8)
+
+
+class ActiveSkill(SkillIdentity):
+    available: bool = True
+    update_available: bool = False
+
+
+class ActiveSkillState(BaseModel):
+    revision: int = Field(default=0, ge=0)
+    skills: list[ActiveSkill] = Field(default_factory=list)
+
+
 class MessageExecution(BaseModel):
+    skills: list[SkillIdentity] = Field(default_factory=list)
     persona: PersonaProvenance
     context: ContextProvenance | None = None
     prompt: PromptProvenance = Field(default_factory=PromptProvenance)
@@ -81,6 +100,7 @@ class NewMessageRequest(BaseModel):
 
 
 class Message(LLMMessage):
+    skills: list[SkillIdentity] = Field(default_factory=list)
     execution: MessageExecution | None = None
     model_config = ConfigDict(from_attributes=True)
     # Persisted chat content remains plain text; multimodal parts are runtime-only.
@@ -133,6 +153,7 @@ class ChatContextUsage(BaseModel):
 
 
 class ChatInfo(BaseModel):
+    active_skills: ActiveSkillState = Field(default_factory=ActiveSkillState)
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     user_id: str
@@ -207,6 +228,7 @@ class BulkDeleteChatResponse(BaseModel):
 
 
 class NewChatRequest(BaseModel):
+    skills: SkillSelection | None = None
     persona_id: uuid.UUID | None = None
     model_id: uuid.UUID
     model_config = ConfigDict(extra="forbid")
@@ -264,10 +286,11 @@ class ChatDraft(BaseModel):
 
 
 class ChatSendRequest(BaseModel):
+    skills: SkillSelection | None = None
     expected_model_revision: int = Field(ge=1)
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID
-    user_prompt: str = Field(min_length=1)
+    user_prompt: str
     parent_message_id: uuid.UUID | None
     draft_id: uuid.UUID | None = None
     files: list[uuid.UUID] = Field(default_factory=list, max_length=100)

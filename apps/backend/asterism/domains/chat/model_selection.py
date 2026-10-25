@@ -81,7 +81,12 @@ async def selected_chat_model(chat: ChatModel, session: AsyncSession) -> ChatMod
 
 
 async def selection_info(chat: ChatModel, session: AsyncSession) -> ChatInfo:
+    from .skills import branch_skills, describe_skills
+
     info = ChatInfo.model_validate(chat)
+    info.active_skills = await describe_skills(
+        chat.user_id, await branch_skills(chat.user_id, chat.id, session), session
+    )
     info.selected_model = await selected_chat_model(chat, session)
     return info
 
