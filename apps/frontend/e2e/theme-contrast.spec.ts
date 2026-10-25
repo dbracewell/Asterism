@@ -78,7 +78,7 @@ for (const theme of themes) {
       .locator("form")
       .evaluate((el) => el.setAttribute("data-contrast", "composer"));
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByLabel("Message", { exact: true })
       .evaluate((el) => el.setAttribute("data-contrast", "composer-input"));
     const results: {
       state: string;

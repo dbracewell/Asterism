@@ -36,11 +36,11 @@ function createCache() {
   });
   return cache;
 }
-export function SkillsSettingsHarness() {
+export function SkillsSettingsHarness({ admin = false }: { admin?: boolean }) {
   const [cache] = useState(createCache);
   return (
     <QueryClientProvider client={cache}>
-      <UserProvider user={user}>
+      <UserProvider user={admin ? { ...user, role: "admin" } : user}>
         <main className="flex h-dvh min-h-0 min-w-0 flex-col p-2">
           <SettingsPageView />
         </main>

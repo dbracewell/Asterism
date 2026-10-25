@@ -13,7 +13,7 @@ import {
   IconUsersGroup,
   IconUserShield,
 } from "@tabler/icons-react";
-import { CodeIcon, PaletteIcon, ToolboxIcon } from "lucide-react";
+import { BookOpenIcon, CodeIcon, PaletteIcon, ToolboxIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 
@@ -49,6 +49,13 @@ const ToolsSettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/tools-settings").then(
       (module) => module.ToolsSettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const SkillsPolicySettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/skills-policy-settings").then(
+      (module) => module.SkillsPolicySettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -127,6 +134,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "tools",
     icon: <ToolboxIcon />,
     settingsPane: pane("Tools", <ToolsSettings />),
+  },
+  {
+    type: "section",
+    label: "Skills",
+    value: "skills",
+    icon: <BookOpenIcon />,
+    settingsPane: pane("Skills", <SkillsPolicySettings />),
   },
   {
     type: "section",

@@ -1,9 +1,10 @@
 # EPIC-40: User skills and chat slash commands
 
-Status: US-40.1 complete, user-confirmed on 2026-10-25 and approved for local
-merge. US-40.2 is complete, user-confirmed on 2026-10-25 and approved for local merge; US-40.3 is complete, user-confirmed on 2026-10-25 and approved for local merge; US-40.4 remains planned.
-CRUD/assignment/policy/discovery APIs, management UI, and recorded runtime activation exist. See the
-[US-40.1 verification record](../reviews/us-40.1-skills-verification-2026-10-25.md).
+Status: complete; all four stories user-confirmed on 2026-10-25 and approved
+for local merge, including the admin activation-policy UI. Completed checklists
+are [archived](../archive/todo-completed-2026-10-25.md). See the
+[US-40.4 verification record and addendum](../reviews/us-40.4-slash-skills-verification-2026-10-25.md)
+for current evidence and remaining baseline failures.
 
 ## Objective and first-version contract
 
@@ -186,6 +187,8 @@ untouched backend formatting failures remain documented in the
 
 ## US-40.4: Discover and invoke skills from the chat input
 
+Status: complete; checklist [archived](../archive/todo-completed-2026-10-25.md).
+
 As a user, I want `/` to help me find and activate an eligible skill while composing.
 
 Estimate: 2–3 days. Dependencies: US-40.2 and US-40.3.
@@ -204,10 +207,13 @@ lookups never activate a skill silently. Empty-body messages are allowed with a
 selected skill. Escape closes the picker; arrows/Enter choose a skill while
 Shift+Enter and input-method composition retain normal text-entry behavior.
 
-- [ ] Add accessible, keyboard/touch-operable slash discovery using generated eligible-skill queries and existing shadcn patterns; cover loading, no matches, unavailable policy, and retry.
-- [ ] Implement command-boundary parsing, exact-name resolution, persistent ordered active-skill chips with remove/refresh controls, pending/update/unavailable states, and explicit handling of unknown commands/literal slash text.
-- [ ] Restore branch-local active state and pending composer edits across reloads; integrate new/existing sends, follow-ups, removals, refreshes, and retry/draft state; show per-message snapshots and retain prompt/attachments on rejection.
-- [ ] Verify keyboard/IME, mobile/short layouts, command parsing, follow-up persistence, removal/refresh, reloads/branch switches, skill-only sends, stale/deleted skills, and General/project execution end to end; run relevant gates and update README/architecture/epic/checklist records.
+- [x] Add the admin Skills activation-policy pane and accessible, keyboard/touch-operable slash discovery using generated eligible-skill queries and existing shadcn patterns; cover loading, no matches, unavailable policy, and retry.
+- [x] Implement command-boundary parsing, exact-name resolution, persistent ordered active-skill chips with remove/refresh controls, pending/update/unavailable states, and explicit handling of unknown commands/literal slash text.
+- [x] Restore branch-local active state and pending composer edits across reloads; integrate new/existing sends, follow-ups, removals, refreshes, and retry/draft state; show per-message snapshots and retain prompt/attachments on rejection.
+- [x] Verify keyboard/IME, mobile/short layouts, command parsing, follow-up persistence, removal/refresh, reloads/branch switches, skill-only sends, stale/deleted skills, and General/project execution end to end; run relevant gates and update README/architecture/epic/checklist records.
+
+Verification and known baseline failures are documented in the
+[US-40.4 verification record](../reviews/us-40.4-slash-skills-verification-2026-10-25.md).
 
 ## Delivery
 

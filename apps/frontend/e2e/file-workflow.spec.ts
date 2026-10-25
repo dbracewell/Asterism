@@ -89,7 +89,7 @@ test("uploads, attaches, and renders a persisted file with a mocked reply", asyn
     mimeType: "application/pdf",
     buffer: Buffer.from("pdf"),
   });
-  await page.getByRole("textbox", { name: "Message" }).fill("Summarize this");
+  await page.getByLabel("Message", { exact: true }).fill("Summarize this");
   await expect(page.getByLabel("Send message")).toBeEnabled();
   await page.getByLabel("Send message").click();
   await expect(page.getByLabel("Persisted user message")).toContainText(
@@ -124,7 +124,7 @@ test("keeps a failed upload visible and does not send the message", async ({
     mimeType: "application/pdf",
     buffer: Buffer.from("pdf"),
   });
-  await page.getByRole("textbox", { name: "Message" }).fill("Summarize this");
+  await page.getByLabel("Message", { exact: true }).fill("Summarize this");
   await expect(page.getByLabel("Send message")).toBeEnabled();
   await page.getByLabel("Send message").click();
   await expect(
@@ -156,24 +156,20 @@ test("retries a failed send with the same receipt key and no duplicate upload", 
     mimeType: "application/pdf",
     buffer: Buffer.from("pdf"),
   });
-  await page
-    .getByRole("textbox", { name: "Message", exact: true })
-    .fill("Summarize this");
+  await page.getByLabel("Message", { exact: true }).fill("Summarize this");
   await page.getByLabel("Send message").click();
   await expect(page.locator("form").getByRole("alert")).toHaveText(
     "Send unavailable",
   );
-  await expect(
-    page.getByRole("textbox", { name: "Message", exact: true }),
-  ).toHaveValue("Summarize this");
+  await expect(page.getByLabel("Message", { exact: true })).toHaveValue(
+    "Summarize this",
+  );
   await expect(page.getByLabel("Persisted user message")).toHaveCount(0);
   await page.getByLabel("Send message").click();
   await expect(page.getByLabel("Persisted user message")).toContainText(
     "report.pdf",
   );
-  await expect(
-    page.getByRole("textbox", { name: "Message", exact: true }),
-  ).toHaveValue("");
+  await expect(page.getByLabel("Message", { exact: true })).toHaveValue("");
   expect(uploads).toBe(1);
   expect(sends).toHaveLength(2);
   expect(sends[1]).toEqual(sends[0]);

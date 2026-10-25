@@ -55,19 +55,21 @@ export default function AppPage() {
     models.data?.some((model) => model.id === modelId && model.available);
 
   return (
-    <div className="from-primary/5 via-primary/15 relative flex flex-1 flex-col items-center justify-center gap-6 bg-radial-[at_50%_50%] via-5% to-transparent to-60% p-2 pt-12">
+    <div className="from-primary/5 via-primary/15 relative flex min-h-fit flex-1 shrink-0 flex-col items-center gap-6 bg-radial-[at_50%_50%] via-5% to-transparent to-60% p-2 pt-12">
       <Constellation
         className="repeat-[1] fill-mode-[forwards] absolute -z-10 animate-ping opacity-100 duration-500"
         fill="var(--color-secondary)"
         size={250}
       />
-      <h1 className="z-1 text-4xl font-bold">
+      <h1 className="z-1 mt-auto text-4xl font-bold">
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
-      <div className="flex w-full max-w-4xl flex-col gap-2">
+      <div className="mb-auto flex w-full max-w-4xl flex-col gap-2">
         <ChatInputContainer>
           <ChatInput
             key={projectId ?? "general"}
+            skillOwner={user.id}
+            skillScope={`new:${projectId ?? "general"}`}
             projectId={projectId}
             placeholder="Ask anything…"
             disabled={!modelAvailable || !workspaceAvailable || !hasPersona}
@@ -78,7 +80,7 @@ export default function AppPage() {
                 <ChatPersonaPicker value={personaId} onChange={setPersonaId} />
               </>
             }
-            onSubmit={({ prompt, files, requestId, draftId }) => {
+            onSubmit={({ prompt, files, requestId, draftId, skills }) => {
               if (!modelAvailable || !workspaceAvailable || !hasPersona)
                 throw new Error(
                   "Choose an available model and workspace before sending.",
@@ -91,6 +93,7 @@ export default function AppPage() {
                   project_id: projectId,
                   user_prompt: prompt,
                   files,
+                  ...(skills ? { skills } : {}),
                   ...(draftId ? { draft_id: draftId } : {}),
                 },
               });

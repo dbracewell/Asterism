@@ -192,7 +192,7 @@ test("reopens a saved model, switches and regenerates through the real chat comp
   await page.getByLabel("Chat model").click();
   await page.getByRole("option", { name: "Beta (Provider)" }).click();
   await expect(page.getByLabel("Chat model")).toBeDisabled();
-  await expect(page.getByRole("textbox")).toBeDisabled();
+  await expect(page.getByLabel("Message", { exact: true })).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "Regenerate response" }),
   ).toBeDisabled();
@@ -260,7 +260,9 @@ test("chooses a draft model explicitly and forwards it when starting a chat", as
   await page.goto("/e2e/chat-model-session?draft=true");
   await page.getByLabel("Chat model").click();
   await page.getByRole("option", { name: "Beta (Provider)" }).click();
-  await page.getByRole("textbox").fill("Use my selected model");
+  await page
+    .getByLabel("Message", { exact: true })
+    .fill("Use my selected model");
   await page.getByLabel("Send message").click();
   await expect.poll(() => created?.model_id).toBe(B);
   expect(created?.project_id).toBeNull();

@@ -1,9 +1,9 @@
-# Private instruction skills — US-40.1 through US-40.3
+# Private instruction skills — US-40.1 through US-40.4
 
 Private document CRUD, main-agent assignments, admin activation policy,
 eligible-skill discovery, and the Skills editor/settings UI are implemented.
 Chat acceptance and execution support pinned, ordered branch-local activations.
-Slash discovery and active-skill composer controls remain US-40.4 in
+Slash discovery, active-skill composer controls, and per-message labels are implemented in
 [EPIC-40](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md).
 
 ## Document contract
@@ -123,7 +123,11 @@ including IDs outside the visible page. It submits only skill IDs plus the
 captured configuration revision; it never overwrites other main settings. Dirty
 selections survive background reads/conflicts until the user explicitly reloads
 or discards. Policy status is read through eligible discovery, so ordinary users
-do not call admin policy mutation endpoints. No policy editing UI is added here.
+do not call admin policy mutation endpoints. Administrators manage the global activation switch under Admin Settings → Skills
+(`/settings?t=admin&setting=skills`). The lazy pane and policy reads/writes are
+admin-only. Saving uses the generated strict-boolean policy mutation and shared
+cache invalidation to refresh discovery and chat state. Failed saves preserve the
+pending switch value; read failures offer retry without guessing policy state.
 
 All API state uses generated Hey API query/mutation options and TanStack Query.
 Owner-specific query-key fields prevent cache reuse between signed-in users while
@@ -190,5 +194,48 @@ Delegates receive their own prompt composition without the parent's skills.
 
 See [ADR-0023](../adr/0023-branch-local-skill-execution.md) for the storage and
 replay decision. Schema changes require fresh initialization; no migrations or
-working-data resets are performed. Pending composer selections, visible chips,
-and per-message skill display remain US-40.4.
+working-data resets are performed.
+
+## Chat composer and slash commands
+
+General and project chat entry points pass authenticated ownership and current
+accepted branch state into `SkillComposer`. API state uses generated eligible
+queries with owner-scoped keys. Discovery queries return metadata only; exact typed
+names are resolved through the same API immediately before sending. At most 100
+skills can be assigned, matching the discovery page size, so exact resolution
+never relies on a truncated assigned catalog. No document text enters the send
+payload; the backend resolves and authorizes IDs again.
+
+A leading run of whitespace-separated `/name` commands activates ordered unique
+skills. Selecting from the popup consumes the current command and resolves earlier
+leading commands in order. URLs, slash paths with additional separators, inline
+code and later prose remain literal. Unknown names and lookup failures preserve
+original text; literal sending is explicit. Arrow keys/Enter select, Escape closes,
+and Shift+Enter/IME composition retain text-entry behavior. The message field uses
+combobox semantics with a labelled list and active descendant; highlighted options
+scroll into view. Touch selection restores focus to the message field.
+
+The accepted set remains visible across follow-ups. New chips display pending
+state; accepted chips display pinned revisions. Remove/reorder/refresh changes
+are staged, and selecting an already active updated skill explicitly requests
+refresh. A stale revision preserves text and pending changes until a confirmed
+reload of accepted skills. Unavailable chips can be removed without discarding
+other selections. Only an accepted send changes server state. Each message shows
+its recorded skill names/revisions, including historical assistant executions.
+
+The local draft stores only prompt text, identity metadata, pending refresh IDs,
+accepted-state revision and literal-mode choice in versioned `sessionStorage`.
+Keys include authenticated owner plus workspace for new chats or chat/branch tip
+for existing chats. Switching users/branches remounts the composer; reload restores
+only the matching draft. Storage is read after hydration, never during server
+render, and unavailable/malformed storage falls back to a usable empty draft.
+Drafts remain in the current browser tab; this is not cross-device synchronization.
+Skill source is never stored by the composer. Server validation remains authoritative.
+
+Submission resolves commands before uploading attachments. Its stable request
+signature includes effective skill IDs/order/refresh/revision along with prompt,
+attachments and model scope. Failures retain prompt, selections, and attachments;
+acknowledgement clears only the submitted draft. Existing sends read the
+server's accepted branch state before resuming generation, so allocated revisions
+are never guessed. Completion clears the busy state even when an intermediate
+status event was missed. Shared mutation-cache invalidation remains in use.

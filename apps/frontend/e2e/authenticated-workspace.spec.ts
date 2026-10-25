@@ -258,7 +258,7 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     await page.getByRole("combobox", { name: "Chat model" }).click();
     await page.getByRole("option", { name: /Integrated A/ }).click();
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByLabel("Message", { exact: true })
       .fill("Review project evidence");
     await page
       .getByRole("button", { name: "Send message", exact: true })
@@ -340,7 +340,7 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     await page.getByRole("combobox", { name: "Chat model" }).click();
     await page.getByRole("option", { name: /Integrated B/ }).click();
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByLabel("Message", { exact: true })
       .fill("Continue with the second model");
     await page
       .getByRole("button", { name: "Send message", exact: true })
@@ -393,7 +393,7 @@ test("authenticated project and General chats preserve scope, provenance, and ow
       buffer: Buffer.from("GENERAL_LOCAL_283"),
     });
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByLabel("Message", { exact: true })
       .fill("Use my local notes");
     await page
       .getByRole("button", { name: "Send message", exact: true })
@@ -453,7 +453,7 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     const beforeRevocation = calls.length;
     await page.goto(`/c/${projectChat}`);
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByLabel("Message", { exact: true })
       .fill("Check after deselection");
     await page
       .getByRole("button", { name: "Send message", exact: true })

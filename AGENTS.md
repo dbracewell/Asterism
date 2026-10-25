@@ -77,7 +77,9 @@ retain fixed models and receive the same or narrower execution file scope.
   Skill text never grants tools, file access, MCP, or delegation. User Settings
   provides private skill editing/preview and main-agent assignment controls.
   Chat acceptance pins ordered branch-local skill instructions and rechecks live
-  eligibility on execution/replay. Slash commands remain planned.
+  eligibility on execution/replay. The chat composer provides explicit slash
+  discovery, persistent active chips, removal/reorder/refresh and message provenance.
+  Admin Settings → Skills manages the global activation policy.
 - **Admin** can add, update, enable/disable:
   - Tools
   - MCP servers

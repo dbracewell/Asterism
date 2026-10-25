@@ -73,3 +73,17 @@ export const skillMutationInvalidates = () => [
   mainAgentGetQueryKey(),
   skillEligibleGetManyQueryKey(),
 ];
+
+export function eligibleSkillOptions(owner: string, query = "", page = 1) {
+  const options = skillEligibleGetManyOptions({
+    client,
+    query: { query, page, page_size: 100 },
+  });
+  const ownerKey = { ...options.queryKey[0], owner };
+  return queryOptions({
+    ...options,
+    queryKey: [ownerKey],
+    staleTime: 0,
+    retry: false,
+  });
+}

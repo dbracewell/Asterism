@@ -2,8 +2,10 @@
 import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
+import { FieldSet } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import type { UserFile } from "@/lib/client";
+import type { ActiveSkillState, SkillSelection, UserFile } from "@/lib/client";
+import { SkillComposer, type SkillComposerControl } from "./skill-composer";
 import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
@@ -57,6 +59,10 @@ interface AttachedFile {
 export type ChatInputProps = {
   /** Rendered in the toolbar after the attach menu, e.g. a model selector. */
   modelSelector?: React.ReactNode;
+  skillOwner?: string;
+  skillScope?: string;
+  activeSkills?: ActiveSkillState;
+  skillComposer?: SkillComposerControl;
   /** Compact indicators shown in the toolbar beside the send button. */
   status?: React.ReactNode;
   onSubmit: (data: {
@@ -64,6 +70,7 @@ export type ChatInputProps = {
     files: string[];
     requestId: string;
     draftId?: string;
+    skills?: SkillSelection;
   }) => void | Promise<unknown>;
   requestScope?: string;
   /** Changes when the saved file scope may have changed (branch, model). */
@@ -100,7 +107,23 @@ export const ChatInputContainer = ({
   );
 };
 
-export const ChatInput = ({
+export const ChatInput = (props: ChatInputProps) =>
+  props.skillOwner ? (
+    <SkillComposer
+      key={`${props.skillOwner}:${props.skillScope}`}
+      owner={props.skillOwner}
+      scope={props.skillScope ?? "new"}
+      state={props.activeSkills}
+      disabled={props.disabled}
+    >
+      {(control) => <ChatInputCore {...props} skillComposer={control} />}
+    </SkillComposer>
+  ) : (
+    <ChatInputCore {...props} />
+  );
+
+const ChatInputCore = ({
+  skillComposer,
   modelSelector,
   status,
   onSubmit,
@@ -122,7 +145,8 @@ export const ChatInput = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
-  const [prompt, setPrompt] = useState("");
+  const [localPrompt, setPrompt] = useState("");
+  const prompt = skillComposer?.prompt ?? localPrompt;
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendError, setSendError] = useState<string>();
@@ -270,23 +294,27 @@ export const ChatInput = ({
       isStaging ||
       submittingRef.current ||
       !onSubmit ||
-      (!prompt.trim() && !attachedFiles.length)
+      (!prompt.trim() && !attachedFiles.length && !skillComposer?.hasSkills)
     )
       return;
     submittingRef.current = true;
     setIsSubmitting(true);
     setSendError(undefined);
-    const uploads = await stageUploads();
-    const uploadedIds = uploads.filter((id): id is string => id !== null);
-    const files = [...new Set(uploadedIds)];
     try {
+      const prepared = skillComposer
+        ? await skillComposer.prepare(prompt)
+        : { prompt: prompt.trim() };
+      const uploads = await stageUploads();
+      const uploadedIds = uploads.filter((id): id is string => id !== null);
+      const files = [...new Set(uploadedIds)];
       // Uploads are library sources; no partial message is accepted after an upload failure.
       if (uploadedIds.length !== attachedFiles.length) {
         toast.error("Failed to upload all attachments. Please retry.");
         return;
       }
       const signature = JSON.stringify({
-        prompt: prompt.trim(),
+        prompt: prepared.prompt,
+        skills: prepared.skills,
         files,
         draftId: draft.id.current,
         scope: requestScope,
@@ -296,14 +324,16 @@ export const ChatInput = ({
         requestRef.current = { signature, id: crypto.randomUUID() };
       }
       await onSubmit({
-        prompt: prompt.trim(),
+        prompt: prepared.prompt,
+        ...(prepared.skills ? { skills: prepared.skills } : {}),
         files,
         requestId: requestRef.current.id,
         ...(draft.id.current ? { draftId: draft.id.current } : {}),
       });
       draft.consumed();
       clearAttachments();
-      setPrompt("");
+      updatePrompt("");
+      skillComposer?.accepted();
       requestRef.current = null;
     } catch (error) {
       setSendError(uploadErrorMessage(error));
@@ -313,10 +343,15 @@ export const ChatInput = ({
     }
   };
 
-  const controlsDisabled = !!disabled || isSubmitting || isStaging;
+  const controlsDisabled =
+    !!disabled ||
+    isSubmitting ||
+    isStaging ||
+    (skillComposer ? !skillComposer.ready : false);
 
   const updatePrompt = (value: string) => {
-    setPrompt(value);
+    if (skillComposer) skillComposer.changePrompt(value);
+    else setPrompt(value);
     const lines = Math.min(8, value.split(/\n/).length);
     if (lines !== numberOfLinesRef.current) {
       numberOfLinesRef.current = lines;
@@ -364,8 +399,8 @@ export const ChatInput = ({
     else void takeScreenshot();
   };
 
-  const hasPrompt = prompt.trim().length > 0;
-  const isDisabled = disabled || isSubmitting || isStaging || !hasPrompt;
+  const hasPrompt = prompt.trim().length > 0 || !!skillComposer?.hasSkills;
+  const isDisabled = controlsDisabled || !hasPrompt;
 
   const retryable = attachedFiles.some(
     (file) => file.state === "queued" || file.state === "failed",
@@ -489,7 +524,15 @@ export const ChatInput = ({
               <span>{sendError}</span>
             </p>
           )}
+          {skillComposer && (
+            <FieldSet disabled={controlsDisabled}>
+              {skillComposer.controls}
+            </FieldSet>
+          )}
           <Textarea
+            {...skillComposer?.inputProps}
+            role={skillComposer ? "combobox" : undefined}
+            aria-haspopup={skillComposer ? "listbox" : undefined}
             disabled={controlsDisabled}
             aria-label="Message"
             ref={textareaRef}
@@ -508,10 +551,15 @@ export const ChatInput = ({
               "max-h-48! min-h-14!",
             )}
             onKeyDown={(event) => {
+              if (skillComposer?.keyDown(event)) {
+                event.preventDefault();
+                return;
+              }
               if (
                 event.key === "Enter" &&
                 !event.shiftKey &&
-                !event.nativeEvent.isComposing
+                !event.nativeEvent.isComposing &&
+                event.keyCode !== 229
               ) {
                 event.preventDefault();
                 if (!isDisabled) void submitPrompt();

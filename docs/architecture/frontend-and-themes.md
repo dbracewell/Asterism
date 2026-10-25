@@ -269,18 +269,19 @@ provides General and Agents. Settings navigation wraps long labels alongside the
 badges and scrolls the entire focused tab into view; keyboard arrows follow the
 container's horizontal/vertical orientation and preserve unrelated URL parameters.
 
-| Capability           | Available now                                                         | Planned                                                    |
-| -------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection          | —                                                          |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings | —                                                          |
-| Appearance           | User theme/font preferences; admin Theme Editor                       | —                                                          |
-| Image captioning     | Admin captioning policy and file-processing integration               | —                                                          |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle    | Users management screens and permission-policy controls    |
-| Groups               | —                                                                     | Group management and group policy settings                 |
-| Image Generation     | Image search and captioning are separate existing capabilities        | Image-generation providers, models and generation workflow |
-| Code Execution       | —                                                                     | Sandboxed execution and runtime settings                   |
-| Export               | Individual file downloads                                             | Data/conversation export tools                             |
-| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs  | Long-term memory engine                                    |
+| Capability           | Available now                                                                         | Planned                                                    |
+| -------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection                          | —                                                          |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                 | —                                                          |
+| Skills               | Private editor/assignments, admin policy, slash discovery and branch-local activation | Automatic selection                                        |
+| Appearance           | User theme/font preferences; admin Theme Editor                                       | —                                                          |
+| Image captioning     | Admin captioning policy and file-processing integration                               | —                                                          |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                    | Users management screens and permission-policy controls    |
+| Groups               | —                                                                                     | Group management and group policy settings                 |
+| Image Generation     | Image search and captioning are separate existing capabilities                        | Image-generation providers, models and generation workflow |
+| Code Execution       | —                                                                                     | Sandboxed execution and runtime settings                   |
+| Export               | Individual file downloads                                                             | Data/conversation export tools                             |
+| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                  | Long-term memory engine                                    |
 
 The Users pane says that admin/user access checks already exist. Better Auth
 carries the role; verified JWTs and backend `AdminUserDep` enforce protected
@@ -323,5 +324,24 @@ source/preview dialogs, and confirmed deletion. Agents includes a separate
 revision-checked main-agent skill-assignment dialog. Existing settings URL state
 and responsive container scrolling apply. Previews use the shared Markdown trust
 boundary; private query caches and drafts follow authenticated identity. Runtime
-activation/slash commands remain planned. See [skills](skills.md) for behavior,
+activation/slash discovery and branch-local composer controls are implemented. See [skills](skills.md) for behavior,
 policy, owner-scoping, and draft/conflict contracts.
+
+## Skill commands in chat (US-40.4)
+
+The shared chat input composes an optional authenticated skill controller for both
+new and existing General/project chats. Existing Popover, Button, Badge, FieldSet
+and Empty primitives provide discovery, controls and errors. A pure leading-command
+parser leaves ordinary slash text alone. Generated eligible queries supply names;
+accepted snapshots stay server-owned. Skills are never inferred from descriptions.
+
+Pending prompt/skill metadata persists per owner/workspace/branch in tab-local
+storage. Accepted and pending states remain distinct, with explicit stale-state
+reload and literal-send recovery. Read the [skills contract](skills.md#chat-composer-and-slash-commands)
+for keyboard, touch, replay and failure behavior. No UI library dependencies were added.
+
+Admin Settings includes a lazy Skills pane with the global activation switch.
+It uses the existing admin-only policy API, generated query/mutation options,
+and shared mutation invalidation. Non-admin users cannot mount its controls or
+request policy through this pane. User-owned source/assignment editing remains
+separate and available while activation is disabled.

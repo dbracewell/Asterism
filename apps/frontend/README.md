@@ -46,19 +46,19 @@ Export** as **Planned**. Their panes explain future scope and offer no configura
 actions. Providers, Theme Editor, Tools and Image Captioning remain available;
 user settings expose General, Personas, Skills, and Agents.
 
-| Capability           | Available now                                                                                                              | Planned                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Providers and models | Admin provider/model configuration; per-chat model selection                                                               | —                                                          |
-| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                                                      | —                                                          |
-| Skills               | Private skills editor/assignments and branch-local runtime activation APIs ([contract](../../docs/architecture/skills.md)) | Slash commands and active-skill composer UI                |
-| Appearance           | User theme/font preferences; admin Theme Editor                                                                            | —                                                          |
-| Image captioning     | Admin captioning policy and file-processing integration                                                                    | —                                                          |
-| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                         | Users management screens and permission-policy controls    |
-| Groups               | —                                                                                                                          | Group management and group policy settings                 |
-| Image Generation     | Image search and captioning are separate existing capabilities                                                             | Image-generation providers, models and generation workflow |
-| Code Execution       | —                                                                                                                          | Sandboxed execution and runtime settings                   |
-| Export               | Individual file downloads                                                                                                  | Data/conversation export tools                             |
-| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                                                       | Long-term memory engine                                    |
+| Capability           | Available now                                                                                                                                            | Planned                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Providers and models | Admin provider/model configuration; per-chat model selection                                                                                             | —                                                          |
+| Agents and tools     | User main/sub-agent settings; admin tool policy and provider settings                                                                                    | —                                                          |
+| Skills               | Private skills editor/assignments, admin policy, slash discovery, branch-local activation and provenance ([contract](../../docs/architecture/skills.md)) | Automatic skill selection                                  |
+| Appearance           | User theme/font preferences; admin Theme Editor                                                                                                          | —                                                          |
+| Image captioning     | Admin captioning policy and file-processing integration                                                                                                  | —                                                          |
+| Users and access     | Admin/user access checks, owner scoping and backend user lifecycle                                                                                       | Users management screens and permission-policy controls    |
+| Groups               | —                                                                                                                                                        | Group management and group policy settings                 |
+| Image Generation     | Image search and captioning are separate existing capabilities                                                                                           | Image-generation providers, models and generation workflow |
+| Code Execution       | —                                                                                                                                                        | Sandboxed execution and runtime settings                   |
+| Export               | Individual file downloads                                                                                                                                | Data/conversation export tools                             |
+| Personas and memory  | Persona CRUD/defaults, chat selection and immutable execution inputs                                                                                     | Long-term memory engine                                    |
 
 The Users badge describes unfinished administration screens, not missing access
 control. Backend list/provision/delete routes already have authorization and
@@ -281,6 +281,21 @@ button. These writes do not change instructions, tools, or generation defaults.
 The dialog explains the admin activation policy; editing and assigning remain
 available when policy is disabled. Policy status does not grant permissions.
 Private query caches and open drafts are scoped to the authenticated owner.
-Backend activation contracts and generated types are available; slash discovery
-and active-skill composer controls remain US-40.4. See the
+Type `/` at the start of a message to search eligible assigned skills, or type
+leading commands such as `/review-code /write-docs Explain this`. Selection order
+is preserved. Ordinary URLs, paths and later prose remain text. Unknown commands
+retain the message and offer an explicit **Send as literal text** option.
+
+Active skill chips continue across follow-ups. Remove, reorder or refresh them
+before sending; changes apply only when that message is accepted. Updates are
+pinned until explicit refresh/reactivation. Unavailable skills must be removed
+before sending. Skill-only messages are supported. Draft text and pending skill
+changes persist in this tab across reloads, scoped to user/workspace/branch.
+Per-message labels show the pinned skill names/revisions. See the
 [skills contract](../../docs/architecture/skills.md).
+
+Administrators can enable or disable activation under **Admin Settings → Skills**
+(`/settings?t=admin&setting=skills`). Enable **Enable skill activation**, then
+choose **Save skill policy**. The policy defaults to disabled; users still need
+owned skills assigned to their main agent. Disabling retains documents,
+assignments and historical snapshots while blocking affected execution.

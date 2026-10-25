@@ -63,7 +63,13 @@ describe("getLazyAdminSettingsSections", () => {
       sections
         .filter((section) => !section.badge)
         .map((section) => section.label),
-    ).toEqual(["Providers", "Theme Editor", "Tools", "Image Captioning"]);
+    ).toEqual([
+      "Providers",
+      "Theme Editor",
+      "Tools",
+      "Skills",
+      "Image Captioning",
+    ]);
     expect(sections.every((section) => !section.disabled)).toBe(true);
   });
 });

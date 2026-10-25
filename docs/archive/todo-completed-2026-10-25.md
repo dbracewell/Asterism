@@ -99,3 +99,28 @@ untouched backend formatting failures remain documented in the
 [verification record](../reviews/us-40.3-skill-execution-verification-2026-10-25.md).
 Browser E2E and production build were not run for this backend/API story.
 US-40.4 remains planned; EPIC-40 is not complete.
+
+## [EPIC-40 / US-40.4: Slash commands and activation controls](../epics/EPIC-40-USER-SKILLS-AND-CHAT-SLASH-COMMANDS.md#us-404-discover-and-invoke-skills-from-the-chat-input)
+
+- [x] US-40.4: Discover and invoke skills from the chat input
+  - [x] Add the admin Skills activation-policy pane and accessible, keyboard/touch-operable slash discovery using generated eligible-skill queries and existing shadcn patterns; cover loading, no matches, unavailable policy, and retry.
+  - [x] Implement command-boundary parsing, exact-name resolution, persistent ordered active-skill chips with remove/refresh controls, pending/update/unavailable states, and explicit handling of unknown commands/literal slash text.
+  - [x] Restore branch-local active state and pending composer edits across reloads; integrate new/existing sends, follow-ups, removals, refreshes, and retry/draft state; show per-message snapshots and retain prompt/attachments on rejection.
+  - [x] Verify keyboard/IME, mobile/short layouts, command parsing, follow-up persistence, removal/refresh, reloads/branch switches, skill-only sends, stale/deleted skills, and General/project execution end to end; run relevant gates and update README/architecture/epic/checklist records.
+
+The user confirmed completion, including the admin activation-policy UI follow-up,
+and authorized local commit/merge on 2026-10-25. Delivered slash discovery, ordered
+persistent skill chips, removal/reorder/refresh, branch-scoped drafts, message
+provenance, and Admin Settings → Skills. The 320px short-height clipping is fixed.
+
+Verification: 44 initial focused tests and 39 selected isolated browser checks
+passed; frontend typecheck, lint, formatting, six auth database checks and build
+passed. The admin UI follow-up passed 11 focused tests and three browser checks;
+the full frontend suite has 412 passes and four unchanged failures. An unchanged
+model-context browser assertion remains. The 39-check run/build predate the admin
+follow-up; its browser checks used a separate test frontend and mocked APIs while
+preserving the user's active dev servers. See the
+[verification record and addendum](../reviews/us-40.4-slash-skills-verification-2026-10-25.md).
+
+EPIC-40 (US-40.1 through US-40.4) is confirmed complete. Recommended next work:
+reconcile the documented frontend unit/model-context browser baseline failures.

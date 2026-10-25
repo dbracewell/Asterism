@@ -34,8 +34,8 @@ export function SkillAvailability({ owner }: { owner: string }) {
           {policy.data?.policy_enabled
             ? "Only assigned skills are eligible."
             : "Assignments remain saved while activation is disabled."}{" "}
-          Chat activation and slash commands are coming in a later update. Skill
-          text grants no tools or file access.
+          Use / in the chat input to activate assigned skills. Skill text grants
+          no tools or file access.
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

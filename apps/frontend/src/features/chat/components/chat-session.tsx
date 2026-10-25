@@ -2,6 +2,7 @@
 import { CopyButton } from "@/components/copy-button";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { QueryError } from "@/components/query-error";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -198,6 +199,7 @@ export const ChatSession = ({
       );
     },
     onStreamComplete: (updatedMessages) => {
+      setIsProcessing(false);
       setIncomingMessage(null);
       if (!updatedMessages.length) return;
       setSubAgentActivities([]);
@@ -230,11 +232,13 @@ export const ChatSession = ({
     files,
     requestId,
     draftId,
+    skills,
   }: {
     prompt: string;
     files: string[];
     requestId: string;
     draftId?: string;
+    skills?: import("@/lib/client").SkillSelection;
   }) => {
     if (!session) throw new Error("Chat is not loaded. Please retry.");
     setSocketError(null);
@@ -245,32 +249,24 @@ export const ChatSession = ({
         modelRevision: session.info.model_revision ?? 1,
       };
     }
-    const accepted = await sendMessage.mutateAsync({
+    await sendMessage.mutateAsync({
       path: { chat_id: chatId },
       body: {
         request_id: requestId,
         expected_model_revision: pendingSend.current.modelRevision,
         user_prompt: prompt,
+        ...(skills ? { skills } : {}),
         files,
         ...(draftId ? { draft_id: draftId } : {}),
         parent_message_id: pendingSend.current.parentId,
       },
     });
-    setSubAgentActivities([]);
-    queryClient.setQueryData(queryKey, (prev?: Chat) => {
-      if (!prev) return prev;
-      const existing = prev.messages.some(
-        (message) => message.id === accepted.id,
-      );
-      return {
-        ...prev,
-        messages: existing
-          ? prev.messages.map((message) =>
-              message.id === accepted.id ? accepted : message,
-            )
-          : [...prev.messages, accepted],
-      };
+    // Read the authoritative accepted branch state, including its allocated skill revision.
+    await queryClient.fetchQuery({
+      ...chatSessionGetOneOptions({ client, path: { chat_id: chatId } }),
+      staleTime: 0,
     });
+    setSubAgentActivities([]);
     setIsProcessing(true);
     // Persistence acknowledgement precedes generation; reconnect can resume this same pending turn.
     sendJsonMessage({ type: "resume" });
@@ -502,7 +498,10 @@ export const ChatSession = ({
         )}
         <ChatInputContainer className="max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
           <ChatInput
-            key={chatId}
+            key={`${user.id}:${chatId}:${session.messages.at(-1)?.id ?? "root"}`}
+            skillOwner={user.id}
+            skillScope={`${chatId}:${session.messages.at(-1)?.id ?? "root"}`}
+            activeSkills={session.info.active_skills}
             chatId={chatId}
             projectId={session.info.project_id}
             savedFileIds={
@@ -729,6 +728,25 @@ const MessageItem = React.memo(
               </Button>
             </div>
           ))}
+        {!!message.skills?.length && (
+          <div
+            className="flex max-w-full flex-wrap gap-1"
+            aria-label="Message skills"
+          >
+            {message.skills.map((skill) => (
+              <Badge
+                key={skill.id}
+                variant="outline"
+                className="max-w-full"
+                title={skill.name}
+              >
+                <span className="truncate">
+                  /{skill.name} · r{skill.revision}
+                </span>
+              </Badge>
+            ))}
+          </div>
+        )}
         <MarkdownViewer
           content={message.content}
           className={cn(

@@ -303,7 +303,7 @@ for (const width of [320, 390]) {
         "No available models. Ask an administrator to enable one.",
       ),
     ).toBeAttached();
-    const message = page.getByRole("textbox", { name: "Message", exact: true });
+    const message = page.getByLabel("Message", { exact: true });
     await expect(message).toBeAttached();
     await page.mouse.move(width / 2, 220);
     await page.mouse.wheel(0, 10000);
@@ -395,7 +395,7 @@ for (const width of [320, 390]) {
     await page.mouse.move(width / 2, 150);
     await page.mouse.wheel(0, 10000);
     await expect(last).toBeInViewport({ ratio: 1 });
-    const message = page.getByRole("textbox", { name: "Message", exact: true });
+    const message = page.getByLabel("Message", { exact: true });
     await expect(message).toBeInViewport({ ratio: 1 });
     const lastBox = await last.boundingBox();
     expect(lastBox).not.toBeNull();
