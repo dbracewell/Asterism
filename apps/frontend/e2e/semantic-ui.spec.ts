@@ -18,7 +18,8 @@ async function target(control: Locator) {
 }
 
 for (const theme of [
-  "light",
+  "atlas",
+  "night-atlas",
   "dracula",
   "one_dark",
   "catppuccin-latte-mauve",

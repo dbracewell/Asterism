@@ -69,24 +69,27 @@ image components are not controlled by untrusted Markdown source URLs.
 
 ## Code typography and syntax palettes
 
-Inline code uses Geist Mono, and fenced code sets the same font on `pre`, lets
+Inline code uses JetBrains Mono, and fenced code sets the same font on `pre`, lets
 `code` inherit it and preserves inheritance through highlighted spans. Ordinary
-text inherits Inter; the Montserrat logo stays separate. The renderer directly
+text and the wordmark inherit Schibsted Grotesk. The renderer directly
 imports these installed Highlight.js style modules:
 
-| Application theme                   | Syntax palette                                      |
-| ----------------------------------- | --------------------------------------------------- |
-| Dracula                             | Dracula                                             |
-| One Dark                            | Atom One Dark                                       |
-| Catppuccin Latte Mauve, Flowers     | Atom One Light                                      |
-| Light                               | Visual Studio light                                 |
-| Dark, Catppuccin Mocha, UCF Knights | Visual Studio 2015 dark                             |
-| Custom theme IDs                    | Visual Studio light/dark according to declared type |
+| Application theme               | Syntax palette                                      |
+| ------------------------------- | --------------------------------------------------- |
+| Dracula                         | Dracula                                             |
+| One Dark                        | Atom One Dark                                       |
+| Catppuccin Latte Mauve, Flowers | Atom One Light                                      |
+| Atlas                           | a11y light on the theme `card` surface              |
+| Night Atlas                     | a11y dark on the theme `card` surface               |
+| Catppuccin Mocha, UCF Knights   | Visual Studio 2015 dark                             |
+| Custom theme IDs                | Visual Studio light/dark according to declared type |
 
 The Catppuccin, Flowers and UCF mappings are deliberate related light/dark
 adaptations, not exact source-theme syntax reproductions. Custom themes do not
 supply executable highlighter styles. This mapping documents identity and type;
-syntax token contrast has not been certified for every language/token combination.
+syntax token contrast has not been certified for every language/token combination,
+except that the a11y palettes keep every token at or above 4.5:1 on Atlas and
+Night Atlas cards.
 It preserves the literal-code copy path, local horizontal scrolling and existing
 Markdown/KaTeX security policy.
 

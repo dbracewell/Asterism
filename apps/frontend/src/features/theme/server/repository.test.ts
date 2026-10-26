@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import light from "../bundled/light.json";
+import atlas from "../bundled/atlas.json";
 
 vi.mock("server-only", () => ({}));
 vi.mock("node:fs/promises", async (original) => {
@@ -20,35 +20,35 @@ afterEach(async () => {
   vi.mocked(fs.rename).mockClear();
   await fs.rm(root, { recursive: true, force: true });
 });
-const repository = () => createThemeRepository(root, { light });
+const repository = () => createThemeRepository(root, { atlas });
 
 describe("durable theme repository", () => {
   it("reads defaults without creating storage and saves overrides separately", async () => {
     const missingRoot = path.join(root, "not-created");
     expect(
-      (await createThemeRepository(missingRoot, { light }).read("light")).name,
-    ).toBe(light.name);
+      (await createThemeRepository(missingRoot, { atlas }).read("atlas")).name,
+    ).toBe(atlas.name);
     await expect(fs.stat(missingRoot)).rejects.toMatchObject({
       code: "ENOENT",
     });
     const saved = await repository().save({
-      ...light,
-      filename: "light",
+      ...atlas,
+      filename: "atlas",
       name: "Override",
     });
-    expect(saved.filename).toBe("light");
-    expect(light.name).toBe("Default Light Theme");
-    const file = path.join(root, "themes", "light.json");
+    expect(saved.filename).toBe("atlas");
+    expect(atlas.name).toBe("Atlas");
+    const file = path.join(root, "themes", "atlas.json");
     expect(JSON.parse(await fs.readFile(file, "utf8"))).toEqual({
-      ...light,
+      ...atlas,
       name: "Override",
     });
     expect((await fs.stat(file)).mode & 0o777).toBe(0o600);
     expect((await fs.stat(path.dirname(file))).mode & 0o777).toBe(0o700);
-    expect((await repository().read("light")).name).toBe("Override");
+    expect((await repository().read("atlas")).name).toBe("Override");
   });
   it("retains the last committed file on rename failure, cleans up and permits retry", async () => {
-    const original = await repository().save({ ...light, name: "Original" });
+    const original = await repository().save({ ...atlas, name: "Original" });
     const target = path.join(root, "themes", `${original.filename}.json`);
     const before = await fs.readFile(target, "utf8");
     vi.mocked(fs.rename).mockRejectedValueOnce(
@@ -67,34 +67,34 @@ describe("durable theme repository", () => {
   it("does not publish a new file or reserve its name on failed creation", async () => {
     vi.mocked(fs.rename).mockRejectedValueOnce(new Error("write failed"));
     await expect(
-      repository().save({ ...light, name: "New theme" }),
+      repository().save({ ...atlas, name: "New theme" }),
     ).rejects.toMatchObject({ code: "STORAGE_ERROR" });
     expect(await fs.readdir(path.join(root, "themes"))).toEqual([]);
-    const saved = await repository().save({ ...light, name: "New theme" });
+    const saved = await repository().save({ ...atlas, name: "New theme" });
     expect((await repository().read(saved.filename)).name).toBe("New theme");
   });
   it("isolates malformed files and ignores temporary files while retaining valid overrides/defaults", async () => {
-    await repository().save({ ...light, filename: "light", name: "Override" });
+    await repository().save({ ...atlas, filename: "atlas", name: "Override" });
     const directory = path.join(root, "themes");
     await fs.writeFile(path.join(directory, "bad-json.json"), "{");
     await fs.writeFile(
       path.join(directory, "bad-schema.json"),
-      JSON.stringify({ ...light, colors: {} }),
+      JSON.stringify({ ...atlas, colors: {} }),
     );
     await fs.writeFile(path.join(directory, ".incomplete.tmp"), "{");
     const themes = await repository().list();
-    expect(Object.keys(themes)).toEqual(["light"]);
-    expect(themes.light.name).toBe("Override");
+    expect(Object.keys(themes)).toEqual(["atlas"]);
+    expect(themes.atlas.name).toBe("Override");
     expect(console.warn).toHaveBeenCalledTimes(2);
-    await fs.writeFile(path.join(directory, "light.json"), "invalid");
-    expect((await repository().read("light")).name).toBe(light.name);
-    await repository().save({ ...light, filename: "light", name: "Repaired" });
-    expect((await repository().read("light")).name).toBe("Repaired");
+    await fs.writeFile(path.join(directory, "atlas.json"), "invalid");
+    expect((await repository().read("atlas")).name).toBe(atlas.name);
+    await repository().save({ ...atlas, filename: "atlas", name: "Repaired" });
+    expect((await repository().read("atlas")).name).toBe("Repaired");
   });
   it("rejects duplicate names on create and rename, including concurrent saves through separate instances", async () => {
     const results = await Promise.allSettled([
-      repository().save({ ...light, name: "Concurrent" }),
-      repository().save({ ...light, name: "concurrent" }),
+      repository().save({ ...atlas, name: "Concurrent" }),
+      repository().save({ ...atlas, name: "concurrent" }),
     ]);
     expect(
       results.filter((result) => result.status === "fulfilled"),
@@ -102,7 +102,7 @@ describe("durable theme repository", () => {
     expect(
       results.find((result) => result.status === "rejected"),
     ).toMatchObject({ reason: { code: "DUPLICATE_NAME" } });
-    const other = await repository().save({ ...light, name: "Other" });
+    const other = await repository().save({ ...atlas, name: "Other" });
     await expect(
       repository().save({ ...other, name: " Concurrent " }),
     ).rejects.toMatchObject({ code: "DUPLICATE_NAME" });
@@ -111,7 +111,7 @@ describe("durable theme repository", () => {
   it("refreshes without a process cache and leaves readers on committed data during a write", async () => {
     const first = repository();
     const second = repository();
-    const original = await first.save({ ...light, name: "Before" });
+    const original = await first.save({ ...atlas, name: "Before" });
     let release!: () => void;
     let entered!: () => void;
     const gate = new Promise<void>((resolve) => {
@@ -142,7 +142,7 @@ describe("durable theme repository", () => {
     try {
       await fs.symlink(outside, path.join(root, "themes"));
       await expect(
-        repository().save({ ...light, name: "Escape" }),
+        repository().save({ ...atlas, name: "Escape" }),
       ).rejects.toMatchObject({ code: "STORAGE_ERROR" });
       expect(await fs.readdir(outside)).toEqual([]);
     } finally {
@@ -152,16 +152,16 @@ describe("durable theme repository", () => {
   it("rejects symlinked override targets and a blocked storage directory", async () => {
     await fs.mkdir(path.join(root, "themes"));
     const sentinel = path.join(root, "sentinel.json");
-    await fs.writeFile(sentinel, JSON.stringify(light));
-    await fs.symlink(sentinel, path.join(root, "themes", "light.json"));
+    await fs.writeFile(sentinel, JSON.stringify(atlas));
+    await fs.symlink(sentinel, path.join(root, "themes", "atlas.json"));
     await expect(
-      repository().save({ ...light, filename: "light", name: "Escape" }),
+      repository().save({ ...atlas, filename: "atlas", name: "Escape" }),
     ).rejects.toMatchObject({ code: "STORAGE_ERROR" });
-    expect(JSON.parse(await fs.readFile(sentinel, "utf8"))).toEqual(light);
+    expect(JSON.parse(await fs.readFile(sentinel, "utf8"))).toEqual(atlas);
     await fs.rm(path.join(root, "themes"), { recursive: true });
     await fs.writeFile(path.join(root, "themes"), "blocked");
     await expect(
-      repository().save({ ...light, name: "Blocked" }),
+      repository().save({ ...atlas, name: "Blocked" }),
     ).rejects.toMatchObject({ code: "STORAGE_ERROR" });
   });
 });

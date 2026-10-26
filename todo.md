@@ -28,9 +28,9 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Update tests and screenshot baselines; document the scale in the frontend README.
 
 - [x] US-41.2: Ship native Atlas themes
-  - [ ] Add the bundled palettes; make them the defaults; remove the old Light/Dark defaults.
-  - [ ] Align the `:root` fallback; check prose, syntax-highlight and toast colors against both themes.
-  - [ ] Extend the bundled-palette contrast tests; update screenshots.
+  - [x] Add the bundled palettes; make them the defaults; remove the old Light/Dark defaults.
+  - [x] Align the `:root` fallback; check prose, syntax-highlight and toast colors against both themes.
+  - [x] Extend the bundled-palette contrast tests; update screenshots.
 
 - [ ] US-41.3: Extend themes beyond color
   - [ ] Extend the theme schema, loader and inline style generation; reject out-of-range values.

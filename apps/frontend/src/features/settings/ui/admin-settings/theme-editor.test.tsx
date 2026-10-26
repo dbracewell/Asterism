@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Theme } from "@/features/theme/types";
-import light from "@/features/theme/bundled/light.json";
+import atlas from "@/features/theme/bundled/atlas.json";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const { saveTheme, refresh } = vi.hoisted(() => ({
@@ -22,9 +22,9 @@ const { saveTheme, refresh } = vi.hoisted(() => ({
 vi.mock("@/features/theme/server/actions", () => ({ saveTheme }));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
-    lightThemes: [{ ...light, filename: "light" }],
+    lightThemes: [{ ...atlas, filename: "atlas" }],
     darkThemes: [],
-    getTheme: () => ({ ...light, filename: "light" }),
+    getTheme: () => ({ ...atlas, filename: "atlas" }),
     refresh,
   }),
 }));
@@ -52,21 +52,21 @@ describe("theme save feedback", () => {
     show();
     expect(screen.getByRole("button", { name: "New theme" })).toBeEnabled();
     fireEvent.click(
-      screen.getByRole("button", { name: `Duplicate ${light.name}` }),
+      screen.getByRole("button", { name: `Duplicate ${atlas.name}` }),
     );
-    expect(screen.getByLabelText("Name")).toHaveValue(`${light.name} Copy`);
+    expect(screen.getByLabelText("Name")).toHaveValue(`${atlas.name} Copy`);
   });
   it("names standalone color controls and their hex inputs", () => {
     show();
-    fireEvent.click(screen.getByRole("button", { name: light.name }));
+    fireEvent.click(screen.getByRole("button", { name: atlas.name }));
     fireEvent.click(screen.getByRole("button", { name: "Edit Border color" }));
     expect(
       screen.getByRole("textbox", { name: "Border hex color" }),
-    ).toHaveValue(light.colors.border);
+    ).toHaveValue(atlas.colors.border);
   });
   it("retains failed edits, disables switching during retry, and refreshes only after success", async () => {
     const { invalidated } = show();
-    fireEvent.click(screen.getByRole("button", { name: light.name }));
+    fireEvent.click(screen.getByRole("button", { name: atlas.name }));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Kept draft" },
     });
@@ -97,15 +97,15 @@ describe("theme save feedback", () => {
     );
     expect(screen.getByLabelText("Name")).toBeDisabled();
     expect(screen.getByRole("button", { name: "New theme" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: light.name })).toBeDisabled();
+    expect(screen.getByRole("button", { name: atlas.name })).toBeDisabled();
     await act(async () =>
       finish({
         ok: true,
         theme: {
-          ...light,
+          ...atlas,
           type: "light",
           name: "Kept draft",
-          filename: "light",
+          filename: "atlas",
         },
       }),
     );
@@ -158,8 +158,8 @@ describe("theme save feedback", () => {
     expect(
       screen.queryByText("private server details"),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: light.name }));
+    fireEvent.click(screen.getByRole("button", { name: atlas.name }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Name")).toHaveValue(light.name);
+    expect(screen.getByLabelText("Name")).toHaveValue(atlas.name);
   });
 });

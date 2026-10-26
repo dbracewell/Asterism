@@ -5,7 +5,7 @@ const viewports = [
   { name: "mobile", width: 390, height: 800 },
 ];
 
-for (const theme of ["light", "dark", "dracula"]) {
+for (const theme of ["atlas", "night-atlas", "dracula"]) {
   for (const viewport of viewports) {
     test(`${theme}: type system at ${viewport.name}`, async ({
       page,

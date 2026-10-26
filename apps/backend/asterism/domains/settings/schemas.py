@@ -178,7 +178,7 @@ class UserSettings(BaseModel):
     domain; ``models`` is the list of all active models across providers.
     """
 
-    theme: str = Field(default="light")
+    theme: str = Field(default="atlas")
     font_size: str = Field(default="16px")
     models: list[LlmDisplayInfo] = Field(default_factory=list[LlmDisplayInfo])
     default_model_id: uuid.UUID | None = Field(default=None)

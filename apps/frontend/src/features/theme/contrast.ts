@@ -12,6 +12,14 @@ export const themeTextPairs = [
   ["sidebar-accent-foreground", "sidebar-accent"],
 ] as const;
 
+/** Control boundaries (WCAG 1.4.11): input borders and focus rings on their surfaces. */
+export const themeNonTextPairs = [
+  ["input", "background"],
+  ["input", "card"],
+  ["ring", "background"],
+  ["ring", "card"],
+] as const;
+
 function luminance(hex: string): number {
   if (!/^#(?:[a-f\d]{3}|[a-f\d]{6})$/i.test(hex))
     throw new Error(`Expected an opaque hex color: ${hex}`);

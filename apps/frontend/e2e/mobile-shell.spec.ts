@@ -530,7 +530,7 @@ test("General quick chats and workspace context coexist with aligned full-row se
     "http://localhost:3100/api/py/settings/user/theme",
     {
       headers: { Authorization: `Bearer ${token}` },
-      data: { value: "dark" },
+      data: { value: "night-atlas" },
     },
   );
   expect(themeResponse.ok()).toBeTruthy();
@@ -538,7 +538,7 @@ test("General quick chats and workspace context coexist with aligned full-row se
   await context.addCookies([
     {
       name: "asterism-custom-theme-name",
-      value: "dark",
+      value: "night-atlas",
       url: "http://localhost:3100",
     },
     {

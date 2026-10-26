@@ -178,7 +178,7 @@ async def test_invalid_capabilities_models_and_settings_batch_are_atomic(main_ag
         await save_sub_agent("user-a", SubAgentCreate(name="Bad", model_id=uuid.uuid4()), session=session)
     with pytest.raises(BadDataException):
         await bulk_upsert_user_settings("user-a", {"theme": "dark", "default_agent_id": str(uuid.uuid4())}, session)
-    assert (await get_user_settings("user-a", session)).theme == "light"
+    assert (await get_user_settings("user-a", session)).theme == "atlas"
     for fields in [
         dict(max_steps=0),
         dict(chat_parameters={"extra_body": {"model": "override"}}),

@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 const { state, setTheme, setFontSize, refresh } = vi.hoisted(() => ({
   state: {
     saved: "broken-custom",
-    current: "light",
+    current: "atlas",
     savedFontSize: undefined as string | undefined,
   },
   setTheme: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock("@/features/auth/components/user-context", () => ({
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
     currentTheme: state.current,
-    allThemes: [{ filename: "light" }, { filename: "valid-custom" }],
+    allThemes: [{ filename: "atlas" }, { filename: "valid-custom" }],
     setTheme,
     fontSize: "16px",
     setFontSize,
@@ -28,7 +28,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 import { ThemeCheck } from "./theme-check";
 beforeEach(() => {
   vi.clearAllMocks();
-  state.current = "light";
+  state.current = "atlas";
   state.saved = "broken-custom";
   state.savedFontSize = undefined;
 });
@@ -45,11 +45,11 @@ it("applies valid saved custom themes and restores Light when an override disapp
   state.current = "valid-custom";
   state.saved = "removed-custom";
   view.rerender(<ThemeCheck />);
-  expect(setTheme).toHaveBeenLastCalledWith("light");
+  expect(setTheme).toHaveBeenLastCalledWith("atlas");
 });
 
 it("does not trigger a refresh loop when user.settings.font_size is undefined", () => {
-  state.saved = "light";
+  state.saved = "atlas";
   state.savedFontSize = undefined;
   const view = render(<ThemeCheck />);
   view.rerender(<ThemeCheck />);

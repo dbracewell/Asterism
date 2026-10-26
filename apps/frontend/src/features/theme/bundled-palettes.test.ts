@@ -2,7 +2,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { themeColorsSchema, themeDataSchema, themeIdSchema } from "./schemas";
-import { contrastRatio, themeTextPairs } from "./contrast";
+import { contrastRatio, themeNonTextPairs, themeTextPairs } from "./contrast";
+import { DEFAULT_THEME_NAME } from "./constants";
 vi.mock("server-only", () => ({}));
 import { bundledThemes } from "./bundled";
 
@@ -16,6 +17,26 @@ const ids = readdirSync(directory)
 it("registers every bundled palette exactly once", () => {
   expect(Object.keys(bundledThemes).sort()).toEqual(ids);
   expect(ids.length).toBeGreaterThan(0);
+});
+it("ships Atlas and Night Atlas as the native light and dark palettes", () => {
+  expect(bundledThemes.atlas).toMatchObject({ name: "Atlas", type: "light" });
+  expect(bundledThemes["night-atlas"]).toMatchObject({
+    name: "Night Atlas",
+    type: "dark",
+  });
+  expect(DEFAULT_THEME_NAME).toBe("atlas");
+});
+it("keeps the :root fallback identical to Atlas", () => {
+  const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+  const root = css.match(/^:root \{([^}]*)\}/m)![1];
+  const declared = Object.fromEntries(
+    [...root.matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)].map(([, key, value]) => [
+      key,
+      value.trim(),
+    ]),
+  );
+  for (const [key, value] of Object.entries(bundledThemes.atlas.colors))
+    expect(declared[key], key).toBe(value);
 });
 it("covers every declared foreground role", () => {
   expect(themeTextPairs.map(([foreground]) => foreground).sort()).toEqual(
@@ -43,6 +64,19 @@ for (const id of ids) {
           ratio,
           `${id}: ${foreground} ${raw.colors[foreground]} / ${background} ${raw.colors[background]} = ${ratio}:1; minimum 4.5:1`,
         ).toBeGreaterThanOrEqual(4.5);
+      },
+    );
+    it.each(themeNonTextPairs)(
+      "%s on %s meets 3:1 as a control boundary",
+      (control, background) => {
+        const ratio = contrastRatio(
+          raw.colors[control],
+          raw.colors[background],
+        );
+        expect(
+          ratio,
+          `${id}: ${control} ${raw.colors[control]} / ${background} ${raw.colors[background]} = ${ratio}:1; minimum 3:1`,
+        ).toBeGreaterThanOrEqual(3);
       },
     );
   });
