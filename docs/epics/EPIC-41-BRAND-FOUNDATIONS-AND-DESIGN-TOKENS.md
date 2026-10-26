@@ -46,10 +46,10 @@ modular scale (`display`, `title`, `heading`, `body`, `meta`) is available as
 Tailwind utilities, and `--font-heading` is wired up. The wordmark uses the chosen
 face in sentence case. Inter, Geist and Montserrat are removed.
 
-- [ ] Compare the candidates (Schibsted Grotesk, Hanken Grotesk, Instrument Sans) on chat, settings and list screens; record the choice in an ADR note.
-- [ ] Replace the font loading in `app/layout.tsx`; define the scale and the heading/mono tokens in `globals.css`.
-- [ ] Migrate headings and meta text to the scale utilities; redraw `FullLogo` in the new face.
-- [ ] Update tests and screenshot baselines; document the scale in the frontend README.
+- [x] Compare the candidates (Schibsted Grotesk, Hanken Grotesk, Instrument Sans) on chat, settings and list screens; record the choice in an ADR note.
+- [x] Replace the font loading in `app/layout.tsx`; define the scale and the heading/mono tokens in `globals.css`.
+- [x] Migrate headings and meta text to the scale utilities; redraw `FullLogo` in the new face.
+- [x] Update tests and screenshot baselines; document the scale in the frontend README.
 
 ## US-41.2: Ship native Atlas themes
 

@@ -89,7 +89,7 @@ export function ProjectSubAgents({
   }
   return (
     <section aria-label="Project sub-agents" className="flex flex-col gap-5">
-      <h2 className="text-lg font-semibold">Project sub-agents</h2>
+      <h2 className="text-heading">Project sub-agents</h2>
       <p className="text-muted-foreground text-sm">
         Only selected sub-agents can receive delegated work from chats in this
         project. Each uses its fixed model. New projects start with no

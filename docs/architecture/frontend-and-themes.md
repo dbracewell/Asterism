@@ -227,11 +227,12 @@ and reduced motion. Source fidelity permits documented accessibility adaptations
 
 ## Typography, labels and motion (US-33.2)
 
-Inter is inherited from the document instead of being applied to every element.
-The workspace and authentication ASTERISM wordmarks deliberately retain Montserrat
-through the existing `font-monsterrat` utility. The logo link/icon can shrink
+Schibsted Grotesk is inherited from the document instead of being applied to every
+element ([ADR 0024](../adr/0024-type-system.md) defines the `text-display`,
+`text-title`, `text-heading`, `text-body` and `text-meta` scale). The workspace and
+authentication wordmarks use the same face in sentence case. The logo link/icon can shrink
 inside the header while the full wordmark and mobile close target stay separate. Inline code, fenced code and syntax
-spans use Geist Mono; KaTeX keeps its own typography. Prose counters use the defined
+spans use JetBrains Mono; KaTeX keeps its own typography. Prose counters use the defined
 muted foreground and code backgrounds use literal `transparent`. See the
 [syntax palette mapping](markdown-content.md#code-typography-and-syntax-palettes).
 

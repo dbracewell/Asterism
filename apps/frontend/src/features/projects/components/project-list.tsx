@@ -44,7 +44,7 @@ export function ProjectList() {
     <main className="container mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 pt-16">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Projects</h1>
+          <h1 className="text-title">Projects</h1>
           <p className="text-muted-foreground">
             Keep related work, instructions, and chats together.
           </p>

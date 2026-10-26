@@ -4,25 +4,17 @@ import { ThemeProvider } from "@/features/theme/components/theme-context";
 import { getTheme } from "@/features/theme/server/theme-loader";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Montserrat } from "next/font/google";
+import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const schibstedGrotesk = Schibsted_Grotesk({
   subsets: ["latin"],
+  variable: "--font-ui",
 });
 
-const montserrat = Montserrat({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-monsterrat",
-  weight: ["400", "500", "600", "700"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-code",
 });
 
 export const metadata: Metadata = {
@@ -46,11 +38,9 @@ export default async function RootLayout({
         "no-scrollbar",
         "h-full",
         "antialiased",
-        geistSans.variable,
-        geistMono.variable,
+        schibstedGrotesk.variable,
+        jetbrainsMono.variable,
         "font-sans",
-        inter.variable,
-        montserrat.variable,
       )}
       suppressHydrationWarning
     >

@@ -27,7 +27,7 @@ export function WorkspaceChats({ projectId }: { projectId: string | null }) {
   return (
     <section className="flex flex-col gap-4" aria-label="Workspace chats">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium">Chats</h2>
+        <h2 className="text-heading">Chats</h2>
         <Button asChild>
           <Link href={projectId ? `/?project_id=${projectId}` : "/"}>
             New chat

@@ -186,8 +186,9 @@ for backup/reset and the single-writer deployment contract. US-31.3 disables raw
 Markdown HTML and automatic image resources, limits links and constrains KaTeX;
 see the [content policy](../../docs/architecture/markdown-content.md). EPIC-32 layout work is complete. US-33.1 repairs bundled palette and shared
 control contrast. US-33.2 adds semantic feature states, named settings/icon controls,
-inherited body typography, Geist Mono code and reduced motion while preserving
-`font-monsterrat` for the ASTERISM wordmark. See [typography, labels and motion](../../docs/architecture/frontend-and-themes.md#typography-labels-and-motion-us-332)
+inherited body typography, JetBrains Mono code and reduced motion; the wordmark
+now uses the UI face (see [ADR 0024](../../docs/adr/0024-type-system.md) for the
+type scale: `text-display`, `text-title`, `text-heading`, `text-body`, `text-meta`). See [typography, labels and motion](../../docs/architecture/frontend-and-themes.md#typography-labels-and-motion-us-332)
 and the [syntax mapping](../../docs/architecture/markdown-content.md#code-typography-and-syntax-palettes).
 US-33.3 extends these fixtures with all-theme schema/contrast gates and a
 container/height/text-size browser matrix; see the [review matrix](../../docs/architecture/theme-layout-review-matrix.md)

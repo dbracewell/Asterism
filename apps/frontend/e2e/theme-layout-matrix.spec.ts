@@ -220,12 +220,12 @@ for (const theme of themes)
           await code
             .locator("code")
             .evaluate((el) => getComputedStyle(el).fontFamily),
-        ).toMatch(/Geist Mono|Geist_Mono/);
+        ).toMatch(/JetBrains/);
         expect(
           await page
             .getByRole("heading", { name: "ASTERISM" })
             .evaluate((el) => getComputedStyle(el).fontFamily),
-        ).toMatch(/Montserrat/);
+        ).toMatch(/Schibsted/);
         await page.keyboard.press("Tab");
         const save = page.locator('[data-contrast="primary"]');
         await reachable(save);

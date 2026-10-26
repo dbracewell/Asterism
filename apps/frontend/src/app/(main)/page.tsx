@@ -61,7 +61,7 @@ export default function AppPage() {
         fill="var(--color-secondary)"
         size={250}
       />
-      <h1 className="z-1 mt-auto text-4xl font-bold">
+      <h1 className="z-1 mt-auto text-display">
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
       {project && (

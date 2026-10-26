@@ -73,7 +73,7 @@ export function FileView({ filename }: { filename: string }) {
           />
         )}
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold">
+          <h1 className="truncate text-title">
             {file.original_name}
           </h1>
           <p className="text-muted-foreground text-sm capitalize">

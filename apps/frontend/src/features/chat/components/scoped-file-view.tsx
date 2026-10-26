@@ -37,7 +37,7 @@ export function ScopedFileView({
         <p role="status">Checking source access…</p>
       ) : (
         <>
-          <h1 className="text-xl font-semibold break-all">
+          <h1 className="text-heading break-all">
             {file.data.original_name}
           </h1>
           <p>

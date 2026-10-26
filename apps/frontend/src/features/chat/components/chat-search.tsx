@@ -30,7 +30,7 @@ export const ChatSearch = () => {
   return (
     <section className="container mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 p-4 pt-16">
       <div>
-        <h1 className="text-2xl font-semibold">Search</h1>
+        <h1 className="text-title">Search</h1>
         <p className="text-muted-foreground text-sm">
           Find chats and projects by name, project description, or conversation
           content.
