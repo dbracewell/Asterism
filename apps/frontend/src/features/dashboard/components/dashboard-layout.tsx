@@ -3,6 +3,7 @@ import UserProvider from "@/features/auth/components/user-context";
 import { getCurrentUser } from "@/features/auth/server/session";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
 import { MobileSidebarTrigger } from "@/features/dashboard/components/mobile-sidebar-trigger";
+import { NavHeader } from "@/features/dashboard/components/nav-header";
 import { ThemeCheck } from "@/features/dashboard/components/theme-check";
 import { UpdateTimeZone } from "@/features/dashboard/components/update-timezone";
 import {
@@ -46,6 +47,7 @@ export const DashboardLayout = async ({
         />
         <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
           <MobileSidebarTrigger />
+          <NavHeader />
           <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col">
             {children}
           </div>

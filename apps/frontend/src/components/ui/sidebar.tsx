@@ -20,7 +20,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import Cookies from "js-cookie";
-import { PanelLeftIcon } from "lucide-react";
+import { PanelLeftOpenIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Slot } from "radix-ui";
 import React from "react";
@@ -275,22 +275,27 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar, triggerRef } = useSidebar();
-
+  const { toggleSidebar, triggerRef, isMobile } = useSidebar();
+  if (!isMobile) {
+    return null;
+  }
   return (
     <Button
       ref={triggerRef}
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
-      className={cn("size-8! [&_svg:not([class*='size-'])]:size-6!", className)}
+      className={cn(
+        "text-muted-foreground size-8! [&_svg:not([class*='size-'])]:size-6!",
+        className,
+      )}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <PanelLeftOpenIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

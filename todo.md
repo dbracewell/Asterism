@@ -14,3 +14,109 @@ No user story is currently active. Recommended next work: reconcile the four
 remaining frontend unit assertions and the model-context browser assertion.
 See the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md)
 for current evidence and verification limits.
+
+## Visual design epics (proposed)
+
+Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. Not started.
+
+### [EPIC-41: Brand foundations and design tokens](docs/epics/EPIC-41-BRAND-FOUNDATIONS-AND-DESIGN-TOKENS.md)
+
+- [ ] US-41.1: Establish the type system
+  - [ ] Compare the candidates (Schibsted Grotesk, Hanken Grotesk, Instrument Sans) on chat, settings and list screens; record the choice in an ADR note.
+  - [ ] Replace the font loading in `app/layout.tsx`; define the scale and the heading/mono tokens in `globals.css`.
+  - [ ] Migrate headings and meta text to the scale utilities; redraw `FullLogo` in the new face.
+  - [ ] Update tests and screenshot baselines; document the scale in the frontend README.
+
+- [ ] US-41.2: Ship native Atlas themes
+  - [ ] Add the bundled palettes; make them the defaults; remove the old Light/Dark defaults.
+  - [ ] Align the `:root` fallback; check prose, syntax-highlight and toast colors against both themes.
+  - [ ] Extend the bundled-palette contrast tests; update screenshots.
+
+- [ ] US-41.3: Extend themes beyond color
+  - [ ] Extend the theme schema, loader and inline style generation; reject out-of-range values.
+  - [ ] Add editor controls with a live preview; test validation and the fallbacks.
+
+- [ ] US-41.4: Shape and elevation tokens
+  - [ ] Define the tokens; migrate the feature components (chat, projects, settings, file manager).
+  - [ ] Add a lint or test guard against new ad-hoc radius/shadow classes outside `components/ui`.
+
+- [ ] US-41.5: Consolidate icons
+  - [ ] Replace the Tabler imports (`IconBrain`, `IconUserCog`, …); set the default stroke width; remove the dependency.
+
+- [ ] US-41.6: Brand assets and cleanup
+  - [ ] Produce the assets from the constellation mark; add them via Next metadata file conventions.
+  - [ ] Remove `AnimatedBorder` and its harness usages; replace hard-coded colors with tokens.
+
+### [EPIC-43: Conversation surface polish](docs/epics/EPIC-43-CONVERSATION-SURFACE-POLISH.md)
+
+- [ ] US-43.1: Message anatomy
+  - [ ] Extract `MessageItem` parts (marker, body, meta, actions) from `chat-session.tsx`.
+  - [ ] Add a relative-time formatter that respects the user's timezone setting; test it plus touch/keyboard reachability.
+
+- [ ] US-43.2: Reasoning and tool timeline
+  - [ ] Build the `AgentTimeline` component; replace the "Thinking" collapsible and the raw tool lines.
+  - [ ] Test long arguments, failures, the streaming state and `show_thinking` off.
+
+- [ ] US-43.3: Tool approval card
+  - [ ] Build the approval card; wire up the existing `tool_approval` message; test focus and repeated approvals.
+
+- [ ] US-43.4: Code blocks and prose
+  - [ ] Restyle the `prose` utilities and the `MarkdownViewer` code block; check them against all bundled themes in screenshots.
+
+- [ ] US-43.5: Citations as source chips
+  - [ ] Rebuild `RetrievalCitations`; test the previews, ownership-scoped links and long names.
+
+- [ ] US-43.6: Streaming affordances
+  - [ ] Replace `Loading`; add the scroll-anchor button; test reduced motion and scrolling behavior.
+
+### [EPIC-44: Agent constellation](docs/epics/EPIC-44-AGENT-CONSTELLATION.md)
+
+- [ ] US-44.1: Delegation graph
+  - [ ] Design the layout (deterministic placement of up to N nodes, plus an overflow strategy); build the SVG component.
+  - [ ] Map the existing activity states to node states; test state transitions and many-agent/narrow layouts.
+
+- [ ] US-44.2: Compact summary
+  - [ ] Build the summary and expand interaction; test reload and history rendering.
+
+- [ ] US-44.3: Accessibility and reduced motion
+  - [ ] Add the text equivalent, a polite live region and keyboard handling; add axe and keyboard tests.
+
+### [EPIC-45: Welcome, empty and loading states](docs/epics/EPIC-45-WELCOME-EMPTY-AND-LOADING-STATES.md)
+
+- [ ] US-45.1: New-chat hero
+  - [ ] Rebuild the hero in `app/(main)/page.tsx`; add the suggestion sources; test with a project, without one, and with no skills.
+
+- [ ] US-45.2: Skeletons for loading
+  - [ ] Add skeleton variants; replace the "Loading …" paragraphs; test that status announcements remain.
+
+- [ ] US-45.3: Empty states with a clear next step
+  - [ ] Audit the 61 `Empty` usages; standardize copy and actions; update the tests that assert on copy.
+
+- [ ] US-45.4: Sign-in and first-run screens
+  - [ ] Restyle `AuthForm` and the auth layout; keep the existing auth tests passing; update screenshots.
+
+### [EPIC-42: App shell and navigation chrome](docs/epics/EPIC-42-APP-SHELL-AND-NAVIGATION-CHROME.md)
+
+- [ ] US-42.1: Contextual header
+  - [ ] Replace `NavHeader` and `MobileSidebarTrigger` with one route-aware header component.
+  - [ ] Add breadcrumb, chip and action slots fed by route params and existing queries; reuse `ChatSessionActionMenu`.
+  - [ ] Test the breadcrumbs per route, the mobile layout and keyboard order; update screenshots.
+
+- [ ] US-42.2: Sidebar hierarchy
+  - [ ] Restyle the sidebar groups and rows; add an optional project accent (backend field, regenerated client).
+  - [ ] Test the active state and collapsed icon mode; update screenshots.
+
+- [ ] US-42.3: Shared page header and list layout
+  - [ ] Build `PageHeader` and the list layout; migrate the four pages.
+  - [ ] Update tests and screenshots.
+
+### [EPIC-46: Settings and admin visual coherence](docs/epics/EPIC-46-SETTINGS-AND-ADMIN-VISUAL-COHERENCE.md)
+
+- [ ] US-46.1: Settings hierarchy
+  - [ ] Add a settings section primitive; migrate the user and admin panes; test the sticky save bar's dirty state.
+
+- [ ] US-46.2: Theme gallery
+  - [ ] Build the preview tile from the theme variables; replace the selector; test selection, keyboard use and admin-only editing.
+
+- [ ] US-46.3: Provider and model identity
+  - [ ] Add a provider icon map (monochrome, theme-aware) and capability badges; test the labels for accessibility.

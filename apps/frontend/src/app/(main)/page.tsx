@@ -55,7 +55,7 @@ export default function AppPage() {
     models.data?.some((model) => model.id === modelId && model.available);
 
   return (
-    <div className="from-primary/5 via-primary/15 relative flex min-h-fit flex-1 shrink-0 flex-col items-center gap-6 bg-radial-[at_50%_50%] via-5% to-transparent to-60% p-2 pt-12">
+    <div className="from-primary/5 via-primary/15 relative flex min-h-fit flex-1 shrink-0 flex-col items-center bg-radial-[at_50%_50%] via-5% to-transparent to-60% p-2 pt-12">
       <Constellation
         className="repeat-[1] fill-mode-[forwards] absolute -z-10 animate-ping opacity-100 duration-500"
         fill="var(--color-secondary)"
@@ -64,7 +64,12 @@ export default function AppPage() {
       <h1 className="z-1 mt-auto text-4xl font-bold">
         Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
       </h1>
-      <div className="mb-auto flex w-full max-w-4xl flex-col gap-2">
+      {project && (
+        <p className="text-muted-foreground text-sm">
+          Create a new chat in the <b>{project.data?.name}</b> project.
+        </p>
+      )}
+      <div className="mt-6 mb-auto flex w-full max-w-4xl flex-col gap-2">
         <ChatInputContainer>
           <ChatInput
             key={projectId ?? "general"}

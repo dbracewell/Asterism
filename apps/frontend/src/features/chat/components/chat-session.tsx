@@ -40,10 +40,10 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { IconBrain } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   RotateCwIcon,
@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
-import { ExecutionLabel, ExistingChatModelPicker } from "./chat-model-picker";
+import { ExistingChatModelPicker } from "./chat-model-picker";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
@@ -447,7 +447,7 @@ export const ChatSession = ({
               isProcessing={interactionBusy}
               canRegenerate={false}
               onRegenerate={requestRegeneration}
-              defaultShowThinking
+              defaultShowThinking={user.settings.show_thinking ?? false}
               sendJsonMessage={sendJsonMessage}
             />
           )}
@@ -665,31 +665,22 @@ const MessageItem = React.memo(
           !!message.tool_calls && "mb-0!",
         )}
       >
-        {message.role === "assistant" && (
-          <ExecutionLabel execution={message.execution} />
-        )}
         {userShowThinking && (
           <Collapsible
             open={showThinking}
             onOpenChange={setShowThinking}
             className={cn(
-              "text-muted-foreground bg-muted rounded-xl p-2 text-sm",
+              "text-muted-foreground rounded-xl p-2 text-sm",
               !message.thinking && "hidden",
             )}
           >
             <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between text-left font-medium">
               <span>
-                Thinking{" "}
+                <IconBrain className="inline-block size-5" /> Thinking{" "}
                 {message.tool_calls && (
                   <>({formatPlural(message.tool_calls.length, "tool call")})</>
                 )}
               </span>
-              <ChevronDownIcon
-                className={cn(
-                  "size-4 shrink-0 transition-transform duration-200",
-                  showThinking && "rotate-180",
-                )}
-              />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2">
               <p

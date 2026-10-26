@@ -1,11 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { Button } from "@/components/ui/button";
-import { Hint } from "@/components/ui/hint";
 import { FieldSet } from "@/components/ui/field";
+import { Hint } from "@/components/ui/hint";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActiveSkillState, SkillSelection, UserFile } from "@/lib/client";
-import { SkillComposer, type SkillComposerControl } from "./skill-composer";
 import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
@@ -30,6 +29,7 @@ import {
 } from "../lib/capture";
 import { AttachMenu, type AttachAction } from "./attach-menu";
 import { ChatFileContext } from "./chat-file-context";
+import { SkillComposer, type SkillComposerControl } from "./skill-composer";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 
@@ -98,7 +98,7 @@ export const ChatInputContainer = ({
   return (
     <div
       className={cn(
-        "border-input focus-within:border-ring focus-within:ring-ring bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col rounded-2xl border shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-2",
+        "border-input focus-within:border-ring focus-within:ring-ring bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col overflow-clip rounded-2xl border shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-2",
         className,
       )}
     >

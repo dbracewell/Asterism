@@ -73,11 +73,13 @@ export function ChatPersonaPicker({
                     : "Saved persona"}
               </SelectItem>
             )}
-            {query.data?.profiles.map((profile) => (
-              <SelectItem key={profile.id} value={profile.id}>
-                {profile.name}
-              </SelectItem>
-            ))}
+            {query.data?.profiles
+              .filter((profile) => profile.id !== query.data.default_persona_id)
+              .map((profile) => (
+                <SelectItem key={profile.id} value={profile.id}>
+                  {profile.name}
+                </SelectItem>
+              ))}
           </SelectGroup>
         </SelectContent>
       </Select>
