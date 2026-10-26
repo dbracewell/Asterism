@@ -107,7 +107,9 @@ async function atomicSave(directory: string, theme: Theme) {
     if (!isMissing(error)) throw error;
   }
   const temporary = path.join(directory, `.${randomUUID()}.tmp`);
-  const data = { name: theme.name, type: theme.type, colors: theme.colors };
+  // Persist only validated theme fields; the filename is the storage key.
+  const { filename: _filename, ...data } = theme;
+  void _filename;
   let file;
   try {
     file = await fs.open(temporary, "wx", 0o600);
@@ -163,7 +165,7 @@ export function createThemeRepository(
     if (!parsed.success)
       throw new ThemeRepositoryError(
         "INVALID_THEME",
-        "Check the theme name, ID and hex colors.",
+        "Check the theme name, ID, hex colors and shape values.",
       );
     try {
       // Resolve a canonical queue key before serializing name checks and writes.

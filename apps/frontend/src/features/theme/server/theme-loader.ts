@@ -6,7 +6,7 @@ import {
   FONT_SIZE_COOKIE,
   THEME_NAME_COOKIE,
 } from "@/features/theme/constants";
-import { convertToCssVariables } from "@/features/theme/lib/utils";
+import { themeToCssVariables } from "@/features/theme/lib/utils";
 import { getAllThemes } from "./catalog";
 import { cookies } from "next/headers";
 
@@ -22,9 +22,7 @@ export async function getTheme() {
     themeNameCookie = DEFAULT_THEME_NAME;
   }
   const currentTheme = allThemes[themeNameCookie];
-  const themeStyles = convertToCssVariables(
-    currentTheme.colors,
-  ) as React.CSSProperties;
+  const themeStyles = themeToCssVariables(currentTheme) as React.CSSProperties;
   const mode = currentTheme.type;
 
   return {

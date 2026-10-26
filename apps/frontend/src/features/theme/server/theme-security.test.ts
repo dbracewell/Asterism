@@ -165,6 +165,10 @@ describe("direct editor actions", () => {
     { ...atlas, name: " " },
     { ...atlas, type: "invalid" },
     { ...atlas, unknown: true },
+    { ...atlas, radius: 2 },
+    { ...atlas, radius: "1rem; background: url(x)" },
+    { ...atlas, shadow: "0 0 40px red" },
+    { ...atlas, density: "spacious" },
   ])("rejects malformed payload before IO", async (input) => {
     await rm(directory, { recursive: true });
     expect(await saveTheme(input)).toMatchObject({

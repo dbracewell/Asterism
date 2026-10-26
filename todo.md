@@ -32,9 +32,9 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Align the `:root` fallback; check prose, syntax-highlight and toast colors against both themes.
   - [x] Extend the bundled-palette contrast tests; update screenshots.
 
-- [ ] US-41.3: Extend themes beyond color
-  - [ ] Extend the theme schema, loader and inline style generation; reject out-of-range values.
-  - [ ] Add editor controls with a live preview; test validation and the fallbacks.
+- [x] US-41.3: Extend themes beyond color
+  - [x] Extend the theme schema, loader and inline style generation; reject out-of-range values.
+  - [x] Add editor controls with a live preview; test validation and the fallbacks.
 
 - [ ] US-41.4: Shape and elevation tokens
   - [ ] Define the tokens; migrate the feature components (chat, projects, settings, file manager).

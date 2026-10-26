@@ -25,6 +25,16 @@ import {
 import { useTheme } from "@/features/theme/components/theme-context";
 import { saveTheme } from "@/features/theme/server/actions";
 import { Theme } from "@/features/theme/types";
+import {
+  ATLAS_SHAPE,
+  THEME_RADIUS_MAX,
+  THEME_RADIUS_MIN,
+} from "@/features/theme/constants";
+import {
+  resolveThemeShape,
+  themeToCssVariables,
+} from "@/features/theme/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { prettyText } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,9 +46,15 @@ import {
   PlusIcon,
   SaveIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { HexColorPicker } from "react-colorful";
-import { Controller, ControllerRenderProps, useForm } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  ControllerRenderProps,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import z from "zod";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -192,6 +208,11 @@ const ThemeGroups = [
   { background: "border" },
   { background: "input" },
   { background: "ring" },
+  { background: "chart-1" },
+  { background: "chart-2" },
+  { background: "chart-3" },
+  { background: "chart-4" },
+  { background: "chart-5" },
 ];
 
 const ThemeSchema = themeDataSchema.extend({
@@ -202,9 +223,10 @@ type ThemeFormValues = z.infer<typeof ThemeSchema>;
 type ThemeColorKey = keyof typeof ThemeColorsSchema.shape;
 type ColorPath = `colors.${ThemeColorKey}`;
 
+// Shape fields are optional in storage; the editor shows the resolved values.
 const prepareFormData = ({ theme }: { theme?: Theme }) => {
   if (theme) {
-    return theme;
+    return { ...theme, ...resolveThemeShape(theme) };
   }
   const entries = (Object.keys(ThemeColorsSchema.shape) as ThemeColorKey[]).map(
     (key) => [key, "#ffffff"],
@@ -213,6 +235,7 @@ const prepareFormData = ({ theme }: { theme?: Theme }) => {
     type: "light",
     filename: "",
     name: "",
+    ...ATLAS_SHAPE,
     colors: Object.fromEntries(entries),
   } as ThemeFormValues;
 };
@@ -388,6 +411,93 @@ const ThemeForm = ({
               </div>
             ))}
           </div>
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 @md:grid-cols-3">
+            <Controller
+              control={control}
+              name="radius"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-theme-radius">
+                    Corner radius (rem)
+                  </FieldLabel>
+                  <Input
+                    id="form-theme-radius"
+                    type="number"
+                    inputMode="decimal"
+                    min={THEME_RADIUS_MIN}
+                    max={THEME_RADIUS_MAX}
+                    step={0.05}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={Number.isFinite(field.value) ? field.value : ""}
+                    onChange={(event) =>
+                      field.onChange(
+                        event.target.value === ""
+                          ? undefined
+                          : event.target.valueAsNumber,
+                      )
+                    }
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              control={control}
+              name="shadow"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-theme-shadow">Shadows</FieldLabel>
+                  <Select
+                    name={field.name}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger
+                      id="form-theme-shadow"
+                      aria-invalid={fieldState.invalid}
+                    >
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent position="item-aligned">
+                      <SelectItem value="soft">Soft</SelectItem>
+                      <SelectItem value="flat">Flat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+            <Controller
+              control={control}
+              name="density"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-theme-density">Density</FieldLabel>
+                  <Select
+                    name={field.name}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger
+                      id="form-theme-density"
+                      aria-invalid={fieldState.invalid}
+                    >
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent position="item-aligned">
+                      <SelectItem value="comfortable">Comfortable</SelectItem>
+                      <SelectItem value="compact">Compact</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+          </div>
+          <ThemePreview control={control} />
         </FieldGroup>
       </FieldSet>
       {save.isError && <FieldError errors={[save.error]} />}
@@ -410,6 +520,74 @@ const ThemeForm = ({
         </Button>
       </div>
     </form>
+  );
+};
+
+const previewSchema = themeDataSchema.pick({
+  colors: true,
+  radius: true,
+  shadow: true,
+  density: true,
+});
+
+// Custom properties inherit, so the preview re-scopes the draft theme locally.
+const ThemePreview = ({ control }: { control: Control<ThemeFormValues> }) => {
+  const values = useWatch({ control });
+  const parsed = previewSchema.safeParse({
+    colors: values.colors,
+    radius: values.radius,
+    shadow: values.shadow,
+    density: values.density,
+  });
+  const style = parsed.success
+    ? (themeToCssVariables(parsed.data) as CSSProperties)
+    : undefined;
+  return (
+    <section aria-label="Theme preview" className="flex min-w-0 flex-col gap-1">
+      <h3 className="text-muted-foreground text-sm font-medium">Preview</h3>
+      {style == null ? (
+        <p className="text-muted-foreground text-sm">
+          Preview resumes when every value is valid.
+        </p>
+      ) : (
+        <div
+          data-testid="theme-preview"
+          style={style}
+          className={cn(
+            "bg-background text-foreground min-w-0 rounded-lg border p-4",
+            values.type === "dark" && "dark",
+          )}
+        >
+          <div className="bg-card text-card-foreground flex flex-col gap-3 rounded-xl border p-4 shadow-md">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-heading">Sample project</span>
+              <Badge>Ready</Badge>
+              <Badge variant="outline">3 files</Badge>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Supporting text on the card surface.
+            </p>
+            <Input
+              aria-label="Preview input"
+              placeholder="Ask anything"
+              tabIndex={-1}
+              readOnly
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" tabIndex={-1}>
+                Primary
+              </Button>
+              <Button type="button" variant="outline" tabIndex={-1}>
+                Outline
+              </Button>
+              <Button type="button" variant="secondary" tabIndex={-1}>
+                Secondary
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 };
 

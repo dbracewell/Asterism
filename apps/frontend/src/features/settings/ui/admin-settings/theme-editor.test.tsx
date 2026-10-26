@@ -15,16 +15,17 @@ import type { Theme } from "@/features/theme/types";
 import atlas from "@/features/theme/bundled/atlas.json";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const { saveTheme, refresh } = vi.hoisted(() => ({
+const { saveTheme, refresh, catalog } = vi.hoisted(() => ({
   saveTheme: vi.fn(),
   refresh: vi.fn(),
+  catalog: { theme: null as Theme | null },
 }));
 vi.mock("@/features/theme/server/actions", () => ({ saveTheme }));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
     lightThemes: [{ ...atlas, filename: "atlas" }],
     darkThemes: [],
-    getTheme: () => ({ ...atlas, filename: "atlas" }),
+    getTheme: () => catalog.theme ?? { ...atlas, filename: "atlas" },
     refresh,
   }),
 }));
@@ -45,7 +46,10 @@ function show() {
   );
   return { invalidated };
 }
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  catalog.theme = null;
+});
 
 describe("theme save feedback", () => {
   it("names creation and duplication actions and opens a named copy draft", () => {
@@ -102,8 +106,7 @@ describe("theme save feedback", () => {
       finish({
         ok: true,
         theme: {
-          ...atlas,
-          type: "light",
+          ...(atlas as Theme),
           name: "Kept draft",
           filename: "atlas",
         },
@@ -161,5 +164,69 @@ describe("theme save feedback", () => {
     fireEvent.click(screen.getByRole("button", { name: atlas.name }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue(atlas.name);
+  });
+});
+
+describe("theme shape controls", () => {
+  it("shows Atlas shape values for a theme that omits them", () => {
+    const { radius, shadow, density, ...colorsOnly } = atlas as Theme;
+    void [radius, shadow, density];
+    catalog.theme = { ...colorsOnly, filename: "atlas" };
+    show();
+    fireEvent.click(screen.getByRole("button", { name: atlas.name }));
+    expect(screen.getByLabelText("Corner radius (rem)")).toHaveValue(0.45);
+    expect(screen.getByLabelText("Shadows")).toHaveTextContent("Soft");
+    expect(screen.getByLabelText("Density")).toHaveTextContent("Comfortable");
+    expect(
+      screen.getByTestId("theme-preview").style.getPropertyValue("--radius"),
+    ).toBe("0.45rem");
+  });
+  it("previews draft radius and colors live, scoped to the preview", () => {
+    show();
+    fireEvent.click(screen.getByRole("button", { name: atlas.name }));
+    fireEvent.change(screen.getByLabelText("Corner radius (rem)"), {
+      target: { value: "1" },
+    });
+    const preview = screen.getByTestId("theme-preview");
+    expect(preview.style.getPropertyValue("--radius")).toBe("1rem");
+    expect(preview.style.getPropertyValue("--background")).toBe(
+      atlas.colors.background,
+    );
+    expect(preview.style.getPropertyValue("--elevation")).toBe("1");
+    expect(preview.style.getPropertyValue("--spacing")).toBe("0.25rem");
+    expect(document.documentElement.style.getPropertyValue("--radius")).toBe(
+      "",
+    );
+  });
+  it("rejects an out-of-range radius without saving", async () => {
+    show();
+    fireEvent.click(screen.getByRole("button", { name: atlas.name }));
+    fireEvent.change(screen.getByLabelText("Corner radius (rem)"), {
+      target: { value: "3" },
+    });
+    expect(screen.queryByTestId("theme-preview")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    // The native range constraint and the Zod schema both block the save.
+    expect(screen.getByLabelText("Corner radius (rem)")).toBeInvalid();
+    await act(async () => {});
+    expect(saveTheme).not.toHaveBeenCalled();
+  });
+  it("saves the edited shape values", async () => {
+    saveTheme.mockResolvedValue({
+      ok: true,
+      theme: { ...atlas, filename: "atlas", radius: 0.2 },
+    });
+    show();
+    fireEvent.click(screen.getByRole("button", { name: atlas.name }));
+    fireEvent.change(screen.getByLabelText("Corner radius (rem)"), {
+      target: { value: "0.2" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(saveTheme).toHaveBeenCalled());
+    expect(saveTheme.mock.calls[0][0]).toMatchObject({
+      radius: 0.2,
+      shadow: "soft",
+      density: "comfortable",
+    });
   });
 });
