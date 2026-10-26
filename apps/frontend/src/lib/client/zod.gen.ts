@@ -1533,7 +1533,7 @@ export const zUserFileList = z.object({
  * domain; ``models`` is the list of all active models across providers.
  */
 export const zUserSettings = z.object({
-  theme: z.string().optional().default("light"),
+  theme: z.string().optional().default("atlas"),
   font_size: z.string().optional().default("16px"),
   models: z.array(zLlmDisplayInfo).optional(),
   default_model_id: z.uuid().nullish(),

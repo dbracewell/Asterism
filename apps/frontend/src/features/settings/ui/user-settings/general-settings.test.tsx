@@ -10,13 +10,13 @@ vi.mock("@/features/settings/hooks/use-update-user-settings", () => ({
   }),
 }));
 vi.mock("@/features/auth/components/user-context", () => ({
-  useUser: () => ({ settings: { theme: "light", font_size: "16px" } }),
+  useUser: () => ({ settings: { theme: "atlas", font_size: "16px" } }),
 }));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
     setTheme: vi.fn(),
     setFontSize: vi.fn(),
-    lightThemes: [{ filename: "light", name: "Light" }],
+    lightThemes: [{ filename: "atlas", name: "Atlas" }],
     darkThemes: [],
   }),
 }));

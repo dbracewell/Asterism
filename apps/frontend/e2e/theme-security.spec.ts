@@ -7,7 +7,7 @@ test("public catalog rejects traversal and preserves sign-in theme selection", a
   const catalog = await page.request.get("/api/theme/list");
   expect(catalog.status()).toBe(200);
   const entries: { filename: string; name: string }[] = await catalog.json();
-  expect(entries.some((theme) => theme.filename === "dark")).toBe(true);
+  expect(entries.some((theme) => theme.filename === "night-atlas")).toBe(true);
   for (const id of [
     "../package",
     "../../package",
@@ -21,13 +21,13 @@ test("public catalog rejects traversal and preserves sign-in theme selection", a
     expect(response.status()).toBe(400);
     expect(await response.text()).not.toContain('"dependencies"');
   }
-  const palette = await page.request.get("/api/theme?name=dark");
+  const palette = await page.request.get("/api/theme?name=night-atlas");
   expect(palette.status()).toBe(200);
   const dark = await palette.json();
   await context.addCookies([
     {
       name: "asterism-custom-theme-name",
-      value: "dark",
+      value: "night-atlas",
       url: "http://localhost:3100",
     },
   ]);

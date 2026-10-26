@@ -62,9 +62,9 @@ every semantic variable, including the sidebar and chart variables. They are the
 defaults, pass the existing contrast tests, and `:root` in `globals.css` matches
 Atlas.
 
-- [ ] Add the bundled palettes; make them the defaults; remove the old Light/Dark defaults.
-- [ ] Align the `:root` fallback; check prose, syntax-highlight and toast colors against both themes.
-- [ ] Extend the bundled-palette contrast tests; update screenshots.
+- [x] Add the bundled palettes; make them the defaults; remove the old Light/Dark defaults.
+- [x] Align the `:root` fallback; check prose, syntax-highlight and toast colors against both themes.
+- [x] Extend the bundled-palette contrast tests; update screenshots.
 
 ## US-41.3: Extend themes beyond color
 
