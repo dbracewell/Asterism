@@ -58,20 +58,20 @@ for (const theme of [
     const logo = page.getByRole("heading", { name: "ASTERISM" });
     expect(
       await logo.evaluate((el) => getComputedStyle(el).fontFamily),
-    ).toMatch(/Montserrat/);
+    ).toMatch(/Schibsted/);
     const fonts = await page
       .locator("pre, pre code, pre code span")
       .evaluateAll((nodes) =>
         nodes.map((el) => getComputedStyle(el).fontFamily),
       );
     expect(fonts.length).toBeGreaterThan(2);
-    for (const font of fonts) expect(font).toMatch(/Geist Mono|Geist_Mono/);
+    for (const font of fonts) expect(font).toMatch(/JetBrains/);
     expect(
       await page
         .locator("code")
         .first()
         .evaluate((el) => getComputedStyle(el).fontFamily),
-    ).toMatch(/Geist Mono|Geist_Mono/);
+    ).toMatch(/JetBrains/);
     await expect(
       page.getByRole("alert").filter({ hasText: "Failed to load image" }),
     ).toBeVisible();

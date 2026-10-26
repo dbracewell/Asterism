@@ -22,12 +22,12 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 ### [EPIC-41: Brand foundations and design tokens](docs/epics/EPIC-41-BRAND-FOUNDATIONS-AND-DESIGN-TOKENS.md)
 
 - [ ] US-41.1: Establish the type system
-  - [ ] Compare the candidates (Schibsted Grotesk, Hanken Grotesk, Instrument Sans) on chat, settings and list screens; record the choice in an ADR note.
-  - [ ] Replace the font loading in `app/layout.tsx`; define the scale and the heading/mono tokens in `globals.css`.
-  - [ ] Migrate headings and meta text to the scale utilities; redraw `FullLogo` in the new face.
-  - [ ] Update tests and screenshot baselines; document the scale in the frontend README.
+  - [x] Compare the candidates (Schibsted Grotesk, Hanken Grotesk, Instrument Sans) on chat, settings and list screens; record the choice in an ADR note.
+  - [x] Replace the font loading in `app/layout.tsx`; define the scale and the heading/mono tokens in `globals.css`.
+  - [x] Migrate headings and meta text to the scale utilities; redraw `FullLogo` in the new face.
+  - [x] Update tests and screenshot baselines; document the scale in the frontend README.
 
-- [ ] US-41.2: Ship native Atlas themes
+- [x] US-41.2: Ship native Atlas themes
   - [ ] Add the bundled palettes; make them the defaults; remove the old Light/Dark defaults.
   - [ ] Align the `:root` fallback; check prose, syntax-highlight and toast colors against both themes.
   - [ ] Extend the bundled-palette contrast tests; update screenshots.

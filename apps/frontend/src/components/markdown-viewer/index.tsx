@@ -127,7 +127,7 @@ const MarkdownViewer = ({
                     PreTag="pre"
                     codeTagProps={{ style: { fontFamily: "inherit" } }}
                     customStyle={{
-                      fontFamily: "var(--font-geist-mono), monospace",
+                      fontFamily: "var(--font-mono)",
                       margin: 0,
                       fontSize: codeFontSize ?? globalTheme.fontSize,
                       borderTopLeftRadius: 0,

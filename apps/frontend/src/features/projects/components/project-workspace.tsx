@@ -60,7 +60,7 @@ export function ProjectWorkspace({
         <>
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold">{project.data.name}</h1>
+              <h1 className="text-title">{project.data.name}</h1>
               <p className="text-muted-foreground">
                 {settings
                   ? "Project settings"

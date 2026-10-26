@@ -124,7 +124,7 @@ export function AuthForm({
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="flex items-center justify-center gap-1">
               <Constellation size={50} />
-              <h1 className="font-monsterrat text-xl font-bold">ASTERISM</h1>
+              <h1 className="text-heading">Asterism</h1>
             </div>
 
             <FieldDescription>

@@ -60,7 +60,7 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
       aria-label="Project files"
       className="flex min-h-96 flex-col gap-3"
     >
-      <h2 className="text-lg font-semibold">Project files</h2>
+      <h2 className="text-heading">Project files</h2>
       <p className="text-muted-foreground text-sm">
         Files here are shared with chats in this project. Removing a file keeps
         it in your library and other projects.

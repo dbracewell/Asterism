@@ -99,7 +99,7 @@ for (const width of [320, 390]) {
     const brand = sidebar.getByRole("heading", { name: "ASTERISM" });
     expect(
       await brand.evaluate((el) => getComputedStyle(el).fontFamily),
-    ).toMatch(/Montserrat/);
+    ).toMatch(/Schibsted/);
     const headerBounds = await sidebar.evaluate((el) => {
       const heading = el.querySelector("h1")!.getBoundingClientRect();
       const close = el
