@@ -3,7 +3,9 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { themeColorsSchema, themeDataSchema, themeIdSchema } from "./schemas";
 import { contrastRatio, themeNonTextPairs, themeTextPairs } from "./contrast";
-import { DEFAULT_THEME_NAME } from "./constants";
+import { ATLAS_SHAPE, DEFAULT_THEME_NAME } from "./constants";
+import { resolveThemeShape, themeToCssVariables } from "./lib/utils";
+import type { Theme } from "./types";
 vi.mock("server-only", () => ({}));
 import { bundledThemes } from "./bundled";
 
@@ -26,6 +28,10 @@ it("ships Atlas and Night Atlas as the native light and dark palettes", () => {
   });
   expect(DEFAULT_THEME_NAME).toBe("atlas");
 });
+it("declares the Atlas shape that omitted theme values fall back to", () => {
+  expect(resolveThemeShape(bundledThemes.atlas as Theme)).toEqual(ATLAS_SHAPE);
+  expect(resolveThemeShape({})).toEqual(ATLAS_SHAPE);
+});
 it("keeps the :root fallback identical to Atlas", () => {
   const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
   const root = css.match(/^:root \{([^}]*)\}/m)![1];
@@ -35,8 +41,10 @@ it("keeps the :root fallback identical to Atlas", () => {
       value.trim(),
     ]),
   );
-  for (const [key, value] of Object.entries(bundledThemes.atlas.colors))
-    expect(declared[key], key).toBe(value);
+  for (const [key, value] of Object.entries(
+    themeToCssVariables(bundledThemes.atlas as Theme),
+  ))
+    expect(declared[key.slice(2)], key).toBe(value);
 });
 it("covers every declared foreground role", () => {
   expect(themeTextPairs.map(([foreground]) => foreground).sort()).toEqual(

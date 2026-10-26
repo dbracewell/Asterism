@@ -32,8 +32,15 @@ export interface ThemeColors {
   "sidebar-ring": string;
 }
 
+export type ThemeShadow = "flat" | "soft";
+export type ThemeDensity = "comfortable" | "compact";
+
 export type CssVariableTheme = {
   [K in keyof ThemeColors as `--${K}`]: string;
+} & {
+  "--radius": string;
+  "--elevation": string;
+  "--spacing": string;
 };
 
 export type Theme = {
@@ -41,4 +48,7 @@ export type Theme = {
   filename: string;
   type: "dark" | "light";
   colors: ThemeColors;
+  radius?: number;
+  shadow?: ThemeShadow;
+  density?: ThemeDensity;
 };

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { THEME_RADIUS_MAX, THEME_RADIUS_MIN } from "./constants";
 
 export const themeIdSchema = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,79}$/);
 const hexColor = z.string().regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
@@ -44,6 +45,10 @@ export const themeDataSchema = z.strictObject({
     .regex(/^[^\x00-\x1f\x7f]+$/),
   type: z.enum(["dark", "light"]),
   colors: themeColorsSchema,
+  // Optional shape values; omitted values fall back to ATLAS_SHAPE.
+  radius: z.number().min(THEME_RADIUS_MIN).max(THEME_RADIUS_MAX).optional(),
+  shadow: z.enum(["flat", "soft"]).optional(),
+  density: z.enum(["comfortable", "compact"]).optional(),
 });
 export const themeSaveSchema = themeDataSchema.extend({
   filename: z.union([themeIdSchema, z.literal(""), z.null()]).optional(),

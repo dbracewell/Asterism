@@ -250,7 +250,9 @@ Atlas (default light) and Night Atlas (dark) are the native palettes; the six
 other bundled themes are optional presets that retain documented source palettes and
 accessibility adaptations. Every palette also defines `chart-1`…`chart-5`, and the
 `:root` fallback in `globals.css` mirrors Atlas (enforced by `bundled-palettes.test.ts`,
-which also checks 3:1 input/focus boundaries). Shared controls use distinct input boundaries, opaque focus rings and
+which also checks 3:1 input/focus boundaries). Themes may also set `radius`,
+`shadow` (soft/flat) and `density` (comfortable/compact); omitted values fall
+back to Atlas. See [shape values](../../docs/architecture/theme-storage.md#shape-values-us-413). Shared controls use distinct input boundaries, opaque focus rings and
 readable hover/selected states. See the [palette mapping and review contract](../../docs/architecture/bundled-theme-palettes.md).
 The test-only `/e2e/theme-contrast` route exercises production controls with each
 cookie-selected theme; `e2e/theme-contrast.spec.ts` records text, boundary and focus

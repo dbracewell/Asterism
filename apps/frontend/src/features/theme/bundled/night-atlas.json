@@ -1,6 +1,9 @@
 {
   "name": "Night Atlas",
   "type": "dark",
+  "radius": 0.45,
+  "shadow": "soft",
+  "density": "comfortable",
   "colors": {
     "background": "#0e1424",
     "foreground": "#dce3f5",

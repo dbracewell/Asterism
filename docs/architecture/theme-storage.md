@@ -19,10 +19,11 @@ No database schema, data migration, legacy directory reader, or fallback to form
 
 ## Files and reads
 
-Each custom file is `<catalog-id>.json`, containing only `name`, `type`, and the
-complete `colors` map. The ID is the filename stem; `filename` is response metadata,
-not a persisted JSON field. The strict runtime schema rejects unknown fields,
-invalid hex colors and invalid names/IDs. New palette IDs are server-generated
+Each custom file is `<catalog-id>.json`, containing `name`, `type`, the complete
+`colors` map and the optional shape fields `radius`, `shadow` and `density`. The ID
+is the filename stem; `filename` is response metadata, not a persisted JSON field.
+The strict runtime schema rejects unknown fields, invalid hex colors, invalid
+names/IDs and out-of-range shape values. New palette IDs are server-generated
 UUIDs. Editing a bundled ID writes an override with that ID; the bundle is never
 modified. Theme names must be unique, case-insensitively, across the effective
 catalog; updates exclude their own ID from the check.
@@ -41,6 +42,24 @@ The configured root and local deployment filesystem are trusted. Palette JSON is
 public presentation data; never store secrets there. It is served only through
 validated catalog APIs and server-rendered metadata, not from a writable public
 asset directory.
+
+## Shape values (US-41.3)
+
+| Field     | Values                     | Atlas fallback | CSS variable                         |
+| --------- | -------------------------- | -------------- | ------------------------------------ |
+| `radius`  | number of rem, `0`–`1.25`  | `0.45`         | `--radius` (all `rounded-*` tiers)   |
+| `shadow`  | `soft` \| `flat`           | `soft`         | `--elevation` `1`/`0` scales shadows |
+| `density` | `comfortable` \| `compact` | `comfortable`  | `--spacing` `0.25rem`/`0.225rem`     |
+
+Omitted fields resolve to the Atlas values (`ATLAS_SHAPE`), so every theme sets
+every variable in the same inline style as its colors. Values are typed enums or
+bounded numbers, never raw CSS. `globals.css` redefines Tailwind's `shadow-*`
+scale with alpha multiplied by `--elevation`, so `flat` removes elevation while
+focus rings (a separate box-shadow layer) remain. Compact density scales all
+Tailwind spacing and sizing utilities by 0.9. Fonts are fixed by the brand and are
+not theme fields. The theme editor resolves omitted values for display, saves
+explicit values, and previews the draft in a locally scoped element without
+changing the page until it is saved.
 
 ## Writes, errors, and freshness
 

@@ -1,6 +1,9 @@
 {
   "name": "Atlas",
   "type": "light",
+  "radius": 0.45,
+  "shadow": "soft",
+  "density": "comfortable",
   "colors": {
     "background": "#f5f7fb",
     "foreground": "#1b2340",

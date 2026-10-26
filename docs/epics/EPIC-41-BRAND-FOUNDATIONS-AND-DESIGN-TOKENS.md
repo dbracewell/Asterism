@@ -78,8 +78,8 @@ rules. The theme editor can edit them, and omitted values fall back to Atlas.
 Fonts stay fixed by the brand unless the user decides otherwise when this story
 starts.
 
-- [ ] Extend the theme schema, loader and inline style generation; reject out-of-range values.
-- [ ] Add editor controls with a live preview; test validation and the fallbacks.
+- [x] Extend the theme schema, loader and inline style generation; reject out-of-range values.
+- [x] Add editor controls with a live preview; test validation and the fallbacks.
 
 ## US-41.4: Shape and elevation tokens
 
