@@ -11,11 +11,6 @@ import {
 import { client } from "@/lib/api";
 import { fileDeleteManyMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { isErrorDetail } from "@/lib/utils";
-import {
-  IconFileUpload,
-  IconSelectAll,
-  IconSquareOff,
-} from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Grid2X2Icon,
@@ -23,6 +18,9 @@ import {
   SearchIcon,
   Trash2Icon,
   XIcon,
+  FileUpIcon,
+  ListChecksIcon,
+  ListXIcon,
 } from "lucide-react";
 import { ReactNode, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -200,7 +198,7 @@ const SelectionSection = () => {
             setSelectedFiles(selectableFiles.map((file) => file.filename))
           }
         >
-          <IconSelectAll />
+          <ListChecksIcon />
         </Button>
       </Hint>
       <Hint hint="Clear selection" side="top" asChild>
@@ -211,7 +209,7 @@ const SelectionSection = () => {
           size="icon-lg"
           disabled={files.length === 0 || selectedFiles.length === 0}
         >
-          <IconSquareOff />
+          <ListXIcon />
         </Button>
       </Hint>
     </RibbonSection>
@@ -315,7 +313,7 @@ export const UploadFilesSection = () => {
           disabled={isMutating}
           onClick={() => fileInputRef.current?.click()}
         >
-          <IconFileUpload />
+          <FileUpIcon />
         </Button>
       </Hint>
     </RibbonSection>

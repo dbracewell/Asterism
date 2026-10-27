@@ -2,8 +2,8 @@
 import { useFileManager } from "@/components/file-manager/context";
 import { useUploadFiles } from "@/components/file-manager/hooks";
 import { Spinner } from "@/components/ui/spinner";
-import { IconCirclePlus } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { CirclePlusIcon } from "lucide-react";
 import { useState } from "react";
 
 export const UploadFileDropZone = ({
@@ -48,7 +48,7 @@ export const UploadFileDropZone = ({
           isDragOver ? "opacity-100" : "opacity-0",
         )}
       >
-        <IconCirclePlus className="mr-1" size={16} />
+        <CirclePlusIcon className="mr-1" size={16} />
         {source.kind === "project"
           ? "Drop files here to upload and add to this project"
           : "Drop files here to upload to your library"}

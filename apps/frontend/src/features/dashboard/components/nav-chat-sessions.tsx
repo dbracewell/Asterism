@@ -27,8 +27,12 @@ import {
   projectGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { IconMessage2, IconTrash } from "@tabler/icons-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  MessageSquareIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -229,7 +233,7 @@ function ScopedNavChatSessions({
                 size="icon-sm"
                 variant="destructive"
               >
-                <IconTrash />
+                <Trash2Icon />
               </Button>
             </div>
           </>
@@ -304,7 +308,7 @@ function ScopedNavChatSessions({
               tooltip={session.title || "Untitled chat"}
             >
               <Link href={`/c/${session.id}`}>
-                <IconMessage2 className="hidden group-data-[collapsible=icon]:block" />
+                <MessageSquareIcon className="hidden group-data-[collapsible=icon]:block" />
                 <span className="group-data-[collapsible=icon]:hidden">
                   {session.title || "Untitled chat"}
                 </span>

@@ -7,6 +7,10 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
+import { LucideProvider } from "lucide-react";
+
+// US-41.5: every icon shares one stroke weight; set it here, not per icon.
+export const ICON_STROKE_WIDTH = 2;
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -24,7 +28,9 @@ const queryClient = new QueryClient({
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>{children}</TooltipProvider>
+      <LucideProvider strokeWidth={ICON_STROKE_WIDTH}>
+        <TooltipProvider>{children}</TooltipProvider>
+      </LucideProvider>
     </QueryClientProvider>
   );
 }

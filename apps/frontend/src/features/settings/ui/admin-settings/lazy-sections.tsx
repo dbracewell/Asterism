@@ -6,14 +6,17 @@ import {
   AdminPaneLoading,
 } from "@/features/settings/ui/admin-settings/admin-pane-state";
 import {
-  IconCloudCog,
-  IconDatabaseExport,
-  IconImageGeneration,
-  IconPhoto,
-  IconUsersGroup,
-  IconUserShield,
-} from "@tabler/icons-react";
-import { BookOpenIcon, CodeIcon, PaletteIcon, ToolboxIcon } from "lucide-react";
+  BookOpenIcon,
+  CodeIcon,
+  PaletteIcon,
+  ToolboxIcon,
+  CloudCogIcon,
+  DatabaseBackupIcon,
+  ImagePlusIcon,
+  ImageIcon,
+  UsersRoundIcon,
+  ShieldUserIcon,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 
@@ -100,7 +103,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Providers",
     value: "providers",
     isDefault: true,
-    icon: <IconCloudCog />,
+    icon: <CloudCogIcon />,
     settingsPane: pane("Providers", <ProvidersTab />),
   },
   {
@@ -115,7 +118,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     type: "section",
     label: "Groups",
     value: "group-settings",
-    icon: <IconUsersGroup />,
+    icon: <UsersRoundIcon />,
     badge: "Planned",
     settingsPane: pane("Groups", <GroupSettings />),
   },
@@ -123,7 +126,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     type: "section",
     label: "Users",
     value: "user-permissions",
-    icon: <IconUserShield />,
+    icon: <ShieldUserIcon />,
     badge: "Planned",
     settingsPane: pane("Users", <UserPermissionsSettings />),
   },
@@ -146,7 +149,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     type: "section",
     label: "Image Generation",
     value: "image-generation",
-    icon: <IconImageGeneration />,
+    icon: <ImagePlusIcon />,
     badge: "Planned",
     settingsPane: pane("Image Generation", <ImageGenSettings />),
   },
@@ -154,7 +157,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     type: "section",
     label: "Image Captioning",
     value: "image-captioning",
-    icon: <IconPhoto />,
+    icon: <ImageIcon />,
     settingsPane: pane("Image Captioning", <CaptioningSettings />),
   },
   {
@@ -170,7 +173,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     type: "section",
     label: "Export",
     value: "export",
-    icon: <IconDatabaseExport />,
+    icon: <DatabaseBackupIcon />,
     badge: "Planned",
     settingsPane: pane("Export", <ExportSettings />),
   },
