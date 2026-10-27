@@ -24,6 +24,8 @@ export function useWorkspaceScope() {
     null;
   return {
     projectId,
+    chatId,
+    chatTitle: chat?.data?.info.title ?? null,
     refetch: chat.refetch,
     isFetching: chat.isFetching,
     pending: !!chatId && chat.isPending,
