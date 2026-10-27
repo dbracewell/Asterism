@@ -27,7 +27,7 @@ export function WorkspaceNavigationRow({
       data-workspace-row={label}
       data-active={active === true}
       className={cn(
-        "group/label hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-8 w-full shrink-0 items-center rounded-md group-data-[collapsible=icon]:hidden",
+        "group/label hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-control flex h-8 w-full shrink-0 items-center group-data-[collapsible=icon]:hidden",
         active && "bg-sidebar-accent text-sidebar-accent-foreground",
       )}
     >

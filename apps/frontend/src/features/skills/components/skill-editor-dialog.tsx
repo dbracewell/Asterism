@@ -274,7 +274,7 @@ function LoadedSkillEditor({
             <TabsContent value="preview" className="min-w-0">
               <section
                 aria-label="Skill preview"
-                className="min-h-40 min-w-0 rounded-md border p-3"
+                className="rounded-surface min-h-40 min-w-0 border p-3"
               >
                 <MarkdownViewer content={previewBody(content)} />
               </section>

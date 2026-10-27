@@ -234,7 +234,7 @@ function ScopedFileRow({
     );
   if (!file.data) return <p role="status">Loading file…</p>;
   return (
-    <div className="bg-card flex flex-wrap items-center gap-2 rounded-lg border p-2.5">
+    <div className="bg-card rounded-surface flex flex-wrap items-center gap-2 border p-2.5">
       <Link
         className="break-all underline"
         href={scopedFileHref(chatId, fileId)}

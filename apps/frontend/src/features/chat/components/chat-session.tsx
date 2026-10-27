@@ -468,7 +468,7 @@ export const ChatSession = ({
       >
         {isScrollable && (
           <Button
-            className="mx-auto shrink-0 rounded-full"
+            className="rounded-control mx-auto shrink-0"
             aria-label="Jump to latest message"
             onClick={() => {
               preventAutoScrollRef.current = false;
@@ -482,7 +482,7 @@ export const ChatSession = ({
         {socketError && (
           <div
             role="alert"
-            className="bg-destructive/10 border-destructive text-destructive mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+            className="bg-destructive/10 border-destructive text-destructive rounded-surface mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-2 border px-3 py-2 text-sm"
           >
             <p className="min-w-0 flex-1">{socketError}</p>
             <Button
@@ -609,7 +609,7 @@ const ConnectionIndicator = ({ status }: { status?: string }) => {
       <span
         aria-hidden="true"
         className={cn(
-          "size-2 rounded-full",
+          "rounded-dot size-2",
           connected ? "bg-primary" : "bg-destructive",
         )}
       />
@@ -670,7 +670,7 @@ const MessageItem = React.memo(
             open={showThinking}
             onOpenChange={setShowThinking}
             className={cn(
-              "text-muted-foreground rounded-xl p-2 text-sm",
+              "text-muted-foreground rounded-surface p-2 text-sm",
               !message.thinking && "hidden",
             )}
           >
@@ -743,7 +743,7 @@ const MessageItem = React.memo(
           className={cn(
             "flex w-full min-w-0 flex-1 flex-col",
             message.role === "user" &&
-              "bg-accent text-accent-foreground ml-auto w-fit max-w-full rounded-xl px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
+              "bg-accent text-accent-foreground rounded-surface ml-auto w-fit max-w-full px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
           )}
         />
         {!!message.tool_call_results?.length && (
@@ -826,7 +826,7 @@ const MessageItem = React.memo(
                 <Button
                   size="icon-sm"
                   variant="ghost"
-                  className="rounded-full"
+                  className="rounded-control"
                   aria-label="Regenerate response"
                   disabled={isProcessing || !canRegenerate}
                   onClick={() => onRegenerate(message.parent_message_id)}
@@ -837,7 +837,7 @@ const MessageItem = React.memo(
               <CopyButton
                 text={message.content}
                 size="icon-sm"
-                className="rounded-full"
+                className="rounded-control"
               />
             </div>
           )}
@@ -851,9 +851,9 @@ const Loading = () => {
   return (
     <div className="mt-3 flex items-center space-x-1 px-4">
       <span className="sr-only">Processing...</span>
-      <div className="bg-primary size-2 animate-bounce rounded-full [animation-delay:-0.3s]"></div>
-      <div className="bg-primary size-2 animate-bounce rounded-full [animation-delay:-0.15s]"></div>
-      <div className="bg-primary size-2 animate-bounce rounded-full"></div>
+      <div className="bg-primary rounded-dot size-2 animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="bg-primary rounded-dot size-2 animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="bg-primary rounded-dot size-2 animate-bounce"></div>
     </div>
   );
 };

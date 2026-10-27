@@ -45,7 +45,7 @@ export function MessageAttachments({
         if (file.kind === "image") {
           return (
             <div
-              className="overflow-hidden rounded-md border"
+              className="rounded-surface overflow-hidden border"
               key={file.file_id}
             >
               <APIImage

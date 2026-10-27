@@ -7,7 +7,7 @@ import {
 
 export const ImageGenSettings = () => {
   return (
-    <Empty className="rounded-lg border p-8">
+    <Empty className="rounded-surface border p-8">
       <EmptyHeader>
         <EmptyTitle>Image Generation</EmptyTitle>
         <EmptyDescription>

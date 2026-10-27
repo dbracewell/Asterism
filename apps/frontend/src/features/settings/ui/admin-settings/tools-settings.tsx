@@ -131,7 +131,7 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
           return (
             <div
               key={tool.name}
-              className="flex flex-col overflow-clip rounded border"
+              className="rounded-surface flex flex-col overflow-clip border"
             >
               <div className="bg-accent text-accent-foreground flex items-center gap-2 p-2 text-sm font-bold">
                 <Checkbox

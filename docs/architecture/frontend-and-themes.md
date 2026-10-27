@@ -225,6 +225,29 @@ normal-text pairs across seven of eight bundled themes and palette-source links.
 source attribution, composited-state checks, accessible labels, code typography
 and reduced motion. Source fidelity permits documented accessibility adaptations.
 
+## Shape and elevation tokens (US-41.4)
+
+Shape follows hierarchy. All tiers derive from the theme `--radius` (US-41.3), so
+a theme's corner radius scales every tier together; elevation is multiplied by the
+theme `--elevation` (`flat` removes it).
+
+| Utility           | Value (Atlas)         | Use                                                          |
+| ----------------- | --------------------- | ------------------------------------------------------------ |
+| `rounded-control` | 0.8 × radius (≈5.8px) | Buttons, inputs, selects, menu items, list rows, thumbnails  |
+| `rounded-surface` | 1.4 × radius (≈10px)  | Cards, panels, callouts, code blocks, images, menus/popovers |
+| `rounded-overlay` | 1.8 × radius (≈13px)  | Dialogs and the chat composer                                |
+| `rounded-chip`    | pill                  | Chips/badges only                                            |
+| `rounded-dot`     | circle                | Small status and progress indicators                         |
+| `shadow-raised`   | level 1               | Resting composer, error card, prose tables, theme preview    |
+| `shadow-overlay`  | level 2               | Dialogs, sheets, menus/popovers, focused composer            |
+
+Floating menus and popovers use the surface radius (their `p-1` padding nests the
+control-radius items cleanly) with overlay elevation. Icon buttons use the control
+radius; pills are reserved for chips. `rounded-none` and `rounded-[inherit]` remain
+structural escapes. `src/app/shape-tokens.test.ts` fails on raw `rounded*` /
+`shadow*` scale classes outside `components/ui`, `lib/client` and
+`features/theme`; shadcn primitives map their shells onto the same tokens.
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every

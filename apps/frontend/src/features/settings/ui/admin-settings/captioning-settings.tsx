@@ -90,7 +90,7 @@ function CaptioningSettingsPane() {
         </p>
       </div>
 
-      <div className="space-y-2 rounded-md border p-4">
+      <div className="rounded-surface space-y-2 border p-4">
         <h3 className="font-medium">Knowledge embeddings</h3>
         <p className="text-sm">
           Model status:{" "}
@@ -150,7 +150,7 @@ function CaptioningSettingsPane() {
 
       {draftMode === "provider" && (
         <div className="space-y-2">
-          <p className="rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
+          <p className="rounded-surface border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
             Selecting a provider sends source images to that provider for
             caption generation. Save only if this external processing is
             appropriate for your files.
@@ -190,7 +190,7 @@ function CaptioningSettingsPane() {
       )}
 
       {draftMode === "local" && (
-        <div className="space-y-2 rounded-md border p-4">
+        <div className="rounded-surface space-y-2 border p-4">
           <p className="text-sm">
             Model status: <strong>{localStatus?.status ?? "unknown"}</strong>
             {localStatus?.total_bytes

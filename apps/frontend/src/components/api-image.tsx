@@ -149,7 +149,7 @@ const ImageContent = ({
     return (
       <div
         role="alert"
-        className="border-destructive bg-destructive/10 text-destructive rounded-lg border p-4"
+        className="border-destructive bg-destructive/10 text-destructive rounded-surface border p-4"
       >
         Failed to load image
       </div>
@@ -161,7 +161,7 @@ const ImageContent = ({
       <Skeleton
         role="status"
         aria-label="Loading image"
-        className="flex items-center justify-center rounded-lg"
+        className="rounded-surface flex items-center justify-center"
         style={{
           width: width === "auto" ? 32 : width,
           height: height === "auto" ? 32 : height,
@@ -179,7 +179,7 @@ const ImageContent = ({
     return (
       <div
         role="alert"
-        className="border-destructive bg-destructive/10 text-destructive rounded-lg border p-4"
+        className="border-destructive bg-destructive/10 text-destructive rounded-surface border p-4"
       >
         No thumbnail available for this image
       </div>
@@ -219,7 +219,7 @@ const ImageContent = ({
           <img
             src={fullImageUrl ?? data.thumbnail}
             alt={alt}
-            className="max-h-[calc(100dvh-2rem)] max-w-full rounded-md object-contain"
+            className="rounded-surface max-h-[calc(100dvh-2rem)] max-w-full object-contain"
           />
         </DialogContent>
       </Dialog>

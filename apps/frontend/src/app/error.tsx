@@ -17,7 +17,7 @@ export default function Error({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-4">
-      <div className="bg-card border-destructive mx-auto flex w-full max-w-xl flex-col rounded-xl border-2 p-10 shadow">
+      <div className="bg-card border-destructive rounded-surface shadow-raised mx-auto flex w-full max-w-xl flex-col border-2 p-10">
         <h2 className="text-destructive flex items-center justify-center gap-3 text-xl font-bold">
           <OctagonXIcon /> Something went wrong
         </h2>

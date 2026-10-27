@@ -98,7 +98,7 @@ export const ChatInputContainer = ({
   return (
     <div
       className={cn(
-        "border-input focus-within:border-ring focus-within:ring-ring bg-background mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col overflow-clip rounded-2xl border shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-2",
+        "border-input focus-within:border-ring focus-within:ring-ring bg-background rounded-overlay shadow-raised focus-within:shadow-overlay mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col overflow-clip border transition-shadow focus-within:ring-2",
         className,
       )}
     >
@@ -578,7 +578,7 @@ const ChatInputCore = ({
                 type="button"
                 variant="destructive"
                 size="icon-lg"
-                className="rounded-full"
+                className="rounded-control"
                 aria-label="Stop generating"
                 onClick={onStop}
               >
@@ -588,7 +588,7 @@ const ChatInputCore = ({
               <Button
                 type="submit"
                 size="icon-lg"
-                className="rounded-full"
+                className="rounded-control"
                 disabled={isDisabled}
                 aria-label="Send message"
                 onClick={(event) => {
@@ -654,11 +654,11 @@ const AttachmentChip = ({
 }) => (
   <div
     className={cn(
-      "flex max-w-full min-w-0 items-center gap-2 rounded-xl border p-1 pr-1.5 text-xs",
+      "rounded-surface flex max-w-full min-w-0 items-center gap-2 border p-1 pr-1.5 text-xs",
       file.state === "failed" ? "border-destructive" : "border-border",
     )}
   >
-    <span className="bg-background text-foreground flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
+    <span className="bg-background text-foreground rounded-control flex size-8 shrink-0 items-center justify-center overflow-hidden border">
       {file.preview ? (
         <img alt="" className="size-full object-cover" src={file.preview} />
       ) : (
@@ -687,7 +687,7 @@ const AttachmentChip = ({
       variant="ghost"
       size="icon-xs"
       aria-label={`Remove ${file.name}`}
-      className="rounded-full"
+      className="rounded-control"
       disabled={disabled}
       onClick={onRemove}
       type="button"

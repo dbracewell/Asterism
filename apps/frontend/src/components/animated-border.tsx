@@ -17,7 +17,7 @@ export const AnimatedBorder = ({
   return (
     <div
       className={cn(
-        "from-primary/80 via-primary/50 to-primary/80 text-primary-foreground relative w-full animate-[gradient-move_3s_linear_infinite] overflow-clip rounded-[inherit] bg-linear-to-r bg-size-[200%_auto] p-1 shadow-2xl transition-shadow focus-within:shadow-[0_0_15px_rgba(122,0,255,0.5)]",
+        "from-primary/80 via-primary/50 to-primary/80 text-primary-foreground shadow-overlay focus-within:shadow-overlay relative w-full animate-[gradient-move_3s_linear_infinite] overflow-clip rounded-[inherit] bg-linear-to-r bg-size-[200%_auto] p-1 transition-shadow",
         className,
       )}
     >

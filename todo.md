@@ -36,9 +36,9 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Extend the theme schema, loader and inline style generation; reject out-of-range values.
   - [x] Add editor controls with a live preview; test validation and the fallbacks.
 
-- [ ] US-41.4: Shape and elevation tokens
-  - [ ] Define the tokens; migrate the feature components (chat, projects, settings, file manager).
-  - [ ] Add a lint or test guard against new ad-hoc radius/shadow classes outside `components/ui`.
+- [x] US-41.4: Shape and elevation tokens
+  - [x] Define the tokens; migrate the feature components (chat, projects, settings, file manager).
+  - [x] Add a lint or test guard against new ad-hoc radius/shadow classes outside `components/ui`.
 
 - [ ] US-41.5: Consolidate icons
   - [ ] Replace the Tabler imports (`IconBrain`, `IconUserCog`, …); set the default stroke width; remove the dependency.

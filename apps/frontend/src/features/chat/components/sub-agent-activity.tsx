@@ -39,7 +39,7 @@ export const SubAgentActivityPanel = ({
           key={activity.executionId}
           data-testid={`sub-agent-${activity.executionId}`}
           className={cn(
-            "bg-muted/60 border-border min-w-0 rounded-xl border px-3 py-2 text-sm [overflow-wrap:anywhere]",
+            "bg-muted/60 border-border rounded-surface min-w-0 border px-3 py-2 text-sm [overflow-wrap:anywhere]",
             activity.status === "error" && "border-destructive/60",
           )}
         >
