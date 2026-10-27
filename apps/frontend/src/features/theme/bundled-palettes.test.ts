@@ -90,6 +90,48 @@ for (const id of ids) {
   });
 }
 
+// US-41.6: status toasts and caution notes tint a surface with 10% of a role
+// with popover/foreground text; error toasts use destructive text on its tint. sRGB mixing is a
+// close stand-in for the oklab mix used in CSS; keep a margin above 4.5:1.
+function tint(role: string, surface: string, amount = 0.1) {
+  const channels = (hex: string) =>
+    [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const [r, g, b] = channels(surface).map((value, i) =>
+    Math.round(value + (channels(role)[i] - value) * amount),
+  );
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+for (const [id, raw] of Object.entries(bundledThemes)) {
+  it(`${id}: tinted status toasts and notes keep 4.5:1 text`, () => {
+    const colors = themeColorsSchema.parse(raw.colors);
+    const pairs: [string, string, string][] = [
+      [
+        "status toast",
+        colors["popover-foreground"],
+        tint(colors.primary, colors.popover),
+      ],
+      [
+        "destructive toast",
+        colors.destructive,
+        tint(colors.destructive, colors.popover),
+      ],
+      ["note on card", colors.foreground, tint(colors.primary, colors.card)],
+      [
+        "note on background",
+        colors.foreground,
+        tint(colors.primary, colors.background),
+      ],
+    ];
+    for (const [label, text, surface] of pairs) {
+      expect(
+        contrastRatio(text, surface),
+        `${id}: ${label} ${text} on ${surface}`,
+      ).toBeGreaterThanOrEqual(4.6);
+    }
+  });
+}
+
 describe("contrast calculation boundaries", () => {
   it("matches reference extremes and shorthand", () => {
     expect(contrastRatio("#000", "#fff")).toBe(21);

@@ -3,11 +3,11 @@ import { TriangleAlertIcon } from "lucide-react";
 export const SubAgentToolWarning = () => (
   <div
     role="note"
-    className="text-foreground rounded-surface flex items-start gap-2 border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+    className="text-foreground rounded-surface border-primary/40 bg-primary/10 flex items-start gap-2 border p-3 text-sm"
   >
     <TriangleAlertIcon
       aria-hidden="true"
-      className="mt-0.5 size-4 shrink-0 text-amber-500"
+      className="text-primary mt-0.5 size-4 shrink-0"
     />
     <p>
       Sub-agent tools run autonomously without asking for permission. Only

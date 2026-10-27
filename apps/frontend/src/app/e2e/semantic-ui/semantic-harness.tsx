@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { APIImage } from "@/components/api-image";
-import { AnimatedBorder } from "@/components/animated-border";
 import { FullLogo } from "@/components/full-logo";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
@@ -23,9 +22,6 @@ export function SemanticHarness() {
             "Inline `code sample`.\n\n```javascript\nconst answer = 42;\n```\n\n1. First\n2. Second"
           }
         />
-        <AnimatedBorder>
-          <p>Activity remains visible</p>
-        </AnimatedBorder>
         <APIImage filename="semantic-error.png" />
         <APIImage filename="semantic-missing.png" />
         <APIImage filename="semantic-loading.png" />

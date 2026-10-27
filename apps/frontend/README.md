@@ -259,6 +259,12 @@ readable hover/selected states. See the [palette mapping and review contract](..
 The test-only `/e2e/theme-contrast` route exercises production controls with each
 cookie-selected theme; `e2e/theme-contrast.spec.ts` records text, boundary and focus
 ratios plus screenshots. Custom theme overrides are not rewritten or certified.
+Icons come only from Lucide, with one stroke width set by `LucideProvider`
+([icons](../../docs/architecture/frontend-and-themes.md#icons-us-415)); UI colors
+come only from theme tokens (`src/app/color-tokens.test.ts`). Brand icons, the web
+manifest and the Open Graph image are generated from `src/app/icon.svg` with
+`pnpm --filter @asterism/frontend generate:icons`; see
+[brand assets](../../docs/architecture/frontend-and-themes.md#brand-assets-us-416).
 
 ## Personas
 

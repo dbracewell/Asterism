@@ -9,7 +9,6 @@ import {
 } from "@/components/markdown-viewer/test-content";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { useState } from "react";
-import { AnimatedBorder } from "@/components/animated-border";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import { ThemeSelector } from "@/components/settings/theme-selector";
 import { FontSizeSelector } from "@/components/settings/font-size-selector";
@@ -221,11 +220,6 @@ export function ThemeContrastHarness() {
                   ]}
                 />
               </div>
-            </div>
-            <div data-testid="chat-panel">
-              <AnimatedBorder>
-                <p className="text-foreground p-2">New chat panel</p>
-              </AnimatedBorder>
             </div>
             <div data-testid="composer">
               <ChatInputContainer>

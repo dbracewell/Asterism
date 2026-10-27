@@ -30,6 +30,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          // richColors: themes have no success/warning roles, so status toasts
+          // tint with primary (keeping popover text for contrast) and errors
+          // tint with destructive.
+          ...richColors("success", "--primary", "--popover-foreground"),
+          ...richColors("info", "--primary", "--popover-foreground"),
+          ...richColors("warning", "--primary", "--popover-foreground"),
+          ...richColors("error", "--destructive", "--destructive"),
         } as React.CSSProperties
       }
       toastOptions={{
@@ -41,5 +48,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
     />
   );
 };
+
+function richColors(status: string, role: string, text: string) {
+  return {
+    [`--${status}-bg`]: `color-mix(in oklab, var(${role}) 10%, var(--popover))`,
+    [`--${status}-border`]: `color-mix(in oklab, var(${role}) 40%, var(--popover))`,
+    [`--${status}-text`]: `var(${text})`,
+  };
+}
 
 export { Toaster };
