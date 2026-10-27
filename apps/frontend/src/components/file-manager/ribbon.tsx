@@ -13,14 +13,14 @@ import { fileDeleteManyMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { isErrorDetail } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
+  FileUpIcon,
   Grid2X2Icon,
+  ListChecksIcon,
   ListIcon,
+  ListXIcon,
   SearchIcon,
   Trash2Icon,
   XIcon,
-  FileUpIcon,
-  ListChecksIcon,
-  ListXIcon,
 } from "lucide-react";
 import { ReactNode, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -47,7 +47,7 @@ type RibbonSectionProps = {
 
 export const RibbonSection = ({ title, children }: RibbonSectionProps) => {
   return (
-    <div className="flex max-w-full min-w-0 flex-col items-center gap-0.5 border-l px-2">
+    <div className="flex max-w-full min-w-0 flex-col items-center gap-0.5 px-2">
       <div className="text-muted-foreground text-center text-xs">{title}</div>
       <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
         {children}
