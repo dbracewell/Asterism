@@ -1,6 +1,6 @@
 # EPIC-41: Brand foundations and design tokens
 
-Status: proposed. Source: the approved visual design audit (2026-10-26).
+Status: complete (2026-10-27). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
