@@ -231,9 +231,9 @@ function SubAgentCard({
                 : "Fixed model unavailable"}
             </span>
             {agent.model_available ? (
-              <CheckCircle2Icon className="size-4 shrink-0 text-green-500" />
+              <CheckCircle2Icon className="text-primary size-4 shrink-0" />
             ) : (
-              <XCircleIcon className="size-4 shrink-0 text-red-500" />
+              <XCircleIcon className="text-destructive size-4 shrink-0" />
             )}
           </span>
         </CardDescription>

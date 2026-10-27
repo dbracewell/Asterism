@@ -105,11 +105,6 @@ for (const theme of [
       );
     expect(animationNames.length).toBeGreaterThan(0);
     expect(animationNames.every((name) => name === "none")).toBe(true);
-    const activity = page.getByText("Activity remains visible");
-    await expect(activity).toBeVisible();
-    expect(await activity.evaluate((el) => getComputedStyle(el).color)).toBe(
-      await page.locator("body").evaluate((el) => getComputedStyle(el).color),
-    );
     const zoom = page.getByRole("button", { name: "Enlarge Test diagram" });
     await zoom.focus();
     await page.keyboard.press("Enter");

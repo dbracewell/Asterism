@@ -209,14 +209,16 @@ panes, tall dialogs, rich-content overflow and expanded composer content.
 ## Theme and component consistency
 
 Semantic variables cover text/surface, primary/secondary/muted/accent, destructive,
-border/input/ring and sidebar roles. Chart defaults remain in global CSS rather
-than the theme JSON contract. Shared shadcn components consume these variables;
+border/input/ring, chart-1…5 and sidebar roles. Shared shadcn components consume these variables;
 image/download failures, required indicators, chat errors and connection/delegation
 statuses now consume semantic roles. Errors use `destructive`; connected/completed
 indicators use `primary` with explicit status text. Context usage adds Normal,
-Elevated and Near limit text rather than relying on yellow/red alone. Library
-overlay scrims retain their own styles. AnimatedBorder pairs its inner background
-with foreground, preventing text from inheriting the outer primary foreground. Focus and destructive states use opacity,
+Elevated and Near limit text rather than relying on yellow/red alone. Cautions
+(sub-agent tools, external captioning) use a `primary` tint with a warning icon;
+modal backdrops use the theme-independent `bg-scrim` token. Since US-41.6,
+`src/app/color-tokens.test.ts` fails on Tailwind palette colors (`text-amber-500`,
+`bg-black/80`, …) anywhere in `src` and on hex/`rgb()` literals outside
+`features/theme` and the theme editor. Focus and destructive states use opacity,
 so raw token contrast measurements are only a first check.
 
 The [dated review](../reviews/2026-10-17-codebase-review.md) records 12 failing
@@ -255,6 +257,26 @@ Lucide (`lucide-react`) is the only icon set. `LucideProvider` in
 icon, so components set only size and color, never `strokeWidth`.
 `src/app/icon-library.test.ts` fails on imports from other icon packages, on
 per-icon `strokeWidth`/`absoluteStrokeWidth` props and on icon-package dependencies.
+
+## Brand assets (US-41.6)
+
+`src/app/icon.svg` is the single source for every raster brand asset;
+`pnpm --filter @asterism/frontend generate:icons` regenerates them with Playwright
+Chromium (the Open Graph render needs network access for Schibsted Grotesk):
+
+| Output                                             | Purpose                                                           |
+| -------------------------------------------------- | ----------------------------------------------------------------- |
+| `src/app/favicon.ico` (16/32/48), `icon.svg`       | Browser tab icons (Next metadata file conventions)                |
+| `src/app/apple-icon.png` (180, full bleed)         | iOS home screen                                                   |
+| `public/icon-192.png`, `icon-512.png`              | Web manifest icons                                                |
+| `public/icon-maskable-512.png`                     | Manifest `maskable` icon, mark inside the 80% safe zone           |
+| `src/app/opengraph-image.png` (1200×630) + alt.txt | Link previews (`og:image`, `twitter:image`) in Night Atlas colors |
+
+`src/app/manifest.ts` serves `/manifest.webmanifest`, taking its background and
+theme colors from the bundled Atlas palette. The root layout sets `metadataBase`
+from `PUBLIC_URL` so preview images resolve to absolute browser-facing URLs. The
+auth proxy matcher already excludes image and `.webmanifest` paths, so crawlers and
+install prompts fetch them without a session (`e2e/brand-metadata.spec.ts`).
 
 ## Typography, labels and motion (US-33.2)
 

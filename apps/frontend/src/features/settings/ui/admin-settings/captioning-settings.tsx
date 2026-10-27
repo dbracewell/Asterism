@@ -21,6 +21,7 @@ import {
   appKnowledgeEmbeddingStatusOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { TriangleAlertIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function CaptioningSettingsPane() {
@@ -150,11 +151,20 @@ function CaptioningSettingsPane() {
 
       {draftMode === "provider" && (
         <div className="space-y-2">
-          <p className="rounded-surface border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
-            Selecting a provider sends source images to that provider for
-            caption generation. Save only if this external processing is
-            appropriate for your files.
-          </p>
+          <div
+            role="note"
+            className="text-foreground rounded-surface border-primary/40 bg-primary/10 flex items-start gap-2 border p-3 text-sm"
+          >
+            <TriangleAlertIcon
+              aria-hidden="true"
+              className="text-primary mt-0.5 size-4 shrink-0"
+            />
+            <p>
+              Selecting a provider sends source images to that provider for
+              caption generation. Save only if this external processing is
+              appropriate for your files.
+            </p>
+          </div>
           <Label htmlFor="caption-provider-model">Vision model</Label>
           <Select
             value={current.provider_model_id ?? ""}

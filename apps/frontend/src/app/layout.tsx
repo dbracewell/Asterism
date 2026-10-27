@@ -2,6 +2,7 @@ import Providers from "@/app/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/features/theme/components/theme-context";
 import { getTheme } from "@/features/theme/server/theme-loader";
+import { getFrontendServerConfig } from "@/lib/server-config";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
@@ -17,10 +18,15 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-code",
 });
 
-export const metadata: Metadata = {
-  title: "Asterism",
-  description: "Where will your curiosity lead you today?",
-};
+export function generateMetadata(): Metadata {
+  return {
+    // Resolves the Open Graph image to the browser-facing origin.
+    metadataBase: new URL(getFrontendServerConfig().publicUrl),
+    title: "Asterism",
+    description: "Where will your curiosity lead you today?",
+    openGraph: { siteName: "Asterism", type: "website" },
+  };
+}
 
 export default async function RootLayout({
   children,
