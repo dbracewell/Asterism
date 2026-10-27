@@ -126,7 +126,7 @@ function ModelRow({
     onChange({ ...draft, model: { ...model, ...changes } });
 
   return (
-    <FieldGroup className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-3 rounded border p-3">
+    <FieldGroup className="rounded-surface grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-3 border p-3">
       <div className="flex min-w-0 items-center gap-2">
         <Checkbox
           id={`model-${model.id}-active`}
@@ -304,7 +304,7 @@ function ModelCatalog({
   };
 
   return (
-    <div className="bg-muted/20 mt-3 rounded border p-3">
+    <div className="bg-muted/20 rounded-surface mt-3 border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
@@ -624,7 +624,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
         </p>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
           {fields.length === 0 ? (
-            <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
+            <div className="text-muted-foreground bg-card rounded-surface m-3 flex flex-1 flex-col items-center justify-center gap-3 border border-dashed p-4 text-sm">
               <ComputerIcon className="text-muted-foreground/50 size-10" />
               <h4 className="max-w-sm text-center text-xl">
                 No providers configured yet. Add one to get started.
@@ -642,7 +642,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
             return (
               <FieldSet
                 key={field.fieldKey}
-                className="bg-background/30 min-w-0 rounded border p-4"
+                className="bg-background/30 rounded-surface min-w-0 border p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <FieldTitle className="text-base! font-medium!">

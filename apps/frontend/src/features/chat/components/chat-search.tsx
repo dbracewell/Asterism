@@ -97,7 +97,7 @@ export const ChatSearch = () => {
         );
         return result.kind === "chat" ? (
           <Link
-            className="hover:bg-accent rounded-lg border p-3 transition-colors"
+            className="hover:bg-accent rounded-surface border p-3 transition-colors"
             href={`/c/${result.id}`}
             key={`${result.kind}-${result.id}`}
           >
@@ -106,7 +106,7 @@ export const ChatSearch = () => {
         ) : (
           <Link
             href={`/projects/${result.id}`}
-            className="hover:bg-muted/50 rounded-lg border p-3"
+            className="hover:bg-muted/50 rounded-surface border p-3"
             key={`${result.kind}-${result.id}`}
           >
             {content}

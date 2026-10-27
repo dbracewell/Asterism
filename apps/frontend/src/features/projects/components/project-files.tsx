@@ -65,7 +65,7 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
         Files here are shared with chats in this project. Removing a file keeps
         it in your library and other projects.
       </p>
-      <div className="relative flex min-h-96 flex-col overflow-hidden rounded-lg border">
+      <div className="rounded-surface relative flex min-h-96 flex-col overflow-hidden border">
         <FileManager.Provider
           key={projectId}
           source={{ kind: "project", projectId }}

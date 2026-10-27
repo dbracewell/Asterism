@@ -158,7 +158,7 @@ const ThemeButton = ({
     <div className="flex items-center justify-between gap-1">
       <Button
         className={cn(
-          "min-w-0 flex-1 justify-start! truncate rounded-md p-0.5! text-left! text-xs",
+          "rounded-control min-w-0 flex-1 justify-start! truncate p-0.5! text-left! text-xs",
           currentTheme === theme.name && "bg-accent text-accent-foreground",
         )}
         variant="ghost"
@@ -291,7 +291,7 @@ const ThemeForm = ({
 
   if (theme == null) {
     return (
-      <div className="text-muted-foreground bg-card m-3 flex flex-1 flex-col items-center justify-center gap-3 rounded border border-dashed p-4 text-sm">
+      <div className="text-muted-foreground bg-card rounded-surface m-3 flex flex-1 flex-col items-center justify-center gap-3 border border-dashed p-4 text-sm">
         <PaletteIcon className="text-muted-foreground/30 size-10" />
         <h4 className="max-w-full text-center text-xl">
           Select a current theme or create a new one.
@@ -554,11 +554,11 @@ const ThemePreview = ({ control }: { control: Control<ThemeFormValues> }) => {
           data-testid="theme-preview"
           style={style}
           className={cn(
-            "bg-background text-foreground min-w-0 rounded-lg border p-4",
+            "bg-background text-foreground rounded-surface min-w-0 border p-4",
             values.type === "dark" && "dark",
           )}
         >
-          <div className="bg-card text-card-foreground flex flex-col gap-3 rounded-xl border p-4 shadow-md">
+          <div className="bg-card text-card-foreground rounded-surface shadow-raised flex flex-col gap-3 border p-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-heading">Sample project</span>
               <Badge>Ready</Badge>

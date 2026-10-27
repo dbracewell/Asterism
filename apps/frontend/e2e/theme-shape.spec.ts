@@ -47,9 +47,9 @@ for (const [theme, label] of [
           };
         });
       const soft = await measure();
-      expect(soft.radius).toBe("10.08px"); // rounded-xl = 1.4 × 0.45rem
+      expect(soft.radius).toBe("10.08px"); // rounded-surface = 1.4 × 0.45rem
       expect(soft.padding).toBe("16px");
-      expect(soft.shadow).toMatch(/rgba\(0, 0, 0, 0\.1\)/);
+      expect(soft.shadow).toMatch(/rgba\(0, 0, 0, 0\.08\)/); // shadow-raised
 
       await page.getByLabel("Corner radius (rem)").fill("1");
       await page.getByLabel("Shadows").click();

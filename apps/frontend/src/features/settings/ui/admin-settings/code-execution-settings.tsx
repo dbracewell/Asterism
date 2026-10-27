@@ -7,7 +7,7 @@ import {
 
 export const CodeExecutionSettings = () => {
   return (
-    <Empty className="rounded-lg border p-8">
+    <Empty className="rounded-surface border p-8">
       <EmptyHeader>
         <EmptyTitle>Code Execution</EmptyTitle>
         <EmptyDescription>

@@ -46,7 +46,10 @@ export const SubAgentE2EHarness = () => {
       </Button>
       <SubAgentActivityPanel activities={activities} />
       {parentResponse && (
-        <section aria-label="Parent response" className="rounded-xl border p-3">
+        <section
+          aria-label="Parent response"
+          className="rounded-surface border p-3"
+        >
           {parentResponse}
         </section>
       )}

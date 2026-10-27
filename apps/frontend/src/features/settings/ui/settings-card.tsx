@@ -69,7 +69,7 @@ export const SettingsCard = ({
       >
         <div
           className={cn(
-            "bg-card flex flex-col items-center gap-0.5 rounded-md border p-2",
+            "bg-card rounded-surface flex flex-col items-center gap-0.5 border p-2",
             isNarrow ? "flex-row" : "w-full",
           )}
         >

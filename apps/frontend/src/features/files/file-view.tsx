@@ -64,7 +64,7 @@ export function FileView({ filename }: { filename: string }) {
       <header className="flex items-start gap-4">
         {file.kind === "image" && (
           <APIImage
-            className="shrink-0 rounded object-cover"
+            className="rounded-control shrink-0 object-cover"
             filename={file.filename}
             alt={file.original_name}
             thumbnail={file.thumbnail}
@@ -73,9 +73,7 @@ export function FileView({ filename }: { filename: string }) {
           />
         )}
         <div className="min-w-0">
-          <h1 className="truncate text-title">
-            {file.original_name}
-          </h1>
+          <h1 className="text-title truncate">{file.original_name}</h1>
           <p className="text-muted-foreground text-sm capitalize">
             {file.kind} · {file.mime_type} ·{" "}
             {formatFileSize(file.size, 2, false)}
@@ -124,7 +122,7 @@ export function FileView({ filename }: { filename: string }) {
           {knowledge.isPending ? (
             <p role="status">Loading content…</p>
           ) : knowledge.error && !artifact ? null : extractedContent ? (
-            <pre className="bg-muted max-h-96 overflow-auto rounded p-3 text-sm whitespace-pre-wrap">
+            <pre className="bg-muted rounded-surface max-h-96 overflow-auto p-3 text-sm whitespace-pre-wrap">
               {extractedContent}
             </pre>
           ) : (

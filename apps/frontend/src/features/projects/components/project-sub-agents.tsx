@@ -255,7 +255,7 @@ function AgentRow({
   onClick: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+    <div className="rounded-surface flex flex-wrap items-center justify-between gap-3 border p-3">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-medium break-words">{agent.name}</p>
         <p className="text-muted-foreground text-sm break-words">

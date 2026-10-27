@@ -109,7 +109,7 @@ const MarkdownViewer = ({
               code?.className ?? "",
             )?.[1];
             return (
-              <div className="not-prose max-w-full min-w-0 rounded-md border">
+              <div className="not-prose rounded-surface max-w-full min-w-0 border">
                 <div className="flex items-center justify-between gap-2 px-2 pt-1 text-xs font-normal">
                   <span>{language ?? "Code"}</span>
                   <CopyButton text={text} />

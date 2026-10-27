@@ -22,6 +22,13 @@
   --shadow-xl:
     0 20px 25px -5px rgb(0 0 0 / calc(0.1 * var(--elevation))),
     0 8px 10px -6px rgb(0 0 0 / calc(0.1 * var(--elevation)));
+  /* Two elevation levels for feature code (US-41.4). */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / calc(0.08 * var(--elevation))),
+    0 1px 2px -1px rgb(0 0 0 / calc(0.08 * var(--elevation)));
+  --shadow-overlay:
+    0 8px 24px -6px rgb(0 0 0 / calc(0.16 * var(--elevation))),
+    0 2px 6px -2px rgb(0 0 0 / calc(0.08 * var(--elevation)));
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / calc(0.25 * var(--elevation)));
 }
 
@@ -77,6 +84,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Shape tiers (US-41.4): controls < surfaces < overlays/composer.
+     Pills are for chips only; dots are small circular indicators. */
+  --radius-control: calc(var(--radius) * 0.8);
+  --radius-surface: calc(var(--radius) * 1.4);
+  --radius-overlay: calc(var(--radius) * 1.8);
+  --radius-chip: calc(infinity * 1px);
+  --radius-dot: 50%;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -121,7 +135,7 @@
   }
 
   table {
-    @apply border-border border-collapse border shadow;
+    @apply border-border shadow-raised border-collapse border;
   }
 
   td {

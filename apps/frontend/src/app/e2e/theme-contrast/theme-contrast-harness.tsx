@@ -71,7 +71,7 @@ export function ThemeContrastHarness() {
       <div className="grid min-w-0 grid-cols-1 gap-4 @3xl/review:grid-cols-[220px_minmax(0,1fr)]">
         <SidebarProvider className="min-h-0">
           <aside
-            className="bg-sidebar text-sidebar-foreground w-full rounded-lg p-4"
+            className="bg-sidebar text-sidebar-foreground rounded-surface w-full p-4"
             aria-label="Review sidebar"
           >
             <SidebarGroupLabel data-contrast="sidebar-label">
@@ -90,7 +90,7 @@ export function ThemeContrastHarness() {
               </SidebarMenuItem>
             </SidebarMenu>
             <p
-              className="bg-sidebar-primary text-sidebar-primary-foreground mt-4 rounded p-2"
+              className="bg-sidebar-primary text-sidebar-primary-foreground rounded-control mt-4 p-2"
               data-contrast="sidebar-primary"
             >
               New conversation
@@ -254,7 +254,7 @@ export function ThemeContrastHarness() {
               <TabsContent value="general">General configuration</TabsContent>
               <TabsContent value="advanced">Advanced configuration</TabsContent>
             </Tabs>
-            <div className="bg-muted flex flex-col gap-3 rounded-lg p-4">
+            <div className="bg-muted rounded-surface flex flex-col gap-3 p-4">
               <p className="text-muted-foreground" data-contrast="muted">
                 Muted labels on a muted surface
               </p>
@@ -270,7 +270,7 @@ export function ThemeContrastHarness() {
               Could not save. Try again.
             </p>
             <div
-              className="bg-popover text-popover-foreground rounded-lg border p-4"
+              className="bg-popover text-popover-foreground rounded-surface border p-4"
               data-contrast="popover"
             >
               Popover content uses its paired text role.
@@ -284,7 +284,7 @@ export function ThemeContrastHarness() {
                 role="region"
                 aria-label="Review rich content"
                 tabIndex={0}
-                className="focus-visible:outline-ring max-h-64 min-w-0 overflow-auto rounded border p-2 focus-visible:outline-2"
+                className="focus-visible:outline-ring rounded-control max-h-64 min-w-0 overflow-auto border p-2 focus-visible:outline-2"
               >
                 <MarkdownViewer
                   content={

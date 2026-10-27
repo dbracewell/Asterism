@@ -136,7 +136,7 @@ export function AuthForm({
               ref={errorRef}
               id="auth-error"
               tabIndex={-1}
-              className="scroll-mt-6 rounded-md wrap-anywhere outline-offset-4 focus-visible:outline-2"
+              className="rounded-control scroll-mt-6 wrap-anywhere outline-offset-4 focus-visible:outline-2"
             >
               {error}
             </FieldError>

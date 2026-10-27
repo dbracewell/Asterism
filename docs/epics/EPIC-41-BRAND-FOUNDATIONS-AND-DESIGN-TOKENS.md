@@ -91,8 +91,8 @@ Acceptance: three radius tiers (control, surface, overlay/composer) and two
 elevation levels are defined. Ad-hoc `rounded-*` and `shadow-*` classes in
 feature code are replaced, and pills are reserved for chips.
 
-- [ ] Define the tokens; migrate the feature components (chat, projects, settings, file manager).
-- [ ] Add a lint or test guard against new ad-hoc radius/shadow classes outside `components/ui`.
+- [x] Define the tokens; migrate the feature components (chat, projects, settings, file manager).
+- [x] Add a lint or test guard against new ad-hoc radius/shadow classes outside `components/ui`.
 
 ## US-41.5: Consolidate icons
 

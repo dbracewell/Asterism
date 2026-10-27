@@ -100,7 +100,7 @@ export const CollapsibleSidebarGroup = ({
               actions={actions}
             />
           ) : (
-            <div className="group/label hover:bg-sidebar-accent flex w-full shrink-0 items-center rounded-md group-data-[collapsible=icon]:hidden">
+            <div className="group/label hover:bg-sidebar-accent rounded-control flex w-full shrink-0 items-center group-data-[collapsible=icon]:hidden">
               <CollapsibleTrigger asChild>
                 <Button
                   variant="sidebarGhost"

@@ -280,7 +280,7 @@ function ScopedNavChatSessions({
           <SidebarMenuItem
             key={session.id}
             className={cn(
-              "group/item hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center justify-between rounded-md",
+              "group/item hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-control flex w-full items-center justify-between",
               index >= 20 && "group-data-[collapsible=icon]:hidden",
             )}
           >

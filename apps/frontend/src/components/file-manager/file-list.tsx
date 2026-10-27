@@ -89,7 +89,7 @@ export const FileList = () => {
                   }
                 }}
                 className={cn(
-                  "hover:bg-accent/50 hover:text-accent-foreground focus-visible:ring-ring flex min-w-0 items-center gap-1 rounded-lg p-2 select-none focus-visible:ring-2 focus-visible:outline-none",
+                  "hover:bg-accent/50 hover:text-accent-foreground focus-visible:ring-ring rounded-control flex min-w-0 items-center gap-1 p-2 select-none focus-visible:ring-2 focus-visible:outline-none",
                   view === "grid"
                     ? "bg-background text-foreground flex-col border"
                     : "flex-wrap @3xl/files:flex-nowrap",
@@ -103,7 +103,7 @@ export const FileList = () => {
               >
                 {file.kind === "image" ? (
                   <APIImage
-                    className="shrink-0 rounded object-cover"
+                    className="rounded-control shrink-0 object-cover"
                     filename={file.filename}
                     alt={file.original_name}
                     thumbnail={file.thumbnail}
