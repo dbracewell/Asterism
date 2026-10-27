@@ -8,8 +8,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
-import { IconMessage2Plus } from "@tabler/icons-react";
-import { FilesIcon, SearchIcon } from "lucide-react";
+import { FilesIcon, SearchIcon, MessageSquarePlusIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,7 +23,7 @@ export const NavActions = () => {
           <SidebarMenuItem>
             <SidebarMenuButton size="lgText" tooltip="New Chat" asChild>
               <Link href={projectId ? `/?project_id=${projectId}` : "/"}>
-                <IconMessage2Plus /> <span>New Chat</span>
+                <MessageSquarePlusIcon /> <span>New Chat</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

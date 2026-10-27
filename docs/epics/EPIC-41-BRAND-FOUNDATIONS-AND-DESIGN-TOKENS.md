@@ -103,7 +103,7 @@ Estimate: 0.5 day. Dependencies: none.
 Acceptance: only Lucide is used, with one stroke width; `@tabler/icons-react` is
 removed from dependencies.
 
-- [ ] Replace the Tabler imports (`IconBrain`, `IconUserCog`, …); set the default stroke width; remove the dependency.
+- [x] Replace the Tabler imports (`IconBrain`, `IconUserCog`, …); set the default stroke width; remove the dependency.
 
 ## US-41.6: Brand assets and cleanup
 

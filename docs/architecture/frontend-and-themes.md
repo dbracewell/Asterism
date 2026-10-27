@@ -248,6 +248,14 @@ structural escapes. `src/app/shape-tokens.test.ts` fails on raw `rounded*` /
 `shadow*` scale classes outside `components/ui`, `lib/client` and
 `features/theme`; shadcn primitives map their shells onto the same tokens.
 
+## Icons (US-41.5)
+
+Lucide (`lucide-react`) is the only icon set. `LucideProvider` in
+`src/app/providers.tsx` sets one stroke width (`ICON_STROKE_WIDTH = 2`) for every
+icon, so components set only size and color, never `strokeWidth`.
+`src/app/icon-library.test.ts` fails on imports from other icon packages, on
+per-icon `strokeWidth`/`absoluteStrokeWidth` props and on icon-package dependencies.
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every

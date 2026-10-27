@@ -40,7 +40,6 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { IconBrain } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,
@@ -48,6 +47,7 @@ import {
   ChevronRightIcon,
   RotateCwIcon,
   XIcon,
+  BrainIcon,
 } from "lucide-react";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -676,7 +676,7 @@ const MessageItem = React.memo(
           >
             <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between text-left font-medium">
               <span>
-                <IconBrain className="inline-block size-5" /> Thinking{" "}
+                <BrainIcon className="inline-block size-5" /> Thinking{" "}
                 {message.tool_calls && (
                   <>({formatPlural(message.tool_calls.length, "tool call")})</>
                 )}

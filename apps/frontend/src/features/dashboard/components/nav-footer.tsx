@@ -14,8 +14,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser } from "@/features/auth/components/user-context";
 import { authClient } from "@/lib/auth-client";
-import { IconUserCog } from "@tabler/icons-react";
-import { ChevronsUpDown, LogOutIcon, Settings2Icon } from "lucide-react";
+import {
+  ChevronsUpDown,
+  LogOutIcon,
+  Settings2Icon,
+  UserCogIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 export const NavFooter = () => {
@@ -33,7 +37,7 @@ export const NavFooter = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton size="lg">
-                <IconUserCog className="group-data-[state=expanded]:size-6!" />
+                <UserCogIcon className="group-data-[state=expanded]:size-6!" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
