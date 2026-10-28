@@ -33,8 +33,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [x] US-43.3: Tool approval card
   - [x] Build the approval card; wire up the existing `tool_approval` message; test focus and repeated approvals.
 
-- [ ] US-43.4: Code blocks and prose
-  - [ ] Restyle the `prose` utilities and the `MarkdownViewer` code block; check them against all bundled themes in screenshots.
+- [x] US-43.4: Code blocks and prose
+  - [x] Restyle the `prose` utilities and the `MarkdownViewer` code block; check them against all bundled themes in screenshots.
 
 - [ ] US-43.5: Citations as source chips
   - [ ] Rebuild `RetrievalCitations`; test the previews, ownership-scoped links and long names.

@@ -78,8 +78,8 @@ new scrolling framework is introduced.
 The shared Markdown renderer wraps prose, links, inline code and omitted-image
 labels at long tokens. Tables and fenced code have bounded horizontal scroll
 regions, keyboard focus and visible focus outlines. Each code block (including
-unlabelled fences) keeps literal text and a separate copy header, so horizontal
-scrolling does not move its copy action out of reach. KaTeX's generated `.katex`
+unlabelled fences) keeps literal text and a separate header (language, wrap toggle,
+copy), so horizontal scrolling does not move its actions out of reach. KaTeX's generated `.katex`
 spans get bounded, keyboard-focusable horizontal scroll areas and start alignment
 to keep the first term accessible. Raw HTML, automatic Markdown images, URL and
 math security settings remain governed by the [content policy](markdown-content.md).
@@ -240,7 +240,7 @@ theme `--elevation` (`flat` removes it).
 | `rounded-overlay` | 1.8 × radius (≈13px)  | Dialogs and the chat composer                                |
 | `rounded-chip`    | pill                  | Chips/badges only                                            |
 | `rounded-dot`     | circle                | Small status and progress indicators                         |
-| `shadow-raised`   | level 1               | Resting composer, error card, prose tables, theme preview    |
+| `shadow-raised`   | level 1               | Resting composer, error card, theme preview                  |
 | `shadow-overlay`  | level 2               | Dialogs, sheets, menus/popovers, focused composer            |
 
 Floating menus and popovers use the surface radius (their `p-1` padding nests the
@@ -359,6 +359,35 @@ Coverage: `tool-approval-cards.test.tsx`, `tool-approval.test.ts`, the
 de-duplication test in `use-chat-websocket.test.tsx` and
 `e2e/tool-approval.spec.ts` (repeated approve/deny over the socket, keyboard
 focus, untrusted arguments and not stealing focus from the composer).
+
+## Code blocks and prose (US-43.4)
+
+`components/markdown-viewer/code-block.tsx` renders each fenced block as a
+bordered surface with a muted header: the language (`text` for unlabelled
+fences), a "Wrap long lines" toggle (`aria-pressed`, per block, default off) and
+the copy action. Wrapping switches the highlighter to `pre-wrap` and breaks long
+tokens; otherwise the body keeps its keyboard-scrollable horizontal region. The
+syntax palette still comes from `syntax-theme.ts`.
+
+The `prose` utilities in `globals.css` take every color from theme tokens:
+
+- Tables use a `bg-muted` header row with `foreground` text, thin `border` rules
+  and even body rows at 45% `muted` over the surface. Body text keeps the
+  surface's own foreground, replacing the old primary-filled header and accent
+  rows. Plain `th, td` selectors outrank Typography's first/last-child padding
+  resets so the first column is not flush with the border.
+- Links use `--primary` with a 40% primary underline that becomes solid on hover.
+  Every bundled theme's primary is at least 4.5:1 on its background and card.
+- Blockquotes use a 3px primary rule and `muted-foreground` text without
+  Typography's italics or generated quotation marks.
+- Inline code sits on a `bg-muted` chip.
+
+`e2e/prose-themes.spec.ts` renders `/e2e/prose` (prose on the page background and
+on a card) in every bundled theme. It asserts AA contrast for the header, striped
+and plain rows, links, quotes, inline code and the code language label. It checks
+that the header and the two row fills differ and attaches a full-page screenshot
+per theme. It also checks that wrapping removes horizontal scroll at 390px. The
+typography baselines were regenerated for the new code block.
 
 ## Typography, labels and motion (US-33.2)
 

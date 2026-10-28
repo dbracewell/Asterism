@@ -30,6 +30,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/responsiveness",
     "/e2e/chat-reachability",
     "/e2e/markdown",
+    "/e2e/prose",
   );
 }
 

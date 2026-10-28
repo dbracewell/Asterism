@@ -1,11 +1,10 @@
 "use client";
-import { CopyButton } from "@/components/copy-button";
 import { useTheme } from "@/features/theme/components/theme-context";
 import { cn } from "@/lib/utils";
 import "katex/dist/katex.min.css";
 import { isValidElement, type HTMLAttributes } from "react";
 import ReactMarkdown from "react-markdown";
-import SyntaxHighlighter from "react-syntax-highlighter";
+import { CodeBlock } from "./code-block";
 import { syntaxTheme } from "./syntax-theme";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
@@ -65,7 +64,7 @@ const MarkdownViewer = ({
                 role="region"
                 aria-label="Scrollable table"
                 tabIndex={0}
-                className={scrollRegion}
+                className={cn(scrollRegion, "rounded-control mb-5 last:mb-0")}
               >
                 <table {...props} className="w-max min-w-full">
                   {children}
@@ -109,37 +108,13 @@ const MarkdownViewer = ({
               code?.className ?? "",
             )?.[1];
             return (
-              <div className="not-prose rounded-surface max-w-full min-w-0 border">
-                <div className="flex items-center justify-between gap-2 px-2 pt-1 text-xs font-normal">
-                  <span>{language ?? "Code"}</span>
-                  <CopyButton text={text} />
-                </div>
-                <div
-                  role="region"
-                  aria-label="Scrollable code"
-                  tabIndex={0}
-                  className={scrollRegion}
-                >
-                  <SyntaxHighlighter
-                    suppressHydrationWarning
-                    style={codeTheme}
-                    language={language ?? "text"}
-                    PreTag="pre"
-                    codeTagProps={{ style: { fontFamily: "inherit" } }}
-                    customStyle={{
-                      fontFamily: "var(--font-mono)",
-                      margin: 0,
-                      fontSize: codeFontSize ?? globalTheme.fontSize,
-                      borderTopLeftRadius: 0,
-                      borderTopRightRadius: 0,
-                      width: "max-content",
-                      minWidth: "100%",
-                    }}
-                  >
-                    {text}
-                  </SyntaxHighlighter>
-                </div>
-              </div>
+              <CodeBlock
+                text={text}
+                language={language}
+                theme={codeTheme}
+                fontSize={codeFontSize ?? globalTheme.fontSize}
+                scrollClassName={scrollRegion}
+              />
             );
           },
           code({ children, node, ...props }) {
@@ -147,7 +122,7 @@ const MarkdownViewer = ({
             return (
               <code
                 {...props}
-                className="px-1.5 py-0.5 font-mono text-sm whitespace-pre-wrap before:content-none after:content-none"
+                className="bg-muted rounded-control px-1.5 py-0.5 font-mono text-[0.9em] font-normal whitespace-pre-wrap before:content-none after:content-none"
               >
                 {children}
               </code>

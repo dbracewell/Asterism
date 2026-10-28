@@ -71,3 +71,21 @@ $$
 
 export const fencedCode =
   "```typescript\nconst text = \"<iframe src='/untrusted-markdown/code'></iframe>\";\n```";
+
+export const proseSample =
+  `
+### Brightest stars
+
+Catalogue values from [the Hipparcos survey](https://example.test/hipparcos), with \`magnitude\` as apparent visual magnitude.
+
+| Star | Constellation | Magnitude |
+| --- | --- | --- |
+| Sirius | Canis Major | -1.46 |
+| Canopus | Carina | -0.74 |
+| Arcturus | Boötes | -0.05 |
+| Vega | Lyra | 0.03 |
+
+> Vega was the northern pole star around 12,000 BCE and will be again around 13,700 CE.
+
+` +
+  "```python\ndef brightest(stars):\n    return sorted(stars, key=lambda star: star.magnitude)[:3]  # lower magnitude is brighter, so sort ascending and keep the first three entries\n```";

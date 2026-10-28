@@ -106,7 +106,7 @@ test("untrusted replies and file text cannot install HTML or load resources; mat
     main.getByText("[Image omitted: Remote tracker]", { exact: true }),
   ).toBeVisible();
   await expect(main.getByRole("link", { name: /^unsafe/ })).toHaveCount(0);
-  await main.getByRole("button").click();
+  await main.getByRole("button", { name: "Copy" }).click();
   await expect
     .poll(() => page.evaluate(() => navigator.clipboard.readText()))
     .toBe("const text = \"<iframe src='/untrusted-markdown/code'></iframe>\";");
