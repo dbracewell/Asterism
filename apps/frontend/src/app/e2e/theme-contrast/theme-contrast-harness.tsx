@@ -10,6 +10,7 @@ import {
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { useState } from "react";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
+import { MessageLoading } from "@/features/chat/components/message/message-loading";
 import { ThemeSelector } from "@/components/settings/theme-selector";
 import { FontSizeSelector } from "@/components/settings/font-size-selector";
 import { ModelSelector } from "@/components/settings/model-selector";
@@ -220,6 +221,9 @@ export function ThemeContrastHarness() {
                   ]}
                 />
               </div>
+            </div>
+            <div data-testid="pending-reply">
+              <MessageLoading />
             </div>
             <div data-testid="composer">
               <ChatInputContainer>

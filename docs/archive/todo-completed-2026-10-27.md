@@ -42,3 +42,9 @@ serially. Six `shape-tokens` baselines were regenerated after removing the
 theme-contrast chat panel. See
 [frontend and themes](../architecture/frontend-and-themes.md) for the type
 scale, themes, shape/elevation tokens, icons, brand assets and color-token guard.
+
+Correction (US-43.1): the serial rerun did not in fact clear the 16
+`theme-layout-matrix` reduced-motion cases. Removing `AnimatedBorder` left the
+theme-contrast harness with no animated element, so `animation.length > 0`
+failed. US-43.1 adds the chat pending indicator to the harness, restoring the
+check, and regenerates the six `shape-tokens` baselines.

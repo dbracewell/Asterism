@@ -19,7 +19,15 @@ function createCache() {
   });
   return cache;
 }
-export function ChatModelSessionHarness({ draft }: { draft: boolean }) {
+export function ChatModelSessionHarness({
+  draft,
+  timezone,
+  showThinking = false,
+}: {
+  draft: boolean;
+  timezone: string;
+  showThinking?: boolean;
+}) {
   const [cache] = useState(createCache);
   return (
     <QueryClientProvider client={cache}>
@@ -29,7 +37,7 @@ export function ChatModelSessionHarness({ draft }: { draft: boolean }) {
           name: "Test",
           email: "test@example.test",
           role: "user",
-          timezone: "UTC",
+          timezone,
           settings: {
             main_agent: {
               id: "66666666-6666-4666-8666-666666666666",
@@ -39,6 +47,7 @@ export function ChatModelSessionHarness({ draft }: { draft: boolean }) {
               tools: [],
             },
             default_model_id: "11111111-1111-4111-8111-111111111111",
+            show_thinking: showThinking,
           },
         }}
       >

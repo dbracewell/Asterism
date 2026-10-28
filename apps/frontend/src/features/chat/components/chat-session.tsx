@@ -1,14 +1,6 @@
 "use client";
-import { CopyButton } from "@/components/copy-button";
-import MarkdownViewer from "@/components/markdown-viewer";
 import { QueryError } from "@/components/query-error";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/features/auth/components/user-context";
@@ -16,7 +8,8 @@ import {
   ChatInput,
   ChatInputContainer,
 } from "@/features/chat/components/chat-input";
-import { MessageAttachments } from "@/features/chat/components/message-attachments";
+import { MessageItem } from "@/features/chat/components/message/message-item";
+import { MessageLoading } from "@/features/chat/components/message/message-loading";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import {
@@ -36,27 +29,16 @@ import {
   chatModelsListOptions,
   chatSessionGetOneOptions,
   chatSessionGetOneQueryKey,
-  messageUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { formatPlural } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowDownIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  RotateCwIcon,
-  XIcon,
-  BrainIcon,
-} from "lucide-react";
+import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
-import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import { ExistingChatModelPicker } from "./chat-model-picker";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
 } from "./chat-persona-picker";
-import { RetrievalCitations } from "./retrieval-citations";
 
 const SCROLL_BOTTOM_THRESHOLD = 200;
 const AUTO_SCROLL_LOCK_THRESHOLD = 16;
@@ -422,11 +404,12 @@ export const ChatSession = ({
           </p>
         )}
         <div className="mx-auto w-full max-w-5xl">
-          {session.messages.map((message) => (
+          {session.messages.map((message, index) => (
             <MessageItem
               chatId={chatId}
               key={message.id}
               message={message}
+              startsTurn={session.messages[index - 1]?.role !== "assistant"}
               isProcessing={interactionBusy}
               canRegenerate={
                 selectedModelAvailable && connectionStatus === "Connected"
@@ -438,12 +421,13 @@ export const ChatSession = ({
 
           {!incomingMessage &&
             session.messages.length > 0 &&
-            session.messages[0].status === "pending" && <Loading />}
+            session.messages[0].status === "pending" && <MessageLoading />}
           <SubAgentActivityPanel activities={subAgentActivities} />
           {incomingMessage && (
             <MessageItem
               chatId={chatId}
               message={incomingMessage}
+              startsTurn={session.messages.at(-1)?.role !== "assistant"}
               isProcessing={interactionBusy}
               canRegenerate={false}
               onRegenerate={requestRegeneration}
@@ -616,244 +600,6 @@ const ConnectionIndicator = ({ status }: { status?: string }) => {
       <span className={connected ? "sr-only" : "text-muted-foreground"}>
         {status}
       </span>
-    </div>
-  );
-};
-
-const MessageItem = React.memo(
-  ({
-    chatId,
-    isProcessing,
-    message,
-    defaultShowThinking = false,
-    canRegenerate,
-    onRegenerate,
-    sendJsonMessage,
-  }: {
-    chatId: string;
-    isProcessing: boolean;
-    message: StreamingMessage;
-    defaultShowThinking?: boolean;
-    canRegenerate: boolean;
-    onRegenerate: (parentId?: string | null) => void;
-    sendJsonMessage: SendJsonMessage;
-  }) => {
-    const user = useUser();
-    const userShowThinking = user.settings.show_thinking ?? false;
-    const [showThinking, setShowThinking] = React.useState(defaultShowThinking);
-    const thinkingRef = React.useRef<HTMLParagraphElement>(null);
-    React.useEffect(() => {
-      if (defaultShowThinking && thinkingRef.current) {
-        thinkingRef.current.scrollTop = thinkingRef.current.scrollHeight;
-      }
-    }, [message.thinking, defaultShowThinking]);
-
-    const nodeIndex = message.current_sibling_index ?? 1;
-    const nodeCount = message.sibling_count ?? 1;
-    const prevSiblingId = message.previous_sibling_id ?? null;
-    const nextSiblingId = message.next_sibling_id ?? null;
-
-    const updateMessage = useMutation({
-      ...messageUpdateMutation({
-        client,
-      }),
-    });
-    return (
-      <div
-        className={cn(
-          "mb-5 flex min-w-0 flex-col gap-1 wrap-anywhere",
-          !!message.tool_calls && "mb-0!",
-        )}
-      >
-        {userShowThinking && (
-          <Collapsible
-            open={showThinking}
-            onOpenChange={setShowThinking}
-            className={cn(
-              "text-muted-foreground rounded-surface p-2 text-sm",
-              !message.thinking && "hidden",
-            )}
-          >
-            <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between text-left font-medium">
-              <span>
-                <BrainIcon className="inline-block size-5" /> Thinking{" "}
-                {message.tool_calls && (
-                  <>({formatPlural(message.tool_calls.length, "tool call")})</>
-                )}
-              </span>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2">
-              <p
-                ref={thinkingRef}
-                className="max-h-50 overflow-y-auto whitespace-pre-wrap select-text"
-                style={{ overflowAnchor: "auto" }}
-              >
-                {message.thinking ?? ""}
-              </p>
-              {message.tool_calls && message.tool_calls.length > 0 && (
-                <h4 className="mt-0.5 font-bold">Tools</h4>
-              )}
-              {message.tool_calls?.map((tc) => (
-                <div key={tc.id}>
-                  • {tc.function.name}{" "}
-                  {tc.function.arguments !== "{}" && tc.function.arguments}
-                </div>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-        )}
-        {message.needsPermission &&
-          message.needsPermission.map((t) => (
-            <div key={t.id}>
-              {t.name} {t.arguments}{" "}
-              <Button
-                onClick={() =>
-                  sendJsonMessage({
-                    type: "tool_approval",
-                    tool_id: t.id,
-                    approved: true,
-                  })
-                }
-              >
-                Approve
-              </Button>
-            </div>
-          ))}
-        {!!message.skills?.length && (
-          <div
-            className="flex max-w-full flex-wrap gap-1"
-            aria-label="Message skills"
-          >
-            {message.skills.map((skill) => (
-              <Badge
-                key={skill.id}
-                variant="outline"
-                className="max-w-full"
-                title={skill.name}
-              >
-                <span className="truncate">
-                  /{skill.name} · r{skill.revision}
-                </span>
-              </Badge>
-            ))}
-          </div>
-        )}
-        <MarkdownViewer
-          content={message.content}
-          className={cn(
-            "flex w-full min-w-0 flex-1 flex-col",
-            message.role === "user" &&
-              "bg-accent text-accent-foreground rounded-surface ml-auto w-fit max-w-full px-3 py-2 sm:max-w-125 md:max-w-150 xl:max-w-250",
-          )}
-        />
-        {!!message.tool_call_results?.length && (
-          <RetrievalCitations
-            chatId={chatId}
-            results={message.tool_call_results}
-          />
-        )}
-        {message.role === "user" && message.files && (
-          <MessageAttachments chatId={chatId} files={message.files} />
-        )}
-        {message.role === "assistant" && message.status === "pending" && (
-          <Loading />
-        )}
-        {message.tool_calls == null &&
-          (message.status === "completed" ||
-            message.status === "cancelled") && (
-            <div
-              className={cn(
-                "text-muted-foreground flex w-fit max-w-full flex-wrap items-center gap-1 text-xs",
-                message.role === "user" && "ml-auto",
-              )}
-            >
-              {message.role !== "user" && (
-                <span className="mr-1">
-                  {message.status === "cancelled" && "Stopped · "}
-                  {new Date(message.created_at * 1000).toLocaleString()}
-                  {(message.output_tokens ?? 0) > 0 &&
-                  (message.generation_duration_ms ?? 0) > 0
-                    ? ` · ${((message.output_tokens ?? 0) / ((message.generation_duration_ms ?? 1) / 1000)).toFixed(1)} tok/s`
-                    : ""}
-                </span>
-              )}
-
-              {nodeCount > 1 && (
-                <div className="flex items-center px-2">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => {
-                      updateMessage.mutate({
-                        path: {
-                          chat_id: chatId,
-                          message_id: message.parent_message_id!,
-                        },
-                        body: {
-                          active_child_id: prevSiblingId,
-                        },
-                      });
-                    }}
-                    aria-label="Previous response version"
-                    disabled={prevSiblingId == null || isProcessing}
-                  >
-                    <ChevronLeftIcon />
-                  </Button>
-                  {nodeIndex} / {nodeCount}
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => {
-                      updateMessage.mutate({
-                        path: {
-                          chat_id: chatId,
-                          message_id: message.parent_message_id!,
-                        },
-                        body: {
-                          active_child_id: nextSiblingId,
-                        },
-                      });
-                    }}
-                    aria-label="Next response version"
-                    disabled={nextSiblingId == null || isProcessing}
-                  >
-                    <ChevronRightIcon />
-                  </Button>
-                </div>
-              )}
-
-              {message.role !== "user" && (
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  className="rounded-control"
-                  aria-label="Regenerate response"
-                  disabled={isProcessing || !canRegenerate}
-                  onClick={() => onRegenerate(message.parent_message_id)}
-                >
-                  <RotateCwIcon />
-                </Button>
-              )}
-              <CopyButton
-                text={message.content}
-                size="icon-sm"
-                className="rounded-control"
-              />
-            </div>
-          )}
-      </div>
-    );
-  },
-);
-MessageItem.displayName = "MessageItem";
-
-const Loading = () => {
-  return (
-    <div className="mt-3 flex items-center space-x-1 px-4">
-      <span className="sr-only">Processing...</span>
-      <div className="bg-primary rounded-dot size-2 animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="bg-primary rounded-dot size-2 animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="bg-primary rounded-dot size-2 animate-bounce"></div>
     </div>
   );
 };

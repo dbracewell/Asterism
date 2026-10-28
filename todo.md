@@ -22,9 +22,9 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ### [EPIC-43: Conversation surface polish](docs/epics/EPIC-43-CONVERSATION-SURFACE-POLISH.md)
 
-- [ ] US-43.1: Message anatomy
-  - [ ] Extract `MessageItem` parts (marker, body, meta, actions) from `chat-session.tsx`.
-  - [ ] Add a relative-time formatter that respects the user's timezone setting; test it plus touch/keyboard reachability.
+- [x] US-43.1: Message anatomy
+  - [x] Extract `MessageItem` parts (marker, body, meta, actions) from `chat-session.tsx`.
+  - [x] Add a relative-time formatter that respects the user's timezone setting; test it plus touch/keyboard reachability.
 
 - [ ] US-43.2: Reasoning and tool timeline
   - [ ] Build the `AgentTimeline` component; replace the "Thinking" collapsible and the raw tool lines.
