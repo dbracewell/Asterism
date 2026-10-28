@@ -39,8 +39,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [x] US-43.5: Citations as source chips
   - [x] Rebuild `RetrievalCitations`; test the previews, ownership-scoped links and long names.
 
-- [ ] US-43.6: Streaming affordances
-  - [ ] Replace `Loading`; add the scroll-anchor button; test reduced motion and scrolling behavior.
+- [x] US-43.6: Streaming affordances
+  - [x] Replace `Loading`; add the scroll-anchor button; test reduced motion and scrolling behavior.
 
 ### [EPIC-44: Agent constellation](docs/epics/EPIC-44-AGENT-CONSTELLATION.md)
 
