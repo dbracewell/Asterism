@@ -226,16 +226,19 @@ for (const { width, height, pane, enlarged } of [
         .poll(() => region.evaluate((node) => node.scrollLeft))
         .toBeGreaterThan(0);
     }
-    const thinking = history.getByRole("button", {
-      name: "Thinking (1 tool call)",
+    const timeline = history.getByRole("button", {
+      name: "Thinking · 1 tool call",
       exact: true,
     });
-    await reachable(thinking);
+    await reachable(timeline);
     await page.keyboard.press("Enter");
-    await expect(thinking).toHaveAttribute("aria-expanded", "true");
-    const tool = history.getByText(`• synthetic_tool`, { exact: false });
-    await expect(tool).toBeVisible();
-    await expect(tool).toContainText(token);
+    await expect(timeline).toHaveAttribute("aria-expanded", "true");
+    const tool = history.getByRole("button", { name: /^synthetic_tool/ });
+    await reachable(tool);
+    await page.keyboard.press("Enter");
+    const args = history.getByRole("region", { name: "Arguments" });
+    await expect(args).toBeVisible();
+    await expect(args).toContainText(token);
     const download = history.getByRole("link", { name: "Download source.txt" });
     await reachable(download);
     expect(

@@ -26,9 +26,9 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Extract `MessageItem` parts (marker, body, meta, actions) from `chat-session.tsx`.
   - [x] Add a relative-time formatter that respects the user's timezone setting; test it plus touch/keyboard reachability.
 
-- [ ] US-43.2: Reasoning and tool timeline
-  - [ ] Build the `AgentTimeline` component; replace the "Thinking" collapsible and the raw tool lines.
-  - [ ] Test long arguments, failures, the streaming state and `show_thinking` off.
+- [x] US-43.2: Reasoning and tool timeline
+  - [x] Build the `AgentTimeline` component; replace the "Thinking" collapsible and the raw tool lines.
+  - [x] Test long arguments, failures, the streaming state and `show_thinking` off.
 
 - [ ] US-43.3: Tool approval card
   - [ ] Build the approval card; wire up the existing `tool_approval` message; test focus and repeated approvals.

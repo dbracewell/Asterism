@@ -142,7 +142,7 @@ export const ChatSession = ({
     messageListRef.current?.scrollIntoView({ behavior: "instant" });
   }, [incomingMessage]);
 
-  const { sendJsonMessage, readyState } = useChatWebSocket({
+  const { sendJsonMessage, readyState, toolTimings } = useChatWebSocket({
     chatId,
     jwtToken,
     onStatusChange: (isProcessing) => {
@@ -415,6 +415,7 @@ export const ChatSession = ({
                 selectedModelAvailable && connectionStatus === "Connected"
               }
               onRegenerate={requestRegeneration}
+              toolTimings={toolTimings}
               sendJsonMessage={sendJsonMessage}
             />
           ))}
@@ -431,7 +432,8 @@ export const ChatSession = ({
               isProcessing={interactionBusy}
               canRegenerate={false}
               onRegenerate={requestRegeneration}
-              defaultShowThinking={user.settings.show_thinking ?? false}
+              streaming
+              toolTimings={toolTimings}
               sendJsonMessage={sendJsonMessage}
             />
           )}
