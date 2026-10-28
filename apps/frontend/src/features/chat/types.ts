@@ -35,8 +35,11 @@ export type StreamingMessage = Message & {
 
 export type SubAgentActivity = {
   executionId: string;
+  /** Delegating sub-agent's execution; null when the main agent delegated. */
+  parentExecutionId: string | null;
   subAgentId: string;
   name: string;
+  modelName: string | null;
   depth: number;
   status: "running" | "completed" | "error";
   content: string;
@@ -57,8 +60,10 @@ export const updateSubAgentActivities = (
       ? activities[index]
       : {
           executionId: packet.execution_id,
+          parentExecutionId: packet.parent_execution_id ?? null,
           subAgentId: packet.sub_agent_id,
           name: packet.sub_agent_name,
+          modelName: null,
           depth: packet.depth,
           status: "running",
           content: "",
@@ -66,14 +71,18 @@ export const updateSubAgentActivities = (
           toolCalls: [],
         };
 
-  let next = previous;
+  // The name arrives once the child has resolved its fixed model binding.
+  const base: SubAgentActivity = packet.model_name
+    ? { ...previous, modelName: packet.model_name }
+    : previous;
+  let next = base;
   switch (packet.event.type) {
     case "start":
-      next = { ...previous, status: "running", error: undefined };
+      next = { ...base, status: "running", error: undefined };
       break;
     case "delta":
       next = {
-        ...previous,
+        ...base,
         status: "running",
         content: packet.event.content,
         thinking: packet.event.thinking,
@@ -81,7 +90,7 @@ export const updateSubAgentActivities = (
       break;
     case "tool_call":
       next = {
-        ...previous,
+        ...base,
         status: "running",
         content: "",
         toolCalls: packet.event.tool_calls,
@@ -89,15 +98,15 @@ export const updateSubAgentActivities = (
       break;
     case "complete":
       next = {
-        ...previous,
+        ...base,
         status: "completed",
-        content: packet.event.content || previous.content,
-        thinking: packet.event.thinking || previous.thinking,
+        content: packet.event.content || base.content,
+        thinking: packet.event.thinking || base.thinking,
       };
       break;
     case "error":
       next = {
-        ...previous,
+        ...base,
         status: "error",
         error: packet.event.content,
       };

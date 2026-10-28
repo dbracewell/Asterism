@@ -47,6 +47,7 @@
 
 @theme inline {
   --header-height: 50px;
+  --color-flare: var(--flare);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
@@ -226,6 +227,14 @@
   --sidebar-accent-foreground: #1b2340;
   --sidebar-border: #b9c3da;
   --sidebar-ring: #3b5bdb;
+}
+
+/* EPIC-41 `flare`: live agent state only. A brand constant, not a theme role. */
+body {
+  --flare: #e0a526;
+}
+.dark {
+  --flare: #f2c14e;
 }
 
 @utility no-scrollbar {

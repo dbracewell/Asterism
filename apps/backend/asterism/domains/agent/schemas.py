@@ -28,10 +28,20 @@ class AgentEventType(StrEnum):
 
 
 class SubAgentEventEnvelope(BaseModel):
+    """One child event plus the delegation's identity for live display.
+
+    ``parent_execution_id`` is the delegating sub-agent's execution (None when
+    the main agent delegated). ``model_id``/``model_name`` are the fixed model
+    binding that ran; the name is None until the child resolves its model.
+    """
+
     model_config = ConfigDict(from_attributes=True)
     execution_id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    parent_execution_id: uuid.UUID | None = None
     sub_agent_id: uuid.UUID
     sub_agent_name: str
+    model_id: uuid.UUID | None = None
+    model_name: str | None = None
     depth: int
     event: AgentEvent
 

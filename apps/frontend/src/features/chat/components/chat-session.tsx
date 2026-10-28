@@ -448,7 +448,10 @@ export const ChatSession = ({
             ) : (
               <StreamingIndicator variant="turn" />
             ))}
-          <SubAgentActivityPanel activities={subAgentActivities} />
+          <SubAgentActivityPanel
+            activities={subAgentActivities}
+            mainModel={session.info.selected_model?.name}
+          />
           {incomingMessage && (
             <MessageItem
               chatId={chatId}

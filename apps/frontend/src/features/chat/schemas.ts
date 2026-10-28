@@ -100,8 +100,13 @@ export const SubAgentChildEventSchema = z.discriminatedUnion("type", [
 export const AgentSubAgentEventSchema = z.object({
   type: z.literal("sub_agent"),
   execution_id: z.string(),
+  /** Delegating sub-agent's execution; null when the main agent delegated. */
+  parent_execution_id: z.string().nullish(),
   sub_agent_id: z.string(),
   sub_agent_name: z.string(),
+  /** The fixed model binding that ran; the name is null until resolved. */
+  model_id: z.string().nullish(),
+  model_name: z.string().nullish(),
   depth: z.number(),
   event: SubAgentChildEventSchema,
 });

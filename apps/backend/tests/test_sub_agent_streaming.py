@@ -1,10 +1,12 @@
 import uuid
+from dataclasses import replace
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from asterism.core.schemas import AuthedUser
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
+from asterism.domains.agent.execution_scope import ModelIdentity
 from asterism.domains.agent.schemas import AgentProfile, SubAgentEventEnvelope
 from asterism.domains.chat.message_queue import get_message_queue
 from asterism.domains.chat.orchestrator import ChatOrchestrator
@@ -251,12 +253,15 @@ class TestSubAgentStreaming:
         assert "Sensitive task text" not in caplog.text
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("delegation_execution_id", [None, uuid.uuid4()])
     async def test_parent_agent_event_stream_includes_sub_agent_events(
         self,
         test_user,
         make_chat_session,
+        delegation_execution_id,
     ):
-        """Verify parent agent.run() yields SUB_AGENT events when child runs."""
+        """Verify parent agent.run() yields SUB_AGENT events when child runs,
+        tagged with the parent's own delegation execution (None for main)."""
         parent_id = uuid.uuid4()
         child_id = uuid.uuid4()
         parent_profile = _make_agent_profile(parent_id, "ParentAgent")
@@ -297,6 +302,7 @@ class TestSubAgentStreaming:
             user=test_user,
             session=session,
             allowed_tools=["sub_agent"],
+            delegation_execution_id=delegation_execution_id,
         )
 
         real_agent_run = Agent.run
@@ -354,6 +360,8 @@ class TestSubAgentStreaming:
         assert delta_sub.sub_agent_id == child_id
         assert delta_sub.sub_agent_name == "ChildWorker"
         assert delta_sub.depth == 1
+        assert delta_sub.parent_execution_id == delegation_execution_id
+        assert delta_sub.model_id == child_profile.model_id
         assert delta_sub.event.type == AgentEventType.DELTA
         assert delta_sub.event.content == "Child streaming delta"
 
@@ -378,6 +386,7 @@ class TestSubAgentStreaming:
         root_id = uuid.uuid4()
         agent_b_id = uuid.uuid4()
         agent_c_id = uuid.uuid4()
+        b_execution_id = uuid.uuid4()
 
         child_c_profile = _make_agent_profile(agent_c_id, "WorkerC")
         session = make_chat_session(allowed_tools=["sub_agent"])
@@ -395,10 +404,18 @@ class TestSubAgentStreaming:
             app_settings=MagicMock(),
             client=MagicMock(),
             call_stack=[root_id, agent_b_id],  # Already at depth 2
+            caller_execution_id=b_execution_id,
             event_sink=capture_sink,
         )
+        child_execution_ids: list[uuid.UUID | None] = []
 
         async def fake_c_run(self_agent, messages):
+            child_execution_ids.append(self_agent.delegation_execution_id)
+            # The real run resolves the bound model before its first event.
+            self_agent.execution_scope = replace(
+                self_agent.execution_scope,
+                executed_model=ModelIdentity(id=child_c_profile.model_id, name="Gamma"),
+            )
             yield AgentEvent(type=AgentEventType.DELTA, content="C delta")
             yield AgentEvent(type=AgentEventType.COMPLETE, content="C complete")
 
@@ -415,6 +432,12 @@ class TestSubAgentStreaming:
         assert captured[0].depth == 2
         assert captured[0].sub_agent_id == agent_c_id
         assert captured[1].depth == 2
+        # Edges and model provenance for the live delegation graph.
+        assert {item.parent_execution_id for item in captured} == {b_execution_id}
+        assert {item.model_id for item in captured} == {child_c_profile.model_id}
+        assert {item.model_name for item in captured} == {"Gamma"}
+        # C's own delegations will be tagged with C's execution id.
+        assert child_execution_ids == [captured[0].execution_id]
 
     @pytest.mark.asyncio
     async def test_chat_orchestrator_forwards_sub_agent_events_to_queue(
@@ -453,9 +476,14 @@ class TestSubAgentStreaming:
         orchestrator = ChatOrchestrator(agent)
         queue = get_message_queue(session.info.id)
 
+        parent_execution_id = uuid.uuid4()
+        model_id = uuid.uuid4()
         envelope = SubAgentEventEnvelope(
+            parent_execution_id=parent_execution_id,
             sub_agent_id=sub_id,
             sub_agent_name="SubWorker",
+            model_id=model_id,
+            model_name="Gamma",
             depth=1,
             event=AgentEvent(
                 type=AgentEventType.DELTA,
@@ -498,6 +526,9 @@ class TestSubAgentStreaming:
         assert sub_agent_packets[0]["sub_agent_id"] == str(sub_id)
         assert sub_agent_packets[0]["sub_agent_name"] == "SubWorker"
         assert sub_agent_packets[0]["depth"] == 1
+        assert sub_agent_packets[0]["parent_execution_id"] == str(parent_execution_id)
+        assert sub_agent_packets[0]["model_id"] == str(model_id)
+        assert sub_agent_packets[0]["model_name"] == "Gamma"
         assert sub_agent_packets[0]["event"]["type"] == "delta"
         assert sub_agent_packets[0]["event"]["content"] == "Sub-agent delta"
 

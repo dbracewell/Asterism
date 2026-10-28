@@ -33,7 +33,7 @@ export const SubAgentE2EHarness = () => {
   });
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-4 p-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 p-8">
       <h1 className="text-xl font-bold">Sub-agent stream verification</h1>
       <Button
         disabled={readyState !== ReadyState.OPEN}

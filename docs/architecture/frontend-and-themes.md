@@ -439,6 +439,40 @@ Coverage: `streaming-indicator.test.tsx` and `e2e/streaming-affordances.spec.ts`
 while a reply grows, keyboard jump, the idle threshold). It also relies on the
 streaming and reachability cases in `e2e/chat-reachability.spec.ts`.
 
+## Delegation graph (US-44.1)
+
+`features/chat/components/agent-constellation.tsx` draws the main agent and every
+delegated sub-agent as stars joined by chart lines. It sits at the top of
+`SubAgentActivityPanel`, and the per-agent cards stay below it. Each node shows
+the name and model, clipped to its column, with the full text and state in an SVG
+`<title>`. The main node shows the chat's selected model.
+
+- **Layout** (`lib/constellation-layout.ts`): a pure function of the activities
+  and the measured width. There is one band per delegation level. Each band
+  wraps into rows of 112px columns (2 to 6, from a `ResizeObserver` measurement).
+  Siblings keep their parent's order, then arrival order. Lines follow
+  `parentExecutionId`, and an unknown parent attaches to the main agent.
+- **Overflow:** past 16 sub-agents, the rest fold into one dashed "+N more" node
+  with a running count. Breadth-first order means the hidden agents are always
+  the deepest or latest, so every drawn line has both ends visible.
+- **States:** running nodes and their incoming lines use `flare`, with a
+  pulsing halo and a dashed line. Completed nodes settle to `star` (primary), and
+  failed nodes are destructive with a cross. The main node is live while any
+  child runs. State is never shown by color alone: shape, title text and the
+  card's status label carry it too.
+- **`flare`** (`--color-flare`): `#E0A526` light, `#F2C14E` under `.dark`. It is
+  set on `body` as a brand constant outside the theme roles, as EPIC-41
+  specifies.
+
+The text equivalent, live announcements, keyboard expansion and a fully static
+reduced-motion graph are US-44.3. Until then, the global reduced-motion rule
+already stops the halo.
+
+Coverage: `constellation-layout.test.ts`, `agent-constellation.test.tsx`,
+`sub-agent-activity.test.tsx` and `e2e/agent-constellation.spec.ts`. The e2e spec
+covers state transitions, nested lines, 20 agents at 320px and 1280px, and
+screenshot baselines for Atlas, Night Atlas and Dracula on desktop and mobile.
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every

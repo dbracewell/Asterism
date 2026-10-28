@@ -59,6 +59,7 @@ class Agent:
         allowed_tools: list[str] | None = None,
         approval_policy: ToolApprovalPolicy | None = None,
         call_stack: list[uuid.UUID] | None = None,
+        delegation_execution_id: uuid.UUID | None = None,
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
         user_files: list[str] | None = None,
         parent_message_id: uuid.UUID | None = None,
@@ -99,6 +100,8 @@ class Agent:
         self.messages: list[LLMMessage] = []
         self.chat_scope_snapshot: ChatScopeSnapshot | None = None
         self.project_scope_snapshot: ProjectScopeSnapshot | None = None
+        # Set when this agent runs as a delegated sub-agent; tags its own delegations.
+        self.delegation_execution_id = delegation_execution_id
         if call_stack is not None:
             self.call_stack: list[uuid.UUID] = list(call_stack)
         elif self.profile.id is not None:
@@ -409,6 +412,7 @@ class Agent:
                 user_message=user_message or "",
                 user_files=self.user_files,
                 call_stack=self.call_stack,
+                caller_execution_id=self.delegation_execution_id,
                 event_sink=event_sink,
                 parent_message_id=self.parent_message_id,
                 delegation_scope=self.delegation_scope,
