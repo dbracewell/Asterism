@@ -21,6 +21,33 @@ class MessageStatus(StrEnum):
     CANCELLED = auto()
 
 
+DelegationStatus = Literal["running", "completed", "error", "cancelled"]
+
+
+class DelegationRecord(BaseModel):
+    """One sub-agent delegation observed during an assistant step.
+
+    Persisted on the assistant message whose tool calls ran it, for history
+    display only: identity, the fixed model that ran, timing, the child's own
+    tool calls and results, and its output or error. Thinking and prompts are not kept.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    execution_id: uuid.UUID
+    parent_execution_id: uuid.UUID | None = None
+    sub_agent_id: uuid.UUID
+    name: str
+    model_name: str | None = None
+    depth: int = Field(ge=0)
+    status: DelegationStatus
+    started_at_ms: int = Field(ge=0)
+    ended_at_ms: int = Field(ge=0)
+    tool_calls: list[ToolCall] = Field(default_factory=list)
+    tool_results: list[ToolResult] = Field(default_factory=list)
+    output: str = ""
+    error: str | None = None
+
+
 class MessageFileReference(BaseModel):
     file_id: uuid.UUID
     filename: str
@@ -96,6 +123,7 @@ class NewMessageRequest(BaseModel):
     status: MessageStatus = Field(default=MessageStatus.PENDING)
     tool_calls: list[ToolCall] | None = Field(default=None)
     tool_call_results: list[ToolResult] | None = Field(default=None)
+    delegations: list[DelegationRecord] | None = Field(default=None)
     files: list[uuid.UUID] = Field(default_factory=list, max_length=100)
 
 
@@ -114,6 +142,7 @@ class Message(LLMMessage):
     total_tokens: int = Field(default=0)
     generation_duration_ms: int = Field(default=0)
     tool_call_results: list[ToolResult] | None = None
+    delegations: list[DelegationRecord] | None = None
     files: list[MessageFileReference] = Field(default_factory=list)
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False

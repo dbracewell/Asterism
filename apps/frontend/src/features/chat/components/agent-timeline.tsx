@@ -36,10 +36,10 @@ const STATUS_LABEL: Record<ToolStepStatus, string> = {
   empty: "No result",
 };
 
-const triggerClass =
+export const triggerClass =
   "hover:text-foreground focus-visible:ring-ring rounded-control flex min-w-0 cursor-pointer items-center gap-1.5 text-left outline-none focus-visible:ring-2";
 
-const chevronClass =
+export const chevronClass =
   "size-4 shrink-0 transition-transform motion-reduce:transition-none";
 
 const StatusIcon = ({ status }: { status: ToolStepStatus }) => {

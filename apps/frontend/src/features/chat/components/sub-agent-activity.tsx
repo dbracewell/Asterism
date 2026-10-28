@@ -20,6 +20,7 @@ import {
 const statusLabel = (activity: SubAgentActivity) => {
   if (activity.status === "completed") return "Completed";
   if (activity.status === "error") return "Failed";
+  if (activity.status === "cancelled") return "Cancelled";
   return "Working";
 };
 

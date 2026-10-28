@@ -473,6 +473,31 @@ Coverage: `constellation-layout.test.ts`, `agent-constellation.test.tsx`,
 covers state transitions, nested lines, 20 agents at 320px and 1280px, and
 screenshot baselines for Atlas, Night Atlas and Dracula on desktop and mobile.
 
+## Delegation summary (US-44.2)
+
+When a step that delegated is persisted, the live graph (`SubAgentActivityPanel`)
+is cleared and that message renders `components/delegation-summary.tsx` from
+`message.delegations`. History loaded from the server uses the same path, so the
+live and reloaded views match. The summary always starts collapsed as one line,
+"3 agents · 12.0 s · 7 tools", followed by "· N failed" or "· N cancelled" when
+any occurred. The time is wall-clock, from the earliest start to the latest end.
+
+Expanding shows:
+
+- the constellation (`activitiesFromRecords` maps records onto the live activity
+  shape, adding a muted `cancelled` node state)
+- an ordered "Delegated agents" list, with each agent's name, model, depth,
+  status and duration
+- each agent's `AgentTimeline`, built from its recorded tool calls and results
+  (`delegationSteps`)
+- each agent's output as Markdown, and its error as plain text. Errors are not an
+  alert, so old failures aren't announced as if they were live.
+
+Coverage: `delegations.test.ts`, `delegation-summary.test.tsx` and
+`e2e/delegation-summary.spec.ts`. The e2e spec covers history collapsed then
+expanded by keyboard, reload, the live-to-summary handover, Markdown safety, and
+screenshots for Atlas, Night Atlas and Dracula on desktop and mobile.
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every

@@ -1,6 +1,6 @@
 import type { SubAgentActivity } from "@/features/chat/types";
 
-export type ConstellationNodeState = "running" | "completed" | "error";
+export type ConstellationNodeState = SubAgentActivity["status"];
 
 export type ConstellationNode = {
   /** `main` for the root, otherwise the delegation execution id. */

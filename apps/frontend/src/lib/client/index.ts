@@ -261,6 +261,7 @@ export type {
   ConfigurationProvenance,
   ContextProvenance,
   CreateUserRequest,
+  DelegationRecord,
   DownloadProgress,
   DownloadStatus,
   EligibleSkillsPage,

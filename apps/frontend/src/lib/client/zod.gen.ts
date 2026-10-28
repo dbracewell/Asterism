@@ -1374,6 +1374,31 @@ export const zToolResult = z.object({
 });
 
 /**
+ * DelegationRecord
+ *
+ * One sub-agent delegation observed during an assistant step.
+ *
+ * Persisted on the assistant message whose tool calls ran it, for history
+ * display only: identity, the fixed model that ran, timing, the child's own
+ * tool calls and results, and its output or error. Thinking and prompts are not kept.
+ */
+export const zDelegationRecord = z.object({
+  execution_id: z.uuid(),
+  parent_execution_id: z.uuid().nullish(),
+  sub_agent_id: z.uuid(),
+  name: z.string(),
+  model_name: z.string().nullish(),
+  depth: z.int().gte(0),
+  status: z.enum(["running", "completed", "error", "cancelled"]),
+  started_at_ms: z.int().gte(0),
+  ended_at_ms: z.int().gte(0),
+  tool_calls: z.array(zToolCall).optional(),
+  tool_results: z.array(zToolResult).optional(),
+  output: z.string().optional().default(""),
+  error: z.string().nullish(),
+});
+
+/**
  * Message
  */
 export const zMessage = z.object({
@@ -1392,6 +1417,7 @@ export const zMessage = z.object({
   total_tokens: z.int().optional().default(0),
   generation_duration_ms: z.int().optional().default(0),
   tool_call_results: z.array(zToolResult).nullish(),
+  delegations: z.array(zDelegationRecord).nullish(),
   files: z.array(zMessageFileReference).optional(),
   active_child_id: z.uuid().nullish(),
   has_siblings: z.boolean().optional().default(false),
