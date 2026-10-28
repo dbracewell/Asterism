@@ -278,6 +278,32 @@ from `PUBLIC_URL` so preview images resolve to absolute browser-facing URLs. The
 auth proxy matcher already excludes image and `.webmanifest` paths, so crawlers and
 install prompts fetch them without a session (`e2e/brand-metadata.spec.ts`).
 
+## Message anatomy (US-43.1)
+
+`features/chat/components/message/` holds the transcript parts that
+`MessageItem` composes:
+
+| Part              | Role                                                                                      |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| `MessageMarker`   | Small constellation on the first assistant message of a turn; later steps keep its column |
+| `MessageBody`     | Skill badges and Markdown; user text sits in a card-surface bubble                        |
+| `MessageMeta`     | Stopped state, relative time and tok/s; the time shows the full timestamp in a tooltip    |
+| `MessageActions`  | Response version switcher, regenerate and copy                                            |
+| `MessageThinking` | Current "Thinking" collapsible (replaced by the timeline in US-43.2)                      |
+
+Each message is an `article` named "Your message" or "Assistant message".
+Metadata is transparent until the message is hovered or holds focus, and always
+shown on coarse (touch) pointers. The time is focusable, so Tab from the actions
+reaches it and opens the full timestamp; a tap opens it on touch.
+
+`src/lib/relative-time.ts` formats "now", minutes, hours, "yesterday", days, then a
+calendar date. Day boundaries and the tooltip use the user's stored `timezone`
+(invalid zones fall back to UTC), not the browser's. `useNow` (`src/hooks`) shares
+one 30-second clock and returns null during server rendering and hydration, so
+relative labels never cause hydration mismatches. Coverage:
+`src/lib/relative-time.test.ts` and `e2e/message-anatomy.spec.ts` (hover, keyboard,
+touch and time zones).
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every
