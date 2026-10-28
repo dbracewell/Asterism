@@ -149,6 +149,21 @@ project revision/identity changes, configuration/model revocation, or cancellati
 an in-flight silent child is polled rather than allowed to complete unchecked.
 See [context isolation](context-isolation.md) for source ceilings and history limits.
 
+Each forwarded child event is wrapped in a `SubAgentEventEnvelope` and sent as a
+`sub_agent` socket packet. Besides `execution_id`, `sub_agent_id`,
+`sub_agent_name`, `depth` and the child `event`, it carries:
+
+- `parent_execution_id`: the delegating sub-agent's execution, or null when the
+  main agent delegated. A child agent receives its own execution id as
+  `delegation_execution_id`, and the tool registry passes it to that child's own
+  tool calls as `ToolContext.caller_execution_id`.
+- `model_id` and `model_name`: the fixed binding that ran, taken from the child's
+  execution scope. The name is null until the child resolves its model, so a
+  model-lookup failure leaves it null.
+
+These are display fields for the delegation graph only. They grant nothing, and
+authorization stays with the live checks above.
+
 ## Resume, regeneration, and audit
 
 Each invocation has an execution UUID. Delegated events also include target ID,

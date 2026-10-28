@@ -73,8 +73,10 @@ describe("sub-agent activity", () => {
         activities={[
           {
             executionId: "running",
+            parentExecutionId: null,
             subAgentId: "agent-running",
             name: "Researcher",
+            modelName: "Gamma",
             depth: 1,
             status: "running",
             content: "Found an initial result",
@@ -89,6 +91,8 @@ describe("sub-agent activity", () => {
           },
           {
             executionId: "done",
+            parentExecutionId: null,
+            modelName: null,
             subAgentId: "agent-done",
             name: "Writer",
             depth: 2,
@@ -99,6 +103,8 @@ describe("sub-agent activity", () => {
           },
           {
             executionId: "failed",
+            parentExecutionId: null,
+            modelName: null,
             subAgentId: "agent-failed",
             name: "Reviewer",
             depth: 1,
@@ -115,7 +121,12 @@ describe("sub-agent activity", () => {
     expect(
       screen.getByRole("region", { name: "Sub-agent activity" }),
     ).toBeVisible();
-    expect(screen.getByText("Researcher")).toBeVisible();
+    expect(
+      screen.getByRole("img", { name: /^Delegation graph: main agent and 3/ }),
+    ).toBeVisible();
+    const researcher = screen.getByTestId("sub-agent-running");
+    expect(researcher).toHaveTextContent("Researcher");
+    expect(researcher).toHaveTextContent("Gamma");
     expect(screen.getByText("Working")).toBeVisible();
     expect(screen.getByText(/web_search/)).toBeVisible();
     expect(screen.getByText("Completed")).toBeVisible();

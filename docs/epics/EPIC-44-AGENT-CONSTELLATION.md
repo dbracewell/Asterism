@@ -1,6 +1,6 @@
 # EPIC-44: Agent constellation
 
-Status: proposed. Source: the approved visual design audit (2026-10-26).
+Status: in progress. Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
@@ -11,9 +11,12 @@ joined by chart lines, echoing the constellation logo.
 
 ## Ownership and delivery
 
-Frontend presentation over the existing sub-agent activity data. It adds no
-runtime or authorization changes and does not reveal delegation details the user
-can't already see. Uses `flare` only for live state and `star` for settled state
+Mostly frontend presentation over the sub-agent activity stream. US-44.1 added
+three display fields to the live `sub_agent` event (`parent_execution_id`,
+`model_id`, `model_name`) so lines and model labels are exact: the old fields
+couldn't tell parallel nested delegations apart. There are no authorization
+changes, and nothing is revealed that the user can't already see (the model is
+the fixed binding of the user's own sub-agent definition). Uses `flare` only for live state and `star` for settled state
 (EPIC-41). Reuses `AgentTimeline` from US-43.2. This is the only place in the
 product with orchestrated, non-user-triggered motion.
 
@@ -29,8 +32,8 @@ each sub-agent (name and model) as nodes joined by lines. Running nodes glow in
 styling. Layout is deterministic and works from 320px wide up to many agents
 (wrapping or scrolling beyond a set maximum).
 
-- [ ] Design the layout (deterministic placement of up to N nodes, plus an overflow strategy); build the SVG component.
-- [ ] Map the existing activity states to node states; test state transitions and many-agent/narrow layouts.
+- [x] Design the layout (deterministic placement of up to N nodes, plus an overflow strategy); build the SVG component.
+- [x] Map the existing activity states to node states; test state transitions and many-agent/narrow layouts.
 
 ## US-44.2: Compact summary
 

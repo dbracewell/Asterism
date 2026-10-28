@@ -127,6 +127,8 @@ class ToolContext[T: BaseModel | None]:
         user_files: File names uploaded with the current user message.
         call_stack: Agent ids from the root agent down to the caller (used for
             sub-agent cycle/depth guards).
+        caller_execution_id: Delegation execution id of the calling sub-agent;
+            None when the main agent is the caller.
         event_sink: Optional sink streaming sub-agent events to the UI; may be
             sync or async.
         parent_message_id: Message id that triggered this tool call, if known.
@@ -146,6 +148,7 @@ class ToolContext[T: BaseModel | None]:
     client: LLMClientProtocol
     user_files: list[str] = field(default_factory=list)
     call_stack: list[uuid.UUID] = field(default_factory=list)
+    caller_execution_id: uuid.UUID | None = None
     event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None
     parent_message_id: uuid.UUID | None = None
     delegation_scope: DelegationScope | None = None
@@ -282,6 +285,7 @@ class ToolRegistry:
         user_files: list[str] | None = None,
         max_retries: int = 3,
         call_stack: list[uuid.UUID] | None = None,
+        caller_execution_id: uuid.UUID | None = None,
         event_sink: Callable[[SubAgentEventEnvelope], Awaitable[None] | None] | None = None,
         parent_message_id: uuid.UUID | None = None,
         delegation_scope: DelegationScope | None = None,
@@ -312,6 +316,8 @@ class ToolRegistry:
             user_files: File names uploaded with the user message.
             max_retries: Retries after the initial attempt for tool exceptions.
             call_stack: Agent ids from root to caller, for sub-agent guards.
+            caller_execution_id: Delegation execution id of a calling
+                sub-agent; None for the main agent.
             event_sink: Optional sink streaming sub-agent events to the UI.
             parent_message_id: Message id that triggered this call, if known.
             delegation_scope: Live sub-agent delegation selections.
@@ -382,6 +388,7 @@ class ToolRegistry:
                 client=client,
                 app_settings=app_settings,
                 call_stack=list(call_stack) if call_stack else [],
+                caller_execution_id=caller_execution_id,
                 event_sink=event_sink,
                 parent_message_id=parent_message_id,
                 delegation_scope=delegation_scope,

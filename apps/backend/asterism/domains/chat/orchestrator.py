@@ -456,10 +456,7 @@ class ChatOrchestrator:
                             await self.queue.put(
                                 {
                                     "type": "sub_agent",
-                                    "execution_id": str(event.sub_agent.execution_id),
-                                    "sub_agent_id": str(event.sub_agent.sub_agent_id),
-                                    "sub_agent_name": (event.sub_agent.sub_agent_name),
-                                    "depth": event.sub_agent.depth,
+                                    **event.sub_agent.model_dump(mode="json", exclude={"event"}),
                                     "event": (event.sub_agent.event.model_dump(mode="json")),
                                 },
                             )

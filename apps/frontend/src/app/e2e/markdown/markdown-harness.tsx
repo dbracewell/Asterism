@@ -43,6 +43,8 @@ export function MarkdownHarness() {
         activities={[
           {
             executionId: "synthetic",
+            parentExecutionId: null,
+            modelName: null,
             subAgentId: "synthetic",
             name: "Content reviewer",
             depth: 1,

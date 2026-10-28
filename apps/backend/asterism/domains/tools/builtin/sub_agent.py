@@ -236,7 +236,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         # replacement) and must reflect live state. The duplicated DB
         # round-trips are deliberate defense in depth.
         parent_scope = await require_internal_tool(
-                name="sub_agent", user_id=ctx.user.id, chat_id=ctx.session.info.id, scope=ctx.tool_scope
+            name="sub_agent", user_id=ctx.user.id, chat_id=ctx.session.info.id, scope=ctx.tool_scope
         )
         agent_profile = await require_delegation_target(
             user_id=ctx.user.id,
@@ -258,6 +258,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             ctx.event_sink,
             SubAgentEventEnvelope(
                 execution_id=execution_id,
+                parent_execution_id=ctx.caller_execution_id,
                 sub_agent_id=target_id,
                 sub_agent_name="Unknown sub-agent",
                 depth=len(ctx.call_stack),
@@ -331,6 +332,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         allowed_tools=allowed_tools,
         approval_policy=AllowlistApprovalPolicy(),
         call_stack=child_call_stack,
+        delegation_execution_id=execution_id,
         event_sink=ctx.event_sink,
         user_files=ctx.user_files,
         parent_message_id=parent_msg_id,
@@ -339,6 +341,20 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         tool_scope=replace(parent_scope, caller_agent_id=target_id, model_id=agent_profile.model_id),
         execution_scope=child_scope,
     )
+
+    def envelope(event: AgentEvent) -> SubAgentEventEnvelope:
+        # The child resolves its model before its first event, filling in the name.
+        executed = (agent.execution_scope or child_scope).executed_model
+        return SubAgentEventEnvelope(
+            execution_id=execution_id,
+            parent_execution_id=ctx.caller_execution_id,
+            sub_agent_id=target_id,
+            sub_agent_name=agent_profile.name,
+            model_id=executed.id,
+            model_name=executed.name,
+            depth=len(ctx.call_stack),
+            event=event,
+        )
 
     forwarded_types = {
         AgentEventType.START,
@@ -381,24 +397,12 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             if event.type in forwarded_types:
                 await _emit(
                     ctx.event_sink,
-                    SubAgentEventEnvelope(
-                        execution_id=execution_id,
-                        sub_agent_id=target_id,
-                        sub_agent_name=agent_profile.name,
-                        depth=len(ctx.call_stack),
-                        event=event,
-                    ),
+                    envelope(event),
                 )
         if not received_event:
             await _emit(
                 ctx.event_sink,
-                SubAgentEventEnvelope(
-                    execution_id=execution_id,
-                    sub_agent_id=target_id,
-                    sub_agent_name=agent_profile.name,
-                    depth=len(ctx.call_stack),
-                    event=last_response,
-                ),
+                envelope(last_response),
             )
     except Exception as exc:
         last_response = AgentEvent(
@@ -410,16 +414,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             execution_id,
             agent_profile.name,
         )
-        await _emit(
-            ctx.event_sink,
-            SubAgentEventEnvelope(
-                execution_id=execution_id,
-                sub_agent_id=target_id,
-                sub_agent_name=agent_profile.name,
-                depth=len(ctx.call_stack),
-                event=last_response,
-            ),
-        )
+        await _emit(ctx.event_sink, envelope(last_response))
 
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     logger.info(

@@ -1,6 +1,7 @@
 "use client";
 
 import MarkdownViewer from "@/components/markdown-viewer";
+import { AgentConstellation } from "@/features/chat/components/agent-constellation";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,8 +25,11 @@ const statusLabel = (activity: SubAgentActivity) => {
 
 export const SubAgentActivityPanel = ({
   activities,
+  mainModel,
 }: {
   activities: SubAgentActivity[];
+  /** Model the main agent runs with in this chat, when known. */
+  mainModel?: string | null;
 }) => {
   if (activities.length === 0) return null;
 
@@ -34,6 +38,7 @@ export const SubAgentActivityPanel = ({
       aria-label="Sub-agent activity"
       className="mb-4 flex w-full min-w-0 flex-col gap-2"
     >
+      <AgentConstellation activities={activities} mainModel={mainModel} />
       {activities.map((activity) => (
         <article
           key={activity.executionId}
@@ -46,6 +51,11 @@ export const SubAgentActivityPanel = ({
           <header className="flex flex-wrap items-center gap-2 font-medium">
             <BotIcon className="size-4" aria-hidden="true" />
             <span>{activity.name}</span>
+            {activity.modelName && (
+              <span className="text-muted-foreground text-xs font-normal">
+                {activity.modelName}
+              </span>
+            )}
             {activity.depth > 1 && (
               <span className="text-muted-foreground text-xs">
                 Depth {activity.depth}
