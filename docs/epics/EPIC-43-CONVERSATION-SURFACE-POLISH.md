@@ -68,7 +68,7 @@ Acceptance: code blocks have a header with language, copy and wrap toggle. Table
 use neutral header rows and subtle zebra striping that works in every bundled
 theme (including Flowers). Blockquotes and links follow the theme.
 
-- [ ] Restyle the `prose` utilities and the `MarkdownViewer` code block; check them against all bundled themes in screenshots.
+- [x] Restyle the `prose` utilities and the `MarkdownViewer` code block; check them against all bundled themes in screenshots.
 
 ## US-43.5: Citations as source chips
 

@@ -96,7 +96,7 @@ describe("shared Markdown trust boundary", () => {
     const { container } = view(fencedCode);
     expect(screen.getByText("typescript")).toBeInTheDocument();
     expect(container.querySelector("iframe")).toBeNull();
-    fireEvent.click(container.querySelector("button")!);
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     expect(clipboard).toHaveBeenCalledWith(
       "const text = \"<iframe src='/untrusted-markdown/code'></iframe>\";",
     );
@@ -144,12 +144,47 @@ describe("rich content navigation", () => {
       expect(regions[index]).toHaveAttribute("tabindex", "0");
       expect(regions[index].querySelector("pre code")).toHaveTextContent(text);
       fireEvent.click(
-        within(regions[index].parentElement!).getByRole("button"),
+        within(regions[index].parentElement!).getByRole("button", {
+          name: "Copy",
+        }),
       );
       expect(clipboard).toHaveBeenLastCalledWith(text);
     }
     expect(container.querySelector("input")).toBeNull();
   });
+  it("labels code blocks and toggles line wrapping per block", () => {
+    view(`\`\`\`\n${"unbroken".repeat(40)}\n\`\`\`\n\n${fencedCode}`);
+    const blocks = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-slot=code-block]"),
+    );
+    expect(blocks.map((block) => block.dataset.wrap)).toEqual([
+      "false",
+      "false",
+    ]);
+    expect(within(blocks[0]).getByText("text")).toBeInTheDocument();
+    expect(within(blocks[1]).getByText("typescript")).toBeInTheDocument();
+    const toggle = within(blocks[0]).getByRole("button", {
+      name: "Wrap long lines",
+    });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(blocks[0]).toHaveAttribute("data-wrap", "true");
+    expect(blocks[0].querySelector("code")).toHaveStyle({
+      whiteSpace: "pre-wrap",
+    });
+    expect(blocks[1]).toHaveAttribute("data-wrap", "false");
+    fireEvent.click(toggle);
+    expect(blocks[0]).toHaveAttribute("data-wrap", "false");
+  });
+
+  it("renders tables with a header row separate from body rows", () => {
+    view("| A | B |\n|---|---|\n| one | two |\n| three | four |");
+    const table = screen.getByRole("table");
+    expect(within(table).getAllByRole("columnheader")).toHaveLength(2);
+    expect(table.querySelectorAll("tbody tr")).toHaveLength(2);
+  });
+
   it("exposes table and generated math scroll areas to the keyboard without enabling HTML", () => {
     const { container } = view(
       "| A | B |\n|---|---|\n| one | two |\n\n$$\nx^2 + y^2\n$$",
