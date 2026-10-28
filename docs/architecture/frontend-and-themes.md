@@ -389,6 +389,29 @@ that the header and the two row fills differ and attaches a full-page screenshot
 per theme. It also checks that wrapping removes horizontal scroll at 390px. The
 typography baselines were regenerated for the new code block.
 
+## Citations as source chips (US-43.5)
+
+`features/chat/components/retrieval-citations.tsx` renders a "Sources" list of
+numbered chips. `citedSources` groups `search_knowledge` hits by file in
+first-retrieval order, and the chip numbers follow that order.
+
+- An available chip is a link to `/c/[chatId]/files/[fileId]`, named "Source N:
+  full name". The name truncates visually at 12rem, and the full name stays in
+  the accessible name and the preview.
+- The preview is the shared tooltip, so it opens on hover and keyboard focus and
+  is the chip's accessible description while open. It shows the name, the
+  excerpt, provenance, generation, match kind and passage count, all as React
+  text.
+- Checking and revoked states keep the number. A revoked chip is a dashed, non-link
+  chip with "Source unavailable in this chat" (`role="alert"`) and a "Retry
+  source N" button. An existing link disappears when a scope refetch is denied.
+
+Coverage: `retrieval-citations.test.tsx`, the provenance test in
+`attachment-scope.test.tsx` and `e2e/citation-chips.spec.ts` (390px and 1280px:
+long names, keyboard and hover previews, untrusted excerpts and a revoked
+source). The scope and security checks are in `e2e/chat-file-scope.spec.ts` and
+`e2e/markdown-security.spec.ts`.
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every

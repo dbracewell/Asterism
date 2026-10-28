@@ -80,7 +80,7 @@ Acceptance: retrieved sources render as numbered chips with hover or focus
 previews of the snippet and file name, link to the scoped file view, and are
 keyboard accessible.
 
-- [ ] Rebuild `RetrievalCitations`; test the previews, ownership-scoped links and long names.
+- [x] Rebuild `RetrievalCitations`; test the previews, ownership-scoped links and long names.
 
 ## US-43.6: Streaming affordances
 

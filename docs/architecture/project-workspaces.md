@@ -176,11 +176,14 @@ explicit, revision-guarded mutation for a local file; staging, sending, retrieva
 moving chats never automatically promote it. Active generation disables these controls;
 the backend independently enforces lifecycle and live scope boundaries.
 
-Retrieval source cards read validated `search_knowledge` tool-result metadata,
-show project/chat provenance at retrieval plus artifact generation/match kind, and
-recheck live chat authorization for source names and links. Other tool results or
-malformed source records do not create citation links. Source lists initially mount
-20 citations, with an explicit control to show more. Links use
+Retrieval sources read validated `search_knowledge` tool-result metadata and
+render as numbered chips, one per file in first-retrieval order (US-43.5). A chip's
+hover/focus preview shows the file name, the first matched `excerpt` (whitespace
+collapsed, 280 characters, plain text), project/chat provenance at retrieval,
+artifact generation, match kind and the passage count. Each chip rechecks live chat
+authorization before it shows a name or link. Other tool results or malformed
+source records do not create citation links. Source lists initially mount 20
+chips, with an explicit control to show more. Links use
 `/c/[chatId]/files/[fileId]`; that route verifies the scoped metadata API and exposes
 only a scoped image/download. Each byte request rechecks scope. Revoked/deleted or
 inactive-branch sources show unavailable/retry states with no library fallback.

@@ -87,7 +87,7 @@ test("untrusted replies and file text cannot install HTML or load resources; mat
   await expect(
     page
       .getByRole("region", { name: "Retrieved sources" })
-      .getByRole("link", { name: "reference.md" }),
+      .getByRole("link", { name: "Source 1: reference.md" }),
   ).toHaveAttribute("href", `/c/example-chat/files/${FILE}`);
   await expect(file.locator("pre")).toHaveText(adversarialMarkdown);
   for (const region of [main, subAgent, file]) {
