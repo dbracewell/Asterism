@@ -30,8 +30,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Build the `AgentTimeline` component; replace the "Thinking" collapsible and the raw tool lines.
   - [x] Test long arguments, failures, the streaming state and `show_thinking` off.
 
-- [ ] US-43.3: Tool approval card
-  - [ ] Build the approval card; wire up the existing `tool_approval` message; test focus and repeated approvals.
+- [x] US-43.3: Tool approval card
+  - [x] Build the approval card; wire up the existing `tool_approval` message; test focus and repeated approvals.
 
 - [ ] US-43.4: Code blocks and prose
   - [ ] Restyle the `prose` utilities and the `MarkdownViewer` code block; check them against all bundled themes in screenshots.

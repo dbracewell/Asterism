@@ -332,6 +332,34 @@ and reduced motion) and the narrow/200% layouts in `e2e/chat-reachability.spec.t
 Run Playwright serially (`--workers=1`, as CI does): in parallel, the dev server's
 first compile of a route can reload pages of other running tests.
 
+## Tool approval cards (US-43.3)
+
+When the backend sends `tool_permission_request` for a tool outside the agent's
+pre-approved list, `features/chat/components/tool-approval-cards.tsx` renders a
+card above the message body. The protocol is unchanged: Approve and Deny send
+`{"type": "tool_approval", "tool_id", "approved"}` (the backend already accepted
+`approved: false`), and the card leaves when the backend's `tool_update` arrives,
+including after its 60-second auto-deny timeout.
+
+- Each card shows the tool name, the full arguments as plain text in a
+  keyboard-scrollable region, and a risk hint from `lib/tool-approval.ts`. The
+  hint is a name-based guess ("May make changes", "Looks read-only", "Unknown
+  effect") because the protocol carries no risk metadata; it is advisory only.
+- A request is answered at most once. After a decision the actions become
+  `aria-disabled` (they keep focus) and the card shows "Approving…" or
+  "Denying…" until it is confirmed. `useChatWebSocket` ignores duplicate
+  requests with the same id.
+- Focus: a new request focuses its card unless the user is typing in a text
+  field; a polite live region always announces the number of waiting tools.
+  After a decision, focus moves to the next undecided card. When the focused
+  card is removed, focus moves to a remaining card, or back to where it was
+  before the first card took it.
+
+Coverage: `tool-approval-cards.test.tsx`, `tool-approval.test.ts`, the
+de-duplication test in `use-chat-websocket.test.tsx` and
+`e2e/tool-approval.spec.ts` (repeated approve/deny over the socket, keyboard
+focus, untrusted arguments and not stealing focus from the composer).
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every

@@ -1,14 +1,14 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { useUser } from "@/features/auth/components/user-context";
 import { AgentTimeline } from "@/features/chat/components/agent-timeline";
 import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { RetrievalCitations } from "@/features/chat/components/retrieval-citations";
+import { ToolApprovalCards } from "@/features/chat/components/tool-approval-cards";
 import {
   ToolTimings,
   messageTimelineSteps,
 } from "@/features/chat/lib/agent-timeline";
-import { StreamingMessage } from "@/features/chat/types";
+import { PermissionRequest, StreamingMessage } from "@/features/chat/types";
 import { cn } from "@/lib/utils";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -17,6 +17,8 @@ import { MessageBody } from "./message-body";
 import { MessageLoading } from "./message-loading";
 import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
+
+const NO_REQUESTS: PermissionRequest[] = [];
 
 /**
  * One transcript entry: an assistant column with a marker, or a right-aligned
@@ -78,22 +80,16 @@ export const MessageItem = React.memo(
             streaming={streaming}
             defaultOpen={streaming && showThinking}
           />
-          {message.needsPermission?.map((t) => (
-            <div key={t.id}>
-              {t.name} {t.arguments}{" "}
-              <Button
-                onClick={() =>
-                  sendJsonMessage({
-                    type: "tool_approval",
-                    tool_id: t.id,
-                    approved: true,
-                  })
-                }
-              >
-                Approve
-              </Button>
-            </div>
-          ))}
+          <ToolApprovalCards
+            requests={message.needsPermission ?? NO_REQUESTS}
+            onDecide={(request, approved) =>
+              sendJsonMessage({
+                type: "tool_approval",
+                tool_id: request.id,
+                approved,
+              })
+            }
+          />
           <MessageBody message={message} />
           {!!message.tool_call_results?.length && (
             <RetrievalCitations

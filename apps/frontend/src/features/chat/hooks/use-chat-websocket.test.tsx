@@ -260,3 +260,41 @@ it("times tool calls from the request until their results arrive", () => {
   });
   now.mockRestore();
 });
+
+it("queues each tool approval request once and drops it when resolved", () => {
+  const onStreamUpdate = vi.fn();
+  renderHook(() =>
+    useChatWebSocket({
+      chatId: "chat-1",
+      jwtToken: "test-token",
+      onStreamUpdate,
+    }),
+  );
+  const options = socket.mock.calls.at(-1)?.[1] as {
+    onMessage: (event: { data: string }) => void;
+  };
+  const send = (packet: object) =>
+    act(() => options.onMessage({ data: JSON.stringify(packet) }));
+  const request = {
+    type: "tool_permission_request",
+    id: "call-1",
+    name: "write_file",
+    arguments: '{"path":"a.md"}',
+  };
+
+  send(request);
+  send(request);
+  send({ ...request, id: "call-2" });
+  expect(onStreamUpdate).toHaveBeenCalledTimes(2);
+  expect(onStreamUpdate.mock.lastCall?.[0].needsPermission).toEqual([
+    { id: "call-1", name: "write_file", arguments: '{"path":"a.md"}' },
+    { id: "call-2", name: "write_file", arguments: '{"path":"a.md"}' },
+  ]);
+
+  send({ type: "tool_update", id: "call-1" });
+  expect(
+    onStreamUpdate.mock.lastCall?.[0].needsPermission.map(
+      (pending: { id: string }) => pending.id,
+    ),
+  ).toEqual(["call-2"]);
+});
