@@ -283,13 +283,12 @@ install prompts fetch them without a session (`e2e/brand-metadata.spec.ts`).
 `features/chat/components/message/` holds the transcript parts that
 `MessageItem` composes:
 
-| Part              | Role                                                                                      |
-| ----------------- | ----------------------------------------------------------------------------------------- |
-| `MessageMarker`   | Small constellation on the first assistant message of a turn; later steps keep its column |
-| `MessageBody`     | Skill badges and Markdown; user text sits in a card-surface bubble                        |
-| `MessageMeta`     | Stopped state, relative time and tok/s; the time shows the full timestamp in a tooltip    |
-| `MessageActions`  | Response version switcher, regenerate and copy                                            |
-| `MessageThinking` | Current "Thinking" collapsible (replaced by the timeline in US-43.2)                      |
+| Part             | Role                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| `MessageMarker`  | Small constellation on the first assistant message of a turn; later steps keep its column |
+| `MessageBody`    | Skill badges and Markdown; user text sits in a card-surface bubble                        |
+| `MessageMeta`    | Stopped state, relative time and tok/s; the time shows the full timestamp in a tooltip    |
+| `MessageActions` | Response version switcher, regenerate and copy                                            |
 
 Each message is an `article` named "Your message" or "Assistant message".
 Metadata is transparent until the message is hovered or holds focus, and always
@@ -303,6 +302,35 @@ one 30-second clock and returns null during server rendering and hydration, so
 relative labels never cause hydration mismatches. Coverage:
 `src/lib/relative-time.test.ts` and `e2e/message-anatomy.spec.ts` (hover, keyboard,
 touch and time zones).
+
+## Agent timeline (US-43.2)
+
+`features/chat/components/agent-timeline.tsx` renders an agent's reasoning and
+tool calls as one collapsible step list. It takes plain `AgentTimelineStep`
+values, not messages, so EPIC-44 can feed it sub-agent activity.
+`features/chat/lib/agent-timeline.ts` maps an assistant step message to steps:
+
+- Reasoning comes first and only when the user's `show_thinking` setting is on.
+  Tool steps always show; the timeline is collapsed unless it is the live message
+  and thinking is shown.
+- Each tool row shows the name, a one-line `key: value` argument summary (80
+  characters), a status and a duration, and expands to the full arguments and
+  result. Arguments, results and reasoning are untrusted and render as plain text
+  in keyboard-scrollable regions.
+- Status comes from the persisted result: `raw_result.error` is Failed, the
+  backend's "not authorized" notice is Denied, other empty results are No result,
+  and an unanswered call is Running while the message is pending.
+- The backend stores no tool durations. `useChatWebSocket` times each call from
+  its `tool_call` event to the `complete` event carrying its result, so durations
+  appear only for calls observed live in this session.
+
+The summary reads like "Thinking · 2 tool calls · 1 failed", or "Running
+web_search" while a call runs. Spinners stop under reduced motion. Coverage:
+`agent-timeline.test.ts(x)`, the timing test in `use-chat-websocket.test.tsx`,
+`e2e/agent-timeline.spec.ts` (history, failures, `show_thinking` off, streaming
+and reduced motion) and the narrow/200% layouts in `e2e/chat-reachability.spec.ts`.
+Run Playwright serially (`--workers=1`, as CI does): in parallel, the dev server's
+first compile of a route can reload pages of other running tests.
 
 ## Typography, labels and motion (US-33.2)
 

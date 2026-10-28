@@ -1,8 +1,13 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/features/auth/components/user-context";
+import { AgentTimeline } from "@/features/chat/components/agent-timeline";
 import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { RetrievalCitations } from "@/features/chat/components/retrieval-citations";
+import {
+  ToolTimings,
+  messageTimelineSteps,
+} from "@/features/chat/lib/agent-timeline";
 import { StreamingMessage } from "@/features/chat/types";
 import { cn } from "@/lib/utils";
 import React from "react";
@@ -12,7 +17,6 @@ import { MessageBody } from "./message-body";
 import { MessageLoading } from "./message-loading";
 import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
-import { MessageThinking } from "./message-thinking";
 
 /**
  * One transcript entry: an assistant column with a marker, or a right-aligned
@@ -25,7 +29,8 @@ export const MessageItem = React.memo(
     isProcessing,
     message,
     startsTurn,
-    defaultShowThinking = false,
+    streaming = false,
+    toolTimings,
     canRegenerate,
     onRegenerate,
     sendJsonMessage,
@@ -35,13 +40,24 @@ export const MessageItem = React.memo(
     message: StreamingMessage;
     /** First assistant message after a user message; carries the marker. */
     startsTurn: boolean;
-    defaultShowThinking?: boolean;
+    /** The live message; its timeline opens when the user shows thinking. */
+    streaming?: boolean;
+    toolTimings?: ToolTimings;
     canRegenerate: boolean;
     onRegenerate: (parentId?: string | null) => void;
     sendJsonMessage: SendJsonMessage;
   }) => {
     const user = useUser();
     const fromUser = message.role === "user";
+    const showThinking = user.settings.show_thinking ?? false;
+    const steps = React.useMemo(
+      () =>
+        messageTimelineSteps(message, {
+          showThinking,
+          timings: toolTimings,
+        }),
+      [message, showThinking, toolTimings],
+    );
     const settled =
       message.tool_calls == null &&
       (message.status === "completed" || message.status === "cancelled");
@@ -57,12 +73,11 @@ export const MessageItem = React.memo(
       >
         {!fromUser && <MessageMarker visible={startsTurn} />}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          {(user.settings.show_thinking ?? false) && (
-            <MessageThinking
-              message={message}
-              defaultOpen={defaultShowThinking}
-            />
-          )}
+          <AgentTimeline
+            steps={steps}
+            streaming={streaming}
+            defaultOpen={streaming && showThinking}
+          />
           {message.needsPermission?.map((t) => (
             <div key={t.id}>
               {t.name} {t.arguments}{" "}

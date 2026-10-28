@@ -205,3 +205,58 @@ it("surfaces retryable capacity errors and retains bounded reconnects", () => {
   expect(options.reconnectInterval).toBe(3000);
   expect(options.shouldReconnect({ code: 1013 })).toBe(true);
 });
+
+it("times tool calls from the request until their results arrive", () => {
+  const now = vi.spyOn(Date, "now").mockReturnValue(10_000);
+  const { result } = renderHook(() =>
+    useChatWebSocket({ chatId: "chat", jwtToken: "token" }),
+  );
+  const options = () =>
+    socket.mock.calls.at(-1)?.[1] as {
+      onMessage: (event: { data: string }) => void;
+    };
+  const toolCall = {
+    id: "call-1",
+    type: "function",
+    function: { name: "web_search", arguments: "{}" },
+  };
+  act(() => {
+    options().onMessage({
+      data: JSON.stringify({ type: "tool_call", tool_calls: [toolCall] }),
+    });
+  });
+  expect(result.current.toolTimings).toEqual({
+    "call-1": { startedAt: 10_000 },
+  });
+
+  now.mockReturnValue(12_500);
+  act(() => {
+    options().onMessage({
+      data: JSON.stringify({
+        type: "complete",
+        last_messages: [
+          {
+            id: "99999999-9999-4999-8999-999999999999",
+            role: "assistant",
+            content: "",
+            status: "completed",
+            created_at: 0,
+            tool_calls: [toolCall],
+            tool_call_results: [
+              {
+                content: "ok",
+                raw_result: null,
+                is_empty: false,
+                tool_call: toolCall,
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  });
+  expect(result.current.toolTimings).toEqual({
+    "call-1": { startedAt: 10_000, endedAt: 12_500 },
+  });
+  now.mockRestore();
+});

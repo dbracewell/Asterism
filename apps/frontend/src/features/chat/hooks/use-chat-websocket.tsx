@@ -1,4 +1,5 @@
 import { AgentEventSchema, AgentSubAgentEvent } from "@/features/chat/schemas";
+import { ToolTimings } from "@/features/chat/lib/agent-timeline";
 import { StreamingMessage } from "@/features/chat/types";
 import { authClient } from "@/lib/auth-client";
 import { chatWebSocketUrl } from "@/lib/backend-url";
@@ -49,6 +50,7 @@ export const useChatWebSocket = ({
   onSubAgentEvent,
 }: UseChatWebSocketProps) => {
   const [activeToken, setActiveToken] = React.useState(jwtToken);
+  const [toolTimings, setToolTimings] = React.useState<ToolTimings>({});
   const didUnmount = React.useRef(false);
   const flushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const streamingMessageRef = React.useRef<StreamingMessage | null>(null);
@@ -220,6 +222,14 @@ export const useChatWebSocket = ({
       }
 
       if (msgContent.type === "tool_call") {
+        const startedAt = Date.now();
+        setToolTimings((timings) => {
+          const next = { ...timings };
+          for (const call of msgContent.tool_calls) {
+            next[call.id] ??= { startedAt };
+          }
+          return next;
+        });
         if (streamingMessageRef.current == null) {
           streamingMessageRef.current = createPendingAssistantMessage();
         }
@@ -286,6 +296,22 @@ export const useChatWebSocket = ({
           clearTimeout(flushTimerRef.current);
           flushTimerRef.current = null;
         }
+        const endedAt = Date.now();
+        setToolTimings((timings) => {
+          let next = timings;
+          for (const message of msgContent.last_messages) {
+            for (const result of message.tool_call_results ?? []) {
+              const timing = timings[result.tool_call.id];
+              if (timing && timing.endedAt == null) {
+                next = {
+                  ...next,
+                  [result.tool_call.id]: { ...timing, endedAt },
+                };
+              }
+            }
+          }
+          return next;
+        });
         onStreamCompleteRef.current?.(msgContent.last_messages);
         streamingMessageRef.current = null;
       }
@@ -296,7 +322,8 @@ export const useChatWebSocket = ({
     () => ({
       sendJsonMessage,
       readyState,
+      toolTimings,
     }),
-    [readyState, sendJsonMessage],
+    [readyState, sendJsonMessage, toolTimings],
   );
 };

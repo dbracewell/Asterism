@@ -43,8 +43,8 @@ each tool's name, a truncated summary of its arguments, its status and its
 duration, with full arguments and results expandable. The component is reusable
 by EPIC-44.
 
-- [ ] Build the `AgentTimeline` component; replace the "Thinking" collapsible and the raw tool lines.
-- [ ] Test long arguments, failures, the streaming state and `show_thinking` off.
+- [x] Build the `AgentTimeline` component; replace the "Thinking" collapsible and the raw tool lines.
+- [x] Test long arguments, failures, the streaming state and `show_thinking` off.
 
 ## US-43.3: Tool approval card
 
