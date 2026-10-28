@@ -19,7 +19,7 @@ for current evidence and verification limits.
 
 Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. EPIC-41 is confirmed complete and archived in the
 [2026-10-27 checklist](docs/archive/todo-completed-2026-10-27.md); EPIC-43 is confirmed complete and archived in the
-[2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md). EPIC-44 is in progress (US-44.1 merged; US-44.2 active).
+[2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md). EPIC-44 is in progress (US-44.1 and US-44.2 merged; US-44.3 next).
 
 ### [EPIC-44: Agent constellation](docs/epics/EPIC-44-AGENT-CONSTELLATION.md)
 
