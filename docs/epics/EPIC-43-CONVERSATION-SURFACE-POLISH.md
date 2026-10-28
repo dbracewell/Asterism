@@ -56,7 +56,7 @@ Acceptance: a pending approval renders as a card with the tool, its arguments an
 a risk hint, plus Approve and Deny actions, and it is focus-managed. The approval
 protocol is unchanged, with Deny added only if the backend already supports it.
 
-- [ ] Build the approval card; wire up the existing `tool_approval` message; test focus and repeated approvals.
+- [x] Build the approval card; wire up the existing `tool_approval` message; test focus and repeated approvals.
 
 ## US-43.4: Code blocks and prose
 

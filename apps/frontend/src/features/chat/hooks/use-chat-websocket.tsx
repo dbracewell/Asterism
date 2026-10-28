@@ -266,12 +266,17 @@ export const useChatWebSocket = ({
           streamingMessageRef.current = createPendingAssistantMessage();
         }
 
-        if (streamingMessageRef.current != null) {
+        const pending = streamingMessageRef.current.needsPermission ?? [];
+        if (!pending.some((request) => request.id === msgContent.id)) {
           streamingMessageRef.current = {
             ...streamingMessageRef.current!,
             needsPermission: [
-              ...(streamingMessageRef.current.needsPermission ?? []),
-              msgContent,
+              ...pending,
+              {
+                id: msgContent.id,
+                name: msgContent.name,
+                arguments: msgContent.arguments,
+              },
             ],
           };
           onStreamUpdateRef.current?.(streamingMessageRef.current);

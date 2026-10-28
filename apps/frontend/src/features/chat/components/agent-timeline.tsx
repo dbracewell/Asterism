@@ -74,7 +74,7 @@ const StatusIcon = ({ status }: { status: ToolStepStatus }) => {
 };
 
 /** A labelled, keyboard-scrollable block of untrusted text. */
-const Payload = ({ label, text }: { label: string; text: string }) => (
+export const Payload = ({ label, text }: { label: string; text: string }) => (
   <div className="mt-1.5 min-w-0">
     <div className="text-meta font-medium">{label}</div>
     <pre
