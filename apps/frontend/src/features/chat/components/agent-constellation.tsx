@@ -18,18 +18,21 @@ const stateLabel: Record<ConstellationNodeState, string> = {
   running: "Running",
   completed: "Done",
   error: "Failed",
+  cancelled: "Cancelled",
 };
 
 const coreFill: Record<ConstellationNodeState, string> = {
   running: "fill-flare",
   completed: "fill-primary",
   error: "fill-destructive",
+  cancelled: "fill-muted-foreground",
 };
 
 const edgeStroke: Record<ConstellationNodeState, string> = {
   running: "stroke-flare",
   completed: "stroke-border",
   error: "stroke-destructive/60",
+  cancelled: "stroke-border",
 };
 
 const nodeTitle = (node: ConstellationNode) =>

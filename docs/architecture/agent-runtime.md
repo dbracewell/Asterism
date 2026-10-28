@@ -164,6 +164,20 @@ Each forwarded child event is wrapped in a `SubAgentEventEnvelope` and sent as a
 These are display fields for the delegation graph only. They grant nothing, and
 authorization stays with the live checks above.
 
+The orchestrator's `DelegationCollector` (`domains/chat/delegations.py`) folds a
+step's envelopes into one `DelegationRecord` per execution. A record holds
+identity, parent, model name, depth, status, start/end time in milliseconds, the
+child's tool calls and results (from its per-step `COMPLETE` events), and its
+output or error. The records are drained onto the assistant message that step
+persists (`Message.delegations`), so each record belongs to the step that ran it.
+
+- A run that never sent a terminal event is stored as `error`.
+- On cancel, in-flight records are stored as `cancelled`. The partial assistant
+  message is kept even when no text had streamed.
+- Thinking, prompts and forwarded parent context are never stored.
+- Records live in the owner's chat and are deleted with it. The audit trail stays
+  in `sub_agent_traces` (digests only).
+
 ## Resume, regeneration, and audit
 
 Each invocation has an execution UUID. Delegated events also include target ID,

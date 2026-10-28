@@ -1,6 +1,7 @@
 "use client";
 import { useUser } from "@/features/auth/components/user-context";
 import { AgentTimeline } from "@/features/chat/components/agent-timeline";
+import { DelegationSummary } from "@/features/chat/components/delegation-summary";
 import { MessageAttachments } from "@/features/chat/components/message-attachments";
 import { RetrievalCitations } from "@/features/chat/components/retrieval-citations";
 import { ToolApprovalCards } from "@/features/chat/components/tool-approval-cards";
@@ -80,6 +81,12 @@ export const MessageItem = React.memo(
             streaming={streaming}
             defaultOpen={streaming && showThinking}
           />
+          {!!message.delegations?.length && (
+            <DelegationSummary
+              records={message.delegations}
+              mainModel={message.execution?.model.name}
+            />
+          )}
           <ToolApprovalCards
             requests={message.needsPermission ?? NO_REQUESTS}
             onDecide={(request, approved) =>

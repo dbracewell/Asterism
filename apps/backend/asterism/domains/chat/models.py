@@ -25,7 +25,7 @@ from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
 from .execution_models import ChatExecutionModel
-from .schemas import ChatModelChoice, MessageExecution, MessageFileReference, MessageStatus
+from .schemas import ChatModelChoice, DelegationRecord, MessageExecution, MessageFileReference, MessageStatus
 
 
 class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
@@ -169,6 +169,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
     tool_call_results: Mapped[list[ToolResult | None]] = mapped_column(
         jsonb_type(TypeAdapter(list[ToolResult])),
+        nullable=True,
+    )
+    # Sub-agent delegations run by this step's tool calls (history display only).
+    delegations: Mapped[list[DelegationRecord] | None] = mapped_column(
+        jsonb_type(TypeAdapter(list[DelegationRecord])),
         nullable=True,
     )
     files: Mapped[list[MessageFileReference]] = mapped_column(

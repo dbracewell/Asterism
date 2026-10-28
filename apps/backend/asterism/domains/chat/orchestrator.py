@@ -14,6 +14,7 @@ from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
+from asterism.domains.chat.delegations import DelegationCollector
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.prompts import create_title_generation_prompt
 from asterism.domains.chat.schemas import (
@@ -58,6 +59,7 @@ class ChatOrchestrator:
         self._streaming_content: str = ""
         self._streaming_thinking: str = ""
         self._execution: MessageExecution | None = None
+        self._delegations = DelegationCollector()
 
         # Inject interactive approval into the agent so tool
         # authorization flows through the WebSocket UI.
@@ -99,8 +101,10 @@ class ChatOrchestrator:
 
         parent_index = index_of(self.chat.messages, lambda message: message.id == parent_id)
 
-        # Retain useful streamed output rather than silently discarding it.
-        if self._streaming_content or self._streaming_thinking:
+        # Retain useful streamed output and delegation work rather than
+        # silently discarding it.
+        delegations = self._delegations.drain(unfinished="cancelled")
+        if self._streaming_content or self._streaming_thinking or delegations:
             partial = await chat_service.add_message(
                 user_id=self.user_id,
                 chat_id=self.chat_id,
@@ -109,6 +113,7 @@ class ChatOrchestrator:
                     content=self._streaming_content,
                     thinking=self._streaming_thinking,
                     status=MessageStatus.CANCELLED,
+                    delegations=delegations or None,
                     parent_message_id=parent_id,
                     execution=self._execution,
                     model_id=self.agent.model_id,  # type: ignore
@@ -396,6 +401,7 @@ class ChatOrchestrator:
             self._active_parent_id = parent_message.id
             self._streaming_content = ""
             self._streaming_thinking = ""
+            self._delegations = DelegationCollector()
 
             self._execution = await self.agent.prepare_execution(parent_message.id)
             await self.agent.prepare_execution_scope()
@@ -431,6 +437,7 @@ class ChatOrchestrator:
                                 parent_message_id=parent_message.id,
                                 tool_calls=event.tool_calls if event.has_tool_calls() else None,
                                 tool_call_results=event.tool_results if event.has_tool_results() else None,
+                                delegations=self._delegations.drain() or None,
                                 execution=self._execution,
                                 model_id=self.agent.model_id,  # type:ignore
                             ),
@@ -453,6 +460,7 @@ class ChatOrchestrator:
 
                     case AgentEvent(type=AgentEventType.SUB_AGENT):
                         if event.sub_agent:
+                            self._delegations.observe(event.sub_agent)
                             await self.queue.put(
                                 {
                                     "type": "sub_agent",

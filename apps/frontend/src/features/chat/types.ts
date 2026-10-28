@@ -41,7 +41,8 @@ export type SubAgentActivity = {
   name: string;
   modelName: string | null;
   depth: number;
-  status: "running" | "completed" | "error";
+  /** `cancelled` only comes from persisted history (a stopped turn). */
+  status: "running" | "completed" | "error" | "cancelled";
   content: string;
   thinking: string;
   toolCalls: z.infer<typeof ToolCallSchema>[];

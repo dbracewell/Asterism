@@ -724,6 +724,70 @@ export type CreateUserRequest = {
 };
 
 /**
+ * DelegationRecord
+ *
+ * One sub-agent delegation observed during an assistant step.
+ *
+ * Persisted on the assistant message whose tool calls ran it, for history
+ * display only: identity, the fixed model that ran, timing, the child's own
+ * tool calls and results, and its output or error. Thinking and prompts are not kept.
+ */
+export type DelegationRecord = {
+  /**
+   * Execution Id
+   */
+  execution_id: string;
+  /**
+   * Parent Execution Id
+   */
+  parent_execution_id?: string | null;
+  /**
+   * Sub Agent Id
+   */
+  sub_agent_id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Model Name
+   */
+  model_name?: string | null;
+  /**
+   * Depth
+   */
+  depth: number;
+  /**
+   * Status
+   */
+  status: "running" | "completed" | "error" | "cancelled";
+  /**
+   * Started At Ms
+   */
+  started_at_ms: number;
+  /**
+   * Ended At Ms
+   */
+  ended_at_ms: number;
+  /**
+   * Tool Calls
+   */
+  tool_calls?: Array<ToolCall>;
+  /**
+   * Tool Results
+   */
+  tool_results?: Array<ToolResult>;
+  /**
+   * Output
+   */
+  output?: string;
+  /**
+   * Error
+   */
+  error?: string | null;
+};
+
+/**
  * DownloadProgress
  */
 export type DownloadProgress = {
@@ -1380,6 +1444,10 @@ export type Message = {
    * Tool Call Results
    */
   tool_call_results?: Array<ToolResult> | null;
+  /**
+   * Delegations
+   */
+  delegations?: Array<DelegationRecord> | null;
   /**
    * Files
    */

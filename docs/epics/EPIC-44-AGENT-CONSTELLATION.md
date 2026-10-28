@@ -16,7 +16,11 @@ three display fields to the live `sub_agent` event (`parent_execution_id`,
 `model_id`, `model_name`) so lines and model labels are exact: the old fields
 couldn't tell parallel nested delegations apart. There are no authorization
 changes, and nothing is revealed that the user can't already see (the model is
-the fixed binding of the user's own sub-agent definition). Uses `flare` only for live state and `star` for settled state
+the fixed binding of the user's own sub-agent definition). US-44.2 persists one
+`DelegationRecord` per delegation on the assistant message whose step ran it, so
+history can render the same graph and each agent's timeline and output. The record
+holds identity, model, timing, the child's tool calls and results, and its output
+or error. Thinking and prompts are not kept. Uses `flare` only for live state and `star` for settled state
 (EPIC-41). Reuses `AgentTimeline` from US-43.2. This is the only place in the
 product with orchestrated, non-user-triggered motion.
 
@@ -45,7 +49,7 @@ Acceptance: after the run completes, the graph collapses to a summary line, for
 example "3 agents · 12s · 7 tools". Expanding it shows each agent's timeline and
 output. History loaded from the server renders in the collapsed state.
 
-- [ ] Build the summary and expand interaction; test reload and history rendering.
+- [x] Build the summary and expand interaction; test reload and history rendering.
 
 ## US-44.3: Accessibility and reduced motion
 
