@@ -14,9 +14,9 @@ import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import { MessageActions } from "./message-actions";
 import { MessageBody } from "./message-body";
-import { MessageLoading } from "./message-loading";
 import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
+import { StreamingIndicator } from "./streaming-indicator";
 
 const NO_REQUESTS: PermissionRequest[] = [];
 
@@ -100,7 +100,7 @@ export const MessageItem = React.memo(
           {fromUser && message.files && (
             <MessageAttachments chatId={chatId} files={message.files} />
           )}
-          {!fromUser && message.status === "pending" && <MessageLoading />}
+          {!fromUser && message.status === "pending" && <StreamingIndicator />}
           {settled && (
             <footer
               className={cn(

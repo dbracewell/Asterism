@@ -412,6 +412,33 @@ long names, keyboard and hover previews, untrusted excerpts and a revoked
 source). The scope and security checks are in `e2e/chat-file-scope.spec.ts` and
 `e2e/markdown-security.spec.ts`.
 
+## Streaming affordances (US-43.6)
+
+`features/chat/components/message/streaming-indicator.tsx` replaces the bouncing
+dots. The constellation's five stars twinkle in sequence (`animate-twinkle` in
+`globals.css`, staggered by the `--node` index that `Constellation` sets when it is
+given a `nodeClassName`). The indicator is a `role="status"` with the text
+"Assistant is working…" and a hidden glyph. Under reduced motion the stars stay
+fully lit and still.
+
+- `turn` fills the marker column while a reply is owed and nothing has streamed
+  yet, meaning the socket reports processing or the last message is a pending user
+  turn, and there is no resume error. Between agent steps, when the last message is
+  an assistant step, it trails under that turn's marker instead.
+- `inline` trails a reply that is still streaming.
+
+The "Jump to latest" pill floats above the composer, so the transcript doesn't
+resize. When idle it appears more than 200px from the bottom. During streaming it
+appears as soon as the user scrolls more than 16px up, which also stops auto-follow,
+and it shows a pulsing dot instead of the arrow. Jumping resumes following. While
+the pill is shown, the transcript gets bottom scroll padding so focused or
+scrolled-to content stays clear of it.
+
+Coverage: `streaming-indicator.test.tsx` and `e2e/streaming-affordances.spec.ts`
+(handover from pending to streaming, reduced motion, holding the reader's place
+while a reply grows, keyboard jump, the idle threshold). It also relies on the
+streaming and reachability cases in `e2e/chat-reachability.spec.ts`.
+
 ## Typography, labels and motion (US-33.2)
 
 Schibsted Grotesk is inherited from the document instead of being applied to every

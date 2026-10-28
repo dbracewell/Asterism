@@ -1,15 +1,28 @@
+import type React from "react";
+
 interface ConstellationProps {
   size?: number;
   fill?: string;
   strokeWidth?: number;
   className?: string;
+  /** Applied to every star; each also receives its index as `--node`. */
+  nodeClassName?: string;
 }
+
+const NODES = [
+  { cx: 80, cy: 125, r: 16 },
+  { cx: 150, cy: 115, r: 28 },
+  { cx: 180, cy: 35, r: 18 },
+  { cx: 250, cy: 105, r: 18 },
+  { cx: 205, cy: 190, r: 18 },
+];
 
 export default function Constellation({
   size = 70,
   fill = "var(--color-sidebar-foreground)",
   strokeWidth = 8,
   className,
+  nodeClassName,
 }: ConstellationProps) {
   return (
     <svg
@@ -21,11 +34,19 @@ export default function Constellation({
       fill="none"
     >
       {/* Nodes */}
-      <circle cx="80" cy="125" r="16" fill={fill} />
-      <circle cx="150" cy="115" r="28" fill={fill} />
-      <circle cx="180" cy="35" r="18" fill={fill} />
-      <circle cx="250" cy="105" r="18" fill={fill} />
-      <circle cx="205" cy="190" r="18" fill={fill} />
+      {NODES.map((node, index) => (
+        <circle
+          key={index}
+          {...node}
+          fill={fill}
+          className={nodeClassName}
+          style={
+            nodeClassName
+              ? ({ "--node": index } as React.CSSProperties)
+              : undefined
+          }
+        />
+      ))}
 
       {/* Connections */}
       <g stroke={fill} strokeWidth={strokeWidth} strokeLinecap="round">

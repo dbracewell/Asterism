@@ -1,6 +1,6 @@
 # EPIC-43: Conversation surface polish
 
-Status: in progress. Source: the approved visual design audit (2026-10-26).
+Status: complete. Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
@@ -91,4 +91,4 @@ Estimate: 0.5 day. Dependencies: US-43.1.
 Acceptance: a branded pending indicator (static under reduced motion) and a "jump
 to latest" button that appears when the user scrolls up during streaming.
 
-- [ ] Replace `Loading`; add the scroll-anchor button; test reduced motion and scrolling behavior.
+- [x] Replace `Loading`; add the scroll-anchor button; test reduced motion and scrolling behavior.

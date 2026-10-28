@@ -9,7 +9,7 @@ import {
   ChatInputContainer,
 } from "@/features/chat/components/chat-input";
 import { MessageItem } from "@/features/chat/components/message/message-item";
-import { MessageLoading } from "@/features/chat/components/message/message-loading";
+import { StreamingIndicator } from "@/features/chat/components/message/streaming-indicator";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import {
@@ -40,7 +40,9 @@ import {
   personaAvailable,
 } from "./chat-persona-picker";
 
+// Far enough from the bottom to offer "jump to latest" even when idle.
 const SCROLL_BOTTOM_THRESHOLD = 200;
+// Any scroll further up than this stops following a streaming reply.
 const AUTO_SCROLL_LOCK_THRESHOLD = 16;
 
 export const ChatSession = ({
@@ -101,6 +103,7 @@ export const ChatSession = ({
   >([]);
   const preventAutoScrollRef = React.useRef(false);
   const [isScrollable, setIsScrollable] = React.useState(false);
+  const [isScrolledAway, setIsScrolledAway] = React.useState(false);
   const [socketError, setSocketError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -321,6 +324,17 @@ export const ChatSession = ({
     setIsProcessing(true);
     sendJsonMessage({ type: "regenerate", parent_message_id: parentId });
   }
+  const generating = isProcessing || !!incomingMessage;
+  // Idle: only when well away from the end. Streaming: as soon as the user
+  // stops following the reply.
+  const showJump = isScrollable || (generating && isScrolledAway);
+  // A reply is owed but nothing has streamed yet.
+  const lastMessage = session.messages.at(-1);
+  const awaitingReply =
+    !incomingMessage &&
+    !session.info.resume_error &&
+    (isProcessing ||
+      (lastMessage?.role === "user" && lastMessage.status === "pending"));
   const contextWindow =
     session.info.context_model?.context_window ??
     user.settings.models?.find(
@@ -335,15 +349,20 @@ export const ChatSession = ({
     >
       <section
         aria-label="Conversation history"
-        className="bg-background relative mx-auto flex min-h-0 w-full min-w-0 flex-1 scroll-p-3 flex-col overflow-y-auto px-3 py-4 wrap-anywhere *:shrink-0"
+        className={cn(
+          "bg-background relative mx-auto flex min-h-0 w-full min-w-0 flex-1 scroll-p-3 flex-col overflow-y-auto px-3 py-4 wrap-anywhere *:shrink-0",
+          // Keep scrolled-to and focused content clear of the floating pill.
+          showJump && "scroll-pb-14",
+        )}
         style={{ overflowAnchor: "auto" }}
         onScroll={(e) => {
           const scrollPosition =
             e.currentTarget.scrollHeight -
             (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
 
-          preventAutoScrollRef.current =
-            scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD;
+          const isLocked = scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD;
+          preventAutoScrollRef.current = isLocked;
+          if (isLocked !== isScrolledAway) setIsScrolledAway(isLocked);
 
           const isNowScrollable = scrollPosition > SCROLL_BOTTOM_THRESHOLD;
           if (isNowScrollable !== isScrollable) {
@@ -420,9 +439,15 @@ export const ChatSession = ({
             />
           ))}
 
-          {!incomingMessage &&
-            session.messages.length > 0 &&
-            session.messages[0].status === "pending" && <MessageLoading />}
+          {awaitingReply &&
+            (lastMessage?.role === "assistant" ? (
+              // Between agent steps: trail the turn under its existing marker.
+              <div className="mb-5 pl-10">
+                <StreamingIndicator />
+              </div>
+            ) : (
+              <StreamingIndicator variant="turn" />
+            ))}
           <SubAgentActivityPanel activities={subAgentActivities} />
           {incomingMessage && (
             <MessageItem
@@ -450,19 +475,31 @@ export const ChatSession = ({
       </section>
       <div
         data-slot="chat-composer"
-        className="flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 bg-transparent p-2"
+        className="relative flex max-h-[60%] min-h-0 shrink-0 flex-col gap-2 bg-transparent p-2"
       >
-        {isScrollable && (
+        {showJump && (
           <Button
-            className="rounded-control mx-auto shrink-0"
+            variant="outline"
+            size="sm"
+            data-slot="jump-to-latest"
+            className="rounded-dot shadow-overlay bg-background absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2"
             aria-label="Jump to latest message"
             onClick={() => {
               preventAutoScrollRef.current = false;
               setIsScrollable(false);
+              setIsScrolledAway(false);
               messageListRef.current?.scrollIntoView({ behavior: "instant" });
             }}
           >
-            <ArrowDownIcon /> Scroll Down
+            {generating ? (
+              <span
+                aria-hidden="true"
+                className="bg-primary rounded-dot size-1.5 animate-pulse motion-reduce:animate-none"
+              />
+            ) : (
+              <ArrowDownIcon />
+            )}
+            Jump to latest
           </Button>
         )}
         {socketError && (
