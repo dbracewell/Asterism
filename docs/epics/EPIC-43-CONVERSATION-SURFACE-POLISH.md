@@ -1,6 +1,6 @@
 # EPIC-43: Conversation surface polish
 
-Status: in progress. Source: the approved visual design audit (2026-10-26).
+Status: complete. Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
