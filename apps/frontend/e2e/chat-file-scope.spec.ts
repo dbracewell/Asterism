@@ -356,13 +356,15 @@ test("preserves retrieval provenance while revoked citations and source views fa
   );
   await page.goto(`/e2e/files?scope=project&chat=${A}`);
   const citations = page.getByRole("region", { name: "Retrieved sources" });
-  await expect(citations).toContainText("At retrieval: This chat");
-  await expect(
-    citations.getByRole("link", { name: "library.txt" }),
-  ).toHaveAttribute("href", `/c/${A}/files/${LIBRARY}`);
+  const chip = citations.getByRole("link", { name: "Source 1: library.txt" });
+  await expect(chip).toHaveAttribute("href", `/c/${A}/files/${LIBRARY}`);
+  await chip.focus();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "This chat · generation 2 · text",
+  );
   authorized = false;
   await page.reload();
-  await expect(citations).toContainText("Retrieved source unavailable");
+  await expect(citations).toContainText("Source unavailable in this chat");
   await expect(citations.getByRole("link")).toHaveCount(0);
   await page.goto(`/e2e/files?scope=project&chat=${A}&file=${LIBRARY}`);
   await expect(page.locator("main").getByRole("alert")).toContainText(

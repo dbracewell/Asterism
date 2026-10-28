@@ -36,8 +36,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [x] US-43.4: Code blocks and prose
   - [x] Restyle the `prose` utilities and the `MarkdownViewer` code block; check them against all bundled themes in screenshots.
 
-- [ ] US-43.5: Citations as source chips
-  - [ ] Rebuild `RetrievalCitations`; test the previews, ownership-scoped links and long names.
+- [x] US-43.5: Citations as source chips
+  - [x] Rebuild `RetrievalCitations`; test the previews, ownership-scoped links and long names.
 
 - [ ] US-43.6: Streaming affordances
   - [ ] Replace `Loading`; add the scroll-anchor button; test reduced motion and scrolling behavior.

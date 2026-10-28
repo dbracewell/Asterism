@@ -294,15 +294,18 @@ it("shows retrieval provenance but denies links when the source is no longer aut
     },
   ] as ToolResult[];
   const rendered = setup(<RetrievalCitations chatId="a" results={results} />);
-  expect(await screen.findByRole("link", { name: `${F}.txt` })).toHaveAttribute(
-    "href",
-    `/c/a/files/${F}`,
+  const link = await screen.findByRole("link", {
+    name: `Source 1: ${F}.txt`,
+  });
+  expect(link).toHaveAttribute("href", `/c/a/files/${F}`);
+  await userEvent.hover(link);
+  expect(await screen.findByRole("tooltip")).toHaveTextContent(
+    "This chat · generation 2 · text",
   );
-  expect(screen.getByText("At retrieval: This chat")).toBeInTheDocument();
   api.chatFileGetInfo.mockRejectedValue({ detail: "No longer in scope" });
   await rendered.qc.invalidateQueries();
   expect(await screen.findByRole("alert")).toHaveTextContent(
-    "Retrieved source unavailable",
+    "Source unavailable in this chat",
   );
   expect(screen.queryByRole("link")).not.toBeInTheDocument();
 });
