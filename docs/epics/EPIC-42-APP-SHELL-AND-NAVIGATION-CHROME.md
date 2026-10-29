@@ -1,6 +1,6 @@
 # EPIC-42: App shell and navigation chrome
 
-Status: in progress (US-42.1 complete; US-42.2 complete; US-42.3 awaiting confirmation). Source: the approved visual design audit (2026-10-26).
+Status: complete (US-42.1 through US-42.3 confirmed and merged). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 

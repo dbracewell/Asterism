@@ -33,3 +33,22 @@ branches were merged into `main` in order with `--no-ff`.
 
 - [x] US-45.4: Sign-in and first-run screens
   - [x] Restyle `AuthForm` and the auth layout; keep the existing auth tests passing; update screenshots.
+
+The user confirmed US-42.3 completion and authorized a local merge on
+2026-10-29. EPIC-42 (US-42.1 through US-42.3) is complete; each story was
+confirmed and merged with `--no-ff` before the next began.
+
+### [EPIC-42: App shell and navigation chrome](../epics/EPIC-42-APP-SHELL-AND-NAVIGATION-CHROME.md)
+
+- [x] US-42.1: Contextual header
+  - [x] Replace `NavHeader` and `MobileSidebarTrigger` with one route-aware header component.
+  - [x] Add breadcrumb, chip and action slots fed by route params and existing queries; reuse `ChatSessionActionMenu`.
+  - [x] Test the breadcrumbs per route, the mobile layout and keyboard order; update screenshots. (No committed screenshot baselines cover the shell.)
+
+- [x] US-42.2: Sidebar hierarchy
+  - [x] Restyle the sidebar groups and rows; add an optional project accent (backend field, regenerated client).
+  - [x] Test the active state and collapsed icon mode; update screenshots.
+
+- [x] US-42.3: Shared page header and list layout
+  - [x] Build `PageHeader` and the list layout; migrate the four pages.
+  - [x] Update tests and screenshots. (No committed screenshot baselines cover these pages.)
