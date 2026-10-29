@@ -1,6 +1,6 @@
 # EPIC-44: Agent constellation
 
-Status: in progress. Source: the approved visual design audit (2026-10-26).
+Status: complete. Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
