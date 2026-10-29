@@ -306,7 +306,7 @@ function ScopedNavChatSessions({
                 </span>
               </Link>
             </SidebarMenuButton>
-            <ChatSessionActionMenu chat_id={session.id} />
+            <ChatSessionActionMenu chat={session} />
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

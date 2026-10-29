@@ -310,7 +310,7 @@ for (const width of [320, 390]) {
     await expect(message).toBeInViewport({ ratio: 1 });
     const title = page
       .locator('[data-slot="sidebar-inset"] > header')
-      .getByText("Asterism", { exact: true });
+      .getByText("New chat", { exact: true });
     expect(
       await title.evaluate((node) => {
         const box = node.getBoundingClientRect();

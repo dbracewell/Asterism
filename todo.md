@@ -20,14 +20,14 @@ for current evidence and verification limits.
 Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. EPIC-41 is confirmed complete and archived in the
 [2026-10-27 checklist](docs/archive/todo-completed-2026-10-27.md); EPIC-43 is confirmed complete and archived in the
 [2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44 and EPIC-45 are confirmed complete and archived in the
-[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md).
+[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). US-42.1 is implemented on `feature/us-42.1-contextual-header` and awaits merge confirmation.
 
 ### [EPIC-42: App shell and navigation chrome](docs/epics/EPIC-42-APP-SHELL-AND-NAVIGATION-CHROME.md)
 
-- [ ] US-42.1: Contextual header
-  - [ ] Replace `NavHeader` and `MobileSidebarTrigger` with one route-aware header component.
-  - [ ] Add breadcrumb, chip and action slots fed by route params and existing queries; reuse `ChatSessionActionMenu`.
-  - [ ] Test the breadcrumbs per route, the mobile layout and keyboard order; update screenshots.
+- [x] US-42.1: Contextual header
+  - [x] Replace `NavHeader` and `MobileSidebarTrigger` with one route-aware header component.
+  - [x] Add breadcrumb, chip and action slots fed by route params and existing queries; reuse `ChatSessionActionMenu`.
+  - [x] Test the breadcrumbs per route, the mobile layout and keyboard order; update screenshots. (No committed screenshot baselines cover the shell.)
 
 - [ ] US-42.2: Sidebar hierarchy
   - [ ] Restyle the sidebar groups and rows; add an optional project accent (backend field, regenerated client).

@@ -8,7 +8,6 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { ProjectList } from "./project-list";
 import { ProjectWorkspace } from "./project-workspace";
-import { ChatWorkspace } from "./chat-workspace";
 import { WorkspaceChats } from "./workspace-chats";
 
 const mocks = vi.hoisted(() => ({
@@ -17,7 +16,6 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
   remove: vi.fn(),
-  move: vi.fn(),
   chats: vi.fn(),
   push: vi.fn(),
 }));
@@ -61,7 +59,6 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   projectCreateMutation: () => ({ mutationFn: mocks.create }),
   projectUpdateMutation: () => ({ mutationFn: mocks.update }),
   projectDeleteMutation: () => ({ mutationFn: mocks.remove }),
-  chatSessionMoveMutation: () => ({ mutationFn: mocks.move }),
   chatSessionGetManyOptions: ({ query }: { query: object }) => ({
     queryKey: ["chats", query],
     queryFn: () => mocks.chats(query),
@@ -253,63 +250,4 @@ it("explains detachment, supports cancel, and deletes only after confirmation", 
     }),
   );
   expect(mocks.push).toHaveBeenCalledWith("/general");
-});
-it("explains history transfer, moves to General, and reports server rejection", async () => {
-  mocks.move.mockRejectedValueOnce({ detail: "Run active" });
-  setup(
-    <ChatWorkspace
-      info={{
-        id: "c",
-        project_id: "p",
-        user_id: "a",
-        created_at: 0,
-        updated_at: 0,
-      }}
-      disabled={false}
-    />,
-  );
-  expect(await screen.findByRole("link", { name: "Research" })).toHaveAttribute(
-    "href",
-    "/projects/p",
-  );
-  await userEvent.click(screen.getByRole("button", { name: "Move chat" }));
-  expect(screen.getByRole("dialog")).toHaveTextContent(
-    "full history and local attachments",
-  );
-  await userEvent.click(screen.getByLabelText("Destination workspace"));
-  await userEvent.click(screen.getByRole("option", { name: /^General$/ }));
-  await userEvent.click(
-    screen.getByRole("button", { name: "Move to workspace" }),
-  );
-  expect(await screen.findByRole("alert")).toHaveTextContent("Run active");
-  expect(mocks.move.mock.calls[0][0]).toEqual({
-    path: { chat_id: "c" },
-    body: { project_id: null },
-  });
-  mocks.move.mockResolvedValue({});
-  await userEvent.click(
-    screen.getByRole("button", { name: "Move to workspace" }),
-  );
-  await waitFor(() =>
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
-  );
-});
-it("disables moving during an active generation", async () => {
-  setup(
-    <ChatWorkspace
-      info={{
-        id: "c",
-        project_id: null,
-        user_id: "a",
-        created_at: 0,
-        updated_at: 0,
-      }}
-      disabled
-    />,
-  );
-  expect(screen.getByRole("button", { name: "Move chat" })).toBeDisabled();
-  expect(screen.getByRole("link", { name: "General" })).toHaveAttribute(
-    "href",
-    "/general",
-  );
 });

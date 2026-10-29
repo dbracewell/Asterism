@@ -1,9 +1,8 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import UserProvider from "@/features/auth/components/user-context";
 import { getCurrentUser } from "@/features/auth/server/session";
+import { AppHeader } from "@/features/dashboard/components/app-header";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
-import { MobileSidebarTrigger } from "@/features/dashboard/components/mobile-sidebar-trigger";
-import { NavHeader } from "@/features/dashboard/components/nav-header";
 import { ThemeCheck } from "@/features/dashboard/components/theme-check";
 import { UpdateTimeZone } from "@/features/dashboard/components/update-timezone";
 import {
@@ -46,8 +45,7 @@ export const DashboardLayout = async ({
           navGeneralQuickChatsOpen={navGeneralQuickChatsOpen}
         />
         <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
-          <MobileSidebarTrigger />
-          <NavHeader />
+          <AppHeader />
           <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col">
             {children}
           </div>
