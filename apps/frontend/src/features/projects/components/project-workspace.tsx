@@ -2,6 +2,7 @@
 
 import { PageHeaderSkeleton } from "@/components/loading-skeletons";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
+import { PageHeader, PageLayout } from "@/components/page-layout";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { client } from "@/lib/api";
@@ -32,7 +33,7 @@ export function ProjectWorkspace({
     retry: false,
   });
   return (
-    <main className="container mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 pt-16">
+    <PageLayout>
       <Link
         href="/projects"
         className="text-muted-foreground text-sm hover:underline"
@@ -54,27 +55,27 @@ export function ProjectWorkspace({
       )}
       {project.data && (
         <>
-          <header className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-title">{project.data.name}</h1>
-              <p className="text-muted-foreground">
-                {settings
-                  ? "Project settings"
-                  : project.data.description || "Project workspace"}
-              </p>
-            </div>
-            <Button variant="outline" asChild>
-              <Link
-                href={
-                  settings
-                    ? `/projects/${projectId}`
-                    : `/projects/${projectId}/settings`
-                }
-              >
-                {settings ? "Overview" : "Project settings"}
-              </Link>
-            </Button>
-          </header>
+          <PageHeader
+            title={project.data.name}
+            description={
+              settings
+                ? "Project settings"
+                : project.data.description || "Project workspace"
+            }
+            actions={
+              <Button variant="outline" asChild>
+                <Link
+                  href={
+                    settings
+                      ? `/projects/${projectId}`
+                      : `/projects/${projectId}/settings`
+                  }
+                >
+                  {settings ? "Overview" : "Project settings"}
+                </Link>
+              </Button>
+            }
+          />
           {settings ? (
             <ProjectSettings
               key={projectId}
@@ -99,7 +100,7 @@ export function ProjectWorkspace({
           )}
         </>
       )}
-    </main>
+    </PageLayout>
   );
 }
 
