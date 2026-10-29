@@ -20,7 +20,7 @@ for current evidence and verification limits.
 Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. EPIC-41 is confirmed complete and archived in the
 [2026-10-27 checklist](docs/archive/todo-completed-2026-10-27.md); EPIC-43 is confirmed complete and archived in the
 [2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44 and EPIC-45 are confirmed complete and archived in the
-[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). US-42.1 is merged into `main`. US-42.2 is implemented on `feature/us-42.2-sidebar-hierarchy` and awaits merge confirmation.
+[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). US-42.1 is merged into `main`. US-42.2 is merged into `main`; US-42.3 is next.
 
 ### [EPIC-42: App shell and navigation chrome](docs/epics/EPIC-42-APP-SHELL-AND-NAVIGATION-CHROME.md)
 
