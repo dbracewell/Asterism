@@ -18,6 +18,7 @@ import {
   SESSIONS_OPEN_COOKIE,
 } from "@/features/dashboard/constants";
 import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
+import { ProjectAccentDot } from "@/features/projects/project-accent";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
 import {
@@ -171,6 +172,9 @@ function ScopedNavChatSessions({
   return (
     <CollapsibleSidebarGroup
       label={label}
+      labelAdornment={
+        !general && <ProjectAccentDot accent={project.data?.accent ?? null} />
+      }
       href={general ? "/general" : undefined}
       isActive={
         general &&

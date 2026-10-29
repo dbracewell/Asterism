@@ -224,3 +224,11 @@ def test_owner_updates_cannot_break_existing_memberships(project_session, target
         project_session.execute(statement.values(user_id="b"))
         project_session.commit()
     project_session.rollback()
+
+
+def test_accent_is_limited_to_the_palette(project_session):
+    project_session.add(ProjectModel(user_id="a", name="Colored", accent="violet"))
+    project_session.commit()
+    project_session.add(ProjectModel(user_id="a", name="Bad", accent="chartreuse"))
+    with pytest.raises(IntegrityError):
+        project_session.commit()

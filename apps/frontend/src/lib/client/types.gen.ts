@@ -1749,6 +1749,19 @@ export type Project = {
    */
   system_prompt: string;
   /**
+   * Accent
+   */
+  accent:
+    | "red"
+    | "orange"
+    | "amber"
+    | "green"
+    | "teal"
+    | "sky"
+    | "violet"
+    | "pink"
+    | null;
+  /**
    * Context Revision
    */
   context_revision: number;
@@ -1780,6 +1793,19 @@ export type ProjectCreate = {
    * System Prompt
    */
   system_prompt?: string;
+  /**
+   * Accent
+   */
+  accent?:
+    | "red"
+    | "orange"
+    | "amber"
+    | "green"
+    | "teal"
+    | "sky"
+    | "violet"
+    | "pink"
+    | null;
 };
 
 /**
@@ -1918,7 +1944,8 @@ export type ProjectSubAgentList = {
  * Partial project update guarded by an optimistic ``expected_context_revision``.
  *
  * Only fields present in the payload are written; omitted fields are untouched.
- * An empty string clears text, but explicit JSON null is rejected.
+ * An empty string clears text, but explicit JSON null is rejected for text
+ * fields. ``accent`` is the exception: explicit null removes the color.
  */
 export type ProjectUpdate = {
   /**
@@ -1937,6 +1964,19 @@ export type ProjectUpdate = {
    * System Prompt
    */
   system_prompt?: string;
+  /**
+   * Accent
+   */
+  accent?:
+    | "red"
+    | "orange"
+    | "amber"
+    | "green"
+    | "teal"
+    | "sky"
+    | "violet"
+    | "pink"
+    | null;
 };
 
 /**

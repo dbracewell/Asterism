@@ -69,6 +69,7 @@ const project = {
   name: "Research",
   description: "Work together",
   system_prompt: "Original",
+  accent: "teal" as const,
   context_revision: 3,
   created_at: 0,
   updated_at: 0,
@@ -154,6 +155,10 @@ it("creates a project with separate instructions and navigates to its overview",
     screen.getByLabelText("Project instructions"),
     "Keep citations",
   );
+  await userEvent.click(
+    screen.getByRole("combobox", { name: "Sidebar color" }),
+  );
+  await userEvent.click(await screen.findByRole("option", { name: "Violet" }));
   await userEvent.click(screen.getByRole("button", { name: "Create project" }));
   await waitFor(() =>
     expect(mocks.create).toHaveBeenCalledWith(
@@ -162,6 +167,7 @@ it("creates a project with separate instructions and navigates to its overview",
           name: "Research",
           description: "Work together",
           system_prompt: "Keep citations",
+          accent: "violet",
         },
       },
       expect.anything(),
@@ -230,6 +236,22 @@ it("keeps the editing revision across refresh, then explicitly reloads after con
   await userEvent.click(screen.getByRole("button", { name: "Save settings" }));
   expect(await screen.findByRole("status")).toHaveTextContent("settings saved");
   expect(mocks.update.mock.calls[1][0].body.expected_context_revision).toBe(4);
+});
+it("clears a project's sidebar color with an explicit null", async () => {
+  mocks.update.mockResolvedValue({ ...project, accent: null });
+  setup(<ProjectWorkspace projectId="p" settings />);
+  const color = await screen.findByRole("combobox", { name: "Sidebar color" });
+  expect(color).toHaveTextContent("Teal");
+  await userEvent.click(color);
+  await userEvent.click(
+    await screen.findByRole("option", { name: "No color" }),
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Save settings" }));
+  await waitFor(() =>
+    expect(mocks.update.mock.calls[0][0].body).toEqual(
+      expect.objectContaining({ accent: null, expected_context_revision: 3 }),
+    ),
+  );
 });
 it("explains detachment, supports cancel, and deletes only after confirmation", async () => {
   mocks.remove.mockResolvedValue(project);

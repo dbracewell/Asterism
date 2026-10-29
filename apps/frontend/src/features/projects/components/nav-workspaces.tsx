@@ -14,6 +14,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { ProjectAccentDot } from "@/features/projects/project-accent";
 import { client } from "@/lib/api";
 import { projectGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
@@ -69,18 +70,29 @@ export function NavWorkspaces({
           {isProjectsVisible && (
             <>
               <SidebarMenuSub>
-                {projects.data?.projects.map((project) => (
-                  <SidebarMenuSubItem key={project.id}>
-                    <SidebarMenuSubButton
-                      asChild
-                      isActive={scope.projectId === project.id}
-                    >
-                      <Link href={`/projects/${project.id}`}>
-                        <span className="truncate">{project.name}</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                ))}
+                {projects.data?.projects.map((project) => {
+                  const href = `/projects/${project.id}`;
+                  const inScope = scope.projectId === project.id;
+                  return (
+                    <SidebarMenuSubItem key={project.id}>
+                      <SidebarMenuSubButton asChild isActive={inScope}>
+                        <Link
+                          href={href}
+                          aria-current={
+                            pathname === href
+                              ? "page"
+                              : inScope
+                                ? "true"
+                                : undefined
+                          }
+                        >
+                          <ProjectAccentDot accent={project.accent} />
+                          <span className="truncate">{project.name}</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  );
+                })}
                 {projects.isPending && (
                   <NavListSkeleton label="Loading workspaces" />
                 )}

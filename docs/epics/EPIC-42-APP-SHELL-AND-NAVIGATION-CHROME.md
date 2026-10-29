@@ -1,6 +1,6 @@
 # EPIC-42: App shell and navigation chrome
 
-Status: in progress (US-42.1 complete). Source: the approved visual design audit (2026-10-26).
+Status: in progress (US-42.1 complete; US-42.2 implemented, awaiting merge confirmation). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
@@ -49,8 +49,20 @@ Acceptance: a clear active-item state, quieter section labels, and the logo at
 full strength. Projects can show an optional color or glyph. If that needs a
 schema field, it is added directly with no migration.
 
-- [ ] Restyle the sidebar groups and rows; add an optional project accent (backend field, regenerated client).
-- [ ] Test the active state and collapsed icon mode; update screenshots.
+Implementation: the accent is color only. `projects.accent` is a nullable column
+limited by a check constraint to a fixed palette (red, orange, amber, green,
+teal, sky, violet, pink); it is metadata, so it never advances
+`context_revision`, and `PATCH` clears it with an explicit `null`. The project
+form offers a "Sidebar color" select, and the dot (`--color-project-*` tokens,
+theme-independent mid-tones) appears beside the name in the sidebar, the
+project chat group and the project list; it is decorative and hidden from
+assistive tech. Selected rows add a leading primary bar
+(`sidebar-active-indicator`) on top of the fill, including in icon mode;
+section labels are small uppercase muted text; the logo renders at full
+strength. Existing databases need a reset for the new column.
+
+- [x] Restyle the sidebar groups and rows; add an optional project accent (backend field, regenerated client).
+- [x] Test the active state and collapsed icon mode; update screenshots.
 
 ## US-42.3: Shared page header and list layout
 

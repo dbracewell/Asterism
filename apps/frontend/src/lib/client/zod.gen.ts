@@ -686,6 +686,9 @@ export const zProject = z.object({
   name: z.string(),
   description: z.string(),
   system_prompt: z.string(),
+  accent: z
+    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
+    .nullable(),
   context_revision: z.int().gte(1),
   created_at: z.int(),
   updated_at: z.int(),
@@ -700,6 +703,9 @@ export const zProjectCreate = z.object({
   name: z.string().min(1).max(255),
   description: z.string().max(10000).optional().default(""),
   system_prompt: z.string().max(100000).optional().default(""),
+  accent: z
+    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
+    .nullish(),
 });
 
 /**
@@ -765,13 +771,17 @@ export const zProjectSubAgentBatchResult = z.object({
  * Partial project update guarded by an optimistic ``expected_context_revision``.
  *
  * Only fields present in the payload are written; omitted fields are untouched.
- * An empty string clears text, but explicit JSON null is rejected.
+ * An empty string clears text, but explicit JSON null is rejected for text
+ * fields. ``accent`` is the exception: explicit null removes the color.
  */
 export const zProjectUpdate = z.object({
   expected_context_revision: z.int().gte(1),
   name: z.string().min(1).max(255).optional(),
   description: z.string().max(10000).optional(),
   system_prompt: z.string().max(100000).optional(),
+  accent: z
+    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
+    .nullish(),
 });
 
 /**

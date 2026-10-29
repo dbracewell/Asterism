@@ -141,6 +141,7 @@ function ProjectSettings({
     name: draft.name,
     description: draft.description,
     system_prompt: draft.system_prompt,
+    accent: draft.accent,
   };
   return (
     <>

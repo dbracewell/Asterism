@@ -22,6 +22,7 @@ import { useState } from "react";
 
 export const CollapsibleSidebarGroup = ({
   label,
+  labelAdornment,
   children,
   defaultIsOpen = false,
   cookieName,
@@ -33,6 +34,8 @@ export const CollapsibleSidebarGroup = ({
   isActive,
 }: {
   label: string;
+  /** Decorative mark shown before the label, such as a project accent. */
+  labelAdornment?: React.ReactNode;
   href?: string;
   isActive?: boolean;
   defaultIsOpen?: boolean;
@@ -111,9 +114,10 @@ export const CollapsibleSidebarGroup = ({
                 </Button>
               </CollapsibleTrigger>
               <SidebarGroupLabel
-                className="min-w-0 flex-1 shrink px-0"
+                className="text-sidebar-foreground min-w-0 flex-1 shrink gap-2 px-0 text-sm tracking-normal normal-case"
                 title={label}
               >
+                {labelAdornment}
                 <span className="truncate">{label}</span>
               </SidebarGroupLabel>
               {actions}

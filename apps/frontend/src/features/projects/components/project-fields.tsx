@@ -7,8 +7,22 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  PROJECT_ACCENTS,
+  ProjectAccentDot,
+  type ProjectAccent,
+} from "@/features/projects/project-accent";
 import type { ProjectCreate } from "@/lib/client";
+
+const NO_ACCENT = "none";
 
 export function ProjectFields({
   value,
@@ -44,6 +58,32 @@ export function ProjectFields({
             onChange({ ...value, description: event.target.value })
           }
         />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="project-accent">Sidebar color</FieldLabel>
+        <Select
+          value={value.accent ?? NO_ACCENT}
+          disabled={disabled}
+          onValueChange={(accent) =>
+            onChange({
+              ...value,
+              accent: accent === NO_ACCENT ? null : (accent as ProjectAccent),
+            })
+          }
+        >
+          <SelectTrigger id="project-accent" className="w-full sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_ACCENT}>No color</SelectItem>
+            {Object.entries(PROJECT_ACCENTS).map(([accent, { label }]) => (
+              <SelectItem key={accent} value={accent}>
+                <ProjectAccentDot accent={accent as ProjectAccent} />
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field>
         <FieldLabel htmlFor="project-instructions">

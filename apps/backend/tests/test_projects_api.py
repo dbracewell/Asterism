@@ -205,6 +205,8 @@ async def test_duplicate_names_conflict_and_failed_update_is_atomic(project_api)
         {"name": "X", "system_prompt": "x" * 100_001},
         {"name": "X", "user_id": "b"},
         {"name": "X", "context_revision": 10},
+        {"name": "X", "accent": "chartreuse"},
+        {"name": "X", "accent": ""},
     ],
 )
 async def test_create_validation(project_api, payload):
@@ -230,6 +232,7 @@ async def test_create_validation(project_api, payload):
         {"system_prompt": "x" * 100_001},
         {"context_revision": 20},
         {"user_id": "b"},
+        {"accent": "chartreuse"},
     ],
 )
 async def test_patch_validation(project_api, fields):
@@ -262,6 +265,34 @@ async def test_revision_guards_noops_and_metadata_updates(project_api):
     assert (await client.get(path, headers=auth())).json() == changed.json()
     assert (await client.delete(path, headers=auth())).status_code == 422
     assert (await client.delete(path, headers=auth(), params={"expected_context_revision": 0})).status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_accent_is_optional_metadata_cleared_by_null(project_api):
+    client, _, _ = project_api
+    plain = await create(client, name="Plain")
+    assert plain["accent"] is None
+    project = await create(client, accent="teal")
+    assert project["accent"] == "teal"
+    path = f"/projects/{project['id']}"
+    recolored = await client.patch(path, headers=auth(), json={"expected_context_revision": 1, "accent": "pink"})
+    assert recolored.json()["accent"] == "pink"
+    assert recolored.json()["context_revision"] == 1
+    renamed = await client.patch(path, headers=auth(), json={"expected_context_revision": 1, "name": "Renamed"})
+    assert renamed.json()["accent"] == "pink"
+    cleared = await client.patch(path, headers=auth(), json={"expected_context_revision": 1, "accent": None})
+    assert cleared.status_code == 200
+    assert cleared.json()["accent"] is None
+    assert cleared.json()["context_revision"] == 1
+
+
+def test_accent_schema_matches_db_palette():
+    from typing import get_args
+
+    from asterism.domains.projects.models import PROJECT_ACCENTS
+    from asterism.domains.projects.schemas import ProjectAccent
+
+    assert get_args(ProjectAccent) == PROJECT_ACCENTS
 
 
 @pytest.mark.asyncio

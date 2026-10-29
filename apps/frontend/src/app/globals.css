@@ -92,6 +92,16 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  /* Project accents (US-42.2): theme-independent mid-tones that read on light
+     and dark sidebars; decorative beside the project name. */
+  --color-project-red: var(--color-red-500);
+  --color-project-orange: var(--color-orange-500);
+  --color-project-amber: var(--color-amber-500);
+  --color-project-green: var(--color-green-500);
+  --color-project-teal: var(--color-teal-500);
+  --color-project-sky: var(--color-sky-500);
+  --color-project-violet: var(--color-violet-500);
+  --color-project-pink: var(--color-pink-500);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -250,6 +260,12 @@ body {
 }
 .dark {
   --flare: #f2c14e;
+}
+
+/* US-42.2: the selected sidebar row carries a primary bar on its leading edge,
+   so selection reads without relying on the fill alone (and in icon mode). */
+@utility sidebar-active-indicator {
+  box-shadow: inset 2px 0 0 var(--sidebar-primary);
 }
 
 @utility no-scrollbar {
