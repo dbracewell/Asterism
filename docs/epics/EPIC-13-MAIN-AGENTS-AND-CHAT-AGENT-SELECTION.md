@@ -4,6 +4,12 @@
 
 **Completed.** US-13.1 through US-13.3 are implemented, verified, user-confirmed, and merged.
 
+> **Superseded.** The multiple selectable main agents, default-agent choice and
+> new-chat agent selector described below were replaced by US-27.4 and US-29.1.
+> Each user now has exactly one model-free main-agent configuration (no selector)
+> and zero or more fixed-model sub-agent definitions that projects select. See
+> [agent runtime](../architecture/agent-runtime.md). This epic is kept as history.
+
 ## Goal
 
 Make the distinction between a user's interactive **main agents** and delegated

@@ -85,6 +85,17 @@ fit below 250px. Dialogs share a dynamic viewport height cap and scroll through 
 content to their footer and close actions. See the
 [container and scroll contracts](../../docs/architecture/frontend-and-themes.md#settings-dialogs-and-file-panes-us-322).
 
+## Agents and the new-chat page
+
+Every user has exactly one main agent, configured under **User Settings → Agents**.
+It has no model of its own and there is nothing to choose: every new chat uses it,
+with the model and persona picked in the composer. Users may define any number of
+sub-agents, each bound to one fixed model; a project selects which of them its chats
+may delegate to, and General chats never delegate. The new-chat page therefore shows
+only the workspace (General or a linked project) and up to four suggested prompts
+from the project description and the user's eligible skills. See
+[agent runtime](../../docs/architecture/agent-runtime.md).
+
 ## Chat content and composer layout
 
 Chat history and the composer share normal flow. The composer has a bounded scroll
