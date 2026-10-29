@@ -1,6 +1,7 @@
 "use client";
 
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader, PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -29,14 +30,11 @@ export const ChatSearch = () => {
   useEffect(() => setPage(1), [deferredQuery]);
 
   return (
-    <section className="container mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 p-4 pt-16">
-      <div>
-        <h1 className="text-title">Search</h1>
-        <p className="text-muted-foreground text-sm">
-          Find chats and projects by name, project description, or conversation
-          content.
-        </p>
-      </div>
+    <PageLayout>
+      <PageHeader
+        title="Search"
+        description="Find chats and projects by name, project description, or conversation content."
+      />
       <div className="relative">
         <SearchIcon className="text-muted-foreground absolute top-1/2 left-2 size-4 -translate-y-1/2" />
         <Input
@@ -139,6 +137,6 @@ export const ChatSearch = () => {
           </div>
         </div>
       )}
-    </section>
+    </PageLayout>
   );
 };

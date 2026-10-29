@@ -2,6 +2,7 @@
 
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
+import { PageHeader, PageLayout } from "@/components/page-layout";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,16 +38,12 @@ export function ProjectList() {
     retry: false,
   });
   return (
-    <main className="container mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 pt-16">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title">Projects</h1>
-          <p className="text-muted-foreground">
-            Keep related work, instructions, and chats together.
-          </p>
-        </div>
-        <CreateProjectDialog />
-      </header>
+    <PageLayout>
+      <PageHeader
+        title="Projects"
+        description="Keep related work, instructions, and chats together."
+        actions={<CreateProjectDialog />}
+      />
       <Input
         aria-label="Search projects"
         placeholder="Search names and descriptions"
@@ -139,7 +136,7 @@ export function ProjectList() {
           </div>
         </>
       )}
-    </main>
+    </PageLayout>
   );
 }
 

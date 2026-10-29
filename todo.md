@@ -20,7 +20,7 @@ for current evidence and verification limits.
 Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. EPIC-41 is confirmed complete and archived in the
 [2026-10-27 checklist](docs/archive/todo-completed-2026-10-27.md); EPIC-43 is confirmed complete and archived in the
 [2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44 and EPIC-45 are confirmed complete and archived in the
-[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). US-42.1 is merged into `main`. US-42.2 is merged into `main`; US-42.3 is next.
+[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). US-42.1 is merged into `main`. US-42.2 is merged into `main`. US-42.3 is implemented on `feature/us-42.3-page-header-list-layout` and awaits confirmation.
 
 ### [EPIC-42: App shell and navigation chrome](docs/epics/EPIC-42-APP-SHELL-AND-NAVIGATION-CHROME.md)
 
@@ -33,9 +33,9 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Restyle the sidebar groups and rows; add an optional project accent (backend field, regenerated client).
   - [x] Test the active state and collapsed icon mode; update screenshots.
 
-- [ ] US-42.3: Shared page header and list layout
-  - [ ] Build `PageHeader` and the list layout; migrate the four pages.
-  - [ ] Update tests and screenshots.
+- [x] US-42.3: Shared page header and list layout
+  - [x] Build `PageHeader` and the list layout; migrate the four pages.
+  - [x] Update tests and screenshots. (No committed screenshot baselines cover these pages.)
 
 ### [EPIC-46: Settings and admin visual coherence](docs/epics/EPIC-46-SETTINGS-AND-ADMIN-VISUAL-COHERENCE.md)
 

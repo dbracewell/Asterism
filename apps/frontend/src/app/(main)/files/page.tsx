@@ -1,13 +1,15 @@
 import * as FileManager from "@/components/file-manager";
+import { PageHeader, PageLayout } from "@/components/page-layout";
 
 export default function FilesPage() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <h1 className="bg-accent text-accent-foreground text-heading border-b px-4 py-2">
-        File Manager
-      </h1>
+    <PageLayout fill>
+      <PageHeader
+        title="Files"
+        description="Your file library. Upload files here, then add them to projects and chats."
+      />
       <FileManager.Provider>
-        <FileManager.UploadFileDropZone>
+        <FileManager.UploadFileDropZone className="relative">
           <FileManager.Ribbon>
             <FileManager.DeleteSelectedFilesSection />
             <FileManager.UploadFilesSection />
@@ -15,6 +17,6 @@ export default function FilesPage() {
           <FileManager.FileList />
         </FileManager.UploadFileDropZone>
       </FileManager.Provider>
-    </div>
+    </PageLayout>
   );
 }
