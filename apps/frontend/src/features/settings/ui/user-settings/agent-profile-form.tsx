@@ -1,11 +1,12 @@
 "use client";
+import { ListSkeleton, LoadingState } from "@/components/loading-skeletons";
 import { HelpIcon } from "@/components/help-icon";
 import { QueryError } from "@/components/query-error";
 import { Required } from "@/components/required";
 import { ModelSelector } from "@/components/settings/model-selector";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -297,7 +298,11 @@ function ConfigurationForm({
                     disabled={modelQuery.isPending || modelQuery.isError}
                   />
 
-                  {modelQuery.isPending && <p role="status">Loading models…</p>}
+                  {modelQuery.isPending && (
+                    <LoadingState label="Loading models…">
+                      <Skeleton className="h-3 w-1/3" />
+                    </LoadingState>
+                  )}
                   {modelQuery.isError && (
                     <Empty role="alert" className="flex-none p-3">
                       <EmptyDescription>
@@ -407,12 +412,11 @@ function ConfigurationForm({
             <FieldSet className="grid grid-cols-1 gap-2 @xl/agent:grid-cols-2 @4xl/agent:grid-cols-3 @6xl/agent:grid-cols-4">
               <FieldLegend>Allowed tools</FieldLegend>
               {toolQuery.isPending && (
-                <div role="status" className="flex items-center gap-2 p-2">
-                  <Spinner size={16} />
-                  <span className="text-muted-foreground text-sm">
-                    Loading tools…
-                  </span>
-                </div>
+                <ListSkeleton
+                  label="Loading tools…"
+                  rows={3}
+                  className="col-span-full"
+                />
               )}
               {toolQuery.isError && (
                 <div className="col-span-full">

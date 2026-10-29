@@ -1,9 +1,9 @@
 "use client";
 
+import { PageHeaderSkeleton } from "@/components/loading-skeletons";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import type { Project, ProjectCreate } from "@/lib/client";
 import {
@@ -39,11 +39,7 @@ export function ProjectWorkspace({
       >
         All projects
       </Link>
-      {project.isPending && (
-        <div role="status" aria-label="Loading project">
-          <Spinner size={24} />
-        </div>
-      )}
+      {project.isPending && <PageHeaderSkeleton label="Loading project" />}
       {project.error && (
         <QueryError
           error={project.error}

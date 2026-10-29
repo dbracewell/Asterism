@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,9 @@ function OwnedSkillsSettings({ owner }: { owner: string }) {
           }}
         />
       </Field>
-      {skills.isPending && <p role="status">Loading skills…</p>}
+      {skills.isPending && (
+        <ListSkeleton label="Loading skills…" rows={3} detail />
+      )}
       {skills.error && (
         <QueryError
           error={skills.error}

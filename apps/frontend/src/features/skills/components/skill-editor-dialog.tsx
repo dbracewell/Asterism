@@ -1,5 +1,6 @@
 "use client";
 
+import { FormSkeleton } from "@/components/loading-skeletons";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { QueryError } from "@/components/query-error";
@@ -67,7 +68,7 @@ export function SkillEditorDialog(props: Props) {
             </DialogDescription>
           </DialogHeader>
           {detail.isPending ? (
-            <p role="status">Loading skill…</p>
+            <FormSkeleton label="Loading skill…" fields={2} />
           ) : (
             <QueryError
               error={detail.error}

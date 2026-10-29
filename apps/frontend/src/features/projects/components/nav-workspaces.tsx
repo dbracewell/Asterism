@@ -1,4 +1,5 @@
 "use client";
+import { NavListSkeleton } from "@/components/loading-skeletons";
 import { PROJECTS_OPEN_COOKIE } from "@/features/dashboard/constants";
 import { WorkspaceNavigationRow } from "@/features/dashboard/components/workspace-navigation-row";
 import { NavChatSessions } from "@/features/dashboard/components/nav-chat-sessions";
@@ -13,7 +14,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import { projectGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
@@ -82,9 +82,7 @@ export function NavWorkspaces({
                   </SidebarMenuSubItem>
                 ))}
                 {projects.isPending && (
-                  <div role="status" aria-label="Loading workspaces">
-                    <Spinner size={24} />
-                  </div>
+                  <NavListSkeleton label="Loading workspaces" />
                 )}
                 {projects.error && (
                   <QueryError

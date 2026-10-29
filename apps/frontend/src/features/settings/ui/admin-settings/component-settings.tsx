@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { FormSkeleton } from "@/components/loading-skeletons";
 import { HelpIcon } from "@/components/help-icon";
 import {
   Field,
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import {
   ComponentProviderParameters,
@@ -81,7 +81,7 @@ export const ComponentSettings = ({
   }, [provider]);
 
   if (isLoading) {
-    return <Spinner />;
+    return <FormSkeleton label="Loading settings…" fields={2} />;
   }
 
   return (

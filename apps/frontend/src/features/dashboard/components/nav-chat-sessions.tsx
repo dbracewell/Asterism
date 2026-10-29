@@ -1,5 +1,6 @@
 "use client";
 
+import { NavListSkeleton } from "@/components/loading-skeletons";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Spinner } from "@/components/ui/spinner";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { CollapsibleSidebarGroup } from "@/features/dashboard/components/collapsible-sidebar-group";
 import {
@@ -156,11 +156,7 @@ function ScopedNavChatSessions({
   };
 
   if (workspace.pending)
-    return (
-      <div role="status" aria-label="Loading chat workspace">
-        <Spinner size={24} />
-      </div>
-    );
+    return <NavListSkeleton label="Loading chat workspace" rows={5} />;
 
   if (workspace.error)
     return (
@@ -251,11 +247,7 @@ function ScopedNavChatSessions({
           isRetrying={project.isFetching}
         />
       )}
-      {isPending && (
-        <div role="status" aria-label="Loading chats">
-          <Spinner size={24} />
-        </div>
-      )}
+      {isPending && <NavListSkeleton label="Loading chats" rows={5} />}
       {error && (
         <QueryError
           error={error}

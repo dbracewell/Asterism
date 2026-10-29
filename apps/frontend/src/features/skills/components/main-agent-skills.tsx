@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -101,7 +102,9 @@ function AssignmentDialog({
       </DialogHeader>
       {discard.dialog}
       <SkillAvailability owner={owner} />
-      {assignments.isPending && <p role="status">Loading skill assignments…</p>}
+      {assignments.isPending && (
+        <ListSkeleton label="Loading skill assignments…" rows={2} />
+      )}
       {assignments.error && (
         <QueryError
           error={assignments.error}
@@ -134,7 +137,9 @@ function AssignmentDialog({
           }}
         />
       </Field>
-      {skills.isPending && <p role="status">Loading owned skills…</p>}
+      {skills.isPending && (
+        <ListSkeleton label="Loading owned skills…" rows={3} />
+      )}
       {skills.error && (
         <QueryError
           error={skills.error}

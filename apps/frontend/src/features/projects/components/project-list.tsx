@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import type { ProjectCreate } from "@/lib/client";
 import {
@@ -61,9 +61,7 @@ export function ProjectList() {
         }}
       />
       {projects.isPending && (
-        <div role="status" aria-label="Loading projects">
-          <Spinner size={24} />
-        </div>
+        <ListSkeleton label="Loading projects" rows={5} detail />
       )}
       {projects.error && (
         <QueryError

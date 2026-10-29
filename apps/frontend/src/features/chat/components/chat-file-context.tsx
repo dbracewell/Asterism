@@ -1,5 +1,7 @@
 "use client";
 
+import { FormSkeleton } from "@/components/loading-skeletons";
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -232,7 +234,7 @@ function ScopedFileRow({
         isRetrying={file.isFetching}
       />
     );
-  if (!file.data) return <p role="status">Loading file…</p>;
+  if (!file.data) return <FormSkeleton label="Loading file…" fields={2} />;
   return (
     <div className="bg-card rounded-surface flex flex-wrap items-center gap-2 border p-2.5">
       <Link
@@ -359,7 +361,7 @@ function DraftProjectFiles({ projectId }: { projectId: string | null }) {
           isRetrying={files.isFetching}
         />
       ) : files.isPending || files.isFetching ? (
-        <p role="status">Loading project files…</p>
+        <ListSkeleton label="Loading project files…" rows={3} />
       ) : (
         <>
           {!files.data.files.length && <p>No project files.</p>}
