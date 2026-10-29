@@ -3,7 +3,6 @@ import {
   QueryClient,
   QueryClientProvider,
   MutationCache,
-  useQuery,
 } from "@tanstack/react-query";
 import {
   Sidebar,
@@ -15,22 +14,43 @@ import { ProjectList } from "@/features/projects/components/project-list";
 import { ProjectWorkspace } from "@/features/projects/components/project-workspace";
 import { NavWorkspaces } from "@/features/projects/components/nav-workspaces";
 import { WorkspaceChats } from "@/features/projects/components/workspace-chats";
-import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
-import { client } from "@/lib/api";
-import { chatSessionGetOneOptions } from "@/lib/client/@tanstack/react-query.gen";
+import UserProvider from "@/features/auth/components/user-context";
+import type { User } from "@/features/auth/types";
+import {
+  ChatHeaderContent,
+  HeaderBar,
+} from "@/features/dashboard/components/app-header";
 import { useState } from "react";
 export const PROJECT_ID = "11111111-1111-4111-8111-111111111111";
 const CHAT_ID = "33333333-3333-4333-8333-333333333333";
+const TEST_USER: User = {
+  id: "test",
+  name: "Projects tester",
+  email: "projects@example.test",
+  role: "user",
+  timezone: "UTC",
+  settings: {
+    main_agent: {
+      id: "main",
+      name: "Main",
+      description: "",
+      system_prompt: "",
+      tools: [],
+    },
+    show_thinking: true,
+  },
+};
 function ChatView() {
-  const chat = useQuery(
-    chatSessionGetOneOptions({ client, path: { chat_id: CHAT_ID } }),
+  return (
+    <UserProvider user={TEST_USER}>
+      <HeaderBar>
+        <ChatHeaderContent chatId={CHAT_ID} />
+      </HeaderBar>
+      <main className="mx-auto w-full max-w-3xl p-8">
+        <p>Existing conversation history</p>
+      </main>
+    </UserProvider>
   );
-  return chat.data ? (
-    <main className="mx-auto w-full max-w-3xl p-8">
-      <ChatWorkspace info={chat.data.info} disabled={false} />
-      <p>Existing conversation history</p>
-    </main>
-  ) : null;
 }
 function createTestCache() {
   const cache = new QueryClient({

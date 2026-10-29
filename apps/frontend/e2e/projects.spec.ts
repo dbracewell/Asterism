@@ -230,11 +230,16 @@ test("moves a chat to General with explicit history transfer and updates its ide
       },
     });
   });
+  await page.route("**/api/py/users/personas", (route) =>
+    route.fulfill({
+      json: { profiles: [], default_persona_id: "none", default_revision: 1 },
+    }),
+  );
   await page.goto("/e2e/projects?view=chat");
-  await expect(
-    page.locator("main").getByRole("link", { name: "Research" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Move chat" }).click();
+  const header = page.locator('[data-slot="app-header"]');
+  await expect(header.getByRole("link", { name: "Research" })).toBeVisible();
+  await header.getByRole("button", { name: "Chat actions" }).click();
+  await page.getByRole("menuitem", { name: "Move" }).click();
   await expect(page.getByRole("dialog")).toContainText(
     "Historical answers may contain information from the previous project",
   );
@@ -243,7 +248,7 @@ test("moves a chat to General with explicit history transfer and updates its ide
   await page.getByRole("button", { name: "Move to workspace" }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(
-    page.locator("main").getByRole("link", { name: "General", exact: true }),
+    header.getByRole("link", { name: "General", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Existing conversation history")).toBeVisible();
 });

@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -26,96 +25,47 @@ import type { ChatInfo } from "@/lib/client";
 import {
   chatSessionMoveMutation,
   projectGetManyOptions,
-  projectGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import { useState } from "react";
 
-export function WorkspaceIdentity({ projectId }: { projectId: string | null }) {
-  const project = useQuery({
-    ...projectGetOneOptions({ client, path: { project_id: projectId ?? "" } }),
-    enabled: !!projectId,
-    retry: false,
-  });
-  if (!projectId)
-    return (
-      <div className="flex flex-col gap-1">
-        <Link href="/general" className="text-sm hover:underline">
-          General
-        </Link>
-        <p className="text-muted-foreground text-xs">
-          General chats never delegate to sub-agents.
-        </p>
-      </div>
-    );
-  return (
-    <div className="flex flex-col gap-2">
-      <Link href={`/projects/${projectId}`} className="text-sm hover:underline">
-        {project.data?.name ??
-          (project.isPending ? "Loading project…" : "Project unavailable")}
-      </Link>
-      {project.error && (
-        <QueryError
-          error={project.error}
-          message="Could not refresh project identity."
-          retry={project.refetch}
-          isRetrying={project.isFetching}
-        />
-      )}
-    </div>
-  );
-}
-
-export function ChatWorkspace({
+/** Moves a chat between General and projects, transferring its history. */
+export function MoveChatDialog({
   info,
-  disabled,
+  open,
+  onOpenChange,
 }: {
   info: ChatInfo;
-  disabled: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <div
-      className="flex flex-wrap items-center justify-between gap-3 py-3"
-      aria-label="Chat workspace"
-    >
-      <WorkspaceIdentity projectId={info.project_id ?? null} />
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" disabled={disabled}>
-            Move chat
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Move chat</DialogTitle>
-            <DialogDescription>
-              This transfers the chat’s full history and local attachments.
-              Historical answers may contain information from the previous
-              project. Later turns use the destination’s instructions and files.
-              Pending generations must be regenerated after a move.
-            </DialogDescription>
-          </DialogHeader>
-          <MoveChatForm
-            key={`${info.id}:${info.project_id ?? "general"}`}
-            info={info}
-            disabled={disabled}
-            onMoved={() => setOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Move chat</DialogTitle>
+          <DialogDescription>
+            This transfers the chat’s full history and local attachments.
+            Historical answers may contain information from the previous
+            project. Later turns use the destination’s instructions and files.
+            Pending generations must be regenerated after a move.
+          </DialogDescription>
+        </DialogHeader>
+        <MoveChatForm
+          key={`${info.id}:${info.project_id ?? "general"}`}
+          info={info}
+          onMoved={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }
 
 function MoveChatForm({
   info,
-  disabled,
   onMoved,
 }: {
   info: ChatInfo;
-  disabled: boolean;
   onMoved: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -160,7 +110,7 @@ function MoveChatForm({
               setQuery(event.target.value);
               setPage(1);
             }}
-            disabled={move.isPending || disabled}
+            disabled={move.isPending}
           />
         </Field>
         {projects.error && (
@@ -177,7 +127,7 @@ function MoveChatForm({
           </FieldLabel>
           <Select
             value={target.id}
-            disabled={move.isPending || disabled}
+            disabled={move.isPending}
             onValueChange={(id) =>
               setTarget({
                 id,
@@ -248,9 +198,7 @@ function MoveChatForm({
       <Button
         type="submit"
         disabled={
-          disabled ||
-          move.isPending ||
-          target.id === (info.project_id ?? "general")
+          move.isPending || target.id === (info.project_id ?? "general")
         }
       >
         {move.isPending ? "Moving…" : "Move to workspace"}

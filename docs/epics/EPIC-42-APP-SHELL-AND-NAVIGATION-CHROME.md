@@ -1,6 +1,6 @@
 # EPIC-42: App shell and navigation chrome
 
-Status: proposed. Source: the approved visual design audit (2026-10-26).
+Status: in progress (US-42.1). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
@@ -26,8 +26,17 @@ compact model and persona chips for the current chat, and chat actions (rename,
 move, delete). It merges with `MobileSidebarTrigger`, so mobile has one header.
 On narrow screens it collapses without overflowing.
 
-- [ ] Replace `NavHeader` and `MobileSidebarTrigger` with one route-aware header component.
-- [ ] Add breadcrumb, chip and action slots fed by route params and existing queries; reuse `ChatSessionActionMenu`.
+Implementation: `AppHeader` (`features/dashboard/components/app-header.tsx`) maps
+the pathname to a breadcrumb. Below `sm` only the current crumb shows; the
+read-only model and persona chips appear from `md`. The chips reflect the chat's
+current selection; the composer pickers remain the place to change them.
+`ChatSessionActionMenu` now offers rename, move and delete in both the sidebar
+and the header. The move dialog replaces the in-transcript workspace strip. The
+header can't see whether a run is active, so a move during a run is rejected by
+the server (409) and the dialog shows the error.
+
+- [x] Replace `NavHeader` and `MobileSidebarTrigger` with one route-aware header component.
+- [x] Add breadcrumb, chip and action slots fed by route params and existing queries; reuse `ChatSessionActionMenu`.
 - [ ] Test the breadcrumbs per route, the mobile layout and keyboard order; update screenshots.
 
 ## US-42.2: Sidebar hierarchy

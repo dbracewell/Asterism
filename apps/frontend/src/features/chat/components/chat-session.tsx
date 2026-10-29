@@ -20,7 +20,6 @@ import {
   SubAgentActivity,
   updateSubAgentActivities,
 } from "@/features/chat/types";
-import { ChatWorkspace } from "@/features/projects/components/chat-workspace";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
@@ -376,10 +375,6 @@ export const ChatSession = ({
             description="Write a message below to begin."
           />
         )}
-        <ChatWorkspace
-          info={session.info}
-          disabled={isProcessing || sendMessage.isPending}
-        />
         {session.info.pending_persona && (
           <p
             className="text-muted-foreground text-sm"
