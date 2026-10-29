@@ -15,11 +15,13 @@ import type { Theme } from "@/features/theme/types";
 import atlas from "@/features/theme/bundled/atlas.json";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const { saveTheme, refresh, catalog } = vi.hoisted(() => ({
+const { saveTheme, refresh, catalog, search } = vi.hoisted(() => ({
   saveTheme: vi.fn(),
   refresh: vi.fn(),
   catalog: { theme: null as Theme | null },
+  search: { params: new URLSearchParams() },
 }));
+vi.mock("next/navigation", () => ({ useSearchParams: () => search.params }));
 vi.mock("@/features/theme/server/actions", () => ({ saveTheme }));
 vi.mock("@/features/theme/components/theme-context", () => ({
   useTheme: () => ({
@@ -49,6 +51,19 @@ function show() {
 beforeEach(() => {
   vi.clearAllMocks();
   catalog.theme = null;
+  search.params = new URLSearchParams();
+});
+
+describe("opening from the theme gallery", () => {
+  it("starts on the theme named in the URL", () => {
+    search.params = new URLSearchParams({ theme: "atlas" });
+    show();
+    expect(screen.getByLabelText("Name")).toHaveValue(atlas.name);
+  });
+  it("starts with no selection when the URL names no theme", () => {
+    show();
+    expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
+  });
 });
 
 describe("theme save feedback", () => {

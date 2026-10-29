@@ -101,6 +101,7 @@ export function ResponsivenessHarness() {
           role: "admin",
           timezone: "UTC",
           settings: {
+            theme: "atlas",
             main_agent: {
               id: "main",
               name: "Main",

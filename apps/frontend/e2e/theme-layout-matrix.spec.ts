@@ -161,7 +161,12 @@ for (const theme of themes)
           "Include attachments",
           "Enable tools",
         ]) {
-          const control = page.getByLabel(name, { exact: true });
+          const labelled = page.getByLabel(name, { exact: true });
+          // The theme gallery is a radio group; its tab stop is the checked tile.
+          const control =
+            name === "Theme"
+              ? labelled.getByRole("radio", { checked: true })
+              : labelled;
           await page.keyboard.press("Tab");
           const geometry = await reachable(control);
           observations.push({ name, ...geometry });

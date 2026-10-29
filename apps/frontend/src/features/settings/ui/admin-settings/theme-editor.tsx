@@ -50,6 +50,7 @@ import {
   PlusIcon,
   SaveIcon,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { type CSSProperties, useEffect, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import {
@@ -68,8 +69,12 @@ import {
 } from "@/features/theme/schemas";
 
 export const ThemeEditor = () => {
-  const { lightThemes, darkThemes } = useTheme();
-  const [theme, setTheme] = useState<Theme | null>(null);
+  const { lightThemes, darkThemes, getTheme } = useTheme();
+  // The gallery's edit link opens the editor on that theme.
+  const requested = useSearchParams()?.get("theme");
+  const [theme, setTheme] = useState<Theme | null>(
+    () => (requested && getTheme(requested)) || null,
+  );
   const [selection, setSelection] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const chooseTheme = (next: Theme) => {
