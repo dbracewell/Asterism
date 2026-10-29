@@ -52,6 +52,7 @@ export function MarkdownHarness() {
             content: adversarialMarkdown + "\n" + normalMarkdown,
             thinking: "",
             toolCalls: [],
+            toolResults: [],
           },
         ]}
       />

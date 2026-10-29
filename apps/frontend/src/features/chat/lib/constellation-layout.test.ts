@@ -22,6 +22,7 @@ const activity = (
   content: "",
   thinking: "",
   toolCalls: [],
+  toolResults: [],
   ...overrides,
 });
 

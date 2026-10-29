@@ -1,5 +1,5 @@
 import { AgentSubAgentEvent, ToolCallSchema } from "@/features/chat/schemas";
-import { Message } from "@/lib/client";
+import { Message, ToolResult } from "@/lib/client";
 import z from "zod";
 import { ReadyState } from "react-use-websocket";
 
@@ -46,8 +46,17 @@ export type SubAgentActivity = {
   content: string;
   thinking: string;
   toolCalls: z.infer<typeof ToolCallSchema>[];
+  toolResults: ToolResult[];
   error?: string;
 };
+
+const mergeToolResults = (previous: ToolResult[], incoming: ToolResult[]) => [
+  ...previous.filter(
+    (result) =>
+      !incoming.some((next) => next.tool_call.id === result.tool_call.id),
+  ),
+  ...incoming,
+];
 
 export const updateSubAgentActivities = (
   activities: SubAgentActivity[],
@@ -70,6 +79,7 @@ export const updateSubAgentActivities = (
           content: "",
           thinking: "",
           toolCalls: [],
+          toolResults: [],
         };
 
   // The name arrives once the child has resolved its fixed model binding.
@@ -100,9 +110,13 @@ export const updateSubAgentActivities = (
     case "complete":
       next = {
         ...base,
-        status: "completed",
+        status: packet.event.tool_calls.length ? "running" : "completed",
         content: packet.event.content || base.content,
         thinking: packet.event.thinking || base.thinking,
+        toolResults: mergeToolResults(
+          base.toolResults,
+          packet.event.tool_results,
+        ),
       };
       break;
     case "error":

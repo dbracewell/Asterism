@@ -1,5 +1,5 @@
 import { zMessageExecution } from "@/lib/client/zod.gen";
-import { zMessage } from "@/lib/client/zod.gen";
+import { zMessage, zToolResult } from "@/lib/client/zod.gen";
 import z from "zod";
 
 export const FunctionSchema = z.object({
@@ -82,6 +82,10 @@ const SubAgentCompleteEvent = z.object({
   type: z.literal("complete"),
   content: z.string().default(""),
   thinking: z.string().default(""),
+  /** A step that called tools is intermediate; the child keeps working. */
+  tool_calls: ToolCallSchema.array().default([]),
+  /** Results of the tool calls this child step made. */
+  tool_results: zToolResult.array().default([]),
 });
 
 const SubAgentErrorEvent = z.object({

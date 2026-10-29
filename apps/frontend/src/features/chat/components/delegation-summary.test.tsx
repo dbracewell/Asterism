@@ -37,7 +37,7 @@ describe("DelegationSummary", () => {
       name: "2 agents · 3.0 s · 1 tool · 1 failed",
     });
     expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("img", { name: /Delegation graph/ })).toBeNull();
+    expect(screen.queryByRole("list", { name: /Delegation graph/ })).toBeNull();
     expect(screen.queryByText("Timed out")).toBeNull();
   });
 
@@ -45,7 +45,7 @@ describe("DelegationSummary", () => {
     render(<DelegationSummary records={records} mainModel="Alpha" />);
     await userEvent.click(screen.getByRole("button", { name: /^2 agents/ }));
     expect(
-      screen.getByRole("img", {
+      screen.getByRole("list", {
         name: "Delegation graph: main agent and 2 sub-agents, 1 failed",
       }),
     ).toBeInTheDocument();

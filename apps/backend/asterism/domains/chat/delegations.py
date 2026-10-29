@@ -49,9 +49,10 @@ class DelegationCollector:
             case AgentEventType.TOOL_CALL:
                 update["tool_calls"] = _merge_tool_calls(record.tool_calls, event.tool_calls)
             case AgentEventType.COMPLETE:
-                # Each child step completes; its tool results arrive here.
+                # Each child step completes; its tool results arrive here. A
+                # step that called tools is intermediate: the child keeps going.
                 update |= {
-                    "status": "completed",
+                    "status": "running" if event.tool_calls else "completed",
                     "output": event.content or record.output,
                     "tool_results": _merge_tool_results(record.tool_results, event.tool_results),
                 }
