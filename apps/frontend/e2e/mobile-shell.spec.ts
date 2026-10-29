@@ -665,3 +665,61 @@ test("General quick chats and workspace context coexist with aligned full-row se
     contextList.getByRole("link", { name: "Context chat 2-0", exact: true }),
   ).toBeVisible();
 });
+
+test("sidebar marks the active item in expanded and icon modes and shows project accents", async ({
+  page,
+  context,
+}) => {
+  await page.unroute("**/api/py/projects/?**");
+  const tokenResponse = await context.request.get(
+    "http://localhost:3100/api/auth/token",
+  );
+  const { token } = await tokenResponse.json();
+  const created = await context.request.post(
+    "http://localhost:3100/api/py/projects/",
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { name: `Accent ${randomUUID().slice(0, 8)}`, accent: "teal" },
+    },
+  );
+  expect(created.ok()).toBeTruthy();
+  const project = await created.json();
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await context.addCookies([
+    { name: PROJECTS_OPEN_COOKIE, value: "true", url: "http://localhost:3100" },
+    { name: "sidebar_state", value: "true", url: "http://localhost:3100" },
+  ]);
+  await page.goto(`/projects/${project.id}`);
+  const sidebar = page.locator('[data-slot="sidebar"]');
+  const logo = sidebar.locator('[data-sidebar="header"] a').first();
+  await expect(logo.locator("svg")).toHaveCSS("opacity", "1");
+  await expect(logo.locator("h1")).toHaveCSS("opacity", "1");
+  await expect(
+    sidebar.locator('[data-slot="sidebar-group-label"]', {
+      hasText: "Workspaces",
+    }),
+  ).toHaveCSS("text-transform", "uppercase");
+  const row = sidebar.getByRole("link", { name: project.name, exact: true });
+  await expect(row).toHaveAttribute("aria-current", "page");
+  await expect(row).toHaveAttribute("data-active", "true");
+  await expect(row).toHaveCSS("box-shadow", /inset/);
+  const accent = row.locator('[data-accent="teal"]');
+  await expect(accent).toBeVisible();
+  await expect(accent).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+
+  await page.goto("/search");
+  const search = sidebar.getByRole("link", { name: "Search", exact: true });
+  await page
+    .getByRole("button", { name: "Collapse sidebar", exact: true })
+    .click();
+  await expect(sidebar).toHaveAttribute("data-collapsible", "icon");
+  await expect(search).toBeVisible();
+  await expect(search).toHaveAttribute("data-active", "true");
+  await expect(search).toHaveCSS("box-shadow", /inset/);
+  await expect(
+    sidebar.getByRole("link", { name: "Files", exact: true }),
+  ).toHaveCSS("box-shadow", "none");
+  await page
+    .getByRole("button", { name: "Expand sidebar", exact: true })
+    .click();
+});

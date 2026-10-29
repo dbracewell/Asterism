@@ -8,13 +8,16 @@ from sqlalchemy.orm import Mapped, mapped_column
 from asterism.db.base_model import Base
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
+# Named colors a project may show in the sidebar; the frontend maps each to a swatch.
+PROJECT_ACCENTS = ("red", "orange", "amber", "green", "teal", "sky", "violet", "pink")
+
 
 class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     """A user-owned project: metadata plus a ``context_revision`` optimistic token.
 
     The revision is bumped only when the *execution context* changes — i.e. the
     file membership or ``system_prompt`` changes. Pure metadata edits (name,
-    description) deliberately do not advance it, so clients can retry metadata
+    description, accent) deliberately do not advance it, so clients can retry metadata
     updates without re-reading after unrelated churn. Membership and prompt
     writers compare-and-set on this column to detect concurrent context changes.
     """
@@ -25,6 +28,8 @@ class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    # Optional sidebar color from the fixed PROJECT_ACCENTS palette; metadata only.
+    accent: Mapped[str | None] = mapped_column(String(16), nullable=True)
     context_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
 
     __table_args__ = (
@@ -34,6 +39,10 @@ class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         UniqueConstraint("id", "user_id", name="uq_projects_id_user"),
         CheckConstraint("length(trim(name)) > 0 AND length(name) <= 255", name="ck_projects_name"),
         CheckConstraint("context_revision >= 1", name="ck_projects_context_revision"),
+        CheckConstraint(
+            f"accent IS NULL OR accent IN ({', '.join(repr(accent) for accent in PROJECT_ACCENTS)})",
+            name="ck_projects_accent",
+        ),
         Index("idx_projects_user_updated", "user_id", "updated_at"),
     )
 

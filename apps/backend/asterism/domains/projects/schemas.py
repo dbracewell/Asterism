@@ -6,7 +6,7 @@ seen ``context_revision`` so services can compare-and-set membership changes.
 """
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from pydantic.json_schema import SkipJsonSchema
@@ -15,6 +15,9 @@ from asterism.domains.agent.schemas import SubAgentDefinition
 
 # Trimmed, non-empty project name; mirrors the DB check constraint.
 ProjectName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+
+# Mirrors models.PROJECT_ACCENTS (a test keeps them in sync).
+ProjectAccent = Literal["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"]
 
 
 class ProjectCreate(BaseModel):
@@ -25,13 +28,15 @@ class ProjectCreate(BaseModel):
     name: ProjectName
     description: str = Field(default="", max_length=10_000)
     system_prompt: str = Field(default="", max_length=100_000)
+    accent: ProjectAccent | None = None
 
 
 class ProjectUpdate(BaseModel):
     """Partial project update guarded by an optimistic ``expected_context_revision``.
 
     Only fields present in the payload are written; omitted fields are untouched.
-    An empty string clears text, but explicit JSON null is rejected.
+    An empty string clears text, but explicit JSON null is rejected for text
+    fields. ``accent`` is the exception: explicit null removes the color.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -41,6 +46,7 @@ class ProjectUpdate(BaseModel):
     name: ProjectName | SkipJsonSchema[None] = None
     description: str | SkipJsonSchema[None] = Field(default=None, max_length=10_000)
     system_prompt: str | SkipJsonSchema[None] = Field(default=None, max_length=100_000)
+    accent: ProjectAccent | None = None
 
     @field_validator("name", "description", "system_prompt", mode="before")
     @classmethod
@@ -60,6 +66,7 @@ class Project(BaseModel):
     name: str
     description: str
     system_prompt: str
+    accent: ProjectAccent | None
     context_revision: int = Field(ge=1)
     created_at: int
     updated_at: int

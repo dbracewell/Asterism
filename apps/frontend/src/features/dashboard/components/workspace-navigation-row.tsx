@@ -28,7 +28,8 @@ export function WorkspaceNavigationRow({
       data-active={active === true}
       className={cn(
         "group/label hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-control flex h-8 w-full shrink-0 items-center group-data-[collapsible=icon]:hidden",
-        active && "bg-sidebar-accent text-sidebar-accent-foreground",
+        active &&
+          "bg-sidebar-accent text-sidebar-accent-foreground sidebar-active-indicator font-medium",
       )}
     >
       <Button

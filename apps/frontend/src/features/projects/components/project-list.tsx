@@ -23,6 +23,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ProjectAccentDot } from "@/features/projects/project-accent";
 import { ProjectFields } from "./project-fields";
 
 export function ProjectList() {
@@ -104,9 +105,10 @@ export function ProjectList() {
               {projects.data.projects.map((project) => (
                 <li key={project.id} className="py-4">
                   <Link
-                    className="font-medium underline-offset-4 hover:underline"
+                    className="inline-flex items-center gap-2 font-medium underline-offset-4 hover:underline"
                     href={`/projects/${project.id}`}
                   >
+                    <ProjectAccentDot accent={project.accent} />
                     {project.name}
                   </Link>
                   <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
