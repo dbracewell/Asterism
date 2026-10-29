@@ -76,12 +76,10 @@ export default function AppPage() {
         <HeroMark />
         <h1 className="text-display">What should we work on?</h1>
         <p className="text-muted-foreground text-body">
-          <span>{main.name}</span>
-          {" · "}
           {projectId ? (
             project.data ? (
               <>
-                in{" "}
+                New chat in{" "}
                 <Link
                   className="text-foreground font-medium underline-offset-4 hover:underline"
                   href={`/projects/${project.data.id}`}
@@ -90,10 +88,10 @@ export default function AppPage() {
                 </Link>
               </>
             ) : (
-              "project chat"
+              "New project chat"
             )
           ) : (
-            "general chat"
+            "New chat in General"
           )}
         </p>
         {project.error && (

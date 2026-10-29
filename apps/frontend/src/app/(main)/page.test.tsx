@@ -127,7 +127,6 @@ function renderPage() {
 }
 it("prefills only the explicit default, permits a different model, and sends it independently of the main configuration", async () => {
   renderPage();
-  expect(screen.getByText("Main agent")).toBeVisible();
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Start chat" })).toBeEnabled(),
   );
@@ -239,7 +238,8 @@ it("offers skill suggestions without a project and shows the general context", a
   mocks.getProject.mockClear();
   mocks.skills = [{ id: "s1", name: "cite", description: "Add citations" }];
   renderPage();
-  expect(screen.getByText(/general chat/)).toBeVisible();
+  expect(screen.getByText("New chat in General")).toBeVisible();
+  expect(screen.queryByText("Main agent")).not.toBeInTheDocument();
   const list = await screen.findByRole("list", { name: "Suggested prompts" });
   expect(within(list).getAllByRole("button")).toHaveLength(1);
   expect(mocks.getProject).not.toHaveBeenCalled();

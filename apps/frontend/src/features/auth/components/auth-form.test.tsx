@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { AuthForm, sanitizeRedirectPath } from "./auth-form";
@@ -100,4 +100,28 @@ it("passes sanitized callbackURL to signIn.email", async () => {
     }),
     expect.any(Object),
   );
+});
+it("shows the branded wordmark and the first-run steps without adding tab stops", async () => {
+  render(<AuthForm view="install" />);
+  expect(screen.getByRole("heading", { name: "Asterism" })).toBeVisible();
+  expect(screen.getByText("Set up your Asterism instance")).toBeVisible();
+  const steps = within(
+    screen.getByRole("list", { name: "First-run setup" }),
+  ).getAllByRole("listitem");
+  expect(steps).toHaveLength(3);
+  expect(steps[0]).toHaveAttribute("aria-current", "step");
+  expect(steps[0]).toHaveTextContent("Create the administrator account");
+  await userEvent.tab();
+  expect(screen.getByLabelText("Name")).toHaveFocus();
+});
+it("greets returning users without setup steps", async () => {
+  render(<AuthForm view="login" />);
+  expect(
+    screen.getByText("Where will your curiosity lead you today?"),
+  ).toBeVisible();
+  expect(
+    screen.queryByRole("list", { name: "First-run setup" }),
+  ).not.toBeInTheDocument();
+  await userEvent.tab();
+  expect(screen.getByLabelText("Email")).toHaveFocus();
 });

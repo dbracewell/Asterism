@@ -7,7 +7,12 @@ test("fresh installation renders administrator setup form", async ({
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "ASTERISM" })).toBeVisible();
-  await expect(page.getByText("Setup your ASTERISM instance")).toBeVisible();
+  await expect(page.getByText("Set up your Asterism instance")).toBeVisible();
+  const steps = page.getByRole("list", { name: "First-run setup" });
+  await expect(steps.getByRole("listitem")).toHaveCount(3);
+  await expect(steps.locator('[aria-current="step"]')).toContainText(
+    "Create the administrator account",
+  );
   await expect(page.getByLabel("Email")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
   await expect(page.getByText("Admin Passkey", { exact: true })).toBeVisible();
