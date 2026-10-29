@@ -43,6 +43,21 @@
       opacity: 1;
     }
   }
+  /* New-chat hero (US-45.1): the at-rest state is the finished drawing, so
+     reduced motion (which removes animations) leaves it static and visible. */
+  --animate-star-in: star-in 420ms ease-out backwards;
+  --animate-line-in: line-in 520ms ease-in-out backwards;
+  @keyframes star-in {
+    from {
+      opacity: 0;
+      scale: 0.3;
+    }
+  }
+  @keyframes line-in {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
 }
 
 @theme inline {

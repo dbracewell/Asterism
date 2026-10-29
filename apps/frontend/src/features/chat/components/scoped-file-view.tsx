@@ -37,9 +37,7 @@ export function ScopedFileView({
         <p role="status">Checking source access…</p>
       ) : (
         <>
-          <h1 className="text-heading break-all">
-            {file.data.original_name}
-          </h1>
+          <h1 className="text-heading break-all">{file.data.original_name}</h1>
           <p>
             Authorized source in the current file scope of this conversation.
           </p>

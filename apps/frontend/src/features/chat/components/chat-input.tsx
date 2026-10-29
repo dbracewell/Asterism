@@ -17,7 +17,13 @@ import {
   UploadCloudIcon,
   XIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { useAttachmentDraft } from "../hooks/use-attachment-draft";
 import {
@@ -56,7 +62,13 @@ interface AttachedFile {
   sourceId?: string;
 }
 
+export type ChatInputHandle = {
+  /** Replaces the draft message and focuses it; never sends. */
+  fill: (text: string) => void;
+};
+
 export type ChatInputProps = {
+  ref?: React.Ref<ChatInputHandle>;
   /** Rendered in the toolbar after the attach menu, e.g. a model selector. */
   modelSelector?: React.ReactNode;
   skillOwner?: string;
@@ -123,6 +135,7 @@ export const ChatInput = (props: ChatInputProps) =>
   );
 
 const ChatInputCore = ({
+  ref,
   skillComposer,
   modelSelector,
   status,
@@ -358,6 +371,13 @@ const ChatInputCore = ({
       onLineNumberChange?.(lines);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    fill(text) {
+      updatePrompt(text);
+      textareaRef.current?.focus();
+    },
+  }));
 
   const insertText = (text: string) => {
     const element = textareaRef.current;

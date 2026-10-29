@@ -1,25 +1,33 @@
 "use client";
-import Constellation from "@/components/logo";
+import { QueryError } from "@/components/query-error";
 import { useUser } from "@/features/auth/components/user-context";
 import {
   ChatInput,
   ChatInputContainer,
+  type ChatInputHandle,
 } from "@/features/chat/components/chat-input";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import {
   ChatPersonaPicker,
   personaAvailable,
 } from "@/features/chat/components/chat-persona-picker";
+import {
+  HeroMark,
+  HeroSuggestions,
+} from "@/features/chat/components/new-chat-hero";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
+import { heroSuggestions } from "@/features/chat/lib/hero-suggestions";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
+import { eligibleSkillOptions } from "@/features/skills/queries";
 import { client } from "@/lib/api";
 import {
   chatModelsListOptions,
   projectGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function AppPage() {
   const user = useUser();
@@ -53,31 +61,60 @@ export default function AppPage() {
   const modelAvailable =
     !models.error &&
     models.data?.some((model) => model.id === modelId && model.available);
+  // Disabled skill policy or no assignments simply yields no skill suggestions.
+  const skills = useQuery(eligibleSkillOptions(user.id));
+  const suggestions = heroSuggestions({
+    project: projectId ? project.data : null,
+    skills: skills.error ? [] : skills.data?.items,
+  });
+  const composer = useRef<ChatInputHandle>(null);
+  const sendBlocked = !modelAvailable || !workspaceAvailable || !hasPersona;
 
   return (
-    <div className="from-primary/5 via-primary/15 relative flex min-h-fit flex-1 shrink-0 flex-col items-center bg-radial-[at_50%_50%] via-5% to-transparent to-60% p-2 pt-12">
-      <Constellation
-        className="repeat-[1] fill-mode-[forwards] absolute -z-10 animate-ping opacity-100 duration-500"
-        fill="var(--color-secondary)"
-        size={250}
-      />
-      <h1 className="z-1 mt-auto text-display">
-        Welcome <span className="text-primary">{user.name.split(" ")[0]}</span>
-      </h1>
-      {project && (
-        <p className="text-muted-foreground text-sm">
-          Create a new chat in the <b>{project.data?.name}</b> project.
+    <div className="flex min-h-fit flex-1 shrink-0 flex-col items-center p-2 pt-12">
+      <div className="mt-auto flex flex-col items-center gap-3 text-center">
+        <HeroMark />
+        <h1 className="text-display">What should we work on?</h1>
+        <p className="text-muted-foreground text-body">
+          <span>{main.name}</span>
+          {" · "}
+          {projectId ? (
+            project.data ? (
+              <>
+                in{" "}
+                <Link
+                  className="text-foreground font-medium underline-offset-4 hover:underline"
+                  href={`/projects/${project.data.id}`}
+                >
+                  {project.data.name}
+                </Link>
+              </>
+            ) : (
+              "project chat"
+            )
+          ) : (
+            "general chat"
+          )}
         </p>
-      )}
-      <div className="mt-6 mb-auto flex w-full max-w-4xl flex-col gap-2">
+        {project.error && (
+          <QueryError
+            error={project.error}
+            message="This project couldn't be loaded."
+            retry={project.refetch}
+            isRetrying={project.isFetching}
+          />
+        )}
+      </div>
+      <div className="mt-6 mb-auto flex w-full max-w-4xl flex-col gap-3">
         <ChatInputContainer>
           <ChatInput
+            ref={composer}
             key={projectId ?? "general"}
             skillOwner={user.id}
             skillScope={`new:${projectId ?? "general"}`}
             projectId={projectId}
             placeholder="Ask anything…"
-            disabled={!modelAvailable || !workspaceAvailable || !hasPersona}
+            disabled={sendBlocked}
             requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${searchParams.get("project_id") ?? "general"}`}
             modelSelector={
               <>
@@ -86,7 +123,7 @@ export default function AppPage() {
               </>
             }
             onSubmit={({ prompt, files, requestId, draftId, skills }) => {
-              if (!modelAvailable || !workspaceAvailable || !hasPersona)
+              if (sendBlocked)
                 throw new Error(
                   "Choose an available model and workspace before sending.",
                 );
@@ -110,6 +147,11 @@ export default function AppPage() {
             Choose an available chat model before starting a chat.
           </p>
         )}
+        <HeroSuggestions
+          suggestions={suggestions}
+          disabled={sendBlocked}
+          onChoose={(suggestion) => composer.current?.fill(suggestion.prompt)}
+        />
       </div>
     </div>
   );
