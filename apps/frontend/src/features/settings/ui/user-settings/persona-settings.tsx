@@ -1,5 +1,6 @@
 "use client";
 
+import { FormSkeleton } from "@/components/loading-skeletons";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +89,7 @@ function OwnedPersonaSettings({ userId }: { userId: string }) {
           It does not change tools, files, permissions or memory.
         </p>
       </div>
-      {query.isPending && <p role="status">Loading personas…</p>}
+      {query.isPending && <FormSkeleton label="Loading personas…" />}
       {query.error && (
         <QueryError
           error={query.error}

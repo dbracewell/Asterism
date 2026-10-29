@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,7 +210,9 @@ function MoveChatForm({
           </Select>
         </Field>
       </FieldGroup>
-      {projects.isPending && <p role="status">Loading destinations…</p>}
+      {projects.isPending && (
+        <ListSkeleton label="Loading destinations…" rows={3} />
+      )}
       {projects.data?.projects.length === 0 && (
         <p>No matching projects. You can move this chat to General.</p>
       )}

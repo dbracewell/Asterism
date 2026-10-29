@@ -1,4 +1,5 @@
 "use client";
+import { FormSkeleton, ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
 import { MainAgentSkills } from "@/features/skills/components/main-agent-skills";
 import { useConfirmationDialog } from "@/components/confirmation-dialog";
@@ -74,7 +75,9 @@ export const AgentsSettings = () => {
         >
           <header className="flex flex-wrap items-center gap-3 border-b pb-2">
             <h2 className="text-lg font-semibold">Main Agent</h2>
-            {main.isPending && <p role="status">Loading main configuration…</p>}
+            {main.isPending && (
+              <FormSkeleton label="Loading main configuration…" />
+            )}
             {main.isError && (
               <QueryError
                 error={main.error}
@@ -108,7 +111,9 @@ export const AgentsSettings = () => {
             Then select them in a project. General chats do not have access to
             sub-agents.
           </p>
-          {agents.isPending && <p role="status">Loading sub-agents…</p>}
+          {agents.isPending && (
+            <ListSkeleton label="Loading sub-agents…" rows={3} detail />
+          )}
           {agents.isError && (
             <QueryError
               error={agents.error}

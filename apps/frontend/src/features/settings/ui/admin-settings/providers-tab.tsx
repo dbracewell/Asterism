@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { client } from "@/lib/api";
 import { Llm, ProviderSettings, ProviderSummary } from "@/lib/client";
@@ -373,9 +373,7 @@ function ModelCatalog({
             )}
           </InputGroup>
           {catalog.isLoading ? (
-            <div className="flex justify-center p-4">
-              <Spinner size={28} />
-            </div>
+            <ListSkeleton label="Loading models…" rows={5} />
           ) : catalog.isError ? (
             <p role="alert">Models could not be loaded.</p>
           ) : (
@@ -782,7 +780,7 @@ export function ProvidersTab({
   const settings = appSettings ?? providerSettings.data;
 
   if (appSettings === undefined && providerSettings.isLoading) {
-    return <Spinner />;
+    return <ListSkeleton label="Loading provider settings…" detail />;
   }
 
   if (providerSettings.isError || settings == null) {

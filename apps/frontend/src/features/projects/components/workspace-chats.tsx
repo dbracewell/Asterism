@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +9,6 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import { chatSessionGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
@@ -34,11 +34,7 @@ export function WorkspaceChats({ projectId }: { projectId: string | null }) {
           </Link>
         </Button>
       </div>
-      {chats.isPending && (
-        <div role="status" aria-label="Loading chats">
-          <Spinner size={24} />
-        </div>
-      )}
+      {chats.isPending && <ListSkeleton label="Loading chats" rows={5} />}
       {chats.error && (
         <QueryError
           error={chats.error}

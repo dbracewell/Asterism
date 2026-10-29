@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,7 +129,7 @@ export function ProjectSubAgents({
       <section aria-label="Selected sub-agents" className="flex flex-col gap-3">
         <h3 className="font-medium">Selected sub-agents</h3>
         {selected.isPending && (
-          <p role="status">Loading selected sub-agents…</p>
+          <ListSkeleton label="Loading selected sub-agents…" rows={2} />
         )}
         {selected.error && (
           <QueryError
@@ -183,7 +184,7 @@ export function ProjectSubAgents({
       >
         <h3 className="font-medium">Available sub-agents</h3>
         {candidates.isPending && (
-          <p role="status">Loading available sub-agents…</p>
+          <ListSkeleton label="Loading available sub-agents…" rows={3} />
         )}
         {candidates.error && (
           <QueryError

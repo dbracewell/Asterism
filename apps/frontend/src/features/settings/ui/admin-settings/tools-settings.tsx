@@ -1,10 +1,10 @@
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { ComponentRegistry } from "@/features/settings/types";
 import { ComponentSettings } from "@/features/settings/ui/admin-settings/component-settings";
 import { client } from "@/lib/api";
@@ -237,7 +237,7 @@ export const ToolsSettings = ({
   const settings = appSettings ?? toolSettingsQuery.data;
 
   if (appSettings === undefined && toolSettingsQuery.isLoading) {
-    return <Spinner />;
+    return <ListSkeleton label="Loading tool settings…" detail />;
   }
   if (toolSettingsQuery.isError || settings == null) {
     return (

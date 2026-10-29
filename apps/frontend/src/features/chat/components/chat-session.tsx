@@ -2,7 +2,8 @@
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Spinner } from "@/components/ui/spinner";
+import { TranscriptSkeleton } from "@/components/loading-skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/features/auth/components/user-context";
 import {
   ChatInput,
@@ -262,17 +263,7 @@ export const ChatSession = ({
     [readyState],
   );
 
-  if (isLoading) {
-    return (
-      <div
-        role="status"
-        aria-label="Loading conversation"
-        className="flex min-h-0 min-w-0 flex-1 items-center justify-center"
-      >
-        <Spinner loadingMessage />
-      </div>
-    );
-  }
+  if (isLoading) return <ChatSessionSkeleton />;
 
   if (error && !session) {
     return (
@@ -287,9 +278,7 @@ export const ChatSession = ({
     );
   }
 
-  if (session == null) {
-    return <Spinner />;
-  }
+  if (session == null) return <ChatSessionSkeleton />;
 
   const selectedModelAvailable =
     !models.error &&
@@ -645,3 +634,16 @@ const ConnectionIndicator = ({ status }: { status?: string }) => {
     </div>
   );
 };
+
+/** The transcript and composer while a conversation loads. */
+const ChatSessionSkeleton = () => (
+  <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <TranscriptSkeleton
+      label="Loading conversation"
+      className="min-h-0 flex-1 overflow-hidden"
+    />
+    <div aria-hidden="true" className="mx-auto w-full max-w-4xl p-2">
+      <Skeleton className="rounded-overlay h-28 w-full" />
+    </div>
+  </div>
+);

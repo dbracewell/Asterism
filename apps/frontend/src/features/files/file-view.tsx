@@ -1,5 +1,6 @@
 "use client";
 
+import { FormSkeleton, ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { APIImage } from "@/components/api-image";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +41,8 @@ export function FileView({ filename }: { filename: string }) {
       </p>
     );
   }
-  if (!info.data) return <p className="text-muted-foreground p-6">Loading…</p>;
+  if (!info.data)
+    return <FormSkeleton label="Loading file…" fields={3} className="p-6" />;
 
   const file = info.data;
   const artifact = knowledge.data;
@@ -105,7 +107,7 @@ export function FileView({ filename }: { filename: string }) {
         </CardHeader>
         <CardContent>
           {knowledge.isPending ? (
-            <p role="status">Loading caption…</p>
+            <ListSkeleton label="Loading caption…" rows={1} />
           ) : knowledge.error && !artifact ? null : captionText ? (
             <p>{captionText}</p>
           ) : (
@@ -120,7 +122,7 @@ export function FileView({ filename }: { filename: string }) {
         </CardHeader>
         <CardContent>
           {knowledge.isPending ? (
-            <p role="status">Loading content…</p>
+            <ListSkeleton label="Loading content…" rows={3} />
           ) : knowledge.error && !artifact ? null : extractedContent ? (
             <pre className="bg-muted rounded-surface max-h-96 overflow-auto p-3 text-sm whitespace-pre-wrap">
               {extractedContent}
@@ -152,7 +154,7 @@ export function FileView({ filename }: { filename: string }) {
             />
           )}
           {similar.isPending ? (
-            <p role="status">Loading similar files…</p>
+            <ListSkeleton label="Loading similar files…" rows={3} />
           ) : similar.error && !similar.data ? null : similar.data?.files
               .length ? (
             <ul className="divide-y">

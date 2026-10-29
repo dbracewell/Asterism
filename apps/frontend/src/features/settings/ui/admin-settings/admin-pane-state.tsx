@@ -1,11 +1,10 @@
 "use client";
 
+import { FormSkeleton } from "@/components/loading-skeletons";
 import { Component, type ReactNode } from "react";
 
 export const AdminPaneLoading = () => (
-  <p role="status" aria-live="polite" className="text-muted-foreground p-4">
-    Loading settings pane…
-  </p>
+  <FormSkeleton label="Loading settings pane…" fields={4} className="p-4" />
 );
 
 type AdminPaneErrorBoundaryProps = {

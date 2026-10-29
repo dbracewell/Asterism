@@ -1,5 +1,6 @@
 "use client";
 
+import { FormSkeleton } from "@/components/loading-skeletons";
 import { Button } from "@/components/ui/button";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -67,7 +68,7 @@ function CaptioningSettingsPane() {
         : "The captioning configuration could not be saved.";
 
   if (configuration.isLoading)
-    return <p>Loading knowledge processing settings…</p>;
+    return <FormSkeleton label="Loading knowledge processing settings…" />;
   if (configuration.isError || !current) {
     return (
       <p role="alert">Knowledge processing settings could not be loaded.</p>
