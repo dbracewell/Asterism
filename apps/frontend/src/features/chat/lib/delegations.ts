@@ -26,6 +26,7 @@ export const activitiesFromRecords = (
       ...call,
       type: "function" as const,
     })),
+    toolResults: record.tool_results ?? [],
     error: record.error ?? undefined,
   }));
 
@@ -55,19 +56,23 @@ export function delegationSummary(records: DelegationRecord[]): string {
     .join(" · ");
 }
 
-/** The child's own tool calls, with recorded results, as timeline steps. */
-export const delegationSteps = (
-  record: DelegationRecord,
+/** An agent's own tool calls, with any results so far, as timeline steps. */
+export const activitySteps = (
+  activity: SubAgentActivity,
 ): AgentTimelineStep[] =>
   messageTimelineSteps(
     {
-      id: record.execution_id,
+      id: activity.executionId,
       role: "assistant",
       content: "",
       created_at: 0,
-      status: "completed",
-      tool_calls: record.tool_calls,
-      tool_call_results: record.tool_results,
+      status: activity.status === "running" ? "pending" : "completed",
+      tool_calls: activity.toolCalls,
+      tool_call_results: activity.toolResults,
     } as Message,
     { showThinking: false },
   );
+
+/** The child's own tool calls, with recorded results, as timeline steps. */
+export const delegationSteps = (record: DelegationRecord) =>
+  activitySteps(activitiesFromRecords([record])[0]);

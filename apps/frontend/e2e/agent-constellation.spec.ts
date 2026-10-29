@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, Page, test } from "./support/test";
 
 type Packet = Record<string, unknown>;
@@ -48,7 +49,9 @@ async function openHarness(page: Page) {
 
 const graph = (page: Page) => page.locator('[data-slot="agent-constellation"]');
 const node = (page: Page, id: string) =>
-  graph(page).locator(`[data-node-id="${id}"]`);
+  graph(page).locator(`[data-slot="constellation-node"][data-node-id="${id}"]`);
+const nodeButton = (page: Page, name: RegExp) =>
+  graph(page).getByRole("button", { name });
 const core = (page: Page, id: string) =>
   node(page, id).locator("circle").last();
 
@@ -99,7 +102,7 @@ test("moves nodes from live flare to settled star or destructive", async ({
   await expect(edge).toHaveAttribute("data-state", "error");
   await expect(graph(page).locator(".animate-pulse")).toHaveCount(0);
   await expect(
-    page.getByRole("img", {
+    page.getByRole("list", {
       name: "Delegation graph: main agent and 2 sub-agents, 1 failed",
     }),
   ).toBeVisible();
@@ -152,6 +155,128 @@ for (const width of [320, 1280]) {
     ).toBe(true);
   });
 }
+
+test("passes axe and is fully operable by keyboard", async ({ page }) => {
+  const send = await openHarness(page);
+  send(
+    subAgent("lead", { type: "start" }, { name: "Researcher" }),
+    subAgent(
+      "child",
+      { type: "start" },
+      { name: "Fact checker", parent: "lead" },
+    ),
+    subAgent("child", { type: "error", content: "Provider timed out" }),
+  );
+  const checker = nodeButton(page, /^Fact checker/);
+  await expect(checker).toHaveAccessibleName(
+    "Fact checker, Gamma, failed, delegated by Researcher",
+  );
+  const scan = () =>
+    new AxeBuilder({ page })
+      .include('[data-slot="agent-constellation"]')
+      .analyze();
+  expect((await scan()).violations).toEqual([]);
+
+  // Tab reaches every node in layout order.
+  await page.getByRole("button", { name: "Delegate task" }).focus();
+  const order: (string | null)[] = [];
+  for (let index = 0; index < 3; index++) {
+    await page.keyboard.press("Tab");
+    order.push(
+      await page.evaluate(
+        () => document.activeElement?.getAttribute("data-node-id") ?? null,
+      ),
+    );
+  }
+  expect(order).toEqual(["main", "lead", "child"]);
+  await expect(checker).toBeFocused();
+  // A visible focus ring.
+  expect(
+    await checker.evaluate((node) => getComputedStyle(node).boxShadow),
+  ).not.toBe("none");
+
+  await page.keyboard.press("Enter");
+  await expect(checker).toHaveAttribute("aria-expanded", "true");
+  const details = graph(page).getByRole("region", {
+    name: "Fact checker details",
+  });
+  await expect(details).toContainText("Provider timed out");
+  expect((await scan()).violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(details).toHaveCount(0);
+  await expect(checker).toBeFocused();
+  await expect(checker).toHaveAttribute("aria-expanded", "false");
+});
+
+test("announces each agent's start and outcome in one polite region", async ({
+  page,
+}) => {
+  const send = await openHarness(page);
+  const announcer = page.locator('[data-slot="delegation-announcer"]');
+  await expect(announcer).toHaveAttribute("aria-live", "polite");
+  send(subAgent("lead", { type: "start" }, { name: "Researcher" }));
+  await expect(announcer).toHaveText("Researcher started.");
+  // An intermediate tool step is not a finish.
+  send(
+    subAgent(
+      "lead",
+      {
+        type: "complete",
+        content: "",
+        thinking: "",
+        tool_calls: [
+          {
+            id: "t",
+            type: "function",
+            function: { name: "web_search", arguments: "{}" },
+          },
+        ],
+      },
+      { name: "Researcher" },
+    ),
+  );
+  await expect(node(page, "lead")).toHaveAttribute("data-state", "running");
+  await expect(announcer).toHaveText("Researcher started.");
+  send(
+    subAgent(
+      "lead",
+      { type: "complete", content: "Done", thinking: "" },
+      { name: "Researcher" },
+    ),
+  );
+  await expect(announcer).toHaveText("Researcher finished.");
+  // Cards no longer carry their own live status regions.
+  await expect(
+    page
+      .getByRole("region", { name: "Sub-agent activity" })
+      .locator("[aria-live]"),
+  ).toHaveCount(0);
+});
+
+test("holds the graph still under reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const send = await openHarness(page);
+  send(
+    subAgent("lead", { type: "start" }, { name: "Researcher" }),
+    subAgent("child", { type: "start" }, { parent: "lead" }),
+  );
+  await expect(node(page, "child")).toHaveAttribute("data-state", "running");
+  const halo = node(page, "lead").locator("circle").first();
+  await expect(halo).toHaveCSS("animation-name", "none");
+  expect(
+    await graph(page).evaluate(
+      (root) =>
+        root
+          .getAnimations({ subtree: true })
+          .filter((animation) => animation.playState === "running").length,
+    ),
+  ).toBe(0);
+  // Live state still reads without motion: flare fill and the dashed line.
+  await expect(core(page, "lead")).toHaveCSS("fill", "rgb(224, 165, 38)");
+  await expect(
+    graph(page).locator('[data-slot="constellation-edge"][data-to="child"]'),
+  ).toHaveAttribute("stroke-dasharray", "4 3");
+});
 
 const themes = ["atlas", "night-atlas", "dracula"];
 const viewports = [

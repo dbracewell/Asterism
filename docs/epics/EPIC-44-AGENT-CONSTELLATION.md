@@ -62,4 +62,4 @@ Acceptance: under reduced motion the graph is static. Screen readers get an
 equivalent ordered list with live status announcements. Nodes can be reached and
 expanded by keyboard.
 
-- [ ] Add the text equivalent, a polite live region and keyboard handling; add axe and keyboard tests.
+- [x] Add the text equivalent, a polite live region and keyboard handling; add axe and keyboard tests.

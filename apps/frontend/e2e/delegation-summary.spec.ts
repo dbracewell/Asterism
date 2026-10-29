@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { mockDefaultPersonas } from "./support/personas";
 import { expect, test, type Page, type WebSocketRoute } from "./support/test";
 import type {
@@ -169,7 +170,7 @@ const summary = (page: Page) =>
     exact: true,
   });
 const graph = (page: Page) =>
-  history(page).getByRole("img", { name: /^Delegation graph/ });
+  history(page).getByRole("list", { name: /^Delegation graph/ });
 
 test("history renders delegations collapsed and expands to each agent", async ({
   page,
@@ -203,6 +204,13 @@ test("history renders delegations collapsed and expands to each agent", async ({
   await expect(child).toContainText("Failed · 5.0 s");
   await expect(child).toContainText("Provider timed out");
   await expect(history(page).getByRole("alert")).toHaveCount(0);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .include('[data-slot="delegation-summary"]')
+        .analyze()
+    ).violations,
+  ).toEqual([]);
 
   await page.reload();
   await expect(summary(page)).toHaveAttribute("aria-expanded", "false");
@@ -231,7 +239,7 @@ test("a live run's graph collapses into the summary once its step persists", asy
   const live = history(page).getByRole("region", {
     name: "Sub-agent activity",
   });
-  await expect(live.getByRole("img", { name: /1 running/ })).toBeVisible();
+  await expect(live.getByRole("list", { name: /1 running/ })).toBeVisible();
   await expect(summary(page)).toHaveCount(0);
 
   chat.messages = [user, step];

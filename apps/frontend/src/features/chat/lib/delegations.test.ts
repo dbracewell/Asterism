@@ -53,6 +53,7 @@ describe("delegation records", () => {
         content: "Answer",
         thinking: "",
         toolCalls: [call("1")],
+        toolResults: [],
         error: "Partial",
       },
     ]);

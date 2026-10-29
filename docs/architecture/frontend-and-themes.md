@@ -464,9 +464,7 @@ the name and model, clipped to its column, with the full text and state in an SV
   set on `body` as a brand constant outside the theme roles, as EPIC-41
   specifies.
 
-The text equivalent, live announcements, keyboard expansion and a fully static
-reduced-motion graph are US-44.3. Until then, the global reduced-motion rule
-already stops the halo.
+Accessibility and reduced motion are covered under US-44.3 below.
 
 Coverage: `constellation-layout.test.ts`, `agent-constellation.test.tsx`,
 `sub-agent-activity.test.tsx` and `e2e/agent-constellation.spec.ts`. The e2e spec
@@ -497,6 +495,44 @@ Coverage: `delegations.test.ts`, `delegation-summary.test.tsx` and
 `e2e/delegation-summary.spec.ts`. The e2e spec covers history collapsed then
 expanded by keyboard, reload, the live-to-summary handover, Markdown safety, and
 screenshots for Atlas, Night Atlas and Dracula on desktop and mobile.
+
+## Constellation accessibility (US-44.3)
+
+The SVG drawing is `aria-hidden`. The graph's accessible form is an ordered list,
+named with the summary ("Delegation graph: main agent and 3 sub-agents, 1 running,
+1 failed"). It holds one button per node, absolutely positioned over each star,
+in layout order: parents come before children, then siblings in arrival order.
+
+- **Labels:** each button is named with the agent, model, state and delegator,
+  for example "Writer, done, delegated by Researcher". The overflow node reads
+  "N more agents, K running".
+- **Keyboard:** Tab reaches every node, with a visible focus ring. Enter, Space or
+  a click toggles one details region below the graph at a time. The button has
+  `aria-expanded`, and `aria-controls` is set only while open.
+- **Details:** for a sub-agent, its model, depth and status, its `AgentTimeline`
+  with recorded or live results, and its output or error. The main node lists its
+  direct delegations, and the overflow node lists the hidden agents.
+- **Closing:** Escape or Close collapses the details and returns focus to the
+  node.
+- **Live announcements:** `SubAgentActivityPanel` keeps one polite live region
+  mounted, even before the first agent appears. `useDelegationAnnouncements`
+  speaks each change once: "Researcher started.", "Researcher finished. Checker
+  failed." The per-card status labels are no longer live regions. History
+  summaries don't announce.
+- **Intermediate steps:** a child `complete` that carries tool calls is an
+  intermediate step, so the agent stays `running` (in the UI and in persisted
+  records). Before this change the live status flickered to "Completed" between
+  tool steps.
+- **Reduced motion:** the halo carries `motion-reduce:animate-none` on top of the
+  global rule, so the graph has no running animations. Live state still shows
+  through the `flare` fill and the dashed line.
+
+Coverage: the `agent-constellation.test.tsx` and `sub-agent-activity.test.tsx`
+keyboard and announcement cases, and `test_chat_delegations.py` for intermediate
+steps. In `e2e/agent-constellation.spec.ts`: axe (`@axe-core/playwright`, a new dev
+dependency) on the graph and its open details, Tab order, focus ring,
+Enter/Escape, the polite region, and reduced motion with zero running animations.
+`e2e/delegation-summary.spec.ts` adds axe on the expanded summary.
 
 ## Typography, labels and motion (US-33.2)
 

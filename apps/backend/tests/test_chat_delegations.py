@@ -89,6 +89,19 @@ def test_collector_records_identity_timing_tools_and_outcome():
     assert collector.drain() == []
 
 
+def test_intermediate_step_is_not_a_finish():
+    collector = DelegationCollector()
+    collector.observe(envelope(LEAD, AgentEvent(type=AgentEventType.START)), now_ms=1)
+    collector.observe(
+        envelope(LEAD, AgentEvent(type=AgentEventType.COMPLETE, tool_calls=[call("a")], tool_results=[result("a")])),
+        now_ms=2,
+    )
+    # Cancelled during the next tool call: still in flight, not completed.
+    (record,) = collector.drain(unfinished="cancelled")
+    assert record.status == "cancelled"
+    assert record.tool_results == [result("a")]
+
+
 def test_collector_marks_unterminated_runs():
     collector = DelegationCollector()
     collector.observe(envelope(LEAD, AgentEvent(type=AgentEventType.START)), now_ms=1)

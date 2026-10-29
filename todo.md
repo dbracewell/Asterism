@@ -19,7 +19,7 @@ for current evidence and verification limits.
 
 Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. EPIC-41 is confirmed complete and archived in the
 [2026-10-27 checklist](docs/archive/todo-completed-2026-10-27.md); EPIC-43 is confirmed complete and archived in the
-[2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md). EPIC-44 is in progress (US-44.1 and US-44.2 merged; US-44.3 next).
+[2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md). EPIC-44 is in progress (US-44.1 and US-44.2 merged; US-44.3 active).
 
 ### [EPIC-44: Agent constellation](docs/epics/EPIC-44-AGENT-CONSTELLATION.md)
 
@@ -30,8 +30,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [x] US-44.2: Compact summary
   - [x] Build the summary and expand interaction; test reload and history rendering.
 
-- [ ] US-44.3: Accessibility and reduced motion
-  - [ ] Add the text equivalent, a polite live region and keyboard handling; add axe and keyboard tests.
+- [x] US-44.3: Accessibility and reduced motion
+  - [x] Add the text equivalent, a polite live region and keyboard handling; add axe and keyboard tests.
 
 ### [EPIC-45: Welcome, empty and loading states](docs/epics/EPIC-45-WELCOME-EMPTY-AND-LOADING-STATES.md)
 
