@@ -1,13 +1,8 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
 import {
   Popover,
   PopoverAnchor,
@@ -552,15 +547,16 @@ export function SkillComposer({
           {query.isPending ? (
             <p role="status">Loading skills…</p>
           ) : query.isError ? (
-            <Empty role="alert">
-              <EmptyHeader>
-                <EmptyTitle>Could not load skills</EmptyTitle>
-                <EmptyDescription>Your message is kept.</EmptyDescription>
-              </EmptyHeader>
-              <Button type="button" onClick={() => void query.refetch()}>
-                Retry skills
-              </Button>
-            </Empty>
+            <EmptyState
+              role="alert"
+              title="Skills unavailable"
+              description="Your message is kept; retry to load your assigned skills."
+              action={
+                <Button type="button" onClick={() => void query.refetch()}>
+                  Retry skills
+                </Button>
+              }
+            />
           ) : !query.data?.policy_enabled ? (
             <p>Skill activation is disabled by an administrator.</p>
           ) : !options.length ? (

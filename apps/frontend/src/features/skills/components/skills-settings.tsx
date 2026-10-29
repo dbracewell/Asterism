@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
 import { QueryError } from "@/components/query-error";
@@ -12,12 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
@@ -93,16 +88,37 @@ function OwnedSkillsSettings({ owner }: { owner: string }) {
         />
       )}
       {skills.data?.total === 0 && (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>
-              {query ? "No matching skills" : "No skills yet"}
-            </EmptyTitle>
-            <EmptyDescription>
-              Create a skill from a SKILL.md template to get started.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          title={query ? "No matching skills" : "No skills yet"}
+          description={
+            query
+              ? "Try a different name or description."
+              : "Create a skill from a SKILL.md template to reuse instructions in chat."
+          }
+          action={
+            query ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setQuery("");
+                  setPage(1);
+                }}
+              >
+                Clear search
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={(event) => {
+                  returnFocus.current = event.currentTarget;
+                  setEditing({ id: null });
+                }}
+              >
+                Create a skill
+              </Button>
+            )
+          }
+        />
       )}
       {skills.data?.items.map((skill) => (
         <Card key={skill.id} className="min-w-0">

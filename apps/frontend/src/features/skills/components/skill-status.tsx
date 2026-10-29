@@ -1,10 +1,5 @@
 import { QueryError } from "@/components/query-error";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/empty-state";
 import { useQuery } from "@tanstack/react-query";
 import { skillAvailabilityOptions } from "../queries";
 
@@ -22,23 +17,20 @@ export function SkillAvailability({ owner }: { owner: string }) {
       />
     );
   return (
-    <Empty className="flex-none items-start p-3 text-left" role="note">
-      <EmptyHeader>
-        <EmptyTitle>
-          {policy.data?.policy_enabled
-            ? "Skill assignments available"
-            : "Skill activation disabled by administrator"}
-        </EmptyTitle>
-        <EmptyDescription>
-          You can edit your skills and save assignments.{" "}
-          {policy.data?.policy_enabled
-            ? "Only assigned skills are eligible."
-            : "Assignments remain saved while activation is disabled."}{" "}
-          Use / in the chat input to activate assigned skills. Skill text grants
-          no tools or file access.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <EmptyState
+      className="flex-none items-start p-3 text-left"
+      role="note"
+      title={
+        policy.data?.policy_enabled
+          ? "Skill assignments available"
+          : "Skill activation disabled by administrator"
+      }
+      description={
+        policy.data?.policy_enabled
+          ? "Type / in the chat input to use an assigned skill; skill text never grants tools or file access."
+          : "You can still edit skills and save assignments, which take effect once an administrator enables activation."
+      }
+    />
   );
 }
 
@@ -55,13 +47,13 @@ export function SkillFailure({
     "detail" in error &&
     typeof error.detail === "string"
       ? error.detail
-      : "Please retry.";
+      : "Retry, or reload the page if it keeps failing.";
   return (
-    <Empty role="alert" className="flex-none items-start p-3 text-left">
-      <EmptyHeader>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{detail}</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <EmptyState
+      role="alert"
+      className="flex-none items-start p-3 text-left"
+      title={title}
+      description={detail}
+    />
   );
 }

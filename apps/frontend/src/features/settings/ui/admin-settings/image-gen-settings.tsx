@@ -1,20 +1,9 @@
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/empty-state";
 
-export const ImageGenSettings = () => {
-  return (
-    <Empty className="rounded-surface border p-8">
-      <EmptyHeader>
-        <EmptyTitle>Image Generation</EmptyTitle>
-        <EmptyDescription>
-          Image generation provider and model configurations are planned for a
-          future release.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  );
-};
+export const ImageGenSettings = () => (
+  <EmptyState
+    className="rounded-surface border p-8"
+    title="Image generation"
+    description="Image generation providers and models are planned for a future release."
+  />
+);

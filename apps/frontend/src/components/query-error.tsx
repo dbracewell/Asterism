@@ -24,7 +24,9 @@ export function QueryError({
     <Empty className="flex-none gap-2 p-4">
       <div role="alert">
         <EmptyTitle className="text-destructive">{message}</EmptyTitle>
-        {detail && <EmptyDescription>{detail}</EmptyDescription>}
+        <EmptyDescription>
+          {detail ?? "Check your connection, then retry."}
+        </EmptyDescription>
       </div>
       <Button
         variant="outline"

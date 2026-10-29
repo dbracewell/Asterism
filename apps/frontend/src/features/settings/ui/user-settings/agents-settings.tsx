@@ -1,4 +1,5 @@
 "use client";
+import { EmptyState } from "@/components/empty-state";
 import { FormSkeleton, ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
 import { MainAgentSkills } from "@/features/skills/components/main-agent-skills";
@@ -13,12 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
 import { SubAgentDefinition } from "@/lib/client";
@@ -123,14 +118,10 @@ export const AgentsSettings = () => {
             />
           )}
           {agents.data?.total === 0 && (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>No sub-agents yet.</EmptyTitle>
-                <EmptyDescription>
-                  Create an agent to get started.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              title="No sub-agents yet"
+              description="Use Create sub-agent to give a model its own instructions and tools for project chats."
+            />
           )}
           {agents.data && agents.data.total > 0 && subAgents.length === 0 && (
             <p>No sub-agents on this page. Use Previous to return.</p>

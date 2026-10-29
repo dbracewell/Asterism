@@ -1,14 +1,9 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { client } from "@/lib/api";
 import { chatSessionGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
@@ -50,14 +45,17 @@ export function WorkspaceChats({ projectId }: { projectId: string | null }) {
       {chats.data && (
         <>
           {chats.data.chats.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>No chats yet</EmptyTitle>
-                <EmptyDescription>
-                  Start a chat in this workspace.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              title="No chats yet"
+              description="Chats you start here will be listed in this workspace."
+              action={
+                <Button asChild variant="outline">
+                  <Link href={projectId ? `/?project_id=${projectId}` : "/"}>
+                    Start a chat
+                  </Link>
+                </Button>
+              }
+            />
           ) : (
             <ul className="divide-y">
               {chats.data.chats.map((chat) => (

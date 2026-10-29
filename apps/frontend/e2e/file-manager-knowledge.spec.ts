@@ -120,5 +120,5 @@ test("shows canonical processing state and confirms the full impact before file 
     ),
   ).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
-  await expect(page.getByText("No files found.")).toBeVisible();
+  await expect(page.getByText("No files found", { exact: true })).toBeVisible();
 });

@@ -183,9 +183,7 @@ it("retains edits after a failed save and permits retry", async () => {
   await userEvent.click(
     await screen.findByRole("button", { name: "Save configuration" }),
   );
-  expect(
-    await screen.findByText(/Your edits are retained/),
-  ).toBeInTheDocument();
+  expect(await screen.findByText(/Your edits are kept/)).toBeInTheDocument();
   expect(screen.getByLabelText("Instructions")).toHaveValue("Keep my edits");
   await userEvent.click(
     screen.getByRole("button", { name: "Save configuration" }),
@@ -215,7 +213,9 @@ it("blocks saving when models cannot refresh, without replacing the saved bindin
       </TooltipProvider>
     </QueryClientProvider>,
   );
-  expect(await screen.findByText(/Could not load models/)).toBeInTheDocument();
+  expect(
+    await screen.findByText(/model list couldn't load/),
+  ).toBeInTheDocument();
   expect(screen.getByLabelText("Model")).toHaveTextContent(
     "missing (unavailable)",
   );

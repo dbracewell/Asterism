@@ -332,7 +332,7 @@ test("conversation loading, failure, empty and cached-refresh states keep retry 
   await reachable(page.getByRole("button", { name: "Retry", exact: true }));
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(
-    page.getByText("No messages yet. Write a message to begin."),
+    page.getByText("No messages yet", { exact: true }),
   ).toBeAttached();
   await reachable(page.getByLabel("Message", { exact: true }));
   state = "ready";

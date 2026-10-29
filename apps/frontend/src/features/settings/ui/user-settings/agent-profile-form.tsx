@@ -1,4 +1,5 @@
 "use client";
+import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton, LoadingState } from "@/components/loading-skeletons";
 import { HelpIcon } from "@/components/help-icon";
 import { QueryError } from "@/components/query-error";
@@ -15,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Empty, EmptyDescription } from "@/components/ui/empty";
 import {
   Field,
   FieldGroup,
@@ -304,9 +304,12 @@ function ConfigurationForm({
                     </LoadingState>
                   )}
                   {modelQuery.isError && (
-                    <Empty role="alert" className="flex-none p-3">
-                      <EmptyDescription>
-                        Could not {modelQuery.data ? "refresh" : "load"} models.{" "}
+                    <EmptyState
+                      role="alert"
+                      className="flex-none p-3"
+                      title="Models unavailable"
+                      description={`The model list couldn't ${modelQuery.data ? "refresh" : "load"}; retry to choose a model.`}
+                      action={
                         <Button
                           type="button"
                           variant="outline"
@@ -314,8 +317,8 @@ function ConfigurationForm({
                         >
                           Retry models
                         </Button>
-                      </EmptyDescription>
-                    </Empty>
+                      }
+                    />
                   )}
                   {modelQuery.data &&
                     !available.some((model) => model.available) && (
@@ -469,12 +472,12 @@ function ConfigurationForm({
           </FieldGroup>
         </FieldSet>
         {saveError && (
-          <Empty role="alert" className="flex-none p-3">
-            <EmptyDescription>
-              Could not save configuration. Your edits are retained. Check the
-              model and tool availability, then try again.
-            </EmptyDescription>
-          </Empty>
+          <EmptyState
+            role="alert"
+            className="flex-none p-3"
+            title="Configuration not saved"
+            description="Your edits are kept; check that the model and tools are available, then save again."
+          />
         )}
         <Button
           type="submit"

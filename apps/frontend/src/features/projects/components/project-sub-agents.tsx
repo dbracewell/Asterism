@@ -1,10 +1,10 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import { client } from "@/lib/api";
 import type { ProjectSubAgentList, SubAgentDefinition } from "@/lib/client";
 import {
@@ -144,12 +144,10 @@ export function ProjectSubAgents({
           />
         )}
         {selected.data?.total === 0 && (
-          <Empty>
-            <EmptyTitle>No selected sub-agents</EmptyTitle>
-            <EmptyDescription>
-              Chats in this project will use the main agent without delegation.
-            </EmptyDescription>
-          </Empty>
+          <EmptyState
+            title="No selected sub-agents"
+            description="Chats in this project use the main agent alone until you select a sub-agent below."
+          />
         )}
         {selected.data?.agents.map((agent) => (
           <AgentRow
@@ -199,12 +197,17 @@ export function ProjectSubAgents({
           />
         )}
         {candidates.data?.total === 0 && (
-          <Empty>
-            <EmptyTitle>No more sub-agents to select</EmptyTitle>
-            <EmptyDescription>
-              Create definitions in agent settings, or deselect a worker above.
-            </EmptyDescription>
-          </Empty>
+          <EmptyState
+            title="No more sub-agents to select"
+            description="Create another sub-agent in agent settings, or deselect one above."
+            action={
+              <Button variant="outline" asChild>
+                <Link href="/settings?t=user&setting=agents">
+                  Create a sub-agent
+                </Link>
+              </Button>
+            }
+          />
         )}
         {candidates.data?.agents.map((agent) => (
           <AgentRow

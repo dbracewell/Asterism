@@ -69,7 +69,7 @@ it("shows empty and error search states", async () => {
   renderSearch();
   const input = screen.getByLabelText("Search chats and projects");
   await userEvent.setup().type(input, "nothing");
-  expect(await screen.findByText("No matches found.")).toBeInTheDocument();
+  expect(await screen.findByText("No matches found")).toBeInTheDocument();
 
   await userEvent.setup().clear(input);
   await userEvent.setup().type(input, "failure");

@@ -1,21 +1,9 @@
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/empty-state";
 
-export const UserPermissionsSettings = () => {
-  return (
-    <Empty className="rounded-surface border p-8">
-      <EmptyHeader>
-        <EmptyTitle>User Permissions</EmptyTitle>
-        <EmptyDescription>
-          Admin and user access checks are already enforced. User management
-          screens and permission policy controls are planned for a future
-          release.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  );
-};
+export const UserPermissionsSettings = () => (
+  <EmptyState
+    className="rounded-surface border p-8"
+    title="Users"
+    description="Admin and user access checks are already enforced; user management screens and permission controls are planned for a future release."
+  />
+);
