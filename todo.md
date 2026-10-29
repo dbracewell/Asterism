@@ -24,8 +24,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ### [EPIC-45: Welcome, empty and loading states](docs/epics/EPIC-45-WELCOME-EMPTY-AND-LOADING-STATES.md)
 
-- [ ] US-45.1: New-chat hero
-  - [ ] Rebuild the hero in `app/(main)/page.tsx`; add the suggestion sources; test with a project, without one, and with no skills.
+- [x] US-45.1: New-chat hero
+  - [x] Rebuild the hero in `app/(main)/page.tsx`; add the suggestion sources; test with a project, without one, and with no skills.
 
 - [ ] US-45.2: Skeletons for loading
   - [ ] Add skeleton variants; replace the "Loading …" paragraphs; test that status announcements remain.

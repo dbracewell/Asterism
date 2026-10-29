@@ -7,6 +7,8 @@ interface ConstellationProps {
   className?: string;
   /** Applied to every star; each also receives its index as `--node`. */
   nodeClassName?: string;
+  /** Applied to every connection; each also receives its index as `--line`. */
+  lineClassName?: string;
 }
 
 const NODES = [
@@ -17,12 +19,22 @@ const NODES = [
   { cx: 205, cy: 190, r: 18 },
 ];
 
+const LINES = [
+  [80, 125, 150, 115],
+  [150, 115, 180, 35],
+  [180, 35, 250, 105],
+  [150, 115, 250, 105],
+  [150, 115, 205, 190],
+  [205, 190, 250, 105],
+];
+
 export default function Constellation({
   size = 70,
   fill = "var(--color-sidebar-foreground)",
   strokeWidth = 8,
   className,
   nodeClassName,
+  lineClassName,
 }: ConstellationProps) {
   return (
     <svg
@@ -50,12 +62,22 @@ export default function Constellation({
 
       {/* Connections */}
       <g stroke={fill} strokeWidth={strokeWidth} strokeLinecap="round">
-        <line x1="80" y1="125" x2="150" y2="115" />
-        <line x1="150" y1="115" x2="180" y2="35" />
-        <line x1="180" y1="35" x2="250" y2="105" />
-        <line x1="150" y1="115" x2="250" y2="105" />
-        <line x1="150" y1="115" x2="205" y2="190" />
-        <line x1="205" y1="190" x2="250" y2="105" />
+        {LINES.map(([x1, y1, x2, y2], index) => (
+          <line
+            key={index}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            pathLength={lineClassName ? 1 : undefined}
+            className={lineClassName}
+            style={
+              lineClassName
+                ? ({ "--line": index } as React.CSSProperties)
+                : undefined
+            }
+          />
+        ))}
       </g>
     </svg>
   );
