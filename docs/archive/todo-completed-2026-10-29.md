@@ -15,3 +15,21 @@ confirmed and merged with `--no-ff` before the next began.
 
 - [x] US-44.3: Accessibility and reduced motion
   - [x] Add the text equivalent, a polite live region and keyboard handling; add axe and keyboard tests.
+
+The user confirmed EPIC-45 completion and authorized a local merge on
+2026-10-29. EPIC-45 (US-45.1 through US-45.4) is complete; the stacked story
+branches were merged into `main` in order with `--no-ff`.
+
+### [EPIC-45: Welcome, empty and loading states](../epics/EPIC-45-WELCOME-EMPTY-AND-LOADING-STATES.md)
+
+- [x] US-45.1: New-chat hero
+  - [x] Rebuild the hero in `app/(main)/page.tsx`; add the suggestion sources; test with a project, without one, and with no skills.
+
+- [x] US-45.2: Skeletons for loading
+  - [x] Add skeleton variants; replace the "Loading …" paragraphs; test that status announcements remain.
+
+- [x] US-45.3: Empty states with a clear next step
+  - [x] Audit the 61 `Empty` usages; standardize copy and actions; update the tests that assert on copy.
+
+- [x] US-45.4: Sign-in and first-run screens
+  - [x] Restyle `AuthForm` and the auth layout; keep the existing auth tests passing; update screenshots.

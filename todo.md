@@ -19,22 +19,8 @@ for current evidence and verification limits.
 
 Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. EPIC-41 is confirmed complete and archived in the
 [2026-10-27 checklist](docs/archive/todo-completed-2026-10-27.md); EPIC-43 is confirmed complete and archived in the
-[2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44 is confirmed complete and archived in the
-[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). EPIC-45 is implemented on stacked story branches and awaits merge confirmation.
-
-### [EPIC-45: Welcome, empty and loading states](docs/epics/EPIC-45-WELCOME-EMPTY-AND-LOADING-STATES.md)
-
-- [x] US-45.1: New-chat hero
-  - [x] Rebuild the hero in `app/(main)/page.tsx`; add the suggestion sources; test with a project, without one, and with no skills.
-
-- [x] US-45.2: Skeletons for loading
-  - [x] Add skeleton variants; replace the "Loading …" paragraphs; test that status announcements remain.
-
-- [x] US-45.3: Empty states with a clear next step
-  - [x] Audit the 61 `Empty` usages; standardize copy and actions; update the tests that assert on copy.
-
-- [x] US-45.4: Sign-in and first-run screens
-  - [x] Restyle `AuthForm` and the auth layout; keep the existing auth tests passing; update screenshots.
+[2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44 and EPIC-45 are confirmed complete and archived in the
+[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md).
 
 ### [EPIC-42: App shell and navigation chrome](docs/epics/EPIC-42-APP-SHELL-AND-NAVIGATION-CHROME.md)
 

@@ -1,6 +1,6 @@
 # EPIC-45: Welcome, empty and loading states
 
-Status: implemented (US-45.1–45.4), awaiting merge confirmation. Source: the approved visual design audit (2026-10-26).
+Status: complete. Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
