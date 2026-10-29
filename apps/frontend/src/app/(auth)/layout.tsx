@@ -1,3 +1,4 @@
+import { AuthBackdrop } from "@/features/auth/components/auth-backdrop";
 import type { Viewport } from "next";
 import type { ReactNode } from "react";
 
@@ -9,8 +10,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main
       aria-label="Authentication"
-      className="flex h-dvh min-h-0 w-full flex-none scroll-py-6 flex-col items-center overflow-y-auto px-4 py-6"
+      className="relative isolate flex h-dvh min-h-0 w-full flex-none scroll-py-6 flex-col items-center overflow-y-auto px-4 py-6"
     >
+      <AuthBackdrop />
       {children}
     </main>
   );

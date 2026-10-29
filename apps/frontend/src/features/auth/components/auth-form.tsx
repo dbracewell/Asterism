@@ -56,7 +56,7 @@ export function AuthForm({
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
-      showError("Email and Password Required");
+      showError("Email and password required");
       return;
     }
     if (view === "install" && (!name.trim() || !adminPassKey.trim())) {
@@ -112,7 +112,11 @@ export function AuthForm({
 
   return (
     <div
-      className={cn("flex w-full max-w-lg min-w-0 flex-col gap-6", className)}
+      className={cn(
+        "bg-card text-card-foreground rounded-overlay shadow-overlay flex w-full min-w-0 flex-col gap-6 border p-5 sm:p-8",
+        view === "install" ? "max-w-lg" : "max-w-md",
+        className,
+      )}
       {...props}
     >
       <form
@@ -121,16 +125,21 @@ export function AuthForm({
         aria-describedby={error ? "auth-error" : undefined}
       >
         <FieldGroup>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Constellation size={50} />
-              <h1 className="text-heading">Asterism</h1>
-            </div>
-
-            <FieldDescription>
-              {view === "install" && <>Setup your ASTERISM instance </>}
+          <div className="flex min-w-0 flex-col items-center gap-3 text-center">
+            <Constellation
+              className="text-primary"
+              fill="currentColor"
+              size={56}
+              strokeWidth={10}
+            />
+            <h1 className="text-title tracking-[0.18em] uppercase">Asterism</h1>
+            <FieldDescription className="text-balance">
+              {view === "install"
+                ? "Set up your Asterism instance"
+                : "Where will your curiosity lead you today?"}
             </FieldDescription>
           </div>
+          {view === "install" && <SetupSteps />}
           {error && (
             <FieldError
               ref={errorRef}
@@ -198,5 +207,60 @@ export function AuthForm({
         </FieldGroup>
       </form>
     </div>
+  );
+}
+
+const SETUP_STEPS = [
+  {
+    title: "Create the administrator account",
+    detail: "This account manages providers, tools and users.",
+  },
+  {
+    title: "Add a model provider",
+    detail: "Connect a provider and enable a model in Admin settings.",
+  },
+  {
+    title: "Start your first chat",
+    detail: "Ask anything from the new-chat page.",
+  },
+];
+
+/** First-run checklist; the administrator account is the current step. */
+function SetupSteps() {
+  return (
+    <ol
+      aria-label="First-run setup"
+      className="rounded-surface bg-muted/50 flex min-w-0 flex-col gap-3 p-4 text-left"
+    >
+      {SETUP_STEPS.map((step, index) => (
+        <li
+          key={step.title}
+          aria-current={index === 0 ? "step" : undefined}
+          className="flex min-w-0 gap-3"
+        >
+          <span
+            aria-hidden="true"
+            className={cn(
+              "rounded-dot text-meta flex size-6 shrink-0 items-center justify-center font-semibold",
+              index === 0
+                ? "bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground border",
+            )}
+          >
+            {index + 1}
+          </span>
+          <span className="flex min-w-0 flex-col gap-0.5 wrap-anywhere">
+            <span className="text-body font-medium">
+              <span className="sr-only">Step {index + 1}: </span>
+              {step.title}
+              {index === 0 && <span className="sr-only"> (current)</span>}
+            </span>
+            <span className="text-meta text-muted-foreground">
+              {step.detail}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
