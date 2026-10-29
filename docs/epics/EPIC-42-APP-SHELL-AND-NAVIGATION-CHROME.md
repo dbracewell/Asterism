@@ -1,6 +1,6 @@
 # EPIC-42: App shell and navigation chrome
 
-Status: in progress (US-42.1). Source: the approved visual design audit (2026-10-26).
+Status: in progress (US-42.1 implemented, awaiting merge confirmation). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
@@ -37,7 +37,7 @@ the server (409) and the dialog shows the error.
 
 - [x] Replace `NavHeader` and `MobileSidebarTrigger` with one route-aware header component.
 - [x] Add breadcrumb, chip and action slots fed by route params and existing queries; reuse `ChatSessionActionMenu`.
-- [ ] Test the breadcrumbs per route, the mobile layout and keyboard order; update screenshots.
+- [x] Test the breadcrumbs per route, the mobile layout and keyboard order; update screenshots.
 
 ## US-42.2: Sidebar hierarchy
 
