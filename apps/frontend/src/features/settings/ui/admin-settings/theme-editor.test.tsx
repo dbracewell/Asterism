@@ -132,7 +132,9 @@ describe("theme save feedback", () => {
       theme: { ...input, filename: id },
     }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Theme saved.");
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Theme saved."),
+    );
     expect(saveTheme.mock.calls[0][0].filename).toBe("");
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Edited" },
@@ -144,7 +146,9 @@ describe("theme save feedback", () => {
       filename: id,
       name: "Edited",
     });
-    await screen.findByRole("status");
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Theme saved."),
+    );
   });
   it("retains drafts on transport failure and clears errors when choosing another theme", async () => {
     show();

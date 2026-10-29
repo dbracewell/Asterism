@@ -11,6 +11,11 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { useUser } from "@/features/auth/components/user-context";
+import {
+  SettingsPane,
+  SettingsSaveBar,
+  SettingsSection,
+} from "@/features/settings/ui/settings-section";
 import { client } from "@/lib/api";
 import {
   skillsPolicyGetOptions,
@@ -69,19 +74,10 @@ function SkillsPolicyForm() {
         ? String(error.detail)
         : "Skill policy could not be saved. Retry when administrator access is available.";
   return (
-    <section
-      className="flex min-h-0 min-w-0 flex-1 flex-col gap-4"
-      aria-labelledby="skills-policy-heading"
+    <SettingsPane
+      title="Skills"
+      description="Control whether users can activate their assigned instruction skills in chat. Disabled by default."
     >
-      <div>
-        <h2 id="skills-policy-heading" className="text-base font-bold">
-          Skills
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Control whether users can activate their assigned instruction skills
-          in chat. Disabled by default.
-        </p>
-      </div>
       {policy.isError && (
         <QueryError
           error={policy.error}
@@ -90,46 +86,44 @@ function SkillsPolicyForm() {
           isRetrying={policy.isFetching}
         />
       )}
-      <FieldGroup>
-        <Field orientation="horizontal">
-          <Switch
-            id="skills-enabled"
-            checked={enabled}
-            disabled={update.isPending}
-            onCheckedChange={(value) => {
-              setDraft(value);
-              setSaved(false);
-              update.reset();
-            }}
-          />
-          <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="skills-enabled">
-              Enable skill activation
-            </FieldLabel>
-            <FieldDescription>
-              Users must still own each skill and assign it to their main agent.
-              Enabling this policy grants no tools, files, MCP access, or
-              delegation.
-            </FieldDescription>
-          </div>
-        </Field>
-      </FieldGroup>
-      <p className="text-muted-foreground text-sm">
-        Disabling blocks execution and follow-ups that use active skills until
-        those skills are removed. Private documents, assignments, and historical
-        snapshots remain saved.
-      </p>
+      <SettingsSection
+        title="Activation"
+        description="Disabling blocks execution and follow-ups that use active skills until those skills are removed. Private documents, assignments, and historical snapshots remain saved."
+      >
+        <FieldGroup>
+          <Field orientation="horizontal">
+            <Switch
+              id="skills-enabled"
+              checked={enabled}
+              disabled={update.isPending}
+              onCheckedChange={(value) => {
+                setDraft(value);
+                setSaved(false);
+                update.reset();
+              }}
+            />
+            <div className="flex flex-col gap-1">
+              <FieldLabel htmlFor="skills-enabled">
+                Enable skill activation
+              </FieldLabel>
+              <FieldDescription>
+                Users must still own each skill and assign it to their main
+                agent. Enabling this policy grants no tools, files, MCP access,
+                or delegation.
+              </FieldDescription>
+            </div>
+          </Field>
+        </FieldGroup>
+      </SettingsSection>
       {update.isError && (
         <p role="alert" className="text-destructive text-sm">
           {errorText}
         </p>
       )}
-      {saved && (
-        <p role="status" className="text-muted-foreground text-sm">
-          Skill policy saved.
-        </p>
-      )}
-      <div className="mt-auto flex justify-end">
+      <SettingsSaveBar
+        dirty={dirty}
+        status={saved ? "Skill policy saved." : undefined}
+      >
         <Button
           disabled={
             !dirty || update.isPending || policy.isError || policy.isFetching
@@ -138,7 +132,7 @@ function SkillsPolicyForm() {
         >
           {update.isPending ? "Saving…" : "Save skill policy"}
         </Button>
-      </div>
-    </section>
+      </SettingsSaveBar>
+    </SettingsPane>
   );
 }

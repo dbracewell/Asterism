@@ -122,7 +122,7 @@ export const SettingsCard = ({
         <TabsContent
           key={selectedSetting.value}
           value={selectedSetting.value}
-          className="flex max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-2"
+          className="flex max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-2 pt-2"
         >
           {selectedSetting.settingsPane}
         </TabsContent>

@@ -22,6 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  SettingsPane,
+  SettingsSaveBar,
+} from "@/features/settings/ui/settings-section";
 import { useTheme } from "@/features/theme/components/theme-context";
 import { saveTheme } from "@/features/theme/server/actions";
 import { Theme } from "@/features/theme/types";
@@ -74,21 +78,21 @@ export const ThemeEditor = () => {
   };
 
   return (
-    <div className="@container/theme flex min-w-0 flex-1 flex-col">
-      <div className="relative flex items-center gap-2 border-b pb-2">
-        <h1 className="text-base font-bold">Theme Editor</h1>
+    <SettingsPane
+      title="Theme editor"
+      description="Create and edit the themes available to every user."
+      className="@container/theme"
+      actions={
         <Button
           type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="New theme"
+          variant="outline"
           disabled={isSaving}
-          className="absolute top-0 right-0"
           onClick={() => chooseTheme(prepareFormData({}))}
         >
-          <PlusIcon />
+          <PlusIcon /> New theme
         </Button>
-      </div>
+      }
+    >
       <div className="flex min-w-0 flex-1 flex-col items-stretch gap-2 @3xl/theme:flex-row">
         <div className="flex max-h-60 min-w-0 shrink-0 flex-col gap-1 overflow-y-auto py-2 @3xl/theme:max-h-none @3xl/theme:w-60">
           {lightThemes.length > 0 && (
@@ -134,7 +138,7 @@ export const ThemeEditor = () => {
           />
         </div>
       </div>
-    </div>
+    </SettingsPane>
   );
 };
 
@@ -501,12 +505,10 @@ const ThemeForm = ({
         </FieldGroup>
       </FieldSet>
       {save.isError && <FieldError errors={[save.error]} />}
-      {save.isSuccess && !form.formState.isDirty && (
-        <p role="status" className="text-muted-foreground text-sm">
-          Theme saved.
-        </p>
-      )}
-      <div className="mt-2 flex items-center justify-end gap-2">
+      <SettingsSaveBar
+        dirty={form.formState.isDirty}
+        status={save.isSuccess ? "Theme saved." : undefined}
+      >
         <Button type="submit" disabled={isPending || !form.formState.isDirty}>
           {isPending ? (
             <LoaderCircleIcon
@@ -518,7 +520,7 @@ const ThemeForm = ({
           )}
           {isPending ? "Saving…" : save.isError ? "Retry save" : "Save"}
         </Button>
-      </div>
+      </SettingsSaveBar>
     </form>
   );
 };

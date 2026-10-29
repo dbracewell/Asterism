@@ -6,6 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useUser } from "@/features/auth/components/user-context";
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
 import { useTheme } from "@/features/theme/components/theme-context";
+import {
+  SettingsPane,
+  SettingsSection,
+} from "@/features/settings/ui/settings-section";
 
 export const GeneralSettings = () => {
   const { updateSetting, isUpdatingUserSetting } = useUpdateUserSettings();
@@ -14,10 +18,13 @@ export const GeneralSettings = () => {
   const { setTheme } = useTheme();
 
   return (
-    <div className="@container/general flex min-w-0 flex-1 flex-col gap-y-8 p-2">
-      <div className="flex flex-col gap-3">
-        <h1 className="border-b pb-2 text-base font-bold">Appearance</h1>
-        <div className="grid min-w-0 grid-cols-1 items-center gap-x-2 gap-y-3 @sm/general:grid-cols-[auto_minmax(0,1fr)]">
+    <SettingsPane
+      title="General"
+      description="Appearance and defaults for your account."
+      className="@container/general"
+    >
+      <SettingsSection title="Appearance">
+        <div className="grid min-w-0 grid-cols-1 items-center gap-x-4 gap-y-3 @sm/general:grid-cols-[auto_minmax(0,1fr)]">
           <Label htmlFor="general-theme">Theme</Label>
           <ThemeSelector
             id="general-theme"
@@ -45,12 +52,13 @@ export const GeneralSettings = () => {
             }}
           />
         </div>
-      </div>
-      <div className="flex flex-col gap-3">
-        <h1 className="border-b pb-2 text-base font-bold">
-          <Label htmlFor="general-default-model">Default Model</Label>
-        </h1>
+      </SettingsSection>
+      <SettingsSection
+        title="Chat"
+        description="New chats start with this model; each chat keeps its own selection."
+      >
         <div className="flex flex-col items-start gap-2">
+          <Label htmlFor="general-default-model">Default Model</Label>
           <ModelSelector
             id="general-default-model"
             className="w-full max-w-80 min-w-0"
@@ -61,7 +69,7 @@ export const GeneralSettings = () => {
             availableModels={Object.values(userSettings.models ?? {})}
           />
         </div>
-      </div>
-    </div>
+      </SettingsSection>
+    </SettingsPane>
   );
 };

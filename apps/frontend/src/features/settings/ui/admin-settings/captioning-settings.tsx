@@ -11,6 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  SettingsPane,
+  SettingsSection,
+} from "@/features/settings/ui/settings-section";
 import { client } from "@/lib/api";
 import {
   appCaptioningGetOptions,
@@ -76,24 +80,11 @@ function CaptioningSettingsPane() {
   }
 
   return (
-    <section
-      className="flex min-h-0 flex-1 flex-col space-y-5"
-      aria-labelledby="knowledge-processing-heading"
+    <SettingsPane
+      title="Knowledge processing"
+      description="Image captioning is one part of the platform-wide knowledge-processing policy. Changing its mode or provider creates replacement knowledge generations for eligible files; current ready generations remain searchable until each replacement succeeds."
     >
-      <div>
-        <h2 id="knowledge-processing-heading" className="text-lg font-semibold">
-          Knowledge processing
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Image captioning is one part of the platform-wide knowledge-processing
-          policy. Changing its mode or provider creates replacement knowledge
-          generations for eligible files; current ready generations remain
-          searchable until each replacement succeeds.
-        </p>
-      </div>
-
-      <div className="rounded-surface space-y-2 border p-4">
-        <h3 className="font-medium">Knowledge embeddings</h3>
+      <SettingsSection title="Knowledge embeddings">
         <p className="text-sm">
           Model status:{" "}
           <strong>{embeddingStatus.data?.status ?? "unknown"}</strong>
@@ -116,134 +107,136 @@ function CaptioningSettingsPane() {
             and are processed when the bundle is ready.
           </p>
         )}
-      </div>
+      </SettingsSection>
 
-      <FieldSet className="space-y-2" disabled={update.isPending}>
-        <FieldLegend className="font-medium">Mode</FieldLegend>
-        {[
-          ["disabled", "Disabled"],
-          ["provider", "Configured vision provider"],
-          ["local", "Local SmolVLM2 (CPU)"],
-        ].map(([mode, label]) => (
-          <Label
-            className="flex cursor-pointer items-center gap-2 font-normal"
-            key={mode}
-          >
-            <input
-              type="radio"
-              name="captioning-mode"
-              checked={draftMode === mode}
-              onChange={() => {
-                setDraftMode(mode);
-                if (mode !== "provider") {
-                  update.mutate({
-                    body: {
-                      mode: mode as "disabled" | "local",
-                      provider_model_id: null,
-                    },
-                  });
-                }
+      <SettingsSection title="Image captioning">
+        <FieldSet className="gap-2" disabled={update.isPending}>
+          <FieldLegend>Mode</FieldLegend>
+          {[
+            ["disabled", "Disabled"],
+            ["provider", "Configured vision provider"],
+            ["local", "Local SmolVLM2 (CPU)"],
+          ].map(([mode, label]) => (
+            <Label
+              className="flex cursor-pointer items-center gap-2 font-normal"
+              key={mode}
+            >
+              <input
+                type="radio"
+                name="captioning-mode"
+                checked={draftMode === mode}
+                onChange={() => {
+                  setDraftMode(mode);
+                  if (mode !== "provider") {
+                    update.mutate({
+                      body: {
+                        mode: mode as "disabled" | "local",
+                        provider_model_id: null,
+                      },
+                    });
+                  }
+                }}
+              />
+              {label}
+            </Label>
+          ))}
+        </FieldSet>
+
+        {draftMode === "provider" && (
+          <div className="space-y-2">
+            <div
+              role="note"
+              className="text-foreground rounded-surface border-primary/40 bg-primary/10 flex items-start gap-2 border p-3 text-sm"
+            >
+              <TriangleAlertIcon
+                aria-hidden="true"
+                className="text-primary mt-0.5 size-4 shrink-0"
+              />
+              <p>
+                Selecting a provider sends source images to that provider for
+                caption generation. Save only if this external processing is
+                appropriate for your files.
+              </p>
+            </div>
+            <Label htmlFor="caption-provider-model">Vision model</Label>
+            <Select
+              value={current.provider_model_id ?? ""}
+              onValueChange={(value) => {
+                update.mutate({
+                  body: {
+                    mode: "provider",
+                    provider_model_id: value,
+                  },
+                });
               }}
-            />
-            {label}
-          </Label>
-        ))}
-      </FieldSet>
-
-      {draftMode === "provider" && (
-        <div className="space-y-2">
-          <div
-            role="note"
-            className="text-foreground rounded-surface border-primary/40 bg-primary/10 flex items-start gap-2 border p-3 text-sm"
-          >
-            <TriangleAlertIcon
-              aria-hidden="true"
-              className="text-primary mt-0.5 size-4 shrink-0"
-            />
-            <p>
-              Selecting a provider sends source images to that provider for
-              caption generation. Save only if this external processing is
-              appropriate for your files.
-            </p>
+            >
+              <SelectTrigger
+                id="caption-provider-model"
+                className="w-full md:w-lg"
+              >
+                <SelectValue placeholder="Select a discovered vision model" />
+              </SelectTrigger>
+              <SelectContent>
+                {visionModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.provider_name} — {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {visionModels.length === 0 && (
+              <p role="alert" className="text-destructive text-sm">
+                No active discovered vision-capable models are available.
+              </p>
+            )}
           </div>
-          <Label htmlFor="caption-provider-model">Vision model</Label>
-          <Select
-            value={current.provider_model_id ?? ""}
-            onValueChange={(value) => {
-              update.mutate({
-                body: {
-                  mode: "provider",
-                  provider_model_id: value,
-                },
-              });
-            }}
-          >
-            <SelectTrigger
-              id="caption-provider-model"
-              className="w-full md:w-lg"
-            >
-              <SelectValue placeholder="Select a discovered vision model" />
-            </SelectTrigger>
-            <SelectContent>
-              {visionModels.map((model) => (
-                <SelectItem key={model.id} value={model.id}>
-                  {model.provider_name} — {model.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {visionModels.length === 0 && (
-            <p role="alert" className="text-destructive text-sm">
-              No active discovered vision-capable models are available.
-            </p>
-          )}
-        </div>
-      )}
+        )}
 
-      {draftMode === "local" && (
-        <div className="rounded-surface space-y-2 border p-4">
-          <p className="text-sm">
-            Model status: <strong>{localStatus?.status ?? "unknown"}</strong>
-            {localStatus?.total_bytes
-              ? ` (${localStatus.bytes_downloaded} / ${localStatus.total_bytes} bytes)`
-              : ""}
+        {draftMode === "local" && (
+          <div className="space-y-2">
+            <p className="text-sm">
+              Model status: <strong>{localStatus?.status ?? "unknown"}</strong>
+              {localStatus?.total_bytes
+                ? ` (${localStatus.bytes_downloaded} / ${localStatus.total_bytes} bytes)`
+                : ""}
+            </p>
+            {localStatus?.error && (
+              <p role="alert" className="text-destructive text-sm">
+                {localStatus.error}
+              </p>
+            )}
+            {localStatus?.status === "downloading" ||
+            localStatus?.status === "verifying" ? (
+              <Button
+                variant="outline"
+                onClick={() => cancel.mutate({})}
+                disabled={cancel.isPending}
+              >
+                Cancel download
+              </Button>
+            ) : localStatus?.status !== "ready" ? (
+              <Button
+                onClick={() => download.mutate({})}
+                disabled={download.isPending}
+              >
+                Download model
+              </Button>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                The verified local model is ready. CPU inference is bounded to
+                one concurrent caption by default.
+              </p>
+            )}
+          </div>
+        )}
+
+        {update.isError && (
+          <p role="alert" className="text-destructive text-sm">
+            {updateErrorMessage}
           </p>
-          {localStatus?.error && (
-            <p role="alert" className="text-destructive text-sm">
-              {localStatus.error}
-            </p>
-          )}
-          {localStatus?.status === "downloading" ||
-          localStatus?.status === "verifying" ? (
-            <Button
-              variant="outline"
-              onClick={() => cancel.mutate({})}
-              disabled={cancel.isPending}
-            >
-              Cancel download
-            </Button>
-          ) : localStatus?.status !== "ready" ? (
-            <Button
-              onClick={() => download.mutate({})}
-              disabled={download.isPending}
-            >
-              Download model
-            </Button>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              The verified local model is ready. CPU inference is bounded to one
-              concurrent caption by default.
-            </p>
-          )}
-        </div>
-      )}
-
-      {update.isError && (
-        <p role="alert" className="text-destructive text-sm">
-          {updateErrorMessage}
-        </p>
-      )}
-    </section>
+        )}
+      </SettingsSection>
+    </SettingsPane>
   );
 }
 
