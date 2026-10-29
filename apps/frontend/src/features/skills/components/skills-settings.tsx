@@ -5,16 +5,12 @@ import { ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  SettingsPane,
+  SettingsSection,
+} from "@/features/settings/ui/settings-section";
 import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { skillsListOptions } from "../queries";
@@ -38,17 +34,10 @@ function OwnedSkillsSettings({ owner }: { owner: string }) {
     : page;
   if (page > lastPage) setPage(lastPage);
   return (
-    <section
-      aria-label="Skills management"
-      className="flex min-w-0 flex-col gap-4"
-    >
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-base font-bold">Skills</h1>
-          <p className="text-muted-foreground text-sm">
-            Your private SKILL.md instruction documents.
-          </p>
-        </div>
+    <SettingsPane
+      title="Skills"
+      description="Your private SKILL.md instruction documents."
+      actions={
         <Button
           ref={newButton}
           onClick={(event) => {
@@ -58,119 +47,125 @@ function OwnedSkillsSettings({ owner }: { owner: string }) {
         >
           New skill
         </Button>
-      </header>
+      }
+    >
       <SkillAvailability owner={owner} />
-      <Field>
-        <FieldLabel htmlFor="skill-search">Search skills</FieldLabel>
-        <Input
-          id="skill-search"
-          maxLength={200}
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setPage(1);
-          }}
-        />
-      </Field>
-      {skills.isPending && (
-        <ListSkeleton label="Loading skills…" rows={3} detail />
-      )}
-      {skills.error && (
-        <QueryError
-          error={skills.error}
-          message={
-            skills.data
-              ? "Could not refresh skills. Showing saved results."
-              : "Could not load skills."
-          }
-          retry={skills.refetch}
-          isRetrying={skills.isFetching}
-        />
-      )}
-      {skills.data?.total === 0 && (
-        <EmptyState
-          title={query ? "No matching skills" : "No skills yet"}
-          description={
-            query
-              ? "Try a different name or description."
-              : "Create a skill from a SKILL.md template to reuse instructions in chat."
-          }
-          action={
-            query ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setQuery("");
-                  setPage(1);
-                }}
+      <SettingsSection title="Your skills">
+        <Field>
+          <FieldLabel htmlFor="skill-search">Search skills</FieldLabel>
+          <Input
+            id="skill-search"
+            maxLength={200}
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setPage(1);
+            }}
+          />
+        </Field>
+        {skills.isPending && (
+          <ListSkeleton label="Loading skills…" rows={3} detail />
+        )}
+        {skills.error && (
+          <QueryError
+            error={skills.error}
+            message={
+              skills.data
+                ? "Could not refresh skills. Showing saved results."
+                : "Could not load skills."
+            }
+            retry={skills.refetch}
+            isRetrying={skills.isFetching}
+          />
+        )}
+        {skills.data?.total === 0 && (
+          <EmptyState
+            title={query ? "No matching skills" : "No skills yet"}
+            description={
+              query
+                ? "Try a different name or description."
+                : "Create a skill from a SKILL.md template to reuse instructions in chat."
+            }
+            action={
+              query ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setQuery("");
+                    setPage(1);
+                  }}
+                >
+                  Clear search
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={(event) => {
+                    returnFocus.current = event.currentTarget;
+                    setEditing({ id: null });
+                  }}
+                >
+                  Create a skill
+                </Button>
+              )
+            }
+          />
+        )}
+        {!!skills.data?.items.length && (
+          <ul aria-label="Your skills" className="min-w-0 divide-y border-y">
+            {skills.data.items.map((skill) => (
+              <li
+                key={skill.id}
+                className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3"
               >
-                Clear search
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={(event) => {
-                  returnFocus.current = event.currentTarget;
-                  setEditing({ id: null });
-                }}
-              >
-                Create a skill
-              </Button>
-            )
-          }
-        />
-      )}
-      {skills.data?.items.map((skill) => (
-        <Card key={skill.id} className="min-w-0">
-          <CardHeader>
-            <CardTitle className="wrap-anywhere">{skill.name}</CardTitle>
-            <CardDescription className="wrap-anywhere">
-              {skill.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-sm">
-              Revision {skill.revision}
-            </p>
-          </CardContent>
-          <CardFooter className="justify-end">
+                <div className="flex min-w-0 flex-1 basis-56 flex-col gap-0.5">
+                  <p className="font-medium wrap-anywhere">{skill.name}</p>
+                  <p className="text-muted-foreground text-sm wrap-anywhere">
+                    {skill.description}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    Revision {skill.revision}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  aria-label={`View or edit ${skill.name}`}
+                  onClick={(event) => {
+                    returnFocus.current = event.currentTarget;
+                    setEditing({ id: skill.id });
+                  }}
+                >
+                  View or edit
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {skills.data && skills.data.total > 10 && (
+          <nav
+            aria-label="Skill pages"
+            className="flex flex-wrap items-center justify-end gap-3"
+          >
             <Button
               variant="outline"
-              aria-label={`View or edit ${skill.name}`}
-              onClick={(event) => {
-                returnFocus.current = event.currentTarget;
-                setEditing({ id: skill.id });
-              }}
+              disabled={page === 1 || skills.isFetching}
+              onClick={() => setPage(page - 1)}
             >
-              View or edit
+              Previous skills
             </Button>
-          </CardFooter>
-        </Card>
-      ))}
-      {skills.data && skills.data.total > 10 && (
-        <nav
-          aria-label="Skill pages"
-          className="flex flex-wrap items-center justify-end gap-3"
-        >
-          <Button
-            variant="outline"
-            disabled={page === 1 || skills.isFetching}
-            onClick={() => setPage(page - 1)}
-          >
-            Previous skills
-          </Button>
-          <span>
-            Page {page} of {lastPage}
-          </span>
-          <Button
-            variant="outline"
-            disabled={page === lastPage || skills.isFetching}
-            onClick={() => setPage(page + 1)}
-          >
-            Next skills
-          </Button>
-        </nav>
-      )}
+            <span>
+              Page {page} of {lastPage}
+            </span>
+            <Button
+              variant="outline"
+              disabled={page === lastPage || skills.isFetching}
+              onClick={() => setPage(page + 1)}
+            >
+              Next skills
+            </Button>
+          </nav>
+        )}
+      </SettingsSection>
       {editing && (
         <SkillEditorDialog
           owner={owner}
@@ -185,6 +180,6 @@ function OwnedSkillsSettings({ owner }: { owner: string }) {
           }}
         />
       )}
-    </section>
+    </SettingsPane>
   );
 }

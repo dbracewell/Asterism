@@ -1,6 +1,6 @@
 # EPIC-46: Settings and admin visual coherence
 
-Status: proposed. Source: the approved visual design audit (2026-10-26).
+Status: in progress (US-46.1). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
@@ -24,7 +24,7 @@ Acceptance: settings panes use grouped sections with headings and dividers, with
 cards reserved for distinct objects such as providers and sub-agents. Forms with
 unsaved changes show a sticky save bar.
 
-- [ ] Add a settings section primitive; migrate the user and admin panes; test the sticky save bar's dirty state.
+- [x] Add a settings section primitive; migrate the user and admin panes; test the sticky save bar's dirty state.
 
 ## US-46.2: Theme gallery
 

@@ -6,14 +6,6 @@ import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Field,
   FieldDescription,
   FieldGroup,
@@ -33,6 +25,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "@/features/auth/components/user-context";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
+import {
+  SettingsPane,
+  SettingsSaveBar,
+  SettingsSection,
+} from "@/features/settings/ui/settings-section";
 
 function Failure({ title, error }: { title: string; error: unknown }) {
   const detail =
@@ -81,14 +78,10 @@ function OwnedPersonaSettings({ userId }: { userId: string }) {
     },
   });
   return (
-    <div className="flex min-h-0 min-w-0 flex-col gap-4">
-      <div>
-        <h1 className="text-base font-bold">Personas</h1>
-        <p className="text-muted-foreground text-sm">
-          A persona holds your background and response preferences in USER.md.
-          It does not change tools, files, permissions or memory.
-        </p>
-      </div>
+    <SettingsPane
+      title="Personas"
+      description="A persona holds your background and response preferences in USER.md. It does not change tools, files, permissions or memory."
+    >
       {query.isPending && <FormSkeleton label="Loading personas…" />}
       {query.error && (
         <QueryError
@@ -104,84 +97,71 @@ function OwnedPersonaSettings({ userId }: { userId: string }) {
       )}
       {query.data && (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Your personas</CardTitle>
-              <CardDescription>
-                Use your default for new messages, or choose a fixed persona in
-                a chat. You can keep up to 20 personas.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex min-w-0 flex-col gap-3">
-              <div className="flex flex-wrap gap-2" aria-label="Your personas">
-                {query.data.profiles.map((profile) => (
-                  <Button
-                    key={profile.id}
-                    aria-label={`Edit persona ${profile.name}`}
-                    variant={
-                      editing?.id === profile.id ? "secondary" : "outline"
-                    }
-                    className="h-auto max-w-full whitespace-normal"
-                    disabled={busy || create.isPending}
-                    onClick={() => setEditing(profile)}
-                  >
-                    <span className="min-w-0 wrap-anywhere">
-                      {profile.name}
-                    </span>
-                    {profile.is_default && (
-                      <Badge variant="secondary">Default</Badge>
-                    )}
-                  </Button>
-                ))}
-              </div>
-              <form
-                className="flex flex-col gap-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  create.mutate({ body: { name: name.trim(), user_md: "" } });
-                }}
-              >
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="new-persona-name">
-                      New persona name
-                    </FieldLabel>
-                    <Input
-                      id="new-persona-name"
-                      ref={newNameInput}
-                      maxLength={80}
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      disabled={
-                        busy ||
-                        create.isPending ||
-                        query.data.profiles.length >= 20
-                      }
-                    />
-                  </Field>
-                </FieldGroup>
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
+          <SettingsSection
+            title="Your personas"
+            description="Use your default for new messages, or choose a fixed persona in a chat. You can keep up to 20 personas."
+          >
+            <div className="flex flex-wrap gap-2" aria-label="Your personas">
+              {query.data.profiles.map((profile) => (
+                <Button
+                  key={profile.id}
+                  aria-label={`Edit persona ${profile.name}`}
+                  variant={editing?.id === profile.id ? "secondary" : "outline"}
+                  className="h-auto max-w-full whitespace-normal"
+                  disabled={busy || create.isPending}
+                  onClick={() => setEditing(profile)}
+                >
+                  <span className="min-w-0 wrap-anywhere">{profile.name}</span>
+                  {profile.is_default && (
+                    <Badge variant="secondary">Default</Badge>
+                  )}
+                </Button>
+              ))}
+            </div>
+            <form
+              className="flex flex-col gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                create.mutate({ body: { name: name.trim(), user_md: "" } });
+              }}
+            >
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="new-persona-name">
+                    New persona name
+                  </FieldLabel>
+                  <Input
+                    id="new-persona-name"
+                    ref={newNameInput}
+                    maxLength={80}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
                     disabled={
                       busy ||
                       create.isPending ||
-                      !name.trim() ||
                       query.data.profiles.length >= 20
                     }
-                  >
-                    {create.isPending ? "Creating…" : "Create persona"}
-                  </Button>
-                </div>
-              </form>
-              {create.error && (
-                <Failure
-                  title="Could not create persona"
-                  error={create.error}
-                />
-              )}
-            </CardContent>
-          </Card>
+                  />
+                </Field>
+              </FieldGroup>
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={
+                    busy ||
+                    create.isPending ||
+                    !name.trim() ||
+                    query.data.profiles.length >= 20
+                  }
+                >
+                  {create.isPending ? "Creating…" : "Create persona"}
+                </Button>
+              </div>
+            </form>
+            {create.error && (
+              <Failure title="Could not create persona" error={create.error} />
+            )}
+          </SettingsSection>
           {editing && (
             <PersonaEditor
               key={editing.id}
@@ -205,7 +185,7 @@ function OwnedPersonaSettings({ userId }: { userId: string }) {
           )}
         </>
       )}
-    </div>
+    </SettingsPane>
   );
 }
 
@@ -289,15 +269,13 @@ function PersonaEditor({
     }
   }
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Edit persona</CardTitle>
-        <CardDescription>
-          Changes apply to new messages. A response already waiting or running
-          keeps the instructions it started with.
-        </CardDescription>
-      </CardHeader>
+    <SettingsSection
+      title="Edit persona"
+      description="Changes apply to new messages. A response already waiting or running keeps the instructions it started with."
+      className="flex-1"
+    >
       <form
+        className="flex flex-1 flex-col gap-4"
         onSubmit={(event) => {
           event.preventDefault();
           save.mutate({
@@ -310,109 +288,107 @@ function PersonaEditor({
           });
         }}
       >
-        <CardContent className="flex flex-col gap-4">
-          {!available && (
-            <p role="alert" className="text-destructive text-sm">
-              Persona unavailable: Your draft is retained here. Choose another
-              persona to continue.
-            </p>
-          )}
-          {stale && (
-            <p role="status" className="text-muted-foreground text-sm">
-              Persona changed: A newer version is saved. Your draft is retained;
-              reload the saved persona before making it your default.
-            </p>
-          )}
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="persona-name">Persona name</FieldLabel>
-              <Input
-                id="persona-name"
-                autoFocus
-                maxLength={80}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                disabled={busy}
-              />
-            </Field>
-            <Field data-invalid={characters > 16000}>
-              <FieldLabel htmlFor="persona-user-md">
-                USER.md instructions
-              </FieldLabel>
-              <Textarea
-                id="persona-user-md"
-                rows={10}
-                maxLength={32000}
-                className="font-mono"
-                value={userMd}
-                onChange={(event) => setUserMd(event.target.value)}
-                disabled={busy}
-                aria-describedby="persona-document-help"
-                aria-invalid={characters > 16000}
-              />
-              <FieldDescription id="persona-document-help">
-                Write your background and response preferences.{" "}
-                {characters.toLocaleString()} / 16,000 characters.
-              </FieldDescription>
-            </Field>
-          </FieldGroup>
-          {characters > 16000 && (
-            <p role="alert">USER.md must contain at most 16,000 characters.</p>
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            {isDefault ? (
-              <Badge>Default persona</Badge>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busy || dirty || stale || !available || !!save.error}
-                onClick={() =>
-                  makeDefault.mutate({
-                    body: {
-                      persona_id: profile.id,
-                      expected_default_revision: collection.default_revision,
-                    },
-                  })
-                }
-              >
-                {makeDefault.isPending ? "Updating default…" : "Make default"}
-              </Button>
-            )}
+        {!available && (
+          <p role="alert" className="text-destructive text-sm">
+            Persona unavailable: Your draft is retained here. Choose another
+            persona to continue.
+          </p>
+        )}
+        {stale && (
+          <p role="status" className="text-muted-foreground text-sm">
+            Persona changed: A newer version is saved. Your draft is retained;
+            reload the saved persona before making it your default.
+          </p>
+        )}
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="persona-name">Persona name</FieldLabel>
+            <Input
+              id="persona-name"
+              autoFocus
+              maxLength={80}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              disabled={busy}
+            />
+          </Field>
+          <Field data-invalid={characters > 16000}>
+            <FieldLabel htmlFor="persona-user-md">
+              USER.md instructions
+            </FieldLabel>
+            <Textarea
+              id="persona-user-md"
+              rows={10}
+              maxLength={32000}
+              className="font-mono"
+              value={userMd}
+              onChange={(event) => setUserMd(event.target.value)}
+              disabled={busy}
+              aria-describedby="persona-document-help"
+              aria-invalid={characters > 16000}
+            />
+            <FieldDescription id="persona-document-help">
+              Write your background and response preferences.{" "}
+              {characters.toLocaleString()} / 16,000 characters.
+            </FieldDescription>
+          </Field>
+        </FieldGroup>
+        {characters > 16000 && (
+          <p role="alert">USER.md must contain at most 16,000 characters.</p>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {isDefault ? (
+            <Badge>Default persona</Badge>
+          ) : (
             <Button
               type="button"
               variant="outline"
-              disabled={busy}
-              onClick={() => void reloadSaved()}
+              disabled={busy || dirty || stale || !available || !!save.error}
+              onClick={() =>
+                makeDefault.mutate({
+                  body: {
+                    persona_id: profile.id,
+                    expected_default_revision: collection.default_revision,
+                  },
+                })
+              }
             >
-              {reloading ? "Reloading…" : "Reload saved persona"}
+              {makeDefault.isPending ? "Updating default…" : "Make default"}
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={busy || isDefault || !available}
-              onClick={async () => {
-                if (await confirmation.confirm())
-                  remove.mutate({
-                    path: { persona_id: profile.id },
-                    query: { expected_revision: saved.revision },
-                  });
-              }}
-            >
-              Delete persona
-            </Button>
-          </div>
-          {dirty && !isDefault && (
-            <p className="text-muted-foreground text-sm">
-              Save your changes before making this persona the default.
-            </p>
           )}
-          {error && <Failure title="Could not update persona" error={error} />}
-          <p className="text-muted-foreground text-sm" role="status">
-            Saved revision {saved.revision}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void reloadSaved()}
+          >
+            {reloading ? "Reloading…" : "Reload saved persona"}
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={busy || isDefault || !available}
+            onClick={async () => {
+              if (await confirmation.confirm())
+                remove.mutate({
+                  path: { persona_id: profile.id },
+                  query: { expected_revision: saved.revision },
+                });
+            }}
+          >
+            Delete persona
+          </Button>
+        </div>
+        {dirty && !isDefault && (
+          <p className="text-muted-foreground text-sm">
+            Save your changes before making this persona the default.
           </p>
-        </CardContent>
-        <CardFooter className="justify-end">
+        )}
+        {error && <Failure title="Could not update persona" error={error} />}
+        <SettingsSaveBar
+          dirty={dirty}
+          status={`Saved revision ${saved.revision}`}
+        >
           <Button
             type="submit"
             disabled={
@@ -421,9 +397,9 @@ function PersonaEditor({
           >
             {save.isPending ? "Saving…" : "Save persona"}
           </Button>
-        </CardFooter>
+        </SettingsSaveBar>
       </form>
       {confirmation.dialog}
-    </Card>
+    </SettingsSection>
   );
 }

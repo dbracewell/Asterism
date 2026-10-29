@@ -477,12 +477,12 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     expect((await api("GET", `/files/info/${file.filename}`)).id).toBe(file.id);
     await page.goto("/settings?t=user&setting=agents");
     const mainConfiguration = page.getByRole("region", {
-      name: "Main configuration",
+      name: "Main agent",
       exact: true,
     });
     await expect(
       mainConfiguration.getByRole("heading", {
-        name: "Main Agent",
+        name: "Main agent",
         exact: true,
       }),
     ).toBeVisible();

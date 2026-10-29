@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ComponentRegistry } from "@/features/settings/types";
 import { ComponentSettings } from "@/features/settings/ui/admin-settings/component-settings";
+import {
+  SettingsPane,
+  SettingsSaveBar,
+} from "@/features/settings/ui/settings-section";
 import { client } from "@/lib/api";
 import { arraysEqual } from "@/lib/arrays";
 import {
@@ -97,15 +101,16 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-4">
-      <div className="flex items-center gap-2 border-b pb-2">
-        <h1 className="text-base font-bold">Tools</h1>
-      </div>
+    <SettingsPane
+      title="Tools"
+      description="Activate the tools agents may be assigned, and configure the providers behind them."
+    >
       <div className="flex flex-col gap-x-4 gap-y-2 sm:flex-row sm:items-center">
         <Input
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter tools..."
+          aria-label="Filter tools"
           className="max-w-100 flex-1"
         />
         <div className="flex items-center gap-1">
@@ -123,17 +128,14 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
           </Label>
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-auto">
+      <ul aria-label="Tools" className="min-w-0 divide-y border-y">
         {tools.map((tool) => {
           const cmp = tool.component_type
             ? components[tool.component_type]
             : null;
           return (
-            <div
-              key={tool.name}
-              className="rounded-surface flex flex-col overflow-clip border"
-            >
-              <div className="bg-accent text-accent-foreground flex items-center gap-2 p-2 text-sm font-bold">
+            <li key={tool.name} className="flex min-w-0 flex-col gap-1 py-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
                 <Checkbox
                   id={`tool-${tool.name}`}
                   name={tool.name}
@@ -176,12 +178,12 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
                   <Badge variant="secondary">Context managed</Badge>
                 )}
               </div>
-              <p className="text-muted-foreground px-2 py-1 text-xs">
+              <p className="text-muted-foreground pl-6 text-xs">
                 {tool.description}
               </p>
               {tool.component_type && cmp && (
                 <ComponentSettings
-                  className="p-2"
+                  className="pt-2 pl-6"
                   key={cmp.settings_key}
                   defaultValue={cmp.default_value}
                   component_type={tool.component_type}
@@ -201,11 +203,11 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
                   }}
                 />
               )}
-            </div>
+            </li>
           );
         })}
-      </div>
-      <div className="flex items-center justify-end">
+      </ul>
+      <SettingsSaveBar dirty={isDirty}>
         <Button
           disabled={!isDirty || saveSettings.isPending}
           onClick={() => {
@@ -220,8 +222,8 @@ const ToolsSettingsForm = ({ appSettings }: { appSettings: ToolSettings }) => {
         >
           Save
         </Button>
-      </div>
-    </div>
+      </SettingsSaveBar>
+    </SettingsPane>
   );
 };
 

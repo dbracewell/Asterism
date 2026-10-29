@@ -29,6 +29,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
+import {
+  SettingsPane,
+  SettingsSaveBar,
+} from "@/features/settings/ui/settings-section";
 import { client } from "@/lib/api";
 import { Llm, ProviderSettings, ProviderSummary } from "@/lib/client";
 import {
@@ -304,7 +308,7 @@ function ModelCatalog({
   };
 
   return (
-    <div className="bg-muted/20 rounded-surface mt-3 border p-3">
+    <div className="mt-4 border-t pt-4">
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
@@ -584,184 +588,175 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
 
   return (
     <form
-      className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+      className="flex min-w-0 flex-1 flex-col"
       onSubmit={handleSubmit((values) => {
         void save(values, "Settings saved.").catch(() => undefined);
       })}
     >
       <fieldset disabled={isSaving} className="contents">
-        <div className="relative">
-          <h1 className="border-b pb-2 text-base font-bold">
-            OpenAI API Compatible Providers
-          </h1>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => append(emptyProvider())}
-            aria-label="Add provider"
-            className="absolute top-0 right-0"
-          >
-            <PlusIcon />
-          </Button>
-        </div>
-        {appSettings.draft_model ? (
-          <p className="text-muted-foreground text-sm">
-            Draft model: {appSettings.draft_model.provider_name} —{" "}
-            {appSettings.draft_model.name}
-          </p>
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            Choose an active model below to use as the draft model.
-          </p>
-        )}
-        <p className="text-muted-foreground text-sm" role="status">
-          {hasChanges
-            ? "Unsaved changes. Click Save to apply all provider and model edits."
-            : "Provider and model edits apply when you click Save."}
-        </p>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
-          {fields.length === 0 ? (
-            <div className="text-muted-foreground bg-card rounded-surface m-3 flex flex-1 flex-col items-center justify-center gap-3 border border-dashed p-4 text-sm">
-              <ComputerIcon className="text-muted-foreground/50 size-10" />
-              <h4 className="max-w-sm text-center text-xl">
-                No providers configured yet. Add one to get started.
-              </h4>
-              <Button type="button" onClick={() => append(emptyProvider())}>
-                <PlusIcon /> Add Provider
-              </Button>
-            </div>
-          ) : null}
-          {fields.map((field, index) => {
-            const errors = formState.errors.llm_providers?.[index];
-            const provider = appSettings.llm_providers?.find(
-              (item) => item.id === field.id,
-            ) ?? { ...field, model_count: 0, active_model_count: 0 };
-            return (
-              <FieldSet
-                key={field.fieldKey}
-                className="bg-background/30 rounded-surface min-w-0 border p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <FieldTitle className="text-base! font-medium!">
-                    {field.name.trim() || `Provider ${index + 1}`}
-                  </FieldTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => deleteProvider(index)}
-                    aria-label={`Delete provider ${index + 1}`}
-                  >
-                    <Trash2Icon />
-                  </Button>
-                </div>
-                <FieldGroup>
-                  <Input
-                    type="hidden"
-                    {...register(`llm_providers.${index}.id`)}
-                  />
-                  <Field>
-                    <FieldLabel htmlFor={`provider-type-${index}`}>
-                      Provider Type
-                    </FieldLabel>
-                    <FieldContent>
-                      <Select
-                        value={form.getValues(
-                          `llm_providers.${index}.provider_type`,
-                        )}
-                        onValueChange={(value) => {
-                          form.setValue(
+        <SettingsPane
+          title="Providers"
+          description={
+            appSettings.draft_model
+              ? `OpenAI API compatible providers and their models. Draft model: ${appSettings.draft_model.provider_name} — ${appSettings.draft_model.name}.`
+              : "OpenAI API compatible providers and their models. Choose an active model below to use as the draft model."
+          }
+          actions={
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => append(emptyProvider())}
+            >
+              <PlusIcon /> Add provider
+            </Button>
+          }
+        >
+          <div className="flex min-w-0 flex-col gap-3">
+            {fields.length === 0 ? (
+              <div className="text-muted-foreground bg-card rounded-surface flex flex-col items-center justify-center gap-3 border border-dashed p-8 text-sm">
+                <ComputerIcon className="text-muted-foreground/50 size-10" />
+                <h4 className="max-w-sm text-center text-xl">
+                  No providers configured yet. Add one to get started.
+                </h4>
+                <Button type="button" onClick={() => append(emptyProvider())}>
+                  <PlusIcon /> Add Provider
+                </Button>
+              </div>
+            ) : null}
+            {fields.map((field, index) => {
+              const errors = formState.errors.llm_providers?.[index];
+              const provider = appSettings.llm_providers?.find(
+                (item) => item.id === field.id,
+              ) ?? { ...field, model_count: 0, active_model_count: 0 };
+              return (
+                <FieldSet
+                  key={field.fieldKey}
+                  className="bg-background/30 rounded-surface min-w-0 border p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <FieldTitle className="text-base! font-medium!">
+                      {field.name.trim() || `Provider ${index + 1}`}
+                    </FieldTitle>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => deleteProvider(index)}
+                      aria-label={`Delete provider ${index + 1}`}
+                    >
+                      <Trash2Icon />
+                    </Button>
+                  </div>
+                  <FieldGroup>
+                    <Input
+                      type="hidden"
+                      {...register(`llm_providers.${index}.id`)}
+                    />
+                    <Field>
+                      <FieldLabel htmlFor={`provider-type-${index}`}>
+                        Provider Type
+                      </FieldLabel>
+                      <FieldContent>
+                        <Select
+                          value={form.getValues(
                             `llm_providers.${index}.provider_type`,
-                            value as FormProvider["provider_type"],
-                            { shouldDirty: true, shouldValidate: true },
-                          );
-                          form.setValue(
-                            `llm_providers.${index}.base_url`,
-                            value === "openai" ? OPENAI_BASE_URL : "",
-                            { shouldDirty: true, shouldValidate: true },
-                          );
-                        }}
-                      >
-                        <SelectTrigger
-                          id={`provider-type-${index}`}
-                          aria-label={`Provider type for provider ${index + 1}`}
+                          )}
+                          onValueChange={(value) => {
+                            form.setValue(
+                              `llm_providers.${index}.provider_type`,
+                              value as FormProvider["provider_type"],
+                              { shouldDirty: true, shouldValidate: true },
+                            );
+                            form.setValue(
+                              `llm_providers.${index}.base_url`,
+                              value === "openai" ? OPENAI_BASE_URL : "",
+                              { shouldDirty: true, shouldValidate: true },
+                            );
+                          }}
                         >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="openai">OpenAI</SelectItem>
-                          <SelectItem value="generic_openai">
-                            Generic OpenAI
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor={`provider-name-${index}`}>
-                      Provider Name
-                    </FieldLabel>
-                    <FieldContent>
-                      <Input
-                        data-1p-ignore
-                        id={`provider-name-${index}`}
-                        {...register(`llm_providers.${index}.name`)}
-                      />
-                      <FieldError errors={[errors?.name]} />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor={`provider-base-url-${index}`}>
-                      Base URL
-                    </FieldLabel>
-                    <FieldContent>
-                      <Input
-                        data-1p-ignore
-                        id={`provider-base-url-${index}`}
-                        placeholder="https://api.example.com/v1"
-                        {...register(`llm_providers.${index}.base_url`)}
-                      />
-                      <FieldError errors={[errors?.base_url]} />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor={`provider-api-key-${index}`}>
-                      API Key
-                    </FieldLabel>
-                    <FieldContent>
-                      <Input
-                        data-1p-ignore
-                        id={`provider-api-key-${index}`}
-                        type="password"
-                        {...register(`llm_providers.${index}.api_key`)}
-                      />
-                      <FieldError errors={[errors?.api_key]} />
-                    </FieldContent>
-                  </Field>
-                </FieldGroup>
-                <ModelCatalog
-                  provider={provider}
-                  draftModelId={draftModelId}
-                  onSetDraft={setDraft}
-                  onRefresh={refresh}
-                  drafts={drafts}
-                  onChange={changeDraft}
-                />
-              </FieldSet>
-            );
-          })}
-        </div>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? (
-              <LoaderCircleIcon className="animate-spin" />
-            ) : (
-              <SaveIcon />
-            )}
-            Save
-          </Button>
-        </div>
+                          <SelectTrigger
+                            id={`provider-type-${index}`}
+                            aria-label={`Provider type for provider ${index + 1}`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="openai">OpenAI</SelectItem>
+                            <SelectItem value="generic_openai">
+                              Generic OpenAI
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor={`provider-name-${index}`}>
+                        Provider Name
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          data-1p-ignore
+                          id={`provider-name-${index}`}
+                          {...register(`llm_providers.${index}.name`)}
+                        />
+                        <FieldError errors={[errors?.name]} />
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor={`provider-base-url-${index}`}>
+                        Base URL
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          data-1p-ignore
+                          id={`provider-base-url-${index}`}
+                          placeholder="https://api.example.com/v1"
+                          {...register(`llm_providers.${index}.base_url`)}
+                        />
+                        <FieldError errors={[errors?.base_url]} />
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor={`provider-api-key-${index}`}>
+                        API Key
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          data-1p-ignore
+                          id={`provider-api-key-${index}`}
+                          type="password"
+                          {...register(`llm_providers.${index}.api_key`)}
+                        />
+                        <FieldError errors={[errors?.api_key]} />
+                      </FieldContent>
+                    </Field>
+                  </FieldGroup>
+                  <ModelCatalog
+                    provider={provider}
+                    draftModelId={draftModelId}
+                    onSetDraft={setDraft}
+                    onRefresh={refresh}
+                    drafts={drafts}
+                    onChange={changeDraft}
+                  />
+                </FieldSet>
+              );
+            })}
+          </div>
+          <SettingsSaveBar
+            dirty={hasChanges}
+            status="Provider and model edits apply when you click Save."
+          >
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : (
+                <SaveIcon />
+              )}
+              Save
+            </Button>
+          </SettingsSaveBar>
+        </SettingsPane>
       </fieldset>
     </form>
   );

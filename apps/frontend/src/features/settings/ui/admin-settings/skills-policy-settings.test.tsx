@@ -65,7 +65,9 @@ it("loads disabled policy, saves only a boolean, and invalidates discovery and c
   ).toBeDisabled();
   await user.click(toggle);
   await user.click(screen.getByRole("button", { name: "Save skill policy" }));
-  await screen.findByRole("status");
+  await waitFor(() =>
+    expect(screen.getByRole("status")).toHaveTextContent("Skill policy saved."),
+  );
   expect(mocks.save).toHaveBeenCalledWith(
     { body: { enabled: true } },
     expect.anything(),
@@ -117,4 +119,31 @@ it("does not read or mutate administrator policy for an ordinary user", async ()
   expect(mocks.get).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
   expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+});
+it("raises the sticky save bar only while the policy differs from the saved value", async () => {
+  setup();
+  const user = userEvent.setup();
+  const toggle = await screen.findByRole("switch", {
+    name: "Enable skill activation",
+  });
+  const status = screen.getByRole("status");
+  const bar = status.closest('[data-slot="settings-save-bar"]');
+  expect(bar).not.toHaveAttribute("data-dirty");
+  expect(status).not.toHaveTextContent("Unsaved changes");
+
+  await user.click(toggle);
+  expect(bar).toHaveAttribute("data-dirty");
+  expect(status).toHaveTextContent("Unsaved changes");
+  expect(
+    screen.getByRole("button", { name: "Save skill policy" }),
+  ).toBeEnabled();
+
+  await user.click(toggle);
+  expect(bar).not.toHaveAttribute("data-dirty");
+  expect(status).not.toHaveTextContent("Unsaved changes");
+
+  await user.click(toggle);
+  await user.click(screen.getByRole("button", { name: "Save skill policy" }));
+  await waitFor(() => expect(status).toHaveTextContent("Skill policy saved."));
+  expect(bar).not.toHaveAttribute("data-dirty");
 });
