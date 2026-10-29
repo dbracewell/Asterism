@@ -157,7 +157,9 @@ test("shares explorer controls for project membership, library picking, upload, 
     "Library files, processing artifacts, other projects",
   );
   await page.getByRole("button", { name: "Confirm" }).click();
-  await expect(explorer.getByText("No files found.")).toBeVisible();
+  await expect(
+    explorer.getByText("No files found", { exact: true }),
+  ).toBeVisible();
   expect(libraryDeletes).toBe(0);
   await explorer.getByRole("button", { name: "Clear search" }).click();
   await explorer.getByLabel("Choose attachments").setInputFiles({

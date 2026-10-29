@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -63,7 +64,11 @@ export const ChatSearch = () => {
         </p>
       )}
       {enabled && !isFetching && data?.results.length === 0 && (
-        <p className="text-muted-foreground text-sm">No matches found.</p>
+        <EmptyState
+          className="flex-none"
+          title="No matches found"
+          description="Try different or fewer words."
+        />
       )}
       {data?.results.map((result) => {
         const content = (

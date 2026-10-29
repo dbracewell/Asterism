@@ -135,24 +135,24 @@ for (const viewport of [
       exact: true,
     });
     await group.focus();
-    await verify("Groups", "Groups Settings");
+    await verify("Groups", "Groups");
     expect(requests).toEqual([]);
     await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown");
-    await verify("Users", "User Permissions");
+    await verify("Users", "Users");
     await expect(
       page.getByText(/Admin and user access checks are already enforced/),
     ).toBeVisible();
     expect(requests).toEqual([]);
     await page.keyboard.press("End");
-    await verify("Export", "Export Settings");
+    await verify("Export", "Export");
     await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp");
-    await verify("Code Execution", "Code Execution");
+    await verify("Code Execution", "Code execution");
     await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp"); // available Captioning
     await expect(
       tabs.getByRole("tab", { name: "Image Captioning", exact: true }),
     ).toBeFocused();
     await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp");
-    await verify("Image Generation", "Image Generation");
+    await verify("Image Generation", "Image generation");
     await page.screenshot({
       path: info.outputPath("planned-settings.png"),
       fullPage: true,

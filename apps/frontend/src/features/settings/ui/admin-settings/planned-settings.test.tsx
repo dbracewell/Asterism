@@ -8,11 +8,11 @@ import { ExportSettings } from "./export-settings";
 
 describe("planned administration panes", () => {
   it.each([
-    ["Groups Settings", GroupSettings, "User group management"],
-    ["User Permissions", UserPermissionsSettings, "User management"],
-    ["Image Generation", ImageGenSettings, "Image generation provider"],
-    ["Code Execution", CodeExecutionSettings, "Sandboxed code execution"],
-    ["Export Settings", ExportSettings, "Data and conversation export"],
+    ["Groups", GroupSettings, "User group management"],
+    ["Users", UserPermissionsSettings, "user management screens"],
+    ["Image generation", ImageGenSettings, "Image generation providers"],
+    ["Code execution", CodeExecutionSettings, "Sandboxed code execution"],
+    ["Export", ExportSettings, "Data and conversation export"],
   ])(
     "%s explains its future scope without offering configuration controls",
     (title, Pane, scope) => {

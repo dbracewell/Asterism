@@ -30,8 +30,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [x] US-45.2: Skeletons for loading
   - [x] Add skeleton variants; replace the "Loading …" paragraphs; test that status announcements remain.
 
-- [ ] US-45.3: Empty states with a clear next step
-  - [ ] Audit the 61 `Empty` usages; standardize copy and actions; update the tests that assert on copy.
+- [x] US-45.3: Empty states with a clear next step
+  - [x] Audit the 61 `Empty` usages; standardize copy and actions; update the tests that assert on copy.
 
 - [ ] US-45.4: Sign-in and first-run screens
   - [ ] Restyle `AuthForm` and the auth layout; keep the existing auth tests passing; update screenshots.

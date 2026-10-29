@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -11,12 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { client } from "@/lib/api";
 import type { ProjectCreate } from "@/lib/client";
@@ -79,21 +74,31 @@ export function ProjectList() {
         <>
           {projects.isFetching && <p role="status">Refreshing projects…</p>}
           {projects.data.projects.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>
-                  {query ? "No matching projects" : "No projects yet"}
-                </EmptyTitle>
-                <EmptyDescription>
-                  {query
-                    ? "Try another name or description."
-                    : "Create a project, or start a chat in General."}
-                </EmptyDescription>
-              </EmptyHeader>
-              <Button asChild variant="outline">
-                <Link href="/general">Open General</Link>
-              </Button>
-            </Empty>
+            <EmptyState
+              title={query ? "No matching projects" : "No projects yet"}
+              description={
+                query
+                  ? "Try a different name or description."
+                  : "Use New project to group related chats, or start one in General."
+              }
+              action={
+                query ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setQuery("");
+                      setPage(1);
+                    }}
+                  >
+                    Clear search
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline">
+                    <Link href="/general">Open General</Link>
+                  </Button>
+                )
+              }
+            />
           ) : (
             <ul className="divide-y">
               {projects.data.projects.map((project) => (

@@ -1,4 +1,5 @@
 "use client";
+import { EmptyState } from "@/components/empty-state";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -368,9 +369,12 @@ export const ChatSession = ({
           />
         )}
         {!session.messages.length && (
-          <p role="status" className="text-muted-foreground py-4">
-            No messages yet. Write a message to begin.
-          </p>
+          <EmptyState
+            role="status"
+            className="flex-none"
+            title="No messages yet"
+            description="Write a message below to begin."
+          />
         )}
         <ChatWorkspace
           info={session.info}

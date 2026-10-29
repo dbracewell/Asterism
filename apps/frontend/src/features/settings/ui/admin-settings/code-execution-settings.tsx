@@ -1,20 +1,9 @@
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/empty-state";
 
-export const CodeExecutionSettings = () => {
-  return (
-    <Empty className="rounded-surface border p-8">
-      <EmptyHeader>
-        <EmptyTitle>Code Execution</EmptyTitle>
-        <EmptyDescription>
-          Sandboxed code execution and runtime environment settings are planned
-          for a future release.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  );
-};
+export const CodeExecutionSettings = () => (
+  <EmptyState
+    className="rounded-surface border p-8"
+    title="Code execution"
+    description="Sandboxed code execution and runtime settings are planned for a future release."
+  />
+);
