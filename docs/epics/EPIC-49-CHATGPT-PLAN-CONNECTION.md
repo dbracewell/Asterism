@@ -1,6 +1,6 @@
 # EPIC-49: ChatGPT plan connection
 
-Status: proposed. Source: Sign in with ChatGPT research (2026-10-30).
+Status: in progress (US-49.1). Source: Sign in with ChatGPT research (2026-10-30).
 
 ## Objective
 
@@ -16,8 +16,10 @@ another billing source.
 
 ## Constraints from the OpenAI preview (verify at epic start)
 
-The feature is a preview; re-read the linked docs before US-49.1 begins and
-update this section if they changed.
+The feature is a preview; re-read the linked docs before each story begins and
+update this section if they changed. Last verified 2026-10-30 at US-49.1 start
+against the overview, models-and-inference, preview-limitations and
+errors-and-recovery pages.
 
 - Eligibility: plan usage is available to open-source and locally hosted apps.
   Asterism is Apache-2.0 licensed (2026-10-30). Paid or remotely hosted
@@ -32,18 +34,37 @@ update this section if they changed.
 - Tokens: access tokens last one hour; refresh tokens last 30 days and rotate on
   every refresh (reuse fails with `refresh_token_reused`). Each issued client
   ID is bound to one ChatGPT user and workspace.
-- Inference: `POST /v1/responses` with `stream: true` and `store: false`; send
-  history in `input` and system text as `instructions`. `temperature`, `top_p`,
-  `max_output_tokens`, `previous_response_id` and several other fields are
-  rejected. Function and custom tools work; hosted tools (image generation,
-  file search, MCP connectors) do not. Text, image and file inputs work when
-  the model accepts them. Models come from `GET /v1/models`
-  (`visibility == "list"`).
-- Errors: `subscription_sharing_usage_limit_exceeded` (429) pauses plan
-  requests and points to "Manage usage"; `subscription_sharing_usage_unavailable`
-  (503) retries with bounded backoff; confirmed revocation or terminal refresh
-  errors require signing in again. Fallback to another billing path must be the
-  user's explicit choice.
+- Host ID: `ext_agent_host_id` is chosen and persisted before first sign-in;
+  stable and opaque (`urn:ietf:params:oauth:jwk-thumbprint:…` recommended,
+  `urn:uuid:…` UUIDv4 or `did:key:…` accepted), never a personal identifier.
+- Inference: `POST https://api.openai.com/v1/responses` with `stream: true` and
+  `store: false`; resend all needed history in `input` (no
+  `previous_response_id`). Explicit system message items are rejected: use
+  `instructions` (or developer messages). Rejected fields: `background`,
+  `conversation`, `max_output_tokens`, `max_tool_calls`, `metadata`,
+  `moderation`, `multi_agent`, `prompt`, `prompt_cache_retention`,
+  `safety_identifier`, `temperature`, `top_logprobs`, `top_p`, `truncation`,
+  `user`. Function and custom tools work; image generation, file search, Code
+  Interpreter, computer use, hosted MCP/connectors and `tool_search` do not.
+  Text, image and file inputs work when the model accepts them; audio/video and
+  the Files upload API do not. Success requires `response.completed`;
+  `response.incomplete`, `response.failed` and interrupted streams are handled
+  separately. Models come from `GET /v1/models` (`models[]` with
+  `visibility == "list"`, server order kept, show `display_name`, send `slug`).
+- Errors: `subscription_sharing_usage_limit_exceeded` (429, may also arrive as
+  `response.failed` mid-stream) pauses plan requests and points to "Manage
+  usage" without inferring a reset time; `subscription_sharing_usage_unavailable`
+  and `subscription_sharing_user_unavailable` (503) keep credentials and retry
+  with bounded backoff; `subscription_sharing_user_not_eligible` (403) explains
+  the restriction without retrying; `subscription_sharing_unsupported_capability`
+  (400) names the rejected `error.param`. `invalid_grant`, `invalid_refresh_token`,
+  `token_expired`, `refresh_token_expired`, `refresh_token_invalidated` and
+  `refresh_token_reused` on refresh are terminal: clear tokens and repeat OAuth
+  with the saved issued client ID. Do not delete credentials on temporary
+  failures. Preserve status, code and request ID for diagnostics. Declined
+  consent or a grant without `chatgpt.tokens.use.direct` keeps the sign-in with
+  plan usage disabled. Fallback to another billing path must be the user's
+  explicit choice.
 - UI wording: "Continue with ChatGPT", "Using ChatGPT plan", "Manage usage",
   and a one-time "You're using your ChatGPT plan" notice dismissed with
   "Got it" ([guidelines](https://developers.openai.com/siwc/ui-ux-guidelines)).
@@ -78,9 +99,9 @@ parameters are sent, so unsupported defaults (`temperature`, `top_p`,
 `max_tokens`) are omitted rather than rejected. Existing providers keep Chat
 Completions unchanged.
 
-- [ ] Add the Responses streaming client and event reducer behind the existing LLM interface.
-- [ ] Add per-provider request capabilities for generation parameters and tool kinds.
-- [ ] Test streaming, tool calls in the agent loop, interrupted and failed streams against a local double.
+- [x] Add the Responses streaming client and event reducer behind the existing LLM interface.
+- [x] Add per-provider request capabilities for generation parameters and tool kinds.
+- [x] Test streaming, tool calls in the agent loop, interrupted and failed streams against a local double.
 
 ## US-49.2: Per-user ChatGPT connection
 

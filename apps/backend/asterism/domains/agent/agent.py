@@ -20,7 +20,7 @@ from asterism.domains.agent.execution_scope import (
     resolve_execution_scope,
 )
 from asterism.domains.chat.schemas import Chat, MessageExecution
-from asterism.domains.llm.client import LLMClient
+from asterism.domains.llm.factory import create_llm_client
 from asterism.domains.llm.schemas import (
     ContentPart,
     LLMClientProtocol,
@@ -363,11 +363,7 @@ class Agent:
         if self._client is not None:
             return self._client
 
-        client = LLMClient(
-            api_key=model_info.provider.api_key,
-            base_url=model_info.provider.base_url,
-            model_name=model_info.name,
-        )
+        client = create_llm_client(model_info.name, model_info.provider)
         self._client = client
         return client
 
