@@ -16,6 +16,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/skills",
     "/e2e/skill-chat",
     "/e2e/providers",
+    "/e2e/provider-setup",
     "/e2e/planned-settings",
     "/e2e/files",
     "/e2e/file-manager",

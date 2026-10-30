@@ -34,6 +34,10 @@ import {
 } from "@/components/ui/select";
 import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import {
+  OPENAI_BASE_URL,
+  providerSchema,
+} from "@/features/settings/provider-schema";
+import {
   SettingsPane,
   SettingsSaveBar,
 } from "@/features/settings/ui/settings-section";
@@ -46,7 +50,6 @@ import {
   appProviderSettingsGetOptions,
   appProviderSettingsUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { zProviderType } from "@/lib/client/zod.gen";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -70,29 +73,6 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-export const OPENAI_BASE_URL = "https://api.openai.com/v1";
-
-export const providerSchema = z
-  .object({
-    id: z.string(),
-    name: z.string().trim().min(1, "Provider name is required."),
-    base_url: z.url("Base URL must be an absolute HTTP(S) URL."),
-    api_key: z.string().trim().min(1, "API key is required."),
-    provider_type: zProviderType,
-  })
-  .superRefine((provider, context) => {
-    if (
-      provider.provider_type === "openai" &&
-      provider.base_url !== OPENAI_BASE_URL
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["base_url"],
-        message: "OpenAI uses Asterism's fixed API URL.",
-      });
-    }
-  });
 
 const formSchema = z.object({
   llm_providers: z.array(providerSchema),

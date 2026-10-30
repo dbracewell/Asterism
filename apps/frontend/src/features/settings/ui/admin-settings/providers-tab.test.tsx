@@ -8,7 +8,11 @@ import { ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProviderSettings } from "@/lib/client";
-import { OPENAI_BASE_URL, providerSchema, ProvidersTab } from "./providers-tab";
+import {
+  OPENAI_BASE_URL,
+  providerSchema,
+} from "@/features/settings/provider-schema";
+import { ProvidersTab } from "./providers-tab";
 
 const mocks = vi.hoisted(() => ({
   listModels: vi.fn(),

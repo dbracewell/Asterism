@@ -69,7 +69,10 @@ and limits.
 
 ## Authentication layout
 
-Setup and login share a route-scoped dynamic-height scroll container. Small forms
+Setup and login share a route-scoped dynamic-height scroll container. After the
+administrator account is created, `/setup` continues the same card with the provider
+step; its server guard sends anyone other than an administrator on an instance
+with no active models to `/`. Small forms
 center; taller forms scroll through the final action, including at 200% text size.
 Validation failures focus a wrapping summary without discarding input. Keyboard
 scroll padding keeps focus rings visible. Auth-only viewport metadata requests
@@ -209,7 +212,8 @@ For full browser verification, use the root isolated runner; it owns fresh auth,
 backend, and file/vector storage plus the internal JWKS bridge. Playwright serves a
 production build (set `E2E_DEV_SERVER=1` to use `next dev` while iterating), and
 screenshot comparisons run only on macOS, where the baselines were rendered. Its fresh-install
-project runs before account creation. The authenticated workspace spec uses real
+project runs before account creation; the first-run project then creates the first
+administrator through the real setup flow before any other account-creating spec. The authenticated workspace spec uses real
 app APIs and sockets against a local model double; focused harness specs retain
 mocked boundaries. Every spec imports `test` from `e2e/support/test.ts` so unhandled
 page errors fail the run; keep that shared fixture when adding cases. Model-picker dialog regressions exercise pointer selection,

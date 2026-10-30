@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. EPIC-47 (quality baseline cleanup) is confirmed
+US-48.1 is confirmed complete and merged. EPIC-47 (quality baseline cleanup) is confirmed
 complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
 limits are recorded in the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md).
 
@@ -26,11 +26,11 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ### [EPIC-48: First-run provider setup](docs/epics/EPIC-48-FIRST-RUN-PROVIDER-SETUP.md)
 
-- [ ] US-48.1: Add a model provider during setup
-  - [ ] Add the setup step state and routing (admin, no active models, skip).
-  - [ ] Build the provider form step from the shared provider schema and the provider/capability identity components.
-  - [ ] Wire discovery, model enablement and default selection; handle failures and retry.
-  - [ ] Add unit and isolated browser tests, including skip, reload, failure and reachability.
+- [x] US-48.1: Add a model provider during setup
+  - [x] Add the setup step state and routing (admin, no active models, skip).
+  - [x] Build the provider form step from the shared provider schema and the provider/capability identity components.
+  - [x] Wire discovery, model enablement and default selection; handle failures and retry.
+  - [x] Add unit and isolated browser tests, including skip, reload, failure and reachability.
 
 ### [EPIC-49: ChatGPT plan connection](docs/epics/EPIC-49-CHATGPT-PLAN-CONNECTION.md)
 

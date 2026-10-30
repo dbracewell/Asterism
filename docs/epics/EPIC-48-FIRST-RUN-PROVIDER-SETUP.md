@@ -1,6 +1,6 @@
 # EPIC-48: First-run provider setup
 
-Status: proposed. Source: user feedback on the first-run setup screen
+Status: in progress (US-48.1 complete). Source: user feedback on the first-run setup screen
 (2026-10-30).
 
 ## Objective
@@ -49,10 +49,10 @@ Acceptance:
 - Keyboard, screen-reader and narrow/short-viewport behaviour matches the
   existing setup and sign-in checks, in every theme.
 
-- [ ] Add the setup step state and routing (admin, no active models, skip).
-- [ ] Build the provider form step from the shared provider schema and the provider/capability identity components.
-- [ ] Wire discovery, model enablement and default selection; handle failures and retry.
-- [ ] Add unit and isolated browser tests, including skip, reload, failure and reachability.
+- [x] Add the setup step state and routing (admin, no active models, skip).
+- [x] Build the provider form step from the shared provider schema and the provider/capability identity components.
+- [x] Wire discovery, model enablement and default selection; handle failures and retry.
+- [x] Add unit and isolated browser tests, including skip, reload, failure and reachability.
 
 Open question: should step 3 also get an in-card moment (for example a "You're
 ready" confirmation with a suggested first prompt), or is landing on the
