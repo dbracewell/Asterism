@@ -38,7 +38,7 @@ Estimate: 0.5 day. Dependencies: US-47.1.
 Acceptance: `pnpm test` passes. Each failing test is either updated to the
 current intended UI or the defect it exposes is fixed.
 
-- [ ] Triage and fix the failing frontend unit test(s); confirm the backend suite stays green.
+- [x] Triage and fix the failing frontend unit test(s); confirm the backend suite stays green.
 
 ## US-47.3: Browser test baseline
 
