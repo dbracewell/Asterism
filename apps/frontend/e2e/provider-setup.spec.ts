@@ -184,7 +184,7 @@ test("a discovery failure keeps the entered values and retries", async ({
   expect(state.saves[1][0].id).toBe(state.saves[0][0].id);
 });
 
-test("enabling models and a default continues to the new-chat page", async ({
+test("enabling models shows the ready step, which opens the new-chat page", async ({
   page,
 }) => {
   const state = await routeSetupApi(page);
@@ -198,6 +198,17 @@ test("enabling models and a default continues to the new-chat page", async ({
   await form.getByLabel("Default model").click();
   await page.getByRole("option", { name: "gamma-tools" }).click();
   await form.getByRole("button", { name: "Continue" }).click();
+  const steps = page.getByRole("list", { name: "First-run setup" });
+  await expect(steps.locator('[aria-current="step"]')).toContainText(
+    "Start your first chat",
+  );
+  await expect(page.getByRole("status")).toHaveText(
+    "You're ready to start your exploration.",
+  );
+  const start = page.getByRole("button", { name: "Start chatting" });
+  await expect(start).toBeFocused();
+  await expect(page).toHaveURL(/\/e2e\/provider-setup$/);
+  await start.click();
   await expect(page).toHaveURL(`${origin}/`);
   await expect(
     page.getByRole("heading", { name: "New chat stand-in" }),
@@ -323,6 +334,15 @@ for (const scenario of authViewports) {
       await expectReachable(control, true);
     }
     await expectAuthFits(page);
+    await models.getByRole("button", { name: "Continue" }).press("Enter");
+    const start = page.getByRole("button", { name: "Start chatting" });
+    await expect(start).toBeFocused();
+    await expectReachable(start, true);
+    // At 200% text on a 300px screen the message sits just above the focused
+    // action and is reached by scrolling.
+    await page.getByRole("status").scrollIntoViewIfNeeded();
+    await expectReachable(page.getByRole("status"));
+    await expectAuthFits(page);
   });
 }
 
@@ -366,6 +386,13 @@ for (const theme of themes) {
       .getByText("beta-vision")
       .evaluate((el) => el.setAttribute("data-contrast", "model"));
     expect((await measure(page, "model")).ratio).toBeGreaterThanOrEqual(4.5);
+    await expectAuthFits(page);
+    await models.getByRole("button", { name: "Continue" }).click();
+    await page
+      .getByRole("status")
+      .evaluate((el) => el.setAttribute("data-contrast", "ready"));
+    expect((await measure(page, "ready")).ratio).toBeGreaterThanOrEqual(4.5);
+    await expect(steps.locator('[data-step-marker="complete"]')).toHaveCount(2);
     await expectAuthFits(page);
   });
 }

@@ -100,10 +100,13 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-const renderStep = (onComplete = vi.fn()) => {
-  render(<ProviderSetupStep onComplete={onComplete} />, { wrapper: Wrapper });
-  return onComplete;
+const renderStep = (onStart = vi.fn()) => {
+  render(<ProviderSetupStep onStart={onStart} />, { wrapper: Wrapper });
+  return onStart;
 };
+
+const readyButton = () =>
+  screen.findByRole("button", { name: "Start chatting" });
 
 const steps = () => screen.getByRole("list", { name: "First-run setup" });
 
@@ -236,9 +239,9 @@ describe("first-run provider step", () => {
     );
   });
 
-  it("enables the chosen models, saves the default and continues", async () => {
+  it("enables the chosen models, saves the default and shows the ready step", async () => {
     mocks.settings.mockResolvedValue(savedSettings(2));
-    const onComplete = renderStep();
+    const onStart = renderStep();
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Enable models" });
     expect(
@@ -264,7 +267,7 @@ describe("first-run provider step", () => {
     await user.click(await screen.findByRole("option", { name: "model-2" }));
 
     await user.click(within(form).getByRole("button", { name: "Continue" }));
-    await waitFor(() => expect(onComplete).toHaveBeenCalled());
+    const start = await readyButton();
     expect(mocks.updateModel).toHaveBeenCalledTimes(2);
     expect(mocks.updateModel.mock.calls[1][0]).toEqual({
       path: { provider_id: providerId, model_id: catalog[1].id },
@@ -286,14 +289,20 @@ describe("first-run provider step", () => {
     expect(items[1]).toHaveTextContent("(complete)");
     expect(items[2]).toHaveAttribute("aria-current", "step");
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Opening your first chat",
+      "You're ready to start your exploration.",
     );
+    expect(screen.queryByRole("form")).not.toBeInTheDocument();
+    expect(start).toHaveFocus();
+    // The ready step waits for the administrator instead of redirecting.
+    expect(onStart).not.toHaveBeenCalled();
+    await user.click(start);
+    expect(onStart).toHaveBeenCalledTimes(1);
   });
 
   it("keeps model choices after an enablement failure", async () => {
     mocks.settings.mockResolvedValue(savedSettings(2));
     mocks.updateModel.mockRejectedValueOnce({ detail: "Database busy" });
-    const onComplete = renderStep();
+    renderStep();
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Enable models" });
     await user.click(await within(form).findByLabelText("model-1"));
@@ -304,9 +313,11 @@ describe("first-run provider step", () => {
     );
     expect(alert).toHaveFocus();
     expect(within(form).getByLabelText("model-1")).toBeChecked();
-    expect(onComplete).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: "Start chatting" }),
+    ).not.toBeInTheDocument();
     await user.click(within(form).getByRole("button", { name: "Continue" }));
-    await waitFor(() => expect(onComplete).toHaveBeenCalled());
+    expect(await readyButton()).toBeVisible();
   });
 
   it("resumes a saved provider without models at the connection form", async () => {

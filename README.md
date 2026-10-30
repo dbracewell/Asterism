@@ -297,7 +297,7 @@ Documented package scripts are the supported entrypoints. Raw `next`, `uvicorn`,
 
 Open the app and complete the initial account setup using `ADMIN_PASSPHRASE`.
 The same setup card then offers to connect a model provider and enable a model
-(`/setup`); it can be skipped and is shown only to an administrator while no model
+(`/setup`), then confirms you're ready before opening the first chat; it can be skipped and is shown only to an administrator while no model
 is active. Keep this passphrase private. The frontend and backend must use the same `SYSTEM_KEY`.
 
 ## Files, project context, and captions
