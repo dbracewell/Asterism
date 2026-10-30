@@ -68,6 +68,4 @@ def select_artifact_extractions(
     Returns:
         A select over the extraction rows of those artifacts.
     """
-    return select(FileKnowledgeExtractionModel).where(
-        FileKnowledgeExtractionModel.artifact_id.in_(artifact_ids)
-    )
+    return select(FileKnowledgeExtractionModel).where(FileKnowledgeExtractionModel.artifact_id.in_(artifact_ids))

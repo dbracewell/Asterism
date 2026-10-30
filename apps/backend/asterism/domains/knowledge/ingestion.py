@@ -199,9 +199,7 @@ async def ingest_file(
         if text_extraction is not None:
             text_extraction.status = KnowledgeExtractionStatus.READY
             text_extraction.provider = TEXT_EXTRACTION_PROVIDER
-            text_extraction.payload = {
-                "content": source.text if not source.file.is_image else None
-            }
+            text_extraction.payload = {"content": source.text if not source.file.is_image else None}
             text_extraction.completed_at = get_unix_timestamp()
 
         stage = KnowledgeExtractionKind.EMBEDDING

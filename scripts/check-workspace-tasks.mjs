@@ -7,8 +7,8 @@ const backend = readJson("apps/backend/package.json");
 const frontend = readJson("apps/frontend/package.json");
 
 const required = {
-  backend: ["lint", "test", "typecheck"],
-  frontend: ["build", "lint", "test", "typecheck"],
+  backend: ["format:check", "lint", "test", "typecheck"],
+  frontend: ["build", "format:check", "lint", "test", "typecheck"],
 };
 
 for (const task of required.backend) {

@@ -99,16 +99,13 @@ async def reported_artifacts(
         newest.setdefault(artifact.file_id, artifact)
         if artifact.is_current:
             current[artifact.file_id] = artifact
-    reported = {
-        file_id: current.get(file_id, artifact) for file_id, artifact in newest.items()
-    }
+    reported = {file_id: current.get(file_id, artifact) for file_id, artifact in newest.items()}
     extractions = await load_extractions(
         artifact_ids=[artifact.id for artifact in reported.values()],
         session=session,
     )
     return {
-        file_id: describe_artifact(artifact, extractions.get(artifact.id, []))
-        for file_id, artifact in reported.items()
+        file_id: describe_artifact(artifact, extractions.get(artifact.id, [])) for file_id, artifact in reported.items()
     }
 
 
@@ -354,11 +351,7 @@ async def reset_for_reprocessing(
     )
     return describe_artifact(
         artifact,
-        [
-            extraction
-            for kind, extraction in extractions.items()
-            if kind is not KnowledgeExtractionKind.CAPTIONING
-        ],
+        [extraction for kind, extraction in extractions.items() if kind is not KnowledgeExtractionKind.CAPTIONING],
     )
 
 

@@ -29,10 +29,10 @@ const file = (id: string, name: string) => ({
   projects: [{ id: "p-1", name: "References" }],
 });
 
-const artifact = (
-  extractions: Record<string, unknown>,
-  status = "ready",
-) => ({ status, extractions });
+const artifact = (extractions: Record<string, unknown>, status = "ready") => ({
+  status,
+  extractions,
+});
 
 function renderView() {
   return render(

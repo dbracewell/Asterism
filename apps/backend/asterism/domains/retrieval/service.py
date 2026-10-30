@@ -178,8 +178,7 @@ def _file_states(snapshot: RetrievalSnapshot) -> list[dict[str, str]]:
     """
     artifacts = {artifact.file_id: artifact for artifact in snapshot.artifacts}
     return [
-        {"file_id": str(file.file_id), "status": _file_status(artifacts.get(file.file_id))}
-        for file in snapshot.files
+        {"file_id": str(file.file_id), "status": _file_status(artifacts.get(file.file_id))} for file in snapshot.files
     ]
 
 

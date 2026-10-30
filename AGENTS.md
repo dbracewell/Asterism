@@ -115,6 +115,7 @@ Run from repository root unless noted otherwise:
 - `pnpm lint` — lint backend, then frontend
 - `pnpm test` — test backend, then frontend
 - `pnpm typecheck` — type-check backend, then frontend
+- `pnpm format` / `pnpm format:check` — format, or verify formatting without writing, for backend then frontend
 
 Common focused runs:
 
@@ -294,7 +295,7 @@ Minimum expectations per story:
 
 - Lint passes
 - Type checks pass
-- formatting (pnpm format)
+- Formatting passes (`pnpm format:check`; fix with `pnpm format`)
 - Unit/integration tests pass (or updated intentionally)
 - API schema and generated clients synchronized
 - No broken auth/permission paths
