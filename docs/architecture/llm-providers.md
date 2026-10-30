@@ -16,6 +16,12 @@ Anthropic endpoints are not supported.
 
 ## Configuration workflow
 
+On a new instance, the first-run setup card (`/setup`, step 2) connects one
+provider, runs discovery, enables the chosen models and saves the administrator's
+default model. It uses the same provider schema and APIs as Admin Settings, is
+shown only to an administrator while no model is active, and can be skipped.
+Everything else follows the workflow below.
+
 1. Open **Settings → Admin Settings → Providers** and add a provider.
 2. Select the provider type, enter its name and API key, and supply a base URL
    for Generic OpenAI.

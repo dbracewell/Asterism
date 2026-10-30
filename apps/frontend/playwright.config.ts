@@ -61,9 +61,17 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: "chromium",
-      testIgnore: /home\.spec\.ts/,
+      // Creates the first administrator, so it follows the fresh-install
+      // checks and precedes every other account-creating spec.
+      name: "first-run",
+      testMatch: /first-run-setup\.spec\.ts/,
       dependencies: ["fresh-install"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "chromium",
+      testIgnore: /home\.spec\.ts|first-run-setup\.spec\.ts/,
+      dependencies: ["first-run"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],
