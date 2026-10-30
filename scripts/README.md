@@ -133,6 +133,14 @@ The Playwright subprocess is asynchronous so internal auth requests can progress
 CLI arguments pass through to Playwright. The `fresh-install` project is an explicit
 prerequisite before account-creating Chromium tests.
 
+Playwright serves a production build (`next build`, then `next start`) under the
+`test` profile, so results do not depend on worker count: `next dev` compiles
+routes and chunks on demand and Fast-Refreshes open pages, which made parallel
+runs fail different specs each time. The test profile disables Better Auth's
+production rate limiter because parallel specs create many accounts from one
+address. Set `E2E_DEV_SERVER=1` to iterate against `next dev` without rebuilding;
+results there may vary with parallel workers.
+
 The authenticated workspace spec runs only with the runner's
 `ASTERISM_ISOLATED_E2E=true` marker. It uses real Better Auth/JWT, production routes,
 SQLite/file storage, WebSockets, and a local deterministic OpenAI-compatible model

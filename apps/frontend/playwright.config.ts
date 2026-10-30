@@ -4,11 +4,20 @@ import { resolve } from "node:path";
 const testStorageRoot =
   process.env.STORAGE_ROOT ?? resolve(process.cwd(), "test-results/storage");
 
+// Specs run against a production build: `next dev` compiles routes and chunks
+// on demand and Fast-Refreshes open pages after each compile, so parallel
+// workers saw remounts and stalled queries that varied by run. Set
+// E2E_DEV_SERVER=1 to iterate against `next dev` without rebuilding.
+const devServer = process.env.E2E_DEV_SERVER === "1";
+const server = devServer
+  ? "pnpm exec next dev --port 3100 --webpack"
+  : "pnpm exec next build && pnpm exec next start --port 3100";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  // The isolated backend and Next development server share the GitHub runner.
-  // Serial CI execution avoids resource contention during fresh setup.
+  // The isolated backend and the Next server share the GitHub runner. Serial
+  // CI execution avoids resource contention during fresh setup.
   workers: process.env.CI ? 1 : undefined,
   retries: 0,
   // Visual baselines are macOS renders; font rasterization differs elsewhere.
@@ -26,11 +35,10 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command:
-      "node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes && pnpm exec next dev --port 3100 --webpack",
+    command: `node node_modules/auth/dist/index.mjs migrate --config ./src/lib/auth-cli.ts --yes && ${server}`,
     url: "http://localhost:3100/e2e/sub-agent",
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: devServer ? 120_000 : 600_000,
     env: {
       ...process.env,
       ASTERISM_CONFIG_PROFILE: "test",

@@ -302,7 +302,9 @@ for (const viewport of [
       name: "Worker 24",
       exact: true,
     });
-    await expect(option).toBeInViewport({ ratio: 1 });
+    // Fully visible, up to sub-pixel rounding of the popup's floating position
+    // (0.98 of the 28px row tolerates about half a pixel).
+    await expect(option).toBeInViewport({ ratio: 0.98 });
     // A normal click exercises stacking, clipping and the modal pointer boundary.
     await option.click();
     await expect(model).toHaveText("Worker 24");
