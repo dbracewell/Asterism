@@ -47,6 +47,7 @@ from asterism.core.config import config
 from asterism.domains.llm.typedefs import FinishReason
 from asterism.domains.tools.registry import tool_registry
 
+from .capabilities import CHAT_COMPLETIONS_CAPABILITIES, RequestCapabilities
 from .schemas import (
     ChatCompletionParams,
     Function,
@@ -159,6 +160,40 @@ def extract_text_tool_calls(content: str) -> tuple[str, list[ToolCall]]:
     return clean_content, calls
 
 
+def structured_output_schema(response_model: Type[BaseModel]) -> tuple[str, dict[str, Any], str]:
+    """Return ``(name, schema, description)`` for strict JSON-schema output.
+
+    ``title`` keys are dropped recursively (strict JSON mode rejects them) and
+    the top-level description is split out for the provider's format field.
+    """
+
+    def clean_schema(raw_schema: Any) -> Any:
+        if isinstance(raw_schema, dict):
+            raw_schema.pop("title", None)
+            for value in list(raw_schema.values()):
+                if isinstance(value, (dict, list)):
+                    clean_schema(value)
+        elif isinstance(raw_schema, list):
+            for item in raw_schema:
+                clean_schema(item)
+        return raw_schema
+
+    schema = clean_schema(response_model.model_json_schema())
+    description = schema.pop("description", "")
+    return response_model.__name__, schema, description
+
+
+def parse_structured_output[T: BaseModel](response_model: Type[T], content: str) -> T:
+    """Validate model text into ``response_model``.
+
+    Models often wrap JSON in markdown fences, so a single leading/trailing
+    fence pair is stripped first. Raises on validation failure.
+    """
+    clean_content = re.sub(r"^```(?:json)?\n?", "", content, flags=re.IGNORECASE)
+    clean_content = re.sub(r"\n?```$", "", clean_content).strip()
+    return response_model.model_validate_json(clean_content)
+
+
 @dataclass
 class StreamHandler[T: BaseModel]:
     """Stateful reducer that turns raw provider chunks into ``LLMEvent`` streams.
@@ -228,19 +263,10 @@ class StreamHandler[T: BaseModel]:
         self.content = self.content.strip()
         self.thinking = self.thinking.strip()
 
-        # Structured-output mode: models often wrap JSON in markdown fences, so
-        # strip a single leading/trailing fence pair before validation. A
-        # validation failure is terminal (ERROR event) — no retry here.
+        # A validation failure is terminal (ERROR event) — no retry here.
         if self.response_model:
             try:
-                clean_content = re.sub(
-                    r"^```(?:json)?\n?",
-                    "",
-                    self.content,
-                    flags=re.IGNORECASE,
-                )
-                clean_content = re.sub(r"\n?```$", "", clean_content).strip()
-                parsed = self.response_model.model_validate_json(clean_content)
+                parsed = parse_structured_output(self.response_model, self.content)
             except Exception as e:
                 exception = e
                 yield LLMEvent(
@@ -402,6 +428,7 @@ class LLMClient(LLMClientProtocol):
         api_key: SecretStr | str,
         base_url: str,
         client: AsyncOpenAI | None = None,
+        capabilities: RequestCapabilities = CHAT_COMPLETIONS_CAPABILITIES,
     ) -> None:
         """Bind a model to an endpoint.
 
@@ -412,8 +439,11 @@ class LLMClient(LLMClientProtocol):
             client: Optional pre-built ``AsyncOpenAI``; when omitted, a shared
                 pooled client for (base_url, api_key) is used — note that
                 :meth:`close` on such a client closes the *shared* pool entry.
+            capabilities: Request parameters and tool kinds the provider
+                accepts; unsupported ones are omitted from requests.
         """
         self.max_retries: int = 3
+        self.capabilities = capabilities
         self.api_key = api_key if isinstance(api_key, SecretStr) else SecretStr(api_key)
         self.base_url: str = base_url
         self.model_name: str = model_name
@@ -446,9 +476,10 @@ class LLMClient(LLMClientProtocol):
                 tool registry (omitted when the list is empty/None).
             response_model: When set, enables strict ``json_schema`` response
                 format derived from the model's Pydantic schema.
-            **kwargs: Optional completion parameters (temperature, top_p, ...)
-                forwarded to the provider; caller-provided values win over the
-                defaults applied here.
+            **kwargs: Optional completion parameters (temperature, top_p, ...);
+                only those the provider's request capabilities support are
+                forwarded, and caller-provided values win over the defaults
+                applied here.
 
         Returns:
             Keyword arguments for ``chat.completions.create`` (without the
@@ -456,41 +487,24 @@ class LLMClient(LLMClientProtocol):
         """
         completion_args: dict[str, Any] = {
             "model": self.model_name,
-            **kwargs,
+            **self.capabilities.request_parameters(kwargs),
         }
-        schemas = tool_registry.schemas(tools)
+        schemas = self.capabilities.supported_tools(tool_registry.schemas(tools))
         if schemas:
             completion_args["tools"] = schemas
-        # Kept out of ChatCompletionParams, but discard it defensively while
-        # callers migrate from the former provider-specific option.
-        completion_args.pop("thinking_budget_tokens", None)
 
         # Default seed to wall-clock seconds unless the caller pins one; keeps
         # a single request stable across retries while varying between requests.
-        if "seed" not in completion_args:
+        if "seed" in self.capabilities.parameters and "seed" not in completion_args:
             completion_args["seed"] = int(time.time())
 
         if response_model:
-
-            def clean_schema(raw_schema: Any) -> Any:
-                """Recursively drop ``title`` keys (required by strict JSON mode)."""
-                if isinstance(raw_schema, dict):
-                    raw_schema.pop("title", None)
-                    for key, value in list(raw_schema.items()):
-                        if isinstance(value, (dict, list)):
-                            clean_schema(value)
-                elif isinstance(raw_schema, list):
-                    for item in raw_schema:
-                        clean_schema(item)
-                return raw_schema
-
-            sanitized_schema = clean_schema(response_model.model_json_schema())
-            description = sanitized_schema.pop("description", "")
+            name, schema, description = structured_output_schema(response_model)
             completion_args["response_format"] = ResponseFormatJSONSchema(
                 json_schema=JSONSchema(
-                    name=response_model.__name__,
+                    name=name,
                     strict=True,
-                    schema=sanitized_schema,
+                    schema=schema,
                     description=description,
                 ),
                 type="json_schema",

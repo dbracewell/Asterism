@@ -10,7 +10,8 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. EPIC-47 (quality baseline cleanup) and EPIC-48
+US-49.1 is confirmed complete and merged; US-49.2 (per-user ChatGPT connection) is
+active on `feature/us-49.2-chatgpt-connection`. EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
 limits are recorded in the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md).
 
@@ -22,14 +23,14 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 [2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md); EPIC-46 is confirmed complete and archived in the
 [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). All visual design epics are complete.
 
-## Proposed
+## Active
 
 ### [EPIC-49: ChatGPT plan connection](docs/epics/EPIC-49-CHATGPT-PLAN-CONNECTION.md)
 
-- [ ] US-49.1: Responses API streaming adapter
-  - [ ] Add the Responses streaming client and event reducer behind the existing LLM interface.
-  - [ ] Add per-provider request capabilities for generation parameters and tool kinds.
-  - [ ] Test streaming, tool calls in the agent loop, interrupted and failed streams against a local double.
+- [x] US-49.1: Responses API streaming adapter
+  - [x] Add the Responses streaming client and event reducer behind the existing LLM interface.
+  - [x] Add per-provider request capabilities for generation parameters and tool kinds.
+  - [x] Test streaming, tool calls in the agent loop, interrupted and failed streams against a local double.
 
 - [ ] US-49.2: Per-user ChatGPT connection
   - [ ] Add the admin policy (default disabled) and the encrypted per-user connection store.

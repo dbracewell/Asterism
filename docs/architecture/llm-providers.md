@@ -78,9 +78,33 @@ redirect, oversized-response, and malformed-response failures.
 Models are stored by provider and name. Matching models retain their UUID during
 refresh, preserving sub-agent, chat-selection, and draft references. Chat execution lookup accepts only
 active models. Draft lookup also requires the selected model to remain active.
-The runtime `LLMClient` receives the normalized persisted URL, so OpenAI always
+The runtime client receives the normalized persisted URL, so OpenAI always
 uses the canonical origin and Generic OpenAI uses the administrator's normalized
 compatible endpoint.
+
+## Request capabilities and wire APIs
+
+`create_llm_client` (`domains/llm/factory.py`) chooses the client from the
+provider type's `RequestCapabilities` (`domains/llm/capabilities.py`): the wire
+API, the generation parameters forwarded, and the tool kinds accepted.
+Parameters and tool schemas outside the capabilities are omitted instead of
+being sent and rejected. OpenAI and Generic OpenAI use Chat Completions
+(`LLMClient`) with every parameter, unchanged.
+
+`ResponsesLLMClient` (`domains/llm/responses.py`) implements the same
+`LLMClientProtocol` over `POST /v1/responses` and emits the same `LLMEvent`
+stream. Every request is stateless (`store: false`, `stream: true`): system
+messages are joined into `instructions`, and the full history is resent as
+`input` items, with tool calls and results as linked `function_call` /
+`function_call_output` items. Only `response.completed` produces a normal
+`COMPLETE`; `response.incomplete` completes with `length`/`content_filter` and
+drops possibly truncated tool calls. `response.failed`, `error` events, HTTP
+errors and streams that end early produce one `ERROR` event whose exception is
+an `LLMProviderError` keeping the provider code, status, param and request ID.
+SDK retries are disabled for this client, so usage-limit (429) errors surface
+once. The ChatGPT plan capabilities (EPIC-49) send no `temperature`, `top_p`,
+`max_tokens` or `seed` and only function tools. No provider type uses them
+until the ChatGPT connection lands.
 
 Main-agent settings have no model binding. Chat selection and per-execution model
 provenance are independent; unavailable selections remain visible without silent

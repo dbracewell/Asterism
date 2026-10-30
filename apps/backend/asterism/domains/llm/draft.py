@@ -2,7 +2,7 @@
 
 The draft model is a cheap/fast model chosen in application settings for
 utility generation (e.g. chat-title drafting). This module owns one process-wide
-wrapper that lazily builds an ``LLMClient`` from current settings and drops it
+wrapper that lazily builds an LLM client from current settings and drops it
 whenever the admin updates the draft-model setting, so the next call picks up
 the new provider/model binding.
 """
@@ -12,7 +12,7 @@ from typing import Unpack
 import asterism.domains.settings.service as settings_service
 from asterism.core.events import Event, EventType, event_bus
 
-from .client import LLMClient
+from .factory import create_llm_client
 from .schemas import ChatCompletionParams, LLMClientProtocol, LLMMessage
 
 
@@ -41,11 +41,7 @@ class DraftModel:
             return self._llm_client
 
         draft_model = await settings_service.get_draft_model()
-        client = LLMClient(
-            api_key=draft_model.provider.api_key,
-            base_url=draft_model.provider.base_url,
-            model_name=draft_model.name,
-        )
+        client = create_llm_client(draft_model.name, draft_model.provider)
         self._llm_client = client
         return client
 
