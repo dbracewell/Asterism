@@ -72,6 +72,8 @@ for (const [theme, label] of [
       await page.getByLabel("Corner radius (rem)").fill("2");
       await expect(preview).toHaveCount(0);
       await page.getByLabel("Corner radius (rem)").fill("0");
+      // Keep the sticky "Unsaved changes" bar from covering the preview.
+      await preview.evaluate((el) => el.scrollIntoView({ block: "start" }));
       await expect(preview).toHaveScreenshot(
         `theme-shape-${theme}-${viewport.name}.png`,
       );

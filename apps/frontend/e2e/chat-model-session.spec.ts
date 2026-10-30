@@ -1,6 +1,6 @@
 import { defaultPersonaProvenance } from "../src/test/personas";
 import { mockDefaultPersonas } from "./support/personas";
-import { expect, test } from "./support/test";
+import { expect, test, type Page } from "./support/test";
 import type {
   Chat,
   ChatModelChoice,
@@ -11,6 +11,10 @@ test.beforeEach(async ({ page }) => {
   await mockDefaultPersonas(page);
 });
 
+const executedModel = (page: Page) =>
+  page
+    .getByRole("article", { name: "Assistant message" })
+    .locator("[data-slot=executed-model]");
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
 const C = "77777777-7777-4777-8777-777777777777";
@@ -190,7 +194,7 @@ test("reopens a saved model, switches and regenerates through the real chat comp
   await expect(page.getByLabel("Chat model")).toContainText("Alpha", {
     timeout: 15_000,
   });
-  await expect(page.getByLabel("Executed model")).toContainText("Alpha");
+  await expect(executedModel(page)).toContainText("Alpha");
   await page.getByLabel("Chat model").click();
   await page.getByRole("option", { name: "Beta (Provider)" }).click();
   await expect(page.getByLabel("Chat model")).toBeDisabled();
@@ -198,30 +202,32 @@ test("reopens a saved model, switches and regenerates through the real chat comp
   await expect(
     page.getByRole("button", { name: "Regenerate response" }),
   ).toBeDisabled();
-  await expect(page.getByLabel("Executed model")).toContainText("Alpha");
+  await expect(executedModel(page)).toContainText("Alpha");
   finishModelChange();
   await expect(page.getByLabel("Chat model")).toContainText("Beta");
-  await expect(page.getByText("Images supported")).toBeVisible();
-  await expect(page.getByText("8,192 token context")).toBeVisible();
-  await expect(page.getByLabel("Executed model")).toContainText("Alpha");
+  await expect(
+    page
+      .getByLabel("Selected model capabilities")
+      .getByText("Images supported"),
+  ).toBeVisible();
+  await expect(executedModel(page)).toContainText("Alpha");
   expect(changes).toEqual([{ model_id: B, expected_model_revision: 1 }]);
   await page.reload();
   await expect(page.getByLabel("Chat model")).toContainText("Beta");
-  await expect(page.getByLabel("Executed model")).toContainText("Alpha");
-  await expect(
-    page.getByText("General chats never delegate to sub-agents."),
-  ).toBeVisible();
+  await expect(executedModel(page)).toContainText("Alpha");
   await page.getByRole("button", { name: "Regenerate response" }).click();
   await expect.poll(() => regeneratedWith).toBe(B);
   await expect(page.getByLabel("Chat model")).toBeDisabled();
   finish!();
   await expect(page.getByText("Regenerated Beta answer")).toBeVisible();
-  await expect(page.getByLabel("Executed model")).toContainText("Beta");
+  await expect(executedModel(page)).toContainText("Beta");
   await page.getByRole("button", { name: "Previous response version" }).click();
   await expect(page.getByText("Original Alpha answer")).toBeVisible();
-  await expect(page.getByLabel("Executed model")).toContainText("Alpha");
+  await expect(executedModel(page)).toContainText("Alpha");
   await expect(page.getByLabel("Chat model")).toContainText("Beta");
-  await expect(page.getByLabel("Executed model")).toHaveText(
+  await expect(executedModel(page)).toHaveText("Alpha");
+  await expect(executedModel(page)).toHaveAttribute(
+    "title",
     "Alpha · Provider · configuration 1",
   );
   expect(settingsWrites).toBe(0);

@@ -249,8 +249,12 @@ for (const width of [320, 390]) {
     });
     await expect(lastFile).toBeAttached();
     await page.mouse.move(width / 2, 220);
-    await page.mouse.wheel(0, 10000);
-    await expect(lastFile).toBeInViewport();
+    // On a short viewport the first wheel scrolls the page until the nested
+    // file list reaches the pointer; later wheels scroll the list itself.
+    await expect(async () => {
+      await page.mouse.wheel(0, 10000);
+      await expect(lastFile).toBeInViewport({ timeout: 500 });
+    }).toPass({ timeout: 5_000 });
     // Center the action in its actual scroll owner; metadata wrapping changes
     // the required wheel distance as the pane narrows.
     const wheelDelta = await lastFile.evaluate((node) => {

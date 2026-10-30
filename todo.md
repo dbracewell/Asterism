@@ -29,8 +29,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [ ] US-47.2: Unit test baseline (implemented on `feature/us-47.2-unit-baseline`; awaiting confirmation)
   - [x] Triage and fix the failing frontend unit test(s); confirm the backend suite stays green.
 
-- [ ] US-47.3: Browser test baseline
-  - [ ] Run the full isolated suite; triage and fix each failing spec.
+- [ ] US-47.3: Browser test baseline (implemented on `feature/us-47.3-browser-baseline`; awaiting confirmation)
+  - [x] Run the full isolated suite; triage and fix each failing spec.
 
 - [ ] US-47.4: Deterministic local browser runs
   - [ ] Find the source of the cold-start failures; warm or otherwise stabilize the server before specs; verify with repeated runs.
