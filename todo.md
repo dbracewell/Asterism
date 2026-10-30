@@ -31,3 +31,26 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [ ] Build the provider form step from the shared provider schema and the provider/capability identity components.
   - [ ] Wire discovery, model enablement and default selection; handle failures and retry.
   - [ ] Add unit and isolated browser tests, including skip, reload, failure and reachability.
+
+### [EPIC-49: ChatGPT plan connection](docs/epics/EPIC-49-CHATGPT-PLAN-CONNECTION.md)
+
+- [ ] US-49.1: Responses API streaming adapter
+  - [ ] Add the Responses streaming client and event reducer behind the existing LLM interface.
+  - [ ] Add per-provider request capabilities for generation parameters and tool kinds.
+  - [ ] Test streaming, tool calls in the agent loop, interrupted and failed streams against a local double.
+
+- [ ] US-49.2: Per-user ChatGPT connection
+  - [ ] Add the admin policy (default disabled) and the encrypted per-user connection store.
+  - [ ] Implement registration, reauthorization, loopback callback, ID-token validation and disconnect.
+  - [ ] Implement serialized refresh with terminal-error handling; test ownership isolation, rotation and policy changes.
+  - [ ] Write the ADR (connection ownership, loopback limit, no fallback, preview constraints).
+
+- [ ] US-49.3: Plan models in the pickers
+  - [ ] Sync owner-scoped plan models and expose them through the chat model choices.
+  - [ ] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
+  - [ ] Test owner isolation, provenance and availability changes.
+
+- [ ] US-49.4: Plan usage experience and limits
+  - [ ] Add the plan label, Manage usage link and first-use notice.
+  - [ ] Map usage-limit, unavailable and revoked errors to their recovery UI.
+  - [ ] Add unit and isolated browser tests with a local OAuth and Responses double.
