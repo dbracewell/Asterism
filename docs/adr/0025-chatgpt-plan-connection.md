@@ -1,6 +1,6 @@
 # ADR-0025: Per-user ChatGPT plan connections
 
-Status: Implemented in US-49.2; pending user confirmation.
+Status: Implemented in US-49.2; user-confirmed on 2026-10-30.
 
 ## Context
 
