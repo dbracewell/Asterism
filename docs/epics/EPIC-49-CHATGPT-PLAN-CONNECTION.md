@@ -1,6 +1,6 @@
 # EPIC-49: ChatGPT plan connection
 
-Status: in progress (US-49.1 complete; US-49.2 active). Source: Sign in with ChatGPT research (2026-10-30).
+Status: in progress (US-49.1 and US-49.2 complete; US-49.3 active). Source: Sign in with ChatGPT research (2026-10-30).
 
 ## Objective
 
@@ -30,7 +30,13 @@ errors-and-recovery pages.
   Scopes `openid profile email offline_access resource.invoke
   chatgpt.tokens.use.direct`; resource `https://api.openai.com/v1`.
 - Callback: an HTTP loopback URI on `127.0.0.1` (not `localhost`), so the
-  user's browser must run on the same machine as Asterism.
+  user's browser must run on the same machine as Asterism. Only the port may
+  vary between sign-ins; scheme, host and path stay fixed. Reauthorization
+  sends the saved client ID with `id_token_hint`/`login_hint` and omits
+  `agent_name_hint`; a callback with a different client ID is rejected.
+  Revocation uses the `revocation_endpoint` from
+  `https://auth.openai.com/.well-known/openid-configuration` (verified
+  2026-10-30 at US-49.2 start).
 - Tokens: access tokens last one hour; refresh tokens last 30 days and rotate on
   every refresh (reuse fails with `refresh_token_reused`). Each issued client
   ID is bound to one ChatGPT user and workspace.
@@ -120,10 +126,10 @@ disabled". Users can disconnect, which removes their tokens. Requests and
 refreshes never use another user's connection. The instructions state that the
 browser must run on the Asterism machine.
 
-- [ ] Add the admin policy (default disabled) and the encrypted per-user connection store.
-- [ ] Implement registration, reauthorization, loopback callback, ID-token validation and disconnect.
-- [ ] Implement serialized refresh with terminal-error handling; test ownership isolation, rotation and policy changes.
-- [ ] Write the ADR (connection ownership, loopback limit, no fallback, preview constraints).
+- [x] Add the admin policy (default disabled) and the encrypted per-user connection store.
+- [x] Implement registration, reauthorization, loopback callback, ID-token validation and disconnect.
+- [x] Implement serialized refresh with terminal-error handling; test ownership isolation, rotation and policy changes.
+- [x] Write the ADR (connection ownership, loopback limit, no fallback, preview constraints).
 
 ## US-49.3: Plan models in the pickers
 

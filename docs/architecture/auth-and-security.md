@@ -79,6 +79,16 @@ requests, and filters emitted events by user ID for SSE subscribers.
 - Secrets use the root configuration contract or canonical `/run/secrets` files;
   see the root [README](../../README.md#configuration).
 
+## ChatGPT plan connections
+
+Users may connect their own ChatGPT plan when the admin policy
+`chatgpt_plan_enabled` is on (default off). Connections are per user, encrypted
+at rest and never returned with tokens. The loopback OAuth callback
+(`/api/py/chatgpt/callback` on `127.0.0.1`) is unauthenticated and authorized only
+by a single-use, ten-minute `state`. Refreshes are serialized per user and
+never fall back to another user's connection or provider. See
+[ADR-0025](../adr/0025-chatgpt-plan-connection.md).
+
 ## Related guides
 
 - [System overview](overview.md)

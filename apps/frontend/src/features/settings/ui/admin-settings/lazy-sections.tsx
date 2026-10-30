@@ -16,6 +16,7 @@ import {
   ImageIcon,
   UsersRoundIcon,
   ShieldUserIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -59,6 +60,13 @@ const SkillsPolicySettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/skills-policy-settings").then(
       (module) => module.SkillsPolicySettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const ChatGptPolicySettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/chatgpt-policy-settings").then(
+      (module) => module.ChatGptPolicySettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -144,6 +152,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "skills",
     icon: <BookOpenIcon />,
     settingsPane: pane("Skills", <SkillsPolicySettings />),
+  },
+  {
+    type: "section",
+    label: "ChatGPT Plans",
+    value: "chatgpt",
+    icon: <MessageCircleIcon />,
+    settingsPane: pane("ChatGPT Plans", <ChatGptPolicySettings />),
   },
   {
     type: "section",

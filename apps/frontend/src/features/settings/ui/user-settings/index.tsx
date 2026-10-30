@@ -1,6 +1,7 @@
 import { Types } from "@/features/settings/types";
 import { AgentsSettings } from "@/features/settings/ui/user-settings/agents-settings";
 import { GeneralSettings } from "@/features/settings/ui/user-settings/general-settings";
+import { ChatGptConnectionSettings } from "@/features/chatgpt/components/chatgpt-connection-settings";
 import { SkillsSettings } from "@/features/skills/components/skills-settings";
 import { PersonaSettings } from "./persona-settings";
 import {
@@ -8,6 +9,7 @@ import {
   Settings2Icon,
   UserRoundIcon,
   BookOpenIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 
 export const UserSettings: Types = [
@@ -39,5 +41,12 @@ export const UserSettings: Types = [
     value: "agents",
     icon: <BotIcon />,
     settingsPane: <AgentsSettings />,
+  },
+  {
+    type: "section",
+    label: "ChatGPT",
+    value: "chatgpt",
+    icon: <MessageCircleIcon />,
+    settingsPane: <ChatGptConnectionSettings />,
   },
 ];

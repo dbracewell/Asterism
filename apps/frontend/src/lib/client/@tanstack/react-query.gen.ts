@@ -105,6 +105,21 @@ import type {
   ChatFileRemoveData,
   ChatFileRemoveError,
   ChatFileRemoveResponse,
+  ChatgptConnectionAuthorizeData,
+  ChatgptConnectionAuthorizeError,
+  ChatgptConnectionAuthorizeResponse,
+  ChatgptConnectionDisconnectData,
+  ChatgptConnectionDisconnectError,
+  ChatgptConnectionDisconnectResponse,
+  ChatgptConnectionGetData,
+  ChatgptConnectionGetError,
+  ChatgptConnectionGetResponse,
+  ChatgptPolicyGetData,
+  ChatgptPolicyGetError,
+  ChatgptPolicyGetResponse,
+  ChatgptPolicyUpdateData,
+  ChatgptPolicyUpdateError,
+  ChatgptPolicyUpdateResponse,
   ChatMessageSendData,
   ChatMessageSendError,
   ChatMessageSendResponse,
@@ -2706,6 +2721,147 @@ export const skillUpdateMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const chatgptPolicyGetQueryKey = (
+  options?: Options<ChatgptPolicyGetData>,
+) => createQueryKey("chatgptPolicyGet", options);
+
+/**
+ * Get Policy
+ */
+export const chatgptPolicyGetOptions = (
+  options?: Options<ChatgptPolicyGetData>,
+) =>
+  queryOptions<
+    ChatgptPolicyGetResponse,
+    ChatgptPolicyGetError,
+    ChatgptPolicyGetResponse,
+    ReturnType<typeof chatgptPolicyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatgptPolicyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatgptPolicyGetQueryKey(options),
+  });
+
+/**
+ * Put Policy
+ */
+export const chatgptPolicyUpdateMutation = (
+  options?: Partial<Options<ChatgptPolicyUpdateData>>,
+): UseMutationOptions<
+  ChatgptPolicyUpdateResponse,
+  ChatgptPolicyUpdateError,
+  Options<ChatgptPolicyUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatgptPolicyUpdateResponse,
+    ChatgptPolicyUpdateError,
+    Options<ChatgptPolicyUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatgptPolicyUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const chatgptConnectionGetQueryKey = (
+  options?: Options<ChatgptConnectionGetData>,
+) => createQueryKey("chatgptConnectionGet", options);
+
+/**
+ * Get Connection
+ */
+export const chatgptConnectionGetOptions = (
+  options?: Options<ChatgptConnectionGetData>,
+) =>
+  queryOptions<
+    ChatgptConnectionGetResponse,
+    ChatgptConnectionGetError,
+    ChatgptConnectionGetResponse,
+    ReturnType<typeof chatgptConnectionGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatgptConnectionGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatgptConnectionGetQueryKey(options),
+  });
+
+/**
+ * Authorize
+ */
+export const chatgptConnectionAuthorizeMutation = (
+  options?: Partial<Options<ChatgptConnectionAuthorizeData>>,
+): UseMutationOptions<
+  ChatgptConnectionAuthorizeResponse,
+  ChatgptConnectionAuthorizeError,
+  Options<ChatgptConnectionAuthorizeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatgptConnectionAuthorizeResponse,
+    ChatgptConnectionAuthorizeError,
+    Options<ChatgptConnectionAuthorizeData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatgptConnectionAuthorize({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Disconnect
+ */
+export const chatgptConnectionDisconnectMutation = (
+  options?: Partial<Options<ChatgptConnectionDisconnectData>>,
+): UseMutationOptions<
+  ChatgptConnectionDisconnectResponse,
+  ChatgptConnectionDisconnectError,
+  Options<ChatgptConnectionDisconnectData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatgptConnectionDisconnectResponse,
+    ChatgptConnectionDisconnectError,
+    Options<ChatgptConnectionDisconnectData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatgptConnectionDisconnect({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

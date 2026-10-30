@@ -192,6 +192,7 @@ class ApplicationSettings(BaseModel):
     """Aggregate of global application settings (admin view)."""
 
     skills_enabled: StrictBool = False
+    chatgpt_plan_enabled: StrictBool = False
     llm_providers: list[Provider] = Field(default_factory=list)
     draft_model_id: uuid.UUID | None = None
     web_search_provider: ComponentProviderParameters | None = None

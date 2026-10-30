@@ -18,6 +18,7 @@ from asterism.core.lifespan import lifespan
 from asterism.core.schemas import ErrorDetail
 from asterism.domains.agent.router import agents_router
 from asterism.domains.chat.router import chat_router
+from asterism.domains.chatgpt.router import chatgpt_router
 from asterism.domains.components.router import components_router
 from asterism.domains.files.router import file_router
 from asterism.domains.knowledge.router import knowledge_router
@@ -137,6 +138,7 @@ app.include_router(project_router)
 # generic /settings/app/{key} routes.
 app.include_router(knowledge_router)
 app.include_router(skills_router)
+app.include_router(chatgpt_router)
 app.include_router(settings_router)
 app.include_router(user_router)
 app.include_router(persona_router)
