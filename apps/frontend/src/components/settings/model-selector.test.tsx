@@ -10,8 +10,15 @@ const models = [
     name: "Alpha",
     provider_name: "Test",
     provider_id: "provider",
+    provider_type: "generic_openai" as const,
   },
-  { id: "beta", name: "Beta", provider_name: "Test", provider_id: "provider" },
+  {
+    id: "beta",
+    name: "Beta",
+    provider_name: "Test",
+    provider_id: "provider",
+    provider_type: "generic_openai" as const,
+  },
 ];
 
 it("tracks the saved binding as models load, refresh, disappear, and the value changes", () => {

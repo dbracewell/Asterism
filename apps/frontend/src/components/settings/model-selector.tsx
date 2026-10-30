@@ -10,9 +10,15 @@ import {
   ComboboxList,
   ComboboxTrigger,
 } from "@/components/ui/combobox";
+import {
+  CapabilityIcons,
+  capabilityLabels,
+  PROVIDER_TYPES,
+  ProviderIcon,
+} from "@/components/settings/model-identity";
 import type { ChatModelChoice, LlmDisplayInfo } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 export type ModelOption = LlmDisplayInfo | ChatModelChoice;
 
@@ -28,6 +34,8 @@ type ModelSelectorProps = {
   variant?: "field" | "inline";
   /** Append the provider name to each model. */
   showProvider?: boolean;
+  /** Show supported-capability icons on each listed model. */
+  showCapabilities?: boolean;
   /** Label for a saved value that is no longer selectable. */
   savedLabel?: string;
   "aria-label"?: string;
@@ -49,13 +57,61 @@ const ModelLabel = ({
   model: ModelOption;
   showProvider: boolean;
 }) => (
-  <span className="truncate">
-    {model.name}{" "}
-    {showProvider && (
-      <span className="text-muted-foreground">({model.provider_name})</span>
+  <span className="flex min-w-0 items-center gap-1.5">
+    {model.provider_type && (
+      <ProviderIcon
+        type={model.provider_type}
+        className="text-muted-foreground"
+      />
     )}
+    <span className="truncate">
+      {model.name}{" "}
+      {showProvider && (
+        <span className="text-muted-foreground">({model.provider_name})</span>
+      )}
+    </span>
   </span>
 );
+
+/**
+ * Icons stay out of the option's accessible name so it remains the model
+ * label; the same identity is read as the option's description instead.
+ */
+const ModelOptionItem = ({
+  model,
+  showProvider,
+  showCapabilities,
+}: {
+  model: ModelOption;
+  showProvider: boolean;
+  showCapabilities: boolean;
+}) => {
+  const descriptionId = useId();
+  const description = [
+    model.provider_type &&
+      `${PROVIDER_TYPES[model.provider_type].label} provider`,
+    ...(showCapabilities ? capabilityLabels(model) : []),
+  ]
+    .filter(Boolean)
+    .join(". ");
+  return (
+    <ComboboxItem
+      value={model}
+      className="pr-7"
+      aria-describedby={description ? descriptionId : undefined}
+    >
+      <ModelLabel model={model} showProvider={showProvider} />
+      {showCapabilities && (
+        <CapabilityIcons model={model} decorative className="ml-auto" />
+      )}
+      {description && (
+        <span id={descriptionId} hidden>
+          {description}
+        </span>
+      )}
+    </ComboboxItem>
+  );
+};
 
 /**
  * Searchable model picker. Unavailable models are never listed; a saved value
@@ -72,6 +128,7 @@ export const ModelSelector = ({
   disabled = false,
   variant = "field",
   showProvider = false,
+  showCapabilities = false,
   savedLabel,
   "aria-label": ariaLabel,
   "aria-invalid": ariaInvalid,
@@ -151,9 +208,12 @@ export const ModelSelector = ({
         <ComboboxEmpty>No models found.</ComboboxEmpty>
         <ComboboxList>
           {(model: ModelOption) => (
-            <ComboboxItem key={model.id} value={model} className="pr-7">
-              <ModelLabel model={model} showProvider={showProvider} />
-            </ComboboxItem>
+            <ModelOptionItem
+              key={model.id}
+              model={model}
+              showProvider={showProvider}
+              showCapabilities={showCapabilities}
+            />
           )}
         </ComboboxList>
       </ComboboxContent>

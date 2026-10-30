@@ -12,7 +12,7 @@ from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.agent.skill_inputs import SkillIdentity
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
-from asterism.domains.settings.provider_types import ModelCapabilitySource
+from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
 
 class MessageStatus(StrEnum):
@@ -64,6 +64,7 @@ class ChatModelChoice(BaseModel):
     name: str
     provider_id: uuid.UUID
     provider_name: str
+    provider_type: ProviderType
     available: bool
     enabled: bool = True
     authorized: bool = True

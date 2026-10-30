@@ -352,6 +352,7 @@ describe("provider model browser", () => {
             name: "Draft",
             provider_id: draftProviderId,
             provider_name: "Draft provider",
+            provider_type: "generic_openai",
             context_window: null,
             supports_vision: null,
             context_window_source: "unknown",
@@ -428,6 +429,51 @@ describe("provider model browser", () => {
     expect(screen.getByLabelText("Search Large catalog models")).toBeVisible();
     expect(await screen.findByText("URL-selected model")).toBeVisible();
     expect(mocks.listModels).toHaveBeenCalledTimes(1);
+  });
+
+  it("labels the provider type and each model's capabilities", async () => {
+    mocks.getSearchParam.mockImplementation((name: string) =>
+      name === "provider" ? settings.llm_providers![0].id : undefined,
+    );
+    mocks.listModels.mockResolvedValue({
+      models: [
+        {
+          id: "30000000-0000-4000-8000-000000000001",
+          name: "Capable model",
+          provider_id: settings.llm_providers![0].id,
+          is_active: true,
+          context_window: null,
+          supports_vision: true,
+          supports_tools: true,
+          context_window_source: "unknown",
+          vision_source: "manual",
+          tools_source: "manual",
+        },
+        {
+          id: "30000000-0000-4000-8000-000000000002",
+          name: "Plain model",
+          provider_id: settings.llm_providers![0].id,
+          is_active: true,
+          context_window: null,
+          supports_vision: false,
+          supports_tools: null,
+          context_window_source: "unknown",
+          vision_source: "manual",
+          tools_source: "unknown",
+        },
+      ],
+      total: 2,
+      next_cursor: null,
+    });
+    render(<ProvidersTab appSettings={settings} />, { wrapper: Wrapper });
+    expect(screen.getByText("OpenAI-compatible")).toBeVisible();
+    await screen.findByText("Capable model");
+    expect(screen.getAllByRole("img", { name: "Tool calling" })).toHaveLength(
+      1,
+    );
+    expect(screen.getAllByRole("img", { name: "Vision input" })).toHaveLength(
+      1,
+    );
   });
 
   it("defers a large catalog until the administrator opens it", () => {

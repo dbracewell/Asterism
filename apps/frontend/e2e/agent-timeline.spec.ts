@@ -11,6 +11,7 @@ const model: ChatModelChoice = {
   name: "Alpha",
   provider_id: "33333333-3333-4333-8333-333333333333",
   provider_name: "Provider",
+  provider_type: "generic_openai",
   available: true,
   supports_tools: true,
   context_window: 4096,

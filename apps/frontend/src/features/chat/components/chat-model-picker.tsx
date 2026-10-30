@@ -1,6 +1,10 @@
 "use client";
 
 import { QueryError } from "@/components/query-error";
+import {
+  capabilityLabels,
+  supportedCapabilities,
+} from "@/components/settings/model-identity";
 import { ModelSelector } from "@/components/settings/model-selector";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
@@ -13,17 +17,9 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ImageIcon, WrenchIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const NOTICE_CLASS = "order-last w-full basis-full px-2 text-xs";
-
-const compactTokens = (tokens: number) =>
-  tokens >= 1_000_000
-    ? `${(tokens / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`
-    : tokens >= 1_000
-      ? `${Math.round(tokens / 1_000)}K`
-      : String(tokens);
 
 /**
  * Composer-toolbar model selector. Renders as a fragment so the selector sits
@@ -55,6 +51,7 @@ export function ChatModelPicker({
         aria-label="Chat model"
         aria-invalid={!!value && !!query.data && !selected?.available}
         showProvider
+        showCapabilities
         value={value}
         onValueChange={onChange}
         availableModels={choices}
@@ -100,34 +97,18 @@ export function ChatModelPicker({
 }
 
 export function ModelCapabilities({ model }: { model: ChatModelChoice }) {
-  const labels = [
-    model.supports_vision === true
-      ? "Images supported"
-      : model.supports_vision === false
-        ? "Text only"
-        : "Image support unknown",
-    model.supports_tools === true
-      ? "Tools supported"
-      : model.supports_tools === false
-        ? "Tools unsupported"
-        : "Tool support unknown",
-  ];
+  const labels = capabilityLabels(model);
   return (
     <div
       aria-label="Selected model capabilities"
       title={labels.join(" · ")}
       className="text-muted-foreground flex items-center gap-1.5 px-1 text-xs"
     >
-      {model.supports_vision === true && (
-        <Hint hint="Vision support">
-          <ImageIcon aria-hidden="true" className="size-5" />
+      {supportedCapabilities(model).map(({ key, icon: Icon, name }) => (
+        <Hint key={key} hint={name}>
+          <Icon aria-hidden="true" className="size-5" />
         </Hint>
-      )}
-      {model.supports_tools === true && (
-        <Hint hint="Tool calling support">
-          <WrenchIcon aria-hidden="true" className="size-5" />
-        </Hint>
-      )}
+      ))}
       <span className="sr-only">
         {labels.map((label) => (
           <span key={label}>{label}</span>

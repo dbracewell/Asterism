@@ -107,6 +107,7 @@ it("carries the executed model snapshot into the streaming assistant message", (
       name: "Executed model",
       provider_id: "44444444-4444-4444-8444-444444444444",
       provider_name: "Provider",
+      provider_type: "generic_openai",
       available: true,
     },
     configuration: {

@@ -160,6 +160,7 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
       name: "Alpha",
       provider_id: "33333333-3333-4333-8333-333333333333",
       provider_name: "Provider",
+      provider_type: "generic_openai" as const,
       available: true,
       supports_tools: false,
     };
@@ -313,6 +314,7 @@ test("new project chat forwards ordered skill IDs and stripped prompt through th
           name: "Alpha",
           provider_id: "33333333-3333-4333-8333-333333333333",
           provider_name: "Provider",
+          provider_type: "generic_openai",
           available: true,
         },
       ],

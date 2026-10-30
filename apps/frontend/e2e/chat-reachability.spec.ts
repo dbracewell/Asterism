@@ -24,6 +24,7 @@ const model: ChatModelChoice = {
   name: "Layout model",
   provider_id: M,
   provider_name: "Synthetic provider",
+  provider_type: "generic_openai",
   available: true,
   context_window: 8192,
   supports_tools: true,

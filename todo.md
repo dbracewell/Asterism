@@ -30,5 +30,5 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [x] US-46.2: Theme gallery
   - [x] Build the preview tile from the theme variables; replace the selector; test selection, keyboard use and admin-only editing.
 
-- [ ] US-46.3: Provider and model identity
-  - [ ] Add a provider icon map (monochrome, theme-aware) and capability badges; test the labels for accessibility.
+- [ ] US-46.3: Provider and model identity (implemented on `feature/us-46.3-provider-model-identity`; awaiting confirmation)
+  - [x] Add a provider icon map (monochrome, theme-aware) and capability badges; test the labels for accessibility.

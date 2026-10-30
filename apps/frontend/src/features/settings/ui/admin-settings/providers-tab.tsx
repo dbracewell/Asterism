@@ -2,6 +2,10 @@
 
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
+import {
+  CapabilityIcons,
+  ProviderTypeLabel,
+} from "@/components/settings/model-identity";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -58,7 +62,12 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import {
+  type Control,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -146,6 +155,7 @@ function ModelRow({
         >
           {model.name}
         </FieldLabel>
+        <CapabilityIcons model={model} />
       </div>
       <Field>
         <FieldLabel htmlFor={`model-${model.id}-context`}>
@@ -234,6 +244,21 @@ function ModelRow({
       </div>
     </FieldGroup>
   );
+}
+
+/** Follows the unsaved provider-type choice so the header matches the form. */
+function ProviderHeaderType({
+  control,
+  index,
+}: {
+  control: Control<Values>;
+  index: number;
+}) {
+  const type = useWatch({
+    control,
+    name: `llm_providers.${index}.provider_type`,
+  });
+  return <ProviderTypeLabel type={type} />;
 }
 
 function ModelCatalog({
@@ -634,9 +659,12 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
                   className="bg-background/30 rounded-surface min-w-0 border p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <FieldTitle className="text-base! font-medium!">
-                      {field.name.trim() || `Provider ${index + 1}`}
-                    </FieldTitle>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                      <FieldTitle className="text-base! font-medium!">
+                        {field.name.trim() || `Provider ${index + 1}`}
+                      </FieldTitle>
+                      <ProviderHeaderType control={control} index={index} />
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"

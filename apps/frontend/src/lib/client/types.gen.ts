@@ -453,6 +453,7 @@ export type ChatModelChoice = {
    * Provider Name
    */
   provider_name: string;
+  provider_type: ProviderType;
   /**
    * Available
    */
@@ -1315,6 +1316,7 @@ export type LlmDisplayInfo = {
    * Provider Name
    */
   provider_name: string;
+  provider_type: ProviderType;
   /**
    * Context Window
    */

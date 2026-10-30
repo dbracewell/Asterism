@@ -22,8 +22,20 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   chatModelUpdateMutation: () => ({ mutationFn: mocks.update }),
 }));
 const choices = [
-  { id: "a", name: "Alpha", provider_name: "Provider", available: true },
-  { id: "b", name: "Beta", provider_name: "Provider", available: true },
+  {
+    id: "a",
+    name: "Alpha",
+    provider_name: "Provider",
+    provider_type: "generic_openai",
+    available: true,
+  },
+  {
+    id: "b",
+    name: "Beta",
+    provider_name: "Provider",
+    provider_type: "generic_openai",
+    available: true,
+  },
 ];
 function wrapper(
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
@@ -133,6 +145,7 @@ it("labels historical output from its recorded snapshot", () => {
       name: "Original model",
       provider_id: "provider",
       provider_name: "Original provider",
+      provider_type: "generic_openai",
       available: true,
     },
     configuration: {
@@ -162,7 +175,31 @@ it("shows explicit capabilities without inferring support from the model name", 
   });
   expect(await screen.findByText("Images supported")).toBeVisible();
   expect(screen.getByText("Tools unsupported")).toBeVisible();
-  expect(screen.getByText("8,192 token context")).toBeVisible();
+});
+
+it("shows provider and capability identity on each listed model", async () => {
+  mocks.list.mockResolvedValue([
+    { ...choices[0], provider_type: "openai", supports_tools: true },
+    { ...choices[1], supports_vision: true, supports_tools: false },
+  ]);
+  render(<ChatModelPicker value="a" onChange={vi.fn()} />, {
+    wrapper: wrapper(),
+  });
+  await waitFor(() =>
+    expect(screen.getByLabelText("Chat model")).toBeEnabled(),
+  );
+  await userEvent.click(screen.getByLabelText("Chat model"));
+  expect(
+    await screen.findByRole("option", { name: "Alpha (Provider)" }),
+  ).toHaveAccessibleDescription(
+    "OpenAI provider. Tools supported. Image support unknown",
+  );
+  const beta = screen.getByRole("option", { name: "Beta (Provider)" });
+  expect(beta).toHaveAccessibleDescription(
+    "OpenAI-compatible provider. Tools unsupported. Images supported",
+  );
+  expect(beta.querySelector('[title="Vision input"]')).not.toBeNull();
+  expect(beta.querySelector('[title="Tool calling"]')).toBeNull();
 });
 
 it("requires a successful reload after a model revision conflict", async () => {

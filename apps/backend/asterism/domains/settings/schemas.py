@@ -129,6 +129,7 @@ class LlmDisplayInfo(BaseModel):
     name: str
     provider_id: uuid.UUID
     provider_name: str
+    provider_type: ProviderType
     context_window: PositiveInt | None = None
     supports_vision: bool | None = None
     supports_tools: bool | None = None

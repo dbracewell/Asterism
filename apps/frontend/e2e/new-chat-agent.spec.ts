@@ -66,6 +66,7 @@ test("edits the sole model-free main configuration and exposes unavailable worke
           name: "Available model",
           provider_id: "66666666-6666-4666-8666-666666666666",
           provider_name: "Test",
+          provider_type: "generic_openai",
           available: true,
         },
       ],
