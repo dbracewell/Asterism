@@ -59,6 +59,10 @@ export type ApplicationSettings = {
    */
   skills_enabled?: boolean;
   /**
+   * Chatgpt Plan Enabled
+   */
+  chatgpt_plan_enabled?: boolean;
+  /**
    * Llm Providers
    */
   llm_providers?: Array<Provider>;
@@ -338,6 +342,107 @@ export type ChatFileScope = {
    * Unavailable File Ids
    */
   unavailable_file_ids: Array<string>;
+};
+
+/**
+ * ChatGPTAuthorizationStart
+ *
+ * Where the user's browser goes next to continue with ChatGPT.
+ */
+export type ChatGptAuthorizationStart = {
+  /**
+   * Authorization Url
+   */
+  authorization_url: string;
+};
+
+/**
+ * ChatGPTConnection
+ *
+ * The caller's connection state.
+ *
+ * Fields:
+ * policy_enabled: Current admin policy; when false, plan requests are
+ * unavailable but the connection is kept.
+ * status: Connection lifecycle state; ``None`` when never connected.
+ * email: Email from the validated ID token, for display.
+ * plan_usage_enabled: True only when connected with plan usage granted.
+ * updated_at: Last connection change (Unix seconds).
+ */
+export type ChatGptConnection = {
+  /**
+   * Policy Enabled
+   */
+  policy_enabled: boolean;
+  status?: ChatGptConnectionStatus | null;
+  /**
+   * Email
+   */
+  email?: string | null;
+  /**
+   * Plan Usage Enabled
+   */
+  plan_usage_enabled?: boolean;
+  /**
+   * Updated At
+   */
+  updated_at?: number | null;
+};
+
+/**
+ * ChatGPTConnectionStatus
+ *
+ * Lifecycle state of one user's connection.
+ *
+ * ``CONNECTED`` holds tokens with plan usage granted; ``PLAN_USAGE_DISABLED``
+ * holds tokens whose grant lacks ``chatgpt.tokens.use.direct``;
+ * ``REAUTHORIZATION_REQUIRED`` lost its tokens to a terminal refresh error;
+ * ``DISCONNECTED`` was signed out by the user. The last two keep the issued
+ * client ID and verified identity for a later sign-in.
+ */
+export type ChatGptConnectionStatus =
+  | "connected"
+  | "plan_usage_disabled"
+  | "reauthorization_required"
+  | "disconnected";
+
+/**
+ * ChatGPTDisconnect
+ *
+ * Disconnect options. ``forget`` also removes the saved registration so the
+ * next sign-in can choose a different ChatGPT account.
+ */
+export type ChatGptDisconnect = {
+  /**
+   * Forget
+   */
+  forget?: boolean;
+};
+
+/**
+ * ChatGPTDisconnectResult
+ *
+ * Result of a disconnect; ``revocation_confirmed`` is false when the session
+ * could not be ended at OpenAI and the user should disconnect it in ChatGPT.
+ */
+export type ChatGptDisconnectResult = {
+  /**
+   * Revocation Confirmed
+   */
+  revocation_confirmed: boolean;
+  connection: ChatGptConnection;
+};
+
+/**
+ * ChatGPTPolicy
+ *
+ * Admin policy: whether users may connect and use their ChatGPT plans.
+ */
+export type ChatGptPolicy = {
+  /**
+   * Enabled
+   */
+  enabled: boolean;
 };
 
 /**
@@ -3015,6 +3120,10 @@ export type ApplicationSettingsWritable = {
    * Skills Enabled
    */
   skills_enabled?: boolean;
+  /**
+   * Chatgpt Plan Enabled
+   */
+  chatgpt_plan_enabled?: boolean;
   /**
    * Llm Providers
    */
@@ -5753,6 +5862,189 @@ export type SkillUpdateResponses = {
 
 export type SkillUpdateResponse =
   SkillUpdateResponses[keyof SkillUpdateResponses];
+
+export type ChatgptPolicyGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/chatgpt";
+};
+
+export type ChatgptPolicyGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ChatgptPolicyGetError =
+  ChatgptPolicyGetErrors[keyof ChatgptPolicyGetErrors];
+
+export type ChatgptPolicyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptPolicy;
+};
+
+export type ChatgptPolicyGetResponse =
+  ChatgptPolicyGetResponses[keyof ChatgptPolicyGetResponses];
+
+export type ChatgptPolicyUpdateData = {
+  body: ChatGptPolicy;
+  path?: never;
+  query?: never;
+  url: "/settings/app/chatgpt";
+};
+
+export type ChatgptPolicyUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatgptPolicyUpdateError =
+  ChatgptPolicyUpdateErrors[keyof ChatgptPolicyUpdateErrors];
+
+export type ChatgptPolicyUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptPolicy;
+};
+
+export type ChatgptPolicyUpdateResponse =
+  ChatgptPolicyUpdateResponses[keyof ChatgptPolicyUpdateResponses];
+
+export type ChatgptConnectionGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/chatgpt/connection";
+};
+
+export type ChatgptConnectionGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ChatgptConnectionGetError =
+  ChatgptConnectionGetErrors[keyof ChatgptConnectionGetErrors];
+
+export type ChatgptConnectionGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptConnection;
+};
+
+export type ChatgptConnectionGetResponse =
+  ChatgptConnectionGetResponses[keyof ChatgptConnectionGetResponses];
+
+export type ChatgptConnectionAuthorizeData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/chatgpt/connection/authorize";
+};
+
+export type ChatgptConnectionAuthorizeErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ChatgptConnectionAuthorizeError =
+  ChatgptConnectionAuthorizeErrors[keyof ChatgptConnectionAuthorizeErrors];
+
+export type ChatgptConnectionAuthorizeResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptAuthorizationStart;
+};
+
+export type ChatgptConnectionAuthorizeResponse =
+  ChatgptConnectionAuthorizeResponses[keyof ChatgptConnectionAuthorizeResponses];
+
+export type ChatgptConnectionDisconnectData = {
+  body: ChatGptDisconnect;
+  path?: never;
+  query?: never;
+  url: "/chatgpt/connection/disconnect";
+};
+
+export type ChatgptConnectionDisconnectErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatgptConnectionDisconnectError =
+  ChatgptConnectionDisconnectErrors[keyof ChatgptConnectionDisconnectErrors];
+
+export type ChatgptConnectionDisconnectResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptDisconnectResult;
+};
+
+export type ChatgptConnectionDisconnectResponse =
+  ChatgptConnectionDisconnectResponses[keyof ChatgptConnectionDisconnectResponses];
 
 export type MainAgentGetData = {
   body?: never;

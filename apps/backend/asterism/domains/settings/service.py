@@ -739,6 +739,11 @@ def _validate_non_provider_app_setting(
             raise BadDataException("Skills policy must be a boolean")
         return value, None
 
+    if key == "chatgpt_plan_enabled":
+        if type(value) is not bool:
+            raise BadDataException("ChatGPT plan policy must be a boolean")
+        return value, None
+
     if key == "active_tools":
         if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
             raise BadDataException("Invalid value for application setting 'active_tools'")

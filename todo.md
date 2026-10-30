@@ -32,11 +32,11 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Add per-provider request capabilities for generation parameters and tool kinds.
   - [x] Test streaming, tool calls in the agent loop, interrupted and failed streams against a local double.
 
-- [ ] US-49.2: Per-user ChatGPT connection
-  - [ ] Add the admin policy (default disabled) and the encrypted per-user connection store.
-  - [ ] Implement registration, reauthorization, loopback callback, ID-token validation and disconnect.
-  - [ ] Implement serialized refresh with terminal-error handling; test ownership isolation, rotation and policy changes.
-  - [ ] Write the ADR (connection ownership, loopback limit, no fallback, preview constraints).
+- [ ] US-49.2: Per-user ChatGPT connection (implemented; awaiting confirmation)
+  - [x] Add the admin policy (default disabled) and the encrypted per-user connection store.
+  - [x] Implement registration, reauthorization, loopback callback, ID-token validation and disconnect.
+  - [x] Implement serialized refresh with terminal-error handling; test ownership isolation, rotation and policy changes.
+  - [x] Write the ADR (connection ownership, loopback limit, no fallback, preview constraints).
 
 - [ ] US-49.3: Plan models in the pickers
   - [ ] Sync owner-scoped plan models and expose them through the chat model choices.

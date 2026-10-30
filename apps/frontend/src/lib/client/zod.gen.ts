@@ -108,6 +108,84 @@ export const zChatDraftModelUpdate = z.object({
 });
 
 /**
+ * ChatGPTAuthorizationStart
+ *
+ * Where the user's browser goes next to continue with ChatGPT.
+ */
+export const zChatGptAuthorizationStart = z.object({
+  authorization_url: z.string(),
+});
+
+/**
+ * ChatGPTConnectionStatus
+ *
+ * Lifecycle state of one user's connection.
+ *
+ * ``CONNECTED`` holds tokens with plan usage granted; ``PLAN_USAGE_DISABLED``
+ * holds tokens whose grant lacks ``chatgpt.tokens.use.direct``;
+ * ``REAUTHORIZATION_REQUIRED`` lost its tokens to a terminal refresh error;
+ * ``DISCONNECTED`` was signed out by the user. The last two keep the issued
+ * client ID and verified identity for a later sign-in.
+ */
+export const zChatGptConnectionStatus = z.enum([
+  "connected",
+  "plan_usage_disabled",
+  "reauthorization_required",
+  "disconnected",
+]);
+
+/**
+ * ChatGPTConnection
+ *
+ * The caller's connection state.
+ *
+ * Fields:
+ * policy_enabled: Current admin policy; when false, plan requests are
+ * unavailable but the connection is kept.
+ * status: Connection lifecycle state; ``None`` when never connected.
+ * email: Email from the validated ID token, for display.
+ * plan_usage_enabled: True only when connected with plan usage granted.
+ * updated_at: Last connection change (Unix seconds).
+ */
+export const zChatGptConnection = z.object({
+  policy_enabled: z.boolean(),
+  status: zChatGptConnectionStatus.nullish(),
+  email: z.string().nullish(),
+  plan_usage_enabled: z.boolean().optional().default(false),
+  updated_at: z.int().nullish(),
+});
+
+/**
+ * ChatGPTDisconnect
+ *
+ * Disconnect options. ``forget`` also removes the saved registration so the
+ * next sign-in can choose a different ChatGPT account.
+ */
+export const zChatGptDisconnect = z.object({
+  forget: z.boolean().optional().default(false),
+});
+
+/**
+ * ChatGPTDisconnectResult
+ *
+ * Result of a disconnect; ``revocation_confirmed`` is false when the session
+ * could not be ended at OpenAI and the user should disconnect it in ChatGPT.
+ */
+export const zChatGptDisconnectResult = z.object({
+  revocation_confirmed: z.boolean(),
+  connection: zChatGptConnection,
+});
+
+/**
+ * ChatGPTPolicy
+ *
+ * Admin policy: whether users may connect and use their ChatGPT plans.
+ */
+export const zChatGptPolicy = z.object({
+  enabled: z.boolean(),
+});
+
+/**
  * ChatModelUpdate
  */
 export const zChatModelUpdate = z.object({
@@ -879,6 +957,7 @@ export const zProvider = z.object({
  */
 export const zApplicationSettings = z.object({
   skills_enabled: z.boolean().optional().default(false),
+  chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProvider).optional(),
   draft_model_id: z.uuid().nullish(),
   web_search_provider: zComponentProviderParameters.nullish(),
@@ -1601,6 +1680,7 @@ export const zProviderWritable = z.object({
  */
 export const zApplicationSettingsWritable = z.object({
   skills_enabled: z.boolean().optional().default(false),
+  chatgpt_plan_enabled: z.boolean().optional().default(false),
   llm_providers: z.array(zProviderWritable).optional(),
   draft_model_id: z.uuid().nullish(),
   web_search_provider: zComponentProviderParameters.nullish(),
@@ -2252,6 +2332,35 @@ export const zSkillUpdatePath = z.object({
  * Successful Response
  */
 export const zSkillUpdateResponse = zSkill;
+
+/**
+ * Successful Response
+ */
+export const zChatgptPolicyGetResponse = zChatGptPolicy;
+
+export const zChatgptPolicyUpdateBody = zChatGptPolicy;
+
+/**
+ * Successful Response
+ */
+export const zChatgptPolicyUpdateResponse = zChatGptPolicy;
+
+/**
+ * Successful Response
+ */
+export const zChatgptConnectionGetResponse = zChatGptConnection;
+
+/**
+ * Successful Response
+ */
+export const zChatgptConnectionAuthorizeResponse = zChatGptAuthorizationStart;
+
+export const zChatgptConnectionDisconnectBody = zChatGptDisconnect;
+
+/**
+ * Successful Response
+ */
+export const zChatgptConnectionDisconnectResponse = zChatGptDisconnectResult;
 
 /**
  * Successful Response

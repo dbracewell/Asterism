@@ -105,6 +105,21 @@ import type {
   ChatFileRemoveData,
   ChatFileRemoveErrors,
   ChatFileRemoveResponses,
+  ChatgptConnectionAuthorizeData,
+  ChatgptConnectionAuthorizeErrors,
+  ChatgptConnectionAuthorizeResponses,
+  ChatgptConnectionDisconnectData,
+  ChatgptConnectionDisconnectErrors,
+  ChatgptConnectionDisconnectResponses,
+  ChatgptConnectionGetData,
+  ChatgptConnectionGetErrors,
+  ChatgptConnectionGetResponses,
+  ChatgptPolicyGetData,
+  ChatgptPolicyGetErrors,
+  ChatgptPolicyGetResponses,
+  ChatgptPolicyUpdateData,
+  ChatgptPolicyUpdateErrors,
+  ChatgptPolicyUpdateResponses,
   ChatMessageSendData,
   ChatMessageSendErrors,
   ChatMessageSendResponses,
@@ -1877,6 +1892,119 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/skills/{skill_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Policy
+   */
+  public chatgptPolicyGet<ThrowOnError extends boolean = false>(
+    options?: Options<ChatgptPolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptPolicyGetResponses,
+    ChatgptPolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ChatgptPolicyGetResponses,
+      ChatgptPolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/chatgpt",
+      ...options,
+    });
+  }
+
+  /**
+   * Put Policy
+   */
+  public chatgptPolicyUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ChatgptPolicyUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptPolicyUpdateResponses,
+    ChatgptPolicyUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ChatgptPolicyUpdateResponses,
+      ChatgptPolicyUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/chatgpt",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Connection
+   */
+  public chatgptConnectionGet<ThrowOnError extends boolean = false>(
+    options?: Options<ChatgptConnectionGetData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptConnectionGetResponses,
+    ChatgptConnectionGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ChatgptConnectionGetResponses,
+      ChatgptConnectionGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chatgpt/connection",
+      ...options,
+    });
+  }
+
+  /**
+   * Authorize
+   */
+  public chatgptConnectionAuthorize<ThrowOnError extends boolean = false>(
+    options?: Options<ChatgptConnectionAuthorizeData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptConnectionAuthorizeResponses,
+    ChatgptConnectionAuthorizeErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      ChatgptConnectionAuthorizeResponses,
+      ChatgptConnectionAuthorizeErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chatgpt/connection/authorize",
+      ...options,
+    });
+  }
+
+  /**
+   * Disconnect
+   */
+  public chatgptConnectionDisconnect<ThrowOnError extends boolean = false>(
+    options: Options<ChatgptConnectionDisconnectData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptConnectionDisconnectResponses,
+    ChatgptConnectionDisconnectErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatgptConnectionDisconnectResponses,
+      ChatgptConnectionDisconnectErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chatgpt/connection/disconnect",
       ...options,
       headers: {
         "Content-Type": "application/json",
