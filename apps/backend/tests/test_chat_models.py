@@ -55,6 +55,8 @@ async def test_explicit_choice_reopen_owner_revision_and_no_default_retargeting(
     assert {choice["id"] for choice in choices} == {A, B}
     assert all(choice["available"] for choice in choices)
     assert not any("api_key" in choice for choice in choices)
+    # Pickers render provider identity from the existing provider type; no new storage.
+    assert {choice["provider_type"] for choice in choices} == {"generic_openai"}
     chat = await new_chat(client)
     path = f"/chat/{chat['info']['id']}/model"
     assert chat["info"]["selected_model_id"] == A

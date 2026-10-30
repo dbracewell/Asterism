@@ -66,6 +66,23 @@ _REDACTED_API_KEY = REDACTED_SECRET
 _APP_SETTING_KEYS = frozenset(ApplicationSettings.model_fields.keys())
 
 
+def llm_display_info(model: LLMModel) -> LlmDisplayInfo:
+    """Flatten a model row (with its provider loaded) into the picker/list view."""
+    return LlmDisplayInfo(
+        id=model.id,
+        name=model.name,
+        provider_id=model.provider_id,
+        provider_name=model.provider.name,
+        provider_type=model.provider.provider_type,
+        context_window=model.context_window,
+        supports_vision=model.supports_vision,
+        supports_tools=model.supports_tools,
+        tools_source=model.tools_source,
+        context_window_source=model.context_window_source,
+        vision_source=model.vision_source,
+    )
+
+
 def _provider_api_key(provider: ProviderInfo, existing_api_key: str | None = None) -> str:
     """Unwrap a submitted API key without replacing an existing redacted key.
 
@@ -313,18 +330,7 @@ async def get_provider_settings(
                 else None
             )
             if draft_row is not None:
-                draft_model = LlmDisplayInfo(
-                    id=draft_row.id,
-                    name=draft_row.name,
-                    provider_id=draft_row.provider_id,
-                    provider_name=draft_row.provider.name,
-                    context_window=draft_row.context_window,
-                    supports_vision=draft_row.supports_vision,
-                    supports_tools=draft_row.supports_tools,
-                    tools_source=draft_row.tools_source,
-                    context_window_source=draft_row.context_window_source,
-                    vision_source=draft_row.vision_source,
-                )
+                draft_model = llm_display_info(draft_row)
 
         return ProviderSettings(
             llm_providers=[
@@ -608,21 +614,7 @@ async def get_captioning_models(
                 )
             ).all(),
         )
-        return [
-            LlmDisplayInfo(
-                id=model.id,
-                name=model.name,
-                provider_id=model.provider_id,
-                provider_name=model.provider.name,
-                context_window=model.context_window,
-                supports_vision=model.supports_vision,
-                supports_tools=model.supports_tools,
-                tools_source=model.tools_source,
-                context_window_source=model.context_window_source,
-                vision_source=model.vision_source,
-            )
-            for model in rows
-        ]
+        return [llm_display_info(model) for model in rows]
 
 
 async def update_tool_settings(
@@ -968,23 +960,7 @@ async def get_user_models(
     async with get_async_db_session(session) as session:
         stmt = select(LLMModel).where(LLMModel.is_active).options(joinedload(LLMModel.provider))
         result = await session.scalars(stmt)
-        models: list[LlmDisplayInfo] = []
-        for m in result.all():
-            models.append(
-                LlmDisplayInfo(
-                    id=m.id,
-                    name=m.name,
-                    provider_id=m.provider.id,
-                    provider_name=m.provider.name,
-                    context_window=m.context_window,
-                    supports_vision=m.supports_vision,
-                    supports_tools=m.supports_tools,
-                    tools_source=m.tools_source,
-                    context_window_source=m.context_window_source,
-                    vision_source=m.vision_source,
-                ),
-            )
-        return models
+        return [llm_display_info(m) for m in result.all()]
 
 
 async def get_model_and_provider(

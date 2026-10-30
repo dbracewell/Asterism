@@ -1,6 +1,6 @@
 # EPIC-46: Settings and admin visual coherence
 
-Status: in progress (US-46.1 and US-46.2 complete). Source: the approved visual design audit (2026-10-26).
+Status: in progress (US-46.1 and US-46.2 complete; US-46.3 implemented, awaiting confirmation). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
@@ -58,4 +58,18 @@ Acceptance: provider-type icons and capability icons (tools, vision, thinking)
 appear in the chat model picker, sub-agent model selection and the admin provider
 list, each with a text label or tooltip.
 
-- [ ] Add a provider icon map (monochrome, theme-aware) and capability badges; test the labels for accessibility.
+- [x] Add a provider icon map (monochrome, theme-aware) and capability badges; test the labels for accessibility.
+
+Implementation notes: `components/settings/model-identity.tsx` holds the
+provider-type map (`openai` → cloud, `generic_openai` → server; lucide glyphs
+drawn in `currentColor`) and the capability map (tool calling, vision input).
+Model views (`ChatModelChoice`, `LlmDisplayInfo`) now carry the provider's
+existing `provider_type`; no new storage. `ModelSelector` shows the provider
+icon on every model and, with `showCapabilities` (chat picker and sub-agent
+model selection), icons for supported capabilities. Icons in options are
+decorative with native tooltips; the option name stays the model label and its
+accessible description states the provider type and every capability,
+including unsupported and unknown. The admin provider list shows the live
+provider type beside each provider name and labelled capability icons on each
+model row. Thinking is not shown: models have no thinking/reasoning capability
+data, and adding it would need new storage and detection.

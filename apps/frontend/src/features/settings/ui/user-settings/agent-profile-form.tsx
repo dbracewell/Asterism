@@ -292,6 +292,7 @@ function ConfigurationForm({
                   </Required>
                   <ModelSelector
                     id="agent-model"
+                    showCapabilities
                     onValueChange={setModelId}
                     value={modelId}
                     availableModels={available.filter((c) => c.available)}

@@ -222,6 +222,7 @@ export function ThemeContrastHarness() {
                       name: "Palette model",
                       provider_id: "palette-provider",
                       provider_name: "Synthetic provider",
+                      provider_type: "generic_openai",
                     },
                   ]}
                 />

@@ -537,24 +537,6 @@ export const zChatContextModel = z.object({
 });
 
 /**
- * ChatModelChoice
- */
-export const zChatModelChoice = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  provider_id: z.uuid(),
-  provider_name: z.string(),
-  available: z.boolean(),
-  enabled: z.boolean().optional().default(true),
-  authorized: z.boolean().optional().default(true),
-  unavailable_reason: z.string().nullish(),
-  context_window: z.int().nullish(),
-  context_window_source: zModelCapabilitySource.optional().default("unknown"),
-  supports_vision: z.boolean().nullish(),
-  supports_tools: z.boolean().nullish(),
-});
-
-/**
  * Llm
  *
  * A provider model with capability flags and their provenance.
@@ -564,24 +546,6 @@ export const zLlm = z.object({
   name: z.string(),
   provider_id: z.uuid(),
   is_active: z.boolean(),
-  context_window: z.int().gt(0).nullish(),
-  supports_vision: z.boolean().nullish(),
-  supports_tools: z.boolean().nullish(),
-  tools_source: zModelCapabilitySource.optional().default("unknown"),
-  context_window_source: zModelCapabilitySource.optional().default("unknown"),
-  vision_source: zModelCapabilitySource.optional().default("unknown"),
-});
-
-/**
- * LlmDisplayInfo
- *
- * Flat, denormalized model view (includes ``provider_name``) for pickers and lists.
- */
-export const zLlmDisplayInfo = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  provider_id: z.uuid(),
-  provider_name: z.string(),
   context_window: z.int().gt(0).nullish(),
   supports_vision: z.boolean().nullish(),
   supports_tools: z.boolean().nullish(),
@@ -856,6 +820,44 @@ export const zProviderModelsPage = z.object({
  * a client-supplied base URL.
  */
 export const zProviderType = z.enum(["openai", "generic_openai"]);
+
+/**
+ * ChatModelChoice
+ */
+export const zChatModelChoice = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  provider_id: z.uuid(),
+  provider_name: z.string(),
+  provider_type: zProviderType,
+  available: z.boolean(),
+  enabled: z.boolean().optional().default(true),
+  authorized: z.boolean().optional().default(true),
+  unavailable_reason: z.string().nullish(),
+  context_window: z.int().nullish(),
+  context_window_source: zModelCapabilitySource.optional().default("unknown"),
+  supports_vision: z.boolean().nullish(),
+  supports_tools: z.boolean().nullish(),
+});
+
+/**
+ * LlmDisplayInfo
+ *
+ * Flat, denormalized model view (includes ``provider_name``) for pickers and lists.
+ */
+export const zLlmDisplayInfo = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  provider_id: z.uuid(),
+  provider_name: z.string(),
+  provider_type: zProviderType,
+  context_window: z.int().gt(0).nullish(),
+  supports_vision: z.boolean().nullish(),
+  supports_tools: z.boolean().nullish(),
+  tools_source: zModelCapabilitySource.optional().default("unknown"),
+  context_window_source: zModelCapabilitySource.optional().default("unknown"),
+  vision_source: zModelCapabilitySource.optional().default("unknown"),
+});
 
 /**
  * Provider

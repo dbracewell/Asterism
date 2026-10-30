@@ -13,6 +13,7 @@ const model = {
   name: "Alpha",
   provider_id: "33333333-3333-4333-8333-333333333333",
   provider_name: "Provider",
+  provider_type: "generic_openai" as const,
   available: true,
 };
 const historical: MessageExecution = {

@@ -82,6 +82,7 @@ for (const theme of themes)
               name: "Matrix model",
               provider_id: "matrix",
               provider_name: "Synthetic",
+              provider_type: "generic_openai",
               available: true,
             },
           ],

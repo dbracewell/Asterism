@@ -29,6 +29,7 @@ for (const theme of ["atlas", "night-atlas", "dracula"]) {
               name: "Palette chat model",
               provider_id: "contrast-provider",
               provider_name: "Synthetic provider",
+              provider_type: "generic_openai",
               available: true,
             },
           ],

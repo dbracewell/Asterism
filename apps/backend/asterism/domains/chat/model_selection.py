@@ -22,6 +22,7 @@ def model_choice(model: LLMModel) -> ChatModelChoice:
         name=model.name,
         provider_id=model.provider_id,
         provider_name=model.provider.name,
+        provider_type=model.provider.provider_type,
         available=model.is_active,
         enabled=model.is_active,
         authorized=True,
