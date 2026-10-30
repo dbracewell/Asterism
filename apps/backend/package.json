@@ -1,6 +1,7 @@
 {
   "name": "@asterism/backend",
   "private": true,
+  "license": "Apache-2.0",
   "scripts": {
     "dev": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile development -- pnpm dev:raw",
     "dev:raw": "uv run python -m asterism.serve --port 8000 --timeout-graceful-shutdown=2 --proxy-headers --forwarded-allow-ips='*'",

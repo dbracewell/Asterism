@@ -347,3 +347,8 @@ See [binding and storage limits](docs/adr/0021-personas-and-execution-binding.md
 This schema requires fresh initialization. For an older development database, use
 the explicit reset workflow when ready to discard its data; story tests use
 disposable storage and do not reset the working database.
+
+## License
+
+Asterism is licensed under the [Apache License, Version 2.0](LICENSE).
+Copyright 2026 David Bracewell.
