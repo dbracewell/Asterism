@@ -19,6 +19,7 @@
     "reset:db": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- node scripts/reset-db.mjs",
     "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope frontend --profile reset -- node scripts/reset-db.mjs --yes",
     "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "generate:icons": "node scripts/generate-icons.mjs"
   },
   "pnpm": {

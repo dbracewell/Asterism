@@ -68,7 +68,7 @@ jobs:
         run: pnpm check:workspace-tasks
 
       - name: Run quality gates
-        run: pnpm lint && pnpm typecheck && pnpm test
+        run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm test
 
       - name: Verify synthetic secrets do not enter browser artifacts or build logs
         run: |

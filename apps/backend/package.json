@@ -14,6 +14,7 @@
     "reset:db:confirmed": "node ../../scripts/run-with-env.mjs --env required --scope backend --profile reset -- uv run python -m asterism.db.init_db --reset --yes",
     "cycles": "knot .",
     "deps": "pydeps  --rankdir TB  asterism",
-    "format": "ruff check --select I --fix . && ruff format ."
+    "format": "uv run ruff check --select I --fix . && uv run ruff format .",
+    "format:check": "uv run ruff check --select I . && uv run ruff format --check ."
   }
 }

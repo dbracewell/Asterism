@@ -10,10 +10,8 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. Recommended next work: reconcile the four
-remaining frontend unit assertions and the model-context browser assertion.
-See the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md)
-for current evidence and verification limits.
+EPIC-47 (quality baseline cleanup) is active; see below. Earlier verification
+limits are recorded in the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md).
 
 ## Visual design epics (proposed)
 
@@ -22,3 +20,17 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 [2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44, EPIC-45 and EPIC-42 are confirmed complete and archived in the
 [2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md); EPIC-46 is confirmed complete and archived in the
 [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). All visual design epics are complete.
+
+## [EPIC-47: Quality baseline cleanup](docs/epics/EPIC-47-QUALITY-BASELINE-CLEANUP.md)
+
+- [ ] US-47.1: Format gate (implemented on `feature/us-47.1-format-gate`; awaiting confirmation)
+  - [x] Format the existing drift; add backend and frontend `format:check` scripts and a root script; run it in CI.
+
+- [ ] US-47.2: Unit test baseline
+  - [ ] Triage and fix the failing frontend unit test(s); confirm the backend suite stays green.
+
+- [ ] US-47.3: Browser test baseline
+  - [ ] Run the full isolated suite; triage and fix each failing spec.
+
+- [ ] US-47.4: Deterministic local browser runs
+  - [ ] Find the source of the cold-start failures; warm or otherwise stabilize the server before specs; verify with repeated runs.

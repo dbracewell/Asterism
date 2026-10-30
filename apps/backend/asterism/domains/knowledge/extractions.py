@@ -100,11 +100,7 @@ def describe_artifact(
         The artifact with its ``extractions`` map keyed by kind.
     """
     return FileKnowledgeArtifact.model_validate(artifact).model_copy(
-        update={
-            "extractions": {
-                row.kind.value: describe_extraction(row) for row in extractions
-            }
-        }
+        update={"extractions": {row.kind.value: describe_extraction(row) for row in extractions}}
     )
 
 

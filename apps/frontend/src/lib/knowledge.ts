@@ -61,7 +61,8 @@ export function hasActiveExtraction(
   artifact?: Pick<FileKnowledgeArtifact, "status" | "extractions"> | null,
 ): boolean {
   if (!artifact) return false;
-  if (artifact.status === "pending" || artifact.status === "running") return true;
+  if (artifact.status === "pending" || artifact.status === "running")
+    return true;
   return Object.values(artifact.extractions ?? {}).some(
     (extraction) =>
       extraction.status === "pending" || extraction.status === "running",
