@@ -1,6 +1,6 @@
 # EPIC-47: Quality baseline cleanup
 
-Status: in progress. Source: the EPIC-46 close-out (2026-10-30), which found
+Status: complete (US-47.1 through US-47.4). Source: the EPIC-46 close-out (2026-10-30), which found
 `main` failing gates that each story had to work around.
 
 ## Objective
