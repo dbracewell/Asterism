@@ -1,6 +1,6 @@
 # EPIC-48: First-run provider setup
 
-Status: in progress (US-48.1 complete; US-48.2 active). Source: user feedback on the first-run setup screen
+Status: complete (US-48.1 and US-48.2 confirmed 2026-10-30). Source: user feedback on the first-run setup screen
 (2026-10-30).
 
 ## Objective

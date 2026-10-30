@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-48.1 is confirmed complete and merged. US-48.2 is active on `feature/us-48.2-ready-step`. EPIC-47 (quality baseline cleanup) is confirmed
+EPIC-48 (US-48.1 and US-48.2) is confirmed complete and merged; no user story is currently active. EPIC-47 (quality baseline cleanup) is confirmed
 complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
 limits are recorded in the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md).
 
@@ -32,7 +32,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Wire discovery, model enablement and default selection; handle failures and retry.
   - [x] Add unit and isolated browser tests, including skip, reload, failure and reachability.
 
-- [ ] US-48.2: You're ready
+- [x] US-48.2: You're ready
   - [x] Replace the automatic redirect with the in-card ready step.
   - [x] Update unit, mocked browser and isolated first-run tests.
 
