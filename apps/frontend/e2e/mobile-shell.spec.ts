@@ -119,7 +119,11 @@ for (const width of [320, 390]) {
     expect(headerBounds.closeRight).toBeLessThanOrEqual(
       headerBounds.sidebarRight,
     );
-    expect(headerBounds.closeWidth).toBeGreaterThanOrEqual(44);
+    // 44px touch target; layout can report 43.99998 on Linux, so compare at
+    // 0.01px precision rather than exact float equality.
+    expect(
+      Math.round(headerBounds.closeWidth * 100) / 100,
+    ).toBeGreaterThanOrEqual(44);
     await expect(
       sidebar.getByRole("link", { name: "Files", exact: true }),
     ).toBeVisible();

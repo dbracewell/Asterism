@@ -368,6 +368,8 @@ test("authenticated settings create and assign a private skill with real APIs", 
   await page.getByRole("button", { name: "Manage main-agent skills" }).click();
   await page.getByRole("checkbox", { name: /real-review/ }).check();
   await page.getByRole("button", { name: "Save assignments" }).click();
+  // Reload only after the save lands; reloading earlier can cancel it.
+  await expect(page.getByText("Skill assignments saved")).toBeVisible();
   await page.reload();
   await page.getByRole("button", { name: "Manage main-agent skills" }).click();
   await expect(
