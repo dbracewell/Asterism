@@ -1,6 +1,6 @@
 # EPIC-46: Settings and admin visual coherence
 
-Status: in progress (US-46.1 and US-46.2 complete; US-46.3 implemented, awaiting confirmation). Source: the approved visual design audit (2026-10-26).
+Status: complete (US-46.1 through US-46.3). Source: the approved visual design audit (2026-10-26).
 
 ## Objective
 
