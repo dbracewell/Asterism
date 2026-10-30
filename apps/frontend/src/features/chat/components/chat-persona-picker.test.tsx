@@ -69,20 +69,26 @@ function Controlled({ initial = null }: { initial?: string | null }) {
 
 it("distinguishes the dynamic default choice from a fixed persona", async () => {
   const user = userEvent.setup();
+  // A distinct name proves the default choice shows the user's default persona
+  // rather than the "Default" fallback.
+  api.userPersonaList.mockResolvedValue({
+    data: {
+      ...collection,
+      profiles: [{ ...collection.profiles[0], name: "Everyday" }, teacher],
+    },
+  });
   setup(<Controlled />);
   const selector = await screen.findByRole("combobox", {
     name: "Chat persona",
   });
   await waitFor(() => expect(selector).toBeEnabled());
-  expect(selector).toHaveTextContent("Use my default (Default)");
+  expect(selector).toHaveTextContent("Everyday");
   await user.click(selector);
   await user.click(await screen.findByRole("option", { name: "Teaching" }));
   expect(changed).toHaveBeenLastCalledWith(teacher.id);
   expect(selector).toHaveTextContent("Teaching");
   await user.click(selector);
-  await user.click(
-    await screen.findByRole("option", { name: "Use my default (Default)" }),
-  );
+  await user.click(await screen.findByRole("option", { name: "Everyday" }));
   expect(changed).toHaveBeenLastCalledWith(null);
 });
 

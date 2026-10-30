@@ -26,8 +26,8 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 - [ ] US-47.1: Format gate (implemented on `feature/us-47.1-format-gate`; awaiting confirmation)
   - [x] Format the existing drift; add backend and frontend `format:check` scripts and a root script; run it in CI.
 
-- [ ] US-47.2: Unit test baseline
-  - [ ] Triage and fix the failing frontend unit test(s); confirm the backend suite stays green.
+- [ ] US-47.2: Unit test baseline (implemented on `feature/us-47.2-unit-baseline`; awaiting confirmation)
+  - [x] Triage and fix the failing frontend unit test(s); confirm the backend suite stays green.
 
 - [ ] US-47.3: Browser test baseline
   - [ ] Run the full isolated suite; triage and fix each failing spec.
