@@ -1,6 +1,6 @@
 # EPIC-49: ChatGPT plan connection
 
-Status: in progress (US-49.1). Source: Sign in with ChatGPT research (2026-10-30).
+Status: in progress (US-49.1 complete; US-49.2 active). Source: Sign in with ChatGPT research (2026-10-30).
 
 ## Objective
 
