@@ -50,7 +50,26 @@ Acceptance: `node scripts/run-isolated-e2e.mjs --retries=0` passes in CI mode
 (one worker). Each failing spec is updated to the current intended UI or the
 defect it exposes is fixed.
 
-- [ ] Run the full isolated suite; triage and fix each failing spec.
+- [x] Run the full isolated suite; triage and fix each failing spec.
+
+Implementation notes: the clean-checkout baseline failed 17 of 209 specs.
+Fixes, by cause:
+
+- Real defects: on short viewports the Files page shrank its file manager
+  below its content, so the toolbar overlapped the list and the list could not
+  scroll; the page now keeps a minimum height and scrolls instead. Replies again
+  show their recorded model, now in the message meta row (provider and
+  configuration revision in its title), restoring per-message provenance that
+  the pre-redesign label used to show.
+- Stale harness and assertions: the new-chat agent harness lacked a
+  `UserProvider`; the chat model session spec still expected the removed
+  context-window text and General-scope notice, and its capability assertion
+  is now scoped to the selected-model group.
+- Visual baselines: shape-tokens and theme-shape snapshots predated the theme
+  gallery and sticky save bar; the theme-shape preview is scrolled clear of the
+  save bar, and typography now waits for its settled image states, since its
+  old baseline captured loading spinners. Snapshots are macOS renders, so other
+  platforms set `ignoreSnapshots` and skip only the screenshot comparisons.
 
 ## US-47.4: Deterministic local browser runs
 

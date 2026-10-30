@@ -18,7 +18,9 @@ export function tokensPerSecond(message: StreamingMessage): string | null {
 }
 
 /**
- * Stopped state, relative time and generation speed. The time is focusable
+ * Executed model, stopped state, relative time and generation speed. The model
+ * name is the reply's recorded provenance, not the chat's current selection;
+ * its title carries the provider and configuration revision. The time is focusable
  * and shows the full timestamp in the user's time zone; on touch, a tap opens
  * it because tooltips have no hover there.
  */
@@ -29,9 +31,21 @@ export const MessageMeta = ({ message }: { message: StreamingMessage }) => {
   const touchRef = React.useRef(false);
   const created = new Date(message.created_at * 1000);
   const speed = message.role === "user" ? null : tokensPerSecond(message);
+  const execution = message.role === "user" ? null : message.execution;
 
   return (
     <span data-slot="message-meta">
+      {execution && (
+        <>
+          <span
+            data-slot="executed-model"
+            title={`${execution.model.name} · ${execution.model.provider_name} · configuration ${execution.configuration.config_revision}`}
+          >
+            {execution.model.name}
+          </span>
+          {" · "}
+        </>
+      )}
       {message.status === "cancelled" && "Stopped · "}
       <Tooltip open={open} onOpenChange={setOpen}>
         <TooltipTrigger asChild>

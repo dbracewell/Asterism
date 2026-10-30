@@ -3,7 +3,7 @@ import { PageHeader, PageLayout } from "@/components/page-layout";
 
 export default function FilesPage() {
   return (
-    <PageLayout fill>
+    <PageLayout fill className="min-h-[32rem]">
       <PageHeader
         title="Files"
         description="Your file library. Upload files here, then add them to projects and chats."

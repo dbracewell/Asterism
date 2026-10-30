@@ -11,6 +11,10 @@ export default defineConfig({
   // Serial CI execution avoids resource contention during fresh setup.
   workers: process.env.CI ? 1 : undefined,
   retries: 0,
+  // Visual baselines are macOS renders; font rasterization differs elsewhere.
+  // Other platforms (CI on Linux) skip only the screenshot comparisons, so
+  // every structural, contrast and accessibility assertion still runs.
+  ignoreSnapshots: process.platform !== "darwin",
   reporter: [
     ["list"],
     ["html", { outputFolder: "playwright-report", open: "never" }],

@@ -34,6 +34,9 @@ for (const theme of ["atlas", "night-atlas", "dracula"]) {
       });
       expect(families.join(" ")).not.toMatch(/Inter|Geist|Montserrat/);
       expect(families.join(" ")).toMatch(/Schibsted/);
+      // Capture the settled page: every missing image has resolved to its
+      // error state rather than a loading spinner.
+      await expect(page.getByText("Failed to load image")).toHaveCount(4);
 
       await expect(page).toHaveScreenshot(
         `typography-${theme}-${viewport.name}.png`,
