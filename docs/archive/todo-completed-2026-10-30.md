@@ -34,3 +34,20 @@ run on these changes at merge time.
 
 - [x] US-47.4: Deterministic local browser runs
   - [x] Find the source of the cold-start failures; warm or otherwise stabilize the server before specs; verify with repeated runs.
+
+The user confirmed US-48.1 and US-48.2 completion and authorized local merges on
+2026-10-30. EPIC-48 (US-48.1 and US-48.2) is complete; each story was confirmed
+and merged with `--no-ff` before the next began. US-48.2 resolves the epic's open
+question: step 3 is an in-card "You're ready to start your exploration." moment.
+
+### [EPIC-48: First-run provider setup](../epics/EPIC-48-FIRST-RUN-PROVIDER-SETUP.md)
+
+- [x] US-48.1: Add a model provider during setup
+  - [x] Add the setup step state and routing (admin, no active models, skip).
+  - [x] Build the provider form step from the shared provider schema and the provider/capability identity components.
+  - [x] Wire discovery, model enablement and default selection; handle failures and retry.
+  - [x] Add unit and isolated browser tests, including skip, reload, failure and reachability.
+
+- [x] US-48.2: You're ready
+  - [x] Replace the automatic redirect with the in-card ready step.
+  - [x] Update unit, mocked browser and isolated first-run tests.
