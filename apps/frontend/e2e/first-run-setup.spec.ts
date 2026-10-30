@@ -94,6 +94,10 @@ test("the administrator connects a provider right after creating the account", a
   await page.getByRole("option", { name: "First-run beta" }).click();
   await models.getByRole("button", { name: "Continue" }).click();
 
+  await expect(page.getByRole("status")).toHaveText(
+    "You're ready to start your exploration.",
+  );
+  await page.getByRole("button", { name: "Start chatting" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole("combobox", { name: "Chat model", exact: true }),

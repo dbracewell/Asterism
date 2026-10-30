@@ -165,16 +165,17 @@ function SkipLink() {
 }
 
 /**
- * Step 2 of first-run setup: connect one provider, discover its models and
- * enable at least one. Rendered in the same card as the account step.
+ * Steps 2 and 3 of first-run setup: connect one provider, discover its models
+ * and enable at least one, then confirm readiness. Rendered in the same card
+ * as the account step.
  */
 export function ProviderSetupStep({
   className,
   // A full load gives the new-chat page the saved default model.
-  onComplete = () => window.location.assign("/"),
+  onStart = () => window.location.assign("/"),
 }: {
   className?: string;
-  onComplete?: () => void;
+  onStart?: () => void;
 }) {
   const settings = useQuery(appProviderSettingsGetOptions({ client }));
   const [done, setDone] = useState(false);
@@ -185,9 +186,7 @@ export function ProviderSetupStep({
         <AuthHeading description="Set up your Asterism instance" />
         <SetupSteps current={done ? 2 : 1} />
         {done ? (
-          <p role="status" className="text-body text-center">
-            Provider connected. Opening your first chat…
-          </p>
+          <ReadyStep onStart={onStart} />
         ) : settings.isLoading ? (
           <FormSkeleton label="Loading provider settings…" fields={4} />
         ) : settings.isError || !settings.data ? (
@@ -200,13 +199,24 @@ export function ProviderSetupStep({
         ) : (
           <ProviderSetupFlow
             settings={settings.data}
-            onDone={() => {
-              setDone(true);
-              onComplete();
-            }}
+            onDone={() => setDone(true)}
           />
         )}
       </FieldGroup>
+    </div>
+  );
+}
+
+function ReadyStep({ onStart }: { onStart: () => void }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-4 text-center">
+      <p role="status" className="text-body font-medium text-balance">
+        You&apos;re ready to start your exploration.
+      </p>
+      {/* The form that had focus is gone; continue from the next action. */}
+      <Button autoFocus className={actionClassName} onClick={onStart}>
+        Start chatting
+      </Button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # EPIC-48: First-run provider setup
 
-Status: in progress (US-48.1 complete). Source: user feedback on the first-run setup screen
+Status: in progress (US-48.1 complete; US-48.2 active). Source: user feedback on the first-run setup screen
 (2026-10-30).
 
 ## Objective
@@ -54,6 +54,24 @@ Acceptance:
 - [x] Wire discovery, model enablement and default selection; handle failures and retry.
 - [x] Add unit and isolated browser tests, including skip, reload, failure and reachability.
 
-Open question: should step 3 also get an in-card moment (for example a "You're
-ready" confirmation with a suggested first prompt), or is landing on the
-new-chat page enough?
+## US-48.2: You're ready
+
+As the administrator who just connected a provider, I want the setup card to
+confirm that setup is finished before I leave it, so the first chat feels like
+the natural last step.
+
+Decision (2026-10-30): step 3 gets an in-card moment rather than landing
+directly on the new-chat page.
+
+Acceptance:
+
+- After models are enabled, the same card shows steps 1 and 2 complete, step 3
+  current (`aria-current="step"`), and the message "You're ready to start your
+  exploration." with one primary action that opens the new-chat page, where the
+  chosen default model is selected.
+- The message is announced and the primary action receives focus; keyboard,
+  narrow/short-viewport and theme behaviour matches the other setup steps.
+- "Skip for now" still goes straight to the new-chat page without this screen.
+
+- [x] Replace the automatic redirect with the in-card ready step.
+- [x] Update unit, mocked browser and isolated first-run tests.

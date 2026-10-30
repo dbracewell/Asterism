@@ -18,7 +18,8 @@ Anthropic endpoints are not supported.
 
 On a new instance, the first-run setup card (`/setup`, step 2) connects one
 provider, runs discovery, enables the chosen models and saves the administrator's
-default model. It uses the same provider schema and APIs as Admin Settings, is
+default model, then shows step 3 ("You're ready to start your exploration.")
+before opening the new-chat page. It uses the same provider schema and APIs as Admin Settings, is
 shown only to an administrator while no model is active, and can be skipped.
 Everything else follows the workflow below.
 
