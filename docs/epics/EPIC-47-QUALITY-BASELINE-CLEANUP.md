@@ -79,7 +79,18 @@ result as CI.
 Estimate: 1 day. Dependencies: US-47.3.
 
 Acceptance: repeated local runs with default workers pass without changes to
-test timeouts or retries, because the development server has compiled the
-tested routes before specs start.
+test timeouts or retries.
 
-- [ ] Find the source of the cold-start failures; warm or otherwise stabilize the server before specs; verify with repeated runs.
+- [x] Find the source of the cold-start failures; warm or otherwise stabilize the server before specs; verify with repeated runs.
+
+Implementation notes: with 9 local workers the suite failed 34 specs, varying
+by run. Traces showed Fast Refresh rebuilds and full reloads mid-spec: `next
+dev` compiles routes and chunks on demand and refreshes every open page.
+Warming routes first (34 → 12) and keeping compiled pages resident did not stop
+the rebuilds, so Playwright now serves a production build (`next build`, then
+`next start`); `E2E_DEV_SERVER=1` keeps `next dev` for iteration. Production
+mode enables Better Auth's rate limiter, which rejected parallel sign-ups, so the
+`test` profile disables it. One sub-pixel visibility check in the model-popup
+spec now tolerates half a pixel. Result: 209/209 in about 50 seconds with 9
+workers on repeated runs (one earlier run hit the sub-pixel case), and 209/209
+in CI mode.

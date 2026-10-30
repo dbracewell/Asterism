@@ -27,6 +27,9 @@ function createAuth() {
     baseURL: config.publicUrl,
     secret: config.betterAuthSecret,
     database: new Database(config.authDbPath),
+    // Browser tests run a production build and create many accounts and
+    // sessions from one address in parallel; production keeps the limiter.
+    ...(config.profile === "test" && { rateLimit: { enabled: false } }),
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,
