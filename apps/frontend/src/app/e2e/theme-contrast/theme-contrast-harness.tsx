@@ -11,7 +11,7 @@ import { useReadWriteSearchParams } from "@/hooks/use-read-write-search-params";
 import { useState } from "react";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import { StreamingIndicator } from "@/features/chat/components/message/streaming-indicator";
-import { ThemeSelector } from "@/components/settings/theme-selector";
+import { ThemeGallery } from "@/components/settings/theme-gallery";
 import { FontSizeSelector } from "@/components/settings/font-size-selector";
 import { ModelSelector } from "@/components/settings/model-selector";
 import {
@@ -193,10 +193,15 @@ export function ThemeContrastHarness() {
             <div className="grid min-w-0 grid-cols-1 gap-4 @3xl/review:grid-cols-3">
               <div
                 data-testid="appearance-theme"
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-2 @3xl/review:col-span-3"
               >
-                <Label htmlFor="review-theme">Theme</Label>
-                <ThemeSelector id="review-theme" currentTheme={currentTheme} />
+                <Label id="review-theme" asChild>
+                  <span>Theme</span>
+                </Label>
+                <ThemeGallery
+                  labelId="review-theme"
+                  currentTheme={currentTheme}
+                />
               </div>
               <div
                 data-testid="appearance-size"

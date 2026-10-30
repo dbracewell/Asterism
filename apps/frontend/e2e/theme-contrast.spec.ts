@@ -57,15 +57,22 @@ for (const theme of themes) {
     await chatSelect.evaluate((el) =>
       el.setAttribute("data-contrast", "chat-select"),
     );
-    for (const [testId, id] of [
-      ["appearance-theme", "appearance-theme"],
-      ["appearance-size", "appearance-size"],
-    ]) {
-      await page
-        .getByTestId(testId)
-        .getByRole("combobox")
-        .evaluate((el, id) => el.setAttribute("data-contrast", id), id);
-    }
+    await page
+      .getByTestId("appearance-size")
+      .getByRole("combobox")
+      .evaluate((el) => el.setAttribute("data-contrast", "appearance-size"));
+    // The gallery's selected tile: its radio control and its theme name.
+    const selectedTheme = page
+      .getByTestId("appearance-theme")
+      .getByRole("radio", { checked: true });
+    await expect(selectedTheme).toHaveAccessibleName(palette.name);
+    await selectedTheme.evaluate((el) => {
+      el.setAttribute("data-contrast", "appearance-theme");
+      el.nextElementSibling?.setAttribute(
+        "data-contrast",
+        "appearance-theme-name",
+      );
+    });
     await page
       .locator("#review-settings-model")
       .evaluate((el) => el.setAttribute("data-contrast", "settings-model"));
@@ -138,7 +145,7 @@ for (const theme of themes) {
       "badge-destructive",
       "badge-outline",
       "badge-link",
-      "appearance-theme",
+      "appearance-theme-name",
       "appearance-size",
       "settings-model",
       "composer",

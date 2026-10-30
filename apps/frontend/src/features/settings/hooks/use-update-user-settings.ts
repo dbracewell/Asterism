@@ -18,6 +18,8 @@ export function useUpdateUserSettings() {
     ...userSettingUpdateMutation({
       client: client,
     }),
+    // Run in order, so rapid changes (arrowing through themes) end on the last.
+    scope: { id: "user-setting-update" },
     onSuccess: () => {
       router.refresh();
     },

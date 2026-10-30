@@ -36,7 +36,17 @@ Acceptance: themes appear as live preview tiles (a small mock UI rendered with
 each theme's variables). Clicking a tile applies it, and admins can open the
 editor from the selected tile.
 
-- [ ] Build the preview tile from the theme variables; replace the selector; test selection, keyboard use and admin-only editing.
+- [x] Build the preview tile from the theme variables; replace the selector; test selection, keyboard use and admin-only editing.
+
+Implementation notes: `ThemeGallery` (`components/settings/theme-gallery.tsx`)
+is a shadcn `RadioGroup` of choice tiles grouped as Light and Dark. Each tile
+scopes the theme's CSS variables onto a small `aria-hidden` mock (sidebar, card
+and primary/secondary buttons), so the radio's name is the theme name. Arrow keys
+move between tiles; the pick applies at once while the setting saves, and setting
+updates share a mutation scope so rapid changes land in order. The selected tile
+shows an admin-only "Edit … theme" link to
+`/settings?t=admin&setting=theme_editor&theme=<id>`, which opens the theme editor
+on that theme.
 
 ## US-46.3: Provider and model identity
 

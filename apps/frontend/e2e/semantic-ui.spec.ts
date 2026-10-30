@@ -130,18 +130,35 @@ for (const width of [320, 1280]) {
       route.fulfill({ json: { key: "show_thinking", value: true } }),
     );
     await page.goto("/e2e/responsiveness?setting=general");
-    const theme = page.getByRole("combobox", { name: "Theme", exact: true });
+    const gallery = page.getByRole("radiogroup", {
+      name: "Theme",
+      exact: true,
+    });
     const size = page.getByRole("combobox", { name: "Font Size" });
-    await expect(theme).toBeVisible();
+    await expect(gallery).toBeVisible();
     await expect(size).toBeVisible();
     await expect(
       page.getByRole("combobox", { name: "Default Model", exact: true }),
     ).toBeVisible();
-    await theme.focus();
-    await page.keyboard.press("Enter");
-    await expect(page.getByRole("listbox")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(theme).toBeFocused();
+    // One tab stop; arrow keys move focus and selection between tiles.
+    const first = gallery.getByRole("radio").first();
+    await first.focus();
+    // Radix checks the radio that receives focus while the arrow is held.
+    await page.keyboard.down("ArrowRight");
+    const second = gallery.getByRole("radio").nth(1);
+    await expect(second).toBeFocused();
+    await expect(second).toBeChecked();
+    await page.keyboard.up("ArrowRight");
+    expect(
+      await second.evaluate(
+        (el) =>
+          el.matches(":focus-visible") &&
+          getComputedStyle(el).boxShadow !== "none",
+      ),
+    ).toBe(true);
+    await expect(
+      gallery.getByRole("link", { name: /^Edit .* theme$/ }),
+    ).toHaveCount(1);
     await expect(
       page.getByRole("checkbox", { name: "Show Thinking" }),
     ).toBeEnabled();

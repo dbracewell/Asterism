@@ -20,15 +20,15 @@ for current evidence and verification limits.
 Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 43 → 44 → 45 → 42 → 46. EPIC-41 is confirmed complete and archived in the
 [2026-10-27 checklist](docs/archive/todo-completed-2026-10-27.md); EPIC-43 is confirmed complete and archived in the
 [2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44, EPIC-45 and EPIC-42 are confirmed complete and archived in the
-[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). EPIC-46 is active; US-46.1 is merged into `main`; US-46.2 is next.
+[2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md). EPIC-46 is active; US-46.1 is merged into `main`; US-46.2 is in review.
 
 ### [EPIC-46: Settings and admin visual coherence](docs/epics/EPIC-46-SETTINGS-AND-ADMIN-VISUAL-COHERENCE.md)
 
 - [x] US-46.1: Settings hierarchy
   - [x] Add a settings section primitive; migrate the user and admin panes; test the sticky save bar's dirty state.
 
-- [ ] US-46.2: Theme gallery
-  - [ ] Build the preview tile from the theme variables; replace the selector; test selection, keyboard use and admin-only editing.
+- [ ] US-46.2: Theme gallery (implemented on `feature/us-46.2-theme-gallery`; awaiting confirmation)
+  - [x] Build the preview tile from the theme variables; replace the selector; test selection, keyboard use and admin-only editing.
 
 - [ ] US-46.3: Provider and model identity
   - [ ] Add a provider icon map (monochrome, theme-aware) and capability badges; test the labels for accessibility.
