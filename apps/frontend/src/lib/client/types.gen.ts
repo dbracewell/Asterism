@@ -1051,6 +1051,36 @@ export type ErrorDetail = {
 };
 
 /**
+ * ExamplesField
+ */
+export type ExamplesField = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Help
+   */
+  help?: string;
+  /**
+   * Required
+   */
+  required?: boolean;
+  /**
+   * Kind
+   */
+  kind: "examples";
+  /**
+   * Default
+   */
+  default?: Array<string> | null;
+};
+
+/**
  * FileContentStatus
  *
  * Lifecycle of the converted-content cache held by a :class:`UserFileModel`.
@@ -1464,6 +1494,36 @@ export type LlmDisplayInfo = {
   tools_source?: ModelCapabilitySource;
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
+};
+
+/**
+ * LongTextField
+ */
+export type LongTextField = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Help
+   */
+  help?: string;
+  /**
+   * Required
+   */
+  required?: boolean;
+  /**
+   * Kind
+   */
+  kind: "long_text";
+  /**
+   * Default
+   */
+  default?: string | null;
 };
 
 /**
@@ -2114,6 +2174,43 @@ export type ProjectUpdate = {
 };
 
 /**
+ * PromptFramework
+ */
+export type PromptFramework = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  document: TemplateDocument;
+};
+
+/**
+ * PromptFrameworkCatalog
+ */
+export type PromptFrameworkCatalog = {
+  /**
+   * Version
+   */
+  version: number;
+  /**
+   * Items
+   */
+  items: Array<PromptFramework>;
+};
+
+/**
  * PromptProvenance
  */
 export type PromptProvenance = {
@@ -2147,6 +2244,107 @@ export type PromptSource = {
    * Digest
    */
   digest: string;
+};
+
+/**
+ * PromptTemplate
+ */
+export type PromptTemplate = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+  document: TemplateDocument;
+};
+
+/**
+ * PromptTemplateCreate
+ */
+export type PromptTemplateCreate = {
+  document: TemplateDocument;
+};
+
+/**
+ * PromptTemplatePage
+ */
+export type PromptTemplatePage = {
+  /**
+   * Items
+   */
+  items: Array<PromptTemplateSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * PromptTemplateSummary
+ */
+export type PromptTemplateSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * PromptTemplateUpdate
+ */
+export type PromptTemplateUpdate = {
+  document: TemplateDocument;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
 };
 
 /**
@@ -2416,6 +2614,40 @@ export type SearchResultList = {
 };
 
 /**
+ * SelectField
+ */
+export type SelectField = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Help
+   */
+  help?: string;
+  /**
+   * Required
+   */
+  required?: boolean;
+  /**
+   * Kind
+   */
+  kind: "select";
+  /**
+   * Options
+   */
+  options: Array<string>;
+  /**
+   * Default
+   */
+  default?: string | null;
+};
+
+/**
  * Setting
  *
  * A single key/value setting row.
@@ -2426,6 +2658,36 @@ export type Setting = {
    */
   key: string;
   value: JsonValue;
+};
+
+/**
+ * ShortTextField
+ */
+export type ShortTextField = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Help
+   */
+  help?: string;
+  /**
+   * Required
+   */
+  required?: boolean;
+  /**
+   * Kind
+   */
+  kind: "short_text";
+  /**
+   * Default
+   */
+  default?: string | null;
 };
 
 /**
@@ -2813,6 +3075,43 @@ export type SubAgentTrace = {
    * Depth
    */
   depth?: number;
+};
+
+/**
+ * TemplateDocument
+ *
+ * Canonical template document; clients write it whole, metadata is derived.
+ */
+export type TemplateDocument = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Fields
+   */
+  fields: Array<
+    | ({
+        kind: "short_text";
+      } & ShortTextField)
+    | ({
+        kind: "long_text";
+      } & LongTextField)
+    | ({
+        kind: "select";
+      } & SelectField)
+    | ({
+        kind: "examples";
+      } & ExamplesField)
+  >;
+  /**
+   * Body
+   */
+  body: string;
 };
 
 /**
@@ -5895,6 +6194,341 @@ export type SkillUpdateResponses = {
 
 export type SkillUpdateResponse =
   SkillUpdateResponses[keyof SkillUpdateResponses];
+
+export type PromptFrameworkGetManyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/prompt-templates/frameworks";
+};
+
+export type PromptFrameworkGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type PromptFrameworkGetManyError =
+  PromptFrameworkGetManyErrors[keyof PromptFrameworkGetManyErrors];
+
+export type PromptFrameworkGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: PromptFrameworkCatalog;
+};
+
+export type PromptFrameworkGetManyResponse =
+  PromptFrameworkGetManyResponses[keyof PromptFrameworkGetManyResponses];
+
+export type PromptFrameworkGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Framework Id
+     */
+    framework_id: string;
+  };
+  query?: never;
+  url: "/prompt-templates/frameworks/{framework_id}";
+};
+
+export type PromptFrameworkGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type PromptFrameworkGetOneError =
+  PromptFrameworkGetOneErrors[keyof PromptFrameworkGetOneErrors];
+
+export type PromptFrameworkGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: PromptFramework;
+};
+
+export type PromptFrameworkGetOneResponse =
+  PromptFrameworkGetOneResponses[keyof PromptFrameworkGetOneResponses];
+
+export type PromptTemplateGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Query
+     */
+    query?: string;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/prompt-templates/";
+};
+
+export type PromptTemplateGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type PromptTemplateGetManyError =
+  PromptTemplateGetManyErrors[keyof PromptTemplateGetManyErrors];
+
+export type PromptTemplateGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: PromptTemplatePage;
+};
+
+export type PromptTemplateGetManyResponse =
+  PromptTemplateGetManyResponses[keyof PromptTemplateGetManyResponses];
+
+export type PromptTemplateCreateData = {
+  body: PromptTemplateCreate;
+  path?: never;
+  query?: never;
+  url: "/prompt-templates/";
+};
+
+export type PromptTemplateCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type PromptTemplateCreateError =
+  PromptTemplateCreateErrors[keyof PromptTemplateCreateErrors];
+
+export type PromptTemplateCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: PromptTemplate;
+};
+
+export type PromptTemplateCreateResponse =
+  PromptTemplateCreateResponses[keyof PromptTemplateCreateResponses];
+
+export type PromptTemplateDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Template Id
+     */
+    template_id: string;
+  };
+  query: {
+    /**
+     * Expected Revision
+     */
+    expected_revision: number;
+  };
+  url: "/prompt-templates/{template_id}";
+};
+
+export type PromptTemplateDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type PromptTemplateDeleteError =
+  PromptTemplateDeleteErrors[keyof PromptTemplateDeleteErrors];
+
+export type PromptTemplateDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type PromptTemplateDeleteResponse =
+  PromptTemplateDeleteResponses[keyof PromptTemplateDeleteResponses];
+
+export type PromptTemplateGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Template Id
+     */
+    template_id: string;
+  };
+  query?: never;
+  url: "/prompt-templates/{template_id}";
+};
+
+export type PromptTemplateGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type PromptTemplateGetOneError =
+  PromptTemplateGetOneErrors[keyof PromptTemplateGetOneErrors];
+
+export type PromptTemplateGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: PromptTemplate;
+};
+
+export type PromptTemplateGetOneResponse =
+  PromptTemplateGetOneResponses[keyof PromptTemplateGetOneResponses];
+
+export type PromptTemplateUpdateData = {
+  body: PromptTemplateUpdate;
+  path: {
+    /**
+     * Template Id
+     */
+    template_id: string;
+  };
+  query?: never;
+  url: "/prompt-templates/{template_id}";
+};
+
+export type PromptTemplateUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type PromptTemplateUpdateError =
+  PromptTemplateUpdateErrors[keyof PromptTemplateUpdateErrors];
+
+export type PromptTemplateUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: PromptTemplate;
+};
+
+export type PromptTemplateUpdateResponse =
+  PromptTemplateUpdateResponses[keyof PromptTemplateUpdateResponses];
 
 export type ChatgptPolicyGetData = {
   body?: never;

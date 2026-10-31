@@ -1,6 +1,6 @@
 # EPIC-51: Prompt frameworks and templates
 
-Status: proposed. Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-51.1). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -39,10 +39,10 @@ parser rejects unknown field kinds, duplicate keys, placeholders without a
 matching field and oversized documents. Templates are owner-scoped, with the
 same 404 for foreign and missing IDs.
 
-- [ ] Write an ADR for the template document format, placeholder grammar and catalog versioning.
-- [ ] Implement the domain model, queries, service and router, and regenerate the client.
-- [ ] Ship the initial framework catalog (RTF, CO-STAR, CRAFT, few-shot, step-by-step).
-- [ ] Test parsing limits, owner isolation, revision conflicts and catalog immutability.
+- [x] Write an ADR for the template document format, placeholder grammar and catalog versioning.
+- [x] Implement the domain model, queries, service and router, and regenerate the client.
+- [x] Ship the initial framework catalog (RTF, CO-STAR, CRAFT, few-shot, step-by-step).
+- [x] Test parsing limits, owner isolation, revision conflicts and catalog immutability.
 
 ## US-51.2: Template builder with live preview
 

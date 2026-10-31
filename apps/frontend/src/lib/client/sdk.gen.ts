@@ -249,6 +249,27 @@ import type {
   ProjectUpdateData,
   ProjectUpdateErrors,
   ProjectUpdateResponses,
+  PromptFrameworkGetManyData,
+  PromptFrameworkGetManyErrors,
+  PromptFrameworkGetManyResponses,
+  PromptFrameworkGetOneData,
+  PromptFrameworkGetOneErrors,
+  PromptFrameworkGetOneResponses,
+  PromptTemplateCreateData,
+  PromptTemplateCreateErrors,
+  PromptTemplateCreateResponses,
+  PromptTemplateDeleteData,
+  PromptTemplateDeleteErrors,
+  PromptTemplateDeleteResponses,
+  PromptTemplateGetManyData,
+  PromptTemplateGetManyErrors,
+  PromptTemplateGetManyResponses,
+  PromptTemplateGetOneData,
+  PromptTemplateGetOneErrors,
+  PromptTemplateGetOneResponses,
+  PromptTemplateUpdateData,
+  PromptTemplateUpdateErrors,
+  PromptTemplateUpdateResponses,
   SkillCreateData,
   SkillCreateErrors,
   SkillCreateResponses,
@@ -1901,6 +1922,161 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/skills/{skill_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Frameworks
+   */
+  public promptFrameworkGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<PromptFrameworkGetManyData, ThrowOnError>,
+  ): RequestResult<
+    PromptFrameworkGetManyResponses,
+    PromptFrameworkGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      PromptFrameworkGetManyResponses,
+      PromptFrameworkGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/frameworks",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Framework
+   */
+  public promptFrameworkGetOne<ThrowOnError extends boolean = false>(
+    options: Options<PromptFrameworkGetOneData, ThrowOnError>,
+  ): RequestResult<
+    PromptFrameworkGetOneResponses,
+    PromptFrameworkGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      PromptFrameworkGetOneResponses,
+      PromptFrameworkGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/frameworks/{framework_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * List Templates
+   */
+  public promptTemplateGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<PromptTemplateGetManyData, ThrowOnError>,
+  ): RequestResult<
+    PromptTemplateGetManyResponses,
+    PromptTemplateGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      PromptTemplateGetManyResponses,
+      PromptTemplateGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/",
+      ...options,
+    });
+  }
+
+  /**
+   * Create
+   */
+  public promptTemplateCreate<ThrowOnError extends boolean = false>(
+    options: Options<PromptTemplateCreateData, ThrowOnError>,
+  ): RequestResult<
+    PromptTemplateCreateResponses,
+    PromptTemplateCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      PromptTemplateCreateResponses,
+      PromptTemplateCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete
+   */
+  public promptTemplateDelete<ThrowOnError extends boolean = false>(
+    options: Options<PromptTemplateDeleteData, ThrowOnError>,
+  ): RequestResult<
+    PromptTemplateDeleteResponses,
+    PromptTemplateDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      PromptTemplateDeleteResponses,
+      PromptTemplateDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/{template_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get One
+   */
+  public promptTemplateGetOne<ThrowOnError extends boolean = false>(
+    options: Options<PromptTemplateGetOneData, ThrowOnError>,
+  ): RequestResult<
+    PromptTemplateGetOneResponses,
+    PromptTemplateGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      PromptTemplateGetOneResponses,
+      PromptTemplateGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/{template_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update
+   */
+  public promptTemplateUpdate<ThrowOnError extends boolean = false>(
+    options: Options<PromptTemplateUpdateData, ThrowOnError>,
+  ): RequestResult<
+    PromptTemplateUpdateResponses,
+    PromptTemplateUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      PromptTemplateUpdateResponses,
+      PromptTemplateUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/{template_id}",
       ...options,
       headers: {
         "Content-Type": "application/json",

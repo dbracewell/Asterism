@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. EPIC-49 (ChatGPT plan connection) and EPIC-50
+**Active story: US-51.1** (branch `feature/us-51.1-prompt-templates`). EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -26,15 +26,15 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. Nothing here has started.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. US-51.1 is in progress.
 
 ### [EPIC-51: Prompt frameworks and templates](docs/epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md)
 
-- [ ] US-51.1: Template document and framework catalog
-  - [ ] Write an ADR for the template document format, placeholder grammar and catalog versioning.
-  - [ ] Implement the domain model, queries, service and router, and regenerate the client.
-  - [ ] Ship the initial framework catalog (RTF, CO-STAR, CRAFT, few-shot, step-by-step).
-  - [ ] Test parsing limits, owner isolation, revision conflicts and catalog immutability.
+- [~] US-51.1: Template document and framework catalog (implemented; awaiting confirmation)
+  - [x] Write an ADR for the template document format, placeholder grammar and catalog versioning.
+  - [x] Implement the domain model, queries, service and router, and regenerate the client.
+  - [x] Ship the initial framework catalog (RTF, CO-STAR, CRAFT, few-shot, step-by-step).
+  - [x] Test parsing limits, owner isolation, revision conflicts and catalog immutability.
 - [ ] US-51.2: Template builder with live preview
   - [ ] Build the schema-driven form and preview with field/segment linking.
   - [ ] Add composer insertion and responsive layout; add unit and Playwright tests.

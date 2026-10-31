@@ -249,6 +249,27 @@ import type {
   ProjectUpdateData,
   ProjectUpdateError,
   ProjectUpdateResponse,
+  PromptFrameworkGetManyData,
+  PromptFrameworkGetManyError,
+  PromptFrameworkGetManyResponse,
+  PromptFrameworkGetOneData,
+  PromptFrameworkGetOneError,
+  PromptFrameworkGetOneResponse,
+  PromptTemplateCreateData,
+  PromptTemplateCreateError,
+  PromptTemplateCreateResponse,
+  PromptTemplateDeleteData,
+  PromptTemplateDeleteError,
+  PromptTemplateDeleteResponse,
+  PromptTemplateGetManyData,
+  PromptTemplateGetManyError,
+  PromptTemplateGetManyResponse,
+  PromptTemplateGetOneData,
+  PromptTemplateGetOneError,
+  PromptTemplateGetOneResponse,
+  PromptTemplateUpdateData,
+  PromptTemplateUpdateError,
+  PromptTemplateUpdateResponse,
   SkillCreateData,
   SkillCreateError,
   SkillCreateResponse,
@@ -2726,6 +2747,251 @@ export const skillUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().skillUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const promptFrameworkGetManyQueryKey = (
+  options?: Options<PromptFrameworkGetManyData>,
+) => createQueryKey("promptFrameworkGetMany", options);
+
+/**
+ * List Frameworks
+ */
+export const promptFrameworkGetManyOptions = (
+  options?: Options<PromptFrameworkGetManyData>,
+) =>
+  queryOptions<
+    PromptFrameworkGetManyResponse,
+    PromptFrameworkGetManyError,
+    PromptFrameworkGetManyResponse,
+    ReturnType<typeof promptFrameworkGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().promptFrameworkGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: promptFrameworkGetManyQueryKey(options),
+  });
+
+export const promptFrameworkGetOneQueryKey = (
+  options: Options<PromptFrameworkGetOneData>,
+) => createQueryKey("promptFrameworkGetOne", options);
+
+/**
+ * Get Framework
+ */
+export const promptFrameworkGetOneOptions = (
+  options: Options<PromptFrameworkGetOneData>,
+) =>
+  queryOptions<
+    PromptFrameworkGetOneResponse,
+    PromptFrameworkGetOneError,
+    PromptFrameworkGetOneResponse,
+    ReturnType<typeof promptFrameworkGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().promptFrameworkGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: promptFrameworkGetOneQueryKey(options),
+  });
+
+export const promptTemplateGetManyQueryKey = (
+  options?: Options<PromptTemplateGetManyData>,
+) => createQueryKey("promptTemplateGetMany", options);
+
+/**
+ * List Templates
+ */
+export const promptTemplateGetManyOptions = (
+  options?: Options<PromptTemplateGetManyData>,
+) =>
+  queryOptions<
+    PromptTemplateGetManyResponse,
+    PromptTemplateGetManyError,
+    PromptTemplateGetManyResponse,
+    ReturnType<typeof promptTemplateGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().promptTemplateGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: promptTemplateGetManyQueryKey(options),
+  });
+
+export const promptTemplateGetManyInfiniteQueryKey = (
+  options?: Options<PromptTemplateGetManyData>,
+): QueryKey<Options<PromptTemplateGetManyData>> =>
+  createQueryKey("promptTemplateGetMany", options, true);
+
+/**
+ * List Templates
+ */
+export const promptTemplateGetManyInfiniteOptions = (
+  options?: Options<PromptTemplateGetManyData>,
+) =>
+  infiniteQueryOptions<
+    PromptTemplateGetManyResponse,
+    PromptTemplateGetManyError,
+    InfiniteData<PromptTemplateGetManyResponse>,
+    QueryKey<Options<PromptTemplateGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<PromptTemplateGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<PromptTemplateGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry
+          .get()
+          .promptTemplateGetMany({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true,
+          });
+        return data;
+      },
+      queryKey: promptTemplateGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create
+ */
+export const promptTemplateCreateMutation = (
+  options?: Partial<Options<PromptTemplateCreateData>>,
+): UseMutationOptions<
+  PromptTemplateCreateResponse,
+  PromptTemplateCreateError,
+  Options<PromptTemplateCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PromptTemplateCreateResponse,
+    PromptTemplateCreateError,
+    Options<PromptTemplateCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().promptTemplateCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete
+ */
+export const promptTemplateDeleteMutation = (
+  options?: Partial<Options<PromptTemplateDeleteData>>,
+): UseMutationOptions<
+  PromptTemplateDeleteResponse,
+  PromptTemplateDeleteError,
+  Options<PromptTemplateDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PromptTemplateDeleteResponse,
+    PromptTemplateDeleteError,
+    Options<PromptTemplateDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().promptTemplateDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const promptTemplateGetOneQueryKey = (
+  options: Options<PromptTemplateGetOneData>,
+) => createQueryKey("promptTemplateGetOne", options);
+
+/**
+ * Get One
+ */
+export const promptTemplateGetOneOptions = (
+  options: Options<PromptTemplateGetOneData>,
+) =>
+  queryOptions<
+    PromptTemplateGetOneResponse,
+    PromptTemplateGetOneError,
+    PromptTemplateGetOneResponse,
+    ReturnType<typeof promptTemplateGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().promptTemplateGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: promptTemplateGetOneQueryKey(options),
+  });
+
+/**
+ * Update
+ */
+export const promptTemplateUpdateMutation = (
+  options?: Partial<Options<PromptTemplateUpdateData>>,
+): UseMutationOptions<
+  PromptTemplateUpdateResponse,
+  PromptTemplateUpdateError,
+  Options<PromptTemplateUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PromptTemplateUpdateResponse,
+    PromptTemplateUpdateError,
+    Options<PromptTemplateUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().promptTemplateUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,
