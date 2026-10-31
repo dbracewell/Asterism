@@ -82,8 +82,8 @@ Acceptance: Settings → Templates lists bundled frameworks and the user's own
 templates. Users can duplicate a framework, edit fields and body with a preview,
 and delete with a revision check.
 
-- [ ] Build the library list, duplicate action and editor with preview.
-- [ ] Test editing, conflicts and accessibility (axe, keyboard).
+- [x] Build the library list, duplicate action and editor with preview.
+- [x] Test editing, conflicts and accessibility (axe, keyboard).
 
 ## US-51.5: Scaffolding levels
 

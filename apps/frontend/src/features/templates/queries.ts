@@ -2,6 +2,7 @@ import { client } from "@/lib/api";
 import {
   promptFrameworkGetManyOptions,
   promptTemplateGetManyOptions,
+  promptTemplateGetManyQueryKey,
   promptTemplateGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { queryOptions } from "@tanstack/react-query";
@@ -29,6 +30,32 @@ export function templateListOptions(owner: string) {
     retry: false,
   });
 }
+
+/** One searchable page of the owner's templates for the settings library. */
+export function templateLibraryOptions(
+  owner: string,
+  query: string,
+  page: number,
+) {
+  const options = promptTemplateGetManyOptions({
+    client,
+    query: { query, page, page_size: LIBRARY_PAGE_SIZE },
+  });
+  const ownerKey = { ...options.queryKey[0], owner };
+  return queryOptions({
+    ...options,
+    queryKey: [ownerKey],
+    staleTime: 0,
+    retry: false,
+  });
+}
+
+export const LIBRARY_PAGE_SIZE = 10;
+
+/** Every owned-template list (library pages and the composer picker). */
+export const templateMutationInvalidates = () => [
+  promptTemplateGetManyQueryKey(),
+];
 
 export function templateDetailOptions(owner: string, id: string | null) {
   const options = promptTemplateGetOneOptions({

@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. US-51.1, US-51.2 and US-51.3 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+US-51.4 is active on `feature/us-51.4-template-library-editor`. US-51.1, US-51.2 and US-51.3 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -41,9 +41,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-51.3: Composer integration and provenance
   - [x] Extend slash discovery and message provenance; regenerate the client.
   - [x] Test label rendering, missing-template history and branch regeneration.
-- [ ] US-51.4: Template library and editor
-  - [ ] Build the library list, duplicate action and editor with preview.
-  - [ ] Test editing, conflicts and accessibility (axe, keyboard).
+- [ ] US-51.4: Template library and editor (in progress; implementation complete, awaiting confirmation)
+  - [x] Build the library list, duplicate action and editor with preview.
+  - [x] Test editing, conflicts and accessibility (axe, keyboard).
 - [ ] US-51.5: Scaffolding levels
   - [ ] Add level definitions to the template schema and the builder UI.
   - [ ] Test that each level renders the right fields and that provenance records the level.

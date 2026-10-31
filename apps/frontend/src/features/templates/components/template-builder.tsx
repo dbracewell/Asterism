@@ -37,8 +37,11 @@ const MAX_EXAMPLES = 10;
 
 type Props = {
   template: TemplateDocument;
-  /** Receives the assembled prompt; the caller decides where it goes. */
-  onUse: (prompt: string) => void;
+  /**
+   * Receives the assembled prompt; the caller decides where it goes. Without
+   * it the builder is a try-out preview with no primary action.
+   */
+  onUse?: (prompt: string) => void;
   /** Rendered before the primary action, e.g. a Back button. */
   secondaryAction?: React.ReactNode;
 };
@@ -71,7 +74,7 @@ export function TemplateBuilder({ template, onUse, secondaryAction }: Props) {
         ?.focus();
       return;
     }
-    onUse(assemble(template, values));
+    onUse?.(assemble(template, values));
   };
 
   return (
@@ -149,9 +152,11 @@ export function TemplateBuilder({ template, onUse, secondaryAction }: Props) {
           </p>
         )}
         {secondaryAction}
-        <Button type="button" onClick={use}>
-          Use prompt
-        </Button>
+        {onUse && (
+          <Button type="button" onClick={use}>
+            Use prompt
+          </Button>
+        )}
       </div>
     </div>
   );
