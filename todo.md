@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-51.4 is active on `feature/us-51.4-template-library-editor`. US-51.1, US-51.2 and US-51.3 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active. US-51.1 through US-51.4 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -26,7 +26,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. US-51.1 and US-51.2 are complete; EPIC-51 continues.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. US-51.1 through US-51.4 are complete; EPIC-51 continues.
 
 ### [EPIC-51: Prompt frameworks and templates](docs/epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md)
 
@@ -41,7 +41,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-51.3: Composer integration and provenance
   - [x] Extend slash discovery and message provenance; regenerate the client.
   - [x] Test label rendering, missing-template history and branch regeneration.
-- [ ] US-51.4: Template library and editor (in progress; implementation complete, awaiting confirmation)
+- [x] US-51.4: Template library and editor
   - [x] Build the library list, duplicate action and editor with preview.
   - [x] Test editing, conflicts and accessibility (axe, keyboard).
 - [ ] US-51.5: Scaffolding levels

@@ -1,6 +1,6 @@
 # EPIC-51: Prompt frameworks and templates
 
-Status: in progress (US-51.1, US-51.2 and US-51.3 complete). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-51.1 through US-51.4 complete). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
