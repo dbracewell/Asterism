@@ -10,8 +10,8 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-49.1 and US-49.2 are confirmed complete and merged; US-49.3 (plan models in the
-pickers) is active on `feature/us-49.3-plan-models`. EPIC-47 (quality baseline cleanup) and EPIC-48
+US-49.1 through US-49.3 are confirmed complete and merged; US-49.4 (plan usage
+experience and limits) is active on `feature/us-49.4-plan-usage`. EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
 limits are recorded in the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md).
 
@@ -38,7 +38,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Implement serialized refresh with terminal-error handling; test ownership isolation, rotation and policy changes.
   - [x] Write the ADR (connection ownership, loopback limit, no fallback, preview constraints).
 
-- [ ] US-49.3: Plan models in the pickers (implemented; awaiting confirmation)
+- [x] US-49.3: Plan models in the pickers
   - [x] Sync owner-scoped plan models and expose them through the chat model choices.
   - [x] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
   - [x] Test owner isolation, provenance and availability changes.
