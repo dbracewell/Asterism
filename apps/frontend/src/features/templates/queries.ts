@@ -1,5 +1,6 @@
 import { client } from "@/lib/api";
 import {
+  promptCoachStatusGetOptions,
   promptFrameworkGetManyOptions,
   promptTemplateGetManyOptions,
   promptTemplateGetManyQueryKey,
@@ -68,6 +69,18 @@ export function templateDetailOptions(owner: string, id: string | null) {
     queryKey: [ownerKey],
     enabled: id !== null,
     staleTime: 0,
+    retry: false,
+  });
+}
+
+/** Whether the owner's prompt coach can run now (opt-in and a usable model). */
+export function coachStatusOptions(owner: string) {
+  const options = promptCoachStatusGetOptions({ client });
+  const ownerKey = { ...options.queryKey[0], owner };
+  return queryOptions({
+    ...options,
+    queryKey: [ownerKey],
+    staleTime: 60 * 1000,
     retry: false,
   });
 }

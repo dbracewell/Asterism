@@ -194,6 +194,8 @@ class UserSettings(BaseModel):
     main_agent: MainAgentConfiguration
     sub_agents: dict[uuid.UUID, SubAgentDefinition] = Field(default_factory=dict)
     show_thinking: bool = Field(default=True)
+    # US-51.6: the composer's "Review prompt" action is opt-in.
+    prompt_coach_enabled: bool = Field(default=False)
 
 
 class ApplicationSettings(BaseModel):

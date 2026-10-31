@@ -222,6 +222,20 @@ export const zChatUpdateRequest = z.object({
 });
 
 /**
+ * CoachCriterion
+ *
+ * The rubric a draft is reviewed against, in display order.
+ */
+export const zCoachCriterion = z.enum([
+  "goal",
+  "audience",
+  "context",
+  "constraints",
+  "output_format",
+  "examples",
+]);
+
+/**
  * ComponentProviderParameters
  *
  * A named component provider (e.g. web search) plus its string parameters.
@@ -859,6 +873,27 @@ export const zProjectUpdate = z.object({
 });
 
 /**
+ * PromptCoachStatus
+ *
+ * Whether the caller can use the coach right now.
+ *
+ * ``enabled`` is the caller's own opt-in setting; ``available`` is whether a
+ * model can run reviews (the draft model, else the caller's own plan).
+ */
+export const zPromptCoachStatus = z.object({
+  enabled: z.boolean(),
+  available: z.boolean(),
+});
+
+/**
+ * PromptReviewRequest
+ */
+export const zPromptReviewRequest = z.object({
+  prompt: z.string().min(1).max(16000),
+  model_id: z.uuid().nullish(),
+});
+
+/**
  * PromptSource
  */
 export const zPromptSource = z.object({
@@ -881,6 +916,29 @@ export const zPromptSource = z.object({
 export const zPromptProvenance = z.object({
   composer_revision: z.int().optional().default(1),
   sources: z.array(zPromptSource).optional().default([]),
+});
+
+/**
+ * PromptSuggestion
+ *
+ * One checklist item and the edit that applies it.
+ *
+ * With ``find`` set, applying replaces that exact text of the reviewed draft
+ * with ``text``; otherwise ``text`` is appended as a new paragraph.
+ */
+export const zPromptSuggestion = z.object({
+  id: z.string(),
+  criterion: zCoachCriterion,
+  message: z.string().max(300),
+  find: z.string().max(16000).nullish(),
+  text: z.string().max(2000),
+});
+
+/**
+ * PromptReview
+ */
+export const zPromptReview = z.object({
+  suggestions: z.array(zPromptSuggestion).max(6),
 });
 
 /**
@@ -1859,6 +1917,7 @@ export const zUserSettings = z.object({
   main_agent: zMainAgentConfiguration,
   sub_agents: z.record(z.string(), zSubAgentDefinition).optional(),
   show_thinking: z.boolean().optional().default(true),
+  prompt_coach_enabled: z.boolean().optional().default(false),
 });
 
 /**
@@ -2548,6 +2607,18 @@ export const zPromptFrameworkGetOnePath = z.object({
  * Successful Response
  */
 export const zPromptFrameworkGetOneResponse = zPromptFramework;
+
+/**
+ * Successful Response
+ */
+export const zPromptCoachStatusGetResponse = zPromptCoachStatus;
+
+export const zPromptCoachReviewBody = zPromptReviewRequest;
+
+/**
+ * Successful Response
+ */
+export const zPromptCoachReviewResponse = zPromptReview;
 
 export const zPromptTemplateGetManyQuery = z.object({
   query: z.string().max(200).optional().default(""),

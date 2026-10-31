@@ -235,5 +235,7 @@ CRUD, and a bundled read-only framework catalog (RTF, CO-STAR, CRAFT, few-shot,
 step-by-step) at `/prompt-templates/frameworks`. US-51.5 adds conditional
 `{{#key}}…{{/key}}` sections, guided-level field examples and a freeform
 checklist to the document, and makes the scaffolding `level` a required part of
-send-time template provenance. Template text grants no capabilities. See the [prompt templates contract](../../docs/architecture/prompt-templates.md)
+send-time template provenance. US-51.6 adds the opt-in, ephemeral prompt coach
+(`/prompt-templates/coach` and `/prompt-templates/coach/review`), which runs on
+the chat-title model. Template text grants no capabilities. See the [prompt templates contract](../../docs/architecture/prompt-templates.md)
 and [ADR-0026](../../docs/adr/0026-prompt-template-documents-and-framework-catalog.md).

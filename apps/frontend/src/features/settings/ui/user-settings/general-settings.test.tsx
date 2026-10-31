@@ -44,6 +44,19 @@ describe("General settings labels", () => {
     expect(updateSetting).toHaveBeenCalledWith("show_thinking", true, false);
   });
 
+  it("offers the prompt coach as an opt-in, off by default", () => {
+    render(<GeneralSettings />, { wrapper: TooltipProvider });
+    const toggle = screen.getByRole("checkbox", { name: "Prompt Coach" });
+    expect(toggle).not.toBeChecked();
+    expect(toggle).toHaveAccessibleDescription(/Reviews are not saved/);
+    fireEvent.click(toggle);
+    expect(updateSetting).toHaveBeenCalledWith(
+      "prompt_coach_enabled",
+      true,
+      false,
+    );
+  });
+
   it("saves and applies a theme picked from the gallery", () => {
     render(<GeneralSettings />, { wrapper: TooltipProvider });
     fireEvent.click(screen.getByRole("radio", { name: "Dracula" }));

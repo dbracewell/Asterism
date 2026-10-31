@@ -113,6 +113,9 @@ export default function AppPage() {
             projectId={projectId}
             placeholder="Ask anything…"
             disabled={sendBlocked}
+            promptCoach={
+              user.settings.prompt_coach_enabled ? { modelId } : undefined
+            }
             requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${searchParams.get("project_id") ?? "general"}`}
             modelSelector={
               <>

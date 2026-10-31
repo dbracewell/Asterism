@@ -249,6 +249,12 @@ import type {
   ProjectUpdateData,
   ProjectUpdateError,
   ProjectUpdateResponse,
+  PromptCoachReviewData,
+  PromptCoachReviewError,
+  PromptCoachReviewResponse,
+  PromptCoachStatusGetData,
+  PromptCoachStatusGetError,
+  PromptCoachStatusGetResponse,
   PromptFrameworkGetManyData,
   PromptFrameworkGetManyError,
   PromptFrameworkGetManyResponse,
@@ -2812,6 +2818,61 @@ export const promptFrameworkGetOneOptions = (
     },
     queryKey: promptFrameworkGetOneQueryKey(options),
   });
+
+export const promptCoachStatusGetQueryKey = (
+  options?: Options<PromptCoachStatusGetData>,
+) => createQueryKey("promptCoachStatusGet", options);
+
+/**
+ * Coach Status
+ */
+export const promptCoachStatusGetOptions = (
+  options?: Options<PromptCoachStatusGetData>,
+) =>
+  queryOptions<
+    PromptCoachStatusGetResponse,
+    PromptCoachStatusGetError,
+    PromptCoachStatusGetResponse,
+    ReturnType<typeof promptCoachStatusGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().promptCoachStatusGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: promptCoachStatusGetQueryKey(options),
+  });
+
+/**
+ * Coach Review
+ */
+export const promptCoachReviewMutation = (
+  options?: Partial<Options<PromptCoachReviewData>>,
+): UseMutationOptions<
+  PromptCoachReviewResponse,
+  PromptCoachReviewError,
+  Options<PromptCoachReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PromptCoachReviewResponse,
+    PromptCoachReviewError,
+    Options<PromptCoachReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().promptCoachReview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const promptTemplateGetManyQueryKey = (
   options?: Options<PromptTemplateGetManyData>,

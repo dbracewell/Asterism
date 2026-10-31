@@ -116,7 +116,8 @@ current access token through `ChatGPTPlanClient`, which pauses the plan on a
 usage limit, retries temporary unavailability with bounded backoff, refreshes
 once on a rejected session, and reports `chatgpt_plan_<reason>` codes for the
 recovery UI. Without a usable draft model, chat titles run on the chat owner's
-own available plan model (`chat/title_model.py`). See
+own available plan model (`chat/title_model.py`); prompt-coach reviews (US-51.6)
+use the same resolution. See
 [ADR-0025](../adr/0025-chatgpt-plan-connection.md).
 
 Main-agent settings have no model binding. Chat selection and per-execution model

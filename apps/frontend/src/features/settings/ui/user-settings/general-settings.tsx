@@ -78,6 +78,29 @@ export const GeneralSettings = () => {
             availableModels={Object.values(userSettings.models ?? {})}
           />
         </div>
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="general-prompt-coach"
+            aria-describedby="general-prompt-coach-description"
+            checked={user.settings.prompt_coach_enabled ?? false}
+            disabled={isUpdatingUserSetting}
+            onCheckedChange={(checked) => {
+              updateSetting("prompt_coach_enabled", !!checked, false);
+            }}
+          />
+          <div className="flex min-w-0 flex-col gap-1">
+            <Label htmlFor="general-prompt-coach">Prompt Coach</Label>
+            <p
+              id="general-prompt-coach-description"
+              className="text-muted-foreground text-xs"
+            >
+              Adds a &ldquo;Review prompt&rdquo; button to the message box. It
+              checks your draft for a clear goal, audience, context,
+              constraints, output format and examples, and suggests edits you
+              can apply. Reviews are not saved, and nothing is sent to the chat.
+            </p>
+          </div>
+        </div>
       </SettingsSection>
     </SettingsPane>
   );

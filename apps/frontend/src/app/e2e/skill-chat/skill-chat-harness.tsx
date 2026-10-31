@@ -23,6 +23,7 @@ export function SkillChatHarness() {
   const [owner, setOwner] = useState("alice");
   const [states, setStates] = useState<Record<string, ActiveSkillState>>({});
   const [last, setLast] = useState("");
+  const [coach, setCoach] = useState(false);
   const state = states[`${owner}:${branch}`] ?? { revision: 0, skills: [] };
   return (
     <QueryClientProvider client={cache}>
@@ -35,6 +36,9 @@ export function SkillChatHarness() {
               onClick={() => setOwner(owner === "alice" ? "bob" : "alice")}
             >
               Switch owner
+            </Button>
+            <Button onClick={() => setCoach(!coach)}>
+              {coach ? "Turn coach off" : "Turn coach on"}
             </Button>
           </div>
           <p>
@@ -50,6 +54,7 @@ export function SkillChatHarness() {
                 skillOwner={owner}
                 skillScope={`${branch}:${state.revision ?? 0}`}
                 activeSkills={state}
+                promptCoach={coach ? { modelId: null } : undefined}
                 onSubmit={async (data) => {
                   const response = await fetch("/api/py/test-skill-send", {
                     method: "POST",

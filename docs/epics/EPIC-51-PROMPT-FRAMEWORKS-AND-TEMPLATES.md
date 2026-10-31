@@ -1,6 +1,6 @@
 # EPIC-51: Prompt frameworks and templates
 
-Status: in progress (US-51.1 through US-51.5 complete). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-51.1 through US-51.6 complete). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -114,9 +114,9 @@ titles (EPIC-50); with no usable model, the action is unavailable. Critiques are
 ephemeral and not stored. The feature is off by default and enabled in user
 settings.
 
-- [ ] Add the coach endpoint and rubric prompt, reusing title-model resolution.
-- [ ] Build the suggestion checklist and apply actions in the composer.
-- [ ] Test model resolution, unavailable state, ephemerality and the UI flow.
+- [x] Add the coach endpoint and rubric prompt, reusing title-model resolution.
+- [x] Build the suggestion checklist and apply actions in the composer.
+- [x] Test model resolution, unavailable state, ephemerality and the UI flow.
 
 ## US-51.7: Before/after comparison
 
