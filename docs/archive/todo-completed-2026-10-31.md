@@ -28,3 +28,13 @@ live ChatGPT account was used. See ADR-0025.
   - [x] Add the plan label, Manage usage link and first-use notice.
   - [x] Map usage-limit, unavailable and revoked errors to their recovery UI.
   - [x] Add unit and isolated browser tests with a local OAuth and Responses double.
+
+The user confirmed US-50.1 on 2026-10-31. EPIC-50 (US-50.1) is complete:
+without a usable draft model, chat titles run on the owner's own ChatGPT plan.
+
+### [EPIC-50: ChatGPT plan chat titles](../epics/EPIC-50-CHATGPT-PLAN-CHAT-TITLES.md)
+
+- [x] US-50.1: Plan fallback for chat titles
+  - [x] Resolve the title model (draft first, then the owner's plan) in the chat domain.
+  - [x] Test draft precedence, plan fallback and selection, other-user isolation, unavailable plans and the text fallback.
+  - [x] Document the fallback in ADR-0025 and the provider docs.

@@ -1,6 +1,6 @@
 # EPIC-50: ChatGPT plan chat titles
 
-Status: in progress (US-50.1 active). Source: user request (2026-10-31).
+Status: complete (2026-10-31); archived in docs/archive/todo-completed-2026-10-31.md. Source: user request (2026-10-31).
 
 ## Objective
 
