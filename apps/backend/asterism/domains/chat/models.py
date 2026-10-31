@@ -23,6 +23,7 @@ from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
+from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateProvenance
 
 from .execution_models import ChatExecutionModel
 from .schemas import ChatModelChoice, DelegationRecord, MessageExecution, MessageFileReference, MessageStatus
@@ -130,6 +131,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
     accepted_persona: Mapped[PersonaSnapshot | None] = mapped_column(
         jsonb_type(TypeAdapter(PersonaSnapshot)),
+        nullable=True,
+    )
+    # Label-only record of the template that built this prompt; never inherited.
+    accepted_template: Mapped[TemplateProvenance | None] = mapped_column(
+        jsonb_type(TypeAdapter(TemplateProvenance)),
         nullable=True,
     )
     status: Mapped[MessageStatus] = mapped_column(
@@ -255,6 +261,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     def skills(self) -> list[SkillIdentity]:
         execution = self.execution
         return execution.skills if execution is not None else [item.identity for item in self.accepted_skills.snapshots]
+
+    @property
+    def template(self) -> TemplateLabel | None:
+        accepted = self.accepted_template
+        return TemplateLabel(**accepted.model_dump()) if accepted is not None else None
 
     @property
     def execution(self) -> MessageExecution | None:

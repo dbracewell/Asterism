@@ -91,13 +91,13 @@ work while still making Admin Settings feel immediate when I select it.
 Measurements compare the `main` baseline with this branch in authenticated
 Next.js development sessions, excluding shared shell/auth/folder/chat requests:
 
-| Scenario | Baseline | Branch |
-| --- | ---: | ---: |
-| Cold direct Admin Settings application-settings reads | 1 | 1 |
-| Nested admin `TabsContent` instances rendered | 9 | 1 |
-| Cold User Settings admin application-settings reads | 1 | 0 |
-| Completed hover prefetch reads | n/a | 1 |
-| Additional application-settings reads on navigation after completed prefetch | n/a | 0 |
+| Scenario                                                                     | Baseline | Branch |
+| ---------------------------------------------------------------------------- | -------: | -----: |
+| Cold direct Admin Settings application-settings reads                        |        1 |      1 |
+| Nested admin `TabsContent` instances rendered                                |        9 |      1 |
+| Cold User Settings admin application-settings reads                          |        1 |      0 |
+| Completed hover prefetch reads                                               |      n/a |      1 |
+| Additional application-settings reads on navigation after completed prefetch |      n/a |      0 |
 
 The Admin trigger prefetches only the default pane's current aggregate read on
 pointer hover or keyboard focus. A 30-second freshness window lets immediate
@@ -132,11 +132,11 @@ screen.
 Production-build browser captures compare the post-US-19.2 baseline with this
 story on a cold default Admin Settings visit:
 
-| Metric | Baseline | Code-split |
-| --- | ---: | ---: |
-| Initial JavaScript chunks | 22 | 25 |
-| Initial JavaScript transfer (uncompressed build bytes) | 1,431,483 | 1,378,142 |
-| Application-settings reads | 1 | 1 |
+| Metric                                                 |  Baseline | Code-split |
+| ------------------------------------------------------ | --------: | ---------: |
+| Initial JavaScript chunks                              |        22 |         25 |
+| Initial JavaScript transfer (uncompressed build bytes) | 1,431,483 |  1,378,142 |
+| Application-settings reads                             |         1 |          1 |
 
 Code splitting reduced initial JavaScript by 53,341 bytes (3.7%) despite the
 expected increase in chunk count. The Theme Editor's `color` and
@@ -186,13 +186,13 @@ inconsistent writes.
 
 **Contract inventory and migration plan**
 
-| Consumer | Aggregate fields used | Replacement |
-| --- | --- | --- |
-| Providers pane | `llm_providers`, `draft_model_id` | `GET /settings/app/providers` → `ProviderSettings` |
-| Image Captioning pane | `llm_providers` for active discovered vision models | Provider settings read plus the existing captioning configuration/status contracts |
-| Tools pane | `active_tools`, `web_search_provider`, `image_search_provider` | `GET /settings/app/tools` → `ToolSettings` |
-| Admin hover/focus prefetch | Entire aggregate | Prefetch provider settings only |
-| Provider E2E harness | Entire aggregate | Provider settings read |
+| Consumer                   | Aggregate fields used                                          | Replacement                                                                        |
+| -------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Providers pane             | `llm_providers`, `draft_model_id`                              | `GET /settings/app/providers` → `ProviderSettings`                                 |
+| Image Captioning pane      | `llm_providers` for active discovered vision models            | Provider settings read plus the existing captioning configuration/status contracts |
+| Tools pane                 | `active_tools`, `web_search_provider`, `image_search_provider` | `GET /settings/app/tools` → `ToolSettings`                                         |
+| Admin hover/focus prefetch | Entire aggregate                                               | Prefetch provider settings only                                                    |
+| Provider E2E harness       | Entire aggregate                                               | Provider settings read                                                             |
 
 Both focused endpoints remain admin-only through `AdminUserDep`. Provider reads
 select providers with an explicit `selectinload(ProviderModel.models)` and read

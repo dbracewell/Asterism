@@ -7,11 +7,13 @@ Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-cont
 Estimated effort: **8–12 engineering person-days**, including story-level verification.
 
 ## User stories
+
 ### US-29.1 — One main agent configuration per user
 
 As a user, I want one main agent whose behavior I configure in user settings.
 
 **Estimate:** 2–3 person-days. **Dependencies:** EPIC-25.
+
 - [x] US-29.1-T1: Replace multiple selectable main-agent profiles/default-agent selection with exactly one user-owned main-agent configuration; provision it with the user and enforce uniqueness in the DB and existence in service lifecycle paths. Main-agent configuration has no bound model.
 - [x] US-29.1-T2: Expose owner-scoped read/update of main-agent instructions, ordinary capabilities, loop limits, and supported generation defaults through user settings; prevent deleting the sole main-agent configuration. Preserve separate user-profile/persona invariants.
 - [x] US-29.1-T3: Keep separately managed, owner-scoped sub-agent definitions with name, description, instructions, capabilities, and one fixed model per definition; permit zero or more without an arbitrary product count limit. Validate model availability and handle model deletion/disablement explicitly without silent replacement.
@@ -49,6 +51,7 @@ pass. No full-repository basedpyright pass is claimed.
 As a user, I want to choose the model used for each chat while keeping my main-agent behavior.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-29.1.
+
 - [x] US-29.2-T1: Define the available chat-model API from the existing provider/model catalog with enabled/authorized status, display identity, and relevant capabilities; return a clear state when no model is available.
 - [x] US-29.2-T2: Replace chat main-agent selection with persisted model selection, including draft/new chats and an explicit initialization policy; validate requested models server-side. Model changes apply on the next turn; reject changes during an active run.
 - [x] US-29.2-T3: Pass the selected model separately from main-agent configuration through runtime construction, token/context estimates, streaming, attachment/vision handling, background/resumed jobs, and regeneration. Snapshot the actual model/provider and configuration revision per turn; distinguish replay of a recorded turn from regeneration using the current selection.
@@ -91,6 +94,7 @@ User confirmed completion on 2026-10-15 and authorized commit and merge into `ma
 As a user, I want to choose which of my sub-agents may participate in a project.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-29.1.
+
 - [x] US-29.3-T1: Add unique, owner-consistent project/sub-agent memberships with database enforcement and atomic owner-scoped list/select/deselect APIs; new projects start with no selected sub-agents. Reject main-agent and foreign IDs.
 - [x] US-29.3-T2: Derive eligible delegation targets only from the active project's selection; General chats never use sub-agents, even if the user has definitions. A model-supplied target must be in the current server-derived set.
 - [x] US-29.3-T3: Increment project context revision on selection changes; clean references on sub-agent/project deletion, and cancel/reject affected delegation after deselection or revocation. Moves/deletion change eligible targets with the chat's next context; recheck authorization at invocation.
@@ -135,6 +139,7 @@ No live external-provider verification is claimed. User confirmed completion on
 As a user, I want required orchestration tools to work automatically without manual tool switches.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-29.2 and US-29.3.
+
 - [x] US-29.4-T1: Introduce explicit tool metadata/policy separating user-configurable tools from internal context-managed tools; exclude internal tools from user-facing selectable tool lists and reject attempts to override their state through user settings/chat payloads. Retain admin management, audit traces, and ordinary capability allowlists.
 - [x] US-29.4-T2: Automatically enable delegation for project execution when selected eligible sub-agents exist; omit it for empty selection and General. Expose only eligible target descriptions; preserve fixed sub-agent models and bounded recursion.
 - [x] US-29.4-T3: Automatically enable project-knowledge search when the current project has file memberships, with explicit pending/failed/unavailable extraction behavior; also support authorized General/project chat-local attachment retrieval when that scope has files. Empty file scope disables retrieval and fails closed if directly invoked.

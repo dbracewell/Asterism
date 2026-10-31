@@ -1,6 +1,6 @@
 # EPIC-51: Prompt frameworks and templates
 
-Status: in progress (US-51.1 and US-51.2 complete). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-51.1, US-51.2 and US-51.3 complete). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -69,8 +69,8 @@ message records the template ID, revision and scaffolding level, and shows a
 small "Built with RTF" label. Deleting the template later leaves the label shown
 as unavailable.
 
-- [ ] Extend slash discovery and message provenance; regenerate the client.
-- [ ] Test label rendering, missing-template history and branch regeneration.
+- [x] Extend slash discovery and message provenance; regenerate the client.
+- [x] Test label rendering, missing-template history and branch regeneration.
 
 ## US-51.4: Template library and editor
 

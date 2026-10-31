@@ -54,6 +54,9 @@ async function mock(page: Page) {
   await page.route("**/api/py/prompt-templates/frameworks", (route) =>
     route.fulfill({ json: { version: 1, items: [rtf] } }),
   );
+  await page.route("**/api/py/test-skill-send", (route) =>
+    route.fulfill({ json: { ok: true } }),
+  );
   await page.route("**/api/py/prompt-templates/?*", (route) =>
     route.fulfill({ json: { items: [], total: 0, page: 1, page_size: 100 } }),
   );
@@ -122,3 +125,25 @@ for (const [width, height] of [
     await expect(input).toHaveValue(/a short bulleted list\. Thanks!$/);
   });
 }
+
+test("slash discovery opens a framework and the send records its provenance at 320px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await mock(page);
+  await page.goto("/e2e/skill-chat");
+  const input = page.getByLabel("Message", { exact: true });
+  await input.fill("/rt");
+  await page.getByRole("option", { name: /\/rtf/ }).click();
+  await expect(input).toHaveValue("");
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel(/^Task/).fill("Summarize the chapter.");
+  await dialog.getByRole("button", { name: "Use prompt" }).click();
+  await expect(page.getByText("Built with RTF")).toBeVisible();
+  await page.getByLabel("Send message").click();
+  const payload = page.getByLabel("Last accepted payload");
+  await expect(payload).toContainText(
+    '"template":{"source":"framework","id":"rtf","revision":1,"level":"guided"}',
+  );
+  await expect(page.getByText("Built with RTF")).toBeHidden();
+});

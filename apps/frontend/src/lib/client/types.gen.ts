@@ -656,6 +656,7 @@ export type ChatPersonaUpdate = {
  */
 export type ChatSendRequest = {
   skills?: SkillSelection | null;
+  template?: TemplateUse | null;
   /**
    * Expected Model Revision
    */
@@ -1604,6 +1605,7 @@ export type Message = {
    * Skills
    */
   skills?: Array<SkillIdentity>;
+  template?: TemplateLabel | null;
   execution?: MessageExecution | null;
   /**
    * Id
@@ -1774,6 +1776,7 @@ export type ModelProvenance = {
  */
 export type NewChatRequest = {
   skills?: SkillSelection | null;
+  template?: TemplateUse | null;
   /**
    * Persona Id
    */
@@ -3112,6 +3115,62 @@ export type TemplateDocument = {
    * Body
    */
   body: string;
+};
+
+/**
+ * TemplateLabel
+ *
+ * Provenance plus live availability, computed when history is read.
+ */
+export type TemplateLabel = {
+  /**
+   * Source
+   */
+  source: "framework" | "template";
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Level
+   */
+  level: "guided" | "standard" | "freeform";
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Available
+   */
+  available?: boolean;
+};
+
+/**
+ * TemplateUse
+ *
+ * Client claim attached to a send: which template built this prompt.
+ */
+export type TemplateUse = {
+  /**
+   * Source
+   */
+  source: "framework" | "template";
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Level
+   */
+  level?: "guided" | "standard" | "freeform";
 };
 
 /**

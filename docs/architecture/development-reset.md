@@ -64,8 +64,8 @@ manually to bypass target review.
 | Backend `DB_URL`, default `STORAGE_ROOT/database.db`        | Delete SQLite file and `-wal`, `-shm`, `-journal` sidecars; create fresh model schema and search indexes |
 | Auth `BETTER_AUTH_DB_PATH`, default `STORAGE_ROOT/users.db` | Delete selected database and sidecars; initialize using pinned Better Auth CLI                           |
 | `STORAGE_ROOT/files`                                        | Remove original uploaded bytes, including sharded source keys                                            |
-| `STORAGE_ROOT/knowledge`                                    | Remove derived knowledge/vector storage                                                                 |
-| `STORAGE_ROOT/themes`                                     | Preserve administrator-created themes and bundled-palette overrides                                      |
+| `STORAGE_ROOT/knowledge`                                    | Remove derived knowledge/vector storage                                                                  |
+| `STORAGE_ROOT/themes`                                       | Preserve administrator-created themes and bundled-palette overrides                                      |
 | `STORAGE_ROOT/models/knowledge-clip`                        | Preserve reusable embedding model bundle                                                                 |
 | `STORAGE_ROOT/models/captioning-smolvlm2`                   | Preserve reusable local caption model bundle                                                             |
 

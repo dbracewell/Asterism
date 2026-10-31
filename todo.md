@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. US-51.1 and US-51.2 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active. US-51.1, US-51.2 and US-51.3 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -38,9 +38,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-51.2: Template builder with live preview
   - [x] Build the schema-driven form and preview with field/segment linking.
   - [x] Add composer insertion and responsive layout; add unit and Playwright tests.
-- [ ] US-51.3: Composer integration and provenance
-  - [ ] Extend slash discovery and message provenance; regenerate the client.
-  - [ ] Test label rendering, missing-template history and branch regeneration.
+- [x] US-51.3: Composer integration and provenance
+  - [x] Extend slash discovery and message provenance; regenerate the client.
+  - [x] Test label rendering, missing-template history and branch regeneration.
 - [ ] US-51.4: Template library and editor
   - [ ] Build the library list, duplicate action and editor with preview.
   - [ ] Test editing, conflicts and accessibility (axe, keyboard).

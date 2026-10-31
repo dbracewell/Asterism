@@ -65,6 +65,16 @@ event.listen(
     Base.metadata,
     "after_create",
     DDL("""
+CREATE TRIGGER IF NOT EXISTS accepted_template_immutable
+BEFORE UPDATE OF accepted_template ON messages
+WHEN NEW.accepted_template IS NOT OLD.accepted_template
+BEGIN SELECT RAISE(ABORT, 'Accepted template provenance is immutable'); END
+""").execute_if(dialect="sqlite"),
+)
+event.listen(
+    Base.metadata,
+    "after_create",
+    DDL("""
 CREATE TRIGGER IF NOT EXISTS accepted_skills_immutable
 BEFORE UPDATE OF accepted_skills ON messages
 WHEN NEW.accepted_skills IS NOT OLD.accepted_skills

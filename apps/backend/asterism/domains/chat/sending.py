@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.projects.scope import require_owned_project
+from asterism.domains.prompt_templates.provenance import resolve_template_use
 from asterism.domains.user.models import UserModel
 from asterism.domains.user.personas import require_persona_access
 
@@ -92,11 +93,17 @@ async def persist_user_send(
     from .skills import accept_skills
 
     skills = await accept_skills(user_id=user_id, chat=chat, selection=payload.skills, session=session)
+    template = (
+        await resolve_template_use(user_id=user_id, use=payload.template, session=session)
+        if payload.template is not None
+        else None
+    )
     await bind_message_files(user_id=user_id, chat_id=chat.id, files=files, session=session)
     message = MessageModel(
         user_id=user_id,
         chat_id=chat.id,
         accepted_skills=skills,
+        accepted_template=template,
         accepted_persona=await resolve_persona_snapshot(
             user_id=user_id,
             persona_id=chat.persona_id,

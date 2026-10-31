@@ -13,6 +13,18 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: [{ _id: "eligible", query }],
     queryFn: () => eligible(query.query),
   }),
+  promptFrameworkGetManyOptions: () => ({
+    queryKey: [{ _id: "promptFrameworkGetMany" }],
+    queryFn: async () => ({ version: 1, items: [] }),
+  }),
+  promptTemplateGetManyOptions: () => ({
+    queryKey: [{ _id: "promptTemplateGetMany" }],
+    queryFn: async () => ({ items: [], total: 0, page: 1, page_size: 100 }),
+  }),
+  promptTemplateGetOneOptions: () => ({
+    queryKey: [{ _id: "promptTemplateGetOne" }],
+    queryFn: async () => null,
+  }),
 }));
 vi.mock("../hooks/use-attachment-draft", () => ({
   useAttachmentDraft: () => ({

@@ -1274,33 +1274,6 @@ export const zSkillSelection = z.object({
 });
 
 /**
- * ChatSendRequest
- */
-export const zChatSendRequest = z.object({
-  skills: zSkillSelection.nullish(),
-  expected_model_revision: z.int().gte(1),
-  request_id: z.uuid(),
-  user_prompt: z.string(),
-  parent_message_id: z.uuid().nullable(),
-  draft_id: z.uuid().nullish(),
-  files: z.array(z.uuid()).max(100).optional(),
-});
-
-/**
- * NewChatRequest
- */
-export const zNewChatRequest = z.object({
-  skills: zSkillSelection.nullish(),
-  persona_id: z.uuid().nullish(),
-  model_id: z.uuid(),
-  request_id: z.uuid(),
-  draft_id: z.uuid().nullish(),
-  user_prompt: z.string(),
-  project_id: z.uuid().nullish(),
-  files: z.array(z.uuid()).max(100).optional(),
-});
-
-/**
  * SkillSummary
  */
 export const zSkillSummary = z.object({
@@ -1506,6 +1479,64 @@ export const zPromptTemplateUpdate = z.object({
 });
 
 /**
+ * TemplateLabel
+ *
+ * Provenance plus live availability, computed when history is read.
+ */
+export const zTemplateLabel = z.object({
+  source: z.enum(["framework", "template"]),
+  id: z.string(),
+  revision: z.int(),
+  level: z.enum(["guided", "standard", "freeform"]),
+  name: z.string(),
+  available: z.boolean().optional().default(true),
+});
+
+/**
+ * TemplateUse
+ *
+ * Client claim attached to a send: which template built this prompt.
+ */
+export const zTemplateUse = z.object({
+  source: z.enum(["framework", "template"]),
+  id: z.string().min(1).max(64),
+  revision: z.int().gte(1).lte(2147483647),
+  level: z
+    .enum(["guided", "standard", "freeform"])
+    .optional()
+    .default("guided"),
+});
+
+/**
+ * ChatSendRequest
+ */
+export const zChatSendRequest = z.object({
+  skills: zSkillSelection.nullish(),
+  template: zTemplateUse.nullish(),
+  expected_model_revision: z.int().gte(1),
+  request_id: z.uuid(),
+  user_prompt: z.string(),
+  parent_message_id: z.uuid().nullable(),
+  draft_id: z.uuid().nullish(),
+  files: z.array(z.uuid()).max(100).optional(),
+});
+
+/**
+ * NewChatRequest
+ */
+export const zNewChatRequest = z.object({
+  skills: zSkillSelection.nullish(),
+  template: zTemplateUse.nullish(),
+  persona_id: z.uuid().nullish(),
+  model_id: z.uuid(),
+  request_id: z.uuid(),
+  draft_id: z.uuid().nullish(),
+  user_prompt: z.string(),
+  project_id: z.uuid().nullish(),
+  files: z.array(z.uuid()).max(100).optional(),
+});
+
+/**
  * TextExtractionPayload
  *
  * The text derived from a source file.
@@ -1666,6 +1697,7 @@ export const zMessage = z.object({
   thinking: z.string().nullish(),
   tool_calls: z.array(zToolCall).nullish(),
   skills: z.array(zSkillIdentity).optional(),
+  template: zTemplateLabel.nullish(),
   execution: zMessageExecution.nullish(),
   id: z.uuid(),
   status: zMessageStatus,

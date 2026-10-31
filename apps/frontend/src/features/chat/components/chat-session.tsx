@@ -226,12 +226,14 @@ export const ChatSession = ({
     requestId,
     draftId,
     skills,
+    template,
   }: {
     prompt: string;
     files: string[];
     requestId: string;
     draftId?: string;
     skills?: import("@/lib/client").SkillSelection;
+    template?: import("@/lib/client").TemplateUse;
   }) => {
     if (!session) throw new Error("Chat is not loaded. Please retry.");
     setSocketError(null);
@@ -249,6 +251,7 @@ export const ChatSession = ({
         expected_model_revision: pendingSend.current.modelRevision,
         user_prompt: prompt,
         ...(skills ? { skills } : {}),
+        ...(template ? { template } : {}),
         files,
         ...(draftId ? { draft_id: draftId } : {}),
         parent_message_id: pendingSend.current.parentId,

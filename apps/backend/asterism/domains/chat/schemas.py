@@ -12,6 +12,7 @@ from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.agent.skill_inputs import SkillIdentity
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
+from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateUse
 from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
 
@@ -133,6 +134,7 @@ class NewMessageRequest(BaseModel):
 
 class Message(LLMMessage):
     skills: list[SkillIdentity] = Field(default_factory=list)
+    template: TemplateLabel | None = None
     execution: MessageExecution | None = None
     model_config = ConfigDict(from_attributes=True)
     # Persisted chat content remains plain text; multimodal parts are runtime-only.
@@ -262,6 +264,7 @@ class BulkDeleteChatResponse(BaseModel):
 
 class NewChatRequest(BaseModel):
     skills: SkillSelection | None = None
+    template: TemplateUse | None = None
     persona_id: uuid.UUID | None = None
     model_id: uuid.UUID
     model_config = ConfigDict(extra="forbid")
@@ -320,6 +323,7 @@ class ChatDraft(BaseModel):
 
 class ChatSendRequest(BaseModel):
     skills: SkillSelection | None = None
+    template: TemplateUse | None = None
     expected_model_revision: int = Field(ge=1)
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID

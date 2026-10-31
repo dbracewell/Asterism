@@ -7,11 +7,13 @@ Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-cont
 Estimated effort: **6–9 engineering person-days**, including story-level verification.
 
 ## User stories
+
 ### US-25.1 — Chat project binding and scoped attachments
 
 As a user, I want project chats and General chats to have explicit, isolated file access.
 
 **Estimate:** 2–3 person-days. **Dependencies:** EPIC-24.
+
 - [x] US-25.1-T1: Replace folder_id with nullable project_id in chat contracts and introduce explicit ChatFile membership using stable file IDs.
 - [x] US-25.1-T2: Validate owner consistency at service and DB boundaries; a chat belongs to zero or one project.
 - [x] US-25.1-T3: Persist message-to-file provenance using file IDs and resolve attachments against the active message branch.
@@ -25,6 +27,7 @@ As a user, I want project chats and General chats to have explicit, isolated fil
 As a user, I want to organize and find chats within projects or General.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-25.1.
+
 - [x] US-25.2-T1: Implement create-in-project and move-to-project/General, with owner validation and rejection while a run is active.
 - [x] US-25.2-T2: Apply new project prompt and files from the next turn; preserve chat-local attachments and historical messages. Connect project deletion to chat-service detachment into General in the same relational transaction once project binding exists.
 - [x] US-25.2-T3: Replace folder search and ancestor traversal with project name/description and chat search behind the existing search adapter.
@@ -37,6 +40,7 @@ As a user, I want to organize and find chats within projects or General.
 As a user, I want uploaded files to remain usable when I reopen a chat.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-25.1.
+
 - [x] US-25.3-T1: Bind new uploads and explicitly selected library files to the target chat; support draft uploads before a new chat has an ID.
 - [x] US-25.3-T2: Define send/attach atomicity, failed-send retry, draft cleanup, and attachment removal without deleting source files.
 - [x] US-25.3-T3: Keep file access consistent across reopen, regenerate, branch changes, and deleted-file references.
@@ -47,7 +51,6 @@ As a user, I want uploaded files to remain usable when I reopen a chat.
 ## Shared definition of done
 
 Complete only one story at a time, on its own feature branch. Run relevant lint, type checks, unit/integration tests, generated-client checks, and E2E for changed workflows. Record unrun gates accurately. Update todo/documentation; obtain user completion confirmation before merge. This plan does not authorize resetting the current database during planning.
-
 
 ## US-25.1 implementation and verification (2026-10-14)
 
@@ -90,25 +93,25 @@ TanStack mutation; attachment previews/downloads use chat/file IDs. Project navi
 and move controls remain EPIC-27. The E2E upload test now verifies the stable-ID download
 request and filename, using mocked source bytes.
 
-| Gate | Result |
-| --- | --- |
-| Backend Ruff | Passed |
-| Backend compileall | Passed; repository typecheck gate is compilation |
-| Targeted basedpyright (five new attachment/branch/scope/cleanup modules) | Passed, 0 errors and 0 warnings |
-| Full backend unit/integration suite | 330 passed |
-| Fresh initialization/schema/ownership | Passed in backend suite with production SQLite FK policy; includes invalid direct writes/owner updates, unique memberships, project detachment, chat/source cleanup, and message-edge isolation |
-| Chat HTTP/service/runtime regressions | Passed in backend suite: General/project/sibling/library isolation, foreign/missing/duplicate atomic rejection, active branches, detached references, original-byte downloads, cached runtime rechecks, reopen/deletion/same-name replacement, and event identity |
-| Frontend ESLint | Passed |
-| Frontend TypeScript | Passed |
-| Frontend Vitest | 31 files, 87 tests passed; obsolete folder-chat tests replaced with current metadata behavior |
-| Frontend auth migration tests | 6 passed |
-| Frontend production build | Passed |
-| Served OpenAPI / Hey API consistency | ASGI-served schema exported with /api/py root; SDK/types/Zod/query clients regenerated with Hey API 0.98.1; independent generation matches all 18 TS files ignoring trailing whitespace only |
-| Isolated Playwright (`CI=1`) | 11 passed, one worker, no test retries; final run includes generated upload mutation and stable-ID source download. Browser workflows use API mocks; source ownership/branch/physical-byte behavior is separately verified with real backend HTTP/integration tests |
-| Root configuration tests | 29 passed |
-| Dependency/import review | No circular imports; 141 modules, 482 internal imports |
-| Diff whitespace check | Passed |
-| GitHub CI | Not triggered; local verification only |
+| Gate                                                                     | Result                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend Ruff                                                             | Passed                                                                                                                                                                                                                                                              |
+| Backend compileall                                                       | Passed; repository typecheck gate is compilation                                                                                                                                                                                                                    |
+| Targeted basedpyright (five new attachment/branch/scope/cleanup modules) | Passed, 0 errors and 0 warnings                                                                                                                                                                                                                                     |
+| Full backend unit/integration suite                                      | 330 passed                                                                                                                                                                                                                                                          |
+| Fresh initialization/schema/ownership                                    | Passed in backend suite with production SQLite FK policy; includes invalid direct writes/owner updates, unique memberships, project detachment, chat/source cleanup, and message-edge isolation                                                                     |
+| Chat HTTP/service/runtime regressions                                    | Passed in backend suite: General/project/sibling/library isolation, foreign/missing/duplicate atomic rejection, active branches, detached references, original-byte downloads, cached runtime rechecks, reopen/deletion/same-name replacement, and event identity   |
+| Frontend ESLint                                                          | Passed                                                                                                                                                                                                                                                              |
+| Frontend TypeScript                                                      | Passed                                                                                                                                                                                                                                                              |
+| Frontend Vitest                                                          | 31 files, 87 tests passed; obsolete folder-chat tests replaced with current metadata behavior                                                                                                                                                                       |
+| Frontend auth migration tests                                            | 6 passed                                                                                                                                                                                                                                                            |
+| Frontend production build                                                | Passed                                                                                                                                                                                                                                                              |
+| Served OpenAPI / Hey API consistency                                     | ASGI-served schema exported with /api/py root; SDK/types/Zod/query clients regenerated with Hey API 0.98.1; independent generation matches all 18 TS files ignoring trailing whitespace only                                                                        |
+| Isolated Playwright (`CI=1`)                                             | 11 passed, one worker, no test retries; final run includes generated upload mutation and stable-ID source download. Browser workflows use API mocks; source ownership/branch/physical-byte behavior is separately verified with real backend HTTP/integration tests |
+| Root configuration tests                                                 | 29 passed                                                                                                                                                                                                                                                           |
+| Dependency/import review                                                 | No circular imports; 141 modules, 482 internal imports                                                                                                                                                                                                              |
+| Diff whitespace check                                                    | Passed                                                                                                                                                                                                                                                              |
+| GitHub CI                                                                | Not triggered; local verification only                                                                                                                                                                                                                              |
 
 HTTP tests substitute JWT decoding while normal Bearer enforcement, owner/service
 checks, transactions, database constraints, and source storage execute normally.
@@ -121,7 +124,6 @@ The schema change requires a clean disposable-data reset before running against 
 development database. Only isolated test/E2E databases were initialized; no migrations,
 legacy fallbacks, source copies on membership changes, or new extraction generations were
 introduced. User completion confirmation on 2026-10-14 authorizes commit/merge.
-
 
 ## US-25.2 implementation and verification (2026-10-14)
 
@@ -160,22 +162,22 @@ EPIC-27. Hey API SDK/types/Zod/query operations were regenerated from ASGI-serve
 OpenAPI; an independent generation matched all 18 TypeScript files ignoring trailing
 whitespace only.
 
-| Gate | Result |
-| --- | --- |
-| Backend Ruff / compileall | Passed |
-| Targeted basedpyright (membership/search/query/project-reader modules) | Passed, 0 errors/warnings |
-| Full backend unit/integration suite | 338 passed |
-| Move/lifecycle/search regressions | Passed: owner/auth isolation, active generation/approval denial, start-vs-move serialization, history/local attachment preservation, stale/failed delete rollback, cached identity refresh, scoped SQL pagination, project index update/delete, adapter ownership recheck, OpenAPI contracts |
-| Frontend ESLint / TypeScript | Passed |
-| Frontend Vitest | 32 files, 89 tests passed |
-| Frontend auth migration tests | 6 passed |
-| Root configuration tests | 29 passed |
-| Production build | Passed |
-| OpenAPI / Hey API consistency | Passed, independent 18-file comparison |
-| Isolated Playwright (`CI=1`) | Final run: 12 passed, one worker, no retries; changed search tested with API mocks, real owner/transaction behavior covered by backend HTTP tests |
-| Dependency cycles | Passed; 145 modules, 505 internal imports, no circular imports |
-| Diff whitespace | Passed |
-| GitHub CI | Not triggered; local verification only |
+| Gate                                                                   | Result                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend Ruff / compileall                                              | Passed                                                                                                                                                                                                                                                                                       |
+| Targeted basedpyright (membership/search/query/project-reader modules) | Passed, 0 errors/warnings                                                                                                                                                                                                                                                                    |
+| Full backend unit/integration suite                                    | 338 passed                                                                                                                                                                                                                                                                                   |
+| Move/lifecycle/search regressions                                      | Passed: owner/auth isolation, active generation/approval denial, start-vs-move serialization, history/local attachment preservation, stale/failed delete rollback, cached identity refresh, scoped SQL pagination, project index update/delete, adapter ownership recheck, OpenAPI contracts |
+| Frontend ESLint / TypeScript                                           | Passed                                                                                                                                                                                                                                                                                       |
+| Frontend Vitest                                                        | 32 files, 89 tests passed                                                                                                                                                                                                                                                                    |
+| Frontend auth migration tests                                          | 6 passed                                                                                                                                                                                                                                                                                     |
+| Root configuration tests                                               | 29 passed                                                                                                                                                                                                                                                                                    |
+| Production build                                                       | Passed                                                                                                                                                                                                                                                                                       |
+| OpenAPI / Hey API consistency                                          | Passed, independent 18-file comparison                                                                                                                                                                                                                                                       |
+| Isolated Playwright (`CI=1`)                                           | Final run: 12 passed, one worker, no retries; changed search tested with API mocks, real owner/transaction behavior covered by backend HTTP tests                                                                                                                                            |
+| Dependency cycles                                                      | Passed; 145 modules, 505 internal imports, no circular imports                                                                                                                                                                                                                               |
+| Diff whitespace                                                        | Passed                                                                                                                                                                                                                                                                                       |
+| GitHub CI                                                              | Not triggered; local verification only                                                                                                                                                                                                                                                       |
 
 Initial frontend search expectations were updated from folder paths to project identity.
 The new E2E page initially redirected to sign-in; it was added to the existing test-only
@@ -192,7 +194,6 @@ isolated tests/cleanup.
 Only isolated databases were initialized. No working database reset, migration,
 compatibility adapter, live provider call or later-story implementation occurred.
 Older disposable development schemas/indexes require the documented reset workflow.
-
 
 ## US-25.3 implementation and verification (2026-10-14)
 
@@ -246,22 +247,22 @@ It now uses a per-instance UUID factory; a regression checks unique instance ide
 absence of a random OpenAPI default. This narrow correction makes the served schema/client
 contract reproducible; it does not start the main-agent configuration story.
 
-| Gate | Result |
-| --- | --- |
-| Backend Ruff / compileall | Passed |
-| Targeted basedpyright (six lifecycle/query modules) | Passed, 0 errors and 0 warnings |
-| Full backend unit/integration suite | 357 passed |
-| Lifecycle/HTTP/DB/runtime regressions | Passed: owned draft/create/pick/upload isolation, mixed-owner/missing/duplicate rejection, atomic rollback, cancellation before acceptance/ingest, discard-during-upload, fixed expiry, unavailable snapshots, explicit re-selection, immutable byte access, source-preserving dispatch failure, lost-ack/concurrent create receipts, active run/approval/branch guards, removal/reopen/regeneration/replay, generation cancellation and duplicate resume |
-| Frontend ESLint / TypeScript | Passed |
-| Frontend Vitest | 32 files, 93 tests passed |
-| Frontend auth migration tests | 6 passed |
-| Root configuration tests | 29 passed |
-| Production build | Passed |
-| Served OpenAPI / Hey API consistency | Passed; independent generation from another fresh ASGI process matches all 18 TS files ignoring trailing whitespace only |
-| Isolated Playwright (`CI=1`) | Final run: 13 passed, one worker, no retries; upload/send/retry/download use generated clients and mocked API replies |
-| Dependency cycles | Passed; 149 modules, 539 internal imports, no circular imports |
-| Diff whitespace | Passed |
-| GitHub CI | Not triggered; local verification only |
+| Gate                                                | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend Ruff / compileall                           | Passed                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Targeted basedpyright (six lifecycle/query modules) | Passed, 0 errors and 0 warnings                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Full backend unit/integration suite                 | 357 passed                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Lifecycle/HTTP/DB/runtime regressions               | Passed: owned draft/create/pick/upload isolation, mixed-owner/missing/duplicate rejection, atomic rollback, cancellation before acceptance/ingest, discard-during-upload, fixed expiry, unavailable snapshots, explicit re-selection, immutable byte access, source-preserving dispatch failure, lost-ack/concurrent create receipts, active run/approval/branch guards, removal/reopen/regeneration/replay, generation cancellation and duplicate resume |
+| Frontend ESLint / TypeScript                        | Passed                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Frontend Vitest                                     | 32 files, 93 tests passed                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Frontend auth migration tests                       | 6 passed                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Root configuration tests                            | 29 passed                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Production build                                    | Passed                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Served OpenAPI / Hey API consistency                | Passed; independent generation from another fresh ASGI process matches all 18 TS files ignoring trailing whitespace only                                                                                                                                                                                                                                                                                                                                  |
+| Isolated Playwright (`CI=1`)                        | Final run: 13 passed, one worker, no retries; upload/send/retry/download use generated clients and mocked API replies                                                                                                                                                                                                                                                                                                                                     |
+| Dependency cycles                                   | Passed; 149 modules, 539 internal imports, no circular imports                                                                                                                                                                                                                                                                                                                                                                                            |
+| Diff whitespace                                     | Passed                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| GitHub CI                                           | Not triggered; local verification only                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 Backend HTTP tests substitute JWT decoding; normal Bearer checks, owner services, relational
 transactions, foreign-key constraints and source storage execute normally. Runtime assembly

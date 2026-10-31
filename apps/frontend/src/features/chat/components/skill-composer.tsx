@@ -10,6 +10,15 @@ import {
 } from "@/components/ui/popover";
 import { eligibleSkillOptions } from "@/features/skills/queries";
 import type {
+  AppliedTemplate,
+  TemplateSelection,
+} from "@/features/templates/components/template-picker-dialog";
+import { templateSlashOptions } from "@/features/templates/lib/slash";
+import {
+  frameworkCatalogOptions,
+  templateListOptions,
+} from "@/features/templates/queries";
+import type {
   ActiveSkill,
   ActiveSkillState,
   SkillSelection,
@@ -29,11 +38,15 @@ import { parseSkillCommands, slashSearch } from "../lib/skill-commands";
 
 export type SkillComposerControl = {
   prompt: string;
-  changePrompt: (value: string) => void;
+  /** Replaces the prompt; a template, when given, labels the new text. */
+  changePrompt: (value: string, template?: AppliedTemplate) => void;
   prepare: (
     prompt: string,
   ) => Promise<{ prompt: string; skills?: SkillSelection }>;
   accepted: () => void;
+  /** The template label describing the draft; persisted with the prompt. */
+  template: AppliedTemplate | null;
+  changeTemplate: (template: AppliedTemplate | null) => void;
   hasSkills: boolean;
   ready: boolean;
   controls: ReactNode;
@@ -51,19 +64,37 @@ type Draft = {
   refresh: string[];
   prompt: string;
   literal: boolean;
+  template: AppliedTemplate | null;
 };
+
+/** Restored labels are only a client claim; the server re-resolves them on send. */
+function restoredTemplate(value: unknown): AppliedTemplate | null {
+  if (!value || typeof value !== "object") return null;
+  const { name, use } = value as Partial<AppliedTemplate>;
+  return typeof name === "string" &&
+    use &&
+    (use.source === "framework" || use.source === "template") &&
+    typeof use.id === "string" &&
+    Number.isInteger(use.revision) &&
+    typeof use.level === "string"
+    ? { name, use }
+    : null;
+}
 
 export function SkillComposer({
   owner,
   scope,
   state,
   disabled,
+  onOpenTemplate,
   children,
 }: {
   owner: string;
   scope: string;
   state?: ActiveSkillState;
   disabled?: boolean;
+  /** Slash discovery hands template choices to the composer's builder. */
+  onOpenTemplate?: (selection: TemplateSelection | null) => void;
   children: (control: SkillComposerControl) => ReactNode;
 }) {
   const revision = state?.revision ?? 0;
@@ -97,7 +128,11 @@ export function SkillComposer({
           value.refresh.every((id: unknown) => typeof id === "string") &&
           typeof value.prompt === "string"
         )
-          restored = value;
+          restored = {
+            ...value,
+            literal: value.literal === true,
+            template: restoredTemplate(value.template),
+          };
       }
     } catch {
       /* Unavailable or malformed storage must not block composition. */
@@ -109,6 +144,7 @@ export function SkillComposer({
         refresh: [],
         prompt: "",
         literal: false,
+        template: null,
       },
     );
     // Scope changes remount this component; accepted state is captured as the draft baseline.
@@ -120,6 +156,7 @@ export function SkillComposer({
     refresh: [],
     prompt: "",
     literal: false,
+    template: null,
   };
   const current: Draft = {
     ...stored,
@@ -151,7 +188,30 @@ export function SkillComposer({
     ...eligibleSkillOptions(owner, manual ? "" : (search ?? "")),
     enabled: open,
   });
-  const options = query.data?.items ?? [];
+  // Templates are offered only for typed slash searches, not the Skills button.
+  const templateSearch = onOpenTemplate && !manual ? search : null;
+  const frameworks = useQuery({
+    ...frameworkCatalogOptions(),
+    enabled: open && templateSearch !== null,
+  });
+  const ownedTemplates = useQuery({
+    ...templateListOptions(owner),
+    enabled: open && templateSearch !== null,
+  });
+  const templateOptions =
+    templateSearch === null
+      ? []
+      : templateSlashOptions(templateSearch, {
+          frameworks: frameworks.data?.items ?? [],
+          templates: ownedTemplates.data?.items ?? [],
+        });
+  const skillOptions = query.data?.policy_enabled
+    ? (query.data?.items ?? [])
+    : [];
+  const options = [
+    ...skillOptions.map((item) => ({ kind: "skill" as const, item })),
+    ...templateOptions.map((item) => ({ kind: "template" as const, item })),
+  ];
   const activeIndex = Math.min(index, Math.max(0, options.length - 1));
   useEffect(() => {
     if (open && options.length)
@@ -238,6 +298,21 @@ export function SkillComposer({
         anchorRef.current?.querySelector("textarea")?.focus(),
       );
     }
+  }
+  function openTemplate(selection: TemplateSelection | null) {
+    // The slash token was a command, not message text.
+    update({
+      ...current,
+      prompt: current.prompt.replace(/(^|\s)\/[a-z0-9-]*$/, "$1"),
+    });
+    setManual(false);
+    setDismissed(true);
+    setIndex(0);
+    onOpenTemplate?.(selection);
+  }
+  function choose(option: (typeof options)[number]) {
+    if (option.kind === "skill") void add(option.item);
+    else openTemplate(option.item.selection);
   }
   async function prepare(prompt: string) {
     setDismissed(true);
@@ -457,8 +532,14 @@ export function SkillComposer({
   );
   const control: SkillComposerControl = {
     prompt: current.prompt,
-    changePrompt(value) {
-      update({ ...current, prompt: value, literal: false });
+    changePrompt(value, template) {
+      update({
+        ...current,
+        prompt: value,
+        literal: false,
+        // A template label describes the current draft; clearing the draft drops it.
+        template: value.trim() ? (template ?? current.template) : null,
+      });
       setDismissed(false);
       setManual(false);
       setIndex(0);
@@ -468,7 +549,17 @@ export function SkillComposer({
       try {
         sessionStorage.removeItem(storageKey);
       } catch {}
-      setDraft({ ...current, prompt: "", refresh: [], literal: false });
+      setDraft({
+        ...current,
+        prompt: "",
+        refresh: [],
+        literal: false,
+        template: null,
+      });
+    },
+    template: current.template,
+    changeTemplate(template) {
+      update({ ...current, template });
     },
     hasSkills: current.skills.length > 0,
     ready: !!draft && !resolving,
@@ -503,11 +594,11 @@ export function SkillComposer({
         return true;
       }
       if (event.key === "Enter") {
-        if (query.isError || query.isPending || !options.length) {
+        if (!options.length) {
           setDismissed(true);
           return true;
         }
-        void add(options[activeIndex]);
+        choose(options[activeIndex]);
         return true;
       }
       return false;
@@ -541,7 +632,9 @@ export function SkillComposer({
         <div
           id={listId}
           role="listbox"
-          aria-label="Eligible skills"
+          aria-label={
+            onOpenTemplate ? "Skills and templates" : "Eligible skills"
+          }
           className="flex flex-col gap-1"
         >
           {query.isPending ? (
@@ -559,30 +652,33 @@ export function SkillComposer({
             />
           ) : !query.data?.policy_enabled ? (
             <p>Skill activation is disabled by an administrator.</p>
-          ) : !options.length ? (
+          ) : !skillOptions.length && !templateOptions.length ? (
             <p>No matching assigned skills. Manage skills in User Settings.</p>
-          ) : (
-            options.map((item, i) => (
-              <Button
-                key={item.id}
-                id={`${listId}-${i}`}
-                role="option"
-                tabIndex={-1}
-                aria-selected={i === activeIndex}
-                variant={i === activeIndex ? "secondary" : "ghost"}
-                className="h-auto min-h-11 justify-start text-left whitespace-normal"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => void add(item)}
-              >
-                <span className="flex min-w-0 flex-col">
-                  <span className="break-all">/{item.name}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {item.description}
-                  </span>
+          ) : null}
+          {options.map((option, i) => (
+            <Button
+              key={`${option.kind}:${option.kind === "skill" ? option.item.id : option.item.key}`}
+              id={`${listId}-${i}`}
+              role="option"
+              tabIndex={-1}
+              aria-selected={i === activeIndex}
+              variant={i === activeIndex ? "secondary" : "ghost"}
+              className="h-auto min-h-11 justify-start text-left whitespace-normal"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => choose(option)}
+            >
+              <span className="flex min-w-0 flex-col">
+                <span className="break-all">
+                  {option.kind === "skill"
+                    ? `/${option.item.name}`
+                    : option.item.label}
                 </span>
-              </Button>
-            ))
-          )}
+                <span className="text-muted-foreground text-xs">
+                  {option.item.description}
+                </span>
+              </span>
+            </Button>
+          ))}
         </div>
       </PopoverContent>
     </Popover>

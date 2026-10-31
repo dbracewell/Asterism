@@ -120,7 +120,14 @@ export default function AppPage() {
                 <ChatPersonaPicker value={personaId} onChange={setPersonaId} />
               </>
             }
-            onSubmit={({ prompt, files, requestId, draftId, skills }) => {
+            onSubmit={({
+              prompt,
+              files,
+              requestId,
+              draftId,
+              skills,
+              template,
+            }) => {
               if (sendBlocked)
                 throw new Error(
                   "Choose an available model and workspace before sending.",
@@ -134,6 +141,7 @@ export default function AppPage() {
                   user_prompt: prompt,
                   files,
                   ...(skills ? { skills } : {}),
+                  ...(template ? { template } : {}),
                   ...(draftId ? { draft_id: draftId } : {}),
                 },
               });

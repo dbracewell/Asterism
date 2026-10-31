@@ -631,6 +631,8 @@ export type {
   SubAgentUpdateResponse,
   SubAgentUpdateResponses,
   TemplateDocument,
+  TemplateLabel,
+  TemplateUse,
   TextExtraction,
   TextExtractionPayload,
   ToolCall,

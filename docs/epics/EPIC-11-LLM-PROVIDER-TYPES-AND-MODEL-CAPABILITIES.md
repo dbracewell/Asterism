@@ -18,15 +18,15 @@ cannot determine it.
 
 ## Current findings (code inspection)
 
-| Area | Current behavior / problem |
-| --- | --- |
-| Provider contract | `ProviderModel` and `ProviderInfo` contain a name, base URL, and API key, but no provider type. Every provider is treated as a generic OpenAI-compatible endpoint. |
-| Provider UI | The admin enters every base URL manually. There is no distinction between first-party OpenAI and compatible servers. |
-| Model discovery | A Next.js server action calls `{base_url}/models` directly and retains only each model's `id`. It silently returns an empty list for non-success responses. |
-| Model metadata | `LLMModel` records only name and active state. Context-window and vision capabilities cannot be stored or exposed to model consumers. |
-| Refresh behavior | Model IDs and active states are merged by model name, but there is no capability provenance with which to preserve administrator corrections. |
-| API ownership | Discovery bypasses the generated backend API client, duplicates provider protocol knowledge in the frontend, and provides limited validation, diagnostics, timeout control, and response-shape handling. |
-| Schema evolution | Backend initialization uses SQLAlchemy `create_all`, which creates missing tables but does not add columns to existing tables. This epic therefore requires an explicit, tested, data-preserving migration path. |
+| Area              | Current behavior / problem                                                                                                                                                                                       |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Provider contract | `ProviderModel` and `ProviderInfo` contain a name, base URL, and API key, but no provider type. Every provider is treated as a generic OpenAI-compatible endpoint.                                               |
+| Provider UI       | The admin enters every base URL manually. There is no distinction between first-party OpenAI and compatible servers.                                                                                             |
+| Model discovery   | A Next.js server action calls `{base_url}/models` directly and retains only each model's `id`. It silently returns an empty list for non-success responses.                                                      |
+| Model metadata    | `LLMModel` records only name and active state. Context-window and vision capabilities cannot be stored or exposed to model consumers.                                                                            |
+| Refresh behavior  | Model IDs and active states are merged by model name, but there is no capability provenance with which to preserve administrator corrections.                                                                    |
+| API ownership     | Discovery bypasses the generated backend API client, duplicates provider protocol knowledge in the frontend, and provides limited validation, diagnostics, timeout control, and response-shape handling.         |
+| Schema evolution  | Backend initialization uses SQLAlchemy `create_all`, which creates missing tables but does not add columns to existing tables. This epic therefore requires an explicit, tested, data-preserving migration path. |
 
 ## Product and data decisions
 
@@ -36,9 +36,9 @@ Introduce the closed provider-type enum below. Persist enum values as stable
 lowercase strings so future provider types can be added without renaming the
 existing values.
 
-| Value | Display label | Base URL behavior | Discovery behavior |
-| --- | --- | --- | --- |
-| `openai` | OpenAI | Backend-enforced `https://api.openai.com/v1`; not administrator-editable | OpenAI `/models` plus Asterism's maintained OpenAI capability catalog |
+| Value            | Display label  | Base URL behavior                                                                                   | Discovery behavior                                                        |
+| ---------------- | -------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `openai`         | OpenAI         | Backend-enforced `https://api.openai.com/v1`; not administrator-editable                            | OpenAI `/models` plus Asterism's maintained OpenAI capability catalog     |
 | `generic_openai` | Generic OpenAI | Required administrator-supplied absolute `http` or `https` URL, normalized without a trailing slash | OpenAI-compatible `/models` response with best-effort metadata extraction |
 
 The backend is authoritative: it ignores/rejects a custom base URL for an
@@ -58,12 +58,12 @@ Existing providers are migrated without deletion:
 
 Add typed, nullable fields to each model:
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `context_window` | positive integer or `null` | Maximum total input/output context in tokens as reported by the catalog/provider; `null` means unknown. |
-| `supports_vision` | boolean or `null` | `true` accepts image input, `false` is known not to, and `null` means unknown. |
-| `context_window_source` | `catalog`, `provider`, `manual`, or `unknown` | Provenance for context-window metadata. |
-| `vision_source` | `catalog`, `provider`, `manual`, or `unknown` | Provenance for vision metadata. |
+| Field                   | Type                                          | Meaning                                                                                                 |
+| ----------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `context_window`        | positive integer or `null`                    | Maximum total input/output context in tokens as reported by the catalog/provider; `null` means unknown. |
+| `supports_vision`       | boolean or `null`                             | `true` accepts image input, `false` is known not to, and `null` means unknown.                          |
+| `context_window_source` | `catalog`, `provider`, `manual`, or `unknown` | Provenance for context-window metadata.                                                                 |
+| `vision_source`         | `catalog`, `provider`, `manual`, or `unknown` | Provenance for vision metadata.                                                                         |
 
 Tri-state vision support is intentional: treating “not reported” as `false`
 would turn missing Generic OpenAI metadata into incorrect capability data.
