@@ -115,7 +115,9 @@ settings, the draft model and captioning see global providers only (see
 current access token through `ChatGPTPlanClient`, which pauses the plan on a
 usage limit, retries temporary unavailability with bounded backoff, refreshes
 once on a rejected session, and reports `chatgpt_plan_<reason>` codes for the
-recovery UI. See [ADR-0025](../adr/0025-chatgpt-plan-connection.md).
+recovery UI. Without a usable draft model, chat titles run on the chat owner's
+own available plan model (`chat/title_model.py`). See
+[ADR-0025](../adr/0025-chatgpt-plan-connection.md).
 
 Main-agent settings have no model binding. Chat selection and per-execution model
 provenance are independent; unavailable selections remain visible without silent

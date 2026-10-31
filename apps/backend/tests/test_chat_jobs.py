@@ -304,14 +304,14 @@ async def test_title_generation_uses_a_fallback_when_the_provider_fails(monkeypa
     orchestrator = ChatOrchestrator(agent)
     saved: list[str] = []
 
-    def unavailable_draft_model():
+    async def unavailable_draft_model(*_args):
         raise RuntimeError("provider unavailable")
 
     async def save(title: str):
         saved.append(title)
 
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.get_draft_model",
+        "asterism.domains.chat.orchestrator.resolve_title_model",
         unavailable_draft_model,
     )
     monkeypatch.setattr(orchestrator, "_save_chat_title", save)
@@ -353,10 +353,10 @@ async def test_title_generation_falls_back_after_invalid_provider_output(
     async def save(title: str):
         saved.append(title)
 
-    monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.get_draft_model",
-        lambda: EmptyDraftModel(),
-    )
+    async def resolve(*_args):
+        return EmptyDraftModel()
+
+    monkeypatch.setattr("asterism.domains.chat.orchestrator.resolve_title_model", resolve)
     monkeypatch.setattr(orchestrator, "_save_chat_title", save)
 
     await orchestrator.generate_chat_title()

@@ -132,6 +132,17 @@ usage for available plan models. The one-time "You're using your ChatGPT plan"
 notice is stored per registration (`notice_dismissed_at`), so it does not
 repeat on later sign-ins.
 
+**Chat titles (US-50.1).** Titles still come from the admin draft model when it
+is usable. Only when no draft model is set, or it is inactive or removed,
+`chat/title_model.py` titles the chat on the chat owner's own plan: the chat's
+selected model when it is one of the owner's available plan models, otherwise
+the owner's first available plan model. This is the one place a request moves
+onto a plan without the user picking a plan model for it; it is limited to the
+owner's own connection, uses the same availability rule and plan client as
+chats (so a usage limit while titling pauses the plan), and never applies when
+a configured draft model merely fails. With no available plan, the text
+fallback (the first words of the message) is unchanged.
+
 ## Consequences
 
 - Plan usage works only when the user's browser runs on the Asterism machine.
