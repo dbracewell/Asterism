@@ -1,8 +1,9 @@
-# Prompt templates — US-51.1
+# Prompt templates — US-51.1 and US-51.2
 
 Private template CRUD and the bundled, read-only framework catalog are
-implemented in the `prompt_templates` backend domain. The builder, composer
-integration, editor and scaffolding levels are later
+implemented in the `prompt_templates` backend domain. The composer's template
+builder (US-51.2) is implemented. Slash discovery and provenance, the editor and
+scaffolding levels are later
 [EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md) stories.
 
 The document format, bounds, placeholder grammar, assembly semantics and catalog
@@ -35,3 +36,13 @@ integers. Templates cascade with their owner.
 
 Template text is prompt content only. It grants no tools, files, MCP or
 delegation, and assembly output is ordinary editable composer text.
+
+## Builder (US-51.2)
+
+`src/features/templates` owns the frontend. `lib/assemble.ts` mirrors the
+ADR-0026 grammar and assembly rules in TypeScript; the server has already
+validated each document, so the builder does not re-validate shape. The picker
+reads the catalog and up to 100 owned template summaries (owner-keyed queries),
+loading a template's document only when it is chosen. Assembly happens entirely
+in the browser and is never sent as a separate request: "Use prompt" inserts the
+text at the composer cursor. No template ID is recorded yet (US-51.3).

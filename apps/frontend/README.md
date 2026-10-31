@@ -325,6 +325,17 @@ changes persist in this tab across reloads, scoped to user/workspace/branch.
 Per-message labels show the pinned skill names/revisions. See the
 [skills contract](../../docs/architecture/skills.md).
 
+## Prompt template builder
+
+Choose **Prompt templates** in the composer toolbar to pick a bundled framework
+(RTF, CO-STAR, CRAFT, few-shot, step-by-step) or one of your own templates. The
+form is generated from the template's field schema, beside a live preview of the
+assembled prompt (stacked on narrow screens). Hovering or focusing a field
+highlights the preview text it produces, and hovering preview text highlights
+its field. Required fields are validated before **Use prompt** inserts the text
+at the composer cursor, where it stays ordinary editable text. See the
+[prompt templates contract](../../docs/architecture/prompt-templates.md).
+
 Administrators can enable or disable activation under **Admin Settings → Skills**
 (`/settings?t=admin&setting=skills`). Enable **Enable skill activation**, then
 choose **Save skill policy**. The policy defaults to disabled; users still need
