@@ -6,11 +6,14 @@ from fastapi import APIRouter, Query
 from fastapi.responses import RedirectResponse
 
 from asterism.common.log import get_logger
+from asterism.core.exceptions import BadDataException, CodedException
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from . import policy, service
+from .availability import PLAN_UNAVAILABLE_MESSAGES
+from .plan_models import PlanModelsUnavailable
 from .schemas import (
     ChatGPTAuthorizationStart,
     ChatGPTConnection,
@@ -46,6 +49,17 @@ async def get_connection(user: AuthedUserDep, session: DBSessionDep) -> ChatGPTC
 @chatgpt_router.post("/chatgpt/connection/authorize", operation_id="chatgptConnectionAuthorize")
 async def authorize(user: AuthedUserDep, session: DBSessionDep) -> ChatGPTAuthorizationStart:
     return await service.start_authorization(user.id, session)
+
+
+@chatgpt_router.post("/chatgpt/connection/models", operation_id="chatgptPlanModelsSync")
+async def sync_models(user: AuthedUserDep, session: DBSessionDep) -> ChatGPTConnection:
+    """Reload the caller's plan models from their ChatGPT account."""
+    try:
+        return await service.sync_plan_models(user.id, session)
+    except service.ChatGPTPlanUnavailable as error:
+        raise BadDataException(PLAN_UNAVAILABLE_MESSAGES[error.reason]) from error
+    except PlanModelsUnavailable as error:
+        raise CodedException(503, "ChatGPT plan models could not be loaded; try again later") from error
 
 
 @chatgpt_router.post("/chatgpt/connection/disconnect", operation_id="chatgptConnectionDisconnect")

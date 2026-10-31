@@ -123,3 +123,26 @@ it("keeps an unavailable saved model visible without listing it", () => {
     "Gamma (unavailable)",
   );
 });
+
+it("labels ChatGPT plan models by display name and finds them by slug", async () => {
+  const plan = {
+    id: "plan",
+    name: "gpt-plan",
+    display_name: "GPT Plan",
+    provider_name: "ChatGPT",
+    provider_id: "chatgpt",
+    provider_type: "chatgpt" as const,
+  };
+  render(
+    <ModelSelector
+      value="plan"
+      availableModels={[...models, plan]}
+      onValueChange={vi.fn()}
+      showProvider
+    />,
+  );
+  const trigger = screen.getByRole("combobox");
+  expect(trigger).toHaveTextContent("GPT Plan (ChatGPT)");
+  expect(trigger).not.toHaveTextContent("gpt-plan");
+  expect(trigger.querySelector("svg")).not.toBeNull();
+});

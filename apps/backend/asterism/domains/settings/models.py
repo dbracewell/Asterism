@@ -13,7 +13,7 @@ Two table families live here:
 import uuid
 
 from pydantic import JsonValue
-from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from asterism.db.base_model import Base
@@ -38,6 +38,21 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     """
 
     __tablename__ = "providers"
+    __table_args__ = (
+        # Admin providers are global; a CHATGPT provider belongs to exactly one
+        # user and each user has at most one.
+        CheckConstraint(
+            "(provider_type = 'chatgpt') = (owner_user_id IS NOT NULL)",
+            name="ck_providers_chatgpt_owned",
+        ),
+        UniqueConstraint("owner_user_id", name="uq_providers_owner"),
+        Index(
+            "uq_providers_global_name",
+            "name",
+            unique=True,
+            sqlite_where=text("owner_user_id IS NULL"),
+        ),
+    )
 
     # Provider flavor; OPENAI pins the base URL server-side (see provider_types).
     provider_type: Mapped[ProviderType] = mapped_column(
@@ -53,11 +68,15 @@ class ProviderModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         default=ProviderType.GENERIC_OPENAI,
         server_default=ProviderType.GENERIC_OPENAI.value,
     )
-    # Display name; unique across all providers.
+    # Display name; unique across global (admin) providers.
     name: Mapped[str] = mapped_column(
         Text,
         nullable=False,
-        unique=True,
+    )
+    # Set only for a user's own CHATGPT provider; global providers are NULL.
+    owner_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
     )
     base_url: Mapped[str] = mapped_column(
         Text,
@@ -99,6 +118,11 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
     name: Mapped[str] = mapped_column(
         Text,
         nullable=False,
+    )
+    # Human-readable label when the provider supplies one (ChatGPT plan models).
+    display_name: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
     )
     is_active: Mapped[bool] = mapped_column(
         Boolean,

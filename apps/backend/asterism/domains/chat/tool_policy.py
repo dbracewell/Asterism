@@ -9,7 +9,7 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.service import get_agent_profile
-from asterism.domains.settings.models import LLMModel
+from asterism.domains.chatgpt.availability import available_user_model
 from asterism.domains.settings.tool_settings import get_tool_settings
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
 from asterism.domains.tools.context import ContextToolScope
@@ -32,8 +32,8 @@ async def resolve_effective_tools(
     if model_id is None:
         return [], None
     async with get_async_db_session(session) as db:
-        model = await db.get(LLMModel, model_id)
-        if model is None or not model.is_active:
+        model = await available_user_model(user_id, model_id, db)
+        if model is None:
             return [], ceiling
         current = await get_agent_profile(user_id, profile.id, db)
         if current.sub_agent and current.model_id != model_id:
@@ -104,7 +104,7 @@ async def require_internal_tool(
     if name not in INTERNAL_TOOL_NAMES or scope is None or scope.user_id != user_id or scope.chat_id != chat_id:
         raise BadDataException("Internal tool is unavailable in this execution context")
     async with get_async_db_session() as db:
-        model = await db.get(LLMModel, scope.model_id)
+        model = await available_user_model(user_id, scope.model_id, db)
         settings = await get_tool_settings(db)
         if (
             model is None

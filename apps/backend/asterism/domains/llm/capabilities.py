@@ -88,3 +88,5 @@ def request_capabilities(provider_type: ProviderType) -> RequestCapabilities:
     match provider_type:
         case ProviderType.OPENAI | ProviderType.GENERIC_OPENAI:
             return CHAT_COMPLETIONS_CAPABILITIES
+        case ProviderType.CHATGPT:
+            return CHATGPT_PLAN_CAPABILITIES

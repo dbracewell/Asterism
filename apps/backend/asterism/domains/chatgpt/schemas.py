@@ -22,6 +22,7 @@ class ChatGPTConnection(BaseModel):
         status: Connection lifecycle state; ``None`` when never connected.
         email: Email from the validated ID token, for display.
         plan_usage_enabled: True only when connected with plan usage granted.
+        model_count: Plan models currently listed by the account.
         updated_at: Last connection change (Unix seconds).
     """
 
@@ -29,6 +30,7 @@ class ChatGPTConnection(BaseModel):
     status: ChatGPTConnectionStatus | None = None
     email: str | None = None
     plan_usage_enabled: bool = False
+    model_count: int = 0
     updated_at: int | None = None
 
 

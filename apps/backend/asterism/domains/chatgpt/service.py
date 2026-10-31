@@ -16,7 +16,6 @@ import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
-from enum import StrEnum
 from urllib.parse import urlencode, urlsplit
 
 from sqlalchemy import delete, select, update
@@ -28,7 +27,8 @@ from asterism.core.config import config
 from asterism.core.exceptions import BadDataException
 from asterism.db.database import get_async_db_session
 
-from . import policy
+from . import plan_models, policy
+from .availability import PlanUnavailableReason, plan_status
 from .models import (
     ChatGPTAuthorizationModel,
     ChatGPTConnectionModel,
@@ -81,14 +81,6 @@ async def close_oauth_client() -> None:
         _oauth_client = None
 
 
-class PlanUnavailableReason(StrEnum):
-    POLICY_DISABLED = "policy_disabled"
-    NOT_CONNECTED = "not_connected"
-    PLAN_USAGE_DISABLED = "plan_usage_disabled"
-    REAUTHORIZATION_REQUIRED = "reauthorization_required"
-    TEMPORARILY_UNAVAILABLE = "temporarily_unavailable"
-
-
 class ChatGPTPlanUnavailable(Exception):
     """The user's plan cannot serve requests now; ``reason`` says why."""
 
@@ -139,22 +131,34 @@ async def host_id(session: AsyncSession) -> str:
     return created
 
 
-def _connection_view(row: ChatGPTConnectionModel | None, *, policy_enabled: bool) -> ChatGPTConnection:
+async def get_connection(user_id: str, session: AsyncSession) -> ChatGPTConnection:
+    """Return the caller's connection state (never tokens)."""
+    enabled = (await policy.read_policy(session)).enabled
+    row = await session.get(ChatGPTConnectionModel, user_id, populate_existing=True)
     if row is None:
-        return ChatGPTConnection(policy_enabled=policy_enabled)
+        return ChatGPTConnection(policy_enabled=enabled)
+    provider = await plan_models.owned_provider(user_id, session)
     return ChatGPTConnection(
-        policy_enabled=policy_enabled,
+        policy_enabled=enabled,
         status=row.status,
         email=row.email,
         plan_usage_enabled=row.status == ChatGPTConnectionStatus.CONNECTED,
+        model_count=sum(model.is_active for model in provider.models) if provider else 0,
         updated_at=row.updated_at,
     )
 
 
-async def get_connection(user_id: str, session: AsyncSession) -> ChatGPTConnection:
-    """Return the caller's connection state (never tokens)."""
-    enabled = (await policy.read_policy(session)).enabled
-    return _connection_view(await session.get(ChatGPTConnectionModel, user_id), policy_enabled=enabled)
+async def sync_plan_models(user_id: str, session: AsyncSession) -> ChatGPTConnection:
+    """Refresh the caller's plan models from their own account.
+
+    Raises:
+        ChatGPTPlanUnavailable: The plan cannot be used now.
+        PlanModelsUnavailable: The model list could not be fetched.
+    """
+    credential = await access_token(user_id)
+    listed = await plan_models.fetch_plan_models(credential.access_token)
+    await plan_models.store_plan_models(user_id, listed, session)
+    return await get_connection(user_id, session)
 
 
 async def start_authorization(user_id: str, session: AsyncSession) -> ChatGPTAuthorizationStart:
@@ -313,9 +317,14 @@ async def complete_authorization(
         await session.commit()
 
     logger.info("ChatGPT connection saved user=%s status=%s", user_id, connection.status.value)
-    if connection.status == ChatGPTConnectionStatus.CONNECTED:
-        return ChatGPTCallbackResult.CONNECTED
-    return ChatGPTCallbackResult.PLAN_USAGE_DISABLED
+    if connection.status != ChatGPTConnectionStatus.CONNECTED:
+        return ChatGPTCallbackResult.PLAN_USAGE_DISABLED
+    # Best effort: a failed sync keeps the connection; the user can refresh.
+    try:
+        await sync_plan_models(user_id, session)
+    except (ChatGPTPlanUnavailable, plan_models.PlanModelsUnavailable) as error:
+        logger.warning("ChatGPT plan model sync failed user=%s error=%s", user_id, type(error).__name__)
+    return ChatGPTCallbackResult.CONNECTED
 
 
 async def disconnect(
@@ -374,15 +383,11 @@ async def access_token(user_id: str, oauth: ChatGPTOAuthClient | None = None) ->
     """
     oauth = oauth or oauth_client()
     async with _refresh_locks[user_id], get_async_db_session() as session:
-        if not (await policy.read_policy(session)).enabled:
-            raise ChatGPTPlanUnavailable(PlanUnavailableReason.POLICY_DISABLED)
+        reason = await plan_status(user_id, session)
+        if reason is not None:
+            raise ChatGPTPlanUnavailable(reason)
         connection = await session.get(ChatGPTConnectionModel, user_id)
-        if connection is None or connection.status == ChatGPTConnectionStatus.DISCONNECTED:
-            raise ChatGPTPlanUnavailable(PlanUnavailableReason.NOT_CONNECTED)
-        if connection.status == ChatGPTConnectionStatus.REAUTHORIZATION_REQUIRED:
-            raise ChatGPTPlanUnavailable(PlanUnavailableReason.REAUTHORIZATION_REQUIRED)
-        if connection.status == ChatGPTConnectionStatus.PLAN_USAGE_DISABLED:
-            raise ChatGPTPlanUnavailable(PlanUnavailableReason.PLAN_USAGE_DISABLED)
+        assert connection is not None
         assert connection.access_token and connection.refresh_token and connection.expires_at
 
         now = int(time.time())

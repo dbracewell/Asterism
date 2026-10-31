@@ -22,6 +22,7 @@ from asterism.core.exceptions import BadDataException
 from asterism.domains.knowledge.caption_schemas import CaptioningConfiguration, CaptioningError, CaptionMode
 from asterism.domains.settings.captioning_guard import configure_captioning_selection_guard
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel
+from asterism.domains.settings.queries import is_global_model
 
 from .processing_schemas import (
     KnowledgeCaptionConfiguration,
@@ -154,7 +155,7 @@ async def ensure_captioning_selection_is_valid(*, session: AsyncSession) -> None
     selected = None
     if provider_model_id is not None:
         selected = await session.scalar(
-            select(LLMModel).join(LLMModel.provider).where(LLMModel.id == provider_model_id)
+            select(LLMModel).join(LLMModel.provider).where(LLMModel.id == provider_model_id, is_global_model())
         )
     try:
         CaptioningConfiguration(

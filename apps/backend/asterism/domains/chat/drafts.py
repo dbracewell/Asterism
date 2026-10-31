@@ -80,7 +80,7 @@ async def create_draft(*, user_id: str, payload: ChatDraftCreate, session: Async
         if payload.model_id is not None:
             if payload.chat_id is not None:
                 raise BadDataException("Change an existing chat's model through its selection endpoint")
-            await require_chat_model(payload.model_id, session)
+            await require_chat_model(payload.model_id, user_id, session)
         draft = ChatDraftModel(
             user_id=user_id,
             chat_id=payload.chat_id,
@@ -215,7 +215,7 @@ async def change_draft_model(
         if draft.model_id != payload.expected_model_id:
             raise CodedException(409, "Draft model selection changed; reload and retry")
         if payload.model_id is not None:
-            await require_chat_model(payload.model_id, session)
+            await require_chat_model(payload.model_id, user_id, session)
         draft.model_id = payload.model_id
         result = await draft_response(draft=draft, session=session)
         await session.commit()

@@ -120,6 +120,7 @@ class SubAgentDefinition(SubAgentCreate):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     model_available: bool
+    model_unavailable_reason: str | None = None
     config_revision: int = Field(default=1, ge=1)
 
 

@@ -110,7 +110,7 @@ async def get_main_agent(user_id: str, session: AsyncSession | None = None) -> M
         return result
 
 
-async def _validate_configuration(payload: MainAgentUpdate, session: AsyncSession) -> None:
+async def _validate_configuration(user_id: str, payload: MainAgentUpdate, session: AsyncSession) -> None:
     from asterism.domains.settings.tool_settings import get_tool_settings
 
     settings = await get_tool_settings(session=session)
@@ -124,8 +124,9 @@ async def _validate_configuration(payload: MainAgentUpdate, session: AsyncSessio
     if len(payload.tools) != len(set(payload.tools)):
         raise BadDataException("Tools must be unique")
     if isinstance(payload, SubAgentCreate):
-        model = await session.get(LLMModel, payload.model_id)
-        if model is None or not model.is_active:
+        from asterism.domains.chatgpt.availability import available_user_model
+
+        if await available_user_model(user_id, payload.model_id, session) is None:
             raise BadDataException("Sub-agent model must be available and active")
 
 
@@ -135,7 +136,7 @@ async def update_main_agent(
     session: AsyncSession | None = None,
 ) -> MainAgentConfiguration:
     async with get_async_db_session(session) as session:
-        await _validate_configuration(payload, session)
+        await _validate_configuration(user_id, payload, session)
         profile = await get_main_agent_profile(user_id, session)
         row = await session.get(AgentProfileModel, profile.id)
         assert row is not None
@@ -154,10 +155,22 @@ async def update_main_agent(
         return await get_main_agent(user_id, session)
 
 
-async def _sub_definition(profile: AgentProfile, session: AsyncSession) -> SubAgentDefinition:
-    model = await session.get(LLMModel, profile.model_id)
+async def _sub_definition(user_id: str, profile: AgentProfile, session: AsyncSession) -> SubAgentDefinition:
+    from asterism.domains.chatgpt.availability import ModelAvailability
+    from asterism.domains.settings.queries import select_visible_models
+
+    model = await session.scalar(select_visible_models(user_id).where(LLMModel.id == profile.model_id))
+    reason = (
+        (await ModelAvailability.load(user_id, session)).reason(model)
+        if model is not None
+        else "Model was removed; choose another model"
+    )
     return SubAgentDefinition.model_validate(
-        {**profile.model_dump(exclude={"sub_agent"}), "model_available": model is not None and model.is_active},
+        {
+            **profile.model_dump(exclude={"sub_agent"}),
+            "model_available": reason is None,
+            "model_unavailable_reason": reason,
+        },
     )
 
 
@@ -171,7 +184,7 @@ async def get_sub_agents(user_id: str, session: AsyncSession | None = None) -> l
         definitions = []
         for row in rows:
             profile = AgentProfile.model_validate(row)
-            definitions.append(await _sub_definition(profile, session))
+            definitions.append(await _sub_definition(user_id, profile, session))
         return definitions
 
 
@@ -190,7 +203,7 @@ async def list_sub_agents(
         page=page,
         page_size=page_size,
     )
-    items = [await _sub_definition(AgentProfile.model_validate(row), session) for row in result.records]
+    items = [await _sub_definition(user_id, AgentProfile.model_validate(row), session) for row in result.records]
     return SubAgentList(items=items, total=result.total, page=page, page_size=page_size)
 
 
@@ -201,7 +214,7 @@ async def save_sub_agent(
     session: AsyncSession | None = None,
 ) -> SubAgentDefinition:
     async with get_async_db_session(session) as session:
-        await _validate_configuration(payload, session)
+        await _validate_configuration(user_id, payload, session)
         if agent_id is None:
             row = AgentProfileModel(user_id=user_id, sub_agent=True)
             session.add(row)
@@ -218,7 +231,7 @@ async def save_sub_agent(
         row.chat_parameters = cast(ChatCompletionParams, payload.chat_parameters.model_dump(exclude_none=True))
         await session.commit()
         await session.refresh(row)
-        return await _sub_definition(await get_agent_profile(user_id, row.id, session), session)
+        return await _sub_definition(user_id, await get_agent_profile(user_id, row.id, session), session)
 
 
 async def delete_agent_profile(
@@ -232,7 +245,7 @@ async def delete_agent_profile(
             raise BadDataException("The main configuration cannot be deleted")
         row = await session.get(AgentProfileModel, agent_id)
         assert row is not None
-        definition = await _sub_definition(profile, session)
+        definition = await _sub_definition(user_id, profile, session)
         from asterism.domains.projects.revocation import revoke_agent_projects
 
         await revoke_agent_projects(user_id=user_id, agent_id=agent_id, session=session)

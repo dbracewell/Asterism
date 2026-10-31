@@ -453,7 +453,7 @@ def test_tool_kinds_filter_unsupported_tool_schemas():
     assert CHAT_COMPLETIONS_CAPABILITIES.supported_tools(schemas) == [schemas[0]]
 
 
-@pytest.mark.parametrize("provider_type", list(ProviderType))
+@pytest.mark.parametrize("provider_type", [ProviderType.OPENAI, ProviderType.GENERIC_OPENAI])
 def test_existing_providers_keep_chat_completions(provider_type):
     provider = ProviderInfo(
         id=uuid.uuid4(),

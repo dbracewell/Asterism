@@ -42,7 +42,7 @@ async def read_execution_files(
     ):
         raise BadDataException("Invalid file execution context")
     async with get_async_db_session() as db:
-        model = await require_chat_model(scope.executed_model.id, db)
+        model = await require_chat_model(scope.executed_model.id, scope.user_id, db)
         if (scope.executed_model.name is not None and model.name != scope.executed_model.name) or (
             scope.executed_model.provider_id is not None and model.provider_id != scope.executed_model.provider_id
         ):

@@ -146,9 +146,9 @@ disabled or a model leaves the account, bound chats and sub-agents show the
 model as unavailable and are never retargeted. Delegation to a sub-agent bound
 to a plan model runs only on its owner's connection.
 
-- [ ] Sync owner-scoped plan models and expose them through the chat model choices.
-- [ ] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
-- [ ] Test owner isolation, provenance and availability changes.
+- [x] Sync owner-scoped plan models and expose them through the chat model choices.
+- [x] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
+- [x] Test owner isolation, provenance and availability changes.
 
 ## US-49.4: Plan usage experience and limits
 

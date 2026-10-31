@@ -39,7 +39,7 @@ async def list_project_sub_agents(
         page=page,
         page_size=page_size,
     )
-    return await _agent_page(page_result, project.context_revision, session)
+    return await _agent_page(user_id, page_result, project.context_revision, session)
 
 
 async def list_project_sub_agent_candidates(
@@ -65,10 +65,11 @@ async def list_project_sub_agent_candidates(
         .order_by(AgentProfileModel.name, AgentProfileModel.id)
     )
     page_result = await paginate_select(statement=statement, session=session, page=page, page_size=page_size)
-    return await _agent_page(page_result, project.context_revision, session)
+    return await _agent_page(user_id, page_result, project.context_revision, session)
 
 
 async def _agent_page(
+    user_id: str,
     result: QueryPage[AgentProfileModel],
     revision: int,
     session: AsyncSession,
@@ -78,7 +79,7 @@ async def _agent_page(
     Enriches each row with live model availability via the agent domain's
     ``_sub_definition`` (a cross-domain private import kept for now).
     """
-    definitions = [await _sub_definition(AgentProfile.model_validate(row), session) for row in result.records]
+    definitions = [await _sub_definition(user_id, AgentProfile.model_validate(row), session) for row in result.records]
     return ProjectSubAgentList(
         context_revision=revision,
         agents=definitions,

@@ -38,10 +38,10 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Implement serialized refresh with terminal-error handling; test ownership isolation, rotation and policy changes.
   - [x] Write the ADR (connection ownership, loopback limit, no fallback, preview constraints).
 
-- [ ] US-49.3: Plan models in the pickers
-  - [ ] Sync owner-scoped plan models and expose them through the chat model choices.
-  - [ ] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
-  - [ ] Test owner isolation, provenance and availability changes.
+- [ ] US-49.3: Plan models in the pickers (implemented; awaiting confirmation)
+  - [x] Sync owner-scoped plan models and expose them through the chat model choices.
+  - [x] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
+  - [x] Test owner isolation, provenance and availability changes.
 
 - [ ] US-49.4: Plan usage experience and limits
   - [ ] Add the plan label, Manage usage link and first-use notice.

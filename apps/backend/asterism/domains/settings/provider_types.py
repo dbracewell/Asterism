@@ -14,11 +14,14 @@ class ProviderType(StrEnum):
 
     ``OPENAI`` is the first-party API (base URL pinned server-side);
     ``GENERIC_OPENAI`` is any OpenAI-compatible endpoint (public or local) with
-    a client-supplied base URL.
+    a client-supplied base URL. ``CHATGPT`` is one user's own ChatGPT plan
+    (pinned to the OpenAI API, authorized by that user's connection); it is
+    never admin-managed.
     """
 
     OPENAI = "openai"
     GENERIC_OPENAI = "generic_openai"
+    CHATGPT = "chatgpt"
 
 
 class ModelCapabilitySource(StrEnum):
@@ -37,7 +40,7 @@ def normalize_provider_base_url(provider_type: ProviderType, base_url: str) -> s
     public or local, but must be absolute HTTP(S) URLs without credentials,
     query parameters, or fragments.
     """
-    if provider_type == ProviderType.OPENAI:
+    if provider_type in (ProviderType.OPENAI, ProviderType.CHATGPT):
         return OPENAI_BASE_URL
 
     value = base_url.strip()

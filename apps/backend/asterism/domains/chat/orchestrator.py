@@ -292,7 +292,9 @@ class ChatOrchestrator:
                 if self.agent.execution is None
                 else self.agent.execution_scope or await self.agent.prepare_execution_scope()
             )
-            model = await settings_service.get_model_and_provider(model_id=self.agent.model_id)
+            model = await settings_service.get_model_and_provider(
+                model_id=self.agent.model_id, user_id=self.agent.user.id
+            )
             reader = create_runtime_file_reader(
                 ceiling=self.agent.tool_scope, check_active=self.agent.authorization_check
             )
