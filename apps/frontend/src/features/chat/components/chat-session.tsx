@@ -40,6 +40,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
 import { ExistingChatModelPicker } from "./chat-model-picker";
+import { ComparisonBlock, invalidateComparisons } from "./comparison-block";
+import {
+  CompareMessageDialog,
+  CompareModelsPicker,
+  comparePayload,
+} from "./compare-targets";
+import { groupTranscript } from "../lib/comparison";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
@@ -103,6 +110,15 @@ export const ChatSession = ({
   const [incomingMessage, setIncomingMessage] =
     React.useState<StreamingMessage | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  // US-54.4: a run answering a comparison column streams into its column.
+  const [comparisonStream, setComparisonStream] =
+    React.useState<StreamingMessage | null>(null);
+  const [compareModels, setCompareModels] = React.useState<string[]>([]);
+  const [compareSource, setCompareSource] = React.useState<{
+    messageId: string;
+    modelId?: string;
+    modelName?: string;
+  } | null>(null);
   const [subAgentActivities, setSubAgentActivities] = React.useState<
     SubAgentActivity[]
   >([]);
@@ -161,6 +177,10 @@ export const ChatSession = ({
     },
     onStreamStart: (pendingMessage) => {
       preventAutoScrollRef.current = false;
+      if (pendingMessage.comparison) {
+        setComparisonStream(pendingMessage);
+        return;
+      }
       setIncomingMessage(pendingMessage);
       queryClient.setQueryData(queryKey, (prev?: Chat) => {
         if (!prev || prev.messages.length === 0) return prev;
@@ -175,15 +195,21 @@ export const ChatSession = ({
         };
       });
     },
-    onStreamError: (error, code) => {
+    onStreamError: (error, code, comparison) => {
       setIsProcessing(false);
       setIncomingMessage(null);
+      setComparisonStream(null);
+      if (comparison) void invalidateComparisons(queryClient);
       setSocketError({ message: error, code });
     },
     onRegenerate: () => {
       refetch();
     },
     onStreamUpdate: (nextIncomingMessage) => {
+      if (nextIncomingMessage.comparison) {
+        setComparisonStream(nextIncomingMessage);
+        return;
+      }
       setIncomingMessage(nextIncomingMessage);
     },
     onSubAgentEvent: (packet) => {
@@ -191,7 +217,15 @@ export const ChatSession = ({
         updateSubAgentActivities(activities, packet),
       );
     },
-    onStreamComplete: (updatedMessages) => {
+    onStreamComplete: (updatedMessages, comparison) => {
+      if (comparison) {
+        // Columns run one after another; the next column's start follows.
+        setComparisonStream(null);
+        setSubAgentActivities([]);
+        void invalidateComparisons(queryClient);
+        queryClient.invalidateQueries({ queryKey });
+        return;
+      }
       setIsProcessing(false);
       setIncomingMessage(null);
       if (!updatedMessages.length) return;
@@ -255,8 +289,10 @@ export const ChatSession = ({
         files,
         ...(draftId ? { draft_id: draftId } : {}),
         parent_message_id: pendingSend.current.parentId,
+        ...comparePayload(compareModels),
       },
     });
+    setCompareModels([]);
     // Read the authoritative accepted branch state, including its allocated skill revision.
     await queryClient.fetchQuery({
       ...chatSessionGetOneOptions({ client, path: { chat_id: chatId } }),
@@ -323,7 +359,26 @@ export const ChatSession = ({
     setIsProcessing(true);
     sendJsonMessage({ type: "regenerate", parent_message_id: parentId });
   }
-  const generating = isProcessing || !!incomingMessage;
+  /** Comparing is offered on a turn's first answer, once that turn is settled. */
+  const compareAction = (index: number) => {
+    const message = session.messages[index];
+    const turn = session.messages[index - 1];
+    if (
+      message.role !== "assistant" ||
+      turn?.role !== "user" ||
+      turn.comparison_id ||
+      message.status !== "completed" ||
+      message.tool_calls
+    )
+      return undefined;
+    return () =>
+      setCompareSource({
+        messageId: turn.id,
+        modelId: message.execution?.model.id,
+        modelName: message.execution?.model.name,
+      });
+  };
+  const generating = isProcessing || !!incomingMessage || !!comparisonStream;
   // Idle: only when well away from the end. Streaming: as soon as the user
   // stops following the reply.
   const showJump = isScrollable || (generating && isScrolledAway);
@@ -331,6 +386,8 @@ export const ChatSession = ({
   const lastMessage = session.messages.at(-1);
   const awaitingReply =
     !incomingMessage &&
+    !comparisonStream &&
+    !lastMessage?.comparison_id &&
     !session.info.resume_error &&
     (isProcessing ||
       (lastMessage?.role === "user" && lastMessage.status === "pending"));
@@ -421,21 +478,40 @@ export const ChatSession = ({
           </p>
         )}
         <div className="mx-auto w-full max-w-5xl">
-          {session.messages.map((message, index) => (
-            <MessageItem
-              chatId={chatId}
-              key={message.id}
-              message={message}
-              startsTurn={session.messages[index - 1]?.role !== "assistant"}
-              isProcessing={interactionBusy}
-              canRegenerate={
-                selectedModelAvailable && connectionStatus === "Connected"
-              }
-              onRegenerate={requestRegeneration}
-              toolTimings={toolTimings}
-              sendJsonMessage={sendJsonMessage}
-            />
-          ))}
+          {groupTranscript(session.messages).map((item) =>
+            item.kind === "comparison" ? (
+              <ComparisonBlock
+                key={item.comparisonId}
+                chatId={chatId}
+                comparisonId={item.comparisonId}
+                stream={comparisonStream}
+                isProcessing={interactionBusy}
+                canRegenerate={
+                  selectedModelAvailable && connectionStatus === "Connected"
+                }
+                onRegenerate={requestRegeneration}
+                toolTimings={toolTimings}
+                sendJsonMessage={sendJsonMessage}
+              />
+            ) : (
+              <MessageItem
+                chatId={chatId}
+                key={item.message.id}
+                message={item.message}
+                startsTurn={
+                  session.messages[item.index - 1]?.role !== "assistant"
+                }
+                isProcessing={interactionBusy}
+                canRegenerate={
+                  selectedModelAvailable && connectionStatus === "Connected"
+                }
+                onRegenerate={requestRegeneration}
+                onCompare={compareAction(item.index)}
+                toolTimings={toolTimings}
+                sendJsonMessage={sendJsonMessage}
+              />
+            ),
+          )}
 
           {awaitingReply &&
             (lastMessage?.role === "assistant" ? (
@@ -549,7 +625,7 @@ export const ChatSession = ({
             }
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
-            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}`}
+            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${compareModels.join(",")}`}
             scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
             scopeLocked={isProcessing || sendMessage.isPending}
             onSubmit={addUserMessage}
@@ -571,6 +647,11 @@ export const ChatSession = ({
                         : previous,
                     )
                   }
+                />
+                <CompareModelsPicker
+                  value={compareModels}
+                  onChange={setCompareModels}
+                  disabled={interactionBusy}
                 />
                 <ExistingChatPersonaPicker
                   info={session.info}
@@ -597,6 +678,29 @@ export const ChatSession = ({
             }
           />
         </ChatInputContainer>
+        <CompareMessageDialog
+          chatId={chatId}
+          messageId={compareSource?.messageId ?? null}
+          currentModelId={compareSource?.modelId}
+          currentModelName={compareSource?.modelName}
+          onOpenChange={(open) => {
+            if (!open) setCompareSource(null);
+          }}
+          onCompared={async () => {
+            setSocketError(null);
+            await queryClient.fetchQuery({
+              ...chatSessionGetOneOptions({
+                client,
+                path: { chat_id: chatId },
+              }),
+              staleTime: 0,
+            });
+            setSubAgentActivities([]);
+            setIsProcessing(true);
+            // The new columns are pending; the job answers them one after another.
+            sendJsonMessage({ type: "resume" });
+          }}
+        />
       </div>
     </div>
   );

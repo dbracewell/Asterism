@@ -67,9 +67,11 @@ async def prepare_execution(
                     raise CodedException(409, "Recorded source context is unavailable or changed; regenerate")
                 execution = recorded
             else:
-                if chat.selected_model_id is None:
+                # A comparison column always runs on its own fixed target model.
+                model_id = await column_target(message, session) or chat.selected_model_id
+                if model_id is None:
                     raise CodedException(409, "Choose a chat model before generating")
-                choice = await require_chat_model(chat.selected_model_id, user_id, session)
+                choice = await require_chat_model(model_id, user_id, session)
                 chat_snap = chat_snapshot or await read_chat_scope_snapshot(
                     user_id=user_id, chat_id=chat_id, session=session
                 )
@@ -205,3 +207,18 @@ def validate_prompt_snapshot(
         or execution.context.user_profile_revision != execution.persona.revision
     ):
         raise CodedException(409, "Recorded persona input is unavailable or changed; regenerate")
+
+
+async def column_target(message: MessageModel, session: AsyncSession) -> uuid.UUID | None:
+    """The fixed model of the comparison column this turn belongs to, if any.
+
+    Regenerating a multi-step answer starts from an assistant step, so walk up
+    to the nearest user turn.
+    """
+    current: MessageModel | None = message
+    for _ in range(10_000):
+        if current is None or current.role == "user":
+            break
+        parent_id = current.parent_message_id
+        current = await session.get(MessageModel, parent_id) if parent_id is not None else None
+    return current.target_model_id if current is not None else None

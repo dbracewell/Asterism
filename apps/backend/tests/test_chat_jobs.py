@@ -181,7 +181,7 @@ async def test_cancelling_persists_a_terminal_partial_response(monkeypatch):
         add_message,
     )
     monkeypatch.setattr(
-        "asterism.domains.chat.orchestrator.chat_service.update_message",
+        "asterism.domains.chat.orchestrator.chat_service.write_message_update",
         update_message,
     )
     orchestrator._active_parent_id = parent_id

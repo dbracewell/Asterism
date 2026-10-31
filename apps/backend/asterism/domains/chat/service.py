@@ -123,36 +123,54 @@ async def update_message(
     session: AsyncSession | None = None,
 ) -> Message:
     with chat_jobs.guard_idle_change(chat_id):
-        async with get_async_db_session(session) as session:
-            await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
-            await _owned_message(user_id=user_id, chat_id=chat_id, message_id=message_id, session=session)
-            if payload.active_child_id is not None:
-                child = await _owned_message(
-                    user_id=user_id,
-                    chat_id=chat_id,
-                    message_id=payload.active_child_id,
-                    session=session,
-                )
-                if child.parent_message_id != message_id:
-                    raise BadDataException("Active child must be a direct child of this message")
-            values = payload.model_dump(exclude_unset=True)
-            if "tool_results" in values:
-                tool_results = values.pop("tool_results")
-                if "tool_call_results" not in values:
-                    values["tool_call_results"] = tool_results
-            update_stmt = (
-                update(MessageModel)
-                .where(
-                    MessageModel.id == message_id,
-                    MessageModel.user_id == user_id,
-                    MessageModel.chat_id == chat_id,
-                )
-                .values(**values)
-                .returning(MessageModel)
+        return await write_message_update(
+            user_id=user_id, chat_id=chat_id, message_id=message_id, payload=payload, session=session
+        )
+
+
+async def write_message_update(
+    user_id: str,
+    chat_id: uuid.UUID,
+    message_id: uuid.UUID,
+    payload: UpdateMessageRequest,
+    session: AsyncSession | None = None,
+) -> Message:
+    """Apply a message update without the idle guard.
+
+    Only the chat's own running job calls this (regeneration and cancellation);
+    every external caller goes through :func:`update_message`, which refuses
+    changes while a run is active.
+    """
+    async with get_async_db_session(session) as session:
+        await _lock_owned_chat(user_id=user_id, chat_id=chat_id, session=session)
+        await _owned_message(user_id=user_id, chat_id=chat_id, message_id=message_id, session=session)
+        if payload.active_child_id is not None:
+            child = await _owned_message(
+                user_id=user_id,
+                chat_id=chat_id,
+                message_id=payload.active_child_id,
+                session=session,
             )
-            message = await session.scalar(update_stmt)
-            await session.commit()
-            return Message.model_validate(message)
+            if child.parent_message_id != message_id:
+                raise BadDataException("Active child must be a direct child of this message")
+        values = payload.model_dump(exclude_unset=True)
+        if "tool_results" in values:
+            tool_results = values.pop("tool_results")
+            if "tool_call_results" not in values:
+                values["tool_call_results"] = tool_results
+        update_stmt = (
+            update(MessageModel)
+            .where(
+                MessageModel.id == message_id,
+                MessageModel.user_id == user_id,
+                MessageModel.chat_id == chat_id,
+            )
+            .values(**values)
+            .returning(MessageModel)
+        )
+        message = await session.scalar(update_stmt)
+        await session.commit()
+        return Message.model_validate(message)
 
 
 async def update_chat(
@@ -300,7 +318,7 @@ async def get_one(
                 messages=[],
             )
 
-        messages = active_branch(all_messages)
+        messages = active_branch(all_messages, chat_session.active_root_id)
         from .scope import resolve_chat_file_scope
 
         records_by_id = {message.id: message for message in all_messages}
@@ -395,3 +413,48 @@ async def _owned_message(
     if message is None:
         raise NotFoundException("Message not found")
     return message
+
+
+# ---------------------------------------------------------------------------
+# Comparison runtime (US-54.4); only the chat's own job calls these.
+# ---------------------------------------------------------------------------
+
+
+async def pending_comparison_columns(user_id: str, chat_id: uuid.UUID) -> list[uuid.UUID]:
+    """Unanswered columns of the comparisons on the active branch, in run order."""
+    from .comparisons import pending_on_branch
+
+    async with get_async_db_session() as session:
+        chat = await session.scalar(select_owned_chats(user_id=user_id).where(ChatModel.id == chat_id))
+        if chat is None:
+            raise NotFoundException("Chat not found")
+        records = list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id)))
+        return [record.id for record in pending_on_branch(records, active_branch(records, chat.active_root_id))]
+
+
+async def read_column_branch(user_id: str, chat_id: uuid.UUID, message_id: uuid.UUID) -> list[Message]:
+    """Root-to-column history for running a column that is not on the active branch."""
+    from .branches import branch_to
+
+    async with get_async_db_session() as session:
+        return branch_to(
+            list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id))), message_id
+        )
+
+
+async def cancel_comparison_columns(user_id: str, chat_id: uuid.UUID, message_ids: list[uuid.UUID]) -> None:
+    """Mark columns a cancelled comparison never reached, so a reconnect does not run them."""
+    if not message_ids:
+        return
+    async with get_async_db_session() as session:
+        await session.execute(
+            update(MessageModel)
+            .where(
+                MessageModel.user_id == user_id,
+                MessageModel.chat_id == chat_id,
+                MessageModel.id.in_(message_ids),
+                MessageModel.status == MessageStatus.PENDING,
+            )
+            .values(status=MessageStatus.CANCELLED),
+        )
+        await session.commit()

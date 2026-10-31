@@ -325,6 +325,15 @@ changes persist in this tab across reloads, scoped to user/workspace/branch.
 Per-message labels show the pinned skill names/revisions. See the
 [skills contract](../../docs/architecture/skills.md).
 
+## Side-by-side comparison
+
+Use **Compare models** in the composer toolbar to send the next message to two
+or three models, or **Compare with other models** on an answer to add one or two
+more models beside it. The answers appear in columns (stacked on narrow
+screens), each with its token usage and, when it delegated, a **Run graph** link.
+Columns answer one after another; the active one shows **Continuing here**, and
+**Continue from …** switches the conversation to another column's branch.
+
 ## Prompt template builder
 
 Choose **Prompt templates** in the composer toolbar to pick a bundled framework

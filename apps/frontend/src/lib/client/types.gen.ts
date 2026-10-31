@@ -202,6 +202,32 @@ export type Chat = {
 };
 
 /**
+ * ChatComparison
+ */
+export type ChatComparison = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+  /**
+   * Parent Message Id
+   */
+  parent_message_id: string | null;
+  /**
+   * Active Index
+   */
+  active_index: number | null;
+  /**
+   * Columns
+   */
+  columns: Array<ComparisonColumn>;
+};
+
+/**
  * ChatContextModel
  */
 export type ChatContextModel = {
@@ -655,6 +681,10 @@ export type ChatPersonaUpdate = {
  * ChatSendRequest
  */
 export type ChatSendRequest = {
+  /**
+   * Compare
+   */
+  compare?: Array<ComparisonTarget> | null;
   skills?: SkillSelection | null;
   template?: TemplateUse | null;
   /**
@@ -705,6 +735,73 @@ export type CoachCriterion =
   | "constraints"
   | "output_format"
   | "examples";
+
+/**
+ * ComparisonActivate
+ */
+export type ComparisonActivate = {
+  /**
+   * Index
+   */
+  index: number;
+};
+
+/**
+ * ComparisonColumn
+ *
+ * One column: its user turn, the assistant steps that answered it, and usage totals.
+ */
+export type ComparisonColumn = {
+  /**
+   * Index
+   */
+  index: number;
+  request: Message;
+  /**
+   * Replies
+   */
+  replies?: Array<Message>;
+  model?: ChatModelChoice | null;
+  /**
+   * Status
+   */
+  status: "pending" | "completed" | "cancelled";
+  /**
+   * Input Tokens
+   */
+  input_tokens?: number;
+  /**
+   * Output Tokens
+   */
+  output_tokens?: number;
+  /**
+   * Total Tokens
+   */
+  total_tokens?: number;
+  /**
+   * Generation Duration Ms
+   */
+  generation_duration_ms?: number;
+};
+
+/**
+ * ComparisonTarget
+ *
+ * One comparison column: a fixed model and, optionally, its own prompt.
+ *
+ * Without ``user_prompt`` the column uses the request's prompt. Columns must
+ * differ in model or prompt.
+ */
+export type ComparisonTarget = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * User Prompt
+   */
+  user_prompt?: string | null;
+};
 
 /**
  * ComponentListResponse
@@ -1697,6 +1794,37 @@ export type Message = {
    * Previous Sibling Id
    */
   previous_sibling_id?: string | null;
+  /**
+   * Comparison Id
+   */
+  comparison_id?: string | null;
+  /**
+   * Comparison Index
+   */
+  comparison_index?: number | null;
+  /**
+   * Target Model Id
+   */
+  target_model_id?: string | null;
+};
+
+/**
+ * MessageCompareRequest
+ *
+ * Compare an answered turn with one or two more targets (US-54.4).
+ *
+ * The existing turn becomes column 0; each target adds a column that reruns
+ * the same accepted inputs (prompt, files, skills, persona, template).
+ */
+export type MessageCompareRequest = {
+  /**
+   * Request Id
+   */
+  request_id: string;
+  /**
+   * Targets
+   */
+  targets: Array<ComparisonTarget>;
 };
 
 /**
@@ -1796,6 +1924,10 @@ export type ModelProvenance = {
  * NewChatRequest
  */
 export type NewChatRequest = {
+  /**
+   * Compare
+   */
+  compare?: Array<ComparisonTarget> | null;
   skills?: SkillSelection | null;
   template?: TemplateUse | null;
   /**
@@ -5138,6 +5270,138 @@ export type ChatMessageSendResponses = {
 
 export type ChatMessageSendResponse =
   ChatMessageSendResponses[keyof ChatMessageSendResponses];
+
+export type ChatMessageCompareData = {
+  body: MessageCompareRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/message/{message_id}/compare";
+};
+
+export type ChatMessageCompareErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatMessageCompareError =
+  ChatMessageCompareErrors[keyof ChatMessageCompareErrors];
+
+export type ChatMessageCompareResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatComparison;
+};
+
+export type ChatMessageCompareResponse =
+  ChatMessageCompareResponses[keyof ChatMessageCompareResponses];
+
+export type ChatComparisonGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Comparison Id
+     */
+    comparison_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/comparisons/{comparison_id}";
+};
+
+export type ChatComparisonGetOneErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatComparisonGetOneError =
+  ChatComparisonGetOneErrors[keyof ChatComparisonGetOneErrors];
+
+export type ChatComparisonGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatComparison;
+};
+
+export type ChatComparisonGetOneResponse =
+  ChatComparisonGetOneResponses[keyof ChatComparisonGetOneResponses];
+
+export type ChatComparisonActivateData = {
+  body: ComparisonActivate;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Comparison Id
+     */
+    comparison_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/comparisons/{comparison_id}/active";
+};
+
+export type ChatComparisonActivateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatComparisonActivateError =
+  ChatComparisonActivateErrors[keyof ChatComparisonActivateErrors];
+
+export type ChatComparisonActivateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatComparison;
+};
+
+export type ChatComparisonActivateResponse =
+  ChatComparisonActivateResponses[keyof ChatComparisonActivateResponses];
 
 export type ProjectGetManyData = {
   body?: never;

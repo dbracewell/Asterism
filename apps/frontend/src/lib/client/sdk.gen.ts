@@ -72,6 +72,12 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateErrors,
   AppToolSettingsUpdateResponses,
+  ChatComparisonActivateData,
+  ChatComparisonActivateErrors,
+  ChatComparisonActivateResponses,
+  ChatComparisonGetOneData,
+  ChatComparisonGetOneErrors,
+  ChatComparisonGetOneResponses,
   ChatDraftAddFilesData,
   ChatDraftAddFilesErrors,
   ChatDraftAddFilesResponses,
@@ -129,6 +135,9 @@ import type {
   ChatgptPolicyUpdateData,
   ChatgptPolicyUpdateErrors,
   ChatgptPolicyUpdateResponses,
+  ChatMessageCompareData,
+  ChatMessageCompareErrors,
+  ChatMessageCompareResponses,
   ChatMessageSendData,
   ChatMessageSendErrors,
   ChatMessageSendResponses,
@@ -1267,6 +1276,81 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/message",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Compare Message
+   *
+   * Make an answered turn column 0 of a comparison and queue the other targets.
+   */
+  public chatMessageCompare<ThrowOnError extends boolean = false>(
+    options: Options<ChatMessageCompareData, ThrowOnError>,
+  ): RequestResult<
+    ChatMessageCompareResponses,
+    ChatMessageCompareErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatMessageCompareResponses,
+      ChatMessageCompareErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/message/{message_id}/compare",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Comparison
+   */
+  public chatComparisonGetOne<ThrowOnError extends boolean = false>(
+    options: Options<ChatComparisonGetOneData, ThrowOnError>,
+  ): RequestResult<
+    ChatComparisonGetOneResponses,
+    ChatComparisonGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ChatComparisonGetOneResponses,
+      ChatComparisonGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/comparisons/{comparison_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Activate Comparison Column
+   *
+   * Continue the conversation from another column.
+   */
+  public chatComparisonActivate<ThrowOnError extends boolean = false>(
+    options: Options<ChatComparisonActivateData, ThrowOnError>,
+  ): RequestResult<
+    ChatComparisonActivateResponses,
+    ChatComparisonActivateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ChatComparisonActivateResponses,
+      ChatComparisonActivateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/comparisons/{comparison_id}/active",
       ...options,
       headers: {
         "Content-Type": "application/json",

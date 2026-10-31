@@ -4,22 +4,31 @@ import { StreamingMessage } from "@/features/chat/types";
 import { authClient } from "@/lib/auth-client";
 import { chatWebSocketUrl } from "@/lib/backend-url";
 import { Message } from "@/lib/client";
+import { ComparisonTag, parseComparisonTag } from "../lib/comparison";
 import React, { useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 
 type UseChatWebSocketProps = {
   chatId: string;
   jwtToken: string;
-  onStreamStart?: (message: Message) => void;
-  onStreamUpdate?: (message: Message) => void;
-  onStreamComplete?: (messages: Message[]) => void;
-  onStreamError?: (error: string, code?: string | null) => void;
+  onStreamStart?: (message: StreamingMessage) => void;
+  onStreamUpdate?: (message: StreamingMessage) => void;
+  /** `comparison` is set when the run answered a comparison column (US-54.4). */
+  onStreamComplete?: (messages: Message[], comparison?: ComparisonTag) => void;
+  onStreamError?: (
+    error: string,
+    code?: string | null,
+    comparison?: ComparisonTag,
+  ) => void;
   onRegenerate?: (parentId: string) => void;
   onStatusChange?: (isProcessing: boolean) => void;
   onSubAgentEvent?: (event: AgentSubAgentEvent) => void;
 };
 
-const createPendingAssistantMessage = (): StreamingMessage => ({
+const createPendingAssistantMessage = (
+  comparison?: ComparisonTag,
+): StreamingMessage => ({
+  ...(comparison ? { comparison } : {}),
   model_id: "",
   thinking: "",
   content: "",
@@ -186,6 +195,8 @@ export const useChatWebSocket = ({
       }
 
       const msgContent = result.data;
+      // Comparison runs tag every packet with their column.
+      const comparison = parseComparisonTag(raw_object["comparison"]);
 
       if (msgContent.type === "sub_agent") {
         onSubAgentEventRef.current?.(msgContent);
@@ -207,13 +218,17 @@ export const useChatWebSocket = ({
           onStatusChangeRef.current?.(false);
         }
         streamingMessageRef.current = null;
-        onStreamErrorRef.current?.(msgContent.content, msgContent.error_code);
+        onStreamErrorRef.current?.(
+          msgContent.content,
+          msgContent.error_code,
+          comparison,
+        );
         return;
       }
 
       if (msgContent.type === "start") {
         const pendingMessage = {
-          ...createPendingAssistantMessage(),
+          ...createPendingAssistantMessage(comparison),
           execution: msgContent.execution,
           model_id: msgContent.execution?.model.id,
         };
@@ -231,7 +246,8 @@ export const useChatWebSocket = ({
           return next;
         });
         if (streamingMessageRef.current == null) {
-          streamingMessageRef.current = createPendingAssistantMessage();
+          streamingMessageRef.current =
+            createPendingAssistantMessage(comparison);
         }
 
         if (streamingMessageRef.current != null) {
@@ -246,7 +262,8 @@ export const useChatWebSocket = ({
 
       if (msgContent.type === "tool_update") {
         if (streamingMessageRef.current == null) {
-          streamingMessageRef.current = createPendingAssistantMessage();
+          streamingMessageRef.current =
+            createPendingAssistantMessage(comparison);
           return;
         }
         if (streamingMessageRef.current != null) {
@@ -263,7 +280,8 @@ export const useChatWebSocket = ({
 
       if (msgContent.type === "tool_permission_request") {
         if (streamingMessageRef.current == null) {
-          streamingMessageRef.current = createPendingAssistantMessage();
+          streamingMessageRef.current =
+            createPendingAssistantMessage(comparison);
         }
 
         const pending = streamingMessageRef.current.needsPermission ?? [];
@@ -285,7 +303,8 @@ export const useChatWebSocket = ({
 
       if (msgContent.type === "delta") {
         if (streamingMessageRef.current == null) {
-          streamingMessageRef.current = createPendingAssistantMessage();
+          streamingMessageRef.current =
+            createPendingAssistantMessage(comparison);
         }
 
         streamingMessageRef.current = {
@@ -317,7 +336,10 @@ export const useChatWebSocket = ({
           }
           return next;
         });
-        onStreamCompleteRef.current?.(msgContent.last_messages);
+        onStreamCompleteRef.current?.(
+          msgContent.last_messages,
+          comparison ?? streamingMessageRef.current?.comparison,
+        );
         streamingMessageRef.current = null;
       }
     },

@@ -72,6 +72,12 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateError,
   AppToolSettingsUpdateResponse,
+  ChatComparisonActivateData,
+  ChatComparisonActivateError,
+  ChatComparisonActivateResponse,
+  ChatComparisonGetOneData,
+  ChatComparisonGetOneError,
+  ChatComparisonGetOneResponse,
   ChatDraftAddFilesData,
   ChatDraftAddFilesError,
   ChatDraftAddFilesResponse,
@@ -129,6 +135,9 @@ import type {
   ChatgptPolicyUpdateData,
   ChatgptPolicyUpdateError,
   ChatgptPolicyUpdateResponse,
+  ChatMessageCompareData,
+  ChatMessageCompareError,
+  ChatMessageCompareResponse,
   ChatMessageSendData,
   ChatMessageSendError,
   ChatMessageSendResponse,
@@ -1607,6 +1616,92 @@ export const chatMessageSendMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().chatMessageSend({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Compare Message
+ *
+ * Make an answered turn column 0 of a comparison and queue the other targets.
+ */
+export const chatMessageCompareMutation = (
+  options?: Partial<Options<ChatMessageCompareData>>,
+): UseMutationOptions<
+  ChatMessageCompareResponse,
+  ChatMessageCompareError,
+  Options<ChatMessageCompareData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatMessageCompareResponse,
+    ChatMessageCompareError,
+    Options<ChatMessageCompareData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatMessageCompare({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const chatComparisonGetOneQueryKey = (
+  options: Options<ChatComparisonGetOneData>,
+) => createQueryKey("chatComparisonGetOne", options);
+
+/**
+ * Get Comparison
+ */
+export const chatComparisonGetOneOptions = (
+  options: Options<ChatComparisonGetOneData>,
+) =>
+  queryOptions<
+    ChatComparisonGetOneResponse,
+    ChatComparisonGetOneError,
+    ChatComparisonGetOneResponse,
+    ReturnType<typeof chatComparisonGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatComparisonGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatComparisonGetOneQueryKey(options),
+  });
+
+/**
+ * Activate Comparison Column
+ *
+ * Continue the conversation from another column.
+ */
+export const chatComparisonActivateMutation = (
+  options?: Partial<Options<ChatComparisonActivateData>>,
+): UseMutationOptions<
+  ChatComparisonActivateResponse,
+  ChatComparisonActivateError,
+  Options<ChatComparisonActivateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatComparisonActivateResponse,
+    ChatComparisonActivateError,
+    Options<ChatComparisonActivateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatComparisonActivate({
         ...options,
         ...fnOptions,
         throwOnError: true,

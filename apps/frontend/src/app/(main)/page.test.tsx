@@ -75,6 +75,15 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mocks.search),
 }));
 vi.mock("@/components/logo", () => ({ default: () => null }));
+vi.mock(
+  "@/features/chat/components/compare-targets",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@/features/chat/components/compare-targets")
+    >()),
+    CompareModelsPicker: () => null,
+  }),
+);
 vi.mock("@/features/chat/components/chat-input", async () => {
   const React = await import("react");
   return {

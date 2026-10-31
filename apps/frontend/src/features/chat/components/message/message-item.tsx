@@ -36,6 +36,7 @@ export const MessageItem = React.memo(
     toolTimings,
     canRegenerate,
     onRegenerate,
+    onCompare,
     sendJsonMessage,
   }: {
     chatId: string;
@@ -48,6 +49,7 @@ export const MessageItem = React.memo(
     toolTimings?: ToolTimings;
     canRegenerate: boolean;
     onRegenerate: (parentId?: string | null) => void;
+    onCompare?: () => void;
     sendJsonMessage: SendJsonMessage;
   }) => {
     const user = useUser();
@@ -121,6 +123,7 @@ export const MessageItem = React.memo(
                 isProcessing={isProcessing}
                 canRegenerate={canRegenerate}
                 onRegenerate={onRegenerate}
+                onCompare={onCompare}
               />
               <span className="opacity-0 transition-opacity group-focus-within/message:opacity-100 group-hover/message:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100">
                 <MessageMeta message={message} />

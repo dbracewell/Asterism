@@ -8,6 +8,10 @@ import {
 } from "@/features/chat/components/chat-input";
 import { ChatModelPicker } from "@/features/chat/components/chat-model-picker";
 import {
+  CompareModelsPicker,
+  comparePayload,
+} from "@/features/chat/components/compare-targets";
+import {
   ChatPersonaPicker,
   personaAvailable,
 } from "@/features/chat/components/chat-persona-picker";
@@ -45,6 +49,7 @@ export default function AppPage() {
     user.settings.default_model_id ?? "",
   );
   const [personaId, setPersonaId] = useState<string | null>(null);
+  const [compareModels, setCompareModels] = useState<string[]>([]);
   const personas = useQuery(personaQueryOptions(user.id));
   const hasPersona =
     !personas.error && personaAvailable(personas.data, personaId);
@@ -116,10 +121,15 @@ export default function AppPage() {
             promptCoach={
               user.settings.prompt_coach_enabled ? { modelId } : undefined
             }
-            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${searchParams.get("project_id") ?? "general"}`}
+            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}`}
             modelSelector={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />
+                <CompareModelsPicker
+                  value={compareModels}
+                  onChange={setCompareModels}
+                  disabled={sendBlocked}
+                />
                 <ChatPersonaPicker value={personaId} onChange={setPersonaId} />
               </>
             }
@@ -146,6 +156,7 @@ export default function AppPage() {
                   ...(skills ? { skills } : {}),
                   ...(template ? { template } : {}),
                   ...(draftId ? { draft_id: draftId } : {}),
+                  ...comparePayload(compareModels),
                 },
               });
             }}

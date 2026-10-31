@@ -6,7 +6,12 @@ import { StreamingMessage } from "@/features/chat/types";
 import { client } from "@/lib/api";
 import { messageUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
-import { ChevronLeftIcon, ChevronRightIcon, RotateCwIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ColumnsIcon,
+  RotateCwIcon,
+} from "lucide-react";
 
 export const MessageActions = ({
   chatId,
@@ -14,12 +19,15 @@ export const MessageActions = ({
   isProcessing,
   canRegenerate,
   onRegenerate,
+  onCompare,
 }: {
   chatId: string;
   message: StreamingMessage;
   isProcessing: boolean;
   canRegenerate: boolean;
   onRegenerate: (parentId?: string | null) => void;
+  /** Offered on a turn's answer when it can be compared with other models. */
+  onCompare?: () => void;
 }) => {
   const updateMessage = useMutation({ ...messageUpdateMutation({ client }) });
   const nodeIndex = message.current_sibling_index ?? 1;
@@ -68,6 +76,20 @@ export const MessageActions = ({
             onClick={() => onRegenerate(message.parent_message_id)}
           >
             <RotateCwIcon />
+          </Button>
+        </Hint>
+      )}
+      {onCompare && message.role !== "user" && (
+        <Hint hint="Compare with other models">
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="rounded-control"
+            aria-label="Compare with other models"
+            disabled={isProcessing || !canRegenerate}
+            onClick={onCompare}
+          >
+            <ColumnsIcon />
           </Button>
         </Hint>
       )}

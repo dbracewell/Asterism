@@ -236,6 +236,26 @@ export const zCoachCriterion = z.enum([
 ]);
 
 /**
+ * ComparisonActivate
+ */
+export const zComparisonActivate = z.object({
+  index: z.int().gte(0).lte(2),
+});
+
+/**
+ * ComparisonTarget
+ *
+ * One comparison column: a fixed model and, optionally, its own prompt.
+ *
+ * Without ``user_prompt`` the column uses the request's prompt. Columns must
+ * differ in model or prompt.
+ */
+export const zComparisonTarget = z.object({
+  model_id: z.uuid(),
+  user_prompt: z.string().max(100000).nullish(),
+});
+
+/**
  * ComponentProviderParameters
  *
  * A named component provider (e.g. web search) plus its string parameters.
@@ -617,6 +637,19 @@ export const zMainAgentUpdate = z.object({
   max_steps: z.int().gte(1).lte(100).optional().default(5),
   tools: z.array(z.string()).optional(),
   chat_parameters: zGenerationDefaults.optional(),
+});
+
+/**
+ * MessageCompareRequest
+ *
+ * Compare an answered turn with one or two more targets (US-54.4).
+ *
+ * The existing turn becomes column 0; each target adds a column that reruns
+ * the same accepted inputs (prompt, files, skills, persona, template).
+ */
+export const zMessageCompareRequest = z.object({
+  request_id: z.uuid(),
+  targets: z.array(zComparisonTarget).min(1).max(2),
 });
 
 /**
@@ -1571,6 +1604,7 @@ export const zTemplateUse = z.object({
  * ChatSendRequest
  */
 export const zChatSendRequest = z.object({
+  compare: z.array(zComparisonTarget).min(2).max(3).nullish(),
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
   expected_model_revision: z.int().gte(1),
@@ -1585,6 +1619,7 @@ export const zChatSendRequest = z.object({
  * NewChatRequest
  */
 export const zNewChatRequest = z.object({
+  compare: z.array(zComparisonTarget).min(2).max(3).nullish(),
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
   persona_id: z.uuid().nullish(),
@@ -1777,6 +1812,9 @@ export const zMessage = z.object({
   parent_message_id: z.uuid().nullish(),
   next_sibling_id: z.uuid().nullish(),
   previous_sibling_id: z.uuid().nullish(),
+  comparison_id: z.uuid().nullish(),
+  comparison_index: z.int().nullish(),
+  target_model_id: z.uuid().nullish(),
 });
 
 /**
@@ -1786,6 +1824,34 @@ export const zChat = z.object({
   info: zChatInfo,
   messages: z.array(zMessage),
   context_usage: zChatContextUsage.nullish(),
+});
+
+/**
+ * ComparisonColumn
+ *
+ * One column: its user turn, the assistant steps that answered it, and usage totals.
+ */
+export const zComparisonColumn = z.object({
+  index: z.int(),
+  request: zMessage,
+  replies: z.array(zMessage).optional(),
+  model: zChatModelChoice.nullish(),
+  status: z.enum(["pending", "completed", "cancelled"]),
+  input_tokens: z.int().optional().default(0),
+  output_tokens: z.int().optional().default(0),
+  total_tokens: z.int().optional().default(0),
+  generation_duration_ms: z.int().optional().default(0),
+});
+
+/**
+ * ChatComparison
+ */
+export const zChatComparison = z.object({
+  id: z.uuid(),
+  chat_id: z.uuid(),
+  parent_message_id: z.uuid().nullable(),
+  active_index: z.int().nullable(),
+  columns: z.array(zComparisonColumn),
 });
 
 /**
@@ -2326,6 +2392,40 @@ export const zChatMessageSendPath = z.object({
  * Successful Response
  */
 export const zChatMessageSendResponse = zMessage;
+
+export const zChatMessageCompareBody = zMessageCompareRequest;
+
+export const zChatMessageComparePath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatMessageCompareResponse = zChatComparison;
+
+export const zChatComparisonGetOnePath = z.object({
+  chat_id: z.uuid(),
+  comparison_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatComparisonGetOneResponse = zChatComparison;
+
+export const zChatComparisonActivateBody = zComparisonActivate;
+
+export const zChatComparisonActivatePath = z.object({
+  chat_id: z.uuid(),
+  comparison_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatComparisonActivateResponse = zChatComparison;
 
 export const zProjectGetManyQuery = z.object({
   page: z.int().gte(1).optional().default(1),

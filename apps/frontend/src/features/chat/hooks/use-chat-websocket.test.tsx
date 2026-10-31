@@ -199,7 +199,11 @@ it("surfaces retryable capacity errors and retains bounded reconnects", () => {
       content,
     }),
   });
-  expect(onStreamError).toHaveBeenCalledWith(content, "chat_capacity");
+  expect(onStreamError).toHaveBeenCalledWith(
+    content,
+    "chat_capacity",
+    undefined,
+  );
   expect(onStatusChange).toHaveBeenLastCalledWith(false);
   expect(onStreamComplete).not.toHaveBeenCalled();
   expect(options.reconnectAttempts).toBe(10);
@@ -298,4 +302,45 @@ it("queues each tool approval request once and drops it when resolved", () => {
       (pending: { id: string }) => pending.id,
     ),
   ).toEqual(["call-2"]);
+});
+
+it("tags a comparison column's run from start to completion", () => {
+  vi.useFakeTimers();
+  try {
+    const onStreamStart = vi.fn();
+    const onStreamUpdate = vi.fn();
+    const onStreamComplete = vi.fn();
+    renderHook(() =>
+      useChatWebSocket({
+        chatId: "chat",
+        jwtToken: "token",
+        onStreamStart,
+        onStreamUpdate,
+        onStreamComplete,
+      }),
+    );
+    const options = socket.mock.calls.at(-1)?.[1] as {
+      onMessage: (event: { data: string }) => void;
+    };
+    const comparison = { id: "cmp-1", column_id: "column-2" };
+    const send = (packet: object) =>
+      options.onMessage({ data: JSON.stringify({ ...packet, comparison }) });
+
+    send({ type: "start" });
+    expect(onStreamStart.mock.calls[0][0].comparison).toEqual(comparison);
+    send({ type: "delta", content: "Tides follow", thinking: "" });
+    act(() => vi.advanceTimersByTime(60));
+    expect(onStreamUpdate.mock.calls.at(-1)?.[0]).toMatchObject({
+      content: "Tides follow",
+      comparison,
+    });
+    send({ type: "complete", last_messages: [] });
+    expect(onStreamComplete).toHaveBeenCalledWith([], comparison);
+
+    // An untagged run is an ordinary turn.
+    options.onMessage({ data: JSON.stringify({ type: "start" }) });
+    expect(onStreamStart.mock.calls[1][0].comparison).toBeUndefined();
+  } finally {
+    vi.useRealTimers();
+  }
 });

@@ -1,6 +1,6 @@
 # EPIC-54: Run inspection, replay and comparison
 
-Status: proposed. Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress (US-54.4 implemented ahead of order to unblock US-51.7; awaiting confirmation). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
@@ -79,9 +79,9 @@ against two or three targets (models, or agent configurations). The answers
 stream into columns, each showing usage and a link to its run graph. Each column
 is a chat branch, and the user can continue from any of them.
 
-- [ ] Implement multi-target submission as sibling branches within chat admission limits.
-- [ ] Build the comparison layout (columns that stack on narrow screens).
-- [ ] Test admission limits, branch provenance and continuation.
+- [x] Implement multi-target submission as sibling branches within chat admission limits.
+- [x] Build the comparison layout (columns that stack on narrow screens).
+- [x] Test admission limits, branch provenance and continuation.
 
 ## US-54.5: Fork from a step
 

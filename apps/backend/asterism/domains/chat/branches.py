@@ -9,17 +9,28 @@ from .models import MessageModel
 from .schemas import Message
 
 
-def active_branch(records: Sequence[MessageModel]) -> list[Message]:
+def sibling_order(message: MessageModel) -> tuple[int, int, str]:
+    """Creation order; comparison columns created together keep their column order."""
+    return (message.created_at, message.comparison_index or 0, str(message.id))
+
+
+def active_branch(records: Sequence[MessageModel], active_root_id: uuid.UUID | None = None) -> list[Message]:
+    """The active branch: from the active root, follow each turn's active child.
+
+    ``active_root_id`` selects among sibling roots (comparison columns at the
+    start of a chat); otherwise, or when it is not a root, the oldest root.
+    """
     by_id = {message.id: message for message in records}
     children: dict[uuid.UUID | None, list[MessageModel]] = {}
     for message in records:
         children.setdefault(message.parent_message_id, []).append(message)
     for siblings in children.values():
-        siblings.sort(key=lambda message: (message.created_at, str(message.id)))
+        siblings.sort(key=sibling_order)
     roots = children.get(None, [])
     if not roots:
         return []
-    current = roots[0]
+    chosen = by_id.get(active_root_id) if active_root_id is not None else None
+    current = chosen if chosen is not None and chosen.parent_message_id is None else roots[0]
     visited: set[uuid.UUID] = set()
     result = []
     while current is not None:
@@ -42,3 +53,18 @@ def active_branch(records: Sequence[MessageModel]) -> list[Message]:
             raise BadDataException("Invalid active message branch")
         current = child
     return result
+
+
+def branch_to(records: Sequence[MessageModel], message_id: uuid.UUID) -> list[Message]:
+    """The path from the root to ``message_id`` (used to run a non-active comparison column)."""
+    by_id = {message.id: message for message in records}
+    path: list[MessageModel] = []
+    current = by_id.get(message_id)
+    while current is not None:
+        if len(path) > len(records):
+            raise BadDataException("Invalid message branch")
+        path.append(current)
+        current = by_id.get(current.parent_message_id) if current.parent_message_id is not None else None
+    if not path:
+        raise BadDataException("Message not found")
+    return [Message.model_validate(message) for message in reversed(path)]

@@ -2,6 +2,7 @@
 
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import CodedException
@@ -17,8 +18,11 @@ from .schemas import ActiveSkill, ActiveSkillState, MessageExecution, SkillSelec
 
 async def branch_skills(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> AcceptedSkills:
     records = list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id)))
+    root = await session.scalar(
+        select(ChatModel.active_root_id).where(ChatModel.id == chat_id, ChatModel.user_id == user_id)
+    )
     by_id = {row.id: row for row in records}
-    for message in reversed(active_branch(records)):
+    for message in reversed(active_branch(records, root)):
         if message.role == "user":
             return by_id[message.id].accepted_skills
     return AcceptedSkills()

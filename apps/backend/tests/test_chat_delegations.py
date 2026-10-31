@@ -177,7 +177,7 @@ async def test_cancel_keeps_in_flight_delegations_without_streamed_text():
     saved = AsyncMock(return_value=user_msg)
     with (
         patch("asterism.domains.chat.service.add_message", new=saved),
-        patch("asterism.domains.chat.service.update_message", new=AsyncMock(return_value=user_msg)),
+        patch("asterism.domains.chat.service.write_message_update", new=AsyncMock(return_value=user_msg)),
     ):
         await orchestrator.cancel_active_generation()
     partial = saved.await_args.kwargs["message"]

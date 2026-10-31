@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from enum import StrEnum, auto
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -157,6 +157,10 @@ class Message(LLMMessage):
     parent_message_id: uuid.UUID | None = None
     next_sibling_id: uuid.UUID | None = None
     previous_sibling_id: uuid.UUID | None = None
+    # US-54.4: set on user turns that are columns of a comparison.
+    comparison_id: uuid.UUID | None = None
+    comparison_index: int | None = None
+    target_model_id: uuid.UUID | None = None
 
 
 class MessageList(BaseModel):
@@ -262,7 +266,31 @@ class BulkDeleteChatResponse(BaseModel):
     deleted_chat_ids: list[uuid.UUID]
 
 
+MIN_COMPARISON_COLUMNS = 2
+MAX_COMPARISON_COLUMNS = 3
+
+
+class ComparisonTarget(BaseModel):
+    """One comparison column: a fixed model and, optionally, its own prompt.
+
+    Without ``user_prompt`` the column uses the request's prompt. Columns must
+    differ in model or prompt.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    model_id: uuid.UUID
+    user_prompt: str | None = Field(default=None, max_length=100_000)
+
+
+ComparisonTargets = Annotated[
+    list[ComparisonTarget],
+    Field(min_length=MIN_COMPARISON_COLUMNS, max_length=MAX_COMPARISON_COLUMNS),
+]
+
+
 class NewChatRequest(BaseModel):
+    # US-54.4: run the prompt as sibling comparison columns instead of one turn.
+    compare: ComparisonTargets | None = None
     skills: SkillSelection | None = None
     template: TemplateUse | None = None
     persona_id: uuid.UUID | None = None
@@ -322,6 +350,7 @@ class ChatDraft(BaseModel):
 
 
 class ChatSendRequest(BaseModel):
+    compare: ComparisonTargets | None = None
     skills: SkillSelection | None = None
     template: TemplateUse | None = None
     expected_model_revision: int = Field(ge=1)
@@ -343,3 +372,47 @@ class ChatPersonaUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     persona_id: uuid.UUID | None
     expected_persona_revision: int = Field(ge=1)
+
+
+class MessageCompareRequest(BaseModel):
+    """Compare an answered turn with one or two more targets (US-54.4).
+
+    The existing turn becomes column 0; each target adds a column that reruns
+    the same accepted inputs (prompt, files, skills, persona, template).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    request_id: uuid.UUID
+    targets: list[ComparisonTarget] = Field(min_length=1, max_length=MAX_COMPARISON_COLUMNS - 1)
+
+
+ComparisonColumnStatus = Literal["pending", "completed", "cancelled"]
+
+
+class ComparisonColumn(BaseModel):
+    """One column: its user turn, the assistant steps that answered it, and usage totals."""
+
+    index: int
+    request: Message
+    replies: list[Message] = Field(default_factory=list)
+    # Current listing of the fixed target model; None when it was removed.
+    model: ChatModelChoice | None = None
+    status: ComparisonColumnStatus
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+    generation_duration_ms: int = 0
+
+
+class ChatComparison(BaseModel):
+    id: uuid.UUID
+    chat_id: uuid.UUID
+    parent_message_id: uuid.UUID | None
+    # The column the conversation continues from, if it is on the active branch.
+    active_index: int | None
+    columns: list[ComparisonColumn]
+
+
+class ComparisonActivate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    index: int = Field(ge=0, le=MAX_COMPARISON_COLUMNS - 1)

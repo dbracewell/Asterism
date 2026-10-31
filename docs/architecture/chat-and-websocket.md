@@ -16,6 +16,9 @@ regenerates turns. Sending filename-based messages over the socket is unsupporte
 | `DELETE /chat/drafts/{draft_id}`            | Discard references without deleting shared library sources                                                                    |
 | `PUT /chat/{chat_id}/model`                 | Change next-turn selection with `model_id` and `expected_model_revision`                                                      |
 | `PUT /chat/drafts/{draft_id}/model`         | Compare-and-set draft model using `model_id` and `expected_model_id`                                                          |
+| `POST /chat/{chat_id}/message/{id}/compare` | Make an answered turn column 0 of a comparison and queue 1–2 more `targets`                                                   |
+| `GET /chat/{chat_id}/comparisons/{id}`      | Columns with their turn, replies, target model, status and usage totals                                                       |
+| `PUT /chat/{chat_id}/comparisons/{id}/active` | Continue the conversation from column `index`                                                                               |
 
 Draft references expire after 24 hours and grant no runtime file access. Before
 send, the UI verifies that the persisted draft exactly matches visible selections.
@@ -34,6 +37,19 @@ provenance. Runtime scope is current project files plus active-branch local
 snapshots intersected with current chat memberships and owned source rows. General
 has only the local set. Historical attachment snapshots retain immutable file IDs
 and unavailable states after removal; filename reuse cannot redirect them.
+
+## Side-by-side comparison (US-54.4)
+
+`POST /chat/` and `POST /chat/{chat_id}/message` accept optional `compare`: two
+or three targets `{model_id, user_prompt?}` that must differ in model or prompt.
+Acceptance creates one sibling user turn per target, sharing a `comparison_id`,
+each with a fixed `target_model_id`; column 0 becomes the active branch (the
+parent's active child, or the chat's `active_root_id` at the start of a chat).
+Resume answers the pending columns one after another in the chat's single work
+slot, each on its own history and target model. Their packets carry
+`comparison: {id, column_id}`. Sends are refused while a column is pending;
+cancelling marks the remaining columns cancelled. See
+[ADR-0027](../adr/0027-side-by-side-comparison-branches.md).
 
 ## Transport and job ownership
 

@@ -282,8 +282,13 @@ for (const { width, height, pane, enlarged } of [
       .getByRole("button", { name: "Regenerate response", exact: true })
       .last();
     await reachable(regenerate);
+    // The next answer action follows Regenerate in tab order.
     await page.keyboard.press("Tab");
-    await expect(history.getByRole("button").last()).toBeFocused();
+    await expect(
+      history
+        .getByRole("button", { name: "Compare with other models", exact: true })
+        .last(),
+    ).toBeFocused();
     const marker = history.getByText("Final response marker", { exact: true });
     await marker.scrollIntoViewIfNeeded();
     await expect(marker).toBeInViewport({ ratio: 1 });

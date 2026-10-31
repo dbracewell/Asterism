@@ -57,6 +57,9 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=True,
     )
     model_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Which root turn the active branch starts from; None means the oldest root.
+    # Only comparisons create sibling roots (US-54.4).
+    active_root_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     title: Mapped[str | None] = mapped_column(
         String,
         nullable=True,
@@ -138,6 +141,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         jsonb_type(TypeAdapter(TemplateProvenance)),
         nullable=True,
     )
+    # US-54.4: a user turn that is one column of a side-by-side comparison.
+    # Columns are sibling turns sharing ``comparison_id``; each runs on its
+    # fixed ``target_model_id``. Set once, then immutable (SQLite trigger).
+    comparison_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
+    comparison_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     status: Mapped[MessageStatus] = mapped_column(
         Enum(
             MessageStatus,
@@ -209,6 +218,13 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
     __table_args__ = (
         UniqueConstraint("id", "chat_id", "user_id", name="uq_messages_id_chat_user"),
+        UniqueConstraint("comparison_id", "comparison_index", name="uq_messages_comparison_column"),
+        CheckConstraint(
+            "(comparison_id IS NULL AND comparison_index IS NULL AND target_model_id IS NULL)"
+            " OR (comparison_id IS NOT NULL AND role = 'user' AND target_model_id IS NOT NULL"
+            " AND comparison_index BETWEEN 0 AND 2)",
+            name="message_comparison_column_shape",
+        ),
         ForeignKeyConstraint(
             ["execution_id", "chat_id", "user_id"],
             ["chat_executions.id", "chat_executions.chat_id", "chat_executions.user_id"],

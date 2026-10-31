@@ -28,6 +28,7 @@ from .schemas import (
     BulkDeleteChatRequest,
     BulkDeleteChatResponse,
     Chat,
+    ChatComparison,
     ChatDraft,
     ChatDraftCreate,
     ChatDraftFiles,
@@ -41,7 +42,9 @@ from .schemas import (
     ChatPersonaUpdate,
     ChatSendRequest,
     ChatUpdateRequest,
+    ComparisonActivate,
     Message,
+    MessageCompareRequest,
     NewChatRequest,
     SearchResultList,
     UpdateMessageRequest,
@@ -487,6 +490,59 @@ async def send_message(chat_id: uuid.UUID, payload: ChatSendRequest, user: Authe
     from .sending import send_message
 
     return await send_message(user_id=user.id, chat_id=chat_id, payload=payload, session=db)
+
+
+@chat_router.post(
+    "/{chat_id}/message/{message_id}/compare",
+    response_model=ChatComparison,
+    operation_id="chatMessageCompare",
+    responses={400: {"model": ErrorDetail}, 409: {"model": ErrorDetail}},
+)
+async def compare_message(
+    chat_id: uuid.UUID,
+    message_id: uuid.UUID,
+    payload: MessageCompareRequest,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> ChatComparison:
+    """Make an answered turn column 0 of a comparison and queue the other targets."""
+    from .comparisons import compare_existing
+
+    return await compare_existing(user_id=user.id, chat_id=chat_id, message_id=message_id, payload=payload, session=db)
+
+
+@chat_router.get(
+    "/{chat_id}/comparisons/{comparison_id}",
+    response_model=ChatComparison,
+    operation_id="chatComparisonGetOne",
+)
+async def get_comparison(
+    chat_id: uuid.UUID, comparison_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> ChatComparison:
+    from .comparisons import read_comparison
+
+    return await read_comparison(user_id=user.id, chat_id=chat_id, comparison_id=comparison_id, session=db)
+
+
+@chat_router.put(
+    "/{chat_id}/comparisons/{comparison_id}/active",
+    response_model=ChatComparison,
+    operation_id="chatComparisonActivate",
+    responses={409: {"model": ErrorDetail}},
+)
+async def activate_comparison_column(
+    chat_id: uuid.UUID,
+    comparison_id: uuid.UUID,
+    payload: ComparisonActivate,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> ChatComparison:
+    """Continue the conversation from another column."""
+    from .comparisons import activate_column
+
+    return await activate_column(
+        user_id=user.id, chat_id=chat_id, comparison_id=comparison_id, payload=payload, session=db
+    )
 
 
 @chat_router.delete(
