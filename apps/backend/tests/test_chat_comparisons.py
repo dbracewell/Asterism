@@ -462,3 +462,54 @@ async def test_an_injected_start_carries_the_comparison_tag(monkeypatch):
     assert sent[0]["comparison"] == tag
     # An ordinary turn's injected start stays untagged.
     assert "comparison" not in sent[3]
+
+
+@pytest.mark.asyncio
+async def test_a_before_after_comparison_runs_both_prompts_on_one_model(project_api, monkeypatch):
+    """US-51.7: the coach's original and improved prompts as labelled columns on the same model."""
+    client, sessions, _ = project_api
+    original, improved = "Write about dogs.", "Write a one-page care guide for a new puppy."
+    targets = [
+        {"model_id": A, "label": "  Before "},
+        {"model_id": A, "user_prompt": improved, "label": "After"},
+    ]
+    template = {"source": "framework", "id": "rtf", "revision": 1, "level": "guided"}
+    response = await client.post(
+        "/chat/",
+        headers=auth(),
+        json={
+            "request_id": str(uuid.uuid4()),
+            "user_prompt": original,
+            "model_id": A,
+            "compare": targets,
+            "template": template,
+        },
+    )
+    assert response.status_code == 200, response.text
+    accepted = response.json()
+    chat_id = uuid.UUID(accepted["info"]["id"])
+    runtime = Runtime(chat_id, sessions, monkeypatch)
+    await (await runtime.build()).resume_pending_turn()
+
+    result = await comparison(client, chat_id, accepted["messages"][0]["comparison_id"])
+    before, after = result["columns"]
+    assert (before["request"]["comparison_label"], after["request"]["comparison_label"]) == ("Before", "After")
+    assert (before["request"]["content"], after["request"]["content"]) == (original, improved)
+    assert {column["replies"][0]["execution"]["model"]["id"] for column in result["columns"]} == {A}
+    assert runtime.histories == [[original], [improved]]
+    # The template built the original prompt, so only that column carries its label.
+    assert before["request"]["template"]["id"] == "rtf"
+    assert after["request"]["template"] is None
+
+    # Labels are short headings.
+    too_long = await compare_chat(client, [{"model_id": A, "label": "x" * 41}, {"model_id": B}])
+    assert too_long.status_code == 422
+    blank = await compare_chat(client, [{"model_id": A, "label": ""}, {"model_id": B}])
+    assert blank.status_code == 422
+    async with sessions() as session:
+        with pytest.raises(IntegrityError, match="immutable"):
+            await session.execute(
+                update(MessageModel)
+                .where(MessageModel.id == uuid.UUID(after["request"]["id"]))
+                .values(comparison_label="Changed")
+            )

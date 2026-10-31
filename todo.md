@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. US-51.1 through US-51.6 and US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+US-51.7 (before/after comparison) is implemented on `feature/us-51.7-before-after-comparison` and awaiting confirmation. US-51.1 through US-51.6 and US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -51,8 +51,8 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Add the coach endpoint and rubric prompt, reusing title-model resolution.
   - [x] Build the suggestion checklist and apply actions in the composer.
   - [x] Test model resolution, unavailable state, ephemerality and the UI flow.
-- [ ] US-51.7: Before/after comparison
-  - [ ] Wire the coach's before/after pair into the comparison flow; test it end to end.
+- [ ] US-51.7: Before/after comparison (implemented; awaiting confirmation)
+  - [x] Wire the coach's before/after pair into the comparison flow; test it end to end.
 
 ### [EPIC-52: Tutor mode and guided learning](docs/epics/EPIC-52-TUTOR-MODE-AND-GUIDED-LEARNING.md)
 

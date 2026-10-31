@@ -801,6 +801,10 @@ export type ComparisonTarget = {
    * User Prompt
    */
   user_prompt?: string | null;
+  /**
+   * Label
+   */
+  label?: string | null;
 };
 
 /**
@@ -1806,6 +1810,10 @@ export type Message = {
    * Target Model Id
    */
   target_model_id?: string | null;
+  /**
+   * Comparison Label
+   */
+  comparison_label?: string | null;
 };
 
 /**

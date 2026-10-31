@@ -221,3 +221,75 @@ it("shows a clear message when nothing needs to change", async () => {
   );
   expect(await screen.findByText(/Nothing to add/)).toBeInTheDocument();
 });
+
+it("compares the reviewed original with the improved draft once a suggestion is applied", async () => {
+  const user = userEvent.setup();
+  const { input, submit } = setup();
+  await user.type(input, "Write about dogs.");
+  await user.click(
+    await screen.findByRole("button", { name: "Review prompt" }),
+  );
+  const panel = await screen.findByRole("region", { name: "Prompt review" });
+  expect(
+    within(panel).queryByRole("button", { name: "Compare before/after" }),
+  ).not.toBeInTheDocument();
+
+  await user.click(
+    within(panel).getByRole("button", { name: "Apply goal suggestion" }),
+  );
+  const compare = within(panel).getByRole("button", {
+    name: "Compare before/after",
+  });
+  // Editing back to the original leaves nothing to compare.
+  await user.clear(input);
+  await user.type(input, "Write about dogs.");
+  expect(compare).toBeDisabled();
+  await user.clear(input);
+  await user.type(input, "Write a care guide for a new puppy.");
+
+  await user.click(compare);
+  await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+  expect(submit.mock.calls[0][0]).toMatchObject({
+    prompt: "Write about dogs.",
+    compare: [
+      { model_id: MODEL, label: "Before" },
+      {
+        model_id: MODEL,
+        user_prompt: "Write a care guide for a new puppy.",
+        label: "After",
+      },
+    ],
+  });
+  // Sent like any message: the composer and the ephemeral review clear.
+  expect(input).toHaveValue("");
+  expect(
+    screen.queryByRole("region", { name: "Prompt review" }),
+  ).not.toBeInTheDocument();
+});
+
+it("does not offer before/after without a selected model", async () => {
+  const user = userEvent.setup();
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <TooltipProvider>
+        <ChatInput
+          skillOwner="alice"
+          skillScope="new:general"
+          promptCoach={{ modelId: null }}
+          onSubmit={vi.fn()}
+        />
+      </TooltipProvider>
+    </QueryClientProvider>,
+  );
+  await user.type(screen.getByLabelText("Message"), "Write about dogs.");
+  await user.click(
+    await screen.findByRole("button", { name: "Review prompt" }),
+  );
+  const panel = await screen.findByRole("region", { name: "Prompt review" });
+  await user.click(
+    within(panel).getByRole("button", { name: "Apply goal suggestion" }),
+  );
+  expect(
+    within(panel).queryByRole("button", { name: "Compare before/after" }),
+  ).not.toBeInTheDocument();
+});

@@ -147,6 +147,8 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     comparison_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
     comparison_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
     target_model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    # Optional heading such as "Before"/"After" (US-51.7); the model name otherwise.
+    comparison_label: Mapped[str | None] = mapped_column(String(40), nullable=True)
     status: Mapped[MessageStatus] = mapped_column(
         Enum(
             MessageStatus,
@@ -220,7 +222,8 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         UniqueConstraint("id", "chat_id", "user_id", name="uq_messages_id_chat_user"),
         UniqueConstraint("comparison_id", "comparison_index", name="uq_messages_comparison_column"),
         CheckConstraint(
-            "(comparison_id IS NULL AND comparison_index IS NULL AND target_model_id IS NULL)"
+            "(comparison_id IS NULL AND comparison_index IS NULL AND target_model_id IS NULL"
+            " AND comparison_label IS NULL)"
             " OR (comparison_id IS NOT NULL AND role = 'user' AND target_model_id IS NOT NULL"
             " AND comparison_index BETWEEN 0 AND 2)",
             name="message_comparison_column_shape",

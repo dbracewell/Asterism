@@ -140,6 +140,7 @@ export default function AppPage() {
               draftId,
               skills,
               template,
+              compare,
             }) => {
               if (sendBlocked)
                 throw new Error(
@@ -156,7 +157,7 @@ export default function AppPage() {
                   ...(skills ? { skills } : {}),
                   ...(template ? { template } : {}),
                   ...(draftId ? { draft_id: draftId } : {}),
-                  ...comparePayload(compareModels),
+                  ...(compare ? { compare } : comparePayload(compareModels)),
                 },
               });
             }}

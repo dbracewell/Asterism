@@ -80,7 +80,12 @@ for (const [width, height] of [
     await page.getByRole("button", { name: "Review prompt" }).click();
     const panel = page.getByRole("region", { name: "Prompt review" });
     await expect(panel.getByRole("listitem")).toHaveCount(3);
-    expect(reviews).toEqual([{ prompt: "Write about dogs.", model_id: null }]);
+    expect(reviews).toEqual([
+      {
+        prompt: "Write about dogs.",
+        model_id: "11111111-1111-4111-8111-111111111111",
+      },
+    ]);
 
     await panel.getByRole("button", { name: "Apply goal suggestion" }).click();
     await panel
@@ -128,3 +133,44 @@ test("the review action is unavailable without a usable model", async ({
   );
   expect(reviews).toEqual([]);
 });
+
+for (const [width, height] of [
+  [1280, 800],
+  [320, 568],
+]) {
+  test(`compares the original and improved prompts at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await mock(page);
+    await page.goto("/e2e/skill-chat");
+    await page.getByRole("button", { name: "Turn coach on" }).click();
+    const input = page.getByLabel("Message", { exact: true });
+    await input.fill("Write about dogs.");
+    await page.getByRole("button", { name: "Review prompt" }).click();
+    const panel = page.getByRole("region", { name: "Prompt review" });
+    await expect(
+      panel.getByRole("button", { name: "Compare before/after" }),
+    ).toHaveCount(0);
+
+    await panel.getByRole("button", { name: "Apply goal suggestion" }).click();
+    const compare = panel.getByRole("button", { name: "Compare before/after" });
+    await expect(compare).toBeEnabled();
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .include('[aria-label="Prompt review"]')
+          .analyze()
+      ).violations,
+    ).toEqual([]);
+    await compare.click();
+
+    const payload = page.getByLabel("Last accepted payload");
+    await expect(payload).toContainText('"prompt":"Write about dogs."');
+    await expect(payload).toContainText(
+      '"compare":[{"model_id":"11111111-1111-4111-8111-111111111111","label":"Before"},{"model_id":"11111111-1111-4111-8111-111111111111","user_prompt":"Write a one-page care guide for a new puppy.","label":"After"}]',
+    );
+    await expect(panel).toBeHidden();
+    await expect(input).toHaveValue("");
+  });
+}

@@ -41,7 +41,8 @@ and unavailable states after removal; filename reuse cannot redirect them.
 ## Side-by-side comparison (US-54.4)
 
 `POST /chat/` and `POST /chat/{chat_id}/message` accept optional `compare`: two
-or three targets `{model_id, user_prompt?}` that must differ in model or prompt.
+or three targets `{model_id, user_prompt?, label?}` that must differ in model or
+prompt; a label (1–40 characters) heads the column.
 Acceptance creates one sibling user turn per target, sharing a `comparison_id`,
 each with a fixed `target_model_id`; column 0 becomes the active branch (the
 parent's active child, or the chat's `active_root_id` at the start of a chat).

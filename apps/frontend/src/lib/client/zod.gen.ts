@@ -253,6 +253,7 @@ export const zComparisonActivate = z.object({
 export const zComparisonTarget = z.object({
   model_id: z.uuid(),
   user_prompt: z.string().max(100000).nullish(),
+  label: z.string().min(1).max(40).nullish(),
 });
 
 /**
@@ -1815,6 +1816,7 @@ export const zMessage = z.object({
   comparison_id: z.uuid().nullish(),
   comparison_index: z.int().nullish(),
   target_model_id: z.uuid().nullish(),
+  comparison_label: z.string().nullish(),
 });
 
 /**

@@ -178,3 +178,32 @@ it("shows each column's own prompt when the prompts differ", async () => {
     "Explain tides",
   );
 });
+
+it("heads before/after columns with their labels and names the model", async () => {
+  const base = comparison();
+  data.current = {
+    ...base,
+    columns: [
+      {
+        ...base.columns[0],
+        request: message("q0", "user", { comparison_label: "Before" }),
+      },
+      {
+        ...base.columns[1],
+        model: base.columns[0].model,
+        request: message("q1", "user", {
+          content: "Explain tides to a ten-year-old",
+          comparison_label: "After",
+        }),
+      },
+    ],
+  };
+  setup();
+  const after = await screen.findByRole("article", { name: "After" });
+  expect(after).toHaveTextContent("Alpha");
+  expect(after).toHaveTextContent("Explain tides to a ten-year-old");
+  expect(
+    within(after).getByRole("button", { name: "Continue from After" }),
+  ).toBeEnabled();
+  expect(screen.getByRole("article", { name: "Before" })).toBeInTheDocument();
+});
