@@ -8,24 +8,8 @@ from asterism.domains.settings.schemas import ProviderInfo, RuntimeProviderInfo
 
 from .capabilities import LLMApi, request_capabilities
 from .client import LLMClient
-from .errors import LLMProviderError
-from .responses import AccessTokenSupplier, ResponsesLLMClient
+from .responses import ResponsesLLMClient
 from .schemas import LLMClientProtocol
-
-# Placeholder pool key: plan requests replace it with the owner's access token.
-_PLAN_POOL_KEY = "chatgpt-plan"
-
-
-def _plan_access_token(owner_user_id: str) -> AccessTokenSupplier:
-    async def supply() -> str:
-        from asterism.domains.chatgpt.service import ChatGPTPlanUnavailable, access_token
-
-        try:
-            return (await access_token(owner_user_id)).access_token
-        except ChatGPTPlanUnavailable as error:
-            raise LLMProviderError(str(error), code=f"chatgpt_plan_{error.reason.value}") from error
-
-    return supply
 
 
 def create_llm_client(
@@ -44,13 +28,9 @@ def create_llm_client(
         owner = provider.owner_user_id if isinstance(provider, RuntimeProviderInfo) else None
         if owner is None or owner != user_id:
             raise BadDataException("ChatGPT plan models run only for the user who connected them")
-        return ResponsesLLMClient(
-            model_name=model_name,
-            api_key=_PLAN_POOL_KEY,
-            base_url=provider.base_url,
-            capabilities=capabilities,
-            access_token=_plan_access_token(owner),
-        )
+        from asterism.domains.chatgpt.plan_client import ChatGPTPlanClient
+
+        return ChatGPTPlanClient(model_name=model_name, base_url=provider.base_url, owner_user_id=owner)
     match capabilities.api:
         case LLMApi.CHAT_COMPLETIONS:
             client_type = LLMClient

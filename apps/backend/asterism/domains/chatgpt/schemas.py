@@ -23,6 +23,8 @@ class ChatGPTConnection(BaseModel):
         email: Email from the validated ID token, for display.
         plan_usage_enabled: True only when connected with plan usage granted.
         model_count: Plan models currently listed by the account.
+        usage_paused: Plan requests are paused after a usage limit.
+        notice_pending: The one-time plan-usage notice has not been dismissed.
         updated_at: Last connection change (Unix seconds).
     """
 
@@ -31,6 +33,8 @@ class ChatGPTConnection(BaseModel):
     email: str | None = None
     plan_usage_enabled: bool = False
     model_count: int = 0
+    usage_paused: bool = False
+    notice_pending: bool = False
     updated_at: int | None = None
 
 

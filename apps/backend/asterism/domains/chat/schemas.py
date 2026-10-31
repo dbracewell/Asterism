@@ -70,6 +70,8 @@ class ChatModelChoice(BaseModel):
     enabled: bool = True
     authorized: bool = True
     unavailable_reason: str | None = None
+    # Stable code for plan recovery UI, e.g. ``chatgpt_plan_usage_limit``.
+    unavailable_code: str | None = None
     context_window: int | None = None
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     supports_vision: bool | None = None

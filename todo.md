@@ -43,7 +43,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
   - [x] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
   - [x] Test owner isolation, provenance and availability changes.
 
-- [ ] US-49.4: Plan usage experience and limits
-  - [ ] Add the plan label, Manage usage link and first-use notice.
-  - [ ] Map usage-limit, unavailable and revoked errors to their recovery UI.
-  - [ ] Add unit and isolated browser tests with a local OAuth and Responses double.
+- [ ] US-49.4: Plan usage experience and limits (implemented; awaiting confirmation)
+  - [x] Add the plan label, Manage usage link and first-use notice.
+  - [x] Map usage-limit, unavailable and revoked errors to their recovery UI.
+  - [x] Add unit and isolated browser tests with a local OAuth and Responses double.

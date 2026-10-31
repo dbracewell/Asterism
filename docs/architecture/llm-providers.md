@@ -112,7 +112,10 @@ created by that user's ChatGPT connection, never by admins. Their models sync
 from the user's account and appear only in that user's pickers; admin provider
 settings, the draft model and captioning see global providers only (see
 `settings/queries.py`). A plan model runs only for its owner, on the owner's
-current access token. See [ADR-0025](../adr/0025-chatgpt-plan-connection.md).
+current access token through `ChatGPTPlanClient`, which pauses the plan on a
+usage limit, retries temporary unavailability with bounded backoff, refreshes
+once on a rejected session, and reports `chatgpt_plan_<reason>` codes for the
+recovery UI. See [ADR-0025](../adr/0025-chatgpt-plan-connection.md).
 
 Main-agent settings have no model binding. Chat selection and per-execution model
 provenance are independent; unavailable selections remain visible without silent

@@ -1,6 +1,6 @@
 # ADR-0025: Per-user ChatGPT plan connections
 
-Status: Implemented in US-49.2 (user-confirmed on 2026-10-30) and extended in US-49.3 (user-confirmed on 2026-10-31).
+Status: Implemented in US-49.2 (user-confirmed on 2026-10-30) and extended in US-49.3 (user-confirmed on 2026-10-31) and US-49.4 (pending user confirmation).
 
 ## Context
 
@@ -105,12 +105,41 @@ request; an unavailable plan becomes one `ERROR` event with code
 `chatgpt_plan_<reason>`. Delegation runs a sub-agent as the delegating user, so
 a plan-bound target runs only on its owner's connection.
 
+**Usage and recovery (US-49.4).** `ChatGPTPlanClient` (`chatgpt/plan_client.py`)
+wraps the Responses client for plan models and applies the plan error rules
+before any output reaches the caller:
+
+- `subscription_sharing_usage_limit_exceeded` (HTTP 429 or `response.failed`,
+  even after output) pauses the owner's plan (`usage_paused_at`). Paused plans
+  send no requests and their models report `chatgpt_plan_usage_limit`. No reset
+  time is inferred; only the user's explicit "Try my plan again" (or a new
+  sign-in) resumes it. Other 429s do not pause.
+- `subscription_sharing_usage_unavailable`, `…_user_unavailable` and bare 503s
+  retry three times (1, 2 and 4 seconds) while no output has been emitted, then
+  fail as `chatgpt_plan_temporarily_unavailable` with credentials kept.
+- `subscription_sharing_invalid_user` or 401 forces one token refresh and one
+  retry. Only a terminal refresh error asks the user to sign in again
+  (`chatgpt_plan_reauthorization_required`); a second rejection is reported as
+  `chatgpt_plan_session_rejected` and keeps the connection.
+
+Every plan failure is one `ERROR` event whose `error_code` (`chatgpt_plan_<reason>`)
+travels on the chat WebSocket, and picker entries carry the same
+`unavailable_code`. The UI maps each code to recovery: "Manage usage"
+(`https://chatgpt.com/settings/usage`) is the primary action for usage
+limits, reconnect codes link to User Settings, and choosing another model is
+always the user's action. The composer shows "Using ChatGPT plan" with Manage
+usage for available plan models. The one-time "You're using your ChatGPT plan"
+notice is stored per registration (`notice_dismissed_at`), so it does not
+repeat on later sign-ins.
+
 ## Consequences
 
 - Plan usage works only when the user's browser runs on the Asterism machine.
 - A second backend process would need a cross-process refresh lock; the
   revision check already prevents stale overwrites.
-- OpenAI endpoints are module constants; browser tests (US-49.4) will need a
-  configurable issuer to point them at a local double.
+- OpenAI endpoints are module constants. Backend tests drive the real OAuth,
+  models and Responses code against HTTP doubles; browser tests mock the
+  Asterism API and a routed `auth.openai.com` consent page instead of making
+  the endpoints configurable.
 - The preview's constraints are tracked in EPIC-49 and must be re-verified at
   each story start.

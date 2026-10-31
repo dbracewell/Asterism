@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
   disconnect: vi.fn(),
   sync: vi.fn(),
+  dismiss: vi.fn(),
+  resume: vi.fn(),
   callback: null as string | null,
 }));
 vi.mock("@/features/auth/components/user-context", () => ({
@@ -29,6 +31,8 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   chatgptConnectionAuthorizeMutation: () => ({ mutationFn: mocks.authorize }),
   chatgptConnectionDisconnectMutation: () => ({ mutationFn: mocks.disconnect }),
   chatgptPlanModelsSyncMutation: () => ({ mutationFn: mocks.sync }),
+  chatgptPlanNoticeDismissMutation: () => ({ mutationFn: mocks.dismiss }),
+  chatgptPlanUsageResumeMutation: () => ({ mutationFn: mocks.resume }),
 }));
 
 const assign = vi.fn();
@@ -58,6 +62,8 @@ beforeEach(() => {
   });
   mocks.disconnect.mockReset();
   mocks.sync.mockReset();
+  mocks.dismiss.mockReset().mockResolvedValue({ notice_pending: false });
+  mocks.resume.mockReset();
   assign.mockReset();
   vi.stubGlobal("location", { ...window.location, assign });
 });
@@ -233,4 +239,49 @@ it("hides plan models until plan usage is connected", async () => {
   expect(
     screen.queryByRole("button", { name: "Refresh models" }),
   ).not.toBeInTheDocument();
+});
+
+it("shows the first-use notice once and dismisses it with Got it", async () => {
+  mocks.get.mockResolvedValue({
+    policy_enabled: true,
+    status: "connected",
+    email: "plan@example.test",
+    plan_usage_enabled: true,
+    model_count: 1,
+    notice_pending: true,
+  });
+  const user = setup();
+  const dialog = await screen.findByRole("alertdialog", {
+    name: "You're using your ChatGPT plan",
+  });
+  expect(dialog).toHaveTextContent(
+    "Eligible usage in this app uses your ChatGPT plan. Manage usage in your ChatGPT settings.",
+  );
+  expect(within(dialog).getByRole("button", { name: "Got it" })).toHaveFocus();
+  await user.keyboard("{Enter}");
+  await waitFor(() => expect(mocks.dismiss).toHaveBeenCalledTimes(1));
+  await waitFor(() =>
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+  );
+});
+
+it("shows usage-limit recovery with Manage usage while the plan is paused", async () => {
+  mocks.get.mockResolvedValue({
+    policy_enabled: true,
+    status: "connected",
+    email: "plan@example.test",
+    plan_usage_enabled: true,
+    model_count: 1,
+    usage_paused: true,
+  });
+  setup();
+  const notice = await screen.findByRole("alert", {
+    name: "Usage limit reached",
+  });
+  expect(
+    within(notice).getByRole("link", { name: /Manage usage/ }),
+  ).toHaveAttribute("href", "https://chatgpt.com/settings/usage");
+  expect(
+    within(notice).getByRole("button", { name: "Try my plan again" }),
+  ).toBeInTheDocument();
 });
