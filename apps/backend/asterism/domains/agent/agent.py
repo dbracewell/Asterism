@@ -337,7 +337,9 @@ class Agent:
         if self.model_id is None:
             raise BadDataException("Choose an available chat model before generating")
         try:
-            model_info: LlmWithProvider = await settings_service.get_model_and_provider(model_id=self.model_id)
+            model_info: LlmWithProvider = await settings_service.get_model_and_provider(
+                model_id=self.model_id, user_id=self.user.id
+            )
         except NotFoundException as error:
             action = (
                 "edit the sub-agent definition"
@@ -363,7 +365,7 @@ class Agent:
         if self._client is not None:
             return self._client
 
-        client = create_llm_client(model_info.name, model_info.provider)
+        client = create_llm_client(model_info.name, model_info.provider, user_id=self.user.id)
         self._client = client
         return client
 

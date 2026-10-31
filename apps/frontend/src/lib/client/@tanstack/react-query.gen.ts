@@ -114,6 +114,9 @@ import type {
   ChatgptConnectionGetData,
   ChatgptConnectionGetError,
   ChatgptConnectionGetResponse,
+  ChatgptPlanModelsSyncData,
+  ChatgptPlanModelsSyncError,
+  ChatgptPlanModelsSyncResponse,
   ChatgptPolicyGetData,
   ChatgptPolicyGetError,
   ChatgptPolicyGetResponse,
@@ -2833,6 +2836,35 @@ export const chatgptConnectionAuthorizeMutation = (
           ...fnOptions,
           throwOnError: true,
         });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Sync Models
+ *
+ * Reload the caller's plan models from their ChatGPT account.
+ */
+export const chatgptPlanModelsSyncMutation = (
+  options?: Partial<Options<ChatgptPlanModelsSyncData>>,
+): UseMutationOptions<
+  ChatgptPlanModelsSyncResponse,
+  ChatgptPlanModelsSyncError,
+  Options<ChatgptPlanModelsSyncData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatgptPlanModelsSyncResponse,
+    ChatgptPlanModelsSyncError,
+    Options<ChatgptPlanModelsSyncData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatgptPlanModelsSync({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };

@@ -13,6 +13,7 @@ import {
 import {
   CapabilityIcons,
   capabilityLabels,
+  modelLabel,
   PROVIDER_TYPES,
   ProviderIcon,
 } from "@/components/settings/model-identity";
@@ -46,7 +47,7 @@ const isAvailable = (model: ModelOption) =>
   !("available" in model) || model.available;
 
 const matches = (model: ModelOption, query: string) =>
-  `${model.name} ${model.provider_name}`
+  `${modelLabel(model)} ${model.name} ${model.provider_name}`
     .toLowerCase()
     .includes(query.trim().toLowerCase());
 
@@ -65,7 +66,7 @@ const ModelLabel = ({
       />
     )}
     <span className="truncate">
-      {model.name}{" "}
+      {modelLabel(model)}{" "}
       {showProvider && (
         <span className="text-muted-foreground">({model.provider_name})</span>
       )}
@@ -158,7 +159,7 @@ export const ModelSelector = ({
       onValueChange={(model: ModelOption | null) => {
         if (model) onValueChange(model.id);
       }}
-      itemToStringLabel={(model: ModelOption) => model.name}
+      itemToStringLabel={(model: ModelOption) => modelLabel(model)}
       itemToStringValue={(model: ModelOption) => model.id}
       isItemEqualToValue={(a: ModelOption, b: ModelOption) => a.id === b.id}
       filter={matches}
@@ -187,7 +188,7 @@ export const ModelSelector = ({
           {selected ? (
             <ModelLabel model={selected} showProvider={showProvider} />
           ) : value ? (
-            `${savedLabel ?? known?.name ?? value} (unavailable)`
+            `${savedLabel ?? (known ? modelLabel(known) : value)} (unavailable)`
           ) : (
             <span className="text-muted-foreground">Select a model...</span>
           )}

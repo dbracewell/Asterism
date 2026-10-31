@@ -9,6 +9,7 @@ from asterism.common.log import get_logger
 from asterism.core import config
 from asterism.db.database import db_session_manager
 from asterism.domains.chat.jobs import chat_jobs
+from asterism.domains.chatgpt.plan_models import close_api_http
 from asterism.domains.chatgpt.service import close_oauth_client
 from asterism.domains.files.sources import FileSourceReader
 from asterism.domains.knowledge.runtime import (
@@ -80,5 +81,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await close_fetch_browser()
     await close_openai_clients()
     await close_oauth_client()
+    await close_api_http()
     await db_session_manager.close()
     logger.info("Asterism backend shutting down...")

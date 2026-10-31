@@ -114,6 +114,9 @@ import type {
   ChatgptConnectionGetData,
   ChatgptConnectionGetErrors,
   ChatgptConnectionGetResponses,
+  ChatgptPlanModelsSyncData,
+  ChatgptPlanModelsSyncErrors,
+  ChatgptPlanModelsSyncResponses,
   ChatgptPolicyGetData,
   ChatgptPolicyGetErrors,
   ChatgptPolicyGetResponses,
@@ -1984,6 +1987,29 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chatgpt/connection/authorize",
+      ...options,
+    });
+  }
+
+  /**
+   * Sync Models
+   *
+   * Reload the caller's plan models from their ChatGPT account.
+   */
+  public chatgptPlanModelsSync<ThrowOnError extends boolean = false>(
+    options?: Options<ChatgptPlanModelsSyncData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptPlanModelsSyncResponses,
+    ChatgptPlanModelsSyncErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      ChatgptPlanModelsSyncResponses,
+      ChatgptPlanModelsSyncErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chatgpt/connection/models",
       ...options,
     });
   }

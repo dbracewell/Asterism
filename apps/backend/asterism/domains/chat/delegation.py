@@ -9,9 +9,9 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.agent.delegation_scope import DelegationScope
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.service import get_agent_profile
+from asterism.domains.chatgpt.availability import available_user_model
 from asterism.domains.projects.queries import selected_agent_ids
 from asterism.domains.projects.service import get_project
-from asterism.domains.settings.models import LLMModel
 
 from .models import ChatModel
 
@@ -68,8 +68,8 @@ async def require_delegation_target(
         profile = await get_agent_profile(user_id, target_id, session)
         if not profile.sub_agent or (config_revision is not None and profile.config_revision != config_revision):
             raise BadDataException("Sub-agent configuration changed; start a new delegation")
-        model = await session.get(LLMModel, profile.model_id)
-        if model is None or not model.is_active:
+        # Plan-bound targets run only on the delegating owner's own connection.
+        if profile.model_id is None or await available_user_model(user_id, profile.model_id, session) is None:
             raise BadDataException("Sub-agent model is unavailable; edit the sub-agent definition")
         return profile
 

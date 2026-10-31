@@ -69,7 +69,7 @@ async def prepare_execution(
             else:
                 if chat.selected_model_id is None:
                     raise CodedException(409, "Choose a chat model before generating")
-                choice = await require_chat_model(chat.selected_model_id, session)
+                choice = await require_chat_model(chat.selected_model_id, user_id, session)
                 chat_snap = chat_snapshot or await read_chat_scope_snapshot(
                     user_id=user_id, chat_id=chat_id, session=session
                 )
@@ -162,7 +162,7 @@ async def validate_recorded_execution(
 
     snapshots = await recorded_skill_snapshots(user_id=user_id, execution=recorded, session=session)
     await validate_snapshots(user_id, snapshots, session)
-    choice = await require_chat_model(recorded.model.id, session)
+    choice = await require_chat_model(recorded.model.id, user_id, session)
     if (
         choice.name != recorded.model.name
         or choice.provider_id != recorded.model.provider_id

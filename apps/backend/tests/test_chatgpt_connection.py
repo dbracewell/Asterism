@@ -42,6 +42,11 @@ class OAuthDouble:
         self.nonce: str | None = None
         self.audience: str | None = None
         self.refresh_count = 0
+        self.models: list[dict[str, Any]] = [
+            {"slug": "gpt-plan", "display_name": "GPT Plan", "visibility": "list"},
+            {"slug": "gpt-hidden", "display_name": "Hidden", "visibility": "hide"},
+        ]
+        self.model_tokens: list[str] = []
 
     def id_token(self, *, audience: str, nonce: str | None) -> str:
         now = int(time.time())
@@ -59,6 +64,10 @@ class OAuthDouble:
 
     def handle(self, request: httpx.Request) -> httpx.Response:
         path = request.url.path
+        if request.url.host == "api.openai.com":
+            assert path == "/v1/models"
+            self.model_tokens.append(request.headers["authorization"])
+            return httpx.Response(200, json={"models": self.models})
         if path == "/.well-known/openid-configuration":
             return httpx.Response(
                 200,
@@ -115,11 +124,9 @@ def chatgpt(project_api, monkeypatch):
 
     monkeypatch.setattr("asterism.core.security.verify_jwks_token", verify)
     double = OAuthDouble()
-    monkeypatch.setattr(
-        service,
-        "_oauth_client",
-        ChatGPTOAuthClient(http=httpx.AsyncClient(transport=httpx.MockTransport(double.handle))),
-    )
+    transport = httpx.MockTransport(double.handle)
+    monkeypatch.setattr(service, "_oauth_client", ChatGPTOAuthClient(http=httpx.AsyncClient(transport=transport)))
+    monkeypatch.setattr("asterism.domains.chatgpt.plan_models._api_http", httpx.AsyncClient(transport=transport))
     from contextlib import asynccontextmanager
 
     @asynccontextmanager

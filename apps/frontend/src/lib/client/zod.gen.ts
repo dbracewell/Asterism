@@ -145,6 +145,7 @@ export const zChatGptConnectionStatus = z.enum([
  * status: Connection lifecycle state; ``None`` when never connected.
  * email: Email from the validated ID token, for display.
  * plan_usage_enabled: True only when connected with plan usage granted.
+ * model_count: Plan models currently listed by the account.
  * updated_at: Last connection change (Unix seconds).
  */
 export const zChatGptConnection = z.object({
@@ -152,6 +153,7 @@ export const zChatGptConnection = z.object({
   status: zChatGptConnectionStatus.nullish(),
   email: z.string().nullish(),
   plan_usage_enabled: z.boolean().optional().default(false),
+  model_count: z.int().optional().default(0),
   updated_at: z.int().nullish(),
 });
 
@@ -895,9 +897,11 @@ export const zProviderModelsPage = z.object({
  *
  * ``OPENAI`` is the first-party API (base URL pinned server-side);
  * ``GENERIC_OPENAI`` is any OpenAI-compatible endpoint (public or local) with
- * a client-supplied base URL.
+ * a client-supplied base URL. ``CHATGPT`` is one user's own ChatGPT plan
+ * (pinned to the OpenAI API, authorized by that user's connection); it is
+ * never admin-managed.
  */
-export const zProviderType = z.enum(["openai", "generic_openai"]);
+export const zProviderType = z.enum(["openai", "generic_openai", "chatgpt"]);
 
 /**
  * ChatModelChoice
@@ -905,6 +909,7 @@ export const zProviderType = z.enum(["openai", "generic_openai"]);
 export const zChatModelChoice = z.object({
   id: z.uuid(),
   name: z.string(),
+  display_name: z.string().nullish(),
   provider_id: z.uuid(),
   provider_name: z.string(),
   provider_type: zProviderType,
@@ -926,6 +931,7 @@ export const zChatModelChoice = z.object({
 export const zLlmDisplayInfo = z.object({
   id: z.uuid(),
   name: z.string(),
+  display_name: z.string().nullish(),
   provider_id: z.uuid(),
   provider_name: z.string(),
   provider_type: zProviderType,
@@ -1286,6 +1292,7 @@ export const zSubAgentDefinition = z.object({
   model_id: z.uuid(),
   id: z.uuid(),
   model_available: z.boolean(),
+  model_unavailable_reason: z.string().nullish(),
   config_revision: z.int().gte(1).optional().default(1),
 });
 
@@ -2354,6 +2361,11 @@ export const zChatgptConnectionGetResponse = zChatGptConnection;
  * Successful Response
  */
 export const zChatgptConnectionAuthorizeResponse = zChatGptAuthorizationStart;
+
+/**
+ * Successful Response
+ */
+export const zChatgptPlanModelsSyncResponse = zChatGptConnection;
 
 export const zChatgptConnectionDisconnectBody = zChatGptDisconnect;
 

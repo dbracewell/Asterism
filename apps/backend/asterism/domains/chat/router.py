@@ -56,7 +56,7 @@ chat_router = APIRouter(
 
 @chat_router.get("/models", response_model=list[ChatModelChoice], operation_id="chatModelsList")
 async def available_chat_models(user: AuthedUserDep, session: DBSessionDep) -> list[ChatModelChoice]:
-    return await list_chat_models(session)
+    return await list_chat_models(user.id, session)
 
 
 @chat_router.put(

@@ -4,6 +4,7 @@ import {
   CloudIcon,
   ImageIcon,
   type LucideIcon,
+  MessageCircleIcon,
   ServerIcon,
   WrenchIcon,
 } from "lucide-react";
@@ -18,7 +19,14 @@ export const PROVIDER_TYPES: Record<
 > = {
   openai: { label: "OpenAI", icon: CloudIcon },
   generic_openai: { label: "OpenAI-compatible", icon: ServerIcon },
+  chatgpt: { label: "ChatGPT plan", icon: MessageCircleIcon },
 };
+
+/** The provider's display name for a model when it gives one, else its ID. */
+export const modelLabel = (model: {
+  name: string;
+  display_name?: string | null;
+}) => model.display_name ?? model.name;
 
 type CapabilityModel = {
   supports_tools?: boolean | null;

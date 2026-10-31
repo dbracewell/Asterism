@@ -1,6 +1,6 @@
 # ADR-0025: Per-user ChatGPT plan connections
 
-Status: Implemented in US-49.2; user-confirmed on 2026-10-30.
+Status: Implemented in US-49.2 (user-confirmed on 2026-10-30) and extended in US-49.3 (user-confirmed on 2026-10-31).
 
 ## Context
 
@@ -69,6 +69,41 @@ even when revocation is unconfirmed, and reports which happened. The registratio
 (client ID, subject, email) is kept for a later sign-in, as OpenAI recommends;
 "Use a different account" (`forget`) deletes it so the next sign-in registers
 anew.
+
+**Plan models (US-49.3).** A user's plan models are ordinary `models` rows under
+that user's own `providers` row (`provider_type = 'chatgpt'`, `owner_user_id`
+set; a CHECK ties the two together and each user has at most one). Chats,
+sub-agent definitions and project selections therefore bind them by model ID
+exactly like admin models, with no parallel tables. Global provider names stay
+unique through a partial index on `owner_user_id IS NULL`.
+
+`settings/queries.py` holds the owner-scoped base conditions. Every admin-wide
+surface (provider settings, app settings, provider model pages, discovery,
+draft model, captioning, knowledge processing) filters to global providers;
+user pickers and lookups (`/chat/models`, `/settings/user` models, default
+model, sub-agent binding, delegation, tool policy, execution lookup) use
+global plus the caller's own models. Admin payloads with `provider_type =
+'chatgpt'` are rejected.
+
+`chatgpt/availability.py` is the single availability rule: another user's plan
+model is unavailable; an owned plan model is available only while it is active
+(still listed by the account), the policy is enabled and the connection has
+plan usage. Pickers, chat admission, sub-agent and project listings and
+delegation all report its reason and never retarget a binding.
+
+Models sync from `GET /v1/models` (`visibility == "list"`, `slug` as the model,
+`display_name` for labels) after a successful sign-in and on "Refresh models".
+Unlisted models are deactivated, never deleted, so bindings survive and return
+when the model is listed again. Plan models report `supports_tools = true`
+(source: provider), because the plan route accepts function tools; vision and
+context size stay unknown. Picker order is Asterism's name order, not the
+server order.
+
+At execution, `create_llm_client` refuses a plan model unless the executing
+user owns it, and the Responses client fetches that owner's token on every
+request; an unavailable plan becomes one `ERROR` event with code
+`chatgpt_plan_<reason>`. Delegation runs a sub-agent as the delegating user, so
+a plan-bound target runs only on its owner's connection.
 
 ## Consequences
 

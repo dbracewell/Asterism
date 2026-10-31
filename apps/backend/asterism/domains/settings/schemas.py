@@ -103,10 +103,17 @@ class ProviderInfo(BaseModel):
         return self
 
 
+class RuntimeProviderInfo(ProviderInfo):
+    """Provider as resolved for execution; ``owner_user_id`` is set only for a
+    user's own ChatGPT plan provider."""
+
+    owner_user_id: str | None = None
+
+
 class LlmWithProvider(Llm):
     """A model plus its provider (used to resolve a concrete model for execution)."""
 
-    provider: ProviderInfo
+    provider: RuntimeProviderInfo
 
 
 class Provider(ProviderInfo):
@@ -127,6 +134,7 @@ class LlmDisplayInfo(BaseModel):
 
     id: uuid.UUID
     name: str
+    display_name: str | None = None
     provider_id: uuid.UUID
     provider_name: str
     provider_type: ProviderType

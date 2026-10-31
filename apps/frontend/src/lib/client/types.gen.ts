@@ -367,6 +367,7 @@ export type ChatGptAuthorizationStart = {
  * status: Connection lifecycle state; ``None`` when never connected.
  * email: Email from the validated ID token, for display.
  * plan_usage_enabled: True only when connected with plan usage granted.
+ * model_count: Plan models currently listed by the account.
  * updated_at: Last connection change (Unix seconds).
  */
 export type ChatGptConnection = {
@@ -383,6 +384,10 @@ export type ChatGptConnection = {
    * Plan Usage Enabled
    */
   plan_usage_enabled?: boolean;
+  /**
+   * Model Count
+   */
+  model_count?: number;
   /**
    * Updated At
    */
@@ -550,6 +555,10 @@ export type ChatModelChoice = {
    * Name
    */
   name: string;
+  /**
+   * Display Name
+   */
+  display_name?: string | null;
   /**
    * Provider Id
    */
@@ -1413,6 +1422,10 @@ export type LlmDisplayInfo = {
    * Name
    */
   name: string;
+  /**
+   * Display Name
+   */
+  display_name?: string | null;
   /**
    * Provider Id
    */
@@ -2296,9 +2309,11 @@ export type ProviderSummary = {
  *
  * ``OPENAI`` is the first-party API (base URL pinned server-side);
  * ``GENERIC_OPENAI`` is any OpenAI-compatible endpoint (public or local) with
- * a client-supplied base URL.
+ * a client-supplied base URL. ``CHATGPT`` is one user's own ChatGPT plan
+ * (pinned to the OpenAI API, authorized by that user's connection); it is
+ * never admin-managed.
  */
-export type ProviderType = "openai" | "generic_openai";
+export type ProviderType = "openai" | "generic_openai" | "chatgpt";
 
 /**
  * ScopedChatFile
@@ -2690,6 +2705,10 @@ export type SubAgentDefinition = {
    * Model Available
    */
   model_available: boolean;
+  /**
+   * Model Unavailable Reason
+   */
+  model_unavailable_reason?: string | null;
   /**
    * Config Revision
    */
@@ -6006,6 +6025,41 @@ export type ChatgptConnectionAuthorizeResponses = {
 
 export type ChatgptConnectionAuthorizeResponse =
   ChatgptConnectionAuthorizeResponses[keyof ChatgptConnectionAuthorizeResponses];
+
+export type ChatgptPlanModelsSyncData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/chatgpt/connection/models";
+};
+
+export type ChatgptPlanModelsSyncErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ChatgptPlanModelsSyncError =
+  ChatgptPlanModelsSyncErrors[keyof ChatgptPlanModelsSyncErrors];
+
+export type ChatgptPlanModelsSyncResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptConnection;
+};
+
+export type ChatgptPlanModelsSyncResponse =
+  ChatgptPlanModelsSyncResponses[keyof ChatgptPlanModelsSyncResponses];
 
 export type ChatgptConnectionDisconnectData = {
   body: ChatGptDisconnect;

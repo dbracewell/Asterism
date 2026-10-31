@@ -1,6 +1,6 @@
 # EPIC-49: ChatGPT plan connection
 
-Status: in progress (US-49.1 and US-49.2 complete; US-49.3 active). Source: Sign in with ChatGPT research (2026-10-30).
+Status: in progress (US-49.1 through US-49.3 complete; US-49.4 active). Source: Sign in with ChatGPT research (2026-10-30).
 
 ## Objective
 
@@ -146,9 +146,9 @@ disabled or a model leaves the account, bound chats and sub-agents show the
 model as unavailable and are never retargeted. Delegation to a sub-agent bound
 to a plan model runs only on its owner's connection.
 
-- [ ] Sync owner-scoped plan models and expose them through the chat model choices.
-- [ ] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
-- [ ] Test owner isolation, provenance and availability changes.
+- [x] Sync owner-scoped plan models and expose them through the chat model choices.
+- [x] Mark unavailable bindings without replacement; cover chats, sub-agents and project selections.
+- [x] Test owner isolation, provenance and availability changes.
 
 ## US-49.4: Plan usage experience and limits
 

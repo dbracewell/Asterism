@@ -165,7 +165,7 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
                 file_ids=payload.files,
                 session=session,
             )
-            choice = await require_chat_model(payload.model_id, session)
+            choice = await require_chat_model(payload.model_id, user_id, session)
             if payload.draft_id is not None:
                 from .drafts import owned_draft
 
@@ -242,7 +242,7 @@ async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendReq
                 raise CodedException(409, "Chat model selection changed; reload before sending")
             if chat.selected_model_id is None:
                 raise CodedException(409, "Choose a chat model before sending")
-            await require_chat_model(chat.selected_model_id, session)
+            await require_chat_model(chat.selected_model_id, user_id, session)
             branch = active_branch(
                 list(
                     await session.scalars(

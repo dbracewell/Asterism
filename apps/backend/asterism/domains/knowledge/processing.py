@@ -28,6 +28,7 @@ from asterism.domains.knowledge.models import (
 )
 from asterism.domains.knowledge.runtime import start_file_ingestion_job
 from asterism.domains.settings.models import LLMModel
+from asterism.domains.settings.queries import is_global_model
 
 from .policy import (
     load_processing_configuration,
@@ -252,7 +253,7 @@ async def update_captioning_configuration(
         BadDataException: If the requested mode/model combination is not
             eligible, or the policy cannot be persisted.
     """
-    models = list(await session.scalars(select(LLMModel)))
+    models = list(await session.scalars(select(LLMModel).where(is_global_model())))
     try:
         selected = CaptioningConfiguration(
             mode=CaptionMode(payload.mode),

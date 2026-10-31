@@ -103,8 +103,16 @@ errors and streams that end early produce one `ERROR` event whose exception is
 an `LLMProviderError` keeping the provider code, status, param and request ID.
 SDK retries are disabled for this client, so usage-limit (429) errors surface
 once. The ChatGPT plan capabilities (EPIC-49) send no `temperature`, `top_p`,
-`max_tokens` or `seed` and only function tools. No provider type uses them
-until the ChatGPT connection lands.
+`max_tokens` or `seed` and only function tools.
+
+## ChatGPT plan providers
+
+`ProviderType.CHATGPT` providers are owned by one user (`owner_user_id`) and
+created by that user's ChatGPT connection, never by admins. Their models sync
+from the user's account and appear only in that user's pickers; admin provider
+settings, the draft model and captioning see global providers only (see
+`settings/queries.py`). A plan model runs only for its owner, on the owner's
+current access token. See [ADR-0025](../adr/0025-chatgpt-plan-connection.md).
 
 Main-agent settings have no model binding. Chat selection and per-execution model
 provenance are independent; unavailable selections remain visible without silent

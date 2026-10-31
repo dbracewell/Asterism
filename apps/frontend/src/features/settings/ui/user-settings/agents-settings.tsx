@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
+import { modelLabel } from "@/components/settings/model-identity";
 import { SubAgentDefinition } from "@/lib/client";
 import {
   chatModelsListOptions,
@@ -138,7 +139,7 @@ export const AgentsSettings = () => {
                   agent={agent}
                   modelLabel={
                     model
-                      ? `${model.name} (${model.provider_name})`
+                      ? `${modelLabel(model)} (${model.provider_name})`
                       : agent.model_id
                   }
                   edit={() => setEditingAgent(agent)}
@@ -216,7 +217,7 @@ function SubAgentCard({
             <span className="sr-only">
               {agent.model_available
                 ? "Fixed model available"
-                : "Fixed model unavailable"}
+                : `Fixed model unavailable${agent.model_unavailable_reason ? `: ${agent.model_unavailable_reason}` : ""}`}
             </span>
             {agent.model_available ? (
               <CheckCircle2Icon className="text-primary size-4 shrink-0" />

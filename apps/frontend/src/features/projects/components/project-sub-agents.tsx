@@ -267,7 +267,14 @@ function AgentRow({
         </p>
         <p className="text-sm break-words">Fixed model: {modelLabel}</p>
         {!agent.model_available && (
-          <Badge variant="secondary">Model unavailable</Badge>
+          <>
+            <Badge variant="secondary">Model unavailable</Badge>
+            {agent.model_unavailable_reason && (
+              <p className="text-muted-foreground text-sm">
+                {agent.model_unavailable_reason}
+              </p>
+            )}
+          </>
         )}
       </div>
       <Button variant="outline" disabled={disabled} onClick={onClick}>

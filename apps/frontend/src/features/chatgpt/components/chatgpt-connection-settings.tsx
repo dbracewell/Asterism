@@ -16,6 +16,7 @@ import { client } from "@/lib/api";
 import {
   chatgptConnectionAuthorizeMutation,
   chatgptConnectionDisconnectMutation,
+  chatgptPlanModelsSyncMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import type { ChatGptConnection } from "@/lib/client/types.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -75,6 +76,7 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
   const disconnect = useMutation(
     chatgptConnectionDisconnectMutation({ client }),
   );
+  const syncModels = useMutation(chatgptPlanModelsSyncMutation({ client }));
 
   if (!connection.data)
     return connection.isError ? (
@@ -128,6 +130,35 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
       >
         <ConnectionStatus data={data} />
       </SettingsSection>
+      {data.status === "connected" && (
+        <SettingsSection
+          title="Plan models"
+          description="Your plan models appear only in your own chat and sub-agent model pickers. Models that leave your plan stay bound but become unavailable."
+          actions={
+            <Button
+              variant="outline"
+              disabled={busy || syncModels.isPending || !data.policy_enabled}
+              onClick={() => syncModels.mutate({})}
+            >
+              {syncModels.isPending ? "Refreshing…" : "Refresh models"}
+            </Button>
+          }
+        >
+          <p role="status" className="text-sm">
+            {data.model_count === 1
+              ? "1 plan model available."
+              : `${data.model_count ?? 0} plan models available.`}
+          </p>
+          {syncModels.isError && (
+            <p role="alert" className="text-destructive text-sm">
+              {errorText(
+                syncModels.error,
+                "ChatGPT plan models could not be refreshed. Try again.",
+              )}
+            </p>
+          )}
+        </SettingsSection>
+      )}
       {authorize.isError && (
         <p role="alert" className="text-destructive text-sm">
           {errorText(

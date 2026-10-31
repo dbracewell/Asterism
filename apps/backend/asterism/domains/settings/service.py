@@ -14,6 +14,7 @@ Conventions:
 """
 
 import uuid
+from collections.abc import Sequence
 from typing import Any, cast
 
 from pydantic import JsonValue, ValidationError
@@ -36,6 +37,8 @@ from .models import (
     ProviderModel,
     UserSettingModel,
 )
+from .provider_types import ProviderType
+from .queries import is_global_model, is_global_provider, select_visible_models
 from .schemas import (
     ApplicationSettings,
     BulkUpdateSettingRequest,
@@ -71,6 +74,7 @@ def llm_display_info(model: LLMModel) -> LlmDisplayInfo:
     return LlmDisplayInfo(
         id=model.id,
         name=model.name,
+        display_name=model.display_name,
         provider_id=model.provider_id,
         provider_name=model.provider.name,
         provider_type=model.provider.provider_type,
@@ -132,7 +136,7 @@ async def get_user_settings(
         combined["main_agent"] = await agent_service.get_main_agent(user_id, session)
         combined["sub_agents"] = {agent.id: agent for agent in await agent_service.get_sub_agents(user_id, session)}
         user_settings = UserSettings.model_validate(combined)
-        user_settings.models = await get_user_models(session=session)
+        user_settings.models = await get_user_models(user_id, session=session)
 
     # settings_cache.set_user_settings(user_id, user_settings)
     return user_settings
@@ -149,7 +153,7 @@ async def bulk_upsert_user_settings(
     """
     async with get_async_db_session(session) as session:
         for key, value in updates.items():
-            await _validate_user_setting(key, value, session)
+            await _validate_user_setting(user_id, key, value, session)
 
         for key, value in updates.items():
             if value is None:
@@ -196,7 +200,7 @@ async def upsert_user_setting(
         return Setting(key=key, value=value)
 
     async with get_async_db_session(session) as session:
-        await _validate_user_setting(key, value, session)
+        await _validate_user_setting(user_id, key, value, session)
         stmt = (
             insert(UserSettingModel)
             .values(
@@ -227,7 +231,7 @@ async def delete_user_setting(
 ) -> None:
     """Delete one user setting row; the key must be a known, deletable setting."""
     async with get_async_db_session(session) as session:
-        await _validate_user_setting(key, None, session)
+        await _validate_user_setting(user_id, key, None, session)
         stmt = delete(UserSettingModel).where(
             UserSettingModel.user_id == user_id,
             UserSettingModel.key == key,
@@ -237,7 +241,7 @@ async def delete_user_setting(
         # settings_cache.remove_user_setting(user_id)
 
 
-async def _validate_user_setting(key: str, value: Any, session: AsyncSession) -> None:
+async def _validate_user_setting(user_id: str, key: str, value: Any, session: AsyncSession) -> None:
     """Enforce the whitelist of user setting keys and per-key value shapes.
 
     ``default_model_id`` must reference an existing, active model; ``None``
@@ -250,8 +254,9 @@ async def _validate_user_setting(key: str, value: Any, session: AsyncSession) ->
             model_id = uuid.UUID(str(value))
         except ValueError as exc:
             raise BadDataException("default_model_id must be a model UUID") from exc
-        model = await session.get(LLMModel, model_id)
-        if model is None or not model.is_active:
+        from asterism.domains.chatgpt.availability import available_user_model
+
+        if await available_user_model(user_id, model_id, session) is None:
             raise BadDataException("Default model must be available and active")
     if value is not None and key == "show_thinking" and not isinstance(value, bool):
         raise BadDataException("show_thinking must be boolean")
@@ -301,11 +306,15 @@ async def get_provider_settings(
             .where(LLMModel.provider_id == ProviderModel.id, LLMModel.is_active)
             .scalar_subquery()
         )
-        providers_stmt = select(
-            ProviderModel,
-            model_count.label("model_count"),
-            active_model_count.label("active_model_count"),
-        ).options(noload(ProviderModel.models))
+        providers_stmt = (
+            select(
+                ProviderModel,
+                model_count.label("model_count"),
+                active_model_count.label("active_model_count"),
+            )
+            .where(is_global_provider())
+            .options(noload(ProviderModel.models))
+        )
         providers = list((await session.execute(providers_stmt)).all())
         draft_model_id = await session.scalar(
             select(ApplicationSettingsModel.value).where(
@@ -324,7 +333,9 @@ async def get_provider_settings(
                 logger.warning("Stored draft_model_id setting is not a valid UUID; ignoring it")
             draft_row = (
                 await session.scalar(
-                    select(LLMModel).where(LLMModel.id == parsed_draft_model_id).options(joinedload(LLMModel.provider)),
+                    select(LLMModel)
+                    .where(LLMModel.id == parsed_draft_model_id, is_global_model())
+                    .options(joinedload(LLMModel.provider)),
                 )
                 if parsed_draft_model_id is not None
                 else None
@@ -364,12 +375,19 @@ async def update_provider_settings(
     async with get_async_db_session(session) as session:
         existing_providers = {
             provider.id: provider
-            for provider in (await session.scalars(select(ProviderModel).options(noload(ProviderModel.models)))).all()
+            for provider in (
+                await session.scalars(
+                    select(ProviderModel).where(is_global_provider()).options(noload(ProviderModel.models)),
+                )
+            ).all()
         }
+        _reject_owned_provider_types(settings.llm_providers)
         incoming_ids = {provider.id for provider in settings.llm_providers}
         draft_model_id = settings.draft_model_id
         if draft_model_id is not None:
-            draft_provider_id = await session.scalar(select(LLMModel.provider_id).where(LLMModel.id == draft_model_id))
+            draft_provider_id = await session.scalar(
+                select(LLMModel.provider_id).where(LLMModel.id == draft_model_id, is_global_model()),
+            )
             if draft_provider_id is not None and draft_provider_id not in incoming_ids:
                 draft_model_id = None
         await _delete_missing_providers(set(existing_providers), incoming_ids, session)
@@ -403,6 +421,7 @@ async def update_provider_settings(
                 select(LLMModel).where(
                     LLMModel.id == draft_model_id,
                     LLMModel.is_active,
+                    is_global_model(),
                 ),
             )
             if draft_model is None:
@@ -442,7 +461,9 @@ async def get_provider_models(
     provider and is validated before the page query runs.
     """
     async with get_async_db_session(session) as session:
-        exists = await session.scalar(select(ProviderModel.id).where(ProviderModel.id == provider_id))
+        exists = await session.scalar(
+            select(ProviderModel.id).where(ProviderModel.id == provider_id, is_global_provider()),
+        )
         if exists is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
 
@@ -503,6 +524,7 @@ async def update_provider_model(
             select(LLMModel).where(
                 LLMModel.id == model_id,
                 LLMModel.provider_id == provider_id,
+                is_global_model(),
             ),
         )
         if model is None:
@@ -526,7 +548,10 @@ async def update_provider_model(
         )
         if not model.is_active and str(model.id) == str(draft_model_id):
             replacement = await session.scalar(
-                select(LLMModel.id).where(LLMModel.is_active).order_by(func.lower(LLMModel.name), LLMModel.id).limit(1),
+                select(LLMModel.id)
+                .where(LLMModel.is_active, is_global_model())
+                .order_by(func.lower(LLMModel.name), LLMModel.id)
+                .limit(1),
             )
             if replacement is None:
                 # No active model remains; clear the draft by deleting its row.
@@ -556,7 +581,9 @@ async def get_provider_for_discovery(
     """Load a provider with its models for a discovery run."""
     async with get_async_db_session(session) as session:
         provider = await session.scalar(
-            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models)),
+            select(ProviderModel)
+            .where(ProviderModel.id == provider_id, is_global_provider())
+            .options(selectinload(ProviderModel.models)),
         )
         if provider is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
@@ -574,7 +601,9 @@ async def replace_provider_models(
     """
     async with get_async_db_session(session) as session:
         provider = await session.scalar(
-            select(ProviderModel).where(ProviderModel.id == provider_id).options(selectinload(ProviderModel.models)),
+            select(ProviderModel)
+            .where(ProviderModel.id == provider_id, is_global_provider())
+            .options(selectinload(ProviderModel.models)),
         )
         if provider is None:
             raise NotFoundException(f"Provider id {provider_id} not found in database")
@@ -608,6 +637,7 @@ async def get_captioning_models(
                     .where(
                         LLMModel.is_active.is_(True),
                         LLMModel.supports_vision.is_(True),
+                        is_global_model(),
                     )
                     .options(joinedload(LLMModel.provider))
                     .order_by(func.lower(LLMModel.name), LLMModel.id),
@@ -938,6 +968,7 @@ async def get_draft_model(
             .where(
                 LLMModel.id == draft_model_id,
                 LLMModel.is_active,
+                is_global_model(),
             )
         )
 
@@ -949,39 +980,50 @@ async def get_draft_model(
 
 
 async def get_all_providers(session: AsyncSession) -> list[ProviderModel]:
-    """Load all providers eagerly including their models."""
+    """Load all admin-managed providers eagerly including their models."""
     async with get_async_db_session(session) as session:
-        stmt = select(ProviderModel).options(
-            selectinload(ProviderModel.models),
+        stmt = (
+            select(ProviderModel)
+            .where(is_global_provider())
+            .options(
+                selectinload(ProviderModel.models),
+            )
         )
         result = await session.scalars(stmt)
         return list(result.all())
 
 
 async def get_user_models(
+    user_id: str,
     session: AsyncSession | None = None,
 ) -> list[LlmDisplayInfo]:
-    """List every active model across providers (models are global, not per-user)."""
+    """List the models ``user_id`` can use now: active global models plus the
+    user's own available ChatGPT plan models."""
+    from asterism.domains.chatgpt.availability import ModelAvailability
+
     async with get_async_db_session(session) as session:
-        stmt = select(LLMModel).where(LLMModel.is_active).options(joinedload(LLMModel.provider))
-        result = await session.scalars(stmt)
-        return [llm_display_info(m) for m in result.all()]
+        availability = await ModelAvailability.load(user_id, session)
+        rows = await session.scalars(select_visible_models(user_id))
+        return [llm_display_info(m) for m in rows.all() if availability.reason(m) is None]
 
 
 async def get_model_and_provider(
     model_id: uuid.UUID,
+    user_id: str | None = None,
     session: AsyncSession | None = None,
 ) -> LlmWithProvider:
-    """Fetch an active model with its provider for execution."""
+    """Fetch an active model with its provider for execution.
+
+    With ``user_id``, the model must be visible to that user (global or the
+    user's own plan model); without it, only global models qualify. Plan
+    availability is enforced when a request fetches the owner's token.
+    """
     async with get_async_db_session(session) as session:
         stmt = (
-            select(LLMModel)
-            .where(
-                LLMModel.id == model_id,
-                LLMModel.is_active,
-            )
-            .options(joinedload(LLMModel.provider))
-        )
+            select_visible_models(user_id)
+            if user_id is not None
+            else select(LLMModel).where(is_global_model()).options(joinedload(LLMModel.provider))
+        ).where(LLMModel.id == model_id, LLMModel.is_active)
         result = await session.scalar(stmt)
         if not result:
             raise NotFoundException(f"Model id {model_id} not found in database")
@@ -989,20 +1031,10 @@ async def get_model_and_provider(
         return LlmWithProvider.model_validate(result)
 
 
-async def get_model(
-    model_id: uuid.UUID,
-    session: AsyncSession | None = None,
-) -> Llm:
-    """Fetch an active model without its provider."""
-    async with get_async_db_session(session) as session:
-        stmt = select(LLMModel).where(
-            LLMModel.id == model_id,
-            LLMModel.is_active,
-        )
-        result = await session.scalar(stmt)
-        if not result:
-            raise NotFoundException(f"Model id {model_id} not found in database")
-        return Llm.model_validate(result)
+def _reject_owned_provider_types(providers: Sequence[ProviderInfo]) -> None:
+    """Admins cannot create or convert providers into a user's ChatGPT plan."""
+    if any(provider.provider_type == ProviderType.CHATGPT for provider in providers):
+        raise BadDataException("ChatGPT plan providers are connected by users, not configured by admins")
 
 
 async def bulk_upsert_providers(
@@ -1014,6 +1046,7 @@ async def bulk_upsert_providers(
     Updates/creates providers, merges each provider's models by name, and
     deletes providers absent from the payload after the sub-agent binding check.
     """
+    _reject_owned_provider_types(update)
     current_providers = await get_all_providers(session=session)
     processed_providers = set()
     existing_providers = {p.id: p for p in current_providers}

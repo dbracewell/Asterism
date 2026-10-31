@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, Type, Unpack
+from typing import Any, AsyncGenerator, Awaitable, Callable, Type, Unpack
 
 from openai import APIError, AsyncOpenAI
 from openai.types.responses import Response, ResponseStreamEvent
@@ -43,6 +43,9 @@ from .schemas import (
 )
 
 logger = get_logger("LLM_RESPONSES")
+
+# Returns a bearer token for one request; raises LLMProviderError when none.
+type AccessTokenSupplier = Callable[[], Awaitable[str]]
 
 # Asterism parameter name -> Responses request field. Parameters without a
 # Responses equivalent (seed, stop, penalties, n, logprobs, ...) are never sent.
@@ -314,8 +317,12 @@ class ResponsesLLMClient(LLMClientProtocol):
         base_url: str,
         client: AsyncOpenAI | None = None,
         capabilities: RequestCapabilities = CHATGPT_PLAN_CAPABILITIES,
+        access_token: AccessTokenSupplier | None = None,
     ) -> None:
+        """``access_token``, when given, supplies the bearer token per request
+        (replacing ``api_key``), so a refreshed token is always used."""
         self.max_retries: int = 3
+        self._access_token = access_token
         self.capabilities = capabilities
         self.api_key = api_key if isinstance(api_key, SecretStr) else SecretStr(api_key)
         self.base_url = base_url
@@ -407,6 +414,13 @@ class ResponsesLLMClient(LLMClientProtocol):
             return
 
         request = self._prepare_request(messages=messages, tools=tools, response_model=response_model, **kwargs)
+        client = self._client
+        if self._access_token is not None:
+            try:
+                client = client.with_options(api_key=await self._access_token())
+            except LLMProviderError as error:
+                yield ResponsesStreamHandler()._error(error)
+                return
 
         @retry_async_gen(
             on_exceed_attempts=lambda e: e,
@@ -416,7 +430,7 @@ class ResponsesLLMClient(LLMClientProtocol):
         )
         async def async_responses_impl(**request):
             async with llm_request_limiter.acquire():
-                stream = await self._client.responses.create(stream=True, store=False, **request)
+                stream = await client.responses.create(stream=True, store=False, **request)
                 async for event in stream:
                     yield event
 

@@ -62,6 +62,7 @@ class MessageFileReference(BaseModel):
 class ChatModelChoice(BaseModel):
     id: uuid.UUID
     name: str
+    display_name: str | None = None
     provider_id: uuid.UUID
     provider_name: str
     provider_type: ProviderType

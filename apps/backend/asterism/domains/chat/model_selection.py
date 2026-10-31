@@ -2,13 +2,14 @@
 
 import uuid
 
-from sqlalchemy import select, update
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from asterism.core.exceptions import CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
+from asterism.domains.chatgpt.availability import ModelAvailability
 from asterism.domains.settings.models import LLMModel
+from asterism.domains.settings.queries import select_visible_models
 
 from .jobs import chat_jobs
 from .models import ChatModel
@@ -16,17 +17,19 @@ from .queries import select_owned_chats
 from .schemas import ChatInfo, ChatModelChoice, ChatModelUpdate
 
 
-def model_choice(model: LLMModel) -> ChatModelChoice:
+def model_choice(model: LLMModel, availability: ModelAvailability) -> ChatModelChoice:
+    reason = availability.reason(model)
     return ChatModelChoice(
         id=model.id,
         name=model.name,
+        display_name=model.display_name,
         provider_id=model.provider_id,
         provider_name=model.provider.name,
         provider_type=model.provider.provider_type,
-        available=model.is_active,
+        available=reason is None,
         enabled=model.is_active,
         authorized=True,
-        unavailable_reason=None if model.is_active else "Model disabled; choose another model",
+        unavailable_reason=reason,
         context_window=model.context_window,
         context_window_source=model.context_window_source,
         supports_vision=model.supports_vision,
@@ -34,40 +37,39 @@ def model_choice(model: LLMModel) -> ChatModelChoice:
     )
 
 
-async def list_chat_models(session: AsyncSession) -> list[ChatModelChoice]:
-    # Provider catalogs are platform-managed; all authenticated users share this visibility policy.
-    rows = await session.scalars(
-        select(LLMModel).options(joinedload(LLMModel.provider)).order_by(LLMModel.name, LLMModel.id),
-    )
-    return [model_choice(row) for row in rows]
+async def list_chat_models(user_id: str, session: AsyncSession) -> list[ChatModelChoice]:
+    """Global provider models plus the caller's own ChatGPT plan models."""
+    availability = await ModelAvailability.load(user_id, session)
+    rows = await session.scalars(select_visible_models(user_id).order_by(LLMModel.name, LLMModel.id))
+    return [model_choice(row, availability) for row in rows]
 
 
-async def require_chat_model(model_id: uuid.UUID, session: AsyncSession) -> ChatModelChoice:
+async def require_chat_model(model_id: uuid.UUID, user_id: str, session: AsyncSession) -> ChatModelChoice:
     row = await session.scalar(
-        select(LLMModel)
-        .where(LLMModel.id == model_id)
-        .options(joinedload(LLMModel.provider))
-        .execution_options(populate_existing=True),
+        select_visible_models(user_id).where(LLMModel.id == model_id).execution_options(populate_existing=True),
     )
-    if row is None or not row.is_active:
+    choice = model_choice(row, await ModelAvailability.load(user_id, session)) if row is not None else None
+    if choice is None or not choice.available:
+        reason = choice.unavailable_reason if choice is not None else None
         raise CodedException(
             409,
-            "Selected model is unavailable; choose an available chat model and regenerate or retry",
+            f"Selected model is unavailable ({reason}); choose an available chat model and regenerate or retry"
+            if reason
+            else "Selected model is unavailable; choose an available chat model and regenerate or retry",
         )
-    return model_choice(row)
+    return choice
 
 
 async def selected_chat_model(chat: ChatModel, session: AsyncSession) -> ChatModelChoice | None:
     if chat.selected_model_id is None:
         return None
     row = await session.scalar(
-        select(LLMModel)
+        select_visible_models(chat.user_id)
         .where(LLMModel.id == chat.selected_model_id)
-        .options(joinedload(LLMModel.provider))
         .execution_options(populate_existing=True),
     )
     if row is not None:
-        return model_choice(row)
+        return model_choice(row, await ModelAvailability.load(chat.user_id, session))
     saved = chat.selected_model_snapshot
     if saved is None:
         return None
@@ -118,7 +120,7 @@ async def change_chat_model(
                     raise NotFoundException("Chat not found")
                 if chat.model_revision != payload.expected_model_revision:
                     raise CodedException(409, "Chat model selection changed; reload and retry")
-                choice = await require_chat_model(payload.model_id, session)
+                choice = await require_chat_model(payload.model_id, user_id, session)
                 if chat.selected_model_id != payload.model_id:
                     chat.selected_model_id = payload.model_id
                     chat.model_revision += 1
