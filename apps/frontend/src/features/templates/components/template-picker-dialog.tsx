@@ -258,14 +258,14 @@ function SelectedTemplate({
       <TemplateBuilder
         key={`${selection.source}:${selection.id}:${loaded.revision}`}
         template={loaded.document}
-        onUse={(prompt) =>
+        onUse={(prompt, level) =>
           onUse(prompt, {
             name: loaded.document.name,
             use: {
               source: selection.source,
               id: selection.id,
               revision: loaded.revision,
-              level: "guided",
+              level,
             },
           })
         }

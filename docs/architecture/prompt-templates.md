@@ -1,10 +1,10 @@
-# Prompt templates — US-51.1 through US-51.4
+# Prompt templates — US-51.1 through US-51.5
 
 Private template CRUD and the bundled, read-only framework catalog are
 implemented in the `prompt_templates` backend domain. The composer's template
 builder (US-51.2), slash discovery and message provenance (US-51.3) and the
-settings library and editor (US-51.4) are implemented. Scaffolding levels and the
-prompt coach are later
+settings library and editor (US-51.4) and scaffolding levels (US-51.5) are
+implemented. The prompt coach and before/after comparison are later
 [EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md) stories.
 
 The document format, bounds, placeholder grammar, assembly semantics and catalog
@@ -66,7 +66,8 @@ with the composer draft in this tab's session storage (scoped to user and
 workspace) and survives a reload. A restored chip is only a client claim; the
 server re-resolves it on send, so a template deleted meanwhile rejects the send
 with 404 until the chip is removed.
-`level` is `guided` until scaffolding levels exist (US-51.5).
+`level` is the scaffolding level the prompt was built at (US-51.5) and is
+required.
 
 The server resolves the claim before accepting the message: a framework must be
 in the catalog and an owned template must exist (foreign, missing and malformed
@@ -116,3 +117,41 @@ picker, so saves refresh both).
   revision automatically; a dirty one is told to reload before saving. Deletion
   is confirmed; messages built with the template keep their label, shown as
   unavailable.
+
+## Scaffolding levels (US-51.5)
+
+Every template supports three levels, chosen with the **Guided / Standard /
+Freeform** tabs at the top of the builder (composer and editor preview alike).
+The level only changes how much help the builder shows; the result is still
+ordinary composer text.
+
+| Level    | Shows                                                                                                                            |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Guided   | Every field with its help, its `example` hint and its default pre-filled.                                                        |
+| Standard | Required fields with help, starting empty; optional fields are under a collapsed **More (N optional)**. No examples or defaults. |
+| Freeform | Only the checklist (with tick boxes for self-checking that are never saved or sent) beside a blank **Your prompt**.              |
+
+The builder opens at guided. Switching levels keeps what the user typed;
+switching to guided fills only fields that are still empty with their defaults.
+Freeform text is separate from the field values. **Use prompt** validates the
+required fields (or, in freeform, a nonblank prompt) and passes the level to the
+composer, which shows it on the chip ("Built with RTF · Standard") and sends it
+as `template.level`. The server stores it in the message's provenance, and the
+history label shows it too. A restored draft whose stored level is unknown drops
+the chip.
+
+The document additions behind the levels are in ADR-0026's US-51.5 addendum:
+
+- `fields[].example`: an optional hint of up to 500 characters, shown only at the
+  guided level and never inserted into the prompt.
+- `checklist`: up to 12 items of up to 200 characters. When empty, the freeform
+  checklist is derived from the fields (`Label: help`).
+- Conditional sections `{{#key}}…{{/key}}` in the body: the section text is
+  kept only when field `key` has a value, so an optional field left empty at the
+  standard level drops its surrounding sentence. The editor's body help explains
+  the syntax, its validation mirrors the server's section rules, and renaming a
+  key renames its section tags as well.
+
+The bundled frameworks are at revision 2 (`CATALOG_VERSION` 2). Each has a
+checklist and field examples, and RTF, CO-STAR, CRAFT and step-by-step wrap their
+optional fields in sections.

@@ -57,6 +57,7 @@ const rtfDocument = {
       label: "Role",
       help: "",
       required: true,
+      example: "a running coach",
       default: "a teacher",
     },
     {
@@ -65,10 +66,12 @@ const rtfDocument = {
       label: "Task",
       help: "",
       required: true,
+      example: null,
       default: null,
     },
   ],
   body: "Act as {{role}}. {{task}}",
+  checklist: ["Say who should answer.", "State the task."],
 };
 const rtf = {
   id: "rtf",
@@ -219,6 +222,7 @@ it("edits fields and body with a revision-checked save", async () => {
     label: "Audience",
     help: "",
     required: false,
+    example: null,
     default: null,
   });
 });

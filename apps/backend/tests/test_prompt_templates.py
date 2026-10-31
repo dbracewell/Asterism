@@ -11,6 +11,7 @@ from asterism.domains.prompt_templates import catalog
 from asterism.domains.prompt_templates.documents import (
     MAX_DOCUMENT_BYTES,
     Placeholder,
+    Section,
     parse_document,
     parse_document_json,
     split_body,
@@ -111,6 +112,25 @@ async def create(client, user="a", **overrides):
         document(body="{{text}} {{audience}} null\x00byte"),
         document(body="{{text}} {{audience}} \ud800"),
         document(allowed_tools=["shell"]),
+        # Conditional sections (US-51.5).
+        document(body="{{text}} {{#audience}}for {{audience}}"),  # Never closed.
+        document(body="{{text}} for {{audience}}{{/audience}}"),  # Close without open.
+        document(body="{{text}} {{#audience}}{{audience}}{{/text}}"),  # Mismatched close.
+        document(body="{{#text}}{{#audience}}{{audience}}{{/audience}}{{/text}} {{text}}"),  # Nested.
+        document(body="{{text}} {{audience}} {{#missing}}x{{/missing}}"),  # Unknown section field.
+        document(body="{{text}} {{#audience}}only a toggle{{/audience}}"),  # Field never used as a placeholder.
+        document(body="{{text}} {{# audience}}{{audience}}{{/audience}}"),
+        document(body="{{text}} {{#}}{{audience}}{{/}}"),
+        # Guided examples and freeform checklists (US-51.5).
+        document(fields=[{"kind": "short_text", "key": "t", "label": "T", "example": ""}], body="{{t}}"),
+        document(fields=[{"kind": "short_text", "key": "t", "label": "T", "example": "  "}], body="{{t}}"),
+        document(fields=[{"kind": "short_text", "key": "t", "label": "T", "example": "x" * 501}], body="{{t}}"),
+        document(checklist=["ok", " "]),
+        document(checklist=[""]),
+        document(checklist=["x" * 201]),
+        document(checklist=["x"] * 13),
+        document(checklist="one item"),
+        document(checklist=["null\x00"]),
         "not a mapping",
     ],
 )
@@ -144,6 +164,34 @@ def test_placeholder_grammar_escapes_and_repeats():
     assert parsed.body == body  # Source is stored verbatim; escapes are interpreted only when assembling.
 
 
+def test_conditional_sections_group_text_and_placeholders():
+    body = "A {{text}}{{#audience}} for {{audience}} \\{{x}}{{/audience}}."
+    assert split_body(body) == [
+        "A ",
+        Placeholder("text"),
+        Section("audience", (" for ", Placeholder("audience"), " {{x}}")),
+        ".",
+    ]
+    # Sections may repeat, wrap other fields and contain no placeholder at all.
+    repeated = "{{#audience}}Hi.{{/audience}}{{text}}{{#text}}{{audience}}{{/text}}"
+    assert parse_document(document(body=repeated)).body == repeated
+
+
+def test_levels_metadata_is_optional_and_round_trips():
+    plain = parse_document(document())
+    assert plain.checklist == () and all(field.example is None for field in plain.fields)
+    parsed = parse_document(
+        document(
+            fields=[{"kind": "long_text", "key": "text", "label": "Text", "example": "A news story."}],
+            body="{{text}}",
+            checklist=["Say who reads it.", "Give the text."],
+        )
+    )
+    assert parsed.fields[0].example == "A news story."
+    assert parsed.checklist == ("Say who reads it.", "Give the text.")
+    assert parse_document(parsed.model_dump()) == parsed
+
+
 def test_every_field_kind_parses_with_defaults():
     parsed = parse_document(
         with_field({"kind": "examples", "key": "extra", "label": "Examples", "default": ["a", "b"]})
@@ -164,6 +212,18 @@ def test_catalog_is_bundled_validated_and_immutable():
     for framework in catalog.FRAMEWORKS.values():
         assert parse_document(framework.document.model_dump()) == framework.document
         assert framework.revision >= 1
+        # Every framework supports all three scaffolding levels.
+        assert framework.document.checklist
+        assert any(field.required for field in framework.document.fields)
+    # Standard hides optional fields; most frameworks have some, wrapped in sections.
+    sectioned = [
+        f.id for f in catalog.FRAMEWORKS.values() if any(isinstance(s, Section) for s in split_body(f.document.body))
+    ]
+    assert sectioned == ["rtf", "co-star", "craft", "step-by-step"]
+    for framework_id in sectioned:
+        framework = catalog.FRAMEWORKS[framework_id]
+        sections = {s.key for s in split_body(framework.document.body) if isinstance(s, Section)}
+        assert sections == {field.key for field in framework.document.fields if not field.required}
     with pytest.raises(TypeError):
         catalog.FRAMEWORKS["mine"] = catalog.FRAMEWORKS["rtf"]  # type: ignore[index]
     with pytest.raises(Exception):
@@ -183,7 +243,7 @@ async def test_every_caller_lists_frameworks_and_none_can_write_them(templates_a
         assert body["version"] == catalog.CATALOG_VERSION
         assert [item["id"] for item in body["items"]] == list(catalog.FRAMEWORKS)
     one = (await client.get(BASE + "frameworks/co-star", headers=auth())).json()
-    assert one["name"] == "CO-STAR" and one["revision"] == 1
+    assert one["name"] == "CO-STAR" and one["revision"] == 2
     assert {field["key"] for field in one["document"]["fields"]} == {
         "context",
         "objective",

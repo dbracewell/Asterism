@@ -5,51 +5,93 @@ export type TemplateField = TemplateDocument["fields"][number];
 export type FieldValue = string | string[];
 export type FieldValues = Record<string, FieldValue>;
 
+type Leaf = { type: "text"; text: string } | { type: "field"; key: string };
+
 export type BodySegment =
-  | { type: "text"; text: string }
-  | { type: "field"; key: string };
+  | Leaf
+  /** `{{#key}}…{{/key}}`: kept only when field `key` has a value. */
+  | { type: "section"; key: string; segments: Leaf[] };
 
-const KEY = /^[a-z][a-z0-9_]{0,31}/;
+const TAG = /^\{\{([#/]?)([a-z][a-z0-9_]{0,31})\}\}/;
 
-/** Splits a body into literal text and placeholders; `\{{` is a literal `{{`. */
+/**
+ * Splits a body into literal text, placeholders and conditional sections;
+ * `\{{` is a literal `{{`. Mirrors the server grammar but never throws: tags a
+ * draft has not balanced yet stay literal or unwrap, so editor previews of an
+ * invalid body still render.
+ */
 export function splitBody(body: string): BodySegment[] {
   const segments: BodySegment[] = [];
+  let open: { key: string; tag: string; segments: Leaf[] } | null = null;
   let literal = "";
-  let i = 0;
+  const target = () => open?.segments ?? segments;
   const flush = () => {
-    if (literal) segments.push({ type: "text", text: literal });
+    if (literal) target().push({ type: "text", text: literal });
     literal = "";
   };
+  let i = 0;
   while (i < body.length) {
     if (body.startsWith("\\{{", i)) {
       literal += "{{";
       i += 3;
       continue;
     }
-    if (body.startsWith("{{", i)) {
-      const match = KEY.exec(body.slice(i + 2));
-      const end = match ? i + 2 + match[0].length : -1;
-      if (match && body.startsWith("}}", end)) {
-        flush();
-        segments.push({ type: "field", key: match[0] });
-        i = end + 2;
-        continue;
-      }
+    const match = body.startsWith("{{", i) ? TAG.exec(body.slice(i)) : null;
+    const sigil = match?.[1];
+    const key = match?.[2] ?? "";
+    const tag = match?.[0] ?? "";
+    if (sigil === "") {
+      flush();
+      target().push({ type: "field", key });
+    } else if (sigil === "#" && !open) {
+      flush();
+      open = { key, tag, segments: [] };
+    } else if (sigil === "/" && open?.key === key) {
+      flush();
+      segments.push({ type: "section", key, segments: open.segments });
+      open = null;
+    } else {
+      literal += body[i];
+      i += 1;
+      continue;
     }
-    literal += body[i];
-    i += 1;
+    i += tag.length;
   }
   flush();
+  if (open) {
+    // Unclosed: keep its text, including the opening tag, as written.
+    const unclosed: { tag: string; segments: Leaf[] } = open;
+    segments.push({ type: "text", text: unclosed.tag }, ...unclosed.segments);
+  }
   return segments;
 }
 
-export function initialValues(document: TemplateDocument): FieldValues {
+/** Placeholder keys used anywhere in the body, including inside sections. */
+export function placeholderKeys(segments: BodySegment[]) {
+  return new Set(
+    segments.flatMap((segment) =>
+      segment.type === "field"
+        ? [segment.key]
+        : segment.type === "section"
+          ? segment.segments.flatMap((child) =>
+              child.type === "field" ? [child.key] : [],
+            )
+          : [],
+    ),
+  );
+}
+
+/** Starting values; only the guided level pre-fills defaults. */
+export function initialValues(
+  document: TemplateDocument,
+  withDefaults = true,
+): FieldValues {
   return Object.fromEntries(
     document.fields.map((field) => [
       field.key,
       field.kind === "examples"
-        ? [...(field.default ?? [])]
-        : (field.default ?? ""),
+        ? [...((withDefaults && field.default) || [])]
+        : (withDefaults && field.default) || "",
     ]),
   );
 }
@@ -83,7 +125,7 @@ export function assembleSegments(
   values: FieldValues,
 ): AssembledSegment[] {
   const fields = new Map(document.fields.map((field) => [field.key, field]));
-  return splitBody(document.body).map((segment) => {
+  const resolve = (segment: Leaf): AssembledSegment => {
     if (segment.type === "text") return segment;
     const field = fields.get(segment.key);
     return {
@@ -92,6 +134,14 @@ export function assembleSegments(
       label: field?.label ?? segment.key,
       text: field ? renderValue(field, values[segment.key]) : "",
     };
+  };
+  return splitBody(document.body).flatMap((segment) => {
+    if (segment.type !== "section") return [resolve(segment)];
+    const field = fields.get(segment.key);
+    // An empty field drops its whole section, surrounding text included.
+    return field && isFilled(field, values[segment.key])
+      ? segment.segments.map(resolve)
+      : [];
   });
 }
 

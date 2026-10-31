@@ -48,6 +48,7 @@ import {
   type AppliedTemplate,
   type TemplateSelection,
 } from "@/features/templates/components/template-picker-dialog";
+import { levelLabel } from "@/features/templates/lib/levels";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 
@@ -598,10 +599,13 @@ const ChatInputCore = ({
               <Badge
                 variant="secondary"
                 className="max-w-full min-w-0"
-                title={`This message records that it was built with ${appliedTemplate.name}.`}
+                title={`This message records that it was built with ${appliedTemplate.name} at the ${appliedTemplate.use.level} level.`}
               >
                 <span className="truncate">
                   Built with {appliedTemplate.name}
+                </span>
+                <span className="shrink-0">
+                  · {levelLabel(appliedTemplate.use.level)}
                 </span>
               </Badge>
               <Button

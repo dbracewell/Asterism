@@ -29,7 +29,25 @@ it("labels user messages built with a template", () => {
   render(<MessageBody message={message({ template: label })} />);
   const shown = screen.getByText("Built with RTF").closest("p");
   expect(shown).toHaveAttribute("data-template-label", "available");
+  expect(shown).toHaveTextContent("Built with RTF· Guided");
   expect(screen.queryByText(/unavailable/)).toBeNull();
+});
+
+it("shows the recorded scaffolding level", () => {
+  render(
+    <MessageBody
+      message={message({ template: { ...label, level: "standard" } })}
+    />,
+  );
+  const shown = screen.getByText("Built with RTF").closest("p");
+  expect(shown).toHaveAttribute(
+    "title",
+    "Built with RTF (revision 1) at the standard level",
+  );
+  expect(screen.getByText("· Standard")).toHaveAttribute(
+    "data-template-level",
+    "standard",
+  );
 });
 
 it("keeps a deleted template's label, marked unavailable", () => {

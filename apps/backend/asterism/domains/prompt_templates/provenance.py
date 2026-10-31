@@ -28,7 +28,7 @@ class TemplateUse(BaseModel):
     source: TemplateSource
     id: str = Field(min_length=1, max_length=64)
     revision: int = Field(ge=1, le=2_147_483_647)
-    level: ScaffoldingLevel = "guided"
+    level: ScaffoldingLevel
 
 
 class TemplateProvenance(BaseModel):

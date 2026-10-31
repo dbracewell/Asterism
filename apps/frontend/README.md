@@ -332,11 +332,15 @@ Choose **Prompt templates** in the composer toolbar to pick a bundled framework
 form is generated from the template's field schema, beside a live preview of the
 assembled prompt (stacked on narrow screens). Hovering or focusing a field
 highlights the preview text it produces, and hovering preview text highlights
-its field. Required fields are validated before **Use prompt** inserts the text
-at the composer cursor, where it stays ordinary editable text. You can also
+its field. A **Guided / Standard / Freeform** switch sets how much help the
+builder gives: guided shows every field with examples and defaults, standard
+starts empty with optional fields under **More**, and freeform shows only a
+checklist beside a blank prompt. Required fields are validated before **Use
+prompt** inserts the text at the composer cursor, where it stays ordinary
+editable text. You can also
 type `/template`, a framework ID such as `/rtf`, or a template name at the start
 of a message. A removable **Built with …** chip, kept with the draft across
-reloads, records the template on the sent message, which then shows a small label (marked unavailable if the template is
+reloads, records the template and level on the sent message, which then shows a small label (marked unavailable if the template is
 later deleted). See the
 [prompt templates contract](../../docs/architecture/prompt-templates.md).
 

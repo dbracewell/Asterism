@@ -1,6 +1,6 @@
 # EPIC-51: Prompt frameworks and templates
 
-Status: in progress (US-51.1 through US-51.4 complete). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-51.1 through US-51.4 complete; US-51.5 implemented, awaiting confirmation). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -96,8 +96,8 @@ shows every field with examples and defaults. Standard hides optional fields
 behind "More". Freeform shows only a checklist of what a good prompt covers. The
 user chooses the level, and the choice is recorded in provenance.
 
-- [ ] Add level definitions to the template schema and the builder UI.
-- [ ] Test that each level renders the right fields and that provenance records the level.
+- [x] Add level definitions to the template schema and the builder UI.
+- [x] Test that each level renders the right fields and that provenance records the level.
 
 ## US-51.6: Prompt coach
 

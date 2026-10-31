@@ -172,6 +172,31 @@ it("sends template provenance once and drops it when removed or cleared", async 
   expect(screen.queryByText("Built with RTF")).toBeNull();
 });
 
+it("records the scaffolding level the prompt was built at", async () => {
+  const user = userEvent.setup();
+  const { submit, input } = setup();
+  await user.click(screen.getByRole("button", { name: "Prompt templates" }));
+  await user.click(await screen.findByRole("button", { name: /^RTF/ }));
+  await user.click(await screen.findByRole("tab", { name: "Freeform" }));
+  await user.type(screen.getByLabelText(/Your prompt/), "Fold my laundry.");
+  await user.click(screen.getByRole("button", { name: "Use prompt" }));
+  await waitFor(() => expect(input).toHaveValue("Fold my laundry."));
+  expect(screen.getByText("· Freeform")).toBeInTheDocument();
+  await user.click(screen.getByLabelText("Send message"));
+  await waitFor(() =>
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        template: {
+          source: "framework",
+          id: "rtf",
+          revision: 2,
+          level: "freeform",
+        },
+      }),
+    ),
+  );
+});
+
 it("keeps the label and prompt across a reload, like skill drafts", async () => {
   const user = userEvent.setup();
   const first = setup();
@@ -210,6 +235,26 @@ it("ignores a malformed stored label without losing the draft", async () => {
       prompt: "Kept",
       literal: false,
       template: { name: "RTF", use: { source: "bogus", id: "rtf" } },
+    }),
+  );
+  const { input } = setup();
+  await waitFor(() => expect(input).toHaveValue("Kept"));
+  expect(screen.queryByText(/Built with/)).toBeNull();
+});
+
+it("ignores a stored label with an unknown scaffolding level", async () => {
+  sessionStorage.setItem(
+    "asterism:skill-composer:1:alice:new:general",
+    JSON.stringify({
+      revision: 0,
+      skills: [],
+      refresh: [],
+      prompt: "Kept",
+      literal: false,
+      template: {
+        name: "RTF",
+        use: { source: "framework", id: "rtf", revision: 2, level: "expert" },
+      },
     }),
   );
   const { input } = setup();

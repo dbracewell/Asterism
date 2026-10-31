@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. US-51.1 through US-51.4 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+US-51.5 (scaffolding levels) is active on `feature/us-51.5-scaffolding-levels`, implemented and awaiting confirmation. US-51.1 through US-51.4 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -44,9 +44,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-51.4: Template library and editor
   - [x] Build the library list, duplicate action and editor with preview.
   - [x] Test editing, conflicts and accessibility (axe, keyboard).
-- [ ] US-51.5: Scaffolding levels
-  - [ ] Add level definitions to the template schema and the builder UI.
-  - [ ] Test that each level renders the right fields and that provenance records the level.
+- [ ] US-51.5: Scaffolding levels (implemented; awaiting confirmation)
+  - [x] Add level definitions to the template schema and the builder UI.
+  - [x] Test that each level renders the right fields and that provenance records the level.
 - [ ] US-51.6: Prompt coach
   - [ ] Add the coach endpoint and rubric prompt, reusing title-model resolution.
   - [ ] Build the suggestion checklist and apply actions in the composer.

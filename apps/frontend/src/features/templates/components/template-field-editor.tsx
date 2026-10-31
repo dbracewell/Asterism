@@ -44,7 +44,7 @@ type Props = {
   onRemove: () => void;
 };
 
-/** One field of the template schema: kind, key, label, help, required and default. */
+/** One field of the template schema: kind, key, label, help, example, required and default. */
 export function TemplateFieldEditor({
   id,
   field,
@@ -175,6 +175,20 @@ export function TemplateFieldEditor({
           disabled={disabled}
           onChange={(event) => set({ help: event.target.value })}
         />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`${id}-example`}>Example</FieldLabel>
+        <Input
+          id={`${id}-example`}
+          value={field.example}
+          maxLength={LIMITS.hint}
+          disabled={disabled}
+          aria-describedby={`${id}-example-help`}
+          onChange={(event) => set({ example: event.target.value })}
+        />
+        <FieldDescription id={`${id}-example-help`}>
+          Shown at the guided level only; never added to the prompt.
+        </FieldDescription>
       </Field>
       {field.kind === "select" && (
         <Field>
