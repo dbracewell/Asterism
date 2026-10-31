@@ -1,5 +1,5 @@
 import type { TemplateDocument } from "@/lib/client";
-import { splitBody, type TemplateField } from "./assemble";
+import { placeholderKeys, splitBody, type TemplateField } from "./assemble";
 
 /**
  * Editable form of a template document. The server parser (ADR-0026) is
@@ -16,6 +16,8 @@ export type DraftField = {
   label: string;
   help: string;
   required: boolean;
+  /** Guided-level hint; empty means none. */
+  example: string;
   /** Default for text and select fields; empty means no default. */
   defaultText: string;
   /** Select options, one per line. */
@@ -33,6 +35,8 @@ export type TemplateDraft = {
   description: string;
   body: string;
   fields: DraftField[];
+  /** Freeform checklist, one item per line; empty derives it from the fields. */
+  checklist: string;
 };
 
 export const LIMITS = {
@@ -49,6 +53,9 @@ export const LIMITS = {
   option: 120,
   examples: 10,
   example: 4_000,
+  hint: 500,
+  checklist: 12,
+  checklistItem: 200,
 } as const;
 
 export const KIND_LABELS: Record<FieldKind, string> = {
@@ -68,6 +75,7 @@ export function fromDocument(document: TemplateDocument): TemplateDraft {
     name: document.name,
     description: document.description,
     body: document.body,
+    checklist: (document.checklist ?? []).join("\n"),
     fields: document.fields.map((field) => ({
       uid: uid(),
       kind: field.kind,
@@ -75,6 +83,7 @@ export function fromDocument(document: TemplateDocument): TemplateDraft {
       label: field.label,
       help: field.help ?? "",
       required: field.required ?? false,
+      example: field.example ?? "",
       defaultText:
         field.kind === "examples" ? "" : ((field.default as string) ?? ""),
       options: field.kind === "select" ? field.options.join("\n") : "",
@@ -85,6 +94,7 @@ export function fromDocument(document: TemplateDocument): TemplateDraft {
   };
 }
 
+/** One entry per nonblank line, trimmed; used for options and checklists. */
 export function parseOptions(options: string) {
   return options
     .split("\n")
@@ -98,6 +108,7 @@ function toField(field: DraftField): TemplateField {
     label: field.label,
     help: field.help,
     required: field.required,
+    example: field.example.trim() ? field.example : null,
   };
   switch (field.kind) {
     case "examples": {
@@ -126,6 +137,7 @@ export function toDocument(draft: TemplateDraft): TemplateDocument {
     description: draft.description,
     fields: draft.fields.map(toField),
     body: draft.body,
+    checklist: parseOptions(draft.checklist),
   };
 }
 
@@ -143,6 +155,7 @@ export function blankDraft(): TemplateDraft {
     name: "My template",
     description: "Describe when to use this template.",
     body: "{{task}}",
+    checklist: "",
     fields: [
       {
         ...newField("task"),
@@ -166,6 +179,7 @@ export function newField(key: string): DraftField {
       .replace(/^./, (first) => first.toUpperCase()),
     help: "",
     required: false,
+    example: "",
     defaultText: "",
     options: "",
     examples: [],
@@ -188,18 +202,20 @@ export function keyFromLabel(label: string) {
 }
 
 /**
- * Replaces `{{from}}` placeholders with `{{to}}`, using the same scan as the
- * parser so escaped `\{{from}}` text is left alone.
+ * Replaces `{{from}}` placeholders and `{{#from}}`/`{{/from}}` section tags
+ * with `to`, using the same scan as the parser so escaped `\{{from}}` text is
+ * left alone.
  */
 export function renamePlaceholder(body: string, from: string, to: string) {
-  const token = `{{${from}}}`;
   let result = "";
   for (let i = 0; i < body.length; ) {
+    const sigil = body[i + 2] === "#" || body[i + 2] === "/" ? body[i + 2] : "";
+    const token = `{{${sigil}${from}}}`;
     if (body.startsWith("\\{{", i)) {
       result += "\\{{";
       i += 3;
     } else if (body.startsWith(token, i)) {
-      result += `{{${to}}}`;
+      result += `{{${sigil}${to}}}`;
       i += token.length;
     } else {
       result += body[i];
@@ -280,23 +296,46 @@ export type DraftIssues = {
 const blank = (value: string) => !value.trim();
 const tooLong = (value: string, limit: number) => [...value].length > limit;
 
-/** Body placeholder keys, or a message if the body is malformed. */
-function placeholders(body: string): Set<string> | string {
-  // Same left-to-right scan as the server parser.
+/**
+ * Placeholder and section keys, or a message if the body is malformed. Same
+ * left-to-right scan as the server parser, including its section rules.
+ */
+function bodyKeys(
+  body: string,
+): { placeholders: Set<string>; sections: Set<string> } | string {
+  let open: { key: string; at: number } | null = null;
   for (let i = 0; i < body.length; ) {
     if (body.startsWith("\\{{", i)) i += 3;
     else if (body.startsWith("{{", i)) {
-      const match = /^\{\{[a-z][a-z0-9_]{0,31}\}\}/.exec(body.slice(i));
+      const match = /^\{\{([#/]?)([a-z][a-z0-9_]{0,31})\}\}/.exec(
+        body.slice(i),
+      );
       if (!match)
-        return `Malformed placeholder at character ${i}; use {{key}}, or \\{{ for a literal {{.`;
-      i += match[0].length;
+        return `Malformed placeholder at character ${i}; use {{key}}, {{#key}}…{{/key}}, or \\{{ for a literal {{.`;
+      const [tag, sigil, key] = match;
+      if (sigil === "#") {
+        if (open)
+          return `Sections cannot nest: “${key}” opens inside “${open.key}” at character ${i}.`;
+        open = { key, at: i };
+      } else if (sigil === "/") {
+        if (open?.key !== key)
+          return `Section close “${key}” at character ${i} has no matching open.`;
+        open = null;
+      }
+      i += tag.length;
     } else i += 1;
   }
-  return new Set(
-    splitBody(body).flatMap((segment) =>
-      segment.type === "field" ? [segment.key] : [],
+  if (open)
+    return `Section “${open.key}” opened at character ${open.at} is never closed.`;
+  const segments = splitBody(body);
+  return {
+    placeholders: placeholderKeys(segments),
+    sections: new Set(
+      segments.flatMap((segment) =>
+        segment.type === "section" ? [segment.key] : [],
+      ),
     ),
-  );
+  };
 }
 
 export function validateDraft(draft: TemplateDraft): DraftIssues {
@@ -316,6 +355,13 @@ export function validateDraft(draft: TemplateDraft): DraftIssues {
       `Body must be at most ${LIMITS.body.toLocaleString()} characters.`,
     );
   if (!draft.fields.length) general.push("Add at least one field.");
+  const checklist = parseOptions(draft.checklist);
+  if (checklist.length > LIMITS.checklist)
+    general.push(`Use at most ${LIMITS.checklist} checklist items.`);
+  if (checklist.some((item) => tooLong(item, LIMITS.checklistItem)))
+    general.push(
+      `Each checklist item must be at most ${LIMITS.checklistItem} characters.`,
+    );
   if (draft.fields.length > LIMITS.fields)
     general.push(`Use at most ${LIMITS.fields} fields.`);
 
@@ -336,6 +382,8 @@ export function validateDraft(draft: TemplateDraft): DraftIssues {
       issues.push(`Label must be at most ${LIMITS.label} characters.`);
     if (tooLong(field.help, LIMITS.help))
       issues.push(`Help must be at most ${LIMITS.help} characters.`);
+    if (tooLong(field.example, LIMITS.hint))
+      issues.push(`Example must be at most ${LIMITS.hint} characters.`);
     if (
       field.kind === "short_text" &&
       tooLong(field.defaultText, LIMITS.shortText)
@@ -372,14 +420,22 @@ export function validateDraft(draft: TemplateDraft): DraftIssues {
     if (issues.length) fields[field.uid] = issues;
   }
 
-  const used = placeholders(draft.body);
-  if (typeof used === "string") general.push(used);
+  const found = bodyKeys(draft.body);
+  if (typeof found === "string") general.push(found);
   else {
+    const used = found.placeholders;
     const keys = new Set(draft.fields.map((field) => field.key));
     const unknown = [...used].filter((key) => !keys.has(key)).sort();
     if (unknown.length)
       general.push(
         `Placeholders without a matching field: ${unknown.join(", ")}.`,
+      );
+    const unknownSections = [...found.sections]
+      .filter((key) => !keys.has(key))
+      .sort();
+    if (unknownSections.length)
+      general.push(
+        `Sections without a matching field: ${unknownSections.join(", ")}.`,
       );
     for (const field of draft.fields)
       if (KEY_PATTERN.test(field.key) && !used.has(field.key))

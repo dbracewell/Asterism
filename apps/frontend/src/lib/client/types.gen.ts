@@ -1072,6 +1072,10 @@ export type ExamplesField = {
    */
   required?: boolean;
   /**
+   * Example
+   */
+  example?: string | null;
+  /**
    * Kind
    */
   kind: "examples";
@@ -1517,6 +1521,10 @@ export type LongTextField = {
    * Required
    */
   required?: boolean;
+  /**
+   * Example
+   */
+  example?: string | null;
   /**
    * Kind
    */
@@ -2637,6 +2645,10 @@ export type SelectField = {
    */
   required?: boolean;
   /**
+   * Example
+   */
+  example?: string | null;
+  /**
    * Kind
    */
   kind: "select";
@@ -2683,6 +2695,10 @@ export type ShortTextField = {
    * Required
    */
   required?: boolean;
+  /**
+   * Example
+   */
+  example?: string | null;
   /**
    * Kind
    */
@@ -3115,6 +3131,10 @@ export type TemplateDocument = {
    * Body
    */
   body: string;
+  /**
+   * Checklist
+   */
+  checklist?: Array<string>;
 };
 
 /**
@@ -3170,7 +3190,7 @@ export type TemplateUse = {
   /**
    * Level
    */
-  level?: "guided" | "standard" | "freeform";
+  level: "guided" | "standard" | "freeform";
 };
 
 /**

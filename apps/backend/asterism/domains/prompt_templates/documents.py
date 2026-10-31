@@ -27,6 +27,9 @@ MAX_SELECT_OPTIONS = 20
 MAX_OPTION_LENGTH = 120
 MAX_EXAMPLES = 10
 MAX_EXAMPLE_LENGTH = 4_000
+MAX_HINT_LENGTH = 500
+MAX_CHECKLIST_ITEMS = 12
+MAX_CHECKLIST_ITEM_LENGTH = 200
 FIELD_KEY_PATTERN = r"^[a-z][a-z0-9_]{0,31}$"
 
 _KEY = re.compile(r"[a-z][a-z0-9_]{0,31}", re.ASCII)
@@ -45,8 +48,15 @@ class _FieldBase(BaseModel):
     label: str = Field(min_length=1, max_length=MAX_LABEL_LENGTH)
     help: str = Field(default="", max_length=MAX_HELP_LENGTH)
     required: StrictBool = False
+    # Guided-level hint only; never inserted into the prompt.
+    example: str | None = Field(default=None, min_length=1, max_length=MAX_HINT_LENGTH)
 
     _label_nonblank = field_validator("label")(_nonblank)
+
+    @field_validator("example")
+    @classmethod
+    def _example_nonblank(cls, value: str | None) -> str | None:
+        return None if value is None else _nonblank(value)
 
 
 class ShortTextField(_FieldBase):
@@ -89,8 +99,19 @@ class TemplateDocument(BaseModel):
     description: str = Field(min_length=1, max_length=MAX_DESCRIPTION_LENGTH)
     fields: tuple[TemplateField, ...] = Field(min_length=1, max_length=MAX_FIELDS)
     body: str = Field(min_length=1, max_length=MAX_BODY_LENGTH)
+    # Freeform-level checklist; empty means clients derive it from the fields.
+    checklist: tuple[Annotated[str, Field(min_length=1, max_length=MAX_CHECKLIST_ITEM_LENGTH)], ...] = Field(
+        default=(), max_length=MAX_CHECKLIST_ITEMS
+    )
 
     _text_nonblank = field_validator("name", "description", "body")(_nonblank)
+
+    @field_validator("checklist")
+    @classmethod
+    def _checklist_nonblank(cls, items: tuple[str, ...]) -> tuple[str, ...]:
+        for item in items:
+            _nonblank(item)
+        return items
 
 
 @dataclass(frozen=True)
@@ -98,36 +119,87 @@ class Placeholder:
     key: str
 
 
-def split_body(body: str) -> list[str | Placeholder]:
-    """Split a body into literal text and placeholders.
+@dataclass(frozen=True)
+class Section:
+    """Text kept only when the field ``key`` has a value: ``{{#key}}...{{/key}}``."""
+
+    key: str
+    segments: tuple["str | Placeholder", ...]
+
+
+def _tag(body: str, i: int) -> tuple[str, str, int]:
+    """Read the tag at ``body[i:]`` (which starts with ``{{``): (sigil, key, end)."""
+    start = i + 2
+    sigil = body[start] if start < len(body) and body[start] in "#/" else ""
+    match = _KEY.match(body, start + len(sigil))
+    if match is None or not body.startswith("}}", match.end()):
+        raise BadDataException(
+            f"Malformed placeholder at character {i}; use {{{{key}}}}, {{{{#key}}}}...{{{{/key}}}} or \\{{{{"
+        )
+    return sigil, match.group(), match.end() + 2
+
+
+def split_body(body: str) -> list["str | Placeholder | Section"]:
+    """Split a body into literal text, placeholders and conditional sections.
 
     Grammar: ``{{key}}`` is a placeholder where key matches FIELD_KEY_PATTERN
-    (no inner whitespace). ``\\{{`` is a literal ``{{``. Any other ``{{`` is
+    (no inner whitespace). ``{{#key}}`` opens a section closed by ``{{/key}}``;
+    sections do not nest. ``\\{{`` is a literal ``{{``. Any other ``{{`` is
     malformed. A lone ``}}`` or ``\\`` is literal.
     """
-    segments: list[str | Placeholder] = []
+    segments: list[str | Placeholder | Section] = []
+    current: list[str | Placeholder] = []
+    open_key: str | None = None
+    open_at = 0
     literal: list[str] = []
+
+    def flush() -> None:
+        if literal:
+            current.append("".join(literal))
+            literal.clear()
+
     i = 0
     while i < len(body):
         if body.startswith("\\{{", i):
             literal.append("{{")
             i += 3
             continue
-        if body.startswith("{{", i):
-            match = _KEY.match(body, i + 2)
-            if match is None or not body.startswith("}}", match.end()):
-                raise BadDataException(f"Malformed placeholder at character {i}; use {{{{key}}}} or \\{{{{")
-            if literal:
-                segments.append("".join(literal))
-                literal = []
-            segments.append(Placeholder(match.group()))
-            i = match.end() + 2
+        if not body.startswith("{{", i):
+            literal.append(body[i])
+            i += 1
             continue
-        literal.append(body[i])
-        i += 1
-    if literal:
-        segments.append("".join(literal))
+        sigil, key, end = _tag(body, i)
+        flush()
+        if sigil == "":
+            current.append(Placeholder(key))
+        elif sigil == "#":
+            if open_key is not None:
+                raise BadDataException(f"Sections cannot nest: '{key}' opens inside '{open_key}' at character {i}")
+            segments.extend(current)
+            current = []
+            open_key, open_at = key, i
+        else:
+            if open_key != key:
+                raise BadDataException(f"Section close '{key}' at character {i} has no matching open")
+            segments.append(Section(key, tuple(current)))
+            current = []
+            open_key = None
+        i = end
+    flush()
+    if open_key is not None:
+        raise BadDataException(f"Section '{open_key}' opened at character {open_at} is never closed")
+    segments.extend(current)
     return segments
+
+
+def _placeholder_keys(segments: list["str | Placeholder | Section"]) -> set[str]:
+    keys: set[str] = set()
+    for segment in segments:
+        if isinstance(segment, Placeholder):
+            keys.add(segment.key)
+        elif isinstance(segment, Section):
+            keys.update(child.key for child in segment.segments if isinstance(child, Placeholder))
+    return keys
 
 
 def _check_semantics(document: TemplateDocument) -> None:
@@ -140,9 +212,13 @@ def _check_semantics(document: TemplateDocument) -> None:
                 raise BadDataException(f"Select field '{field.key}' has duplicate options")
             if field.default is not None and field.default not in field.options:
                 raise BadDataException(f"Select field '{field.key}' default must be one of its options")
-    used = {segment.key for segment in split_body(document.body) if isinstance(segment, Placeholder)}
+    segments = split_body(document.body)
+    used = _placeholder_keys(segments)
     if unknown := sorted(used - set(keys)):
         raise BadDataException(f"Placeholders without a matching field: {', '.join(unknown)}")
+    sections = {segment.key for segment in segments if isinstance(segment, Section)}
+    if unknown := sorted(sections - set(keys)):
+        raise BadDataException(f"Sections without a matching field: {', '.join(unknown)}")
     if unused := [key for key in keys if key not in used]:
         raise BadDataException(f"Fields not used in the body: {', '.join(unused)}")
 
@@ -181,8 +257,11 @@ def serialize_document(document: TemplateDocument) -> str:
 
 def _texts(document: TemplateDocument):
     yield from (document.name, document.description, document.body)
+    yield from document.checklist
     for field in document.fields:
         yield from (field.label, field.help)
+        if field.example is not None:
+            yield field.example
         if isinstance(field, SelectField):
             yield from field.options
         if isinstance(field.default, str):

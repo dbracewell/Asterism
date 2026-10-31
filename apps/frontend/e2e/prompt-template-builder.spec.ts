@@ -17,6 +17,7 @@ const rtf = {
         help: "Who should the assistant act as?",
         required: true,
         default: "an experienced teacher",
+        example: "a senior data analyst",
       },
       {
         kind: "long_text",
@@ -29,12 +30,17 @@ const rtf = {
         kind: "select",
         key: "format",
         label: "Format",
-        required: true,
+        required: false,
         options: ["a short bulleted list", "a table"],
         default: "a short bulleted list",
       },
     ],
-    body: "Act as {{role}}.\n\nTask: {{task}}\n\nRespond in this format: {{format}}.",
+    body: "Act as {{role}}.\n\nTask: {{task}}{{#format}}\n\nRespond in this format: {{format}}.{{/format}}",
+    checklist: [
+      "Say who the assistant should act as.",
+      "State the task with a clear action verb.",
+      "Describe the shape of the answer.",
+    ],
   },
 };
 
@@ -147,3 +153,92 @@ test("slash discovery opens a framework and the send records its provenance at 3
   );
   await expect(page.getByText("Built with RTF")).toBeHidden();
 });
+
+for (const [width, height] of [
+  [1280, 800],
+  [320, 568],
+]) {
+  test(`scaffolding levels change the form and are recorded at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await mock(page);
+    await page.goto("/e2e/skill-chat");
+    const input = page.getByLabel("Message", { exact: true });
+    await page.getByRole("button", { name: "Prompt templates" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: /^RTF/ }).click();
+    const levels = dialog.getByRole("tablist", { name: "Scaffolding level" });
+    const noOverflow = async () =>
+      expect(
+        await dialog.evaluate(
+          (element) => element.scrollWidth - element.clientWidth,
+        ),
+      ).toBeLessThanOrEqual(0);
+    const axe = async () =>
+      expect(
+        (await new AxeBuilder({ page }).include('[role="dialog"]').analyze())
+          .violations,
+      ).toEqual([]);
+
+    // Guided: every field, with examples and defaults.
+    await expect(levels.getByRole("tab", { name: "Guided" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(
+      dialog.getByText("Example: a senior data analyst"),
+    ).toBeVisible();
+    await expect(dialog.getByLabel(/^Role/)).toHaveValue(
+      "an experienced teacher",
+    );
+    await expect(
+      dialog.getByRole("combobox", { name: "Format" }),
+    ).toBeVisible();
+    await noOverflow();
+    await axe();
+
+    // Freeform: only the checklist and a blank prompt.
+    await levels.getByRole("tab", { name: "Freeform" }).click();
+    await expect(dialog.getByLabel(/^Role/)).toHaveCount(0);
+    const checklist = dialog.getByTestId("template-checklist");
+    await expect(checklist.getByRole("checkbox")).toHaveCount(3);
+    await checklist.getByLabel("Describe the shape of the answer.").check();
+    await noOverflow();
+    await axe();
+
+    // Standard: required fields start empty; optional fields sit under More.
+    // The level tabs are keyboard operable.
+    await levels.getByRole("tab", { name: "Freeform" }).press("ArrowLeft");
+    await expect(levels.getByRole("tab", { name: "Standard" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(dialog.getByLabel(/^Role/)).toHaveValue(
+      "an experienced teacher",
+    );
+    await expect(
+      dialog.getByText("Example: a senior data analyst"),
+    ).toBeHidden();
+    await expect(dialog.getByRole("combobox", { name: "Format" })).toBeHidden();
+    const more = dialog.getByRole("button", { name: "More (1 optional)" });
+    await more.click();
+    await expect(
+      dialog.getByRole("combobox", { name: "Format" }),
+    ).toBeVisible();
+    await noOverflow();
+    await axe();
+
+    await dialog.getByLabel(/^Task/).fill("Compare two plans.");
+    await dialog.getByRole("button", { name: "Use prompt" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(input).toHaveValue(
+      "Act as an experienced teacher.\n\nTask: Compare two plans.\n\nRespond in this format: a short bulleted list.",
+    );
+    await expect(page.getByText("· Standard")).toBeVisible();
+    await page.getByLabel("Send message").click();
+    await expect(page.getByLabel("Last accepted payload")).toContainText(
+      '"level":"standard"',
+    );
+  });
+}

@@ -2,6 +2,12 @@
 
 import { Required } from "@/components/required";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Field,
   FieldDescription,
@@ -17,20 +23,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { TemplateDocument } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { PlusIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon, XIcon } from "lucide-react";
 import { useId, useState } from "react";
 import {
   assemble,
   assembleSegments,
   initialValues,
+  isFilled,
   missingRequired,
   type FieldValue,
   type FieldValues,
   type TemplateField,
 } from "../lib/assemble";
+import {
+  checklistFor,
+  LEVELS,
+  visibleFields,
+  type ScaffoldingLevel,
+} from "../lib/levels";
 
 const NONE = "__none__";
 const MAX_EXAMPLES = 10;
@@ -38,32 +52,74 @@ const MAX_EXAMPLES = 10;
 type Props = {
   template: TemplateDocument;
   /**
-   * Receives the assembled prompt; the caller decides where it goes. Without
-   * it the builder is a try-out preview with no primary action.
+   * Receives the prompt and the level it was built at; the caller decides
+   * where it goes. Without it the builder is a try-out preview with no
+   * primary action.
    */
-  onUse?: (prompt: string) => void;
+  onUse?: (prompt: string, level: ScaffoldingLevel) => void;
   /** Rendered before the primary action, e.g. a Back button. */
   secondaryAction?: React.ReactNode;
+  initialLevel?: ScaffoldingLevel;
 };
 
 /**
- * Schema-driven form beside a live preview. Hovering or focusing a field
- * highlights the preview text it produces, and hovering preview text highlights
- * its field.
+ * A template at the scaffolding level the user picks. Guided and standard show
+ * a schema-driven form beside a live preview: hovering or focusing a field
+ * highlights the preview text it produces, and hovering preview text
+ * highlights its field. Freeform shows a checklist beside a blank prompt.
  */
-export function TemplateBuilder({ template, onUse, secondaryAction }: Props) {
+export function TemplateBuilder({
+  template,
+  onUse,
+  secondaryAction,
+  initialLevel = "guided",
+}: Props) {
   const idPrefix = useId();
+  const [level, setLevel] = useState<ScaffoldingLevel>(initialLevel);
   const [values, setValues] = useState<FieldValues>(() =>
-    initialValues(template),
+    initialValues(template, initialLevel === "guided"),
   );
+  const [freeform, setFreeform] = useState("");
   const [active, setActive] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const missing = new Set(missingRequired(template, values));
+  const freeformMissing = !freeform.trim();
   const fieldId = (key: string) => `${idPrefix}-field-${key}`;
+  const freeformId = `${idPrefix}-freeform`;
   const setValue = (key: string, value: FieldValue) =>
     setValues((current) => ({ ...current, [key]: value }));
 
+  const changeLevel = (next: string) => {
+    const chosen = LEVELS.find((option) => option.value === next)?.value;
+    if (!chosen) return;
+    setLevel(chosen);
+    setShowErrors(false);
+    // What the user typed is kept; guided fills only fields still empty.
+    if (chosen === "guided") {
+      const defaults = initialValues(template);
+      setValues((current) =>
+        Object.fromEntries(
+          template.fields.map((field) => [
+            field.key,
+            isFilled(field, current[field.key])
+              ? current[field.key]
+              : defaults[field.key],
+          ]),
+        ),
+      );
+    }
+  };
+
   const use = () => {
+    if (level === "freeform") {
+      if (freeformMissing) {
+        setShowErrors(true);
+        document.getElementById(freeformId)?.focus();
+        return;
+      }
+      onUse?.(freeform, level);
+      return;
+    }
     const first = template.fields.find((field) => missing.has(field.key));
     if (first) {
       setShowErrors(true);
@@ -74,81 +130,77 @@ export function TemplateBuilder({ template, onUse, secondaryAction }: Props) {
         ?.focus();
       return;
     }
-    onUse?.(assemble(template, values));
+    onUse?.(assemble(template, values), level);
   };
 
+  const control = (field: TemplateField) => (
+    <TemplateFieldControl
+      key={field.key}
+      field={field}
+      id={fieldId(field.key)}
+      value={values[field.key]}
+      onChange={(value) => setValue(field.key, value)}
+      showExample={level === "guided"}
+      active={active === field.key}
+      invalid={showErrors && missing.has(field.key)}
+      onActivate={(on) =>
+        setActive((current) =>
+          on ? field.key : current === field.key ? null : current,
+        )
+      }
+    />
+  );
+
+  const structured = (
+    <StructuredLevel
+      template={template}
+      level={level}
+      idPrefix={idPrefix}
+      values={values}
+      active={active}
+      setActive={setActive}
+      control={control}
+    />
+  );
+  const description = LEVELS.find((option) => option.value === level)!;
+  const invalid =
+    showErrors && (level === "freeform" ? freeformMissing : missing.size > 0);
+
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">
-        <div
-          role="group"
-          aria-label={`${template.name} fields`}
-          className="min-w-0"
-        >
-          <FieldGroup className="gap-4">
-            {template.fields.map((field) => (
-              <TemplateFieldControl
-                key={field.key}
-                field={field}
-                id={fieldId(field.key)}
-                value={values[field.key]}
-                onChange={(value) => setValue(field.key, value)}
-                active={active === field.key}
-                invalid={showErrors && missing.has(field.key)}
-                onActivate={(on) =>
-                  setActive((current) =>
-                    on ? field.key : current === field.key ? null : current,
-                  )
-                }
-              />
-            ))}
-          </FieldGroup>
-        </div>
-        <section
-          aria-labelledby={`${idPrefix}-preview`}
-          className="flex min-w-0 flex-col gap-2 md:sticky md:top-0 md:self-start"
-        >
-          <h3
-            id={`${idPrefix}-preview`}
-            className="text-muted-foreground text-xs font-medium"
-          >
-            Prompt preview
-          </h3>
-          <div
-            data-testid="template-preview"
-            className="bg-muted/60 rounded-surface border p-3 font-mono text-xs/relaxed [overflow-wrap:anywhere] whitespace-pre-wrap"
-          >
-            {assembleSegments(template, values).map((segment, index) =>
-              segment.type === "text" ? (
-                <span key={index}>{segment.text}</span>
-              ) : (
-                <span
-                  key={index}
-                  data-field={segment.key}
-                  data-active={active === segment.key || undefined}
-                  onMouseEnter={() => setActive(segment.key)}
-                  onMouseLeave={() =>
-                    setActive((current) =>
-                      current === segment.key ? null : current,
-                    )
-                  }
-                  className={cn(
-                    "rounded-chip border-b border-dashed border-current/40 transition-colors",
-                    "data-active:bg-primary/20 data-active:border-primary data-active:text-foreground",
-                    !segment.text && "text-muted-foreground italic",
-                  )}
-                >
-                  {segment.text || `[${segment.label}]`}
-                </span>
-              ),
-            )}
-          </div>
-        </section>
+    <Tabs value={level} onValueChange={changeLevel} className="min-w-0 gap-4">
+      <div className="flex min-w-0 flex-col gap-1">
+        <TabsList aria-label="Scaffolding level">
+          {LEVELS.map((option) => (
+            <TabsTrigger key={option.value} value={option.value}>
+              {option.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <p className="text-muted-foreground text-xs">
+          {description.description}
+        </p>
       </div>
+      <TabsContent value="guided">
+        {level === "guided" && structured}
+      </TabsContent>
+      <TabsContent value="standard">
+        {level === "standard" && structured}
+      </TabsContent>
+      <TabsContent value="freeform">
+        <FreeformLevel
+          template={template}
+          id={freeformId}
+          value={freeform}
+          onChange={setFreeform}
+          invalid={showErrors && freeformMissing}
+        />
+      </TabsContent>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {showErrors && missing.size > 0 && (
+        {invalid && (
           <p role="alert" className="text-destructive mr-auto text-xs">
-            Fill in the required fields first.
+            {level === "freeform"
+              ? "Write your prompt first."
+              : "Fill in the required fields first."}
           </p>
         )}
         {secondaryAction}
@@ -158,6 +210,178 @@ export function TemplateBuilder({ template, onUse, secondaryAction }: Props) {
           </Button>
         )}
       </div>
+    </Tabs>
+  );
+}
+
+function StructuredLevel({
+  template,
+  level,
+  idPrefix,
+  values,
+  active,
+  setActive,
+  control,
+}: {
+  template: TemplateDocument;
+  level: ScaffoldingLevel;
+  idPrefix: string;
+  values: FieldValues;
+  active: string | null;
+  setActive: React.Dispatch<React.SetStateAction<string | null>>;
+  control: (field: TemplateField) => React.ReactNode;
+}) {
+  const { primary, more } = visibleFields(template, level);
+  const [moreOpen, setMoreOpen] = useState(false);
+  return (
+    <div className="grid min-w-0 gap-4 md:grid-cols-2">
+      <div
+        role="group"
+        aria-label={`${template.name} fields`}
+        className="flex min-w-0 flex-col gap-4"
+      >
+        <FieldGroup className="gap-4">{primary.map(control)}</FieldGroup>
+        {more.length > 0 && (
+          <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="-ml-2 self-start"
+              >
+                <ChevronDownIcon
+                  className={cn(
+                    "transition-transform",
+                    moreOpen && "rotate-180",
+                  )}
+                />
+                More ({more.length} optional)
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <FieldGroup className="gap-4">{more.map(control)}</FieldGroup>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+      </div>
+      <section
+        aria-labelledby={`${idPrefix}-preview`}
+        className="flex min-w-0 flex-col gap-2 md:sticky md:top-0 md:self-start"
+      >
+        <h3
+          id={`${idPrefix}-preview`}
+          className="text-muted-foreground text-xs font-medium"
+        >
+          Prompt preview
+        </h3>
+        <div
+          data-testid="template-preview"
+          className="bg-muted/60 rounded-surface border p-3 font-mono text-xs/relaxed [overflow-wrap:anywhere] whitespace-pre-wrap"
+        >
+          {assembleSegments(template, values).map((segment, index) =>
+            segment.type === "text" ? (
+              <span key={index}>{segment.text}</span>
+            ) : (
+              <span
+                key={index}
+                data-field={segment.key}
+                data-active={active === segment.key || undefined}
+                onMouseEnter={() => setActive(segment.key)}
+                onMouseLeave={() =>
+                  setActive((current) =>
+                    current === segment.key ? null : current,
+                  )
+                }
+                className={cn(
+                  "rounded-chip border-b border-dashed border-current/40 transition-colors",
+                  "data-active:bg-primary/20 data-active:border-primary data-active:text-foreground",
+                  !segment.text && "text-muted-foreground italic",
+                )}
+              >
+                {segment.text || `[${segment.label}]`}
+              </span>
+            ),
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/** A blank prompt beside a self-check list; ticks are not saved or sent. */
+function FreeformLevel({
+  template,
+  id,
+  value,
+  onChange,
+  invalid,
+}: {
+  template: TemplateDocument;
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  invalid: boolean;
+}) {
+  const checklist = checklistFor(template);
+  const [checked, setChecked] = useState<Set<number>>(() => new Set());
+  const errorId = `${id}-error`;
+  return (
+    <div className="grid min-w-0 gap-4 md:grid-cols-2">
+      <section
+        aria-labelledby={`${id}-checklist`}
+        className="flex min-w-0 flex-col gap-2"
+      >
+        <h3
+          id={`${id}-checklist`}
+          className="text-muted-foreground text-xs font-medium"
+        >
+          A good prompt covers
+        </h3>
+        <ul data-testid="template-checklist" className="flex flex-col gap-2">
+          {checklist.map((item, index) => (
+            <li key={index} className="flex items-start gap-2">
+              <Checkbox
+                id={`${id}-check-${index}`}
+                className="mt-0.5"
+                checked={checked.has(index)}
+                onCheckedChange={(next) =>
+                  setChecked((current) => {
+                    const updated = new Set(current);
+                    if (next === true) updated.add(index);
+                    else updated.delete(index);
+                    return updated;
+                  })
+                }
+              />
+              <label
+                htmlFor={`${id}-check-${index}`}
+                className="text-xs/relaxed"
+              >
+                {item}
+              </label>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <Field data-invalid={invalid || undefined} className="min-w-0">
+        <FieldLabel htmlFor={id}>
+          <Required>Your prompt</Required>
+        </FieldLabel>
+        <Textarea
+          id={id}
+          value={value}
+          maxLength={16000}
+          className="min-h-40"
+          aria-required
+          aria-invalid={invalid || undefined}
+          aria-describedby={invalid ? errorId : undefined}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        {invalid && (
+          <FieldError id={errorId}>Your prompt is required.</FieldError>
+        )}
+      </Field>
     </div>
   );
 }
@@ -167,6 +391,7 @@ function TemplateFieldControl({
   id,
   value,
   onChange,
+  showExample,
   active,
   invalid,
   onActivate,
@@ -175,14 +400,17 @@ function TemplateFieldControl({
   id: string;
   value: FieldValue | undefined;
   onChange: (value: FieldValue) => void;
+  showExample: boolean;
   active: boolean;
   invalid: boolean;
   onActivate: (active: boolean) => void;
 }) {
   const helpId = `${id}-help`;
+  const exampleId = `${id}-example`;
   const errorId = `${id}-error`;
+  const example = showExample ? field.example : null;
   const describedBy =
-    [field.help ? helpId : "", invalid ? errorId : ""]
+    [field.help ? helpId : "", example ? exampleId : "", invalid ? errorId : ""]
       .filter(Boolean)
       .join(" ") || undefined;
   const text = typeof value === "string" ? value : "";
@@ -270,6 +498,11 @@ function TemplateFieldControl({
       )}
       {field.help && (
         <FieldDescription id={helpId}>{field.help}</FieldDescription>
+      )}
+      {example && (
+        <FieldDescription id={exampleId} data-example>
+          Example: {example}
+        </FieldDescription>
       )}
       {invalid && (
         <FieldError id={errorId}>{field.label} is required.</FieldError>

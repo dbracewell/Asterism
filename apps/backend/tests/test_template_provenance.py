@@ -18,8 +18,8 @@ project_api = _project_api
 templates_api = _templates_api
 
 
-def use(source="framework", id="rtf", revision=1, **extra):
-    return {"source": source, "id": id, "revision": revision, **extra}
+def use(source="framework", id="rtf", revision=1, level="guided", **extra):
+    return {"source": source, "id": id, "revision": revision, "level": level, **extra}
 
 
 async def send(client, cid, parent, template=None, prompt="Follow up"):
@@ -71,6 +71,17 @@ async def test_framework_and_template_labels_are_resolved_by_the_server(template
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("level", ["guided", "standard", "freeform"])
+async def test_each_scaffolding_level_is_recorded(templates_api, level):
+    client, _, _ = templates_api
+    chat = await new_chat(client, template=use("framework", "co-star", 2, level))
+    cid = chat["info"]["id"]
+    history = (await client.get(f"/chat/{cid}", headers=auth())).json()["messages"]
+    assert history[0]["template"]["level"] == level
+    assert history[0]["template"]["revision"] == 2
+
+
+@pytest.mark.asyncio
 async def test_invalid_claims_reject_the_send_without_accepting_it(templates_api):
     client, sessions, _ = templates_api
     chat = await new_chat(client)
@@ -80,11 +91,12 @@ async def test_invalid_claims_reject_the_send_without_accepting_it(templates_api
     owned = await create_template(client)
     cases = [
         (use(id="missing"), 404),
-        (use(revision=2), 400),
+        (use(revision=3), 400),
         (use("template", foreign["id"]), 404),
         (use("template", "not-a-uuid"), 404),
         (use("template", owned["id"], 2), 400),
         (use(level="expert"), 422),
+        ({k: v for k, v in use().items() if k != "level"}, 422),
         (use(name="Spoofed"), 422),
         (use(revision=0), 422),
     ]

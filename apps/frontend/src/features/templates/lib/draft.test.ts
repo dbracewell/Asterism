@@ -27,6 +27,7 @@ const document: TemplateDocument = {
       label: "Role",
       help: "Who?",
       required: true,
+      example: null,
       default: "a teacher",
     },
     {
@@ -35,6 +36,7 @@ const document: TemplateDocument = {
       label: "Task",
       help: "",
       required: true,
+      example: null,
       default: null,
     },
     {
@@ -43,6 +45,7 @@ const document: TemplateDocument = {
       label: "Format",
       help: "",
       required: false,
+      example: null,
       options: ["a list", "a table"],
       default: "a list",
     },
@@ -52,10 +55,12 @@ const document: TemplateDocument = {
       label: "Examples",
       help: "",
       required: false,
+      example: null,
       default: ["One", "Two"],
     },
   ],
   body: "Act as {{role}}. {{task}} as {{format}}.\n{{shots}}",
+  checklist: [],
 };
 
 const messages = (draft: TemplateDraft) => {
@@ -69,6 +74,54 @@ describe("template drafts", () => {
     expect(toDocument(draft)).toEqual(document);
     expect(hasIssues(validateDraft(draft))).toBe(false);
     expect(draftSignature(fromDocument(document))).toBe(draftSignature(draft));
+  });
+
+  it("round-trips guided examples and the freeform checklist", () => {
+    const draft = fromDocument({
+      ...document,
+      checklist: ["Name a role.", "State the task."],
+    });
+    expect(draft.checklist).toBe("Name a role.\nState the task.");
+    draft.fields[1].example = "Plan a 5k.";
+    draft.fields[0].example = "   ";
+    draft.checklist = " Name a role. \n\n State the task. ";
+    const result = toDocument(draft);
+    expect(result.fields[1].example).toBe("Plan a 5k.");
+    expect(result.fields[0].example).toBeNull();
+    expect(result.checklist).toEqual(["Name a role.", "State the task."]);
+  });
+
+  it("validates sections, examples and checklist limits like the server", () => {
+    const draft = fromDocument(document);
+    const body = (value: string) => messages({ ...draft, body: value });
+    const base = "{{role}} {{task}} {{format}} {{shots}}";
+    expect(body(`${base}{{#format}}as {{format}}{{/format}}`)).toEqual([]);
+    expect(body(`${base}{{#format}}x`)).toEqual([
+      "Section “format” opened at character 38 is never closed.",
+    ]);
+    expect(body(`${base}{{/format}}`)[0]).toMatch(/has no matching open/);
+    expect(body(`${base}{{#role}}{{#task}}{{/task}}{{/role}}`)[0]).toMatch(
+      /cannot nest/,
+    );
+    expect(body(`${base}{{#nope}}x{{/nope}}`)).toEqual([
+      "Sections without a matching field: nope.",
+    ]);
+    // A section tag alone does not count as using the field.
+    expect(
+      body("{{role}} {{task}} {{format}}{{#shots}}x{{/shots}}").some((m) =>
+        m.startsWith("Not used in the body"),
+      ),
+    ).toBe(true);
+    draft.fields[0].example = "x".repeat(501);
+    draft.checklist = Array.from({ length: 13 }, (_, i) => `Item ${i}`).join(
+      "\n",
+    );
+    expect(messages(draft)).toEqual(
+      expect.arrayContaining([
+        "Example must be at most 500 characters.",
+        "Use at most 12 checklist items.",
+      ]),
+    );
   });
 
   it("normalizes empty defaults, options and examples", () => {
@@ -214,6 +267,9 @@ describe("template drafts", () => {
       expect(renamePlaceholder("\\{{a}} {{a}} {{ab}}", "a", "b")).toBe(
         "\\{{a}} {{b}} {{ab}}",
       );
+      expect(
+        renamePlaceholder("{{#a}}x {{a}}{{/a}} \\{{#a}} {{#ab}}", "a", "b"),
+      ).toBe("{{#b}}x {{b}}{{/b}} \\{{#a}} {{#ab}}");
       expect(keyFromLabel("2nd Draft!")).toBe("field_2nd_draft");
       expect(keyFromLabel("Café notes")).toBe("cafe_notes");
       expect(keyFromLabel("???")).toBe("");

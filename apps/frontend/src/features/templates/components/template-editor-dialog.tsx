@@ -513,7 +513,9 @@ function LoadedTemplateEditor({
                 />
                 <FieldDescription id={`${idPrefix}-body-help`}>
                   Write {"{{key}}"} where a field&apos;s value goes, and{" "}
-                  {"\\{{"} for a literal {"{{"}. {bytes.toLocaleString()} /{" "}
+                  {"\\{{"} for a literal {"{{"}. Wrap text in{" "}
+                  {"{{#key}}…{{/key}}"} to drop it when an optional field is
+                  left empty. {bytes.toLocaleString()} /{" "}
                   {LIMITS.documentBytes.toLocaleString()} UTF-8 bytes.
                 </FieldDescription>
                 {draft.fields.length > 0 && (
@@ -538,6 +540,26 @@ function LoadedTemplateEditor({
                     ))}
                   </div>
                 )}
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={`${idPrefix}-checklist`}>
+                  Freeform checklist
+                </FieldLabel>
+                <Textarea
+                  id={`${idPrefix}-checklist`}
+                  value={draft.checklist}
+                  className="min-h-20"
+                  disabled={pending}
+                  aria-describedby={`${idPrefix}-checklist-help`}
+                  onChange={(event) =>
+                    setDraft({ ...draft, checklist: event.target.value })
+                  }
+                />
+                <FieldDescription id={`${idPrefix}-checklist-help`}>
+                  What a good prompt covers, one item per line (up to{" "}
+                  {LIMITS.checklist}). Shown at the freeform level; leave empty
+                  to list the fields instead.
+                </FieldDescription>
               </Field>
             </TabsContent>
             <TabsContent

@@ -1,6 +1,7 @@
 # ADR-0026 — Prompt template documents, placeholder grammar and framework catalog
 
-Status: accepted; US-51.1 user-confirmed complete on 2026-10-31.
+Status: accepted; US-51.1 user-confirmed complete on 2026-10-31. Amended for
+scaffolding levels by US-51.5 (see the addendum).
 
 ## Context
 
@@ -126,5 +127,41 @@ and there is no admin activation policy because nothing is activated.
 - Optional fields leave their surrounding body text in place when empty. Bundled
   frameworks therefore mark fields required (with defaults where helpful).
   Conditional sections are deferred to scaffolding levels (US-51.5).
+
+## Addendum — scaffolding levels (US-51.5)
+
+Scaffolding levels (guided, standard, freeform) are a builder concern, but each
+level needs something from the document. Rather than defining a separate field
+list per level, which would drift from the body, the levels are derived from the
+existing schema plus three additions:
+
+- **Standard** shows `required` fields and puts optional fields under "More".
+  Without conditional text, an empty optional field would leave its sentence in
+  the prompt, so the grammar gains **sections**:
+
+  ```
+  section := "{{#" key "}}" ( literal | escape | placeholder )* "{{/" key "}}"
+  ```
+
+  Sections do not nest. Every open must be closed by the same key, and a stray
+  close is malformed. A section key must name a declared field. Using a key only
+  as a section tag does not count as using the field: it must still appear as a
+  placeholder. At assembly time, a section whose field renders blank is dropped
+  with all of its text; otherwise its tags are removed and its contents
+  assembled normally.
+
+- **Guided** pre-fills defaults and shows an optional per-field `example` (1–500
+  nonblank characters). The example is a hint only and is never assembled into
+  the prompt.
+- **Freeform** shows an optional document-level `checklist` (≤ 12 items, each
+  1–200 nonblank characters). An empty checklist is derived from the fields by
+  clients.
+
+Both new properties have defaults, so existing documents remain valid. The
+canonical serialization always includes them (`example: null`, `checklist: []`).
+`TemplateUse.level` is now required: every send states its level, and the
+client no longer relies on a server default. The bundled frameworks moved to
+revision 2 and `CATALOG_VERSION` to 2, and some framework fields became optional
+inside sections.
 
 See the [prompt templates contract](../architecture/prompt-templates.md).

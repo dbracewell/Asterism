@@ -337,6 +337,7 @@ export const zExamplesField = z.object({
   label: z.string().min(1).max(80),
   help: z.string().max(500).optional().default(""),
   required: z.boolean().optional().default(false),
+  example: z.string().min(1).max(500).nullish(),
   kind: z.literal("examples"),
   default: z.array(z.string().min(1).max(4000)).max(10).nullish(),
 });
@@ -575,6 +576,7 @@ export const zLongTextField = z.object({
   label: z.string().min(1).max(80),
   help: z.string().max(500).optional().default(""),
   required: z.boolean().optional().default(false),
+  example: z.string().min(1).max(500).nullish(),
   kind: z.literal("long_text"),
   default: z.string().max(8000).nullish(),
 });
@@ -1133,6 +1135,7 @@ export const zSelectField = z.object({
   label: z.string().min(1).max(80),
   help: z.string().max(500).optional().default(""),
   required: z.boolean().optional().default(false),
+  example: z.string().min(1).max(500).nullish(),
   kind: z.literal("select"),
   options: z.array(z.string().min(1).max(120)).min(1).max(20),
   default: z.string().max(120).nullish(),
@@ -1156,6 +1159,7 @@ export const zShortTextField = z.object({
   label: z.string().min(1).max(80),
   help: z.string().max(500).optional().default(""),
   required: z.boolean().optional().default(false),
+  example: z.string().min(1).max(500).nullish(),
   kind: z.literal("short_text"),
   default: z.string().max(500).nullish(),
 });
@@ -1429,6 +1433,7 @@ export const zTemplateDocument = z.object({
     .min(1)
     .max(32),
   body: z.string().min(1).max(16000),
+  checklist: z.array(z.string().min(1).max(200)).max(12).optional().default([]),
 });
 
 /**
@@ -1501,10 +1506,7 @@ export const zTemplateUse = z.object({
   source: z.enum(["framework", "template"]),
   id: z.string().min(1).max(64),
   revision: z.int().gte(1).lte(2147483647),
-  level: z
-    .enum(["guided", "standard", "freeform"])
-    .optional()
-    .default("guided"),
+  level: z.enum(["guided", "standard", "freeform"]),
 });
 
 /**

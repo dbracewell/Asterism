@@ -35,6 +35,7 @@ import {
   type ReactNode,
 } from "react";
 import { parseSkillCommands, slashSearch } from "../lib/skill-commands";
+import { isScaffoldingLevel } from "@/features/templates/lib/levels";
 
 export type SkillComposerControl = {
   prompt: string;
@@ -76,7 +77,7 @@ function restoredTemplate(value: unknown): AppliedTemplate | null {
     (use.source === "framework" || use.source === "template") &&
     typeof use.id === "string" &&
     Number.isInteger(use.revision) &&
-    typeof use.level === "string"
+    isScaffoldingLevel(use.level)
     ? { name, use }
     : null;
 }
