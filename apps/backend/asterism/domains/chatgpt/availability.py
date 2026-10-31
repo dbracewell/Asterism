@@ -28,6 +28,9 @@ class PlanUnavailableReason(StrEnum):
     PLAN_USAGE_DISABLED = "plan_usage_disabled"
     REAUTHORIZATION_REQUIRED = "reauthorization_required"
     TEMPORARILY_UNAVAILABLE = "temporarily_unavailable"
+    USAGE_LIMIT = "usage_limit"
+    NOT_ELIGIBLE = "not_eligible"
+    SESSION_REJECTED = "session_rejected"
 
 
 PLAN_UNAVAILABLE_MESSAGES = {
@@ -38,6 +41,11 @@ PLAN_UNAVAILABLE_MESSAGES = {
     ),
     PlanUnavailableReason.REAUTHORIZATION_REQUIRED: "Sign in to ChatGPT again in User Settings",
     PlanUnavailableReason.TEMPORARILY_UNAVAILABLE: "ChatGPT plan usage is temporarily unavailable; try again later",
+    PlanUnavailableReason.USAGE_LIMIT: (
+        "Usage limit reached. Review your plan or this app's limit in ChatGPT settings."
+    ),
+    PlanUnavailableReason.NOT_ELIGIBLE: "ChatGPT plan usage is not available for your account or workspace",
+    PlanUnavailableReason.SESSION_REJECTED: "ChatGPT did not accept this session; try again later",
 }
 
 
@@ -52,6 +60,10 @@ async def plan_status(user_id: str, session: AsyncSession) -> PlanUnavailableRea
         return PlanUnavailableReason.REAUTHORIZATION_REQUIRED
     if connection.status == ChatGPTConnectionStatus.PLAN_USAGE_DISABLED:
         return PlanUnavailableReason.PLAN_USAGE_DISABLED
+    # Paused after a usage limit until the user explicitly tries again; no
+    # reset time is inferred because an app-specific limit may apply.
+    if connection.usage_paused_at is not None:
+        return PlanUnavailableReason.USAGE_LIMIT
     return None
 
 
@@ -65,6 +77,14 @@ class ModelAvailability:
     @classmethod
     async def load(cls, user_id: str, session: AsyncSession) -> ModelAvailability:
         return cls(user_id=user_id, plan=await plan_status(user_id, session))
+
+    def code(self, model: LLMModel) -> str | None:
+        """Stable ``chatgpt_plan_<reason>`` code for an unavailable plan model."""
+        if model.provider.provider_type != ProviderType.CHATGPT or self.reason(model) is None:
+            return None
+        if model.provider.owner_user_id != self.user_id or not model.is_active or self.plan is None:
+            return None
+        return f"chatgpt_plan_{self.plan.value}"
 
     def reason(self, model: LLMModel) -> str | None:
         """``None`` when usable; otherwise a user-facing reason. ``model.provider`` must be loaded."""

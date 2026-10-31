@@ -199,7 +199,7 @@ it("surfaces retryable capacity errors and retains bounded reconnects", () => {
       content,
     }),
   });
-  expect(onStreamError).toHaveBeenCalledWith(content);
+  expect(onStreamError).toHaveBeenCalledWith(content, "chat_capacity");
   expect(onStatusChange).toHaveBeenLastCalledWith(false);
   expect(onStreamComplete).not.toHaveBeenCalled();
   expect(options.reconnectAttempts).toBe(10);

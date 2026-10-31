@@ -144,6 +144,8 @@ async def get_connection(user_id: str, session: AsyncSession) -> ChatGPTConnecti
         email=row.email,
         plan_usage_enabled=row.status == ChatGPTConnectionStatus.CONNECTED,
         model_count=sum(model.is_active for model in provider.models) if provider else 0,
+        usage_paused=row.usage_paused_at is not None,
+        notice_pending=row.status == ChatGPTConnectionStatus.CONNECTED and row.notice_dismissed_at is None,
         updated_at=row.updated_at,
     )
 
@@ -314,6 +316,7 @@ async def complete_authorization(
             connection.email = identity.email or connection.email
             connection.id_token = tokens.id_token
             connection.token_revision += 1
+            connection.usage_paused_at = None
         await session.commit()
 
     logger.info("ChatGPT connection saved user=%s status=%s", user_id, connection.status.value)
@@ -371,7 +374,44 @@ async def disconnect(
     )
 
 
-async def access_token(user_id: str, oauth: ChatGPTOAuthClient | None = None) -> PlanCredential:
+async def pause_for_usage_limit(user_id: str) -> None:
+    """Pause ``user_id``'s plan requests after a usage-limit error."""
+    async with get_async_db_session() as session:
+        await session.execute(
+            update(ChatGPTConnectionModel)
+            .where(ChatGPTConnectionModel.user_id == user_id, ChatGPTConnectionModel.usage_paused_at.is_(None))
+            .values(usage_paused_at=int(time.time())),
+        )
+        await session.commit()
+    logger.info("ChatGPT plan paused after usage limit user=%s", user_id)
+
+
+async def resume_plan_usage(user_id: str, session: AsyncSession) -> ChatGPTConnection:
+    """The user's explicit choice to try their plan again after a usage limit."""
+    await session.execute(
+        update(ChatGPTConnectionModel).where(ChatGPTConnectionModel.user_id == user_id).values(usage_paused_at=None),
+    )
+    await session.commit()
+    return await get_connection(user_id, session)
+
+
+async def dismiss_notice(user_id: str, session: AsyncSession) -> ChatGPTConnection:
+    """Record that the one-time plan-usage notice was dismissed."""
+    await session.execute(
+        update(ChatGPTConnectionModel)
+        .where(ChatGPTConnectionModel.user_id == user_id, ChatGPTConnectionModel.notice_dismissed_at.is_(None))
+        .values(notice_dismissed_at=int(time.time())),
+    )
+    await session.commit()
+    return await get_connection(user_id, session)
+
+
+async def access_token(
+    user_id: str,
+    oauth: ChatGPTOAuthClient | None = None,
+    *,
+    force_refresh: bool = False,
+) -> PlanCredential:
     """Return a current access token for ``user_id``'s own connection.
 
     Refreshes near expiry under the user's lock. Terminal refresh errors clear
@@ -391,7 +431,7 @@ async def access_token(user_id: str, oauth: ChatGPTOAuthClient | None = None) ->
         assert connection.access_token and connection.refresh_token and connection.expires_at
 
         now = int(time.time())
-        if connection.expires_at - now > REFRESH_MARGIN_SECONDS:
+        if not force_refresh and connection.expires_at - now > REFRESH_MARGIN_SECONDS:
             return PlanCredential(
                 user_id=user_id, access_token=connection.access_token, expires_at=connection.expires_at
             )

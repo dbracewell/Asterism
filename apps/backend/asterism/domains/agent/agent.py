@@ -549,6 +549,7 @@ class Agent:
                         yield AgentEvent(
                             type=AgentEventType.ERROR,
                             content=str(event.exception),
+                            error_code=getattr(event.exception, "code", None),
                         )
                         return
                     case LLMEventType.START:

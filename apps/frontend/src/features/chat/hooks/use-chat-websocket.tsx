@@ -13,7 +13,7 @@ type UseChatWebSocketProps = {
   onStreamStart?: (message: Message) => void;
   onStreamUpdate?: (message: Message) => void;
   onStreamComplete?: (messages: Message[]) => void;
-  onStreamError?: (error: string) => void;
+  onStreamError?: (error: string, code?: string | null) => void;
   onRegenerate?: (parentId: string) => void;
   onStatusChange?: (isProcessing: boolean) => void;
   onSubAgentEvent?: (event: AgentSubAgentEvent) => void;
@@ -207,7 +207,7 @@ export const useChatWebSocket = ({
           onStatusChangeRef.current?.(false);
         }
         streamingMessageRef.current = null;
-        onStreamErrorRef.current?.(msgContent.content);
+        onStreamErrorRef.current?.(msgContent.content, msgContent.error_code);
         return;
       }
 

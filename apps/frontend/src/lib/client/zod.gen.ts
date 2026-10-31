@@ -146,6 +146,8 @@ export const zChatGptConnectionStatus = z.enum([
  * email: Email from the validated ID token, for display.
  * plan_usage_enabled: True only when connected with plan usage granted.
  * model_count: Plan models currently listed by the account.
+ * usage_paused: Plan requests are paused after a usage limit.
+ * notice_pending: The one-time plan-usage notice has not been dismissed.
  * updated_at: Last connection change (Unix seconds).
  */
 export const zChatGptConnection = z.object({
@@ -154,6 +156,8 @@ export const zChatGptConnection = z.object({
   email: z.string().nullish(),
   plan_usage_enabled: z.boolean().optional().default(false),
   model_count: z.int().optional().default(0),
+  usage_paused: z.boolean().optional().default(false),
+  notice_pending: z.boolean().optional().default(false),
   updated_at: z.int().nullish(),
 });
 
@@ -917,6 +921,7 @@ export const zChatModelChoice = z.object({
   enabled: z.boolean().optional().default(true),
   authorized: z.boolean().optional().default(true),
   unavailable_reason: z.string().nullish(),
+  unavailable_code: z.string().nullish(),
   context_window: z.int().nullish(),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   supports_vision: z.boolean().nullish(),
@@ -2366,6 +2371,16 @@ export const zChatgptConnectionAuthorizeResponse = zChatGptAuthorizationStart;
  * Successful Response
  */
 export const zChatgptPlanModelsSyncResponse = zChatGptConnection;
+
+/**
+ * Successful Response
+ */
+export const zChatgptPlanUsageResumeResponse = zChatGptConnection;
+
+/**
+ * Successful Response
+ */
+export const zChatgptPlanNoticeDismissResponse = zChatGptConnection;
 
 export const zChatgptConnectionDisconnectBody = zChatGptDisconnect;
 

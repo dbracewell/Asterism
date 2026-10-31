@@ -62,6 +62,18 @@ async def sync_models(user: AuthedUserDep, session: DBSessionDep) -> ChatGPTConn
         raise CodedException(503, "ChatGPT plan models could not be loaded; try again later") from error
 
 
+@chatgpt_router.post("/chatgpt/connection/resume", operation_id="chatgptPlanUsageResume")
+async def resume(user: AuthedUserDep, session: DBSessionDep) -> ChatGPTConnection:
+    """Try the plan again after a usage limit paused it."""
+    return await service.resume_plan_usage(user.id, session)
+
+
+@chatgpt_router.post("/chatgpt/connection/notice", operation_id="chatgptPlanNoticeDismiss")
+async def dismiss_notice(user: AuthedUserDep, session: DBSessionDep) -> ChatGPTConnection:
+    """Dismiss the one-time "You're using your ChatGPT plan" notice."""
+    return await service.dismiss_notice(user.id, session)
+
+
 @chatgpt_router.post("/chatgpt/connection/disconnect", operation_id="chatgptConnectionDisconnect")
 async def disconnect(payload: ChatGPTDisconnect, user: AuthedUserDep, session: DBSessionDep) -> ChatGPTDisconnectResult:
     return await service.disconnect(user.id, session, forget=payload.forget)

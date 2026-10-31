@@ -117,6 +117,12 @@ import type {
   ChatgptPlanModelsSyncData,
   ChatgptPlanModelsSyncErrors,
   ChatgptPlanModelsSyncResponses,
+  ChatgptPlanNoticeDismissData,
+  ChatgptPlanNoticeDismissErrors,
+  ChatgptPlanNoticeDismissResponses,
+  ChatgptPlanUsageResumeData,
+  ChatgptPlanUsageResumeErrors,
+  ChatgptPlanUsageResumeResponses,
   ChatgptPolicyGetData,
   ChatgptPolicyGetErrors,
   ChatgptPolicyGetResponses,
@@ -2010,6 +2016,52 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chatgpt/connection/models",
+      ...options,
+    });
+  }
+
+  /**
+   * Resume
+   *
+   * Try the plan again after a usage limit paused it.
+   */
+  public chatgptPlanUsageResume<ThrowOnError extends boolean = false>(
+    options?: Options<ChatgptPlanUsageResumeData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptPlanUsageResumeResponses,
+    ChatgptPlanUsageResumeErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      ChatgptPlanUsageResumeResponses,
+      ChatgptPlanUsageResumeErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chatgpt/connection/resume",
+      ...options,
+    });
+  }
+
+  /**
+   * Dismiss Notice
+   *
+   * Dismiss the one-time "You're using your ChatGPT plan" notice.
+   */
+  public chatgptPlanNoticeDismiss<ThrowOnError extends boolean = false>(
+    options?: Options<ChatgptPlanNoticeDismissData, ThrowOnError>,
+  ): RequestResult<
+    ChatgptPlanNoticeDismissResponses,
+    ChatgptPlanNoticeDismissErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      ChatgptPlanNoticeDismissResponses,
+      ChatgptPlanNoticeDismissErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chatgpt/connection/notice",
       ...options,
     });
   }

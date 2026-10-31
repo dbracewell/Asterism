@@ -1,6 +1,6 @@
 # EPIC-49: ChatGPT plan connection
 
-Status: in progress (US-49.1 through US-49.3 complete; US-49.4 active). Source: Sign in with ChatGPT research (2026-10-30).
+Status: complete (2026-10-31); archived in docs/archive/todo-completed-2026-10-31.md. Source: Sign in with ChatGPT research (2026-10-30).
 
 ## Objective
 
@@ -71,9 +71,15 @@ errors-and-recovery pages.
   consent or a grant without `chatgpt.tokens.use.direct` keeps the sign-in with
   plan usage disabled. Fallback to another billing path must be the user's
   explicit choice.
-- UI wording: "Continue with ChatGPT", "Using ChatGPT plan", "Manage usage",
-  and a one-time "You're using your ChatGPT plan" notice dismissed with
-  "Got it" ([guidelines](https://developers.openai.com/siwc/ui-ux-guidelines)).
+- UI wording: "Continue with ChatGPT", "Using ChatGPT plan", "Manage usage"
+  (links to `https://chatgpt.com/settings/usage`), and a one-time "You're using
+  your ChatGPT plan" notice ("Eligible usage in this app uses your ChatGPT
+  plan. Manage usage in your ChatGPT settings.") dismissed with "Got it". Usage
+  limits read "Usage limit reached" / "Review your plan or this app's limit in
+  ChatGPT settings." with Manage usage as the primary action; "Buy app credits"
+  applies only to apps that sell credits, so Asterism omits it
+  ([guidelines](https://developers.openai.com/siwc/ui-ux-guidelines), verified
+  2026-10-31 at US-49.4 start).
 - Do not call ChatGPT's private `backend-api` endpoints.
 
 ## Ownership and delivery
@@ -165,6 +171,6 @@ other models only as the user's explicit choice. Usage-unavailable errors retry
 with bounded backoff, and revoked sessions ask the user to connect again. All
 of it is keyboard and screen-reader accessible in every theme.
 
-- [ ] Add the plan label, Manage usage link and first-use notice.
-- [ ] Map usage-limit, unavailable and revoked errors to their recovery UI.
-- [ ] Add unit and isolated browser tests with a local OAuth and Responses double.
+- [x] Add the plan label, Manage usage link and first-use notice.
+- [x] Map usage-limit, unavailable and revoked errors to their recovery UI.
+- [x] Add unit and isolated browser tests with a local OAuth and Responses double.

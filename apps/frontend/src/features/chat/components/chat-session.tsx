@@ -1,4 +1,8 @@
 "use client";
+import {
+  isPlanErrorCode,
+  PlanRecoveryNotice,
+} from "@/features/chatgpt/components/plan-usage";
 import { EmptyState } from "@/components/empty-state";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -105,7 +109,10 @@ export const ChatSession = ({
   const preventAutoScrollRef = React.useRef(false);
   const [isScrollable, setIsScrollable] = React.useState(false);
   const [isScrolledAway, setIsScrolledAway] = React.useState(false);
-  const [socketError, setSocketError] = React.useState<string | null>(null);
+  const [socketError, setSocketError] = React.useState<{
+    message: string;
+    code?: string | null;
+  } | null>(null);
 
   React.useEffect(() => {
     if (!session) return;
@@ -168,10 +175,10 @@ export const ChatSession = ({
         };
       });
     },
-    onStreamError: (error) => {
+    onStreamError: (error, code) => {
       setIsProcessing(false);
       setIncomingMessage(null);
-      setSocketError(error);
+      setSocketError({ message: error, code });
     },
     onRegenerate: () => {
       refetch();
@@ -493,12 +500,20 @@ export const ChatSession = ({
             Jump to latest
           </Button>
         )}
-        {socketError && (
+        {socketError && isPlanErrorCode(socketError.code) && (
+          <PlanRecoveryNotice
+            code={socketError.code}
+            message={socketError.message}
+            onDismiss={() => setSocketError(null)}
+            className="mx-auto mb-2 max-w-5xl"
+          />
+        )}
+        {socketError && !isPlanErrorCode(socketError.code) && (
           <div
             role="alert"
             className="bg-destructive/10 border-destructive text-destructive rounded-surface mx-auto mb-2 flex w-full max-w-5xl items-center justify-between gap-2 border px-3 py-2 text-sm"
           >
-            <p className="min-w-0 flex-1">{socketError}</p>
+            <p className="min-w-0 flex-1">{socketError.message}</p>
             <Button
               variant="ghost"
               size="icon-xs"

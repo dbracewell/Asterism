@@ -55,6 +55,8 @@ const AgentRegenerateEvent = z.object({
 const AgentErrorEvent = z.object({
   type: z.literal("error"),
   content: z.string(),
+  // Stable provider error code, e.g. chatgpt_plan_usage_limit.
+  error_code: z.string().nullish(),
 });
 
 const AgentDeltaEvent = z.object({

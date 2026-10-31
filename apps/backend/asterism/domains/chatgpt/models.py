@@ -58,6 +58,10 @@ class ChatGPTConnectionModel(Base, TimestampMixin):
     expires_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
     scopes: Mapped[str] = mapped_column(Text, nullable=False, default="")
     token_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Set when a usage limit paused plan requests; cleared by the user.
+    usage_paused_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # When the one-time "You're using your ChatGPT plan" notice was dismissed.
+    notice_dismissed_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     __table_args__ = (
         CheckConstraint("token_revision >= 1", name="ck_chatgpt_connections_token_revision"),

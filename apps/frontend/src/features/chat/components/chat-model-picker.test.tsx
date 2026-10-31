@@ -15,12 +15,15 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   update: vi.fn(),
   get: vi.fn(),
+  resume: vi.fn(),
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   chatModelsListOptions: () => ({ queryKey: ["models"], queryFn: mocks.list }),
   chatSessionGetOneOptions: () => ({ queryKey: ["chat"], queryFn: mocks.get }),
   chatModelUpdateMutation: () => ({ mutationFn: mocks.update }),
+  chatgptPlanUsageResumeMutation: () => ({ mutationFn: mocks.resume }),
 }));
+vi.mock("@/lib/api", () => ({ client: {} }));
 const choices = [
   {
     id: "a",
@@ -248,4 +251,59 @@ it("requires a successful reload after a model revision conflict", async () => {
     ),
   );
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+const plan = {
+  id: "plan",
+  name: "gpt-plan",
+  display_name: "GPT Plan",
+  provider_name: "ChatGPT",
+  provider_type: "chatgpt",
+  available: true,
+};
+
+it("labels a selected ChatGPT plan model with Using ChatGPT plan and Manage usage", async () => {
+  mocks.list.mockResolvedValue([...choices, plan]);
+  render(<ChatModelPicker value="plan" onChange={vi.fn()} />, {
+    wrapper: wrapper(),
+  });
+  expect(await screen.findByText("Using ChatGPT plan")).toBeInTheDocument();
+  const link = screen.getByRole("link", { name: /Manage usage/ });
+  expect(link).toHaveAttribute("href", "https://chatgpt.com/settings/usage");
+  expect(link).toHaveAttribute("target", "_blank");
+});
+
+it("does not label models that are not on a ChatGPT plan", async () => {
+  render(<ChatModelPicker value="a" onChange={vi.fn()} />, {
+    wrapper: wrapper(),
+  });
+  await screen.findByRole("combobox", { name: "Chat model" });
+  await waitFor(() => expect(mocks.list).toHaveBeenCalled());
+  expect(screen.queryByText("Using ChatGPT plan")).not.toBeInTheDocument();
+});
+
+it("offers Manage usage first and an explicit retry while the plan is paused", async () => {
+  mocks.list.mockResolvedValue([
+    ...choices,
+    {
+      ...plan,
+      available: false,
+      unavailable_code: "chatgpt_plan_usage_limit",
+      unavailable_reason: "Usage limit reached.",
+    },
+  ]);
+  mocks.resume.mockResolvedValue({ usage_paused: false });
+  render(<ChatModelPicker value="plan" onChange={vi.fn()} />, {
+    wrapper: wrapper(),
+  });
+  const notice = await screen.findByRole("alert", {
+    name: "Usage limit reached",
+  });
+  const actions = notice.querySelectorAll("a, button");
+  expect(actions[0]).toHaveAccessibleName(/Manage usage/);
+  expect(screen.queryByText("Using ChatGPT plan")).not.toBeInTheDocument();
+  await userEvent.click(
+    screen.getByRole("button", { name: "Try my plan again" }),
+  );
+  await waitFor(() => expect(mocks.resume).toHaveBeenCalledTimes(1));
 });

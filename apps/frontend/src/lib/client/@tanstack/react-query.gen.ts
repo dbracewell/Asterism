@@ -117,6 +117,12 @@ import type {
   ChatgptPlanModelsSyncData,
   ChatgptPlanModelsSyncError,
   ChatgptPlanModelsSyncResponse,
+  ChatgptPlanNoticeDismissData,
+  ChatgptPlanNoticeDismissError,
+  ChatgptPlanNoticeDismissResponse,
+  ChatgptPlanUsageResumeData,
+  ChatgptPlanUsageResumeError,
+  ChatgptPlanUsageResumeResponse,
   ChatgptPolicyGetData,
   ChatgptPolicyGetError,
   ChatgptPolicyGetResponse,
@@ -2865,6 +2871,66 @@ export const chatgptPlanModelsSyncMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Resume
+ *
+ * Try the plan again after a usage limit paused it.
+ */
+export const chatgptPlanUsageResumeMutation = (
+  options?: Partial<Options<ChatgptPlanUsageResumeData>>,
+): UseMutationOptions<
+  ChatgptPlanUsageResumeResponse,
+  ChatgptPlanUsageResumeError,
+  Options<ChatgptPlanUsageResumeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatgptPlanUsageResumeResponse,
+    ChatgptPlanUsageResumeError,
+    Options<ChatgptPlanUsageResumeData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatgptPlanUsageResume({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Dismiss Notice
+ *
+ * Dismiss the one-time "You're using your ChatGPT plan" notice.
+ */
+export const chatgptPlanNoticeDismissMutation = (
+  options?: Partial<Options<ChatgptPlanNoticeDismissData>>,
+): UseMutationOptions<
+  ChatgptPlanNoticeDismissResponse,
+  ChatgptPlanNoticeDismissError,
+  Options<ChatgptPlanNoticeDismissData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatgptPlanNoticeDismissResponse,
+    ChatgptPlanNoticeDismissError,
+    Options<ChatgptPlanNoticeDismissData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatgptPlanNoticeDismiss({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

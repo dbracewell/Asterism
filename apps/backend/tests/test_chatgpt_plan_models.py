@@ -7,10 +7,10 @@ import httpx
 import pytest
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.domains.chat.delegation import require_delegation_target
+from asterism.domains.chatgpt.plan_client import ChatGPTPlanClient
 from asterism.domains.llm import client as llm_client
 from asterism.domains.llm.errors import LLMProviderError
 from asterism.domains.llm.factory import create_llm_client
-from asterism.domains.llm.responses import ResponsesLLMClient
 from asterism.domains.llm.schemas import LLMEventType, LLMMessage
 from asterism.domains.settings import service as settings_service
 from asterism.domains.settings.models import LLMModel, ProviderModel
@@ -158,7 +158,7 @@ async def test_plan_requests_run_only_on_the_owners_connection(plan):
     model = await settings_service.get_model_and_provider(uuid.UUID(await plan_model_id(sessions)), user_id="a")
 
     llm = create_llm_client(model.name, model.provider, user_id="a")
-    assert isinstance(llm, ResponsesLLMClient)
+    assert isinstance(llm, ChatGPTPlanClient)
     events = [event async for event in llm.chat(messages=[LLMMessage.user("Hi")], temperature=0.3)]
 
     assert events[-1].type == LLMEventType.COMPLETE

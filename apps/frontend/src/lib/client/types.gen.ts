@@ -368,6 +368,8 @@ export type ChatGptAuthorizationStart = {
  * email: Email from the validated ID token, for display.
  * plan_usage_enabled: True only when connected with plan usage granted.
  * model_count: Plan models currently listed by the account.
+ * usage_paused: Plan requests are paused after a usage limit.
+ * notice_pending: The one-time plan-usage notice has not been dismissed.
  * updated_at: Last connection change (Unix seconds).
  */
 export type ChatGptConnection = {
@@ -388,6 +390,14 @@ export type ChatGptConnection = {
    * Model Count
    */
   model_count?: number;
+  /**
+   * Usage Paused
+   */
+  usage_paused?: boolean;
+  /**
+   * Notice Pending
+   */
+  notice_pending?: boolean;
   /**
    * Updated At
    */
@@ -584,6 +594,10 @@ export type ChatModelChoice = {
    * Unavailable Reason
    */
   unavailable_reason?: string | null;
+  /**
+   * Unavailable Code
+   */
+  unavailable_code?: string | null;
   /**
    * Context Window
    */
@@ -6060,6 +6074,76 @@ export type ChatgptPlanModelsSyncResponses = {
 
 export type ChatgptPlanModelsSyncResponse =
   ChatgptPlanModelsSyncResponses[keyof ChatgptPlanModelsSyncResponses];
+
+export type ChatgptPlanUsageResumeData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/chatgpt/connection/resume";
+};
+
+export type ChatgptPlanUsageResumeErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ChatgptPlanUsageResumeError =
+  ChatgptPlanUsageResumeErrors[keyof ChatgptPlanUsageResumeErrors];
+
+export type ChatgptPlanUsageResumeResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptConnection;
+};
+
+export type ChatgptPlanUsageResumeResponse =
+  ChatgptPlanUsageResumeResponses[keyof ChatgptPlanUsageResumeResponses];
+
+export type ChatgptPlanNoticeDismissData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/chatgpt/connection/notice";
+};
+
+export type ChatgptPlanNoticeDismissErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+};
+
+export type ChatgptPlanNoticeDismissError =
+  ChatgptPlanNoticeDismissErrors[keyof ChatgptPlanNoticeDismissErrors];
+
+export type ChatgptPlanNoticeDismissResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatGptConnection;
+};
+
+export type ChatgptPlanNoticeDismissResponse =
+  ChatgptPlanNoticeDismissResponses[keyof ChatgptPlanNoticeDismissResponses];
 
 export type ChatgptConnectionDisconnectData = {
   body: ChatGptDisconnect;

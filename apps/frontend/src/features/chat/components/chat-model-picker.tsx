@@ -6,6 +6,11 @@ import {
   supportedCapabilities,
 } from "@/components/settings/model-identity";
 import { ModelSelector } from "@/components/settings/model-selector";
+import {
+  isPlanErrorCode,
+  PlanRecoveryNotice,
+  PlanUsageIndicator,
+} from "@/features/chatgpt/components/plan-usage";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
@@ -59,6 +64,9 @@ export function ChatModelPicker({
         disabled={disabled || !query.data}
       />
       {selected && <ModelCapabilities model={selected} />}
+      {selected?.provider_type === "chatgpt" && selected.available && (
+        <PlanUsageIndicator />
+      )}
       {query.isPending && (
         <p role="status" className="sr-only">
           Loading models…
@@ -87,11 +95,20 @@ export function ChatModelPicker({
           No available models. Ask an administrator to enable one.
         </p>
       )}
-      {value && query.data && !selected?.available && (
-        <p role="alert" className={cn(NOTICE_CLASS, "text-destructive")}>
-          Selected model is unavailable. Choose an available replacement.
-        </p>
-      )}
+      {value &&
+        query.data &&
+        !selected?.available &&
+        (isPlanErrorCode(selected?.unavailable_code) ? (
+          <PlanRecoveryNotice
+            code={selected.unavailable_code}
+            message={selected.unavailable_reason ?? ""}
+            className={NOTICE_CLASS}
+          />
+        ) : (
+          <p role="alert" className={cn(NOTICE_CLASS, "text-destructive")}>
+            Selected model is unavailable. Choose an available replacement.
+          </p>
+        ))}
     </>
   );
 }

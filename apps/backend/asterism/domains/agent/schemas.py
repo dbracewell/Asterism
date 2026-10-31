@@ -58,6 +58,8 @@ class AgentEvent(BaseModel):
     total_tokens: int = Field(default=0)
     generation_duration_ms: int = Field(default=0)
     sub_agent: SubAgentEventEnvelope | None = None
+    # Machine-readable provider error code on ERROR events (e.g. chatgpt_plan_usage_limit).
+    error_code: str | None = None
 
     def has_tool_calls(self) -> bool:
         return len(self.tool_calls) > 0

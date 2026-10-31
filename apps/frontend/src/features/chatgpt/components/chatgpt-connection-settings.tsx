@@ -2,10 +2,23 @@
 
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { QueryError } from "@/components/query-error";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/features/auth/components/user-context";
+import {
+  ManageUsageLink,
+  PlanRecoveryNotice,
+} from "@/features/chatgpt/components/plan-usage";
 import { chatgptConnectionOptions } from "@/features/chatgpt/queries";
 import {
   SettingsPane,
@@ -17,10 +30,11 @@ import {
   chatgptConnectionAuthorizeMutation,
   chatgptConnectionDisconnectMutation,
   chatgptPlanModelsSyncMutation,
+  chatgptPlanNoticeDismissMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import type { ChatGptConnection } from "@/lib/client/types.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 // Outcomes the OAuth callback reports back through `?chatgpt=`.
 const CALLBACK_MESSAGES: Record<string, { text: string; error: boolean }> = {
@@ -67,6 +81,7 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
   const { getSearchParam } = useReadWriteSearchParams();
   const callback = CALLBACK_MESSAGES[getSearchParam("chatgpt") ?? ""];
   const [pending, setPending] = useState<PendingDisconnect>(null);
+  const gotItRef = useRef<HTMLButtonElement>(null);
   const authorize = useMutation({
     ...chatgptConnectionAuthorizeMutation({ client }),
     onSuccess(data) {
@@ -77,6 +92,9 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
     chatgptConnectionDisconnectMutation({ client }),
   );
   const syncModels = useMutation(chatgptPlanModelsSyncMutation({ client }));
+  const dismissNotice = useMutation(
+    chatgptPlanNoticeDismissMutation({ client }),
+  );
 
   if (!connection.data)
     return connection.isError ? (
@@ -129,7 +147,14 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
         }
       >
         <ConnectionStatus data={data} />
+        {data.status === "connected" && <ManageUsageLink />}
       </SettingsSection>
+      {data.status === "connected" && data.usage_paused && (
+        <PlanRecoveryNotice
+          code="chatgpt_plan_usage_limit"
+          message="Usage limit reached."
+        />
+      )}
       {data.status === "connected" && (
         <SettingsSection
           title="Plan models"
@@ -185,6 +210,40 @@ function ChatGptConnectionPane({ owner }: { owner: string }) {
             : "Your tokens were removed, but ChatGPT did not confirm the session ended. Disconnect Asterism in ChatGPT Settings to be sure."}
         </p>
       )}
+      <AlertDialog
+        open={
+          data.status === "connected" &&
+          !!data.notice_pending &&
+          !dismissNotice.isSuccess
+        }
+      >
+        <AlertDialogContent
+          onOpenAutoFocus={(event) => {
+            // The notice has no Cancel; start keyboard focus on "Got it".
+            event.preventDefault();
+            gotItRef.current?.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              You&apos;re using your ChatGPT plan
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Eligible usage in this app uses your ChatGPT plan. Manage usage in
+              your ChatGPT settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              ref={gotItRef}
+              disabled={dismissNotice.isPending}
+              onClick={() => dismissNotice.mutate({})}
+            >
+              Got it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ConfirmationDialog
         open={pending !== null}
         onOpenChange={(open) => !open && setPending(null)}
