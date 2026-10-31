@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-51.7 (before/after comparison) is implemented on `feature/us-51.7-before-after-comparison` and awaiting confirmation. US-51.1 through US-51.6 and US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -26,33 +26,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. US-51.1 through US-51.6 are complete; EPIC-51 continues.
-
-### [EPIC-51: Prompt frameworks and templates](docs/epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md)
-
-- [x] US-51.1: Template document and framework catalog
-  - [x] Write an ADR for the template document format, placeholder grammar and catalog versioning.
-  - [x] Implement the domain model, queries, service and router, and regenerate the client.
-  - [x] Ship the initial framework catalog (RTF, CO-STAR, CRAFT, few-shot, step-by-step).
-  - [x] Test parsing limits, owner isolation, revision conflicts and catalog immutability.
-- [x] US-51.2: Template builder with live preview
-  - [x] Build the schema-driven form and preview with field/segment linking.
-  - [x] Add composer insertion and responsive layout; add unit and Playwright tests.
-- [x] US-51.3: Composer integration and provenance
-  - [x] Extend slash discovery and message provenance; regenerate the client.
-  - [x] Test label rendering, missing-template history and branch regeneration.
-- [x] US-51.4: Template library and editor
-  - [x] Build the library list, duplicate action and editor with preview.
-  - [x] Test editing, conflicts and accessibility (axe, keyboard).
-- [x] US-51.5: Scaffolding levels
-  - [x] Add level definitions to the template schema and the builder UI.
-  - [x] Test that each level renders the right fields and that provenance records the level.
-- [x] US-51.6: Prompt coach
-  - [x] Add the coach endpoint and rubric prompt, reusing title-model resolution.
-  - [x] Build the suggestion checklist and apply actions in the composer.
-  - [x] Test model resolution, unavailable state, ephemerality and the UI flow.
-- [ ] US-51.7: Before/after comparison (implemented; awaiting confirmation)
-  - [x] Wire the coach's before/after pair into the comparison flow; test it end to end.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51 is complete and archived; EPIC-52 is next.
 
 ### [EPIC-52: Tutor mode and guided learning](docs/epics/EPIC-52-TUTOR-MODE-AND-GUIDED-LEARNING.md)
 
