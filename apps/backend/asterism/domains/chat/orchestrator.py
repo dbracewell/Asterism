@@ -27,7 +27,7 @@ from asterism.domains.chat.schemas import (
     NewMessageRequest,
     UpdateMessageRequest,
 )
-from asterism.domains.llm.draft import get_draft_model
+from asterism.domains.chat.title_model import resolve_title_model
 from asterism.domains.llm.schemas import (
     ImageUrlContent,
     ImageUrlContentPart,
@@ -208,17 +208,19 @@ class ChatOrchestrator:
             return
 
         title = ""
+        title_model = None
         try:
-            draft_model = get_draft_model()
+            # The draft model, else the owner's own ChatGPT plan (title_model).
+            title_model = await resolve_title_model(self.user_id, self.chat.info.selected_model_id)
         except Exception as error:
-            # A missing/unavailable draft provider must use the same bounded
+            # A missing/unavailable title model must use the same bounded
             # fallback as failed title-generation attempts.
             self.logger.warning("Chat title setup failed: %s", error)
-        else:
+        if title_model is not None:
             for _ in range(3):
                 try:
                     async with asyncio.timeout(15):
-                        candidate = await draft_model.invoke(
+                        candidate = await title_model.invoke(
                             messages=[
                                 LLMMessage.user(create_title_generation_prompt(user_message.content.strip())),
                             ],

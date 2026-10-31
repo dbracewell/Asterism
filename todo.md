@@ -10,7 +10,8 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. EPIC-49 (ChatGPT plan connection) is confirmed
+US-50.1 (plan fallback for chat titles) is active on
+`feature/us-50.1-plan-chat-titles`. EPIC-49 (ChatGPT plan connection) is confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
 limits are recorded in the [US-40.4 verification record and admin-policy addendum](docs/reviews/us-40.4-slash-skills-verification-2026-10-25.md).
@@ -22,3 +23,12 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 [2026-10-28 checklist](docs/archive/todo-completed-2026-10-28.md); EPIC-44, EPIC-45 and EPIC-42 are confirmed complete and archived in the
 [2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md); EPIC-46 is confirmed complete and archived in the
 [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). All visual design epics are complete.
+
+## Active
+
+### [EPIC-50: ChatGPT plan chat titles](docs/epics/EPIC-50-CHATGPT-PLAN-CHAT-TITLES.md)
+
+- [ ] US-50.1: Plan fallback for chat titles (implemented; awaiting confirmation)
+  - [x] Resolve the title model (draft first, then the owner's plan) in the chat domain.
+  - [x] Test draft precedence, plan fallback and selection, other-user isolation, unavailable plans and the text fallback.
+  - [x] Document the fallback in ADR-0025 and the provider docs.
