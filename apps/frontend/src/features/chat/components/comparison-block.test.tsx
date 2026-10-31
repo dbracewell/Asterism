@@ -207,3 +207,15 @@ it("heads before/after columns with their labels and names the model", async () 
   ).toBeEnabled();
   expect(screen.getByRole("article", { name: "Before" })).toBeInTheDocument();
 });
+
+it("keeps block content out of paragraphs while a column waits its turn", async () => {
+  const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+  const { container } = setup(null, true);
+  const gamma = await screen.findByRole("article", { name: "Gamma" });
+  expect(gamma).toHaveTextContent("Waiting for its turn");
+  expect(container.querySelectorAll("p div")).toHaveLength(0);
+  expect(
+    errors.mock.calls.some((call) => String(call[0]).includes("descendant of")),
+  ).toBe(false);
+  errors.mockRestore();
+});

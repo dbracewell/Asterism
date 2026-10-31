@@ -208,7 +208,8 @@ function Column({
           />
         )}
         {!live && column.status === "pending" && (
-          <p className="text-muted-foreground flex items-center gap-2 text-sm">
+          // A div: the streaming indicator is block content, invalid inside <p>.
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             {isProcessing ? (
               <>
                 <StreamingIndicator /> Waiting for its turn
@@ -216,7 +217,7 @@ function Column({
             ) : (
               "Not answered yet"
             )}
-          </p>
+          </div>
         )}
       </div>
       <footer className="text-muted-foreground text-meta mt-auto flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
