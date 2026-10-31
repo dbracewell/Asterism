@@ -86,7 +86,7 @@ beforeEach(() => sessionStorage.clear());
 
 function setup() {
   const submit = vi.fn().mockResolvedValue(undefined);
-  render(
+  const view = render(
     <QueryClientProvider
       client={
         new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -101,7 +101,7 @@ function setup() {
       </TooltipProvider>
     </QueryClientProvider>,
   );
-  return { submit, input: screen.getByLabelText("Message") };
+  return { submit, input: screen.getByLabelText("Message"), view };
 }
 
 async function build(user: ReturnType<typeof userEvent.setup>) {
@@ -170,4 +170,49 @@ it("sends template provenance once and drops it when removed or cleared", async 
   await build(user);
   await user.clear(input);
   expect(screen.queryByText("Built with RTF")).toBeNull();
+});
+
+it("keeps the label and prompt across a reload, like skill drafts", async () => {
+  const user = userEvent.setup();
+  const first = setup();
+  await user.click(screen.getByRole("button", { name: "Prompt templates" }));
+  await user.click(await screen.findByRole("button", { name: /^RTF/ }));
+  await build(user);
+  await waitFor(() => expect(first.input).toHaveValue("Do laundry."));
+  first.view.unmount();
+
+  const { submit, input, view } = setup();
+  await waitFor(() => expect(input).toHaveValue("Do laundry."));
+  expect(screen.getByText("Built with RTF")).toBeInTheDocument();
+  await user.click(screen.getByLabelText("Send message"));
+  await waitFor(() =>
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        template: expect.objectContaining({ id: "rtf", revision: 2 }),
+      }),
+    ),
+  );
+  // Sending clears the persisted draft, label included.
+  await waitFor(() => expect(input).toHaveValue(""));
+  view.unmount();
+  const again = setup();
+  await waitFor(() => expect(again.input).toHaveValue(""));
+  expect(screen.queryByText("Built with RTF")).toBeNull();
+});
+
+it("ignores a malformed stored label without losing the draft", async () => {
+  sessionStorage.setItem(
+    "asterism:skill-composer:1:alice:new:general",
+    JSON.stringify({
+      revision: 0,
+      skills: [],
+      refresh: [],
+      prompt: "Kept",
+      literal: false,
+      template: { name: "RTF", use: { source: "bogus", id: "rtf" } },
+    }),
+  );
+  const { input } = setup();
+  await waitFor(() => expect(input).toHaveValue("Kept"));
+  expect(screen.queryByText(/Built with/)).toBeNull();
 });

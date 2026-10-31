@@ -60,7 +60,11 @@ send.
 After **Use prompt**, the composer shows a removable "Built with <name>" chip.
 Sending includes `template: {source, id, revision, level}` on
 `POST /chat/` and `POST /chat/{id}/message`. The chip is dropped when removed,
-when the draft is cleared, and after acceptance; it does not survive a reload.
+when the draft is cleared, and after acceptance. Like skill chips, it is saved
+with the composer draft in this tab's session storage (scoped to user and
+workspace) and survives a reload. A restored chip is only a client claim; the
+server re-resolves it on send, so a template deleted meanwhile rejects the send
+with 404 until the chip is removed.
 `level` is `guided` until scaffolding levels exist (US-51.5).
 
 The server resolves the claim before accepting the message: a framework must be

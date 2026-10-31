@@ -197,8 +197,8 @@ const ChatInputCore = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
-  const [appliedTemplate, setAppliedTemplate] =
-    useState<AppliedTemplate | null>(null);
+  // Template labels exist only with an owner, so the composer draft persists them.
+  const appliedTemplate = skillComposer?.template ?? null;
   const [localPrompt, setPrompt] = useState("");
   const prompt = skillComposer?.prompt ?? localPrompt;
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -406,11 +406,9 @@ const ChatInputCore = ({
     isStaging ||
     (skillComposer ? !skillComposer.ready : false);
 
-  const updatePrompt = (value: string) => {
-    if (skillComposer) skillComposer.changePrompt(value);
+  const updatePrompt = (value: string, template?: AppliedTemplate) => {
+    if (skillComposer) skillComposer.changePrompt(value, template);
     else setPrompt(value);
-    // A template label describes the current draft; clearing the draft drops it.
-    if (!value.trim()) setAppliedTemplate(null);
     const lines = Math.min(8, value.split(/\n/).length);
     if (lines !== numberOfLinesRef.current) {
       numberOfLinesRef.current = lines;
@@ -425,11 +423,11 @@ const ChatInputCore = ({
     },
   }));
 
-  const insertText = (text: string) => {
+  const insertText = (text: string, template?: AppliedTemplate) => {
     const element = textareaRef.current;
     const start = element?.selectionStart ?? prompt.length;
     const end = element?.selectionEnd ?? start;
-    updatePrompt(prompt.slice(0, start) + text + prompt.slice(end));
+    updatePrompt(prompt.slice(0, start) + text + prompt.slice(end), template);
     element?.focus();
   };
 
@@ -612,7 +610,7 @@ const ChatInputCore = ({
                 variant="ghost"
                 disabled={controlsDisabled}
                 aria-label={`Remove ${appliedTemplate.name} template label`}
-                onClick={() => setAppliedTemplate(null)}
+                onClick={() => skillComposer?.changeTemplate(null)}
               >
                 <XIcon />
               </Button>
@@ -733,10 +731,7 @@ const ChatInputCore = ({
           owner={skillOwner}
           selection={templateSelection}
           onSelectionChange={onTemplateSelectionChange}
-          onUse={(text, applied) => {
-            insertText(text);
-            setAppliedTemplate(applied);
-          }}
+          onUse={(text, applied) => insertText(text, applied)}
           onCloseAutoFocus={(event) => {
             // The composer, not the toolbar button, owns focus after insertion.
             event.preventDefault();

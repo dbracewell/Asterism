@@ -9,7 +9,10 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { eligibleSkillOptions } from "@/features/skills/queries";
-import type { TemplateSelection } from "@/features/templates/components/template-picker-dialog";
+import type {
+  AppliedTemplate,
+  TemplateSelection,
+} from "@/features/templates/components/template-picker-dialog";
 import { templateSlashOptions } from "@/features/templates/lib/slash";
 import {
   frameworkCatalogOptions,
@@ -35,11 +38,15 @@ import { parseSkillCommands, slashSearch } from "../lib/skill-commands";
 
 export type SkillComposerControl = {
   prompt: string;
-  changePrompt: (value: string) => void;
+  /** Replaces the prompt; a template, when given, labels the new text. */
+  changePrompt: (value: string, template?: AppliedTemplate) => void;
   prepare: (
     prompt: string,
   ) => Promise<{ prompt: string; skills?: SkillSelection }>;
   accepted: () => void;
+  /** The template label describing the draft; persisted with the prompt. */
+  template: AppliedTemplate | null;
+  changeTemplate: (template: AppliedTemplate | null) => void;
   hasSkills: boolean;
   ready: boolean;
   controls: ReactNode;
@@ -57,7 +64,22 @@ type Draft = {
   refresh: string[];
   prompt: string;
   literal: boolean;
+  template: AppliedTemplate | null;
 };
+
+/** Restored labels are only a client claim; the server re-resolves them on send. */
+function restoredTemplate(value: unknown): AppliedTemplate | null {
+  if (!value || typeof value !== "object") return null;
+  const { name, use } = value as Partial<AppliedTemplate>;
+  return typeof name === "string" &&
+    use &&
+    (use.source === "framework" || use.source === "template") &&
+    typeof use.id === "string" &&
+    Number.isInteger(use.revision) &&
+    typeof use.level === "string"
+    ? { name, use }
+    : null;
+}
 
 export function SkillComposer({
   owner,
@@ -106,7 +128,11 @@ export function SkillComposer({
           value.refresh.every((id: unknown) => typeof id === "string") &&
           typeof value.prompt === "string"
         )
-          restored = value;
+          restored = {
+            ...value,
+            literal: value.literal === true,
+            template: restoredTemplate(value.template),
+          };
       }
     } catch {
       /* Unavailable or malformed storage must not block composition. */
@@ -118,6 +144,7 @@ export function SkillComposer({
         refresh: [],
         prompt: "",
         literal: false,
+        template: null,
       },
     );
     // Scope changes remount this component; accepted state is captured as the draft baseline.
@@ -129,6 +156,7 @@ export function SkillComposer({
     refresh: [],
     prompt: "",
     literal: false,
+    template: null,
   };
   const current: Draft = {
     ...stored,
@@ -504,8 +532,14 @@ export function SkillComposer({
   );
   const control: SkillComposerControl = {
     prompt: current.prompt,
-    changePrompt(value) {
-      update({ ...current, prompt: value, literal: false });
+    changePrompt(value, template) {
+      update({
+        ...current,
+        prompt: value,
+        literal: false,
+        // A template label describes the current draft; clearing the draft drops it.
+        template: value.trim() ? (template ?? current.template) : null,
+      });
       setDismissed(false);
       setManual(false);
       setIndex(0);
@@ -515,7 +549,17 @@ export function SkillComposer({
       try {
         sessionStorage.removeItem(storageKey);
       } catch {}
-      setDraft({ ...current, prompt: "", refresh: [], literal: false });
+      setDraft({
+        ...current,
+        prompt: "",
+        refresh: [],
+        literal: false,
+        template: null,
+      });
+    },
+    template: current.template,
+    changeTemplate(template) {
+      update({ ...current, template });
     },
     hasSkills: current.skills.length > 0,
     ready: !!draft && !resolving,

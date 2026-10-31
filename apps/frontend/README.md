@@ -335,8 +335,8 @@ highlights the preview text it produces, and hovering preview text highlights
 its field. Required fields are validated before **Use prompt** inserts the text
 at the composer cursor, where it stays ordinary editable text. You can also
 type `/template`, a framework ID such as `/rtf`, or a template name at the start
-of a message. A removable **Built with …** chip records the template on the sent
-message, which then shows a small label (marked unavailable if the template is
+of a message. A removable **Built with …** chip, kept with the draft across
+reloads, records the template on the sent message, which then shows a small label (marked unavailable if the template is
 later deleted). See the
 [prompt templates contract](../../docs/architecture/prompt-templates.md).
 
