@@ -70,6 +70,7 @@ layers in this order:
 | `platform` | Mandatory platform rules and capability restrictions                                   |
 | `agent`    | Versioned main or delegated role/instructions                                          |
 | `profile`  | Accepted persona USER.md constraints; separate from memory                             |
+| `mode`     | Pinned server-owned learning-mode instructions; main-agent only                        |
 | `project`  | Project task instructions and context revision, when applicable                        |
 | `skills`   | Explicit ordered, pinned skill instructions; main-agent only                           |
 | `runtime`  | Server-authorized tool names and eligible target metadata; bounded to 8,000 characters |
@@ -93,6 +94,10 @@ resume; changes require explicit accepted selection/refresh. Live owner, assignm
 and admin-policy checks run before generation and provider output. Delegates do
 not inherit parent activations. See the [skills contract](skills.md).
 See [ADR-0021](../adr/0021-personas-and-execution-binding.md).
+The `mode` layer uses the turn's pinned learning-mode snapshot; resume replays it,
+and regeneration captures the chat's current selection. It outranks project and
+skill text but not the persona. Delegates do not receive it. See
+[ADR-0028](../adr/0028-learning-mode-layer.md).
 
 ## Bounded loop and streaming
 

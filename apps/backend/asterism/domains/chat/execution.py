@@ -11,11 +11,13 @@ from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectSco
 from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
+from asterism.domains.learning.catalog import require_mode
 from asterism.domains.skills.activation import validate_snapshots
 from asterism.domains.user.personas import require_owned_persona
 
 from .execution_context import build_execution_provenance
 from .execution_models import ChatExecutionModel
+from .learning_modes import accepted_mode_snapshot, current_mode_snapshot
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
 from .personas import read_chat_persona_snapshot
@@ -97,11 +99,14 @@ async def prepare_execution(
                     await require_owned_persona(user_id=user_id, persona_id=persona.id, session=session)
                 except NotFoundException as error:
                     raise CodedException(409, "Accepted persona is unavailable; regenerate") from error
+                # Regeneration captures the current selection; a first run uses the pinned mode.
+                learning_mode = current_mode_snapshot(chat) if restart else accepted_mode_snapshot(message)
                 skills = message.accepted_skills.snapshots
                 await validate_snapshots(user_id, skills, session)
                 prompt = await build_prompt_snapshot(
                     skills=skills,
                     persona_snapshot=persona,
+                    learning_mode=learning_mode,
                     user_id=user_id,
                     chat_id=chat_id,
                     profile=AgentProfile.model_validate(
@@ -115,6 +120,7 @@ async def prepare_execution(
                 execution = MessageExecution(
                     skills=[item.identity for item in skills],
                     persona=persona.identity,
+                    learning_mode=learning_mode.identity,
                     prompt=prompt.provenance,
                     request_message_id=message_id,
                     model=choice,
@@ -160,6 +166,8 @@ async def validate_recorded_execution(
         await require_owned_persona(user_id=user_id, persona_id=recorded.persona.id, session=session)
     except NotFoundException as error:
         raise CodedException(409, "Recorded persona is unavailable; regenerate with an available persona") from error
+    # Resume replays the recorded mode text, but the mode must still be offered.
+    require_mode(recorded.learning_mode.id)
     from .skills import recorded_skill_snapshots
 
     snapshots = await recorded_skill_snapshots(user_id=user_id, execution=recorded, session=session)
@@ -207,6 +215,12 @@ def validate_prompt_snapshot(
         or execution.context.user_profile_revision != execution.persona.revision
     ):
         raise CodedException(409, "Recorded persona input is unavailable or changed; regenerate")
+    mode_layers = [layer for layer in snapshot.layers if layer.kind == "mode"]
+    if len(mode_layers) != 1 or (
+        mode_layers[0].source_id != execution.learning_mode.id.value
+        or mode_layers[0].revision != execution.learning_mode.version
+    ):
+        raise CodedException(409, "Recorded learning mode input is unavailable or changed; regenerate")
 
 
 async def column_target(message: MessageModel, session: AsyncSession) -> uuid.UUID | None:

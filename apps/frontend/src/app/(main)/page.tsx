@@ -11,6 +11,7 @@ import {
   CompareModelsPicker,
   comparePayload,
 } from "@/features/chat/components/compare-targets";
+import { LearningModePicker } from "@/features/chat/components/chat-learning-mode-picker";
 import {
   ChatPersonaPicker,
   personaAvailable,
@@ -24,6 +25,7 @@ import { heroSuggestions } from "@/features/chat/lib/hero-suggestions";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { eligibleSkillOptions } from "@/features/skills/queries";
 import { client } from "@/lib/api";
+import type { LearningModeId } from "@/lib/client";
 import {
   chatModelsListOptions,
   projectGetOneOptions,
@@ -49,6 +51,7 @@ export default function AppPage() {
     user.settings.default_model_id ?? "",
   );
   const [personaId, setPersonaId] = useState<string | null>(null);
+  const [learningMode, setLearningMode] = useState<LearningModeId>("standard");
   const [compareModels, setCompareModels] = useState<string[]>([]);
   const personas = useQuery(personaQueryOptions(user.id));
   const hasPersona =
@@ -121,7 +124,7 @@ export default function AppPage() {
             promptCoach={
               user.settings.prompt_coach_enabled ? { modelId } : undefined
             }
-            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}`}
+            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}`}
             modelSelector={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />
@@ -131,6 +134,10 @@ export default function AppPage() {
                   disabled={sendBlocked}
                 />
                 <ChatPersonaPicker value={personaId} onChange={setPersonaId} />
+                <LearningModePicker
+                  value={learningMode}
+                  onChange={setLearningMode}
+                />
               </>
             }
             onSubmit={({
@@ -151,6 +158,7 @@ export default function AppPage() {
                   request_id: requestId,
                   model_id: modelId,
                   persona_id: personaId,
+                  learning_mode: learningMode,
                   project_id: projectId,
                   user_prompt: prompt,
                   files,

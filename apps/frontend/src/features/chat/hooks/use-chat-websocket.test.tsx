@@ -1,4 +1,5 @@
 import { defaultPersonaProvenance } from "@/test/personas";
+import { standardLearningMode } from "@/test/learning-modes";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { useChatWebSocket } from "./use-chat-websocket";
@@ -99,6 +100,7 @@ it("carries the executed model snapshot into the streaming assistant message", (
   };
   const execution = {
     persona: defaultPersonaProvenance,
+    learning_mode: standardLearningMode,
     id: "11111111-1111-4111-8111-111111111111",
     request_message_id: "22222222-2222-4222-8222-222222222222",
     model_revision: 2,

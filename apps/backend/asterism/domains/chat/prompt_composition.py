@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
+from asterism.domains.agent.learning_inputs import LearningModeSnapshot
 from asterism.domains.agent.prompts import PersonaSnapshot, PromptComposer, PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.skill_inputs import SkillSnapshot
@@ -27,6 +28,7 @@ async def build_prompt_snapshot(
     ceiling: ContextToolScope | None = None,
     skills: tuple[SkillSnapshot, ...] | None = None,
     persona_snapshot: PersonaSnapshot | None = None,
+    learning_mode: LearningModeSnapshot | None = None,
     chat_snapshot: ChatScopeSnapshot | None = None,
     project_snapshot: ProjectScopeSnapshot | None = None,
 ) -> PromptSnapshot:
@@ -68,6 +70,12 @@ async def build_prompt_snapshot(
             branch_ids=chat.active_branch_message_ids,
             session=db,
         )
+        if learning_mode is None and not profile.sub_agent:
+            from .learning_modes import read_pending_or_current_mode
+
+            learning_mode = await read_pending_or_current_mode(
+                user_id=user_id, chat_id=chat_id, branch_ids=chat.active_branch_message_ids, session=db
+            )
         if skills is None:
             from asterism.domains.skills.activation import validate_snapshots
 
@@ -78,6 +86,8 @@ async def build_prompt_snapshot(
         return PromptComposer().snapshot(
             skills=skills,
             profile_layer=persona.layer,
+            # Delegated agents never inherit the learner-facing mode layer.
+            mode_layer=learning_mode.layer if learning_mode is not None and not profile.sub_agent else None,
             agent_id=profile.id,
             agent_revision=profile.config_revision,
             agent_instructions=profile.system_prompt or "",

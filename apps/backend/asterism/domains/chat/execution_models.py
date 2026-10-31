@@ -60,7 +60,16 @@ BEGIN SELECT RAISE(ABORT, 'Accepted persona input is immutable'); END
 """).execute_if(dialect="sqlite"),
 )
 
-
+event.listen(
+    Base.metadata,
+    "after_create",
+    DDL("""
+CREATE TRIGGER IF NOT EXISTS accepted_learning_mode_immutable
+BEFORE UPDATE OF accepted_learning_mode ON messages
+WHEN NEW.accepted_learning_mode IS NOT OLD.accepted_learning_mode
+BEGIN SELECT RAISE(ABORT, 'Accepted learning mode input is immutable'); END
+""").execute_if(dialect="sqlite"),
+)
 event.listen(
     Base.metadata,
     "after_create",

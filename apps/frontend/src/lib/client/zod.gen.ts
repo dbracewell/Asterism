@@ -604,6 +604,52 @@ export const zKnowledgeReprocessSummary = z.object({
 });
 
 /**
+ * LearningModeId
+ */
+export const zLearningModeId = z.enum([
+  "standard",
+  "tutor",
+  "explain_back",
+  "review",
+]);
+
+/**
+ * ChatLearningModeUpdate
+ */
+export const zChatLearningModeUpdate = z.object({
+  learning_mode: zLearningModeId,
+  expected_learning_mode_revision: z.int().gte(1),
+});
+
+/**
+ * LearningMode
+ */
+export const zLearningMode = z.object({
+  id: zLearningModeId,
+  name: z.string(),
+  description: z.string(),
+  version: z.int().gte(1),
+});
+
+/**
+ * LearningModeCatalog
+ */
+export const zLearningModeCatalog = z.object({
+  modes: z.array(zLearningMode),
+});
+
+/**
+ * LearningModeProvenance
+ *
+ * Public identity of the mode a turn ran under; never carries instruction text.
+ */
+export const zLearningModeProvenance = z.object({
+  id: zLearningModeId,
+  name: z.string(),
+  version: z.int().gte(1),
+});
+
+/**
  * LongTextField
  */
 export const zLongTextField = z.object({
@@ -646,7 +692,8 @@ export const zMainAgentUpdate = z.object({
  * Compare an answered turn with one or two more targets (US-54.4).
  *
  * The existing turn becomes column 0; each target adds a column that reruns
- * the same accepted inputs (prompt, files, skills, persona, template).
+ * the same accepted inputs (prompt, files, skills, persona, learning mode,
+ * template).
  */
 export const zMessageCompareRequest = z.object({
   request_id: z.uuid(),
@@ -935,6 +982,7 @@ export const zPromptSource = z.object({
     "platform",
     "agent",
     "profile",
+    "mode",
     "project",
     "skills",
     "runtime",
@@ -1308,6 +1356,7 @@ export const zSkillIdentity = z.object({
 export const zMessageExecution = z.object({
   skills: z.array(zSkillIdentity).optional(),
   persona: zPersonaProvenance,
+  learning_mode: zLearningModeProvenance,
   context: zContextProvenance.nullish(),
   prompt: zPromptProvenance.optional(),
   id: z.uuid().optional(),
@@ -1335,11 +1384,14 @@ export const zChatInfo = z.object({
   context_model: zChatContextModel.nullish(),
   persona_id: z.uuid().nullish(),
   persona_revision: z.int().gte(1).optional().default(1),
+  learning_mode: zLearningModeId.optional().default("standard"),
+  learning_mode_revision: z.int().gte(1).optional().default(1),
   selected_model_id: z.uuid().nullish(),
   model_revision: z.int().gte(1).optional().default(1),
   selected_model: zChatModelChoice.nullish(),
   pending_execution: zMessageExecution.nullish(),
   pending_persona: zPersonaProvenance.nullish(),
+  pending_learning_mode: zLearningModeProvenance.nullish(),
   resume_error: z.string().nullish(),
 });
 
@@ -1624,6 +1676,7 @@ export const zNewChatRequest = z.object({
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
   persona_id: z.uuid().nullish(),
+  learning_mode: zLearningModeId.optional().default("standard"),
   model_id: z.uuid(),
   request_id: z.uuid(),
   draft_id: z.uuid().nullish(),
@@ -1793,6 +1846,7 @@ export const zMessage = z.object({
   thinking: z.string().nullish(),
   tool_calls: z.array(zToolCall).nullish(),
   skills: z.array(zSkillIdentity).optional(),
+  learning_mode: zLearningModeProvenance.nullish(),
   template: zTemplateLabel.nullish(),
   execution: zMessageExecution.nullish(),
   id: z.uuid(),
@@ -2196,6 +2250,17 @@ export const zChatPersonaUpdatePath = z.object({
  * Successful Response
  */
 export const zChatPersonaUpdateResponse = zChatInfo;
+
+export const zChatLearningModeUpdateBody = zChatLearningModeUpdate;
+
+export const zChatLearningModeUpdatePath = z.object({
+  chat_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatLearningModeUpdateResponse = zChatInfo;
 
 export const zChatSessionGetManyQuery = z.object({
   project_id: z.uuid().nullish(),
@@ -2695,6 +2760,11 @@ export const zSkillUpdatePath = z.object({
  * Successful Response
  */
 export const zSkillUpdateResponse = zSkill;
+
+/**
+ * Successful Response
+ */
+export const zLearningModeGetManyResponse = zLearningModeCatalog;
 
 /**
  * Successful Response

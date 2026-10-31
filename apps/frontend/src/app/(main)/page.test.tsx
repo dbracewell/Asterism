@@ -50,6 +50,15 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryKey: ["models"],
     queryFn: async () => mocks.models,
   }),
+  learningModeGetManyOptions: () => ({
+    queryKey: ["learning-modes"],
+    queryFn: async () => ({
+      modes: [
+        { id: "standard", name: "Standard", description: "", version: 1 },
+        { id: "tutor", name: "Tutor", description: "", version: 1 },
+      ],
+    }),
+  }),
 }));
 vi.mock("@/features/chat/components/chat-model-picker", () => ({
   ChatModelPicker: ({
@@ -147,10 +156,23 @@ it("prefills only the explicit default, permits a different model, and sends it 
       draft_id: "staged-draft",
       model_id: "other",
       persona_id: null,
+      learning_mode: "standard",
       project_id: "project",
       user_prompt: "Hello",
       files: [],
     },
+  });
+});
+it("sends the chosen learning mode with a new chat", async () => {
+  mocks.createChatSession.mockClear();
+  renderPage();
+  const picker = await screen.findByRole("combobox", { name: "Learning mode" });
+  await waitFor(() => expect(picker).toBeEnabled());
+  await userEvent.click(picker);
+  await userEvent.click(await screen.findByRole("option", { name: "Tutor" }));
+  await userEvent.click(screen.getByRole("button", { name: "Start chat" }));
+  expect(mocks.createChatSession).toHaveBeenCalledWith({
+    body: expect.objectContaining({ learning_mode: "tutor" }),
   });
 });
 it("retains an unavailable default without choosing a first-available replacement", async () => {

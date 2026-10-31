@@ -69,3 +69,28 @@ it("shows no label without provenance or on assistant messages", () => {
   );
   expect(screen.queryByText(/Built with/)).toBeNull();
 });
+
+it("shows the pinned learning mode on user messages, but not Standard", () => {
+  const tutor = { id: "tutor" as const, name: "Tutor", version: 1 };
+  const { rerender } = render(
+    <MessageBody message={message({ learning_mode: tutor })} />,
+  );
+  const chip = screen.getByText("Tutor").closest("[data-learning-mode]");
+  expect(chip).toHaveAttribute("data-learning-mode", "tutor");
+  expect(chip).toHaveAttribute("title", "Sent in Tutor mode (version 1)");
+  expect(chip).toHaveTextContent("Learning mode: Tutor");
+  rerender(
+    <MessageBody
+      message={message({
+        learning_mode: { id: "standard", name: "Standard", version: 1 },
+      })}
+    />,
+  );
+  expect(screen.queryByText(/Learning mode/)).toBeNull();
+  rerender(
+    <MessageBody
+      message={message({ role: "assistant", learning_mode: tutor })}
+    />,
+  );
+  expect(screen.queryByText(/Learning mode/)).toBeNull();
+});

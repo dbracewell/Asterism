@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.agent.context_provenance import ContextProvenance
+from asterism.domains.agent.learning_inputs import LearningModeId, LearningModeProvenance
 from asterism.domains.agent.prompts import PersonaProvenance, PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.agent.skill_inputs import SkillIdentity
@@ -99,6 +100,7 @@ class ActiveSkillState(BaseModel):
 class MessageExecution(BaseModel):
     skills: list[SkillIdentity] = Field(default_factory=list)
     persona: PersonaProvenance
+    learning_mode: LearningModeProvenance
     context: ContextProvenance | None = None
     prompt: PromptProvenance = Field(default_factory=PromptProvenance)
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
@@ -134,6 +136,7 @@ class NewMessageRequest(BaseModel):
 
 class Message(LLMMessage):
     skills: list[SkillIdentity] = Field(default_factory=list)
+    learning_mode: LearningModeProvenance | None = None
     template: TemplateLabel | None = None
     execution: MessageExecution | None = None
     model_config = ConfigDict(from_attributes=True)
@@ -208,11 +211,14 @@ class ChatInfo(BaseModel):
     context_model: ChatContextModel | None = Field(default=None)
     persona_id: uuid.UUID | None = None
     persona_revision: int = Field(default=1, ge=1)
+    learning_mode: LearningModeId = LearningModeId.STANDARD
+    learning_mode_revision: int = Field(default=1, ge=1)
     selected_model_id: uuid.UUID | None = None
     model_revision: int = Field(default=1, ge=1)
     selected_model: ChatModelChoice | None = None
     pending_execution: MessageExecution | None = None
     pending_persona: PersonaProvenance | None = None
+    pending_learning_mode: LearningModeProvenance | None = None
     resume_error: str | None = None
 
 
@@ -297,6 +303,7 @@ class NewChatRequest(BaseModel):
     skills: SkillSelection | None = None
     template: TemplateUse | None = None
     persona_id: uuid.UUID | None = None
+    learning_mode: LearningModeId = LearningModeId.STANDARD
     model_id: uuid.UUID
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID
@@ -377,11 +384,18 @@ class ChatPersonaUpdate(BaseModel):
     expected_persona_revision: int = Field(ge=1)
 
 
+class ChatLearningModeUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    learning_mode: LearningModeId
+    expected_learning_mode_revision: int = Field(ge=1)
+
+
 class MessageCompareRequest(BaseModel):
     """Compare an answered turn with one or two more targets (US-54.4).
 
     The existing turn becomes column 0; each target adds a column that reruns
-    the same accepted inputs (prompt, files, skills, persona, template).
+    the same accepted inputs (prompt, files, skills, persona, learning mode,
+    template).
     """
 
     model_config = ConfigDict(extra="forbid")

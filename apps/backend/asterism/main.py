@@ -22,6 +22,7 @@ from asterism.domains.chatgpt.router import chatgpt_router
 from asterism.domains.components.router import components_router
 from asterism.domains.files.router import file_router
 from asterism.domains.knowledge.router import knowledge_router
+from asterism.domains.learning.router import learning_router
 from asterism.domains.projects.router import project_router
 from asterism.domains.prompt_templates.router import prompt_templates_router
 from asterism.domains.settings.settings_router import settings_router
@@ -139,6 +140,7 @@ app.include_router(project_router)
 # generic /settings/app/{key} routes.
 app.include_router(knowledge_router)
 app.include_router(skills_router)
+app.include_router(learning_router)
 app.include_router(prompt_templates_router)
 app.include_router(chatgpt_router)
 app.include_router(settings_router)

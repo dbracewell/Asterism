@@ -1,6 +1,6 @@
 # EPIC-52: Tutor mode and guided learning
 
-Status: proposed. Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-52.1 implemented; see [ADR-0028](../adr/0028-learning-mode-layer.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -34,10 +34,10 @@ Review my work. The chosen mode is pinned at acceptance, recorded in message
 provenance, shown as a chip, and preserved on resume. Regeneration captures the
 current selection.
 
-- [ ] Write an ADR for the learning-mode layer, pinning and composition order.
-- [ ] Implement mode definitions, branch pinning and provenance; regenerate the client.
-- [ ] Build the composer picker and message chip.
-- [ ] Test pinning, resume, regeneration and layering with personas and skills.
+- [x] Write an ADR for the learning-mode layer, pinning and composition order.
+- [x] Implement mode definitions, branch pinning and provenance; regenerate the client.
+- [x] Build the composer picker and message chip.
+- [x] Test pinning, resume, regeneration and layering with personas and skills.
 
 ## US-52.2: Socratic tutor with tiered hints
 
