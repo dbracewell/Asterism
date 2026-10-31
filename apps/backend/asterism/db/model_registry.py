@@ -27,6 +27,7 @@ from asterism.domains.knowledge.models import (  # noqa: F401
     FileKnowledgeExtractionModel,
 )
 from asterism.domains.projects.models import ProjectFileModel, ProjectModel, ProjectSubAgentModel  # noqa: F401
+from asterism.domains.prompt_templates.models import PromptTemplateModel  # noqa: F401
 from asterism.domains.settings.models import (  # noqa: F401
     ApplicationSettingsModel,
     LLMModel,

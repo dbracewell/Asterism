@@ -330,6 +330,18 @@ export const zErrorDetail = z.object({
 });
 
 /**
+ * ExamplesField
+ */
+export const zExamplesField = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_]{0,31}$/),
+  label: z.string().min(1).max(80),
+  help: z.string().max(500).optional().default(""),
+  required: z.boolean().optional().default(false),
+  kind: z.literal("examples"),
+  default: z.array(z.string().min(1).max(4000)).max(10).nullish(),
+});
+
+/**
  * FileContentStatus
  *
  * Lifecycle of the converted-content cache held by a :class:`UserFileModel`.
@@ -553,6 +565,18 @@ export const zKnowledgeProcessingProfileUpdate = z.object({
 export const zKnowledgeReprocessSummary = z.object({
   profile: zKnowledgeProcessingProfile,
   queued_file_count: z.int().gte(0),
+});
+
+/**
+ * LongTextField
+ */
+export const zLongTextField = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_]{0,31}$/),
+  label: z.string().min(1).max(80),
+  help: z.string().max(500).optional().default(""),
+  required: z.boolean().optional().default(false),
+  kind: z.literal("long_text"),
+  default: z.string().max(8000).nullish(),
 });
 
 /**
@@ -858,6 +882,28 @@ export const zPromptProvenance = z.object({
 });
 
 /**
+ * PromptTemplateSummary
+ */
+export const zPromptTemplateSummary = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * PromptTemplatePage
+ */
+export const zPromptTemplatePage = z.object({
+  items: z.array(zPromptTemplateSummary),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
  * ProviderDiscoveryResponse
  *
  * Merged model list plus non-fatal warnings and, for OpenAI, the catalog version.
@@ -1080,6 +1126,19 @@ export const zSearchResultList = z.object({
 });
 
 /**
+ * SelectField
+ */
+export const zSelectField = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_]{0,31}$/),
+  label: z.string().min(1).max(80),
+  help: z.string().max(500).optional().default(""),
+  required: z.boolean().optional().default(false),
+  kind: z.literal("select"),
+  options: z.array(z.string().min(1).max(120)).min(1).max(20),
+  default: z.string().max(120).nullish(),
+});
+
+/**
  * Setting
  *
  * A single key/value setting row.
@@ -1087,6 +1146,18 @@ export const zSearchResultList = z.object({
 export const zSetting = z.object({
   key: z.string(),
   value: zJsonValue,
+});
+
+/**
+ * ShortTextField
+ */
+export const zShortTextField = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_]{0,31}$/),
+  label: z.string().min(1).max(80),
+  help: z.string().max(500).optional().default(""),
+  required: z.boolean().optional().default(false),
+  kind: z.literal("short_text"),
+  default: z.string().max(500).nullish(),
 });
 
 /**
@@ -1347,6 +1418,91 @@ export const zSubAgentTrace = z.object({
   total_tokens: z.int().optional().default(0),
   elapsed_ms: z.int().optional().default(0),
   depth: z.int().optional().default(0),
+});
+
+/**
+ * TemplateDocument
+ *
+ * Canonical template document; clients write it whole, metadata is derived.
+ */
+export const zTemplateDocument = z.object({
+  name: z.string().min(1).max(80),
+  description: z.string().min(1).max(500),
+  fields: z
+    .array(
+      z.union([
+        z
+          .object({
+            kind: z.literal("short_text"),
+          })
+          .and(zShortTextField),
+        z
+          .object({
+            kind: z.literal("long_text"),
+          })
+          .and(zLongTextField),
+        z
+          .object({
+            kind: z.literal("select"),
+          })
+          .and(zSelectField),
+        z
+          .object({
+            kind: z.literal("examples"),
+          })
+          .and(zExamplesField),
+      ]),
+    )
+    .min(1)
+    .max(32),
+  body: z.string().min(1).max(16000),
+});
+
+/**
+ * PromptFramework
+ */
+export const zPromptFramework = z.object({
+  id: z.string(),
+  revision: z.int(),
+  name: z.string(),
+  description: z.string(),
+  document: zTemplateDocument,
+});
+
+/**
+ * PromptFrameworkCatalog
+ */
+export const zPromptFrameworkCatalog = z.object({
+  version: z.int(),
+  items: z.array(zPromptFramework),
+});
+
+/**
+ * PromptTemplate
+ */
+export const zPromptTemplate = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  document: zTemplateDocument,
+});
+
+/**
+ * PromptTemplateCreate
+ */
+export const zPromptTemplateCreate = z.object({
+  document: zTemplateDocument,
+});
+
+/**
+ * PromptTemplateUpdate
+ */
+export const zPromptTemplateUpdate = z.object({
+  document: zTemplateDocument,
+  expected_revision: z.int().gte(1).lte(2147483647),
 });
 
 /**
@@ -2344,6 +2500,71 @@ export const zSkillUpdatePath = z.object({
  * Successful Response
  */
 export const zSkillUpdateResponse = zSkill;
+
+/**
+ * Successful Response
+ */
+export const zPromptFrameworkGetManyResponse = zPromptFrameworkCatalog;
+
+export const zPromptFrameworkGetOnePath = z.object({
+  framework_id: z.string().max(64),
+});
+
+/**
+ * Successful Response
+ */
+export const zPromptFrameworkGetOneResponse = zPromptFramework;
+
+export const zPromptTemplateGetManyQuery = z.object({
+  query: z.string().max(200).optional().default(""),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(10),
+});
+
+/**
+ * Successful Response
+ */
+export const zPromptTemplateGetManyResponse = zPromptTemplatePage;
+
+export const zPromptTemplateCreateBody = zPromptTemplateCreate;
+
+/**
+ * Successful Response
+ */
+export const zPromptTemplateCreateResponse = zPromptTemplate;
+
+export const zPromptTemplateDeletePath = z.object({
+  template_id: z.uuid(),
+});
+
+export const zPromptTemplateDeleteQuery = z.object({
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Successful Response
+ */
+export const zPromptTemplateDeleteResponse = z.void();
+
+export const zPromptTemplateGetOnePath = z.object({
+  template_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zPromptTemplateGetOneResponse = zPromptTemplate;
+
+export const zPromptTemplateUpdateBody = zPromptTemplateUpdate;
+
+export const zPromptTemplateUpdatePath = z.object({
+  template_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zPromptTemplateUpdateResponse = zPromptTemplate;
 
 /**
  * Successful Response

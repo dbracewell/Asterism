@@ -46,6 +46,8 @@ Additional guides:
   attachment scopes, model picker, and selection/error states.
 - [Context provenance and memory isolation](context-isolation.md): replay ceilings,
   content-free audit, historical information limits, and future memory keys.
+- [Prompt templates](prompt-templates.md): owner-scoped template documents and the
+  bundled framework catalog ([ADR-0026](../adr/0026-prompt-template-documents-and-framework-catalog.md)).
 - [Development initialization and reset](development-reset.md): relational, source,
   vector cleanup, model-bundle retention, and isolated verification.
 - [ADR-0017](../adr/0017-project-file-and-chat-boundaries.md): current accepted

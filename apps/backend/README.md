@@ -226,3 +226,12 @@ execution/replay rechecks live eligibility. The chat composer supports explicit
 slash selection, persistent active chips, removal and refresh controls.
 See the [skills contract](../../docs/architecture/skills.md) for endpoints, bounds,
 permissions, and fresh-schema behavior. Verification uses disposable storage.
+
+## Prompt templates API
+
+US-51.1 adds owner-scoped `prompt_templates` documents (a typed field schema plus
+a `{{key}}` placeholder body) under `/prompt-templates/`, with revision-checked
+CRUD, and a bundled read-only framework catalog (RTF, CO-STAR, CRAFT, few-shot,
+step-by-step) at `/prompt-templates/frameworks`. Template text grants no
+capabilities. See the [prompt templates contract](../../docs/architecture/prompt-templates.md)
+and [ADR-0026](../../docs/adr/0026-prompt-template-documents-and-framework-catalog.md).
