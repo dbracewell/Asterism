@@ -1,6 +1,6 @@
 # EPIC-51: Prompt frameworks and templates
 
-Status: in progress (US-51.1). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-51.1 and US-51.2 complete). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -55,8 +55,8 @@ Each preview segment is visually linked to the field that produced it (hover or
 focus highlights both). Required fields are validated. "Use prompt" inserts the
 assembled text into the composer, where it stays editable. Works at 320px wide.
 
-- [ ] Build the schema-driven form and preview with field/segment linking.
-- [ ] Add composer insertion and responsive layout; add unit and Playwright tests.
+- [x] Build the schema-driven form and preview with field/segment linking.
+- [x] Add composer insertion and responsive layout; add unit and Playwright tests.
 
 ## US-51.3: Composer integration and provenance
 

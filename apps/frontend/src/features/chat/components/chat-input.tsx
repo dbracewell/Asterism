@@ -10,6 +10,7 @@ import {
   AlertCircleIcon,
   ArrowUpIcon,
   FileTextIcon,
+  LayoutTemplateIcon,
   LoaderCircleIcon,
   RefreshCwIcon,
   SquareIcon,
@@ -36,6 +37,7 @@ import {
 import { AttachMenu, type AttachAction } from "./attach-menu";
 import { ChatFileContext } from "./chat-file-context";
 import { SkillComposer, type SkillComposerControl } from "./skill-composer";
+import { TemplatePickerDialog } from "@/features/templates/components/template-picker-dialog";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 
@@ -137,6 +139,7 @@ export const ChatInput = (props: ChatInputProps) =>
 const ChatInputCore = ({
   ref,
   skillComposer,
+  skillOwner,
   modelSelector,
   status,
   onSubmit,
@@ -158,6 +161,7 @@ const ChatInputCore = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [localPrompt, setPrompt] = useState("");
   const prompt = skillComposer?.prompt ?? localPrompt;
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -590,6 +594,21 @@ const ChatInputCore = ({
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-1 px-2 pb-2">
           <AttachMenu disabled={controlsDisabled} onAction={handleAttach} />
+          {skillOwner && (
+            <Hint hint="Prompt templates">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="rounded-control"
+                aria-label="Prompt templates"
+                disabled={controlsDisabled}
+                onClick={() => setTemplatesOpen(true)}
+              >
+                <LayoutTemplateIcon />
+              </Button>
+            </Hint>
+          )}
           {modelSelector}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {status}
@@ -644,6 +663,19 @@ const ChatInputCore = ({
         ]}
         onPick={pickFiles}
       />
+      {skillOwner && (
+        <TemplatePickerDialog
+          owner={skillOwner}
+          open={templatesOpen}
+          onOpenChange={setTemplatesOpen}
+          onUse={insertText}
+          onCloseAutoFocus={(event) => {
+            // The composer, not the toolbar button, owns focus after insertion.
+            event.preventDefault();
+            textareaRef.current?.focus();
+          }}
+        />
+      )}
       <ChatFileContext
         open={contextOpen}
         onOpenChange={setContextOpen}
