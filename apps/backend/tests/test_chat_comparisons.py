@@ -427,3 +427,38 @@ async def test_regenerating_inside_a_running_job_keeps_the_columns_target(projec
             select(MessageModel).where(MessageModel.parent_message_id == uuid.UUID(first["request"]["id"]))
         )
         assert len(list(siblings)) == 2
+
+
+@pytest.mark.asyncio
+async def test_an_injected_start_carries_the_comparison_tag(monkeypatch):
+    """Providers that emit no start event get one from the controller; it must name the column."""
+    from types import SimpleNamespace
+
+    from asterism.domains.chat.controller import ChatController
+    from asterism.domains.chat.message_queue import get_message_queue
+
+    sent: list[dict] = []
+
+    class Connection:
+        async def send_json(self, packet):
+            sent.append(packet)
+
+    chat_id = uuid.uuid4()
+    job = SimpleNamespace(manager=None, orchestrator=None)
+    controller = ChatController(chat_id, Connection(), job, None)  # type: ignore[arg-type]
+    controller._is_running = True
+    queue = get_message_queue(chat_id)
+    tag = {"id": "cmp", "column_id": "column"}
+    await queue.put({"type": "delta", "content": "Hi", "thinking": "", "comparison": tag})
+    await queue.put({"type": "complete", "last_messages": [], "comparison": tag})
+    await queue.put({"type": "delta", "content": "Plain", "thinking": ""})
+
+    loop = asyncio.create_task(controller._message_queue_processing_loop())
+    while len(sent) < 5:
+        await asyncio.sleep(0)
+    loop.cancel()
+
+    assert [packet["type"] for packet in sent] == ["start", "delta", "complete", "start", "delta"]
+    assert sent[0]["comparison"] == tag
+    # An ordinary turn's injected start stays untagged.
+    assert "comparison" not in sent[3]

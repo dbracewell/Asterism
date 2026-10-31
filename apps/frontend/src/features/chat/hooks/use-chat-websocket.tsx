@@ -197,6 +197,16 @@ export const useChatWebSocket = ({
       const msgContent = result.data;
       // Comparison runs tag every packet with their column.
       const comparison = parseComparisonTag(raw_object["comparison"]);
+      // A run may begin with an untagged start; its tagged packets claim it.
+      if (
+        comparison &&
+        streamingMessageRef.current &&
+        !streamingMessageRef.current.comparison
+      )
+        streamingMessageRef.current = {
+          ...streamingMessageRef.current,
+          comparison,
+        };
 
       if (msgContent.type === "sub_agent") {
         onSubAgentEventRef.current?.(msgContent);

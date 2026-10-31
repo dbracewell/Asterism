@@ -196,13 +196,9 @@ async function mockChat(page: Page) {
         return;
       const tag = { comparison: { id: CMP, column_id: U2 } };
       socket.send(JSON.stringify({ type: "status", is_processing: true }));
-      socket.send(
-        JSON.stringify({
-          type: "start",
-          execution: execution(models[1]),
-          ...tag,
-        }),
-      );
+      // Like a provider without its own start event: an untagged start
+      // followed by tagged packets must still stream into the column only.
+      socket.send(JSON.stringify({ type: "start" }));
       socket.send(
         JSON.stringify({
           type: "delta",
@@ -271,8 +267,14 @@ for (const [width, height] of [
     await expect(beta.getByText("Answering…")).toBeVisible();
     await expect(alpha).not.toContainText("Beta adds");
 
+    const outsideBlock = page.locator(
+      '[aria-label="Conversation history"] article[data-role="assistant"]:not([data-slot="comparison"] *)',
+    );
+    await expect(outsideBlock).toHaveCount(0);
+
     mock.finish();
     await expect(beta).toContainText("Beta adds the sun's smaller pull.");
+    await expect(outsideBlock).toHaveCount(0);
     await expect(beta).toContainText("41 in · 15 out");
 
     // Side by side when there is room; stacked on narrow screens.

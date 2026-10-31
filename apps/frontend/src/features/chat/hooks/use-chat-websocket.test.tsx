@@ -344,3 +344,38 @@ it("tags a comparison column's run from start to completion", () => {
     vi.useRealTimers();
   }
 });
+
+it("lets tagged packets claim a run that began with an untagged start", () => {
+  vi.useFakeTimers();
+  try {
+    const onStreamUpdate = vi.fn();
+    const onStreamComplete = vi.fn();
+    renderHook(() =>
+      useChatWebSocket({
+        chatId: "chat",
+        jwtToken: "token",
+        onStreamUpdate,
+        onStreamComplete,
+      }),
+    );
+    const options = socket.mock.calls.at(-1)?.[1] as {
+      onMessage: (event: { data: string }) => void;
+    };
+    const comparison = { id: "cmp", column_id: "column-2" };
+    options.onMessage({ data: JSON.stringify({ type: "start" }) });
+    options.onMessage({
+      data: JSON.stringify({
+        type: "delta",
+        content: "Beta",
+        thinking: "",
+        comparison,
+      }),
+    });
+    act(() => vi.advanceTimersByTime(60));
+    expect(onStreamUpdate.mock.calls.at(-1)?.[0].comparison).toEqual(
+      comparison,
+    );
+  } finally {
+    vi.useRealTimers();
+  }
+});

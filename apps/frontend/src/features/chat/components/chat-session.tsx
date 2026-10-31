@@ -178,6 +178,7 @@ export const ChatSession = ({
     onStreamStart: (pendingMessage) => {
       preventAutoScrollRef.current = false;
       if (pendingMessage.comparison) {
+        setIncomingMessage(null);
         setComparisonStream(pendingMessage);
         return;
       }
@@ -207,6 +208,8 @@ export const ChatSession = ({
     },
     onStreamUpdate: (nextIncomingMessage) => {
       if (nextIncomingMessage.comparison) {
+        // Never also render a column's run at the end of the transcript.
+        setIncomingMessage(null);
         setComparisonStream(nextIncomingMessage);
         return;
       }
@@ -221,6 +224,7 @@ export const ChatSession = ({
       if (comparison) {
         // Columns run one after another; the next column's start follows.
         setComparisonStream(null);
+        setIncomingMessage(null);
         setSubAgentActivities([]);
         void invalidateComparisons(queryClient);
         queryClient.invalidateQueries({ queryKey });

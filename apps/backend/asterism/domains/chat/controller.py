@@ -155,7 +155,12 @@ class ChatController:
             # Auto-inject START if needed
             if AgentEventType.START not in event_sequence:
                 event_sequence.add(AgentEventType.START)
-                await self.connection.send_json({"type": AgentEventType.START.value})
+                # Comparison runs tag every packet; the injected start must
+                # carry the same tag or the client treats it as a normal turn.
+                start = {"type": AgentEventType.START.value}
+                if "comparison" in msg:
+                    start["comparison"] = msg["comparison"]
+                await self.connection.send_json(start)
 
             if msg_type in (AgentEventType.COMPLETE, AgentEventType.ERROR):
                 event_sequence.clear()
