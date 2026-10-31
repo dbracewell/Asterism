@@ -1,4 +1,5 @@
 import { defaultPersonaProvenance } from "../src/test/personas";
+import { standardLearningMode } from "../src/test/learning-modes";
 import { mockDefaultPersonas } from "./support/personas";
 import { expect, test, type Page } from "./support/test";
 import type {
@@ -46,6 +47,7 @@ const models: ChatModelChoice[] = [
 ];
 const execution = (model: ChatModelChoice): MessageExecution => ({
   persona: defaultPersonaProvenance,
+  learning_mode: standardLearningMode,
   id: "44444444-4444-4444-8444-444444444444",
   request_message_id: U,
   model_revision: model.id === A ? 1 : 2,

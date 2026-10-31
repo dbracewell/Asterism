@@ -23,6 +23,7 @@ from .comparisons import assert_no_pending_columns, column_models, make_active, 
 from .draft_models import ChatSendReceiptModel
 from .drafts import consume_draft, read_draft_file_ids
 from .jobs import chat_jobs
+from .learning_modes import current_mode_snapshot
 from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
 from .personas import resolve_persona_snapshot
@@ -105,6 +106,7 @@ async def persist_user_send(
         "chat_id": chat.id,
         "accepted_skills": skills,
         "accepted_template": template,
+        "accepted_learning_mode": current_mode_snapshot(chat),
         "accepted_persona": await resolve_persona_snapshot(
             user_id=user_id,
             persona_id=chat.persona_id,
@@ -205,6 +207,7 @@ async def create_chat(user_id: str, payload: NewChatRequest, session: AsyncSessi
                 agent_id=agent_id,
                 project_id=payload.project_id,
                 persona_id=payload.persona_id,
+                learning_mode=payload.learning_mode,
                 selected_model_id=payload.model_id,
                 selected_model_snapshot=choice,
             )

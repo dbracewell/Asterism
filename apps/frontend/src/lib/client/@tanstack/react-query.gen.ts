@@ -135,6 +135,9 @@ import type {
   ChatgptPolicyUpdateData,
   ChatgptPolicyUpdateError,
   ChatgptPolicyUpdateResponse,
+  ChatLearningModeUpdateData,
+  ChatLearningModeUpdateError,
+  ChatLearningModeUpdateResponse,
   ChatMessageCompareData,
   ChatMessageCompareError,
   ChatMessageCompareResponse,
@@ -207,6 +210,9 @@ import type {
   FileUploadData,
   FileUploadError,
   FileUploadResponse,
+  LearningModeGetManyData,
+  LearningModeGetManyError,
+  LearningModeGetManyResponse,
   MainAgentGetData,
   MainAgentGetError,
   MainAgentGetResponse,
@@ -978,6 +984,33 @@ export const chatPersonaUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().chatPersonaUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Select Chat Learning Mode
+ */
+export const chatLearningModeUpdateMutation = (
+  options?: Partial<Options<ChatLearningModeUpdateData>>,
+): UseMutationOptions<
+  ChatLearningModeUpdateResponse,
+  ChatLearningModeUpdateError,
+  Options<ChatLearningModeUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatLearningModeUpdateResponse,
+    ChatLearningModeUpdateError,
+    Options<ChatLearningModeUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatLearningModeUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2857,6 +2890,34 @@ export const skillUpdateMutation = (
   };
   return mutationOptions;
 };
+
+export const learningModeGetManyQueryKey = (
+  options?: Options<LearningModeGetManyData>,
+) => createQueryKey("learningModeGetMany", options);
+
+/**
+ * List Learning Modes
+ */
+export const learningModeGetManyOptions = (
+  options?: Options<LearningModeGetManyData>,
+) =>
+  queryOptions<
+    LearningModeGetManyResponse,
+    LearningModeGetManyError,
+    LearningModeGetManyResponse,
+    ReturnType<typeof learningModeGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().learningModeGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: learningModeGetManyQueryKey(options),
+  });
 
 export const promptFrameworkGetManyQueryKey = (
   options?: Options<PromptFrameworkGetManyData>,

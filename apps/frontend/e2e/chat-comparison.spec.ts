@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { defaultPersonaProvenance } from "../src/test/personas";
+import { standardLearningMode } from "../src/test/learning-modes";
 import type {
   Chat,
   ChatComparison,
@@ -33,6 +34,7 @@ const model = (id: string, name: string): ChatModelChoice => ({
 const models = [model(A, "Alpha"), model(B, "Beta")];
 const execution = (target: ChatModelChoice): MessageExecution => ({
   persona: defaultPersonaProvenance,
+  learning_mode: standardLearningMode,
   id: "44444444-4444-4444-8444-444444444444",
   request_message_id: U,
   model_revision: 1,

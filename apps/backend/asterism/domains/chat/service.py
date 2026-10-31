@@ -76,6 +76,9 @@ async def add_message(
                 persona_id=chat.persona_id,
                 session=session,
             )
+            from .learning_modes import current_mode_snapshot
+
+            new_message.accepted_learning_mode = current_mode_snapshot(chat)
         if message.execution is not None:
             from .execution_models import ChatExecutionModel
             from .queries import select_owned_executions
@@ -334,6 +337,9 @@ async def get_one(
             from .personas import describe_pending_persona
 
             await describe_pending_persona(user_id=user_id, pending=pending, info=chat_info, session=session)
+            from .learning_modes import describe_pending_learning_mode
+
+            describe_pending_learning_mode(pending=pending, info=chat_info)
             if pending.role == "user" and pending.pending_execution is None:
                 from asterism.core.exceptions import CodedException
                 from asterism.domains.skills.activation import validate_snapshots

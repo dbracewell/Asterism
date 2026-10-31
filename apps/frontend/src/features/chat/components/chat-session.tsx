@@ -47,6 +47,7 @@ import {
   comparePayload,
 } from "./compare-targets";
 import { groupTranscript } from "../lib/comparison";
+import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
@@ -94,6 +95,7 @@ export const ChatSession = ({
   });
   const [isChangingModel, setIsChangingModel] = React.useState(false);
   const [isChangingPersona, setIsChangingPersona] = React.useState(false);
+  const [isChangingMode, setIsChangingMode] = React.useState(false);
   const personas = useQuery({
     ...personaQueryOptions(user.id),
     enabled: !!session,
@@ -341,7 +343,8 @@ export const ChatSession = ({
     isProcessing ||
     sendMessage.isPending ||
     isChangingModel ||
-    isChangingPersona;
+    isChangingPersona ||
+    isChangingMode;
   const promptPersona =
     session.info.pending_persona ??
     personas.data?.profiles.find(
@@ -631,8 +634,8 @@ export const ChatSession = ({
             }
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
-            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${compareModels.join(",")}`}
-            scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
+            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}`}
+            scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${session.info.learning_mode_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
             scopeLocked={isProcessing || sendMessage.isPending}
             onSubmit={addUserMessage}
             promptCoach={
@@ -663,6 +666,18 @@ export const ChatSession = ({
                   info={session.info}
                   disabled={interactionBusy}
                   onPendingChange={setIsChangingPersona}
+                  onSelected={(info) =>
+                    queryClient.setQueryData(queryKey, (previous?: Chat) =>
+                      previous
+                        ? { ...previous, info: { ...previous.info, ...info } }
+                        : previous,
+                    )
+                  }
+                />
+                <ExistingChatLearningModePicker
+                  info={session.info}
+                  disabled={interactionBusy}
+                  onPendingChange={setIsChangingMode}
                   onSelected={(info) =>
                     queryClient.setQueryData(queryKey, (previous?: Chat) =>
                       previous

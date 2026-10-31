@@ -1,9 +1,12 @@
 import MarkdownViewer from "@/components/markdown-viewer";
 import { Badge } from "@/components/ui/badge";
 import { StreamingMessage } from "@/features/chat/types";
-import type { TemplateLabel as TemplateLabelData } from "@/lib/client";
+import type {
+  LearningModeProvenance,
+  TemplateLabel as TemplateLabelData,
+} from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { LayoutTemplateIcon } from "lucide-react";
+import { GraduationCapIcon, LayoutTemplateIcon } from "lucide-react";
 import { levelLabel } from "@/features/templates/lib/levels";
 
 export const MessageBody = ({ message }: { message: StreamingMessage }) => {
@@ -32,6 +35,11 @@ export const MessageBody = ({ message }: { message: StreamingMessage }) => {
           ))}
         </div>
       )}
+      {fromUser &&
+        message.learning_mode &&
+        message.learning_mode.id !== "standard" && (
+          <LearningModeChip mode={message.learning_mode} />
+        )}
       {fromUser && message.template && (
         <TemplateLabel label={message.template} />
       )}
@@ -66,4 +74,20 @@ const TemplateLabel = ({ label }: { label: TemplateLabelData }) => (
     </span>
     {!label.available && <span className="shrink-0">· unavailable</span>}
   </p>
+);
+
+/** The mode pinned when this turn was accepted; Standard is not labelled. */
+const LearningModeChip = ({ mode }: { mode: LearningModeProvenance }) => (
+  <Badge
+    variant="outline"
+    className="ml-auto max-w-full"
+    data-learning-mode={mode.id}
+    title={`Sent in ${mode.name} mode (version ${mode.version})`}
+  >
+    <GraduationCapIcon aria-hidden />
+    <span className="truncate">
+      <span className="sr-only">Learning mode: </span>
+      {mode.name}
+    </span>
+  </Badge>
 );

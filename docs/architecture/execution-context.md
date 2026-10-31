@@ -150,3 +150,15 @@ serialize USER.md. Deleting a recorded persona revokes pending/running access;
 historical messages retain provenance. Children inherit the root persona without
 expanding capabilities. No memory store is activated. See
 [ADR-0021](../adr/0021-personas-and-execution-binding.md).
+
+## Learning modes
+
+A chat stores its current learning-mode selection and revision. Each accepted user
+turn pins a snapshot of the selected server-owned mode: ID, name, version and
+instruction text. Composition order is
+`platform → agent → profile → mode → project → skills → runtime`. A first run uses
+the pinned snapshot; resume reuses the recorded prompt; regeneration captures the
+current selection. The mode ID must still be in the catalog when a run starts or
+resumes. Execution provenance records the mode's ID, name and version, never its
+text. Delegates do not inherit the mode, and mode text grants no capabilities. See
+[ADR-0028](../adr/0028-learning-mode-layer.md).

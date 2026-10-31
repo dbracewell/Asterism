@@ -1,6 +1,7 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { StreamingMessage } from "@/features/chat/types";
 import { defaultPersonaProvenance } from "@/test/personas";
+import { standardLearningMode } from "@/test/learning-modes";
 import { render } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { MessageMeta } from "./message-meta";
@@ -20,6 +21,7 @@ const message = (extra: Partial<StreamingMessage>): StreamingMessage => ({
 
 const execution = {
   persona: defaultPersonaProvenance,
+  learning_mode: standardLearningMode,
   id: "e",
   request_message_id: "r",
   model_revision: 1,

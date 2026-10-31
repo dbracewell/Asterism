@@ -540,6 +540,11 @@ export type ChatInfo = {
    * Persona Revision
    */
   persona_revision?: number;
+  learning_mode?: LearningModeId;
+  /**
+   * Learning Mode Revision
+   */
+  learning_mode_revision?: number;
   /**
    * Selected Model Id
    */
@@ -551,6 +556,7 @@ export type ChatInfo = {
   selected_model?: ChatModelChoice | null;
   pending_execution?: MessageExecution | null;
   pending_persona?: PersonaProvenance | null;
+  pending_learning_mode?: LearningModeProvenance | null;
   /**
    * Resume Error
    */
@@ -577,6 +583,17 @@ export type ChatInfoList = {
    * Page Size
    */
   page_size: number;
+};
+
+/**
+ * ChatLearningModeUpdate
+ */
+export type ChatLearningModeUpdate = {
+  learning_mode: LearningModeId;
+  /**
+   * Expected Learning Mode Revision
+   */
+  expected_learning_mode_revision: number;
 };
 
 /**
@@ -1533,6 +1550,57 @@ export type KnowledgeReprocessSummary = {
 };
 
 /**
+ * LearningMode
+ */
+export type LearningMode = {
+  id: LearningModeId;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Version
+   */
+  version: number;
+};
+
+/**
+ * LearningModeCatalog
+ */
+export type LearningModeCatalog = {
+  /**
+   * Modes
+   */
+  modes: Array<LearningMode>;
+};
+
+/**
+ * LearningModeId
+ */
+export type LearningModeId = "standard" | "tutor" | "explain_back" | "review";
+
+/**
+ * LearningModeProvenance
+ *
+ * Public identity of the mode a turn ran under; never carries instruction text.
+ */
+export type LearningModeProvenance = {
+  id: LearningModeId;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Version
+   */
+  version: number;
+};
+
+/**
  * Llm
  *
  * A provider model with capability flags and their provenance.
@@ -1727,6 +1795,7 @@ export type Message = {
    * Skills
    */
   skills?: Array<SkillIdentity>;
+  learning_mode?: LearningModeProvenance | null;
   template?: TemplateLabel | null;
   execution?: MessageExecution | null;
   /**
@@ -1822,7 +1891,8 @@ export type Message = {
  * Compare an answered turn with one or two more targets (US-54.4).
  *
  * The existing turn becomes column 0; each target adds a column that reruns
- * the same accepted inputs (prompt, files, skills, persona, template).
+ * the same accepted inputs (prompt, files, skills, persona, learning mode,
+ * template).
  */
 export type MessageCompareRequest = {
   /**
@@ -1844,6 +1914,7 @@ export type MessageExecution = {
    */
   skills?: Array<SkillIdentity>;
   persona: PersonaProvenance;
+  learning_mode: LearningModeProvenance;
   context?: ContextProvenance | null;
   prompt?: PromptProvenance;
   /**
@@ -1942,6 +2013,7 @@ export type NewChatRequest = {
    * Persona Id
    */
   persona_id?: string | null;
+  learning_mode?: LearningModeId;
   /**
    * Model Id
    */
@@ -2438,7 +2510,14 @@ export type PromptSource = {
   /**
    * Kind
    */
-  kind: "platform" | "agent" | "profile" | "project" | "skills" | "runtime";
+  kind:
+    | "platform"
+    | "agent"
+    | "profile"
+    | "mode"
+    | "project"
+    | "skills"
+    | "runtime";
   /**
    * Source Id
    */
@@ -4520,6 +4599,46 @@ export type ChatPersonaUpdateResponses = {
 
 export type ChatPersonaUpdateResponse =
   ChatPersonaUpdateResponses[keyof ChatPersonaUpdateResponses];
+
+export type ChatLearningModeUpdateData = {
+  body: ChatLearningModeUpdate;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/learning-mode";
+};
+
+export type ChatLearningModeUpdateErrors = {
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatLearningModeUpdateError =
+  ChatLearningModeUpdateErrors[keyof ChatLearningModeUpdateErrors];
+
+export type ChatLearningModeUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ChatInfo;
+};
+
+export type ChatLearningModeUpdateResponse =
+  ChatLearningModeUpdateResponses[keyof ChatLearningModeUpdateResponses];
 
 export type ChatSessionGetManyData = {
   body?: never;
@@ -6633,6 +6752,33 @@ export type SkillUpdateResponses = {
 
 export type SkillUpdateResponse =
   SkillUpdateResponses[keyof SkillUpdateResponses];
+
+export type LearningModeGetManyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/learning-modes";
+};
+
+export type LearningModeGetManyErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+};
+
+export type LearningModeGetManyError =
+  LearningModeGetManyErrors[keyof LearningModeGetManyErrors];
+
+export type LearningModeGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: LearningModeCatalog;
+};
+
+export type LearningModeGetManyResponse =
+  LearningModeGetManyResponses[keyof LearningModeGetManyResponses];
 
 export type PromptFrameworkGetManyData = {
   body?: never;

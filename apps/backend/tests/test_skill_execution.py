@@ -78,7 +78,7 @@ async def test_pinning_refresh_removal_replay_and_private_provenance(skills_api)
         prompt = (await db.get(MessageModel, uuid.UUID(first))).pending_prompt
         assert [s.id for s in run.skills] == [uuid.UUID(b["id"]), uuid.UUID(a["id"])]
         assert "Private instructions 0" in prompt.text and "NEW instructions" not in prompt.text
-        assert [layer.kind for layer in prompt.layers] == ["platform", "agent", "profile", "skills", "runtime"]
+        assert [layer.kind for layer in prompt.layers] == ["platform", "agent", "profile", "mode", "skills", "runtime"]
         assert await prepare_execution(**args) == run
         regenerated = await prepare_execution(**args, restart=True)
         assert regenerated.skills == run.skills and regenerated.id != run.id

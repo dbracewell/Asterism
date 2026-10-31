@@ -22,6 +22,7 @@ from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.files.schemas import UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
 
+from .learning_modes import change_chat_learning_mode
 from .model_selection import change_chat_model, list_chat_models
 from .personas import change_chat_persona
 from .schemas import (
@@ -36,6 +37,7 @@ from .schemas import (
     ChatFileScope,
     ChatInfo,
     ChatInfoList,
+    ChatLearningModeUpdate,
     ChatModelChoice,
     ChatModelUpdate,
     ChatMoveRequest,
@@ -102,6 +104,21 @@ async def select_chat_persona(
     db: DBSessionDep,
 ):
     return await change_chat_persona(user_id=user.id, chat_id=chat_id, payload=payload, session=db)
+
+
+@chat_router.put(
+    "/{chat_id}/learning-mode",
+    operation_id="chatLearningModeUpdate",
+    response_model=ChatInfo,
+    responses={404: {"model": ErrorDetail}, 409: {"model": ErrorDetail}},
+)
+async def select_chat_learning_mode(
+    chat_id: uuid.UUID,
+    payload: ChatLearningModeUpdate,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+):
+    return await change_chat_learning_mode(user_id=user.id, chat_id=chat_id, payload=payload, session=db)
 
 
 @chat_router.websocket("/stream/{chat_id}")

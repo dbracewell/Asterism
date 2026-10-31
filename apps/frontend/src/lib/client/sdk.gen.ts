@@ -135,6 +135,9 @@ import type {
   ChatgptPolicyUpdateData,
   ChatgptPolicyUpdateErrors,
   ChatgptPolicyUpdateResponses,
+  ChatLearningModeUpdateData,
+  ChatLearningModeUpdateErrors,
+  ChatLearningModeUpdateResponses,
   ChatMessageCompareData,
   ChatMessageCompareErrors,
   ChatMessageCompareResponses,
@@ -207,6 +210,9 @@ import type {
   FileUploadData,
   FileUploadErrors,
   FileUploadResponses,
+  LearningModeGetManyData,
+  LearningModeGetManyErrors,
+  LearningModeGetManyResponses,
   MainAgentGetData,
   MainAgentGetErrors,
   MainAgentGetResponses,
@@ -823,6 +829,31 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/persona",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Select Chat Learning Mode
+   */
+  public chatLearningModeUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ChatLearningModeUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ChatLearningModeUpdateResponses,
+    ChatLearningModeUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ChatLearningModeUpdateResponses,
+      ChatLearningModeUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/learning-mode",
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -2017,6 +2048,27 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * List Learning Modes
+   */
+  public learningModeGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<LearningModeGetManyData, ThrowOnError>,
+  ): RequestResult<
+    LearningModeGetManyResponses,
+    LearningModeGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      LearningModeGetManyResponses,
+      LearningModeGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/learning-modes",
+      ...options,
     });
   }
 

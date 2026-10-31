@@ -20,6 +20,7 @@ from asterism.core.config import default_allowed_tools
 from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
+from asterism.domains.agent.learning_inputs import LearningModeId, LearningModeProvenance, LearningModeSnapshot
 from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
@@ -40,6 +41,13 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     persona_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
     skill_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     persona_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    # Current learning-mode selection; accepted turns pin their own snapshot.
+    learning_mode: Mapped[LearningModeId] = mapped_column(
+        Enum(LearningModeId, values_callable=enum_values, native_enum=False, create_constraint=True),
+        nullable=False,
+        default=LearningModeId.STANDARD,
+    )
+    learning_mode_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("projects.id", ondelete="SET NULL"),
         index=True,
@@ -74,6 +82,7 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         CheckConstraint("skill_revision >= 0", name="chat_skill_revision_nonnegative"),
         CheckConstraint("model_revision >= 1", name="chat_model_revision_positive"),
         CheckConstraint("persona_revision >= 1", name="chat_persona_revision_positive"),
+        CheckConstraint("learning_mode_revision >= 1", name="chat_learning_mode_revision_positive"),
         ForeignKeyConstraint(
             ["persona_id", "user_id"],
             ["user_personas.id", "user_personas.user_id"],
@@ -134,6 +143,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
     accepted_persona: Mapped[PersonaSnapshot | None] = mapped_column(
         jsonb_type(TypeAdapter(PersonaSnapshot)),
+        nullable=True,
+    )
+    # Private pinned learning-mode instructions; set on user turns only.
+    accepted_learning_mode: Mapped[LearningModeSnapshot | None] = mapped_column(
+        jsonb_type(TypeAdapter(LearningModeSnapshot)),
         nullable=True,
     )
     # Label-only record of the template that built this prompt; never inherited.
@@ -280,6 +294,14 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     def skills(self) -> list[SkillIdentity]:
         execution = self.execution
         return execution.skills if execution is not None else [item.identity for item in self.accepted_skills.snapshots]
+
+    @property
+    def learning_mode(self) -> LearningModeProvenance | None:
+        execution = self.execution
+        if execution is not None:
+            return execution.learning_mode
+        accepted = self.accepted_learning_mode
+        return accepted.identity if accepted is not None else None
 
     @property
     def template(self) -> TemplateLabel | None:
