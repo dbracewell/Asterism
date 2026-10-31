@@ -49,6 +49,12 @@ import {
   type TemplateSelection,
 } from "@/features/templates/components/template-picker-dialog";
 import { levelLabel } from "@/features/templates/lib/levels";
+import {
+  PromptCoachButton,
+  PromptCoachPanel,
+  PromptCoachScope,
+  type PromptCoachControl,
+} from "@/features/templates/components/prompt-coach";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 
@@ -93,6 +99,13 @@ export type ChatInputProps = {
   onTemplateSelectionChange?: (
     selection: TemplateSelection | null | undefined,
   ) => void;
+  /**
+   * Shows "Review prompt" when the owner turned the coach on (US-51.6);
+   * `modelId` is the composer's selected chat model.
+   */
+  promptCoach?: { modelId?: string | null };
+  /** Supplied by the owned input when `promptCoach` is set. */
+  coach?: PromptCoachControl;
   /** Compact indicators shown in the toolbar beside the send button. */
   status?: React.ReactNode;
   onSubmit: (data: {
@@ -159,14 +172,27 @@ function OwnedChatInput(props: ChatInputProps & { skillOwner: string }) {
       disabled={props.disabled}
       onOpenTemplate={setTemplateSelection}
     >
-      {(control) => (
-        <ChatInputCore
-          {...props}
-          skillComposer={control}
-          templateSelection={templateSelection}
-          onTemplateSelectionChange={setTemplateSelection}
-        />
-      )}
+      {(control) => {
+        const input = (coach?: PromptCoachControl) => (
+          <ChatInputCore
+            {...props}
+            skillComposer={control}
+            coach={coach}
+            templateSelection={templateSelection}
+            onTemplateSelectionChange={setTemplateSelection}
+          />
+        );
+        return props.promptCoach ? (
+          <PromptCoachScope
+            owner={props.skillOwner}
+            modelId={props.promptCoach.modelId}
+          >
+            {input}
+          </PromptCoachScope>
+        ) : (
+          input()
+        );
+      }}
     </SkillComposer>
   );
 }
@@ -178,6 +204,7 @@ const ChatInputCore = ({
   templateSelection,
   onTemplateSelectionChange,
   modelSelector,
+  coach,
   status,
   onSubmit,
   requestScope,
@@ -390,6 +417,7 @@ const ChatInputCore = ({
       });
       draft.consumed();
       clearAttachments();
+      coach?.dismiss();
       updatePrompt("");
       skillComposer?.accepted();
       requestRef.current = null;
@@ -620,6 +648,18 @@ const ChatInputCore = ({
               </Button>
             </div>
           )}
+          {coach && (
+            <PromptCoachPanel
+              coach={coach}
+              prompt={prompt}
+              disabled={controlsDisabled}
+              onApply={(text) => {
+                updatePrompt(text);
+                textareaRef.current?.focus();
+              }}
+              onRetry={() => coach.run(coach.original ?? prompt)}
+            />
+          )}
           <Textarea
             {...skillComposer?.inputProps}
             role={skillComposer ? "combobox" : undefined}
@@ -675,6 +715,13 @@ const ChatInputCore = ({
                 <LayoutTemplateIcon />
               </Button>
             </Hint>
+          )}
+          {coach && (
+            <PromptCoachButton
+              coach={coach}
+              prompt={prompt}
+              disabled={controlsDisabled}
+            />
           )}
           {modelSelector}
           <div className="ml-auto flex shrink-0 items-center gap-2">

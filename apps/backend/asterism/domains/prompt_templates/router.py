@@ -8,11 +8,14 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from . import service
+from . import coach, service
 from .schemas import (
     MAX_REVISION,
+    PromptCoachStatus,
     PromptFramework,
     PromptFrameworkCatalog,
+    PromptReview,
+    PromptReviewRequest,
     PromptTemplate,
     PromptTemplateCreate,
     PromptTemplatePage,
@@ -40,6 +43,23 @@ async def list_frameworks(user: AuthedUserDep) -> PromptFrameworkCatalog:
 @prompt_templates_router.get("/frameworks/{framework_id}", operation_id="promptFrameworkGetOne")
 async def get_framework(user: AuthedUserDep, framework_id: str = Path(max_length=64)) -> PromptFramework:
     return service.read_framework(framework_id)
+
+
+# The coach is ephemeral: neither the draft nor the review is stored or cached.
+@prompt_templates_router.get("/coach", operation_id="promptCoachStatusGet")
+async def coach_status(user: AuthedUserDep, response: Response) -> PromptCoachStatus:
+    response.headers["Cache-Control"] = "no-store"
+    return await coach.coach_status(user.id)
+
+
+@prompt_templates_router.post(
+    "/coach/review",
+    operation_id="promptCoachReview",
+    responses={403: {"model": ErrorDetail}, 502: {"model": ErrorDetail}, 503: {"model": ErrorDetail}},
+)
+async def coach_review(payload: PromptReviewRequest, user: AuthedUserDep, response: Response) -> PromptReview:
+    response.headers["Cache-Control"] = "no-store"
+    return await coach.review_prompt(user.id, payload)
 
 
 @prompt_templates_router.get("/", operation_id="promptTemplateGetMany")

@@ -1,11 +1,11 @@
-# Prompt templates — US-51.1 through US-51.5
+# Prompt templates — US-51.1 through US-51.6
 
 Private template CRUD and the bundled, read-only framework catalog are
 implemented in the `prompt_templates` backend domain. The composer's template
 builder (US-51.2), slash discovery and message provenance (US-51.3) and the
-settings library and editor (US-51.4) and scaffolding levels (US-51.5) are
-implemented. The prompt coach and before/after comparison are later
-[EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md) stories.
+settings library and editor (US-51.4), scaffolding levels (US-51.5) and the
+prompt coach (US-51.6) are implemented. The before/after comparison is a later
+[EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md) story.
 
 The document format, bounds, placeholder grammar, assembly semantics and catalog
 versioning are decided in
@@ -155,3 +155,48 @@ The document additions behind the levels are in ADR-0026's US-51.5 addendum:
 The bundled frameworks are at revision 2 (`CATALOG_VERSION` 2). Each has a
 checklist and field examples, and RTF, CO-STAR, CRAFT and step-by-step wrap their
 optional fields in sections.
+
+## Prompt coach (US-51.6)
+
+An optional **Review prompt** button in the composer toolbar critiques the
+current draft against a fixed rubric: goal, audience, context, constraints,
+output format and examples. It is off by default; each user turns it on with
+**User Settings → General → Prompt Coach** (user setting `prompt_coach_enabled`,
+boolean).
+
+| Route                                 | Contract                                                                                                        |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `GET /prompt-templates/coach`         | `{enabled, available}` for the caller                                                                           |
+| `POST /prompt-templates/coach/review` | `{prompt (1–16,000 chars), model_id?}` → `{suggestions}`; 403 when off, 503 with no model, 502 on model failure |
+
+**Model.** Reviews reuse chat-title model resolution
+(`chat/title_model.resolve_title_model`): the admin draft model when usable,
+otherwise the caller's own available ChatGPT plan model, preferring the
+composer's selected chat model (`model_id`) when it is one of them. Another
+user's plan is never used. With neither, `available` is false, the button is
+disabled with an explanation, and reviews return 503.
+
+**Review format.** `coach.py` sends a system rubric prompt and the draft inside
+`<draft>` tags, telling the model to ignore instructions in the draft. The reply
+is parsed leniently and bounded: the first JSON object is read; items with an
+unknown criterion, empty message or edit, an edit over 2,000 characters, or a
+`find` excerpt not present verbatim in the draft are dropped. At most one
+suggestion per criterion is kept, in rubric order (so at most six), messages are
+capped at 300 characters, and the suggestion `id` is its criterion. A reply
+that is not a JSON object with a `suggestions` list is a 502. An empty list
+means the draft already covers the rubric.
+
+**Applying.** Each suggestion is a checklist item with an **Apply** button that
+edits the composer text only: with `find`, the first exact occurrence is
+replaced by `text`; without it, `text` is appended as a new paragraph (never
+twice). A rewrite whose text has since been edited away cannot be applied.
+Nothing is sent to the chat; sending stays an explicit action.
+
+**Ephemeral.** Neither the draft nor the review is stored: no database writes,
+`Cache-Control: no-store`, the draft text is never logged, and the frontend
+keeps the review only in component state (not in the saved composer draft). It
+is cleared on dismiss and when the message is sent. The coach keeps the
+reviewed draft in memory as the "before" prompt for the US-51.7 comparison.
+
+**Trust.** The draft is untrusted text and the review only produces suggested
+composer text. Neither grants tools, files, MCP or delegation.

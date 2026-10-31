@@ -341,7 +341,13 @@ editable text. You can also
 type `/template`, a framework ID such as `/rtf`, or a template name at the start
 of a message. A removable **Built with …** chip, kept with the draft across
 reloads, records the template and level on the sent message, which then shows a small label (marked unavailable if the template is
-later deleted). See the
+later deleted).
+
+Turn on **Prompt Coach** under **User Settings → General** to add a **Review
+prompt** button to the composer. It checks the draft for a goal, audience,
+context, constraints, output format and examples, and lists suggestions you can
+apply to the message text one by one. Nothing is sent or saved; the button is
+disabled when no draft model or connected ChatGPT plan is available. See the
 [prompt templates contract](../../docs/architecture/prompt-templates.md).
 
 Administrators can enable or disable activation under **Admin Settings → Skills**

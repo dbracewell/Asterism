@@ -249,6 +249,12 @@ import type {
   ProjectUpdateData,
   ProjectUpdateErrors,
   ProjectUpdateResponses,
+  PromptCoachReviewData,
+  PromptCoachReviewErrors,
+  PromptCoachReviewResponses,
+  PromptCoachStatusGetData,
+  PromptCoachStatusGetErrors,
+  PromptCoachStatusGetResponses,
   PromptFrameworkGetManyData,
   PromptFrameworkGetManyErrors,
   PromptFrameworkGetManyResponses,
@@ -1969,6 +1975,52 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/prompt-templates/frameworks/{framework_id}",
       ...options,
+    });
+  }
+
+  /**
+   * Coach Status
+   */
+  public promptCoachStatusGet<ThrowOnError extends boolean = false>(
+    options?: Options<PromptCoachStatusGetData, ThrowOnError>,
+  ): RequestResult<
+    PromptCoachStatusGetResponses,
+    PromptCoachStatusGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      PromptCoachStatusGetResponses,
+      PromptCoachStatusGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/coach",
+      ...options,
+    });
+  }
+
+  /**
+   * Coach Review
+   */
+  public promptCoachReview<ThrowOnError extends boolean = false>(
+    options: Options<PromptCoachReviewData, ThrowOnError>,
+  ): RequestResult<
+    PromptCoachReviewResponses,
+    PromptCoachReviewErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      PromptCoachReviewResponses,
+      PromptCoachReviewErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/prompt-templates/coach/review",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

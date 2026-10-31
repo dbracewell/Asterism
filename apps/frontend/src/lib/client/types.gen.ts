@@ -694,6 +694,19 @@ export type ChatUpdateRequest = {
 };
 
 /**
+ * CoachCriterion
+ *
+ * The rubric a draft is reviewed against, in display order.
+ */
+export type CoachCriterion =
+  | "goal"
+  | "audience"
+  | "context"
+  | "constraints"
+  | "output_format"
+  | "examples";
+
+/**
  * ComponentListResponse
  */
 export type ComponentListResponse = {
@@ -2185,6 +2198,25 @@ export type ProjectUpdate = {
 };
 
 /**
+ * PromptCoachStatus
+ *
+ * Whether the caller can use the coach right now.
+ *
+ * ``enabled`` is the caller's own opt-in setting; ``available`` is whether a
+ * model can run reviews (the draft model, else the caller's own plan).
+ */
+export type PromptCoachStatus = {
+  /**
+   * Enabled
+   */
+  enabled: boolean;
+  /**
+   * Available
+   */
+  available: boolean;
+};
+
+/**
  * PromptFramework
  */
 export type PromptFramework = {
@@ -2236,6 +2268,30 @@ export type PromptProvenance = {
 };
 
 /**
+ * PromptReview
+ */
+export type PromptReview = {
+  /**
+   * Suggestions
+   */
+  suggestions: Array<PromptSuggestion>;
+};
+
+/**
+ * PromptReviewRequest
+ */
+export type PromptReviewRequest = {
+  /**
+   * Prompt
+   */
+  prompt: string;
+  /**
+   * Model Id
+   */
+  model_id?: string | null;
+};
+
+/**
  * PromptSource
  */
 export type PromptSource = {
@@ -2255,6 +2311,34 @@ export type PromptSource = {
    * Digest
    */
   digest: string;
+};
+
+/**
+ * PromptSuggestion
+ *
+ * One checklist item and the edit that applies it.
+ *
+ * With ``find`` set, applying replaces that exact text of the reviewed draft
+ * with ``text``; otherwise ``text`` is appended as a new paragraph.
+ */
+export type PromptSuggestion = {
+  /**
+   * Id
+   */
+  id: string;
+  criterion: CoachCriterion;
+  /**
+   * Message
+   */
+  message: string;
+  /**
+   * Find
+   */
+  find?: string | null;
+  /**
+   * Text
+   */
+  text: string;
 };
 
 /**
@@ -3519,6 +3603,10 @@ export type UserSettings = {
    * Show Thinking
    */
   show_thinking?: boolean;
+  /**
+   * Prompt Coach Enabled
+   */
+  prompt_coach_enabled?: boolean;
 };
 
 /**
@@ -6360,6 +6448,100 @@ export type PromptFrameworkGetOneResponses = {
 
 export type PromptFrameworkGetOneResponse =
   PromptFrameworkGetOneResponses[keyof PromptFrameworkGetOneResponses];
+
+export type PromptCoachStatusGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/prompt-templates/coach";
+};
+
+export type PromptCoachStatusGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type PromptCoachStatusGetError =
+  PromptCoachStatusGetErrors[keyof PromptCoachStatusGetErrors];
+
+export type PromptCoachStatusGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PromptCoachStatus;
+};
+
+export type PromptCoachStatusGetResponse =
+  PromptCoachStatusGetResponses[keyof PromptCoachStatusGetResponses];
+
+export type PromptCoachReviewData = {
+  body: PromptReviewRequest;
+  path?: never;
+  query?: never;
+  url: "/prompt-templates/coach/review";
+};
+
+export type PromptCoachReviewErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+  /**
+   * Bad Gateway
+   */
+  502: ErrorDetail;
+  /**
+   * Service Unavailable
+   */
+  503: ErrorDetail;
+};
+
+export type PromptCoachReviewError =
+  PromptCoachReviewErrors[keyof PromptCoachReviewErrors];
+
+export type PromptCoachReviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: PromptReview;
+};
+
+export type PromptCoachReviewResponse =
+  PromptCoachReviewResponses[keyof PromptCoachReviewResponses];
 
 export type PromptTemplateGetManyData = {
   body?: never;

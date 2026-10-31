@@ -142,6 +142,18 @@ async def get_user_settings(
     return user_settings
 
 
+async def get_user_setting(
+    user_id: str,
+    key: str,
+    session: AsyncSession | None = None,
+) -> JsonValue | None:
+    """One stored user setting value, or ``None`` when the key is unset."""
+    async with get_async_db_session(session) as session:
+        return await session.scalar(
+            select(UserSettingModel.value).where(UserSettingModel.user_id == user_id, UserSettingModel.key == key),
+        )
+
+
 async def bulk_upsert_user_settings(
     user_id: str,
     updates: dict[str, Any],
@@ -247,7 +259,7 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
     ``default_model_id`` must reference an existing, active model; ``None``
     values (deletes) skip shape checks.
     """
-    if key not in {"theme", "font_size", "default_model_id", "show_thinking"}:
+    if key not in {"theme", "font_size", "default_model_id", "show_thinking", "prompt_coach_enabled"}:
         raise BadDataException("Unsupported user setting")
     if value is not None and key == "default_model_id":
         try:
@@ -258,8 +270,8 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
 
         if await available_user_model(user_id, model_id, session) is None:
             raise BadDataException("Default model must be available and active")
-    if value is not None and key == "show_thinking" and not isinstance(value, bool):
-        raise BadDataException("show_thinking must be boolean")
+    if value is not None and key in {"show_thinking", "prompt_coach_enabled"} and not isinstance(value, bool):
+        raise BadDataException(f"{key} must be boolean")
     if value is not None and key in {"theme", "font_size"} and not isinstance(value, str):
         raise BadDataException(f"{key} must be text")
 

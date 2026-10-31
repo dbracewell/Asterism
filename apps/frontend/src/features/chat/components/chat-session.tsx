@@ -553,6 +553,11 @@ export const ChatSession = ({
             scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
             scopeLocked={isProcessing || sendMessage.isPending}
             onSubmit={addUserMessage}
+            promptCoach={
+              user.settings.prompt_coach_enabled
+                ? { modelId: session.info.selected_model_id }
+                : undefined
+            }
             modelSelector={
               <>
                 <ExistingChatModelPicker
