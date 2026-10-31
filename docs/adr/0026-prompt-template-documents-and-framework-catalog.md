@@ -100,8 +100,10 @@ bundled framework fails startup and tests, not a request.
 - The catalog has read routes only. Customizing means duplicating a framework's
   document into a new owned template, which is fully independent afterwards.
 - Provenance (US-51.3) records either `(template UUID, revision)` or
-  `(framework ID, revision)`. Old framework revisions are not retained; a recorded
-  revision that no longer matches is shown as a historical label only.
+  `(framework ID, revision)` with the scaffolding level and a server-resolved
+  name snapshot. Old framework revisions are not retained; a recorded revision
+  that no longer matches is shown as a historical label only. Revisions newer
+  than the current one are rejected.
 
 ### Ownership and trust
 

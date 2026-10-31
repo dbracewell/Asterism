@@ -122,7 +122,6 @@ Accessible names now identify agent actions and model fields. The shared picker 
 
 See [EPIC-30](../epics/EPIC-30-PROVIDER-SETTINGS-EDITING.md) for verification details. This follow-up resolves the nine failures recorded during US-30.1. No backend/API changes, working-database reset, push, or remote CI result is claimed. No active EPIC-30 work remains.
 
-
 ## US-31.1 — Confine and authorize theme operations
 
 The user confirmed completion on 2026-10-17, authorizing commit and local merge

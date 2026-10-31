@@ -1,7 +1,9 @@
 import MarkdownViewer from "@/components/markdown-viewer";
 import { Badge } from "@/components/ui/badge";
 import { StreamingMessage } from "@/features/chat/types";
+import type { TemplateLabel as TemplateLabelData } from "@/lib/client";
 import { cn } from "@/lib/utils";
+import { LayoutTemplateIcon } from "lucide-react";
 
 export const MessageBody = ({ message }: { message: StreamingMessage }) => {
   const fromUser = message.role === "user";
@@ -29,6 +31,9 @@ export const MessageBody = ({ message }: { message: StreamingMessage }) => {
           ))}
         </div>
       )}
+      {fromUser && message.template && (
+        <TemplateLabel label={message.template} />
+      )}
       <MarkdownViewer
         content={message.content}
         className={cn(
@@ -40,3 +45,21 @@ export const MessageBody = ({ message }: { message: StreamingMessage }) => {
     </>
   );
 };
+
+const TemplateLabel = ({ label }: { label: TemplateLabelData }) => (
+  <p
+    className="text-muted-foreground ml-auto flex max-w-full min-w-0 items-center gap-1 text-xs"
+    data-template-label={label.available ? "available" : "unavailable"}
+    title={
+      label.available
+        ? `Built with ${label.name} (revision ${label.revision})`
+        : `${label.name} is no longer available`
+    }
+  >
+    <LayoutTemplateIcon className="size-3.5 shrink-0" aria-hidden />
+    <span className={cn("truncate", !label.available && "line-through")}>
+      Built with {label.name}
+    </span>
+    {!label.available && <span className="shrink-0">· unavailable</span>}
+  </p>
+);

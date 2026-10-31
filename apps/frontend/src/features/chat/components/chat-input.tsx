@@ -1,10 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import { LibraryFilePickerDialog } from "@/components/file-manager/library-file-picker";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FieldSet } from "@/components/ui/field";
 import { Hint } from "@/components/ui/hint";
 import { Textarea } from "@/components/ui/textarea";
-import type { ActiveSkillState, SkillSelection, UserFile } from "@/lib/client";
+import type {
+  ActiveSkillState,
+  SkillSelection,
+  TemplateUse,
+  UserFile,
+} from "@/lib/client";
 import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
@@ -37,7 +43,11 @@ import {
 import { AttachMenu, type AttachAction } from "./attach-menu";
 import { ChatFileContext } from "./chat-file-context";
 import { SkillComposer, type SkillComposerControl } from "./skill-composer";
-import { TemplatePickerDialog } from "@/features/templates/components/template-picker-dialog";
+import {
+  TemplatePickerDialog,
+  type AppliedTemplate,
+  type TemplateSelection,
+} from "@/features/templates/components/template-picker-dialog";
 
 type UploadState = "queued" | "uploading" | "ready" | "failed";
 
@@ -77,6 +87,11 @@ export type ChatInputProps = {
   skillScope?: string;
   activeSkills?: ActiveSkillState;
   skillComposer?: SkillComposerControl;
+  /** Template dialog state; `undefined` is closed, `null` shows the list. */
+  templateSelection?: TemplateSelection | null;
+  onTemplateSelectionChange?: (
+    selection: TemplateSelection | null | undefined,
+  ) => void;
   /** Compact indicators shown in the toolbar beside the send button. */
   status?: React.ReactNode;
   onSubmit: (data: {
@@ -85,6 +100,7 @@ export type ChatInputProps = {
     requestId: string;
     draftId?: string;
     skills?: SkillSelection;
+    template?: TemplateUse;
   }) => void | Promise<unknown>;
   requestScope?: string;
   /** Changes when the saved file scope may have changed (branch, model). */
@@ -123,23 +139,43 @@ export const ChatInputContainer = ({
 
 export const ChatInput = (props: ChatInputProps) =>
   props.skillOwner ? (
+    <OwnedChatInput {...props} skillOwner={props.skillOwner} />
+  ) : (
+    <ChatInputCore {...props} />
+  );
+
+/** Skills and templates are private, so both need a known owner. */
+function OwnedChatInput(props: ChatInputProps & { skillOwner: string }) {
+  const [templateSelection, setTemplateSelection] = useState<
+    TemplateSelection | null | undefined
+  >();
+  return (
     <SkillComposer
       key={`${props.skillOwner}:${props.skillScope}`}
       owner={props.skillOwner}
       scope={props.skillScope ?? "new"}
       state={props.activeSkills}
       disabled={props.disabled}
+      onOpenTemplate={setTemplateSelection}
     >
-      {(control) => <ChatInputCore {...props} skillComposer={control} />}
+      {(control) => (
+        <ChatInputCore
+          {...props}
+          skillComposer={control}
+          templateSelection={templateSelection}
+          onTemplateSelectionChange={setTemplateSelection}
+        />
+      )}
     </SkillComposer>
-  ) : (
-    <ChatInputCore {...props} />
   );
+}
 
 const ChatInputCore = ({
   ref,
   skillComposer,
   skillOwner,
+  templateSelection,
+  onTemplateSelectionChange,
   modelSelector,
   status,
   onSubmit,
@@ -161,7 +197,8 @@ const ChatInputCore = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
-  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [appliedTemplate, setAppliedTemplate] =
+    useState<AppliedTemplate | null>(null);
   const [localPrompt, setPrompt] = useState("");
   const prompt = skillComposer?.prompt ?? localPrompt;
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -329,9 +366,11 @@ const ChatInputCore = ({
         toast.error("Failed to upload all attachments. Please retry.");
         return;
       }
+      const template = appliedTemplate?.use;
       const signature = JSON.stringify({
         prompt: prepared.prompt,
         skills: prepared.skills,
+        template,
         files,
         draftId: draft.id.current,
         scope: requestScope,
@@ -343,6 +382,7 @@ const ChatInputCore = ({
       await onSubmit({
         prompt: prepared.prompt,
         ...(prepared.skills ? { skills: prepared.skills } : {}),
+        ...(template ? { template } : {}),
         files,
         requestId: requestRef.current.id,
         ...(draft.id.current ? { draftId: draft.id.current } : {}),
@@ -369,6 +409,8 @@ const ChatInputCore = ({
   const updatePrompt = (value: string) => {
     if (skillComposer) skillComposer.changePrompt(value);
     else setPrompt(value);
+    // A template label describes the current draft; clearing the draft drops it.
+    if (!value.trim()) setAppliedTemplate(null);
     const lines = Math.min(8, value.split(/\n/).length);
     if (lines !== numberOfLinesRef.current) {
       numberOfLinesRef.current = lines;
@@ -553,6 +595,29 @@ const ChatInputCore = ({
               {skillComposer.controls}
             </FieldSet>
           )}
+          {appliedTemplate && (
+            <div className="flex min-w-0 items-center gap-0.5 px-3 pt-2">
+              <Badge
+                variant="secondary"
+                className="max-w-full min-w-0"
+                title={`This message records that it was built with ${appliedTemplate.name}.`}
+              >
+                <span className="truncate">
+                  Built with {appliedTemplate.name}
+                </span>
+              </Badge>
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                disabled={controlsDisabled}
+                aria-label={`Remove ${appliedTemplate.name} template label`}
+                onClick={() => setAppliedTemplate(null)}
+              >
+                <XIcon />
+              </Button>
+            </div>
+          )}
           <Textarea
             {...skillComposer?.inputProps}
             role={skillComposer ? "combobox" : undefined}
@@ -603,7 +668,7 @@ const ChatInputCore = ({
                 className="rounded-control"
                 aria-label="Prompt templates"
                 disabled={controlsDisabled}
-                onClick={() => setTemplatesOpen(true)}
+                onClick={() => onTemplateSelectionChange?.(null)}
               >
                 <LayoutTemplateIcon />
               </Button>
@@ -663,12 +728,15 @@ const ChatInputCore = ({
         ]}
         onPick={pickFiles}
       />
-      {skillOwner && (
+      {skillOwner && onTemplateSelectionChange && (
         <TemplatePickerDialog
           owner={skillOwner}
-          open={templatesOpen}
-          onOpenChange={setTemplatesOpen}
-          onUse={insertText}
+          selection={templateSelection}
+          onSelectionChange={onTemplateSelectionChange}
+          onUse={(text, applied) => {
+            insertText(text);
+            setAppliedTemplate(applied);
+          }}
           onCloseAutoFocus={(event) => {
             // The composer, not the toolbar button, owns focus after insertion.
             event.preventDefault();

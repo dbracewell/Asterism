@@ -696,7 +696,6 @@ those gates were not rerun for this documentation-only cleanup.
   - Verification: backend lint/compile passed; targeted schema basedpyright **0 errors / 0 warnings** after optional-field correction; full backend suite **287 passed** (38 focused project API tests); frontend lint/TypeScript passed; frontend unit suite **30 files / 86 tests passed**; frontend migration tests **6 passed**; no circular imports (132 modules / 437 internal imports); served OpenAPI and regenerated-client consistency passed.
   - Lifecycle definition: shared sources/generations survive deletion. Chat detachment is wired in US-25.2 and run cancellation in US-26.1 when those integrations exist. Frontend build/Playwright were not run; no frontend workflow added. No current database reset performed; completion confirmed for commit and merge.
 
-
 ## US-24.3 — Project file membership API
 
 - [x] US-24.3 (completed; user confirmed 2026-10-14): Project file membership API (2–3 person-days).
@@ -712,7 +711,6 @@ those gates were not rerun for this documentation-only cleanup.
   - Initial frontend/E2E setup attempts stopped before tests; dependency/native-binding repair preceded the successful E2E run with no test retries. GitHub CI was not triggered. Working database/source data was not reset.
   - User confirmation on 2026-10-14 authorizes commit/merge. **EPIC-24 complete**; next recommended story is US-25.1.
 
-
 ## US-25.1 — Chat project binding and scoped attachments
 
 - [x] US-25.1 (completed; user confirmed 2026-10-14): Chat project binding and scoped attachments (2–3 person-days).
@@ -726,7 +724,6 @@ those gates were not rerun for this documentation-only cleanup.
   - Guarded moves/search and explicit lifecycle coordination remain US-25.2; draft/retry/removal lifecycle remains US-25.3. Full prompt/tool/retrieval integration remains EPIC-26/29. No working database reset, migration, compatibility fallback, or later-story implementation was performed. GitHub CI was not triggered.
   - User confirmation on 2026-10-14 authorizes commit/merge. Next recommended story: **US-25.2 — Chat membership changes and search**.
 
-
 ## US-25.2 — Chat membership changes and search
 
 - [x] US-25.2 (completed; user confirmed 2026-10-14): Chat membership changes and search (2–3 person-days).
@@ -736,7 +733,6 @@ those gates were not rerun for this documentation-only cleanup.
   - [x] US-25.2-T4: Regenerate clients; test search isolation, pagination, move effects, and project deletion detaching chats.
   - Verification: backend 338 tests; frontend 89 tests plus 6 auth migration tests; root 29 tests; lint/type/build/client consistency/cycle checks passed; isolated Playwright 12 passed with one worker and no retries on the final run. Details and runtime boundary in the epic. User confirmation on 2026-10-14 authorizes commit/merge. Next recommended story: US-25.3.
 
-
 ## US-25.3 — Chat upload and attachment lifecycle
 
 - [x] US-25.3 (completed; user confirmed 2026-10-14): Chat upload and attachment lifecycle (2–3 person-days).
@@ -745,7 +741,6 @@ those gates were not rerun for this documentation-only cleanup.
   - [x] US-25.3-T3: Keep file access consistent across reopen, regenerate, branch changes, and deleted-file references.
   - [x] US-25.3-T4: Regenerate clients and test cancellation, failed upload/send, replay, removal, and cross-chat isolation.
   - Verification: backend 357 tests; frontend 93 tests plus 6 auth migration tests; root 29 tests; lint/type/build/schema/client consistency/cycle checks passed; final isolated Playwright 13 passed with one worker and no retries. Scope boundaries and initial repairs are recorded in the epic. User confirmation on 2026-10-14 authorizes commit/merge. EPIC-25 complete; next recommended story: US-29.1.
-
 
 ## US-29.1 — One main agent configuration per user
 

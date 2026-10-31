@@ -2,7 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
-import { TemplatePickerDialog } from "./template-picker-dialog";
+import { useState } from "react";
+import {
+  TemplatePickerDialog,
+  type TemplateSelection,
+} from "./template-picker-dialog";
 
 const { frameworks, templates, detail } = vi.hoisted(() => ({
   frameworks: vi.fn(),
@@ -74,18 +78,29 @@ beforeEach(() => {
 function setup() {
   const onUse = vi.fn();
   const onOpenChange = vi.fn();
+  function Harness() {
+    const [selection, setSelection] = useState<
+      TemplateSelection | null | undefined
+    >(null);
+    return (
+      <TemplatePickerDialog
+        owner="alice"
+        selection={selection}
+        onSelectionChange={(next) => {
+          if (next === undefined) onOpenChange(false);
+          setSelection(next);
+        }}
+        onUse={onUse}
+      />
+    );
+  }
   render(
     <QueryClientProvider
       client={
         new QueryClient({ defaultOptions: { queries: { retry: false } } })
       }
     >
-      <TemplatePickerDialog
-        owner="alice"
-        open
-        onOpenChange={onOpenChange}
-        onUse={onUse}
-      />
+      <Harness />
     </QueryClientProvider>,
   );
   return { onUse, onOpenChange };
@@ -98,7 +113,10 @@ it("lists frameworks and owned templates, then builds and uses a framework", asy
   expect(screen.getByRole("heading", { name: "RTF" })).toBeInTheDocument();
   await user.type(screen.getByLabelText(/Task/), "the dishes");
   await user.click(screen.getByRole("button", { name: "Use prompt" }));
-  expect(onUse).toHaveBeenCalledWith("Do the dishes.");
+  expect(onUse).toHaveBeenCalledWith("Do the dishes.", {
+    name: "RTF",
+    use: { source: "framework", id: "rtf", revision: 1, level: "guided" },
+  });
   expect(onOpenChange).toHaveBeenCalledWith(false);
 });
 

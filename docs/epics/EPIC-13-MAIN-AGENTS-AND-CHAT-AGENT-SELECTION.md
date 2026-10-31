@@ -45,19 +45,19 @@ understand which agents are available for direct conversations.
 **Dependencies:** None.
 
 - [x] US-13.1-T1: Partition the Agent Settings UI into accessible Main agents
-  and Sub-agents sections, including empty states and clear delegated-use copy.
+      and Sub-agents sections, including empty states and clear delegated-use copy.
 - [x] US-13.1-T2: Restrict the default-agent control to main agents, label it
-  as the global default for new chats, and require the `sub_agent` tool for
-  every main agent.
+      as the global default for new chats, and require the `sub_agent` tool for
+      every main agent.
 - [x] US-13.1-T3: Enforce server-side default-setting validation: the ID must
-  belong to the user and reference a main agent; reject sub-agents, missing IDs,
-  and malformed values. Sanitize stale legacy defaults on reads.
+      belong to the user and reference a main agent; reject sub-agents, missing IDs,
+      and malformed values. Sanitize stale legacy defaults on reads.
 - [x] US-13.1-T4: Prevent converting or deleting the default main agent when
-  doing so would leave no valid global default; retain the at-least-one-main
-  agent invariant.
+      doing so would leave no valid global default; retain the at-least-one-main
+      agent invariant.
 - [x] US-13.1-T5: Add backend and frontend tests for classification, default
-  selection, rejected sub-agent defaults, and protected default operations;
-  regenerate the typed client if the API contract changes.
+      selection, rejected sub-agent defaults, and protected default operations;
+      regenerate the typed client if the API contract changes.
 
 **Acceptance criteria**
 
@@ -79,17 +79,17 @@ ongoing conversation.
 **Dependencies:** US-13.1.
 
 - [x] US-13.2-T1: Add nullable `agent_id` ownership-safe chat storage, schemas,
-  and a repeatable data-preserving SQLite migration/backfill.
+      and a repeatable data-preserving SQLite migration/backfill.
 - [x] US-13.2-T2: Extend chat creation to accept an optional main-agent ID,
-  resolve omitted values to the user's default main agent, and reject sub-agent,
-  missing, or cross-user IDs.
+      resolve omitted values to the user's default main agent, and reject sub-agent,
+      missing, or cross-user IDs.
 - [x] US-13.2-T3: Construct the websocket runtime agent from the chat's stored
-  agent ID, not the current global default; return a user-safe error for legacy
-  unassigned chats.
+      agent ID, not the current global default; return a user-safe error for legacy
+      unassigned chats.
 - [x] US-13.2-T4: Prevent deletion/conversion of a main agent that is assigned
-  to a chat (or define an explicit safe reassignment flow if required).
+      to a chat (or define an explicit safe reassignment flow if required).
 - [x] US-13.2-T5: Add service/router/migration regression tests and regenerate
-  the Hey API client.
+      the Hey API client.
 
 **Acceptance criteria**
 
@@ -109,16 +109,16 @@ my global default.
 **Dependencies:** US-13.2.
 
 - [x] US-13.3-T1: Add an accessible main-agent selector to the new-chat
-  composer; default it to the user's global default and exclude sub-agents.
+      composer; default it to the user's global default and exclude sub-agents.
 - [x] US-13.3-T2: Send the selected ID through the generated create-chat client
-  and show the selected agent in the resulting chat view/history where useful.
+      and show the selected agent in the resulting chat view/history where useful.
 - [x] US-13.3-T3: Handle no-main-agent, stale selection, and request-failure
-  states with actionable guidance and no silent fallback.
+      states with actionable guidance and no silent fallback.
 - [x] US-13.3-T4: Add frontend unit/integration coverage and a Playwright flow
-  proving default selection, an override, sub-agent exclusion, and persistence
-  across a global-default change.
+      proving default selection, an override, sub-agent exclusion, and persistence
+      across a global-default change.
 - [x] US-13.3-T5: Run full quality gates and document the agent-selection and
-  legacy-chat behavior.
+      legacy-chat behavior.
 
 **Acceptance criteria**
 

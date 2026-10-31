@@ -28,7 +28,7 @@ errors-and-recovery pages.
   authorization uses `client_id=dynamic_agent_client` with a stable
   `ext_agent_host_id` and returns an issued `oaiapp_…` client ID to keep.
   Scopes `openid profile email offline_access resource.invoke
-  chatgpt.tokens.use.direct`; resource `https://api.openai.com/v1`.
+chatgpt.tokens.use.direct`; resource `https://api.openai.com/v1`.
 - Callback: an HTTP loopback URI on `127.0.0.1` (not `localhost`), so the
   user's browser must run on the same machine as Asterism. Only the port may
   vary between sign-ins; scheme, host and path stay fixed. Reauthorization

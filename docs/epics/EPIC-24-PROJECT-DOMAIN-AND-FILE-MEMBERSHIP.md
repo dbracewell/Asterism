@@ -9,11 +9,13 @@ Part of the [Projects and Chat Context Refactor](../plans/projects-and-chat-cont
 Estimated effort: **5–8 engineering person-days**, including story-level verification.
 
 ## User stories
+
 ### US-24.1 — Project boundaries and fresh schema
 
 As a developer, I want explicit project, file, and chat boundaries so each module can evolve independently.
 
 **Estimate:** 1–2 person-days. **Dependencies:** None.
+
 - [x] US-24.1-T1: Document the proposed contracts and lifecycle rules in an ADR; resolve the roadmap assumptions before implementation.
 - [x] US-24.1-T2: Add Project (owner, name, description, system_prompt, context_revision, timestamps) and unique ProjectFile memberships; use composite ownership constraints or equivalent DB enforcement.
 - [x] US-24.1-T3: Keep source files and extraction generations independent of projects; update fresh initialization and isolated reset fixtures without migrations.
@@ -26,6 +28,7 @@ As a developer, I want explicit project, file, and chat boundaries so each modul
 As a user, I want to create, edit, find, and delete projects with their instructions.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-24.1.
+
 - [x] US-24.2-T1: Implement owner-scoped create/read/update/delete, pagination, search, validation, and deterministic sorting.
 - [x] US-24.2-T2: Increment context_revision for prompt and membership changes; reject stale updates where appropriate.
 - [x] US-24.2-T3: Define deletion as detach chats to General and remove memberships while retaining source files; cancel affected runs before deletion once runtime integration exists.
@@ -38,6 +41,7 @@ As a user, I want to create, edit, find, and delete projects with their instruct
 As a user, I want to add and remove files from projects without copying or reprocessing them.
 
 **Estimate:** 2–3 person-days. **Dependencies:** US-24.2.
+
 - [x] US-24.3-T1: Implement atomic bulk add/remove and paginated project file listing through the file-service boundary.
 - [x] US-24.3-T2: Validate all file owners, enforce unique membership, and report already-added files deterministically.
 - [x] US-24.3-T3: Expose project membership summaries for file views and removal impact; omit unused manual ordering.
@@ -58,17 +62,17 @@ All ten roadmap assumptions were approved and recorded in ADR-0017. The model re
 now includes projects and unordered, composite-owner-constrained project memberships;
 file storage and extraction models remain independent. No migrations were added.
 
-| Gate | Result |
-| --- | --- |
-| Backend lint (`uv run ruff check .`) | Passed |
-| Backend typecheck (`uv run python -m compileall -q asterism`) | Passed; repository gate is compilation, not static typing |
-| Full backend unit/integration suite (test-profile wrapper) | 249 passed |
-| Dependency review (`knot asterism`) | No circular imports; 129 modules, 428 internal imports |
-| Fresh initialization / isolated reset / schema invariants | Passed within backend suite, including direct owner updates and extraction import boundary |
-| Application / OpenAPI import | Passed; no project routes or public schemas introduced |
-| Generated clients | Unchanged; no API contract changes in this story |
-| Frontend lint/typecheck/tests/build; Playwright | Not run; no frontend or changed user workflows |
-| Whitespace diff check | Passed |
+| Gate                                                          | Result                                                                                     |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Backend lint (`uv run ruff check .`)                          | Passed                                                                                     |
+| Backend typecheck (`uv run python -m compileall -q asterism`) | Passed; repository gate is compilation, not static typing                                  |
+| Full backend unit/integration suite (test-profile wrapper)    | 249 passed                                                                                 |
+| Dependency review (`knot asterism`)                           | No circular imports; 129 modules, 428 internal imports                                     |
+| Fresh initialization / isolated reset / schema invariants     | Passed within backend suite, including direct owner updates and extraction import boundary |
+| Application / OpenAPI import                                  | Passed; no project routes or public schemas introduced                                     |
+| Generated clients                                             | Unchanged; no API contract changes in this story                                           |
+| Frontend lint/typecheck/tests/build; Playwright               | Not run; no frontend or changed user workflows                                             |
+| Whitespace diff check                                         | Passed                                                                                     |
 
 The working development database was not reset. User confirmation authorizes committing and merging this story.
 Existing unrelated `.pi/` and other epic planning files were preserved.
@@ -88,22 +92,22 @@ US-25.2 after binding exists, and cancellation before deletion in US-26.1 after 
 integration exists. Those future task descriptions explicitly record the handoff.
 No placeholder framework, migrations, or working database reset were introduced.
 
-| Gate | Result |
-| --- | --- |
-| Backend Ruff | Passed |
-| Backend compileall | Passed; repository typecheck gate is compilation |
-| Targeted static type check (`basedpyright`, projects/schemas.py) | Passed: 0 errors, 0 warnings after correcting optional patch-field annotations |
-| Focused project HTTP API tests | 38 passed; JWT token decoding is substituted in ASGI tests, while Bearer requirement and user/service/DB boundaries run normally |
-| Full backend unit/integration suite | 287 passed |
-| Dependency cycles | None; 132 modules, 437 internal imports |
-| Frontend ESLint | Passed |
-| Frontend TypeScript (`tsc --noEmit`) | Passed |
-| Frontend Vitest | 30 files, 86 tests passed |
-| Frontend migration tests | 6 passed |
-| OpenAPI / generated clients | Served schema exported through ASGI; SDK/types/Zod/query operations regenerated with Hey API 0.98.1. Independent regeneration matches all 18 TS files ignoring trailing whitespace only |
-| Frontend build / isolated Playwright | Not run; no frontend workflow added in this story |
-| Root configuration tests / CI jobs | Not run; configuration/workflow files unchanged; CI not triggered |
-| Diff whitespace check | Passed |
+| Gate                                                             | Result                                                                                                                                                                                  |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend Ruff                                                     | Passed                                                                                                                                                                                  |
+| Backend compileall                                               | Passed; repository typecheck gate is compilation                                                                                                                                        |
+| Targeted static type check (`basedpyright`, projects/schemas.py) | Passed: 0 errors, 0 warnings after correcting optional patch-field annotations                                                                                                          |
+| Focused project HTTP API tests                                   | 38 passed; JWT token decoding is substituted in ASGI tests, while Bearer requirement and user/service/DB boundaries run normally                                                        |
+| Full backend unit/integration suite                              | 287 passed                                                                                                                                                                              |
+| Dependency cycles                                                | None; 132 modules, 437 internal imports                                                                                                                                                 |
+| Frontend ESLint                                                  | Passed                                                                                                                                                                                  |
+| Frontend TypeScript (`tsc --noEmit`)                             | Passed                                                                                                                                                                                  |
+| Frontend Vitest                                                  | 30 files, 86 tests passed                                                                                                                                                               |
+| Frontend migration tests                                         | 6 passed                                                                                                                                                                                |
+| OpenAPI / generated clients                                      | Served schema exported through ASGI; SDK/types/Zod/query operations regenerated with Hey API 0.98.1. Independent regeneration matches all 18 TS files ignoring trailing whitespace only |
+| Frontend build / isolated Playwright                             | Not run; no frontend workflow added in this story                                                                                                                                       |
+| Root configuration tests / CI jobs                               | Not run; configuration/workflow files unchanged; CI not triggered                                                                                                                       |
+| Diff whitespace check                                            | Passed                                                                                                                                                                                  |
 
 Tests cover direct API ownership isolation, all endpoints requiring auth, request
 validation, empty description/prompt, duplicate-name rollback, stale/no-op/metadata
@@ -117,7 +121,6 @@ contract non-nullable. Revision-only patches are tested as no-ops. Focused tests
 (38), full backend suite (287), Ruff, and targeted static typing were rerun successfully.
 Independent regeneration confirms unchanged client contracts after normalizing only
 the existing import-time AgentProfile UUID default and trailing whitespace.
-
 
 ## US-24.3 implementation and verification (2026-10-14)
 
@@ -143,23 +146,23 @@ originals and extraction storage while retaining provider model bundles. No migr
 legacy-path fallbacks, manual ordering, UI workflows, or working-data reset were added.
 Chat file binding and project UI remain in their subsequent stories.
 
-| Gate | Result |
-| --- | --- |
-| Backend Ruff | Passed |
-| Backend compileall | Passed; repository typecheck gate is compilation |
-| Full backend unit/integration suite (test-profile wrapper) | 310 passed after query responsibility refactor |
-| Source-store contract / project membership HTTP tests | Passed within backend suite; includes sharing, stale/concurrent writes, atomic foreign/missing rejection, stable keys, original bytes, owner/shard isolation, no repeated writes/processing, removal, deletion, and isolated reset |
-| Dependency/import review | No circular imports; 136 modules, 457 internal imports; all source consumers resolve keys through FileStore |
-| Frontend ESLint | Passed |
-| Frontend TypeScript | Passed |
-| Frontend Vitest | 30 files, 86 tests passed |
-| Frontend auth migration tests | 6 passed |
-| Frontend production build | Passed |
-| OpenAPI / generated clients | Served schema exported with ASGI; Hey API 0.98.1 regenerated SDK/types/Zod/query operations. Independent generation matches all 18 TS files, ignoring trailing whitespace only |
-| Isolated Playwright (`CI=1`) | 11 passed, one worker, no test retries; existing UI workflows use API mocks. New project membership and real source-byte behavior are verified by backend HTTP/integration tests, pending project UI stories |
-| Root configuration tests | 29 passed |
-| Diff whitespace check | Passed |
-| GitHub CI | Not triggered; local gates only |
+| Gate                                                       | Result                                                                                                                                                                                                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend Ruff                                               | Passed                                                                                                                                                                                                                             |
+| Backend compileall                                         | Passed; repository typecheck gate is compilation                                                                                                                                                                                   |
+| Full backend unit/integration suite (test-profile wrapper) | 310 passed after query responsibility refactor                                                                                                                                                                                     |
+| Source-store contract / project membership HTTP tests      | Passed within backend suite; includes sharing, stale/concurrent writes, atomic foreign/missing rejection, stable keys, original bytes, owner/shard isolation, no repeated writes/processing, removal, deletion, and isolated reset |
+| Dependency/import review                                   | No circular imports; 136 modules, 457 internal imports; all source consumers resolve keys through FileStore                                                                                                                        |
+| Frontend ESLint                                            | Passed                                                                                                                                                                                                                             |
+| Frontend TypeScript                                        | Passed                                                                                                                                                                                                                             |
+| Frontend Vitest                                            | 30 files, 86 tests passed                                                                                                                                                                                                          |
+| Frontend auth migration tests                              | 6 passed                                                                                                                                                                                                                           |
+| Frontend production build                                  | Passed                                                                                                                                                                                                                             |
+| OpenAPI / generated clients                                | Served schema exported with ASGI; Hey API 0.98.1 regenerated SDK/types/Zod/query operations. Independent generation matches all 18 TS files, ignoring trailing whitespace only                                                     |
+| Isolated Playwright (`CI=1`)                               | 11 passed, one worker, no test retries; existing UI workflows use API mocks. New project membership and real source-byte behavior are verified by backend HTTP/integration tests, pending project UI stories                       |
+| Root configuration tests                                   | 29 passed                                                                                                                                                                                                                          |
+| Diff whitespace check                                      | Passed                                                                                                                                                                                                                             |
+| GitHub CI                                                  | Not triggered; local gates only                                                                                                                                                                                                    |
 
 Verification environment notes: initial frontend/E2E invocations stopped before tests
 because dependency installation was incomplete, registry access was sandboxed, or the
@@ -173,7 +176,6 @@ package manifest changes were made.
 HTTP tests substitute JWT decoding while exercising normal Bearer enforcement,
 owner/service checks, production foreign-key constraints, transactions, and source
 storage. Dedicated file lifecycle tests also cover cleanup without FK cascades.
-
 
 ### Query responsibility review amendment
 

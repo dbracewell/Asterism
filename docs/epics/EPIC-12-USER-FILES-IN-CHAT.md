@@ -25,16 +25,16 @@ but flagged as unsupported instead of failing the message.
 
 ## Current findings (code inspection)
 
-| Area | Current behavior / problem |
-| --- | --- |
-| File storage | Files live at `{files_root}/{user_id}/{filename}` on the local filesystem. `GET /files/{filename}` serves them with JWT user scoping and path-traversal checks. There is **no upload, list, or delete endpoint**, and no file-store interface (the service touches `config` paths directly, which AGENTS.md says must sit behind an abstraction). |
-| Chat composer | The frontend `ChatInput` already has attachment UI scaffolding (paperclip picker, drag-and-drop, preview badges), but attachments are **never uploaded, never sent**, and are dropped on submit. The WebSocket `chat` command carries only `{type, message: string}`. |
-| Message model | `MessageModel.content` is plain text. There is no field referencing attached files, so attachments cannot be persisted, re-rendered, or re-sent to the model on regenerate. |
-| LLM layer | `LLMMessage.content` is `str` and `to_api_message()` only emits string content. The OpenAI-compatible client therefore cannot send multimodal messages at all. |
-| Vision capability | `LLMModel.supports_vision` (tri-state with provenance) exists from EPIC-11 but **no runtime code consumes it**. |
-| Agent file awareness | `Agent` and `ToolContext` already accept `user_files: list[str]` and the `sub_agent` tool already forwards file names into sub-agent context, but the chat path never populates `user_files`. |
-| Document conversion | No dependency or module converts binary documents. `markitdown` (Microsoft) is not installed. Latest release is 0.1.7 (requires Python ≥3.10; project requires ≥3.13). |
-| Schema evolution | As with EPIC-11, new tables/columns require an explicit, repeatable, data-preserving migration in `asterism/db/schema_migrations.py`; `create_all` alone is insufficient. |
+| Area                 | Current behavior / problem                                                                                                                                                                                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File storage         | Files live at `{files_root}/{user_id}/{filename}` on the local filesystem. `GET /files/{filename}` serves them with JWT user scoping and path-traversal checks. There is **no upload, list, or delete endpoint**, and no file-store interface (the service touches `config` paths directly, which AGENTS.md says must sit behind an abstraction). |
+| Chat composer        | The frontend `ChatInput` already has attachment UI scaffolding (paperclip picker, drag-and-drop, preview badges), but attachments are **never uploaded, never sent**, and are dropped on submit. The WebSocket `chat` command carries only `{type, message: string}`.                                                                             |
+| Message model        | `MessageModel.content` is plain text. There is no field referencing attached files, so attachments cannot be persisted, re-rendered, or re-sent to the model on regenerate.                                                                                                                                                                       |
+| LLM layer            | `LLMMessage.content` is `str` and `to_api_message()` only emits string content. The OpenAI-compatible client therefore cannot send multimodal messages at all.                                                                                                                                                                                    |
+| Vision capability    | `LLMModel.supports_vision` (tri-state with provenance) exists from EPIC-11 but **no runtime code consumes it**.                                                                                                                                                                                                                                   |
+| Agent file awareness | `Agent` and `ToolContext` already accept `user_files: list[str]` and the `sub_agent` tool already forwards file names into sub-agent context, but the chat path never populates `user_files`.                                                                                                                                                     |
+| Document conversion  | No dependency or module converts binary documents. `markitdown` (Microsoft) is not installed. Latest release is 0.1.7 (requires Python ≥3.10; project requires ≥3.13).                                                                                                                                                                            |
+| Schema evolution     | As with EPIC-11, new tables/columns require an explicit, repeatable, data-preserving migration in `asterism/db/schema_migrations.py`; `create_all` alone is insufficient.                                                                                                                                                                         |
 
 ## Product and data decisions
 
@@ -43,12 +43,12 @@ but flagged as unsupported instead of failing the message.
 Every uploaded file is classified into exactly one kind. The kind drives
 processing and how the content reaches the model:
 
-| Kind | Detection | Processing | Model input |
-| --- | --- | --- | --- |
-| `image` | MIME `image/png`, `image/jpeg`, `image/webp`, `image/gif`, `image/bmp` | None — native vision | `image_url` content part (base64 data URL) on the attaching user message, **only if the active model has `supports_vision == true`** |
-| `text` | MIME `text/*`, or a known code/plain-text extension (.py, .ts, .tsx, .js, .json, .yaml, .yml, .toml, .ini, .sh, .sql, .rs, .go, .c, .cpp, .h, .java, .rb, .php, .xml, .log, …) | Read directly as UTF-8 (BOM tolerated; decode failures fall back to conversion, then `failed`) | Text block |
-| `document` | Extensions/MIME supported by the installed MarkItDown converters (.pdf, .docx, .pptx, .xlsx, .xls, .html, .htm, .csv, .md, .rst, .epub when supported) | MarkItDown conversion to Markdown | Text block |
-| `other` | Everything else | Not processed | File name only, flagged `unsupported` |
+| Kind       | Detection                                                                                                                                                                      | Processing                                                                                     | Model input                                                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `image`    | MIME `image/png`, `image/jpeg`, `image/webp`, `image/gif`, `image/bmp`                                                                                                         | None — native vision                                                                           | `image_url` content part (base64 data URL) on the attaching user message, **only if the active model has `supports_vision == true`** |
+| `text`     | MIME `text/*`, or a known code/plain-text extension (.py, .ts, .tsx, .js, .json, .yaml, .yml, .toml, .ini, .sh, .sql, .rs, .go, .c, .cpp, .h, .java, .rb, .php, .xml, .log, …) | Read directly as UTF-8 (BOM tolerated; decode failures fall back to conversion, then `failed`) | Text block                                                                                                                           |
+| `document` | Extensions/MIME supported by the installed MarkItDown converters (.pdf, .docx, .pptx, .xlsx, .xls, .html, .htm, .csv, .md, .rst, .epub when supported)                         | MarkItDown conversion to Markdown                                                              | Text block                                                                                                                           |
+| `other`    | Everything else                                                                                                                                                                | Not processed                                                                                  | File name only, flagged `unsupported`                                                                                                |
 
 Kind detection uses the stored extension plus the sniffed MIME type
 (`filetype`), preferring the extension for code files whose MIME is ambiguous.
@@ -58,11 +58,11 @@ Detection rules are isolated and fixture-tested; no guessing from content.
 
 The tri-state `supports_vision` from EPIC-11 is consumed by the agent runtime:
 
-| `supports_vision` | Behavior |
-| --- | --- |
-| `true` | Images are sent as `image_url` parts. |
-| `false` | Images are **not** sent. The message content includes an explicit note: `(image "name" not included: model does not support image input)`. |
-| `null` (unknown) | Treated as **not supported** (secure-by-default). Same note, worded "model image support is unknown". The user can fix the metadata in admin settings without a code change. |
+| `supports_vision` | Behavior                                                                                                                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `true`            | Images are sent as `image_url` parts.                                                                                                                                        |
+| `false`           | Images are **not** sent. The message content includes an explicit note: `(image "name" not included: model does not support image input)`.                                   |
+| `null` (unknown)  | Treated as **not supported** (secure-by-default). Same note, worded "model image support is unknown". The user can fix the metadata in admin settings without a code change. |
 
 Vision gating is decided per agent run from the resolved model
 (`settings_service.get_model_and_provider`), so switching models changes
@@ -96,27 +96,27 @@ resizing/compression in v1 (see non-goals).
   attached with status `failed` and a short user-facing reason; the agent
   proceeds with the remaining content. The model is told which files could not
   be read.
-- **Logging:** file names, sizes, statuses, durations, and error *types* are
+- **Logging:** file names, sizes, statuses, durations, and error _types_ are
   logged. File **content is never logged**.
 
 ### Persistence
 
 New `user_files` table (SQLAlchemy model + repeatable migration):
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | UUID PK | |
-| `user_id` | str FK → users, CASCADE | ownership |
-| `filename` | str, unique per `user_id` | sanitized storage name used by `GET /files/{filename}` |
-| `original_name` | str | the user-visible name as uploaded |
-| `size` | int | bytes |
-| `mime_type` | str | sniffed via `filetype`, extension fallback |
-| `kind` | enum `image`/`text`/`document`/`other` | from routing table |
-| `sha256` | str | content hash for cache invalidation |
-| `content_status` | enum `pending`/`ready`/`unsupported`/`failed` | `pending` immediately after upload |
-| `content_error` | str nullable | short, user-safe reason |
-| `content_cache` | Text nullable | converted/truncated text for `text`/`document` kinds |
-| timestamps | mixin | created/updated |
+| Column           | Type                                          | Notes                                                  |
+| ---------------- | --------------------------------------------- | ------------------------------------------------------ |
+| `id`             | UUID PK                                       |                                                        |
+| `user_id`        | str FK → users, CASCADE                       | ownership                                              |
+| `filename`       | str, unique per `user_id`                     | sanitized storage name used by `GET /files/{filename}` |
+| `original_name`  | str                                           | the user-visible name as uploaded                      |
+| `size`           | int                                           | bytes                                                  |
+| `mime_type`      | str                                           | sniffed via `filetype`, extension fallback             |
+| `kind`           | enum `image`/`text`/`document`/`other`        | from routing table                                     |
+| `sha256`         | str                                           | content hash for cache invalidation                    |
+| `content_status` | enum `pending`/`ready`/`unsupported`/`failed` | `pending` immediately after upload                     |
+| `content_error`  | str nullable                                  | short, user-safe reason                                |
+| `content_cache`  | Text nullable                                 | converted/truncated text for `text`/`document` kinds   |
+| timestamps       | mixin                                         | created/updated                                        |
 
 `messages` gains a `files` JSONB column: a list of
 `{filename, name, mime_type, size, kind, status}` references. The bytes stay on
@@ -184,14 +184,14 @@ When the orchestrator rebuilds `LLMMessage`s from chat history:
 
 New settings (all with safe defaults, overridable via env):
 
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `max_upload_file_size_bytes` | 20 MiB | per-file upload cap |
-| `max_process_file_size_bytes` | 15 MiB | conversion input cap |
-| `max_converted_chars` | 100,000 | converted-output truncation |
-| `file_conversion_timeout_s` | 60 | conversion wall-clock cap |
-| `max_vision_image_bytes` | 10 MiB | per-image vision cap |
-| `denied_upload_extensions` | list above | upload denylist |
+| Setting                       | Default    | Meaning                     |
+| ----------------------------- | ---------- | --------------------------- |
+| `max_upload_file_size_bytes`  | 20 MiB     | per-file upload cap         |
+| `max_process_file_size_bytes` | 15 MiB     | conversion input cap        |
+| `max_converted_chars`         | 100,000    | converted-output truncation |
+| `file_conversion_timeout_s`   | 60         | conversion wall-clock cap   |
+| `max_vision_image_bytes`      | 10 MiB     | per-image vision cap        |
+| `denied_upload_extensions`    | list above | upload denylist             |
 
 ## Scope / non-goals
 

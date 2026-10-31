@@ -10,10 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { TemplateDocument } from "@/lib/client";
+import type { TemplateDocument, TemplateUse } from "@/lib/client";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
-import { useState } from "react";
 import {
   frameworkCatalogOptions,
   templateDetailOptions,
@@ -21,30 +20,35 @@ import {
 } from "../queries";
 import { TemplateBuilder } from "./template-builder";
 
-type Selection =
-  | { source: "framework"; id: string }
-  | { source: "template"; id: string };
+export type TemplateSelection = {
+  source: TemplateUse["source"];
+  id: string;
+};
+
+/** What the composer records when a built prompt is inserted. */
+export type AppliedTemplate = { use: TemplateUse; name: string };
 
 type Props = {
   owner: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** `undefined` closes the dialog; `null` opens the list. */
+  selection: TemplateSelection | null | undefined;
+  onSelectionChange: (selection: TemplateSelection | null | undefined) => void;
   /** Receives the assembled prompt after the user chooses "Use prompt". */
-  onUse: (prompt: string) => void;
+  onUse: (prompt: string, applied: AppliedTemplate) => void;
   onCloseAutoFocus?: (event: Event) => void;
 };
 
 export function TemplatePickerDialog({
   owner,
-  open,
-  onOpenChange,
+  selection,
+  onSelectionChange,
   onUse,
   onCloseAutoFocus,
 }: Props) {
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const open = selection !== undefined;
+  const setSelection = onSelectionChange;
   const change = (next: boolean) => {
-    if (!next) setSelection(null);
-    onOpenChange(next);
+    if (!next) onSelectionChange(undefined);
   };
   return (
     <Dialog open={open} onOpenChange={change}>
@@ -58,8 +62,8 @@ export function TemplatePickerDialog({
               owner={owner}
               selection={selection}
               onBack={() => setSelection(null)}
-              onUse={(prompt) => {
-                onUse(prompt);
+              onUse={(prompt, applied) => {
+                onUse(prompt, applied);
                 change(false);
               }}
             />
@@ -76,7 +80,7 @@ function TemplateList({
   onSelect,
 }: {
   owner: string;
-  onSelect: (selection: Selection) => void;
+  onSelect: (selection: TemplateSelection) => void;
 }) {
   const frameworks = useQuery(frameworkCatalogOptions());
   const templates = useQuery(templateListOptions(owner));
@@ -200,9 +204,9 @@ function SelectedTemplate({
   onUse,
 }: {
   owner: string;
-  selection: Selection;
+  selection: TemplateSelection;
   onBack: () => void;
-  onUse: (prompt: string) => void;
+  onUse: (prompt: string, applied: AppliedTemplate) => void;
 }) {
   const frameworks = useQuery({
     ...frameworkCatalogOptions(),
@@ -254,7 +258,17 @@ function SelectedTemplate({
       <TemplateBuilder
         key={`${selection.source}:${selection.id}:${loaded.revision}`}
         template={loaded.document}
-        onUse={onUse}
+        onUse={(prompt) =>
+          onUse(prompt, {
+            name: loaded.document.name,
+            use: {
+              source: selection.source,
+              id: selection.id,
+              revision: loaded.revision,
+              level: "guided",
+            },
+          })
+        }
         secondaryAction={back}
       />
     </>
