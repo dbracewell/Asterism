@@ -1,6 +1,6 @@
 # EPIC-49: ChatGPT plan connection
 
-Status: implemented; US-49.4 awaiting confirmation. Source: Sign in with ChatGPT research (2026-10-30).
+Status: complete (2026-10-31); archived in docs/archive/todo-completed-2026-10-31.md. Source: Sign in with ChatGPT research (2026-10-30).
 
 ## Objective
 
