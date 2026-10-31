@@ -81,3 +81,17 @@ WHEN NEW.accepted_skills IS NOT OLD.accepted_skills
 BEGIN SELECT RAISE(ABORT, 'Accepted skill inputs are immutable'); END
 """).execute_if(dialect="sqlite"),
 )
+event.listen(
+    Base.metadata,
+    "after_create",
+    DDL("""
+CREATE TRIGGER IF NOT EXISTS comparison_column_immutable
+BEFORE UPDATE OF comparison_id, comparison_index, target_model_id ON messages
+WHEN OLD.comparison_id IS NOT NULL AND (
+  NEW.comparison_id IS NOT OLD.comparison_id
+  OR NEW.comparison_index IS NOT OLD.comparison_index
+  OR NEW.target_model_id IS NOT OLD.target_model_id
+)
+BEGIN SELECT RAISE(ABORT, 'Comparison columns are immutable'); END
+""").execute_if(dialect="sqlite"),
+)

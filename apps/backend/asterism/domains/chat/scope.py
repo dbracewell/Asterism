@@ -83,7 +83,7 @@ async def read_chat_scope_snapshot(
             ),
         ),
     )
-    branch = active_branch(records)
+    branch = active_branch(records, chat.active_root_id)
     provenance: dict[uuid.UUID, list[uuid.UUID]] = {}
     for message in branch:
         if message.role == "user":

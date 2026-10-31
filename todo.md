@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. US-51.1 through US-51.6 are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active. US-51.1 through US-51.6 and US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) are confirmed complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -111,10 +111,10 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [ ] US-54.3: Context inspector
   - [ ] Record a context manifest (layer IDs and revisions, chunk references, truncations).
   - [ ] Build the inspector; test owner-only access and the untrusted rendering path.
-- [ ] US-54.4: Side-by-side comparison
-  - [ ] Implement multi-target submission as sibling branches within chat admission limits.
-  - [ ] Build the comparison layout (columns that stack on narrow screens).
-  - [ ] Test admission limits, branch provenance and continuation.
+- [x] US-54.4: Side-by-side comparison
+  - [x] Implement multi-target submission as sibling branches within chat admission limits.
+  - [x] Build the comparison layout (columns that stack on narrow screens).
+  - [x] Test admission limits, branch provenance and continuation.
 - [ ] US-54.5: Fork from a step
   - [ ] Write an ADR for fork semantics (what is reused versus re-executed).
   - [ ] Implement the fork execution path; build the fork UI.

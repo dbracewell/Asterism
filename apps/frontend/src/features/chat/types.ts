@@ -1,3 +1,4 @@
+import type { ComparisonTag } from "./lib/comparison";
 import { AgentSubAgentEvent, ToolCallSchema } from "@/features/chat/schemas";
 import { Message, ToolResult } from "@/lib/client";
 import z from "zod";
@@ -31,6 +32,8 @@ export type PermissionRequest = {
 
 export type StreamingMessage = Message & {
   needsPermission?: PermissionRequest[];
+  /** Set when the run answers a comparison column (US-54.4). */
+  comparison?: ComparisonTag;
 };
 
 export type SubAgentActivity = {

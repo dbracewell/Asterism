@@ -19,6 +19,7 @@ from asterism.domains.user.personas import require_persona_access
 from .attachments import bind_message_files, resolve_file_references
 from .binding import resolve_main_agent_id
 from .branches import active_branch
+from .comparisons import assert_no_pending_columns, column_models, make_active, resolve_targets
 from .draft_models import ChatSendReceiptModel
 from .drafts import consume_draft, read_draft_file_ids
 from .jobs import chat_jobs
@@ -99,24 +100,42 @@ async def persist_user_send(
         else None
     )
     await bind_message_files(user_id=user_id, chat_id=chat.id, files=files, session=session)
-    message = MessageModel(
-        user_id=user_id,
-        chat_id=chat.id,
-        accepted_skills=skills,
-        accepted_template=template,
-        accepted_persona=await resolve_persona_snapshot(
+    inputs = {
+        "user_id": user_id,
+        "chat_id": chat.id,
+        "accepted_skills": skills,
+        "accepted_template": template,
+        "accepted_persona": await resolve_persona_snapshot(
             user_id=user_id,
             persona_id=chat.persona_id,
             session=session,
         ),
-        content=payload.user_prompt,
-        role="user",
-        status=MessageStatus.PENDING,
-        files=files,
-        parent_message_id=parent_id,
-    )
-    session.add(message)
+        "files": files,
+        "parent_message_id": parent_id,
+    }
+    if payload.compare is None:
+        message = MessageModel(**inputs, content=payload.user_prompt, role="user", status=MessageStatus.PENDING)
+        session.add(message)
+    else:
+        # US-54.4: sibling columns; column 0 is where the conversation continues.
+        columns = column_models(
+            template_prompt=payload.user_prompt,
+            resolved=await resolve_targets(
+                user_id=user_id,
+                targets=payload.compare,
+                default_prompt=payload.user_prompt,
+                has_skills=bool(skills.snapshots),
+                session=session,
+            ),
+            comparison_id=uuid.uuid4(),
+            first_index=0,
+            **inputs,
+        )
+        session.add_all(columns)
+        message = columns[0]
     await session.flush()
+    if payload.compare is not None and parent_id is None:
+        await make_active(chat=chat, column=message, session=session)
     if parent_id is not None:
         await session.execute(
             update(MessageModel)
@@ -250,17 +269,13 @@ async def send_message(*, user_id: str, chat_id: uuid.UUID, payload: ChatSendReq
             if chat.selected_model_id is None:
                 raise CodedException(409, "Choose a chat model before sending")
             await require_chat_model(chat.selected_model_id, user_id, session)
-            branch = active_branch(
-                list(
-                    await session.scalars(
-                        select_owned_messages(user_id=user_id, chat_id=chat_id),
-                    ),
-                ),
-            )
+            records = list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id)))
+            branch = active_branch(records, chat.active_root_id)
             if (branch[-1].id if branch else None) != payload.parent_message_id:
                 raise CodedException(409, "Chat branch changed; reload before sending")
             if branch and branch[-1].status == MessageStatus.PENDING:
                 raise CodedException(409, "A message is awaiting generation; resume or regenerate it")
+            assert_no_pending_columns(records=records, branch=branch)
             files = await resolve_send_files(
                 user_id=user_id,
                 chat_id=chat_id,

@@ -60,6 +60,8 @@ class ChatOrchestrator:
         self._streaming_thinking: str = ""
         self._execution: MessageExecution | None = None
         self._delegations = DelegationCollector()
+        # US-54.4: identifies the comparison column the current run answers.
+        self._comparison: dict[str, str] | None = None
 
         # Inject interactive approval into the agent so tool
         # authorization flows through the WebSocket UI.
@@ -83,6 +85,18 @@ class ChatOrchestrator:
     def is_active(self) -> bool:
         return self.queue.qsize() > 0 or self.is_processing_messages
 
+    async def _emit(self, packet: dict) -> None:
+        """Queue a client packet; comparison runs are tagged with their column."""
+        if self._comparison is not None:
+            packet = {**packet, "comparison": self._comparison}
+        await self.queue.put(packet)
+
+    def _column_of_current_turn(self) -> dict[str, str] | None:
+        column = next((message for message in reversed(self.chat.messages) if message.role == "user"), None)
+        if column is None or column.comparison_id is None:
+            return None
+        return {"id": str(column.comparison_id), "column_id": str(column.id)}
+
     async def reload_chat(self) -> None:
         self.chat = await chat_service.get_one(chat_id=self.chat_id, user_id=self.user_id)
         self.agent.session = self.chat
@@ -91,7 +105,32 @@ class ChatOrchestrator:
 
     async def resume_pending_turn(self) -> None:
         await self.reload_chat()
-        await self.run_agent()
+        columns = await chat_service.pending_comparison_columns(self.user_id, self.chat_id)
+        if columns:
+            await self.run_comparison(columns)
+        else:
+            await self.run_agent()
+
+    async def run_comparison(self, column_ids: list[uuid.UUID]) -> None:
+        """Answer comparison columns one after another inside this chat's single work slot.
+
+        Each column runs on its own root-to-column history, so a column that is
+        not on the active branch never sees another column's answer. A
+        cancellation stops the current column and cancels the rest.
+        """
+        current = 0
+        try:
+            for current, column_id in enumerate(column_ids):
+                self.chat.messages = await chat_service.read_column_branch(self.user_id, self.chat_id, column_id)
+                self.agent.session = self.chat
+                await self.run_agent()
+        except asyncio.CancelledError:
+            # Includes the current column when it was cancelled before generating;
+            # only still-pending columns change.
+            await chat_service.cancel_comparison_columns(self.user_id, self.chat_id, column_ids[current:])
+            raise
+        finally:
+            await self.reload_chat()
 
     async def cancel_active_generation(self) -> None:
         """Finalize the active user turn so reconnecting never re-runs it."""
@@ -123,7 +162,7 @@ class ChatOrchestrator:
 
         # add_message marks its parent complete when it attaches a child, so
         # write the terminal user-visible cancellation state last.
-        parent = await chat_service.update_message(
+        parent = await chat_service.write_message_update(
             user_id=self.user_id,
             chat_id=self.chat_id,
             message_id=parent_id,
@@ -132,7 +171,7 @@ class ChatOrchestrator:
         if parent_index >= 0:
             self.chat.messages[parent_index] = parent
 
-        await self.queue.put(
+        await self._emit(
             {
                 "type": AgentEventType.COMPLETE.value,
                 "last_messages": [message.model_dump(mode="json") for message in self.chat.messages[parent_index:]],
@@ -152,7 +191,7 @@ class ChatOrchestrator:
     async def handle_regenerate_message(self, parent_message_index: int) -> None:
         self._execution = await self.agent.prepare_execution(self.chat.messages[parent_message_index].id, restart=True)
         parent_message: Message = self.chat.messages[parent_message_index]
-        parent_message = await chat_service.update_message(
+        parent_message = await chat_service.write_message_update(
             user_id=self.user_id,
             chat_id=self.chat_id,
             message_id=parent_message.id,
@@ -246,7 +285,7 @@ class ChatOrchestrator:
         """
         tasks = []
         for tool in pending_tools:
-            await self.queue.put(
+            await self._emit(
                 {
                     "type": "tool_permission_request",
                     "id": tool.id,
@@ -273,7 +312,7 @@ class ChatOrchestrator:
         except asyncio.TimeoutError:
             self.logger.info(f"Tool {tool.id} timed out waiting for user approval.")
             queue.respond(tool, False)
-            await self.queue.put({"type": "tool_update", "id": tool.id})
+            await self._emit({"type": "tool_update", "id": tool.id})
         finally:
             self.pending_approvals.pop(tool.id, None)
 
@@ -401,6 +440,7 @@ class ChatOrchestrator:
 
             parent_message_index = last_user_message_index
             parent_message = self.chat.messages[parent_message_index]
+            self._comparison = self._column_of_current_turn()
             self.agent.parent_message_id = parent_message.id
             self._active_parent_id = parent_message.id
             self._streaming_content = ""
@@ -418,7 +458,7 @@ class ChatOrchestrator:
                         # a normal completion used to persist one blank assistant
                         # message per agent step, leaving the chat unusable.
                         if not event.content.strip() and not event.has_tool_calls():
-                            await self.queue.put(
+                            await self._emit(
                                 {
                                     "type": AgentEventType.ERROR.value,
                                     "content": "The model returned an empty response. Please try again.",
@@ -453,7 +493,7 @@ class ChatOrchestrator:
                         parent_message = new_message
                         parent_message_index = len(self.chat.messages) - 1
 
-                        await self.queue.put(
+                        await self._emit(
                             {
                                 "type": event.type.value,
                                 "last_messages": [
@@ -465,7 +505,7 @@ class ChatOrchestrator:
                     case AgentEvent(type=AgentEventType.SUB_AGENT):
                         if event.sub_agent:
                             self._delegations.observe(event.sub_agent)
-                            await self.queue.put(
+                            await self._emit(
                                 {
                                     "type": "sub_agent",
                                     **event.sub_agent.model_dump(mode="json", exclude={"event"}),
@@ -474,7 +514,7 @@ class ChatOrchestrator:
                             )
 
                     case AgentEvent(type=AgentEventType.START):
-                        await self.queue.put(
+                        await self._emit(
                             {
                                 **event.model_dump(mode="json"),
                                 "execution": self._execution.model_dump(mode="json") if self._execution else None,
@@ -484,17 +524,18 @@ class ChatOrchestrator:
                     case AgentEvent(type=AgentEventType.DELTA):
                         self._streaming_content = event.content
                         self._streaming_thinking = event.thinking
-                        await self.queue.put(event.model_dump())
+                        await self._emit(event.model_dump())
 
                     case _:
-                        await self.queue.put(event.model_dump())
+                        await self._emit(event.model_dump())
 
         except asyncio.CancelledError:
             await self.cancel_active_generation()
             raise
         except Exception as e:
             self.logger.error(f"Error processing messages: {e}", stack_info=True)
-            await self.queue.put({"type": AgentEventType.ERROR.value, "content": str(e)})
+            await self._emit({"type": AgentEventType.ERROR.value, "content": str(e)})
         finally:
             self._active_parent_id = None
+            self._comparison = None
             self.is_processing_messages = False

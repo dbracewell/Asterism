@@ -227,6 +227,15 @@ slash selection, persistent active chips, removal and refresh controls.
 See the [skills contract](../../docs/architecture/skills.md) for endpoints, bounds,
 permissions, and fresh-schema behavior. Verification uses disposable storage.
 
+## Side-by-side comparison
+
+US-54.4 runs a prompt on two or three models as sibling chat branches (`compare`
+on chat sends, `POST /chat/{chat_id}/message/{id}/compare` for an answered turn,
+and `GET`/`PUT /chat/{chat_id}/comparisons/{id}`). Columns run one after another
+within the chat's single work slot. See the
+[chat contract](../../docs/architecture/chat-and-websocket.md#side-by-side-comparison-us-544)
+and [ADR-0027](../../docs/adr/0027-side-by-side-comparison-branches.md).
+
 ## Prompt templates API
 
 US-51.1 adds owner-scoped `prompt_templates` documents (a typed field schema plus
