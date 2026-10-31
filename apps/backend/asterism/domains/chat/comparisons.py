@@ -48,7 +48,7 @@ async def resolve_targets(
     has_skills: bool,
     session: AsyncSession,
     taken: Sequence[tuple[uuid.UUID, str]] = (),
-) -> list[tuple[ChatModelChoice, str]]:
+) -> list[tuple[ChatModelChoice, str, str | None]]:
     """Each target's available model and effective prompt; columns must differ."""
     seen = set(taken)
     resolved = []
@@ -60,14 +60,15 @@ async def resolve_targets(
         if key in seen:
             raise BadDataException("Comparison columns must differ in model or prompt")
         seen.add(key)
-        resolved.append((await require_chat_model(target.model_id, user_id, session), prompt))
+        label = " ".join(target.label.split()) if target.label else None
+        resolved.append((await require_chat_model(target.model_id, user_id, session), prompt, label or None))
     return resolved
 
 
 def column_models(
     *,
     template_prompt: str,
-    resolved: Sequence[tuple[ChatModelChoice, str]],
+    resolved: Sequence[tuple[ChatModelChoice, str, str | None]],
     comparison_id: uuid.UUID,
     first_index: int,
     **inputs,
@@ -84,8 +85,9 @@ def column_models(
             comparison_id=comparison_id,
             comparison_index=first_index + offset,
             target_model_id=choice.id,
+            comparison_label=label,
         )
-        for offset, (choice, prompt) in enumerate(resolved)
+        for offset, (choice, prompt, label) in enumerate(resolved)
     ]
 
 

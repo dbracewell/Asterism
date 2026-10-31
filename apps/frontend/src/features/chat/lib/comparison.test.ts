@@ -2,7 +2,9 @@ import type { ComparisonColumn, Message } from "@/lib/client";
 import { describe, expect, it } from "vitest";
 import { comparePayload } from "../components/compare-targets";
 import {
+  beforeAfterTargets,
   columnLabel,
+  originalBody,
   groupTranscript,
   parseComparisonTag,
   runGraphReply,
@@ -115,5 +117,48 @@ describe("comparison helpers", () => {
         column({ replies: [message("r1", "assistant"), delegated] }),
       ),
     ).toBe(delegated);
+  });
+});
+
+describe("before/after targets (US-51.7)", () => {
+  it("labels the original and the improved draft on one model", () => {
+    expect(
+      beforeAfterTargets(
+        { original: "  Write about dogs. ", modelId: "m" },
+        "Write a puppy care guide.",
+      ),
+    ).toEqual([
+      { model_id: "m", label: "Before" },
+      {
+        model_id: "m",
+        user_prompt: "Write a puppy care guide.",
+        label: "After",
+      },
+    ]);
+  });
+
+  it("refuses identical or empty prompts", () => {
+    expect(() =>
+      beforeAfterTargets({ original: "Same", modelId: "m" }, " Same "),
+    ).toThrow(/Apply a suggestion/);
+    expect(() =>
+      beforeAfterTargets({ original: "  ", modelId: "m" }, "New"),
+    ).toThrow(/empty/);
+  });
+
+  it("drops leading skill commands, which apply to both columns", () => {
+    expect(originalBody("/review  Check this")).toBe("Check this");
+    expect(originalBody("Plain text")).toBe("Plain text");
+  });
+
+  it("heads a labelled column with its label", () => {
+    expect(
+      columnLabel(
+        column({
+          request: message("q", "user", { comparison_label: "After" }),
+          model: { name: "gpt" } as never,
+        }),
+      ),
+    ).toBe("After");
   });
 });

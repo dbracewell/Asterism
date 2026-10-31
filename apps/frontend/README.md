@@ -355,7 +355,9 @@ later deleted).
 Turn on **Prompt Coach** under **User Settings → General** to add a **Review
 prompt** button to the composer. It checks the draft for a goal, audience,
 context, constraints, output format and examples, and lists suggestions you can
-apply to the message text one by one. Nothing is sent or saved; the button is
+apply to the message text one by one. After applying one, **Compare
+before/after** sends the original and the improved prompt to the selected model
+as **Before** and **After** columns. Reviewing alone sends and saves nothing; the button is
 disabled when no draft model or connected ChatGPT plan is available. See the
 [prompt templates contract](../../docs/architecture/prompt-templates.md).
 

@@ -54,7 +54,11 @@ export function SkillChatHarness() {
                 skillOwner={owner}
                 skillScope={`${branch}:${state.revision ?? 0}`}
                 activeSkills={state}
-                promptCoach={coach ? { modelId: null } : undefined}
+                promptCoach={
+                  coach
+                    ? { modelId: "11111111-1111-4111-8111-111111111111" }
+                    : undefined
+                }
                 onSubmit={async (data) => {
                   const response = await fetch("/api/py/test-skill-send", {
                     method: "POST",

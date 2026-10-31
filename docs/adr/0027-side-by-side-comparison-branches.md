@@ -16,11 +16,12 @@ The runtime has exactly one generation per chat, held in one work slot.
 
 **A comparison is a set of sibling user turns.** Two or three user messages share
 a parent and a `comparison_id`, each with a `comparison_index` (0–2) and a fixed
-`target_model_id`. A target is `{model_id, user_prompt?}`; without a prompt the
+`target_model_id`. A target is `{model_id, user_prompt?, label?}`; without a prompt the
 column uses the request's prompt. Columns must differ in model or prompt. All
 columns share the same accepted inputs (files, skills, persona) and the
-template label applies only to columns that use the templated prompt. The
-three fields are set once and then immutable (SQLite trigger); a check
+template label applies only to columns that use the templated prompt. An
+optional `comparison_label` (1–40 characters, e.g. "Before"/"After" for US-51.7)
+heads the column instead of the model name. The column fields are set once and then immutable (SQLite trigger); a check
 constraint keeps them on user turns only.
 
 **Branch selection stays the existing pointer model.** The parent's

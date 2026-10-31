@@ -9,6 +9,7 @@ import {
   AlertCircleIcon,
   CheckIcon,
   ClipboardCheckIcon,
+  ColumnsIcon,
   LoaderCircleIcon,
   XIcon,
 } from "lucide-react";
@@ -124,12 +125,18 @@ export function PromptCoachPanel({
   disabled,
   onApply,
   onRetry,
+  onCompare,
 }: {
   coach: PromptCoachControl;
   prompt: string;
   disabled?: boolean;
   onApply: (text: string) => void;
   onRetry: () => void;
+  /**
+   * Runs the reviewed original and the current draft side by side (US-51.7);
+   * offered once a suggestion has been applied.
+   */
+  onCompare?: () => void;
 }) {
   if (!coach.open) return null;
   const suggestions = coach.review?.suggestions ?? [];
@@ -196,6 +203,24 @@ export function PromptCoachPanel({
               />
             ))}
           </ul>
+        )}
+        {onCompare && coach.applied.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
+            <p className="text-muted-foreground min-w-0 flex-1 text-xs">
+              See what your changes do: send the original and the improved
+              prompt to the same model and compare the answers.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={disabled || prompt.trim() === coach.original?.trim()}
+              onClick={onCompare}
+            >
+              <ColumnsIcon />
+              Compare before/after
+            </Button>
+          </div>
         )}
       </div>
     </section>

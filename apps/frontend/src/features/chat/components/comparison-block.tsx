@@ -15,7 +15,12 @@ import { type QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { CornerDownRightIcon, NetworkIcon } from "lucide-react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import type { ToolTimings } from "../lib/agent-timeline";
-import { columnLabel, runGraphReply, usageText } from "../lib/comparison";
+import {
+  columnLabel,
+  columnModelName,
+  runGraphReply,
+  usageText,
+} from "../lib/comparison";
 import type { StreamingMessage } from "../types";
 import { MessageItem } from "./message/message-item";
 import { StreamingIndicator } from "./message/streaming-indicator";
@@ -156,9 +161,15 @@ function Column({
       )}
     >
       <header className="flex min-w-0 flex-wrap items-center gap-2">
-        <h3 id={headingId} className="min-w-0 flex-1 truncate font-medium">
+        <h3 id={headingId} className="min-w-0 truncate font-medium">
           {label}
         </h3>
+        {column.request.comparison_label && (
+          <span className="text-muted-foreground min-w-0 truncate text-xs">
+            {columnModelName(column)}
+          </span>
+        )}
+        <span className="flex-1" />
         {status && <Badge variant="outline">{status}</Badge>}
         {active && <Badge variant="secondary">Continuing here</Badge>}
       </header>
@@ -197,7 +208,8 @@ function Column({
           />
         )}
         {!live && column.status === "pending" && (
-          <p className="text-muted-foreground flex items-center gap-2 text-sm">
+          // A div: the streaming indicator is block content, invalid inside <p>.
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             {isProcessing ? (
               <>
                 <StreamingIndicator /> Waiting for its turn
@@ -205,7 +217,7 @@ function Column({
             ) : (
               "Not answered yet"
             )}
-          </p>
+          </div>
         )}
       </div>
       <footer className="text-muted-foreground text-meta mt-auto flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">

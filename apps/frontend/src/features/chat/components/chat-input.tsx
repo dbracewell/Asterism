@@ -7,6 +7,7 @@ import { Hint } from "@/components/ui/hint";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   ActiveSkillState,
+  ComparisonTarget,
   SkillSelection,
   TemplateUse,
   UserFile,
@@ -49,6 +50,7 @@ import {
   type TemplateSelection,
 } from "@/features/templates/components/template-picker-dialog";
 import { levelLabel } from "@/features/templates/lib/levels";
+import { beforeAfterTargets, originalBody } from "../lib/comparison";
 import {
   PromptCoachButton,
   PromptCoachPanel,
@@ -115,6 +117,8 @@ export type ChatInputProps = {
     draftId?: string;
     skills?: SkillSelection;
     template?: TemplateUse;
+    /** Set for a before/after send: `prompt` is the original (US-51.7). */
+    compare?: ComparisonTarget[];
   }) => void | Promise<unknown>;
   requestScope?: string;
   /** Changes when the saved file scope may have changed (branch, model). */
@@ -205,6 +209,7 @@ const ChatInputCore = ({
   onTemplateSelectionChange,
   modelSelector,
   coach,
+  promptCoach,
   status,
   onSubmit,
   requestScope,
@@ -370,7 +375,14 @@ const ChatInputCore = ({
     }
   };
 
-  const submitPrompt = async () => {
+  /**
+   * Sends the draft; with `beforeAfter`, sends the coach's original and the
+   * improved draft to one model as labelled comparison columns instead.
+   */
+  const submitPrompt = async (beforeAfter?: {
+    original: string;
+    modelId: string;
+  }) => {
     if (
       disabled ||
       isStaging ||
@@ -395,8 +407,12 @@ const ChatInputCore = ({
         return;
       }
       const template = appliedTemplate?.use;
+      const compare = beforeAfter
+        ? beforeAfterTargets(beforeAfter, prepared.prompt)
+        : undefined;
       const signature = JSON.stringify({
         prompt: prepared.prompt,
+        compare,
         skills: prepared.skills,
         template,
         files,
@@ -408,7 +424,8 @@ const ChatInputCore = ({
         requestRef.current = { signature, id: crypto.randomUUID() };
       }
       await onSubmit({
-        prompt: prepared.prompt,
+        prompt: compare ? originalBody(beforeAfter!.original) : prepared.prompt,
+        ...(compare ? { compare } : {}),
         ...(prepared.skills ? { skills: prepared.skills } : {}),
         ...(template ? { template } : {}),
         files,
@@ -658,6 +675,15 @@ const ChatInputCore = ({
                 textareaRef.current?.focus();
               }}
               onRetry={() => coach.run(coach.original ?? prompt)}
+              onCompare={
+                promptCoach?.modelId && coach.original
+                  ? () =>
+                      void submitPrompt({
+                        original: coach.original!,
+                        modelId: promptCoach.modelId!,
+                      })
+                  : undefined
+              }
             />
           )}
           <Textarea

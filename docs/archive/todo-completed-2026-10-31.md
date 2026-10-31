@@ -38,3 +38,34 @@ without a usable draft model, chat titles run on the owner's own ChatGPT plan.
   - [x] Resolve the title model (draft first, then the owner's plan) in the chat domain.
   - [x] Test draft precedence, plan fallback and selection, other-user isolation, unavailable plans and the text fallback.
   - [x] Document the fallback in ADR-0025 and the provider docs.
+
+The user confirmed US-51.7 completion and authorized a local merge on
+2026-10-31. EPIC-51 (US-51.1 through US-51.7) is complete; each story was
+confirmed and merged with `--no-ff` before the next began. US-51.7 depended
+on US-54.4, which was pulled ahead of EPIC-52 and is tracked under EPIC-54.
+
+### [EPIC-51: Prompt frameworks and templates](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md)
+
+- [x] US-51.1: Template document and framework catalog
+  - [x] Write an ADR for the template document format, placeholder grammar and catalog versioning.
+  - [x] Implement the domain model, queries, service and router, and regenerate the client.
+  - [x] Ship the initial framework catalog (RTF, CO-STAR, CRAFT, few-shot, step-by-step).
+  - [x] Test parsing limits, owner isolation, revision conflicts and catalog immutability.
+- [x] US-51.2: Template builder with live preview
+  - [x] Build the schema-driven form and preview with field/segment linking.
+  - [x] Add composer insertion and responsive layout; add unit and Playwright tests.
+- [x] US-51.3: Composer integration and provenance
+  - [x] Extend slash discovery and message provenance; regenerate the client.
+  - [x] Test label rendering, missing-template history and branch regeneration.
+- [x] US-51.4: Template library and editor
+  - [x] Build the library list, duplicate action and editor with preview.
+  - [x] Test editing, conflicts and accessibility (axe, keyboard).
+- [x] US-51.5: Scaffolding levels
+  - [x] Add level definitions to the template schema and the builder UI.
+  - [x] Test that each level renders the right fields and that provenance records the level.
+- [x] US-51.6: Prompt coach
+  - [x] Add the coach endpoint and rubric prompt, reusing title-model resolution.
+  - [x] Build the suggestion checklist and apply actions in the composer.
+  - [x] Test model resolution, unavailable state, ephemerality and the UI flow.
+- [x] US-51.7: Before/after comparison
+  - [x] Wire the coach's before/after pair into the comparison flow; test it end to end.

@@ -1,6 +1,6 @@
 # EPIC-51: Prompt frameworks and templates
 
-Status: in progress (US-51.1 through US-51.6 complete). Source: product direction discussion (2026-10-31), learner track.
+Status: complete (US-51.1 through US-51.7, confirmed 2026-10-31). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -128,4 +128,4 @@ Acceptance: after applying coach suggestions, the user can run both the original
 and the improved prompt on the same model and compare the answers side by side,
 using the comparison view from US-54.4.
 
-- [ ] Wire the coach's before/after pair into the comparison flow; test it end to end.
+- [x] Wire the coach's before/after pair into the comparison flow; test it end to end.

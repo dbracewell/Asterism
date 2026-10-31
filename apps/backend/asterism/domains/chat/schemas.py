@@ -161,6 +161,7 @@ class Message(LLMMessage):
     comparison_id: uuid.UUID | None = None
     comparison_index: int | None = None
     target_model_id: uuid.UUID | None = None
+    comparison_label: str | None = None
 
 
 class MessageList(BaseModel):
@@ -280,6 +281,8 @@ class ComparisonTarget(BaseModel):
     model_config = ConfigDict(extra="forbid")
     model_id: uuid.UUID
     user_prompt: str | None = Field(default=None, max_length=100_000)
+    # Optional column heading, e.g. "Before" and "After" for a prompt rewrite.
+    label: str | None = Field(default=None, min_length=1, max_length=40)
 
 
 ComparisonTargets = Annotated[

@@ -1,11 +1,11 @@
-# Prompt templates — US-51.1 through US-51.6
+# Prompt templates — US-51.1 through US-51.7
 
 Private template CRUD and the bundled, read-only framework catalog are
 implemented in the `prompt_templates` backend domain. The composer's template
 builder (US-51.2), slash discovery and message provenance (US-51.3) and the
 settings library and editor (US-51.4), scaffolding levels (US-51.5) and the
-prompt coach (US-51.6) are implemented. The before/after comparison is a later
-[EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md) story.
+prompt coach (US-51.6) and the before/after comparison (US-51.7) are
+implemented, completing [EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md).
 
 The document format, bounds, placeholder grammar, assembly semantics and catalog
 versioning are decided in
@@ -200,3 +200,18 @@ reviewed draft in memory as the "before" prompt for the US-51.7 comparison.
 
 **Trust.** The draft is untrusted text and the review only produces suggested
 composer text. Neither grants tools, files, MCP or delegation.
+
+## Before/after comparison (US-51.7)
+
+Once at least one suggestion has been applied, the review panel offers
+**Compare before/after** (when the composer has a selected model and the draft
+differs from the reviewed original). It sends a normal comparison
+([ADR-0027](../adr/0027-side-by-side-comparison-branches.md)) instead of a single
+turn: the request's `user_prompt` is the reviewed original and `compare` holds two
+targets on the selected model, `{label: "Before"}` and `{user_prompt: <improved>,
+label: "After"}`. Leading skill commands are removed from the original because
+the parsed skill selection applies to both columns. A template label applies only
+to the column whose prompt it built (the original). The columns run one after
+another on the same model, are headed **Before** and **After** with the model name
+beside them, and the conversation continues from **Before** until the user picks
+**After**. Sending clears the composer and the review like any send.

@@ -265,6 +265,7 @@ export const ChatSession = ({
     draftId,
     skills,
     template,
+    compare,
   }: {
     prompt: string;
     files: string[];
@@ -272,6 +273,7 @@ export const ChatSession = ({
     draftId?: string;
     skills?: import("@/lib/client").SkillSelection;
     template?: import("@/lib/client").TemplateUse;
+    compare?: import("@/lib/client").ComparisonTarget[];
   }) => {
     if (!session) throw new Error("Chat is not loaded. Please retry.");
     setSocketError(null);
@@ -293,7 +295,7 @@ export const ChatSession = ({
         files,
         ...(draftId ? { draft_id: draftId } : {}),
         parent_message_id: pendingSend.current.parentId,
-        ...comparePayload(compareModels),
+        ...(compare ? { compare } : comparePayload(compareModels)),
       },
     });
     setCompareModels([]);
