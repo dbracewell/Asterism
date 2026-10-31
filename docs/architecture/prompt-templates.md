@@ -1,9 +1,10 @@
-# Prompt templates — US-51.1 through US-51.3
+# Prompt templates — US-51.1 through US-51.4
 
 Private template CRUD and the bundled, read-only framework catalog are
 implemented in the `prompt_templates` backend domain. The composer's template
-builder (US-51.2), slash discovery and message provenance (US-51.3) are
-implemented. The editor and scaffolding levels are later
+builder (US-51.2), slash discovery and message provenance (US-51.3) and the
+settings library and editor (US-51.4) are implemented. Scaffolding levels and the
+prompt coach are later
 [EPIC-51](../epics/EPIC-51-PROMPT-FRAMEWORKS-AND-TEMPLATES.md) stories.
 
 The document format, bounds, placeholder grammar, assembly semantics and catalog
@@ -80,3 +81,38 @@ Reading chat history adds live `available`. A deleted owned template, or a
 framework no longer in the catalog, keeps its recorded name and is shown as
 "Built with <name> · unavailable". The label is provenance only: it does not
 change execution, prompt composition or capabilities.
+
+## Library and editor (US-51.4)
+
+**User Settings → Templates** (`?t=user&setting=templates`) lists the bundled
+frameworks (read-only, with their catalog revision) and a searchable, paged list
+of the user's own templates (10 per page, the same owner-scoped query keys as the
+picker, so saves refresh both).
+
+- **Duplicate** opens the editor as a new, unsaved template prefilled with a
+  framework's or owned template's document and the name `<name> (copy)`. Nothing
+  is created until **Save template**; the copy is independent afterwards.
+- **Edit** loads the full document and edits it as a structured form: name,
+  description, an ordered field list (label, key, kind, required, help, kind-
+  specific options and default; move up/down and remove) and the body. **Add
+  field** appends `{{field_N}}` to the body; the placeholder buttons insert a
+  field's `{{key}}` at the body cursor. Enter in a single-line input does not save.
+- The body follows the fields. A field added in the editor derives its key from
+  its label (`Target audience` → `target_audience`, numbered if taken) until the
+  key is edited directly. Whenever a key becomes valid and unique, that field's
+  placeholders are renamed in the body (escaped `\{{` text is untouched);
+  invalid or duplicate intermediate keys leave the body alone until fixed.
+  Saved fields keep their keys when only the label changes.
+- `lib/draft.ts` converts between the document and the editable draft and mirrors
+  the ADR-0026 parser (key grammar, duplicate keys, malformed, unknown and unused
+  placeholders, select options and defaults, length and byte limits). Problems
+  are listed in one focused alert when saving; the server remains authoritative
+  and its 400/422 text is shown if it still rejects the document.
+- **Preview** renders the same `TemplateBuilder` the composer uses, without
+  "Use prompt"; values typed there are not saved.
+- Saves and deletes send the loaded revision. A 409 keeps the draft and shows the
+  server message; **Reload current template** (confirming discard of a dirty
+  draft) adopts the current revision. A pristine editor adopts a newer cached
+  revision automatically; a dirty one is told to reload before saving. Deletion
+  is confirmed; messages built with the template keep their label, shown as
+  unavailable.
