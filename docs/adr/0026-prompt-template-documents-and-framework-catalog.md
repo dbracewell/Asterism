@@ -1,6 +1,6 @@
 # ADR-0026 — Prompt template documents, placeholder grammar and framework catalog
 
-Status: proposed with US-51.1 (2026-10-31).
+Status: accepted; US-51.1 user-confirmed complete on 2026-10-31.
 
 ## Context
 
