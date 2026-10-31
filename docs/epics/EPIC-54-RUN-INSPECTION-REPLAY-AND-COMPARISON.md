@@ -1,6 +1,6 @@
 # EPIC-54: Run inspection, replay and comparison
 
-Status: in progress (US-54.4 implemented ahead of order to unblock US-51.7; awaiting confirmation). Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
