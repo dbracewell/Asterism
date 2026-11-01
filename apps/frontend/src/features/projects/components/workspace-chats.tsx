@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
@@ -47,7 +48,16 @@ export function WorkspaceChats({ projectId }: { projectId: string | null }) {
           {chats.data.chats.length === 0 ? (
             <EmptyState
               title="No chats yet"
-              description="Chats you start here will be listed in this workspace."
+              description={
+                projectId
+                  ? "Chats you start here can use this project's shared files."
+                  : "Start a General chat for a quick question that only needs the files you attach."
+              }
+              help={
+                <HelpTopic
+                  id={projectId ? "concept.project" : "concept.general-chat"}
+                />
+              }
               action={
                 <Button asChild variant="outline">
                   <Link href={projectId ? `/?project_id=${projectId}` : "/"}>

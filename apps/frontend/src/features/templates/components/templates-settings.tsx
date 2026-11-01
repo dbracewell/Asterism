@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
@@ -131,6 +132,7 @@ function OwnedTemplatesSettings({ owner }: { owner: string }) {
         {templates.data?.total === 0 && (
           <EmptyState
             title={query ? "No matching templates" : "No templates yet"}
+            help={query ? undefined : <HelpTopic id="concept.template" />}
             description={
               query
                 ? "Try a different name or description."

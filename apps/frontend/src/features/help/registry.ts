@@ -391,6 +391,9 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
   },
 };
 
-export function isVisibleTo(entry: HelpEntry, isAdmin: boolean): boolean {
+export function isVisibleTo(
+  entry: { audience: HelpAudience },
+  isAdmin: boolean,
+): boolean {
   return entry.audience === "everyone" || isAdmin;
 }

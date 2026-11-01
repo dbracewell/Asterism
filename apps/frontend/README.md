@@ -111,8 +111,15 @@ keyboard. Admin-only entries render only inside the dashboard's
 from the server, such as tool descriptions. Place help buttons beside a label,
 not inside it, so the control's accessible name stays clean.
 
+Page guides live in `src/features/help/pages.ts`. `pageGuideFor` maps the
+dashboard route (and the Settings `t`/`setting` parameters) to a guide, and
+`PageHelp` in the app header opens it in a side sheet. `?` opens the sheet
+when focus is not in a text field, combobox, menu or another dialog. Empty
+states can pass a `help` element, usually a `HelpTopic`, shown beside the title.
+
 **Convention:** a change that adds a user-facing concept or control adds its
-help entry in the same change. Help describes only implemented behavior: no
+help entry (and updates the page guide when it adds a page or section) in the
+same change. Help describes only implemented behavior: no
 planned features, no long-term memory, and no suggestion that persona, skill,
 mode or template text grants tools or files. See
 [ADR-0032](../../docs/adr/0032-in-app-help-content.md).

@@ -1,4 +1,5 @@
 "use client";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { FormSkeleton, ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
@@ -114,6 +115,7 @@ export const AgentsSettings = () => {
           <EmptyState
             title="No sub-agents yet"
             description="Use Create sub-agent to give a model its own instructions and tools for project chats."
+            help={<HelpTopic id="concept.sub-agent" />}
           />
         )}
         {agents.data && agents.data.total > 0 && subAgents.length === 0 && (

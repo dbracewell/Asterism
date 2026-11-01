@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { PageHeader, PageLayout } from "@/components/page-layout";
@@ -74,10 +75,11 @@ export function ProjectList() {
           {projects.data.projects.length === 0 ? (
             <EmptyState
               title={query ? "No matching projects" : "No projects yet"}
+              help={query ? undefined : <HelpTopic id="concept.project" />}
               description={
                 query
                   ? "Try a different name or description."
-                  : "Use New project to group related chats, or start one in General."
+                  : "Use New project to group related chats and share files with each of them."
               }
               action={
                 query ? (

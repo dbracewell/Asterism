@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { useUser } from "@/features/auth/components/user-context";
@@ -81,10 +82,11 @@ function OwnedSkillsSettings({ owner }: { owner: string }) {
         {skills.data?.total === 0 && (
           <EmptyState
             title={query ? "No matching skills" : "No skills yet"}
+            help={query ? undefined : <HelpTopic id="concept.skill" />}
             description={
               query
                 ? "Try a different name or description."
-                : "Create a skill from a SKILL.md template to reuse instructions in chat."
+                : "Create a skill from a SKILL.md template to reuse instructions in any chat with /."
             }
             action={
               query ? (

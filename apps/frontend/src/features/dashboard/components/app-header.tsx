@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/features/auth/components/user-context";
 import { ChatModeLock } from "@/features/chat/components/chat-mode-lock";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
+import { PageHelp } from "@/features/help/components/page-help";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { client } from "@/lib/api";
 import type { ChatInfo } from "@/lib/client";
@@ -99,6 +100,7 @@ export const AppHeader = () => {
           }
         />
       )}
+      <PageHelp />
     </HeaderBar>
   );
 };
