@@ -24,6 +24,22 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 [2026-10-29 checklist](docs/archive/todo-completed-2026-10-29.md); EPIC-46 is confirmed complete and archived in the
 [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). All visual design epics are complete.
 
+## Onboarding follow-up (proposed)
+
+Source: user feedback after EPIC-48 (2026-11-01). Small and independent of the
+product direction order; schedule it whenever convenient.
+
+### [EPIC-62: Complete model setup during onboarding](docs/epics/EPIC-62-COMPLETE-MODEL-SETUP-DURING-ONBOARDING.md)
+
+- [ ] US-62.1: Choose the draft model during setup
+  - [ ] Add the draft-model select and its defaulting rules to the enable-models step.
+  - [ ] Save `draft_model_id` through the provider settings update without changing the saved providers.
+  - [ ] Add unit and isolated browser tests (default follows, fallback, failure and retry, skip).
+- [ ] US-62.2: Confirm vision and tool support for enabled models
+  - [ ] Add per-model Vision and Tools checkboxes with unknown marking and the explanatory note.
+  - [ ] Save changed capabilities as manual values and keep untouched ones with their sources.
+  - [ ] Add unit and isolated browser tests (discovered, unknown, changed, re-enabled, failure, accessibility).
+
 ## Product direction epics (proposed)
 
 Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61 and EPIC-53 are complete and archived; EPIC-54 is next.
