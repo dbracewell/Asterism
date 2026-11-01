@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-53.5 (adaptive follow-up) is active on `feature/us-53.5-adaptive-follow-up`; US-53.1 through US-53.4 are complete. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active; US-53.1 through US-53.5 are complete and US-53.6 (summaries and study guides) is next. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -46,7 +46,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Implement quiz generation, attempts and grading.
   - [x] Build quiz-taking and results screens with citations.
   - [x] Test grading paths, citation scope and attempt history.
-- [ ] US-53.5: Adaptive follow-up (implementation complete, awaiting confirmation)
+- [x] US-53.5: Adaptive follow-up
   - [x] Derive weak spots from attempts and review logs; build the practice entry point; add tests.
 - [ ] US-53.6: Summaries and study guides
   - [ ] Implement depth-controlled summaries and study-guide generation.
