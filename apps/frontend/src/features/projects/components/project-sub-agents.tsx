@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
@@ -147,6 +148,7 @@ export function ProjectSubAgents({
           <EmptyState
             title="No selected sub-agents"
             description="Chats in this project use the main agent alone until you select a sub-agent below."
+            help={<HelpTopic id="concept.sub-agent" />}
           />
         )}
         {selected.data?.agents.map((agent) => (

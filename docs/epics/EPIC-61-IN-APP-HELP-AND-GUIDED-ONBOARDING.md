@@ -91,9 +91,9 @@ and Admin Settings (each section, admins only). The `?` key opens the panel when
 focus is not in a text field. Empty states on these pages explain the concept and
 link to the relevant help.
 
-- [ ] Implement the page help sheet, route mapping and the keyboard shortcut.
-- [ ] Write the page guides and update the empty states.
-- [ ] Test route coverage, the shortcut's focus rules and admin-only sections.
+- [x] Implement the page help sheet, route mapping and the keyboard shortcut.
+- [x] Write the page guides and update the empty states.
+- [x] Test route coverage, the shortcut's focus rules and admin-only sections.
 
 ## US-61.4: Guided first-chat tour
 

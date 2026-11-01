@@ -171,6 +171,11 @@ for (const width of [320, 390]) {
     const pane = page.locator('[data-slot="tabs-content"]').last();
     await pane.hover({ position: { x: 12, y: 12 } });
     await page.mouse.wheel(0, 10000);
+    // Prompt Coach (US-51.6) is the last General control.
+    await expect(
+      page.getByRole("checkbox", { name: "Prompt Coach", exact: true }),
+    ).toBeInViewport({ ratio: 1 });
+    await model.scrollIntoViewIfNeeded();
     await expect(model).toBeInViewport({ ratio: 1 });
     await model.tap();
     await expect(
@@ -731,3 +736,56 @@ test("sidebar marks the active item in expanded and icon modes and shows project
     .getByRole("button", { name: "Expand sidebar", exact: true })
     .click();
 });
+
+// US-61.3: the header's page help works by tap, keyboard and the ? shortcut,
+// and the sheet fits narrow screens.
+for (const width of [320, 1280]) {
+  test(`page help opens from the header and with ? at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 600 });
+    await page.goto("/projects");
+    const help = page.getByRole("button", { name: "Help for this page" });
+    await expect(help).toBeVisible();
+    const box = await help.boundingBox();
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+    expect(box!.height).toBeGreaterThanOrEqual(width < 768 ? 44 : 24);
+
+    if (width < 768) await help.tap();
+    else await help.click();
+    const sheet = page.getByRole("dialog", { name: "Help: Projects" });
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText("A project groups related chats");
+    // Measure after the slide-in animation settles.
+    await expect
+      .poll(async () => {
+        const box = await sheet.boundingBox();
+        return box && box.x >= 0 && box.x + box.width <= width + 1;
+      })
+      .toBe(true);
+    const more = sheet.getByRole("button", {
+      name: "Learn more about Project",
+    });
+    await more.click();
+    await expect(more).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+    await expect(help).toBeFocused();
+
+    // ? opens help from the page, but not while typing in the search box.
+    await page
+      .getByRole("searchbox")
+      .or(page.getByRole("textbox"))
+      .first()
+      .fill("");
+    await page.keyboard.type("?");
+    await expect(sheet).toHaveCount(0);
+    await page
+      .locator("main")
+      .first()
+      .click({ position: { x: 1, y: 1 } });
+    await page.keyboard.press("?");
+    await expect(sheet).toBeVisible();
+    await page.keyboard.press("Escape");
+  });
+}

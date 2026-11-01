@@ -1,4 +1,5 @@
 "use client";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { APIDownload } from "@/components/api-download";
 import { APIImage } from "@/components/api-image";
@@ -51,6 +52,7 @@ export const FileList = () => {
           className="bg-card"
           title="No files found"
           description="Upload or drop a file here, or clear the search."
+          help={<HelpTopic id="concept.file-scope" />}
         />
       ) : (
         <div className="bg-card flex min-h-0 w-full min-w-0 flex-1 flex-col">
