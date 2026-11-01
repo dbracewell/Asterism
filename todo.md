@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active; US-61.1 through US-61.4 are complete and US-61.5 is implemented, awaiting confirmation. EPIC-52 (US-52.1 through US-52.5) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-61 (in-app help) is next, followed by EPIC-53. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active; EPIC-53 (study tools from project files) is next, starting with US-53.1. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -26,31 +26,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51 is complete and archived; EPIC-52 is complete and archived; EPIC-61 is next (added 2026-11-01), then EPIC-53.
-
-### [EPIC-61: In-app help and guided onboarding](docs/epics/EPIC-61-IN-APP-HELP-AND-GUIDED-ONBOARDING.md)
-
-Confirmed (2026-11-01) to run next, before EPIC-53, so learners can understand personas, skills, learning modes and other composer concepts. The tour is built on existing shadcn/ui primitives (no tour library).
-
-- [x] US-61.1: Help content foundation
-  - [x] Write an ADR for help content ownership, the registry shape and the accuracy rules.
-  - [x] Implement the typed registry, glossary entries and the help popover component.
-  - [x] Migrate existing `HelpIcon` uses where appropriate; document the convention for new features.
-  - [x] Test registry completeness, admin-only filtering, keyboard and touch access, and contrast.
-- [x] US-61.2: Composer help
-  - [x] Add help triggers and mode descriptions to the composer controls.
-  - [x] Verify layout at narrow and short viewports; update composer tests.
-- [x] US-61.3: Page help panel
-  - [x] Implement the page help sheet, route mapping and the keyboard shortcut.
-  - [x] Write the page guides and update the empty states.
-  - [x] Test route coverage, the shortcut's focus rules and admin-only sections.
-- [x] US-61.4: Guided first-chat tour
-  - [x] Add per-user onboarding state to the user preferences API; regenerate the client.
-  - [x] Build the tour on existing shadcn/ui primitives, with skip, back and restart.
-  - [x] Test first-visit behavior, persistence, restart, skipped steps and accessibility.
-- [x] US-61.5: Help center page (awaiting confirmation)
-  - [x] Build the help center page with search and anchor links.
-  - [x] Add a Playwright check that every "Learn more" link resolves to an entry.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52 and EPIC-61 are complete and archived; EPIC-53 is next.
 
 ### [EPIC-53: Study tools from project files](docs/epics/EPIC-53-STUDY-TOOLS-FROM-PROJECT-FILES.md)
 

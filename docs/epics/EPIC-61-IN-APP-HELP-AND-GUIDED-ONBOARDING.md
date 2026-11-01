@@ -1,6 +1,6 @@
 # EPIC-61: In-app help and guided onboarding
 
-Status: in progress (US-61.5 awaiting confirmation; see [ADR-0032](../adr/0032-in-app-help-content.md)). Source: product discussion (2026-11-01), learner track.
+Status: complete (US-61.1 through US-61.5; see [ADR-0032](../adr/0032-in-app-help-content.md)). Source: product discussion (2026-11-01), learner track.
 
 ## Objective
 
