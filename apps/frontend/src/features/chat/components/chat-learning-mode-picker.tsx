@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -18,10 +27,21 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { GraduationCapIcon } from "lucide-react";
+import React from "react";
+import {
+  DelayedConfirmAction,
+  LOCK_OVERRIDE_DELAY_SECONDS,
+} from "./delayed-confirm-action";
 
 /** The server-owned catalog only changes with a deployment. */
 export function learningModeQueryOptions() {
   return { ...learningModeGetManyOptions({ client }), staleTime: Infinity };
+}
+
+/** The learning mode's display name from the server catalog. */
+export function useLearningModeName(mode: ChatInfo["learning_mode"]) {
+  const catalog = useQuery(learningModeQueryOptions());
+  return catalog.data?.modes.find((item) => item.id === mode)?.name;
 }
 
 export function LearningModePicker({
@@ -112,21 +132,50 @@ export function ExistingChatLearningModePicker({
     onSettled: () => onPendingChange(false),
     onSuccess: onSelected,
   });
+  // Leaving a locked mode for Standard waits for a delayed confirmation.
+  const [confirmStandard, setConfirmStandard] = React.useState(false);
+  const mode = info.learning_mode ?? "standard";
+  const modeName = useLearningModeName(mode) ?? "this learning mode";
+  const select = (learningMode: LearningModeId, overrideLock = false) =>
+    mutation.mutate({
+      path: { chat_id: info.id },
+      body: {
+        learning_mode: learningMode,
+        expected_learning_mode_revision: info.learning_mode_revision ?? 1,
+        ...(overrideLock ? { override_lock: true } : {}),
+      },
+    });
   return (
     <>
       <LearningModePicker
-        value={info.learning_mode ?? "standard"}
+        value={mode}
         disabled={disabled || mutation.isPending || !!mutation.error}
-        onChange={(learningMode) =>
-          mutation.mutate({
-            path: { chat_id: info.id },
-            body: {
-              learning_mode: learningMode,
-              expected_learning_mode_revision: info.learning_mode_revision ?? 1,
-            },
-          })
-        }
+        onChange={(learningMode) => {
+          if (learningMode === "standard" && info.learning_mode_locked)
+            setConfirmStandard(true);
+          else select(learningMode);
+        }}
       />
+      <AlertDialog open={confirmStandard} onOpenChange={setConfirmStandard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave {modeName} mode?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You locked this chat to keep working it out yourself. Switching to
+              Standard unlocks it, and the assistant will answer directly.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay in {modeName}</AlertDialogCancel>
+            <DelayedConfirmAction
+              delaySeconds={LOCK_OVERRIDE_DELAY_SECONDS}
+              onConfirm={() => select("standard", true)}
+            >
+              Switch to Standard
+            </DelayedConfirmAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {mutation.error && (
         <p
           role="alert"

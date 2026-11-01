@@ -8,6 +8,9 @@ import { useState } from "react";
 import { ChatSession } from "@/features/chat/components/chat-session";
 import { UserProvider } from "@/features/auth/components/user-context";
 import AppPage from "@/app/(main)/page";
+import { ChatHeaderContent } from "@/features/dashboard/components/app-header";
+
+const CHAT_ID = "77777777-7777-4777-8777-777777777777";
 function createCache() {
   const cache = new QueryClient({
     mutationCache: new MutationCache({
@@ -23,10 +26,12 @@ export function ChatModelSessionHarness({
   draft,
   timezone,
   showThinking = false,
+  showHeader = false,
 }: {
   draft: boolean;
   timezone: string;
   showThinking?: boolean;
+  showHeader?: boolean;
 }) {
   const [cache] = useState(createCache);
   return (
@@ -52,13 +57,15 @@ export function ChatModelSessionHarness({
         }}
       >
         <div className="relative flex h-screen flex-col">
+          {showHeader && !draft && (
+            <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
+              <ChatHeaderContent chatId={CHAT_ID} />
+            </header>
+          )}
           {draft ? (
             <AppPage />
           ) : (
-            <ChatSession
-              chatId="77777777-7777-4777-8777-777777777777"
-              jwtToken="test-token"
-            />
+            <ChatSession chatId={CHAT_ID} jwtToken="test-token" />
           )}
         </div>
       </UserProvider>

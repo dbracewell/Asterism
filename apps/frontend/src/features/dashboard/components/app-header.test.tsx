@@ -4,6 +4,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -13,7 +14,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import Link from "next/link";
 import { useState } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import UserProvider from "@/features/auth/components/user-context";
 import type { User } from "@/features/auth/types";
@@ -30,6 +31,7 @@ const mocks = vi.hoisted(() => ({
   move: vi.fn(),
   remove: vi.fn(),
   push: vi.fn(),
+  lock: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: mocks.push }),
@@ -67,6 +69,16 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
       default_revision: 1,
     }),
   }),
+  learningModeGetManyOptions: () => ({
+    queryKey: ["learning-modes"],
+    queryFn: async () => ({
+      modes: [
+        { id: "standard", name: "Standard", description: "", version: 1 },
+        { id: "tutor", name: "Tutor", description: "", version: 2 },
+      ],
+    }),
+  }),
+  chatLearningModeUpdateMutation: () => ({ mutationFn: mocks.lock }),
   chatSessionUpdateMutation: () => ({ mutationFn: mocks.rename }),
   chatSessionMoveMutation: () => ({ mutationFn: mocks.move }),
   chatSessionDeleteMutation: () => ({ mutationFn: mocks.remove }),
@@ -144,6 +156,7 @@ beforeEach(() => {
   mocks.chat.mockResolvedValue(chatInfo());
   mocks.rename.mockReset();
   mocks.move.mockReset();
+  mocks.lock.mockReset();
 });
 
 describe("headerRoute", () => {
@@ -333,6 +346,93 @@ describe("header chat actions", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
+  });
+});
+
+describe("learning mode lock", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("is absent for Standard chats", async () => {
+    route.pathname = "/c/c";
+    render(<Shell />);
+    await screen.findByRole("button", { name: "Chat actions" });
+    expect(screen.queryByRole("button", { name: /lock/i })).toBeNull();
+  });
+
+  it("locks the current learning mode after a confirmation", async () => {
+    route.pathname = "/c/c";
+    mocks.chat.mockResolvedValue(
+      chatInfo({ learning_mode: "tutor", learning_mode_revision: 2 }),
+    );
+    mocks.lock.mockImplementation(async () => {
+      mocks.chat.mockResolvedValue(
+        chatInfo({
+          learning_mode: "tutor",
+          learning_mode_revision: 3,
+          learning_mode_locked: true,
+        }),
+      );
+      return {};
+    });
+    render(<Shell />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Lock Tutor mode" }),
+    );
+    expect(await screen.findByRole("alertdialog")).toHaveTextContent(
+      "Lock Tutor mode?",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Lock mode" }));
+    expect(mocks.lock.mock.calls[0][0]).toEqual({
+      path: { chat_id: "c" },
+      body: {
+        learning_mode: "tutor",
+        expected_learning_mode_revision: 2,
+        locked: true,
+      },
+    });
+    const locked = await screen.findByRole("button", {
+      name: "Tutor mode locked. Unlock",
+    });
+    expect(locked).toHaveTextContent("Tutor locked");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("unlocks only after the delayed confirmation and reports a failure", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    route.pathname = "/c/c";
+    mocks.chat.mockResolvedValue(
+      chatInfo({
+        learning_mode: "tutor",
+        learning_mode_revision: 3,
+        learning_mode_locked: true,
+      }),
+    );
+    mocks.lock.mockRejectedValueOnce({ detail: "Busy" });
+    render(<Shell />);
+    await user.click(
+      await screen.findByRole("button", { name: "Tutor mode locked. Unlock" }),
+    );
+    const unlock = await screen.findByRole("button", { name: "Unlock" });
+    expect(unlock).toBeDisabled();
+    act(() => vi.advanceTimersByTime(5000));
+    expect(unlock).toBeEnabled();
+    await user.click(unlock);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not unlock the mode",
+    );
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(mocks.lock.mock.calls[0][0]).toEqual({
+      path: { chat_id: "c" },
+      body: {
+        learning_mode: "tutor",
+        expected_learning_mode_revision: 3,
+        locked: false,
+        override_lock: true,
+      },
+    });
   });
 });
 

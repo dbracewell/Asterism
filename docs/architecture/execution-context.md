@@ -175,6 +175,16 @@ turn's level under the current mode. Tutor offers every level; Review my work
 offers only `answer`, its confirmed corrected-solution reveal. See
 [ADR-0029](../adr/0029-branch-local-hint-levels.md).
 
+### Mode lock
+
+A learner can lock a chat's learning mode (never Standard). The lock is chat
+state, not prompt input: it adds no layer and is not pinned on turns. While
+locked, selecting Standard or unlocking needs `override_lock` on
+`PUT /chat/{id}/learning-mode`, and an `answer` hint request needs
+`override_lock` as well as `confirm_reveal`. The UI makes each override wait
+five seconds behind a confirmation. See
+[ADR-0031](../adr/0031-self-imposed-mode-lock.md).
+
 ### Attempts in Review my work
 
 Review mode adds no attachment path of its own. Attached files reach the model

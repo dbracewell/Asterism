@@ -2,7 +2,7 @@
 
 Completed Projects/Chat Context and provider-settings work remains in the existing archives. This checklist tracks the findings from the [2026-10-17 review](docs/reviews/2026-10-17-codebase-review.md). See the [sequenced roadmap](docs/plans/post-refactor-quality-roadmap.md).
 
-Archives: [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
+Archives: [2026-11-01](docs/archive/todo-completed-2026-11-01.md), [2026-10-31](docs/archive/todo-completed-2026-10-31.md), [2026-10-14](docs/archive/todo-completed-2026-10-14.md), [2026-10-15](docs/archive/todo-completed-2026-10-15.md), [2026-10-16](docs/archive/todo-completed-2026-10-16.md), [2026-10-17](docs/archive/todo-completed-2026-10-17.md), [2026-10-18](docs/archive/todo-completed-2026-10-18.md), [2026-10-19](docs/archive/todo-completed-2026-10-19.md), [2026-10-23](docs/archive/todo-completed-2026-10-23.md), [2026-10-24](docs/archive/todo-completed-2026-10-24.md), [2026-10-25](docs/archive/todo-completed-2026-10-25.md), [2026-10-27](docs/archive/todo-completed-2026-10-27.md), [2026-10-28](docs/archive/todo-completed-2026-10-28.md), [2026-10-29](docs/archive/todo-completed-2026-10-29.md), [2026-10-30](docs/archive/todo-completed-2026-10-30.md), and [US-28.3 verification](docs/archive/us-28.3-verification-2026-10-17.md).
 
 EPIC-31 and EPIC-32 are confirmed complete and archived above. US-38.1 through US-38.6 are confirmed complete and archived above. EPIC-33 (US-33.1 through US-33.3) is confirmed complete and archived above. EPIC-36 (US-36.1) and EPIC-37 (US-37.1) are complete; their already-merged implementation and completed checklists are reconciled and archived above. See the [2026-10-24 reassessment](docs/reviews/2026-10-24-open-epics-reassessment.md). EPIC-34 (US-34.1 through US-34.4) is confirmed complete and archived above, including finite chat admission and the current browser baseline; the old agent-selector repairs are already present. EPIC-35 (US-35.1 and US-35.2) is confirmed complete and archived above. Execute one story at a time; obtain completion confirmation before merge.
 
@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. US-52.1 (learning mode foundation), US-52.2 (Socratic tutor with tiered hints), US-52.3 (Explain it back) and US-52.4 (Review my work) are confirmed complete; US-52.5 is next. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active. EPIC-52 (US-52.1 through US-52.5) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-53 is next. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -26,28 +26,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51 is complete and archived; EPIC-52 is next.
-
-### [EPIC-52: Tutor mode and guided learning](docs/epics/EPIC-52-TUTOR-MODE-AND-GUIDED-LEARNING.md)
-
-- [x] US-52.1: Learning mode foundation
-  - [x] Write an ADR for the learning-mode layer, pinning and composition order.
-  - [x] Implement mode definitions, branch pinning and provenance; regenerate the client.
-  - [x] Build the composer picker and message chip.
-  - [x] Test pinning, resume, regeneration and layering with personas and skills.
-- [x] US-52.2: Socratic tutor with tiered hints
-  - [x] Add branch hint state and the level-raising actions; regenerate the client.
-  - [x] Write the tutor mode instructions for each level.
-  - [x] Build the hint controls and answer-reveal confirmation.
-  - [x] Add structural tests and tutor fixtures to the evaluation set.
-- [x] US-52.3: Explain it back
-  - [x] Write the mode instructions and a structured feedback format.
-  - [x] Render the feedback sections; add evaluation fixtures.
-- [x] US-52.4: Review my work
-  - [x] Write the mode instructions and reuse the reveal action.
-  - [x] Test attachment handling in Review mode; add evaluation fixtures.
-- [ ] US-52.5: Self-imposed mode lock
-  - [ ] Add the chat lock state and confirmation flow; test lock persistence and unlocking.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51 is complete and archived; EPIC-52 is complete and archived; EPIC-53 is next.
 
 ### [EPIC-53: Study tools from project files](docs/epics/EPIC-53-STUDY-TOOLS-FROM-PROJECT-FILES.md)
 

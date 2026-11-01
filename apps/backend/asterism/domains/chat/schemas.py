@@ -213,6 +213,8 @@ class ChatInfo(BaseModel):
     persona_revision: int = Field(default=1, ge=1)
     learning_mode: LearningModeId = LearningModeId.STANDARD
     learning_mode_revision: int = Field(default=1, ge=1)
+    # Self-imposed lock (US-52.5); never set while the mode is Standard.
+    learning_mode_locked: bool = False
     # The active branch's hint level, carried by its latest user turn.
     hint_level: HintLevel = HintLevel.NONE
     selected_model_id: uuid.UUID | None = None
@@ -304,13 +306,15 @@ class HintRequest(BaseModel):
 
     Raising must go up from the branch's current level (or from ``none`` with
     ``reset``) and must be offered by the chat's learning mode. Revealing the
-    answer needs ``confirm_reveal``.
+    answer needs ``confirm_reveal``; while the chat's learning mode is locked
+    it also needs ``override_lock``.
     """
 
     model_config = ConfigDict(extra="forbid")
     level: HintLevel
     reset: bool = False
     confirm_reveal: bool = False
+    override_lock: bool = False
 
 
 class NewChatRequest(BaseModel):
@@ -403,9 +407,18 @@ class ChatPersonaUpdate(BaseModel):
 
 
 class ChatLearningModeUpdate(BaseModel):
+    """Select the chat's learning mode and optionally lock or unlock it.
+
+    ``locked`` omitted keeps the current lock. Standard cannot be locked, so
+    selecting it releases the lock. Releasing a lock, explicitly or by
+    selecting Standard, needs ``override_lock``.
+    """
+
     model_config = ConfigDict(extra="forbid")
     learning_mode: LearningModeId
     expected_learning_mode_revision: int = Field(ge=1)
+    locked: bool | None = None
+    override_lock: bool = False
 
 
 class MessageCompareRequest(BaseModel):

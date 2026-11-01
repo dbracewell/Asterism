@@ -6,7 +6,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, ConflictException, NotFoundException
-from asterism.domains.agent.learning_inputs import HintLevel, LearningModeSnapshot
+from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeSnapshot
 from asterism.domains.learning.catalog import recheck_pinned, require_mode
 
 from .jobs import chat_jobs
@@ -30,7 +30,8 @@ def accept_hint_level(*, chat: ChatModel, previous: HintLevel, request: HintRequ
     """The hint level a new turn carries: unchanged, explicitly raised, or reset.
 
     Only the chat's current mode can offer a level, levels only rise within a
-    branch, and the answer needs an explicit confirmation.
+    branch, and the answer needs an explicit confirmation, plus a lock override
+    while the chat's mode is locked.
     """
     if request is None:
         return previous
@@ -45,6 +46,8 @@ def accept_hint_level(*, chat: ChatModel, previous: HintLevel, request: HintRequ
         raise ConflictException("Hint level is already at or above this level; reload before sending")
     if request.level == HintLevel.ANSWER and not request.confirm_reveal:
         raise BadDataException("Showing the answer needs confirmation")
+    if request.level == HintLevel.ANSWER and chat.learning_mode_locked and not request.override_lock:
+        raise ConflictException("Learning mode is locked; confirm the override to show the answer")
     return request.level
 
 
@@ -80,6 +83,18 @@ async def read_pending_or_current_mode(
     return current_mode_snapshot(chat, turn_hint_level(latest))
 
 
+def next_lock_state(chat: ChatModel, payload: ChatLearningModeUpdate) -> bool:
+    """The lock after this update; releasing a lock needs an explicit override."""
+    locked = chat.learning_mode_locked if payload.locked is None else payload.locked
+    if payload.learning_mode == LearningModeId.STANDARD:
+        if payload.locked:
+            raise BadDataException("Standard mode cannot be locked")
+        locked = False
+    if chat.learning_mode_locked and not locked and not payload.override_lock:
+        raise ConflictException("Learning mode is locked; confirm the override to leave it")
+    return locked
+
+
 async def change_chat_learning_mode(
     *,
     user_id: str,
@@ -103,8 +118,10 @@ async def change_chat_learning_mode(
             if chat.learning_mode_revision != payload.expected_learning_mode_revision:
                 raise ConflictException("Chat learning mode changed; reload and retry")
             require_mode(payload.learning_mode)
-            if chat.learning_mode != payload.learning_mode:
+            locked = next_lock_state(chat, payload)
+            if chat.learning_mode != payload.learning_mode or chat.learning_mode_locked != locked:
                 chat.learning_mode = payload.learning_mode
+                chat.learning_mode_locked = locked
                 chat.learning_mode_revision += 1
             await session.flush()
             result = await selection_info(chat, session)

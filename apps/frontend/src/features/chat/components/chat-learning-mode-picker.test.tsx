@@ -6,10 +6,10 @@ import {
   type LearningModeId,
 } from "@/lib/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
   ExistingChatLearningModePicker,
   LearningModePicker,
@@ -56,6 +56,10 @@ beforeEach(() => {
   changed.mockReset();
   ApiClient.__registry.set(api as never);
   api.learningModeGetMany.mockResolvedValue({ data: catalog });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 function setup(element: React.ReactNode) {
@@ -167,4 +171,103 @@ it("changes an existing chat's mode with its selection revision and recovers fro
   await waitFor(() => expect(changed).toHaveBeenCalledWith(current.info));
   await waitFor(() => expect(selector).toHaveTextContent("Review my work"));
   expect(screen.queryByText(/Could not change/)).toBeNull();
+});
+
+function LockedHarness({ info }: { info: ChatInfo }) {
+  return (
+    <ExistingChatLearningModePicker
+      info={info}
+      disabled={false}
+      onPendingChange={() => {}}
+      onSelected={changed}
+    />
+  );
+}
+
+const lockedTutor: ChatInfo = {
+  id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+  user_id: "a",
+  created_at: 0,
+  updated_at: 0,
+  learning_mode: "tutor",
+  learning_mode_revision: 2,
+  learning_mode_locked: true,
+};
+
+it("switches a locked chat between learning modes without a confirmation", async () => {
+  api.chatLearningModeUpdate.mockResolvedValueOnce({
+    data: {
+      ...lockedTutor,
+      learning_mode: "review",
+      learning_mode_revision: 3,
+    },
+  });
+  const user = userEvent.setup();
+  setup(<LockedHarness info={lockedTutor} />);
+  const selector = await screen.findByRole("combobox", {
+    name: "Learning mode",
+  });
+  await waitFor(() => expect(selector).toBeEnabled());
+  await user.click(selector);
+  await user.click(
+    await screen.findByRole("option", { name: "Review my work" }),
+  );
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(api.chatLearningModeUpdate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      body: { learning_mode: "review", expected_learning_mode_revision: 2 },
+    }),
+  );
+});
+
+it("makes a locked chat wait and confirm before switching to Standard", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  api.chatLearningModeUpdate.mockResolvedValueOnce({
+    data: {
+      ...lockedTutor,
+      learning_mode: "standard",
+      learning_mode_locked: false,
+      learning_mode_revision: 3,
+    },
+  });
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  setup(<LockedHarness info={lockedTutor} />);
+  const selector = await screen.findByRole("combobox", {
+    name: "Learning mode",
+  });
+  await waitFor(() => expect(selector).toBeEnabled());
+  await user.click(selector);
+  await user.click(await screen.findByRole("option", { name: "Standard" }));
+  const dialog = await screen.findByRole("alertdialog");
+  expect(dialog).toHaveTextContent("Leave Tutor mode?");
+  await user.click(screen.getByRole("button", { name: "Stay in Tutor" }));
+  expect(api.chatLearningModeUpdate).not.toHaveBeenCalled();
+  expect(selector).toHaveTextContent("Tutor");
+
+  await user.click(selector);
+  await user.click(await screen.findByRole("option", { name: "Standard" }));
+  const confirm = await screen.findByRole("button", {
+    name: "Switch to Standard",
+  });
+  expect(confirm).toBeDisabled();
+  act(() => vi.advanceTimersByTime(5000));
+  expect(confirm).toBeEnabled();
+  await user.click(confirm);
+  await waitFor(() =>
+    expect(api.chatLearningModeUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: {
+          learning_mode: "standard",
+          expected_learning_mode_revision: 2,
+          override_lock: true,
+        },
+      }),
+    ),
+  );
+  await waitFor(() =>
+    expect(changed.mock.calls[0]?.[0]).toMatchObject({
+      learning_mode: "standard",
+      learning_mode_locked: false,
+    }),
+  );
 });

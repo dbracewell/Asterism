@@ -1,6 +1,6 @@
 # EPIC-52: Tutor mode and guided learning
 
-Status: in progress (US-52.1 through US-52.4 complete; see [ADR-0028](../adr/0028-learning-mode-layer.md), [ADR-0029](../adr/0029-branch-local-hint-levels.md) and [ADR-0030](../adr/0030-structured-feedback-sections.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: complete (US-52.1 through US-52.5; see [ADR-0028](../adr/0028-learning-mode-layer.md), [ADR-0029](../adr/0029-branch-local-hint-levels.md), [ADR-0030](../adr/0030-structured-feedback-sections.md) and [ADR-0031](../adr/0031-self-imposed-mode-lock.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -93,4 +93,4 @@ Acceptance: the learner can lock a chat's mode. While locked, switching to
 Standard or revealing answers requires a deliberate confirmation with a short
 delay. The lock is recorded in the chat and visible in its header.
 
-- [ ] Add the chat lock state and confirmation flow; test lock persistence and unlocking.
+- [x] Add the chat lock state and confirmation flow; test lock persistence and unlocking.
