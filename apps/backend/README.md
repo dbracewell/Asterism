@@ -249,6 +249,15 @@ send-time template provenance. US-51.6 adds the opt-in, ephemeral prompt coach
 the chat-title model. Template text grants no capabilities. See the [prompt templates contract](../../docs/architecture/prompt-templates.md)
 and [ADR-0026](../../docs/adr/0026-prompt-template-documents-and-framework-catalog.md).
 
+## Study API
+
+US-53.1 adds the `study` domain: user-owned flashcard decks and cards under
+`/projects/{project_id}/study/decks`. Cards carry optional citations to project
+files, checked against the live project scope on write and marked available or
+unavailable on read. Deleting a project deletes its decks. See the [study tools
+contract](../../docs/architecture/study-tools.md) and
+[ADR-0033](../../docs/adr/0033-study-domain-and-scheduling.md).
+
 ## Learning-mode evaluation
 
 `asterism/domains/learning/evals/*.json` holds fixture cases that check whether

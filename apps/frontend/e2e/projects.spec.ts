@@ -63,6 +63,9 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
     (url) => url.pathname === `/api/py/projects/${P}`,
     (route) => route.fulfill({ json: base }),
   );
+  await page.route(`**/api/py/projects/${P}/study/decks?**`, (route) =>
+    route.fulfill({ json: { items: [], total: 0, page: 1, page_size: 20 } }),
+  );
   const scopes: Array<string | null> = [];
   await page.route("**/api/py/chat/?**", (route) => {
     scopes.push(new URL(route.request().url()).searchParams.get("project_id"));
@@ -99,6 +102,7 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
     page.getByRole("link", { name: "Project settings" }),
   ).toHaveAttribute("href", `/projects/${P}/settings`);
   await expect(page.getByText("No chats yet")).toBeVisible();
+  await expect(page.getByText("No decks yet")).toBeVisible();
   await page.screenshot({
     path: "test-results/projects-desktop.png",
     fullPage: true,

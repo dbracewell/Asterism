@@ -315,6 +315,36 @@ import type {
   SkillUpdateData,
   SkillUpdateError,
   SkillUpdateResponse,
+  StudyCardCreateData,
+  StudyCardCreateError,
+  StudyCardCreateResponse,
+  StudyCardDeleteData,
+  StudyCardDeleteError,
+  StudyCardDeleteResponse,
+  StudyCardGetManyData,
+  StudyCardGetManyError,
+  StudyCardGetManyResponse,
+  StudyCardGetOneData,
+  StudyCardGetOneError,
+  StudyCardGetOneResponse,
+  StudyCardUpdateData,
+  StudyCardUpdateError,
+  StudyCardUpdateResponse,
+  StudyDeckCreateData,
+  StudyDeckCreateError,
+  StudyDeckCreateResponse,
+  StudyDeckDeleteData,
+  StudyDeckDeleteError,
+  StudyDeckDeleteResponse,
+  StudyDeckGetManyData,
+  StudyDeckGetManyError,
+  StudyDeckGetManyResponse,
+  StudyDeckGetOneData,
+  StudyDeckGetOneError,
+  StudyDeckGetOneResponse,
+  StudyDeckUpdateData,
+  StudyDeckUpdateError,
+  StudyDeckUpdateResponse,
   SubAgentCreateData,
   SubAgentCreateError,
   SubAgentCreateResponse,
@@ -2309,6 +2339,376 @@ export const projectSubAgentCandidatesInfiniteOptions = (
       queryKey: projectSubAgentCandidatesInfiniteQueryKey(options),
     },
   );
+
+export const studyDeckGetManyQueryKey = (
+  options: Options<StudyDeckGetManyData>,
+) => createQueryKey("studyDeckGetMany", options);
+
+/**
+ * List Decks
+ */
+export const studyDeckGetManyOptions = (
+  options: Options<StudyDeckGetManyData>,
+) =>
+  queryOptions<
+    StudyDeckGetManyResponse,
+    StudyDeckGetManyError,
+    StudyDeckGetManyResponse,
+    ReturnType<typeof studyDeckGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyDeckGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyDeckGetManyQueryKey(options),
+  });
+
+export const studyDeckGetManyInfiniteQueryKey = (
+  options: Options<StudyDeckGetManyData>,
+): QueryKey<Options<StudyDeckGetManyData>> =>
+  createQueryKey("studyDeckGetMany", options, true);
+
+/**
+ * List Decks
+ */
+export const studyDeckGetManyInfiniteOptions = (
+  options: Options<StudyDeckGetManyData>,
+) =>
+  infiniteQueryOptions<
+    StudyDeckGetManyResponse,
+    StudyDeckGetManyError,
+    InfiniteData<StudyDeckGetManyResponse>,
+    QueryKey<Options<StudyDeckGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<StudyDeckGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<StudyDeckGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().studyDeckGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: studyDeckGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Deck
+ */
+export const studyDeckCreateMutation = (
+  options?: Partial<Options<StudyDeckCreateData>>,
+): UseMutationOptions<
+  StudyDeckCreateResponse,
+  StudyDeckCreateError,
+  Options<StudyDeckCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyDeckCreateResponse,
+    StudyDeckCreateError,
+    Options<StudyDeckCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyDeckCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Deck
+ */
+export const studyDeckDeleteMutation = (
+  options?: Partial<Options<StudyDeckDeleteData>>,
+): UseMutationOptions<
+  StudyDeckDeleteResponse,
+  StudyDeckDeleteError,
+  Options<StudyDeckDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyDeckDeleteResponse,
+    StudyDeckDeleteError,
+    Options<StudyDeckDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyDeckDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyDeckGetOneQueryKey = (
+  options: Options<StudyDeckGetOneData>,
+) => createQueryKey("studyDeckGetOne", options);
+
+/**
+ * Get Deck
+ */
+export const studyDeckGetOneOptions = (options: Options<StudyDeckGetOneData>) =>
+  queryOptions<
+    StudyDeckGetOneResponse,
+    StudyDeckGetOneError,
+    StudyDeckGetOneResponse,
+    ReturnType<typeof studyDeckGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyDeckGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyDeckGetOneQueryKey(options),
+  });
+
+/**
+ * Update Deck
+ */
+export const studyDeckUpdateMutation = (
+  options?: Partial<Options<StudyDeckUpdateData>>,
+): UseMutationOptions<
+  StudyDeckUpdateResponse,
+  StudyDeckUpdateError,
+  Options<StudyDeckUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyDeckUpdateResponse,
+    StudyDeckUpdateError,
+    Options<StudyDeckUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyDeckUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyCardGetManyQueryKey = (
+  options: Options<StudyCardGetManyData>,
+) => createQueryKey("studyCardGetMany", options);
+
+/**
+ * List Cards
+ */
+export const studyCardGetManyOptions = (
+  options: Options<StudyCardGetManyData>,
+) =>
+  queryOptions<
+    StudyCardGetManyResponse,
+    StudyCardGetManyError,
+    StudyCardGetManyResponse,
+    ReturnType<typeof studyCardGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyCardGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyCardGetManyQueryKey(options),
+  });
+
+export const studyCardGetManyInfiniteQueryKey = (
+  options: Options<StudyCardGetManyData>,
+): QueryKey<Options<StudyCardGetManyData>> =>
+  createQueryKey("studyCardGetMany", options, true);
+
+/**
+ * List Cards
+ */
+export const studyCardGetManyInfiniteOptions = (
+  options: Options<StudyCardGetManyData>,
+) =>
+  infiniteQueryOptions<
+    StudyCardGetManyResponse,
+    StudyCardGetManyError,
+    InfiniteData<StudyCardGetManyResponse>,
+    QueryKey<Options<StudyCardGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<StudyCardGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<StudyCardGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().studyCardGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: studyCardGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Card
+ */
+export const studyCardCreateMutation = (
+  options?: Partial<Options<StudyCardCreateData>>,
+): UseMutationOptions<
+  StudyCardCreateResponse,
+  StudyCardCreateError,
+  Options<StudyCardCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyCardCreateResponse,
+    StudyCardCreateError,
+    Options<StudyCardCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyCardCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Card
+ */
+export const studyCardDeleteMutation = (
+  options?: Partial<Options<StudyCardDeleteData>>,
+): UseMutationOptions<
+  StudyCardDeleteResponse,
+  StudyCardDeleteError,
+  Options<StudyCardDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyCardDeleteResponse,
+    StudyCardDeleteError,
+    Options<StudyCardDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyCardDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyCardGetOneQueryKey = (
+  options: Options<StudyCardGetOneData>,
+) => createQueryKey("studyCardGetOne", options);
+
+/**
+ * Get Card
+ */
+export const studyCardGetOneOptions = (options: Options<StudyCardGetOneData>) =>
+  queryOptions<
+    StudyCardGetOneResponse,
+    StudyCardGetOneError,
+    StudyCardGetOneResponse,
+    ReturnType<typeof studyCardGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyCardGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyCardGetOneQueryKey(options),
+  });
+
+/**
+ * Update Card
+ */
+export const studyCardUpdateMutation = (
+  options?: Partial<Options<StudyCardUpdateData>>,
+): UseMutationOptions<
+  StudyCardUpdateResponse,
+  StudyCardUpdateError,
+  Options<StudyCardUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyCardUpdateResponse,
+    StudyCardUpdateError,
+    Options<StudyCardUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyCardUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const appCaptioningGetQueryKey = (
   options?: Options<AppCaptioningGetData>,

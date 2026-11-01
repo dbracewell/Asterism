@@ -1,6 +1,6 @@
 # EPIC-53: Study tools from project files
 
-Status: proposed. Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-53.1). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -36,9 +36,9 @@ their own projects. Cards have a front, a back and optional citations. Access to
 foreign or missing projects returns the same 404. Deleting a project deletes its
 decks.
 
-- [ ] Write an ADR for the study domain and the scheduling algorithm choice.
-- [ ] Implement models, queries, service and router; regenerate the client.
-- [ ] Test owner and project isolation and cascade deletion.
+- [x] Write an ADR for the study domain and the scheduling algorithm choice.
+- [x] Implement models, queries, service and router; regenerate the client.
+- [x] Test owner and project isolation and cascade deletion.
 
 ## US-53.2: Generate flashcards from files
 

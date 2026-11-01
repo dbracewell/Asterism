@@ -27,6 +27,7 @@ from asterism.domains.projects.router import project_router
 from asterism.domains.prompt_templates.router import prompt_templates_router
 from asterism.domains.settings.settings_router import settings_router
 from asterism.domains.skills.router import skills_router
+from asterism.domains.study.router import study_router
 from asterism.domains.tools.router import tools_router
 from asterism.domains.user.persona_router import persona_router
 from asterism.domains.user.router import user_router
@@ -135,6 +136,7 @@ async def validation_exception_handler(
 app.include_router(file_router)
 app.include_router(chat_router)
 app.include_router(project_router)
+app.include_router(study_router)
 # The knowledge router is registered before the settings router: both serve
 # /settings/app/... paths, and the knowledge ones are more specific than the
 # generic /settings/app/{key} routes.

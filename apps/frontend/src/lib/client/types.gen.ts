@@ -3317,6 +3317,241 @@ export type SkillUpdate = {
 };
 
 /**
+ * StudyCard
+ */
+export type StudyCard = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Deck Id
+   */
+  deck_id: string;
+  /**
+   * Front
+   */
+  front: string;
+  /**
+   * Back
+   */
+  back: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * StudyCardCreate
+ */
+export type StudyCardCreate = {
+  /**
+   * Front
+   */
+  front: string;
+  /**
+   * Back
+   */
+  back: string;
+  /**
+   * Citations
+   */
+  citations?: Array<StudyCitationInput>;
+};
+
+/**
+ * StudyCardPage
+ */
+export type StudyCardPage = {
+  /**
+   * Items
+   */
+  items: Array<StudyCard>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * StudyCardUpdate
+ */
+export type StudyCardUpdate = {
+  /**
+   * Front
+   */
+  front?: string;
+  /**
+   * Back
+   */
+  back?: string;
+  /**
+   * Citations
+   */
+  citations?: Array<StudyCitationInput>;
+};
+
+/**
+ * StudyCitation
+ *
+ * A stored citation plus its live state.
+ *
+ * ``available`` is false when the file has left the project or was deleted;
+ * ``file_name`` is then null.
+ */
+export type StudyCitation = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * Chunk Id
+   */
+  chunk_id?: string | null;
+  /**
+   * Artifact Generation
+   */
+  artifact_generation?: number | null;
+  /**
+   * Excerpt
+   */
+  excerpt?: string | null;
+  /**
+   * Available
+   */
+  available: boolean;
+  /**
+   * File Name
+   */
+  file_name: string | null;
+};
+
+/**
+ * StudyCitationInput
+ *
+ * A reference to a project file, optionally narrowed to one retrieval chunk.
+ */
+export type StudyCitationInput = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * Chunk Id
+   */
+  chunk_id?: string | null;
+  /**
+   * Artifact Generation
+   */
+  artifact_generation?: number | null;
+  /**
+   * Excerpt
+   */
+  excerpt?: string | null;
+};
+
+/**
+ * StudyDeck
+ */
+export type StudyDeck = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Card Count
+   */
+  card_count: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * StudyDeckCreate
+ */
+export type StudyDeckCreate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description?: string;
+};
+
+/**
+ * StudyDeckPage
+ */
+export type StudyDeckPage = {
+  /**
+   * Items
+   */
+  items: Array<StudyDeck>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * StudyDeckUpdate
+ */
+export type StudyDeckUpdate = {
+  /**
+   * Name
+   */
+  name?: string;
+  /**
+   * Description
+   */
+  description?: string;
+};
+
+/**
  * SubAgentCreate
  */
 export type SubAgentCreate = {
@@ -6169,6 +6404,508 @@ export type ProjectSubAgentCandidatesResponses = {
 
 export type ProjectSubAgentCandidatesResponse =
   ProjectSubAgentCandidatesResponses[keyof ProjectSubAgentCandidatesResponses];
+
+export type StudyDeckGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/projects/{project_id}/study/decks";
+};
+
+export type StudyDeckGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyDeckGetManyError =
+  StudyDeckGetManyErrors[keyof StudyDeckGetManyErrors];
+
+export type StudyDeckGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyDeckPage;
+};
+
+export type StudyDeckGetManyResponse =
+  StudyDeckGetManyResponses[keyof StudyDeckGetManyResponses];
+
+export type StudyDeckCreateData = {
+  body: StudyDeckCreate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks";
+};
+
+export type StudyDeckCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyDeckCreateError =
+  StudyDeckCreateErrors[keyof StudyDeckCreateErrors];
+
+export type StudyDeckCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyDeck;
+};
+
+export type StudyDeckCreateResponse =
+  StudyDeckCreateResponses[keyof StudyDeckCreateResponses];
+
+export type StudyDeckDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}";
+};
+
+export type StudyDeckDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyDeckDeleteError =
+  StudyDeckDeleteErrors[keyof StudyDeckDeleteErrors];
+
+export type StudyDeckDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type StudyDeckDeleteResponse =
+  StudyDeckDeleteResponses[keyof StudyDeckDeleteResponses];
+
+export type StudyDeckGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}";
+};
+
+export type StudyDeckGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyDeckGetOneError =
+  StudyDeckGetOneErrors[keyof StudyDeckGetOneErrors];
+
+export type StudyDeckGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyDeck;
+};
+
+export type StudyDeckGetOneResponse =
+  StudyDeckGetOneResponses[keyof StudyDeckGetOneResponses];
+
+export type StudyDeckUpdateData = {
+  body: StudyDeckUpdate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}";
+};
+
+export type StudyDeckUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyDeckUpdateError =
+  StudyDeckUpdateErrors[keyof StudyDeckUpdateErrors];
+
+export type StudyDeckUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyDeck;
+};
+
+export type StudyDeckUpdateResponse =
+  StudyDeckUpdateResponses[keyof StudyDeckUpdateResponses];
+
+export type StudyCardGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/projects/{project_id}/study/decks/{deck_id}/cards";
+};
+
+export type StudyCardGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyCardGetManyError =
+  StudyCardGetManyErrors[keyof StudyCardGetManyErrors];
+
+export type StudyCardGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyCardPage;
+};
+
+export type StudyCardGetManyResponse =
+  StudyCardGetManyResponses[keyof StudyCardGetManyResponses];
+
+export type StudyCardCreateData = {
+  body: StudyCardCreate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}/cards";
+};
+
+export type StudyCardCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyCardCreateError =
+  StudyCardCreateErrors[keyof StudyCardCreateErrors];
+
+export type StudyCardCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyCard;
+};
+
+export type StudyCardCreateResponse =
+  StudyCardCreateResponses[keyof StudyCardCreateResponses];
+
+export type StudyCardDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+    /**
+     * Card Id
+     */
+    card_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}";
+};
+
+export type StudyCardDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyCardDeleteError =
+  StudyCardDeleteErrors[keyof StudyCardDeleteErrors];
+
+export type StudyCardDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type StudyCardDeleteResponse =
+  StudyCardDeleteResponses[keyof StudyCardDeleteResponses];
+
+export type StudyCardGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+    /**
+     * Card Id
+     */
+    card_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}";
+};
+
+export type StudyCardGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyCardGetOneError =
+  StudyCardGetOneErrors[keyof StudyCardGetOneErrors];
+
+export type StudyCardGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyCard;
+};
+
+export type StudyCardGetOneResponse =
+  StudyCardGetOneResponses[keyof StudyCardGetOneResponses];
+
+export type StudyCardUpdateData = {
+  body: StudyCardUpdate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+    /**
+     * Card Id
+     */
+    card_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}";
+};
+
+export type StudyCardUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyCardUpdateError =
+  StudyCardUpdateErrors[keyof StudyCardUpdateErrors];
+
+export type StudyCardUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyCard;
+};
+
+export type StudyCardUpdateResponse =
+  StudyCardUpdateResponses[keyof StudyCardUpdateResponses];
 
 export type AppCaptioningGetData = {
   body?: never;
