@@ -315,6 +315,36 @@ import type {
   SkillUpdateData,
   SkillUpdateErrors,
   SkillUpdateResponses,
+  StudyCardCreateData,
+  StudyCardCreateErrors,
+  StudyCardCreateResponses,
+  StudyCardDeleteData,
+  StudyCardDeleteErrors,
+  StudyCardDeleteResponses,
+  StudyCardGetManyData,
+  StudyCardGetManyErrors,
+  StudyCardGetManyResponses,
+  StudyCardGetOneData,
+  StudyCardGetOneErrors,
+  StudyCardGetOneResponses,
+  StudyCardUpdateData,
+  StudyCardUpdateErrors,
+  StudyCardUpdateResponses,
+  StudyDeckCreateData,
+  StudyDeckCreateErrors,
+  StudyDeckCreateResponses,
+  StudyDeckDeleteData,
+  StudyDeckDeleteErrors,
+  StudyDeckDeleteResponses,
+  StudyDeckGetManyData,
+  StudyDeckGetManyErrors,
+  StudyDeckGetManyResponses,
+  StudyDeckGetOneData,
+  StudyDeckGetOneErrors,
+  StudyDeckGetOneResponses,
+  StudyDeckUpdateData,
+  StudyDeckUpdateErrors,
+  StudyDeckUpdateResponses,
   SubAgentCreateData,
   SubAgentCreateErrors,
   SubAgentCreateResponses,
@@ -1671,6 +1701,232 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/sub-agent-candidates",
       ...options,
+    });
+  }
+
+  /**
+   * List Decks
+   */
+  public studyDeckGetMany<ThrowOnError extends boolean = false>(
+    options: Options<StudyDeckGetManyData, ThrowOnError>,
+  ): RequestResult<
+    StudyDeckGetManyResponses,
+    StudyDeckGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyDeckGetManyResponses,
+      StudyDeckGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Deck
+   */
+  public studyDeckCreate<ThrowOnError extends boolean = false>(
+    options: Options<StudyDeckCreateData, ThrowOnError>,
+  ): RequestResult<
+    StudyDeckCreateResponses,
+    StudyDeckCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyDeckCreateResponses,
+      StudyDeckCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete Deck
+   */
+  public studyDeckDelete<ThrowOnError extends boolean = false>(
+    options: Options<StudyDeckDeleteData, ThrowOnError>,
+  ): RequestResult<
+    StudyDeckDeleteResponses,
+    StudyDeckDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      StudyDeckDeleteResponses,
+      StudyDeckDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Deck
+   */
+  public studyDeckGetOne<ThrowOnError extends boolean = false>(
+    options: Options<StudyDeckGetOneData, ThrowOnError>,
+  ): RequestResult<
+    StudyDeckGetOneResponses,
+    StudyDeckGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyDeckGetOneResponses,
+      StudyDeckGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Deck
+   */
+  public studyDeckUpdate<ThrowOnError extends boolean = false>(
+    options: Options<StudyDeckUpdateData, ThrowOnError>,
+  ): RequestResult<
+    StudyDeckUpdateResponses,
+    StudyDeckUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).patch<
+      StudyDeckUpdateResponses,
+      StudyDeckUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Cards
+   */
+  public studyCardGetMany<ThrowOnError extends boolean = false>(
+    options: Options<StudyCardGetManyData, ThrowOnError>,
+  ): RequestResult<
+    StudyCardGetManyResponses,
+    StudyCardGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyCardGetManyResponses,
+      StudyCardGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/cards",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Card
+   */
+  public studyCardCreate<ThrowOnError extends boolean = false>(
+    options: Options<StudyCardCreateData, ThrowOnError>,
+  ): RequestResult<
+    StudyCardCreateResponses,
+    StudyCardCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyCardCreateResponses,
+      StudyCardCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/cards",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete Card
+   */
+  public studyCardDelete<ThrowOnError extends boolean = false>(
+    options: Options<StudyCardDeleteData, ThrowOnError>,
+  ): RequestResult<
+    StudyCardDeleteResponses,
+    StudyCardDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      StudyCardDeleteResponses,
+      StudyCardDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Card
+   */
+  public studyCardGetOne<ThrowOnError extends boolean = false>(
+    options: Options<StudyCardGetOneData, ThrowOnError>,
+  ): RequestResult<
+    StudyCardGetOneResponses,
+    StudyCardGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyCardGetOneResponses,
+      StudyCardGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Card
+   */
+  public studyCardUpdate<ThrowOnError extends boolean = false>(
+    options: Options<StudyCardUpdateData, ThrowOnError>,
+  ): RequestResult<
+    StudyCardUpdateResponses,
+    StudyCardUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).patch<
+      StudyCardUpdateResponses,
+      StudyCardUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

@@ -58,3 +58,32 @@ async def require_owned_project(*, user_id: str, project_id: uuid.UUID, session:
     if project is None:
         raise NotFoundException("Project not found")
     return project
+
+
+async def project_member_files(
+    *,
+    user_id: str,
+    project_id: uuid.UUID,
+    file_ids: set[uuid.UUID],
+    session: AsyncSession,
+) -> dict[uuid.UUID, str]:
+    """Map the requested ids that are live members of one owned project to file names.
+
+    Ids that are foreign, deleted or not attached to the project are absent from
+    the result. Callers prove project ownership first; the owner filters here keep
+    the query safe even if that check is raced.
+    """
+    if not file_ids:
+        return {}
+    memberships = select(ProjectFileModel.file_id).where(
+        ProjectFileModel.user_id == user_id,
+        ProjectFileModel.project_id == project_id,
+        ProjectFileModel.file_id.in_(file_ids),
+    )
+    rows = await session.execute(
+        select_owned_files(user_id=user_id)
+        .with_only_columns(UserFileModel.id, UserFileModel.filename)
+        .order_by(None)
+        .where(UserFileModel.id.in_(memberships)),
+    )
+    return {file_id: filename for file_id, filename in rows}

@@ -1522,6 +1522,115 @@ export const zSkillUpdate = z.object({
 });
 
 /**
+ * StudyCitation
+ *
+ * A stored citation plus its live state.
+ *
+ * ``available`` is false when the file has left the project or was deleted;
+ * ``file_name`` is then null.
+ */
+export const zStudyCitation = z.object({
+  file_id: z.uuid(),
+  chunk_id: z.string().min(1).max(200).nullish(),
+  artifact_generation: z.int().gte(0).lte(2147483647).nullish(),
+  excerpt: z.string().max(1000).nullish(),
+  available: z.boolean(),
+  file_name: z.string().nullable(),
+});
+
+/**
+ * StudyCard
+ */
+export const zStudyCard = z.object({
+  id: z.uuid(),
+  deck_id: z.uuid(),
+  front: z.string(),
+  back: z.string(),
+  citations: z.array(zStudyCitation),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * StudyCardPage
+ */
+export const zStudyCardPage = z.object({
+  items: z.array(zStudyCard),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
+});
+
+/**
+ * StudyCitationInput
+ *
+ * A reference to a project file, optionally narrowed to one retrieval chunk.
+ */
+export const zStudyCitationInput = z.object({
+  file_id: z.uuid(),
+  chunk_id: z.string().min(1).max(200).nullish(),
+  artifact_generation: z.int().gte(0).lte(2147483647).nullish(),
+  excerpt: z.string().max(1000).nullish(),
+});
+
+/**
+ * StudyCardCreate
+ */
+export const zStudyCardCreate = z.object({
+  front: z.string().min(1).max(4000),
+  back: z.string().min(1).max(4000),
+  citations: z.array(zStudyCitationInput).max(8).optional(),
+});
+
+/**
+ * StudyCardUpdate
+ */
+export const zStudyCardUpdate = z.object({
+  front: z.string().min(1).max(4000).optional(),
+  back: z.string().min(1).max(4000).optional(),
+  citations: z.array(zStudyCitationInput).optional(),
+});
+
+/**
+ * StudyDeck
+ */
+export const zStudyDeck = z.object({
+  id: z.uuid(),
+  project_id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  card_count: z.int().gte(0),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * StudyDeckCreate
+ */
+export const zStudyDeckCreate = z.object({
+  name: z.string().min(1).max(120),
+  description: z.string().max(2000).optional().default(""),
+});
+
+/**
+ * StudyDeckPage
+ */
+export const zStudyDeckPage = z.object({
+  items: z.array(zStudyDeck),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
+});
+
+/**
+ * StudyDeckUpdate
+ */
+export const zStudyDeckUpdate = z.object({
+  name: z.string().min(1).max(120).optional(),
+  description: z.string().max(2000).optional(),
+});
+
+/**
  * SubAgentCreate
  */
 export const zSubAgentCreate = z.object({
@@ -2694,6 +2803,125 @@ export const zProjectSubAgentCandidatesQuery = z.object({
  * Successful Response
  */
 export const zProjectSubAgentCandidatesResponse = zProjectSubAgentList;
+
+export const zStudyDeckGetManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+export const zStudyDeckGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyDeckGetManyResponse = zStudyDeckPage;
+
+export const zStudyDeckCreateBody = zStudyDeckCreate;
+
+export const zStudyDeckCreatePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyDeckCreateResponse = zStudyDeck;
+
+export const zStudyDeckDeletePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyDeckDeleteResponse = z.void();
+
+export const zStudyDeckGetOnePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyDeckGetOneResponse = zStudyDeck;
+
+export const zStudyDeckUpdateBody = zStudyDeckUpdate;
+
+export const zStudyDeckUpdatePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyDeckUpdateResponse = zStudyDeck;
+
+export const zStudyCardGetManyPath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+});
+
+export const zStudyCardGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyCardGetManyResponse = zStudyCardPage;
+
+export const zStudyCardCreateBody = zStudyCardCreate;
+
+export const zStudyCardCreatePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyCardCreateResponse = zStudyCard;
+
+export const zStudyCardDeletePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+  card_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyCardDeleteResponse = z.void();
+
+export const zStudyCardGetOnePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+  card_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyCardGetOneResponse = zStudyCard;
+
+export const zStudyCardUpdateBody = zStudyCardUpdate;
+
+export const zStudyCardUpdatePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+  card_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyCardUpdateResponse = zStudyCard;
 
 /**
  * Successful Response
