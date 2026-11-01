@@ -94,13 +94,20 @@ it("offers the four modes with their descriptions", async () => {
   expect(selector).toHaveTextContent("Standard");
   await user.click(selector);
   const options = await screen.findAllByRole("option");
-  expect(options.map((option) => option.textContent)).toEqual([
+  const names = options.map(
+    (option) =>
+      document.getElementById(option.getAttribute("aria-labelledby") ?? "")
+        ?.textContent,
+  );
+  expect(names).toEqual([
     "Standard",
     "Tutor",
     "Explain-back",
     "Review my work",
   ]);
-  expect(options[1]).toHaveAttribute("title", "Guides you.");
+  // Each mode explains itself in the list, not only on hover.
+  expect(options[1]).toHaveAccessibleDescription("Guides you.");
+  expect(options[1]).toHaveTextContent("Guides you.");
   await user.click(screen.getByRole("option", { name: "Tutor" }));
   expect(changed).toHaveBeenLastCalledWith("tutor");
   expect(selector).toHaveTextContent("Tutor");

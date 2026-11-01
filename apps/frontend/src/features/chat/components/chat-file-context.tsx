@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { FormSkeleton } from "@/components/loading-skeletons";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { useState } from "react";
@@ -50,7 +51,10 @@ export function ChatFileContext({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85dvh] sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Files in context</DialogTitle>
+          <div className="flex items-center gap-1">
+            <DialogTitle>Files in context</DialogTitle>
+            <HelpTopic id="concept.file-scope" side="bottom" />
+          </div>
           <DialogDescription>
             {projectId
               ? "Project files shared with every chat, plus attachments in this chat."

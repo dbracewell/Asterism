@@ -200,7 +200,13 @@ test("reviews an attached attempt and confirms before showing a corrected soluti
   await expect(controls).toContainText("Help level: Feedback only", {
     timeout: 15_000,
   });
-  await expect(controls.getByRole("button")).toHaveText(["Show solution"]);
+  // Review offers only the reveal, plus help explaining it (US-61.2).
+  await expect(
+    controls.getByRole("button").filter({ hasText: /\S/ }),
+  ).toHaveText(["Show solution"]);
+  await expect(
+    controls.getByRole("button", { name: "Help: Show answer" }),
+  ).toBeVisible();
 
   // A plain attempt with an attachment never asks for a reveal.
   await page.getByLabel("Choose attachments").setInputFiles({

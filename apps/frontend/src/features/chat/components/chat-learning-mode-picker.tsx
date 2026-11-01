@@ -70,7 +70,7 @@ export function LearningModePicker({
           <GraduationCapIcon className="text-muted-foreground" />
           <SelectValue placeholder="Learning mode" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-w-[min(18rem,calc(100vw-1rem))]">
           <SelectGroup>
             {!selected && (
               <SelectItem value={value} disabled>
@@ -81,7 +81,7 @@ export function LearningModePicker({
               <SelectItem
                 key={mode.id}
                 value={mode.id}
-                title={mode.description}
+                description={mode.description}
               >
                 {mode.name}
               </SelectItem>

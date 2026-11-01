@@ -118,12 +118,20 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  description,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+  /** A second line shown in the list only, not in the closed trigger. */
+  description?: React.ReactNode;
+}) {
+  const id = React.useId();
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      aria-labelledby={description ? `${id}-label` : undefined}
+      aria-describedby={description ? `${id}-description` : undefined}
       className={cn(
+        description && "flex-col items-start gap-0 pr-7",
         "focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground rounded-control relative flex min-h-7 w-full cursor-default items-center gap-2 px-2 py-1 text-xs/relaxed outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
@@ -134,7 +142,18 @@ function SelectItem({
           <CheckIcon className="pointer-events-none" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <SelectPrimitive.ItemText id={description ? `${id}-label` : undefined}>
+        {children}
+      </SelectPrimitive.ItemText>
+      {description && (
+        <span
+          id={`${id}-description`}
+          data-slot="select-item-description"
+          className="text-muted-foreground font-normal whitespace-normal"
+        >
+          {description}
+        </span>
+      )}
     </SelectPrimitive.Item>
   );
 }

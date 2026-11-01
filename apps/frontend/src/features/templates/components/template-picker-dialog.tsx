@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { FormSkeleton, ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,10 @@ function TemplateList({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Prompt templates</DialogTitle>
+        <div className="flex items-center gap-1">
+          <DialogTitle>Prompt templates</DialogTitle>
+          <HelpTopic id="concept.template" side="bottom" />
+        </div>
         <DialogDescription>
           Pick a framework, fill in the form and watch the prompt take shape.
         </DialogDescription>

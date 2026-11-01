@@ -65,8 +65,17 @@ learning-mode picker shows a one-line description of each mode next to its name
 and explains what changes when the learner picks it. Help does not crowd the
 composer at 320px width or at short heights.
 
-- [ ] Add help triggers and mode descriptions to the composer controls.
-- [ ] Verify layout at narrow and short viewports; update composer tests.
+Delivered as: one "Chat controls" help button in the composer toolbar that
+walks through every toolbar control and links to each concept (separate buttons
+beside each picker would crowd the 320px toolbar), plus inline help where there
+is room: skill chips, hint controls (hint levels, or the reveal step in Review
+my work), Files in context, Prompt templates and Prompt review. The mode picker
+lists each mode's one-line description, exposed as the option's accessible
+description. The mode-lock dialog already explains the lock; the header control
+gets page-level help in US-61.3.
+
+- [x] Add help triggers and mode descriptions to the composer controls.
+- [x] Verify layout at narrow and short viewports; update composer tests.
 
 ## US-61.3: Page help panel
 

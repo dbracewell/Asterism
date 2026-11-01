@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -149,6 +150,13 @@ export function ChatHintControls({
           {resetPending && " (from your next message)"}
         </span>
       </span>
+      <HelpTopic
+        id={
+          info.learning_mode === "review"
+            ? "concept.answer-reveal"
+            : "concept.hint-levels"
+        }
+      />
       {steps.map((level) => (
         <Button
           key={level}

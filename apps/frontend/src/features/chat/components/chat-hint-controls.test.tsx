@@ -154,12 +154,22 @@ it("starts a new problem from the next message and resets before raising", async
   );
 });
 
-it("disables every control while busy", async () => {
+it("disables every control while busy but keeps help available", async () => {
   render(<Harness level="nudge" disabled />);
   await screen.findByRole("group", { name: "Hint controls" });
+  const help = screen.getByRole("button", { name: "Help: Hint levels" });
+  expect(help).toBeEnabled();
   for (const button of screen.getAllByRole("button")) {
-    expect(button).toBeDisabled();
+    if (button !== help) expect(button).toBeDisabled();
   }
+});
+
+it("explains the reveal step in Review my work", async () => {
+  render(<Harness mode="review" />);
+  await screen.findByRole("group", { name: "Hint controls" });
+  expect(
+    screen.getByRole("button", { name: "Help: Show answer" }),
+  ).toBeInTheDocument();
 });
 
 it("offers Review only the confirmed corrected solution", async () => {
