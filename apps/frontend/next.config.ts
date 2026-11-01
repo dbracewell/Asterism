@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     turbopackFileSystemCacheForDev: false,
+    // The rewrite proxy above defaults to a 30-second timeout. Study generation
+    // (card drafts, quizzes, summaries, short-answer grading) may run up to 150
+    // seconds by design, so allow longer. Docker's nginx already allows 3600s.
+    proxyTimeout: 180_000,
     // middlewareClientMaxBodySize: "500mb",
     proxyClientMaxBodySize: "500mb",
   },

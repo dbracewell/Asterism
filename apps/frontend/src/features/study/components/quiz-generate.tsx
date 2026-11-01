@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import type {
   StudyQuizGenerateRequest,
@@ -35,6 +34,7 @@ import {
   useSourceFiles,
   useStudyModel,
 } from "./source-fields";
+import { PendingStatus } from "./pending-status";
 
 type StudyQuestionKind = StudyQuizGenerateRequest["kinds"][number];
 
@@ -70,9 +70,9 @@ export function QuizGenerate({ projectId }: { projectId: string }) {
         }}
       />
       {generate.isPending && (
-        <p role="status" className="flex items-center gap-2 text-sm">
-          <Spinner /> Writing questions. This can take a minute or two.
-        </p>
+        <PendingStatus>
+          Writing questions. This can take a minute or two.
+        </PendingStatus>
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">

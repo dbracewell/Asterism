@@ -14,7 +14,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { client } from "@/lib/api";
 import type {
@@ -40,6 +39,7 @@ import {
   useSourceFiles,
   useStudyModel,
 } from "./source-fields";
+import { PendingStatus } from "./pending-status";
 
 export const MAX_DRAFT_CARDS = 30;
 export const MAX_DRAFT_FILES = MAX_SOURCE_FILES;
@@ -184,9 +184,9 @@ function DraftWorkspace({
         }}
       />
       {generate.isPending && (
-        <p role="status" className="flex items-center gap-2 text-sm">
-          <Spinner /> Drafting cards. This can take a minute or two.
-        </p>
+        <PendingStatus>
+          Drafting cards. This can take a minute or two.
+        </PendingStatus>
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">

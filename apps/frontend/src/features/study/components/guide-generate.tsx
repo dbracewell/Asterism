@@ -10,7 +10,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import type {
   StudyGuideDraft,
@@ -25,6 +24,7 @@ import { addDays, daySpan, formatDay, isoDate } from "../lib/dates";
 import { studyErrorDetail } from "../lib/error-detail";
 import { SaveNote } from "./save-note";
 import { StudyModelField, useStudyModel } from "./source-fields";
+import { PendingStatus } from "./pending-status";
 
 export const MAX_GUIDE_DAYS = 60;
 
@@ -71,9 +71,7 @@ export function GuideGenerate({ projectId }: { projectId: string }) {
         }}
       />
       {generate.isPending && (
-        <p role="status" className="flex items-center gap-2 text-sm">
-          <Spinner /> Planning your study days.
-        </p>
+        <PendingStatus>Planning your study days.</PendingStatus>
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">

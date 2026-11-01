@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Spinner } from "@/components/ui/spinner";
 import { client } from "@/lib/api";
 import type { StudySummaryDraft, StudySummaryRequest } from "@/lib/client";
 import { studySummaryGenerateMutation } from "@/lib/client/@tanstack/react-query.gen";
@@ -28,6 +27,7 @@ import {
   useSourceFiles,
   useStudyModel,
 } from "./source-fields";
+import { PendingStatus } from "./pending-status";
 
 type Depth = StudySummaryRequest["depth"];
 
@@ -88,9 +88,9 @@ export function SummaryGenerate({ projectId }: { projectId: string }) {
         }}
       />
       {generate.isPending && (
-        <p role="status" className="flex items-center gap-2 text-sm">
-          <Spinner /> Summarizing. This can take a minute or two.
-        </p>
+        <PendingStatus>
+          Summarizing. This can take a minute or two.
+        </PendingStatus>
       )}
       {generate.error && (
         <p role="alert" className="text-destructive text-sm">

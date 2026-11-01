@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { client } from "@/lib/api";
 import type {
@@ -34,6 +33,7 @@ import { studyErrorDetail } from "../lib/error-detail";
 import { QUIZ_RESPONSE_MAX, optionLetter } from "../lib/quiz";
 import { quizDescription } from "./quiz-page";
 import { StudyModelField, useStudyModel } from "./source-fields";
+import { PendingStatus } from "./pending-status";
 
 type Answer = { choice?: number; text?: string };
 
@@ -174,12 +174,11 @@ function QuizForm({ projectId, quiz }: { projectId: string; quiz: StudyQuiz }) {
           </p>
         )}
         {submit.isPending && (
-          <p role="status" className="flex items-center gap-2 text-sm">
-            <Spinner />{" "}
+          <PendingStatus>
             {writesShortAnswers
               ? "Grading your answers. Short answers can take a moment."
               : "Grading your answers."}
-          </p>
+          </PendingStatus>
         )}
         <div>
           <Button type="submit" disabled={busy || blocked}>
