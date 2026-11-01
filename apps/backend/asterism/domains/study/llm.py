@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from asterism.core.exceptions import CodedException
+from asterism.core.exceptions import BadDataException, CodedException
 from asterism.domains.chatgpt.availability import ModelAvailability
 from asterism.domains.llm.factory import create_llm_client
 from asterism.domains.llm.schemas import LLMClientProtocol, LLMMessage
@@ -44,3 +44,11 @@ async def resolve_model(*, user_id: str, model_id: uuid.UUID, session: AsyncSess
         return event.content or ""
 
     return StudyModel(id=row.id, name=row.display_name or info.name, call=call)
+
+
+async def visible_model_name(*, user_id: str, model_id: uuid.UUID, session: AsyncSession) -> str:
+    """The name of a model the caller can see (availability is not required), or 400."""
+    row = await session.scalar(select_visible_models(user_id).where(LLMModel.id == model_id))
+    if row is None:
+        raise BadDataException("Choose a model you can use")
+    return row.display_name or row.name

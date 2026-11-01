@@ -7,6 +7,7 @@ from sqlalchemy import String, and_, case, func, literal, select, union_all
 from .models import (
     StudyCardModel,
     StudyDeckModel,
+    StudyNoteModel,
     StudyQuizAnswerModel,
     StudyQuizAttemptModel,
     StudyQuizModel,
@@ -247,3 +248,11 @@ def select_cards_with_deck_name(*, user_id: str, card_ids: list[uuid.UUID]):
         .join(StudyDeckModel, and_(StudyDeckModel.id == StudyCardModel.deck_id, StudyDeckModel.user_id == user_id))
         .where(StudyCardModel.user_id == user_id, StudyCardModel.id.in_(card_ids))
     )
+
+
+# --- Notes (US-53.6) -----------------------------------------------------------
+
+
+def select_owned_notes(*, user_id: str, project_id: uuid.UUID):
+    """Notes of one project owned by the caller; unordered so callers can add filters."""
+    return select(StudyNoteModel).where(StudyNoteModel.user_id == user_id, StudyNoteModel.project_id == project_id)

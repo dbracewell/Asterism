@@ -263,7 +263,9 @@ multiple-choice grading, model-graded short answers and saved attempts
 ([ADR-0035](../../docs/adr/0035-practice-quizzes-and-grading.md)). US-53.5 derives
 weak spots from attempts and review logs at `…/study/weak-spots` and builds
 practice quizzes from them
-([ADR-0036](../../docs/adr/0036-weak-spots-and-practice.md)). See the [study tools
+([ADR-0036](../../docs/adr/0036-weak-spots-and-practice.md)). US-53.6 adds cited
+summary drafts, study-guide drafts and saved study notes
+([ADR-0037](../../docs/adr/0037-study-notes-summaries-and-guides.md)). See the [study tools
 contract](../../docs/architecture/study-tools.md) and
 [ADR-0033](../../docs/adr/0033-study-domain-and-scheduling.md).
 

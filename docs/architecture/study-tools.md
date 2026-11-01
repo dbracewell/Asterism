@@ -137,3 +137,31 @@ The project page shows **Weak spots** once there are any: the five most recent,
 each linked to its quiz or deck, and **Practice weak spots**, which builds a
 quiz of up to 10 questions and opens it for taking. Practice quizzes are listed
 with the other quizzes and described as built from weak spots.
+
+## Summaries, study guides and notes (US-53.6)
+
+Decisions are recorded in [ADR-0037](../adr/0037-study-notes-summaries-and-guides.md).
+
+| Route                                                 | Behavior                                                                  |
+| ----------------------------------------------------- | ------------------------------------------------------------------------- |
+| `POST /projects/{project_id}/study/summaries`         | Draft `{sections, body, citations, files}`; `no-store`, nothing saved     |
+| `POST /projects/{project_id}/study/study-guides`      | Draft day plan `{days, body}` linked to decks and quizzes; nothing saved  |
+| `GET`/`POST /projects/{project_id}/study/notes`       | Note page (newest update first, no bodies) / save a draft (201)          |
+| `GET`/`PATCH`/`DELETE …/notes/{note_id}`              | Read with live citations, edit title and body, delete                     |
+
+Summaries take `{model_id, depth: simple|standard|expert, file_ids}` and use the
+card-draft pipeline and limits; each section cites the chunks it draws on and
+each file reports `used` or `failed`. Study guides take `{model_id, start_date,
+exam_date, minutes_per_day}` (1–60 days, 10–480 minutes). The model sees deck,
+quiz and file names with counts and scores, never file contents; only deck and
+quiz labels it was given become links. An unusable plan is a 502 and a timeout a
+504. Notes take `{kind, title, body, citations, model_id?}`; citations must be
+in the project's live scope and the model must be one the learner can see.
+
+The project page lists **Study notes** with **Summarize files**
+(`/projects/{projectId}/study/summaries/new`) and **Plan for an exam**
+(`…/study/guides/new`). Both pages show the draft, then **Save as note** with an
+editable title, which opens the note at `…/study/notes/{noteId}`. The note page
+renders the body through `MarkdownViewer`, lists its sources, and offers edit
+(title and Markdown body) and delete. Generating again with an unsaved draft
+asks for confirmation.

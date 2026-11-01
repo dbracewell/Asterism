@@ -38,6 +38,7 @@ from asterism.domains.skills.models import AgentSkillModel, SkillModel  # noqa: 
 from asterism.domains.study.models import (  # noqa: F401
     StudyCardModel,
     StudyDeckModel,
+    StudyNoteModel,
     StudyQuizAnswerModel,
     StudyQuizAttemptModel,
     StudyQuizModel,

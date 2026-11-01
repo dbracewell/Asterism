@@ -3656,6 +3656,269 @@ export type StudyDraftFileResult = {
 };
 
 /**
+ * StudyGuideDay
+ */
+export type StudyGuideDay = {
+  /**
+   * Date
+   */
+  date: string;
+  /**
+   * Focus
+   */
+  focus: string;
+  /**
+   * Tasks
+   */
+  tasks: Array<StudyGuideTask>;
+};
+
+/**
+ * StudyGuideDraft
+ *
+ * An unsaved day-by-day plan. Days the model left out are rest days. ``body`` is what a save stores.
+ */
+export type StudyGuideDraft = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Start Date
+   */
+  start_date: string;
+  /**
+   * Exam Date
+   */
+  exam_date: string;
+  /**
+   * Minutes Per Day
+   */
+  minutes_per_day: number;
+  /**
+   * Days
+   */
+  days: Array<StudyGuideDay>;
+  /**
+   * Body
+   */
+  body: string;
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Model Name
+   */
+  model_name: string;
+};
+
+/**
+ * StudyGuideLink
+ *
+ * A deck or quiz in this project that a task points to.
+ */
+export type StudyGuideLink = {
+  /**
+   * Kind
+   */
+  kind: "deck" | "quiz";
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+};
+
+/**
+ * StudyGuideRequest
+ *
+ * Plan study days from ``start_date`` through ``exam_date`` (inclusive, at most 60 days).
+ */
+export type StudyGuideRequest = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Start Date
+   */
+  start_date: string;
+  /**
+   * Exam Date
+   */
+  exam_date: string;
+  /**
+   * Minutes Per Day
+   */
+  minutes_per_day?: number;
+};
+
+/**
+ * StudyGuideTask
+ */
+export type StudyGuideTask = {
+  /**
+   * Text
+   */
+  text: string;
+  /**
+   * Minutes
+   */
+  minutes?: number | null;
+  link?: StudyGuideLink | null;
+};
+
+/**
+ * StudyNote
+ *
+ * A note. ``body`` is untrusted Markdown; citations are checked against live scope.
+ */
+export type StudyNote = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Kind
+   */
+  kind: "summary" | "study_guide";
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Model Name
+   */
+  model_name: string | null;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+  /**
+   * Body
+   */
+  body: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
+  /**
+   * Model Id
+   */
+  model_id: string | null;
+};
+
+/**
+ * StudyNoteCreate
+ *
+ * Save a draft as a note. ``model_id`` records which model wrote it.
+ */
+export type StudyNoteCreate = {
+  /**
+   * Kind
+   */
+  kind: "summary" | "study_guide";
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Body
+   */
+  body: string;
+  /**
+   * Citations
+   */
+  citations?: Array<StudyCitationInput>;
+  /**
+   * Model Id
+   */
+  model_id?: string | null;
+};
+
+/**
+ * StudyNotePage
+ */
+export type StudyNotePage = {
+  /**
+   * Items
+   */
+  items: Array<StudyNoteSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * StudyNoteSummary
+ */
+export type StudyNoteSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Kind
+   */
+  kind: "summary" | "study_guide";
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Model Name
+   */
+  model_name: string | null;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * StudyNoteUpdate
+ */
+export type StudyNoteUpdate = {
+  /**
+   * Title
+   */
+  title?: string;
+  /**
+   * Body
+   */
+  body?: string;
+};
+
+/**
  * StudyProjectSummary
  */
 export type StudyProjectSummary = {
@@ -4256,6 +4519,124 @@ export type StudyReviewRequest = {
    * Expected Reps
    */
   expected_reps: number;
+};
+
+/**
+ * StudySourceFileResult
+ *
+ * What happened to one requested file. ``message`` explains a failure.
+ */
+export type StudySourceFileResult = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * File Name
+   */
+  file_name: string | null;
+  /**
+   * Status
+   */
+  status: "used" | "failed";
+  /**
+   * Message
+   */
+  message?: string | null;
+  /**
+   * Section Count
+   */
+  section_count: number;
+  /**
+   * Truncated
+   */
+  truncated?: boolean;
+};
+
+/**
+ * StudySummaryDraft
+ *
+ * An unsaved summary. ``body`` and ``citations`` are what a save stores.
+ */
+export type StudySummaryDraft = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Depth
+   */
+  depth: "simple" | "standard" | "expert";
+  /**
+   * Sections
+   */
+  sections: Array<StudySummarySection>;
+  /**
+   * Body
+   */
+  body: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
+  /**
+   * Files
+   */
+  files: Array<StudySourceFileResult>;
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Model Name
+   */
+  model_name: string;
+};
+
+/**
+ * StudySummaryRequest
+ *
+ * Summarize chosen files, or the whole project scope when ``file_ids`` is null.
+ */
+export type StudySummaryRequest = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Depth
+   */
+  depth: "simple" | "standard" | "expert";
+  /**
+   * File Ids
+   */
+  file_ids?: Array<string> | null;
+};
+
+/**
+ * StudySummarySection
+ */
+export type StudySummarySection = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * File Name
+   */
+  file_name: string | null;
+  /**
+   * Heading
+   */
+  heading: string;
+  /**
+   * Text
+   */
+  text: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
 };
 
 /**
@@ -8401,6 +8782,351 @@ export type StudyWeakSpotPracticeResponses = {
 
 export type StudyWeakSpotPracticeResponse =
   StudyWeakSpotPracticeResponses[keyof StudyWeakSpotPracticeResponses];
+
+export type StudyNoteGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/projects/{project_id}/study/notes";
+};
+
+export type StudyNoteGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyNoteGetManyError =
+  StudyNoteGetManyErrors[keyof StudyNoteGetManyErrors];
+
+export type StudyNoteGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyNotePage;
+};
+
+export type StudyNoteGetManyResponse =
+  StudyNoteGetManyResponses[keyof StudyNoteGetManyResponses];
+
+export type StudyNoteCreateData = {
+  body: StudyNoteCreate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/notes";
+};
+
+export type StudyNoteCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyNoteCreateError =
+  StudyNoteCreateErrors[keyof StudyNoteCreateErrors];
+
+export type StudyNoteCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyNote;
+};
+
+export type StudyNoteCreateResponse =
+  StudyNoteCreateResponses[keyof StudyNoteCreateResponses];
+
+export type StudyNoteDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Note Id
+     */
+    note_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/notes/{note_id}";
+};
+
+export type StudyNoteDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyNoteDeleteError =
+  StudyNoteDeleteErrors[keyof StudyNoteDeleteErrors];
+
+export type StudyNoteDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type StudyNoteDeleteResponse =
+  StudyNoteDeleteResponses[keyof StudyNoteDeleteResponses];
+
+export type StudyNoteGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Note Id
+     */
+    note_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/notes/{note_id}";
+};
+
+export type StudyNoteGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyNoteGetOneError =
+  StudyNoteGetOneErrors[keyof StudyNoteGetOneErrors];
+
+export type StudyNoteGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyNote;
+};
+
+export type StudyNoteGetOneResponse =
+  StudyNoteGetOneResponses[keyof StudyNoteGetOneResponses];
+
+export type StudyNoteUpdateData = {
+  body: StudyNoteUpdate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Note Id
+     */
+    note_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/notes/{note_id}";
+};
+
+export type StudyNoteUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyNoteUpdateError =
+  StudyNoteUpdateErrors[keyof StudyNoteUpdateErrors];
+
+export type StudyNoteUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyNote;
+};
+
+export type StudyNoteUpdateResponse =
+  StudyNoteUpdateResponses[keyof StudyNoteUpdateResponses];
+
+export type StudySummaryGenerateData = {
+  body: StudySummaryRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/summaries";
+};
+
+export type StudySummaryGenerateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudySummaryGenerateError =
+  StudySummaryGenerateErrors[keyof StudySummaryGenerateErrors];
+
+export type StudySummaryGenerateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudySummaryDraft;
+};
+
+export type StudySummaryGenerateResponse =
+  StudySummaryGenerateResponses[keyof StudySummaryGenerateResponses];
+
+export type StudyGuideGenerateData = {
+  body: StudyGuideRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/study-guides";
+};
+
+export type StudyGuideGenerateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+  /**
+   * Bad Gateway
+   */
+  502: ErrorDetail;
+  /**
+   * Gateway Timeout
+   */
+  504: ErrorDetail;
+};
+
+export type StudyGuideGenerateError =
+  StudyGuideGenerateErrors[keyof StudyGuideGenerateErrors];
+
+export type StudyGuideGenerateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyGuideDraft;
+};
+
+export type StudyGuideGenerateResponse =
+  StudyGuideGenerateResponses[keyof StudyGuideGenerateResponses];
 
 export type AppCaptioningGetData = {
   body?: never;

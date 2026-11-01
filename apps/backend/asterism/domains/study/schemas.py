@@ -4,16 +4,19 @@ Requests reject unknown fields. PATCH payloads treat omission as "unchanged" and
 reject explicit null. Clients never send owner, project or derived fields.
 """
 
+import datetime
 import uuid
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationInfo, field_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from .models import (
     MAX_CARD_SIDE_CHARS,
     MAX_DECK_DESCRIPTION_CHARS,
     MAX_DECK_NAME_CHARS,
+    MAX_NOTE_BODY_CHARS,
+    MAX_NOTE_TITLE_CHARS,
     MAX_QUIZ_TITLE_CHARS,
     MAX_RESPONSE_CHARS,
 )
@@ -451,3 +454,170 @@ class StudyWeakSpotPracticeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     question_count: int = Field(default=10, ge=1, le=MAX_PRACTICE_QUESTIONS)
+
+
+# ---------------------------------------------------------------------------
+# Notes, summaries and study guides (US-53.6, ADR-0037).
+# Summaries and guides are drafts; only an explicit save creates a note.
+# ---------------------------------------------------------------------------
+
+MAX_NOTE_CITATIONS = 50
+MAX_GUIDE_DAYS = 60
+
+NoteTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_NOTE_TITLE_CHARS)]
+NoteBody = Annotated[str, StringConstraints(min_length=1, max_length=MAX_NOTE_BODY_CHARS, pattern=r"\S")]
+StudyNoteKind = Literal["summary", "study_guide"]
+StudySummaryDepth = Literal["simple", "standard", "expert"]
+
+
+class StudyNoteCreate(BaseModel):
+    """Save a draft as a note. ``model_id`` records which model wrote it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: StudyNoteKind
+    title: NoteTitle
+    body: NoteBody
+    citations: list[StudyCitationInput] = Field(default_factory=list, max_length=MAX_NOTE_CITATIONS)
+    model_id: uuid.UUID | None = None
+
+
+class StudyNoteUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: NoteTitle | SkipJsonSchema[None] = None
+    body: NoteBody | SkipJsonSchema[None] = None
+
+    @field_validator("title", "body", mode="before")
+    @classmethod
+    def reject_explicit_null(cls, value: object) -> object:
+        return _reject_null(value)
+
+
+class StudyNoteSummary(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    kind: StudyNoteKind
+    title: str
+    model_name: str | None
+    created_at: int
+    updated_at: int
+
+
+class StudyNote(StudyNoteSummary):
+    """A note. ``body`` is untrusted Markdown; citations are checked against live scope."""
+
+    body: str
+    citations: list[StudyCitation]
+    model_id: uuid.UUID | None
+
+
+class StudyNotePage(BaseModel):
+    items: list[StudyNoteSummary]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+
+
+class StudySourceFileResult(BaseModel):
+    """What happened to one requested file. ``message`` explains a failure."""
+
+    file_id: uuid.UUID
+    file_name: str | None
+    status: Literal["used", "failed"]
+    message: str | None = None
+    section_count: int = Field(ge=0)
+    truncated: bool = False
+
+
+class StudySummaryRequest(BaseModel):
+    """Summarize chosen files, or the whole project scope when ``file_ids`` is null."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: uuid.UUID
+    depth: StudySummaryDepth
+    file_ids: list[uuid.UUID] | None = Field(default=None, min_length=1, max_length=MAX_DRAFT_FILES)
+
+    @field_validator("file_ids")
+    @classmethod
+    def unique_files(cls, value: list[uuid.UUID] | None) -> list[uuid.UUID] | None:
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("Each file can be chosen once")
+        return value
+
+
+class StudySummarySection(BaseModel):
+    file_id: uuid.UUID
+    file_name: str | None
+    heading: str
+    text: str
+    citations: list[StudyCitation] = Field(min_length=1)
+
+
+class StudySummaryDraft(BaseModel):
+    """An unsaved summary. ``body`` and ``citations`` are what a save stores."""
+
+    title: str
+    depth: StudySummaryDepth
+    sections: list[StudySummarySection]
+    body: str
+    citations: list[StudyCitation]
+    files: list[StudySourceFileResult]
+    model_id: uuid.UUID
+    model_name: str
+
+
+class StudyGuideRequest(BaseModel):
+    """Plan study days from ``start_date`` through ``exam_date`` (inclusive, at most 60 days)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: uuid.UUID
+    start_date: datetime.date
+    exam_date: datetime.date
+    minutes_per_day: int = Field(default=60, ge=10, le=480)
+
+    @field_validator("exam_date")
+    @classmethod
+    def within_range(cls, value: datetime.date, info: ValidationInfo) -> datetime.date:
+        start = info.data.get("start_date")
+        if start is not None:
+            if value < start:
+                raise ValueError("The exam date must be on or after the start date")
+            if (value - start).days + 1 > MAX_GUIDE_DAYS:
+                raise ValueError(f"Plan at most {MAX_GUIDE_DAYS} days")
+        return value
+
+
+class StudyGuideLink(BaseModel):
+    """A deck or quiz in this project that a task points to."""
+
+    kind: Literal["deck", "quiz"]
+    id: uuid.UUID
+    title: str
+
+
+class StudyGuideTask(BaseModel):
+    text: str
+    minutes: int | None = Field(default=None, ge=1, le=480)
+    link: StudyGuideLink | None = None
+
+
+class StudyGuideDay(BaseModel):
+    date: datetime.date
+    focus: str
+    tasks: list[StudyGuideTask]
+
+
+class StudyGuideDraft(BaseModel):
+    """An unsaved day-by-day plan. Days the model left out are rest days. ``body`` is what a save stores."""
+
+    title: str
+    start_date: datetime.date
+    exam_date: datetime.date
+    minutes_per_day: int
+    days: list[StudyGuideDay]
+    body: str
+    model_id: uuid.UUID
+    model_name: str

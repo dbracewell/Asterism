@@ -351,6 +351,24 @@ import type {
   StudyDeckUpdateData,
   StudyDeckUpdateError,
   StudyDeckUpdateResponse,
+  StudyGuideGenerateData,
+  StudyGuideGenerateError,
+  StudyGuideGenerateResponse,
+  StudyNoteCreateData,
+  StudyNoteCreateError,
+  StudyNoteCreateResponse,
+  StudyNoteDeleteData,
+  StudyNoteDeleteError,
+  StudyNoteDeleteResponse,
+  StudyNoteGetManyData,
+  StudyNoteGetManyError,
+  StudyNoteGetManyResponse,
+  StudyNoteGetOneData,
+  StudyNoteGetOneError,
+  StudyNoteGetOneResponse,
+  StudyNoteUpdateData,
+  StudyNoteUpdateError,
+  StudyNoteUpdateResponse,
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetError,
   StudyProjectSummaryGetResponse,
@@ -381,6 +399,9 @@ import type {
   StudyReviewQueueGetData,
   StudyReviewQueueGetError,
   StudyReviewQueueGetResponse,
+  StudySummaryGenerateData,
+  StudySummaryGenerateError,
+  StudySummaryGenerateResponse,
   StudyWeakSpotGetManyData,
   StudyWeakSpotGetManyError,
   StudyWeakSpotGetManyResponse,
@@ -3249,6 +3270,255 @@ export const studyWeakSpotPracticeMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().studyWeakSpotPractice({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyNoteGetManyQueryKey = (
+  options: Options<StudyNoteGetManyData>,
+) => createQueryKey("studyNoteGetMany", options);
+
+/**
+ * List Notes
+ *
+ * Notes, most recently updated first.
+ */
+export const studyNoteGetManyOptions = (
+  options: Options<StudyNoteGetManyData>,
+) =>
+  queryOptions<
+    StudyNoteGetManyResponse,
+    StudyNoteGetManyError,
+    StudyNoteGetManyResponse,
+    ReturnType<typeof studyNoteGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyNoteGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyNoteGetManyQueryKey(options),
+  });
+
+export const studyNoteGetManyInfiniteQueryKey = (
+  options: Options<StudyNoteGetManyData>,
+): QueryKey<Options<StudyNoteGetManyData>> =>
+  createQueryKey("studyNoteGetMany", options, true);
+
+/**
+ * List Notes
+ *
+ * Notes, most recently updated first.
+ */
+export const studyNoteGetManyInfiniteOptions = (
+  options: Options<StudyNoteGetManyData>,
+) =>
+  infiniteQueryOptions<
+    StudyNoteGetManyResponse,
+    StudyNoteGetManyError,
+    InfiniteData<StudyNoteGetManyResponse>,
+    QueryKey<Options<StudyNoteGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<StudyNoteGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<StudyNoteGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().studyNoteGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: studyNoteGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Note
+ *
+ * Save a summary or study guide draft as a note.
+ */
+export const studyNoteCreateMutation = (
+  options?: Partial<Options<StudyNoteCreateData>>,
+): UseMutationOptions<
+  StudyNoteCreateResponse,
+  StudyNoteCreateError,
+  Options<StudyNoteCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyNoteCreateResponse,
+    StudyNoteCreateError,
+    Options<StudyNoteCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyNoteCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Note
+ */
+export const studyNoteDeleteMutation = (
+  options?: Partial<Options<StudyNoteDeleteData>>,
+): UseMutationOptions<
+  StudyNoteDeleteResponse,
+  StudyNoteDeleteError,
+  Options<StudyNoteDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyNoteDeleteResponse,
+    StudyNoteDeleteError,
+    Options<StudyNoteDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyNoteDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyNoteGetOneQueryKey = (
+  options: Options<StudyNoteGetOneData>,
+) => createQueryKey("studyNoteGetOne", options);
+
+/**
+ * Get Note
+ */
+export const studyNoteGetOneOptions = (options: Options<StudyNoteGetOneData>) =>
+  queryOptions<
+    StudyNoteGetOneResponse,
+    StudyNoteGetOneError,
+    StudyNoteGetOneResponse,
+    ReturnType<typeof studyNoteGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyNoteGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyNoteGetOneQueryKey(options),
+  });
+
+/**
+ * Update Note
+ */
+export const studyNoteUpdateMutation = (
+  options?: Partial<Options<StudyNoteUpdateData>>,
+): UseMutationOptions<
+  StudyNoteUpdateResponse,
+  StudyNoteUpdateError,
+  Options<StudyNoteUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyNoteUpdateResponse,
+    StudyNoteUpdateError,
+    Options<StudyNoteUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyNoteUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Summarize
+ *
+ * Draft a cited summary of project files; nothing is saved.
+ */
+export const studySummaryGenerateMutation = (
+  options?: Partial<Options<StudySummaryGenerateData>>,
+): UseMutationOptions<
+  StudySummaryGenerateResponse,
+  StudySummaryGenerateError,
+  Options<StudySummaryGenerateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudySummaryGenerateResponse,
+    StudySummaryGenerateError,
+    Options<StudySummaryGenerateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studySummaryGenerate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Plan Study Guide
+ *
+ * Draft a day-by-day plan to the exam date, linked to decks and quizzes; nothing is saved.
+ */
+export const studyGuideGenerateMutation = (
+  options?: Partial<Options<StudyGuideGenerateData>>,
+): UseMutationOptions<
+  StudyGuideGenerateResponse,
+  StudyGuideGenerateError,
+  Options<StudyGuideGenerateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyGuideGenerateResponse,
+    StudyGuideGenerateError,
+    Options<StudyGuideGenerateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyGuideGenerate({
         ...options,
         ...fnOptions,
         throwOnError: true,
