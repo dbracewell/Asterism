@@ -1678,6 +1678,125 @@ export const zStudyCardDraftBatch = z.object({
 });
 
 /**
+ * StudyGuideLink
+ *
+ * A deck or quiz in this project that a task points to.
+ */
+export const zStudyGuideLink = z.object({
+  kind: z.enum(["deck", "quiz"]),
+  id: z.uuid(),
+  title: z.string(),
+});
+
+/**
+ * StudyGuideRequest
+ *
+ * Plan study days from ``start_date`` through ``exam_date`` (inclusive, at most 60 days).
+ */
+export const zStudyGuideRequest = z.object({
+  model_id: z.uuid(),
+  start_date: z.iso.date(),
+  exam_date: z.iso.date(),
+  minutes_per_day: z.int().gte(10).lte(480).optional().default(60),
+});
+
+/**
+ * StudyGuideTask
+ */
+export const zStudyGuideTask = z.object({
+  text: z.string(),
+  minutes: z.int().gte(1).lte(480).nullish(),
+  link: zStudyGuideLink.nullish(),
+});
+
+/**
+ * StudyGuideDay
+ */
+export const zStudyGuideDay = z.object({
+  date: z.iso.date(),
+  focus: z.string(),
+  tasks: z.array(zStudyGuideTask),
+});
+
+/**
+ * StudyGuideDraft
+ *
+ * An unsaved day-by-day plan. Days the model left out are rest days. ``body`` is what a save stores.
+ */
+export const zStudyGuideDraft = z.object({
+  title: z.string(),
+  start_date: z.iso.date(),
+  exam_date: z.iso.date(),
+  minutes_per_day: z.int(),
+  days: z.array(zStudyGuideDay),
+  body: z.string(),
+  model_id: z.uuid(),
+  model_name: z.string(),
+});
+
+/**
+ * StudyNote
+ *
+ * A note. ``body`` is untrusted Markdown; citations are checked against live scope.
+ */
+export const zStudyNote = z.object({
+  id: z.uuid(),
+  project_id: z.uuid(),
+  kind: z.enum(["summary", "study_guide"]),
+  title: z.string(),
+  model_name: z.string().nullable(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  body: z.string(),
+  citations: z.array(zStudyCitation),
+  model_id: z.uuid().nullable(),
+});
+
+/**
+ * StudyNoteCreate
+ *
+ * Save a draft as a note. ``model_id`` records which model wrote it.
+ */
+export const zStudyNoteCreate = z.object({
+  kind: z.enum(["summary", "study_guide"]),
+  title: z.string().min(1).max(120),
+  body: z.string().min(1).max(100000).regex(/\S/),
+  citations: z.array(zStudyCitationInput).max(50).optional(),
+  model_id: z.uuid().nullish(),
+});
+
+/**
+ * StudyNoteSummary
+ */
+export const zStudyNoteSummary = z.object({
+  id: z.uuid(),
+  project_id: z.uuid(),
+  kind: z.enum(["summary", "study_guide"]),
+  title: z.string(),
+  model_name: z.string().nullable(),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * StudyNotePage
+ */
+export const zStudyNotePage = z.object({
+  items: z.array(zStudyNoteSummary),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
+});
+
+/**
+ * StudyNoteUpdate
+ */
+export const zStudyNoteUpdate = z.object({
+  title: z.string().min(1).max(120).optional(),
+  body: z.string().min(1).max(100000).regex(/\S/).optional(),
+});
+
+/**
  * StudyProjectSummary
  */
 export const zStudyProjectSummary = z.object({
@@ -1936,6 +2055,58 @@ export const zStudyReviewQueue = z.object({
 export const zStudyReviewRequest = z.object({
   rating: z.enum(["again", "hard", "good", "easy"]),
   expected_reps: z.int().gte(0).lte(2147483647),
+});
+
+/**
+ * StudySourceFileResult
+ *
+ * What happened to one requested file. ``message`` explains a failure.
+ */
+export const zStudySourceFileResult = z.object({
+  file_id: z.uuid(),
+  file_name: z.string().nullable(),
+  status: z.enum(["used", "failed"]),
+  message: z.string().nullish(),
+  section_count: z.int().gte(0),
+  truncated: z.boolean().optional().default(false),
+});
+
+/**
+ * StudySummaryRequest
+ *
+ * Summarize chosen files, or the whole project scope when ``file_ids`` is null.
+ */
+export const zStudySummaryRequest = z.object({
+  model_id: z.uuid(),
+  depth: z.enum(["simple", "standard", "expert"]),
+  file_ids: z.array(z.uuid()).min(1).max(10).nullish(),
+});
+
+/**
+ * StudySummarySection
+ */
+export const zStudySummarySection = z.object({
+  file_id: z.uuid(),
+  file_name: z.string().nullable(),
+  heading: z.string(),
+  text: z.string(),
+  citations: z.array(zStudyCitation).min(1),
+});
+
+/**
+ * StudySummaryDraft
+ *
+ * An unsaved summary. ``body`` and ``citations`` are what a save stores.
+ */
+export const zStudySummaryDraft = z.object({
+  title: z.string(),
+  depth: z.enum(["simple", "standard", "expert"]),
+  sections: z.array(zStudySummarySection),
+  body: z.string(),
+  citations: z.array(zStudyCitation),
+  files: z.array(zStudySourceFileResult),
+  model_id: z.uuid(),
+  model_name: z.string(),
 });
 
 /**
@@ -3439,6 +3610,85 @@ export const zStudyWeakSpotPracticePath = z.object({
  * Successful Response
  */
 export const zStudyWeakSpotPracticeResponse = zStudyQuiz;
+
+export const zStudyNoteGetManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+export const zStudyNoteGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(20),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyNoteGetManyResponse = zStudyNotePage;
+
+export const zStudyNoteCreateBody = zStudyNoteCreate;
+
+export const zStudyNoteCreatePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyNoteCreateResponse = zStudyNote;
+
+export const zStudyNoteDeletePath = z.object({
+  project_id: z.uuid(),
+  note_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyNoteDeleteResponse = z.void();
+
+export const zStudyNoteGetOnePath = z.object({
+  project_id: z.uuid(),
+  note_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyNoteGetOneResponse = zStudyNote;
+
+export const zStudyNoteUpdateBody = zStudyNoteUpdate;
+
+export const zStudyNoteUpdatePath = z.object({
+  project_id: z.uuid(),
+  note_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyNoteUpdateResponse = zStudyNote;
+
+export const zStudySummaryGenerateBody = zStudySummaryRequest;
+
+export const zStudySummaryGeneratePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudySummaryGenerateResponse = zStudySummaryDraft;
+
+export const zStudyGuideGenerateBody = zStudyGuideRequest;
+
+export const zStudyGuideGeneratePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyGuideGenerateResponse = zStudyGuideDraft;
 
 /**
  * Successful Response

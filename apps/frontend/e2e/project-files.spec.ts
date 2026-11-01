@@ -135,6 +135,9 @@ test("shares explorer controls for project membership, library picking, upload, 
   await page.route(`**/api/py/projects/${P}/study/weak-spots?**`, (route) =>
     route.fulfill({ json: { items: [], total: 0 } }),
   );
+  await page.route(`**/api/py/projects/${P}/study/notes?**`, (route) =>
+    route.fulfill({ json: { items: [], total: 0, page: 1, page_size: 20 } }),
+  );
   await page.goto("/e2e/projects?view=overview");
   const explorer = page.getByRole("region", {
     name: "Project files",

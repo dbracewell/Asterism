@@ -108,5 +108,8 @@ Acceptance: the learner can ask for a summary of selected files at three depths
 and produces a day-by-day plan linked to decks and quizzes. Both can be saved to
 the project as a note, or as a file once EPIC-56 lands.
 
-- [ ] Implement depth-controlled summaries and study-guide generation.
-- [ ] Build the save action; test citation scope and plan generation.
+- [x] Implement depth-controlled summaries and study-guide generation.
+- [x] Build the save action; test citation scope and plan generation.
+
+Notes are saved in a new `study_notes` record; saving as a file waits for
+EPIC-56 ([ADR-0037](../adr/0037-study-notes-summaries-and-guides.md)).

@@ -2,11 +2,14 @@
 import UserProvider from "@/features/auth/components/user-context";
 import type { User } from "@/features/auth/types";
 import { CardDraftReview } from "@/features/study/components/card-draft-review";
+import { GuideGenerate } from "@/features/study/components/guide-generate";
+import { NotePage } from "@/features/study/components/note-page";
 import { ProjectWeakSpots } from "@/features/study/components/project-weak-spots";
 import { QuizGenerate } from "@/features/study/components/quiz-generate";
 import { QuizResults } from "@/features/study/components/quiz-results";
 import { QuizTake } from "@/features/study/components/quiz-take";
 import { ReviewSession } from "@/features/study/components/review-session";
+import { SummaryGenerate } from "@/features/study/components/summary-generate";
 import { StudyDeckPage } from "@/features/study/components/study-deck-page";
 import {
   MutationCache,
@@ -20,6 +23,7 @@ export const STUDY_PROJECT_ID = "11111111-1111-4111-8111-111111111111";
 export const STUDY_DECK_ID = "22222222-2222-4222-8222-222222222222";
 export const STUDY_QUIZ_ID = "33333333-3333-4333-8333-333333333333";
 export const STUDY_ATTEMPT_ID = "44444444-4444-4444-8444-444444444444";
+export const STUDY_NOTE_ID = "55555555-5555-4555-8555-555555555551";
 const TEST_USER: User = {
   id: "test",
   name: "Study tester",
@@ -55,7 +59,13 @@ export function StudyHarness({ view }: { view: string }) {
   return (
     <QueryClientProvider client={cache}>
       <UserProvider user={TEST_USER}>
-        {view === "weak-spots" ? (
+        {view === "summary" ? (
+          <SummaryGenerate projectId={STUDY_PROJECT_ID} />
+        ) : view === "guide" ? (
+          <GuideGenerate projectId={STUDY_PROJECT_ID} />
+        ) : view === "note" ? (
+          <NotePage projectId={STUDY_PROJECT_ID} noteId={STUDY_NOTE_ID} />
+        ) : view === "weak-spots" ? (
           <main className="mx-auto max-w-4xl p-6">
             <ProjectWeakSpots projectId={STUDY_PROJECT_ID} />
           </main>

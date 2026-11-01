@@ -286,3 +286,43 @@ class StudyQuizAnswerModel(Base, UuidPrimaryKeyMixin):
         ),
         Index("idx_study_quiz_answers_attempt", "user_id", "attempt_id"),
     )
+
+
+# --- Study notes (US-53.6, ADR-0037) -------------------------------------------
+
+MAX_NOTE_TITLE_CHARS = 120
+MAX_NOTE_BODY_CHARS = 100_000
+
+
+class StudyNoteModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
+    """A saved summary or study guide. Saved only by an explicit learner action."""
+
+    __tablename__ = "study_notes"
+
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    title: Mapped[str] = mapped_column(String(MAX_NOTE_TITLE_CHARS), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    # Canonical JSON list of StudyCitationInput, as on cards.
+    citations: Mapped[str] = mapped_column(Text, nullable=False, default="[]", server_default="[]")
+    # Provenance of the writing model; not a foreign key, so model deletion keeps the note.
+    model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    model_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["project_id", "user_id"],
+            ["projects.id", "projects.user_id"],
+            ondelete="CASCADE",
+            name="fk_study_notes_project_owner",
+        ),
+        CheckConstraint("kind IN ('summary', 'study_guide')", name="ck_study_notes_kind"),
+        CheckConstraint(
+            f"length(trim(title)) > 0 AND length(title) <= {MAX_NOTE_TITLE_CHARS}", name="ck_study_notes_title"
+        ),
+        CheckConstraint(
+            f"length(trim(body)) > 0 AND length(body) <= {MAX_NOTE_BODY_CHARS}", name="ck_study_notes_body"
+        ),
+        Index("idx_study_notes_project", "user_id", "project_id", "updated_at", "id"),
+    )

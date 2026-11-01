@@ -11,7 +11,18 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from . import attempts, generation, quiz_generation, quizzes, review, service, weak_spots
+from . import (
+    attempts,
+    generation,
+    notes,
+    quiz_generation,
+    quizzes,
+    review,
+    service,
+    study_guides,
+    summaries,
+    weak_spots,
+)
 from .schemas import (
     MAX_REVIEW_QUEUE,
     MAX_WEAK_SPOTS,
@@ -25,6 +36,12 @@ from .schemas import (
     StudyDeckCreate,
     StudyDeckPage,
     StudyDeckUpdate,
+    StudyGuideDraft,
+    StudyGuideRequest,
+    StudyNote,
+    StudyNoteCreate,
+    StudyNotePage,
+    StudyNoteUpdate,
     StudyProjectSummary,
     StudyQuiz,
     StudyQuizAttempt,
@@ -37,6 +54,8 @@ from .schemas import (
     StudyReviewCard,
     StudyReviewQueue,
     StudyReviewRequest,
+    StudySummaryDraft,
+    StudySummaryRequest,
     StudyWeakSpotPracticeRequest,
     StudyWeakSpots,
 )
@@ -306,3 +325,66 @@ async def practice_weak_spots(
 ) -> StudyQuiz:
     """Save a quiz that re-asks the most recent weak spots; 400 when there are none."""
     return await weak_spots.practice_weak_spots(user_id=user.id, project_id=project_id, request=payload, session=db)
+
+
+# --- Notes, summaries and study guides (US-53.6, ADR-0037) ---------------------
+
+
+@study_router.get("/notes", operation_id="studyNoteGetMany")
+async def list_notes(
+    project_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+) -> StudyNotePage:
+    """Notes, most recently updated first."""
+    return await notes.list_notes(user_id=user.id, project_id=project_id, page=page, page_size=page_size, session=db)
+
+
+@study_router.post("/notes", operation_id="studyNoteCreate", status_code=201)
+async def create_note(
+    project_id: uuid.UUID, payload: StudyNoteCreate, user: AuthedUserDep, db: DBSessionDep
+) -> StudyNote:
+    """Save a summary or study guide draft as a note."""
+    return await notes.create_note(user_id=user.id, project_id=project_id, payload=payload, session=db)
+
+
+@study_router.get("/notes/{note_id}", operation_id="studyNoteGetOne")
+async def get_note(project_id: uuid.UUID, note_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> StudyNote:
+    return await notes.read_note(user_id=user.id, project_id=project_id, note_id=note_id, session=db)
+
+
+@study_router.patch("/notes/{note_id}", operation_id="studyNoteUpdate")
+async def update_note(
+    project_id: uuid.UUID, note_id: uuid.UUID, payload: StudyNoteUpdate, user: AuthedUserDep, db: DBSessionDep
+) -> StudyNote:
+    return await notes.update_note(user_id=user.id, project_id=project_id, note_id=note_id, payload=payload, session=db)
+
+
+@study_router.delete("/notes/{note_id}", operation_id="studyNoteDelete", status_code=204)
+async def delete_note(project_id: uuid.UUID, note_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> Response:
+    await notes.delete_note(user_id=user.id, project_id=project_id, note_id=note_id, session=db)
+    return Response(status_code=204)
+
+
+@study_router.post("/summaries", operation_id="studySummaryGenerate", responses={409: {"model": ErrorDetail}})
+async def summarize(
+    project_id: uuid.UUID, payload: StudySummaryRequest, user: AuthedUserDep, db: DBSessionDep, response: Response
+) -> StudySummaryDraft:
+    """Draft a cited summary of project files; nothing is saved."""
+    response.headers["Cache-Control"] = "no-store"
+    return await summaries.summarize(user_id=user.id, project_id=project_id, request=payload, session=db)
+
+
+@study_router.post(
+    "/study-guides",
+    operation_id="studyGuideGenerate",
+    responses={409: {"model": ErrorDetail}, 502: {"model": ErrorDetail}, 504: {"model": ErrorDetail}},
+)
+async def plan_study_guide(
+    project_id: uuid.UUID, payload: StudyGuideRequest, user: AuthedUserDep, db: DBSessionDep, response: Response
+) -> StudyGuideDraft:
+    """Draft a day-by-day plan to the exam date, linked to decks and quizzes; nothing is saved."""
+    response.headers["Cache-Control"] = "no-store"
+    return await study_guides.plan_study_guide(user_id=user.id, project_id=project_id, request=payload, session=db)

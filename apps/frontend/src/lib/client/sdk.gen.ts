@@ -351,6 +351,24 @@ import type {
   StudyDeckUpdateData,
   StudyDeckUpdateErrors,
   StudyDeckUpdateResponses,
+  StudyGuideGenerateData,
+  StudyGuideGenerateErrors,
+  StudyGuideGenerateResponses,
+  StudyNoteCreateData,
+  StudyNoteCreateErrors,
+  StudyNoteCreateResponses,
+  StudyNoteDeleteData,
+  StudyNoteDeleteErrors,
+  StudyNoteDeleteResponses,
+  StudyNoteGetManyData,
+  StudyNoteGetManyErrors,
+  StudyNoteGetManyResponses,
+  StudyNoteGetOneData,
+  StudyNoteGetOneErrors,
+  StudyNoteGetOneResponses,
+  StudyNoteUpdateData,
+  StudyNoteUpdateErrors,
+  StudyNoteUpdateResponses,
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetErrors,
   StudyProjectSummaryGetResponses,
@@ -381,6 +399,9 @@ import type {
   StudyReviewQueueGetData,
   StudyReviewQueueGetErrors,
   StudyReviewQueueGetResponses,
+  StudySummaryGenerateData,
+  StudySummaryGenerateErrors,
+  StudySummaryGenerateResponses,
   StudyWeakSpotGetManyData,
   StudyWeakSpotGetManyErrors,
   StudyWeakSpotGetManyResponses,
@@ -2300,6 +2321,177 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/study/weak-spots/practice",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Notes
+   *
+   * Notes, most recently updated first.
+   */
+  public studyNoteGetMany<ThrowOnError extends boolean = false>(
+    options: Options<StudyNoteGetManyData, ThrowOnError>,
+  ): RequestResult<
+    StudyNoteGetManyResponses,
+    StudyNoteGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyNoteGetManyResponses,
+      StudyNoteGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/notes",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Note
+   *
+   * Save a summary or study guide draft as a note.
+   */
+  public studyNoteCreate<ThrowOnError extends boolean = false>(
+    options: Options<StudyNoteCreateData, ThrowOnError>,
+  ): RequestResult<
+    StudyNoteCreateResponses,
+    StudyNoteCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyNoteCreateResponses,
+      StudyNoteCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/notes",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete Note
+   */
+  public studyNoteDelete<ThrowOnError extends boolean = false>(
+    options: Options<StudyNoteDeleteData, ThrowOnError>,
+  ): RequestResult<
+    StudyNoteDeleteResponses,
+    StudyNoteDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      StudyNoteDeleteResponses,
+      StudyNoteDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/notes/{note_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Note
+   */
+  public studyNoteGetOne<ThrowOnError extends boolean = false>(
+    options: Options<StudyNoteGetOneData, ThrowOnError>,
+  ): RequestResult<
+    StudyNoteGetOneResponses,
+    StudyNoteGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyNoteGetOneResponses,
+      StudyNoteGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/notes/{note_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Note
+   */
+  public studyNoteUpdate<ThrowOnError extends boolean = false>(
+    options: Options<StudyNoteUpdateData, ThrowOnError>,
+  ): RequestResult<
+    StudyNoteUpdateResponses,
+    StudyNoteUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).patch<
+      StudyNoteUpdateResponses,
+      StudyNoteUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/notes/{note_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Summarize
+   *
+   * Draft a cited summary of project files; nothing is saved.
+   */
+  public studySummaryGenerate<ThrowOnError extends boolean = false>(
+    options: Options<StudySummaryGenerateData, ThrowOnError>,
+  ): RequestResult<
+    StudySummaryGenerateResponses,
+    StudySummaryGenerateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudySummaryGenerateResponses,
+      StudySummaryGenerateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/summaries",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Plan Study Guide
+   *
+   * Draft a day-by-day plan to the exam date, linked to decks and quizzes; nothing is saved.
+   */
+  public studyGuideGenerate<ThrowOnError extends boolean = false>(
+    options: Options<StudyGuideGenerateData, ThrowOnError>,
+  ): RequestResult<
+    StudyGuideGenerateResponses,
+    StudyGuideGenerateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyGuideGenerateResponses,
+      StudyGuideGenerateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/study-guides",
       ...options,
       headers: {
         "Content-Type": "application/json",
