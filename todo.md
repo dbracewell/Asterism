@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-61.3 is active (US-61.1 and US-61.2 are complete). EPIC-52 (US-52.1 through US-52.5) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-61 (in-app help) is next, followed by EPIC-53. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active; US-61.1 through US-61.3 are complete and US-61.4 is next. EPIC-52 (US-52.1 through US-52.5) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-61 (in-app help) is next, followed by EPIC-53. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -40,7 +40,7 @@ Confirmed (2026-11-01) to run next, before EPIC-53, so learners can understand p
 - [x] US-61.2: Composer help
   - [x] Add help triggers and mode descriptions to the composer controls.
   - [x] Verify layout at narrow and short viewports; update composer tests.
-- [ ] US-61.3: Page help panel (in progress on `feature/us-61.3-page-help-panel`)
+- [x] US-61.3: Page help panel
   - [x] Implement the page help sheet, route mapping and the keyboard shortcut.
   - [x] Write the page guides and update the empty states.
   - [x] Test route coverage, the shortcut's focus rules and admin-only sections.
