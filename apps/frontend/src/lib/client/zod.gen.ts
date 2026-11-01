@@ -378,6 +378,21 @@ export const zExamplesField = z.object({
 });
 
 /**
+ * FeedbackSectionId
+ *
+ * Sections of a structured Explain-back feedback reply, in reply order.
+ */
+export const zFeedbackSectionId = z.enum(["correct", "gaps", "follow_up"]);
+
+/**
+ * FeedbackSection
+ */
+export const zFeedbackSection = z.object({
+  id: zFeedbackSectionId,
+  heading: z.string(),
+});
+
+/**
  * FileContentStatus
  *
  * Lifecycle of the converted-content cache held by a :class:`UserFileModel`.
@@ -658,6 +673,7 @@ export const zLearningMode = z.object({
   description: z.string(),
   version: z.int().gte(1),
   hint_levels: z.array(zHintLevel).optional(),
+  feedback_sections: z.array(zFeedbackSection).optional(),
 });
 
 /**

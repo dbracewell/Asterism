@@ -253,7 +253,9 @@ and [ADR-0026](../../docs/adr/0026-prompt-template-documents-and-framework-catal
 
 `asterism/domains/learning/evals/*.json` holds fixture cases that check whether
 a model follows a learning mode at each hint level (for example, no leaked
-answer before the learner asks for it). The fixtures are validated in CI, but
+answer before the learner asks for it). A case can also set `feedback`:
+`structured` requires the mode's feedback headings in order with one or two
+follow-up questions, and `free_form` forbids them. The fixtures are validated in CI, but
 the live run is informational and never gates CI. Run it against any
 OpenAI-compatible endpoint from `apps/backend`:
 

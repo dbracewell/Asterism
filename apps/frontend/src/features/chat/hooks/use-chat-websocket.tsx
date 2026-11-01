@@ -241,6 +241,8 @@ export const useChatWebSocket = ({
           ...createPendingAssistantMessage(comparison),
           execution: msgContent.execution,
           model_id: msgContent.execution?.model.id,
+          // Lets mode-specific rendering (Explain-back feedback) apply while streaming.
+          learning_mode: msgContent.execution?.learning_mode,
         };
         streamingMessageRef.current = pendingMessage;
         onStreamStartRef.current?.(pendingMessage);

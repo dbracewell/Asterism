@@ -21,7 +21,12 @@ export const learningModes: LearningModeCatalog = {
       id: "explain_back",
       name: "Explain-back",
       description: "You explain a topic; it tells you what you missed.",
-      version: 1,
+      version: 2,
+      feedback_sections: [
+        { id: "correct", heading: "What you got right" },
+        { id: "gaps", heading: "What was missing or wrong" },
+        { id: "follow_up", heading: "Follow-up questions" },
+      ],
     },
     {
       id: "review",

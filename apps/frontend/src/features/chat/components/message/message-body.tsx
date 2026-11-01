@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 import { GraduationCapIcon, LayoutTemplateIcon } from "lucide-react";
 import { levelLabel } from "@/features/templates/lib/levels";
 import { hintLevelLabel } from "@/features/chat/components/chat-hint-controls";
+import { FeedbackReply } from "./feedback-reply";
+
+const contentClass = "flex w-full min-w-0 flex-1 flex-col";
 
 export const MessageBody = ({ message }: { message: StreamingMessage }) => {
   const fromUser = message.role === "user";
@@ -44,14 +47,24 @@ export const MessageBody = ({ message }: { message: StreamingMessage }) => {
       {fromUser && message.template && (
         <TemplateLabel label={message.template} />
       )}
-      <MarkdownViewer
-        content={message.content}
-        className={cn(
-          "flex w-full min-w-0 flex-1 flex-col",
-          fromUser &&
-            "bg-card text-card-foreground border-border rounded-surface rounded-br-control shadow-raised ml-auto w-fit max-w-full border px-3.5 py-2.5 sm:max-w-125 md:max-w-150 xl:max-w-250",
-        )}
-      />
+      {!fromUser &&
+      message.learning_mode &&
+      message.learning_mode.id !== "standard" ? (
+        <FeedbackReply
+          content={message.content}
+          mode={message.learning_mode.id}
+          className={contentClass}
+        />
+      ) : (
+        <MarkdownViewer
+          content={message.content}
+          className={cn(
+            contentClass,
+            fromUser &&
+              "bg-card text-card-foreground border-border rounded-surface rounded-br-control shadow-raised ml-auto w-fit max-w-full border px-3.5 py-2.5 sm:max-w-125 md:max-w-150 xl:max-w-250",
+          )}
+        />
+      )}
     </>
   );
 };

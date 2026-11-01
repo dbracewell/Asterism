@@ -30,6 +30,14 @@ class HintLevel(StrEnum):
         return list(HintLevel).index(self)
 
 
+class FeedbackSectionId(StrEnum):
+    """Sections of a structured Explain-back feedback reply, in reply order."""
+
+    CORRECT = "correct"
+    GAPS = "gaps"
+    FOLLOW_UP = "follow_up"
+
+
 class LearningModeProvenance(BaseModel):
     """Public identity of the mode a turn ran under; never carries instruction text."""
 

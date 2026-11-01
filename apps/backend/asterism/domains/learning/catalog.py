@@ -10,7 +10,24 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from asterism.core.exceptions import CodedException
-from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeSnapshot
+from asterism.domains.agent.learning_inputs import (
+    FeedbackSectionId,
+    HintLevel,
+    LearningModeId,
+    LearningModeSnapshot,
+)
+
+
+@dataclass(frozen=True)
+class FeedbackSection:
+    """One fixed heading of a mode's structured feedback reply.
+
+    The headings are a public contract: the catalog API serves them so the UI
+    can render each section, and the mode text tells the model to use them.
+    """
+
+    id: FeedbackSectionId
+    heading: str
 
 
 @dataclass(frozen=True)
@@ -23,6 +40,8 @@ class LearningModeDefinition:
     # Hint levels with their instruction text, weakest first, starting with
     # ``none``. Empty for modes without tiered hints.
     hint_levels: tuple[tuple[HintLevel, str], ...] = ()
+    # Headings of a structured feedback reply, in order. Empty for free-form modes.
+    feedback_sections: tuple[FeedbackSection, ...] = ()
 
     @property
     def raisable_hint_levels(self) -> tuple[HintLevel, ...]:
@@ -93,13 +112,39 @@ guiding questions.""",
     ),
 )
 
-_EXPLAIN_BACK = """The learner wants to check their understanding by explaining
+EXPLAIN_BACK_SECTIONS = (
+    FeedbackSection(FeedbackSectionId.CORRECT, "What you got right"),
+    FeedbackSection(FeedbackSectionId.GAPS, "What was missing or wrong"),
+    FeedbackSection(FeedbackSectionId.FOLLOW_UP, "Follow-up questions"),
+)
+
+_EXPLAIN_BACK = f"""The learner wants to check their understanding by explaining
 a topic to you.
 - If they have not explained anything yet, ask them to explain the topic in
-  their own words. Do not explain it first.
-- After they explain, reply with: what they got right, what was missing or
-  wrong, and one or two follow-up questions that probe the gaps.
-- Do not rewrite their explanation or give a model answer unless they ask."""
+  their own words. Do not explain it first. Keep this request short and do not
+  use the feedback headings below.
+- After they explain, give feedback in exactly this format, with these three
+  Markdown headings in this order and nothing before the first heading:
+
+  ### {EXPLAIN_BACK_SECTIONS[0].heading}
+  The specific points they explained correctly. If nothing was correct, say so
+  in one sentence.
+
+  ### {EXPLAIN_BACK_SECTIONS[1].heading}
+  Each important idea they left out, and each statement that was wrong or
+  imprecise. Quote or name their words and briefly say why it matters. Do not
+  supply the full correct explanation; point to what needs fixing. If nothing
+  was missing or wrong, say so in one sentence.
+
+  ### {EXPLAIN_BACK_SECTIONS[2].heading}
+  A numbered list of one or two questions that probe the biggest gaps or check
+  that the correct parts are understood, not just memorized.
+
+- When they answer a follow-up question or explain again, give feedback on
+  the new explanation in the same format.
+- Do not rewrite their explanation or give a model answer unless they
+  explicitly ask for one. If they ask, give it without the feedback headings,
+  then invite them to explain it back again in their own words."""
 
 _REVIEW = """The learner wants feedback on their own attempt (for example a
 math solution, code, or an essay excerpt), not a finished solution.
@@ -129,8 +174,9 @@ _DEFINITIONS = (
         id=LearningModeId.EXPLAIN_BACK,
         name="Explain-back",
         description="You explain a topic; it tells you what you got right and what you missed.",
-        version=1,
+        version=2,
         instructions=_EXPLAIN_BACK,
+        feedback_sections=EXPLAIN_BACK_SECTIONS,
     ),
     LearningModeDefinition(
         id=LearningModeId.REVIEW,

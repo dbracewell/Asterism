@@ -90,7 +90,7 @@ it("forwards typed sub-agent packets without replacing the parent stream", () =>
   expect(onStreamUpdate).not.toHaveBeenCalled();
 });
 
-it("carries the executed model snapshot into the streaming assistant message", () => {
+it("carries the executed model and learning mode into the streaming assistant message", () => {
   const onStreamStart = vi.fn();
   renderHook(() =>
     useChatWebSocket({ chatId: "chat", jwtToken: "token", onStreamStart }),
@@ -123,6 +123,7 @@ it("carries the executed model snapshot into the streaming assistant message", (
   expect(onStreamStart.mock.calls[0][0]).toMatchObject({
     model_id: execution.model.id,
     execution,
+    learning_mode: standardLearningMode,
   });
 });
 
