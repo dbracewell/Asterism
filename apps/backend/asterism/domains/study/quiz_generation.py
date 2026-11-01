@@ -238,6 +238,7 @@ async def generate_quiz(
             user_id=user_id,
             project_id=project_id,
             title=request.title or default_title(files),
+            origin="generated",
             model_id=model.id,
             model_name=model.name,
             questions=questions,

@@ -72,3 +72,10 @@ user-owned records that no agent or prompt path reads.
   US-53.5 can derive weak spots from `incorrect` and `partial` answers.
 - Card drafting now shares `drafting.py`; its failure messages say "items"
   rather than "cards" where the text is shared.
+
+## Addendum: weak-spot quizzes (US-53.5, 2026-11-01)
+
+Quizzes now have an `origin`. Weak-spot practice quizzes are built from copies
+of missed items with no model, so `model_name` is required only for generated
+quizzes. Question prompts and rubrics may hold up to 4,000 characters. See
+[ADR-0036](0036-weak-spots-and-practice.md).

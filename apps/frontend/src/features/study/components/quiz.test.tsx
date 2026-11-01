@@ -92,6 +92,7 @@ const summary = {
   attempt_count: 0,
   last_score: null,
   best_score: null,
+  origin: "generated",
   model_id: "m1",
   model_name: "Model One",
   created_at: 1,

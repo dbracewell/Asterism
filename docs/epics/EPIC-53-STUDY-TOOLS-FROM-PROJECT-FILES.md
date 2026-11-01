@@ -95,7 +95,7 @@ Acceptance: missed questions and cards rated "Again" feed a weak-spots set.
 "Practice weak spots" builds a short quiz or card session focused on those
 topics.
 
-- [ ] Derive weak spots from attempts and review logs; build the practice entry point; add tests.
+- [x] Derive weak spots from attempts and review logs; build the practice entry point; add tests.
 
 ## US-53.6: Summaries and study guides
 

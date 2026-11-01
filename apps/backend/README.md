@@ -260,7 +260,10 @@ drafts at `…/decks/{deck_id}/card-drafts`, read through the retrieval domain's
 US-53.3 adds FSRS-6 scheduling, review logs, due counts and the review queue and
 rating routes. US-53.4 adds practice quizzes under `…/study/quizzes`, with exact
 multiple-choice grading, model-graded short answers and saved attempts
-([ADR-0035](../../docs/adr/0035-practice-quizzes-and-grading.md)). See the [study tools
+([ADR-0035](../../docs/adr/0035-practice-quizzes-and-grading.md)). US-53.5 derives
+weak spots from attempts and review logs at `…/study/weak-spots` and builds
+practice quizzes from them
+([ADR-0036](../../docs/adr/0036-weak-spots-and-practice.md)). See the [study tools
 contract](../../docs/architecture/study-tools.md) and
 [ADR-0033](../../docs/adr/0033-study-domain-and-scheduling.md).
 

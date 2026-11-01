@@ -24,6 +24,7 @@ from .schemas import (
     StudyCitationInput,
     StudyQuestionKind,
     StudyQuiz,
+    StudyQuizOrigin,
     StudyQuizPage,
     StudyQuizQuestion,
     StudyQuizSummary,
@@ -47,6 +48,8 @@ class QuestionDraft:
     rubric: str
     explanation: str
     citations: list[StudyCitationInput]
+    source_question_id: uuid.UUID | None = None
+    source_card_id: uuid.UUID | None = None
 
 
 def question_options(row: StudyQuizQuestionModel) -> list[str]:
@@ -103,6 +106,7 @@ async def _to_summaries(*, user_id: str, rows: list[StudyQuizModel], session: As
                 attempt_count=attempts,
                 last_score=last,
                 best_score=best,
+                origin=row.origin,  # pyright: ignore[reportArgumentType]  # DB check constraint pins the values.
                 model_id=row.model_id,
                 model_name=row.model_name,
                 created_at=row.created_at,
@@ -187,17 +191,25 @@ async def save_quiz(
     user_id: str,
     project_id: uuid.UUID,
     title: str,
-    model_id: uuid.UUID,
-    model_name: str,
+    origin: StudyQuizOrigin,
+    model_id: uuid.UUID | None,
+    model_name: str | None,
     questions: list[QuestionDraft],
     session: AsyncSession,
 ) -> StudyQuizModel:
-    """Store a generated quiz and its questions in one transaction.
+    """Store a quiz and its questions in one transaction.
 
     The caller has already checked every citation against the live project scope.
     """
     await require_owned_project(user_id=user_id, project_id=project_id, session=session)
-    quiz = StudyQuizModel(user_id=user_id, project_id=project_id, title=title, model_id=model_id, model_name=model_name)
+    quiz = StudyQuizModel(
+        user_id=user_id,
+        project_id=project_id,
+        title=title,
+        origin=origin,
+        model_id=model_id,
+        model_name=model_name,
+    )
     session.add(quiz)
     await session.flush()
     session.add_all(
@@ -212,6 +224,8 @@ async def save_quiz(
             rubric=question.rubric,
             explanation=question.explanation,
             citations=_citations.dump_json(question.citations).decode(),
+            source_question_id=question.source_question_id,
+            source_card_id=question.source_card_id,
         )
         for position, question in enumerate(questions)
     )

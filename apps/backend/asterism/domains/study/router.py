@@ -11,9 +11,10 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from . import attempts, generation, quiz_generation, quizzes, review, service
+from . import attempts, generation, quiz_generation, quizzes, review, service, weak_spots
 from .schemas import (
     MAX_REVIEW_QUEUE,
+    MAX_WEAK_SPOTS,
     StudyCard,
     StudyCardCreate,
     StudyCardDraftBatch,
@@ -36,6 +37,8 @@ from .schemas import (
     StudyReviewCard,
     StudyReviewQueue,
     StudyReviewRequest,
+    StudyWeakSpotPracticeRequest,
+    StudyWeakSpots,
 )
 
 study_router = APIRouter(
@@ -279,3 +282,27 @@ async def get_attempt(
     return await attempts.read_attempt(
         user_id=user.id, project_id=project_id, quiz_id=quiz_id, attempt_id=attempt_id, session=db
     )
+
+
+# --- Weak spots (US-53.5, ADR-0036) ------------------------------------------
+
+
+@study_router.get("/weak-spots", operation_id="studyWeakSpotGetMany")
+async def list_weak_spots(
+    project_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    response: Response,
+    limit: int = Query(default=20, ge=1, le=MAX_WEAK_SPOTS),
+) -> StudyWeakSpots:
+    """Questions and cards whose latest outcome was a miss, most recent first."""
+    response.headers["Cache-Control"] = "no-store"
+    return await weak_spots.list_weak_spots(user_id=user.id, project_id=project_id, limit=limit, session=db)
+
+
+@study_router.post("/weak-spots/practice", operation_id="studyWeakSpotPractice", status_code=201)
+async def practice_weak_spots(
+    project_id: uuid.UUID, payload: StudyWeakSpotPracticeRequest, user: AuthedUserDep, db: DBSessionDep
+) -> StudyQuiz:
+    """Save a quiz that re-asks the most recent weak spots; 400 when there are none."""
+    return await weak_spots.practice_weak_spots(user_id=user.id, project_id=project_id, request=payload, session=db)

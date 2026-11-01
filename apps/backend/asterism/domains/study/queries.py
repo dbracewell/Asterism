@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import case, func, select
+from sqlalchemy import String, and_, case, func, literal, select, union_all
 
 from .models import (
     StudyCardModel,
@@ -11,6 +11,7 @@ from .models import (
     StudyQuizAttemptModel,
     StudyQuizModel,
     StudyQuizQuestionModel,
+    StudyReviewLogModel,
 )
 
 
@@ -127,3 +128,122 @@ def attempt_stats_by_quiz(*, user_id: str, quiz_ids: list[uuid.UUID]):
         func.max(ranked.c.fraction),
         func.max(case((ranked.c.recency == 1, ranked.c.fraction))),
     ).group_by(ranked.c.quiz_id)
+
+
+# --- Weak spots (US-53.5) ----------------------------------------------------
+
+MISSED_VERDICTS = ("incorrect", "partial")
+AGAIN_RATING = 1
+
+
+def _answer_events(*, user_id: str, project_id: uuid.UUID):
+    """One row per graded quiz answer in the project, keyed by the item it practices.
+
+    A weak-spot copy counts towards the original question or card it re-asks.
+    Ungraded answers say nothing about recall and are left out.
+    """
+    answer, attempt, question, quiz = (
+        StudyQuizAnswerModel,
+        StudyQuizAttemptModel,
+        StudyQuizQuestionModel,
+        StudyQuizModel,
+    )
+    return (
+        select(
+            case(
+                (question.source_card_id.is_not(None), literal("card", String)), else_=literal("question", String)
+            ).label("root_kind"),
+            func.coalesce(question.source_card_id, question.source_question_id, question.id).label("root_id"),
+            attempt.submitted_at.label("at"),
+            attempt.id.label("event_id"),
+            case((answer.verdict.in_(MISSED_VERDICTS), 1), else_=0).label("missed"),
+            answer.verdict.label("outcome"),
+            literal("question", String).label("source_kind"),
+            question.id.label("source_id"),
+            question.position.label("position"),
+        )
+        .select_from(answer)
+        .join(attempt, and_(attempt.id == answer.attempt_id, attempt.user_id == answer.user_id))
+        .join(question, and_(question.id == answer.question_id, question.user_id == answer.user_id))
+        .join(quiz, and_(quiz.id == question.quiz_id, quiz.user_id == question.user_id))
+        .where(answer.user_id == user_id, quiz.project_id == project_id, answer.verdict != "ungraded")
+    )
+
+
+def _review_events(*, user_id: str, project_id: uuid.UUID):
+    """One row per card rating in the project; Again is a miss."""
+    log, card, deck = StudyReviewLogModel, StudyCardModel, StudyDeckModel
+    again = log.rating == AGAIN_RATING
+    return (
+        select(
+            literal("card", String).label("root_kind"),
+            card.id.label("root_id"),
+            log.reviewed_at.label("at"),
+            log.id.label("event_id"),
+            case((again, 1), else_=0).label("missed"),
+            case((again, literal("again", String)), else_=literal("recalled", String)).label("outcome"),
+            literal("card", String).label("source_kind"),
+            card.id.label("source_id"),
+            literal(0).label("position"),
+        )
+        .select_from(log)
+        .join(card, and_(card.id == log.card_id, card.user_id == log.user_id))
+        .join(deck, and_(deck.id == card.deck_id, deck.user_id == card.user_id))
+        .where(log.user_id == user_id, deck.project_id == project_id)
+    )
+
+
+def select_weak_spots(*, user_id: str, project_id: uuid.UUID):
+    """Items whose latest outcome in the project was a miss, most recent miss first.
+
+    Misses from one attempt keep the quiz's question order.
+
+    Rows: ``root_kind, root_id, at, outcome, source_kind, source_id``. The source is
+    the question or card of that latest outcome.
+    """
+    events = union_all(
+        _answer_events(user_id=user_id, project_id=project_id),
+        _review_events(user_id=user_id, project_id=project_id),
+    ).subquery()
+    ranked = select(
+        events,
+        func.row_number()
+        .over(
+            partition_by=(events.c.root_kind, events.c.root_id),
+            order_by=(events.c.at.desc(), events.c.event_id.desc()),
+        )
+        .label("recency"),
+    ).subquery()
+    return (
+        select(
+            ranked.c.root_kind,
+            ranked.c.root_id,
+            ranked.c.at,
+            ranked.c.outcome,
+            ranked.c.source_kind,
+            ranked.c.source_id,
+        )
+        .where(ranked.c.recency == 1, ranked.c.missed == 1)
+        .order_by(ranked.c.at.desc(), ranked.c.event_id, ranked.c.position, ranked.c.root_id)
+    )
+
+
+def select_questions_with_quiz_title(*, user_id: str, question_ids: list[uuid.UUID]):
+    """``(question, quiz title)`` for owned questions."""
+    return (
+        select(StudyQuizQuestionModel, StudyQuizModel.title)
+        .join(
+            StudyQuizModel,
+            and_(StudyQuizModel.id == StudyQuizQuestionModel.quiz_id, StudyQuizModel.user_id == user_id),
+        )
+        .where(StudyQuizQuestionModel.user_id == user_id, StudyQuizQuestionModel.id.in_(question_ids))
+    )
+
+
+def select_cards_with_deck_name(*, user_id: str, card_ids: list[uuid.UUID]):
+    """``(card, deck name)`` for owned cards."""
+    return (
+        select(StudyCardModel, StudyDeckModel.name)
+        .join(StudyDeckModel, and_(StudyDeckModel.id == StudyCardModel.deck_id, StudyDeckModel.user_id == user_id))
+        .where(StudyCardModel.user_id == user_id, StudyCardModel.id.in_(card_ids))
+    )

@@ -117,27 +117,30 @@ class StudyReviewLogModel(Base, UuidPrimaryKeyMixin):
 # --- Practice quizzes (US-53.4, ADR-0035) ------------------------------------
 
 MAX_QUIZ_TITLE_CHARS = 120
-MAX_QUESTION_PROMPT_CHARS = 2_000
+# Questions can be built from cards (US-53.5), so prompts and rubrics hold a card side.
+MAX_QUESTION_PROMPT_CHARS = MAX_CARD_SIDE_CHARS
 MAX_OPTION_CHARS = 500
 MIN_OPTIONS = 2
 MAX_OPTIONS = 6
-MAX_RUBRIC_CHARS = 2_000
+MAX_RUBRIC_CHARS = MAX_CARD_SIDE_CHARS
 MAX_EXPLANATION_CHARS = 2_000
 MAX_RESPONSE_CHARS = 2_000
 MAX_FEEDBACK_CHARS = 2_000
 
 
 class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
-    """A generated quiz. Its questions are fixed once generated; only the title changes."""
+    """A quiz, generated from files or built from weak spots. Questions are fixed; only the title changes."""
 
     __tablename__ = "study_quizzes"
 
     user_id: Mapped[str] = mapped_column(String, nullable=False)
     project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     title: Mapped[str] = mapped_column(String(MAX_QUIZ_TITLE_CHARS), nullable=False)
+    # generated (from files by a model) or weak_spots (copied from missed items, no model).
+    origin: Mapped[str] = mapped_column(String(16), nullable=False, default="generated", server_default="generated")
     # Provenance of the generating model; not a foreign key, so model deletion keeps the quiz.
     model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
-    model_name: Mapped[str] = mapped_column(Text, nullable=False)
+    model_name: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -149,6 +152,10 @@ class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         UniqueConstraint("id", "user_id", name="uq_study_quizzes_id_user"),
         CheckConstraint(
             f"length(trim(title)) > 0 AND length(title) <= {MAX_QUIZ_TITLE_CHARS}", name="ck_study_quizzes_title"
+        ),
+        CheckConstraint(
+            "(origin = 'generated' AND model_name IS NOT NULL) OR origin = 'weak_spots'",
+            name="ck_study_quizzes_origin",
         ),
         Index("idx_study_quizzes_project", "user_id", "project_id", "created_at", "id"),
     )
@@ -171,8 +178,16 @@ class StudyQuizQuestionModel(Base, UuidPrimaryKeyMixin):
     explanation: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     # Canonical JSON list of StudyCitationInput, as on cards.
     citations: Mapped[str] = mapped_column(Text, nullable=False, default="[]", server_default="[]")
+    # Weak-spot practice copies (US-53.5) name the original question or card they re-ask,
+    # so practising a copy resolves the original. Plain ids, not foreign keys: the
+    # original may be deleted while its copies keep their history.
+    source_question_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    source_card_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
 
     __table_args__ = (
+        CheckConstraint(
+            "source_question_id IS NULL OR source_card_id IS NULL", name="ck_study_quiz_questions_single_source"
+        ),
         ForeignKeyConstraint(
             ["quiz_id", "user_id"],
             ["study_quizzes.id", "study_quizzes.user_id"],
