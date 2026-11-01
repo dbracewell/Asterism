@@ -186,12 +186,15 @@ const ParameterForm = ({
               name={name}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={name}>
-                    {info["title"]}
+                  <div className="flex items-center gap-1">
+                    <FieldLabel htmlFor={name}>{info["title"]}</FieldLabel>
                     {!!info["description"] && (
-                      <HelpIcon text={info["description"]} />
+                      <HelpIcon
+                        label={`About ${info["title"] ?? name}`}
+                        text={info["description"]}
+                      />
                     )}
-                  </FieldLabel>
+                  </div>
                   {info["enum"] ? (
                     <Select
                       value={field.value}

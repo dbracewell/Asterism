@@ -87,11 +87,11 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("Model", { exact: true })).toHaveCount(0);
   await dialog.getByLabel("Instructions").fill("Be precise");
-  await dialog.getByLabel("Maximum steps").fill("0");
+  await dialog.getByLabel("Maximum steps", { exact: true }).fill("0");
   await dialog.getByRole("button", { name: "Save configuration" }).click();
   await expect(dialog).toBeVisible();
   expect(main.system_prompt).toBe("Original");
-  await dialog.getByLabel("Maximum steps").fill("7");
+  await dialog.getByLabel("Maximum steps", { exact: true }).fill("7");
   await dialog.getByLabel("Top P", { exact: true }).fill("0.8");
   await expect(
     dialog.getByRole("checkbox", { name: "web_fetch" }),
@@ -99,13 +99,15 @@ test("persists singleton settings and manages fixed-model sub-agents", async ({
   await expect(
     dialog.getByRole("checkbox", { name: /sub_agent|search_knowledge/ }),
   ).toHaveCount(0);
-  await dialog.getByLabel("web_fetch").check();
+  await dialog.getByRole("checkbox", { name: "web_fetch" }).check();
   await dialog.getByRole("button", { name: "Save configuration" }).click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole("button", { name: "Edit main configuration" }).click();
   await expect(dialog.getByLabel("Instructions")).toHaveValue("Be precise");
   await expect(dialog.getByLabel("Top P", { exact: true })).toHaveValue("0.8");
-  await expect(dialog.getByLabel("web_fetch")).toBeChecked();
+  await expect(
+    dialog.getByRole("checkbox", { name: "web_fetch" }),
+  ).toBeChecked();
   await dialog.getByRole("button", { name: "Close" }).click();
   await page
     .getByRole("button", { name: "Create sub-agent", exact: true })

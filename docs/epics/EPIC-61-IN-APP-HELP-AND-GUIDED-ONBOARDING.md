@@ -1,6 +1,6 @@
 # EPIC-61: In-app help and guided onboarding
 
-Status: planned (next; confirmed 2026-11-01). Source: product discussion (2026-11-01), learner track.
+Status: in progress (US-61.1; see [ADR-0032](../adr/0032-in-app-help-content.md)). Source: product discussion (2026-11-01), learner track.
 
 ## Objective
 
@@ -47,10 +47,10 @@ and citations. A reusable help trigger opens a popover with the summary, a
 readers. The existing tooltip-only `HelpIcon` uses are migrated where the text
 is longer than a short label.
 
-- [ ] Write an ADR for help content ownership, the registry shape and the accuracy rules.
-- [ ] Implement the typed registry, glossary entries and the help popover component.
-- [ ] Migrate existing `HelpIcon` uses where appropriate; document the convention for new features.
-- [ ] Test registry completeness, admin-only filtering, keyboard and touch access, and contrast.
+- [x] Write an ADR for help content ownership, the registry shape and the accuracy rules.
+- [x] Implement the typed registry, glossary entries and the help popover component.
+- [x] Migrate existing `HelpIcon` uses where appropriate; document the convention for new features.
+- [x] Test registry completeness, admin-only filtering, keyboard and touch access, and contrast.
 
 ## US-61.2: Composer help
 

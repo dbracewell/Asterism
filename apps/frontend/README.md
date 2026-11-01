@@ -99,6 +99,24 @@ only the workspace (General or a linked project) and up to four suggested prompt
 from the project description and the user's eligible skills. See
 [agent runtime](../../docs/architecture/agent-runtime.md).
 
+## In-app help
+
+Help text lives in `src/features/help/registry.ts`, a typed record keyed by the
+`HelpId` union (`concept.*` for glossary terms, a surface prefix such as
+`settings.*` or `admin.*` for single controls). Render it with
+`<HelpTopic id="…" />`: a focusable button that opens a popover with the
+summary, "Learn more" details and related terms, working with click, tap and
+keyboard. Admin-only entries render only inside the dashboard's
+`HelpAudienceProvider` for admins. `HelpIcon` is reserved for short dynamic text
+from the server, such as tool descriptions. Place help buttons beside a label,
+not inside it, so the control's accessible name stays clean.
+
+**Convention:** a change that adds a user-facing concept or control adds its
+help entry in the same change. Help describes only implemented behavior: no
+planned features, no long-term memory, and no suggestion that persona, skill,
+mode or template text grants tools or files. See
+[ADR-0032](../../docs/adr/0032-in-app-help-content.md).
+
 ## Chat content and composer layout
 
 Chat history and the composer share normal flow. The composer has a bounded scroll
