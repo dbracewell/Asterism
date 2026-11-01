@@ -19,7 +19,7 @@ type Provider = {
 
 /**
  * In-memory provider APIs: discovery fails `failures` times, then finds three
- * models. Records model updates and the saved default model.
+ * models. Records model updates, the saved default model and the draft model.
  */
 async function routeSetupApi(page: Page, failures = 0) {
   const state = {
@@ -29,6 +29,7 @@ async function routeSetupApi(page: Page, failures = 0) {
     saves: [] as Provider[][],
     activated: [] as string[],
     defaultModel: null as unknown,
+    draftModel: null as string | null,
   };
   const models = () =>
     state.discovered
@@ -53,10 +54,11 @@ async function routeSetupApi(page: Page, failures = 0) {
       const body = route.request().postDataJSON();
       state.providers = body.llm_providers;
       state.saves.push(body.llm_providers);
+      state.draftModel = body.draft_model_id ?? null;
     }
     await route.fulfill({
       json: {
-        draft_model_id: null,
+        draft_model_id: state.draftModel,
         llm_providers: state.providers.map((provider) => ({
           ...provider,
           api_key: "**********",
@@ -197,6 +199,10 @@ test("enabling models shows the ready step, which opens the new-chat page", asyn
   await form.getByLabel("gamma-tools").check();
   await form.getByLabel("Default model").click();
   await page.getByRole("option", { name: "gamma-tools" }).click();
+  // The draft model follows the default until chosen.
+  await expect(form.getByLabel("Draft model")).toContainText("gamma-tools");
+  await form.getByLabel("Draft model").click();
+  await page.getByRole("option", { name: "alpha-chat" }).click();
   await form.getByRole("button", { name: "Continue" }).click();
   const steps = page.getByRole("list", { name: "First-run setup" });
   await expect(steps.locator('[aria-current="step"]')).toContainText(
@@ -218,6 +224,14 @@ test("enabling models shows the ready step, which opens the new-chat page", asyn
     "30000000-0000-4000-8000-000000000002",
   ]);
   expect(state.defaultModel).toBe("30000000-0000-4000-8000-000000000002");
+  expect(state.draftModel).toBe("30000000-0000-4000-8000-000000000000");
+  // Saving the draft model re-sends the one provider with its redacted key.
+  expect(state.saves.at(-1)).toEqual([
+    expect.objectContaining({
+      id: state.saves[0][0].id,
+      api_key: "**********",
+    }),
+  ]);
 });
 
 test("reloading after connecting resumes at model enablement", async ({
@@ -325,6 +339,7 @@ for (const scenario of authViewports) {
     await expect(modelControls[2]).toBeChecked();
     for (const control of [
       models.getByLabel("Default model"),
+      models.getByLabel("Draft model"),
       models.getByRole("button", { name: "Continue" }),
       models.getByRole("button", { name: "Change provider" }),
       models.getByRole("link", { name: "Skip for now" }),

@@ -62,7 +62,12 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Loader2, XIcon } from "lucide-react";
 import Link from "next/link";
 import { type RefObject, useDeferredValue, useRef, useState } from "react";
@@ -504,11 +509,17 @@ function ModelStep({
   });
   const [selected, setSelected] = useState<Record<string, Llm>>({});
   const [chosenDefault, setChosenDefault] = useState<string | null>(null);
+  const [chosenDraft, setChosenDraft] = useState<string | null>(null);
   const enabled = Object.values(selected);
   const defaultId =
     chosenDefault && selected[chosenDefault]
       ? chosenDefault
       : (enabled[0]?.id ?? null);
+  // The draft model follows the default until chosen, and falls back to the
+  // default if the chosen model is disabled again.
+  const draftId =
+    chosenDraft && selected[chosenDraft] ? chosenDraft : defaultId;
+  const queryClient = useQueryClient();
   // The page navigates away on success, so skip app-wide refetches per save.
   const meta = { skipGlobalInvalidation: true };
   const updateModel = useMutation({
@@ -519,7 +530,30 @@ function ModelStep({
     ...userSettingUpdateMutation({ client }),
     meta,
   });
-  const pending = updateModel.isPending || updateSetting.isPending;
+  const saveProviders = useMutation({
+    ...appProviderSettingsUpdateMutation({ client }),
+    meta,
+  });
+  const pending =
+    updateModel.isPending || updateSetting.isPending || saveProviders.isPending;
+
+  /** Save the draft model, re-sending the current providers unchanged. */
+  const saveDraftModel = async (modelId: string) => {
+    // The draft must reference an active model, so this runs after enabling.
+    const current = await queryClient.fetchQuery({
+      ...appProviderSettingsGetOptions({ client }),
+      staleTime: 0,
+    });
+    await saveProviders.mutateAsync({
+      body: {
+        llm_providers: (current.llm_providers ?? []).map((provider) => ({
+          ...provider,
+          api_key: savedApiKey(provider),
+        })),
+        draft_model_id: modelId,
+      },
+    });
+  };
 
   const toggle = (model: Llm, on: boolean) =>
     setSelected((current) => {
@@ -561,9 +595,10 @@ function ModelStep({
         path: { key: "default_model_id" },
         body: { value: defaultId },
       });
+      await saveDraftModel(draftId ?? defaultId);
     } catch (cause) {
       showError(
-        `The selected models could not be enabled.${errorDetail(cause)} Your choices are kept; retry Continue.`,
+        `Your model choices could not be saved.${errorDetail(cause)} Your choices are kept; retry Continue.`,
       );
       return;
     }
@@ -707,6 +742,35 @@ function ModelStep({
             </Select>
             <FieldDescription>
               Your new chats start with this model.
+            </FieldDescription>
+          </Field>
+        )}
+        {draftId && (
+          <Field>
+            <FieldLabel htmlFor="setup-draft-model">Draft model</FieldLabel>
+            <Select
+              value={draftId}
+              onValueChange={setChosenDraft}
+              disabled={pending}
+            >
+              <SelectTrigger
+                id="setup-draft-model"
+                className="w-full min-w-0"
+                aria-describedby="setup-draft-model-description"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {enabled.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FieldDescription id="setup-draft-model-description">
+              Writes chat titles and other short background tasks for everyone.
+              A small, fast model works best.
             </FieldDescription>
           </Field>
         )}

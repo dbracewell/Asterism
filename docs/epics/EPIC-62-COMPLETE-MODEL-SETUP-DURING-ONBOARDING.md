@@ -1,6 +1,6 @@
 # EPIC-62: Complete model setup during onboarding
 
-Status: proposed (2026-11-01). Source: user feedback after EPIC-48.
+Status: in progress (US-62.1 implemented, awaiting confirmation). Source: user feedback after EPIC-48.
 
 ## Objective
 
@@ -59,9 +59,9 @@ Acceptance:
 - Keyboard, screen-reader, narrow and short-viewport behaviour matches the rest
   of the setup card, in every theme.
 
-- [ ] Add the draft-model select and its defaulting rules to the enable-models step.
-- [ ] Save `draft_model_id` through the provider settings update without changing the saved providers.
-- [ ] Add unit and isolated browser tests (default follows, fallback, failure and retry, skip).
+- [x] Add the draft-model select and its defaulting rules to the enable-models step.
+- [x] Save `draft_model_id` through the provider settings update without changing the saved providers.
+- [x] Add unit and isolated browser tests (default follows, fallback, failure and retry, skip).
 
 ## US-62.2: Confirm vision and tool support for enabled models
 

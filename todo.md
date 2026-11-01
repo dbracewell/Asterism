@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-No user story is currently active. EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-54 is next. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+US-62.1 (draft model during setup) is active on `feature/us-62.1-setup-draft-model`. EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-54 is next. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -31,10 +31,10 @@ product direction order; schedule it whenever convenient.
 
 ### [EPIC-62: Complete model setup during onboarding](docs/epics/EPIC-62-COMPLETE-MODEL-SETUP-DURING-ONBOARDING.md)
 
-- [ ] US-62.1: Choose the draft model during setup
-  - [ ] Add the draft-model select and its defaulting rules to the enable-models step.
-  - [ ] Save `draft_model_id` through the provider settings update without changing the saved providers.
-  - [ ] Add unit and isolated browser tests (default follows, fallback, failure and retry, skip).
+- [ ] US-62.1: Choose the draft model during setup (implementation complete, awaiting confirmation)
+  - [x] Add the draft-model select and its defaulting rules to the enable-models step.
+  - [x] Save `draft_model_id` through the provider settings update without changing the saved providers.
+  - [x] Add unit and isolated browser tests (default follows, fallback, failure and retry, skip).
 - [ ] US-62.2: Confirm vision and tool support for enabled models
   - [ ] Add per-model Vision and Tools checkboxes with unknown marking and the explanatory note.
   - [ ] Save changed capabilities as manual values and keep untouched ones with their sources.

@@ -309,7 +309,7 @@ describe("first-run provider step", () => {
     await user.click(within(form).getByRole("button", { name: "Continue" }));
     const alert = await within(form).findByRole("alert");
     expect(alert).toHaveTextContent(
-      "The selected models could not be enabled. Database busy",
+      "Your model choices could not be saved. Database busy",
     );
     expect(alert).toHaveFocus();
     expect(within(form).getByLabelText("model-1")).toBeChecked();
@@ -318,6 +318,105 @@ describe("first-run provider step", () => {
     ).not.toBeInTheDocument();
     await user.click(within(form).getByRole("button", { name: "Continue" }));
     expect(await readyButton()).toBeVisible();
+  });
+
+  it("saves the draft model, following the default until chosen", async () => {
+    mocks.settings.mockResolvedValue(savedSettings(2));
+    renderStep();
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Enable models" });
+    expect(
+      within(form).queryByLabelText("Draft model"),
+    ).not.toBeInTheDocument();
+    await user.click(await within(form).findByLabelText("model-1"));
+    await user.click(within(form).getByLabelText("model-2"));
+    const draft = within(form).getByLabelText("Draft model");
+    expect(draft).toHaveTextContent("model-1");
+    expect(draft).toHaveAccessibleDescription(
+      "Writes chat titles and other short background tasks for everyone. A small, fast model works best.",
+    );
+    // Untouched, the draft model follows the default.
+    await user.click(within(form).getByLabelText("Default model"));
+    await user.click(await screen.findByRole("option", { name: "model-2" }));
+    expect(within(form).getByLabelText("Draft model")).toHaveTextContent(
+      "model-2",
+    );
+    // Once chosen, it no longer follows the default.
+    await user.click(within(form).getByLabelText("Draft model"));
+    await user.click(await screen.findByRole("option", { name: "model-1" }));
+    await user.click(within(form).getByLabelText("Default model"));
+    await user.click(await screen.findByRole("option", { name: "model-2" }));
+    expect(within(form).getByLabelText("Draft model")).toHaveTextContent(
+      "model-1",
+    );
+
+    mocks.saveProviders.mockClear();
+    await user.click(within(form).getByRole("button", { name: "Continue" }));
+    await readyButton();
+    expect(mocks.saveProviders).toHaveBeenCalledTimes(1);
+    // The providers are re-sent unchanged; the redacted key keeps the credential.
+    expect(mocks.saveProviders.mock.calls[0][0].body).toEqual({
+      llm_providers: [
+        expect.objectContaining({ id: providerId, api_key: "**********" }),
+      ],
+      draft_model_id: catalog[0].id,
+    });
+    // The draft must name an active model, so it is saved after enabling.
+    const order = (mock: { mock: { invocationCallOrder: number[] } }) =>
+      mock.mock.invocationCallOrder.at(-1) ?? 0;
+    expect(order(mocks.saveProviders)).toBeGreaterThan(
+      order(mocks.updateModel),
+    );
+    expect(order(mocks.saveProviders)).toBeGreaterThan(
+      order(mocks.updateSetting),
+    );
+  });
+
+  it("falls back to the default when the chosen draft model is disabled", async () => {
+    mocks.settings.mockResolvedValue(savedSettings(2));
+    renderStep();
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Enable models" });
+    await user.click(await within(form).findByLabelText("model-1"));
+    await user.click(within(form).getByLabelText("model-2"));
+    await user.click(within(form).getByLabelText("Draft model"));
+    await user.click(await screen.findByRole("option", { name: "model-2" }));
+    await user.click(within(form).getByLabelText("model-2"));
+    expect(within(form).getByLabelText("Draft model")).toHaveTextContent(
+      "model-1",
+    );
+    mocks.saveProviders.mockClear();
+    await user.click(within(form).getByRole("button", { name: "Continue" }));
+    await readyButton();
+    expect(mocks.saveProviders.mock.calls[0][0].body.draft_model_id).toBe(
+      catalog[0].id,
+    );
+  });
+
+  it("keeps choices when saving the draft model fails, then retries", async () => {
+    mocks.settings.mockResolvedValue(savedSettings(2));
+    renderStep();
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Enable models" });
+    await user.click(await within(form).findByLabelText("model-1"));
+    mocks.saveProviders.mockRejectedValueOnce({
+      detail: "draft_model_id must reference an active model",
+    });
+    await user.click(within(form).getByRole("button", { name: "Continue" }));
+    const alert = await within(form).findByRole("alert");
+    expect(alert).toHaveTextContent(
+      "Your model choices could not be saved. draft_model_id must reference an active model",
+    );
+    expect(alert).toHaveFocus();
+    expect(within(form).getByLabelText("model-1")).toBeChecked();
+    expect(within(form).getByLabelText("Draft model")).toHaveTextContent(
+      "model-1",
+    );
+    await user.click(within(form).getByRole("button", { name: "Continue" }));
+    expect(await readyButton()).toBeVisible();
+    expect(mocks.saveProviders.mock.lastCall?.[0].body.draft_model_id).toBe(
+      catalog[0].id,
+    );
   });
 
   it("resumes a saved provider without models at the connection form", async () => {

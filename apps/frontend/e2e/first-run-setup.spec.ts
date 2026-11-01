@@ -92,6 +92,8 @@ test("the administrator connects a provider right after creating the account", a
   await models.getByLabel("First-run beta").check();
   await models.getByLabel("Default model").click();
   await page.getByRole("option", { name: "First-run beta" }).click();
+  await models.getByLabel("Draft model").click();
+  await page.getByRole("option", { name: "First-run alpha" }).click();
   await models.getByRole("button", { name: "Continue" }).click();
 
   await expect(page.getByRole("status")).toHaveText(
@@ -107,8 +109,17 @@ test("the administrator connects a provider right after creating the account", a
   await page.goto("/setup");
   await expect(page).toHaveURL(/\/$/);
 
-  // Leave later specs the instance they expect: no providers.
+  // The draft model was stored, so Admin settings → Providers needs no visit.
   const token = await (await page.request.get("/api/auth/token")).json();
+  const settings = await page.request.get("/api/py/settings/app/providers", {
+    headers: { Authorization: `Bearer ${token.token}` },
+  });
+  expect(settings.ok()).toBeTruthy();
+  const stored = await settings.json();
+  expect(stored.draft_model?.name).toBe("First-run alpha");
+  expect(stored.llm_providers).toHaveLength(1);
+
+  // Leave later specs the instance they expect: no providers.
   const cleared = await page.request.put("/api/py/settings/app/providers", {
     headers: { Authorization: `Bearer ${token.token}` },
     data: { llm_providers: [], draft_model_id: null },
