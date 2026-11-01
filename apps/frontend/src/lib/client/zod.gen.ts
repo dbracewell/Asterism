@@ -1558,6 +1558,10 @@ export const zStudyCard = z.object({
   front: z.string(),
   back: z.string(),
   citations: z.array(zStudyCitation),
+  state: z.enum(["learning", "review", "relearning"]),
+  due_at: z.int(),
+  reps: z.int().gte(0),
+  lapses: z.int().gte(0),
   created_at: z.int(),
   updated_at: z.int(),
 });
@@ -1620,6 +1624,7 @@ export const zStudyDeck = z.object({
   name: z.string(),
   description: z.string(),
   card_count: z.int().gte(0),
+  due_count: z.int().gte(0),
   created_at: z.int(),
   updated_at: z.int(),
 });
@@ -1670,6 +1675,67 @@ export const zStudyDraftFileResult = z.object({
 export const zStudyCardDraftBatch = z.object({
   drafts: z.array(zStudyCardDraft),
   files: z.array(zStudyDraftFileResult),
+});
+
+/**
+ * StudyProjectSummary
+ */
+export const zStudyProjectSummary = z.object({
+  deck_count: z.int().gte(0),
+  card_count: z.int().gte(0),
+  due_count: z.int().gte(0),
+});
+
+/**
+ * StudyReviewPreview
+ *
+ * When the card would next be due (Unix seconds) for each rating.
+ */
+export const zStudyReviewPreview = z.object({
+  again: z.int(),
+  hard: z.int(),
+  good: z.int(),
+  easy: z.int(),
+});
+
+/**
+ * StudyReviewCard
+ */
+export const zStudyReviewCard = z.object({
+  id: z.uuid(),
+  deck_id: z.uuid(),
+  front: z.string(),
+  back: z.string(),
+  citations: z.array(zStudyCitation),
+  state: z.enum(["learning", "review", "relearning"]),
+  due_at: z.int(),
+  reps: z.int().gte(0),
+  lapses: z.int().gte(0),
+  created_at: z.int(),
+  updated_at: z.int(),
+  previews: zStudyReviewPreview,
+});
+
+/**
+ * StudyReviewQueue
+ *
+ * Due cards in due order, capped at ``limit``; ``due_count`` counts all due cards.
+ */
+export const zStudyReviewQueue = z.object({
+  items: z.array(zStudyReviewCard),
+  due_count: z.int().gte(0),
+  now: z.int(),
+});
+
+/**
+ * StudyReviewRequest
+ *
+ * Rate a card. ``expected_reps`` is the card's ``reps`` when shown, so a repeated
+ * submission (a double key press, a second tab) is rejected instead of counted twice.
+ */
+export const zStudyReviewRequest = z.object({
+  rating: z.enum(["again", "hard", "good", "easy"]),
+  expected_reps: z.int().gte(0).lte(2147483647),
 });
 
 /**
@@ -2976,6 +3042,42 @@ export const zStudyCardDraftGeneratePath = z.object({
  * Successful Response
  */
 export const zStudyCardDraftGenerateResponse = zStudyCardDraftBatch;
+
+export const zStudyProjectSummaryGetPath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyProjectSummaryGetResponse = zStudyProjectSummary;
+
+export const zStudyReviewQueueGetPath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+});
+
+export const zStudyReviewQueueGetQuery = z.object({
+  limit: z.int().gte(1).lte(200).optional().default(100),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyReviewQueueGetResponse = zStudyReviewQueue;
+
+export const zStudyCardReviewBody = zStudyReviewRequest;
+
+export const zStudyCardReviewPath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+  card_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyCardReviewResponse = zStudyReviewCard;
 
 /**
  * Successful Response

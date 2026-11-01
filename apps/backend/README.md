@@ -257,7 +257,8 @@ files, checked against the live project scope on write and marked available or
 unavailable on read. Deleting a project deletes its decks. US-53.2 adds bounded, unsaved card
 drafts at `…/decks/{deck_id}/card-drafts`, read through the retrieval domain's
 `SourceReader` and cited to chunks ([ADR-0034](../../docs/adr/0034-bounded-flashcard-draft-generation.md)).
-See the [study tools
+US-53.3 adds FSRS-6 scheduling, review logs, due counts and the review queue and
+rating routes. See the [study tools
 contract](../../docs/architecture/study-tools.md) and
 [ADR-0033](../../docs/adr/0033-study-domain-and-scheduling.md).
 

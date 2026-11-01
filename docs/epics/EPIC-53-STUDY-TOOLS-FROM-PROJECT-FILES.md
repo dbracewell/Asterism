@@ -1,6 +1,6 @@
 # EPIC-53: Study tools from project files
 
-Status: in progress (US-53.1 and US-53.2 complete). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-53.1 and US-53.2 complete; US-53.3 awaiting confirmation). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -66,9 +66,9 @@ and rates recall (Again, Hard, Good, Easy), and the scheduler sets the next due
 date. The project page shows the number of due cards. The session works with
 the keyboard alone.
 
-- [ ] Implement the scheduler interface, review log and due queries.
-- [ ] Build the review session UI with keyboard shortcuts.
-- [ ] Test scheduling math, due ordering and accessibility.
+- [x] Implement the scheduler interface, review log and due queries.
+- [x] Build the review session UI with keyboard shortcuts.
+- [x] Test scheduling math, due ordering and accessibility.
 
 ## US-53.4: Practice quizzes
 

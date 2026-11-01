@@ -330,6 +330,9 @@ import type {
   StudyCardGetOneData,
   StudyCardGetOneErrors,
   StudyCardGetOneResponses,
+  StudyCardReviewData,
+  StudyCardReviewErrors,
+  StudyCardReviewResponses,
   StudyCardUpdateData,
   StudyCardUpdateErrors,
   StudyCardUpdateResponses,
@@ -348,6 +351,12 @@ import type {
   StudyDeckUpdateData,
   StudyDeckUpdateErrors,
   StudyDeckUpdateResponses,
+  StudyProjectSummaryGetData,
+  StudyProjectSummaryGetErrors,
+  StudyProjectSummaryGetResponses,
+  StudyReviewQueueGetData,
+  StudyReviewQueueGetErrors,
+  StudyReviewQueueGetResponses,
   SubAgentCreateData,
   SubAgentCreateErrors,
   SubAgentCreateResponses,
@@ -1952,6 +1961,77 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/study/decks/{deck_id}/card-drafts",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Summary
+   */
+  public studyProjectSummaryGet<ThrowOnError extends boolean = false>(
+    options: Options<StudyProjectSummaryGetData, ThrowOnError>,
+  ): RequestResult<
+    StudyProjectSummaryGetResponses,
+    StudyProjectSummaryGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyProjectSummaryGetResponses,
+      StudyProjectSummaryGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/summary",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Review Queue
+   *
+   * Due cards in due order with the next due time for each rating.
+   */
+  public studyReviewQueueGet<ThrowOnError extends boolean = false>(
+    options: Options<StudyReviewQueueGetData, ThrowOnError>,
+  ): RequestResult<
+    StudyReviewQueueGetResponses,
+    StudyReviewQueueGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyReviewQueueGetResponses,
+      StudyReviewQueueGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/review",
+      ...options,
+    });
+  }
+
+  /**
+   * Rate Card
+   *
+   * Rate recall; 409 when the card was already rated since it was shown.
+   */
+  public studyCardReview<ThrowOnError extends boolean = false>(
+    options: Options<StudyCardReviewData, ThrowOnError>,
+  ): RequestResult<
+    StudyCardReviewResponses,
+    StudyCardReviewErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyCardReviewResponses,
+      StudyCardReviewErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}/reviews",
       ...options,
       headers: {
         "Content-Type": "application/json",

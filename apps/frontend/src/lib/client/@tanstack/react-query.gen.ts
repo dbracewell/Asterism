@@ -330,6 +330,9 @@ import type {
   StudyCardGetOneData,
   StudyCardGetOneError,
   StudyCardGetOneResponse,
+  StudyCardReviewData,
+  StudyCardReviewError,
+  StudyCardReviewResponse,
   StudyCardUpdateData,
   StudyCardUpdateError,
   StudyCardUpdateResponse,
@@ -348,6 +351,12 @@ import type {
   StudyDeckUpdateData,
   StudyDeckUpdateError,
   StudyDeckUpdateResponse,
+  StudyProjectSummaryGetData,
+  StudyProjectSummaryGetError,
+  StudyProjectSummaryGetResponse,
+  StudyReviewQueueGetData,
+  StudyReviewQueueGetError,
+  StudyReviewQueueGetResponse,
   SubAgentCreateData,
   SubAgentCreateError,
   SubAgentCreateResponse,
@@ -2732,6 +2741,93 @@ export const studyCardDraftGenerateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().studyCardDraftGenerate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyProjectSummaryGetQueryKey = (
+  options: Options<StudyProjectSummaryGetData>,
+) => createQueryKey("studyProjectSummaryGet", options);
+
+/**
+ * Get Summary
+ */
+export const studyProjectSummaryGetOptions = (
+  options: Options<StudyProjectSummaryGetData>,
+) =>
+  queryOptions<
+    StudyProjectSummaryGetResponse,
+    StudyProjectSummaryGetError,
+    StudyProjectSummaryGetResponse,
+    ReturnType<typeof studyProjectSummaryGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyProjectSummaryGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyProjectSummaryGetQueryKey(options),
+  });
+
+export const studyReviewQueueGetQueryKey = (
+  options: Options<StudyReviewQueueGetData>,
+) => createQueryKey("studyReviewQueueGet", options);
+
+/**
+ * Get Review Queue
+ *
+ * Due cards in due order with the next due time for each rating.
+ */
+export const studyReviewQueueGetOptions = (
+  options: Options<StudyReviewQueueGetData>,
+) =>
+  queryOptions<
+    StudyReviewQueueGetResponse,
+    StudyReviewQueueGetError,
+    StudyReviewQueueGetResponse,
+    ReturnType<typeof studyReviewQueueGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyReviewQueueGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyReviewQueueGetQueryKey(options),
+  });
+
+/**
+ * Rate Card
+ *
+ * Rate recall; 409 when the card was already rated since it was shown.
+ */
+export const studyCardReviewMutation = (
+  options?: Partial<Options<StudyCardReviewData>>,
+): UseMutationOptions<
+  StudyCardReviewResponse,
+  StudyCardReviewError,
+  Options<StudyCardReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyCardReviewResponse,
+    StudyCardReviewError,
+    Options<StudyCardReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyCardReview({
         ...options,
         ...fnOptions,
         throwOnError: true,

@@ -52,3 +52,27 @@ files or up to 10 files, a card count and a model, then accepts, edits or
 discards each draft. **Accept all** saves the remaining drafts. Accepting uses
 the ordinary card create route, so citations are checked again on save.
 Drafting again with unaccepted drafts asks for confirmation first.
+
+## Spaced-repetition review (US-53.3)
+
+| Route                                            | Behavior                                                         |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `GET /projects/{project_id}/study/summary`       | `{deck_count, card_count, due_count}` for the project            |
+| `GET …/decks/{deck_id}/review?limit=`            | Due cards (`due_at <= now`), most overdue first, with `previews` |
+| `POST …/decks/{deck_id}/cards/{card_id}/reviews` | `{rating, expected_reps}`; 409 if the card was already rated     |
+
+Decks report `due_count` and cards report `state`, `due_at`, `reps` and
+`lapses`. `previews` gives the next due time for each rating, so the review
+buttons can show the wait (for example "10m" or "8d"). New cards are due as soon
+as they are created.
+
+The project page shows the project's due total and a **Review** link for each
+deck with due cards. The deck page shows **Review (N due)** and each card's next
+review date. The session at `/projects/{projectId}/study/{deckId}/review`
+loads up to 100 due cards. Space or Enter shows the answer, and 1–4 rate it
+(Again, Hard, Good, Easy). Held keys and modified keys are ignored. Focus moves
+to **Good** after the answer is shown, back to **Show answer** for the next
+card, and to the summary at the end, and a status region announces each step.
+Cards still in a short learning step (due within 20 minutes) come back later in
+the same session. Only an explicit **Review more due cards** starts a new
+session; background refetches never reset one.
