@@ -3,9 +3,13 @@
 import uuid
 from collections.abc import Sequence
 
-from asterism.core.exceptions import BadDataException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import MessageModel
+from asterism.core.exceptions import BadDataException, CodedException
+
+from .models import ChatModel, MessageModel
+from .queries import select_owned_messages
 from .schemas import Message
 
 
@@ -68,3 +72,36 @@ def branch_to(records: Sequence[MessageModel], message_id: uuid.UUID) -> list[Me
     if not path:
         raise BadDataException("Message not found")
     return [Message.model_validate(message) for message in reversed(path)]
+
+
+async def latest_branch_user_turn(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> MessageModel | None:
+    """The active branch's latest user turn, which carries its branch-local state."""
+    records = list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id)))
+    root = await session.scalar(
+        select(ChatModel.active_root_id).where(ChatModel.id == chat_id, ChatModel.user_id == user_id)
+    )
+    by_id = {row.id: row for row in records}
+    for message in reversed(active_branch(records, root)):
+        if message.role == "user":
+            return by_id[message.id]
+    return None
+
+
+async def nearest_user_ancestor(
+    *, user_id: str, chat_id: uuid.UUID, parent_id: uuid.UUID | None, session: AsyncSession
+) -> MessageModel | None:
+    """A fork inherits state from its source ancestry, never from a sibling."""
+    visited: set[uuid.UUID] = set()
+    while parent_id is not None:
+        if parent_id in visited:
+            raise CodedException(409, "Invalid message ancestry")
+        visited.add(parent_id)
+        parent = await session.scalar(
+            select_owned_messages(user_id=user_id, chat_id=chat_id).where(MessageModel.id == parent_id)
+        )
+        if parent is None:
+            raise CodedException(409, "Source branch is unavailable")
+        if parent.role == "user":
+            return parent
+        parent_id = parent.parent_message_id
+    return None

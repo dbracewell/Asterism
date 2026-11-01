@@ -340,6 +340,7 @@ async def compare_existing(
                 accepted_skills=source.accepted_skills,
                 accepted_persona=source.accepted_persona,
                 accepted_learning_mode=source.accepted_learning_mode,
+                hint_level=source.hint_level,
                 accepted_template=source.accepted_template,
             )
             session.add_all(columns)

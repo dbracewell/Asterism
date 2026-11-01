@@ -16,6 +16,20 @@ class LearningModeId(StrEnum):
     REVIEW = "review"
 
 
+class HintLevel(StrEnum):
+    """Branch-local hint state, weakest first; ``answer`` is the explicit reveal."""
+
+    NONE = "none"
+    NUDGE = "nudge"
+    HINT = "hint"
+    WORKED_EXAMPLE = "worked_example"
+    ANSWER = "answer"
+
+    @property
+    def rank(self) -> int:
+        return list(HintLevel).index(self)
+
+
 class LearningModeProvenance(BaseModel):
     """Public identity of the mode a turn ran under; never carries instruction text."""
 
@@ -23,6 +37,8 @@ class LearningModeProvenance(BaseModel):
     id: LearningModeId
     name: str
     version: int = Field(ge=1)
+    # Set only for modes that offer hints; the layer text includes this level.
+    hint_level: HintLevel | None = None
 
 
 class LearningModeSnapshot(LearningModeProvenance):
@@ -32,7 +48,7 @@ class LearningModeSnapshot(LearningModeProvenance):
 
     @property
     def identity(self) -> LearningModeProvenance:
-        return LearningModeProvenance(id=self.id, name=self.name, version=self.version)
+        return LearningModeProvenance(id=self.id, name=self.name, version=self.version, hint_level=self.hint_level)
 
     @property
     def layer(self) -> PromptLayer:

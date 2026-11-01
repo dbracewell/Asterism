@@ -1,6 +1,6 @@
 # EPIC-52: Tutor mode and guided learning
 
-Status: in progress (US-52.1 complete; see [ADR-0028](../adr/0028-learning-mode-layer.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-52.1 and US-52.2 complete; see [ADR-0028](../adr/0028-learning-mode-layer.md) and [ADR-0029](../adr/0029-branch-local-hint-levels.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -51,10 +51,10 @@ level for that branch. The full answer needs an explicit "Show answer" action
 with a confirmation step. The current level appears in the UI and is passed to
 the mode layer.
 
-- [ ] Add branch hint state and the level-raising actions; regenerate the client.
-- [ ] Write the tutor mode instructions for each level.
-- [ ] Build the hint controls and answer-reveal confirmation.
-- [ ] Add structural tests and tutor fixtures to the evaluation set.
+- [x] Add branch hint state and the level-raising actions; regenerate the client.
+- [x] Write the tutor mode instructions for each level.
+- [x] Build the hint controls and answer-reveal confirmation.
+- [x] Add structural tests and tutor fixtures to the evaluation set.
 
 ## US-52.3: Explain it back
 

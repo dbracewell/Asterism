@@ -20,7 +20,12 @@ from asterism.core.config import default_allowed_tools
 from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
-from asterism.domains.agent.learning_inputs import LearningModeId, LearningModeProvenance, LearningModeSnapshot
+from asterism.domains.agent.learning_inputs import (
+    HintLevel,
+    LearningModeId,
+    LearningModeProvenance,
+    LearningModeSnapshot,
+)
 from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
@@ -149,6 +154,14 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     accepted_learning_mode: Mapped[LearningModeSnapshot | None] = mapped_column(
         jsonb_type(TypeAdapter(LearningModeSnapshot)),
         nullable=True,
+    )
+    # Branch-local hint state after this user turn; later turns on the branch
+    # carry it forward until the learner raises or resets it.
+    hint_level: Mapped[HintLevel] = mapped_column(
+        Enum(HintLevel, values_callable=enum_values, native_enum=False, create_constraint=True),
+        nullable=False,
+        default=HintLevel.NONE,
+        server_default=HintLevel.NONE.value,
     )
     # Label-only record of the template that built this prompt; never inherited.
     accepted_template: Mapped[TemplateProvenance | None] = mapped_column(

@@ -19,7 +19,13 @@ learning_router = APIRouter(
 async def list_learning_modes(user: AuthedUserDep) -> LearningModeCatalog:
     return LearningModeCatalog(
         modes=[
-            LearningMode(id=item.id, name=item.name, description=item.description, version=item.version)
+            LearningMode(
+                id=item.id,
+                name=item.name,
+                description=item.description,
+                version=item.version,
+                hint_levels=list(item.raisable_hint_levels),
+            )
             for item in LEARNING_MODES.values()
         ]
     )

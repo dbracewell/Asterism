@@ -397,6 +397,8 @@ export type {
   FileUploadResponses,
   Function,
   GenerationDefaults,
+  HintLevel,
+  HintRequest,
   JsonValue,
   KnowledgeCaptionConfiguration,
   KnowledgeCaptionConfigurationUpdate,

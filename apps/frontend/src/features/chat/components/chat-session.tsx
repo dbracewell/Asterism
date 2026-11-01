@@ -35,7 +35,7 @@ import {
   chatSessionGetOneOptions,
   chatSessionGetOneQueryKey,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { cn } from "@/lib/utils";
+import { cn, isErrorDetail } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
@@ -48,6 +48,7 @@ import {
 } from "./compare-targets";
 import { groupTranscript } from "../lib/comparison";
 import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
+import { ChatHintControls } from "./chat-hint-controls";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
@@ -96,6 +97,8 @@ export const ChatSession = ({
   const [isChangingModel, setIsChangingModel] = React.useState(false);
   const [isChangingPersona, setIsChangingPersona] = React.useState(false);
   const [isChangingMode, setIsChangingMode] = React.useState(false);
+  // "New problem" resets the branch hint level with the next sent message.
+  const [resetHints, setResetHints] = React.useState(false);
   const personas = useQuery({
     ...personaQueryOptions(user.id),
     enabled: !!session,
@@ -268,6 +271,7 @@ export const ChatSession = ({
     skills,
     template,
     compare,
+    hint,
   }: {
     prompt: string;
     files: string[];
@@ -276,6 +280,7 @@ export const ChatSession = ({
     skills?: import("@/lib/client").SkillSelection;
     template?: import("@/lib/client").TemplateUse;
     compare?: import("@/lib/client").ComparisonTarget[];
+    hint?: import("@/lib/client").HintRequest;
   }) => {
     if (!session) throw new Error("Chat is not loaded. Please retry.");
     setSocketError(null);
@@ -294,6 +299,11 @@ export const ChatSession = ({
         user_prompt: prompt,
         ...(skills ? { skills } : {}),
         ...(template ? { template } : {}),
+        ...(hint
+          ? { hint }
+          : resetHints
+            ? { hint: { level: "none" as const } }
+            : {}),
         files,
         ...(draftId ? { draft_id: draftId } : {}),
         parent_message_id: pendingSend.current.parentId,
@@ -301,6 +311,7 @@ export const ChatSession = ({
       },
     });
     setCompareModels([]);
+    setResetHints(false);
     // Read the authoritative accepted branch state, including its allocated skill revision.
     await queryClient.fetchQuery({
       ...chatSessionGetOneOptions({ client, path: { chat_id: chatId } }),
@@ -614,6 +625,34 @@ export const ChatSession = ({
           </div>
         )}
         <ChatInputContainer className="max-w-5xl scroll-p-2 overflow-y-auto overscroll-contain">
+          {session.messages.length > 0 && (
+            <ChatHintControls
+              info={session.info}
+              disabled={
+                interactionBusy ||
+                connectionStatus !== "Connected" ||
+                !selectedModelAvailable ||
+                !hasPersona ||
+                !!pendingRequestId
+              }
+              resetPending={resetHints}
+              onResetChange={setResetHints}
+              onRaise={(hint, prompt) => {
+                addUserMessage({
+                  prompt,
+                  files: [],
+                  requestId: crypto.randomUUID(),
+                  hint,
+                }).catch((error: unknown) =>
+                  setSocketError({
+                    message: isErrorDetail(error)
+                      ? String(error.detail)
+                      : "Could not request help. Reload the chat and retry.",
+                  }),
+                );
+              }}
+            />
+          )}
           <ChatInput
             key={`${user.id}:${chatId}:${session.messages.at(-1)?.id ?? "root"}`}
             skillOwner={user.id}

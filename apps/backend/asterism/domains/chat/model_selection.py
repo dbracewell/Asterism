@@ -85,12 +85,18 @@ async def selected_chat_model(chat: ChatModel, session: AsyncSession) -> ChatMod
 
 
 async def selection_info(chat: ChatModel, session: AsyncSession) -> ChatInfo:
-    from .skills import branch_skills, describe_skills
+    from asterism.domains.agent.learning_inputs import HintLevel
+    from asterism.domains.agent.skill_inputs import AcceptedSkills
+
+    from .branches import latest_branch_user_turn
+    from .skills import describe_skills
 
     info = ChatInfo.model_validate(chat)
+    turn = await latest_branch_user_turn(chat.user_id, chat.id, session)
     info.active_skills = await describe_skills(
-        chat.user_id, await branch_skills(chat.user_id, chat.id, session), session
+        chat.user_id, turn.accepted_skills if turn is not None else AcceptedSkills(), session
     )
+    info.hint_level = turn.hint_level if turn is not None else HintLevel.NONE
     info.selected_model = await selected_chat_model(chat, session)
     return info
 

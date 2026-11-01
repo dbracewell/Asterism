@@ -94,3 +94,21 @@ it("shows the pinned learning mode on user messages, but not Standard", () => {
   );
   expect(screen.queryByText(/Learning mode/)).toBeNull();
 });
+
+it("adds the hint level to the chip once help was raised", () => {
+  render(
+    <MessageBody
+      message={message({
+        learning_mode: {
+          id: "tutor",
+          name: "Tutor",
+          version: 2,
+          hint_level: "worked_example",
+        },
+      })}
+    />,
+  );
+  const chip = screen.getByText(/Tutor/).closest("[data-learning-mode]");
+  expect(chip).toHaveAttribute("data-hint-level", "worked_example");
+  expect(chip).toHaveTextContent("Learning mode: Tutor · Worked example");
+});

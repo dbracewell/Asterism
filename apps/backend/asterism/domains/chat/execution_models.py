@@ -74,6 +74,16 @@ event.listen(
     Base.metadata,
     "after_create",
     DDL("""
+CREATE TRIGGER IF NOT EXISTS hint_level_immutable
+BEFORE UPDATE OF hint_level ON messages
+WHEN NEW.hint_level IS NOT OLD.hint_level
+BEGIN SELECT RAISE(ABORT, 'Accepted hint level is immutable'); END
+""").execute_if(dialect="sqlite"),
+)
+event.listen(
+    Base.metadata,
+    "after_create",
+    DDL("""
 CREATE TRIGGER IF NOT EXISTS accepted_template_immutable
 BEFORE UPDATE OF accepted_template ON messages
 WHEN NEW.accepted_template IS NOT OLD.accepted_template

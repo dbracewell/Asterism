@@ -8,6 +8,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { GraduationCapIcon, LayoutTemplateIcon } from "lucide-react";
 import { levelLabel } from "@/features/templates/lib/levels";
+import { hintLevelLabel } from "@/features/chat/components/chat-hint-controls";
 
 export const MessageBody = ({ message }: { message: StreamingMessage }) => {
   const fromUser = message.role === "user";
@@ -82,12 +83,16 @@ const LearningModeChip = ({ mode }: { mode: LearningModeProvenance }) => (
     variant="outline"
     className="ml-auto max-w-full"
     data-learning-mode={mode.id}
+    data-hint-level={mode.hint_level ?? undefined}
     title={`Sent in ${mode.name} mode (version ${mode.version})`}
   >
     <GraduationCapIcon aria-hidden />
     <span className="truncate">
       <span className="sr-only">Learning mode: </span>
       {mode.name}
+      {mode.hint_level && mode.hint_level !== "none" && (
+        <> · {hintLevelLabel[mode.hint_level]}</>
+      )}
     </span>
   </Badge>
 );

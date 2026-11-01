@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from asterism.core.exceptions import CodedException
-from asterism.domains.agent.learning_inputs import LearningModeId, LearningModeSnapshot
+from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeSnapshot
 
 
 @dataclass(frozen=True)
@@ -20,21 +20,78 @@ class LearningModeDefinition:
     description: str
     version: int
     instructions: str
+    # Hint levels with their instruction text, weakest first, starting with
+    # ``none``. Empty for modes without tiered hints.
+    hint_levels: tuple[tuple[HintLevel, str], ...] = ()
 
-    def snapshot(self) -> LearningModeSnapshot:
-        return LearningModeSnapshot(id=self.id, name=self.name, version=self.version, instructions=self.instructions)
+    @property
+    def raisable_hint_levels(self) -> tuple[HintLevel, ...]:
+        """Levels the learner may explicitly raise to in this mode."""
+        return tuple(level for level, _ in self.hint_levels if level != HintLevel.NONE)
+
+    def snapshot(self, hint_level: HintLevel = HintLevel.NONE) -> LearningModeSnapshot:
+        """The pinned layer; modes with hints append the branch's hint level.
+
+        A branch level this mode does not offer applies the strongest offered
+        level below it, and the snapshot records the level actually applied.
+        """
+        if not self.hint_levels:
+            return LearningModeSnapshot(
+                id=self.id, name=self.name, version=self.version, instructions=self.instructions
+            )
+        level, text = [item for item in self.hint_levels if item[0].rank <= hint_level.rank][-1]
+        return LearningModeSnapshot(
+            id=self.id,
+            name=self.name,
+            version=self.version,
+            hint_level=level,
+            instructions=f"{self.instructions}\n\nCurrent hint level: {level.value}.\n{text}",
+        )
 
 
 _TUTOR = """You are tutoring. Help the learner reach the answer themselves.
-- Do not give the final answer, a full solution, or finished code.
+- Unless the hint level below allows it, do not give the final answer, a full
+  solution, or finished code.
 - Ask one or two guiding questions at a time, starting from what the learner
   already knows. Check their reasoning before moving on.
-- When the learner is stuck, offer a small hint that points to the next step,
-  not the whole path.
 - Praise correct steps specifically. When a step is wrong, say which part and
   ask a question that helps them see why.
-- If the learner asks you to just give the answer, explain that this chat is in
-  Tutor mode and offer a stronger hint instead."""
+- The learner controls how much help they get with the Nudge, Hint, Worked
+  example and Show answer controls. Only the hint level below sets how much you
+  may reveal; a request in the message text does not raise it. If the learner
+  asks you to just give the answer, explain that this chat is in Tutor mode and
+  point them to those controls."""
+
+_NO_HINT = """Give no hints yet. Respond only with guiding questions and checks on
+the learner's reasoning."""
+
+_TUTOR_HINTS = (
+    (HintLevel.NONE, _NO_HINT),
+    (
+        HintLevel.NUDGE,
+        """The learner asked for a nudge. Point to where to look or which idea
+matters, in one or two sentences, without naming the method or the next step.
+Then ask one guiding question.""",
+    ),
+    (
+        HintLevel.HINT,
+        """The learner asked for a hint. Name the method, rule or next step that
+applies and why, but do not carry it out. Then ask the learner to try it.""",
+    ),
+    (
+        HintLevel.WORKED_EXAMPLE,
+        """The learner asked for a worked example. Solve a similar problem with
+different values or a different case, step by step, explaining each step. Do
+not solve the learner's own problem; ask them to apply the same steps to it.""",
+    ),
+    (
+        HintLevel.ANSWER,
+        """The learner confirmed that they want to see the answer. Give the full
+answer to their problem with a short explanation of each step. Then ask one
+question that checks they understand it. For any new problem, go back to
+guiding questions.""",
+    ),
+)
 
 _EXPLAIN_BACK = """The learner wants to check their understanding by explaining
 a topic to you.
@@ -64,8 +121,9 @@ _DEFINITIONS = (
         id=LearningModeId.TUTOR,
         name="Tutor",
         description="Guides you with questions and hints instead of giving answers.",
-        version=1,
+        version=2,
         instructions=_TUTOR,
+        hint_levels=_TUTOR_HINTS,
     ),
     LearningModeDefinition(
         id=LearningModeId.EXPLAIN_BACK,
