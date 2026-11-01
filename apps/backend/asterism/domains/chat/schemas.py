@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.agent.context_provenance import ContextProvenance
-from asterism.domains.agent.learning_inputs import LearningModeId, LearningModeProvenance
+from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeProvenance
 from asterism.domains.agent.prompts import PersonaProvenance, PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.agent.skill_inputs import SkillIdentity
@@ -213,6 +213,8 @@ class ChatInfo(BaseModel):
     persona_revision: int = Field(default=1, ge=1)
     learning_mode: LearningModeId = LearningModeId.STANDARD
     learning_mode_revision: int = Field(default=1, ge=1)
+    # The active branch's hint level, carried by its latest user turn.
+    hint_level: HintLevel = HintLevel.NONE
     selected_model_id: uuid.UUID | None = None
     model_revision: int = Field(default=1, ge=1)
     selected_model: ChatModelChoice | None = None
@@ -297,6 +299,20 @@ ComparisonTargets = Annotated[
 ]
 
 
+class HintRequest(BaseModel):
+    """Raise the branch hint level with this turn, or reset it with ``none``.
+
+    Raising must go up from the branch's current level (or from ``none`` with
+    ``reset``) and must be offered by the chat's learning mode. Revealing the
+    answer needs ``confirm_reveal``.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    level: HintLevel
+    reset: bool = False
+    confirm_reveal: bool = False
+
+
 class NewChatRequest(BaseModel):
     # US-54.4: run the prompt as sibling comparison columns instead of one turn.
     compare: ComparisonTargets | None = None
@@ -304,6 +320,7 @@ class NewChatRequest(BaseModel):
     template: TemplateUse | None = None
     persona_id: uuid.UUID | None = None
     learning_mode: LearningModeId = LearningModeId.STANDARD
+    hint: HintRequest | None = None
     model_id: uuid.UUID
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID
@@ -363,6 +380,7 @@ class ChatSendRequest(BaseModel):
     compare: ComparisonTargets | None = None
     skills: SkillSelection | None = None
     template: TemplateUse | None = None
+    hint: HintRequest | None = None
     expected_model_revision: int = Field(ge=1)
     model_config = ConfigDict(extra="forbid")
     request_id: uuid.UUID

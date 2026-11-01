@@ -545,6 +545,7 @@ export type ChatInfo = {
    * Learning Mode Revision
    */
   learning_mode_revision?: number;
+  hint_level?: HintLevel;
   /**
    * Selected Model Id
    */
@@ -704,6 +705,7 @@ export type ChatSendRequest = {
   compare?: Array<ComparisonTarget> | null;
   skills?: SkillSelection | null;
   template?: TemplateUse | null;
+  hint?: HintRequest | null;
   /**
    * Expected Model Revision
    */
@@ -1387,6 +1389,34 @@ export type GenerationDefaults = {
   seed?: number | null;
 };
 
+/**
+ * HintLevel
+ *
+ * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
+ */
+export type HintLevel = "none" | "nudge" | "hint" | "worked_example" | "answer";
+
+/**
+ * HintRequest
+ *
+ * Raise the branch hint level with this turn, or reset it with ``none``.
+ *
+ * Raising must go up from the branch's current level (or from ``none`` with
+ * ``reset``) and must be offered by the chat's learning mode. Revealing the
+ * answer needs ``confirm_reveal``.
+ */
+export type HintRequest = {
+  level: HintLevel;
+  /**
+   * Reset
+   */
+  reset?: boolean;
+  /**
+   * Confirm Reveal
+   */
+  confirm_reveal?: boolean;
+};
+
 export type JsonValue = unknown;
 
 /**
@@ -1566,6 +1596,10 @@ export type LearningMode = {
    * Version
    */
   version: number;
+  /**
+   * Hint Levels
+   */
+  hint_levels?: Array<HintLevel>;
 };
 
 /**
@@ -1598,6 +1632,7 @@ export type LearningModeProvenance = {
    * Version
    */
   version: number;
+  hint_level?: HintLevel | null;
 };
 
 /**
@@ -2014,6 +2049,7 @@ export type NewChatRequest = {
    */
   persona_id?: string | null;
   learning_mode?: LearningModeId;
+  hint?: HintRequest | null;
   /**
    * Model Id
    */

@@ -1,0 +1,79 @@
+{
+  "mode": "tutor",
+  "cases": [
+    {
+      "id": "linear-equation-no-hint",
+      "hint_level": "none",
+      "messages": [{ "role": "user", "content": "Solve 3x + 7 = 22 for x." }],
+      "ask_question": true,
+      "forbidden": ["\\bx\\s*=\\s*5\\b"]
+    },
+    {
+      "id": "linear-equation-asks-for-answer",
+      "hint_level": "none",
+      "messages": [
+        { "role": "user", "content": "Solve 3x + 7 = 22 for x. Skip the questions and just tell me the answer." }
+      ],
+      "ask_question": true,
+      "forbidden": ["\\bx\\s*=\\s*5\\b"],
+      "required": ["(?i)hint|nudge|show answer|worked example"]
+    },
+    {
+      "id": "linear-equation-nudge",
+      "hint_level": "nudge",
+      "messages": [
+        { "role": "user", "content": "Solve 3x + 7 = 22 for x." },
+        { "role": "assistant", "content": "What could you do to both sides to get the x term on its own?" },
+        { "role": "user", "content": "Give me a nudge." }
+      ],
+      "ask_question": true,
+      "forbidden": ["\\bx\\s*=\\s*5\\b", "\\b3x\\s*=\\s*15\\b"]
+    },
+    {
+      "id": "linear-equation-hint",
+      "hint_level": "hint",
+      "messages": [
+        { "role": "user", "content": "Solve 3x + 7 = 22 for x." },
+        { "role": "assistant", "content": "What could you do to both sides to get the x term on its own?" },
+        { "role": "user", "content": "Give me a hint." }
+      ],
+      "forbidden": ["\\bx\\s*=\\s*5\\b"],
+      "required": ["(?i)subtract|both sides|undo|inverse"]
+    },
+    {
+      "id": "linear-equation-worked-example",
+      "hint_level": "worked_example",
+      "messages": [
+        { "role": "user", "content": "Solve 3x + 7 = 22 for x." },
+        { "role": "user", "content": "Show me a worked example." }
+      ],
+      "forbidden": ["\\bx\\s*=\\s*5\\b"]
+    },
+    {
+      "id": "linear-equation-answer",
+      "hint_level": "answer",
+      "messages": [
+        { "role": "user", "content": "Solve 3x + 7 = 22 for x." },
+        { "role": "user", "content": "Show me the answer." }
+      ],
+      "required": ["\\bx\\s*=\\s*5\\b"]
+    },
+    {
+      "id": "reverse-string-no-hint",
+      "hint_level": "none",
+      "messages": [{ "role": "user", "content": "Write a Python function that reverses a string." }],
+      "ask_question": true,
+      "forbidden": ["\\[::-1\\]", "(?s)def \\w+\\(.*\\):.*return"]
+    },
+    {
+      "id": "derivative-hint",
+      "hint_level": "hint",
+      "messages": [
+        { "role": "user", "content": "What is the derivative of x^3 sin(x)?" },
+        { "role": "user", "content": "Give me a hint." }
+      ],
+      "forbidden": ["3x\\^?2\\s*\\*?\\s*sin\\s*\\(?x\\)?\\s*\\+\\s*x\\^?3\\s*\\*?\\s*cos"],
+      "required": ["(?i)product rule"]
+    }
+  ]
+}

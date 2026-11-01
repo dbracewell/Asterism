@@ -65,7 +65,7 @@ async def test_catalog_lists_the_four_modes_without_instruction_text(project_api
     modes = response.json()["modes"]
     assert [mode["id"] for mode in modes] == ["standard", "tutor", "explain_back", "review"]
     assert [mode["name"] for mode in modes] == ["Standard", "Tutor", "Explain-back", "Review my work"]
-    assert all(set(mode) == {"id", "name", "description", "version"} for mode in modes)
+    assert all(set(mode) == {"id", "name", "description", "version", "hint_levels"} for mode in modes)
     assert "guiding questions" not in response.text
 
 
@@ -76,22 +76,22 @@ async def test_acceptance_pins_the_mode_and_records_provenance(project_api):
     cid, mid = uuid.UUID(chat["info"]["id"]), uuid.UUID(chat["messages"][0]["id"])
     assert chat["info"]["learning_mode"] == "tutor"
     assert chat["info"]["learning_mode_revision"] == 1
-    assert chat["messages"][0]["learning_mode"] == {"id": "tutor", "name": "Tutor", "version": 1}
+    assert chat["messages"][0]["learning_mode"] == {"id": "tutor", "name": "Tutor", "version": 2, "hint_level": "none"}
     # Changing the selection after acceptance does not rewrite the accepted turn.
     await select_mode(client, cid, "review", 1)
     async with sessions() as db:
         execution = await prepare_execution(user_id="a", chat_id=cid, message_id=mid, session=db)
     assert execution.learning_mode.id == LearningModeId.TUTOR
     prompt = await pending_prompt(sessions, mid)
-    assert "Do not give the final answer" in prompt.text
+    assert "do not give the final answer" in prompt.text
     assert "first error or the weakest point" not in prompt.text
     layer = next(layer for layer in prompt.layers if layer.kind == "mode")
-    assert (layer.source_id, layer.revision) == ("tutor", 1)
+    assert (layer.source_id, layer.revision) == ("tutor", 2)
     state = (await client.get(f"/chat/{cid}", headers=auth())).json()
     assert state["messages"][0]["learning_mode"]["id"] == "tutor"
     assert state["info"]["pending_learning_mode"]["id"] == "tutor"
     assert state["info"]["learning_mode"] == "review"
-    assert "Do not give the final answer" not in str(state)
+    assert "do not give the final answer" not in str(state)
 
 
 @pytest.mark.asyncio
@@ -101,7 +101,7 @@ async def test_resume_keeps_pinned_text_and_regeneration_captures_the_current_se
     cid, mid = uuid.UUID(chat["info"]["id"]), uuid.UUID(chat["messages"][0]["id"])
     async with sessions() as db:
         first = await prepare_execution(user_id="a", chat_id=cid, message_id=mid, session=db)
-    monkeypatch.setattr(catalog, "LEARNING_MODES", revised(LearningModeId.TUTOR, "Revised tutor text", 2))
+    monkeypatch.setattr(catalog, "LEARNING_MODES", revised(LearningModeId.TUTOR, "Revised tutor text", 3))
     async with sessions() as db:
         resumed = await prepare_execution(user_id="a", chat_id=cid, message_id=mid, session=db)
     assert resumed == first
@@ -116,7 +116,7 @@ async def test_resume_keeps_pinned_text_and_regeneration_captures_the_current_se
     await select_mode(client, cid, "tutor", 2)
     async with sessions() as db:
         latest = await prepare_execution(user_id="a", chat_id=cid, message_id=mid, restart=True, session=db)
-    assert (latest.learning_mode.id, latest.learning_mode.version) == (LearningModeId.TUTOR, 2)
+    assert (latest.learning_mode.id, latest.learning_mode.version) == (LearningModeId.TUTOR, 3)
     assert "Revised tutor text" in (await pending_prompt(sessions, mid)).text
 
 
@@ -215,8 +215,8 @@ async def test_mode_layers_between_persona_and_skills(skills_api):
         "skills",
         "runtime",
     ]
-    assert prompt.index("first-year student") < prompt.index("Do not give the final answer")
-    assert prompt.index("Do not give the final answer") < prompt.index("Private instructions 0")
+    assert prompt.index("first-year student") < prompt.index("do not give the final answer")
+    assert prompt.index("do not give the final answer") < prompt.index("Private instructions 0")
 
 
 @pytest.mark.asyncio
@@ -267,7 +267,7 @@ async def test_delegates_do_not_inherit_the_learning_mode(project_api, monkeypat
     )
     await main.prepare_execution(uuid.UUID(chat["messages"][0]["id"]))
     scope = await main.prepare_execution_scope()
-    assert "Do not give the final answer" in await main._build_system_prompt()
+    assert "do not give the final answer" in await main._build_system_prompt()
     profile = await get_agent_profile("a", uuid.UUID(worker["id"]))
     child = Agent(
         profile=profile,
@@ -282,5 +282,5 @@ async def test_delegates_do_not_inherit_the_learning_mode(project_api, monkeypat
         tool_scope=replace(main.tool_scope, caller_agent_id=profile.id, model_id=profile.model_id),
     )
     text = await child._build_system_prompt()
-    assert "Do not give the final answer" not in text
+    assert "do not give the final answer" not in text
     assert all(layer.kind != "mode" for layer in child.prompt_snapshot.layers)

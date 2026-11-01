@@ -248,3 +248,19 @@ send-time template provenance. US-51.6 adds the opt-in, ephemeral prompt coach
 (`/prompt-templates/coach` and `/prompt-templates/coach/review`), which runs on
 the chat-title model. Template text grants no capabilities. See the [prompt templates contract](../../docs/architecture/prompt-templates.md)
 and [ADR-0026](../../docs/adr/0026-prompt-template-documents-and-framework-catalog.md).
+
+## Learning-mode evaluation
+
+`asterism/domains/learning/evals/*.json` holds fixture cases that check whether
+a model follows a learning mode at each hint level (for example, no leaked
+answer before the learner asks for it). The fixtures are validated in CI, but
+the live run is informational and never gates CI. Run it against any
+OpenAI-compatible endpoint from `apps/backend`:
+
+```sh
+node ../../scripts/run-with-env.mjs --env none --scope backend --profile test -- \
+  uv run python scripts/evaluate_learning_modes.py \
+  --base-url http://localhost:11434/v1 --model llama3.1 [--api-key-env OPENAI_API_KEY]
+```
+
+See [ADR-0029](../../docs/adr/0029-branch-local-hint-levels.md).

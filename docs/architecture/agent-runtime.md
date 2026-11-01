@@ -97,7 +97,9 @@ See [ADR-0021](../adr/0021-personas-and-execution-binding.md).
 The `mode` layer uses the turn's pinned learning-mode snapshot; resume replays it,
 and regeneration captures the chat's current selection. It outranks project and
 skill text but not the persona. Delegates do not receive it. See
-[ADR-0028](../adr/0028-learning-mode-layer.md).
+[ADR-0028](../adr/0028-learning-mode-layer.md). Modes with tiered hints append
+the turn's branch hint level to the layer; see
+[ADR-0029](../adr/0029-branch-local-hint-levels.md).
 
 ## Bounded loop and streaming
 

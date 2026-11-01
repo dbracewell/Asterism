@@ -17,7 +17,7 @@ from asterism.domains.user.personas import require_owned_persona
 
 from .execution_context import build_execution_provenance
 from .execution_models import ChatExecutionModel
-from .learning_modes import accepted_mode_snapshot, current_mode_snapshot
+from .learning_modes import accepted_mode_snapshot, current_mode_snapshot, turn_hint_level
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
 from .personas import read_chat_persona_snapshot
@@ -100,7 +100,12 @@ async def prepare_execution(
                 except NotFoundException as error:
                     raise CodedException(409, "Accepted persona is unavailable; regenerate") from error
                 # Regeneration captures the current selection; a first run uses the pinned mode.
-                learning_mode = current_mode_snapshot(chat) if restart else accepted_mode_snapshot(message)
+                # The turn's hint level is part of its request, so regeneration keeps it.
+                learning_mode = (
+                    current_mode_snapshot(chat, turn_hint_level(message))
+                    if restart
+                    else accepted_mode_snapshot(message)
+                )
                 skills = message.accepted_skills.snapshots
                 await validate_snapshots(user_id, skills, session)
                 prompt = await build_prompt_snapshot(

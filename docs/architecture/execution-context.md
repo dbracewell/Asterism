@@ -162,3 +162,14 @@ current selection. The mode ID must still be in the catalog when a run starts or
 resumes. Execution provenance records the mode's ID, name and version, never its
 text. Delegates do not inherit the mode, and mode text grants no capabilities. See
 [ADR-0028](../adr/0028-learning-mode-layer.md).
+
+### Hint levels
+
+Each user turn records the branch hint level (`none`, `nudge`, `hint`,
+`worked_example`, `answer`). The active branch's latest user turn sets the current
+level, so branches keep separate levels. A send raises the level only through an
+explicit `hint` request, which the current mode must offer; the answer level
+needs `confirm_reveal`. The pinned mode snapshot includes the level's
+instructions and records the applied level in provenance. Regeneration keeps the
+turn's level under the current mode. See
+[ADR-0029](../adr/0029-branch-local-hint-levels.md).

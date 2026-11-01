@@ -14,7 +14,8 @@ export const learningModes: LearningModeCatalog = {
       id: "tutor",
       name: "Tutor",
       description: "Guides you with questions and hints instead of answers.",
-      version: 1,
+      version: 2,
+      hint_levels: ["nudge", "hint", "worked_example", "answer"],
     },
     {
       id: "explain_back",

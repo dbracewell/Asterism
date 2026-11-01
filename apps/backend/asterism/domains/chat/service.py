@@ -76,9 +76,16 @@ async def add_message(
                 persona_id=chat.persona_id,
                 session=session,
             )
-            from .learning_modes import current_mode_snapshot
+            from .branches import nearest_user_ancestor
+            from .learning_modes import current_mode_snapshot, turn_hint_level
 
-            new_message.accepted_learning_mode = current_mode_snapshot(chat)
+            # An edited turn starts from its source ancestry's hint level.
+            new_message.hint_level = turn_hint_level(
+                await nearest_user_ancestor(
+                    user_id=user_id, chat_id=chat_id, parent_id=message.parent_message_id, session=session
+                )
+            )
+            new_message.accepted_learning_mode = current_mode_snapshot(chat, new_message.hint_level)
         if message.execution is not None:
             from .execution_models import ChatExecutionModel
             from .queries import select_owned_executions

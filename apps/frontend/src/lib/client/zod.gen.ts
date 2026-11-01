@@ -448,6 +448,34 @@ export const zGenerationDefaults = z.object({
   seed: z.int().nullish(),
 });
 
+/**
+ * HintLevel
+ *
+ * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
+ */
+export const zHintLevel = z.enum([
+  "none",
+  "nudge",
+  "hint",
+  "worked_example",
+  "answer",
+]);
+
+/**
+ * HintRequest
+ *
+ * Raise the branch hint level with this turn, or reset it with ``none``.
+ *
+ * Raising must go up from the branch's current level (or from ``none`` with
+ * ``reset``) and must be offered by the chat's learning mode. Revealing the
+ * answer needs ``confirm_reveal``.
+ */
+export const zHintRequest = z.object({
+  level: zHintLevel,
+  reset: z.boolean().optional().default(false),
+  confirm_reveal: z.boolean().optional().default(false),
+});
+
 export const zJsonValue = z.unknown();
 
 /**
@@ -629,6 +657,7 @@ export const zLearningMode = z.object({
   name: z.string(),
   description: z.string(),
   version: z.int().gte(1),
+  hint_levels: z.array(zHintLevel).optional(),
 });
 
 /**
@@ -647,6 +676,7 @@ export const zLearningModeProvenance = z.object({
   id: zLearningModeId,
   name: z.string(),
   version: z.int().gte(1),
+  hint_level: zHintLevel.nullish(),
 });
 
 /**
@@ -1386,6 +1416,7 @@ export const zChatInfo = z.object({
   persona_revision: z.int().gte(1).optional().default(1),
   learning_mode: zLearningModeId.optional().default("standard"),
   learning_mode_revision: z.int().gte(1).optional().default(1),
+  hint_level: zHintLevel.optional().default("none"),
   selected_model_id: z.uuid().nullish(),
   model_revision: z.int().gte(1).optional().default(1),
   selected_model: zChatModelChoice.nullish(),
@@ -1660,6 +1691,7 @@ export const zChatSendRequest = z.object({
   compare: z.array(zComparisonTarget).min(2).max(3).nullish(),
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
+  hint: zHintRequest.nullish(),
   expected_model_revision: z.int().gte(1),
   request_id: z.uuid(),
   user_prompt: z.string(),
@@ -1677,6 +1709,7 @@ export const zNewChatRequest = z.object({
   template: zTemplateUse.nullish(),
   persona_id: z.uuid().nullish(),
   learning_mode: zLearningModeId.optional().default("standard"),
+  hint: zHintRequest.nullish(),
   model_id: z.uuid(),
   request_id: z.uuid(),
   draft_id: z.uuid().nullish(),

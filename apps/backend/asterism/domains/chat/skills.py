@@ -2,7 +2,6 @@
 
 import uuid
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import CodedException
@@ -10,22 +9,15 @@ from asterism.db.database import get_async_db_session
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillSnapshot
 from asterism.domains.skills.activation import eligible_rows, validate_limits, validate_snapshots
 
-from .branches import active_branch
+from .branches import latest_branch_user_turn, nearest_user_ancestor
 from .models import ChatModel, MessageModel
 from .queries import select_owned_messages
 from .schemas import ActiveSkill, ActiveSkillState, MessageExecution, SkillSelection
 
 
 async def branch_skills(user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> AcceptedSkills:
-    records = list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id)))
-    root = await session.scalar(
-        select(ChatModel.active_root_id).where(ChatModel.id == chat_id, ChatModel.user_id == user_id)
-    )
-    by_id = {row.id: row for row in records}
-    for message in reversed(active_branch(records, root)):
-        if message.role == "user":
-            return by_id[message.id].accepted_skills
-    return AcceptedSkills()
+    turn = await latest_branch_user_turn(user_id, chat_id, session)
+    return turn.accepted_skills if turn is not None else AcceptedSkills()
 
 
 async def accept_skills(
@@ -115,17 +107,5 @@ async def inherited_skills(
     *, user_id: str, chat_id: uuid.UUID, parent_id: uuid.UUID | None, session: AsyncSession
 ) -> AcceptedSkills:
     """A fork inherits its source ancestry, never a sibling's selected state."""
-    visited: set[uuid.UUID] = set()
-    while parent_id is not None:
-        if parent_id in visited:
-            raise CodedException(409, "Invalid message ancestry")
-        visited.add(parent_id)
-        parent = await session.scalar(
-            select_owned_messages(user_id=user_id, chat_id=chat_id).where(MessageModel.id == parent_id)
-        )
-        if parent is None:
-            raise CodedException(409, "Source branch is unavailable")
-        if parent.role == "user":
-            return parent.accepted_skills
-        parent_id = parent.parent_message_id
-    return AcceptedSkills()
+    source = await nearest_user_ancestor(user_id=user_id, chat_id=chat_id, parent_id=parent_id, session=session)
+    return source.accepted_skills if source is not None else AcceptedSkills()
