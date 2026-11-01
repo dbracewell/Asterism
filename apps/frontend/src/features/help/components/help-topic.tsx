@@ -15,8 +15,10 @@ import {
   isVisibleTo,
   type HelpId,
 } from "@/features/help/registry";
+import { helpCenterHref } from "@/features/help/center";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, CircleQuestionMarkIcon } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
 /**
@@ -41,6 +43,8 @@ export function HelpTopic({
   const [trail, setTrail] = React.useState<HelpId[]>([id]);
   const [expanded, setExpanded] = React.useState(false);
   const titleRef = React.useRef<HTMLDivElement>(null);
+  // The help center focuses the entry it lands on; don't return focus here.
+  const leaving = React.useRef(false);
   const detailsId = React.useId();
 
   const entry = helpEntries[id];
@@ -85,6 +89,10 @@ export function HelpTopic({
         side={side}
         align={align}
         aria-label={`Help: ${current.title}`}
+        onCloseAutoFocus={(event) => {
+          if (leaving.current) event.preventDefault();
+          leaving.current = false;
+        }}
         className="w-80 max-w-[calc(100vw-1rem)] gap-3"
       >
         <PopoverHeader>
@@ -114,31 +122,44 @@ export function HelpTopic({
             {current.summary}
           </PopoverDescription>
         </PopoverHeader>
-        {current.details.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {expanded && (
-              <div
-                id={detailsId}
-                className="text-muted-foreground flex flex-col gap-2 text-sm"
-              >
-                {current.details.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-              </div>
-            )}
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="self-start px-0"
-              aria-expanded={expanded}
-              aria-controls={expanded ? detailsId : undefined}
-              onClick={() => setExpanded((value) => !value)}
+        <div className="flex flex-col gap-2">
+          {expanded && (
+            <div
+              id={detailsId}
+              className="text-muted-foreground flex flex-col gap-2 text-sm"
             >
-              {expanded ? "Show less" : "Learn more"}
+              {current.details.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-x-4">
+            {current.details.length > 0 && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="px-0"
+                aria-expanded={expanded}
+                aria-controls={expanded ? detailsId : undefined}
+                onClick={() => setExpanded((value) => !value)}
+              >
+                {expanded ? "Show less" : "Learn more"}
+              </Button>
+            )}
+            <Button asChild variant="link" size="sm" className="px-0">
+              <Link
+                href={helpCenterHref(currentId)}
+                onClick={() => {
+                  leaving.current = true;
+                  setOpen(false);
+                }}
+              >
+                Open in help center
+              </Link>
             </Button>
           </div>
-        )}
+        </div>
         {related.length > 0 && (
           <nav aria-label="Related terms" className="flex flex-col gap-1">
             <p className="text-muted-foreground text-xs">Related</p>

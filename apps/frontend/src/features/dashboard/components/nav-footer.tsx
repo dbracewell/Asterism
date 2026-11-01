@@ -16,6 +16,7 @@ import { useUser } from "@/features/auth/components/user-context";
 import { authClient } from "@/lib/auth-client";
 import {
   ChevronsUpDown,
+  LibraryBigIcon,
   LogOutIcon,
   Settings2Icon,
   UserCogIcon,
@@ -49,6 +50,11 @@ export const NavFooter = () => {
               <DropdownMenuItem asChild>
                 <Link href="/settings" className="cursor-pointer">
                   <Settings2Icon /> Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/help" className="cursor-pointer">
+                  <LibraryBigIcon /> Help center
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSignOut()}>

@@ -58,6 +58,25 @@ describe("PageHelp", () => {
     expect(button).toHaveFocus();
   });
 
+  it("links each term and the page guide into the help center", async () => {
+    const user = userEvent.setup();
+    renderAt("/");
+    await user.click(
+      screen.getByRole("button", { name: "Help for this page" }),
+    );
+    for (const id of pageGuides["new-chat"].terms) {
+      expect(
+        screen.getByRole("link", {
+          name: `Open ${helpEntries[id].title} in the help center`,
+        }),
+      ).toHaveAttribute("href", `/help#${id}`);
+    }
+    const center = screen.getByRole("link", { name: "Open the help center" });
+    expect(center).toHaveAttribute("href", "/help#page-new-chat");
+    await user.click(center);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("expands a term's details in place", async () => {
     const user = userEvent.setup();
     renderAt("/settings", "t=user&setting=personas");
