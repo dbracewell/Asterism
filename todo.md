@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-52.2 (Socratic tutor with tiered hints) is implemented on `feature/us-52.2-socratic-tutor-hints` and awaiting confirmation. US-52.1 (learning mode foundation) is confirmed complete. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active. US-52.1 (learning mode foundation) and US-52.2 (Socratic tutor with tiered hints) are confirmed complete; US-52.3 is next. EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -35,7 +35,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Implement mode definitions, branch pinning and provenance; regenerate the client.
   - [x] Build the composer picker and message chip.
   - [x] Test pinning, resume, regeneration and layering with personas and skills.
-- [ ] US-52.2: Socratic tutor with tiered hints
+- [x] US-52.2: Socratic tutor with tiered hints
   - [x] Add branch hint state and the level-raising actions; regenerate the client.
   - [x] Write the tutor mode instructions for each level.
   - [x] Build the hint controls and answer-reveal confirmation.
