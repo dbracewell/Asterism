@@ -1,6 +1,6 @@
 # EPIC-53: Study tools from project files
 
-Status: in progress (US-53.1 complete; US-53.2 awaiting confirmation). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-53.1 and US-53.2 complete). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
