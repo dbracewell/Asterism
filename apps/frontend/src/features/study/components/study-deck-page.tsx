@@ -82,7 +82,19 @@ export function StudyDeckPage({
             }
             actions={
               <>
-                <Button asChild>
+                {deck.data.due_count > 0 && (
+                  <Button asChild>
+                    <Link
+                      href={`/projects/${projectId}/study/${deckId}/review`}
+                    >
+                      Review ({deck.data.due_count} due)
+                    </Link>
+                  </Button>
+                )}
+                <Button
+                  asChild
+                  variant={deck.data.due_count > 0 ? "outline" : "default"}
+                >
                   <Link href={`/projects/${projectId}/study/${deckId}/drafts`}>
                     Draft from files
                   </Link>
@@ -180,6 +192,7 @@ function DeckCards({
                   projectId={projectId}
                   deckId={deckId}
                   card={card}
+                  fetchedAt={cards.dataUpdatedAt / 1000}
                   onEdit={() => setEditor({ type: "edit", card })}
                 />
               ))}
@@ -228,11 +241,14 @@ function CardItem({
   projectId,
   deckId,
   card,
+  fetchedAt,
   onEdit,
 }: {
   projectId: string;
   deckId: string;
   card: StudyCard;
+  /** When the card list was loaded (Unix seconds); "due" is judged at that time. */
+  fetchedAt: number;
   onEdit: () => void;
 }) {
   const remove = useMutation({
@@ -268,6 +284,11 @@ function CardItem({
       {card.citations.length > 0 && (
         <CardCitations citations={card.citations} />
       )}
+      <p className="text-muted-foreground text-xs">
+        {card.due_at <= fetchedAt
+          ? "Due now"
+          : `Next review ${new Date(card.due_at * 1000).toLocaleDateString()}`}
+      </p>
       <div className="flex justify-end gap-2">
         <Button
           size="sm"

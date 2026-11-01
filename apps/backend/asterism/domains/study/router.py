@@ -11,8 +11,9 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from . import generation, service
+from . import generation, review, service
 from .schemas import (
+    MAX_REVIEW_QUEUE,
     StudyCard,
     StudyCardCreate,
     StudyCardDraftBatch,
@@ -23,6 +24,10 @@ from .schemas import (
     StudyDeckCreate,
     StudyDeckPage,
     StudyDeckUpdate,
+    StudyProjectSummary,
+    StudyReviewCard,
+    StudyReviewQueue,
+    StudyReviewRequest,
 )
 
 study_router = APIRouter(
@@ -139,4 +144,42 @@ async def generate_card_drafts(
     response.headers["Cache-Control"] = "no-store"
     return await generation.generate_card_drafts(
         user_id=user.id, project_id=project_id, deck_id=deck_id, request=payload, session=db
+    )
+
+
+@study_router.get("/summary", operation_id="studyProjectSummaryGet")
+async def get_summary(project_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> StudyProjectSummary:
+    return await service.project_summary(user_id=user.id, project_id=project_id, session=db)
+
+
+@study_router.get("/decks/{deck_id}/review", operation_id="studyReviewQueueGet")
+async def get_review_queue(
+    project_id: uuid.UUID,
+    deck_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    response: Response,
+    limit: int = Query(default=100, ge=1, le=MAX_REVIEW_QUEUE),
+) -> StudyReviewQueue:
+    """Due cards in due order with the next due time for each rating."""
+    response.headers["Cache-Control"] = "no-store"
+    return await review.review_queue(user_id=user.id, project_id=project_id, deck_id=deck_id, limit=limit, session=db)
+
+
+@study_router.post(
+    "/decks/{deck_id}/cards/{card_id}/reviews",
+    operation_id="studyCardReview",
+    responses={409: {"model": ErrorDetail}},
+)
+async def rate_card(
+    project_id: uuid.UUID,
+    deck_id: uuid.UUID,
+    card_id: uuid.UUID,
+    payload: StudyReviewRequest,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> StudyReviewCard:
+    """Rate recall; 409 when the card was already rated since it was shown."""
+    return await review.rate_card(
+        user_id=user.id, project_id=project_id, deck_id=deck_id, card_id=card_id, payload=payload, session=db
     )

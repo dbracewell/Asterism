@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   updateCard: vi.fn(),
   deleteCard: vi.fn(),
   push: vi.fn(),
+  summary: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/lib/api", () => ({ client: {} }));
@@ -33,6 +34,10 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   studyDeckGetManyOptions: ({ query }: { query: object }) => ({
     queryKey: ["decks", query],
     queryFn: () => mocks.decks(query),
+  }),
+  studyProjectSummaryGetOptions: () => ({
+    queryKey: ["summary"],
+    queryFn: () => mocks.summary(),
   }),
   studyDeckGetOneOptions: ({ path }: { path: object }) => ({
     queryKey: ["deck", path],
@@ -56,6 +61,7 @@ const deck = {
   name: "Biology",
   description: "",
   card_count: 1,
+  due_count: 0,
   created_at: 0,
   updated_at: 0,
 };
@@ -109,6 +115,11 @@ beforeEach(() => {
     page_size: 20,
   });
   mocks.deck.mockResolvedValue(deck);
+  mocks.summary.mockResolvedValue({
+    deck_count: 1,
+    card_count: 1,
+    due_count: 0,
+  });
   mocks.cards.mockResolvedValue({
     items: [card],
     total: 1,
@@ -265,4 +276,33 @@ it("shows a load error for a missing or foreign deck", async () => {
     "Could not load this deck.",
   );
   expect(mocks.cards).not.toHaveBeenCalled();
+});
+
+it("shows due counts and review links", async () => {
+  mocks.summary.mockResolvedValue({
+    deck_count: 2,
+    card_count: 4,
+    due_count: 3,
+  });
+  mocks.decks.mockResolvedValue({
+    items: [
+      { ...deck, card_count: 3, due_count: 3 },
+      { ...deck, id: "e", name: "Chemistry", card_count: 1, due_count: 0 },
+    ],
+    total: 2,
+    page: 1,
+    page_size: 20,
+  });
+  setup(<ProjectStudyDecks projectId="p" />);
+  expect(await screen.findByText("3 cards due for review")).toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: "Review Biology, 3 cards due" }),
+  ).toHaveAttribute("href", "/projects/p/study/d/review");
+  expect(screen.getAllByRole("link", { name: /^Review / })).toHaveLength(1);
+
+  mocks.deck.mockResolvedValue({ ...deck, due_count: 2 });
+  setup(<StudyDeckPage projectId="p" deckId="d" />);
+  expect(
+    await screen.findByRole("link", { name: "Review (2 due)" }),
+  ).toHaveAttribute("href", "/projects/p/study/d/review");
 });

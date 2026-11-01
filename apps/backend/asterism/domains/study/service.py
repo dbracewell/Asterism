@@ -6,7 +6,7 @@ project. Foreign and missing records are indistinguishable 404s.
 
 import uuid
 
-from sqlalchemy import delete
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
@@ -14,9 +14,16 @@ from asterism.core.exceptions import NotFoundException
 from asterism.db.queries import paginate_select
 from asterism.domains.projects.scope import require_owned_project
 
+from . import clock
 from .citations import resolve_citations, serialize_citations
 from .models import StudyCardModel, StudyDeckModel
-from .queries import count_cards_by_deck, select_owned_cards, select_owned_decks
+from .queries import (
+    count_cards_by_deck,
+    count_due_by_deck,
+    project_card_totals,
+    select_owned_cards,
+    select_owned_decks,
+)
 from .schemas import (
     StudyCard,
     StudyCardCreate,
@@ -26,6 +33,7 @@ from .schemas import (
     StudyDeckCreate,
     StudyDeckPage,
     StudyDeckUpdate,
+    StudyProjectSummary,
 )
 
 logger = get_logger("Study")
@@ -46,7 +54,7 @@ async def require_deck(
     return deck
 
 
-async def _require_card(
+async def require_card(
     *, user_id: str, project_id: uuid.UUID, deck_id: uuid.UUID, card_id: uuid.UUID, session: AsyncSession
 ) -> StudyCardModel:
     await require_deck(user_id=user_id, project_id=project_id, deck_id=deck_id, session=session)
@@ -63,9 +71,13 @@ async def _require_card(
 
 async def _to_decks(*, user_id: str, rows: list[StudyDeckModel], session: AsyncSession) -> list[StudyDeck]:
     counts: dict[uuid.UUID, int] = {}
+    due: dict[uuid.UUID, int] = {}
     if rows:
-        result = await session.execute(count_cards_by_deck(user_id=user_id, deck_ids=[row.id for row in rows]))
+        deck_ids = [row.id for row in rows]
+        result = await session.execute(count_cards_by_deck(user_id=user_id, deck_ids=deck_ids))
         counts = {deck_id: count for deck_id, count in result.tuples()}
+        result = await session.execute(count_due_by_deck(user_id=user_id, deck_ids=deck_ids, now=clock.now_seconds()))
+        due = {deck_id: count for deck_id, count in result.tuples()}
     return [
         StudyDeck(
             id=row.id,
@@ -73,6 +85,7 @@ async def _to_decks(*, user_id: str, rows: list[StudyDeckModel], session: AsyncS
             name=row.name,
             description=row.description,
             card_count=counts.get(row.id, 0),
+            due_count=due.get(row.id, 0),
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
@@ -80,7 +93,7 @@ async def _to_decks(*, user_id: str, rows: list[StudyDeckModel], session: AsyncS
     ]
 
 
-async def _to_cards(
+async def to_cards(
     *, user_id: str, project_id: uuid.UUID, rows: list[StudyCardModel], session: AsyncSession
 ) -> list[StudyCard]:
     citations = await resolve_citations(
@@ -93,6 +106,10 @@ async def _to_cards(
             front=row.front,
             back=row.back,
             citations=card_citations,
+            state=row.state,  # pyright: ignore[reportArgumentType]  # DB check constraint pins the values.
+            due_at=row.due_at,
+            reps=row.reps,
+            lapses=row.lapses,
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
@@ -101,6 +118,17 @@ async def _to_cards(
 
 
 # --- Decks -----------------------------------------------------------------
+
+
+async def project_summary(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> StudyProjectSummary:
+    await require_owned_project(user_id=user_id, project_id=project_id, session=session)
+    deck_count = await session.scalar(
+        select(func.count()).select_from(select_owned_decks(user_id=user_id, project_id=project_id).subquery())
+    )
+    row = (
+        await session.execute(project_card_totals(user_id=user_id, project_id=project_id, now=clock.now_seconds()))
+    ).one()
+    return StudyProjectSummary(deck_count=deck_count or 0, card_count=row[0], due_count=row[1])
 
 
 async def list_decks(
@@ -179,7 +207,7 @@ async def list_cards(
         page_size=page_size,
     )
     return StudyCardPage(
-        items=await _to_cards(user_id=user_id, project_id=project_id, rows=result.records, session=session),
+        items=await to_cards(user_id=user_id, project_id=project_id, rows=result.records, session=session),
         total=result.total,
         page=page,
         page_size=page_size,
@@ -189,10 +217,8 @@ async def list_cards(
 async def read_card(
     *, user_id: str, project_id: uuid.UUID, deck_id: uuid.UUID, card_id: uuid.UUID, session: AsyncSession
 ) -> StudyCard:
-    card = await _require_card(
-        user_id=user_id, project_id=project_id, deck_id=deck_id, card_id=card_id, session=session
-    )
-    return (await _to_cards(user_id=user_id, project_id=project_id, rows=[card], session=session))[0]
+    card = await require_card(user_id=user_id, project_id=project_id, deck_id=deck_id, card_id=card_id, session=session)
+    return (await to_cards(user_id=user_id, project_id=project_id, rows=[card], session=session))[0]
 
 
 async def create_card(
@@ -205,7 +231,7 @@ async def create_card(
     card = StudyCardModel(user_id=user_id, deck_id=deck_id, front=payload.front, back=payload.back, citations=citations)
     session.add(card)
     await session.commit()
-    return (await _to_cards(user_id=user_id, project_id=project_id, rows=[card], session=session))[0]
+    return (await to_cards(user_id=user_id, project_id=project_id, rows=[card], session=session))[0]
 
 
 async def update_card(
@@ -217,9 +243,7 @@ async def update_card(
     payload: StudyCardUpdate,
     session: AsyncSession,
 ) -> StudyCard:
-    card = await _require_card(
-        user_id=user_id, project_id=project_id, deck_id=deck_id, card_id=card_id, session=session
-    )
+    card = await require_card(user_id=user_id, project_id=project_id, deck_id=deck_id, card_id=card_id, session=session)
     if payload.front is not None:
         card.front = payload.front
     if payload.back is not None:
@@ -229,13 +253,13 @@ async def update_card(
             user_id=user_id, project_id=project_id, citations=payload.citations, session=session
         )
     await session.commit()
-    return (await _to_cards(user_id=user_id, project_id=project_id, rows=[card], session=session))[0]
+    return (await to_cards(user_id=user_id, project_id=project_id, rows=[card], session=session))[0]
 
 
 async def delete_card(
     *, user_id: str, project_id: uuid.UUID, deck_id: uuid.UUID, card_id: uuid.UUID, session: AsyncSession
 ) -> None:
-    await _require_card(user_id=user_id, project_id=project_id, deck_id=deck_id, card_id=card_id, session=session)
+    await require_card(user_id=user_id, project_id=project_id, deck_id=deck_id, card_id=card_id, session=session)
     await session.execute(
         delete(StudyCardModel).where(
             StudyCardModel.id == card_id,

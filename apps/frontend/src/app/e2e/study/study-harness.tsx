@@ -2,6 +2,7 @@
 import UserProvider from "@/features/auth/components/user-context";
 import type { User } from "@/features/auth/types";
 import { CardDraftReview } from "@/features/study/components/card-draft-review";
+import { ReviewSession } from "@/features/study/components/review-session";
 import { StudyDeckPage } from "@/features/study/components/study-deck-page";
 import {
   MutationCache,
@@ -9,6 +10,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { useState } from "react";
+import { handleMutationSuccess } from "@/lib/mutation-cache";
 
 export const STUDY_PROJECT_ID = "11111111-1111-4111-8111-111111111111";
 export const STUDY_DECK_ID = "22222222-2222-4222-8222-222222222222";
@@ -33,8 +35,8 @@ const TEST_USER: User = {
 function createTestCache() {
   const cache = new QueryClient({
     mutationCache: new MutationCache({
-      onSuccess: () => {
-        cache.invalidateQueries();
+      onSuccess: (_data, _variables, _context, mutation) => {
+        handleMutationSuccess(cache, mutation);
       },
     }),
     defaultOptions: { queries: { retry: false } },
@@ -47,7 +49,9 @@ export function StudyHarness({ view }: { view: string }) {
   return (
     <QueryClientProvider client={cache}>
       <UserProvider user={TEST_USER}>
-        {view === "drafts" ? (
+        {view === "review" ? (
+          <ReviewSession projectId={STUDY_PROJECT_ID} deckId={STUDY_DECK_ID} />
+        ) : view === "drafts" ? (
           <CardDraftReview
             projectId={STUDY_PROJECT_ID}
             deckId={STUDY_DECK_ID}

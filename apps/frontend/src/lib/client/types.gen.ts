@@ -3341,6 +3341,22 @@ export type StudyCard = {
    */
   citations: Array<StudyCitation>;
   /**
+   * State
+   */
+  state: "learning" | "review" | "relearning";
+  /**
+   * Due At
+   */
+  due_at: number;
+  /**
+   * Reps
+   */
+  reps: number;
+  /**
+   * Lapses
+   */
+  lapses: number;
+  /**
    * Created At
    */
   created_at: number;
@@ -3544,6 +3560,10 @@ export type StudyDeck = {
    */
   card_count: number;
   /**
+   * Due Count
+   */
+  due_count: number;
+  /**
    * Created At
    */
   created_at: number;
@@ -3633,6 +3653,136 @@ export type StudyDraftFileResult = {
    * Truncated
    */
   truncated?: boolean;
+};
+
+/**
+ * StudyProjectSummary
+ */
+export type StudyProjectSummary = {
+  /**
+   * Deck Count
+   */
+  deck_count: number;
+  /**
+   * Card Count
+   */
+  card_count: number;
+  /**
+   * Due Count
+   */
+  due_count: number;
+};
+
+/**
+ * StudyReviewCard
+ */
+export type StudyReviewCard = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Deck Id
+   */
+  deck_id: string;
+  /**
+   * Front
+   */
+  front: string;
+  /**
+   * Back
+   */
+  back: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
+  /**
+   * State
+   */
+  state: "learning" | "review" | "relearning";
+  /**
+   * Due At
+   */
+  due_at: number;
+  /**
+   * Reps
+   */
+  reps: number;
+  /**
+   * Lapses
+   */
+  lapses: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+  previews: StudyReviewPreview;
+};
+
+/**
+ * StudyReviewPreview
+ *
+ * When the card would next be due (Unix seconds) for each rating.
+ */
+export type StudyReviewPreview = {
+  /**
+   * Again
+   */
+  again: number;
+  /**
+   * Hard
+   */
+  hard: number;
+  /**
+   * Good
+   */
+  good: number;
+  /**
+   * Easy
+   */
+  easy: number;
+};
+
+/**
+ * StudyReviewQueue
+ *
+ * Due cards in due order, capped at ``limit``; ``due_count`` counts all due cards.
+ */
+export type StudyReviewQueue = {
+  /**
+   * Items
+   */
+  items: Array<StudyReviewCard>;
+  /**
+   * Due Count
+   */
+  due_count: number;
+  /**
+   * Now
+   */
+  now: number;
+};
+
+/**
+ * StudyReviewRequest
+ *
+ * Rate a card. ``expected_reps`` is the card's ``reps`` when shown, so a repeated
+ * submission (a double key press, a second tab) is rejected instead of counted twice.
+ */
+export type StudyReviewRequest = {
+  /**
+   * Rating
+   */
+  rating: "again" | "hard" | "good" | "easy";
+  /**
+   * Expected Reps
+   */
+  expected_reps: number;
 };
 
 /**
@@ -7042,6 +7192,159 @@ export type StudyCardDraftGenerateResponses = {
 
 export type StudyCardDraftGenerateResponse =
   StudyCardDraftGenerateResponses[keyof StudyCardDraftGenerateResponses];
+
+export type StudyProjectSummaryGetData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/summary";
+};
+
+export type StudyProjectSummaryGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyProjectSummaryGetError =
+  StudyProjectSummaryGetErrors[keyof StudyProjectSummaryGetErrors];
+
+export type StudyProjectSummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyProjectSummary;
+};
+
+export type StudyProjectSummaryGetResponse =
+  StudyProjectSummaryGetResponses[keyof StudyProjectSummaryGetResponses];
+
+export type StudyReviewQueueGetData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+  };
+  query?: {
+    /**
+     * Limit
+     */
+    limit?: number;
+  };
+  url: "/projects/{project_id}/study/decks/{deck_id}/review";
+};
+
+export type StudyReviewQueueGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyReviewQueueGetError =
+  StudyReviewQueueGetErrors[keyof StudyReviewQueueGetErrors];
+
+export type StudyReviewQueueGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyReviewQueue;
+};
+
+export type StudyReviewQueueGetResponse =
+  StudyReviewQueueGetResponses[keyof StudyReviewQueueGetResponses];
+
+export type StudyCardReviewData = {
+  body: StudyReviewRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+    /**
+     * Card Id
+     */
+    card_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}/reviews";
+};
+
+export type StudyCardReviewErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyCardReviewError =
+  StudyCardReviewErrors[keyof StudyCardReviewErrors];
+
+export type StudyCardReviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyReviewCard;
+};
+
+export type StudyCardReviewResponse =
+  StudyCardReviewResponses[keyof StudyCardReviewResponses];
 
 export type AppCaptioningGetData = {
   body?: never;

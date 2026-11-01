@@ -76,6 +76,7 @@ class StudyDeck(BaseModel):
     name: str
     description: str
     card_count: int = Field(ge=0)
+    due_count: int = Field(ge=0)
     created_at: int
     updated_at: int
 
@@ -115,6 +116,10 @@ class StudyCard(BaseModel):
     front: str
     back: str
     citations: list[StudyCitation]
+    state: Literal["learning", "review", "relearning"]
+    due_at: int
+    reps: int = Field(ge=0)
+    lapses: int = Field(ge=0)
     created_at: int
     updated_at: int
 
@@ -171,3 +176,48 @@ class StudyDraftFileResult(BaseModel):
 class StudyCardDraftBatch(BaseModel):
     drafts: list[StudyCardDraft]
     files: list[StudyDraftFileResult]
+
+
+# ---------------------------------------------------------------------------
+# Review (US-53.3). Ratings follow FSRS: again, hard, good, easy.
+# ---------------------------------------------------------------------------
+
+StudyRating = Literal["again", "hard", "good", "easy"]
+MAX_REVIEW_QUEUE = 200
+
+
+class StudyReviewRequest(BaseModel):
+    """Rate a card. ``expected_reps`` is the card's ``reps`` when shown, so a repeated
+    submission (a double key press, a second tab) is rejected instead of counted twice."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rating: StudyRating
+    expected_reps: int = Field(ge=0, le=2_147_483_647)
+
+
+class StudyReviewPreview(BaseModel):
+    """When the card would next be due (Unix seconds) for each rating."""
+
+    again: int
+    hard: int
+    good: int
+    easy: int
+
+
+class StudyReviewCard(StudyCard):
+    previews: StudyReviewPreview
+
+
+class StudyReviewQueue(BaseModel):
+    """Due cards in due order, capped at ``limit``; ``due_count`` counts all due cards."""
+
+    items: list[StudyReviewCard]
+    due_count: int = Field(ge=0)
+    now: int
+
+
+class StudyProjectSummary(BaseModel):
+    deck_count: int = Field(ge=0)
+    card_count: int = Field(ge=0)
+    due_count: int = Field(ge=0)

@@ -5,7 +5,10 @@ import { ListSkeleton } from "@/components/loading-skeletons";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { client } from "@/lib/api";
-import { studyDeckGetManyOptions } from "@/lib/client/@tanstack/react-query.gen";
+import {
+  studyDeckGetManyOptions,
+  studyProjectSummaryGetOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,6 +19,10 @@ const PAGE_SIZE = 20;
 
 export function cardCountLabel(count: number) {
   return count === 1 ? "1 card" : `${count} cards`;
+}
+
+export function dueLabel(count: number) {
+  return count === 1 ? "1 card due" : `${count} cards due`;
 }
 
 export function ProjectStudyDecks({ projectId }: { projectId: string }) {
@@ -30,6 +37,13 @@ export function ProjectStudyDecks({ projectId }: { projectId: string }) {
     }),
     retry: false,
   });
+  const summary = useQuery({
+    ...studyProjectSummaryGetOptions({
+      client,
+      path: { project_id: projectId },
+    }),
+    retry: false,
+  });
   const newDeck = (
     <Button variant="outline" onClick={() => setCreating(true)}>
       New deck
@@ -38,7 +52,16 @@ export function ProjectStudyDecks({ projectId }: { projectId: string }) {
   return (
     <section className="flex flex-col gap-4" aria-label="Study decks">
       <div className="flex items-center justify-between">
-        <h2 className="text-heading">Study decks</h2>
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          <h2 className="text-heading">Study decks</h2>
+          {summary.data && summary.data.card_count > 0 && (
+            <span className="text-muted-foreground text-sm">
+              {summary.data.due_count > 0
+                ? `${dueLabel(summary.data.due_count)} for review`
+                : "Nothing due for review"}
+            </span>
+          )}
+        </div>
         {decks.data && decks.data.total > 0 && newDeck}
       </div>
       {decks.isPending && <ListSkeleton label="Loading decks" rows={3} />}
@@ -75,8 +98,21 @@ export function ProjectStudyDecks({ projectId }: { projectId: string }) {
                   >
                     {deck.name}
                   </Link>
-                  <span className="text-muted-foreground shrink-0 text-sm">
-                    {cardCountLabel(deck.card_count)}
+                  <span className="flex shrink-0 items-baseline gap-3 text-sm">
+                    <span className="text-muted-foreground">
+                      {cardCountLabel(deck.card_count)}
+                      {deck.due_count > 0 && ` · ${deck.due_count} due`}
+                    </span>
+                    {deck.due_count > 0 && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link
+                          href={`/projects/${projectId}/study/${deck.id}/review`}
+                          aria-label={`Review ${deck.name}, ${dueLabel(deck.due_count)}`}
+                        >
+                          Review
+                        </Link>
+                      </Button>
+                    )}
                   </span>
                 </li>
               ))}

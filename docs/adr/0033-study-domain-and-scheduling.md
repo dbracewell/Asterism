@@ -82,3 +82,18 @@ automatically; EPIC-58 will add explicit, opt-in use.
   which keeps the provenance honest when files change.
 - The schema changes in later stories need the explicit development reset; there
   are no migrations.
+
+## Addendum: scheduler implementation (US-53.3, 2026-11-01)
+
+FSRS-6 is implemented in `study/scheduling.py` as `FsrsScheduler` rather than
+through a package dependency. It follows the reference implementation
+(open-spaced-repetition `fsrs`): learning steps of 1 and 10 minutes, a 10-minute
+relearning step, a 36,500-day maximum interval and no interval fuzzing, so
+results are deterministic. Tests pin its output to reference vectors produced by
+that package, covering new cards, graduation, lapses, relearning and overdue
+reviews.
+
+Cards gained `state`, `step`, `stability`, `difficulty`, `due_at`,
+`last_reviewed_at`, `reps` and `lapses`. A rating is a compare-and-set on
+`reps`, so a repeated submission returns 409 instead of counting twice. Each
+rating appends one `study_review_logs` row, which cascades with its card.
