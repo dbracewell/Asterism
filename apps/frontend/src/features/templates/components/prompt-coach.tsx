@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import { client } from "@/lib/api";
@@ -146,7 +147,9 @@ export function PromptCoachPanel({
       className="bg-background rounded-surface mx-3 mt-2 flex max-h-64 min-w-0 flex-col overflow-y-auto border text-sm"
     >
       <header className="flex items-center gap-2 py-1 pr-1 pl-3">
-        <p className="min-w-0 flex-1 truncate font-medium">Prompt review</p>
+        <p className="min-w-0 truncate font-medium">Prompt review</p>
+        <HelpTopic id="concept.prompt-coach" />
+        <span className="flex-1" />
         <Button
           type="button"
           size="icon-xs"

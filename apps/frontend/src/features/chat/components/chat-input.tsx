@@ -41,6 +41,7 @@ import {
   nameClipboardFile,
   readClipboard,
 } from "../lib/capture";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { AttachMenu, type AttachAction } from "./attach-menu";
 import { ChatFileContext } from "./chat-file-context";
 import { SkillComposer, type SkillComposerControl } from "./skill-composer";
@@ -750,6 +751,7 @@ const ChatInputCore = ({
             />
           )}
           {modelSelector}
+          <HelpTopic id="composer.controls" />
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {status}
             {isProcessing && onStop ? (

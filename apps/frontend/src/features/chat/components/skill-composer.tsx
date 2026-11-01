@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -386,6 +387,7 @@ export function SkillComposer({
         >
           Skills /
         </Button>
+        <HelpTopic id="concept.skill" />
         {current.skills.map((skill, position) => (
           <div
             key={skill.id}

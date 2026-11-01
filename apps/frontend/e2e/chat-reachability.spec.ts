@@ -278,6 +278,24 @@ for (const { width, height, pane, enlarged } of [
     await reachable(
       page.getByRole("button", { name: "Send message", exact: true }),
     );
+    // US-61.2: composer help stays reachable and its popover fits the screen.
+    const help = page.getByRole("button", {
+      name: "Help: Chat controls",
+      exact: true,
+    });
+    await reachable(help);
+    await page.keyboard.press("Enter");
+    const helpDialog = page.getByRole("dialog", {
+      name: "Help: Chat controls",
+    });
+    await expect(helpDialog).toBeVisible();
+    const helpBox = await helpDialog.boundingBox();
+    expect(helpBox).not.toBeNull();
+    expect(helpBox!.x).toBeGreaterThanOrEqual(0);
+    expect(helpBox!.x + helpBox!.width).toBeLessThanOrEqual(width + 1);
+    await page.keyboard.press("Escape");
+    await expect(helpDialog).toHaveCount(0);
+    await expect(help).toBeFocused();
     const regenerate = page
       .getByRole("button", { name: "Regenerate response", exact: true })
       .last();

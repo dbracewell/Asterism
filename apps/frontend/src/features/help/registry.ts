@@ -32,6 +32,7 @@ export type HelpId =
   | "concept.comparison"
   | "concept.tool-approval"
   | "concept.citation"
+  | "composer.controls"
   | "settings.max-steps"
   | "admin.providers"
   | "admin.tools"
@@ -320,6 +321,32 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Open a source to read the passage in its file. Checking sources is a good habit: the assistant can misread or overstate what a file says.",
     ],
     related: ["concept.file-scope", "concept.attachment"],
+    audience: "everyone",
+  },
+  "composer.controls": {
+    title: "Chat controls",
+    summary:
+      "The buttons around the message box change what you send and how the assistant answers. Pick one below to learn more.",
+    details: [
+      "Paperclip: attach files, or see which files this chat can use.",
+      "Template and prompt review: build a clearer prompt from a form, or get feedback on your draft before sending.",
+      "Model and Compare: choose the AI model, or send the same message to several models at once.",
+      "Persona: choose which description of you the assistant should keep in mind.",
+      "Learning mode: choose between direct answers and modes that help you work it out yourself.",
+      "Type / in the message box to add a skill.",
+    ],
+    related: [
+      "concept.attachment",
+      "concept.file-scope",
+      "concept.template",
+      "concept.prompt-coach",
+      "concept.model",
+      "concept.comparison",
+      "concept.persona",
+      "concept.learning-mode",
+      "concept.skill",
+      "concept.mode-lock",
+    ],
     audience: "everyone",
   },
   "settings.max-steps": {
