@@ -1,6 +1,6 @@
 # EPIC-52: Tutor mode and guided learning
 
-Status: in progress (US-52.1 and US-52.2 complete; see [ADR-0028](../adr/0028-learning-mode-layer.md) and [ADR-0029](../adr/0029-branch-local-hint-levels.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-52.1, US-52.2 and US-52.3 complete; see [ADR-0028](../adr/0028-learning-mode-layer.md), [ADR-0029](../adr/0029-branch-local-hint-levels.md) and [ADR-0030](../adr/0030-structured-feedback-sections.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
