@@ -27,11 +27,14 @@ export function ChatModelSessionHarness({
   timezone,
   showThinking = false,
   showHeader = false,
+  newLearner = false,
 }: {
   draft: boolean;
   timezone: string;
   showThinking?: boolean;
   showHeader?: boolean;
+  /** Leave the first-chat tour unrecorded so the new-chat page offers it. */
+  newLearner?: boolean;
 }) {
   const [cache] = useState(createCache);
   return (
@@ -53,6 +56,7 @@ export function ChatModelSessionHarness({
             },
             default_model_id: "11111111-1111-4111-8111-111111111111",
             show_thinking: showThinking,
+            first_chat_tour: newLearner ? null : "completed",
           },
         }}
       >

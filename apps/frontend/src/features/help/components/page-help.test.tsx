@@ -145,4 +145,22 @@ describe("PageHelp", () => {
     });
     expect(sheet).not.toHaveTextContent(helpEntries["admin.tools"].summary);
   });
+
+  it.each([
+    ["/", "project_id=p1", "/?project_id=p1&tour=first-chat"],
+    ["/files", "", "/?tour=first-chat"],
+  ])(
+    "links %s to the chat tour and closes the sheet",
+    async (pathname, search, href) => {
+      const user = userEvent.setup();
+      renderAt(pathname, search);
+      await user.click(
+        screen.getByRole("button", { name: "Help for this page" }),
+      );
+      const link = screen.getByRole("link", { name: "Take the chat tour" });
+      expect(link).toHaveAttribute("href", href);
+      await user.click(link);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    },
+  );
 });

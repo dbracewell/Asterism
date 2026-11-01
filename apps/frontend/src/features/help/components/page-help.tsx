@@ -25,7 +25,13 @@ import {
   isVisibleTo,
   type HelpId,
 } from "@/features/help/registry";
-import { BookOpenTextIcon, ChevronDownIcon } from "lucide-react";
+import { tourHrefFrom } from "@/features/help/tour";
+import {
+  BookOpenTextIcon,
+  ChevronDownIcon,
+  MousePointerClickIcon,
+} from "lucide-react";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
@@ -48,6 +54,8 @@ export function PageHelp() {
   const search = useSearchParams();
   const { isAdmin } = useHelpAudience();
   const [open, setOpen] = React.useState(false);
+  // The tour takes focus itself; don't return it to the Help button.
+  const startingTour = React.useRef(false);
   const guideId = pageGuideFor(
     pathname,
     { t: search.get("t"), setting: search.get("setting") },
@@ -85,8 +93,32 @@ export function PageHelp() {
           <BookOpenTextIcon aria-hidden="true" />
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full max-w-full gap-0 overflow-y-auto sm:max-w-md">
+      <SheetContent
+        className="w-full max-w-full gap-0 overflow-y-auto sm:max-w-md"
+        onCloseAutoFocus={(event) => {
+          if (startingTour.current) event.preventDefault();
+          startingTour.current = false;
+        }}
+      >
         <PageGuideView guide={guide} isAdmin={isAdmin} />
+        <div className="border-t px-4 py-4 text-sm">
+          <p className="text-muted-foreground mb-2">
+            New to Asterism? The chat tour walks through the message box and its
+            controls.
+          </p>
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={tourHrefFrom(pathname, new URLSearchParams(search))}
+              onClick={() => {
+                startingTour.current = true;
+                setOpen(false);
+              }}
+            >
+              <MousePointerClickIcon aria-hidden="true" />
+              Take the chat tour
+            </Link>
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );

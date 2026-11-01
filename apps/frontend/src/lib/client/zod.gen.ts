@@ -2100,6 +2100,7 @@ export const zUserSettings = z.object({
   sub_agents: z.record(z.string(), zSubAgentDefinition).optional(),
   show_thinking: z.boolean().optional().default(true),
   prompt_coach_enabled: z.boolean().optional().default(false),
+  first_chat_tour: z.enum(["completed", "dismissed"]).nullish(),
 });
 
 /**

@@ -49,6 +49,7 @@ export function AttachMenu({
           variant="ghost"
           size="icon-lg"
           aria-label="Add attachments"
+          data-tour="attachments"
           className="rounded-control"
         >
           <PlusIcon />

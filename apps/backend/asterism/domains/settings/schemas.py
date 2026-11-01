@@ -9,6 +9,7 @@ source ⇒ MANUAL" hold on every object that leaves the service layer.
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from pydantic import (
     BaseModel,
@@ -180,6 +181,13 @@ class BulkUpdateSettingRequest(BaseModel):
     values: dict[str, JsonValue]
 
 
+# US-61.4: the first-chat tour is offered while this setting is unset; finishing
+# it records "completed" and skipping it records "dismissed". Deleting the
+# setting offers the tour again.
+FIRST_CHAT_TOUR_SETTING = "first_chat_tour"
+FirstChatTourState = Literal["completed", "dismissed"]
+
+
 class UserSettings(BaseModel):
     """Aggregate of one user's settings as returned by ``GET /settings/user``.
 
@@ -196,6 +204,7 @@ class UserSettings(BaseModel):
     show_thinking: bool = Field(default=True)
     # US-51.6: the composer's "Review prompt" action is opt-in.
     prompt_coach_enabled: bool = Field(default=False)
+    first_chat_tour: FirstChatTourState | None = Field(default=None)
 
 
 class ApplicationSettings(BaseModel):

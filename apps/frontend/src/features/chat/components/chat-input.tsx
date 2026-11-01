@@ -140,12 +140,11 @@ export type ChatInputProps = {
 export const ChatInputContainer = ({
   children,
   className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
+  ...props
+}: React.ComponentProps<"div">) => {
   return (
     <div
+      {...props}
       className={cn(
         "border-input focus-within:border-ring focus-within:ring-ring bg-background rounded-overlay shadow-raised focus-within:shadow-overlay mx-auto flex min-h-0 w-full max-w-full min-w-0 flex-col overflow-clip border transition-shadow focus-within:ring-2",
         className,
@@ -693,6 +692,7 @@ const ChatInputCore = ({
             aria-haspopup={skillComposer ? "listbox" : undefined}
             disabled={controlsDisabled}
             aria-label="Message"
+            data-tour="message"
             ref={textareaRef}
             value={prompt}
             onChange={(event) => updatePrompt(event.target.value)}

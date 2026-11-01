@@ -84,6 +84,10 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mocks.search),
 }));
 vi.mock("@/components/logo", () => ({ default: () => null }));
+// The first-chat tour has its own tests (first-chat-tour.test.tsx).
+vi.mock("@/features/help/components/first-chat-tour", () => ({
+  FirstChatTour: () => null,
+}));
 vi.mock(
   "@/features/chat/components/compare-targets",
   async (importOriginal) => ({

@@ -3907,6 +3907,10 @@ export type UserSettings = {
    * Prompt Coach Enabled
    */
   prompt_coach_enabled?: boolean;
+  /**
+   * First Chat Tour
+   */
+  first_chat_tour?: "completed" | "dismissed" | null;
 };
 
 /**

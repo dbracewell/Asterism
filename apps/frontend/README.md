@@ -117,6 +117,14 @@ dashboard route (and the Settings `t`/`setting` parameters) to a guide, and
 when focus is not in a text field, combobox, menu or another dialog. Empty
 states can pass a `help` element, usually a `HelpTopic`, shown beside the title.
 
+The first-chat tour (`src/features/help/tour.ts` and
+`components/first-chat-tour.tsx`) highlights composer controls by their
+`data-tour` attribute and skips steps whose control is absent. The new-chat page
+offers it while the `first_chat_tour` user setting is unset; finishing stores
+`completed` and skipping stores `dismissed`. `/?tour=first-chat`, linked from
+the help sheet and User Settings → General, replays it. Keep a control's
+`data-tour` attribute when moving or replacing it.
+
 **Convention:** a change that adds a user-facing concept or control adds its
 help entry (and updates the page guide when it adds a page or section) in the
 same change. Help describes only implemented behavior: no

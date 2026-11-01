@@ -54,6 +54,7 @@ export function ChatModelPicker({
         id="chat-model"
         variant="inline"
         aria-label="Chat model"
+        data-tour="model"
         aria-invalid={!!value && !!query.data && !selected?.available}
         showProvider
         showCapabilities
