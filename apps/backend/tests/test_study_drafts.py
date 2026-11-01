@@ -17,6 +17,7 @@ from asterism.domains.retrieval.service import RetrievalArtifact, RetrievalSnaps
 from asterism.domains.retrieval.sources import SourceReader, SourceUnavailable
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.study import generation
+from asterism.domains.study.drafting import TIME_LIMIT_MESSAGE
 from asterism.domains.study.models import StudyCardModel
 from sqlalchemy import delete, func, select, update
 from test_projects_api import auth, create
@@ -87,7 +88,7 @@ def drafts_api(project_api, monkeypatch):
     vectors, model = FakeVectors(), FakeModel()
     monkeypatch.setattr("asterism.domains.study.sources.get_async_db_session", session_context)
     monkeypatch.setattr("asterism.domains.study.sources.vector_store", vectors)
-    monkeypatch.setattr("asterism.domains.study.generation.create_llm_client", model.client)
+    monkeypatch.setattr("asterism.domains.study.llm.create_llm_client", model.client)
     return SimpleNamespace(client=client, sessions=sessions, vectors=vectors, model=model)
 
 
@@ -384,7 +385,7 @@ async def test_slow_model_calls_and_the_request_deadline_fail_only_their_files(d
     monkeypatch.setattr(generation, "REQUEST_SECONDS", 0.2)
     body = (await draft(api, project_id, deck_id, count=2)).json()
     results = {item["file_id"]: item for item in body["files"]}
-    assert results[slow]["message"] == generation.TIME_LIMIT_MESSAGE
+    assert results[slow]["message"] == TIME_LIMIT_MESSAGE
     assert results[fast]["status"] == "used"
 
 
@@ -402,7 +403,7 @@ async def test_more_files_than_cards_reports_unused_files(drafts_api):
         "file_id": second,
         "file_name": "two.txt",
         "status": "failed",
-        "message": "Not needed for the requested number of cards.",
+        "message": "Not needed for the requested number of items.",
         "card_count": 0,
         "truncated": False,
     }

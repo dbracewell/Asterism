@@ -69,6 +69,9 @@ test("browses Projects and General, searches, paginates, and offers scoped new c
   await page.route(`**/api/py/projects/${P}/study/summary`, (route) =>
     route.fulfill({ json: { deck_count: 0, card_count: 0, due_count: 0 } }),
   );
+  await page.route(`**/api/py/projects/${P}/study/quizzes?**`, (route) =>
+    route.fulfill({ json: { items: [], total: 0, page: 1, page_size: 20 } }),
+  );
   const scopes: Array<string | null> = [];
   await page.route("**/api/py/chat/?**", (route) => {
     scopes.push(new URL(route.request().url()).searchParams.get("project_id"));

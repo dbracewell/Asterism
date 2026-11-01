@@ -3674,6 +3674,471 @@ export type StudyProjectSummary = {
 };
 
 /**
+ * StudyQuiz
+ */
+export type StudyQuiz = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Question Count
+   */
+  question_count: number;
+  /**
+   * Multiple Choice Count
+   */
+  multiple_choice_count: number;
+  /**
+   * Short Answer Count
+   */
+  short_answer_count: number;
+  /**
+   * Attempt Count
+   */
+  attempt_count: number;
+  /**
+   * Last Score
+   */
+  last_score: number | null;
+  /**
+   * Best Score
+   */
+  best_score: number | null;
+  /**
+   * Model Id
+   */
+  model_id: string | null;
+  /**
+   * Model Name
+   */
+  model_name: string;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+  /**
+   * Questions
+   */
+  questions: Array<StudyQuizQuestion>;
+};
+
+/**
+ * StudyQuizAnswerInput
+ *
+ * ``choice`` (an option index) answers multiple choice; ``text`` answers short answer.
+ */
+export type StudyQuizAnswerInput = {
+  /**
+   * Question Id
+   */
+  question_id: string;
+  /**
+   * Choice
+   */
+  choice?: number | null;
+  /**
+   * Text
+   */
+  text?: string | null;
+};
+
+/**
+ * StudyQuizAttempt
+ */
+export type StudyQuizAttempt = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Quiz Id
+   */
+  quiz_id: string;
+  /**
+   * Submitted At
+   */
+  submitted_at: number;
+  /**
+   * Score
+   */
+  score: number;
+  /**
+   * Question Count
+   */
+  question_count: number;
+  /**
+   * Ungraded Count
+   */
+  ungraded_count: number;
+  /**
+   * Grader Model Id
+   */
+  grader_model_id: string | null;
+  /**
+   * Grader Model Name
+   */
+  grader_model_name: string | null;
+  /**
+   * Quiz Title
+   */
+  quiz_title: string;
+  /**
+   * Results
+   */
+  results: Array<StudyQuizResult>;
+};
+
+/**
+ * StudyQuizAttemptPage
+ */
+export type StudyQuizAttemptPage = {
+  /**
+   * Items
+   */
+  items: Array<StudyQuizAttemptSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * StudyQuizAttemptRequest
+ *
+ * Submit answers. Omitted questions count as unanswered.
+ *
+ * ``model_id`` grades short answers and is required when any short answer is
+ * not blank.
+ */
+export type StudyQuizAttemptRequest = {
+  /**
+   * Answers
+   */
+  answers: Array<StudyQuizAnswerInput>;
+  /**
+   * Model Id
+   */
+  model_id?: string | null;
+};
+
+/**
+ * StudyQuizAttemptSummary
+ */
+export type StudyQuizAttemptSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Quiz Id
+   */
+  quiz_id: string;
+  /**
+   * Submitted At
+   */
+  submitted_at: number;
+  /**
+   * Score
+   */
+  score: number;
+  /**
+   * Question Count
+   */
+  question_count: number;
+  /**
+   * Ungraded Count
+   */
+  ungraded_count: number;
+  /**
+   * Grader Model Id
+   */
+  grader_model_id: string | null;
+  /**
+   * Grader Model Name
+   */
+  grader_model_name: string | null;
+};
+
+/**
+ * StudyQuizFileResult
+ *
+ * What happened to one requested file. ``message`` explains a failure.
+ */
+export type StudyQuizFileResult = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * File Name
+   */
+  file_name: string | null;
+  /**
+   * Status
+   */
+  status: "used" | "failed";
+  /**
+   * Message
+   */
+  message?: string | null;
+  /**
+   * Question Count
+   */
+  question_count: number;
+  /**
+   * Truncated
+   */
+  truncated?: boolean;
+};
+
+/**
+ * StudyQuizGenerateRequest
+ *
+ * Generate a quiz of ``question_count`` questions of the chosen kinds.
+ *
+ * ``file_ids`` null means the whole project scope (at most 10 files). The quiz
+ * is saved when at least one question is produced.
+ */
+export type StudyQuizGenerateRequest = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Question Count
+   */
+  question_count: number;
+  /**
+   * Kinds
+   */
+  kinds: Array<"multiple_choice" | "short_answer">;
+  /**
+   * File Ids
+   */
+  file_ids?: Array<string> | null;
+  /**
+   * Title
+   */
+  title?: string | null;
+};
+
+/**
+ * StudyQuizGeneration
+ *
+ * The saved quiz, or null when no file produced a usable question.
+ */
+export type StudyQuizGeneration = {
+  quiz: StudyQuiz | null;
+  /**
+   * Files
+   */
+  files: Array<StudyQuizFileResult>;
+};
+
+/**
+ * StudyQuizPage
+ */
+export type StudyQuizPage = {
+  /**
+   * Items
+   */
+  items: Array<StudyQuizSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * StudyQuizQuestion
+ *
+ * A question as shown while taking the quiz: no answer key and no sources.
+ */
+export type StudyQuizQuestion = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Position
+   */
+  position: number;
+  /**
+   * Kind
+   */
+  kind: "multiple_choice" | "short_answer";
+  /**
+   * Prompt
+   */
+  prompt: string;
+  /**
+   * Options
+   */
+  options: Array<string>;
+};
+
+/**
+ * StudyQuizResult
+ *
+ * One graded question with its answer key and sources. Text fields are untrusted.
+ */
+export type StudyQuizResult = {
+  /**
+   * Question Id
+   */
+  question_id: string;
+  /**
+   * Position
+   */
+  position: number;
+  /**
+   * Kind
+   */
+  kind: "multiple_choice" | "short_answer";
+  /**
+   * Prompt
+   */
+  prompt: string;
+  /**
+   * Options
+   */
+  options: Array<string>;
+  /**
+   * Correct Option
+   */
+  correct_option: number | null;
+  /**
+   * Rubric
+   */
+  rubric: string;
+  /**
+   * Explanation
+   */
+  explanation: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
+  /**
+   * Choice
+   */
+  choice: number | null;
+  /**
+   * Text
+   */
+  text: string | null;
+  /**
+   * Verdict
+   */
+  verdict: "correct" | "partial" | "incorrect" | "ungraded";
+  /**
+   * Grader
+   */
+  grader: "exact" | "model" | "none";
+  /**
+   * Feedback
+   */
+  feedback: string;
+};
+
+/**
+ * StudyQuizSummary
+ */
+export type StudyQuizSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Question Count
+   */
+  question_count: number;
+  /**
+   * Multiple Choice Count
+   */
+  multiple_choice_count: number;
+  /**
+   * Short Answer Count
+   */
+  short_answer_count: number;
+  /**
+   * Attempt Count
+   */
+  attempt_count: number;
+  /**
+   * Last Score
+   */
+  last_score: number | null;
+  /**
+   * Best Score
+   */
+  best_score: number | null;
+  /**
+   * Model Id
+   */
+  model_id: string | null;
+  /**
+   * Model Name
+   */
+  model_name: string;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * StudyQuizUpdate
+ */
+export type StudyQuizUpdate = {
+  /**
+   * Title
+   */
+  title: string;
+};
+
+/**
  * StudyReviewCard
  */
 export type StudyReviewCard = {
@@ -7345,6 +7810,412 @@ export type StudyCardReviewResponses = {
 
 export type StudyCardReviewResponse =
   StudyCardReviewResponses[keyof StudyCardReviewResponses];
+
+export type StudyQuizGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/projects/{project_id}/study/quizzes";
+};
+
+export type StudyQuizGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizGetManyError =
+  StudyQuizGetManyErrors[keyof StudyQuizGetManyErrors];
+
+export type StudyQuizGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyQuizPage;
+};
+
+export type StudyQuizGetManyResponse =
+  StudyQuizGetManyResponses[keyof StudyQuizGetManyResponses];
+
+export type StudyQuizGenerateData = {
+  body: StudyQuizGenerateRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/quizzes";
+};
+
+export type StudyQuizGenerateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizGenerateError =
+  StudyQuizGenerateErrors[keyof StudyQuizGenerateErrors];
+
+export type StudyQuizGenerateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyQuizGeneration;
+};
+
+export type StudyQuizGenerateResponse =
+  StudyQuizGenerateResponses[keyof StudyQuizGenerateResponses];
+
+export type StudyQuizDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/quizzes/{quiz_id}";
+};
+
+export type StudyQuizDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizDeleteError =
+  StudyQuizDeleteErrors[keyof StudyQuizDeleteErrors];
+
+export type StudyQuizDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type StudyQuizDeleteResponse =
+  StudyQuizDeleteResponses[keyof StudyQuizDeleteResponses];
+
+export type StudyQuizGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/quizzes/{quiz_id}";
+};
+
+export type StudyQuizGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizGetOneError =
+  StudyQuizGetOneErrors[keyof StudyQuizGetOneErrors];
+
+export type StudyQuizGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyQuiz;
+};
+
+export type StudyQuizGetOneResponse =
+  StudyQuizGetOneResponses[keyof StudyQuizGetOneResponses];
+
+export type StudyQuizUpdateData = {
+  body: StudyQuizUpdate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/quizzes/{quiz_id}";
+};
+
+export type StudyQuizUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizUpdateError =
+  StudyQuizUpdateErrors[keyof StudyQuizUpdateErrors];
+
+export type StudyQuizUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyQuiz;
+};
+
+export type StudyQuizUpdateResponse =
+  StudyQuizUpdateResponses[keyof StudyQuizUpdateResponses];
+
+export type StudyQuizAttemptGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/projects/{project_id}/study/quizzes/{quiz_id}/attempts";
+};
+
+export type StudyQuizAttemptGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizAttemptGetManyError =
+  StudyQuizAttemptGetManyErrors[keyof StudyQuizAttemptGetManyErrors];
+
+export type StudyQuizAttemptGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyQuizAttemptPage;
+};
+
+export type StudyQuizAttemptGetManyResponse =
+  StudyQuizAttemptGetManyResponses[keyof StudyQuizAttemptGetManyResponses];
+
+export type StudyQuizAttemptSubmitData = {
+  body: StudyQuizAttemptRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/quizzes/{quiz_id}/attempts";
+};
+
+export type StudyQuizAttemptSubmitErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizAttemptSubmitError =
+  StudyQuizAttemptSubmitErrors[keyof StudyQuizAttemptSubmitErrors];
+
+export type StudyQuizAttemptSubmitResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyQuizAttempt;
+};
+
+export type StudyQuizAttemptSubmitResponse =
+  StudyQuizAttemptSubmitResponses[keyof StudyQuizAttemptSubmitResponses];
+
+export type StudyQuizAttemptGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+    /**
+     * Attempt Id
+     */
+    attempt_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/quizzes/{quiz_id}/attempts/{attempt_id}";
+};
+
+export type StudyQuizAttemptGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyQuizAttemptGetOneError =
+  StudyQuizAttemptGetOneErrors[keyof StudyQuizAttemptGetOneErrors];
+
+export type StudyQuizAttemptGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyQuizAttempt;
+};
+
+export type StudyQuizAttemptGetOneResponse =
+  StudyQuizAttemptGetOneResponses[keyof StudyQuizAttemptGetOneResponses];
 
 export type AppCaptioningGetData = {
   body?: never;

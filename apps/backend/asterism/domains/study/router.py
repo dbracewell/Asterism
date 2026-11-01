@@ -1,6 +1,6 @@
-"""Authenticated deck and card CRUD under one owned project (ADR-0033).
+"""Authenticated study routes under one owned project (ADR-0033, ADR-0035).
 
-Foreign or missing projects, decks and cards all return 404.
+Foreign or missing projects, decks, cards, quizzes and attempts all return 404.
 """
 
 import uuid
@@ -11,7 +11,7 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from . import generation, review, service
+from . import attempts, generation, quiz_generation, quizzes, review, service
 from .schemas import (
     MAX_REVIEW_QUEUE,
     StudyCard,
@@ -25,6 +25,14 @@ from .schemas import (
     StudyDeckPage,
     StudyDeckUpdate,
     StudyProjectSummary,
+    StudyQuiz,
+    StudyQuizAttempt,
+    StudyQuizAttemptPage,
+    StudyQuizAttemptRequest,
+    StudyQuizGenerateRequest,
+    StudyQuizGeneration,
+    StudyQuizPage,
+    StudyQuizUpdate,
     StudyReviewCard,
     StudyReviewQueue,
     StudyReviewRequest,
@@ -182,4 +190,92 @@ async def rate_card(
     """Rate recall; 409 when the card was already rated since it was shown."""
     return await review.rate_card(
         user_id=user.id, project_id=project_id, deck_id=deck_id, card_id=card_id, payload=payload, session=db
+    )
+
+
+# --- Practice quizzes (US-53.4, ADR-0035) -----------------------------------
+
+
+@study_router.get("/quizzes", operation_id="studyQuizGetMany")
+async def list_quizzes(
+    project_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+) -> StudyQuizPage:
+    return await quizzes.list_quizzes(
+        user_id=user.id, project_id=project_id, page=page, page_size=page_size, session=db
+    )
+
+
+@study_router.post("/quizzes", operation_id="studyQuizGenerate", responses={409: {"model": ErrorDetail}})
+async def generate_quiz(
+    project_id: uuid.UUID, payload: StudyQuizGenerateRequest, user: AuthedUserDep, db: DBSessionDep
+) -> StudyQuizGeneration:
+    """Write and save a quiz from project files; ``quiz`` is null when no question was usable."""
+    return await quiz_generation.generate_quiz(user_id=user.id, project_id=project_id, request=payload, session=db)
+
+
+@study_router.get("/quizzes/{quiz_id}", operation_id="studyQuizGetOne")
+async def get_quiz(project_id: uuid.UUID, quiz_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> StudyQuiz:
+    """The quiz to take: questions without answer keys or sources."""
+    return await quizzes.read_quiz(user_id=user.id, project_id=project_id, quiz_id=quiz_id, session=db)
+
+
+@study_router.patch("/quizzes/{quiz_id}", operation_id="studyQuizUpdate")
+async def update_quiz(
+    project_id: uuid.UUID, quiz_id: uuid.UUID, payload: StudyQuizUpdate, user: AuthedUserDep, db: DBSessionDep
+) -> StudyQuiz:
+    return await quizzes.update_quiz(
+        user_id=user.id, project_id=project_id, quiz_id=quiz_id, payload=payload, session=db
+    )
+
+
+@study_router.delete("/quizzes/{quiz_id}", operation_id="studyQuizDelete", status_code=204)
+async def delete_quiz(project_id: uuid.UUID, quiz_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> Response:
+    await quizzes.delete_quiz(user_id=user.id, project_id=project_id, quiz_id=quiz_id, session=db)
+    return Response(status_code=204)
+
+
+@study_router.get("/quizzes/{quiz_id}/attempts", operation_id="studyQuizAttemptGetMany")
+async def list_attempts(
+    project_id: uuid.UUID,
+    quiz_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+) -> StudyQuizAttemptPage:
+    """Attempts, newest first."""
+    return await attempts.list_attempts(
+        user_id=user.id, project_id=project_id, quiz_id=quiz_id, page=page, page_size=page_size, session=db
+    )
+
+
+@study_router.post(
+    "/quizzes/{quiz_id}/attempts",
+    operation_id="studyQuizAttemptSubmit",
+    status_code=201,
+    responses={409: {"model": ErrorDetail}},
+)
+async def submit_attempt(
+    project_id: uuid.UUID,
+    quiz_id: uuid.UUID,
+    payload: StudyQuizAttemptRequest,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> StudyQuizAttempt:
+    """Grade and save an attempt; returns the results with answer keys and sources."""
+    return await attempts.submit_attempt(
+        user_id=user.id, project_id=project_id, quiz_id=quiz_id, payload=payload, session=db
+    )
+
+
+@study_router.get("/quizzes/{quiz_id}/attempts/{attempt_id}", operation_id="studyQuizAttemptGetOne")
+async def get_attempt(
+    project_id: uuid.UUID, quiz_id: uuid.UUID, attempt_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> StudyQuizAttempt:
+    return await attempts.read_attempt(
+        user_id=user.id, project_id=project_id, quiz_id=quiz_id, attempt_id=attempt_id, session=db
     )

@@ -354,6 +354,30 @@ import type {
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetErrors,
   StudyProjectSummaryGetResponses,
+  StudyQuizAttemptGetManyData,
+  StudyQuizAttemptGetManyErrors,
+  StudyQuizAttemptGetManyResponses,
+  StudyQuizAttemptGetOneData,
+  StudyQuizAttemptGetOneErrors,
+  StudyQuizAttemptGetOneResponses,
+  StudyQuizAttemptSubmitData,
+  StudyQuizAttemptSubmitErrors,
+  StudyQuizAttemptSubmitResponses,
+  StudyQuizDeleteData,
+  StudyQuizDeleteErrors,
+  StudyQuizDeleteResponses,
+  StudyQuizGenerateData,
+  StudyQuizGenerateErrors,
+  StudyQuizGenerateResponses,
+  StudyQuizGetManyData,
+  StudyQuizGetManyErrors,
+  StudyQuizGetManyResponses,
+  StudyQuizGetOneData,
+  StudyQuizGetOneErrors,
+  StudyQuizGetOneResponses,
+  StudyQuizUpdateData,
+  StudyQuizUpdateErrors,
+  StudyQuizUpdateResponses,
   StudyReviewQueueGetData,
   StudyReviewQueueGetErrors,
   StudyReviewQueueGetResponses,
@@ -2037,6 +2061,194 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * List Quizzes
+   */
+  public studyQuizGetMany<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizGetManyData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizGetManyResponses,
+    StudyQuizGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyQuizGetManyResponses,
+      StudyQuizGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes",
+      ...options,
+    });
+  }
+
+  /**
+   * Generate Quiz
+   *
+   * Write and save a quiz from project files; ``quiz`` is null when no question was usable.
+   */
+  public studyQuizGenerate<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizGenerateData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizGenerateResponses,
+    StudyQuizGenerateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyQuizGenerateResponses,
+      StudyQuizGenerateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete Quiz
+   */
+  public studyQuizDelete<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizDeleteData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizDeleteResponses,
+    StudyQuizDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      StudyQuizDeleteResponses,
+      StudyQuizDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes/{quiz_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Quiz
+   *
+   * The quiz to take: questions without answer keys or sources.
+   */
+  public studyQuizGetOne<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizGetOneData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizGetOneResponses,
+    StudyQuizGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyQuizGetOneResponses,
+      StudyQuizGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes/{quiz_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Quiz
+   */
+  public studyQuizUpdate<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizUpdateData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizUpdateResponses,
+    StudyQuizUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).patch<
+      StudyQuizUpdateResponses,
+      StudyQuizUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes/{quiz_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Attempts
+   *
+   * Attempts, newest first.
+   */
+  public studyQuizAttemptGetMany<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizAttemptGetManyData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizAttemptGetManyResponses,
+    StudyQuizAttemptGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyQuizAttemptGetManyResponses,
+      StudyQuizAttemptGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes/{quiz_id}/attempts",
+      ...options,
+    });
+  }
+
+  /**
+   * Submit Attempt
+   *
+   * Grade and save an attempt; returns the results with answer keys and sources.
+   */
+  public studyQuizAttemptSubmit<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizAttemptSubmitData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizAttemptSubmitResponses,
+    StudyQuizAttemptSubmitErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyQuizAttemptSubmitResponses,
+      StudyQuizAttemptSubmitErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes/{quiz_id}/attempts",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get Attempt
+   */
+  public studyQuizAttemptGetOne<ThrowOnError extends boolean = false>(
+    options: Options<StudyQuizAttemptGetOneData, ThrowOnError>,
+  ): RequestResult<
+    StudyQuizAttemptGetOneResponses,
+    StudyQuizAttemptGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyQuizAttemptGetOneResponses,
+      StudyQuizAttemptGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/quizzes/{quiz_id}/attempts/{attempt_id}",
+      ...options,
     });
   }
 

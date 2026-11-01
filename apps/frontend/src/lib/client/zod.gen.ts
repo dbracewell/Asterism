@@ -1687,6 +1687,204 @@ export const zStudyProjectSummary = z.object({
 });
 
 /**
+ * StudyQuizAnswerInput
+ *
+ * ``choice`` (an option index) answers multiple choice; ``text`` answers short answer.
+ */
+export const zStudyQuizAnswerInput = z.object({
+  question_id: z.uuid(),
+  choice: z.int().gte(0).lte(100).nullish(),
+  text: z.string().max(2000).nullish(),
+});
+
+/**
+ * StudyQuizAttemptRequest
+ *
+ * Submit answers. Omitted questions count as unanswered.
+ *
+ * ``model_id`` grades short answers and is required when any short answer is
+ * not blank.
+ */
+export const zStudyQuizAttemptRequest = z.object({
+  answers: z.array(zStudyQuizAnswerInput).max(20),
+  model_id: z.uuid().nullish(),
+});
+
+/**
+ * StudyQuizAttemptSummary
+ */
+export const zStudyQuizAttemptSummary = z.object({
+  id: z.uuid(),
+  quiz_id: z.uuid(),
+  submitted_at: z.int(),
+  score: z.number().gte(0),
+  question_count: z.int().gte(1),
+  ungraded_count: z.int().gte(0),
+  grader_model_id: z.uuid().nullable(),
+  grader_model_name: z.string().nullable(),
+});
+
+/**
+ * StudyQuizAttemptPage
+ */
+export const zStudyQuizAttemptPage = z.object({
+  items: z.array(zStudyQuizAttemptSummary),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
+});
+
+/**
+ * StudyQuizFileResult
+ *
+ * What happened to one requested file. ``message`` explains a failure.
+ */
+export const zStudyQuizFileResult = z.object({
+  file_id: z.uuid(),
+  file_name: z.string().nullable(),
+  status: z.enum(["used", "failed"]),
+  message: z.string().nullish(),
+  question_count: z.int().gte(0),
+  truncated: z.boolean().optional().default(false),
+});
+
+/**
+ * StudyQuizGenerateRequest
+ *
+ * Generate a quiz of ``question_count`` questions of the chosen kinds.
+ *
+ * ``file_ids`` null means the whole project scope (at most 10 files). The quiz
+ * is saved when at least one question is produced.
+ */
+export const zStudyQuizGenerateRequest = z.object({
+  model_id: z.uuid(),
+  question_count: z.int().gte(1).lte(20),
+  kinds: z
+    .array(z.enum(["multiple_choice", "short_answer"]))
+    .min(1)
+    .max(2),
+  file_ids: z.array(z.uuid()).min(1).max(10).nullish(),
+  title: z.string().min(1).max(120).nullish(),
+});
+
+/**
+ * StudyQuizQuestion
+ *
+ * A question as shown while taking the quiz: no answer key and no sources.
+ */
+export const zStudyQuizQuestion = z.object({
+  id: z.uuid(),
+  position: z.int().gte(0),
+  kind: z.enum(["multiple_choice", "short_answer"]),
+  prompt: z.string(),
+  options: z.array(z.string()),
+});
+
+/**
+ * StudyQuiz
+ */
+export const zStudyQuiz = z.object({
+  id: z.uuid(),
+  project_id: z.uuid(),
+  title: z.string(),
+  question_count: z.int().gte(0),
+  multiple_choice_count: z.int().gte(0),
+  short_answer_count: z.int().gte(0),
+  attempt_count: z.int().gte(0),
+  last_score: z.number().nullable(),
+  best_score: z.number().nullable(),
+  model_id: z.uuid().nullable(),
+  model_name: z.string(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  questions: z.array(zStudyQuizQuestion),
+});
+
+/**
+ * StudyQuizGeneration
+ *
+ * The saved quiz, or null when no file produced a usable question.
+ */
+export const zStudyQuizGeneration = z.object({
+  quiz: zStudyQuiz.nullable(),
+  files: z.array(zStudyQuizFileResult),
+});
+
+/**
+ * StudyQuizResult
+ *
+ * One graded question with its answer key and sources. Text fields are untrusted.
+ */
+export const zStudyQuizResult = z.object({
+  question_id: z.uuid(),
+  position: z.int().gte(0),
+  kind: z.enum(["multiple_choice", "short_answer"]),
+  prompt: z.string(),
+  options: z.array(z.string()),
+  correct_option: z.int().nullable(),
+  rubric: z.string(),
+  explanation: z.string(),
+  citations: z.array(zStudyCitation),
+  choice: z.int().nullable(),
+  text: z.string().nullable(),
+  verdict: z.enum(["correct", "partial", "incorrect", "ungraded"]),
+  grader: z.enum(["exact", "model", "none"]),
+  feedback: z.string(),
+});
+
+/**
+ * StudyQuizAttempt
+ */
+export const zStudyQuizAttempt = z.object({
+  id: z.uuid(),
+  quiz_id: z.uuid(),
+  submitted_at: z.int(),
+  score: z.number().gte(0),
+  question_count: z.int().gte(1),
+  ungraded_count: z.int().gte(0),
+  grader_model_id: z.uuid().nullable(),
+  grader_model_name: z.string().nullable(),
+  quiz_title: z.string(),
+  results: z.array(zStudyQuizResult),
+});
+
+/**
+ * StudyQuizSummary
+ */
+export const zStudyQuizSummary = z.object({
+  id: z.uuid(),
+  project_id: z.uuid(),
+  title: z.string(),
+  question_count: z.int().gte(0),
+  multiple_choice_count: z.int().gte(0),
+  short_answer_count: z.int().gte(0),
+  attempt_count: z.int().gte(0),
+  last_score: z.number().nullable(),
+  best_score: z.number().nullable(),
+  model_id: z.uuid().nullable(),
+  model_name: z.string(),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * StudyQuizPage
+ */
+export const zStudyQuizPage = z.object({
+  items: z.array(zStudyQuizSummary),
+  total: z.int().gte(0),
+  page: z.int().gte(1),
+  page_size: z.int().gte(1),
+});
+
+/**
+ * StudyQuizUpdate
+ */
+export const zStudyQuizUpdate = z.object({
+  title: z.string().min(1).max(120),
+});
+
+/**
  * StudyReviewPreview
  *
  * When the card would next be due (Unix seconds) for each rating.
@@ -3078,6 +3276,101 @@ export const zStudyCardReviewPath = z.object({
  * Successful Response
  */
 export const zStudyCardReviewResponse = zStudyReviewCard;
+
+export const zStudyQuizGetManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+export const zStudyQuizGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizGetManyResponse = zStudyQuizPage;
+
+export const zStudyQuizGenerateBody = zStudyQuizGenerateRequest;
+
+export const zStudyQuizGeneratePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizGenerateResponse = zStudyQuizGeneration;
+
+export const zStudyQuizDeletePath = z.object({
+  project_id: z.uuid(),
+  quiz_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizDeleteResponse = z.void();
+
+export const zStudyQuizGetOnePath = z.object({
+  project_id: z.uuid(),
+  quiz_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizGetOneResponse = zStudyQuiz;
+
+export const zStudyQuizUpdateBody = zStudyQuizUpdate;
+
+export const zStudyQuizUpdatePath = z.object({
+  project_id: z.uuid(),
+  quiz_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizUpdateResponse = zStudyQuiz;
+
+export const zStudyQuizAttemptGetManyPath = z.object({
+  project_id: z.uuid(),
+  quiz_id: z.uuid(),
+});
+
+export const zStudyQuizAttemptGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(20),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizAttemptGetManyResponse = zStudyQuizAttemptPage;
+
+export const zStudyQuizAttemptSubmitBody = zStudyQuizAttemptRequest;
+
+export const zStudyQuizAttemptSubmitPath = z.object({
+  project_id: z.uuid(),
+  quiz_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizAttemptSubmitResponse = zStudyQuizAttempt;
+
+export const zStudyQuizAttemptGetOnePath = z.object({
+  project_id: z.uuid(),
+  quiz_id: z.uuid(),
+  attempt_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyQuizAttemptGetOneResponse = zStudyQuizAttempt;
 
 /**
  * Successful Response

@@ -81,9 +81,9 @@ selected files. Multiple-choice answers are graded exactly. Short answers are
 graded by the model against a rubric, with an explanation. Each question cites
 its source. Attempts are saved.
 
-- [ ] Implement quiz generation, attempts and grading.
-- [ ] Build quiz-taking and results screens with citations.
-- [ ] Test grading paths, citation scope and attempt history.
+- [x] Implement quiz generation, attempts and grading.
+- [x] Build quiz-taking and results screens with citations.
+- [x] Test grading paths, citation scope and attempt history.
 
 ## US-53.5: Adaptive follow-up
 
