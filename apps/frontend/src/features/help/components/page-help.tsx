@@ -25,10 +25,12 @@ import {
   isVisibleTo,
   type HelpId,
 } from "@/features/help/registry";
+import { helpCenterHref, pageGuideHref } from "@/features/help/center";
 import { tourHrefFrom } from "@/features/help/tour";
 import {
   BookOpenTextIcon,
   ChevronDownIcon,
+  LibraryBigIcon,
   MousePointerClickIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -54,8 +56,13 @@ export function PageHelp() {
   const search = useSearchParams();
   const { isAdmin } = useHelpAudience();
   const [open, setOpen] = React.useState(false);
-  // The tour takes focus itself; don't return it to the Help button.
-  const startingTour = React.useRef(false);
+  // The tour and help center links move focus themselves; don't return it to
+  // the Help button.
+  const leaving = React.useRef(false);
+  const leave = () => {
+    leaving.current = true;
+    setOpen(false);
+  };
   const guideId = pageGuideFor(
     pathname,
     { t: search.get("t"), setting: search.get("setting") },
@@ -77,7 +84,7 @@ export function PageHelp() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [available]);
 
-  if (!guide || !available) return null;
+  if (!guideId || !guide || !available) return null;
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -96,28 +103,38 @@ export function PageHelp() {
       <SheetContent
         className="w-full max-w-full gap-0 overflow-y-auto sm:max-w-md"
         onCloseAutoFocus={(event) => {
-          if (startingTour.current) event.preventDefault();
-          startingTour.current = false;
+          if (leaving.current) event.preventDefault();
+          leaving.current = false;
         }}
       >
-        <PageGuideView guide={guide} isAdmin={isAdmin} />
-        <div className="border-t px-4 py-4 text-sm">
-          <p className="text-muted-foreground mb-2">
-            New to Asterism? The chat tour walks through the message box and its
-            controls.
-          </p>
-          <Button asChild variant="outline" size="sm">
-            <Link
-              href={tourHrefFrom(pathname, new URLSearchParams(search))}
-              onClick={() => {
-                startingTour.current = true;
-                setOpen(false);
-              }}
-            >
-              <MousePointerClickIcon aria-hidden="true" />
-              Take the chat tour
-            </Link>
-          </Button>
+        <PageGuideView guide={guide} isAdmin={isAdmin} onNavigate={leave} />
+        <div className="flex flex-col gap-3 border-t px-4 py-4 text-sm">
+          <div>
+            <p className="text-muted-foreground mb-2">
+              Browse and search every explanation in one place.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link href={pageGuideHref(guideId)} onClick={leave}>
+                <LibraryBigIcon aria-hidden="true" />
+                Open the help center
+              </Link>
+            </Button>
+          </div>
+          <div>
+            <p className="text-muted-foreground mb-2">
+              New to Asterism? The chat tour walks through the message box and
+              its controls.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={tourHrefFrom(pathname, new URLSearchParams(search))}
+                onClick={leave}
+              >
+                <MousePointerClickIcon aria-hidden="true" />
+                Take the chat tour
+              </Link>
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -127,9 +144,11 @@ export function PageHelp() {
 function PageGuideView({
   guide,
   isAdmin,
+  onNavigate,
 }: {
   guide: PageGuide;
   isAdmin: boolean;
+  onNavigate: () => void;
 }) {
   const terms = guide.terms.filter((id) =>
     isVisibleTo(helpEntries[id], isAdmin),
@@ -175,7 +194,7 @@ function PageGuideView({
             </h3>
             <ul className="flex flex-col gap-3">
               {terms.map((id) => (
-                <TermItem key={id} id={id} />
+                <TermItem key={id} id={id} onNavigate={onNavigate} />
               ))}
             </ul>
           </section>
@@ -185,7 +204,7 @@ function PageGuideView({
   );
 }
 
-function TermItem({ id }: { id: HelpId }) {
+function TermItem({ id, onNavigate }: { id: HelpId; onNavigate: () => void }) {
   const entry = helpEntries[id];
   return (
     <li>
@@ -193,12 +212,14 @@ function TermItem({ id }: { id: HelpId }) {
         <h4 className="font-medium">{entry.title}</h4>
         <p className="text-muted-foreground">{entry.summary}</p>
         {entry.details.length > 0 && (
-          <>
-            <CollapsibleContent className="text-muted-foreground mt-1 flex flex-col gap-1">
-              {entry.details.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </CollapsibleContent>
+          <CollapsibleContent className="text-muted-foreground mt-1 flex flex-col gap-1">
+            {entry.details.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </CollapsibleContent>
+        )}
+        <div className="flex flex-wrap items-center gap-x-4">
+          {entry.details.length > 0 && (
             <CollapsibleTrigger asChild>
               <Button
                 type="button"
@@ -214,8 +235,17 @@ function TermItem({ id }: { id: HelpId }) {
                 />
               </Button>
             </CollapsibleTrigger>
-          </>
-        )}
+          )}
+          <Button asChild variant="link" size="sm" className="px-0">
+            <Link
+              href={helpCenterHref(id)}
+              aria-label={`Open ${entry.title} in the help center`}
+              onClick={onNavigate}
+            >
+              Open in help center
+            </Link>
+          </Button>
+        </div>
       </Collapsible>
     </li>
   );

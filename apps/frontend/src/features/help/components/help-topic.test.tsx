@@ -45,6 +45,21 @@ describe("HelpTopic", () => {
     }
   });
 
+  it("links the current entry to the help center and closes on follow", async () => {
+    const user = userEvent.setup();
+    render(<HelpTopic id="concept.persona" />);
+    await user.click(screen.getByRole("button", { name: "Help: Persona" }));
+    const link = screen.getByRole("link", { name: "Open in help center" });
+    expect(link).toHaveAttribute("href", "/help#concept.persona");
+
+    // The link follows related navigation inside the popover.
+    await user.click(screen.getByRole("button", { name: "Skill" }));
+    const skillLink = screen.getByRole("link", { name: "Open in help center" });
+    expect(skillLink).toHaveAttribute("href", "/help#concept.skill");
+    await user.click(skillLink);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("follows related terms and comes back", async () => {
     const user = userEvent.setup();
     render(<HelpTopic id="concept.persona" />);

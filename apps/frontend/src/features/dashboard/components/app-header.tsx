@@ -41,6 +41,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/search": "Search",
   "/files": "Files",
   "/settings": "Settings",
+  "/help": "Help center",
 };
 
 /** Maps a dashboard pathname onto the header's breadcrumb shape. */

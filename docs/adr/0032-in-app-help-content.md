@@ -55,9 +55,8 @@ presentation choice only; admin pages and APIs keep their own authorization.
 "Help: <title>". It opens a shadcn `Popover`, which works with click, tap and
 keyboard, and Escape closes it and returns focus. The popover shows the title
 and summary. "Learn more" expands the details in place. Related links replace
-the popover content, and a Back button returns. US-61.5 adds an "Open in help
-center" link once that page exists; until then, help never links to a route
-that does not exist.
+the popover content, and a Back button returns. "Open in help center" links to
+the current entry's anchor on `/help`.
 
 `HelpIcon` remains for short, dynamic descriptions supplied by the server (tool
 and component descriptions). It becomes a focusable button that opens the same
@@ -70,6 +69,17 @@ per-user `first_chat_tour` setting (`completed` or `dismissed`; unset means
 "offer it") is stored through the existing user settings API so it follows the
 learner between devices. Replays use the `?tour=first-chat` link and do not
 overwrite an earlier completion when skipped.
+
+**Help center (US-61.5).** `/help` renders every entry and page guide visible
+to the viewer, filtered client-side (every query word must appear in the
+title, summary, details, or a guide's areas, tips and terms). Anchors come
+from one module (`center.ts`): an entry's anchor is its `HelpId`; a page
+guide's is `page-<guide id>`, because guide IDs such as `admin.tools` overlap
+help IDs. Anchors are focusable, so the router's hash navigation focuses the
+entry it lands on. "Learn more" in the popover and page sheet stays an in-place
+expansion; the separate "Open in help center" link goes to the entry, and a
+Playwright check follows every such link. Admin-only entries and guides are
+left out of the page for other users, as in the popover.
 
 **Convention.** A story that adds a user-facing concept or control adds its
 help entry in the same change. The frontend README records this.

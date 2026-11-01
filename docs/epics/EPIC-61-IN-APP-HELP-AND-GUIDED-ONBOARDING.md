@@ -1,6 +1,6 @@
 # EPIC-61: In-app help and guided onboarding
 
-Status: in progress (US-61.1; see [ADR-0032](../adr/0032-in-app-help-content.md)). Source: product discussion (2026-11-01), learner track.
+Status: in progress (US-61.5 awaiting confirmation; see [ADR-0032](../adr/0032-in-app-help-content.md)). Source: product discussion (2026-11-01), learner track.
 
 ## Objective
 
@@ -131,5 +131,15 @@ Acceptance: a `/help` page lists the glossary and the page guides with client-si
 search. Every "Learn more" link lands on the matching entry. The page is linked
 from the sidebar or user menu and respects admin-only filtering.
 
-- [ ] Build the help center page with search and anchor links.
-- [ ] Add a Playwright check that every "Learn more" link resolves to an entry.
+Delivered as: a `/help` page, linked from the user menu and the page help
+sheet, with a Glossary, Controls and settings, and Page guides, each entry at a
+stable anchor and searchable client-side. "Learn more" still expands details in
+place (popover and sheet); a separate "Open in help center" link beside it goes
+to the entry's anchor, and the router focuses it on arrival. Admin-only entries
+and guides are omitted for other users. The Playwright check opens every help
+popover, as a learner and as an admin, follows its help center link and checks
+that the anchor exists, carries the entry's title and is in view; it also
+checks every in-page related and term link.
+
+- [x] Build the help center page with search and anchor links.
+- [x] Add a Playwright check that every "Learn more" link resolves to an entry.

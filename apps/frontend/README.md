@@ -125,6 +125,14 @@ offers it while the `first_chat_tour` user setting is unset; finishing stores
 the help sheet and User Settings → General, replays it. Keep a control's
 `data-tour` attribute when moving or replacing it.
 
+The help center at `/help` (`components/help-center.tsx`, linked from the
+user menu) lists every entry and page guide the viewer may see, with
+client-side search. `src/features/help/center.ts` owns the anchors: an entry's
+anchor is its `HelpId` and a guide's is `page-<guide id>`. Build help center
+links with `helpCenterHref` or `pageGuideHref` rather than by hand; the
+popover and the page sheet use them for "Open in help center", and
+`e2e/help-center.spec.ts` checks every link lands on its entry.
+
 **Convention:** a change that adds a user-facing concept or control adds its
 help entry (and updates the page guide when it adds a page or section) in the
 same change. Help describes only implemented behavior: no

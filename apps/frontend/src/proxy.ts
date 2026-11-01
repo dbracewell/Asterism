@@ -33,6 +33,7 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
     "/e2e/markdown",
     "/e2e/prose",
     "/e2e/help",
+    "/e2e/help-center",
   );
 }
 
