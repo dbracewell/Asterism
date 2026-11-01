@@ -341,6 +341,8 @@ export type {
   EmbeddingPayload,
   ErrorDetail,
   ExamplesField,
+  FeedbackSection,
+  FeedbackSectionId,
   FileContentStatus,
   FileDeleteData,
   FileDeleteError,

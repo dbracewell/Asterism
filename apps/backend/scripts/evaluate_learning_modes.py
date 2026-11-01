@@ -32,7 +32,7 @@ async def run_suite(client: httpx.AsyncClient, *, model: str, suite: EvalSuite) 
     for case in suite.cases:
         try:
             text = await reply(client, model=model, system=suite.system_prompts[case.hint_level], case=case)
-            results.append(score(case, text))
+            results.append(score(case, text, feedback_headings=suite.feedback_headings))
         except httpx.HTTPError as error:
             results.append(CaseResult(id=case.id, passed=False, failures=[f"request failed: {error}"]))
     return results

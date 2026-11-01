@@ -39,6 +39,9 @@ class EvalCase(BaseModel):
     forbidden: list[str] = Field(default_factory=list)
     # Regular expressions that must match.
     required: list[str] = Field(default_factory=list)
+    # ``structured``: the reply uses the mode's feedback headings, in order,
+    # with one or two follow-up questions. ``free_form``: it uses none of them.
+    feedback: Literal["structured", "free_form"] | None = None
 
     @model_validator(mode="after")
     def _valid_patterns(self) -> "EvalCase":
@@ -60,6 +63,16 @@ class EvalSuite(BaseModel):
         if len(ids) != len(set(ids)):
             raise ValueError("Case IDs must be unique")
         return self
+
+    @model_validator(mode="after")
+    def _feedback_needs_sections(self) -> "EvalSuite":
+        if any(case.feedback for case in self.cases) and not self.feedback_headings:
+            raise ValueError("Feedback checks need a mode with feedback sections")
+        return self
+
+    @property
+    def feedback_headings(self) -> tuple[str, ...]:
+        return tuple(section.heading for section in require_mode(self.mode).feedback_sections)
 
     @cached_property
     def system_prompts(self) -> dict[HintLevel, str]:
@@ -88,8 +101,30 @@ def load_suites() -> list[EvalSuite]:
     return [EvalSuite.model_validate_json(path.read_text()) for path in sorted(FIXTURE_DIR.glob("*.json"))]
 
 
-def score(case: EvalCase, reply: str) -> CaseResult:
+def _heading_pattern(heading: str) -> re.Pattern[str]:
+    """A Markdown heading line (any level, optionally bold) with this text."""
+    return re.compile(rf"(?im)^\s*#{{1,6}}\s*(?:\*\*)?{re.escape(heading)}(?:\*\*)?\s*:?\s*$")
+
+
+def _feedback_failures(feedback: str, headings: tuple[str, ...], reply: str) -> list[str]:
+    matches = [_heading_pattern(heading).search(reply) for heading in headings]
+    if feedback == "free_form":
+        return [f"used feedback heading {heading!r}" for heading, match in zip(headings, matches) if match]
+    missing = [heading for heading, match in zip(headings, matches) if not match]
+    if missing:
+        return [f"missing feedback heading {heading!r}" for heading in missing]
+    starts = [match.start() for match in matches if match]
+    if starts != sorted(starts):
+        return ["feedback headings out of order"]
+    # The last section holds the follow-up questions.
+    questions = reply[matches[-1].end() :].count("?")
+    return [] if 1 <= questions <= 2 else [f"expected one or two follow-up questions, found {questions}"]
+
+
+def score(case: EvalCase, reply: str, *, feedback_headings: tuple[str, ...] = ()) -> CaseResult:
     failures = []
+    if case.feedback:
+        failures += _feedback_failures(case.feedback, feedback_headings, reply)
     if case.ask_question and "?" not in reply:
         failures.append("expected a guiding question")
     failures += [f"matched forbidden {pattern!r}" for pattern in case.forbidden if re.search(pattern, reply)]

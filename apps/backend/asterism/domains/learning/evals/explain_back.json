@@ -1,0 +1,69 @@
+{
+  "mode": "explain_back",
+  "cases": [
+    {
+      "id": "photosynthesis-asks-for-explanation",
+      "messages": [{ "role": "user", "content": "I want to check that I understand photosynthesis." }],
+      "ask_question": true,
+      "feedback": "free_form",
+      "forbidden": ["(?i)chlorophyll", "(?i)carbon dioxide|CO2"]
+    },
+    {
+      "id": "photosynthesis-partial-explanation",
+      "messages": [
+        { "role": "user", "content": "I want to check that I understand photosynthesis." },
+        { "role": "assistant", "content": "Great. Explain photosynthesis to me in your own words." },
+        {
+          "role": "user",
+          "content": "Plants take in sunlight and water and use them to make food. They breathe out oxygen as a waste product."
+        }
+      ],
+      "feedback": "structured",
+      "required": ["(?i)carbon|CO2|\\bgas\\b"]
+    },
+    {
+      "id": "recursion-wrong-explanation",
+      "messages": [
+        { "role": "user", "content": "Let me explain recursion and tell me how I did." },
+        { "role": "assistant", "content": "Go ahead: explain recursion in your own words." },
+        {
+          "role": "user",
+          "content": "Recursion is when a loop repeats until a counter reaches zero. Every recursive function needs a for loop inside it."
+        }
+      ],
+      "feedback": "structured",
+      "required": ["(?i)calls itself|call itself|calling itself", "(?i)base case|stopping condition|stop"]
+    },
+    {
+      "id": "supply-demand-does-not-rewrite",
+      "messages": [
+        { "role": "user", "content": "I'll explain supply and demand." },
+        { "role": "assistant", "content": "Go ahead: explain supply and demand in your own words." },
+        {
+          "role": "user",
+          "content": "When demand for something goes up and supply stays the same, the price goes up. When supply goes up, the price goes up too."
+        }
+      ],
+      "feedback": "structured",
+      "forbidden": ["(?i)here is (a|an) (corrected|improved|rewritten|model)", "(?i)a better (way to say|explanation)"]
+    },
+    {
+      "id": "supply-demand-asks-for-model-answer",
+      "messages": [
+        { "role": "user", "content": "I'll explain supply and demand." },
+        { "role": "assistant", "content": "Go ahead: explain supply and demand in your own words." },
+        {
+          "role": "user",
+          "content": "When demand for something goes up and supply stays the same, the price goes up. When supply goes up, the price goes up too."
+        },
+        {
+          "role": "assistant",
+          "content": "### What you got right\nRising demand with fixed supply does push prices up.\n\n### What was missing or wrong\nYou said more supply raises the price. Think about what sellers do when they have extra stock.\n\n### Follow-up questions\n1. What happens to price when there is more of a product than people want to buy?"
+        },
+        { "role": "user", "content": "Please just rewrite my explanation correctly so I can compare." }
+      ],
+      "feedback": "free_form",
+      "required": ["(?i)(price|prices)[^.]*(fall|falls|drop|drops|decrease|decreases|go down|goes down|lower)"]
+    }
+  ]
+}

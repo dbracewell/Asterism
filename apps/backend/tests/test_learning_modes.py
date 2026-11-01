@@ -65,7 +65,9 @@ async def test_catalog_lists_the_four_modes_without_instruction_text(project_api
     modes = response.json()["modes"]
     assert [mode["id"] for mode in modes] == ["standard", "tutor", "explain_back", "review"]
     assert [mode["name"] for mode in modes] == ["Standard", "Tutor", "Explain-back", "Review my work"]
-    assert all(set(mode) == {"id", "name", "description", "version", "hint_levels"} for mode in modes)
+    assert all(
+        set(mode) == {"id", "name", "description", "version", "hint_levels", "feedback_sections"} for mode in modes
+    )
     assert "guiding questions" not in response.text
 
 

@@ -173,3 +173,15 @@ needs `confirm_reveal`. The pinned mode snapshot includes the level's
 instructions and records the applied level in provenance. Regeneration keeps the
 turn's level under the current mode. See
 [ADR-0029](../adr/0029-branch-local-hint-levels.md).
+
+### Structured feedback
+
+A mode may define fixed feedback sections. Explain-back defines three, in order:
+`correct` ("What you got right"), `gaps` ("What was missing or wrong") and
+`follow_up` ("Follow-up questions"). The mode text tells the model to use these
+exact Markdown headings after the learner explains, and not to use them
+otherwise. `GET /learning-modes` serves the section IDs and headings (never the
+instruction text), so the UI renders each section from the catalog rather than a
+copy. Replies that do not start with the first heading render as plain Markdown.
+The streaming `start` event's execution carries the mode, so sections render
+while the reply streams. See [ADR-0030](../adr/0030-structured-feedback-sections.md).

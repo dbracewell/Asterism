@@ -6,6 +6,11 @@ import { MessageBody } from "./message-body";
 vi.mock("@/components/markdown-viewer", () => ({
   default: ({ content }: { content: string }) => <div>{content}</div>,
 }));
+vi.mock("./feedback-reply", () => ({
+  FeedbackReply: ({ content, mode }: { content: string; mode: string }) => (
+    <div data-feedback-mode={mode}>{content}</div>
+  ),
+}));
 
 const label = {
   source: "framework" as const,
@@ -111,4 +116,32 @@ it("adds the hint level to the chip once help was raised", () => {
   const chip = screen.getByText(/Tutor/).closest("[data-learning-mode]");
   expect(chip).toHaveAttribute("data-hint-level", "worked_example");
   expect(chip).toHaveTextContent("Learning mode: Tutor · Worked example");
+});
+
+it("hands assistant replies in a learning mode to the feedback renderer", () => {
+  const explainBack = {
+    id: "explain_back" as const,
+    name: "Explain-back",
+    version: 2,
+  };
+  const { rerender } = render(
+    <MessageBody
+      message={message({ role: "assistant", learning_mode: explainBack })}
+    />,
+  );
+  expect(screen.getByText("Do it.")).toHaveAttribute(
+    "data-feedback-mode",
+    "explain_back",
+  );
+  rerender(<MessageBody message={message({ learning_mode: explainBack })} />);
+  expect(screen.getByText("Do it.")).not.toHaveAttribute("data-feedback-mode");
+  rerender(
+    <MessageBody
+      message={message({
+        role: "assistant",
+        learning_mode: { id: "standard", name: "Standard", version: 1 },
+      })}
+    />,
+  );
+  expect(screen.getByText("Do it.")).not.toHaveAttribute("data-feedback-mode");
 });

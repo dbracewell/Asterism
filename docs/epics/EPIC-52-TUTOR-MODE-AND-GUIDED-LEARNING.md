@@ -66,8 +66,8 @@ Acceptance: in Explain-back mode the agent asks the learner to explain a topic,
 then replies with what was correct, what was missing or wrong, and one or two
 follow-up questions. It does not rewrite the learner's explanation unless asked.
 
-- [ ] Write the mode instructions and a structured feedback format.
-- [ ] Render the feedback sections; add evaluation fixtures.
+- [x] Write the mode instructions and a structured feedback format.
+- [x] Render the feedback sections; add evaluation fixtures.
 
 ## US-52.4: Review my work
 

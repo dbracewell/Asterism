@@ -6,7 +6,7 @@ from asterism.core.schemas import ErrorDetail
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .catalog import LEARNING_MODES
-from .schemas import LearningMode, LearningModeCatalog
+from .schemas import FeedbackSection, LearningMode, LearningModeCatalog
 
 learning_router = APIRouter(
     prefix="/learning-modes",
@@ -25,6 +25,9 @@ async def list_learning_modes(user: AuthedUserDep) -> LearningModeCatalog:
                 description=item.description,
                 version=item.version,
                 hint_levels=list(item.raisable_hint_levels),
+                feedback_sections=[
+                    FeedbackSection(id=section.id, heading=section.heading) for section in item.feedback_sections
+                ],
             )
             for item in LEARNING_MODES.values()
         ]

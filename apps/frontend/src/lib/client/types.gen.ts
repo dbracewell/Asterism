@@ -1219,6 +1219,24 @@ export type ExamplesField = {
 };
 
 /**
+ * FeedbackSection
+ */
+export type FeedbackSection = {
+  id: FeedbackSectionId;
+  /**
+   * Heading
+   */
+  heading: string;
+};
+
+/**
+ * FeedbackSectionId
+ *
+ * Sections of a structured Explain-back feedback reply, in reply order.
+ */
+export type FeedbackSectionId = "correct" | "gaps" | "follow_up";
+
+/**
  * FileContentStatus
  *
  * Lifecycle of the converted-content cache held by a :class:`UserFileModel`.
@@ -1600,6 +1618,10 @@ export type LearningMode = {
    * Hint Levels
    */
   hint_levels?: Array<HintLevel>;
+  /**
+   * Feedback Sections
+   */
+  feedback_sections?: Array<FeedbackSection>;
 };
 
 /**
