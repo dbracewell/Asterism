@@ -1,6 +1,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import UserProvider from "@/features/auth/components/user-context";
 import { getCurrentUser } from "@/features/auth/server/session";
+import { HelpAudienceProvider } from "@/features/help/components/help-audience";
 import { AppHeader } from "@/features/dashboard/components/app-header";
 import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
 import { ThemeCheck } from "@/features/dashboard/components/theme-check";
@@ -32,25 +33,27 @@ export const DashboardLayout = async ({
 
   return (
     <UserProvider user={user}>
-      <ThemeCheck />
-      <UpdateTimeZone />
-      <SidebarProvider
-        defaultOpen={defaultOpen}
-        className="h-dvh min-h-0 flex-none"
-      >
-        <AppSidebar
-          sidebarWidth={sidebarWidth}
-          navSessionsOpen={navSessionsOpen}
-          navProjectsOpen={navProjectsOpen}
-          navGeneralQuickChatsOpen={navGeneralQuickChatsOpen}
-        />
-        <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
-          <AppHeader />
-          <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col">
-            {children}
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+      <HelpAudienceProvider isAdmin={user.role === "admin"}>
+        <ThemeCheck />
+        <UpdateTimeZone />
+        <SidebarProvider
+          defaultOpen={defaultOpen}
+          className="h-dvh min-h-0 flex-none"
+        >
+          <AppSidebar
+            sidebarWidth={sidebarWidth}
+            navSessionsOpen={navSessionsOpen}
+            navProjectsOpen={navProjectsOpen}
+            navGeneralQuickChatsOpen={navGeneralQuickChatsOpen}
+          />
+          <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+            <AppHeader />
+            <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col">
+              {children}
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </HelpAudienceProvider>
     </UserProvider>
   );
 };

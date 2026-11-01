@@ -2,6 +2,7 @@
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton, LoadingState } from "@/components/loading-skeletons";
 import { HelpIcon } from "@/components/help-icon";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { QueryError } from "@/components/query-error";
 import { Required } from "@/components/required";
 import { ModelSelector } from "@/components/settings/model-selector";
@@ -347,10 +348,10 @@ function ConfigurationForm({
               />
             </Field>
             <Field>
-              <Label htmlFor="agent-steps">
-                Maximum steps{" "}
-                <HelpIcon text="The maximum number of turns the agent can take before outputting a reply" />
-              </Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="agent-steps">Maximum steps</Label>
+                <HelpTopic id="settings.max-steps" />
+              </div>
               <Input
                 id="agent-steps"
                 type="number"
@@ -441,20 +442,25 @@ function ConfigurationForm({
                 )}
               {!toolQuery.isError &&
                 selectableTools.map((tool) => (
-                  <Label key={tool.name} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={tools.includes(tool.name)}
-                      onCheckedChange={(checked) =>
-                        setTools(
-                          checked
-                            ? [...tools, tool.name]
-                            : tools.filter((value) => value !== tool.name),
-                        )
-                      }
+                  <div key={tool.name} className="flex items-center gap-1">
+                    <Label className="flex items-center gap-2">
+                      <Checkbox
+                        checked={tools.includes(tool.name)}
+                        onCheckedChange={(checked) =>
+                          setTools(
+                            checked
+                              ? [...tools, tool.name]
+                              : tools.filter((value) => value !== tool.name),
+                          )
+                        }
+                      />
+                      {tool.name}
+                    </Label>
+                    <HelpIcon
+                      label={`About ${tool.name}`}
+                      text={tool.description}
                     />
-                    {tool.name}
-                    <HelpIcon text={tool.description} />
-                  </Label>
+                  </div>
                 ))}
               {!toolQuery.isPending &&
                 !toolQuery.isError &&

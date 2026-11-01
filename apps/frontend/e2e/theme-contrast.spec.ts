@@ -134,6 +134,7 @@ for (const theme of themes) {
       "muted",
       "error",
       "popover",
+      "popover-muted",
       "sidebar-primary",
       "sidebar-label",
       "sidebar-selected",

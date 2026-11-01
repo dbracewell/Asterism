@@ -278,6 +278,12 @@ export function ThemeContrastHarness() {
               data-contrast="popover"
             >
               Popover content uses its paired text role.
+              <p
+                className="text-muted-foreground"
+                data-contrast="popover-muted"
+              >
+                Help details use muted text on the popover.
+              </p>
             </div>
             <section
               aria-label="Typography and content review"
