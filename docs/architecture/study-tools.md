@@ -111,3 +111,29 @@ defaults to the generating model. Submitting opens the results at
 `…/attempts/{attemptId}`: the score, each answer's verdict, the correct option,
 rubric, explanation, feedback and source citations. Question, option, rubric
 and feedback text are untrusted and render through `MarkdownViewer`.
+
+## Weak spots (US-53.5)
+
+Decisions are recorded in [ADR-0036](../adr/0036-weak-spots-and-practice.md).
+
+| Route                                           | Behavior                                                             |
+| ----------------------------------------------- | -------------------------------------------------------------------- |
+| `GET /projects/{project_id}/study/weak-spots`   | Up to `limit` (1–50, default 20) weak spots, newest miss first      |
+| `POST /projects/{project_id}/study/weak-spots/practice` | `{question_count}` (1–20, default 10); saves and returns a quiz (201) |
+
+A question or card is a weak spot when its latest outcome in the project was a
+miss: an incorrect or partly correct quiz answer, or an Again rating. Any later
+success clears it, and ungraded answers are ignored. Each item names its
+original (`root_*`), the question or card last answered (`source_*`), and that
+source's quiz or deck (`container_*`). Nothing is stored.
+
+Practice copies the most recent weak spots into a quiz with `origin:
+"weak_spots"` and no model: missed questions keep their answer key (options
+reshuffled), and weak cards become short-answer questions graded against the
+card's back. Answering a copy counts towards its original. With no weak spots
+the route returns 400.
+
+The project page shows **Weak spots** once there are any: the five most recent,
+each linked to its quiz or deck, and **Practice weak spots**, which builds a
+quiz of up to 10 questions and opens it for taking. Practice quizzes are listed
+with the other quizzes and described as built from weak spots.

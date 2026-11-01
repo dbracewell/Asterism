@@ -2,6 +2,7 @@
 import UserProvider from "@/features/auth/components/user-context";
 import type { User } from "@/features/auth/types";
 import { CardDraftReview } from "@/features/study/components/card-draft-review";
+import { ProjectWeakSpots } from "@/features/study/components/project-weak-spots";
 import { QuizGenerate } from "@/features/study/components/quiz-generate";
 import { QuizResults } from "@/features/study/components/quiz-results";
 import { QuizTake } from "@/features/study/components/quiz-take";
@@ -54,7 +55,11 @@ export function StudyHarness({ view }: { view: string }) {
   return (
     <QueryClientProvider client={cache}>
       <UserProvider user={TEST_USER}>
-        {view === "quiz-new" ? (
+        {view === "weak-spots" ? (
+          <main className="mx-auto max-w-4xl p-6">
+            <ProjectWeakSpots projectId={STUDY_PROJECT_ID} />
+          </main>
+        ) : view === "quiz-new" ? (
           <QuizGenerate projectId={STUDY_PROJECT_ID} />
         ) : view === "quiz-take" ? (
           <QuizTake projectId={STUDY_PROJECT_ID} quizId={STUDY_QUIZ_ID} />

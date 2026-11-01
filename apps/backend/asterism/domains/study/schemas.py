@@ -239,6 +239,7 @@ QuizTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1
 StudyQuestionKind = Literal["multiple_choice", "short_answer"]
 StudyVerdict = Literal["correct", "partial", "incorrect", "ungraded"]
 StudyGrader = Literal["exact", "model", "none"]
+StudyQuizOrigin = Literal["generated", "weak_spots"]
 
 
 class StudyQuizGenerateRequest(BaseModel):
@@ -288,8 +289,10 @@ class StudyQuizSummary(BaseModel):
     # Score fraction (0–1) of the newest and the best attempt, null before the first.
     last_score: float | None
     best_score: float | None
+    # generated from files by ``model_name``, or weak_spots (copied from missed items; no model).
+    origin: StudyQuizOrigin
     model_id: uuid.UUID | None
-    model_name: str
+    model_name: str | None
     created_at: int
     updated_at: int
 
@@ -404,3 +407,47 @@ class StudyQuizResult(BaseModel):
 class StudyQuizAttempt(StudyQuizAttemptSummary):
     quiz_title: str
     results: list[StudyQuizResult]
+
+
+# ---------------------------------------------------------------------------
+# Weak spots (US-53.5, ADR-0036). Derived on read; never stored.
+# ---------------------------------------------------------------------------
+
+MAX_WEAK_SPOTS = 50
+MAX_PRACTICE_QUESTIONS = 20
+
+
+class StudyWeakSpot(BaseModel):
+    """A question or card whose latest outcome was a miss. Text is untrusted.
+
+    ``root_*`` names the original item (a copy re-asked in a weak-spot quiz counts
+    towards its original); ``source_*`` is the question or card last answered.
+    ``container_*`` is that source's quiz or deck.
+    """
+
+    root_kind: Literal["question", "card"]
+    root_id: uuid.UUID
+    source_kind: Literal["question", "card"]
+    source_id: uuid.UUID
+    kind: Literal["multiple_choice", "short_answer", "card"]
+    prompt: str
+    outcome: Literal["incorrect", "partial", "again"]
+    missed_at: int
+    container_id: uuid.UUID
+    container_title: str
+    citations: list[StudyCitation]
+
+
+class StudyWeakSpots(BaseModel):
+    """The most recent weak spots, capped at ``limit``; ``total`` counts all of them."""
+
+    items: list[StudyWeakSpot]
+    total: int = Field(ge=0)
+
+
+class StudyWeakSpotPracticeRequest(BaseModel):
+    """Build a quiz from up to ``question_count`` of the most recent weak spots."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    question_count: int = Field(default=10, ge=1, le=MAX_PRACTICE_QUESTIONS)

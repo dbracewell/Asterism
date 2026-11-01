@@ -381,6 +381,12 @@ import type {
   StudyReviewQueueGetData,
   StudyReviewQueueGetError,
   StudyReviewQueueGetResponse,
+  StudyWeakSpotGetManyData,
+  StudyWeakSpotGetManyError,
+  StudyWeakSpotGetManyResponse,
+  StudyWeakSpotPracticeData,
+  StudyWeakSpotPracticeError,
+  StudyWeakSpotPracticeResponse,
   SubAgentCreateData,
   SubAgentCreateError,
   SubAgentCreateResponse,
@@ -3193,6 +3199,65 @@ export const studyQuizAttemptGetOneOptions = (
     },
     queryKey: studyQuizAttemptGetOneQueryKey(options),
   });
+
+export const studyWeakSpotGetManyQueryKey = (
+  options: Options<StudyWeakSpotGetManyData>,
+) => createQueryKey("studyWeakSpotGetMany", options);
+
+/**
+ * List Weak Spots
+ *
+ * Questions and cards whose latest outcome was a miss, most recent first.
+ */
+export const studyWeakSpotGetManyOptions = (
+  options: Options<StudyWeakSpotGetManyData>,
+) =>
+  queryOptions<
+    StudyWeakSpotGetManyResponse,
+    StudyWeakSpotGetManyError,
+    StudyWeakSpotGetManyResponse,
+    ReturnType<typeof studyWeakSpotGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyWeakSpotGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyWeakSpotGetManyQueryKey(options),
+  });
+
+/**
+ * Practice Weak Spots
+ *
+ * Save a quiz that re-asks the most recent weak spots; 400 when there are none.
+ */
+export const studyWeakSpotPracticeMutation = (
+  options?: Partial<Options<StudyWeakSpotPracticeData>>,
+): UseMutationOptions<
+  StudyWeakSpotPracticeResponse,
+  StudyWeakSpotPracticeError,
+  Options<StudyWeakSpotPracticeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyWeakSpotPracticeResponse,
+    StudyWeakSpotPracticeError,
+    Options<StudyWeakSpotPracticeData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyWeakSpotPractice({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const appCaptioningGetQueryKey = (
   options?: Options<AppCaptioningGetData>,

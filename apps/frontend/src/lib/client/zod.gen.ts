@@ -1793,8 +1793,9 @@ export const zStudyQuiz = z.object({
   attempt_count: z.int().gte(0),
   last_score: z.number().nullable(),
   best_score: z.number().nullable(),
+  origin: z.enum(["generated", "weak_spots"]),
   model_id: z.uuid().nullable(),
-  model_name: z.string(),
+  model_name: z.string().nullable(),
   created_at: z.int(),
   updated_at: z.int(),
   questions: z.array(zStudyQuizQuestion),
@@ -1861,8 +1862,9 @@ export const zStudyQuizSummary = z.object({
   attempt_count: z.int().gte(0),
   last_score: z.number().nullable(),
   best_score: z.number().nullable(),
+  origin: z.enum(["generated", "weak_spots"]),
   model_id: z.uuid().nullable(),
-  model_name: z.string(),
+  model_name: z.string().nullable(),
   created_at: z.int(),
   updated_at: z.int(),
 });
@@ -1934,6 +1936,48 @@ export const zStudyReviewQueue = z.object({
 export const zStudyReviewRequest = z.object({
   rating: z.enum(["again", "hard", "good", "easy"]),
   expected_reps: z.int().gte(0).lte(2147483647),
+});
+
+/**
+ * StudyWeakSpot
+ *
+ * A question or card whose latest outcome was a miss. Text is untrusted.
+ *
+ * ``root_*`` names the original item (a copy re-asked in a weak-spot quiz counts
+ * towards its original); ``source_*`` is the question or card last answered.
+ * ``container_*`` is that source's quiz or deck.
+ */
+export const zStudyWeakSpot = z.object({
+  root_kind: z.enum(["question", "card"]),
+  root_id: z.uuid(),
+  source_kind: z.enum(["question", "card"]),
+  source_id: z.uuid(),
+  kind: z.enum(["multiple_choice", "short_answer", "card"]),
+  prompt: z.string(),
+  outcome: z.enum(["incorrect", "partial", "again"]),
+  missed_at: z.int(),
+  container_id: z.uuid(),
+  container_title: z.string(),
+  citations: z.array(zStudyCitation),
+});
+
+/**
+ * StudyWeakSpotPracticeRequest
+ *
+ * Build a quiz from up to ``question_count`` of the most recent weak spots.
+ */
+export const zStudyWeakSpotPracticeRequest = z.object({
+  question_count: z.int().gte(1).lte(20).optional().default(10),
+});
+
+/**
+ * StudyWeakSpots
+ *
+ * The most recent weak spots, capped at ``limit``; ``total`` counts all of them.
+ */
+export const zStudyWeakSpots = z.object({
+  items: z.array(zStudyWeakSpot),
+  total: z.int().gte(0),
 });
 
 /**
@@ -3371,6 +3415,30 @@ export const zStudyQuizAttemptGetOnePath = z.object({
  * Successful Response
  */
 export const zStudyQuizAttemptGetOneResponse = zStudyQuizAttempt;
+
+export const zStudyWeakSpotGetManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+export const zStudyWeakSpotGetManyQuery = z.object({
+  limit: z.int().gte(1).lte(50).optional().default(20),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyWeakSpotGetManyResponse = zStudyWeakSpots;
+
+export const zStudyWeakSpotPracticeBody = zStudyWeakSpotPracticeRequest;
+
+export const zStudyWeakSpotPracticePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyWeakSpotPracticeResponse = zStudyQuiz;
 
 /**
  * Successful Response

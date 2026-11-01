@@ -3714,13 +3714,17 @@ export type StudyQuiz = {
    */
   best_score: number | null;
   /**
+   * Origin
+   */
+  origin: "generated" | "weak_spots";
+  /**
    * Model Id
    */
   model_id: string | null;
   /**
    * Model Name
    */
-  model_name: string;
+  model_name: string | null;
   /**
    * Created At
    */
@@ -4111,13 +4115,17 @@ export type StudyQuizSummary = {
    */
   best_score: number | null;
   /**
+   * Origin
+   */
+  origin: "generated" | "weak_spots";
+  /**
    * Model Id
    */
   model_id: string | null;
   /**
    * Model Name
    */
-  model_name: string;
+  model_name: string | null;
   /**
    * Created At
    */
@@ -4248,6 +4256,90 @@ export type StudyReviewRequest = {
    * Expected Reps
    */
   expected_reps: number;
+};
+
+/**
+ * StudyWeakSpot
+ *
+ * A question or card whose latest outcome was a miss. Text is untrusted.
+ *
+ * ``root_*`` names the original item (a copy re-asked in a weak-spot quiz counts
+ * towards its original); ``source_*`` is the question or card last answered.
+ * ``container_*`` is that source's quiz or deck.
+ */
+export type StudyWeakSpot = {
+  /**
+   * Root Kind
+   */
+  root_kind: "question" | "card";
+  /**
+   * Root Id
+   */
+  root_id: string;
+  /**
+   * Source Kind
+   */
+  source_kind: "question" | "card";
+  /**
+   * Source Id
+   */
+  source_id: string;
+  /**
+   * Kind
+   */
+  kind: "multiple_choice" | "short_answer" | "card";
+  /**
+   * Prompt
+   */
+  prompt: string;
+  /**
+   * Outcome
+   */
+  outcome: "incorrect" | "partial" | "again";
+  /**
+   * Missed At
+   */
+  missed_at: number;
+  /**
+   * Container Id
+   */
+  container_id: string;
+  /**
+   * Container Title
+   */
+  container_title: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
+};
+
+/**
+ * StudyWeakSpotPracticeRequest
+ *
+ * Build a quiz from up to ``question_count`` of the most recent weak spots.
+ */
+export type StudyWeakSpotPracticeRequest = {
+  /**
+   * Question Count
+   */
+  question_count?: number;
+};
+
+/**
+ * StudyWeakSpots
+ *
+ * The most recent weak spots, capped at ``limit``; ``total`` counts all of them.
+ */
+export type StudyWeakSpots = {
+  /**
+   * Items
+   */
+  items: Array<StudyWeakSpot>;
+  /**
+   * Total
+   */
+  total: number;
 };
 
 /**
@@ -8216,6 +8308,99 @@ export type StudyQuizAttemptGetOneResponses = {
 
 export type StudyQuizAttemptGetOneResponse =
   StudyQuizAttemptGetOneResponses[keyof StudyQuizAttemptGetOneResponses];
+
+export type StudyWeakSpotGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Limit
+     */
+    limit?: number;
+  };
+  url: "/projects/{project_id}/study/weak-spots";
+};
+
+export type StudyWeakSpotGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyWeakSpotGetManyError =
+  StudyWeakSpotGetManyErrors[keyof StudyWeakSpotGetManyErrors];
+
+export type StudyWeakSpotGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyWeakSpots;
+};
+
+export type StudyWeakSpotGetManyResponse =
+  StudyWeakSpotGetManyResponses[keyof StudyWeakSpotGetManyResponses];
+
+export type StudyWeakSpotPracticeData = {
+  body: StudyWeakSpotPracticeRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/weak-spots/practice";
+};
+
+export type StudyWeakSpotPracticeErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyWeakSpotPracticeError =
+  StudyWeakSpotPracticeErrors[keyof StudyWeakSpotPracticeErrors];
+
+export type StudyWeakSpotPracticeResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyQuiz;
+};
+
+export type StudyWeakSpotPracticeResponse =
+  StudyWeakSpotPracticeResponses[keyof StudyWeakSpotPracticeResponses];
 
 export type AppCaptioningGetData = {
   body?: never;

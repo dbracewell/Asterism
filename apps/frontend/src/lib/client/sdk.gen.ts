@@ -381,6 +381,12 @@ import type {
   StudyReviewQueueGetData,
   StudyReviewQueueGetErrors,
   StudyReviewQueueGetResponses,
+  StudyWeakSpotGetManyData,
+  StudyWeakSpotGetManyErrors,
+  StudyWeakSpotGetManyResponses,
+  StudyWeakSpotPracticeData,
+  StudyWeakSpotPracticeErrors,
+  StudyWeakSpotPracticeResponses,
   SubAgentCreateData,
   SubAgentCreateErrors,
   SubAgentCreateResponses,
@@ -2249,6 +2255,56 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/study/quizzes/{quiz_id}/attempts/{attempt_id}",
       ...options,
+    });
+  }
+
+  /**
+   * List Weak Spots
+   *
+   * Questions and cards whose latest outcome was a miss, most recent first.
+   */
+  public studyWeakSpotGetMany<ThrowOnError extends boolean = false>(
+    options: Options<StudyWeakSpotGetManyData, ThrowOnError>,
+  ): RequestResult<
+    StudyWeakSpotGetManyResponses,
+    StudyWeakSpotGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyWeakSpotGetManyResponses,
+      StudyWeakSpotGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/weak-spots",
+      ...options,
+    });
+  }
+
+  /**
+   * Practice Weak Spots
+   *
+   * Save a quiz that re-asks the most recent weak spots; 400 when there are none.
+   */
+  public studyWeakSpotPractice<ThrowOnError extends boolean = false>(
+    options: Options<StudyWeakSpotPracticeData, ThrowOnError>,
+  ): RequestResult<
+    StudyWeakSpotPracticeResponses,
+    StudyWeakSpotPracticeErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyWeakSpotPracticeResponses,
+      StudyWeakSpotPracticeErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/weak-spots/practice",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

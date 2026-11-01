@@ -47,7 +47,11 @@ export function quizDescription(quiz: StudyQuiz) {
     parts.push(
       `${quiz.multiple_choice_count} multiple choice, ${quiz.short_answer_count} short answer`,
     );
-  parts.push(`written by ${quiz.model_name}`);
+  parts.push(
+    quiz.origin === "weak_spots"
+      ? "built from your weak spots"
+      : `written by ${quiz.model_name ?? "an unknown model"}`,
+  );
   return parts.join(" · ");
 }
 
