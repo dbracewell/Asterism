@@ -76,3 +76,38 @@ card, and to the summary at the end, and a status region announces each step.
 Cards still in a short learning step (due within 20 minutes) come back later in
 the same session. Only an explicit **Review more due cards** starts a new
 session; background refetches never reset one.
+
+## Practice quizzes (US-53.4)
+
+Decisions are recorded in [ADR-0035](../adr/0035-practice-quizzes-and-grading.md).
+
+| Route                                                     | Behavior                                                                  |
+| --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `GET /projects/{project_id}/study/quizzes`                | Quiz page, newest first, with counts and last and best score (0–1)       |
+| `POST /projects/{project_id}/study/quizzes`               | Generate and save; `{quiz, files}`, `quiz` null if nothing was usable    |
+| `GET`/`PATCH`/`DELETE …/quizzes/{quiz_id}`                | Read without answer key, rename (`title` only), delete with attempts     |
+| `GET …/quizzes/{quiz_id}/attempts`                        | Attempt page, newest first                                                |
+| `POST …/quizzes/{quiz_id}/attempts`                       | `{answers, model_id?}`; grades, saves and returns the results (201)       |
+| `GET …/quizzes/{quiz_id}/attempts/{attempt_id}`           | One attempt's results with answer key, feedback and live citations       |
+
+Generation takes `{model_id, question_count (1–20), kinds, file_ids, title?}`
+and uses the card-draft pipeline and limits (`study/drafting.py`). Each question
+cites the chunk it came from. Multiple-choice answers (`choice`, an option
+index) are graded exactly. Non-blank short answers (`text`, up to 2,000
+characters) are graded by `model_id` against the question's rubric, with a
+verdict (correct, partial or incorrect) and an explanation; a partial answer
+earns half a point. A grading failure marks only that answer `ungraded`. An
+answer for another quiz's question, a choice out of range or the wrong answer
+type is a 400; short answers without `model_id` are a 400; an unavailable model
+is a 409.
+
+The project page lists quizzes under **Practice quizzes** with **New quiz**.
+`/projects/{projectId}/study/quizzes/new` chooses files, question count, types
+and a model, then links to the saved quiz. The quiz page
+(`…/quizzes/{quizId}`) shows the best and last scores, the attempt history, and
+rename and delete actions. `…/take` shows each question (radio options or a
+short-answer box) and, when the quiz has short answers, a grading model that
+defaults to the generating model. Submitting opens the results at
+`…/attempts/{attemptId}`: the score, each answer's verdict, the correct option,
+rubric, explanation, feedback and source citations. Question, option, rubric
+and feedback text are untrusted and render through `MarkdownViewer`.

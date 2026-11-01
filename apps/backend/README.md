@@ -258,7 +258,9 @@ unavailable on read. Deleting a project deletes its decks. US-53.2 adds bounded,
 drafts at `…/decks/{deck_id}/card-drafts`, read through the retrieval domain's
 `SourceReader` and cited to chunks ([ADR-0034](../../docs/adr/0034-bounded-flashcard-draft-generation.md)).
 US-53.3 adds FSRS-6 scheduling, review logs, due counts and the review queue and
-rating routes. See the [study tools
+rating routes. US-53.4 adds practice quizzes under `…/study/quizzes`, with exact
+multiple-choice grading, model-graded short answers and saved attempts
+([ADR-0035](../../docs/adr/0035-practice-quizzes-and-grading.md)). See the [study tools
 contract](../../docs/architecture/study-tools.md) and
 [ADR-0033](../../docs/adr/0033-study-domain-and-scheduling.md).
 

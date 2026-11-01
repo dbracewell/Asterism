@@ -73,3 +73,10 @@ route, which re-checks every citation against the live project scope.
 - The model is the learner's choice from the chat model list, so plan usage and
   provider costs follow that choice.
 - `VectorStore` implementations must provide `get_file_chunks`.
+
+## Addendum: shared drafting pipeline (US-53.4, 2026-11-01)
+
+The pipeline above now lives in `study/drafting.py` and model resolution in
+`study/llm.py`, shared with quiz generation
+([ADR-0035](0035-practice-quizzes-and-grading.md)). Card behavior and limits are
+unchanged; shared failure messages refer to "items" instead of "cards".

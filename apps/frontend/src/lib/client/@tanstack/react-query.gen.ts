@@ -354,6 +354,30 @@ import type {
   StudyProjectSummaryGetData,
   StudyProjectSummaryGetError,
   StudyProjectSummaryGetResponse,
+  StudyQuizAttemptGetManyData,
+  StudyQuizAttemptGetManyError,
+  StudyQuizAttemptGetManyResponse,
+  StudyQuizAttemptGetOneData,
+  StudyQuizAttemptGetOneError,
+  StudyQuizAttemptGetOneResponse,
+  StudyQuizAttemptSubmitData,
+  StudyQuizAttemptSubmitError,
+  StudyQuizAttemptSubmitResponse,
+  StudyQuizDeleteData,
+  StudyQuizDeleteError,
+  StudyQuizDeleteResponse,
+  StudyQuizGenerateData,
+  StudyQuizGenerateError,
+  StudyQuizGenerateResponse,
+  StudyQuizGetManyData,
+  StudyQuizGetManyError,
+  StudyQuizGetManyResponse,
+  StudyQuizGetOneData,
+  StudyQuizGetOneError,
+  StudyQuizGetOneResponse,
+  StudyQuizUpdateData,
+  StudyQuizUpdateError,
+  StudyQuizUpdateResponse,
   StudyReviewQueueGetData,
   StudyReviewQueueGetError,
   StudyReviewQueueGetResponse,
@@ -2837,6 +2861,338 @@ export const studyCardReviewMutation = (
   };
   return mutationOptions;
 };
+
+export const studyQuizGetManyQueryKey = (
+  options: Options<StudyQuizGetManyData>,
+) => createQueryKey("studyQuizGetMany", options);
+
+/**
+ * List Quizzes
+ */
+export const studyQuizGetManyOptions = (
+  options: Options<StudyQuizGetManyData>,
+) =>
+  queryOptions<
+    StudyQuizGetManyResponse,
+    StudyQuizGetManyError,
+    StudyQuizGetManyResponse,
+    ReturnType<typeof studyQuizGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyQuizGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyQuizGetManyQueryKey(options),
+  });
+
+export const studyQuizGetManyInfiniteQueryKey = (
+  options: Options<StudyQuizGetManyData>,
+): QueryKey<Options<StudyQuizGetManyData>> =>
+  createQueryKey("studyQuizGetMany", options, true);
+
+/**
+ * List Quizzes
+ */
+export const studyQuizGetManyInfiniteOptions = (
+  options: Options<StudyQuizGetManyData>,
+) =>
+  infiniteQueryOptions<
+    StudyQuizGetManyResponse,
+    StudyQuizGetManyError,
+    InfiniteData<StudyQuizGetManyResponse>,
+    QueryKey<Options<StudyQuizGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<StudyQuizGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<StudyQuizGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().studyQuizGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: studyQuizGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Generate Quiz
+ *
+ * Write and save a quiz from project files; ``quiz`` is null when no question was usable.
+ */
+export const studyQuizGenerateMutation = (
+  options?: Partial<Options<StudyQuizGenerateData>>,
+): UseMutationOptions<
+  StudyQuizGenerateResponse,
+  StudyQuizGenerateError,
+  Options<StudyQuizGenerateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyQuizGenerateResponse,
+    StudyQuizGenerateError,
+    Options<StudyQuizGenerateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyQuizGenerate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Quiz
+ */
+export const studyQuizDeleteMutation = (
+  options?: Partial<Options<StudyQuizDeleteData>>,
+): UseMutationOptions<
+  StudyQuizDeleteResponse,
+  StudyQuizDeleteError,
+  Options<StudyQuizDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyQuizDeleteResponse,
+    StudyQuizDeleteError,
+    Options<StudyQuizDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyQuizDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyQuizGetOneQueryKey = (
+  options: Options<StudyQuizGetOneData>,
+) => createQueryKey("studyQuizGetOne", options);
+
+/**
+ * Get Quiz
+ *
+ * The quiz to take: questions without answer keys or sources.
+ */
+export const studyQuizGetOneOptions = (options: Options<StudyQuizGetOneData>) =>
+  queryOptions<
+    StudyQuizGetOneResponse,
+    StudyQuizGetOneError,
+    StudyQuizGetOneResponse,
+    ReturnType<typeof studyQuizGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyQuizGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyQuizGetOneQueryKey(options),
+  });
+
+/**
+ * Update Quiz
+ */
+export const studyQuizUpdateMutation = (
+  options?: Partial<Options<StudyQuizUpdateData>>,
+): UseMutationOptions<
+  StudyQuizUpdateResponse,
+  StudyQuizUpdateError,
+  Options<StudyQuizUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyQuizUpdateResponse,
+    StudyQuizUpdateError,
+    Options<StudyQuizUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyQuizUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyQuizAttemptGetManyQueryKey = (
+  options: Options<StudyQuizAttemptGetManyData>,
+) => createQueryKey("studyQuizAttemptGetMany", options);
+
+/**
+ * List Attempts
+ *
+ * Attempts, newest first.
+ */
+export const studyQuizAttemptGetManyOptions = (
+  options: Options<StudyQuizAttemptGetManyData>,
+) =>
+  queryOptions<
+    StudyQuizAttemptGetManyResponse,
+    StudyQuizAttemptGetManyError,
+    StudyQuizAttemptGetManyResponse,
+    ReturnType<typeof studyQuizAttemptGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .studyQuizAttemptGetMany({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: studyQuizAttemptGetManyQueryKey(options),
+  });
+
+export const studyQuizAttemptGetManyInfiniteQueryKey = (
+  options: Options<StudyQuizAttemptGetManyData>,
+): QueryKey<Options<StudyQuizAttemptGetManyData>> =>
+  createQueryKey("studyQuizAttemptGetMany", options, true);
+
+/**
+ * List Attempts
+ *
+ * Attempts, newest first.
+ */
+export const studyQuizAttemptGetManyInfiniteOptions = (
+  options: Options<StudyQuizAttemptGetManyData>,
+) =>
+  infiniteQueryOptions<
+    StudyQuizAttemptGetManyResponse,
+    StudyQuizAttemptGetManyError,
+    InfiniteData<StudyQuizAttemptGetManyResponse>,
+    QueryKey<Options<StudyQuizAttemptGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<StudyQuizAttemptGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<StudyQuizAttemptGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry
+          .get()
+          .studyQuizAttemptGetMany({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true,
+          });
+        return data;
+      },
+      queryKey: studyQuizAttemptGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Submit Attempt
+ *
+ * Grade and save an attempt; returns the results with answer keys and sources.
+ */
+export const studyQuizAttemptSubmitMutation = (
+  options?: Partial<Options<StudyQuizAttemptSubmitData>>,
+): UseMutationOptions<
+  StudyQuizAttemptSubmitResponse,
+  StudyQuizAttemptSubmitError,
+  Options<StudyQuizAttemptSubmitData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyQuizAttemptSubmitResponse,
+    StudyQuizAttemptSubmitError,
+    Options<StudyQuizAttemptSubmitData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyQuizAttemptSubmit({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyQuizAttemptGetOneQueryKey = (
+  options: Options<StudyQuizAttemptGetOneData>,
+) => createQueryKey("studyQuizAttemptGetOne", options);
+
+/**
+ * Get Attempt
+ */
+export const studyQuizAttemptGetOneOptions = (
+  options: Options<StudyQuizAttemptGetOneData>,
+) =>
+  queryOptions<
+    StudyQuizAttemptGetOneResponse,
+    StudyQuizAttemptGetOneError,
+    StudyQuizAttemptGetOneResponse,
+    ReturnType<typeof studyQuizAttemptGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().studyQuizAttemptGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: studyQuizAttemptGetOneQueryKey(options),
+  });
 
 export const appCaptioningGetQueryKey = (
   options?: Options<AppCaptioningGetData>,

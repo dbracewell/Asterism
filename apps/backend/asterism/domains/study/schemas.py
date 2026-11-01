@@ -10,7 +10,13 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from pydantic.json_schema import SkipJsonSchema
 
-from .models import MAX_CARD_SIDE_CHARS, MAX_DECK_DESCRIPTION_CHARS, MAX_DECK_NAME_CHARS
+from .models import (
+    MAX_CARD_SIDE_CHARS,
+    MAX_DECK_DESCRIPTION_CHARS,
+    MAX_DECK_NAME_CHARS,
+    MAX_QUIZ_TITLE_CHARS,
+    MAX_RESPONSE_CHARS,
+)
 
 MAX_CARD_CITATIONS = 8
 MAX_CHUNK_ID_CHARS = 200
@@ -221,3 +227,180 @@ class StudyProjectSummary(BaseModel):
     deck_count: int = Field(ge=0)
     card_count: int = Field(ge=0)
     due_count: int = Field(ge=0)
+
+
+# ---------------------------------------------------------------------------
+# Practice quizzes (US-53.4, ADR-0035).
+# ---------------------------------------------------------------------------
+
+MAX_QUIZ_QUESTIONS = 20
+
+QuizTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUIZ_TITLE_CHARS)]
+StudyQuestionKind = Literal["multiple_choice", "short_answer"]
+StudyVerdict = Literal["correct", "partial", "incorrect", "ungraded"]
+StudyGrader = Literal["exact", "model", "none"]
+
+
+class StudyQuizGenerateRequest(BaseModel):
+    """Generate a quiz of ``question_count`` questions of the chosen kinds.
+
+    ``file_ids`` null means the whole project scope (at most 10 files). The quiz
+    is saved when at least one question is produced.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: uuid.UUID
+    question_count: int = Field(ge=1, le=MAX_QUIZ_QUESTIONS)
+    kinds: list[StudyQuestionKind] = Field(min_length=1, max_length=2)
+    file_ids: list[uuid.UUID] | None = Field(default=None, min_length=1, max_length=MAX_DRAFT_FILES)
+    title: QuizTitle | None = None
+
+    @field_validator("file_ids")
+    @classmethod
+    def unique_files(cls, value: list[uuid.UUID] | None) -> list[uuid.UUID] | None:
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("Each file can be chosen once")
+        return value
+
+    @field_validator("kinds")
+    @classmethod
+    def unique_kinds(cls, value: list[StudyQuestionKind]) -> list[StudyQuestionKind]:
+        if len(set(value)) != len(value):
+            raise ValueError("Each question kind can be chosen once")
+        return value
+
+
+class StudyQuizUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: QuizTitle
+
+
+class StudyQuizSummary(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    title: str
+    question_count: int = Field(ge=0)
+    multiple_choice_count: int = Field(ge=0)
+    short_answer_count: int = Field(ge=0)
+    attempt_count: int = Field(ge=0)
+    # Score fraction (0–1) of the newest and the best attempt, null before the first.
+    last_score: float | None
+    best_score: float | None
+    model_id: uuid.UUID | None
+    model_name: str
+    created_at: int
+    updated_at: int
+
+
+class StudyQuizPage(BaseModel):
+    items: list[StudyQuizSummary]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+
+
+class StudyQuizQuestion(BaseModel):
+    """A question as shown while taking the quiz: no answer key and no sources."""
+
+    id: uuid.UUID
+    position: int = Field(ge=0)
+    kind: StudyQuestionKind
+    prompt: str
+    options: list[str]
+
+
+class StudyQuiz(StudyQuizSummary):
+    questions: list[StudyQuizQuestion]
+
+
+class StudyQuizFileResult(BaseModel):
+    """What happened to one requested file. ``message`` explains a failure."""
+
+    file_id: uuid.UUID
+    file_name: str | None
+    status: Literal["used", "failed"]
+    message: str | None = None
+    question_count: int = Field(ge=0)
+    truncated: bool = False
+
+
+class StudyQuizGeneration(BaseModel):
+    """The saved quiz, or null when no file produced a usable question."""
+
+    quiz: StudyQuiz | None
+    files: list[StudyQuizFileResult]
+
+
+class StudyQuizAnswerInput(BaseModel):
+    """``choice`` (an option index) answers multiple choice; ``text`` answers short answer."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    question_id: uuid.UUID
+    choice: int | None = Field(default=None, ge=0, le=100)
+    text: str | None = Field(default=None, max_length=MAX_RESPONSE_CHARS)
+
+
+class StudyQuizAttemptRequest(BaseModel):
+    """Submit answers. Omitted questions count as unanswered.
+
+    ``model_id`` grades short answers and is required when any short answer is
+    not blank.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    answers: list[StudyQuizAnswerInput] = Field(max_length=MAX_QUIZ_QUESTIONS)
+    model_id: uuid.UUID | None = None
+
+    @field_validator("answers")
+    @classmethod
+    def unique_questions(cls, value: list[StudyQuizAnswerInput]) -> list[StudyQuizAnswerInput]:
+        if len({answer.question_id for answer in value}) != len(value):
+            raise ValueError("Answer each question once")
+        return value
+
+
+class StudyQuizAttemptSummary(BaseModel):
+    id: uuid.UUID
+    quiz_id: uuid.UUID
+    submitted_at: int
+    # Points: 1 per correct answer, 0.5 per partial short answer.
+    score: float = Field(ge=0)
+    question_count: int = Field(ge=1)
+    ungraded_count: int = Field(ge=0)
+    grader_model_id: uuid.UUID | None
+    grader_model_name: str | None
+
+
+class StudyQuizAttemptPage(BaseModel):
+    items: list[StudyQuizAttemptSummary]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+
+
+class StudyQuizResult(BaseModel):
+    """One graded question with its answer key and sources. Text fields are untrusted."""
+
+    question_id: uuid.UUID
+    position: int = Field(ge=0)
+    kind: StudyQuestionKind
+    prompt: str
+    options: list[str]
+    correct_option: int | None
+    rubric: str
+    explanation: str
+    citations: list[StudyCitation]
+    choice: int | None
+    text: str | None
+    verdict: StudyVerdict
+    grader: StudyGrader
+    feedback: str
+
+
+class StudyQuizAttempt(StudyQuizAttemptSummary):
+    quiz_title: str
+    results: list[StudyQuizResult]

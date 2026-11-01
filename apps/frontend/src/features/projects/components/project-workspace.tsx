@@ -21,6 +21,7 @@ import { ProjectFiles } from "./project-files";
 import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
 import { ProjectStudyDecks } from "@/features/study/components/project-study-decks";
+import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
 
 export function ProjectWorkspace({
   projectId,
@@ -98,6 +99,10 @@ export function ProjectWorkspace({
               <WorkspaceChats key={projectId} projectId={projectId} />
               <ProjectStudyDecks
                 key={`study-${projectId}`}
+                projectId={projectId}
+              />
+              <ProjectStudyQuizzes
+                key={`quizzes-${projectId}`}
                 projectId={projectId}
               />
               <ProjectFiles key={`files-${projectId}`} projectId={projectId} />
