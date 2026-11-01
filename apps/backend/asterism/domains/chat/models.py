@@ -3,6 +3,7 @@ import uuid
 from pydantic import TypeAdapter
 from sqlalchemy import (
     UUID,
+    Boolean,
     CheckConstraint,
     Enum,
     ForeignKey,
@@ -53,6 +54,13 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         default=LearningModeId.STANDARD,
     )
     learning_mode_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    # Self-imposed lock (US-52.5): leaving the mode or revealing needs an override.
+    learning_mode_locked: Mapped[bool] = mapped_column(
+        Boolean(create_constraint=True, name="ck_chats_learning_mode_locked_boolean"),
+        nullable=False,
+        default=False,
+        server_default="0",
+    )
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("projects.id", ondelete="SET NULL"),
         index=True,
@@ -88,6 +96,10 @@ class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         CheckConstraint("model_revision >= 1", name="chat_model_revision_positive"),
         CheckConstraint("persona_revision >= 1", name="chat_persona_revision_positive"),
         CheckConstraint("learning_mode_revision >= 1", name="chat_learning_mode_revision_positive"),
+        CheckConstraint(
+            "NOT learning_mode_locked OR learning_mode != 'standard'",
+            name="chat_standard_mode_unlocked",
+        ),
         ForeignKeyConstraint(
             ["persona_id", "user_id"],
             ["user_personas.id", "user_personas.user_id"],

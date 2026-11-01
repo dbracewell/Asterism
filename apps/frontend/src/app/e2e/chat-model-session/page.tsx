@@ -7,15 +7,17 @@ export default async function ChatModelSessionTestPage({
     draft?: string;
     timezone?: string;
     thinking?: string;
+    header?: string;
   }>;
 }) {
   if (process.env.ASTERISM_CONFIG_PROFILE !== "test") notFound();
-  const { draft, timezone, thinking } = await searchParams;
+  const { draft, timezone, thinking, header } = await searchParams;
   return (
     <ChatModelSessionHarness
       draft={draft === "true"}
       timezone={timezone ?? "UTC"}
       showThinking={thinking === "true"}
+      showHeader={header === "true"}
     />
   );
 }

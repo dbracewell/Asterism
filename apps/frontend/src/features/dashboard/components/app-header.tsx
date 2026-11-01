@@ -12,6 +12,7 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/features/auth/components/user-context";
+import { ChatModeLock } from "@/features/chat/components/chat-mode-lock";
 import { ChatSessionActionMenu } from "@/features/dashboard/components/chat-session-action-menu";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { client } from "@/lib/api";
@@ -147,6 +148,7 @@ export function ChatHeaderContent({
         ]}
       />
       <ChatChips info={info} />
+      {!file && <ChatModeLock info={info} />}
       <ChatSessionActionMenu chat={info} variant="header" />
     </>
   );

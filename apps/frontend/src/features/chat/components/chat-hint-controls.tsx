@@ -2,7 +2,6 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -21,6 +20,10 @@ import type {
 import { useQuery } from "@tanstack/react-query";
 import { LightbulbIcon } from "lucide-react";
 import { learningModeQueryOptions } from "./chat-learning-mode-picker";
+import {
+  DelayedConfirmAction,
+  lockOverrideDelay,
+} from "./delayed-confirm-action";
 
 const ORDER: HintLevel[] = [
   "none",
@@ -126,6 +129,7 @@ export function ChatHintControls({
     (level): level is keyof typeof hintPrompt => level !== "answer",
   );
   const reveal = revealCopy(info.learning_mode);
+  const locked = !!info.learning_mode_locked;
   return (
     <div
       role="group"
@@ -179,16 +183,20 @@ export function ChatHintControls({
               <AlertDialogTitle>{reveal.title}</AlertDialogTitle>
               <AlertDialogDescription>
                 {reveal.description}
+                {locked &&
+                  " You locked this chat's mode, so take a moment before you decide."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep trying</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() =>
+              <DelayedConfirmAction
+                delaySeconds={lockOverrideDelay(info)}
+                onConfirm={() =>
                   onRaise(
                     {
                       level: "answer",
                       confirm_reveal: true,
+                      ...(locked ? { override_lock: true } : {}),
                       ...(resetPending ? { reset: true } : {}),
                     },
                     reveal.prompt,
@@ -196,7 +204,7 @@ export function ChatHintControls({
                 }
               >
                 {reveal.action}
-              </AlertDialogAction>
+              </DelayedConfirmAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

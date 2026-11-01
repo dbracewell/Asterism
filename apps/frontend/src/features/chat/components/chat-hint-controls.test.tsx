@@ -5,10 +5,10 @@ import {
   type LearningModeCatalog,
 } from "@/lib/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ChatHintControls } from "./chat-hint-controls";
 
 const { api, raised } = vi.hoisted(() => ({
@@ -46,18 +46,33 @@ beforeEach(() => {
   api.learningModeGetMany.mockResolvedValue({ data: catalog });
 });
 
-function info(learning_mode: ChatInfo["learning_mode"], hint_level: HintLevel) {
-  return { id: "chat", learning_mode, hint_level } as ChatInfo;
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+function info(
+  learning_mode: ChatInfo["learning_mode"],
+  hint_level: HintLevel,
+  learning_mode_locked = false,
+) {
+  return {
+    id: "chat",
+    learning_mode,
+    hint_level,
+    learning_mode_locked,
+  } as ChatInfo;
 }
 
 function Harness({
   mode = "tutor",
   level = "none",
   disabled = false,
+  locked = false,
 }: {
   mode?: ChatInfo["learning_mode"];
   level?: HintLevel;
   disabled?: boolean;
+  locked?: boolean;
 }) {
   const [reset, setReset] = useState(false);
   return (
@@ -67,7 +82,7 @@ function Harness({
       }
     >
       <ChatHintControls
-        info={info(mode, level)}
+        info={info(mode, level, locked)}
         disabled={disabled}
         resetPending={reset}
         onResetChange={setReset}
@@ -200,4 +215,45 @@ it("starts a new Review attempt after the solution is shown", async () => {
     { level: "answer", confirm_reveal: true, reset: true },
     "Show me a corrected solution.",
   );
+});
+
+it("makes a locked chat wait before the reveal and sends the lock override", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  render(<Harness locked level="hint" />);
+  await user.click(await screen.findByRole("button", { name: "Show answer" }));
+  const dialog = await screen.findByRole("alertdialog");
+  expect(dialog).toHaveTextContent("You locked this chat's mode");
+  const confirm = Array.from(dialog.querySelectorAll("button")).find((button) =>
+    button.textContent?.startsWith("Show answer"),
+  )!;
+  expect(confirm).toBeDisabled();
+  expect(confirm).toHaveTextContent("Show answer(5)");
+  act(() => vi.advanceTimersByTime(4000));
+  expect(confirm).toBeDisabled();
+  expect(confirm).toHaveTextContent("(1)");
+  act(() => vi.advanceTimersByTime(1000));
+  expect(confirm).toBeEnabled();
+  await user.click(confirm);
+  expect(raised).toHaveBeenCalledWith(
+    { level: "answer", confirm_reveal: true, override_lock: true },
+    "Show me the answer.",
+  );
+});
+
+it("restarts the wait each time the locked reveal opens", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  render(<Harness locked />);
+  await user.click(await screen.findByRole("button", { name: "Show answer" }));
+  act(() => vi.advanceTimersByTime(3000));
+  await user.click(screen.getByRole("button", { name: "Keep trying" }));
+  await user.click(screen.getByRole("button", { name: "Show answer" }));
+  const dialog = await screen.findByRole("alertdialog");
+  const confirm = Array.from(dialog.querySelectorAll("button")).find((button) =>
+    button.textContent?.startsWith("Show answer"),
+  )!;
+  expect(confirm).toBeDisabled();
+  expect(confirm).toHaveTextContent("(5)");
+  expect(raised).not.toHaveBeenCalled();
 });
