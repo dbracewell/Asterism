@@ -321,6 +321,9 @@ import type {
   StudyCardDeleteData,
   StudyCardDeleteError,
   StudyCardDeleteResponse,
+  StudyCardDraftGenerateData,
+  StudyCardDraftGenerateError,
+  StudyCardDraftGenerateResponse,
   StudyCardGetManyData,
   StudyCardGetManyError,
   StudyCardGetManyResponse,
@@ -2700,6 +2703,35 @@ export const studyCardUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().studyCardUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Generate Card Drafts
+ *
+ * Draft cards from project files for review; nothing is saved (ADR-0034).
+ */
+export const studyCardDraftGenerateMutation = (
+  options?: Partial<Options<StudyCardDraftGenerateData>>,
+): UseMutationOptions<
+  StudyCardDraftGenerateResponse,
+  StudyCardDraftGenerateError,
+  Options<StudyCardDraftGenerateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyCardDraftGenerateResponse,
+    StudyCardDraftGenerateError,
+    Options<StudyCardDraftGenerateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyCardDraftGenerate({
         ...options,
         ...fnOptions,
         throwOnError: true,

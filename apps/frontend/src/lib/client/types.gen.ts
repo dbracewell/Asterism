@@ -3369,6 +3369,58 @@ export type StudyCardCreate = {
 };
 
 /**
+ * StudyCardDraft
+ */
+export type StudyCardDraft = {
+  /**
+   * Front
+   */
+  front: string;
+  /**
+   * Back
+   */
+  back: string;
+  /**
+   * Citations
+   */
+  citations: Array<StudyCitation>;
+};
+
+/**
+ * StudyCardDraftBatch
+ */
+export type StudyCardDraftBatch = {
+  /**
+   * Drafts
+   */
+  drafts: Array<StudyCardDraft>;
+  /**
+   * Files
+   */
+  files: Array<StudyDraftFileResult>;
+};
+
+/**
+ * StudyCardDraftRequest
+ *
+ * Draft up to ``count`` cards from chosen files, or the whole project when ``file_ids`` is null.
+ */
+export type StudyCardDraftRequest = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Count
+   */
+  count: number;
+  /**
+   * File Ids
+   */
+  file_ids?: Array<string> | null;
+};
+
+/**
  * StudyCardPage
  */
 export type StudyCardPage = {
@@ -3549,6 +3601,38 @@ export type StudyDeckUpdate = {
    * Description
    */
   description?: string;
+};
+
+/**
+ * StudyDraftFileResult
+ *
+ * What happened to one requested file. ``message`` explains a failure.
+ */
+export type StudyDraftFileResult = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * File Name
+   */
+  file_name: string | null;
+  /**
+   * Status
+   */
+  status: "used" | "failed";
+  /**
+   * Message
+   */
+  message?: string | null;
+  /**
+   * Card Count
+   */
+  card_count: number;
+  /**
+   * Truncated
+   */
+  truncated?: boolean;
 };
 
 /**
@@ -6906,6 +6990,58 @@ export type StudyCardUpdateResponses = {
 
 export type StudyCardUpdateResponse =
   StudyCardUpdateResponses[keyof StudyCardUpdateResponses];
+
+export type StudyCardDraftGenerateData = {
+  body: StudyCardDraftRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Deck Id
+     */
+    deck_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/decks/{deck_id}/card-drafts";
+};
+
+export type StudyCardDraftGenerateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyCardDraftGenerateError =
+  StudyCardDraftGenerateErrors[keyof StudyCardDraftGenerateErrors];
+
+export type StudyCardDraftGenerateResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyCardDraftBatch;
+};
+
+export type StudyCardDraftGenerateResponse =
+  StudyCardDraftGenerateResponses[keyof StudyCardDraftGenerateResponses];
 
 export type AppCaptioningGetData = {
   body?: never;

@@ -5,7 +5,7 @@ reject explicit null. Clients never send owner, project or derived fields.
 """
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from pydantic.json_schema import SkipJsonSchema
@@ -124,3 +124,50 @@ class StudyCardPage(BaseModel):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
     page_size: int = Field(ge=1)
+
+
+# ---------------------------------------------------------------------------
+# Card drafts (US-53.2, ADR-0034). Drafts are returned, never stored.
+# ---------------------------------------------------------------------------
+
+MAX_DRAFT_CARDS = 30
+MAX_DRAFT_FILES = 10
+
+
+class StudyCardDraftRequest(BaseModel):
+    """Draft up to ``count`` cards from chosen files, or the whole project when ``file_ids`` is null."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: uuid.UUID
+    count: int = Field(ge=1, le=MAX_DRAFT_CARDS)
+    file_ids: list[uuid.UUID] | None = Field(default=None, min_length=1, max_length=MAX_DRAFT_FILES)
+
+    @field_validator("file_ids")
+    @classmethod
+    def unique_files(cls, value: list[uuid.UUID] | None) -> list[uuid.UUID] | None:
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("Each file can be chosen once")
+        return value
+
+
+class StudyCardDraft(BaseModel):
+    front: str
+    back: str
+    citations: list[StudyCitation] = Field(min_length=1)
+
+
+class StudyDraftFileResult(BaseModel):
+    """What happened to one requested file. ``message`` explains a failure."""
+
+    file_id: uuid.UUID
+    file_name: str | None
+    status: Literal["used", "failed"]
+    message: str | None = None
+    card_count: int = Field(ge=0)
+    truncated: bool = False
+
+
+class StudyCardDraftBatch(BaseModel):
+    drafts: list[StudyCardDraft]
+    files: list[StudyDraftFileResult]

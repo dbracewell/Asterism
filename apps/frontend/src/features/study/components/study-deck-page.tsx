@@ -9,10 +9,9 @@ import {
 import MarkdownViewer from "@/components/markdown-viewer";
 import { PageHeader, PageLayout } from "@/components/page-layout";
 import { QueryError } from "@/components/query-error";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { client } from "@/lib/api";
-import type { StudyCard, StudyCitation } from "@/lib/client";
+import type { StudyCard } from "@/lib/client";
 import {
   studyCardDeleteMutation,
   studyCardGetManyOptions,
@@ -25,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { studyErrorDetail } from "../lib/error-detail";
+import { CardCitations } from "./card-citations";
 import { CardFormDialog } from "./card-form-dialog";
 import { DeckFormDialog } from "./deck-form-dialog";
 import { cardCountLabel } from "./project-study-decks";
@@ -82,6 +82,11 @@ export function StudyDeckPage({
             }
             actions={
               <>
+                <Button asChild>
+                  <Link href={`/projects/${projectId}/study/${deckId}/drafts`}>
+                    Draft from files
+                  </Link>
+                </Button>
                 <Button variant="outline" onClick={() => setEditing(true)}>
                   Edit deck
                 </Button>
@@ -136,7 +141,9 @@ function DeckCards({
     retry: false,
   });
   const addCard = (
-    <Button onClick={() => setEditor({ type: "new" })}>Add card</Button>
+    <Button variant="outline" onClick={() => setEditor({ type: "new" })}>
+      Add card
+    </Button>
   );
   return (
     <section className="flex flex-col gap-4" aria-label="Cards">
@@ -161,7 +168,7 @@ function DeckCards({
         (cards.data.total === 0 ? (
           <EmptyState
             title="No cards yet"
-            description="Add a card with a question on the front and the answer on the back."
+            description="Add a card yourself, or use Draft from files to draft cards from this project's material."
             action={addCard}
           />
         ) : (
@@ -291,24 +298,5 @@ function CardItem({
       </div>
       {dialog}
     </li>
-  );
-}
-
-export function CardCitations({ citations }: { citations: StudyCitation[] }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span className="text-muted-foreground">Sources:</span>
-      {citations.map((citation, index) => (
-        <Badge
-          key={`${citation.file_id}-${citation.chunk_id ?? index}`}
-          variant={citation.available ? "secondary" : "outline"}
-          title={citation.excerpt ?? undefined}
-        >
-          {citation.available
-            ? citation.file_name
-            : "Source no longer in this project"}
-        </Badge>
-      ))}
-    </div>
   );
 }

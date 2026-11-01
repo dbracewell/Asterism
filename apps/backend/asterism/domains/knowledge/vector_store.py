@@ -71,6 +71,27 @@ class VectorSearchResult:
     score: float
 
 
+@dataclass(frozen=True)
+class StoredChunk:
+    """One stored chunk without its embedding, read in document order.
+
+    Attributes:
+        id: Stable chunk identifier.
+        file_id: File the chunk belongs to.
+        artifact_generation: Artifact generation the chunk was stored under.
+        chunk_ordinal: Position of the chunk within its ingestion run.
+        kind: Chunk provenance ("text" or "caption").
+        content: Stored chunk text.
+    """
+
+    id: str
+    file_id: str
+    artifact_generation: int
+    chunk_ordinal: int
+    kind: ChunkKind
+    content: str
+
+
 class VectorStore(Protocol):
     async def initialize(self) -> None: ...
 
@@ -95,6 +116,15 @@ class VectorStore(Protocol):
         artifact_generation: int,
         limit: int,
     ) -> list[list[float]]: ...
+
+    async def get_file_chunks(
+        self,
+        *,
+        user_id: str,
+        file_id: str,
+        artifact_generation: int,
+        limit: int,
+    ) -> list[StoredChunk]: ...
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None: ...
 
@@ -264,6 +294,44 @@ class LanceDbVectorStore:
         except Exception as error:
             raise VectorStoreError("Knowledge vectors could not be read") from error
         return [[float(value) for value in row["vector"]] for row in rows]
+
+    async def get_file_chunks(
+        self,
+        *,
+        user_id: str,
+        file_id: str,
+        artifact_generation: int,
+        limit: int,
+    ) -> list[StoredChunk]:
+        """The first ``limit`` chunks of one file generation, in ordinal order."""
+        await self.initialize()
+        table = self._require_table()
+        predicate = (
+            f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)} "
+            f"AND artifact_generation = {int(artifact_generation)} AND chunk_ordinal < {int(limit)}"
+        )
+        columns = ["id", "user_id", "file_id", "artifact_generation", "chunk_ordinal", "kind", "content"]
+        try:
+            async with self._semaphore:
+                rows = await asyncio.to_thread(
+                    lambda: table.search().where(predicate).select(columns).limit(limit).to_list()
+                )
+        except Exception as error:
+            raise VectorStoreError("Knowledge chunks could not be read") from error
+        chunks = [
+            StoredChunk(
+                id=row["id"],
+                file_id=row["file_id"],
+                artifact_generation=int(row["artifact_generation"]),
+                chunk_ordinal=int(row["chunk_ordinal"]),
+                kind=row["kind"],
+                content=row["content"],
+            )
+            for row in rows
+            # Defense in depth: the predicate already constrains the owner.
+            if row["user_id"] == user_id
+        ]
+        return sorted(chunks, key=lambda chunk: chunk.chunk_ordinal)
 
     async def delete_file(self, *, user_id: str, file_id: str) -> None:
         await self._delete(f"user_id = {self._quote(user_id)} AND file_id = {self._quote(file_id)}")
