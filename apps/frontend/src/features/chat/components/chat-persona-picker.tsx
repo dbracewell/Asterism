@@ -53,6 +53,7 @@ export function ChatPersonaPicker({
       >
         <SelectTrigger
           aria-label="Chat persona"
+          data-tour="persona"
           aria-invalid={!!query.data && !personaAvailable(query.data, value)}
           className="max-w-full min-w-0 border-0! bg-transparent"
         >

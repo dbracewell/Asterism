@@ -15,7 +15,7 @@ Conventions:
 
 import uuid
 from collections.abc import Sequence
-from typing import Any, cast
+from typing import Any, cast, get_args
 
 from pydantic import JsonValue, ValidationError
 from sqlalchemy import and_, delete, func, or_, select
@@ -40,9 +40,11 @@ from .models import (
 from .provider_types import ProviderType
 from .queries import is_global_model, is_global_provider, select_visible_models
 from .schemas import (
+    FIRST_CHAT_TOUR_SETTING,
     ApplicationSettings,
     BulkUpdateSettingRequest,
     ComponentProviderParameters,
+    FirstChatTourState,
     Llm,
     LlmDisplayInfo,
     LlmWithProvider,
@@ -259,7 +261,14 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
     ``default_model_id`` must reference an existing, active model; ``None``
     values (deletes) skip shape checks.
     """
-    if key not in {"theme", "font_size", "default_model_id", "show_thinking", "prompt_coach_enabled"}:
+    if key not in {
+        "theme",
+        "font_size",
+        "default_model_id",
+        "show_thinking",
+        "prompt_coach_enabled",
+        FIRST_CHAT_TOUR_SETTING,
+    }:
         raise BadDataException("Unsupported user setting")
     if value is not None and key == "default_model_id":
         try:
@@ -274,6 +283,8 @@ async def _validate_user_setting(user_id: str, key: str, value: Any, session: As
         raise BadDataException(f"{key} must be boolean")
     if value is not None and key in {"theme", "font_size"} and not isinstance(value, str):
         raise BadDataException(f"{key} must be text")
+    if value is not None and key == FIRST_CHAT_TOUR_SETTING and value not in get_args(FirstChatTourState):
+        raise BadDataException(f"{key} must be one of: completed, dismissed")
 
 
 async def _ensure_provider_unbound(provider_id: uuid.UUID, session: AsyncSession) -> None:

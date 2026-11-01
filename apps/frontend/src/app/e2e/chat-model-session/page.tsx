@@ -8,16 +8,18 @@ export default async function ChatModelSessionTestPage({
     timezone?: string;
     thinking?: string;
     header?: string;
+    learner?: string;
   }>;
 }) {
   if (process.env.ASTERISM_CONFIG_PROFILE !== "test") notFound();
-  const { draft, timezone, thinking, header } = await searchParams;
+  const { draft, timezone, thinking, header, learner } = await searchParams;
   return (
     <ChatModelSessionHarness
       draft={draft === "true"}
       timezone={timezone ?? "UTC"}
       showThinking={thinking === "true"}
       showHeader={header === "true"}
+      newLearner={learner === "new"}
     />
   );
 }

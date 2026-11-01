@@ -63,6 +63,14 @@ that does not exist.
 and component descriptions). It becomes a focusable button that opens the same
 `Popover` instead of a hover-only tooltip.
 
+**First-chat tour (US-61.4).** The tour is a modal shadcn `Popover` anchored
+to each composer control (found by `data-tour`), with a ring drawn around the
+control; no tour library. Its step text follows the same accuracy rules. The
+per-user `first_chat_tour` setting (`completed` or `dismissed`; unset means
+"offer it") is stored through the existing user settings API so it follows the
+learner between devices. Replays use the `?tour=first-chat` link and do not
+overwrite an earlier completion when skipped.
+
 **Convention.** A story that adds a user-facing concept or control adds its
 help entry in the same change. The frontend README records this.
 

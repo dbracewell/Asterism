@@ -62,7 +62,19 @@ describe("General settings labels", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Dracula" }));
     expect(updateSetting).toHaveBeenCalledWith("theme", "dracula", false);
     expect(setTheme).toHaveBeenCalledWith("dracula");
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /theme/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("reports the tour state and links to a restart", () => {
+    render(<GeneralSettings />, { wrapper: TooltipProvider });
+    expect(
+      screen.getByText("You haven't taken the tour yet."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Restart the chat tour" }),
+    ).toHaveAttribute("href", "/?tour=first-chat");
   });
   it("lets admins open the editor from the selected tile", () => {
     role.current = "admin";

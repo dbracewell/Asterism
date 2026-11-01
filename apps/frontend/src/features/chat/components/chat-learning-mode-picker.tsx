@@ -65,6 +65,7 @@ export function LearningModePicker({
       >
         <SelectTrigger
           aria-label="Learning mode"
+          data-tour="learning-mode"
           className="max-w-full min-w-0 border-0! bg-transparent"
         >
           <GraduationCapIcon className="text-muted-foreground" />

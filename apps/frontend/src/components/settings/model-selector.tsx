@@ -41,6 +41,8 @@ type ModelSelectorProps = {
   savedLabel?: string;
   "aria-label"?: string;
   "aria-invalid"?: boolean;
+  /** Marks the trigger as a guided-tour target (US-61.4). */
+  "data-tour"?: string;
 };
 
 const isAvailable = (model: ModelOption) =>
@@ -133,6 +135,7 @@ export const ModelSelector = ({
   savedLabel,
   "aria-label": ariaLabel,
   "aria-invalid": ariaInvalid,
+  "data-tour": tourTarget,
 }: ModelSelectorProps) => {
   const trigger = useRef<HTMLButtonElement>(null);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
@@ -170,6 +173,7 @@ export const ModelSelector = ({
         id={id}
         aria-label={ariaLabel}
         aria-invalid={ariaInvalid}
+        data-tour={tourTarget}
         render={
           <Button
             type="button"

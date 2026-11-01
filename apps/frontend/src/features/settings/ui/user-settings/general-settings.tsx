@@ -3,7 +3,10 @@ import { FontSizeSelector } from "@/components/settings/font-size-selector";
 import { ModelSelector } from "@/components/settings/model-selector";
 import { ThemeGallery } from "@/components/settings/theme-gallery";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { firstChatTourHref } from "@/features/help/tour";
+import Link from "next/link";
 import { useUser } from "@/features/auth/components/user-context";
 import { useUpdateUserSettings } from "@/features/settings/hooks/use-update-user-settings";
 import { useTheme } from "@/features/theme/components/theme-context";
@@ -100,6 +103,23 @@ export const GeneralSettings = () => {
               can apply. Reviews are not saved, and nothing is sent to the chat.
             </p>
           </div>
+        </div>
+      </SettingsSection>
+      <SettingsSection
+        title="Guided tour"
+        description="A short walkthrough of the message box and the controls around it."
+      >
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-muted-foreground text-xs">
+            {user.settings.first_chat_tour === "completed"
+              ? "You finished the tour."
+              : user.settings.first_chat_tour === "dismissed"
+                ? "You skipped the tour."
+                : "You haven't taken the tour yet."}
+          </p>
+          <Button asChild variant="outline" size="sm">
+            <Link href={firstChatTourHref}>Restart the chat tour</Link>
+          </Button>
         </div>
       </SettingsSection>
     </SettingsPane>

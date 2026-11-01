@@ -20,6 +20,7 @@ import {
   HeroMark,
   HeroSuggestions,
 } from "@/features/chat/components/new-chat-hero";
+import { FirstChatTour } from "@/features/help/components/first-chat-tour";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { heroSuggestions } from "@/features/chat/lib/hero-suggestions";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
@@ -112,7 +113,10 @@ export default function AppPage() {
         )}
       </div>
       <div className="mt-6 mb-auto flex w-full max-w-4xl flex-col gap-3">
-        <ChatInputContainer>
+        <FirstChatTour
+          skillsEnabled={skills.error ? false : skills.data?.policy_enabled}
+        />
+        <ChatInputContainer data-tour="composer">
           <ChatInput
             ref={composer}
             key={projectId ?? "general"}

@@ -109,9 +109,17 @@ be restarted from the help panel and from User Settings. Steps whose control is
 not present (for example, skills disabled by policy) are skipped. The tour traps
 focus correctly and announces each step to screen readers.
 
-- [ ] Add per-user onboarding state to the user preferences API; regenerate the client.
-- [ ] Build the tour on existing shadcn/ui primitives, with skip, back and restart.
-- [ ] Test first-visit behavior, persistence, restart, skipped steps and accessibility.
+Delivered as: a "New here?" card on the new-chat page (shown while the
+`first_chat_tour` user setting is unset) that starts a modal popover tour of up
+to six steps: message box, persona, skills (only while the skills policy is on),
+learning mode, model and attachments. Finish stores `completed`; Skip, Escape or
+"No thanks" store `dismissed` (a skipped replay keeps an earlier completion).
+The help sheet ("Take the chat tour") and User Settings → General ("Restart the
+chat tour") replay it through `/?tour=first-chat`.
+
+- [x] Add per-user onboarding state to the user preferences API; regenerate the client.
+- [x] Build the tour on existing shadcn/ui primitives, with skip, back and restart.
+- [x] Test first-visit behavior, persistence, restart, skipped steps and accessibility.
 
 ## US-61.5: Help center page
 
