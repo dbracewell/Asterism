@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-53.6 (summaries and study guides) is active on `feature/us-53.6-summaries-and-study-guides`; US-53.1 through US-53.5 are complete. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+No user story is currently active. EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-54 is next. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -26,31 +26,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52 and EPIC-61 are complete and archived; EPIC-53 is next.
-
-### [EPIC-53: Study tools from project files](docs/epics/EPIC-53-STUDY-TOOLS-FROM-PROJECT-FILES.md)
-
-- [x] US-53.1: Study domain and decks
-  - [x] Write an ADR for the study domain and the scheduling algorithm choice.
-  - [x] Implement models, queries, service and router; regenerate the client.
-  - [x] Test owner and project isolation and cascade deletion.
-- [x] US-53.2: Generate flashcards from files
-  - [x] Implement bounded generation through RetrievalService with citation capture.
-  - [x] Build the draft review screen with accept/edit/discard.
-  - [x] Test scope enforcement, limits, partial failure and citation links.
-- [x] US-53.3: Spaced-repetition review
-  - [x] Implement the scheduler interface, review log and due queries.
-  - [x] Build the review session UI with keyboard shortcuts.
-  - [x] Test scheduling math, due ordering and accessibility.
-- [x] US-53.4: Practice quizzes
-  - [x] Implement quiz generation, attempts and grading.
-  - [x] Build quiz-taking and results screens with citations.
-  - [x] Test grading paths, citation scope and attempt history.
-- [x] US-53.5: Adaptive follow-up
-  - [x] Derive weak spots from attempts and review logs; build the practice entry point; add tests.
-- [ ] US-53.6: Summaries and study guides (implementation complete, awaiting confirmation)
-  - [x] Implement depth-controlled summaries and study-guide generation.
-  - [x] Build the save action; test citation scope and plan generation.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61 and EPIC-53 are complete and archived; EPIC-54 is next.
 
 ### [EPIC-54: Run inspection, replay and comparison](docs/epics/EPIC-54-RUN-INSPECTION-REPLAY-AND-COMPARISON.md)
 

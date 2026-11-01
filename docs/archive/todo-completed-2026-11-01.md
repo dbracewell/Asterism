@@ -53,3 +53,32 @@ Confirmed (2026-11-01) to run next, before EPIC-53, so learners can understand p
 - [x] US-61.5: Help center page
   - [x] Build the help center page with search and anchor links.
   - [x] Add a Playwright check that every "Learn more" link resolves to an entry.
+
+The user confirmed US-53.6 completion and authorized a local merge on
+2026-11-01. EPIC-53 (US-53.1 through US-53.6) is complete; each story was
+confirmed and merged with `--no-ff` before the next began. See ADR-0033
+through ADR-0037.
+
+### [EPIC-53: Study tools from project files](../epics/EPIC-53-STUDY-TOOLS-FROM-PROJECT-FILES.md)
+
+- [x] US-53.1: Study domain and decks
+  - [x] Write an ADR for the study domain and the scheduling algorithm choice.
+  - [x] Implement models, queries, service and router; regenerate the client.
+  - [x] Test owner and project isolation and cascade deletion.
+- [x] US-53.2: Generate flashcards from files
+  - [x] Implement bounded generation through RetrievalService with citation capture.
+  - [x] Build the draft review screen with accept/edit/discard.
+  - [x] Test scope enforcement, limits, partial failure and citation links.
+- [x] US-53.3: Spaced-repetition review
+  - [x] Implement the scheduler interface, review log and due queries.
+  - [x] Build the review session UI with keyboard shortcuts.
+  - [x] Test scheduling math, due ordering and accessibility.
+- [x] US-53.4: Practice quizzes
+  - [x] Implement quiz generation, attempts and grading.
+  - [x] Build quiz-taking and results screens with citations.
+  - [x] Test grading paths, citation scope and attempt history.
+- [x] US-53.5: Adaptive follow-up
+  - [x] Derive weak spots from attempts and review logs; build the practice entry point; add tests.
+- [x] US-53.6: Summaries and study guides
+  - [x] Implement depth-controlled summaries and study-guide generation.
+  - [x] Build the save action; test citation scope and plan generation.
