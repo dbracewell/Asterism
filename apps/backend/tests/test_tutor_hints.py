@@ -52,7 +52,7 @@ async def run(sessions, cid, mid, restart=False):
         )
 
 
-def test_tutor_offers_four_raisable_levels_and_other_modes_none():
+def test_tutor_offers_four_raisable_levels_and_free_form_modes_none():
     tutor = catalog.LEARNING_MODES[LearningModeId.TUTOR]
     assert tutor.raisable_hint_levels == (
         HintLevel.NUDGE,
@@ -64,7 +64,7 @@ def test_tutor_offers_four_raisable_levels_and_other_modes_none():
     assert levels[0] == HintLevel.NONE and levels == sorted(levels, key=lambda level: level.rank)
     texts = [text for _, text in tutor.hint_levels]
     assert len(set(texts)) == len(texts) and all(text.strip() for text in texts)
-    for mode_id in (LearningModeId.STANDARD, LearningModeId.EXPLAIN_BACK, LearningModeId.REVIEW):
+    for mode_id in (LearningModeId.STANDARD, LearningModeId.EXPLAIN_BACK):
         definition = catalog.LEARNING_MODES[mode_id]
         assert definition.raisable_hint_levels == ()
         assert definition.snapshot(HintLevel.ANSWER).hint_level is None
@@ -140,7 +140,7 @@ async def test_levels_rise_only_on_request_carry_forward_and_reach_the_mode_laye
 @pytest.mark.asyncio
 async def test_only_a_mode_that_offers_hints_accepts_a_raise(project_api):
     client, sessions, _ = project_api
-    chat = await new_chat(client, learning_mode="review")
+    chat = await new_chat(client, learning_mode="explain_back")
     cid, first = chat["info"]["id"], chat["messages"][0]["id"]
     assert chat["messages"][0]["learning_mode"]["hint_level"] is None
     await finish(sessions, first)

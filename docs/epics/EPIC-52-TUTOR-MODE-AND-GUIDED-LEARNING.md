@@ -80,8 +80,8 @@ code, or an essay excerpt). The agent identifies the first error or weakest
 point, explains why, and suggests a next step. A full corrected solution needs
 the same explicit reveal action as US-52.2.
 
-- [ ] Write the mode instructions and reuse the reveal action.
-- [ ] Test attachment handling in Review mode; add evaluation fixtures.
+- [x] Write the mode instructions and reuse the reveal action.
+- [x] Test attachment handling in Review mode; add evaluation fixtures.
 
 ## US-52.5: Self-imposed mode lock
 

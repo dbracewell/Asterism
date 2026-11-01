@@ -61,7 +61,11 @@ user message chip shows the level, for example "Tutor · Nudge".
   `asterism/domains/learning/evals/` holds compliance fixtures, and
   `scripts/evaluate_learning_modes.py` runs them against a live model. They do
   not gate CI.
-- US-52.4 can reuse the reveal action by giving Review mode
-  `((none, …), (answer, …))`.
+- US-52.4 reuses the reveal action: Review mode (version 2) offers
+  `((none, …), (answer, …))`, so its only control is "Show solution" behind the
+  same confirmation, and `answer` there means a corrected solution. The UI
+  labels the levels per mode ("Feedback only", "Solution shown", "New
+  attempt"). A Tutor level carried into Review applies `none`; a revealed
+  Review branch carries `answer` into Tutor until "New problem" resets it.
 - US-52.5 can gate `answer` requests and mode changes with its lock.
 - Schema changes need the explicit development reset; no migrations.

@@ -118,6 +118,27 @@ it("adds the hint level to the chip once help was raised", () => {
   expect(chip).toHaveTextContent("Learning mode: Tutor · Worked example");
 });
 
+it("labels a revealed Review solution in the chip", () => {
+  render(
+    <MessageBody
+      message={message({
+        learning_mode: {
+          id: "review",
+          name: "Review my work",
+          version: 2,
+          hint_level: "answer",
+        },
+      })}
+    />,
+  );
+  const chip = screen
+    .getByText(/Review my work/)
+    .closest("[data-learning-mode]");
+  expect(chip).toHaveTextContent(
+    "Learning mode: Review my work · Solution shown",
+  );
+});
+
 it("hands assistant replies in a learning mode to the feedback renderer", () => {
   const explainBack = {
     id: "explain_back" as const,

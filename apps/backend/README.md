@@ -255,7 +255,9 @@ and [ADR-0026](../../docs/adr/0026-prompt-template-documents-and-framework-catal
 a model follows a learning mode at each hint level (for example, no leaked
 answer before the learner asks for it). A case can also set `feedback`:
 `structured` requires the mode's feedback headings in order with one or two
-follow-up questions, and `free_form` forbids them. The fixtures are validated in CI, but
+follow-up questions, and `free_form` forbids them. Review fixtures cover
+pasted and attached attempts (attachments written as the runtime inlines them),
+instructions embedded in an attachment, and the revealed corrected solution. The fixtures are validated in CI, but
 the live run is informational and never gates CI. Run it against any
 OpenAI-compatible endpoint from `apps/backend`:
 

@@ -29,6 +29,13 @@ const catalog: LearningModeCatalog = {
       version: 2,
       hint_levels: ["nudge", "hint", "worked_example", "answer"],
     },
+    {
+      id: "review",
+      name: "Review my work",
+      description: "",
+      version: 2,
+      hint_levels: ["answer"],
+    },
   ],
 };
 
@@ -138,4 +145,59 @@ it("disables every control while busy", async () => {
   for (const button of screen.getAllByRole("button")) {
     expect(button).toBeDisabled();
   }
+});
+
+it("offers Review only the confirmed corrected solution", async () => {
+  const user = userEvent.setup();
+  render(<Harness mode="review" />);
+  const group = await screen.findByRole("group", { name: "Hint controls" });
+  expect(group).toHaveTextContent("Help level: Feedback only");
+  expect(
+    screen.queryByRole("button", { name: "Nudge" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Show answer" }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Show solution" }));
+  const dialog = await screen.findByRole("alertdialog");
+  expect(dialog).toHaveTextContent("Show a corrected solution?");
+  await user.click(screen.getByRole("button", { name: "Keep trying" }));
+  expect(raised).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Show solution" }));
+  const confirm = await screen.findByRole("alertdialog");
+  await user.click(
+    Array.from(confirm.querySelectorAll("button")).find(
+      (button) => button.textContent === "Show solution",
+    )!,
+  );
+  expect(raised).toHaveBeenCalledWith(
+    { level: "answer", confirm_reveal: true },
+    "Show me a corrected solution.",
+  );
+});
+
+it("starts a new Review attempt after the solution is shown", async () => {
+  const user = userEvent.setup();
+  render(<Harness mode="review" level="answer" />);
+  expect(
+    await screen.findByRole("button", { name: "Show solution" }),
+  ).toBeDisabled();
+  expect(screen.getByRole("group")).toHaveTextContent(
+    "Help level: Solution shown",
+  );
+  await user.click(screen.getByRole("button", { name: "New attempt" }));
+  expect(screen.getByRole("group")).toHaveTextContent(
+    "Help level: Feedback only (from your next message)",
+  );
+  await user.click(screen.getByRole("button", { name: "Show solution" }));
+  const confirm = await screen.findByRole("alertdialog");
+  await user.click(
+    Array.from(confirm.querySelectorAll("button")).find(
+      (button) => button.textContent === "Show solution",
+    )!,
+  );
+  expect(raised).toHaveBeenCalledWith(
+    { level: "answer", confirm_reveal: true, reset: true },
+    "Show me a corrected solution.",
+  );
 });

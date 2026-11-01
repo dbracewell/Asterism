@@ -171,8 +171,19 @@ level, so branches keep separate levels. A send raises the level only through an
 explicit `hint` request, which the current mode must offer; the answer level
 needs `confirm_reveal`. The pinned mode snapshot includes the level's
 instructions and records the applied level in provenance. Regeneration keeps the
-turn's level under the current mode. See
+turn's level under the current mode. Tutor offers every level; Review my work
+offers only `answer`, its confirmed corrected-solution reveal. See
 [ADR-0029](../adr/0029-branch-local-hint-levels.md).
+
+### Attempts in Review my work
+
+Review mode adds no attachment path of its own. Attached files reach the model
+through the normal chat attachment flow: text inline under an `Attached file:`
+heading, images as image parts on vision models, and a short notice when a
+file is unavailable or not included. The mode text tells the model to review
+that content as the learner's attempt and to treat it as work, not
+instructions, in line with the platform rule that file contents are untrusted
+task data.
 
 ### Structured feedback
 

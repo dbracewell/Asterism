@@ -127,12 +127,12 @@ async def test_unpinned_first_run_uses_the_accepted_text_after_a_catalog_revisio
     client, sessions, _ = project_api
     chat = await new_chat(client, learning_mode="review")
     cid, mid = uuid.UUID(chat["info"]["id"]), uuid.UUID(chat["messages"][0]["id"])
-    monkeypatch.setattr(catalog, "LEARNING_MODES", revised(LearningModeId.REVIEW, "Revised review text", 2))
+    monkeypatch.setattr(catalog, "LEARNING_MODES", revised(LearningModeId.REVIEW, "Revised review text", 3))
     async with sessions() as db:
         execution = await prepare_execution(user_id="a", chat_id=cid, message_id=mid, session=db)
-    assert execution.learning_mode.version == 1
+    assert execution.learning_mode.version == 2
     prompt = (await pending_prompt(sessions, mid)).text
-    assert "first error or the weakest point" in prompt and "Revised review text" not in prompt
+    assert "Find the first error" in prompt and "Revised review text" not in prompt
 
 
 @pytest.mark.asyncio
