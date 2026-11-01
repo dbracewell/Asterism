@@ -254,7 +254,10 @@ and [ADR-0026](../../docs/adr/0026-prompt-template-documents-and-framework-catal
 US-53.1 adds the `study` domain: user-owned flashcard decks and cards under
 `/projects/{project_id}/study/decks`. Cards carry optional citations to project
 files, checked against the live project scope on write and marked available or
-unavailable on read. Deleting a project deletes its decks. See the [study tools
+unavailable on read. Deleting a project deletes its decks. US-53.2 adds bounded, unsaved card
+drafts at `…/decks/{deck_id}/card-drafts`, read through the retrieval domain's
+`SourceReader` and cited to chunks ([ADR-0034](../../docs/adr/0034-bounded-flashcard-draft-generation.md)).
+See the [study tools
 contract](../../docs/architecture/study-tools.md) and
 [ADR-0033](../../docs/adr/0033-study-domain-and-scheduling.md).
 

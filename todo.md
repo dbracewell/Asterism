@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-53.1 is complete; US-53.2 (generate flashcards from files) is in progress on `feature/us-53.2-generate-flashcards`. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+US-53.1 is complete; US-53.2 (generate flashcards from files) is implemented on `feature/us-53.2-generate-flashcards` and awaits confirmation. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -35,9 +35,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Implement models, queries, service and router; regenerate the client.
   - [x] Test owner and project isolation and cascade deletion.
 - [ ] US-53.2: Generate flashcards from files
-  - [ ] Implement bounded generation through RetrievalService with citation capture.
-  - [ ] Build the draft review screen with accept/edit/discard.
-  - [ ] Test scope enforcement, limits, partial failure and citation links.
+  - [x] Implement bounded generation through RetrievalService with citation capture.
+  - [x] Build the draft review screen with accept/edit/discard.
+  - [x] Test scope enforcement, limits, partial failure and citation links.
 - [ ] US-53.3: Spaced-repetition review
   - [ ] Implement the scheduler interface, review log and due queries.
   - [ ] Build the review session UI with keyboard shortcuts.

@@ -1,6 +1,6 @@
 # EPIC-53: Study tools from project files
 
-Status: in progress (US-53.1). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-53.1 complete; US-53.2 awaiting confirmation). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -51,9 +51,9 @@ count. Asterism drafts cards with citations. The learner reviews, edits, accepts
 or discards each draft before it is saved. Generation is bounded (count, input
 characters, time), and a failed file does not abort the batch.
 
-- [ ] Implement bounded generation through RetrievalService with citation capture.
-- [ ] Build the draft review screen with accept/edit/discard.
-- [ ] Test scope enforcement, limits, partial failure and citation links.
+- [x] Implement bounded generation through RetrievalService with citation capture.
+- [x] Build the draft review screen with accept/edit/discard.
+- [x] Test scope enforcement, limits, partial failure and citation links.
 
 ## US-53.3: Spaced-repetition review
 

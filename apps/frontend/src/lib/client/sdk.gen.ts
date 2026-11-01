@@ -321,6 +321,9 @@ import type {
   StudyCardDeleteData,
   StudyCardDeleteErrors,
   StudyCardDeleteResponses,
+  StudyCardDraftGenerateData,
+  StudyCardDraftGenerateErrors,
+  StudyCardDraftGenerateResponses,
   StudyCardGetManyData,
   StudyCardGetManyErrors,
   StudyCardGetManyResponses,
@@ -1922,6 +1925,33 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/study/decks/{deck_id}/cards/{card_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Generate Card Drafts
+   *
+   * Draft cards from project files for review; nothing is saved (ADR-0034).
+   */
+  public studyCardDraftGenerate<ThrowOnError extends boolean = false>(
+    options: Options<StudyCardDraftGenerateData, ThrowOnError>,
+  ): RequestResult<
+    StudyCardDraftGenerateResponses,
+    StudyCardDraftGenerateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyCardDraftGenerateResponses,
+      StudyCardDraftGenerateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/decks/{deck_id}/card-drafts",
       ...options,
       headers: {
         "Content-Type": "application/json",

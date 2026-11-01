@@ -11,10 +11,12 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from . import service
+from . import generation, service
 from .schemas import (
     StudyCard,
     StudyCardCreate,
+    StudyCardDraftBatch,
+    StudyCardDraftRequest,
     StudyCardPage,
     StudyCardUpdate,
     StudyDeck,
@@ -118,3 +120,23 @@ async def delete_card(
 ) -> Response:
     await service.delete_card(user_id=user.id, project_id=project_id, deck_id=deck_id, card_id=card_id, session=db)
     return Response(status_code=204)
+
+
+@study_router.post(
+    "/decks/{deck_id}/card-drafts",
+    operation_id="studyCardDraftGenerate",
+    responses={409: {"model": ErrorDetail}},
+)
+async def generate_card_drafts(
+    project_id: uuid.UUID,
+    deck_id: uuid.UUID,
+    payload: StudyCardDraftRequest,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    response: Response,
+) -> StudyCardDraftBatch:
+    """Draft cards from project files for review; nothing is saved (ADR-0034)."""
+    response.headers["Cache-Control"] = "no-store"
+    return await generation.generate_card_drafts(
+        user_id=user.id, project_id=project_id, deck_id=deck_id, request=payload, session=db
+    )

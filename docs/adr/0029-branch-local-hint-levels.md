@@ -46,7 +46,7 @@ appends `Current hint level: <level>` and that level's text to the mode
 instructions, and records the level actually applied in the snapshot and in
 `LearningModeProvenance.hint_level`. A level the mode does not offer applies the
 strongest offered level below it. Acceptance pins this snapshot. Resume replays
-it. Regeneration captures the chat's current mode at the *turn's* hint level,
+it. Regeneration captures the chat's current mode at the _turn's_ hint level,
 because the level was part of what the learner asked for on that turn.
 
 **UI.** The chat shows hint controls above the composer when the current mode

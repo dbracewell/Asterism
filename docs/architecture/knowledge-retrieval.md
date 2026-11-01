@@ -256,3 +256,12 @@ vectors, and source bytes. An administrator updates the one global
 `knowledge.processing` policy; a policy identity change creates and queues
 replacement generations for the full eligible library, while a ready previous generation remains searchable
 until its replacement is complete.
+
+## Ordered source reads
+
+`retrieval.sources.SourceReader` reads the opening chunks of one authorized file
+in document order through `VectorStore.get_file_chunks`, for features that work
+through a whole file rather than a query (flashcard drafting, US-53.2). Like
+`RetrievalService` it takes an injected live-scope reader and fails the file
+closed when scope, readiness or the artifact generation changes during the read.
+See [ADR-0034](../adr/0034-bounded-flashcard-draft-generation.md).

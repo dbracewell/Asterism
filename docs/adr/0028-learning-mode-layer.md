@@ -33,7 +33,7 @@ columns copy the source turn's snapshot, as they do for personas and skills.
 
 **Execution.** A first run uses the turn's pinned snapshot, even if the catalog
 has been revised since. Resume reuses the recorded execution and prompt.
-Regeneration (`restart`) captures the chat's *current* selection at the current
+Regeneration (`restart`) captures the chat's _current_ selection at the current
 catalog version. Each `MessageExecution` records public `learning_mode`
 provenance (ID, name, version). The prompt snapshot must contain exactly one
 `mode` layer matching it, or replay fails with 409. Messages expose `learning_mode`:

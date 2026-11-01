@@ -1522,6 +1522,17 @@ export const zSkillUpdate = z.object({
 });
 
 /**
+ * StudyCardDraftRequest
+ *
+ * Draft up to ``count`` cards from chosen files, or the whole project when ``file_ids`` is null.
+ */
+export const zStudyCardDraftRequest = z.object({
+  model_id: z.uuid(),
+  count: z.int().gte(1).lte(30),
+  file_ids: z.array(z.uuid()).min(1).max(10).nullish(),
+});
+
+/**
  * StudyCitation
  *
  * A stored citation plus its live state.
@@ -1549,6 +1560,15 @@ export const zStudyCard = z.object({
   citations: z.array(zStudyCitation),
   created_at: z.int(),
   updated_at: z.int(),
+});
+
+/**
+ * StudyCardDraft
+ */
+export const zStudyCardDraft = z.object({
+  front: z.string(),
+  back: z.string(),
+  citations: z.array(zStudyCitation).min(1),
 });
 
 /**
@@ -1628,6 +1648,28 @@ export const zStudyDeckPage = z.object({
 export const zStudyDeckUpdate = z.object({
   name: z.string().min(1).max(120).optional(),
   description: z.string().max(2000).optional(),
+});
+
+/**
+ * StudyDraftFileResult
+ *
+ * What happened to one requested file. ``message`` explains a failure.
+ */
+export const zStudyDraftFileResult = z.object({
+  file_id: z.uuid(),
+  file_name: z.string().nullable(),
+  status: z.enum(["used", "failed"]),
+  message: z.string().nullish(),
+  card_count: z.int().gte(0),
+  truncated: z.boolean().optional().default(false),
+});
+
+/**
+ * StudyCardDraftBatch
+ */
+export const zStudyCardDraftBatch = z.object({
+  drafts: z.array(zStudyCardDraft),
+  files: z.array(zStudyDraftFileResult),
 });
 
 /**
@@ -2922,6 +2964,18 @@ export const zStudyCardUpdatePath = z.object({
  * Successful Response
  */
 export const zStudyCardUpdateResponse = zStudyCard;
+
+export const zStudyCardDraftGenerateBody = zStudyCardDraftRequest;
+
+export const zStudyCardDraftGeneratePath = z.object({
+  project_id: z.uuid(),
+  deck_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyCardDraftGenerateResponse = zStudyCardDraftBatch;
 
 /**
  * Successful Response

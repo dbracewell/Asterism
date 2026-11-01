@@ -6,19 +6,19 @@ regenerates turns. Sending filename-based messages over the socket is unsupporte
 
 ## Acceptance and attachment lifecycle
 
-| Operation                                   | Contract                                                                                                                      |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `POST /chat/`                               | Create a chat with `request_id`, `model_id`, `user_prompt`, nullable `project_id`, optional `draft_id`, and file UUIDs        |
-| `POST /chat/{chat_id}/message`              | Accept a turn with `request_id`, `expected_model_revision`, `user_prompt`, nullable parent ID, optional draft, and file UUIDs |
-| `POST /chat/drafts`                         | Create an owned staging draft for a new or existing chat                                                                      |
-| `POST /chat/drafts/{draft_id}/uploads`      | Upload durable library sources and add draft references                                                                       |
-| `POST/DELETE /chat/drafts/{draft_id}/files` | Stage/remove library references using `file_ids`                                                                              |
-| `DELETE /chat/drafts/{draft_id}`            | Discard references without deleting shared library sources                                                                    |
-| `PUT /chat/{chat_id}/model`                 | Change next-turn selection with `model_id` and `expected_model_revision`                                                      |
-| `PUT /chat/drafts/{draft_id}/model`         | Compare-and-set draft model using `model_id` and `expected_model_id`                                                          |
-| `POST /chat/{chat_id}/message/{id}/compare` | Make an answered turn column 0 of a comparison and queue 1–2 more `targets`                                                   |
-| `GET /chat/{chat_id}/comparisons/{id}`      | Columns with their turn, replies, target model, status and usage totals                                                       |
-| `PUT /chat/{chat_id}/comparisons/{id}/active` | Continue the conversation from column `index`                                                                               |
+| Operation                                     | Contract                                                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `POST /chat/`                                 | Create a chat with `request_id`, `model_id`, `user_prompt`, nullable `project_id`, optional `draft_id`, and file UUIDs        |
+| `POST /chat/{chat_id}/message`                | Accept a turn with `request_id`, `expected_model_revision`, `user_prompt`, nullable parent ID, optional draft, and file UUIDs |
+| `POST /chat/drafts`                           | Create an owned staging draft for a new or existing chat                                                                      |
+| `POST /chat/drafts/{draft_id}/uploads`        | Upload durable library sources and add draft references                                                                       |
+| `POST/DELETE /chat/drafts/{draft_id}/files`   | Stage/remove library references using `file_ids`                                                                              |
+| `DELETE /chat/drafts/{draft_id}`              | Discard references without deleting shared library sources                                                                    |
+| `PUT /chat/{chat_id}/model`                   | Change next-turn selection with `model_id` and `expected_model_revision`                                                      |
+| `PUT /chat/drafts/{draft_id}/model`           | Compare-and-set draft model using `model_id` and `expected_model_id`                                                          |
+| `POST /chat/{chat_id}/message/{id}/compare`   | Make an answered turn column 0 of a comparison and queue 1–2 more `targets`                                                   |
+| `GET /chat/{chat_id}/comparisons/{id}`        | Columns with their turn, replies, target model, status and usage totals                                                       |
+| `PUT /chat/{chat_id}/comparisons/{id}/active` | Continue the conversation from column `index`                                                                                 |
 
 Draft references expire after 24 hours and grant no runtime file access. Before
 send, the UI verifies that the persisted draft exactly matches visible selections.
