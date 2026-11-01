@@ -12,7 +12,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import type { ChatInfo, HintLevel, HintRequest } from "@/lib/client";
+import type {
+  ChatInfo,
+  HintLevel,
+  HintRequest,
+  LearningModeId,
+} from "@/lib/client";
 import { useQuery } from "@tanstack/react-query";
 import { LightbulbIcon } from "lucide-react";
 import { learningModeQueryOptions } from "./chat-learning-mode-picker";
@@ -25,7 +30,7 @@ const ORDER: HintLevel[] = [
   "answer",
 ];
 
-export const hintLevelLabel: Record<HintLevel, string> = {
+const tutorLabels: Record<HintLevel, string> = {
   none: "Questions only",
   nudge: "Nudge",
   hint: "Hint",
@@ -33,20 +38,67 @@ export const hintLevelLabel: Record<HintLevel, string> = {
   answer: "Answer shown",
 };
 
+/** Review offers only the reveal, which shows a corrected solution. */
+const reviewLabels: Partial<Record<HintLevel, string>> = {
+  none: "Feedback only",
+  answer: "Solution shown",
+};
+
+/** The label of a hint level in the given learning mode. */
+export function hintLevelLabel(
+  mode: LearningModeId | undefined,
+  level: HintLevel,
+) {
+  return (mode === "review" && reviewLabels[level]) || tutorLabels[level];
+}
+
 /** The message sent with each raise; the level, not the text, sets the help. */
-export const hintPrompt: Record<Exclude<HintLevel, "none">, string> = {
+export const hintPrompt: Record<
+  Exclude<HintLevel, "none" | "answer">,
+  string
+> = {
   nudge: "Give me a nudge.",
   hint: "Give me a hint.",
   worked_example: "Show me a worked example.",
-  answer: "Show me the answer.",
 };
+
+type RevealCopy = {
+  action: string;
+  title: string;
+  description: string;
+  prompt: string;
+  reset: string;
+};
+
+const tutorReveal: RevealCopy = {
+  action: "Show answer",
+  title: "Show the full answer?",
+  description:
+    "Working it out yourself helps you learn it. If you are stuck, a hint or worked example may be enough. The tutor will give the full answer to this problem.",
+  prompt: "Show me the answer.",
+  reset: "New problem",
+};
+
+const reviewReveal: RevealCopy = {
+  action: "Show solution",
+  title: "Show a corrected solution?",
+  description:
+    "Fixing it yourself helps you learn it. Try the suggested next step first. The reviewer will write a full corrected version of your attempt.",
+  prompt: "Show me a corrected solution.",
+  reset: "New attempt",
+};
+
+/** The reveal action's wording in the given learning mode. */
+export function revealCopy(mode: LearningModeId | undefined): RevealCopy {
+  return mode === "review" ? reviewReveal : tutorReveal;
+}
 
 const rank = (level: HintLevel) => ORDER.indexOf(level);
 
 /**
  * Tiered help for modes that offer hints. Each raise sends a turn at a higher
- * level for this branch; the answer needs a confirmation. A reset applies to
- * the next message the learner sends.
+ * level for this branch; the answer (Tutor) or corrected solution (Review)
+ * needs a confirmation. A reset applies to the next message the learner sends.
  */
 export function ChatHintControls({
   info,
@@ -70,7 +122,10 @@ export function ChatHintControls({
   const current: HintLevel = resetPending
     ? "none"
     : (info.hint_level ?? "none");
-  const steps = offered.filter((level) => level !== "answer");
+  const steps = offered.filter(
+    (level): level is keyof typeof hintPrompt => level !== "answer",
+  );
+  const reveal = revealCopy(info.learning_mode);
   return (
     <div
       role="group"
@@ -85,7 +140,7 @@ export function ChatHintControls({
             className="text-foreground font-medium"
             data-hint-level={current}
           >
-            {hintLevelLabel[current]}
+            {hintLevelLabel(info.learning_mode, current)}
           </span>
           {resetPending && " (from your next message)"}
         </span>
@@ -100,11 +155,11 @@ export function ChatHintControls({
           onClick={() =>
             onRaise(
               resetPending ? { level, reset: true } : { level },
-              hintPrompt[level as Exclude<HintLevel, "none">],
+              hintPrompt[level],
             )
           }
         >
-          {hintLevelLabel[level]}
+          {hintLevelLabel(info.learning_mode, level)}
         </Button>
       ))}
       {offered.includes("answer") && (
@@ -116,16 +171,14 @@ export function ChatHintControls({
               variant="outline"
               disabled={disabled || current === "answer"}
             >
-              Show answer
+              {reveal.action}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Show the full answer?</AlertDialogTitle>
+              <AlertDialogTitle>{reveal.title}</AlertDialogTitle>
               <AlertDialogDescription>
-                Working it out yourself helps you learn it. If you are stuck, a
-                hint or worked example may be enough. The tutor will give the
-                full answer to this problem.
+                {reveal.description}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -138,11 +191,11 @@ export function ChatHintControls({
                       confirm_reveal: true,
                       ...(resetPending ? { reset: true } : {}),
                     },
-                    hintPrompt.answer,
+                    reveal.prompt,
                   )
                 }
               >
-                Show answer
+                {reveal.action}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -157,7 +210,7 @@ export function ChatHintControls({
           aria-pressed={resetPending}
           onClick={() => onResetChange(!resetPending)}
         >
-          {resetPending ? "Keep current level" : "New problem"}
+          {resetPending ? "Keep current level" : reveal.reset}
         </Button>
       )}
     </div>

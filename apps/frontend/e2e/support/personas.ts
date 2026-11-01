@@ -32,7 +32,8 @@ export const learningModes: LearningModeCatalog = {
       id: "review",
       name: "Review my work",
       description: "Gives feedback on your attempt.",
-      version: 1,
+      version: 2,
+      hint_levels: ["answer"],
     },
   ],
 };

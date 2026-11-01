@@ -104,7 +104,7 @@ const LearningModeChip = ({ mode }: { mode: LearningModeProvenance }) => (
       <span className="sr-only">Learning mode: </span>
       {mode.name}
       {mode.hint_level && mode.hint_level !== "none" && (
-        <> · {hintLevelLabel[mode.hint_level]}</>
+        <> · {hintLevelLabel(mode.id, mode.hint_level)}</>
       )}
     </span>
   </Badge>

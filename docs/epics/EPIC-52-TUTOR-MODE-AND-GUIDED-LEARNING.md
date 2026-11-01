@@ -1,6 +1,6 @@
 # EPIC-52: Tutor mode and guided learning
 
-Status: in progress (US-52.1, US-52.2 and US-52.3 complete; see [ADR-0028](../adr/0028-learning-mode-layer.md), [ADR-0029](../adr/0029-branch-local-hint-levels.md) and [ADR-0030](../adr/0030-structured-feedback-sections.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-52.1 through US-52.4 complete; see [ADR-0028](../adr/0028-learning-mode-layer.md), [ADR-0029](../adr/0029-branch-local-hint-levels.md) and [ADR-0030](../adr/0030-structured-feedback-sections.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -80,8 +80,8 @@ code, or an essay excerpt). The agent identifies the first error or weakest
 point, explains why, and suggests a next step. A full corrected solution needs
 the same explicit reveal action as US-52.2.
 
-- [ ] Write the mode instructions and reuse the reveal action.
-- [ ] Test attachment handling in Review mode; add evaluation fixtures.
+- [x] Write the mode instructions and reuse the reveal action.
+- [x] Test attachment handling in Review mode; add evaluation fixtures.
 
 ## US-52.5: Self-imposed mode lock
 
