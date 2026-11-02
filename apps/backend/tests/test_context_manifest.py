@@ -195,7 +195,7 @@ async def test_steps_record_context_and_only_the_owner_reads_layer_text(project_
     monkeypatch.setattr("asterism.db.database.get_async_db_session", database)
     file_id = uuid.uuid4()
 
-    async def generate(*, messages):
+    async def generate(*, messages, replay=None):
         yield AgentEvent(type=AgentEventType.START)
         yield AgentEvent(
             type=AgentEventType.COMPLETE,

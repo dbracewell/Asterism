@@ -114,6 +114,9 @@ import type {
   ChatFileRemoveData,
   ChatFileRemoveError,
   ChatFileRemoveResponse,
+  ChatForkInstructionsGetData,
+  ChatForkInstructionsGetError,
+  ChatForkInstructionsGetResponse,
   ChatgptConnectionAuthorizeData,
   ChatgptConnectionAuthorizeError,
   ChatgptConnectionAuthorizeResponse,
@@ -144,6 +147,9 @@ import type {
   ChatMessageCompareData,
   ChatMessageCompareError,
   ChatMessageCompareResponse,
+  ChatMessageForkData,
+  ChatMessageForkError,
+  ChatMessageForkResponse,
   ChatMessageSendData,
   ChatMessageSendError,
   ChatMessageSendResponse,
@@ -417,6 +423,9 @@ import type {
   SubAgentDeleteData,
   SubAgentDeleteError,
   SubAgentDeleteResponse,
+  SubAgentInstructionsUpdateData,
+  SubAgentInstructionsUpdateError,
+  SubAgentInstructionsUpdateResponse,
   SubAgentsListData,
   SubAgentsListError,
   SubAgentsListResponse,
@@ -1841,6 +1850,67 @@ export const chatContextLayersGetOptions = (
     },
     queryKey: chatContextLayersGetQueryKey(options),
   });
+
+export const chatForkInstructionsGetQueryKey = (
+  options: Options<ChatForkInstructionsGetData>,
+) => createQueryKey("chatForkInstructionsGet", options);
+
+/**
+ * Get Fork Instructions
+ *
+ * The sub-agent instructions a fork of this delegation starts from; owner only.
+ */
+export const chatForkInstructionsGetOptions = (
+  options: Options<ChatForkInstructionsGetData>,
+) =>
+  queryOptions<
+    ChatForkInstructionsGetResponse,
+    ChatForkInstructionsGetError,
+    ChatForkInstructionsGetResponse,
+    ReturnType<typeof chatForkInstructionsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatForkInstructionsGet({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: chatForkInstructionsGetQueryKey(options),
+  });
+
+/**
+ * Fork Message
+ *
+ * Fork a recorded run at one delegation; the client then resumes the chat (ADR-0038).
+ */
+export const chatMessageForkMutation = (
+  options?: Partial<Options<ChatMessageForkData>>,
+): UseMutationOptions<
+  ChatMessageForkResponse,
+  ChatMessageForkError,
+  Options<ChatMessageForkData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatMessageForkResponse,
+    ChatMessageForkError,
+    Options<ChatMessageForkData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatMessageFork({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 /**
  * Activate Comparison Column
@@ -5839,6 +5909,37 @@ export const subAgentUpdateMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Sub Agent Instructions
+ *
+ * Save new instructions only; refused if the definition changed since it was read.
+ */
+export const subAgentInstructionsUpdateMutation = (
+  options?: Partial<Options<SubAgentInstructionsUpdateData>>,
+): UseMutationOptions<
+  SubAgentInstructionsUpdateResponse,
+  SubAgentInstructionsUpdateError,
+  Options<SubAgentInstructionsUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubAgentInstructionsUpdateResponse,
+    SubAgentInstructionsUpdateError,
+    Options<SubAgentInstructionsUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .subAgentInstructionsUpdate({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

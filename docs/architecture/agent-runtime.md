@@ -272,6 +272,34 @@ The chat footer's "Context" dialog fetches the layer text only when opened.
 Retrieved excerpts come from the step's persisted tool results and render as
 untrusted plain text. File names come from the scope-checked file-info query.
 
+### Fork from a step (US-54.5)
+
+A delegation node's "Fork from here" re-runs a finished run from that
+delegation, with that sub-agent's instructions changed for this run only. See
+[ADR-0038](../adr/0038-fork-from-a-delegation-step.md).
+
+- `GET /chat/{chat_id}/messages/{message_id}/fork/instructions` (owner only)
+  returns the starting text: the source run's own fork override for that
+  sub-agent, otherwise the definition's current instructions. For a nested
+  delegation it also names the top-level delegation that runs again.
+- `POST /chat/{chat_id}/messages/{message_id}/fork` (`chat/forks.py`) adds a
+  pending sibling of the source step and makes it active. The new step keeps the
+  source step's model output, the other calls' results, and their delegation
+  records (marked `reused`). It gets a copy of the source run's execution
+  record with `MessageExecution.fork` (public digests) and the private override
+  text on `chat_executions.instruction_overrides`. The client then sends
+  `resume`.
+- Running the step takes the resume path: recorded inputs with live rechecks.
+  `Agent.run(replay=...)` re-runs only the forked top-level `sub_agent` call,
+  reuses the recorded results, then continues with the steps left in the main
+  agent's budget. The override reaches every delegation of that sub-agent
+  through `ExecutionScope.instruction_overrides`. `sub_agent` refuses it if the
+  definition's revision changed since the fork.
+- Delegation records carry `tool_call_id`, `reused` and
+  `instructions_overridden`. Usage totals leave reused records out.
+- Saving the instructions to the definition is a separate action:
+  `PUT /agents/sub-agents/{agent_id}/instructions` with the expected revision.
+
 ## Resume, regeneration, and audit
 
 Each invocation has an execution UUID. Delegated events also include target ID,

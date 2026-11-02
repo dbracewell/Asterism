@@ -492,7 +492,7 @@ class TestSubAgentStreaming:
             ),
         )
 
-        async def fake_run_with_sub_agent(messages):
+        async def fake_run_with_sub_agent(messages, replay=None):
             # Yield sub-agent event
             yield AgentEvent(
                 type=AgentEventType.SUB_AGENT,

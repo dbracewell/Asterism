@@ -1259,6 +1259,9 @@ export type CreateUserRequest = {
  * ``steps`` is the usage of each of the child's model calls, and
  * ``provider_type``/``pricing`` the model's usage provenance, all as recorded
  * at execution time (US-54.1).
+ * ``tool_call_id`` is the caller's call that started it. On a fork (US-54.5),
+ * ``reused`` marks a record copied from the source step rather than run again,
+ * and ``instructions_overridden`` one that ran with the fork's instructions.
  */
 export type DelegationRecord = {
   /**
@@ -1269,6 +1272,18 @@ export type DelegationRecord = {
    * Parent Execution Id
    */
   parent_execution_id?: string | null;
+  /**
+   * Tool Call Id
+   */
+  tool_call_id?: string | null;
+  /**
+   * Reused
+   */
+  reused?: boolean;
+  /**
+   * Instructions Overridden
+   */
+  instructions_overridden?: boolean;
   /**
    * Sub Agent Id
    */
@@ -1641,6 +1656,81 @@ export type FileProjectSummary = {
 };
 
 /**
+ * ForkInstructions
+ *
+ * Starting point for the fork dialog; owner only.
+ *
+ * ``source`` says whether the text is the run's own fork override or the
+ * definition's current instructions. ``rerun_execution_id`` is the top-level
+ * delegation that runs again (itself, unless the node is nested).
+ */
+export type ForkInstructions = {
+  /**
+   * Sub Agent Id
+   */
+  sub_agent_id: string;
+  /**
+   * Sub Agent Name
+   */
+  sub_agent_name: string;
+  /**
+   * Instructions
+   */
+  instructions: string;
+  /**
+   * Source
+   */
+  source: "fork" | "definition";
+  /**
+   * Definition Revision
+   */
+  definition_revision: number;
+  /**
+   * Rerun Execution Id
+   */
+  rerun_execution_id: string;
+  /**
+   * Rerun Sub Agent Name
+   */
+  rerun_sub_agent_name: string;
+};
+
+/**
+ * ForkProvenance
+ *
+ * Where a forked run came from and what it changed (US-54.5, ADR-0038).
+ *
+ * ``step_index`` is the zero-based step the fork replays; ``overrides`` lists
+ * every sub-agent whose instructions differ, as digests only.
+ */
+export type ForkProvenance = {
+  /**
+   * Source Message Id
+   */
+  source_message_id: string;
+  /**
+   * Source Execution Id
+   */
+  source_execution_id: string;
+  /**
+   * Delegation Execution Id
+   */
+  delegation_execution_id: string;
+  /**
+   * Sub Agent Id
+   */
+  sub_agent_id: string;
+  /**
+   * Step Index
+   */
+  step_index: number;
+  /**
+   * Overrides
+   */
+  overrides?: Array<InstructionOverrideProvenance>;
+};
+
+/**
  * Function
  *
  * A named function invocation with its arguments as a JSON *string*.
@@ -1720,6 +1810,26 @@ export type HintRequest = {
    * Override Lock
    */
   override_lock?: boolean;
+};
+
+/**
+ * InstructionOverrideProvenance
+ *
+ * Public record of an override: which definition, at which revision, which text.
+ */
+export type InstructionOverrideProvenance = {
+  /**
+   * Sub Agent Id
+   */
+  sub_agent_id: string;
+  /**
+   * Base Revision
+   */
+  base_revision: number;
+  /**
+   * Digest
+   */
+  digest: string;
 };
 
 export type JsonValue = unknown;
@@ -2279,6 +2389,7 @@ export type MessageExecution = {
    */
   model_revision: number;
   configuration: MainAgentConfiguration;
+  fork?: ForkProvenance | null;
 };
 
 /**
@@ -2311,6 +2422,26 @@ export type MessageFileReference = {
    * Available
    */
   available?: boolean;
+};
+
+/**
+ * MessageForkRequest
+ *
+ * Fork a recorded run at one delegation with run-only sub-agent instructions.
+ */
+export type MessageForkRequest = {
+  /**
+   * Request Id
+   */
+  request_id: string;
+  /**
+   * Delegation Execution Id
+   */
+  delegation_execution_id: string;
+  /**
+   * Instructions
+   */
+  instructions: string;
 };
 
 /**
@@ -5098,6 +5229,22 @@ export type SubAgentDefinition = {
 };
 
 /**
+ * SubAgentInstructionsUpdate
+ *
+ * Explicitly save new instructions to a definition, e.g. from a fork (US-54.5).
+ */
+export type SubAgentInstructionsUpdate = {
+  /**
+   * System Prompt
+   */
+  system_prompt: string;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
+};
+
+/**
  * SubAgentList
  */
 export type SubAgentList = {
@@ -7361,6 +7508,95 @@ export type ChatContextLayersGetResponses = {
 
 export type ChatContextLayersGetResponse =
   ChatContextLayersGetResponses[keyof ChatContextLayersGetResponses];
+
+export type ChatForkInstructionsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query: {
+    /**
+     * Delegation Execution Id
+     */
+    delegation_execution_id: string;
+  };
+  url: "/chat/{chat_id}/messages/{message_id}/fork/instructions";
+};
+
+export type ChatForkInstructionsGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatForkInstructionsGetError =
+  ChatForkInstructionsGetErrors[keyof ChatForkInstructionsGetErrors];
+
+export type ChatForkInstructionsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ForkInstructions;
+};
+
+export type ChatForkInstructionsGetResponse =
+  ChatForkInstructionsGetResponses[keyof ChatForkInstructionsGetResponses];
+
+export type ChatMessageForkData = {
+  body: MessageForkRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/fork";
+};
+
+export type ChatMessageForkErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatMessageForkError =
+  ChatMessageForkErrors[keyof ChatMessageForkErrors];
+
+export type ChatMessageForkResponses = {
+  /**
+   * Successful Response
+   */
+  200: Message;
+};
+
+export type ChatMessageForkResponse =
+  ChatMessageForkResponses[keyof ChatMessageForkResponses];
 
 export type ChatComparisonActivateData = {
   body: ComparisonActivate;
@@ -12107,6 +12343,46 @@ export type SubAgentUpdateResponses = {
 
 export type SubAgentUpdateResponse =
   SubAgentUpdateResponses[keyof SubAgentUpdateResponses];
+
+export type SubAgentInstructionsUpdateData = {
+  body: SubAgentInstructionsUpdate;
+  path: {
+    /**
+     * Agent Id
+     */
+    agent_id: string;
+  };
+  query?: never;
+  url: "/agents/sub-agents/{agent_id}/instructions";
+};
+
+export type SubAgentInstructionsUpdateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type SubAgentInstructionsUpdateError =
+  SubAgentInstructionsUpdateErrors[keyof SubAgentInstructionsUpdateErrors];
+
+export type SubAgentInstructionsUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: SubAgentDefinition;
+};
+
+export type SubAgentInstructionsUpdateResponse =
+  SubAgentInstructionsUpdateResponses[keyof SubAgentInstructionsUpdateResponses];
 
 export type AgentsGetSubAgentTracesData = {
   body?: never;

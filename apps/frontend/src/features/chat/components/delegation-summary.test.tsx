@@ -68,3 +68,35 @@ describe("DelegationSummary", () => {
     expect(agents.queryByRole("alert")).toBeNull();
   });
 });
+
+describe("DelegationSummary forks", () => {
+  it("offers a fork per agent and labels reused and changed work", async () => {
+    const onFork = vi.fn();
+    render(
+      <DelegationSummary
+        records={[
+          record("lead", { name: "Researcher", instructions_overridden: true }),
+          record("other", { name: "Writer", reused: true }),
+        ]}
+        onFork={onFork}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: /2 agents/ }));
+    const writer = screen.getByTestId("delegation-other");
+    expect(within(writer).getByText("Reused")).toBeVisible();
+    const lead = screen.getByTestId("delegation-lead");
+    expect(within(lead).getByText("Changed instructions")).toBeVisible();
+    await userEvent.click(
+      within(lead).getByRole("button", { name: "Fork from Researcher" }),
+    );
+    expect(onFork).toHaveBeenCalledWith(
+      expect.objectContaining({ execution_id: "lead" }),
+    );
+  });
+
+  it("has no fork action without a handler", async () => {
+    render(<DelegationSummary records={[record("lead")]} />);
+    await userEvent.click(screen.getByRole("button", { name: /1 agent/ }));
+    expect(screen.queryByRole("button", { name: /Fork from/ })).toBeNull();
+  });
+});

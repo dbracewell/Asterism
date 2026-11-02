@@ -34,6 +34,7 @@ AGENT_CHAT_READERS = {
     "asterism.domains.chat.schemas.MessageExecution",
     "asterism.domains.chat.execution.prepare_execution",
     "asterism.domains.chat.execution.read_execution_prompt",
+    "asterism.domains.chat.execution.read_execution_overrides",
     "asterism.domains.chat.personas.validate_persona_access",
     "asterism.domains.chat.skills.validate_execution_skills",
     "asterism.domains.chat.scope.read_chat_scope_snapshot",

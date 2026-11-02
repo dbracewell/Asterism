@@ -119,8 +119,11 @@ export function runUsage(steps: Message[]): RunUsage {
   );
   const agents = [
     main,
+    // A fork's reused delegations were not run again, so they cost nothing here (US-54.5).
     ...assistant.flatMap((step) =>
-      (step.delegations ?? []).map(delegationUsage),
+      (step.delegations ?? [])
+        .filter((record) => !record.reused)
+        .map(delegationUsage),
     ),
   ];
   const counted = agents.filter((agent) => agent.steps.length > 0);

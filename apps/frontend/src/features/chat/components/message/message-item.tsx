@@ -10,7 +10,7 @@ import {
   messageTimelineSteps,
 } from "@/features/chat/lib/agent-timeline";
 import { PermissionRequest, StreamingMessage } from "@/features/chat/types";
-import type { Message } from "@/lib/client";
+import type { DelegationRecord, Message } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -40,6 +40,7 @@ export const MessageItem = React.memo(
     canRegenerate,
     onRegenerate,
     onCompare,
+    onFork,
     sendJsonMessage,
   }: {
     chatId: string;
@@ -55,6 +56,8 @@ export const MessageItem = React.memo(
     canRegenerate: boolean;
     onRegenerate: (parentId?: string | null) => void;
     onCompare?: () => void;
+    /** Fork the run from one of this step's delegations (US-54.5). */
+    onFork?: (record: DelegationRecord) => void;
     sendJsonMessage: SendJsonMessage;
   }) => {
     const user = useUser();
@@ -92,6 +95,7 @@ export const MessageItem = React.memo(
             <DelegationSummary
               records={message.delegations}
               mainModel={message.execution?.model.name}
+              onFork={onFork}
             />
           )}
           <ToolApprovalCards

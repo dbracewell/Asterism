@@ -80,6 +80,24 @@ describe("run usage", () => {
     expect(usageSummary(usage)).toBe("4,200 in · 420 out · ~$0.011");
   });
 
+  it("leaves a fork's reused delegations out of its totals", () => {
+    const steps = [{ input_tokens: 500, output_tokens: 50 }];
+    const usage = runUsage([
+      step({
+        input_tokens: 0,
+        output_tokens: 0,
+        tool_calls: [],
+        delegations: [
+          record("reused", { reused: true, pricing: PRICE, steps }),
+          record("fresh", { pricing: PRICE, steps }),
+        ],
+      }),
+      step({ input_tokens: 0, output_tokens: 0 }),
+    ]);
+    expect([usage.inputTokens, usage.outputTokens]).toEqual([500, 50]);
+    expect(usage.agents.map((agent) => agent.id)).toEqual(["main", "fresh"]);
+  });
+
   it("shows tokens only when no model has a price", () => {
     const usage = runUsage([step({ execution: execution({ pricing: null }) })]);
     expect(usage.cost).toBeNull();

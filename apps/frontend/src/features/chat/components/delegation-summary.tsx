@@ -2,6 +2,8 @@
 
 import Constellation from "@/components/logo";
 import MarkdownViewer from "@/components/markdown-viewer";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,7 +24,7 @@ import {
 } from "@/features/chat/lib/delegations";
 import type { DelegationRecord } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, GitBranchIcon } from "lucide-react";
 import React from "react";
 
 const statusLabel: Record<DelegationRecord["status"], string> = {
@@ -37,13 +39,16 @@ const statusLabel: Record<DelegationRecord["status"], string> = {
  * 7 tools". Expanding shows the constellation, then each agent's timeline and
  * output. Always starts collapsed, both after a live run and in history.
  * Names, tool payloads and output are untrusted and render as text/Markdown.
+ * With `onFork`, each agent offers "Fork from here" (US-54.5).
  */
 export const DelegationSummary = ({
   records,
   mainModel,
+  onFork,
 }: {
   records: DelegationRecord[];
   mainModel?: string | null;
+  onFork?: (record: DelegationRecord) => void;
 }) => {
   const activities = React.useMemo(
     () => activitiesFromRecords(records),
@@ -101,10 +106,35 @@ export const DelegationSummary = ({
                     Depth {record.depth}
                   </span>
                 )}
+                {record.reused && (
+                  <Badge variant="outline" title="Reused from the original run">
+                    Reused
+                  </Badge>
+                )}
+                {record.instructions_overridden && (
+                  <Badge
+                    variant="secondary"
+                    title="Ran with instructions changed for this fork"
+                  >
+                    Changed instructions
+                  </Badge>
+                )}
                 <span className="text-muted-foreground ml-auto text-xs">
                   {statusLabel[record.status]} ·{" "}
                   {formatDuration(recordDurationMs(record))}
                 </span>
+                {onFork && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => onFork(record)}
+                    aria-label={`Fork from ${record.name}`}
+                  >
+                    <GitBranchIcon data-icon="inline-start" aria-hidden />
+                    Fork from here
+                  </Button>
+                )}
               </header>
               <AgentTimeline className="mt-1" steps={delegationSteps(record)} />
               {record.output && (

@@ -6,8 +6,13 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
-from .schemas import SubAgentCreate, SubAgentDefinition, SubAgentList, SubAgentTrace
-from .service import delete_agent_profile, get_sub_agent_traces_by_parent_message, save_sub_agent
+from .schemas import SubAgentCreate, SubAgentDefinition, SubAgentInstructionsUpdate, SubAgentList, SubAgentTrace
+from .service import (
+    delete_agent_profile,
+    get_sub_agent_traces_by_parent_message,
+    save_sub_agent,
+    save_sub_agent_instructions,
+)
 from .service import list_sub_agents as list_owned_sub_agents
 
 agents_router = APIRouter(
@@ -40,6 +45,22 @@ async def update_sub_agent(
     session: DBSessionDep,
 ) -> SubAgentDefinition:
     return await save_sub_agent(user.id, payload, agent_id=agent_id, session=session)
+
+
+@agents_router.put(
+    "/sub-agents/{agent_id}/instructions",
+    response_model=SubAgentDefinition,
+    operation_id="subAgentInstructionsUpdate",
+    responses={409: {"model": ErrorDetail}},
+)
+async def update_sub_agent_instructions(
+    agent_id: uuid.UUID,
+    payload: SubAgentInstructionsUpdate,
+    user: AuthedUserDep,
+    session: DBSessionDep,
+) -> SubAgentDefinition:
+    """Save new instructions only; refused if the definition changed since it was read."""
+    return await save_sub_agent_instructions(user.id, agent_id, payload, session=session)
 
 
 @agents_router.get(

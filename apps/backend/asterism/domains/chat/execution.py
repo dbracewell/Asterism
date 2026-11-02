@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectScopeSnapshot
+from asterism.domains.agent.instruction_overrides import InstructionOverride
 from asterism.domains.agent.prompts import PromptSnapshot
 from asterism.domains.agent.schemas import AgentProfile, MainAgentConfiguration
 from asterism.domains.agent.service import get_main_agent_profile
@@ -200,6 +201,25 @@ async def read_execution_prompt(*, user_id: str, chat_id: uuid.UUID, message_id:
         if message is None or message.pending_prompt is None:
             raise NotFoundException("Recorded prompt not found")
         return message.pending_prompt
+
+
+async def read_execution_overrides(
+    *, user_id: str, chat_id: uuid.UUID, message_id: uuid.UUID, execution: MessageExecution
+) -> tuple[InstructionOverride, ...]:
+    """A fork's private sub-agent instructions, checked against its public digests."""
+    if execution.fork is None:
+        return ()
+    async with get_async_db_session() as session:
+        message = await session.scalar(
+            select_owned_messages(user_id=user_id, chat_id=chat_id).where(MessageModel.id == message_id)
+        )
+        record = message.pending_execution_record if message is not None else None
+        if record is None or record.id != execution.id:
+            raise CodedException(409, "Recorded fork instructions are unavailable; fork again")
+        overrides = tuple(record.instruction_overrides)
+    if [override.provenance for override in overrides] != execution.fork.overrides:
+        raise CodedException(409, "Recorded fork instructions changed; fork again")
+    return overrides
 
 
 def validate_prompt_snapshot(

@@ -26,6 +26,7 @@ from asterism.domains.llm.schemas import (
     LLMClientProtocol,
     LLMEventType,
     LLMMessage,
+    ToolCall,
     ToolResult,
 )
 from asterism.domains.retrieval.service import RetrievalService
@@ -40,6 +41,7 @@ from .approval import (
     ToolUseAuthorization,
 )
 from .delegation_scope import DelegationScope
+from .instruction_overrides import InstructionOverride, ReplayedStep
 from .prompts import PromptComposer, PromptSnapshot
 from .schemas import (
     AgentEvent,
@@ -84,6 +86,8 @@ class Agent:
         self.retrieval_service = retrieval_service
         self.prompt_snapshot = prompt_snapshot
         self.execution: MessageExecution | None = None
+        # A fork's run-only sub-agent instructions, read with its execution.
+        self.instruction_overrides: tuple[InstructionOverride, ...] = ()
         self.model_id = profile.model_id if profile.sub_agent else model_id
         self.profile: AgentProfile = profile
         self.max_steps: int = profile.max_steps
@@ -145,7 +149,11 @@ class Agent:
         chat_snapshot: ChatScopeSnapshot | None = None,
         project_snapshot: ProjectScopeSnapshot | None = None,
     ) -> MessageExecution:
-        from asterism.domains.chat.execution import prepare_execution, read_execution_prompt
+        from asterism.domains.chat.execution import (
+            prepare_execution,
+            read_execution_overrides,
+            read_execution_prompt,
+        )
 
         if self.profile.sub_agent:
             raise BadDataException("Sub-agents retain their fixed model binding")
@@ -180,12 +188,19 @@ class Agent:
             chat_id=self.session.info.id,
             message_id=message_id,
         )
+        self.instruction_overrides = await read_execution_overrides(
+            user_id=self.user.id,
+            chat_id=self.session.info.id,
+            message_id=message_id,
+            execution=execution,
+        )
         return execution
 
     def apply_execution(self, execution: MessageExecution) -> None:
         self._client = None
         self.execution = execution
         self.prompt_snapshot = None
+        self.instruction_overrides = ()
         self.execution_scope = None
         self.tool_scope = None
         self.delegation_scope = None
@@ -302,6 +317,7 @@ class Agent:
                 selected_sub_agent_ids=self.execution_scope.selected_sub_agent_ids,
                 execution_id=self.execution_scope.execution_id,
                 request_message_id=self.execution_scope.request_message_id,
+                instruction_overrides=self.execution_scope.instruction_overrides,
             )
         if self.execution is not None and self.execution.context is not None:
             recorded = self.execution.context
@@ -329,7 +345,12 @@ class Agent:
                 project_instructions=self.prompt_snapshot.project_instructions,
             )
         if self.execution is not None:
-            scope = replace(scope, request_message_id=self.execution.request_message_id, execution_id=self.execution.id)
+            scope = replace(
+                scope,
+                request_message_id=self.execution.request_message_id,
+                execution_id=self.execution.id,
+                instruction_overrides=self.instruction_overrides,
+            )
         self.execution_scope = scope
         return scope
 
@@ -508,10 +529,131 @@ class Agent:
             )
         return snapshot.text
 
+    async def _step_tools(
+        self,
+        tool_calls: list[ToolCall],
+        last_user_message: LLMMessage,
+        results: list[ToolResult],
+    ) -> AsyncGenerator[AgentEvent, None]:
+        """Authorize and run one step's tool calls, streaming sub-agent events.
+
+        Results are appended to ``results`` in completion order once every
+        call has finished.
+        """
+        yield AgentEvent(type=AgentEventType.TOOL_CALL, tool_calls=tool_calls)
+
+        auths = await self._approval_policy.authorize(
+            tool_calls,
+            sorted(set(self.allowed_tools) | (set(self.effective_tools) & INTERNAL_TOOL_NAMES)),
+        )
+
+        sub_agent_queue: asyncio.Queue[SubAgentEventEnvelope] = asyncio.Queue()
+
+        async def _internal_sink(envelope: SubAgentEventEnvelope) -> None:
+            await sub_agent_queue.put(envelope)
+            if self.event_sink:
+                res = self.event_sink(envelope)
+                if inspect.isawaitable(res):
+                    await res
+
+        async def _collect_tool_results() -> list[ToolResult]:
+            collected: list[ToolResult] = []
+
+            last_message = ""
+            if isinstance(last_user_message.content, str):
+                last_message = last_user_message.content
+            else:
+                parts = cast(list[ContentPart], last_user_message.content)
+                part = next((p for p in parts if p.type == "text"), None)
+                last_message = part.text if part else ""
+
+            async for resp in self._run_tools(
+                user_message=last_message,
+                auths=auths,
+                event_sink=_internal_sink,
+            ):
+                collected.append(resp)
+
+            return collected
+
+        tool_task = asyncio.create_task(_collect_tool_results())
+        get_task = None
+
+        try:
+            while not tool_task.done():
+                get_task = asyncio.create_task(sub_agent_queue.get())
+                done, _ = await asyncio.wait(
+                    [tool_task, get_task],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if get_task in done:
+                    envelope = get_task.result()
+                    yield AgentEvent(
+                        type=AgentEventType.SUB_AGENT,
+                        sub_agent=envelope,
+                    )
+                else:
+                    get_task.cancel()
+
+            while not sub_agent_queue.empty():
+                envelope = sub_agent_queue.get_nowait()
+                yield AgentEvent(
+                    type=AgentEventType.SUB_AGENT,
+                    sub_agent=envelope,
+                )
+
+            responses = await tool_task
+        finally:
+            tool_task.cancel()
+            await asyncio.gather(tool_task, return_exceptions=True)
+            if get_task is not None:
+                get_task.cancel()
+                await asyncio.gather(get_task, return_exceptions=True)
+        for response in responses:
+            self.logger.debug("tool completed name=%s", response.tool_call.function.name)
+            results.append(response)
+
+    async def _replay_step(
+        self,
+        replay: ReplayedStep,
+        messages: list[LLMMessage],
+        last_user_message: LLMMessage,
+    ) -> AsyncGenerator[AgentEvent, None]:
+        """Run a fork's recorded step without calling the model (ADR-0038).
+
+        The recorded text and tool calls are kept. Recorded results are reused,
+        and only the remaining calls run again. Results keep the step's call order.
+        """
+        yield AgentEvent(type=AgentEventType.START)
+        messages.append(LLMMessage.assistant(content=replay.content, tool_calls=replay.tool_calls))
+        fresh_calls = [call for call in replay.tool_calls if call.id not in replay.reused_results]
+        fresh: list[ToolResult] = []
+        if fresh_calls:
+            async for event in self._step_tools(fresh_calls, last_user_message, fresh):
+                yield event
+        by_id = {**replay.reused_results, **{result.tool_call.id: result for result in fresh}}
+        tool_results = [by_id[call.id] for call in replay.tool_calls if call.id in by_id]
+        for result in tool_results:
+            messages.append(LLMMessage.tool_call_result(result))
+        yield AgentEvent(
+            type=AgentEventType.COMPLETE,
+            content=replay.content,
+            thinking=replay.thinking,
+            tool_results=tool_results,
+            tool_calls=replay.tool_calls,
+        )
+
     async def run(
         self,
         messages: list[LLMMessage],
+        *,
+        replay: ReplayedStep | None = None,
     ) -> AsyncGenerator[AgentEvent, None]:
+        """Run the bounded agent loop.
+
+        With ``replay``, the loop starts from that recorded step instead of
+        calling the model, then continues with the steps left in its budget.
+        """
         if self.authorization_check:
             await self.authorization_check()
         client: LLMClientProtocol = await self._get_client()
@@ -528,7 +670,15 @@ class Agent:
                 messages.insert(0, LLMMessage.system(system_prompt))
 
         last_user_message: LLMMessage = messages[-1]
-        for step in range(self.max_steps):
+        first_step = 0
+        if replay is not None:
+            if self.authorization_check:
+                await self.authorization_check()
+            async for event in self._replay_step(replay, messages, last_user_message):
+                yield event
+            # The recorded step called tools, so at least a final answer step remains.
+            first_step = min(replay.step_index + 1, self.max_steps - 1)
+        for step in range(first_step, self.max_steps):
             if self.authorization_check:
                 await self.authorization_check()
             # Only allow tools if there are enough
@@ -576,82 +726,10 @@ class Agent:
 
                         tool_results: list[ToolResult] = []
                         if event.tool_calls:
-                            yield AgentEvent(
-                                type=AgentEventType.TOOL_CALL,
-                                tool_calls=event.tool_calls,
-                            )
-
-                            auths = await self._approval_policy.authorize(
-                                event.tool_calls,
-                                sorted(set(self.allowed_tools) | (set(self.effective_tools) & INTERNAL_TOOL_NAMES)),
-                            )
-
-                            sub_agent_queue: asyncio.Queue[SubAgentEventEnvelope] = asyncio.Queue()
-
-                            async def _internal_sink(envelope: SubAgentEventEnvelope) -> None:
-                                await sub_agent_queue.put(envelope)
-                                if self.event_sink:
-                                    res = self.event_sink(envelope)
-                                    if inspect.isawaitable(res):
-                                        await res
-
-                            async def _collect_tool_results() -> list[ToolResult]:
-                                collected: list[ToolResult] = []
-
-                                last_message = ""
-                                if isinstance(last_user_message.content, str):
-                                    last_message = last_user_message.content
-                                else:
-                                    parts = cast(list[ContentPart], last_user_message.content)
-                                    part = next((p for p in parts if p.type == "text"), None)
-                                    last_message = part.text if part else ""
-
-                                async for resp in self._run_tools(
-                                    user_message=last_message,
-                                    auths=auths,
-                                    event_sink=_internal_sink,
-                                ):
-                                    collected.append(resp)
-
-                                return collected
-
-                            tool_task = asyncio.create_task(_collect_tool_results())
-                            get_task = None
-
-                            try:
-                                while not tool_task.done():
-                                    get_task = asyncio.create_task(sub_agent_queue.get())
-                                    done, _ = await asyncio.wait(
-                                        [tool_task, get_task],
-                                        return_when=asyncio.FIRST_COMPLETED,
-                                    )
-                                    if get_task in done:
-                                        envelope = get_task.result()
-                                        yield AgentEvent(
-                                            type=AgentEventType.SUB_AGENT,
-                                            sub_agent=envelope,
-                                        )
-                                    else:
-                                        get_task.cancel()
-
-                                while not sub_agent_queue.empty():
-                                    envelope = sub_agent_queue.get_nowait()
-                                    yield AgentEvent(
-                                        type=AgentEventType.SUB_AGENT,
-                                        sub_agent=envelope,
-                                    )
-
-                                responses = await tool_task
-                            finally:
-                                tool_task.cancel()
-                                await asyncio.gather(tool_task, return_exceptions=True)
-                                if get_task is not None:
-                                    get_task.cancel()
-                                    await asyncio.gather(get_task, return_exceptions=True)
-                            for response in responses:
-                                self.logger.debug("tool completed name=%s", response.tool_call.function.name)
+                            async for tool_event in self._step_tools(event.tool_calls, last_user_message, tool_results):
+                                yield tool_event
+                            for response in tool_results:
                                 messages.append(LLMMessage.tool_call_result(response))
-                                tool_results.append(response)
 
                         yield AgentEvent(
                             type=AgentEventType.COMPLETE,

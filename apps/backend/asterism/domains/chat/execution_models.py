@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import get_unix_timestamp
+from asterism.domains.agent.instruction_overrides import InstructionOverride
 from asterism.domains.agent.prompts import PromptSnapshot
 
 from .schemas import MessageExecution
@@ -24,6 +25,10 @@ class ChatExecutionModel(Base):
     )
     execution: Mapped[MessageExecution] = mapped_column(jsonb_type(TypeAdapter(MessageExecution)), nullable=False)
     prompt: Mapped[PromptSnapshot] = mapped_column(jsonb_type(TypeAdapter(PromptSnapshot)), nullable=False)
+    # Private fork instructions (US-54.5); public provenance holds their digests.
+    instruction_overrides: Mapped[list[InstructionOverride]] = mapped_column(
+        jsonb_type(TypeAdapter(list[InstructionOverride])), nullable=False, default=list
+    )
     created_at: Mapped[int] = mapped_column(default=get_unix_timestamp)
     __table_args__ = (
         UniqueConstraint("id", "chat_id", "user_id", name="uq_execution_id_chat_user"),

@@ -40,12 +40,16 @@ class SubAgentEventEnvelope(BaseModel):
     ``provider_type`` and ``pricing`` are usage provenance captured with the
     resolved model (US-54.1). ``capabilities`` and ``context`` are the child's
     recorded capability (US-54.2) and context (US-54.3) manifests, sent once
-    when the child starts.
+    when the child starts. ``tool_call_id`` is the caller's ``sub_agent`` call
+    that started the delegation, and ``instructions_overridden`` marks a child
+    that ran with fork instructions (US-54.5).
     """
 
     model_config = ConfigDict(from_attributes=True)
     execution_id: uuid.UUID = Field(default_factory=uuid.uuid4)
     parent_execution_id: uuid.UUID | None = None
+    tool_call_id: str | None = None
+    instructions_overridden: bool = False
     sub_agent_id: uuid.UUID
     sub_agent_name: str
     model_id: uuid.UUID | None = None
@@ -136,6 +140,14 @@ class SubAgentDefinition(SubAgentCreate):
     model_available: bool
     model_unavailable_reason: str | None = None
     config_revision: int = Field(default=1, ge=1)
+
+
+class SubAgentInstructionsUpdate(BaseModel):
+    """Explicitly save new instructions to a definition, e.g. from a fork (US-54.5)."""
+
+    model_config = ConfigDict(extra="forbid")
+    system_prompt: str
+    expected_revision: int = Field(ge=1)
 
 
 class SubAgentList(BaseModel):

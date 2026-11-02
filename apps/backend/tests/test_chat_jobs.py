@@ -211,7 +211,7 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
         ],
     )
 
-    async def run(*, messages):
+    async def run(*, messages, replay=None):
         yield AgentEvent(type=AgentEventType.COMPLETE)
 
     agent = SimpleNamespace(
