@@ -1,6 +1,6 @@
 # EPIC-54: Run inspection, replay and comparison
 
-Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1, US-54.2 and US-54.3 complete; US-54.5 in progress). Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1, US-54.2 and US-54.3 complete; US-54.5 implemented, awaiting confirmation). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
@@ -95,9 +95,9 @@ the fork are reused from the record, and steps from the fork onward run fresh.
 The original branch is unchanged. The sub-agent definition is not modified
 unless the user saves it explicitly.
 
-- [ ] Write an ADR for fork semantics (what is reused versus re-executed).
-- [ ] Implement the fork execution path; build the fork UI.
-- [ ] Test isolation of the original branch, scope inheritance and explicit-save behavior.
+- [x] Write an ADR for fork semantics (what is reused versus re-executed). See [ADR-0038](../adr/0038-fork-from-a-delegation-step.md).
+- [x] Implement the fork execution path; build the fork UI.
+- [x] Test isolation of the original branch, scope inheritance and explicit-save behavior.
 
 ## US-54.6: Run diff
 

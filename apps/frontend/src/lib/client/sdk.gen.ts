@@ -114,6 +114,9 @@ import type {
   ChatFileRemoveData,
   ChatFileRemoveErrors,
   ChatFileRemoveResponses,
+  ChatForkInstructionsGetData,
+  ChatForkInstructionsGetErrors,
+  ChatForkInstructionsGetResponses,
   ChatgptConnectionAuthorizeData,
   ChatgptConnectionAuthorizeErrors,
   ChatgptConnectionAuthorizeResponses,
@@ -144,6 +147,9 @@ import type {
   ChatMessageCompareData,
   ChatMessageCompareErrors,
   ChatMessageCompareResponses,
+  ChatMessageForkData,
+  ChatMessageForkErrors,
+  ChatMessageForkResponses,
   ChatMessageSendData,
   ChatMessageSendErrors,
   ChatMessageSendResponses,
@@ -417,6 +423,9 @@ import type {
   SubAgentDeleteData,
   SubAgentDeleteErrors,
   SubAgentDeleteResponses,
+  SubAgentInstructionsUpdateData,
+  SubAgentInstructionsUpdateErrors,
+  SubAgentInstructionsUpdateResponses,
   SubAgentsListData,
   SubAgentsListErrors,
   SubAgentsListResponses,
@@ -1479,6 +1488,56 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/messages/{message_id}/context/layers",
       ...options,
+    });
+  }
+
+  /**
+   * Get Fork Instructions
+   *
+   * The sub-agent instructions a fork of this delegation starts from; owner only.
+   */
+  public chatForkInstructionsGet<ThrowOnError extends boolean = false>(
+    options: Options<ChatForkInstructionsGetData, ThrowOnError>,
+  ): RequestResult<
+    ChatForkInstructionsGetResponses,
+    ChatForkInstructionsGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ChatForkInstructionsGetResponses,
+      ChatForkInstructionsGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/fork/instructions",
+      ...options,
+    });
+  }
+
+  /**
+   * Fork Message
+   *
+   * Fork a recorded run at one delegation; the client then resumes the chat (ADR-0038).
+   */
+  public chatMessageFork<ThrowOnError extends boolean = false>(
+    options: Options<ChatMessageForkData, ThrowOnError>,
+  ): RequestResult<
+    ChatMessageForkResponses,
+    ChatMessageForkErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatMessageForkResponses,
+      ChatMessageForkErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/fork",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 
@@ -4167,6 +4226,33 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/agents/sub-agents/{agent_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Update Sub Agent Instructions
+   *
+   * Save new instructions only; refused if the definition changed since it was read.
+   */
+  public subAgentInstructionsUpdate<ThrowOnError extends boolean = false>(
+    options: Options<SubAgentInstructionsUpdateData, ThrowOnError>,
+  ): RequestResult<
+    SubAgentInstructionsUpdateResponses,
+    SubAgentInstructionsUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      SubAgentInstructionsUpdateResponses,
+      SubAgentInstructionsUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/agents/sub-agents/{agent_id}/instructions",
       ...options,
       headers: {
         "Content-Type": "application/json",

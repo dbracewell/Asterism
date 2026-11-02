@@ -28,6 +28,7 @@ from asterism.domains.agent.context_manifest import (
 )
 from asterism.domains.agent.context_provenance import describe_context
 from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
+from asterism.domains.agent.instruction_overrides import override_for
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
 from asterism.domains.llm.schemas import LLMMessage
 from asterism.domains.llm.token_counting import estimate_text_tokens
@@ -315,6 +316,11 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             scope=ctx.delegation_scope,
             target_id=target_id,
         )
+        # A fork's instructions were written against one definition revision
+        # and are never applied to a changed definition (ADR-0038).
+        override = override_for(ctx.execution_scope.instruction_overrides if ctx.execution_scope else (), target_id)
+        if override is not None and override.base_revision != agent_profile.config_revision:
+            raise ValueError("the sub-agent was edited after this fork was made; fork the run again")
     except Exception as exc:
         logger.exception(
             "delegation profile lookup failed execution_id=%s target_agent_id=%s",
@@ -330,6 +336,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             SubAgentEventEnvelope(
                 execution_id=execution_id,
                 parent_execution_id=ctx.caller_execution_id,
+                tool_call_id=ctx.tool_call_id,
                 sub_agent_id=target_id,
                 sub_agent_name="Unknown sub-agent",
                 depth=len(ctx.call_stack),
@@ -350,7 +357,11 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         allowed_tools,
     )
 
-    sub_profile = agent_profile.model_copy(update={"tools": allowed_tools})
+    # Fork instructions replace only the definition's instructions; tools,
+    # model and authorization stay the definition's own.
+    sub_profile = agent_profile.model_copy(
+        update={"tools": allowed_tools} | ({"system_prompt": override.instructions} if override is not None else {}),
+    )
 
     # Prefer the live execution scope; fall back to one rebuilt from the tool ceiling.
     parent_execution = ctx.execution_scope or ExecutionScope(
@@ -423,6 +434,8 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         return SubAgentEventEnvelope(
             execution_id=execution_id,
             parent_execution_id=ctx.caller_execution_id,
+            tool_call_id=ctx.tool_call_id,
+            instructions_overridden=override is not None,
             sub_agent_id=target_id,
             sub_agent_name=agent_profile.name,
             model_id=executed.id,

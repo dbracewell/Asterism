@@ -138,6 +138,8 @@ class ToolContext[T: BaseModel | None]:
         execution_scope: Full execution scope snapshot, when the agent resolved one.
         retrieval_service: Injected retrieval service (search_knowledge).
         file_reader: Injected runtime file reader for project/chat files.
+        tool_call_id: Id of the model tool call being executed; delegations
+            record it so a fork can find the call that started them (US-54.5).
     """
 
     args: T
@@ -156,6 +158,7 @@ class ToolContext[T: BaseModel | None]:
     execution_scope: ExecutionScope | None = None
     retrieval_service: RetrievalService | None = None
     file_reader: RuntimeFileReader | None = None
+    tool_call_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -396,6 +399,7 @@ class ToolRegistry:
                 execution_scope=execution_scope,
                 retrieval_service=retrieval_service,
                 file_reader=file_reader,
+                tool_call_id=tool_call.id,
             )
 
             if llm_tool.is_async:

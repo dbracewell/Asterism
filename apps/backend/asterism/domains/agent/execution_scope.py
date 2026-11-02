@@ -11,6 +11,7 @@ from asterism.core.exceptions import BadDataException
 from asterism.domains.settings.pricing import ModelPricing
 from asterism.domains.settings.provider_types import ProviderType
 
+from .instruction_overrides import InstructionOverride
 from .prompts import PromptLayer
 
 
@@ -83,6 +84,8 @@ class ExecutionScope:
     project_instructions: str = ""
     request_message_id: uuid.UUID | None = None
     execution_id: uuid.UUID | None = None
+    # A fork's run-only sub-agent instructions (US-54.5); they grant nothing.
+    instruction_overrides: tuple[InstructionOverride, ...] = field(default=(), repr=False)
 
     def narrow_for_sub_agent(
         self,
@@ -125,6 +128,7 @@ class ExecutionScope:
             project_instructions=self.project_instructions,
             request_message_id=self.request_message_id,
             execution_id=self.execution_id,
+            instruction_overrides=self.instruction_overrides,
             allowed_file_ids=self.allowed_file_ids,
             file_provenance=self.file_provenance,
         )

@@ -297,7 +297,7 @@ async def test_runtime_persists_actual_execution_and_streams_its_identity(projec
 
     executing = uuid.UUID(B)
 
-    async def generate(*, messages):
+    async def generate(*, messages, replay=None):
         assert agent.model_id == executing
         assert agent.execution.model.id == executing
         yield AgentEvent(type=AgentEventType.START)

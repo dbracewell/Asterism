@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import (
     BadDataException,
+    CodedException,
     NotFoundException,
     UnauthorizedException,
 )
@@ -25,6 +26,7 @@ from .schemas import (
     MainAgentUpdate,
     SubAgentCreate,
     SubAgentDefinition,
+    SubAgentInstructionsUpdate,
     SubAgentList,
     SubAgentTrace,
     SubAgentTraceCreate,
@@ -232,6 +234,38 @@ async def save_sub_agent(
         await session.commit()
         await session.refresh(row)
         return await _sub_definition(user_id, await get_agent_profile(user_id, row.id, session), session)
+
+
+async def save_sub_agent_instructions(
+    user_id: str,
+    agent_id: uuid.UUID,
+    payload: SubAgentInstructionsUpdate,
+    session: AsyncSession | None = None,
+) -> SubAgentDefinition:
+    """Replace only a definition's instructions, if it is still at ``expected_revision``."""
+    async with get_async_db_session(session) as session:
+        row = await session.scalar(
+            update(AgentProfileModel)
+            .where(
+                AgentProfileModel.id == agent_id,
+                AgentProfileModel.user_id == user_id,
+                AgentProfileModel.sub_agent.is_(True),
+                AgentProfileModel.config_revision == payload.expected_revision,
+            )
+            .values(system_prompt=payload.system_prompt, config_revision=AgentProfileModel.config_revision + 1)
+            .returning(AgentProfileModel.id),
+        )
+        if row is None:
+            owned = await session.scalar(
+                select_owned_agent_profiles(user_id)
+                .with_only_columns(AgentProfileModel.id)
+                .where(AgentProfileModel.id == agent_id, AgentProfileModel.sub_agent.is_(True)),
+            )
+            if owned is None:
+                raise NotFoundException("Sub-agent not found")
+            raise CodedException(409, "The sub-agent changed since you opened it; reload and try again")
+        await session.commit()
+        return await _sub_definition(user_id, await get_agent_profile(user_id, agent_id, session), session)
 
 
 async def delete_agent_profile(

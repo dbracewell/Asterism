@@ -82,7 +82,7 @@ class Runtime:
         )
         runtime = self
 
-        async def generate(*, messages):
+        async def generate(*, messages, replay=None):
             runtime.histories.append([message.content for message in messages if isinstance(message.content, str)])
             yield AgentEvent(type=AgentEventType.START)
             if runtime.gate is not None:

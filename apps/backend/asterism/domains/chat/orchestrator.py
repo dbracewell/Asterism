@@ -17,6 +17,7 @@ from asterism.domains.agent.context_manifest import ContextFile, ContextManifest
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
 from asterism.domains.chat.context_manifest import file_context, step_context, turn_context
 from asterism.domains.chat.delegations import DelegationCollector
+from asterism.domains.chat.forks import replayed_step, write_fork_step
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.prompts import create_title_generation_prompt
 from asterism.domains.chat.schemas import (
@@ -36,6 +37,7 @@ from asterism.domains.llm.schemas import (
     LLMMessage,
     TextContentPart,
     ToolCall,
+    ToolResult,
 )
 from asterism.domains.llm.token_counting import estimate_text_tokens
 from asterism.domains.prompt_templates.provenance import TemplateProvenance
@@ -67,6 +69,8 @@ class ChatOrchestrator:
         self._context: ContextManifest | None = None
         # US-54.4: identifies the comparison column the current run answers.
         self._comparison: dict[str, str] | None = None
+        # US-54.5: the pending fork step being replayed, until it is recorded.
+        self._fork_step: Message | None = None
 
         # Inject interactive approval into the agent so tool
         # authorization flows through the WebSocket UI.
@@ -143,6 +147,11 @@ class ChatOrchestrator:
         if parent_id is None:
             return
 
+        if self._fork_step is not None:
+            await self._cancel_fork_step()
+            self._active_parent_id = None
+            return
+
         parent_index = index_of(self.chat.messages, lambda message: message.id == parent_id)
 
         # Retain useful streamed output and delegation work rather than
@@ -184,6 +193,53 @@ class ChatOrchestrator:
             },
         )
         self._active_parent_id = None
+
+    async def _cancel_fork_step(self) -> None:
+        """Record a cancelled fork step with the work it finished (ADR-0038).
+
+        Calls that did not finish get a cancelled result so the branch stays a
+        valid conversation if the user continues from it.
+        """
+        step = self._fork_step
+        assert step is not None
+        self._fork_step = None
+        recorded = {result.tool_call.id: result for result in step.tool_call_results or [] if result}
+        results = [
+            recorded.get(call.id)
+            or ToolResult(content="Cancelled before it finished.", raw_result=None, is_empty=True, tool_call=call)
+            for call in step.tool_calls or []
+        ]
+        cancelled = await write_fork_step(
+            user_id=self.user_id,
+            chat_id=self.chat_id,
+            message_id=step.id,
+            status=MessageStatus.CANCELLED,
+            tool_call_results=results or None,
+            delegations=[*(step.delegations or []), *self._delegations.drain(unfinished="cancelled")] or None,
+            context=self._context,
+        )
+        self.chat.messages.append(cancelled)
+        await self._emit(
+            {
+                "type": AgentEventType.COMPLETE.value,
+                "last_messages": [cancelled.model_dump(mode="json")],
+            },
+        )
+
+    async def _complete_fork_step(self, event: AgentEvent) -> Message:
+        """Record the replayed fork step: reused work plus what ran again."""
+        step = self._fork_step
+        assert step is not None
+        self._fork_step = None
+        return await write_fork_step(
+            user_id=self.user_id,
+            chat_id=self.chat_id,
+            message_id=step.id,
+            status=MessageStatus.COMPLETED,
+            tool_call_results=event.tool_results or None,
+            delegations=[*(step.delegations or []), *self._delegations.drain()] or None,
+            context=step_context(self._context, event.tool_results) if self._context else None,
+        )
 
     def find_message(self, message_id: str) -> tuple[int, Message]:
         message_index: int = index_of(
@@ -469,16 +525,28 @@ class ChatOrchestrator:
             self._streaming_thinking = ""
             self._delegations = DelegationCollector()
             self._context = None
+            self._fork_step = None
 
             self._execution = await self.agent.prepare_execution(parent_message.id)
             await self.agent.prepare_execution_scope()
+            replay = None
+            if (
+                self._execution is not None
+                and self._execution.fork is not None
+                and parent_message.id == self._execution.request_message_id
+            ):
+                # A pending fork replays its recorded step (ADR-0038). Until the
+                # step is recorded it is not part of the history it runs on.
+                replay = replayed_step(parent_message, self._execution)
+                self._fork_step = parent_message
+                self.chat.messages = self.chat.messages[:parent_message_index]
             messages, files = await self._assemble_agent_messages()
             self._context = turn_context(
                 self.agent.prompt_snapshot,
                 template=self._turn_template(last_user_message_index),
                 files=files,
             )
-            async for event in self.agent.run(messages=messages):
+            async for event in self.agent.run(messages=messages, replay=replay):
                 match event:
                     case AgentEvent(type=AgentEventType.COMPLETE):
                         # An OpenAI-compatible provider can occasionally end a
@@ -494,29 +562,32 @@ class ChatOrchestrator:
                             )
                             return
 
-                        new_message = await chat_service.add_message(
-                            user_id=self.user_id,
-                            chat_id=self.chat_id,
-                            message=NewMessageRequest(
-                                role="assistant",
-                                content=event.content,
-                                thinking=event.thinking,
-                                status=MessageStatus.COMPLETED,
-                                input_tokens=event.input_tokens,
-                                output_tokens=event.output_tokens,
-                                total_tokens=event.total_tokens,
-                                generation_duration_ms=event.generation_duration_ms,
-                                parent_message_id=parent_message.id,
-                                tool_calls=event.tool_calls if event.has_tool_calls() else None,
-                                tool_call_results=event.tool_results if event.has_tool_results() else None,
-                                delegations=self._delegations.drain() or None,
-                                context=step_context(self._context, event.tool_results) if self._context else None,
-                                execution=self._execution,
-                                model_id=self.agent.model_id,  # type:ignore
-                            ),
-                        )
-                        parent_message.active_child_id = new_message.id
-                        parent_message.status = MessageStatus.COMPLETED
+                        if self._fork_step is not None:
+                            new_message = await self._complete_fork_step(event)
+                        else:
+                            new_message = await chat_service.add_message(
+                                user_id=self.user_id,
+                                chat_id=self.chat_id,
+                                message=NewMessageRequest(
+                                    role="assistant",
+                                    content=event.content,
+                                    thinking=event.thinking,
+                                    status=MessageStatus.COMPLETED,
+                                    input_tokens=event.input_tokens,
+                                    output_tokens=event.output_tokens,
+                                    total_tokens=event.total_tokens,
+                                    generation_duration_ms=event.generation_duration_ms,
+                                    parent_message_id=parent_message.id,
+                                    tool_calls=event.tool_calls if event.has_tool_calls() else None,
+                                    tool_call_results=event.tool_results if event.has_tool_results() else None,
+                                    delegations=self._delegations.drain() or None,
+                                    context=step_context(self._context, event.tool_results) if self._context else None,
+                                    execution=self._execution,
+                                    model_id=self.agent.model_id,  # type:ignore
+                                ),
+                            )
+                            parent_message.active_child_id = new_message.id
+                            parent_message.status = MessageStatus.COMPLETED
                         self.chat.messages.append(new_message)
 
                         parent_message = new_message
@@ -567,4 +638,5 @@ class ChatOrchestrator:
         finally:
             self._active_parent_id = None
             self._comparison = None
+            self._fork_step = None
             self.is_processing_messages = False

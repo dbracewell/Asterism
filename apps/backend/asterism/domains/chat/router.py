@@ -46,8 +46,10 @@ from .schemas import (
     ChatUpdateRequest,
     ComparisonActivate,
     ContextLayerTexts,
+    ForkInstructions,
     Message,
     MessageCompareRequest,
+    MessageForkRequest,
     NewChatRequest,
     SearchResultList,
     UpdateMessageRequest,
@@ -554,6 +556,49 @@ async def get_context_layers(
     from .context_inspection import read_context_layers
 
     return await read_context_layers(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
+
+
+@chat_router.get(
+    "/{chat_id}/messages/{message_id}/fork/instructions",
+    response_model=ForkInstructions,
+    operation_id="chatForkInstructionsGet",
+)
+async def get_fork_instructions(
+    chat_id: uuid.UUID,
+    message_id: uuid.UUID,
+    delegation_execution_id: uuid.UUID,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> ForkInstructions:
+    """The sub-agent instructions a fork of this delegation starts from; owner only."""
+    from .forks import read_fork_instructions
+
+    return await read_fork_instructions(
+        user_id=user.id,
+        chat_id=chat_id,
+        message_id=message_id,
+        delegation_execution_id=delegation_execution_id,
+        session=db,
+    )
+
+
+@chat_router.post(
+    "/{chat_id}/messages/{message_id}/fork",
+    response_model=Message,
+    operation_id="chatMessageFork",
+    responses={409: {"model": ErrorDetail}},
+)
+async def fork_message(
+    chat_id: uuid.UUID,
+    message_id: uuid.UUID,
+    payload: MessageForkRequest,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+) -> Message:
+    """Fork a recorded run at one delegation; the client then resumes the chat (ADR-0038)."""
+    from .forks import accept_fork
+
+    return await accept_fork(user_id=user.id, chat_id=chat_id, message_id=message_id, payload=payload, session=db)
 
 
 @chat_router.put(

@@ -27,7 +27,7 @@ import {
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
-import { Chat, Message } from "@/lib/client";
+import { Chat, DelegationRecord, Message } from "@/lib/client";
 import {
   chatFileGetScopeOptions,
   chatMessageSendMutation,
@@ -41,6 +41,7 @@ import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
 import { ExistingChatModelPicker } from "./chat-model-picker";
 import { ComparisonBlock, invalidateComparisons } from "./comparison-block";
+import { ForkStepDialog, type ForkSource } from "./fork-step-dialog";
 import {
   CompareMessageDialog,
   CompareModelsPicker,
@@ -125,6 +126,8 @@ export const ChatSession = ({
     modelId?: string;
     modelName?: string;
   } | null>(null);
+  // US-54.5: the delegation being forked, with the step that ran it.
+  const [forkSource, setForkSource] = React.useState<ForkSource | null>(null);
   const [subAgentActivities, setSubAgentActivities] = React.useState<
     SubAgentActivity[]
   >([]);
@@ -407,6 +410,20 @@ export const ChatSession = ({
         modelName: message.execution?.model.name,
       });
   };
+  /** Forking is offered on a settled step's delegations while the chat is idle. */
+  const forkAction = (index: number) => {
+    const message = session.messages[index];
+    if (
+      message.role !== "assistant" ||
+      message.status !== "completed" ||
+      !message.delegations?.length ||
+      interactionBusy ||
+      connectionStatus !== "Connected"
+    )
+      return undefined;
+    return (record: DelegationRecord) =>
+      setForkSource({ messageId: message.id, record });
+  };
   const generating = isProcessing || !!incomingMessage || !!comparisonStream;
   // Idle: only when well away from the end. Streaming: as soon as the user
   // stops following the reply.
@@ -536,6 +553,7 @@ export const ChatSession = ({
                 }
                 onRegenerate={requestRegeneration}
                 onCompare={compareAction(item.index)}
+                onFork={forkAction(item.index)}
                 toolTimings={toolTimings}
                 turnSteps={turnSteps[item.index]}
                 sendJsonMessage={sendJsonMessage}
@@ -748,6 +766,27 @@ export const ChatSession = ({
             }
           />
         </ChatInputContainer>
+        <ForkStepDialog
+          chatId={chatId}
+          source={forkSource}
+          onOpenChange={(open) => {
+            if (!open) setForkSource(null);
+          }}
+          onForked={async () => {
+            setSocketError(null);
+            await queryClient.fetchQuery({
+              ...chatSessionGetOneOptions({
+                client,
+                path: { chat_id: chatId },
+              }),
+              staleTime: 0,
+            });
+            setSubAgentActivities([]);
+            setIsProcessing(true);
+            // The fork step is pending; resuming replays it on the new branch.
+            sendJsonMessage({ type: "resume" });
+          }}
+        />
         <CompareMessageDialog
           chatId={chatId}
           messageId={compareSource?.messageId ?? null}

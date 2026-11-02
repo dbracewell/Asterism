@@ -33,6 +33,8 @@ class DelegationCollector:
         record = self._records.get(envelope.execution_id) or DelegationRecord(
             execution_id=envelope.execution_id,
             parent_execution_id=envelope.parent_execution_id,
+            tool_call_id=envelope.tool_call_id,
+            instructions_overridden=envelope.instructions_overridden,
             sub_agent_id=envelope.sub_agent_id,
             name=envelope.sub_agent_name,
             model_id=envelope.model_id,

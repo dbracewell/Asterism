@@ -565,6 +565,25 @@ export const zFileProjectSummary = z.object({
 });
 
 /**
+ * ForkInstructions
+ *
+ * Starting point for the fork dialog; owner only.
+ *
+ * ``source`` says whether the text is the run's own fork override or the
+ * definition's current instructions. ``rerun_execution_id`` is the top-level
+ * delegation that runs again (itself, unless the node is nested).
+ */
+export const zForkInstructions = z.object({
+  sub_agent_id: z.uuid(),
+  sub_agent_name: z.string(),
+  instructions: z.string(),
+  source: z.enum(["fork", "definition"]),
+  definition_revision: z.int().gte(1),
+  rerun_execution_id: z.uuid(),
+  rerun_sub_agent_name: z.string(),
+});
+
+/**
  * Function
  *
  * A named function invocation with its arguments as a JSON *string*.
@@ -617,6 +636,34 @@ export const zHintRequest = z.object({
   reset: z.boolean().optional().default(false),
   confirm_reveal: z.boolean().optional().default(false),
   override_lock: z.boolean().optional().default(false),
+});
+
+/**
+ * InstructionOverrideProvenance
+ *
+ * Public record of an override: which definition, at which revision, which text.
+ */
+export const zInstructionOverrideProvenance = z.object({
+  sub_agent_id: z.uuid(),
+  base_revision: z.int().gte(1),
+  digest: z.string(),
+});
+
+/**
+ * ForkProvenance
+ *
+ * Where a forked run came from and what it changed (US-54.5, ADR-0038).
+ *
+ * ``step_index`` is the zero-based step the fork replays; ``overrides`` lists
+ * every sub-agent whose instructions differ, as digests only.
+ */
+export const zForkProvenance = z.object({
+  source_message_id: z.uuid(),
+  source_execution_id: z.uuid(),
+  delegation_execution_id: z.uuid(),
+  sub_agent_id: z.uuid(),
+  step_index: z.int().gte(0),
+  overrides: z.array(zInstructionOverrideProvenance).optional(),
 });
 
 export const zJsonValue = z.unknown();
@@ -894,6 +941,17 @@ export const zMessageFileReference = z.object({
   kind: zFileKind,
   status: zFileContentStatus,
   available: z.boolean().optional().default(true),
+});
+
+/**
+ * MessageForkRequest
+ *
+ * Fork a recorded run at one delegation with run-only sub-agent instructions.
+ */
+export const zMessageForkRequest = z.object({
+  request_id: z.uuid(),
+  delegation_execution_id: z.uuid(),
+  instructions: z.string().max(50000),
 });
 
 /**
@@ -1582,6 +1640,7 @@ export const zMessageExecution = z.object({
   model: zChatModelChoice,
   model_revision: z.int().gte(1),
   configuration: zMainAgentConfiguration,
+  fork: zForkProvenance.nullish(),
 });
 
 /**
@@ -2360,6 +2419,16 @@ export const zProjectSubAgentList = z.object({
 });
 
 /**
+ * SubAgentInstructionsUpdate
+ *
+ * Explicitly save new instructions to a definition, e.g. from a fork (US-54.5).
+ */
+export const zSubAgentInstructionsUpdate = z.object({
+  system_prompt: z.string(),
+  expected_revision: z.int().gte(1),
+});
+
+/**
  * SubAgentList
  */
 export const zSubAgentList = z.object({
@@ -2742,10 +2811,16 @@ export const zUsageStep = z.object({
  * ``steps`` is the usage of each of the child's model calls, and
  * ``provider_type``/``pricing`` the model's usage provenance, all as recorded
  * at execution time (US-54.1).
+ * ``tool_call_id`` is the caller's call that started it. On a fork (US-54.5),
+ * ``reused`` marks a record copied from the source step rather than run again,
+ * and ``instructions_overridden`` one that ran with the fork's instructions.
  */
 export const zDelegationRecord = z.object({
   execution_id: z.uuid(),
   parent_execution_id: z.uuid().nullish(),
+  tool_call_id: z.string().nullish(),
+  reused: z.boolean().optional().default(false),
+  instructions_overridden: z.boolean().optional().default(false),
   sub_agent_id: z.uuid(),
   name: z.string(),
   model_id: z.uuid().nullish(),
@@ -3389,6 +3464,32 @@ export const zChatContextLayersGetPath = z.object({
  * Successful Response
  */
 export const zChatContextLayersGetResponse = zContextLayerTexts;
+
+export const zChatForkInstructionsGetPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+export const zChatForkInstructionsGetQuery = z.object({
+  delegation_execution_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatForkInstructionsGetResponse = zForkInstructions;
+
+export const zChatMessageForkBody = zMessageForkRequest;
+
+export const zChatMessageForkPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatMessageForkResponse = zMessage;
 
 export const zChatComparisonActivateBody = zComparisonActivate;
 
@@ -4437,6 +4538,17 @@ export const zSubAgentUpdatePath = z.object({
  * Successful Response
  */
 export const zSubAgentUpdateResponse = zSubAgentDefinition;
+
+export const zSubAgentInstructionsUpdateBody = zSubAgentInstructionsUpdate;
+
+export const zSubAgentInstructionsUpdatePath = z.object({
+  agent_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zSubAgentInstructionsUpdateResponse = zSubAgentDefinition;
 
 export const zAgentsGetSubAgentTracesPath = z.object({
   parent_message_id: z.uuid(),

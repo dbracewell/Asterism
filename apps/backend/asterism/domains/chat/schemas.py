@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from asterism.domains.agent.capabilities import CapabilityManifest
 from asterism.domains.agent.context_manifest import ContextManifest
 from asterism.domains.agent.context_provenance import ContextProvenance
+from asterism.domains.agent.instruction_overrides import MAX_OVERRIDE_CHARS, InstructionOverrideProvenance
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeProvenance
 from asterism.domains.agent.prompts import LayerKind, PersonaProvenance, PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
@@ -47,11 +48,17 @@ class DelegationRecord(BaseModel):
     ``steps`` is the usage of each of the child's model calls, and
     ``provider_type``/``pricing`` the model's usage provenance, all as recorded
     at execution time (US-54.1).
+    ``tool_call_id`` is the caller's call that started it. On a fork (US-54.5),
+    ``reused`` marks a record copied from the source step rather than run again,
+    and ``instructions_overridden`` one that ran with the fork's instructions.
     """
 
     model_config = ConfigDict(extra="forbid")
     execution_id: uuid.UUID
     parent_execution_id: uuid.UUID | None = None
+    tool_call_id: str | None = None
+    reused: bool = False
+    instructions_overridden: bool = False
     sub_agent_id: uuid.UUID
     name: str
     model_id: uuid.UUID | None = None
@@ -122,6 +129,22 @@ class ActiveSkillState(BaseModel):
     skills: list[ActiveSkill] = Field(default_factory=list)
 
 
+class ForkProvenance(BaseModel):
+    """Where a forked run came from and what it changed (US-54.5, ADR-0038).
+
+    ``step_index`` is the zero-based step the fork replays; ``overrides`` lists
+    every sub-agent whose instructions differ, as digests only.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    source_message_id: uuid.UUID
+    source_execution_id: uuid.UUID
+    delegation_execution_id: uuid.UUID
+    sub_agent_id: uuid.UUID
+    step_index: int = Field(ge=0)
+    overrides: list[InstructionOverrideProvenance] = Field(default_factory=list)
+
+
 class MessageExecution(BaseModel):
     skills: list[SkillIdentity] = Field(default_factory=list)
     persona: PersonaProvenance
@@ -135,6 +158,8 @@ class MessageExecution(BaseModel):
     model: ChatModelChoice
     model_revision: int = Field(ge=1)
     configuration: MainAgentConfiguration
+    # Set when this run is a fork of a recorded run (US-54.5).
+    fork: ForkProvenance | None = None
 
 
 class ChatModelUpdate(BaseModel):
@@ -200,6 +225,32 @@ class Message(LLMMessage):
 class MessageList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     messages: list[Message]
+
+
+class MessageForkRequest(BaseModel):
+    """Fork a recorded run at one delegation with run-only sub-agent instructions."""
+
+    model_config = ConfigDict(extra="forbid")
+    request_id: uuid.UUID
+    delegation_execution_id: uuid.UUID
+    instructions: str = Field(max_length=MAX_OVERRIDE_CHARS)
+
+
+class ForkInstructions(BaseModel):
+    """Starting point for the fork dialog; owner only.
+
+    ``source`` says whether the text is the run's own fork override or the
+    definition's current instructions. ``rerun_execution_id`` is the top-level
+    delegation that runs again (itself, unless the node is nested).
+    """
+
+    sub_agent_id: uuid.UUID
+    sub_agent_name: str
+    instructions: str
+    source: Literal["fork", "definition"]
+    definition_revision: int = Field(ge=1)
+    rerun_execution_id: uuid.UUID
+    rerun_sub_agent_name: str
 
 
 class UpdateMessageRequest(BaseModel):

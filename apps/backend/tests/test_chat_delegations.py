@@ -146,7 +146,7 @@ def _orchestrator() -> tuple[ChatOrchestrator, Message]:
 async def test_orchestrator_attaches_step_delegations_to_the_persisted_message():
     orchestrator, user_msg = _orchestrator()
 
-    async def run(messages):
+    async def run(messages, replay=None):
         yield AgentEvent(type=AgentEventType.SUB_AGENT, sub_agent=envelope(LEAD, AgentEvent(type=AgentEventType.START)))
         yield AgentEvent(
             type=AgentEventType.SUB_AGENT,
