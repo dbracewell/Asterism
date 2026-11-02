@@ -1,6 +1,6 @@
 # EPIC-54: Run inspection, replay and comparison
 
-Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1 and US-54.2 complete; US-54.3 in progress). Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1 and US-54.2 complete; US-54.3 implemented, awaiting confirmation). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
@@ -65,8 +65,8 @@ files, the attached files, and anything truncated or omitted, with the reason.
 Layer content is shown only to the owner. Retrieved text renders as untrusted
 content.
 
-- [ ] Record a context manifest (layer IDs and revisions, chunk references, truncations).
-- [ ] Build the inspector; test owner-only access and the untrusted rendering path.
+- [x] Record a context manifest (layer IDs and revisions, chunk references, truncations).
+- [x] Build the inspector; test owner-only access and the untrusted rendering path.
 
 ## US-54.4: Side-by-side comparison
 

@@ -220,16 +220,17 @@ async def test_empty_model_completion_is_not_persisted_as_a_blank_message(monkey
         run=run,
         prepare_execution=AsyncMock(return_value=None),
         prepare_execution_scope=AsyncMock(return_value=None),
+        prompt_snapshot=None,
     )
     orchestrator = ChatOrchestrator(agent)
 
     async def assembled_messages():
-        return [LLMMessage.user("Tell me something")]
+        return [LLMMessage.user("Tell me something")], []
 
     async def should_not_persist(**_kwargs):
         raise AssertionError("empty completion must not create an assistant message")
 
-    monkeypatch.setattr(orchestrator, "_build_agent_messages", assembled_messages)
+    monkeypatch.setattr(orchestrator, "_assemble_agent_messages", assembled_messages)
     monkeypatch.setattr(
         "asterism.domains.chat.orchestrator.chat_service.add_message",
         should_not_persist,

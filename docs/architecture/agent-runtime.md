@@ -235,6 +235,43 @@ manifests and never recomputes them from current settings.
 `features/chat/lib/capability-manifest.ts` supplies the dialog's data. MCP
 servers are not implemented yet, so manifests have no MCP entries.
 
+### Context inspector (US-54.3)
+
+Each persisted assistant step records a `ContextManifest`
+(`agent/context_manifest.py`) of what the model was given. It holds references
+and reasons only, never content:
+
+- **Layers:** kind, source id, revision, digest and length of each prompt layer
+  (platform, agent, persona, learning mode, project, skills, runtime), taken
+  from the run's prompt snapshot.
+- **Template:** the provenance of the template that built the user turn, if any.
+- **Files:** each attached file on the branch and whether it was included as
+  text, as an image, or not at all, with the reason.
+- **Chunks:** the file, chunk id, generation and score of each passage that
+  `search_knowledge` returned in that step, and whether its excerpt was cut.
+- **Omissions:** runtime details cut at `RUNTIME_MAX_CHARS`
+  (`PromptSnapshot.runtime_truncated`), a search that returned nothing and why,
+  and matches dropped once the result byte budget ran out
+  (`RetrievalResponse.omitted_for_budget`; `RetrievalHit.truncated` marks a
+  clipped excerpt).
+
+The orchestrator builds the manifest from what it actually sent:
+`_assemble_agent_messages` reports file inclusion, and `chat/context_manifest.py`
+adds each step's chunks. Sub-agents record their layers and any cuts to the
+forwarded parent context: older chat messages left out, or the block shortened
+or dropped to fit its token budget. The manifest rides on the first forwarded
+envelope, and `DelegationCollector` adds the child's chunks as its steps
+complete.
+
+Layer text stays in the immutable execution record. Only the chat owner can read
+it, through `GET /chat/{chat_id}/messages/{message_id}/context/layers`. Any other
+user, and any user turn, gets a 404. Sub-agent layer text is not stored, so the
+inspector shows only which layers a sub-agent used.
+
+The chat footer's "Context" dialog fetches the layer text only when opened.
+Retrieved excerpts come from the step's persisted tool results and render as
+untrusted plain text. File names come from the scope-checked file-info query.
+
 ## Resume, regeneration, and audit
 
 Each invocation has an execution UUID. Delegated events also include target ID,

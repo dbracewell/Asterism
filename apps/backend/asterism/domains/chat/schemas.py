@@ -7,9 +7,10 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.agent.capabilities import CapabilityManifest
+from asterism.domains.agent.context_manifest import ContextManifest
 from asterism.domains.agent.context_provenance import ContextProvenance
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeProvenance
-from asterism.domains.agent.prompts import PersonaProvenance, PromptProvenance
+from asterism.domains.agent.prompts import LayerKind, PersonaProvenance, PromptProvenance
 from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.agent.skill_inputs import SkillIdentity
 from asterism.domains.files.models import FileContentStatus, FileKind
@@ -60,6 +61,8 @@ class DelegationRecord(BaseModel):
     steps: list[UsageStep] = Field(default_factory=list)
     # What this sub-agent could use, recorded when it started (US-54.2).
     capabilities: CapabilityManifest | None = None
+    # What this sub-agent was given, recorded when it started (US-54.3).
+    context: ContextManifest | None = None
     depth: int = Field(ge=0)
     status: DelegationStatus
     started_at_ms: int = Field(ge=0)
@@ -155,6 +158,7 @@ class NewMessageRequest(BaseModel):
     tool_calls: list[ToolCall] | None = Field(default=None)
     tool_call_results: list[ToolResult] | None = Field(default=None)
     delegations: list[DelegationRecord] | None = Field(default=None)
+    context: ContextManifest | None = None
     files: list[uuid.UUID] = Field(default_factory=list, max_length=100)
 
 
@@ -176,6 +180,8 @@ class Message(LLMMessage):
     generation_duration_ms: int = Field(default=0)
     tool_call_results: list[ToolResult] | None = None
     delegations: list[DelegationRecord] | None = None
+    # What the model was given for this step, recorded when it ran (US-54.3).
+    context: ContextManifest | None = None
     files: list[MessageFileReference] = Field(default_factory=list)
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
@@ -488,3 +494,16 @@ class ChatComparison(BaseModel):
 class ComparisonActivate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     index: int = Field(ge=0, le=MAX_COMPARISON_COLUMNS - 1)
+
+
+class ContextLayerText(BaseModel):
+    """One recorded prompt layer with its text; returned only to the chat owner."""
+
+    kind: LayerKind
+    source_id: str
+    revision: int
+    text: str
+
+
+class ContextLayerTexts(BaseModel):
+    layers: list[ContextLayerText]

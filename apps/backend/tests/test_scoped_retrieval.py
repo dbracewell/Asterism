@@ -168,6 +168,18 @@ async def test_foreign_matches_limits_caption_and_utf8_budget(context_runtime, m
     clamped = await service.search(scope, query="caption", top_k=3)
     assert clamped.message is None
     assert [(hit.match_kind, hit.excerpt) for hit in clamped.results] == [("caption", "éé"), ("text", "E")]
+    # US-54.3: the context inspector records cut excerpts and budget omissions.
+    assert [hit.truncated for hit in clamped.results] == [True, True]
+    assert clamped.omitted_for_budget == 0
+    budgeted = RetrievalService(
+        read_scope=root.read_scope,
+        embeddings=embeddings,
+        vectors=vectors,
+        limits=RetrievalLimits(top_k=3, allowed_files=10, result_bytes=4),
+    )
+    spent = await budgeted.search(scope, query="caption", top_k=3)
+    assert [hit.excerpt for hit in spent.results] == ["éé"]
+    assert spent.omitted_for_budget == 1
     for invalid in [replace(scope, allowed_file_ids=frozenset()), replace(scope, effective_internal_tools=frozenset())]:
         with pytest.raises(BadDataException):
             await service.search(invalid, query="caption")

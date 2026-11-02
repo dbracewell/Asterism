@@ -78,6 +78,9 @@ import type {
   ChatComparisonGetOneData,
   ChatComparisonGetOneError,
   ChatComparisonGetOneResponse,
+  ChatContextLayersGetData,
+  ChatContextLayersGetError,
+  ChatContextLayersGetResponse,
   ChatDraftAddFilesData,
   ChatDraftAddFilesError,
   ChatDraftAddFilesResponse,
@@ -1807,6 +1810,36 @@ export const chatComparisonGetOneOptions = (
       return data;
     },
     queryKey: chatComparisonGetOneQueryKey(options),
+  });
+
+export const chatContextLayersGetQueryKey = (
+  options: Options<ChatContextLayersGetData>,
+) => createQueryKey("chatContextLayersGet", options);
+
+/**
+ * Get Context Layers
+ *
+ * The prompt layer text a recorded assistant step used; owner only.
+ */
+export const chatContextLayersGetOptions = (
+  options: Options<ChatContextLayersGetData>,
+) =>
+  queryOptions<
+    ChatContextLayersGetResponse,
+    ChatContextLayersGetError,
+    ChatContextLayersGetResponse,
+    ReturnType<typeof chatContextLayersGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatContextLayersGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatContextLayersGetQueryKey(options),
   });
 
 /**

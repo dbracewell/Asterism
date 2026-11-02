@@ -78,6 +78,9 @@ import type {
   ChatComparisonGetOneData,
   ChatComparisonGetOneErrors,
   ChatComparisonGetOneResponses,
+  ChatContextLayersGetData,
+  ChatContextLayersGetErrors,
+  ChatContextLayersGetResponses,
   ChatDraftAddFilesData,
   ChatDraftAddFilesErrors,
   ChatDraftAddFilesResponses,
@@ -1452,6 +1455,29 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/comparisons/{comparison_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Context Layers
+   *
+   * The prompt layer text a recorded assistant step used; owner only.
+   */
+  public chatContextLayersGet<ThrowOnError extends boolean = false>(
+    options: Options<ChatContextLayersGetData, ThrowOnError>,
+  ): RequestResult<
+    ChatContextLayersGetResponses,
+    ChatContextLayersGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ChatContextLayersGetResponses,
+      ChatContextLayersGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/context/layers",
       ...options,
     });
   }

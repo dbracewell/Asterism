@@ -77,6 +77,8 @@ class PromptSnapshot(BaseModel):
     project_revision: int | None = None
     project_instructions: str = ""
     layers: tuple[PromptLayer, ...]
+    # The runtime layer was cut to RUNTIME_MAX_CHARS (recorded for US-54.3).
+    runtime_truncated: bool = False
 
     @property
     def text(self) -> str:
@@ -159,4 +161,5 @@ class PromptComposer:
             project_revision=project_revision,
             project_instructions=project_instructions if project_id else "",
             layers=tuple(layers),
+            runtime_truncated=len(runtime_context) > RUNTIME_MAX_CHARS,
         )

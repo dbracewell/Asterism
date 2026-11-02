@@ -353,6 +353,66 @@ export const zConfigurationProvenance = z.object({
 });
 
 /**
+ * ContextChunk
+ *
+ * A retrieved chunk reference; its excerpt lives in the step's tool result.
+ */
+export const zContextChunk = z.object({
+  tool_call_id: z.string(),
+  file_id: z.uuid(),
+  chunk_id: z.string(),
+  artifact_generation: z.int(),
+  score: z.number(),
+  truncated: z.boolean().optional().default(false),
+});
+
+/**
+ * ContextLayer
+ */
+export const zContextLayer = z.object({
+  kind: z.enum([
+    "platform",
+    "agent",
+    "profile",
+    "mode",
+    "project",
+    "skills",
+    "runtime",
+  ]),
+  source_id: z.string(),
+  revision: z.int(),
+  digest: z.string(),
+  characters: z.int().gte(0),
+});
+
+/**
+ * ContextLayerText
+ *
+ * One recorded prompt layer with its text; returned only to the chat owner.
+ */
+export const zContextLayerText = z.object({
+  kind: z.enum([
+    "platform",
+    "agent",
+    "profile",
+    "mode",
+    "project",
+    "skills",
+    "runtime",
+  ]),
+  source_id: z.string(),
+  revision: z.int(),
+  text: z.string(),
+});
+
+/**
+ * ContextLayerTexts
+ */
+export const zContextLayerTexts = z.object({
+  layers: z.array(zContextLayerText),
+});
+
+/**
  * CreateUserRequest
  *
  * Request model for creating a new user.
@@ -457,6 +517,23 @@ export const zFileContentStatus = z.enum([
   "unsupported",
   "failed",
 ]);
+
+/**
+ * FileInclusion
+ */
+export const zFileInclusion = z.enum(["text", "image", "omitted"]);
+
+/**
+ * ContextFile
+ *
+ * A file attached on the active branch and what the model received of it.
+ */
+export const zContextFile = z.object({
+  file_id: z.uuid(),
+  name: z.string(),
+  inclusion: zFileInclusion,
+  reason: z.string().nullish(),
+});
 
 /**
  * FileKind
@@ -903,6 +980,27 @@ export const zContextProvenance = z.object({
   selected_sub_agent_ids: z.array(z.uuid()),
   selected_model: zModelProvenance.nullable(),
   executed_model: zModelProvenance.nullable(),
+});
+
+/**
+ * OmissionKind
+ *
+ * Omitted attached files carry their reason on ``ContextFile`` instead.
+ */
+export const zOmissionKind = z.enum([
+  "runtime_instructions",
+  "retrieval",
+  "retrieved_excerpt",
+  "forwarded_context",
+]);
+
+/**
+ * ContextOmission
+ */
+export const zContextOmission = z.object({
+  kind: zOmissionKind,
+  subject: z.string().nullish(),
+  reason: z.string().max(500),
 });
 
 /**
@@ -2394,6 +2492,30 @@ export const zTemplateLabel = z.object({
 });
 
 /**
+ * TemplateProvenance
+ *
+ * Server-resolved snapshot stored immutably on the accepted user message.
+ */
+export const zTemplateProvenance = z.object({
+  source: z.enum(["framework", "template"]),
+  id: z.string(),
+  revision: z.int(),
+  level: z.enum(["guided", "standard", "freeform"]),
+  name: z.string(),
+});
+
+/**
+ * ContextManifest
+ */
+export const zContextManifest = z.object({
+  layers: z.array(zContextLayer).optional(),
+  template: zTemplateProvenance.nullish(),
+  files: z.array(zContextFile).optional(),
+  chunks: z.array(zContextChunk).optional(),
+  omissions: z.array(zContextOmission).optional(),
+});
+
+/**
  * TemplateUse
  *
  * Client claim attached to a send: which template built this prompt.
@@ -2632,6 +2754,7 @@ export const zDelegationRecord = z.object({
   pricing: zModelPricing.nullish(),
   steps: z.array(zUsageStep).optional(),
   capabilities: zCapabilityManifest.nullish(),
+  context: zContextManifest.nullish(),
   depth: z.int().gte(0),
   status: z.enum(["running", "completed", "error", "cancelled"]),
   started_at_ms: z.int().gte(0),
@@ -2664,6 +2787,7 @@ export const zMessage = z.object({
   generation_duration_ms: z.int().optional().default(0),
   tool_call_results: z.array(zToolResult).nullish(),
   delegations: z.array(zDelegationRecord).nullish(),
+  context: zContextManifest.nullish(),
   files: z.array(zMessageFileReference).optional(),
   active_child_id: z.uuid().nullish(),
   has_siblings: z.boolean().optional().default(false),
@@ -3255,6 +3379,16 @@ export const zChatComparisonGetOnePath = z.object({
  * Successful Response
  */
 export const zChatComparisonGetOneResponse = zChatComparison;
+
+export const zChatContextLayersGetPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatContextLayersGetResponse = zContextLayerTexts;
 
 export const zChatComparisonActivateBody = zComparisonActivate;
 

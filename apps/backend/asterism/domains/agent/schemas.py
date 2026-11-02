@@ -16,6 +16,7 @@ from asterism.domains.settings.pricing import ModelPricing
 from asterism.domains.settings.provider_types import ProviderType
 
 from .capabilities import CapabilityManifest
+from .context_manifest import ContextManifest
 from .context_provenance import ContextProvenance
 from .prompts import PromptProvenance
 
@@ -37,8 +38,9 @@ class SubAgentEventEnvelope(BaseModel):
     the main agent delegated). ``model_id``/``model_name`` are the fixed model
     binding that ran; the name is None until the child resolves its model.
     ``provider_type`` and ``pricing`` are usage provenance captured with the
-    resolved model (US-54.1). ``capabilities`` is the child's recorded
-    capability manifest (US-54.2), sent once when the child starts.
+    resolved model (US-54.1). ``capabilities`` and ``context`` are the child's
+    recorded capability (US-54.2) and context (US-54.3) manifests, sent once
+    when the child starts.
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -51,6 +53,7 @@ class SubAgentEventEnvelope(BaseModel):
     provider_type: ProviderType | None = None
     pricing: ModelPricing | None = None
     capabilities: CapabilityManifest | None = None
+    context: ContextManifest | None = None
     depth: int
     event: AgentEvent
 
