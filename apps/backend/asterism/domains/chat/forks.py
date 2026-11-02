@@ -42,6 +42,7 @@ from .schemas import (
     MessageForkRequest,
     MessageStatus,
 )
+from .span_citations import resolve_step_citations
 
 # ---------------------------------------------------------------------------
 # Record traversal
@@ -392,6 +393,15 @@ async def write_fork_step(
             chat_id=chat_id,
             content=message.content,
             delegations=delegations,
+            execution=message.execution,
+            session=session,
+        )
+        message.citations, message.delegations = await resolve_step_citations(
+            user_id=user_id,
+            chat_id=chat_id,
+            content=message.content,
+            tool_results=message.tool_call_results,
+            delegations=message.delegations,
             execution=message.execution,
             session=session,
         )

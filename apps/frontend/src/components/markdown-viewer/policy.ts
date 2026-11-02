@@ -25,7 +25,18 @@ export function fileTokenId(url: string | null | undefined): string | null {
   return (url && FILE_TOKEN.exec(url)?.[1]) || null;
 }
 
+// ADR-0040: a claim citation is a link (never an image) whose destination is
+// exactly one to four cite keys. The renderer shows the link text as the claim
+// and resolves each key against the message's server-resolved citations.
+const CITE_TOKEN = /^asterism-cite:([0-9a-f]{12}(?:,[0-9a-f]{12}){0,3})$/;
+
+export function citationKeys(url: string | null | undefined): string[] | null {
+  const keys = url && CITE_TOKEN.exec(url)?.[1];
+  return keys ? keys.split(",") : null;
+}
+
 export const markdownUrlTransform: UrlTransform = (url, key, node) => {
+  if (citationKeys(url) && key === "href" && node.tagName === "a") return url;
   if (
     fileTokenId(url) &&
     ((key === "href" && node.tagName === "a") ||

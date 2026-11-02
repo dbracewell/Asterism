@@ -1,6 +1,11 @@
 import type { ComparisonTag } from "./lib/comparison";
 import { AgentSubAgentEvent, ToolCallSchema } from "@/features/chat/schemas";
-import { InlineFileReference, Message, ToolResult } from "@/lib/client";
+import {
+  InlineFileReference,
+  Message,
+  SpanCitation,
+  ToolResult,
+} from "@/lib/client";
 import z from "zod";
 import { ReadyState } from "react-use-websocket";
 
@@ -53,6 +58,7 @@ export type SubAgentActivity = {
   error?: string;
   /** Resolved file references of persisted output; absent while live (ADR-0039). */
   inlineFiles?: InlineFileReference[];
+  citations?: SpanCitation[];
 };
 
 const mergeToolResults = (previous: ToolResult[], incoming: ToolResult[]) => [

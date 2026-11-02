@@ -58,6 +58,26 @@ class InlineFileReference(BaseModel):
     size: int | None = Field(default=None, ge=0)
 
 
+class SpanCitation(BaseModel):
+    """One ``asterism-cite:`` key in saved Markdown, resolved at save time (ADR-0040).
+
+    A key resolves only to a chunk the saving run retrieved from a file still in
+    its scope. Unavailable citations carry only ``key``: no file, chunk, name or
+    excerpt is ever recorded or returned for them. ``available`` is rechecked
+    against live chat scope on read; ``excerpt`` is untrusted retrieved text.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(pattern=r"^[0-9a-f]{12}$")
+    available: bool
+    file_id: uuid.UUID | None = None
+    chunk_id: str | None = None
+    artifact_generation: int | None = Field(default=None, ge=1)
+    match_kind: str | None = None
+    name: str | None = None
+    excerpt: str | None = None
+
+
 class DelegationRecord(BaseModel):
     """One sub-agent delegation observed during an assistant step.
 
@@ -99,6 +119,8 @@ class DelegationRecord(BaseModel):
     error: str | None = None
     # References in ``output``, resolved when the parent step was saved (US-56.3).
     inline_files: list[InlineFileReference] = Field(default_factory=list)
+    # Citations in ``output``, resolved against this sub-agent's own retrievals (US-55.1).
+    citations: list[SpanCitation] = Field(default_factory=list)
 
 
 class MessageFileReference(BaseModel):
@@ -231,6 +253,8 @@ class Message(LLMMessage):
     files: list[MessageFileReference] = Field(default_factory=list)
     # References in ``content``, resolved at save time (US-56.3, ADR-0039).
     inline_files: list[InlineFileReference] = Field(default_factory=list)
+    # Claim citations in ``content``, resolved at save time (US-55.1, ADR-0040).
+    citations: list[SpanCitation] = Field(default_factory=list)
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0

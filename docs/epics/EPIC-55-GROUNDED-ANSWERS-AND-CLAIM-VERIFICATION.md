@@ -1,6 +1,6 @@
 # EPIC-55: Grounded answers and claim verification
 
-Status: proposed. Source: product direction discussion (2026-10-31), core value proposition and learner track.
+Status: in progress (US-55.1 implemented). Source: product direction discussion (2026-10-31), core value proposition and learner track.
 
 ## Objective
 
@@ -32,8 +32,13 @@ spans. Hovering or focusing a marker shows the cited chunk and file, and opens
 it through the existing scoped-file route. Spans whose citation is unavailable
 are marked as such.
 
-- [ ] Define the span-citation format in the model output contract and parse it at persistence.
-- [ ] Render span markers and previews; test parsing, scope and unavailable files.
+- [x] Define the span-citation format in the model output contract and parse it at persistence.
+- [x] Render span markers and previews; test parsing, scope and unavailable files.
+
+Implementation: [ADR-0040](../adr/0040-claim-level-citations.md). Search hits carry
+an `asterism-cite:<key>` token; `chat/span_citations.py` resolves keys at save
+time against the run's own retrievals and stores `citations` on messages and
+delegation records; `CitedClaim` renders markers with scoped links and previews.
 
 ## US-55.2: Verify pass
 

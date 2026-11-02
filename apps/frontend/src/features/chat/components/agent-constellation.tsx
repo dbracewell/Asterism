@@ -188,7 +188,10 @@ const AgentDetails = ({
       </p>
       <AgentTimeline steps={activitySteps(activity)} />
       {activity.content && (
-        <InlineFilesScope files={activity.inlineFiles ?? null}>
+        <InlineFilesScope
+          files={activity.inlineFiles ?? null}
+          citations={activity.citations ?? null}
+        >
           <MarkdownViewer content={activity.content} className="text-sm" />
         </InlineFilesScope>
       )}

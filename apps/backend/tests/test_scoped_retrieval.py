@@ -25,6 +25,7 @@ from asterism.domains.knowledge.models import (
     KnowledgeExtractionStatus,
 )
 from asterism.domains.knowledge.vector_store import LanceDbVectorStore, VectorChunk, VectorSearchResult
+from asterism.domains.retrieval.citations import citation_token
 from asterism.domains.retrieval.service import RetrievalLimits, RetrievalService
 from sqlalchemy import delete, select, update
 from test_context_tools import add_file, make_execution_scope
@@ -499,6 +500,8 @@ async def test_runtime_tool_injects_shared_retrieval_for_main_and_delegate(conte
     ]
     assert len(results) == 1
     assert results[0].raw_result["results"][0]["file_id"] == str(fid)
+    hit = results[0].raw_result["results"][0]
+    assert hit["citation"] == citation_token(fid, hit["chunk_id"])
     assert results[0].raw_result["scope"]["agent_id"] == str(profile.id)
     service.vectors.search.assert_awaited_once()
 

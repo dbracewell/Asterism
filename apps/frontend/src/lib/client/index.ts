@@ -708,6 +708,7 @@ export type {
   SkillUpdateErrors,
   SkillUpdateResponse,
   SkillUpdateResponses,
+  SpanCitation,
   StudyCard,
   StudyCardCreate,
   StudyCardCreateData,

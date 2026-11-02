@@ -97,6 +97,19 @@ user-supplied HTML. The dependency remains part of the trusted implementation.
 See the primary [react-markdown security and HTML documentation](https://github.com/remarkjs/react-markdown#security)
 and [KaTeX options](https://katex.org/docs/options) for the library boundaries.
 
+## Claim citations — EPIC-55
+
+[ADR-0040](../adr/0040-claim-level-citations.md) adds one more opaque token.
+A link whose destination is exactly `asterism-cite:` plus one to four
+comma-separated 12-hex keys marks its text as a cited claim. The URL transform
+passes it only as an anchor `href`; the renderer replaces the anchor with
+`CitedClaim` and never writes the token into the DOM. Each key resolves against
+the message's server-resolved `citations`. Available markers link to the scoped
+file view and preview the saved excerpt as text. Unknown, unavailable and
+streaming keys render inert markers. Near-misses and image forms stay blocked.
+`e2e/inline-files.spec.ts` checks keyboard focus, the scoped link, that nothing
+is fetched, and axe.
+
 ## Files, citations, and scope
 
 The current `FileView` renders extracted content in a React text node inside

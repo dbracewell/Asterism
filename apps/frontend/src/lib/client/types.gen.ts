@@ -1344,6 +1344,10 @@ export type DelegationRecord = {
    * Inline Files
    */
   inline_files?: Array<InlineFileReference>;
+  /**
+   * Citations
+   */
+  citations?: Array<SpanCitation>;
 };
 
 /**
@@ -2405,6 +2409,10 @@ export type Message = {
    * Inline Files
    */
   inline_files?: Array<InlineFileReference>;
+  /**
+   * Citations
+   */
+  citations?: Array<SpanCitation>;
   /**
    * Active Child Id
    */
@@ -3866,6 +3874,51 @@ export type SkillUpdate = {
    * Expected Revision
    */
   expected_revision: number;
+};
+
+/**
+ * SpanCitation
+ *
+ * One ``asterism-cite:`` key in saved Markdown, resolved at save time (ADR-0040).
+ *
+ * A key resolves only to a chunk the saving run retrieved from a file still in
+ * its scope. Unavailable citations carry only ``key``: no file, chunk, name or
+ * excerpt is ever recorded or returned for them. ``available`` is rechecked
+ * against live chat scope on read; ``excerpt`` is untrusted retrieved text.
+ */
+export type SpanCitation = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Available
+   */
+  available: boolean;
+  /**
+   * File Id
+   */
+  file_id?: string | null;
+  /**
+   * Chunk Id
+   */
+  chunk_id?: string | null;
+  /**
+   * Artifact Generation
+   */
+  artifact_generation?: number | null;
+  /**
+   * Match Kind
+   */
+  match_kind?: string | null;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Excerpt
+   */
+  excerpt?: string | null;
 };
 
 /**

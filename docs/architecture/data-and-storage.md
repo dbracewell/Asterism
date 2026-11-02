@@ -200,6 +200,11 @@ server-resolved `asterism-file:` references in a step's content or a sub-agent's
 output (US-56.3). Like `messages.files`, they are JSON snapshots, not foreign
 keys; message reads recheck their `available` flag against live chat scope.
 
+`messages.citations` and `DelegationRecord.citations` hold the server-resolved
+`asterism-cite:` claim citations (US-55.1, [ADR-0040](../adr/0040-claim-level-citations.md)):
+the cited chunk, file name and an excerpt snapshot. They resolve only against
+chunks the saving run retrieved, and reads recheck `available` against live chat scope.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are

@@ -218,3 +218,44 @@ test("inline files are reachable and operable by keyboard with accessible names"
     (await new AxeBuilder({ page }).include("main").analyze()).violations,
   ).toEqual([]);
 });
+
+test("claim citations preview by keyboard, link to the scoped file view and fetch nothing", async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (/untrusted-citation|asterism-cite/.test(url.href))
+      requests.push(url.href);
+  });
+  await mockFileRoutes(page);
+  await page.goto("/e2e/inline-files");
+  const reply = page.getByRole("region", { name: "Cited reply", exact: true });
+
+  // The same key cited twice keeps one number.
+  const markers = reply.getByRole("link", { name: "Citation 1: report.docx" });
+  await expect(markers).toHaveCount(2);
+  const marker = markers.first();
+  await expect(marker).toHaveAttribute(
+    "href",
+    `/c/${INLINE_CHAT}/files/${DOCX_ID}`,
+  );
+  await marker.focus();
+  const preview = page.getByRole("tooltip");
+  await expect(preview).toContainText(
+    'Revenue grew 12% <img src="/untrusted-citation/x"> in Q3.',
+  );
+
+  const unavailable = reply.getByRole("note", {
+    name: "Citation 2 unavailable",
+  });
+  await unavailable.focus();
+  await expect(
+    page.getByRole("tooltip", { name: "Source unavailable in this chat" }),
+  ).toBeVisible();
+  await expect(reply.getByText("not a claim")).toBeVisible();
+  expect(requests).toEqual([]);
+  expect(
+    (await new AxeBuilder({ page }).include("main").analyze()).violations,
+  ).toEqual([]);
+});
