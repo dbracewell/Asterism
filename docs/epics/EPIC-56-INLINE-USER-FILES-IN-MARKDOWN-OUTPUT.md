@@ -1,6 +1,6 @@
 # EPIC-56: Inline user files in Markdown output
 
-Status: proposed. Source: user request (2026-10-31). Groundwork for agents that create PowerPoint, Word, spreadsheet, PDF and image files.
+Status: in progress (US-56.1 under review; contract in [ADR-0039](../adr/0039-inline-file-references-in-markdown.md)). Source: user request (2026-10-31). Groundwork for agents that create PowerPoint, Word, spreadsheet, PDF and image files.
 
 ## Objective
 
@@ -60,7 +60,11 @@ Acceptance: an ADR defines the token syntax, resolution rules, storage of
 trust policy. `markdown-content.md` is updated to describe the single allowed
 file-reference path.
 
-- [ ] Write the ADR and update the Markdown trust documentation.
+- [x] Write the ADR and update the Markdown trust documentation.
+
+ADR-0039 settles two points that differ from the text above: inline references use
+a new `InlineFileReference` type (the existing `MessageFileReference` stays with
+user attachments), and page/slide thumbnails are deferred.
 
 ## US-56.2: Produced-file registration
 

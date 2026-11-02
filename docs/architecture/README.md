@@ -30,6 +30,8 @@ Additional guides:
 
 - [Markdown and file-content trust](markdown-content.md): raw HTML disabled,
   explicit link/resource policy, constrained math, files and citations.
+- [ADR-0039: Inline file references](../adr/0039-inline-file-references-in-markdown.md):
+  `asterism-file:` tokens, save-time resolution, produced files and active content.
 - [Theme storage and lifecycle](theme-storage.md): read-only defaults, persistent
   overrides, atomic saves, single-writer ownership, backup and reset.
 - [Bundled theme palettes](bundled-theme-palettes.md): source versions, semantic
