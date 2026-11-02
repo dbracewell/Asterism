@@ -230,6 +230,22 @@ Page and slide thumbnails are **deferred**. LibreOffice headless is a large
 runtime dependency with its own sandboxing needs; a PDF-only rasterizer would
 cover one type of four. Revisit when the generation-tools epic needs thumbnails.
 
+US-56.5 implementation: `GET /chats/{chat_id}/files/{file_id}/preview`
+(`chatFileGetPreview`) authorizes like the other scoped routes and returns the
+first 4,000 characters of `content_cache` plus counts read from the source
+structure: PDF pages via `pypdfium2` (now a direct dependency), PowerPoint slides
+and Excel sheets from the archive's part names, and Word pages from
+`docProps/app.xml` when the producer recorded them. Malformed or encrypted
+sources yield no counts. `InlineFile` renders an embedded document or text file
+as a card (type, name, size, count, three-line excerpt, Open and Download); Open
+and mention chips show the longer excerpt in a dialog. Excerpts are React text,
+never Markdown or HTML.
+
+Thumbnail decision (US-56.5): still deferred. `pypdfium2` could render PDF first
+pages without new dependencies, but Word, PowerPoint and Excel would still need
+LibreOffice, and a PDF-only thumbnail would make cards inconsistent. Revisit
+with the generation-tools epic, starting with PDF and slide rendering.
+
 ### 9. Model guidance
 
 The prompt layer explains the syntax only when the run has scoped or produced

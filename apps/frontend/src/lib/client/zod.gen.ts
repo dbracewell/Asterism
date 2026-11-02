@@ -555,6 +555,38 @@ export const zFileKind = z.enum(["image", "text", "document", "other"]);
 export const zFileOrigin = z.enum(["upload", "agent"]);
 
 /**
+ * FilePreview
+ *
+ * Plain-text preview of one source, for document cards (US-56.5).
+ *
+ * The excerpt is the leading part of the cached MarkItDown conversion. Clients
+ * render it as literal text, never as Markdown or HTML. Counts are read from
+ * the source's structure and are ``None`` when unknown.
+ *
+ * Attributes:
+ * file_id: File identifier.
+ * kind: Classification driving conversion and display.
+ * mime_type: Detected MIME type.
+ * status: State of the converted-content cache.
+ * excerpt: Leading converted text, or ``None`` when there is none.
+ * truncated: Whether the converted text continues past the excerpt.
+ * page_count: Pages of a PDF, or of a Word document when it records them.
+ * slide_count: Slides of a PowerPoint presentation.
+ * sheet_count: Worksheets of an Excel workbook.
+ */
+export const zFilePreview = z.object({
+  file_id: z.uuid(),
+  kind: zFileKind,
+  mime_type: z.string(),
+  status: zFileContentStatus,
+  excerpt: z.string().nullable(),
+  truncated: z.boolean(),
+  page_count: z.int().nullish(),
+  slide_count: z.int().nullish(),
+  sheet_count: z.int().nullish(),
+});
+
+/**
  * FileProjectSummary
  *
  * A project that references a file, as shown next to that file.
@@ -3376,6 +3408,16 @@ export const zChatFileGetInfoPath = z.object({
  * Successful Response
  */
 export const zChatFileGetInfoResponse = zUserFile;
+
+export const zChatFileGetPreviewPath = z.object({
+  chat_id: z.uuid(),
+  file_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatFileGetPreviewResponse = zFilePreview;
 
 export const zChatFileRemovePath = z.object({
   chat_id: z.uuid(),

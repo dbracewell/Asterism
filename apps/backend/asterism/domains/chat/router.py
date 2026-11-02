@@ -19,7 +19,7 @@ from asterism.domains.chat.connection import WebSocketConnection
 from asterism.domains.chat.controller import ChatController
 from asterism.domains.chat.jobs import chat_jobs
 from asterism.domains.chat.orchestrator import ChatOrchestrator
-from asterism.domains.files.schemas import UserFile, UserFileList
+from asterism.domains.files.schemas import FilePreview, UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .learning_modes import change_chat_learning_mode
@@ -390,6 +390,19 @@ async def get_chat_file_info(chat_id: uuid.UUID, file_id: uuid.UUID, user: Authe
 
     await require_chat_file(user_id=user.id, chat_id=chat_id, file_id=file_id, session=db)
     return await get_file_info_by_id(user_id=user.id, file_id=file_id, session=db)
+
+
+@chat_router.get("/{chat_id}/files/{file_id}/preview", response_model=FilePreview, operation_id="chatFileGetPreview")
+async def get_chat_file_preview(
+    chat_id: uuid.UUID, file_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> FilePreview:
+    """Text excerpt and structure counts of a scoped file, for document cards (US-56.5)."""
+    from asterism.domains.files.preview import build_file_preview
+
+    from .scope import require_chat_file
+
+    await require_chat_file(user_id=user.id, chat_id=chat_id, file_id=file_id, session=db)
+    return await build_file_preview(user_id=user.id, file_id=file_id, session=db)
 
 
 @chat_router.get(

@@ -108,6 +108,9 @@ import type {
   ChatFileGetInfoData,
   ChatFileGetInfoErrors,
   ChatFileGetInfoResponses,
+  ChatFileGetPreviewData,
+  ChatFileGetPreviewErrors,
+  ChatFileGetPreviewResponses,
   ChatFileGetScopeData,
   ChatFileGetScopeErrors,
   ChatFileGetScopeResponses,
@@ -1184,6 +1187,29 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/files/{file_id}/info",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Chat File Preview
+   *
+   * Text excerpt and structure counts of a scoped file, for document cards (US-56.5).
+   */
+  public chatFileGetPreview<ThrowOnError extends boolean = false>(
+    options: Options<ChatFileGetPreviewData, ThrowOnError>,
+  ): RequestResult<
+    ChatFileGetPreviewResponses,
+    ChatFileGetPreviewErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ChatFileGetPreviewResponses,
+      ChatFileGetPreviewErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/files/{file_id}/preview",
       ...options,
     });
   }

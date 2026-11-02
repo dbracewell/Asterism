@@ -57,9 +57,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-56.4: Inline images
   - [x] Build `InlineFile` image rendering and the lightbox; implement SVG handling.
   - [x] Add adversarial browser tests (foreign IDs, URL-shaped tokens, script-bearing SVG).
-- [ ] US-56.5: Document cards and previews (in progress)
-  - [ ] Build the document card and preview using cached conversions.
-  - [ ] Decide and document the thumbnail approach; test cards for each supported type.
+- [ ] US-56.5: Document cards and previews (in progress; awaiting confirmation)
+  - [x] Build the document card and preview using cached conversions.
+  - [x] Decide and document the thumbnail approach; test cards for each supported type.
 - [ ] US-56.6: Model instructions and accessibility
   - [ ] Add the conditional prompt guidance and copy-text behavior.
   - [ ] Add accessibility and keyboard tests.

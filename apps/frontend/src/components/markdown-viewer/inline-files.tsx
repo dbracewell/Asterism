@@ -13,10 +13,22 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { client } from "@/lib/api";
 import type { InlineFileReference } from "@/lib/client";
-import { chatFileDownloadOptions } from "@/lib/client/@tanstack/react-query.gen";
+import type { FilePreview } from "@/lib/client";
+import {
+  chatFileDownloadOptions,
+  chatFileGetPreviewOptions,
+} from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { FileIcon, FileWarningIcon, ImageIcon } from "lucide-react";
+import {
+  FileIcon,
+  FileSpreadsheetIcon,
+  FileTextIcon,
+  FileWarningIcon,
+  ImageIcon,
+  PresentationIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { createContext, useContext, useEffect, useState } from "react";
 
 /**
@@ -80,6 +92,51 @@ const sizeLabel = (size?: number | null) =>
 const isInlineImage = (file: InlineFileReference) =>
   !!file.mime_type && INLINE_IMAGE_TYPES.has(file.mime_type);
 
+/** Documents and text get a card with a server-made plain-text excerpt (US-56.5). */
+const hasTextPreview = (file: InlineFileReference) =>
+  file.kind === "document" || file.kind === "text";
+
+const TYPES: Record<string, { label: string; Icon: LucideIcon }> = {
+  "application/pdf": { label: "PDF", Icon: FileTextIcon },
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+    label: "Word document",
+    Icon: FileTextIcon,
+  },
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+    label: "PowerPoint presentation",
+    Icon: PresentationIcon,
+  },
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+    label: "Excel workbook",
+    Icon: FileSpreadsheetIcon,
+  },
+  "application/vnd.ms-excel": {
+    label: "Excel workbook",
+    Icon: FileSpreadsheetIcon,
+  },
+  "text/csv": { label: "CSV", Icon: FileSpreadsheetIcon },
+  "text/markdown": { label: "Markdown", Icon: FileTextIcon },
+  "text/plain": { label: "Text", Icon: FileTextIcon },
+};
+
+export const fileType = (file: InlineFileReference) =>
+  (file.mime_type && TYPES[file.mime_type]) ||
+  (isInlineImage(file)
+    ? { label: "Image", Icon: ImageIcon }
+    : { label: file.mime_type || "File", Icon: FileIcon });
+
+const plural = (count: number, noun: string) =>
+  `${count} ${noun}${count === 1 ? "" : "s"}`;
+
+export const countLabel = (preview?: FilePreview) =>
+  preview?.slide_count != null
+    ? plural(preview.slide_count, "slide")
+    : preview?.page_count != null
+      ? plural(preview.page_count, "page")
+      : preview?.sheet_count != null
+        ? plural(preview.sheet_count, "sheet")
+        : "";
+
 export function InlineFile({
   fileId,
   label,
@@ -113,6 +170,8 @@ export function InlineFile({
     (file.size ?? 0) <= MAX_INLINE_IMAGE_BYTES
   )
     return <InlineImage chatId={chatId} file={file} alt={name} />;
+  if (embed && hasTextPreview(file))
+    return <DocumentCard chatId={chatId} file={file} name={name} />;
   return <FileChip chatId={chatId} file={file} name={name} />;
 }
 
@@ -210,7 +269,7 @@ function FileChip({
   name: string;
 }) {
   const image = isInlineImage(file);
-  const Icon = image ? ImageIcon : FileIcon;
+  const { Icon } = fileType(file);
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -228,6 +287,8 @@ function FileChip({
       <Lightbox chatId={chatId} file={file} name={name}>
         {image && (file.size ?? 0) <= MAX_INLINE_IMAGE_BYTES ? (
           <LightboxImage chatId={chatId} file={file} alt={name} />
+        ) : hasTextPreview(file) ? (
+          <PreviewText chatId={chatId} file={file} />
         ) : (
           <p className="text-muted-foreground text-sm">
             No preview is available for this file.
@@ -235,6 +296,132 @@ function FileChip({
         )}
       </Lightbox>
     </Dialog>
+  );
+}
+
+function usePreview(chatId: string, file: InlineFileReference) {
+  return useQuery({
+    ...chatFileGetPreviewOptions({
+      client,
+      path: { chat_id: chatId, file_id: file.file_id },
+    }),
+    retry: false,
+    staleTime: 60_000,
+  });
+}
+
+/** A document card: type, name, size and counts, a short excerpt, Open and Download. */
+function DocumentCard({
+  chatId,
+  file,
+  name,
+}: {
+  chatId: string;
+  file: InlineFileReference;
+  name: string;
+}) {
+  const { label, Icon } = fileType(file);
+  const preview = usePreview(chatId, file);
+  const meta = [label, sizeLabel(file.size), countLabel(preview.data)]
+    .filter(Boolean)
+    .join(" · ");
+  // Spans throughout: the card sits inside a Markdown paragraph.
+  return (
+    <span
+      role="group"
+      aria-label={`${label}: ${name}`}
+      className="bg-card text-card-foreground rounded-surface my-2 flex max-w-xl flex-col gap-2 border p-3"
+      data-inline-file="document"
+    >
+      <span className="flex min-w-0 items-start gap-2">
+        <Icon aria-hidden="true" className="mt-0.5 shrink-0" size={20} />
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate font-medium">{name}</span>
+          <span className="text-muted-foreground text-xs">{meta}</span>
+        </span>
+      </span>
+      {preview.isPending ? (
+        <span
+          role="status"
+          aria-label={`Loading preview of ${name}`}
+          className="bg-muted rounded-control block h-10 animate-pulse"
+        />
+      ) : preview.data?.excerpt ? (
+        <span className="text-muted-foreground line-clamp-3 text-sm whitespace-pre-wrap">
+          {preview.data.excerpt}
+        </span>
+      ) : null}
+      <span className="flex items-center gap-2">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" aria-label={`Open ${name}`}>
+              Open
+            </Button>
+          </DialogTrigger>
+          <Lightbox chatId={chatId} file={file} name={name}>
+            <PreviewText chatId={chatId} file={file} />
+          </Lightbox>
+        </Dialog>
+        <APIDownload
+          chatId={chatId}
+          fileId={file.file_id}
+          filename={file.name || name}
+          linkText="Download"
+        />
+      </span>
+    </span>
+  );
+}
+
+/** The excerpt as literal text: file content is never parsed as Markdown or HTML. */
+function PreviewText({
+  chatId,
+  file,
+}: {
+  chatId: string;
+  file: InlineFileReference;
+}) {
+  const preview = usePreview(chatId, file);
+  if (preview.isPending)
+    return (
+      <Skeleton
+        role="status"
+        aria-label="Loading preview"
+        className="h-40 w-full"
+      />
+    );
+  if (preview.isError)
+    return <p className="text-destructive text-sm">File unavailable.</p>;
+  const { excerpt, truncated, status } = preview.data;
+  if (!excerpt)
+    return (
+      <p className="text-muted-foreground text-sm">
+        {status === "pending"
+          ? "The preview is still being prepared."
+          : "No text preview is available for this file."}
+      </p>
+    );
+  return (
+    <div className="flex w-full max-w-3xl min-w-0 flex-col gap-2">
+      {countLabel(preview.data) && (
+        <p className="text-muted-foreground text-xs">
+          {countLabel(preview.data)}
+        </p>
+      )}
+      <pre
+        role="region"
+        tabIndex={0}
+        aria-label="Text preview"
+        className="bg-muted rounded-control max-h-[60dvh] overflow-auto p-3 text-sm whitespace-pre-wrap"
+      >
+        {excerpt}
+      </pre>
+      {truncated && (
+        <p className="text-muted-foreground text-xs">
+          Showing the start of the file. Download it to see everything.
+        </p>
+      )}
+    </div>
   );
 }
 

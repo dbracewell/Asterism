@@ -8,6 +8,7 @@ export const PNG_ID = "20000000-0000-4000-8000-000000000001";
 export const SVG_ID = "20000000-0000-4000-8000-000000000002";
 export const FOREIGN_ID = "20000000-0000-4000-8000-000000000003";
 export const GONE_ID = "20000000-0000-4000-8000-000000000004";
+export const DOCX_ID = "20000000-0000-4000-8000-000000000005";
 
 const files: InlineFileReference[] = [
   {
@@ -29,6 +30,16 @@ const files: InlineFileReference[] = [
     size: 300,
   },
   { file_id: GONE_ID, available: false },
+  {
+    file_id: DOCX_ID,
+    available: true,
+    role: "produced",
+    name: "report.docx",
+    mime_type:
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    kind: "document",
+    size: 2048,
+  },
 ];
 
 const token = (id: string) => `asterism-file:${id}`;
@@ -39,6 +50,7 @@ const content = [
   `Deleted: ![Deleted image](${token(GONE_ID)})`,
   `URL-shaped: ![Shaped](/api/py/chat/${INLINE_CHAT}/files/${PNG_ID}) [shaped link](asterism-file://${PNG_ID}) ![query](${token(PNG_ID)}?x=1) ![remote](https://untrusted.test/${token(PNG_ID)})`,
   `Literal: \`${token(PNG_ID)}\``,
+  `![](${token(DOCX_ID)})`,
 ].join("\n\n");
 
 export function InlineFilesHarness() {
