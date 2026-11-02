@@ -20,6 +20,7 @@ import { InlineFilesProvider } from "@/components/markdown-viewer/inline-files";
 import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
 import { TurnInspection } from "./turn-inspection";
+import { VerificationPanel } from "@/features/chat/components/verification/verification-panel";
 import { StreamingIndicator } from "./streaming-indicator";
 
 const NO_REQUESTS: PermissionRequest[] = [];
@@ -65,6 +66,7 @@ export const MessageItem = React.memo(
     sendJsonMessage: SendJsonMessage;
   }) => {
     const user = useUser();
+    const answerRef = React.useRef<HTMLDivElement>(null);
     const fromUser = message.role === "user";
     const showThinking = user.settings.show_thinking ?? false;
     const steps = React.useMemo(
@@ -126,8 +128,18 @@ export const MessageItem = React.memo(
                 })
               }
             />
-            <MessageBody message={message} />
+            <div ref={answerRef} className="contents">
+              <MessageBody message={message} />
+            </div>
           </InlineFilesProvider>
+          {!fromUser && message.verification && (
+            <VerificationPanel
+              chatId={chatId}
+              messageId={message.id}
+              verification={message.verification}
+              answerRef={answerRef}
+            />
+          )}
           {!!message.tool_call_results?.length && (
             <RetrievalCitations
               chatId={chatId}

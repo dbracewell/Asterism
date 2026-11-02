@@ -14,8 +14,8 @@ from asterism.domains.prompt_templates.provenance import label_availability
 
 from .attachments import bind_message_files, resolve_file_references
 from .branches import active_branch
-from .inline_files import apply_live_availability
 from .jobs import chat_jobs
+from .live_scope import apply_live_scope
 from .models import (
     ChatModel,
     MessageModel,
@@ -35,7 +35,6 @@ from .schemas import (
 )
 from .search import search as search
 from .sending import create_chat as create_chat
-from .span_citations import apply_live_citations
 
 
 async def add_message(
@@ -404,8 +403,7 @@ async def get_one(
                 chat_info.context_model = None
         scope = await resolve_chat_file_scope(user_id=user_id, chat_id=chat_id, session=session)
         allowed = set(scope.allowed_file_ids)
-        apply_live_availability(messages, allowed)
-        apply_live_citations(messages, allowed)
+        apply_live_scope(messages, allowed)
         for message in messages:
             message.files = [
                 file

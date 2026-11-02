@@ -13,10 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.common.log import get_logger
 from asterism.core.exceptions import NotFoundException
 from asterism.db.queries import paginate_select
+from asterism.domains.llm.selection import visible_model_name
 from asterism.domains.projects.scope import require_owned_project
 
 from .citations import resolve_citations, serialize_citations
-from .llm import visible_model_name
 from .models import StudyNoteModel
 from .queries import select_owned_notes
 from .schemas import StudyNote, StudyNoteCreate, StudyNotePage, StudyNoteSummary, StudyNoteUpdate

@@ -88,7 +88,7 @@ def drafts_api(project_api, monkeypatch):
     vectors, model = FakeVectors(), FakeModel()
     monkeypatch.setattr("asterism.domains.study.sources.get_async_db_session", session_context)
     monkeypatch.setattr("asterism.domains.study.sources.vector_store", vectors)
-    monkeypatch.setattr("asterism.domains.study.llm.create_llm_client", model.client)
+    monkeypatch.setattr("asterism.domains.llm.selection.create_llm_client", model.client)
     return SimpleNamespace(client=client, sessions=sessions, vectors=vectors, model=model)
 
 

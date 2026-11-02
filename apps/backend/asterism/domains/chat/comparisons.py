@@ -24,8 +24,9 @@ from asterism.domains.settings.queries import select_visible_models
 
 from .branches import active_branch, sibling_order
 from .draft_models import ChatSendReceiptModel
-from .inline_files import apply_live_availability, read_live_file_ids
+from .inline_files import read_live_file_ids
 from .jobs import chat_jobs
+from .live_scope import apply_live_scope
 from .model_selection import model_choice, require_chat_model
 from .models import ChatModel, MessageModel
 from .queries import select_owned_chats, select_owned_messages
@@ -39,7 +40,6 @@ from .schemas import (
     MessageCompareRequest,
     MessageStatus,
 )
-from .span_citations import apply_live_citations
 
 
 async def resolve_targets(
@@ -192,8 +192,7 @@ async def _comparison(
     result = []
     for column in columns:
         replies = _replies(column, by_id)
-        apply_live_availability(replies, live)
-        apply_live_citations(replies, live)
+        apply_live_scope(replies, live)
         result.append(
             ComparisonColumn(
                 index=column.comparison_index or 0,

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
 from asterism.domains.llm.schemas import LLMMessage
+from asterism.domains.llm.selection import ModelCall, resolve_usable_model
 from asterism.domains.retrieval.sources import SourceExcerpt
 
 from .drafting import (
@@ -23,7 +24,6 @@ from .drafting import (
     resolve_files,
     source_citation,
 )
-from .llm import ModelCall, resolve_model
 from .models import MAX_CARD_SIDE_CHARS
 from .schemas import StudyCardDraft, StudyCardDraftBatch, StudyCardDraftRequest, StudyDraftFileResult
 from .service import require_deck
@@ -104,7 +104,7 @@ async def generate_card_drafts(
     deadline = time.monotonic() + REQUEST_SECONDS
     await require_deck(user_id=user_id, project_id=project_id, deck_id=deck_id, session=session)
     files = await resolve_files(user_id=user_id, project_id=project_id, file_ids=request.file_ids, session=session)
-    model = await resolve_model(user_id=user_id, model_id=request.model_id, session=session)
+    model = await resolve_usable_model(user_id=user_id, model_id=request.model_id, session=session)
     # Release the request session's connection before the long-running work.
     await session.commit()
 

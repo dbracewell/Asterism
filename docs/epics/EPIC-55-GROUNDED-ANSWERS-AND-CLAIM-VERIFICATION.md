@@ -1,6 +1,6 @@
 # EPIC-55: Grounded answers and claim verification
 
-Status: in progress (US-55.1 complete). Source: product direction discussion (2026-10-31), core value proposition and learner track.
+Status: in progress (US-55.1 complete; US-55.2 implemented). Source: product direction discussion (2026-10-31), core value proposition and learner track.
 
 ## Objective
 
@@ -51,9 +51,15 @@ one against the scoped sources. Each claim is labelled supported, unsupported or
 contradicted, with evidence. The pass is bounded (claim count, time) and its
 usage is shown.
 
-- [ ] Implement claim extraction and per-claim retrieval checks with limits.
-- [ ] Store results with provenance and build the claim overlay.
-- [ ] Test scope narrowing, limits and label rendering; add evaluation fixtures.
+- [x] Implement claim extraction and per-claim retrieval checks with limits.
+- [x] Store results with provenance and build the claim overlay.
+- [x] Test scope narrowing, limits and label rendering; add evaluation fixtures.
+
+Implementation: [ADR-0041](../adr/0041-verify-pass.md). `chat/verification.py`
+runs the bounded pass over the answer's recorded file scope (narrowable, never
+widened) and stores `messages.verification`. The Verify dialog and Verification
+panel show labels, evidence, provenance and usage, and highlight claims in the
+answer. The pass is file-only; web verification is not included.
 
 ## US-55.3: Disagreement display
 

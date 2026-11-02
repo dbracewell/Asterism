@@ -20,6 +20,8 @@ from asterism.domains.prompt_templates.provenance import TemplateLabel, Template
 from asterism.domains.settings.pricing import ModelPricing
 from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
+from .verification_schemas import MessageVerification
+
 
 class MessageStatus(StrEnum):
     PENDING = auto()
@@ -255,6 +257,8 @@ class Message(LLMMessage):
     inline_files: list[InlineFileReference] = Field(default_factory=list)
     # Claim citations in ``content``, resolved at save time (US-55.1, ADR-0040).
     citations: list[SpanCitation] = Field(default_factory=list)
+    # The latest verify pass of this answer (US-55.2); labels, not edits.
+    verification: MessageVerification | None = None
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0

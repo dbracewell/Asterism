@@ -840,6 +840,41 @@ export type ChatUpdateRequest = {
 };
 
 /**
+ * ClaimEvidence
+ *
+ * A retrieved passage the verifier cited for a claim.
+ *
+ * ``name`` and ``excerpt`` are snapshots of untrusted text; ``available`` is
+ * rechecked against the live chat scope on read.
+ */
+export type ClaimEvidence = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * Chunk Id
+   */
+  chunk_id: string;
+  /**
+   * Artifact Generation
+   */
+  artifact_generation: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Excerpt
+   */
+  excerpt: string;
+  /**
+   * Available
+   */
+  available?: boolean;
+};
+
+/**
  * CoachCriterion
  *
  * The rubric a draft is reviewed against, in display order.
@@ -2413,6 +2448,7 @@ export type Message = {
    * Citations
    */
   citations?: Array<SpanCitation>;
+  verification?: MessageVerification | null;
   /**
    * Active Child Id
    */
@@ -2565,6 +2601,35 @@ export type MessageForkRequest = {
  * MessageStatus
  */
 export type MessageStatus = "pending" | "completed" | "cancelled";
+
+/**
+ * MessageVerification
+ *
+ * The latest verify pass of one assistant message, with its provenance.
+ */
+export type MessageVerification = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Model Name
+   */
+  model_name: string;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * File Ids
+   */
+  file_ids: Array<string>;
+  /**
+   * Claims
+   */
+  claims: Array<VerifiedClaim>;
+  usage: VerificationUsage;
+};
 
 /**
  * ModelCapabilitySource
@@ -5992,6 +6057,102 @@ export type UserSettings = {
 };
 
 /**
+ * VerificationUsage
+ *
+ * What the pass spent and where it stopped.
+ */
+export type VerificationUsage = {
+  /**
+   * Claims Found
+   */
+  claims_found: number;
+  /**
+   * Claims Checked
+   */
+  claims_checked: number;
+  /**
+   * Claim Limit
+   */
+  claim_limit: number;
+  /**
+   * Claims Truncated
+   */
+  claims_truncated?: boolean;
+  /**
+   * Answer Truncated
+   */
+  answer_truncated?: boolean;
+  /**
+   * Timed Out
+   */
+  timed_out?: boolean;
+  /**
+   * Searches
+   */
+  searches?: number;
+  /**
+   * Model Calls
+   */
+  model_calls?: number;
+  /**
+   * Input Tokens
+   */
+  input_tokens?: number;
+  /**
+   * Output Tokens
+   */
+  output_tokens?: number;
+  /**
+   * Duration Ms
+   */
+  duration_ms?: number;
+};
+
+/**
+ * VerifiedClaim
+ *
+ * One factual claim from the answer and its label. Labels never edit the answer.
+ */
+export type VerifiedClaim = {
+  /**
+   * Claim
+   */
+  claim: string;
+  /**
+   * Quote
+   */
+  quote?: string | null;
+  /**
+   * Label
+   */
+  label: "supported" | "unsupported" | "contradicted" | "unchecked";
+  /**
+   * Explanation
+   */
+  explanation?: string | null;
+  /**
+   * Evidence
+   */
+  evidence?: Array<ClaimEvidence>;
+};
+
+/**
+ * VerifyRequest
+ *
+ * Verify an answer with a chosen model, optionally against fewer of its sources.
+ */
+export type VerifyRequest = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * File Ids
+   */
+  file_ids?: Array<string> | null;
+};
+
+/**
  * ApplicationSettings
  *
  * Aggregate of global application settings (admin view).
@@ -7766,6 +7927,46 @@ export type ChatRunGetResponses = {
 };
 
 export type ChatRunGetResponse = ChatRunGetResponses[keyof ChatRunGetResponses];
+
+export type ChatMessageVerifyData = {
+  body: VerifyRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/verify";
+};
+
+export type ChatMessageVerifyErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatMessageVerifyError =
+  ChatMessageVerifyErrors[keyof ChatMessageVerifyErrors];
+
+export type ChatMessageVerifyResponses = {
+  /**
+   * Successful Response
+   */
+  200: MessageVerification;
+};
+
+export type ChatMessageVerifyResponse =
+  ChatMessageVerifyResponses[keyof ChatMessageVerifyResponses];
 
 export type ChatForkInstructionsGetData = {
   body?: never;
