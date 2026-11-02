@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { type QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { CornerDownRightIcon, NetworkIcon } from "lucide-react";
+import { useMemo } from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import type { ToolTimings } from "../lib/agent-timeline";
 import {
@@ -22,6 +23,7 @@ import {
   usageText,
 } from "../lib/comparison";
 import type { StreamingMessage } from "../types";
+import { turnStepsEndingAt } from "../lib/run-usage";
 import { MessageItem } from "./message/message-item";
 import { StreamingIndicator } from "./message/streaming-indicator";
 
@@ -138,7 +140,11 @@ function Column({
 }) {
   const activate = useMutation(chatComparisonActivateMutation({ client }));
   const label = columnLabel(column);
-  const replies = column.replies ?? [];
+  const replies = useMemo(() => column.replies ?? [], [column.replies]);
+  const turnSteps = useMemo(
+    () => replies.map((_, index) => turnStepsEndingAt(replies, index)),
+    [replies],
+  );
   const live =
     stream?.comparison?.column_id === column.request.id ? stream : null;
   const graph = runGraphReply(column);
@@ -190,6 +196,7 @@ function Column({
               canRegenerate={active && canRegenerate}
               onRegenerate={onRegenerate}
               toolTimings={toolTimings}
+              turnSteps={turnSteps[index]}
               sendJsonMessage={sendJsonMessage}
             />
           </div>

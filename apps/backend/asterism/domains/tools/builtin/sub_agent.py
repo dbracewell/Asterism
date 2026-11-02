@@ -352,6 +352,8 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             sub_agent_name=agent_profile.name,
             model_id=executed.id,
             model_name=executed.name,
+            provider_type=executed.provider_type,
+            pricing=executed.pricing,
             depth=len(ctx.call_stack),
             event=event,
         )

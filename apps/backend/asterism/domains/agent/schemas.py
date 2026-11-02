@@ -12,6 +12,8 @@ from asterism.domains.llm.schemas import (
     ToolCall,
     ToolResult,
 )
+from asterism.domains.settings.pricing import ModelPricing
+from asterism.domains.settings.provider_types import ProviderType
 
 from .context_provenance import ContextProvenance
 from .prompts import PromptProvenance
@@ -33,6 +35,8 @@ class SubAgentEventEnvelope(BaseModel):
     ``parent_execution_id`` is the delegating sub-agent's execution (None when
     the main agent delegated). ``model_id``/``model_name`` are the fixed model
     binding that ran; the name is None until the child resolves its model.
+    ``provider_type`` and ``pricing`` are usage provenance captured with the
+    resolved model (US-54.1).
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -42,6 +46,8 @@ class SubAgentEventEnvelope(BaseModel):
     sub_agent_name: str
     model_id: uuid.UUID | None = None
     model_name: str | None = None
+    provider_type: ProviderType | None = None
+    pricing: ModelPricing | None = None
     depth: int
     event: AgentEvent
 

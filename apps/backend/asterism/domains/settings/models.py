@@ -13,13 +13,26 @@ Two table families live here:
 import uuid
 
 from pydantic import JsonValue
-from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
+from .pricing import ModelPricing, pricing_from_columns
 from .provider_types import ModelCapabilitySource, ProviderType
 from .secrets import EncryptedText
 
@@ -111,6 +124,19 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
             "context_window IS NULL OR context_window > 0",
             name="ck_models_context_window_positive",
         ),
+        # Optional price metadata (US-54.1): both prices or neither, never negative.
+        CheckConstraint(
+            "(input_price_per_million IS NULL) = (output_price_per_million IS NULL)",
+            name="ck_models_pricing_pair",
+        ),
+        CheckConstraint(
+            "input_price_per_million IS NULL OR input_price_per_million >= 0",
+            name="ck_models_input_price_nonnegative",
+        ),
+        CheckConstraint(
+            "output_price_per_million IS NULL OR output_price_per_million >= 0",
+            name="ck_models_output_price_nonnegative",
+        ),
         Index("ix_models_provider_name_id", "provider_id", "name", "id"),
     )
 
@@ -178,6 +204,9 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
         default=ModelCapabilitySource.UNKNOWN,
         server_default=ModelCapabilitySource.UNKNOWN.value,
     )
+    # US dollars per million tokens; snapshotted into runs at execution time.
+    input_price_per_million: Mapped[float | None] = mapped_column(Float, nullable=True)
+    output_price_per_million: Mapped[float | None] = mapped_column(Float, nullable=True)
     # No single-column index: lookups by provider_id are covered by the leading
     # column of ix_models_provider_name_id.
     provider_id: Mapped[uuid.UUID] = mapped_column(
@@ -189,6 +218,15 @@ class LLMModel(Base, UuidPrimaryKeyMixin):
         "ProviderModel",
         back_populates="models",
     )
+
+    @property
+    def pricing(self) -> ModelPricing | None:
+        return pricing_from_columns(self.input_price_per_million, self.output_price_per_million)
+
+    @pricing.setter
+    def pricing(self, value: ModelPricing | None) -> None:
+        self.input_price_per_million = value.input_per_million if value else None
+        self.output_price_per_million = value.output_per_million if value else None
 
 
 class UserSettingModel(Base, TimestampMixin):

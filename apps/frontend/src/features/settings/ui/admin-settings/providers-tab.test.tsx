@@ -341,6 +341,45 @@ describe("provider model browser", () => {
     expect(mocks.updateProviderSettings).not.toHaveBeenCalled();
   });
 
+  it("saves price metadata as a pair and rejects a half-filled pair", async () => {
+    mocks.updateModel.mockResolvedValue({});
+    mocks.listModels.mockResolvedValue({
+      models: [
+        {
+          id: "priced-model",
+          name: "Priced candidate",
+          provider_id: settings.llm_providers![0].id,
+          is_active: true,
+          context_window: null,
+        },
+      ],
+      total: 1,
+    });
+    render(<ProvidersTab appSettings={settings} />, { wrapper: Wrapper });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse 1,000 models" }),
+    );
+    await screen.findByText("Priced candidate");
+    fireEvent.change(screen.getByLabelText("Input $ / 1M tokens"), {
+      target: { value: "2.5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save" })).toBeEnabled(),
+    );
+    expect(mocks.updateModel).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Output $ / 1M tokens"), {
+      target: { value: "10" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mocks.updateModel).toHaveBeenCalledTimes(1));
+    expect(mocks.updateModel.mock.calls[0][0].body.pricing).toEqual({
+      input_per_million: 2.5,
+      output_per_million: 10,
+    });
+  });
+
   it("clears the draft model when its provider is removed", async () => {
     const draftProviderId = "20000000-0000-4000-8000-000000000001";
     const retainedProviderId = "20000000-0000-4000-8000-000000000002";

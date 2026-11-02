@@ -14,6 +14,7 @@ from asterism.domains.chat.schemas import (
     Message,
     MessageStatus,
     NewMessageRequest,
+    UsageStep,
 )
 from asterism.domains.chat.service import add_message, get_one
 from asterism.domains.llm.schemas import Function, ToolCall, ToolResult
@@ -83,6 +84,7 @@ def test_collector_records_identity_timing_tools_and_outcome():
         tool_calls=[call("a"), call("b", "read")],
         tool_results=[result("a")],
         output="Answer",
+        steps=[UsageStep(), UsageStep()],
     )
     assert child.parent_execution_id == LEAD
     assert (child.status, child.error, child.depth) == ("error", "Timed out", 2)

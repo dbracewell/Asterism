@@ -359,7 +359,11 @@ class Agent:
             self.execution_scope = replace(
                 self.execution_scope,
                 executed_model=ModelIdentity(
-                    id=self.model_id, provider_id=model_info.provider.id, name=model_info.name
+                    id=self.model_id,
+                    provider_id=model_info.provider.id,
+                    name=model_info.name,
+                    provider_type=model_info.provider.provider_type,
+                    pricing=model_info.pricing,
                 ),
             )
         if self._client is not None:

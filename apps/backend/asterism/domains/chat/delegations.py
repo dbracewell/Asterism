@@ -13,7 +13,7 @@ import uuid
 from asterism.domains.agent.schemas import AgentEventType, SubAgentEventEnvelope
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
-from .schemas import DelegationRecord, DelegationStatus
+from .schemas import DelegationRecord, DelegationStatus, UsageStep
 
 
 def _now_ms() -> int:
@@ -33,6 +33,7 @@ class DelegationCollector:
             parent_execution_id=envelope.parent_execution_id,
             sub_agent_id=envelope.sub_agent_id,
             name=envelope.sub_agent_name,
+            model_id=envelope.model_id,
             model_name=envelope.model_name,
             depth=envelope.depth,
             status="running",
@@ -42,6 +43,11 @@ class DelegationCollector:
         update: dict[str, object] = {"ended_at_ms": now}
         if envelope.model_name:
             update["model_name"] = envelope.model_name
+        # Usage provenance arrives once the child resolves its model.
+        for key in ("model_id", "provider_type", "pricing"):
+            value = getattr(envelope, key)
+            if value is not None:
+                update[key] = value
         event = envelope.event
         match event.type:
             case AgentEventType.START:
@@ -55,6 +61,14 @@ class DelegationCollector:
                     "status": "running" if event.tool_calls else "completed",
                     "output": event.content or record.output,
                     "tool_results": _merge_tool_results(record.tool_results, event.tool_results),
+                    "steps": [
+                        *record.steps,
+                        UsageStep(
+                            input_tokens=max(event.input_tokens, 0),
+                            output_tokens=max(event.output_tokens, 0),
+                            generation_duration_ms=max(event.generation_duration_ms, 0),
+                        ),
+                    ],
                 }
             case AgentEventType.ERROR:
                 update |= {"status": "error", "error": event.content}

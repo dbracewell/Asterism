@@ -47,6 +47,7 @@ import {
   comparePayload,
 } from "./compare-targets";
 import { groupTranscript } from "../lib/comparison";
+import { turnStepsEndingAt } from "../lib/run-usage";
 import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
 import { ChatHintControls } from "./chat-hint-controls";
 import {
@@ -323,6 +324,14 @@ export const ChatSession = ({
     sendJsonMessage({ type: "resume" });
   };
 
+  // Each settled final step's turn, for its usage summary (US-54.1).
+  const turnSteps = React.useMemo(
+    () =>
+      (session?.messages ?? []).map((_, index, messages) =>
+        turnStepsEndingAt(messages, index),
+      ),
+    [session?.messages],
+  );
   const connectionStatus = React.useMemo(
     () => connectionStatusMap[readyState],
     [readyState],
@@ -528,6 +537,7 @@ export const ChatSession = ({
                 onRegenerate={requestRegeneration}
                 onCompare={compareAction(item.index)}
                 toolTimings={toolTimings}
+                turnSteps={turnSteps[item.index]}
                 sendJsonMessage={sendJsonMessage}
               />
             ),

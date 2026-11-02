@@ -14,6 +14,7 @@ from asterism.domains.agent.skill_inputs import SkillIdentity
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
 from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateUse
+from asterism.domains.settings.pricing import ModelPricing
 from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
 
@@ -26,12 +27,24 @@ class MessageStatus(StrEnum):
 DelegationStatus = Literal["running", "completed", "error", "cancelled"]
 
 
+class UsageStep(BaseModel):
+    """Provider-reported usage of one model call (0 when the provider reported none)."""
+
+    model_config = ConfigDict(extra="forbid")
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    generation_duration_ms: int = Field(default=0, ge=0)
+
+
 class DelegationRecord(BaseModel):
     """One sub-agent delegation observed during an assistant step.
 
     Persisted on the assistant message whose tool calls ran it, for history
     display only: identity, the fixed model that ran, timing, the child's own
     tool calls and results, and its output or error. Thinking and prompts are not kept.
+    ``steps`` is the usage of each of the child's model calls, and
+    ``provider_type``/``pricing`` the model's usage provenance, all as recorded
+    at execution time (US-54.1).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -39,7 +52,11 @@ class DelegationRecord(BaseModel):
     parent_execution_id: uuid.UUID | None = None
     sub_agent_id: uuid.UUID
     name: str
+    model_id: uuid.UUID | None = None
     model_name: str | None = None
+    provider_type: ProviderType | None = None
+    pricing: ModelPricing | None = None
+    steps: list[UsageStep] = Field(default_factory=list)
     depth: int = Field(ge=0)
     status: DelegationStatus
     started_at_ms: int = Field(ge=0)
@@ -78,6 +95,8 @@ class ChatModelChoice(BaseModel):
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     supports_vision: bool | None = None
     supports_tools: bool | None = None
+    # Price metadata snapshotted with the choice; executions keep it (US-54.1).
+    pricing: ModelPricing | None = None
 
 
 class SkillSelection(BaseModel):

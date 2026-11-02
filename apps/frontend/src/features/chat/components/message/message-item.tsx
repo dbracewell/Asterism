@@ -10,6 +10,7 @@ import {
   messageTimelineSteps,
 } from "@/features/chat/lib/agent-timeline";
 import { PermissionRequest, StreamingMessage } from "@/features/chat/types";
+import type { Message } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -17,6 +18,7 @@ import { MessageActions } from "./message-actions";
 import { MessageBody } from "./message-body";
 import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
+import { RunUsageSummary } from "./run-usage-summary";
 import { StreamingIndicator } from "./streaming-indicator";
 
 const NO_REQUESTS: PermissionRequest[] = [];
@@ -34,6 +36,7 @@ export const MessageItem = React.memo(
     startsTurn,
     streaming = false,
     toolTimings,
+    turnSteps,
     canRegenerate,
     onRegenerate,
     onCompare,
@@ -47,6 +50,8 @@ export const MessageItem = React.memo(
     /** The live message; its timeline opens when the user shows thinking. */
     streaming?: boolean;
     toolTimings?: ToolTimings;
+    /** The turn's assistant steps when this is its settled final step. */
+    turnSteps?: Message[] | null;
     canRegenerate: boolean;
     onRegenerate: (parentId?: string | null) => void;
     onCompare?: () => void;
@@ -127,6 +132,12 @@ export const MessageItem = React.memo(
               />
               <span className="opacity-0 transition-opacity group-focus-within/message:opacity-100 group-hover/message:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100">
                 <MessageMeta message={message} />
+                {!fromUser && turnSteps && (
+                  <>
+                    {" · "}
+                    <RunUsageSummary steps={turnSteps} />
+                  </>
+                )}
               </span>
             </footer>
           )}

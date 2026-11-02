@@ -25,6 +25,7 @@ from pydantic import (
 
 from asterism.domains.agent.schemas import MainAgentConfiguration, SubAgentDefinition
 
+from .pricing import ModelPricing
 from .provider_types import (
     ModelCapabilitySource,
     ProviderType,
@@ -63,6 +64,8 @@ class Llm(BaseModel):
     tools_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+    # Optional admin price metadata (US dollars per million tokens).
+    pricing: ModelPricing | None = None
 
     @model_validator(mode="after")
     def normalize_capability_sources(self) -> "Llm":
@@ -145,6 +148,8 @@ class LlmDisplayInfo(BaseModel):
     tools_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+    # Optional admin price metadata (US dollars per million tokens).
+    pricing: ModelPricing | None = None
 
 
 class ComponentProviderParameters(BaseModel):
@@ -245,6 +250,8 @@ class ProviderModelUpdate(BaseModel):
     tools_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     context_window_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
     vision_source: ModelCapabilitySource = ModelCapabilitySource.UNKNOWN
+    # Optional admin price metadata (US dollars per million tokens).
+    pricing: ModelPricing | None = None
 
     @model_validator(mode="after")
     def normalize_capability_sources(self) -> "ProviderModelUpdate":

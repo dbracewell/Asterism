@@ -1,6 +1,6 @@
 # EPIC-54: Run inspection, replay and comparison
 
-Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7). Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1 implemented, awaiting confirmation). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
@@ -35,9 +35,9 @@ Acceptance: each assistant message shows total input and output tokens and an
 estimated cost. Expanding it breaks the totals down per agent and per step.
 Models without pricing show tokens only. Plan-backed runs show "ChatGPT plan".
 
-- [ ] Record per-step usage on delegation records and messages.
-- [ ] Add optional price metadata to model settings; regenerate the client.
-- [ ] Build the usage summary and breakdown; test totals, missing prices and plan runs.
+- [x] Record per-step usage on delegation records and messages.
+- [x] Add optional price metadata to model settings; regenerate the client.
+- [x] Build the usage summary and breakdown; test totals, missing prices and plan runs.
 
 ## US-54.2: Capability manifest
 

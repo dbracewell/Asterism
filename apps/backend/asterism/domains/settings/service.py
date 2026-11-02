@@ -86,6 +86,7 @@ def llm_display_info(model: LLMModel) -> LlmDisplayInfo:
         tools_source=model.tools_source,
         context_window_source=model.context_window_source,
         vision_source=model.vision_source,
+        pricing=model.pricing,
     )
 
 
@@ -560,6 +561,7 @@ async def update_provider_model(
         model.supports_vision = update.supports_vision
         model.context_window_source = update.context_window_source
         model.vision_source = update.vision_source
+        model.pricing = update.pricing
         await session.flush()
 
         await get_captioning_selection_guard().validate(session=session)
@@ -1110,6 +1112,7 @@ async def bulk_upsert_providers(
                         tools_source=m.tools_source,
                         context_window_source=m.context_window_source,
                         vision_source=m.vision_source,
+                        pricing=m.pricing,
                     )
                     for m in provider.models
                 ],
@@ -1128,7 +1131,8 @@ def _merge_models(
 ):
     """Merge incoming model data into existing ORM rows keyed by name.
 
-    Existing rows keep their identity (id); models absent from ``new_models``
+    Existing rows keep their identity (id) and price metadata, which is edited
+    only per model (``update_provider_model``); models absent from ``new_models``
     are dropped from the returned list so the delete-orphan cascade removes them.
     """
     existing_models_by_name = {m.name: m for m in existing}
@@ -1155,6 +1159,7 @@ def _merge_models(
                 tools_source=m_data.tools_source,
                 context_window_source=m_data.context_window_source,
                 vision_source=m_data.vision_source,
+                pricing=m_data.pricing,
             )
             synced_models.append(new_model)
     return synced_models
