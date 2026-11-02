@@ -45,6 +45,7 @@ from .schemas import (
     ChatSendRequest,
     ChatUpdateRequest,
     ComparisonActivate,
+    ContextLayerTexts,
     Message,
     MessageCompareRequest,
     NewChatRequest,
@@ -539,6 +540,20 @@ async def get_comparison(
     from .comparisons import read_comparison
 
     return await read_comparison(user_id=user.id, chat_id=chat_id, comparison_id=comparison_id, session=db)
+
+
+@chat_router.get(
+    "/{chat_id}/messages/{message_id}/context/layers",
+    response_model=ContextLayerTexts,
+    operation_id="chatContextLayersGet",
+)
+async def get_context_layers(
+    chat_id: uuid.UUID, message_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> ContextLayerTexts:
+    """The prompt layer text a recorded assistant step used; owner only."""
+    from .context_inspection import read_context_layers
+
+    return await read_context_layers(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
 
 
 @chat_router.put(

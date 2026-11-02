@@ -998,6 +998,171 @@ export type ConfigurationProvenance = {
 };
 
 /**
+ * ContextChunk
+ *
+ * A retrieved chunk reference; its excerpt lives in the step's tool result.
+ */
+export type ContextChunk = {
+  /**
+   * Tool Call Id
+   */
+  tool_call_id: string;
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * Chunk Id
+   */
+  chunk_id: string;
+  /**
+   * Artifact Generation
+   */
+  artifact_generation: number;
+  /**
+   * Score
+   */
+  score: number;
+  /**
+   * Truncated
+   */
+  truncated?: boolean;
+};
+
+/**
+ * ContextFile
+ *
+ * A file attached on the active branch and what the model received of it.
+ */
+export type ContextFile = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * Name
+   */
+  name: string;
+  inclusion: FileInclusion;
+  /**
+   * Reason
+   */
+  reason?: string | null;
+};
+
+/**
+ * ContextLayer
+ */
+export type ContextLayer = {
+  /**
+   * Kind
+   */
+  kind:
+    | "platform"
+    | "agent"
+    | "profile"
+    | "mode"
+    | "project"
+    | "skills"
+    | "runtime";
+  /**
+   * Source Id
+   */
+  source_id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Digest
+   */
+  digest: string;
+  /**
+   * Characters
+   */
+  characters: number;
+};
+
+/**
+ * ContextLayerText
+ *
+ * One recorded prompt layer with its text; returned only to the chat owner.
+ */
+export type ContextLayerText = {
+  /**
+   * Kind
+   */
+  kind:
+    | "platform"
+    | "agent"
+    | "profile"
+    | "mode"
+    | "project"
+    | "skills"
+    | "runtime";
+  /**
+   * Source Id
+   */
+  source_id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Text
+   */
+  text: string;
+};
+
+/**
+ * ContextLayerTexts
+ */
+export type ContextLayerTexts = {
+  /**
+   * Layers
+   */
+  layers: Array<ContextLayerText>;
+};
+
+/**
+ * ContextManifest
+ */
+export type ContextManifest = {
+  /**
+   * Layers
+   */
+  layers?: Array<ContextLayer>;
+  template?: TemplateProvenance | null;
+  /**
+   * Files
+   */
+  files?: Array<ContextFile>;
+  /**
+   * Chunks
+   */
+  chunks?: Array<ContextChunk>;
+  /**
+   * Omissions
+   */
+  omissions?: Array<ContextOmission>;
+};
+
+/**
+ * ContextOmission
+ */
+export type ContextOmission = {
+  kind: OmissionKind;
+  /**
+   * Subject
+   */
+  subject?: string | null;
+  /**
+   * Reason
+   */
+  reason: string;
+};
+
+/**
  * ContextProvenance
  */
 export type ContextProvenance = {
@@ -1127,6 +1292,7 @@ export type DelegationRecord = {
    */
   steps?: Array<UsageStep>;
   capabilities?: CapabilityManifest | null;
+  context?: ContextManifest | null;
   /**
    * Depth
    */
@@ -1358,6 +1524,11 @@ export type FeedbackSectionId = "correct" | "gaps" | "follow_up";
  * deterministic failures (missing bytes, too large, conversion error).
  */
 export type FileContentStatus = "pending" | "ready" | "unsupported" | "failed";
+
+/**
+ * FileInclusion
+ */
+export type FileInclusion = "text" | "image" | "omitted";
 
 /**
  * FileKind
@@ -2010,6 +2181,7 @@ export type Message = {
    * Delegations
    */
   delegations?: Array<DelegationRecord> | null;
+  context?: ContextManifest | null;
   /**
    * Files
    */
@@ -2232,6 +2404,17 @@ export type NewChatRequest = {
    */
   files?: Array<string>;
 };
+
+/**
+ * OmissionKind
+ *
+ * Omitted attached files carry their reason on ``ContextFile`` instead.
+ */
+export type OmissionKind =
+  | "runtime_instructions"
+  | "retrieval"
+  | "retrieved_excerpt"
+  | "forwarded_context";
 
 /**
  * PersonaCollection
@@ -5074,6 +5257,34 @@ export type TemplateLabel = {
 };
 
 /**
+ * TemplateProvenance
+ *
+ * Server-resolved snapshot stored immutably on the accepted user message.
+ */
+export type TemplateProvenance = {
+  /**
+   * Source
+   */
+  source: "framework" | "template";
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Level
+   */
+  level: "guided" | "standard" | "freeform";
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
  * TemplateUse
  *
  * Client claim attached to a send: which template built this prompt.
@@ -7110,6 +7321,46 @@ export type ChatComparisonGetOneResponses = {
 
 export type ChatComparisonGetOneResponse =
   ChatComparisonGetOneResponses[keyof ChatComparisonGetOneResponses];
+
+export type ChatContextLayersGetData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/context/layers";
+};
+
+export type ChatContextLayersGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatContextLayersGetError =
+  ChatContextLayersGetErrors[keyof ChatContextLayersGetErrors];
+
+export type ChatContextLayersGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContextLayerTexts;
+};
+
+export type ChatContextLayersGetResponse =
+  ChatContextLayersGetResponses[keyof ChatContextLayersGetResponses];
 
 export type ChatComparisonActivateData = {
   body: ComparisonActivate;

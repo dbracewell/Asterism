@@ -132,7 +132,9 @@ export const MessageItem = React.memo(
               />
               <span className="opacity-0 transition-opacity group-focus-within/message:opacity-100 group-hover/message:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100">
                 <MessageMeta message={message} />
-                {!fromUser && turnSteps && <TurnInspection steps={turnSteps} />}
+                {!fromUser && turnSteps && (
+                  <TurnInspection chatId={chatId} steps={turnSteps} />
+                )}
               </span>
             </footer>
           )}

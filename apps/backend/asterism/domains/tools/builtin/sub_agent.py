@@ -19,6 +19,13 @@ from pydantic import BaseModel, Field
 from asterism.common.log import get_logger
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
 from asterism.domains.agent.capabilities import CapabilityManifest
+from asterism.domains.agent.context_manifest import (
+    ContextManifest,
+    ContextOmission,
+    OmissionKind,
+    layer_references,
+    runtime_omissions,
+)
 from asterism.domains.agent.context_provenance import describe_context
 from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
@@ -47,7 +54,9 @@ class SubAgentArgs(BaseModel):
     )
 
 
-def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
+def _build_parent_context_block(
+    ctx: ToolContext[SubAgentArgs], omissions: list[ContextOmission] | None = None
+) -> str | None:
     """Assemble the bounded "forwarded parent context" block for a child agent.
 
     Combines caller notes, uploaded file names, and a recent conversation
@@ -55,9 +64,18 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
     fits the configured token budget. The block is wrapped in untrusted-data
     delimiters so the child treats it as data, not instructions.
 
+    Args:
+        ctx: The delegation's tool context.
+        omissions: When given, receives what was left out and why (US-54.3).
+
     Returns:
         The delimited context block, or None when nothing is worth forwarding.
     """
+
+    def omit(reason: str) -> None:
+        if omissions is not None:
+            omissions.append(ContextOmission(kind=OmissionKind.FORWARDED_CONTEXT, reason=reason))
+
     from asterism.core.config import config
 
     sections: list[str] = []
@@ -92,6 +110,11 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
             selected_messages.append(f"[{role}]: {msg_content}")
             accumulated_tokens += msg_tokens
 
+        if len(selected_messages) < len(ctx.session.messages):
+            omit(
+                f"Only the latest {len(selected_messages)} of {len(ctx.session.messages)} chat messages were "
+                "forwarded, to fit the message and token limits."
+            )
         if selected_messages:
             selected_messages.reverse()
             convo_str = "\n".join(selected_messages)
@@ -108,7 +131,10 @@ def _build_parent_context_block(ctx: ToolContext[SubAgentArgs]) -> str | None:
     suffix = "\n--- END FORWARDED PARENT CONTEXT ---"
     budget = config.sub_agent_context_window_tokens
     if estimate_text_tokens(prefix + suffix) > budget:
+        omit("Forwarded context did not fit the token budget and was left out.")
         return None
+    if estimate_text_tokens(prefix + body + suffix) > budget:
+        omit("Forwarded context was cut to fit the token budget.")
     while estimate_text_tokens(prefix + body + suffix) > budget:
         body = body[: int(len(body) * 0.8)]
     return prefix + body + suffix
@@ -184,6 +210,18 @@ async def _child_capabilities(agent: Agent) -> CapabilityManifest | None:
     except Exception:
         get_logger("SUB_AGENT").warning("capability manifest capture failed", exc_info=True)
         return None
+
+
+def _child_context(agent: Agent, forwarded: list[ContextOmission]) -> ContextManifest:
+    """What the child was given: its prompt layers and any forwarded-context cuts.
+
+    Chunks the child retrieves are added from its step results as they arrive.
+    """
+    snapshot = agent.prompt_snapshot
+    return ContextManifest(
+        layers=layer_references(snapshot) if snapshot else [],
+        omissions=[*(runtime_omissions(snapshot) if snapshot else []), *forwarded],
+    )
 
 
 async def _emit(
@@ -375,7 +413,11 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         execution_scope=child_scope,
     )
 
-    def envelope(event: AgentEvent, capabilities: CapabilityManifest | None = None) -> SubAgentEventEnvelope:
+    def envelope(
+        event: AgentEvent,
+        capabilities: CapabilityManifest | None = None,
+        context: ContextManifest | None = None,
+    ) -> SubAgentEventEnvelope:
         # The child resolves its model before its first event, filling in the name.
         executed = (agent.execution_scope or child_scope).executed_model
         return SubAgentEventEnvelope(
@@ -388,6 +430,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             provider_type=executed.provider_type,
             pricing=executed.pricing,
             capabilities=capabilities,
+            context=context,
             depth=len(ctx.call_stack),
             event=event,
         )
@@ -400,7 +443,8 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         AgentEventType.ERROR,
     }
 
-    context_block = _build_parent_context_block(ctx)
+    forwarded_omissions: list[ContextOmission] = []
+    context_block = _build_parent_context_block(ctx, forwarded_omissions)
     sub_agent_messages: list[LLMMessage] = []
     if context_block:
         sub_agent_messages.append(LLMMessage.user(context_block))
@@ -416,6 +460,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     )
     received_event = False
     capabilities: CapabilityManifest | None = None
+    context: ContextManifest | None = None
     logger.info(
         "delegation started execution_id=%s sub_agent_name=%s context_included=%s file_count=%d",
         execution_id,
@@ -429,6 +474,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                 # The child has resolved its model and tools by its first event;
                 # the manifest rides on the next forwarded envelope only.
                 capabilities = await _child_capabilities(agent)
+                context = _child_context(agent, forwarded_omissions)
             received_event = True
             last_response = event
             if event.type == AgentEventType.COMPLETE:
@@ -436,8 +482,8 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                 total_tokens += event.total_tokens or 0
 
             if event.type in forwarded_types:
-                await _emit(ctx.event_sink, envelope(event, capabilities))
-                capabilities = None
+                await _emit(ctx.event_sink, envelope(event, capabilities, context))
+                capabilities = context = None
         if not received_event:
             await _emit(
                 ctx.event_sink,

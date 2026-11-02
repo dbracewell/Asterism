@@ -13,7 +13,9 @@ from asterism.core.events import ChatUpdateEvent, Event, EventType, event_bus
 from asterism.core.exceptions import BadDataException
 from asterism.domains.agent.agent import Agent
 from asterism.domains.agent.approval import InteractiveApprovalPolicy
+from asterism.domains.agent.context_manifest import ContextFile, ContextManifest
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
+from asterism.domains.chat.context_manifest import file_context, step_context, turn_context
 from asterism.domains.chat.delegations import DelegationCollector
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.prompts import create_title_generation_prompt
@@ -36,6 +38,7 @@ from asterism.domains.llm.schemas import (
     ToolCall,
 )
 from asterism.domains.llm.token_counting import estimate_text_tokens
+from asterism.domains.prompt_templates.provenance import TemplateProvenance
 from asterism.domains.settings import service as settings_service
 from asterism.domains.tools.registry import tool_registry
 
@@ -60,6 +63,8 @@ class ChatOrchestrator:
         self._streaming_thinking: str = ""
         self._execution: MessageExecution | None = None
         self._delegations = DelegationCollector()
+        # US-54.3: what the current run was given, shared by its steps.
+        self._context: ContextManifest | None = None
         # US-54.4: identifies the comparison column the current run answers.
         self._comparison: dict[str, str] | None = None
 
@@ -153,6 +158,7 @@ class ChatOrchestrator:
                     thinking=self._streaming_thinking,
                     status=MessageStatus.CANCELLED,
                     delegations=delegations or None,
+                    context=self._context,
                     parent_message_id=parent_id,
                     execution=self._execution,
                     model_id=self.agent.model_id,  # type: ignore
@@ -322,6 +328,11 @@ class ChatOrchestrator:
             future.set_result(approved)
 
     async def _build_agent_messages(self) -> list[LLMMessage]:
+        messages, _ = await self._assemble_agent_messages()
+        return messages
+
+    async def _assemble_agent_messages(self) -> tuple[list[LLMMessage], list[ContextFile]]:
+        """The provider messages, plus how each attached file was included (US-54.3)."""
         ids = {file.file_id for message in self.chat.messages for file in message.files}
         payloads = {}
         self.agent.file_input_authorization = None
@@ -380,7 +391,18 @@ class ChatOrchestrator:
                 messages.append(LLMMessage(role="user", content=parts))
             for result in message.tool_call_results or []:
                 messages.append(LLMMessage.tool_call_result(result))
-        return messages
+        references = [
+            reference for message in self.chat.messages if message.role == "user" for reference in message.files
+        ]
+        return messages, file_context(references, payloads)
+
+    def _turn_template(self, index: int) -> TemplateProvenance | None:
+        """The template label of the user turn this run answers, if any."""
+        for message in reversed(self.chat.messages[: index + 1]):
+            if message.role == "user":
+                label = message.template
+                return TemplateProvenance.model_validate(label.model_dump(exclude={"available"})) if label else None
+        return None
 
     async def estimate_context_usage(self) -> ChatContextUsage:
         """Estimate the initial provider payload using the same runtime assembly.
@@ -446,10 +468,16 @@ class ChatOrchestrator:
             self._streaming_content = ""
             self._streaming_thinking = ""
             self._delegations = DelegationCollector()
+            self._context = None
 
             self._execution = await self.agent.prepare_execution(parent_message.id)
             await self.agent.prepare_execution_scope()
-            messages = await self._build_agent_messages()
+            messages, files = await self._assemble_agent_messages()
+            self._context = turn_context(
+                self.agent.prompt_snapshot,
+                template=self._turn_template(last_user_message_index),
+                files=files,
+            )
             async for event in self.agent.run(messages=messages):
                 match event:
                     case AgentEvent(type=AgentEventType.COMPLETE):
@@ -482,6 +510,7 @@ class ChatOrchestrator:
                                 tool_calls=event.tool_calls if event.has_tool_calls() else None,
                                 tool_call_results=event.tool_results if event.has_tool_results() else None,
                                 delegations=self._delegations.drain() or None,
+                                context=step_context(self._context, event.tool_results) if self._context else None,
                                 execution=self._execution,
                                 model_id=self.agent.model_id,  # type:ignore
                             ),

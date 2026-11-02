@@ -21,6 +21,7 @@ from asterism.core.config import default_allowed_tools
 from asterism.db.base_model import Base
 from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
+from asterism.domains.agent.context_manifest import ContextManifest
 from asterism.domains.agent.learning_inputs import (
     HintLevel,
     LearningModeId,
@@ -230,6 +231,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     # Sub-agent delegations run by this step's tool calls (history display only).
     delegations: Mapped[list[DelegationRecord] | None] = mapped_column(
         jsonb_type(TypeAdapter(list[DelegationRecord])),
+        nullable=True,
+    )
+    # Context manifest of an assistant step: references and reasons only (US-54.3).
+    context: Mapped[ContextManifest | None] = mapped_column(
+        jsonb_type(TypeAdapter(ContextManifest)),
         nullable=True,
     )
     files: Mapped[list[MessageFileReference]] = mapped_column(

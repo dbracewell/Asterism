@@ -108,6 +108,7 @@ class RetrievalHit(BaseModel):
             unit-normalized vectors).
         match_kind: Chunk provenance as stored ("caption" or "text").
         excerpt: Byte-budgeted excerpt of the chunk content.
+        truncated: True when the byte budget cut the excerpt short.
     """
 
     file_id: uuid.UUID
@@ -118,6 +119,7 @@ class RetrievalHit(BaseModel):
     score: float
     match_kind: str
     excerpt: str
+    truncated: bool = False
 
 
 class RetrievalResponse(BaseModel):
@@ -135,6 +137,7 @@ class RetrievalResponse(BaseModel):
             searchable in this context.
         scope: Compact summary of the execution scope this search ran under.
         provenance: Full content-free provenance for audit/future derived context.
+        omitted_for_budget: Matches left out because the byte budget ran out.
     """
 
     results: list[RetrievalHit] = Field(default_factory=list)
@@ -143,6 +146,7 @@ class RetrievalResponse(BaseModel):
     file_states: list[dict[str, str]] = Field(default_factory=list)
     scope: dict[str, str | int | None]
     provenance: ContextProvenance
+    omitted_for_budget: int = Field(default=0, ge=0)
 
 
 def _file_status(artifact: RetrievalArtifact | None) -> str:
@@ -279,6 +283,7 @@ class RetrievalService:
         *,
         message: str | None = None,
         results: list[RetrievalHit] | None = None,
+        omitted_for_budget: int = 0,
     ) -> RetrievalResponse:
         """Assemble the response envelope for a search outcome.
 
@@ -288,12 +293,14 @@ class RetrievalService:
             snapshot: Snapshot used to report per-file states.
             message: Human-readable explanation when no results were produced.
             results: Matching hits, if any.
+            omitted_for_budget: Matches dropped because the byte budget ran out.
         """
         return RetrievalResponse(
             provenance=describe_context(scope),
             results=results or [],
             count=len(results or []),
             message=message,
+            omitted_for_budget=omitted_for_budget,
             file_states=_file_states(snapshot),
             scope={
                 "chat_id": str(scope.chat_id),
@@ -382,8 +389,8 @@ class RetrievalService:
         #    vector search: a file revoked during the query drops out here and
         #    its matches are discarded by _enrich's generation cross-checks.
         snapshot = await self._read(scope)
-        results = self._enrich(scope, snapshot, queried, matches, top_k)
-        return self._response(scope, snapshot, results=results)
+        results, omitted = self._enrich(scope, snapshot, queried, matches, top_k)
+        return self._response(scope, snapshot, results=results, omitted_for_budget=omitted)
 
     def _enrich(
         self,
@@ -392,7 +399,7 @@ class RetrievalService:
         queried: dict[str, RetrievalArtifact],
         matches: list[VectorSearchResult],
         top_k: int,
-    ) -> list[RetrievalHit]:
+    ) -> tuple[list[RetrievalHit], int]:
         """Turn raw vector matches into provenance-verified hits.
 
         A match is kept only if it survives every cross-check below; otherwise
@@ -411,13 +418,15 @@ class RetrievalService:
 
         Returns:
             Hits in original match order, each excerpt clipped so the whole
-            list fits :attr:`RetrievalLimits.result_bytes`.
+            list fits :attr:`RetrievalLimits.result_bytes`, and the number of
+            otherwise valid matches dropped because the budget ran out.
         """
         # Ready artifacts/files from the fresh snapshot, keyed by file id.
         artifacts = {str(artifact.file_id): artifact for artifact in snapshot.artifacts if artifact.ready}
         files = {str(file.file_id): file for file in snapshot.files}
         remaining = self.limits.result_bytes
         results: list[RetrievalHit] = []
+        omitted = 0
         for match in matches:
             artifact = artifacts.get(match.file_id)
             previous = queried.get(match.file_id)
@@ -431,12 +440,13 @@ class RetrievalService:
                 or previous is None
                 or artifact.generation != match.artifact_generation
                 or previous.generation != artifact.generation
-                or remaining <= 0
                 or len(results) >= top_k
             ):
                 continue
-            excerpt = _bounded_excerpt(match.content, remaining)
+            excerpt = _bounded_excerpt(match.content, remaining) if remaining > 0 else ""
             if not excerpt:
+                # An empty chunk has nothing to omit; anything else ran out of budget.
+                omitted += bool(match.content)
                 continue
             remaining -= len(excerpt.encode("utf-8"))
             file = files[match.file_id]
@@ -450,6 +460,7 @@ class RetrievalService:
                     score=_similarity(match.score),
                     match_kind=match.kind,
                     excerpt=excerpt,
+                    truncated=len(excerpt) < len(match.content),
                 )
             )
-        return results
+        return results, omitted

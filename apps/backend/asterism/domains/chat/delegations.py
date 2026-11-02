@@ -10,9 +10,11 @@ grant nothing.
 import time
 import uuid
 
+from asterism.domains.agent.context_manifest import ContextManifest
 from asterism.domains.agent.schemas import AgentEventType, SubAgentEventEnvelope
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 
+from .context_manifest import retrieval_context
 from .schemas import DelegationRecord, DelegationStatus, UsageStep
 
 
@@ -44,8 +46,8 @@ class DelegationCollector:
         if envelope.model_name:
             update["model_name"] = envelope.model_name
         # Usage provenance arrives once the child resolves its model; the
-        # capability manifest arrives once, when the child starts.
-        for key in ("model_id", "provider_type", "pricing", "capabilities"):
+        # capability and context manifests arrive once, when the child starts.
+        for key in ("model_id", "provider_type", "pricing", "capabilities", "context"):
             value = getattr(envelope, key)
             if value is not None:
                 update[key] = value
@@ -62,6 +64,7 @@ class DelegationCollector:
                     "status": "running" if event.tool_calls else "completed",
                     "output": event.content or record.output,
                     "tool_results": _merge_tool_results(record.tool_results, event.tool_results),
+                    "context": _with_retrieval(update.get("context") or record.context, event.tool_results),
                     "steps": [
                         *record.steps,
                         UsageStep(
@@ -85,6 +88,16 @@ class DelegationCollector:
         ]
         self._records = {}
         return records
+
+
+def _with_retrieval(context: ContextManifest | None, results: list[ToolResult]) -> ContextManifest | None:
+    """Add a child step's retrieved chunks to its recorded context manifest."""
+    if context is None:
+        return None
+    chunks, omissions = retrieval_context(results)
+    return context.model_copy(
+        update={"chunks": [*context.chunks, *chunks], "omissions": [*context.omissions, *omissions]}
+    )
 
 
 def _merge_tool_results(previous: list[ToolResult], incoming: list[ToolResult]) -> list[ToolResult]:
