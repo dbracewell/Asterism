@@ -8,6 +8,8 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 from asterism.core.exceptions import BadDataException
+from asterism.domains.settings.pricing import ModelPricing
+from asterism.domains.settings.provider_types import ProviderType
 
 from .prompts import PromptLayer
 
@@ -24,6 +26,9 @@ class ModelIdentity:
     id: uuid.UUID
     provider_id: uuid.UUID | None = None
     name: str | None = None
+    # Display-only usage provenance (US-54.1); never part of identity checks.
+    provider_type: ProviderType | None = field(default=None, compare=False)
+    pricing: ModelPricing | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)

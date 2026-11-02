@@ -185,6 +185,27 @@ persists (`Message.delegations`), so each record belongs to the step that ran it
 - Records live in the owner's chat and are deleted with it. The audit trail stays
   in `sub_agent_traces` (digests only).
 
+### Run usage and cost (US-54.1)
+
+Each main-agent model call persists as one assistant message with its
+provider-reported `input_tokens`/`output_tokens`. Each `DelegationRecord` adds
+`steps` (one `UsageStep` per child `COMPLETE` event) and the child model's
+`model_id`, `provider_type` and `pricing`, taken from the resolved model.
+
+Admins may set optional `pricing` per model (`ModelPricing`: US dollars per
+million input and output tokens, both or neither; edited only through
+`PUT /app/providers/{id}/models/{model_id}`, kept by provider saves and catalog
+refreshes). It is snapshotted at execution time: into `ChatModelChoice.pricing`
+on the main execution when the turn is accepted, and into delegation records
+when the child resolves its model. Usage views read only these recorded values, so
+later price edits never rewrite past runs.
+
+The chat footer of a turn's final step sums the turn's steps
+(`features/chat/lib/run-usage.ts`). Models without prices show tokens only, and
+a cost that leaves out unpriced steps is marked partial. Steps on a ChatGPT plan
+(`provider_type = chatgpt`) show "ChatGPT plan" instead of dollars. Opening the
+summary breaks totals down per agent and per model call.
+
 ## Resume, regeneration, and audit
 
 Each invocation has an execution UUID. Delegated events also include target ID,

@@ -35,6 +35,7 @@ def model_choice(model: LLMModel, availability: ModelAvailability) -> ChatModelC
         context_window_source=model.context_window_source,
         supports_vision=model.supports_vision,
         supports_tools=model.supports_tools,
+        pricing=model.pricing,
     )
 
 

@@ -673,6 +673,7 @@ export type ChatModelChoice = {
    * Supports Tools
    */
   supports_tools?: boolean | null;
+  pricing?: ModelPricing | null;
 };
 
 /**
@@ -1012,6 +1013,9 @@ export type CreateUserRequest = {
  * Persisted on the assistant message whose tool calls ran it, for history
  * display only: identity, the fixed model that ran, timing, the child's own
  * tool calls and results, and its output or error. Thinking and prompts are not kept.
+ * ``steps`` is the usage of each of the child's model calls, and
+ * ``provider_type``/``pricing`` the model's usage provenance, all as recorded
+ * at execution time (US-54.1).
  */
 export type DelegationRecord = {
   /**
@@ -1031,9 +1035,19 @@ export type DelegationRecord = {
    */
   name: string;
   /**
+   * Model Id
+   */
+  model_id?: string | null;
+  /**
    * Model Name
    */
   model_name?: string | null;
+  provider_type?: ProviderType | null;
+  pricing?: ModelPricing | null;
+  /**
+   * Steps
+   */
+  steps?: Array<UsageStep>;
   /**
    * Depth
    */
@@ -1717,6 +1731,7 @@ export type Llm = {
   tools_source?: ModelCapabilitySource;
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
+  pricing?: ModelPricing | null;
 };
 
 /**
@@ -1761,6 +1776,7 @@ export type LlmDisplayInfo = {
   tools_source?: ModelCapabilitySource;
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
+  pricing?: ModelPricing | null;
 };
 
 /**
@@ -2060,6 +2076,22 @@ export type ModelCapabilitySource =
   | "provider"
   | "manual"
   | "unknown";
+
+/**
+ * ModelPricing
+ *
+ * US dollars per million input and output tokens.
+ */
+export type ModelPricing = {
+  /**
+   * Input Per Million
+   */
+  input_per_million: number;
+  /**
+   * Output Per Million
+   */
+  output_per_million: number;
+};
 
 /**
  * ModelProvenance
@@ -2841,6 +2873,7 @@ export type ProviderModelUpdate = {
   tools_source?: ModelCapabilitySource;
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
+  pricing?: ModelPricing | null;
 };
 
 /**
@@ -5176,6 +5209,26 @@ export type UpdateMessageRequest = {
  */
 export type UpdateSettingValue = {
   value: JsonValue;
+};
+
+/**
+ * UsageStep
+ *
+ * Provider-reported usage of one model call (0 when the provider reported none).
+ */
+export type UsageStep = {
+  /**
+   * Input Tokens
+   */
+  input_tokens?: number;
+  /**
+   * Output Tokens
+   */
+  output_tokens?: number;
+  /**
+   * Generation Duration Ms
+   */
+  generation_duration_ms?: number;
 };
 
 /**

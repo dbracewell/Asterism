@@ -434,6 +434,7 @@ def merge_discovered_models(
                 "id": existing.id,
                 "provider_id": existing.provider_id,
                 "is_active": existing.is_active,
+                "pricing": existing.pricing,
             },
         )
         if existing.context_window_source == ModelCapabilitySource.MANUAL:

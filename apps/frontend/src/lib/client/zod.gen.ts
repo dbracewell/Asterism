@@ -798,6 +798,16 @@ export const zChatContextModel = z.object({
 });
 
 /**
+ * ModelPricing
+ *
+ * US dollars per million input and output tokens.
+ */
+export const zModelPricing = z.object({
+  input_per_million: z.number().gte(0).lte(1000000),
+  output_per_million: z.number().gte(0).lte(1000000),
+});
+
+/**
  * Llm
  *
  * A provider model with capability flags and their provenance.
@@ -813,6 +823,7 @@ export const zLlm = z.object({
   tools_source: zModelCapabilitySource.optional().default("unknown"),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   vision_source: zModelCapabilitySource.optional().default("unknown"),
+  pricing: zModelPricing.nullish(),
 });
 
 /**
@@ -1125,6 +1136,7 @@ export const zProviderModelUpdate = z.object({
   tools_source: zModelCapabilitySource.optional().default("unknown"),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   vision_source: zModelCapabilitySource.optional().default("unknown"),
+  pricing: zModelPricing.nullish(),
 });
 
 /**
@@ -1170,6 +1182,7 @@ export const zChatModelChoice = z.object({
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   supports_vision: z.boolean().nullish(),
   supports_tools: z.boolean().nullish(),
+  pricing: zModelPricing.nullish(),
 });
 
 /**
@@ -1190,6 +1203,7 @@ export const zLlmDisplayInfo = z.object({
   tools_source: zModelCapabilitySource.optional().default("unknown"),
   context_window_source: zModelCapabilitySource.optional().default("unknown"),
   vision_source: zModelCapabilitySource.optional().default("unknown"),
+  pricing: zModelPricing.nullish(),
 });
 
 /**
@@ -2503,6 +2517,49 @@ export const zToolResult = z.object({
 });
 
 /**
+ * ToolSettings
+ *
+ * Admin tool configuration: enabled tools plus component provider selections.
+ */
+export const zToolSettings = z.object({
+  web_search_provider: zComponentProviderParameters.nullish(),
+  image_search_provider: zComponentProviderParameters.nullish(),
+  active_tools: z.array(z.string()).optional(),
+});
+
+/**
+ * UpdateMessageRequest
+ */
+export const zUpdateMessageRequest = z.object({
+  content: z.string().nullish(),
+  thinking: z.string().nullish(),
+  active_child_id: z.uuid().nullish(),
+  status: zMessageStatus.nullish(),
+  tool_results: z.array(zToolResult).nullish(),
+  tool_call_results: z.array(zToolResult).nullish(),
+});
+
+/**
+ * UpdateSettingValue
+ *
+ * Payload for updating one setting by key (``value`` of ``None`` deletes it).
+ */
+export const zUpdateSettingValue = z.object({
+  value: zJsonValue,
+});
+
+/**
+ * UsageStep
+ *
+ * Provider-reported usage of one model call (0 when the provider reported none).
+ */
+export const zUsageStep = z.object({
+  input_tokens: z.int().gte(0).optional().default(0),
+  output_tokens: z.int().gte(0).optional().default(0),
+  generation_duration_ms: z.int().gte(0).optional().default(0),
+});
+
+/**
  * DelegationRecord
  *
  * One sub-agent delegation observed during an assistant step.
@@ -2510,13 +2567,20 @@ export const zToolResult = z.object({
  * Persisted on the assistant message whose tool calls ran it, for history
  * display only: identity, the fixed model that ran, timing, the child's own
  * tool calls and results, and its output or error. Thinking and prompts are not kept.
+ * ``steps`` is the usage of each of the child's model calls, and
+ * ``provider_type``/``pricing`` the model's usage provenance, all as recorded
+ * at execution time (US-54.1).
  */
 export const zDelegationRecord = z.object({
   execution_id: z.uuid(),
   parent_execution_id: z.uuid().nullish(),
   sub_agent_id: z.uuid(),
   name: z.string(),
+  model_id: z.uuid().nullish(),
   model_name: z.string().nullish(),
+  provider_type: zProviderType.nullish(),
+  pricing: zModelPricing.nullish(),
+  steps: z.array(zUsageStep).optional(),
   depth: z.int().gte(0),
   status: z.enum(["running", "completed", "error", "cancelled"]),
   started_at_ms: z.int().gte(0),
@@ -2598,38 +2662,6 @@ export const zChatComparison = z.object({
   parent_message_id: z.uuid().nullable(),
   active_index: z.int().nullable(),
   columns: z.array(zComparisonColumn),
-});
-
-/**
- * ToolSettings
- *
- * Admin tool configuration: enabled tools plus component provider selections.
- */
-export const zToolSettings = z.object({
-  web_search_provider: zComponentProviderParameters.nullish(),
-  image_search_provider: zComponentProviderParameters.nullish(),
-  active_tools: z.array(z.string()).optional(),
-});
-
-/**
- * UpdateMessageRequest
- */
-export const zUpdateMessageRequest = z.object({
-  content: z.string().nullish(),
-  thinking: z.string().nullish(),
-  active_child_id: z.uuid().nullish(),
-  status: zMessageStatus.nullish(),
-  tool_results: z.array(zToolResult).nullish(),
-  tool_call_results: z.array(zToolResult).nullish(),
-});
-
-/**
- * UpdateSettingValue
- *
- * Payload for updating one setting by key (``value`` of ``None`` deletes it).
- */
-export const zUpdateSettingValue = z.object({
-  value: zJsonValue,
 });
 
 /**

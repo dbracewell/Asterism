@@ -91,12 +91,38 @@ const emptyProvider = (): FormProvider => ({
   provider_type: "generic_openai",
 });
 
-type ModelDraft = { model: Llm; contextWindow: string };
+type ModelDraft = {
+  model: Llm;
+  contextWindow: string;
+  /** US dollars per million tokens; both empty means unpriced. */
+  inputPrice: string;
+  outputPrice: string;
+};
 type ModelDrafts = Record<string, ModelDraft>;
 const modelDraft = (model: Llm): ModelDraft => ({
   model,
   contextWindow: model.context_window?.toString() ?? "",
+  inputPrice: model.pricing?.input_per_million.toString() ?? "",
+  outputPrice: model.pricing?.output_per_million.toString() ?? "",
 });
+
+/** Both prices, neither (null), or "invalid" for a half-filled or bad pair. */
+function draftPricing(
+  draft: Pick<ModelDraft, "inputPrice" | "outputPrice">,
+): Llm["pricing"] | "invalid" {
+  const input = draft.inputPrice.trim();
+  const output = draft.outputPrice.trim();
+  if (!input && !output) return null;
+  const values = [Number(input), Number(output)];
+  if (
+    !input ||
+    !output ||
+    values.some((value) => !Number.isFinite(value) || value < 0)
+  ) {
+    return "invalid";
+  }
+  return { input_per_million: values[0], output_per_million: values[1] };
+}
 
 function ModelRow({
   draft,
@@ -109,7 +135,7 @@ function ModelRow({
   onChange: (draft: ModelDraft) => void;
   onSetDraft: (id: string) => void;
 }) {
-  const { model, contextWindow } = draft;
+  const { model, contextWindow, inputPrice, outputPrice } = draft;
   const isActive = model.is_active;
   const vision =
     model.supports_vision == null ? "unknown" : String(model.supports_vision);
@@ -159,6 +185,40 @@ function ModelRow({
             })
           }
           placeholder="Unknown"
+        />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`model-${model.id}-input-price`}>
+          Input $ / 1M tokens
+        </FieldLabel>
+        <Input
+          id={`model-${model.id}-input-price`}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="any"
+          value={inputPrice}
+          onChange={(event) =>
+            onChange({ ...draft, inputPrice: event.target.value })
+          }
+          placeholder="No price"
+        />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`model-${model.id}-output-price`}>
+          Output $ / 1M tokens
+        </FieldLabel>
+        <Input
+          id={`model-${model.id}-output-price`}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="any"
+          value={outputPrice}
+          onChange={(event) =>
+            onChange({ ...draft, outputPrice: event.target.value })
+          }
+          placeholder="No price"
         />
       </Field>
       <Field>
@@ -507,9 +567,10 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
         (provider) => provider.id === model.provider_id,
       ),
     );
-    const updates = pending.map(({ model, contextWindow }) => ({
-      model,
-      context: contextWindow.trim() ? Number(contextWindow) : null,
+    const updates = pending.map((draft) => ({
+      model: draft.model,
+      context: draft.contextWindow.trim() ? Number(draft.contextWindow) : null,
+      pricing: draftPricing(draft),
     }));
     if (
       updates.some(
@@ -520,10 +581,16 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
       toast.error("Context window must be a positive whole number.");
       throw new Error("Invalid context window");
     }
+    if (updates.some(({ pricing }) => pricing === "invalid")) {
+      toast.error(
+        "Enter both prices as non-negative numbers, or leave both empty.",
+      );
+      throw new Error("Invalid pricing");
+    }
     setIsSaving(true);
     try {
       // Save models first so a newly enabled model can be selected as the draft.
-      for (const { model, context } of updates) {
+      for (const { model, context, pricing } of updates) {
         await updateModel.mutateAsync({
           path: { provider_id: model.provider_id, model_id: model.id },
           body: {
@@ -534,6 +601,7 @@ function ProvidersForm({ appSettings }: { appSettings: ProviderSettings }) {
             tools_source: model.tools_source,
             context_window_source: model.context_window_source,
             vision_source: model.vision_source,
+            pricing: pricing === "invalid" ? null : pricing,
           },
         });
       }
