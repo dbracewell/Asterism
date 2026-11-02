@@ -1802,6 +1802,27 @@ export const zSkillUpdate = z.object({
 });
 
 /**
+ * SpanCitation
+ *
+ * One ``asterism-cite:`` key in saved Markdown, resolved at save time (ADR-0040).
+ *
+ * A key resolves only to a chunk the saving run retrieved from a file still in
+ * its scope. Unavailable citations carry only ``key``: no file, chunk, name or
+ * excerpt is ever recorded or returned for them. ``available`` is rechecked
+ * against live chat scope on read; ``excerpt`` is untrusted retrieved text.
+ */
+export const zSpanCitation = z.object({
+  key: z.string().regex(/^[0-9a-f]{12}$/),
+  available: z.boolean(),
+  file_id: z.uuid().nullish(),
+  chunk_id: z.string().nullish(),
+  artifact_generation: z.int().gte(1).nullish(),
+  match_kind: z.string().nullish(),
+  name: z.string().nullish(),
+  excerpt: z.string().nullish(),
+});
+
+/**
  * StudyCardDraftRequest
  *
  * Draft up to ``count`` cards from chosen files, or the whole project when ``file_ids`` is null.
@@ -2898,6 +2919,7 @@ export const zDelegationRecord = z.object({
   output: z.string().optional().default(""),
   error: z.string().nullish(),
   inline_files: z.array(zInlineFileReference).optional(),
+  citations: z.array(zSpanCitation).optional(),
 });
 
 /**
@@ -2925,6 +2947,7 @@ export const zMessage = z.object({
   context: zContextManifest.nullish(),
   files: z.array(zMessageFileReference).optional(),
   inline_files: z.array(zInlineFileReference).optional(),
+  citations: z.array(zSpanCitation).optional(),
   active_child_id: z.uuid().nullish(),
   has_siblings: z.boolean().optional().default(false),
   sibling_count: z.int().optional().default(0),

@@ -1,7 +1,7 @@
 "use client";
 import MarkdownViewer from "@/components/markdown-viewer";
 import { InlineFilesProvider } from "@/components/markdown-viewer/inline-files";
-import type { InlineFileReference } from "@/lib/client";
+import type { InlineFileReference, SpanCitation } from "@/lib/client";
 
 export const INLINE_CHAT = "e2e-inline-chat";
 export const PNG_ID = "20000000-0000-4000-8000-000000000001";
@@ -54,6 +54,26 @@ const content = [
   `![](${token(DOCX_ID)})`,
 ].join("\n\n");
 
+export const CITED_KEY = "0123456789ab";
+export const GONE_KEY = "abcdef012345";
+const citations: SpanCitation[] = [
+  {
+    key: CITED_KEY,
+    available: true,
+    file_id: DOCX_ID,
+    chunk_id: "chunk-1",
+    artifact_generation: 1,
+    match_kind: "text",
+    name: "report.docx",
+    excerpt: 'Revenue grew 12% <img src="/untrusted-citation/x"> in Q3.',
+  },
+  { key: GONE_KEY, available: false },
+];
+const cited = [
+  `[Revenue grew 12% in Q3.](asterism-cite:${CITED_KEY}) [Costs fell.](asterism-cite:${GONE_KEY},${CITED_KEY})`,
+  `Near-miss: [not a claim](asterism-cite:${CITED_KEY}?x=1)`,
+].join("\n\n");
+
 export function InlineFilesHarness() {
   return (
     <main className="flex h-dvh flex-col gap-6 overflow-auto p-6">
@@ -61,6 +81,13 @@ export function InlineFilesHarness() {
       <section aria-label="Resolved reply">
         <InlineFilesProvider value={{ chatId: INLINE_CHAT, files }}>
           <MarkdownViewer content={content} />
+        </InlineFilesProvider>
+      </section>
+      <section aria-label="Cited reply">
+        <InlineFilesProvider
+          value={{ chatId: INLINE_CHAT, files: [], citations }}
+        >
+          <MarkdownViewer content={cited} />
         </InlineFilesProvider>
       </section>
       <section aria-label="Unresolved reply">

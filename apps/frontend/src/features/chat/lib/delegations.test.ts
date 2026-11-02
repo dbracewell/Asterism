@@ -56,6 +56,7 @@ describe("delegation records", () => {
         toolResults: [],
         error: "Partial",
         inlineFiles: [],
+        citations: [],
       },
     ]);
   });

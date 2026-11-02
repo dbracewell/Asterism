@@ -39,6 +39,7 @@ from .schemas import (
     MessageCompareRequest,
     MessageStatus,
 )
+from .span_citations import apply_live_citations
 
 
 async def resolve_targets(
@@ -192,6 +193,7 @@ async def _comparison(
     for column in columns:
         replies = _replies(column, by_id)
         apply_live_availability(replies, live)
+        apply_live_citations(replies, live)
         result.append(
             ComparisonColumn(
                 index=column.comparison_index or 0,

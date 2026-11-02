@@ -120,7 +120,10 @@ export const SubAgentActivityPanel = ({
 
             {activity.content && (
               // Live output has no resolved list yet: tokens show as pending.
-              <InlineFilesScope files={activity.inlineFiles ?? null}>
+              <InlineFilesScope
+                files={activity.inlineFiles ?? null}
+                citations={activity.citations ?? null}
+              >
                 <MarkdownViewer
                   content={activity.content}
                   className="mt-2 text-sm"

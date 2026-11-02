@@ -139,7 +139,10 @@ export const DelegationSummary = ({
               </header>
               <AgentTimeline className="mt-1" steps={delegationSteps(record)} />
               {record.output && (
-                <InlineFilesScope files={record.inline_files ?? []}>
+                <InlineFilesScope
+                  files={record.inline_files ?? []}
+                  citations={record.citations ?? []}
+                >
                   <MarkdownViewer
                     content={record.output}
                     className="mt-2 text-sm"

@@ -41,6 +41,7 @@ from .schemas import (
     MessageExecution,
     MessageFileReference,
     MessageStatus,
+    SpanCitation,
 )
 
 
@@ -253,6 +254,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     # Server-resolved ``asterism-file:`` references in ``content`` (ADR-0039).
     inline_files: Mapped[list[InlineFileReference]] = mapped_column(
         jsonb_type(TypeAdapter(list[InlineFileReference])),
+        nullable=False,
+        default=list,
+    )
+    # Server-resolved ``asterism-cite:`` claim citations in ``content`` (ADR-0040).
+    citations: Mapped[list[SpanCitation]] = mapped_column(
+        jsonb_type(TypeAdapter(list[SpanCitation])),
         nullable=False,
         default=list,
     )

@@ -107,6 +107,15 @@ FILE_REFERENCE_GUIDANCE = (
 )
 """ADR-0039 §9: explains the syntax only when the run can see files. It grants nothing."""
 
+CITATION_GUIDANCE = (
+    "\nCitations: when a claim in your reply relies on a search_knowledge result, wrap that claim "
+    "in a link to the result's citation: [the claim](asterism-cite:<key>). To cite up to four "
+    "results for one claim, separate their keys with commas: [the claim](asterism-cite:<key>,<key>). "
+    "Cite only citations returned to you in this run, and only for claims the excerpt supports. "
+    "Keep each linked span to the claim itself, usually one sentence."
+)
+"""ADR-0040: explains claim citations only when the run can search. It grants nothing."""
+
 
 async def build_runtime_prompt(
     *,
@@ -137,4 +146,6 @@ async def build_runtime_prompt(
             )
     if scope is not None and scope.file_ids:
         runtime += FILE_REFERENCE_GUIDANCE
+    if "search_knowledge" in tools:
+        runtime += CITATION_GUIDANCE
     return runtime

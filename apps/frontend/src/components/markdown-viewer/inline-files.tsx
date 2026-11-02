@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { client } from "@/lib/api";
-import type { InlineFileReference } from "@/lib/client";
+import type { InlineFileReference, SpanCitation } from "@/lib/client";
 import type { FilePreview } from "@/lib/client";
 import {
   chatFileDownloadOptions,
@@ -32,33 +32,37 @@ import {
 import { createContext, useContext, useEffect, useState } from "react";
 
 /**
- * Server-resolved file references for the Markdown being rendered (ADR-0039).
- * `files: null` means the message is still streaming and has no resolved list.
- * Without a provider every token is inert.
+ * Server-resolved file references (ADR-0039) and claim citations (ADR-0040) for
+ * the Markdown being rendered. `null` means the message is still streaming and
+ * has no resolved list. Without a provider every token is inert.
  */
 type InlineFiles = {
   chatId: string | null;
   files: InlineFileReference[] | null;
+  citations?: SpanCitation[] | null;
 };
 
-const InlineFilesContext = createContext<InlineFiles>({
+export const InlineFilesContext = createContext<InlineFiles>({
   chatId: null,
   files: [],
+  citations: [],
 });
 
 export const InlineFilesProvider = InlineFilesContext.Provider;
 
-/** Narrows the resolved list (e.g. to one sub-agent's output) within the same chat. */
+/** Narrows the resolved lists (e.g. to one sub-agent's output) within the same chat. */
 export function InlineFilesScope({
   files,
+  citations = files === null ? null : [],
   children,
 }: {
   files: InlineFileReference[] | null;
+  citations?: SpanCitation[] | null;
   children: React.ReactNode;
 }) {
   const { chatId } = useContext(InlineFilesContext);
   return (
-    <InlineFilesProvider value={{ chatId, files }}>
+    <InlineFilesProvider value={{ chatId, files, citations }}>
       {children}
     </InlineFilesProvider>
   );

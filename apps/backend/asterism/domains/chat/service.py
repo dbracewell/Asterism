@@ -35,6 +35,7 @@ from .schemas import (
 )
 from .search import search as search
 from .sending import create_chat as create_chat
+from .span_citations import apply_live_citations
 
 
 async def add_message(
@@ -109,6 +110,17 @@ async def add_message(
                 chat_id=chat_id,
                 content=message.content,
                 delegations=message.delegations,
+                execution=message.execution,
+                session=session,
+            )
+            from .span_citations import resolve_step_citations
+
+            new_message.citations, delegations = await resolve_step_citations(
+                user_id=user_id,
+                chat_id=chat_id,
+                content=message.content,
+                tool_results=message.tool_call_results,
+                delegations=delegations,
                 execution=message.execution,
                 session=session,
             )
@@ -393,6 +405,7 @@ async def get_one(
         scope = await resolve_chat_file_scope(user_id=user_id, chat_id=chat_id, session=session)
         allowed = set(scope.allowed_file_ids)
         apply_live_availability(messages, allowed)
+        apply_live_citations(messages, allowed)
         for message in messages:
             message.files = [
                 file

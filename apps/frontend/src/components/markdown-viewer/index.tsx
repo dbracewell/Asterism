@@ -10,7 +10,9 @@ import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { InlineFile } from "./inline-files";
+import { CitedClaim } from "./span-citations";
 import {
+  citationKeys,
   fileTokenId,
   markdownMathOptions,
   markdownUrlTransform,
@@ -54,6 +56,8 @@ const MarkdownViewer = ({
         rehypePlugins={[[rehypeKatex, markdownMathOptions]]}
         components={{
           a({ href, children, node, ...props }) {
+            const keys = citationKeys(href);
+            if (keys) return <CitedClaim keys={keys}>{children}</CitedClaim>;
             const fileId = fileTokenId(href);
             if (fileId)
               return (

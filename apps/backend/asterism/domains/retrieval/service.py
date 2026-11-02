@@ -23,6 +23,7 @@ from asterism.domains.agent.execution_scope import ExecutionScope, FileProvenanc
 from asterism.domains.knowledge.embedding import EmbeddingProvider
 from asterism.domains.knowledge.models import KnowledgeExtractionStatus
 from asterism.domains.knowledge.vector_store import VectorSearchResult, VectorStore
+from asterism.domains.retrieval.citations import citation_token
 
 logger = get_logger("RETRIEVAL")
 
@@ -109,6 +110,7 @@ class RetrievalHit(BaseModel):
         match_kind: Chunk provenance as stored ("caption" or "text").
         excerpt: Byte-budgeted excerpt of the chunk content.
         truncated: True when the byte budget cut the excerpt short.
+        citation: Link destination that cites this chunk in the reply (ADR-0040).
     """
 
     file_id: uuid.UUID
@@ -120,6 +122,7 @@ class RetrievalHit(BaseModel):
     match_kind: str
     excerpt: str
     truncated: bool = False
+    citation: str = ""
 
 
 class RetrievalResponse(BaseModel):
@@ -461,6 +464,7 @@ class RetrievalService:
                     match_kind=match.kind,
                     excerpt=excerpt,
                     truncated=len(excerpt) < len(match.content),
+                    citation=citation_token(file.file_id, match.id),
                 )
             )
         return results, omitted

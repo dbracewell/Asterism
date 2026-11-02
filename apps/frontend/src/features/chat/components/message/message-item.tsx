@@ -98,6 +98,10 @@ export const MessageItem = React.memo(
                 !fromUser && message.status === "pending"
                   ? null
                   : (message.inline_files ?? []),
+              citations:
+                !fromUser && message.status === "pending"
+                  ? null
+                  : (message.citations ?? []),
             }}
           >
             <AgentTimeline
