@@ -37,7 +37,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Implement claim extraction and per-claim retrieval checks with limits.
   - [x] Store results with provenance and build the claim overlay.
   - [x] Test scope narrowing, limits and label rendering; add evaluation fixtures.
-- [ ] US-55.3: Disagreement display (implemented on `feature/us-55.3-disagreement-display`; awaiting confirmation)
+- [x] US-55.3: Disagreement display (confirmed and merged 2026-11-02)
   - [x] Implement a bounded claim-comparison pass; build the summary; add tests.
 - [ ] US-55.4: Spot-the-error exercise
   - [ ] Add the exercise mode with a recorded error and reveal flow.
