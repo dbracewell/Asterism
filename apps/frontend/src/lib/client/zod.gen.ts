@@ -51,6 +51,55 @@ export const zBulkDeleteChatResponse = z.object({
 });
 
 /**
+ * CapabilityApproval
+ */
+export const zCapabilityApproval = z.enum(["automatic", "ask"]);
+
+/**
+ * CapabilityGrant
+ *
+ * One condition that had to hold for an entry to be available.
+ */
+export const zCapabilityGrant = z.enum([
+  "agent_assignment",
+  "admin_policy",
+  "model_support",
+  "project_selection",
+  "chat_attachment",
+  "chat_selection",
+  "file_scope",
+]);
+
+/**
+ * CapabilityKind
+ */
+export const zCapabilityKind = z.enum(["tool", "skill", "file", "sub_agent"]);
+
+/**
+ * CapabilityEntry
+ */
+export const zCapabilityEntry = z.object({
+  kind: zCapabilityKind,
+  id: z.string().max(200),
+  name: z.string().max(1000).nullish(),
+  grants: z.array(zCapabilityGrant).min(1),
+  approval: zCapabilityApproval.nullish(),
+  revision: z.int().gte(1).nullish(),
+});
+
+/**
+ * CapabilityManifest
+ */
+export const zCapabilityManifest = z.object({
+  agent_id: z.uuid(),
+  agent_name: z.string(),
+  is_sub_agent: z.boolean(),
+  configuration_revision: z.int().gte(1),
+  model_supports_tools: z.boolean().nullish(),
+  entries: z.array(zCapabilityEntry).optional(),
+});
+
+/**
  * CaptioningPayload
  *
  * The caption derived from an image.
@@ -1428,6 +1477,7 @@ export const zMessageExecution = z.object({
   persona: zPersonaProvenance,
   learning_mode: zLearningModeProvenance,
   context: zContextProvenance.nullish(),
+  capabilities: zCapabilityManifest.nullish(),
   prompt: zPromptProvenance.optional(),
   id: z.uuid().optional(),
   request_message_id: z.uuid(),
@@ -2581,6 +2631,7 @@ export const zDelegationRecord = z.object({
   provider_type: zProviderType.nullish(),
   pricing: zModelPricing.nullish(),
   steps: z.array(zUsageStep).optional(),
+  capabilities: zCapabilityManifest.nullish(),
   depth: z.int().gte(0),
   status: z.enum(["running", "completed", "error", "cancelled"]),
   started_at_ms: z.int().gte(0),

@@ -43,8 +43,9 @@ class DelegationCollector:
         update: dict[str, object] = {"ended_at_ms": now}
         if envelope.model_name:
             update["model_name"] = envelope.model_name
-        # Usage provenance arrives once the child resolves its model.
-        for key in ("model_id", "provider_type", "pricing"):
+        # Usage provenance arrives once the child resolves its model; the
+        # capability manifest arrives once, when the child starts.
+        for key in ("model_id", "provider_type", "pricing", "capabilities"):
             value = getattr(envelope, key)
             if value is not None:
                 update[key] = value

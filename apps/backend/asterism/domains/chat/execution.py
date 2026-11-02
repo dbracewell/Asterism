@@ -132,13 +132,14 @@ async def prepare_execution(
                     model_revision=chat.model_revision,
                     configuration=current,
                 )
-                execution.context = await build_execution_provenance(
+                execution.context, execution.capabilities = await build_execution_provenance(
                     user_id=user_id,
                     chat_id=chat_id,
                     execution=execution,
                     session=session,
                     chat_snapshot=chat_snap,
                     project_snapshot=project_snap,
+                    auto_approved_tools=chat.allowed_tools,
                 )
                 record = ChatExecutionModel(
                     id=execution.id,

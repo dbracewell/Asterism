@@ -206,6 +206,35 @@ a cost that leaves out unpriced steps is marked partial. Steps on a ChatGPT plan
 (`provider_type = chatgpt`) show "ChatGPT plan" instead of dollars. Opening the
 summary breaks totals down per agent and per model call.
 
+### Capability manifest (US-54.2)
+
+Each agent run records a `CapabilityManifest` (`agent/capabilities.py`). It
+lists the run's tools, skills, sub-agents and files. Each entry names the grants
+that allowed it: agent assignment, admin policy, model tool support, project
+selection, chat attachment, chat skill selection, or files in scope. Tools also
+record whether the user is asked before each call. `chat/capabilities.py`
+builds it from the results of the same authorization that started the run:
+`resolve_effective_tools`, the accepted skills, the scope's file provenance and
+the eligible delegation targets. It only adds grant reasons and display names.
+
+- **Main agent:** captured in `build_execution_provenance` when the turn is
+  accepted and stored as `MessageExecution.capabilities`. Resume reuses it;
+  regeneration records a new one. Tools on the chat's `allowed_tools` run
+  without asking, and the rest ask first.
+- **Sub-agents:** captured after the child resolves its tools, before its first
+  event. The manifest rides on the next forwarded `SubAgentEventEnvelope`, and
+  `DelegationCollector` stores it on the `DelegationRecord`. Sub-agents never
+  receive skills, and their own assigned tools run without asking. If capture
+  fails, the delegation continues and its record has no manifest.
+- **Single-step agents:** an agent limited to one step never gets tools, so its
+  manifest lists none.
+
+The manifest is a record only. It grants nothing, and live authorization still
+rechecks every call. The chat footer's "Capabilities" dialog shows the recorded
+manifests and never recomputes them from current settings.
+`features/chat/lib/capability-manifest.ts` supplies the dialog's data. MCP
+servers are not implemented yet, so manifests have no MCP entries.
+
 ## Resume, regeneration, and audit
 
 Each invocation has an execution UUID. Delegated events also include target ID,

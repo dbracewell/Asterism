@@ -364,6 +364,7 @@ class Agent:
                     name=model_info.name,
                     provider_type=model_info.provider.provider_type,
                     pricing=model_info.pricing,
+                    supports_tools=model_info.supports_tools,
                 ),
             )
         if self._client is not None:

@@ -1,6 +1,6 @@
 # EPIC-54: Run inspection, replay and comparison
 
-Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1 complete; US-54.2 in progress). Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1 complete; US-54.2 implemented, awaiting confirmation). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
@@ -50,8 +50,8 @@ servers, file scope and sub-agents it had. Each entry names the grant that
 allowed it (agent assignment, admin policy, model support, project selection).
 The manifest is captured at execution time.
 
-- [ ] Capture the effective capability set with grant reasons at execution time.
-- [ ] Build the manifest panel; test accuracy against authorization fixtures.
+- [x] Capture the effective capability set with grant reasons at execution time.
+- [x] Build the manifest panel; test accuracy against authorization fixtures.
 
 ## US-54.3: Context inspector
 
