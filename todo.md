@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-US-54.1 and US-54.2 are complete; US-54.3 (context inspector) is active on `feature/us-54.3-context-inspector` and awaiting completion confirmation. EPIC-62 (US-62.1 and US-62.2) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-54 is next. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
+US-54.1, US-54.2 and US-54.3 are complete; US-54.5 (fork from a step) is active on `feature/us-54.5-fork-from-step`. EPIC-62 (US-62.1 and US-62.2) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md); EPIC-54 is next. EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). US-54.4 (pulled ahead of EPIC-52 to unblock US-51.7) is also complete. EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -37,14 +37,14 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-54.2: Capability manifest
   - [x] Capture the effective capability set with grant reasons at execution time.
   - [x] Build the manifest panel; test accuracy against authorization fixtures.
-- [ ] US-54.3: Context inspector (implementation complete, awaiting confirmation)
+- [x] US-54.3: Context inspector
   - [x] Record a context manifest (layer IDs and revisions, chunk references, truncations).
   - [x] Build the inspector; test owner-only access and the untrusted rendering path.
 - [x] US-54.4: Side-by-side comparison
   - [x] Implement multi-target submission as sibling branches within chat admission limits.
   - [x] Build the comparison layout (columns that stack on narrow screens).
   - [x] Test admission limits, branch provenance and continuation.
-- [ ] US-54.5: Fork from a step
+- [ ] US-54.5: Fork from a step (in progress)
   - [ ] Write an ADR for fork semantics (what is reused versus re-executed).
   - [ ] Implement the fork execution path; build the fork UI.
   - [ ] Test isolation of the original branch, scope inheritance and explicit-save behavior.
