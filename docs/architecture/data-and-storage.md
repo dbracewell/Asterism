@@ -205,6 +205,11 @@ keys; message reads recheck their `available` flag against live chat scope.
 the cited chunk, file name and an excerpt snapshot. They resolve only against
 chunks the saving run retrieved, and reads recheck `available` against live chat scope.
 
+`messages.verification` holds the latest verify pass of an answer (US-55.2,
+[ADR-0041](../adr/0041-verify-pass.md)): verifier model, time, searched files,
+one label per claim with evidence snapshots, and usage. It never changes the
+answer; reads recheck evidence availability against live chat scope.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are

@@ -43,6 +43,7 @@ from .schemas import (
     MessageStatus,
     SpanCitation,
 )
+from .verification_schemas import MessageVerification
 
 
 class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
@@ -256,6 +257,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         jsonb_type(TypeAdapter(list[InlineFileReference])),
         nullable=False,
         default=list,
+    )
+    # The latest verify pass of this answer (US-55.2, ADR-0041).
+    verification: Mapped[MessageVerification | None] = mapped_column(
+        jsonb_type(TypeAdapter(MessageVerification)),
+        nullable=True,
     )
     # Server-resolved ``asterism-cite:`` claim citations in ``content`` (ADR-0040).
     citations: Mapped[list[SpanCitation]] = mapped_column(

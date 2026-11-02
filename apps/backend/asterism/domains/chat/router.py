@@ -55,6 +55,7 @@ from .schemas import (
     SearchResultList,
     UpdateMessageRequest,
 )
+from .verification_schemas import MessageVerification, VerifyRequest
 
 chat_router = APIRouter(
     prefix="/chat",
@@ -582,6 +583,20 @@ async def get_run(chat_id: uuid.UUID, message_id: uuid.UUID, user: AuthedUserDep
     from .runs import read_run
 
     return await read_run(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
+
+
+@chat_router.post(
+    "/{chat_id}/messages/{message_id}/verify",
+    response_model=MessageVerification,
+    operation_id="chatMessageVerify",
+)
+async def verify_message(
+    chat_id: uuid.UUID, message_id: uuid.UUID, payload: VerifyRequest, user: AuthedUserDep, db: DBSessionDep
+) -> MessageVerification:
+    """Check an answer's claims against its sources and store the labels; owner only (US-55.2)."""
+    from .verification import verify_message
+
+    return await verify_message(user_id=user.id, chat_id=chat_id, message_id=message_id, request=payload, session=db)
 
 
 @chat_router.get(

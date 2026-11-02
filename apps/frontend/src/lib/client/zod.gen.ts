@@ -271,6 +271,23 @@ export const zChatUpdateRequest = z.object({
 });
 
 /**
+ * ClaimEvidence
+ *
+ * A retrieved passage the verifier cited for a claim.
+ *
+ * ``name`` and ``excerpt`` are snapshots of untrusted text; ``available`` is
+ * rechecked against the live chat scope on read.
+ */
+export const zClaimEvidence = z.object({
+  file_id: z.uuid(),
+  chunk_id: z.string(),
+  artifact_generation: z.int().gte(1),
+  name: z.string(),
+  excerpt: z.string(),
+  available: z.boolean().optional().default(true),
+});
+
+/**
  * CoachCriterion
  *
  * The rubric a draft is reviewed against, in display order.
@@ -2923,95 +2940,6 @@ export const zDelegationRecord = z.object({
 });
 
 /**
- * Message
- */
-export const zMessage = z.object({
-  role: z.string(),
-  content: z.string(),
-  thinking: z.string().nullish(),
-  tool_calls: z.array(zToolCall).nullish(),
-  skills: z.array(zSkillIdentity).optional(),
-  learning_mode: zLearningModeProvenance.nullish(),
-  template: zTemplateLabel.nullish(),
-  execution: zMessageExecution.nullish(),
-  id: z.uuid(),
-  status: zMessageStatus,
-  created_at: z.int(),
-  model_id: z.uuid().nullish(),
-  input_tokens: z.int().optional().default(0),
-  output_tokens: z.int().optional().default(0),
-  total_tokens: z.int().optional().default(0),
-  generation_duration_ms: z.int().optional().default(0),
-  tool_call_results: z.array(zToolResult).nullish(),
-  delegations: z.array(zDelegationRecord).nullish(),
-  context: zContextManifest.nullish(),
-  files: z.array(zMessageFileReference).optional(),
-  inline_files: z.array(zInlineFileReference).optional(),
-  citations: z.array(zSpanCitation).optional(),
-  active_child_id: z.uuid().nullish(),
-  has_siblings: z.boolean().optional().default(false),
-  sibling_count: z.int().optional().default(0),
-  current_sibling_index: z.int().optional().default(-1),
-  parent_message_id: z.uuid().nullish(),
-  next_sibling_id: z.uuid().nullish(),
-  previous_sibling_id: z.uuid().nullish(),
-  comparison_id: z.uuid().nullish(),
-  comparison_index: z.int().nullish(),
-  target_model_id: z.uuid().nullish(),
-  comparison_label: z.string().nullish(),
-});
-
-/**
- * Chat
- */
-export const zChat = z.object({
-  info: zChatInfo,
-  messages: z.array(zMessage),
-  context_usage: zChatContextUsage.nullish(),
-});
-
-/**
- * ComparisonColumn
- *
- * One column: its user turn, the assistant steps that answered it, and usage totals.
- */
-export const zComparisonColumn = z.object({
-  index: z.int(),
-  request: zMessage,
-  replies: z.array(zMessage).optional(),
-  model: zChatModelChoice.nullish(),
-  status: z.enum(["pending", "completed", "cancelled"]),
-  input_tokens: z.int().optional().default(0),
-  output_tokens: z.int().optional().default(0),
-  total_tokens: z.int().optional().default(0),
-  generation_duration_ms: z.int().optional().default(0),
-});
-
-/**
- * ChatComparison
- */
-export const zChatComparison = z.object({
-  id: z.uuid(),
-  chat_id: z.uuid(),
-  parent_message_id: z.uuid().nullable(),
-  active_index: z.int().nullable(),
-  columns: z.array(zComparisonColumn),
-});
-
-/**
- * RecordedRun
- *
- * One recorded run on any branch, for run diff (US-54.6).
- *
- * ``request`` is the user turn the run answers; ``steps`` are its assistant
- * steps along that branch, in order. Everything is as recorded at execution.
- */
-export const zRecordedRun = z.object({
-  request: zMessage,
-  steps: z.array(zMessage),
-});
-
-/**
  * UserFile
  *
  * Public representation of one file in the caller's library.
@@ -3112,6 +3040,152 @@ export const zUserSettings = z.object({
   show_thinking: z.boolean().optional().default(true),
   prompt_coach_enabled: z.boolean().optional().default(false),
   first_chat_tour: z.enum(["completed", "dismissed"]).nullish(),
+});
+
+/**
+ * VerificationUsage
+ *
+ * What the pass spent and where it stopped.
+ */
+export const zVerificationUsage = z.object({
+  claims_found: z.int().gte(0),
+  claims_checked: z.int().gte(0),
+  claim_limit: z.int().gte(1),
+  claims_truncated: z.boolean().optional().default(false),
+  answer_truncated: z.boolean().optional().default(false),
+  timed_out: z.boolean().optional().default(false),
+  searches: z.int().gte(0).optional().default(0),
+  model_calls: z.int().gte(0).optional().default(0),
+  input_tokens: z.int().gte(0).optional().default(0),
+  output_tokens: z.int().gte(0).optional().default(0),
+  duration_ms: z.int().gte(0).optional().default(0),
+});
+
+/**
+ * VerifiedClaim
+ *
+ * One factual claim from the answer and its label. Labels never edit the answer.
+ */
+export const zVerifiedClaim = z.object({
+  claim: z.string().max(500),
+  quote: z.string().max(1000).nullish(),
+  label: z.enum(["supported", "unsupported", "contradicted", "unchecked"]),
+  explanation: z.string().max(600).nullish(),
+  evidence: z.array(zClaimEvidence).max(4).optional(),
+});
+
+/**
+ * MessageVerification
+ *
+ * The latest verify pass of one assistant message, with its provenance.
+ */
+export const zMessageVerification = z.object({
+  model_id: z.uuid(),
+  model_name: z.string(),
+  created_at: z.int().gte(0),
+  file_ids: z.array(z.uuid()),
+  claims: z.array(zVerifiedClaim),
+  usage: zVerificationUsage,
+});
+
+/**
+ * Message
+ */
+export const zMessage = z.object({
+  role: z.string(),
+  content: z.string(),
+  thinking: z.string().nullish(),
+  tool_calls: z.array(zToolCall).nullish(),
+  skills: z.array(zSkillIdentity).optional(),
+  learning_mode: zLearningModeProvenance.nullish(),
+  template: zTemplateLabel.nullish(),
+  execution: zMessageExecution.nullish(),
+  id: z.uuid(),
+  status: zMessageStatus,
+  created_at: z.int(),
+  model_id: z.uuid().nullish(),
+  input_tokens: z.int().optional().default(0),
+  output_tokens: z.int().optional().default(0),
+  total_tokens: z.int().optional().default(0),
+  generation_duration_ms: z.int().optional().default(0),
+  tool_call_results: z.array(zToolResult).nullish(),
+  delegations: z.array(zDelegationRecord).nullish(),
+  context: zContextManifest.nullish(),
+  files: z.array(zMessageFileReference).optional(),
+  inline_files: z.array(zInlineFileReference).optional(),
+  citations: z.array(zSpanCitation).optional(),
+  verification: zMessageVerification.nullish(),
+  active_child_id: z.uuid().nullish(),
+  has_siblings: z.boolean().optional().default(false),
+  sibling_count: z.int().optional().default(0),
+  current_sibling_index: z.int().optional().default(-1),
+  parent_message_id: z.uuid().nullish(),
+  next_sibling_id: z.uuid().nullish(),
+  previous_sibling_id: z.uuid().nullish(),
+  comparison_id: z.uuid().nullish(),
+  comparison_index: z.int().nullish(),
+  target_model_id: z.uuid().nullish(),
+  comparison_label: z.string().nullish(),
+});
+
+/**
+ * Chat
+ */
+export const zChat = z.object({
+  info: zChatInfo,
+  messages: z.array(zMessage),
+  context_usage: zChatContextUsage.nullish(),
+});
+
+/**
+ * ComparisonColumn
+ *
+ * One column: its user turn, the assistant steps that answered it, and usage totals.
+ */
+export const zComparisonColumn = z.object({
+  index: z.int(),
+  request: zMessage,
+  replies: z.array(zMessage).optional(),
+  model: zChatModelChoice.nullish(),
+  status: z.enum(["pending", "completed", "cancelled"]),
+  input_tokens: z.int().optional().default(0),
+  output_tokens: z.int().optional().default(0),
+  total_tokens: z.int().optional().default(0),
+  generation_duration_ms: z.int().optional().default(0),
+});
+
+/**
+ * ChatComparison
+ */
+export const zChatComparison = z.object({
+  id: z.uuid(),
+  chat_id: z.uuid(),
+  parent_message_id: z.uuid().nullable(),
+  active_index: z.int().nullable(),
+  columns: z.array(zComparisonColumn),
+});
+
+/**
+ * RecordedRun
+ *
+ * One recorded run on any branch, for run diff (US-54.6).
+ *
+ * ``request`` is the user turn the run answers; ``steps`` are its assistant
+ * steps along that branch, in order. Everything is as recorded at execution.
+ */
+export const zRecordedRun = z.object({
+  request: zMessage,
+  steps: z.array(zMessage),
+});
+
+/**
+ * VerifyRequest
+ *
+ * Verify an answer with a chosen model, optionally against fewer of its sources.
+ */
+export const zVerifyRequest = z.object({
+  model_id: z.uuid(),
+  file_ids: z.array(z.uuid()).min(1).max(100).nullish(),
 });
 
 /**
@@ -3583,6 +3657,18 @@ export const zChatRunGetPath = z.object({
  * Successful Response
  */
 export const zChatRunGetResponse = zRecordedRun;
+
+export const zChatMessageVerifyBody = zVerifyRequest;
+
+export const zChatMessageVerifyPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatMessageVerifyResponse = zMessageVerification;
 
 export const zChatForkInstructionsGetPath = z.object({
   chat_id: z.uuid(),

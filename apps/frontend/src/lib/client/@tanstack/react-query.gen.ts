@@ -156,6 +156,9 @@ import type {
   ChatMessageSendData,
   ChatMessageSendError,
   ChatMessageSendResponse,
+  ChatMessageVerifyData,
+  ChatMessageVerifyError,
+  ChatMessageVerifyResponse,
   ChatModelsListData,
   ChatModelsListError,
   ChatModelsListResponse,
@@ -1913,6 +1916,35 @@ export const chatRunGetOptions = (options: Options<ChatRunGetData>) =>
     },
     queryKey: chatRunGetQueryKey(options),
   });
+
+/**
+ * Verify Message
+ *
+ * Check an answer's claims against its sources and store the labels; owner only (US-55.2).
+ */
+export const chatMessageVerifyMutation = (
+  options?: Partial<Options<ChatMessageVerifyData>>,
+): UseMutationOptions<
+  ChatMessageVerifyResponse,
+  ChatMessageVerifyError,
+  Options<ChatMessageVerifyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatMessageVerifyResponse,
+    ChatMessageVerifyError,
+    Options<ChatMessageVerifyData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatMessageVerify({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const chatForkInstructionsGetQueryKey = (
   options: Options<ChatForkInstructionsGetData>,

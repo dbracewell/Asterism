@@ -156,6 +156,9 @@ import type {
   ChatMessageSendData,
   ChatMessageSendErrors,
   ChatMessageSendResponses,
+  ChatMessageVerifyData,
+  ChatMessageVerifyErrors,
+  ChatMessageVerifyResponses,
   ChatModelsListData,
   ChatModelsListErrors,
   ChatModelsListResponses,
@@ -1536,6 +1539,33 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/messages/{message_id}/run",
       ...options,
+    });
+  }
+
+  /**
+   * Verify Message
+   *
+   * Check an answer's claims against its sources and store the labels; owner only (US-55.2).
+   */
+  public chatMessageVerify<ThrowOnError extends boolean = false>(
+    options: Options<ChatMessageVerifyData, ThrowOnError>,
+  ): RequestResult<
+    ChatMessageVerifyResponses,
+    ChatMessageVerifyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatMessageVerifyResponses,
+      ChatMessageVerifyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/verify",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

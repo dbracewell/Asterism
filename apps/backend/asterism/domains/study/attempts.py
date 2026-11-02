@@ -18,11 +18,11 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.queries import paginate_select
 from asterism.domains.llm.schemas import LLMMessage
+from asterism.domains.llm.selection import ModelCall, SelectedModel, resolve_usable_model
 
 from . import clock
 from .citations import resolve_citations
 from .drafting import DraftFailed, clean_text, json_object, run_until
-from .llm import ModelCall, StudyModel, resolve_model
 from .models import MAX_FEEDBACK_CHARS, StudyQuizAnswerModel, StudyQuizAttemptModel, StudyQuizQuestionModel
 from .queries import select_attempt_answers, select_quiz_attempts
 from .quizzes import question_options, quiz_questions, require_quiz
@@ -141,12 +141,12 @@ async def _grade_with_model(grade: _Grade, model: ModelCall, slots: asyncio.Sema
 
 async def _grading_model(
     *, user_id: str, grades: list[_Grade], model_id: uuid.UUID | None, session: AsyncSession
-) -> StudyModel | None:
+) -> SelectedModel | None:
     if not any(grade.text is not None for grade in grades):
         return None
     if model_id is None:
         raise BadDataException("Choose a model to grade short answers")
-    return await resolve_model(user_id=user_id, model_id=model_id, session=session)
+    return await resolve_usable_model(user_id=user_id, model_id=model_id, session=session)
 
 
 # --- Results ---------------------------------------------------------------
