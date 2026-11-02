@@ -437,6 +437,7 @@ export type {
   GenerationDefaults,
   HintLevel,
   HintRequest,
+  InlineFileReference,
   InstructionOverrideProvenance,
   JsonValue,
   KnowledgeCaptionConfiguration,

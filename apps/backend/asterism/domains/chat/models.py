@@ -34,7 +34,14 @@ from asterism.domains.llm.schemas import ToolCall, ToolResult
 from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateProvenance
 
 from .execution_models import ChatExecutionModel
-from .schemas import ChatModelChoice, DelegationRecord, MessageExecution, MessageFileReference, MessageStatus
+from .schemas import (
+    ChatModelChoice,
+    DelegationRecord,
+    InlineFileReference,
+    MessageExecution,
+    MessageFileReference,
+    MessageStatus,
+)
 
 
 class ChatModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
@@ -240,6 +247,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     )
     files: Mapped[list[MessageFileReference]] = mapped_column(
         jsonb_type(TypeAdapter(list[MessageFileReference])),
+        nullable=False,
+        default=list,
+    )
+    # Server-resolved ``asterism-file:`` references in ``content`` (ADR-0039).
+    inline_files: Mapped[list[InlineFileReference]] = mapped_column(
+        jsonb_type(TypeAdapter(list[InlineFileReference])),
         nullable=False,
         default=list,
     )

@@ -195,6 +195,11 @@ Registration adds a `chat_files` membership; branch scope admits the file only
 while a message of its producing run is on the active branch. Deleting the chat
 leaves the file in the library.
 
+`messages.inline_files` and `DelegationRecord.inline_files` hold the
+server-resolved `asterism-file:` references in a step's content or a sub-agent's
+output (US-56.3). Like `messages.files`, they are JSON snapshots, not foreign
+keys; message reads recheck their `available` flag against live chat scope.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are

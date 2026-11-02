@@ -1340,6 +1340,10 @@ export type DelegationRecord = {
    * Error
    */
   error?: string | null;
+  /**
+   * Inline Files
+   */
+  inline_files?: Array<InlineFileReference>;
 };
 
 /**
@@ -1817,6 +1821,47 @@ export type HintRequest = {
    * Override Lock
    */
   override_lock?: boolean;
+};
+
+/**
+ * InlineFileReference
+ *
+ * One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
+ *
+ * Unavailable references carry only ``file_id``: no role, name, type or size is
+ * ever recorded or returned for them, so a foreign or guessed ID reveals nothing
+ * a missing ID would not. ``available`` is rechecked against live scope on read.
+ */
+export type InlineFileReference = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  /**
+   * Available
+   */
+  available: boolean;
+  /**
+   * Role
+   */
+  role?: "produced" | "referenced" | null;
+  /**
+   * Producing Execution Id
+   */
+  producing_execution_id?: string | null;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Mime Type
+   */
+  mime_type?: string | null;
+  kind?: FileKind | null;
+  /**
+   * Size
+   */
+  size?: number | null;
 };
 
 /**
@@ -2303,6 +2348,10 @@ export type Message = {
    * Files
    */
   files?: Array<MessageFileReference>;
+  /**
+   * Inline Files
+   */
+  inline_files?: Array<InlineFileReference>;
   /**
    * Active Child Id
    */

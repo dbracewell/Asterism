@@ -646,6 +646,26 @@ export const zHintRequest = z.object({
 });
 
 /**
+ * InlineFileReference
+ *
+ * One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
+ *
+ * Unavailable references carry only ``file_id``: no role, name, type or size is
+ * ever recorded or returned for them, so a foreign or guessed ID reveals nothing
+ * a missing ID would not. ``available`` is rechecked against live scope on read.
+ */
+export const zInlineFileReference = z.object({
+  file_id: z.uuid(),
+  available: z.boolean(),
+  role: z.enum(["produced", "referenced"]).nullish(),
+  producing_execution_id: z.uuid().nullish(),
+  name: z.string().nullish(),
+  mime_type: z.string().nullish(),
+  kind: zFileKind.nullish(),
+  size: z.int().gte(0).nullish(),
+});
+
+/**
  * InstructionOverrideProvenance
  *
  * Public record of an override: which definition, at which revision, which text.
@@ -2845,6 +2865,7 @@ export const zDelegationRecord = z.object({
   tool_results: z.array(zToolResult).optional(),
   output: z.string().optional().default(""),
   error: z.string().nullish(),
+  inline_files: z.array(zInlineFileReference).optional(),
 });
 
 /**
@@ -2871,6 +2892,7 @@ export const zMessage = z.object({
   delegations: z.array(zDelegationRecord).nullish(),
   context: zContextManifest.nullish(),
   files: z.array(zMessageFileReference).optional(),
+  inline_files: z.array(zInlineFileReference).optional(),
   active_child_id: z.uuid().nullish(),
   has_siblings: z.boolean().optional().default(false),
   sibling_count: z.int().optional().default(0),
