@@ -1,6 +1,7 @@
 "use client";
 
 import MarkdownViewer from "@/components/markdown-viewer";
+import { InlineFilesScope } from "@/components/markdown-viewer/inline-files";
 import { AgentConstellation } from "@/features/chat/components/agent-constellation";
 import {
   Collapsible,
@@ -118,10 +119,13 @@ export const SubAgentActivityPanel = ({
             )}
 
             {activity.content && (
-              <MarkdownViewer
-                content={activity.content}
-                className="mt-2 text-sm"
-              />
+              // Live output has no resolved list yet: tokens show as pending.
+              <InlineFilesScope files={activity.inlineFiles ?? null}>
+                <MarkdownViewer
+                  content={activity.content}
+                  className="mt-2 text-sm"
+                />
+              </InlineFilesScope>
             )}
             {activity.error && (
               <p

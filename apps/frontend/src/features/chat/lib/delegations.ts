@@ -28,6 +28,7 @@ export const activitiesFromRecords = (
     })),
     toolResults: record.tool_results ?? [],
     error: record.error ?? undefined,
+    inlineFiles: record.inline_files ?? [],
   }));
 
 export const recordDurationMs = (record: DelegationRecord) =>

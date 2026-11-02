@@ -16,6 +16,7 @@ import React from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import { MessageActions } from "./message-actions";
 import { MessageBody } from "./message-body";
+import { InlineFilesProvider } from "@/components/markdown-viewer/inline-files";
 import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
 import { TurnInspection } from "./turn-inspection";
@@ -89,29 +90,40 @@ export const MessageItem = React.memo(
       >
         {!fromUser && <MessageMarker visible={startsTurn} />}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <AgentTimeline
-            steps={steps}
-            streaming={streaming}
-            defaultOpen={streaming && showThinking}
-          />
-          {!!message.delegations?.length && (
-            <DelegationSummary
-              records={message.delegations}
-              mainModel={message.execution?.model.name}
-              onFork={onFork}
+          <InlineFilesProvider
+            value={{
+              chatId,
+              // A streaming step has no server-resolved list yet (ADR-0039 §5).
+              files:
+                !fromUser && message.status === "pending"
+                  ? null
+                  : (message.inline_files ?? []),
+            }}
+          >
+            <AgentTimeline
+              steps={steps}
+              streaming={streaming}
+              defaultOpen={streaming && showThinking}
             />
-          )}
-          <ToolApprovalCards
-            requests={message.needsPermission ?? NO_REQUESTS}
-            onDecide={(request, approved) =>
-              sendJsonMessage({
-                type: "tool_approval",
-                tool_id: request.id,
-                approved,
-              })
-            }
-          />
-          <MessageBody message={message} />
+            {!!message.delegations?.length && (
+              <DelegationSummary
+                records={message.delegations}
+                mainModel={message.execution?.model.name}
+                onFork={onFork}
+              />
+            )}
+            <ToolApprovalCards
+              requests={message.needsPermission ?? NO_REQUESTS}
+              onDecide={(request, approved) =>
+                sendJsonMessage({
+                  type: "tool_approval",
+                  tool_id: request.id,
+                  approved,
+                })
+              }
+            />
+            <MessageBody message={message} />
+          </InlineFilesProvider>
           {!!message.tool_call_results?.length && (
             <RetrievalCitations
               chatId={chatId}

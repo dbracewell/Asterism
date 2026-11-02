@@ -54,9 +54,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-56.3: Reference resolution at save time
   - [x] Implement parsing and resolution in the chat domain; expose resolved references.
   - [x] Test foreign, missing, out-of-scope and deleted files, and identical 404 behavior.
-- [ ] US-56.4: Inline images (in progress)
-  - [ ] Build `InlineFile` image rendering and the lightbox; implement SVG handling.
-  - [ ] Add adversarial browser tests (foreign IDs, URL-shaped tokens, script-bearing SVG).
+- [ ] US-56.4: Inline images (in progress; awaiting confirmation)
+  - [x] Build `InlineFile` image rendering and the lightbox; implement SVG handling.
+  - [x] Add adversarial browser tests (foreign IDs, URL-shaped tokens, script-bearing SVG).
 - [ ] US-56.5: Document cards and previews
   - [ ] Build the document card and preview using cached conversions.
   - [ ] Decide and document the thumbnail approach; test cards for each supported type.

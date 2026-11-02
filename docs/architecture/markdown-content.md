@@ -65,9 +65,18 @@ It carries an opaque token that the server resolved when the message was saved.
   disposition.
 - **Code.** Tokens inside inline code and fenced code remain literal text.
 
-Status: the contract is accepted (US-56.1). Until US-56.3 and US-56.4 land, the
-renderer has no resolved list and file-reference tokens fall under the general
-policy: blocked links and omitted-image labels.
+Status: implemented for images (US-56.4). `InlineFilesProvider` supplies the chat ID
+and resolved list for a message; `InlineFilesScope` narrows it to one sub-agent's
+output. The URL transform lets only an exact token reach the link/image
+components, which render `InlineFile` instead of an anchor or image element.
+Resolved images up to 20 MiB load through `chatFileDownload` into a typed
+`blob:` URL, display at a bounded size and open a lightbox with Download. Larger
+images, mentions and other types render as a chip that opens the same dialog;
+document cards and previews follow in US-56.5. Unit tests cover the grammar,
+scoping and inert states; `e2e/inline-files.spec.ts` checks in a real browser
+that only the two scoped routes are requested, that foreign, deleted and
+URL-shaped tokens stay inert, and that a script-bearing SVG neither runs nor
+loads its external resources.
 
 ## Math policy and pipeline
 

@@ -294,3 +294,17 @@ async def test_deleting_the_chat_keeps_the_produced_file_in_the_library(produced
         row = await session.get(UserFileModel, file.file_id)
         assert row is not None and row.produced_chat_id == scope_.chat_id
         assert list(await session.scalars(select(ChatFileModel))) == []
+
+
+@pytest.mark.asyncio
+async def test_downloads_are_inert_attachments(produced):
+    p = produced
+    _, scope_ = await run(p)
+    file = await register_produced_file(scope_, tool="t", name="drawing.svg", content=SVG)
+    for path in (f"/chat/{scope_.chat_id}/files/{file.file_id}", f"/files/{file.filename}"):
+        response = await p.client.get(path, headers=auth())
+        assert response.status_code == 200, response.text
+        assert response.headers["content-type"].startswith("image/svg+xml")
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["content-security-policy"] == "sandbox; default-src 'none'"
+        assert response.headers["content-disposition"].startswith("attachment")

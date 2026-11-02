@@ -16,8 +16,24 @@ export function markdownLink(url: string): string | undefined {
   }
 }
 
-export const markdownUrlTransform: UrlTransform = (url, key, node) =>
-  key === "href" && node.tagName === "a" ? markdownLink(url) : undefined;
+// ADR-0039: the only file path. An exact token reaches the renderer's link/image
+// components, which never put it in `href` or `src`; near-misses stay blocked.
+const FILE_TOKEN =
+  /^asterism-file:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
+
+export function fileTokenId(url: string | null | undefined): string | null {
+  return (url && FILE_TOKEN.exec(url)?.[1]) || null;
+}
+
+export const markdownUrlTransform: UrlTransform = (url, key, node) => {
+  if (
+    fileTokenId(url) &&
+    ((key === "href" && node.tagName === "a") ||
+      (key === "src" && node.tagName === "img"))
+  )
+    return url;
+  return key === "href" && node.tagName === "a" ? markdownLink(url) : undefined;
+};
 
 // KaTeX owns the generated layout markup; untrusted input cannot opt into its
 // HTML, ID, link or image commands. No caller can override these settings.

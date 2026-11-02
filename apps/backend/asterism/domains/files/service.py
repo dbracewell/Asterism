@@ -49,6 +49,12 @@ from .store import get_file_store as get_file_store
 
 logger = get_logger("FilesService")
 
+SOURCE_RESPONSE_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "sandbox; default-src 'none'",
+}
+"""Stored bytes are untrusted: never sniffed, and inert even if opened directly (ADR-0039 §7)."""
+
 _DENIED_EXTENSIONS = {
     ".app",
     ".bat",
@@ -157,6 +163,7 @@ async def get_user_file(
         headers = {
             "Cache-Control": "private, no-cache",
             "ETag": etag,
+            **SOURCE_RESPONSE_HEADERS,
         }
 
         if if_none_match:
@@ -789,5 +796,5 @@ async def download_file_by_id(*, user_id: str, file_id: uuid.UUID, session: Asyn
         path=path,
         filename=file.original_name,
         media_type=file.mime_type,
-        headers={"Cache-Control": "private, no-store"},
+        headers={"Cache-Control": "private, no-store", **SOURCE_RESPONSE_HEADERS},
     )

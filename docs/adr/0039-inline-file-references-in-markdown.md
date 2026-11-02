@@ -157,6 +157,12 @@ to an `InlineFile` component. Nothing else changes:
 - Every other surface that renders Markdown without a resolved list (study
   tools, notes, harnesses) passes an empty list, so tokens there are inert.
 
+US-56.4 implementation: `components/markdown-viewer/inline-files.tsx`. Bytes are
+fetched with TanStack Query (`chatFileDownloadOptions`) and wrapped in a `Blob`
+typed from the resolved `mime_type`, so the browser never sniffs the type. Images
+over 20 MiB are not fetched inline. User messages always render tokens as
+unavailable, because user text is never resolved.
+
 ### 6. Produced files
 
 Tools register output through an internal service in the files domain. It is

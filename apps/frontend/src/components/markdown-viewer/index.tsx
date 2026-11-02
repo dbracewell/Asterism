@@ -9,7 +9,19 @@ import { syntaxTheme } from "./syntax-theme";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { markdownMathOptions, markdownUrlTransform } from "./policy";
+import { InlineFile } from "./inline-files";
+import {
+  fileTokenId,
+  markdownMathOptions,
+  markdownUrlTransform,
+} from "./policy";
+
+type TextNode = { type: string; value?: string; children?: TextNode[] };
+const nodeText = (node?: TextNode): string =>
+  node?.type === "text"
+    ? (node.value ?? "")
+    : (node?.children ?? []).map(nodeText).join("");
+const fileLabel = (text: string) => text.trim().slice(0, 200);
 
 const scrollRegion =
   "min-w-0 max-w-full overflow-x-auto overscroll-x-contain scroll-p-2 focus-visible:outline-2 focus-visible:outline-ring";
@@ -42,7 +54,15 @@ const MarkdownViewer = ({
         rehypePlugins={[[rehypeKatex, markdownMathOptions]]}
         components={{
           a({ href, children, node, ...props }) {
-            void node;
+            const fileId = fileTokenId(href);
+            if (fileId)
+              return (
+                <InlineFile
+                  fileId={fileId}
+                  label={fileLabel(nodeText(node as TextNode | undefined))}
+                  embed={false}
+                />
+              );
             if (!href) return <span>{children}</span>;
             return (
               <a {...props} href={href} rel="noreferrer noopener">
@@ -50,7 +70,16 @@ const MarkdownViewer = ({
               </a>
             );
           },
-          img({ alt }) {
+          img({ alt, src }) {
+            const fileId = fileTokenId(typeof src === "string" ? src : null);
+            if (fileId)
+              return (
+                <InlineFile
+                  fileId={fileId}
+                  label={fileLabel(alt ?? "")}
+                  embed
+                />
+              );
             return (
               <span className="text-muted-foreground">
                 [Image omitted{alt ? `: ${alt}` : ""}]
