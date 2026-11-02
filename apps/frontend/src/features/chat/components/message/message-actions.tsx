@@ -1,5 +1,6 @@
 "use client";
 import { CopyButton } from "@/components/copy-button";
+import { copyableText } from "@/components/markdown-viewer/copy-text";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import { StreamingMessage } from "@/features/chat/types";
@@ -94,7 +95,7 @@ export const MessageActions = ({
         </Hint>
       )}
       <CopyButton
-        text={message.content}
+        text={copyableText(message.content, message.inline_files)}
         size="icon-sm"
         className="rounded-control"
       />

@@ -98,6 +98,16 @@ async def build_prompt_snapshot(
         )
 
 
+FILE_REFERENCE_GUIDANCE = (
+    "\nFiles: to show one of the user's files in your reply, write "
+    "![short description](asterism-file:<file id>) to embed it (images display inline, "
+    "documents as cards) or [label](asterism-file:<file id>) to mention it. "
+    "Use only file ids given to you in this conversation: attached files, search results "
+    "or tool results. Any other id shows as unavailable. Never write URLs to files."
+)
+"""ADR-0039 §9: explains the syntax only when the run can see files. It grants nothing."""
+
+
 async def build_runtime_prompt(
     *,
     user_id: str,
@@ -125,4 +135,6 @@ async def build_runtime_prompt(
                 "\nUse sub_agent to delegate tasks to these eligible agents. "
                 "Include their relevant results in your response.\nSub Agents:\n" + "\n".join(rows)
             )
+    if scope is not None and scope.file_ids:
+        runtime += FILE_REFERENCE_GUIDANCE
     return runtime

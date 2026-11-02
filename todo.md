@@ -60,10 +60,10 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-56.5: Document cards and previews
   - [x] Build the document card and preview using cached conversions.
   - [x] Decide and document the thumbnail approach; test cards for each supported type.
-- [ ] US-56.6: Model instructions and accessibility (in progress)
-  - [ ] Add the conditional prompt guidance and copy-text behavior.
-  - [ ] Add accessibility and keyboard tests.
-  - [ ] Fix the pre-existing browser failures (fork button accessible name, help-center focus).
+- [ ] US-56.6: Model instructions and accessibility (in progress; awaiting confirmation)
+  - [x] Add the conditional prompt guidance and copy-text behavior.
+  - [x] Add accessibility and keyboard tests.
+  - [x] Fix the pre-existing browser failures (fork button accessible name, help-center focus).
 
 ### [EPIC-57: Writing feedback and AI-use transparency](docs/epics/EPIC-57-WRITING-FEEDBACK-AND-AI-USE-TRANSPARENCY.md)
 

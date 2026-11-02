@@ -87,7 +87,7 @@ describe("DelegationSummary forks", () => {
     const lead = screen.getByTestId("delegation-lead");
     expect(within(lead).getByText("Changed instructions")).toBeVisible();
     await userEvent.click(
-      within(lead).getByRole("button", { name: "Fork from Researcher" }),
+      within(lead).getByRole("button", { name: "Fork from here: Researcher" }),
     );
     expect(onFork).toHaveBeenCalledWith(
       expect.objectContaining({ execution_id: "lead" }),

@@ -130,7 +130,7 @@ export const DelegationSummary = ({
                     variant="ghost"
                     size="xs"
                     onClick={() => onFork(record)}
-                    aria-label={`Fork from ${record.name}`}
+                    aria-label={`Fork from here: ${record.name}`}
                   >
                     <GitBranchIcon data-icon="inline-start" aria-hidden />
                     Fork from here
