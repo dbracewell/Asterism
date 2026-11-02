@@ -128,6 +128,16 @@ stale client flag cannot reach a revoked file: the route returns the same 404.
 Replay and resume re-resolve against live access when they save. Regeneration and
 forks create new messages and resolve from scratch.
 
+US-56.3 implementation: `chat/inline_files.py` resolves in `add_message`
+(assistant steps, including cancelled partial steps) and `write_fork_step`,
+using one live scope read per save. A reference resolves when the file is in the
+live chat scope and either in the run's recorded `context.allowed_file_ids` or
+produced in that run (sub-agent output: produced under its own agent ID). A step
+saved without a recorded run resolves nothing. `name` is the file's original
+name. The chat, run-inspection and comparison reads all recheck availability;
+comparison replies off the active branch therefore show produced files from
+other branches as unavailable, the same as attachments.
+
 ### 5. Rendering
 
 `MarkdownViewer` takes the message's resolved list as a prop. The URL transform

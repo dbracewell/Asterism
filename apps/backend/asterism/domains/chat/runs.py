@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import NotFoundException
 
+from .inline_files import apply_live_availability, read_live_file_ids
 from .models import MessageModel
 from .queries import select_owned_messages
 from .schemas import Message, RecordedRun
@@ -43,7 +44,10 @@ def run_through(records: list[MessageModel], message_id: uuid.UUID) -> tuple[Mes
 async def read_run(*, user_id: str, chat_id: uuid.UUID, message_id: uuid.UUID, session: AsyncSession) -> RecordedRun:
     records = list(await session.scalars(select_owned_messages(user_id=user_id, chat_id=chat_id)))
     request, steps = run_through(records, message_id)
-    return RecordedRun(
+    run = RecordedRun(
         request=Message.model_validate(request),
         steps=[Message.model_validate(step) for step in steps],
     )
+    live = await read_live_file_ids(user_id=user_id, chat_id=chat_id, session=session)
+    apply_live_availability(run.steps, live)
+    return run

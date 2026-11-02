@@ -14,6 +14,7 @@ from asterism.domains.prompt_templates.provenance import label_availability
 
 from .attachments import bind_message_files, resolve_file_references
 from .branches import active_branch
+from .inline_files import apply_live_availability
 from .jobs import chat_jobs
 from .models import (
     ChatModel,
@@ -100,6 +101,18 @@ async def add_message(
             if record.execution != message.execution:
                 raise BadDataException("Execution metadata changed")
             new_message.execution_id = record.id
+        if message.role == "assistant":
+            from .inline_files import resolve_step
+
+            new_message.inline_files, delegations = await resolve_step(
+                user_id=user_id,
+                chat_id=chat_id,
+                content=message.content,
+                delegations=message.delegations,
+                execution=message.execution,
+                session=session,
+            )
+            new_message.delegations = delegations
         session.add(new_message)
 
         if new_message.parent_message_id:
@@ -379,6 +392,7 @@ async def get_one(
                 chat_info.context_model = None
         scope = await resolve_chat_file_scope(user_id=user_id, chat_id=chat_id, session=session)
         allowed = set(scope.allowed_file_ids)
+        apply_live_availability(messages, allowed)
         for message in messages:
             message.files = [
                 file

@@ -39,6 +39,25 @@ class UsageStep(BaseModel):
     generation_duration_ms: int = Field(default=0, ge=0)
 
 
+class InlineFileReference(BaseModel):
+    """One ``asterism-file:`` reference in saved Markdown, resolved at save time (ADR-0039).
+
+    Unavailable references carry only ``file_id``: no role, name, type or size is
+    ever recorded or returned for them, so a foreign or guessed ID reveals nothing
+    a missing ID would not. ``available`` is rechecked against live scope on read.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    file_id: uuid.UUID
+    available: bool
+    role: Literal["produced", "referenced"] | None = None
+    producing_execution_id: uuid.UUID | None = None
+    name: str | None = None
+    mime_type: str | None = None
+    kind: FileKind | None = None
+    size: int | None = Field(default=None, ge=0)
+
+
 class DelegationRecord(BaseModel):
     """One sub-agent delegation observed during an assistant step.
 
@@ -78,6 +97,8 @@ class DelegationRecord(BaseModel):
     tool_results: list[ToolResult] = Field(default_factory=list)
     output: str = ""
     error: str | None = None
+    # References in ``output``, resolved when the parent step was saved (US-56.3).
+    inline_files: list[InlineFileReference] = Field(default_factory=list)
 
 
 class MessageFileReference(BaseModel):
@@ -208,6 +229,8 @@ class Message(LLMMessage):
     # What the model was given for this step, recorded when it ran (US-54.3).
     context: ContextManifest | None = None
     files: list[MessageFileReference] = Field(default_factory=list)
+    # References in ``content``, resolved at save time (US-56.3, ADR-0039).
+    inline_files: list[InlineFileReference] = Field(default_factory=list)
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0

@@ -29,6 +29,7 @@ from .branches import active_branch
 from .comparisons import pending_on_branch
 from .draft_models import ChatSendReceiptModel
 from .execution_models import ChatExecutionModel
+from .inline_files import resolve_step
 from .jobs import chat_jobs
 from .models import ChatModel, MessageModel
 from .queries import select_owned_chats, select_owned_executions, select_owned_messages
@@ -385,7 +386,15 @@ async def write_fork_step(
             raise NotFoundException("Message not found")
         message.status = status
         message.tool_call_results = [*tool_call_results] if tool_call_results is not None else []
-        message.delegations = delegations
+        # A fork resolves its references again against live access (ADR-0039 §4).
+        message.inline_files, message.delegations = await resolve_step(
+            user_id=user_id,
+            chat_id=chat_id,
+            content=message.content,
+            delegations=delegations,
+            execution=message.execution,
+            session=session,
+        )
         message.context = context
         await session.flush()
         result = Message.model_validate(message)

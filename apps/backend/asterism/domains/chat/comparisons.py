@@ -24,6 +24,7 @@ from asterism.domains.settings.queries import select_visible_models
 
 from .branches import active_branch, sibling_order
 from .draft_models import ChatSendReceiptModel
+from .inline_files import apply_live_availability, read_live_file_ids
 from .jobs import chat_jobs
 from .model_selection import model_choice, require_chat_model
 from .models import ChatModel, MessageModel
@@ -186,9 +187,11 @@ async def _comparison(
         row.id: model_choice(row, availability)
         for row in await session.scalars(select_visible_models(chat.user_id).where(LLMModel.id.in_(target_ids)))
     }
+    live = await read_live_file_ids(user_id=chat.user_id, chat_id=chat.id, session=session)
     result = []
     for column in columns:
         replies = _replies(column, by_id)
+        apply_live_availability(replies, live)
         result.append(
             ComparisonColumn(
                 index=column.comparison_index or 0,
