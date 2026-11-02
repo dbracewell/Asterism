@@ -21,7 +21,7 @@ markup/attributes are never installed as DOM elements.
 | Standard Markdown | Headings, paragraphs, emphasis, quotations, lists, inline code and fenced code remain supported.                                                                          |
 | GFM               | Tables, strikethrough, footnotes and disabled task-list checkboxes remain supported.                                                                                      |
 | Raw HTML          | No user HTML elements, styles, classes, event handlers, forms, frames, scripts, media, metadata or SVG are installed.                                                     |
-| Markdown images   | Always display an omitted-image label with the alt text. No `img`, `src`, `srcset` or network request is produced.                                                        |
+| Markdown images   | Always display an omitted-image label with the alt text. No `img`, `src`, `srcset` or network request is produced. The only exception is a file reference token (below).  |
 | Resource URLs     | All untrusted automatic resources are blocked, including remote, protocol-relative, same-origin, data and blob image URLs.                                                |
 | Links             | Explicit HTTP(S) URLs without credentials, application paths beginning with a single `/`, and document fragments beginning with `#` are allowed.                          |
 | Other URLs        | Script/data/blob/file/FTP/mailto schemes, protocol-relative URLs, backslashes, whitespace/control characters, path-relative links and query-only links are not clickable. |
@@ -35,6 +35,39 @@ The shared URL transform permits only anchor `href` values; no resource attribut
 can pass through it. No inline-image loading/approval flow is implemented.
 Authorized attachment previews remain separate application components; Markdown
 cannot turn an arbitrary endpoint into an authenticated image request.
+
+## File references — EPIC-56
+
+[ADR-0039](../adr/0039-inline-file-references-in-markdown.md) defines the single
+allowed path from Markdown to a file. **Markdown never carries a fetchable URL.**
+It carries an opaque token that the server resolved when the message was saved.
+
+- **Syntax.** A link or image destination that is exactly
+  `asterism-file:<lowercase canonical UUID>`. `![label](asterism-file:…)` embeds
+  the file; `[label](asterism-file:…)` is an inline chip. Anything else, including
+  near-misses with a path, query, fragment, uppercase hex or another scheme in
+  front, is not a token and stays blocked by the URL policy above.
+- **Authority.** The renderer receives the message's server-resolved reference
+  list. A token renders a file only when its ID is in that list and `available`.
+  The ID in the text grants nothing.
+- **Unavailable.** Foreign, missing, out-of-scope, deleted and over-limit IDs all
+  render the same inert "File unavailable" label with no request. Streaming text
+  shows an inert pending label until the saved message arrives. Surfaces that
+  have no resolved list (study tools, notes) render every token inert.
+- **Fetching.** A token is never written into `href` or `src`. Metadata and bytes
+  load only through the generated client's scoped chat-file operations
+  (`chatFileGetInfo`, `chatFileDownload`) as blobs, so server-side scope still
+  governs every byte. No other URL is requested.
+- **Active content.** SVG displays only through `<img>` from a `blob:` URL; it is
+  never inlined, framed or navigated. HTML files are never rendered. Scoped
+  chat-file responses send `X-Content-Type-Options: nosniff`,
+  `Content-Security-Policy: sandbox; default-src 'none'` and an attachment
+  disposition.
+- **Code.** Tokens inside inline code and fenced code remain literal text.
+
+Status: the contract is accepted (US-56.1). Until US-56.3 and US-56.4 land, the
+renderer has no resolved list and file-reference tokens fall under the general
+policy: blocked links and omitted-image labels.
 
 ## Math policy and pipeline
 
