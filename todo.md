@@ -33,7 +33,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-55.1: Claim-level citations (confirmed and merged 2026-11-02)
   - [x] Define the span-citation format in the model output contract and parse it at persistence.
   - [x] Render span markers and previews; test parsing, scope and unavailable files.
-- [ ] US-55.2: Verify pass (implemented on `feature/us-55.2-verify-pass`; awaiting confirmation)
+- [x] US-55.2: Verify pass (confirmed and merged 2026-11-02)
   - [x] Implement claim extraction and per-claim retrieval checks with limits.
   - [x] Store results with provenance and build the claim overlay.
   - [x] Test scope narrowing, limits and label rendering; add evaluation fixtures.
