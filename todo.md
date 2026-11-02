@@ -47,11 +47,11 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 - [x] US-56.1: Reference contract and ADR
   - [x] Write the ADR and update the Markdown trust documentation.
-- [ ] US-56.2: Produced-file registration (in progress; awaiting confirmation)
+- [x] US-56.2: Produced-file registration
   - [x] Add the `origin` and provenance columns and the registration service in the files domain.
   - [x] Enforce limits and content detection; return reference tokens in tool results.
   - [x] Test limits, type detection, provenance, sub-agent ownership and scope membership.
-- [ ] US-56.3: Reference resolution at save time
+- [ ] US-56.3: Reference resolution at save time (in progress)
   - [ ] Implement parsing and resolution in the chat domain; expose resolved references.
   - [ ] Test foreign, missing, out-of-scope and deleted files, and identical 404 behavior.
 - [ ] US-56.4: Inline images
