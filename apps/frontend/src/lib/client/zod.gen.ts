@@ -2915,6 +2915,19 @@ export const zChatComparison = z.object({
 });
 
 /**
+ * RecordedRun
+ *
+ * One recorded run on any branch, for run diff (US-54.6).
+ *
+ * ``request`` is the user turn the run answers; ``steps`` are its assistant
+ * steps along that branch, in order. Everything is as recorded at execution.
+ */
+export const zRecordedRun = z.object({
+  request: zMessage,
+  steps: z.array(zMessage),
+});
+
+/**
  * UserFile
  *
  * Public representation of one file in the caller's library.
@@ -3464,6 +3477,16 @@ export const zChatContextLayersGetPath = z.object({
  * Successful Response
  */
 export const zChatContextLayersGetResponse = zContextLayerTexts;
+
+export const zChatRunGetPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatRunGetResponse = zRecordedRun;
 
 export const zChatForkInstructionsGetPath = z.object({
   chat_id: z.uuid(),

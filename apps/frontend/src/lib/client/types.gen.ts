@@ -3350,6 +3350,22 @@ export type ProviderSummary = {
 export type ProviderType = "openai" | "generic_openai" | "chatgpt";
 
 /**
+ * RecordedRun
+ *
+ * One recorded run on any branch, for run diff (US-54.6).
+ *
+ * ``request`` is the user turn the run answers; ``steps`` are its assistant
+ * steps along that branch, in order. Everything is as recorded at execution.
+ */
+export type RecordedRun = {
+  request: Message;
+  /**
+   * Steps
+   */
+  steps: Array<Message>;
+};
+
+/**
  * ScopedChatFile
  */
 export type ScopedChatFile = {
@@ -7508,6 +7524,44 @@ export type ChatContextLayersGetResponses = {
 
 export type ChatContextLayersGetResponse =
   ChatContextLayersGetResponses[keyof ChatContextLayersGetResponses];
+
+export type ChatRunGetData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/run";
+};
+
+export type ChatRunGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatRunGetError = ChatRunGetErrors[keyof ChatRunGetErrors];
+
+export type ChatRunGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecordedRun;
+};
+
+export type ChatRunGetResponse = ChatRunGetResponses[keyof ChatRunGetResponses];
 
 export type ChatForkInstructionsGetData = {
   body?: never;

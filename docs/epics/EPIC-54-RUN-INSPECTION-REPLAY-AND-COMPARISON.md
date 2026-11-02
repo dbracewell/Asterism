@@ -1,6 +1,6 @@
 # EPIC-54: Run inspection, replay and comparison
 
-Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1, US-54.2, US-54.3 and US-54.5 complete; US-54.6 next). Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress (US-54.4 complete, done ahead of order to unblock US-51.7; US-54.1, US-54.2, US-54.3 and US-54.5 complete; US-54.6 implemented, awaiting confirmation). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
@@ -108,4 +108,4 @@ Estimate: 1.5 days. Dependencies: US-54.4 or US-54.5.
 Acceptance: comparing two branches shows a text diff of the final answers plus
 differences in agents, models, tools called, usage and capability manifests.
 
-- [ ] Build the diff view over recorded data; test it with fixture runs.
+- [x] Build the diff view over recorded data; test it with fixture runs.

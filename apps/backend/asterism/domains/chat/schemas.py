@@ -253,6 +253,17 @@ class ForkInstructions(BaseModel):
     rerun_sub_agent_name: str
 
 
+class RecordedRun(BaseModel):
+    """One recorded run on any branch, for run diff (US-54.6).
+
+    ``request`` is the user turn the run answers; ``steps`` are its assistant
+    steps along that branch, in order. Everything is as recorded at execution.
+    """
+
+    request: Message
+    steps: list[Message]
+
+
 class UpdateMessageRequest(BaseModel):
     content: str | None = Field(default=None)
     thinking: str | None = Field(default=None)

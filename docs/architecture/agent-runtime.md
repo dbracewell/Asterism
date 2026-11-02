@@ -300,6 +300,21 @@ delegation, with that sub-agent's instructions changed for this run only. See
 - Saving the instructions to the definition is a separate action:
   `PUT /agents/sub-agents/{agent_id}/instructions` with the expected revision.
 
+### Run diff (US-54.6)
+
+Two runs on different branches can be compared: comparison columns ("Diff
+answers" under a comparison), and a turn whose branch was regenerated, edited
+or forked ("Diff branches" in its meta line, against the branches beside its
+first fork point).
+
+`GET /chat/{chat_id}/messages/{message_id}/run` (owner only, `chat/runs.py`)
+returns the recorded run a message belongs to, on that message's own branch: the
+user turn, then its steps back from the message and onward along its active
+chain. `features/chat/lib/run-diff.ts` compares two runs from their records
+only: a word-level diff of the final answers (line-level, then whole-text, for
+long answers), agents and their models, tool calls by name, usage totals and
+capability-manifest entries. Answers render as plain untrusted text.
+
 ## Resume, regeneration, and audit
 
 Each invocation has an execution UUID. Delegated events also include target ID,

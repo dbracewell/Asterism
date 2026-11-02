@@ -162,6 +162,9 @@ import type {
   ChatPersonaUpdateData,
   ChatPersonaUpdateError,
   ChatPersonaUpdateResponse,
+  ChatRunGetData,
+  ChatRunGetError,
+  ChatRunGetResponse,
   ChatSearchData,
   ChatSearchError,
   ChatSearchResponse,
@@ -1849,6 +1852,33 @@ export const chatContextLayersGetOptions = (
       return data;
     },
     queryKey: chatContextLayersGetQueryKey(options),
+  });
+
+export const chatRunGetQueryKey = (options: Options<ChatRunGetData>) =>
+  createQueryKey("chatRunGet", options);
+
+/**
+ * Get Run
+ *
+ * The recorded run a message belongs to, on its own branch; owner only (US-54.6).
+ */
+export const chatRunGetOptions = (options: Options<ChatRunGetData>) =>
+  queryOptions<
+    ChatRunGetResponse,
+    ChatRunGetError,
+    ChatRunGetResponse,
+    ReturnType<typeof chatRunGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatRunGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatRunGetQueryKey(options),
   });
 
 export const chatForkInstructionsGetQueryKey = (
