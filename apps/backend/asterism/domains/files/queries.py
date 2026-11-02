@@ -6,13 +6,15 @@ membership filters on top of the returned statement without the files domain
 importing them (enforced by ``tests/test_file_queries.py``).
 """
 
+import uuid
+from collections.abc import Iterable
 from typing import Literal
 
 from sqlalchemy import Select, select
 
 from asterism.core.exceptions import BadDataException
 
-from .models import UserFileModel
+from .models import FileOrigin, UserFileModel
 
 FileSort = Literal["name", "kind", "date", "size"]
 """Supported sort keys for a file listing."""
@@ -64,4 +66,22 @@ def select_owned_files(
         UserFileModel.created_at.desc(),
         UserFileModel.filename,
         UserFileModel.id,
+    )
+
+
+def select_produced_files(
+    *,
+    user_id: str,
+    chat_id: uuid.UUID,
+    run_ids: Iterable[uuid.UUID],
+) -> Select[tuple[UserFileModel]]:
+    """Select the caller's files that tools produced in the given runs of one chat.
+
+    Provenance only narrows; callers still add their membership filter, which is
+    what grants scope.
+    """
+    return select_owned_files(user_id=user_id).where(
+        UserFileModel.origin == FileOrigin.AGENT,
+        UserFileModel.produced_chat_id == chat_id,
+        UserFileModel.produced_execution_id.in_(list(run_ids)),
     )

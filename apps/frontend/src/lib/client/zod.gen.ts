@@ -548,6 +548,13 @@ export const zContextFile = z.object({
 export const zFileKind = z.enum(["image", "text", "document", "other"]);
 
 /**
+ * FileOrigin
+ *
+ * Who created a file's bytes (ADR-0039).
+ */
+export const zFileOrigin = z.enum(["upload", "agent"]);
+
+/**
  * FileProjectSummary
  *
  * A project that references a file, as shown next to that file.
@@ -2944,6 +2951,7 @@ export const zRecordedRun = z.object({
  * created_at: Creation time as whole Unix seconds.
  * updated_at: Last update time as whole Unix seconds.
  * thumbnail: Data-URL preview for images, else ``None``.
+ * origin: Whether the user uploaded the file or an agent tool produced it.
  * projects: Projects that currently attach this file.
  * knowledge: Latest knowledge artifact for this file, if one exists.
  */
@@ -2959,6 +2967,7 @@ export const zUserFile = z.object({
   created_at: z.int(),
   updated_at: z.int(),
   thumbnail: z.string().nullable(),
+  origin: zFileOrigin,
   projects: z.array(zFileProjectSummary).optional(),
   knowledge: zFileKnowledgeArtifact.nullish(),
 });

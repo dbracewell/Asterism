@@ -15,6 +15,8 @@ Layering (each module owns exactly one responsibility):
 - ``service``          – Use-case orchestration (upload, list, delete, …).
 - ``router``           – FastAPI transport layer.
 - ``runtime_access``   – Model-facing reads, gated by live execution scope.
+- ``produced``         – Internal registration of tool-produced files with
+                         provenance and per-run limits (ADR-0039).
 
 The knowledge-processing policy — its schema, persistence, and transitions —
 belongs to the knowledge domain (``asterism.domains.knowledge``), not to this

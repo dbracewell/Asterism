@@ -11,6 +11,7 @@ const imageFile: UserFile = {
   content_status: "ready",
   content_error: null,
   thumbnail: null,
+  origin: "upload",
   projects: [
     {
       id: "30000000-0000-4000-8000-000000000001",

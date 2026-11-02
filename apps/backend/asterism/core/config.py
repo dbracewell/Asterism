@@ -116,6 +116,12 @@ class Config(BaseSettings):
     max_vision_image_bytes: int = 10 * 1024 * 1024
     """The maximum size of an image that can be processed for vision tasks (in bytes)."""
 
+    max_produced_files_per_run: int = 20
+    """The maximum number of files tools may produce in one chat run (US-56.2)."""
+
+    max_produced_bytes_per_run: int = 100 * 1024 * 1024
+    """The maximum total size of files tools may produce in one chat run (in bytes)."""
+
     embedding_dimension: int = 512
     """Dimension emitted by the pinned CLIP text/image embedding model."""
 
@@ -266,6 +272,10 @@ class Config(BaseSettings):
             raise ConfigValidationError("FILE_CONVERSION_TIMEOUT_S must be from 1 to 600")
         if not 1 <= self.max_vision_image_bytes <= self.max_upload_file_size_bytes:
             raise ConfigValidationError("MAX_VISION_IMAGE_BYTES must be from 1 to MAX_UPLOAD_FILE_SIZE_BYTES")
+        if not 1 <= self.max_produced_files_per_run <= 1_000:
+            raise ConfigValidationError("MAX_PRODUCED_FILES_PER_RUN must be from 1 to 1000")
+        if not 1 <= self.max_produced_bytes_per_run <= 1024 * 1024 * 1024:
+            raise ConfigValidationError("MAX_PRODUCED_BYTES_PER_RUN must be from 1 to 1073741824")
         if not 1 <= self.embedding_dimension <= 8192:
             raise ConfigValidationError("KNOWLEDGE_EMBEDDING_DIMENSION must be from 1 to 8192")
         if not 1 <= self.max_concurrent_knowledge_embeddings <= 16:

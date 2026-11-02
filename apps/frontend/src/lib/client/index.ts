@@ -419,6 +419,7 @@ export type {
   FileKnowledgeRegenerateErrors,
   FileKnowledgeRegenerateResponse,
   FileKnowledgeRegenerateResponses,
+  FileOrigin,
   FileProjectSummary,
   FileSimilarGetManyData,
   FileSimilarGetManyError,

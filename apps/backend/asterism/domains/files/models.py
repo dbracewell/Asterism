@@ -7,8 +7,9 @@ knowledge domain, never inside the store.
 """
 
 import enum
+import uuid
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.common.enums import enum_values
@@ -58,6 +59,16 @@ class FileContentStatus(str, enum.Enum):
 
     FAILED = "failed"
     """Conversion failed; ``content_error`` explains why and may be retryable."""
+
+
+class FileOrigin(str, enum.Enum):
+    """Who created a file's bytes (ADR-0039)."""
+
+    UPLOAD = "upload"
+    """Uploaded by the user through the file API."""
+
+    AGENT = "agent"
+    """Registered by a tool during a chat run; carries ``produced_*`` provenance."""
 
 
 class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
@@ -160,6 +171,34 @@ class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     )
     """``data:image/jpeg;base64,...`` preview for image files, else ``None``."""
 
+    origin: Mapped[FileOrigin] = mapped_column(
+        Enum(
+            FileOrigin,
+            values_callable=enum_values,
+            native_enum=False,
+            create_constraint=True,
+        ),
+        nullable=False,
+        default=FileOrigin.UPLOAD,
+        server_default=FileOrigin.UPLOAD.value,
+    )
+    """Whether the user uploaded the file or a tool produced it."""
+
+    # Produced-file provenance (US-56.2). Historical record only: these are not
+    # foreign keys, so deleting the chat or agent leaves the library file intact.
+    # Chat scope membership is granted by ``chat_files``, never by these columns.
+    produced_chat_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    """Chat whose run produced the file."""
+
+    produced_execution_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    """Run (``chat_executions`` id) that produced the file; shared by its sub-agents."""
+
+    produced_agent_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    """Main-agent configuration or sub-agent definition whose tool produced the file."""
+
+    produced_tool: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    """Name of the tool that registered the file."""
+
     __table_args__ = (
         # Composite foreign keys from chat_files, chat_draft_files and
         # project_files reference (id, user_id). SQLite only accepts a
@@ -172,4 +211,14 @@ class UserFileModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
         # owner-scoped lookups, so no separate index on the same columns is
         # needed.
         UniqueConstraint("user_id", "filename", name="uq_user_files_user_filename"),
+        # Provenance is all-or-nothing and only on produced files.
+        CheckConstraint(
+            "(origin = 'upload' AND produced_chat_id IS NULL AND produced_execution_id IS NULL"
+            " AND produced_agent_id IS NULL AND produced_tool IS NULL)"
+            " OR (origin = 'agent' AND produced_chat_id IS NOT NULL AND produced_execution_id IS NOT NULL"
+            " AND produced_agent_id IS NOT NULL AND produced_tool IS NOT NULL)",
+            name="ck_user_files_origin_provenance",
+        ),
+        # Per-run limit accounting and branch scope lookups.
+        Index("idx_user_files_produced_execution", "user_id", "produced_execution_id"),
     )
