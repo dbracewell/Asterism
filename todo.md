@@ -45,9 +45,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ### [EPIC-56: Inline user files in Markdown output](docs/epics/EPIC-56-INLINE-USER-FILES-IN-MARKDOWN-OUTPUT.md)
 
-- [ ] US-56.1: Reference contract and ADR (in progress; awaiting confirmation)
+- [x] US-56.1: Reference contract and ADR
   - [x] Write the ADR and update the Markdown trust documentation.
-- [ ] US-56.2: Produced-file registration
+- [ ] US-56.2: Produced-file registration (in progress)
   - [ ] Add the `origin` and provenance columns and the registration service in the files domain.
   - [ ] Enforce limits and content detection; return reference tokens in tool results.
   - [ ] Test limits, type detection, provenance, sub-agent ownership and scope membership.
