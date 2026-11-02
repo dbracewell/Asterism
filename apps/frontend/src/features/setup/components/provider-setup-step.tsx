@@ -90,6 +90,43 @@ const PROVIDER_CHOICES: { type: ProviderType; detail: string }[] = [
   },
 ];
 
+type Capability = "vision" | "tools";
+type CapabilityChoices = Partial<Record<Capability, boolean>>;
+
+const CAPABILITIES: { key: Capability; label: string }[] = [
+  { key: "vision", label: "Vision" },
+  { key: "tools", label: "Tools" },
+];
+
+const discovered = (model: Llm, capability: Capability) =>
+  capability === "vision" ? model.supports_vision : model.supports_tools;
+
+/** Whether a capability box is checked: the administrator's choice, else discovery. */
+export const capabilityChecked = (
+  model: Llm,
+  choices: CapabilityChoices | undefined,
+  capability: Capability,
+) => choices?.[capability] ?? discovered(model, capability) === true;
+
+/**
+ * One capability's saved value and source. A box the administrator changed is
+ * a manual value; an untouched one keeps its discovered value and source, so
+ * an unknown capability left unchecked stays unknown (EPIC-62).
+ */
+export function capabilityUpdate(
+  model: Llm,
+  choices: CapabilityChoices | undefined,
+  capability: Capability,
+): { value: boolean | null; source: Llm["vision_source"] } {
+  const value = discovered(model, capability) ?? null;
+  const source =
+    capability === "vision" ? model.vision_source : model.tools_source;
+  const checked = capabilityChecked(model, choices, capability);
+  return checked === (value === true)
+    ? { value, source }
+    : { value: checked, source: "manual" };
+}
+
 const newProvider = (): ProviderFormValues => ({
   id: self.crypto.randomUUID(),
   name: PROVIDER_TYPES.openai.label,
@@ -510,6 +547,9 @@ function ModelStep({
   const [selected, setSelected] = useState<Record<string, Llm>>({});
   const [chosenDefault, setChosenDefault] = useState<string | null>(null);
   const [chosenDraft, setChosenDraft] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<
+    Record<string, CapabilityChoices>
+  >({});
   const enabled = Object.values(selected);
   const defaultId =
     chosenDefault && selected[chosenDefault]
@@ -555,13 +595,27 @@ function ModelStep({
     });
   };
 
-  const toggle = (model: Llm, on: boolean) =>
+  const toggle = (model: Llm, on: boolean) => {
     setSelected((current) => {
       const next = { ...current };
       if (on) next[model.id] = model;
       else delete next[model.id];
       return next;
     });
+    // Re-enabling a model starts again from the discovered values.
+    if (!on)
+      setCapabilities((current) => {
+        const next = { ...current };
+        delete next[model.id];
+        return next;
+      });
+  };
+
+  const choose = (model: Llm, capability: Capability, checked: boolean) =>
+    setCapabilities((current) => ({
+      ...current,
+      [model.id]: { ...current[model.id], [capability]: checked },
+    }));
 
   const changeSearch = (value: string) => {
     setSearch(value);
@@ -578,16 +632,22 @@ function ModelStep({
     clearError();
     try {
       for (const model of enabled) {
+        const vision = capabilityUpdate(
+          model,
+          capabilities[model.id],
+          "vision",
+        );
+        const tools = capabilityUpdate(model, capabilities[model.id], "tools");
         await updateModel.mutateAsync({
           path: { provider_id: providerId, model_id: model.id },
           body: {
             is_active: true,
             context_window: model.context_window ?? null,
-            supports_vision: model.supports_vision,
-            supports_tools: model.supports_tools,
-            tools_source: model.tools_source,
+            supports_vision: vision.value,
+            supports_tools: tools.value,
+            tools_source: tools.source,
             context_window_source: model.context_window_source,
-            vision_source: model.vision_source,
+            vision_source: vision.source,
           },
         });
       }
@@ -658,6 +718,13 @@ function ModelStep({
                 {" · "}
                 {enabled.length.toLocaleString()} enabled
               </p>
+              {enabled.length > 0 && (
+                <FieldDescription>
+                  Check Vision and Tools only for what each enabled model
+                  supports; unchecked capabilities are not used. Tools are
+                  needed for sub-agents and project file search.
+                </FieldDescription>
+              )}
               {models.length === 0 ? (
                 <p className="text-muted-foreground text-body">
                   No matching models.
@@ -685,6 +752,15 @@ function ModelStep({
                         </FieldLabel>
                         <CapabilityIcons model={model} />
                       </Field>
+                      {model.id in selected && (
+                        <CapabilityChoicesRow
+                          model={model}
+                          choices={capabilities[model.id]}
+                          onChange={(capability, checked) =>
+                            choose(model, capability, checked)
+                          }
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -792,5 +868,45 @@ function ModelStep({
         </Field>
       </FieldGroup>
     </form>
+  );
+}
+
+/** Vision and Tools boxes for one enabled model, marking values discovery left unknown. */
+function CapabilityChoicesRow({
+  model,
+  choices,
+  onChange,
+}: {
+  model: Llm;
+  choices: CapabilityChoices | undefined;
+  onChange: (capability: Capability, checked: boolean) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 pl-6">
+      {CAPABILITIES.map(({ key, label }) => {
+        const id = `setup-model-${model.id}-${key}`;
+        const unknown =
+          discovered(model, key) == null && choices?.[key] === undefined;
+        return (
+          <Field key={key} orientation="horizontal" className="w-auto">
+            <Checkbox
+              id={id}
+              aria-label={`${label} for ${model.name}`}
+              aria-describedby={unknown ? `${id}-unknown` : undefined}
+              checked={capabilityChecked(model, choices, key)}
+              onCheckedChange={(value) => onChange(key, value === true)}
+            />
+            <FieldLabel htmlFor={id} className="text-meta font-normal">
+              {label}
+              {unknown && (
+                <span id={`${id}-unknown`} className="text-muted-foreground">
+                  (Unknown)
+                </span>
+              )}
+            </FieldLabel>
+          </Field>
+        );
+      })}
+    </div>
   );
 }

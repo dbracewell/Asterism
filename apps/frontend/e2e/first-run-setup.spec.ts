@@ -88,8 +88,14 @@ test("the administrator connects a provider right after creating the account", a
   await connect.getByRole("button", { name: "Retry" }).click();
 
   const models = page.getByRole("form", { name: "Enable models" });
-  await models.getByLabel("First-run alpha").check();
-  await models.getByLabel("First-run beta").check();
+  await models.getByLabel("First-run alpha", { exact: true }).check();
+  await models.getByLabel("First-run beta", { exact: true }).check();
+  // The local double reports no capabilities, so both are unknown.
+  const alphaTools = models.getByRole("checkbox", {
+    name: "Tools for First-run alpha",
+  });
+  await expect(alphaTools).toHaveAccessibleDescription("(Unknown)");
+  await alphaTools.check();
   await models.getByLabel("Default model").click();
   await page.getByRole("option", { name: "First-run beta" }).click();
   await models.getByLabel("Draft model").click();
@@ -118,6 +124,33 @@ test("the administrator connects a provider right after creating the account", a
   const stored = await settings.json();
   expect(stored.draft_model?.name).toBe("First-run alpha");
   expect(stored.llm_providers).toHaveLength(1);
+  // Checked capabilities are manual; untouched unknown ones stay unknown.
+  const catalog = await page.request.get(
+    `/api/py/settings/app/providers/${stored.llm_providers[0].id}/models?limit=10`,
+    { headers: { Authorization: `Bearer ${token.token}` } },
+  );
+  expect(catalog.ok()).toBeTruthy();
+  const byName = Object.fromEntries(
+    (
+      (await catalog.json()).models as {
+        name: string;
+        supports_tools: boolean | null;
+        tools_source: string;
+        supports_vision: boolean | null;
+        vision_source: string;
+      }[]
+    ).map((model) => [model.name, model]),
+  );
+  expect(byName["First-run alpha"]).toMatchObject({
+    supports_tools: true,
+    tools_source: "manual",
+    supports_vision: null,
+    vision_source: "unknown",
+  });
+  expect(byName["First-run beta"]).toMatchObject({
+    supports_tools: null,
+    tools_source: "unknown",
+  });
 
   // Leave later specs the instance they expect: no providers.
   const cleared = await page.request.put("/api/py/settings/app/providers", {

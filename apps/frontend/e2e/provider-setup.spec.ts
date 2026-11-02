@@ -28,6 +28,7 @@ async function routeSetupApi(page: Page, failures = 0) {
     failures,
     saves: [] as Provider[][],
     activated: [] as string[],
+    updates: {} as Record<string, Record<string, unknown>>,
     defaultModel: null as unknown,
     draftModel: null as string | null,
   };
@@ -103,7 +104,9 @@ async function routeSetupApi(page: Page, failures = 0) {
     "**/api/py/settings/app/providers/*/models/*",
     async (route) => {
       if (route.request().url().endsWith("/discover")) return route.fallback();
-      state.activated.push(route.request().url().split("/").at(-1)!);
+      const id = route.request().url().split("/").at(-1)!;
+      state.activated.push(id);
+      state.updates[id] = route.request().postDataJSON();
       await route.fulfill({ json: {} });
     },
   );
@@ -195,8 +198,13 @@ test("enabling models shows the ready step, which opens the new-chat page", asyn
   const form = modelsForm(page);
   await expect(form.getByRole("img", { name: "Vision input" })).toBeVisible();
   await expect(form.getByRole("img", { name: "Tool calling" })).toBeVisible();
-  await form.getByLabel("alpha-chat").check();
-  await form.getByLabel("gamma-tools").check();
+  await form.getByLabel("alpha-chat", { exact: true }).check();
+  await form.getByLabel("gamma-tools", { exact: true }).check();
+  // Discovery said alpha has no vision and gamma has tools; correct alpha.
+  await expect(
+    form.getByRole("checkbox", { name: "Tools for gamma-tools" }),
+  ).toBeChecked();
+  await form.getByRole("checkbox", { name: "Vision for alpha-chat" }).check();
   await form.getByLabel("Default model").click();
   await page.getByRole("option", { name: "gamma-tools" }).click();
   // The draft model follows the default until chosen.
@@ -225,6 +233,17 @@ test("enabling models shows the ready step, which opens the new-chat page", asyn
   ]);
   expect(state.defaultModel).toBe("30000000-0000-4000-8000-000000000002");
   expect(state.draftModel).toBe("30000000-0000-4000-8000-000000000000");
+  expect(state.updates["30000000-0000-4000-8000-000000000000"]).toMatchObject({
+    supports_vision: true,
+    vision_source: "manual",
+    supports_tools: false,
+    tools_source: "unknown",
+  });
+  expect(state.updates["30000000-0000-4000-8000-000000000002"]).toMatchObject({
+    supports_vision: false,
+    supports_tools: true,
+    tools_source: "unknown",
+  });
   // Saving the draft model re-sends the one provider with its redacted key.
   expect(state.saves.at(-1)).toEqual([
     expect.objectContaining({
@@ -243,7 +262,9 @@ test("reloading after connecting resumes at model enablement", async ({
   await expect(modelsForm(page)).toBeVisible();
   await page.reload();
   await expect(modelsForm(page)).toBeVisible();
-  await expect(modelsForm(page).getByLabel("alpha-chat")).not.toBeChecked();
+  await expect(
+    modelsForm(page).getByLabel("alpha-chat", { exact: true }),
+  ).not.toBeChecked();
   await modelsForm(page)
     .getByRole("button", { name: "Change provider" })
     .click();
@@ -322,13 +343,15 @@ for (const scenario of authViewports) {
     await page.keyboard.press("Enter");
 
     const models = modelsForm(page);
-    await expect(models.getByLabel("alpha-chat")).toBeVisible();
+    await expect(
+      models.getByLabel("alpha-chat", { exact: true }),
+    ).toBeVisible();
     await expectAuthFits(page);
     await models.getByLabel("Search models").focus();
     const modelControls = [
-      models.getByLabel("alpha-chat"),
-      models.getByLabel("beta-vision"),
-      models.getByLabel("gamma-tools"),
+      models.getByLabel("alpha-chat", { exact: true }),
+      models.getByLabel("beta-vision", { exact: true }),
+      models.getByLabel("gamma-tools", { exact: true }),
     ];
     for (const control of modelControls) {
       await page.keyboard.press("Tab");
@@ -338,6 +361,8 @@ for (const scenario of authViewports) {
     await page.keyboard.press("Space");
     await expect(modelControls[2]).toBeChecked();
     for (const control of [
+      models.getByRole("checkbox", { name: "Vision for gamma-tools" }),
+      models.getByRole("checkbox", { name: "Tools for gamma-tools" }),
       models.getByLabel("Default model"),
       models.getByLabel("Draft model"),
       models.getByRole("button", { name: "Continue" }),
@@ -395,7 +420,7 @@ for (const theme of themes) {
     await expectAuthFits(page);
     await connectForm(page).getByRole("button", { name: "Retry" }).click();
     const models = modelsForm(page);
-    await models.getByLabel("beta-vision").check();
+    await models.getByLabel("beta-vision", { exact: true }).check();
     await models
       .getByRole("list")
       .getByText("beta-vision")

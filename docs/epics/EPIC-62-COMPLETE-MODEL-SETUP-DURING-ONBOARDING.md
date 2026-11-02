@@ -1,6 +1,6 @@
 # EPIC-62: Complete model setup during onboarding
 
-Status: in progress (US-62.1 complete). Source: user feedback after EPIC-48.
+Status: in progress (US-62.1 complete; US-62.2 implemented, awaiting confirmation). Source: user feedback after EPIC-48.
 
 ## Objective
 
@@ -95,9 +95,12 @@ Acceptance:
   for gpt-4o". Keyboard, narrow (320px) and short-viewport behaviour fits the
   card without horizontal scrolling.
 
-- [ ] Add per-model Vision and Tools checkboxes with unknown marking and the explanatory note.
-- [ ] Save changed capabilities as manual values and keep untouched ones with their sources.
-- [ ] Add unit and isolated browser tests (discovered, unknown, changed, re-enabled, failure, accessibility).
+- [x] Add per-model Vision and Tools checkboxes with unknown marking and the explanatory note.
+- [x] Save changed capabilities as manual values and keep untouched ones with their sources.
+- [x] Add unit and isolated browser tests (discovered, unknown, changed, re-enabled, failure, accessibility).
+
+Decision (2026-11-01): an unknown capability left unchecked stays unknown
+rather than becoming "not supported", so later discovery can still fill it.
 
 ## Out of scope
 

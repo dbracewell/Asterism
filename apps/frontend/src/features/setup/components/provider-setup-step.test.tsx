@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { OPENAI_BASE_URL } from "@/features/settings/provider-schema";
 import type { Llm, ProviderSettings } from "@/lib/client";
-import { ProviderSetupStep } from "./provider-setup-step";
+import { capabilityUpdate, ProviderSetupStep } from "./provider-setup-step";
 
 const providerId = "20000000-0000-4000-8000-000000000001";
 
@@ -419,6 +419,88 @@ describe("first-run provider step", () => {
     );
   });
 
+  it("shows Vision and Tools choices for enabled models only", async () => {
+    mocks.settings.mockResolvedValue(savedSettings(2));
+    renderStep();
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Enable models" });
+    await within(form).findByLabelText("model-1");
+    expect(
+      within(form).queryByRole("checkbox", { name: "Vision for model-1" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(form).queryByText(/Check Vision and Tools only/),
+    ).not.toBeInTheDocument();
+
+    await user.click(within(form).getByLabelText("model-1"));
+    const vision = within(form).getByRole("checkbox", {
+      name: "Vision for model-1",
+    });
+    const tools = within(form).getByRole("checkbox", {
+      name: "Tools for model-1",
+    });
+    // Discovery reported tools; vision is unknown and marked as such.
+    expect(tools).toBeChecked();
+    expect(tools).not.toHaveAccessibleDescription();
+    expect(vision).not.toBeChecked();
+    expect(vision).toHaveAccessibleDescription("(Unknown)");
+    expect(
+      within(form).getByText(
+        "Check Vision and Tools only for what each enabled model supports; unchecked capabilities are not used. Tools are needed for sub-agents and project file search.",
+      ),
+    ).toBeVisible();
+
+    // Choosing clears the unknown marker; disabling the model drops its choices.
+    await user.click(vision);
+    expect(vision).toBeChecked();
+    expect(vision).not.toHaveAccessibleDescription();
+    await user.click(within(form).getByLabelText("model-1"));
+    expect(
+      within(form).queryByRole("checkbox", { name: "Vision for model-1" }),
+    ).not.toBeInTheDocument();
+    await user.click(within(form).getByLabelText("model-1"));
+    expect(
+      within(form).getByRole("checkbox", { name: "Vision for model-1" }),
+    ).not.toBeChecked();
+  });
+
+  it("saves changed capabilities as manual and keeps untouched ones", async () => {
+    mocks.settings.mockResolvedValue(savedSettings(2));
+    renderStep();
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Enable models" });
+    await user.click(await within(form).findByLabelText("model-1"));
+    await user.click(within(form).getByLabelText("model-2"));
+    // model-1: uncheck discovered tools, check unknown vision.
+    await user.click(
+      within(form).getByRole("checkbox", { name: "Tools for model-1" }),
+    );
+    await user.click(
+      within(form).getByRole("checkbox", { name: "Vision for model-1" }),
+    );
+    // model-2: toggling tools on and off again leaves it untouched.
+    const tools2 = within(form).getByRole("checkbox", {
+      name: "Tools for model-2",
+    });
+    await user.click(tools2);
+    await user.click(tools2);
+    await user.click(within(form).getByRole("button", { name: "Continue" }));
+    await readyButton();
+    const bodies = mocks.updateModel.mock.calls.map((call) => call[0].body);
+    expect(bodies[0]).toMatchObject({
+      supports_vision: true,
+      vision_source: "manual",
+      supports_tools: false,
+      tools_source: "manual",
+    });
+    expect(bodies[1]).toMatchObject({
+      supports_vision: true,
+      vision_source: "unknown",
+      supports_tools: null,
+      tools_source: "unknown",
+    });
+  });
+
   it("resumes a saved provider without models at the connection form", async () => {
     mocks.settings.mockResolvedValue(savedSettings(0));
     renderStep();
@@ -450,5 +532,44 @@ describe("first-run provider step", () => {
         expect.objectContaining({ query: "model-2" }),
       ),
     );
+  });
+});
+
+describe("capability updates", () => {
+  const vision = (changes: Partial<Llm>, checked?: boolean) =>
+    capabilityUpdate(
+      model(9, changes),
+      checked === undefined ? undefined : { vision: checked },
+      "vision",
+    );
+
+  it("keeps untouched values and sources, including unknown", () => {
+    expect(vision({})).toEqual({ value: null, source: "unknown" });
+    expect(
+      vision({ supports_vision: true, vision_source: "provider" }),
+    ).toEqual({ value: true, source: "provider" });
+    expect(
+      vision({ supports_vision: false, vision_source: "catalog" }),
+    ).toEqual({ value: false, source: "catalog" });
+  });
+
+  it("treats an unchanged choice as untouched", () => {
+    expect(vision({}, false)).toEqual({ value: null, source: "unknown" });
+    expect(
+      vision({ supports_vision: true, vision_source: "catalog" }, true),
+    ).toEqual({ value: true, source: "catalog" });
+    expect(
+      vision({ supports_vision: false, vision_source: "manual" }, false),
+    ).toEqual({ value: false, source: "manual" });
+  });
+
+  it("saves changed choices as manual values", () => {
+    expect(vision({}, true)).toEqual({ value: true, source: "manual" });
+    expect(
+      vision({ supports_vision: true, vision_source: "provider" }, false),
+    ).toEqual({ value: false, source: "manual" });
+    expect(
+      vision({ supports_vision: false, vision_source: "catalog" }, true),
+    ).toEqual({ value: true, source: "manual" });
   });
 });
