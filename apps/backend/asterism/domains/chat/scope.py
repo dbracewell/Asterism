@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import NotFoundException
 from asterism.domains.agent.execution_scope import ChatScopeSnapshot, FileProvenance, ProjectScopeSnapshot
 from asterism.domains.files.models import UserFileModel
-from asterism.domains.files.queries import select_owned_files
+from asterism.domains.files.queries import select_owned_files, select_produced_files
 from asterism.domains.projects.queries import selected_agent_ids
 from asterism.domains.projects.scope import read_project_context
 
@@ -89,6 +89,7 @@ async def read_chat_scope_snapshot(
         if message.role == "user":
             for file in message.files:
                 provenance.setdefault(file.file_id, []).append(message.id)
+    referenced = frozenset(provenance)
     memberships = select(ChatFileModel.file_id).where(
         ChatFileModel.user_id == user_id,
         ChatFileModel.chat_id == chat_id,
@@ -103,6 +104,24 @@ async def read_chat_scope_snapshot(
         ),
     )
     local_ids = set(files)
+    # Produced files (ADR-0039 §6) are branch-local through their producing run:
+    # admitted only while a message recorded with that run is on the active branch.
+    runs: dict[uuid.UUID, list[uuid.UUID]] = {}
+    by_id = {record.id: record for record in records}
+    for message in branch:
+        record = by_id[message.id]
+        for run_id in {record.execution_id, record.pending_execution_id} - {None}:
+            runs.setdefault(run_id, []).append(message.id)
+    if runs:
+        produced = await session.execute(
+            select_produced_files(user_id=user_id, chat_id=chat_id, run_ids=runs)
+            .with_only_columns(UserFileModel.id, UserFileModel.produced_execution_id)
+            .order_by(None)
+            .where(UserFileModel.id.in_(memberships)),
+        )
+        for file_id, run_id in produced:
+            provenance.setdefault(file_id, []).extend(runs[run_id])
+            local_ids.add(file_id)
     return ChatScopeSnapshot(
         chat_id=chat_id,
         project_id=chat.project_id,
@@ -111,7 +130,7 @@ async def read_chat_scope_snapshot(
             FileProvenance(file_id=file_id, sources=("chat",), message_ids=tuple(provenance[file_id]))
             for file_id in sorted(local_ids.intersection(provenance), key=str)
         ),
-        referenced_file_ids=frozenset(provenance),
+        referenced_file_ids=referenced,
     )
 
 

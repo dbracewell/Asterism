@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from asterism.domains.knowledge.schemas import FileKnowledgeArtifact
 
-from .models import FileContentStatus, FileKind
+from .models import FileContentStatus, FileKind, FileOrigin
 
 
 class FileProjectSummary(BaseModel):
@@ -47,6 +47,7 @@ class UserFile(BaseModel):
         created_at: Creation time as whole Unix seconds.
         updated_at: Last update time as whole Unix seconds.
         thumbnail: Data-URL preview for images, else ``None``.
+        origin: Whether the user uploaded the file or an agent tool produced it.
         projects: Projects that currently attach this file.
         knowledge: Latest knowledge artifact for this file, if one exists.
     """
@@ -64,6 +65,7 @@ class UserFile(BaseModel):
     created_at: int
     updated_at: int
     thumbnail: str | None
+    origin: FileOrigin
     projects: list[FileProjectSummary] = Field(default_factory=list)
     knowledge: FileKnowledgeArtifact | None = None
 

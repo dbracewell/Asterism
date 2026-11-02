@@ -184,6 +184,17 @@ another user's bytes or metadata. An intact existing object with the same user,
 sanitized filename, and SHA-256 is reused. Different bytes receive filename collision
 suffixes; deduplication never crosses users or filenames.
 
+`user_files.origin` is `upload` or `agent`. Agent-produced files (US-56.2,
+[ADR-0039](../adr/0039-inline-file-references-in-markdown.md)) are registered by
+tool code through `files/produced.py`, never through an HTTP route. They carry
+historical, non-foreign-key provenance (`produced_chat_id`,
+`produced_execution_id`, `produced_agent_id`, `produced_tool`), have their type
+detected from content, are never deduplicated against existing rows, and are
+capped per run by `MAX_PRODUCED_FILES_PER_RUN` and `MAX_PRODUCED_BYTES_PER_RUN`.
+Registration adds a `chat_files` membership; branch scope admits the file only
+while a message of its producing run is on the active branch. Deleting the chat
+leaves the file in the library.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are

@@ -165,17 +165,28 @@ not an HTTP route and not a model-facing tool; the model cannot upload bytes.
   fails the registration with a tool error; nothing partial is stored.
 - Registration adds a `chat_files` membership and returns the token
   (`asterism-file:<uuid>`) and a ready-made embed string in the tool result.
-- **Visibility during the run.** The produced ID joins a run-local produced set
-  on the execution tree. The producing execution and its ancestors may read and
-  reference it. A sub-agent's produced files belong to the parent chat and
-  become visible to the parent when its delegation returns. Siblings and
-  descendants do not gain them.
-- **Visibility after the run.** `role = produced` entries on active-branch
-  assistant messages (and their delegation records) join the chat file scope,
-  next to attachments on user messages. A produced file is therefore
-  branch-local, like an attachment: switching to a branch that did not produce
-  it removes it from scope. The user can add any produced file to a project
-  explicitly.
+- **Visibility during the run.** A produced file does not widen the run's
+  file-reading scope: the run keeps its recorded ceiling. It can be
+  _referenced_, though. When a reply is saved (US-56.3), the main agent may
+  reference any file produced in its run, including its sub-agents' files. A
+  sub-agent may reference only files produced under its own agent ID in that
+  run, so siblings cannot cite each other's output. Two delegations to the same
+  sub-agent definition in one run share that ID.
+- **Visibility after the run.** Sub-agents share their run's `execution_id`, and
+  messages record their run in `execution_id` (steps) and
+  `pending_execution_id` (the request). Branch scope admits a produced file
+  while it has a `chat_files` membership and a message of its producing run is
+  on the active branch. A produced file is therefore branch-local, like an
+  attachment: switching to a branch that did not run it removes it from scope.
+  This depends only on provenance, not on the reply's references. The user can
+  add any produced file to a project explicitly.
+
+US-56.2 implementation: `files/produced.py` (`register_produced_file`,
+`ProducedFile.token`/`embed`/`tool_result()`), `chat/file_references.py`
+(`attach_produced_file` checks that the run belongs to the chat and the user)
+and `chat/scope.py`. A per-run lock serializes limit checks. Limits are
+`MAX_PRODUCED_FILES_PER_RUN` (20) and `MAX_PRODUCED_BYTES_PER_RUN` (100 MiB).
+Unrecognized binary content is rejected rather than stored.
 
 ### 7. Active content
 

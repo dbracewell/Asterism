@@ -1,6 +1,6 @@
 # EPIC-56: Inline user files in Markdown output
 
-Status: in progress (US-56.1 complete, US-56.2 in progress; contract in [ADR-0039](../adr/0039-inline-file-references-in-markdown.md)). Source: user request (2026-10-31). Groundwork for agents that create PowerPoint, Word, spreadsheet, PDF and image files.
+Status: in progress (US-56.1 complete, US-56.2 under review; contract in [ADR-0039](../adr/0039-inline-file-references-in-markdown.md)). Source: user request (2026-10-31). Groundwork for agents that create PowerPoint, Word, spreadsheet, PDF and image files.
 
 ## Objective
 
@@ -78,9 +78,9 @@ and enforces size and count limits per run. Registration returns a reference
 token for the tool result. It is not exposed as a user or model-facing upload
 route.
 
-- [ ] Add the `origin` and provenance columns and the registration service in the files domain.
-- [ ] Enforce limits and content detection; return reference tokens in tool results.
-- [ ] Test limits, type detection, provenance, sub-agent ownership and scope membership.
+- [x] Add the `origin` and provenance columns and the registration service in the files domain.
+- [x] Enforce limits and content detection; return reference tokens in tool results.
+- [x] Test limits, type detection, provenance, sub-agent ownership and scope membership.
 
 ## US-56.3: Reference resolution at save time
 

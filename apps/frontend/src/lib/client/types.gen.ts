@@ -1630,6 +1630,13 @@ export type FileKnowledgeArtifact = {
 };
 
 /**
+ * FileOrigin
+ *
+ * Who created a file's bytes (ADR-0039).
+ */
+export type FileOrigin = "upload" | "agent";
+
+/**
  * FileProjectSummary
  *
  * A project that references a file, as shown next to that file.
@@ -5702,6 +5709,7 @@ export type UsageStep = {
  * created_at: Creation time as whole Unix seconds.
  * updated_at: Last update time as whole Unix seconds.
  * thumbnail: Data-URL preview for images, else ``None``.
+ * origin: Whether the user uploaded the file or an agent tool produced it.
  * projects: Projects that currently attach this file.
  * knowledge: Latest knowledge artifact for this file, if one exists.
  */
@@ -5744,6 +5752,7 @@ export type UserFile = {
    * Thumbnail
    */
   thumbnail: string | null;
+  origin: FileOrigin;
   /**
    * Projects
    */
