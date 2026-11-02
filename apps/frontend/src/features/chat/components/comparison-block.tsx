@@ -26,6 +26,7 @@ import type { StreamingMessage } from "../types";
 import { turnStepsEndingAt } from "../lib/run-usage";
 import { MessageItem } from "./message/message-item";
 import { StreamingIndicator } from "./message/streaming-indicator";
+import { RunDiffDialog } from "./run-diff-dialog";
 
 type ComparisonBlockProps = {
   chatId: string;
@@ -117,6 +118,18 @@ export function ComparisonBlock(props: ComparisonBlockProps) {
           />
         ))}
       </div>
+      <RunDiffDialog
+        chatId={chatId}
+        className="text-muted-foreground text-meta w-fit"
+        triggerLabel="Diff answers"
+        // Answered columns only; each column's request leads to its own run.
+        choices={columns
+          .filter((column) => column.status === "completed")
+          .map((column) => ({
+            messageId: column.request.id,
+            label: columnLabel(column),
+          }))}
+      />
     </section>
   );
 }

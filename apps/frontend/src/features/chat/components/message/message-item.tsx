@@ -37,6 +37,7 @@ export const MessageItem = React.memo(
     streaming = false,
     toolTimings,
     turnSteps,
+    turnRequest,
     canRegenerate,
     onRegenerate,
     onCompare,
@@ -53,6 +54,8 @@ export const MessageItem = React.memo(
     toolTimings?: ToolTimings;
     /** The turn's assistant steps when this is its settled final step. */
     turnSteps?: Message[] | null;
+    /** The user turn `turnSteps` answer, for diffing branches (US-54.6). */
+    turnRequest?: Message | null;
     canRegenerate: boolean;
     onRegenerate: (parentId?: string | null) => void;
     onCompare?: () => void;
@@ -137,7 +140,11 @@ export const MessageItem = React.memo(
               <span className="opacity-0 transition-opacity group-focus-within/message:opacity-100 group-hover/message:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100">
                 <MessageMeta message={message} />
                 {!fromUser && turnSteps && (
-                  <TurnInspection chatId={chatId} steps={turnSteps} />
+                  <TurnInspection
+                    chatId={chatId}
+                    steps={turnSteps}
+                    request={turnRequest}
+                  />
                 )}
               </span>
             </footer>

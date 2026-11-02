@@ -162,6 +162,9 @@ import type {
   ChatPersonaUpdateData,
   ChatPersonaUpdateErrors,
   ChatPersonaUpdateResponses,
+  ChatRunGetData,
+  ChatRunGetErrors,
+  ChatRunGetResponses,
   ChatSearchData,
   ChatSearchErrors,
   ChatSearchResponses,
@@ -1487,6 +1490,25 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/messages/{message_id}/context/layers",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Run
+   *
+   * The recorded run a message belongs to, on its own branch; owner only (US-54.6).
+   */
+  public chatRunGet<ThrowOnError extends boolean = false>(
+    options: Options<ChatRunGetData, ThrowOnError>,
+  ): RequestResult<ChatRunGetResponses, ChatRunGetErrors, ThrowOnError> {
+    return (options.client ?? this.client).get<
+      ChatRunGetResponses,
+      ChatRunGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/run",
       ...options,
     });
   }

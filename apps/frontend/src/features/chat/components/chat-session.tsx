@@ -556,6 +556,13 @@ export const ChatSession = ({
                 onFork={forkAction(item.index)}
                 toolTimings={toolTimings}
                 turnSteps={turnSteps[item.index]}
+                turnRequest={
+                  turnSteps[item.index]
+                    ? session.messages[
+                        item.index - (turnSteps[item.index]?.length ?? 0)
+                      ]
+                    : null
+                }
                 sendJsonMessage={sendJsonMessage}
               />
             ),

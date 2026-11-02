@@ -51,6 +51,7 @@ from .schemas import (
     MessageCompareRequest,
     MessageForkRequest,
     NewChatRequest,
+    RecordedRun,
     SearchResultList,
     UpdateMessageRequest,
 )
@@ -556,6 +557,18 @@ async def get_context_layers(
     from .context_inspection import read_context_layers
 
     return await read_context_layers(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
+
+
+@chat_router.get(
+    "/{chat_id}/messages/{message_id}/run",
+    response_model=RecordedRun,
+    operation_id="chatRunGet",
+)
+async def get_run(chat_id: uuid.UUID, message_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> RecordedRun:
+    """The recorded run a message belongs to, on its own branch; owner only (US-54.6)."""
+    from .runs import read_run
+
+    return await read_run(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
 
 
 @chat_router.get(
