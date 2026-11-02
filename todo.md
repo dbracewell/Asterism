@@ -30,7 +30,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ### [EPIC-55: Grounded answers and claim verification](docs/epics/EPIC-55-GROUNDED-ANSWERS-AND-CLAIM-VERIFICATION.md)
 
-- [ ] US-55.1: Claim-level citations (implemented on `feature/us-55.1-claim-level-citations`; awaiting confirmation)
+- [x] US-55.1: Claim-level citations (confirmed and merged 2026-11-02)
   - [x] Define the span-citation format in the model output contract and parse it at persistence.
   - [x] Render span markers and previews; test parsing, scope and unavailable files.
 - [ ] US-55.2: Verify pass
