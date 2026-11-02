@@ -137,6 +137,84 @@ export type BulkUpdateSettingRequest = {
 };
 
 /**
+ * CapabilityApproval
+ */
+export type CapabilityApproval = "automatic" | "ask";
+
+/**
+ * CapabilityEntry
+ */
+export type CapabilityEntry = {
+  kind: CapabilityKind;
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Grants
+   */
+  grants: Array<CapabilityGrant>;
+  approval?: CapabilityApproval | null;
+  /**
+   * Revision
+   */
+  revision?: number | null;
+};
+
+/**
+ * CapabilityGrant
+ *
+ * One condition that had to hold for an entry to be available.
+ */
+export type CapabilityGrant =
+  | "agent_assignment"
+  | "admin_policy"
+  | "model_support"
+  | "project_selection"
+  | "chat_attachment"
+  | "chat_selection"
+  | "file_scope";
+
+/**
+ * CapabilityKind
+ */
+export type CapabilityKind = "tool" | "skill" | "file" | "sub_agent";
+
+/**
+ * CapabilityManifest
+ */
+export type CapabilityManifest = {
+  /**
+   * Agent Id
+   */
+  agent_id: string;
+  /**
+   * Agent Name
+   */
+  agent_name: string;
+  /**
+   * Is Sub Agent
+   */
+  is_sub_agent: boolean;
+  /**
+   * Configuration Revision
+   */
+  configuration_revision: number;
+  /**
+   * Model Supports Tools
+   */
+  model_supports_tools?: boolean | null;
+  /**
+   * Entries
+   */
+  entries?: Array<CapabilityEntry>;
+};
+
+/**
  * Captioning
  *
  * The captioning output of one artifact.
@@ -1048,6 +1126,7 @@ export type DelegationRecord = {
    * Steps
    */
   steps?: Array<UsageStep>;
+  capabilities?: CapabilityManifest | null;
   /**
    * Depth
    */
@@ -2012,6 +2091,7 @@ export type MessageExecution = {
   persona: PersonaProvenance;
   learning_mode: LearningModeProvenance;
   context?: ContextProvenance | null;
+  capabilities?: CapabilityManifest | null;
   prompt?: PromptProvenance;
   /**
    * Id

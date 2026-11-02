@@ -29,6 +29,8 @@ class ModelIdentity:
     # Display-only usage provenance (US-54.1); never part of identity checks.
     provider_type: ProviderType | None = field(default=None, compare=False)
     pricing: ModelPricing | None = field(default=None, compare=False)
+    # Recorded in the capability manifest (US-54.2); authorization rechecks the live model.
+    supports_tools: bool | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)

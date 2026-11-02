@@ -18,7 +18,7 @@ import { MessageActions } from "./message-actions";
 import { MessageBody } from "./message-body";
 import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
-import { RunUsageSummary } from "./run-usage-summary";
+import { TurnInspection } from "./turn-inspection";
 import { StreamingIndicator } from "./streaming-indicator";
 
 const NO_REQUESTS: PermissionRequest[] = [];
@@ -132,12 +132,7 @@ export const MessageItem = React.memo(
               />
               <span className="opacity-0 transition-opacity group-focus-within/message:opacity-100 group-hover/message:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100">
                 <MessageMeta message={message} />
-                {!fromUser && turnSteps && (
-                  <>
-                    {" · "}
-                    <RunUsageSummary steps={turnSteps} />
-                  </>
-                )}
+                {!fromUser && turnSteps && <TurnInspection steps={turnSteps} />}
               </span>
             </footer>
           )}

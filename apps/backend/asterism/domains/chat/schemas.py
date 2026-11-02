@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from asterism.domains.agent.capabilities import CapabilityManifest
 from asterism.domains.agent.context_provenance import ContextProvenance
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeProvenance
 from asterism.domains.agent.prompts import PersonaProvenance, PromptProvenance
@@ -57,6 +58,8 @@ class DelegationRecord(BaseModel):
     provider_type: ProviderType | None = None
     pricing: ModelPricing | None = None
     steps: list[UsageStep] = Field(default_factory=list)
+    # What this sub-agent could use, recorded when it started (US-54.2).
+    capabilities: CapabilityManifest | None = None
     depth: int = Field(ge=0)
     status: DelegationStatus
     started_at_ms: int = Field(ge=0)
@@ -121,6 +124,8 @@ class MessageExecution(BaseModel):
     persona: PersonaProvenance
     learning_mode: LearningModeProvenance
     context: ContextProvenance | None = None
+    # What the main agent could use in this run, recorded at acceptance (US-54.2).
+    capabilities: CapabilityManifest | None = None
     prompt: PromptProvenance = Field(default_factory=PromptProvenance)
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     request_message_id: uuid.UUID

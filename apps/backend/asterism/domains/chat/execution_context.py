@@ -1,10 +1,12 @@
 """Chat composition root for atomic execution-source provenance."""
 
 import uuid
+from collections.abc import Collection
 from dataclasses import replace
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.domains.agent.capabilities import CapabilityManifest
 from asterism.domains.agent.context_provenance import ContextProvenance, describe_context
 from asterism.domains.agent.execution_scope import (
     ChatScopeSnapshot,
@@ -15,6 +17,7 @@ from asterism.domains.agent.execution_scope import (
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
 
+from .capabilities import build_capability_manifest
 from .schemas import MessageExecution
 from .scope import read_chat_scope_snapshot, read_project_scope_snapshot
 from .tool_policy import resolve_effective_tools
@@ -28,11 +31,13 @@ async def build_execution_provenance(
     session: AsyncSession,
     chat_snapshot: ChatScopeSnapshot | None = None,
     project_snapshot: ProjectScopeSnapshot | None = None,
-) -> ContextProvenance:
+    auto_approved_tools: Collection[str] = (),
+) -> tuple[ContextProvenance, CapabilityManifest]:
+    """Source provenance plus the capability manifest, from one authorization pass."""
     profile = AgentProfile.model_validate(
         {**execution.configuration.model_dump(exclude_none=True), "sub_agent": False, "model_id": None}
     )
-    tools, _ = await resolve_effective_tools(
+    tools, ceiling = await resolve_effective_tools(
         user_id=user_id,
         chat_id=chat_id,
         profile=profile,
@@ -66,7 +71,7 @@ async def build_execution_provenance(
         chat_scope_reader=chat_reader,
         project_scope_reader=project_reader,
     )
-    return describe_context(
+    context = describe_context(
         replace(
             scope,
             execution_id=execution.id,
@@ -74,3 +79,16 @@ async def build_execution_provenance(
             user_profile_revision=execution.persona.revision,
         )
     )
+    capabilities = await build_capability_manifest(
+        user_id=user_id,
+        chat_id=chat_id,
+        profile=profile,
+        model_supports_tools=execution.model.supports_tools,
+        tools=tools,
+        auto_approved_tools=auto_approved_tools,
+        skills=execution.skills,
+        files=scope.file_provenance,
+        delegation=ceiling.delegation if ceiling else None,
+        session=session,
+    )
+    return context, capabilities

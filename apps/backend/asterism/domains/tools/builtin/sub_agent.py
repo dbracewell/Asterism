@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from asterism.common.log import get_logger
 from asterism.domains.agent.agent import Agent, AgentEvent, AgentEventType
+from asterism.domains.agent.capabilities import CapabilityManifest
 from asterism.domains.agent.context_provenance import describe_context
 from asterism.domains.agent.execution_scope import ExecutionScope, ModelIdentity
 from asterism.domains.agent.schemas import SubAgentEventEnvelope
@@ -151,6 +152,38 @@ async def _authorized_events(
             pending.cancel()
             await asyncio.gather(pending, return_exceptions=True)
         await events.aclose()
+
+
+async def _child_capabilities(agent: Agent) -> CapabilityManifest | None:
+    """The child's capability manifest, from the tools it resolved before its first event.
+
+    Recording is best effort: a failure here must not fail the delegation, so
+    the record is then left without a manifest.
+    """
+    from asterism.db.database import get_async_db_session
+    from asterism.domains.chat.capabilities import build_capability_manifest
+
+    scope = agent.execution_scope
+    model = scope.executed_model if scope else None
+    try:
+        async with get_async_db_session() as session:
+            return await build_capability_manifest(
+                user_id=agent.user.id,
+                chat_id=agent.session.info.id,
+                profile=agent.profile,
+                model_supports_tools=model.supports_tools if model else None,
+                tools=agent.effective_tools,
+                # A delegated child runs its own assigned tools without asking.
+                auto_approved_tools=None,
+                # Sub-agents never receive the chat's active skills.
+                skills=(),
+                files=scope.file_provenance if scope else (),
+                delegation=agent.delegation_scope,
+                session=session,
+            )
+    except Exception:
+        get_logger("SUB_AGENT").warning("capability manifest capture failed", exc_info=True)
+        return None
 
 
 async def _emit(
@@ -342,7 +375,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         execution_scope=child_scope,
     )
 
-    def envelope(event: AgentEvent) -> SubAgentEventEnvelope:
+    def envelope(event: AgentEvent, capabilities: CapabilityManifest | None = None) -> SubAgentEventEnvelope:
         # The child resolves its model before its first event, filling in the name.
         executed = (agent.execution_scope or child_scope).executed_model
         return SubAgentEventEnvelope(
@@ -354,6 +387,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             model_name=executed.name,
             provider_type=executed.provider_type,
             pricing=executed.pricing,
+            capabilities=capabilities,
             depth=len(ctx.call_stack),
             event=event,
         )
@@ -381,6 +415,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
         content="Sub-agent ended without producing a response.",
     )
     received_event = False
+    capabilities: CapabilityManifest | None = None
     logger.info(
         "delegation started execution_id=%s sub_agent_name=%s context_included=%s file_count=%d",
         execution_id,
@@ -390,6 +425,10 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
     )
     try:
         async for event in _authorized_events(agent.run(messages=sub_agent_messages), check_authorization):
+            if not received_event:
+                # The child has resolved its model and tools by its first event;
+                # the manifest rides on the next forwarded envelope only.
+                capabilities = await _child_capabilities(agent)
             received_event = True
             last_response = event
             if event.type == AgentEventType.COMPLETE:
@@ -397,10 +436,8 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
                 total_tokens += event.total_tokens or 0
 
             if event.type in forwarded_types:
-                await _emit(
-                    ctx.event_sink,
-                    envelope(event),
-                )
+                await _emit(ctx.event_sink, envelope(event, capabilities))
+                capabilities = None
         if not received_event:
             await _emit(
                 ctx.event_sink,
