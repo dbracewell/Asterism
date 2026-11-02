@@ -24,12 +24,12 @@ import Link from "next/link";
 import React from "react";
 import { flushSync } from "react-dom";
 
-// The router focuses an anchor target after a hash navigation; tabIndex -1
-// makes it focusable and the ring shows which entry the link landed on.
+// A related link focuses its target entry; tabIndex -1 makes it focusable and
+// the ring shows which entry the link landed on.
 const anchorClassName =
   "rounded-surface focus:ring-ring/50 scroll-mt-4 p-3 -m-3 outline-none focus:ring-3";
 
-type JumpTo = () => void;
+type JumpTo = (anchor: string) => void;
 
 /**
  * Every help entry and page guide the viewer may see, with client-side search
@@ -43,9 +43,25 @@ export function HelpCenter() {
   const results = searchHelp(deferredQuery, isAdmin);
   const total =
     results.concepts.length + results.controls.length + results.guides.length;
-  // A link inside the page may target an entry the search hides; clear the
-  // search first so the router finds the anchor when it scrolls.
-  const jumpTo: JumpTo = () => flushSync(() => setQuery(""));
+  // A link inside the page may target an entry the search hides. Clear the
+  // search, then focus the entry once it renders: the router scrolls to a hash
+  // but does not move focus, and the deferred results may lag a frame.
+  const pendingFocus = React.useRef<string | null>(null);
+  const focusPending = React.useCallback(() => {
+    const target = pendingFocus.current
+      ? document.getElementById(pendingFocus.current)
+      : null;
+    if (!target) return;
+    pendingFocus.current = null;
+    target.focus();
+    target.scrollIntoView({ block: "start" });
+  }, []);
+  const jumpTo: JumpTo = (anchor) => {
+    pendingFocus.current = anchor;
+    flushSync(() => setQuery(""));
+    requestAnimationFrame(focusPending);
+  };
+  React.useEffect(focusPending, [deferredQuery, focusPending]);
   const searching = deferredQuery.trim() !== "";
 
   return (
@@ -329,7 +345,10 @@ function TermLinks({
         {ids.map((termId) => (
           <li key={termId}>
             <Button asChild variant="outline" size="xs">
-              <Link href={`#${helpAnchor(termId)}`} onClick={jumpTo}>
+              <Link
+                href={`#${helpAnchor(termId)}`}
+                onClick={() => jumpTo(helpAnchor(termId))}
+              >
                 {helpEntries[termId].title}
               </Link>
             </Button>

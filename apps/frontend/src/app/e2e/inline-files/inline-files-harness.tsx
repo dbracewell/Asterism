@@ -50,6 +50,7 @@ const content = [
   `Deleted: ![Deleted image](${token(GONE_ID)})`,
   `URL-shaped: ![Shaped](/api/py/chat/${INLINE_CHAT}/files/${PNG_ID}) [shaped link](asterism-file://${PNG_ID}) ![query](${token(PNG_ID)}?x=1) ![remote](https://untrusted.test/${token(PNG_ID)})`,
   `Literal: \`${token(PNG_ID)}\``,
+  `Mention: see [the chart](${token(PNG_ID)}) for details.`,
   `![](${token(DOCX_ID)})`,
 ].join("\n\n");
 

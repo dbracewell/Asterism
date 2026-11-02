@@ -1,6 +1,6 @@
 # EPIC-56: Inline user files in Markdown output
 
-Status: in progress (US-56.1 complete, US-56.2 complete, US-56.3 complete, US-56.4 complete, US-56.5 complete, US-56.6 in progress; contract in [ADR-0039](../adr/0039-inline-file-references-in-markdown.md)). Source: user request (2026-10-31). Groundwork for agents that create PowerPoint, Word, spreadsheet, PDF and image files.
+Status: in progress (US-56.1 complete, US-56.2 complete, US-56.3 complete, US-56.4 complete, US-56.5 complete, US-56.6 under review; contract in [ADR-0039](../adr/0039-inline-file-references-in-markdown.md)). Source: user request (2026-10-31). Groundwork for agents that create PowerPoint, Word, spreadsheet, PDF and image files.
 
 ## Objective
 
@@ -137,5 +137,5 @@ produced or scoped files exist. Tool results return ready-to-use tokens. Inline
 files can be reached and opened by keyboard, have accessible names, and pass
 axe checks. Copying a message replaces tokens with file names.
 
-- [ ] Add the conditional prompt guidance and copy-text behavior.
-- [ ] Add accessibility and keyboard tests.
+- [x] Add the conditional prompt guidance and copy-text behavior.
+- [x] Add accessibility and keyboard tests.

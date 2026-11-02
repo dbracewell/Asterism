@@ -31,6 +31,7 @@ from asterism.domains.chat.schemas import (
     UpdateMessageRequest,
 )
 from asterism.domains.chat.title_model import resolve_title_model
+from asterism.domains.files.produced import file_reference_token
 from asterism.domains.llm.schemas import (
     ImageUrlContent,
     ImageUrlContentPart,
@@ -437,9 +438,21 @@ class ChatOrchestrator:
                     if payload is None:
                         parts.append(TextContentPart(text=f'(attached file "{reference.name}" is no longer available)'))
                     elif payload.image_url is not None:
+                        # The token lets the reply show the image again (ADR-0039).
+                        parts.append(
+                            TextContentPart(
+                                text=f"Attached image: {reference.name} "
+                                f"(reference: {file_reference_token(reference.file_id)})"
+                            )
+                        )
                         parts.append(ImageUrlContentPart(image_url=ImageUrlContent(url=payload.image_url)))
                     elif payload.text is not None:
-                        parts.append(TextContentPart(text=f"### Attached file: {reference.name}\n{payload.text}"))
+                        parts.append(
+                            TextContentPart(
+                                text=f"### Attached file: {reference.name} "
+                                f"(reference: {file_reference_token(reference.file_id)})\n{payload.text}"
+                            )
+                        )
                     else:
                         parts.append(
                             TextContentPart(text=f'(attached file "{reference.name}" not included: {payload.reason})')

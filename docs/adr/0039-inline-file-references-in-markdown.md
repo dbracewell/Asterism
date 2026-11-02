@@ -1,6 +1,6 @@
 # ADR-0039 — Inline file references in Markdown output
 
-Status: accepted for US-56.1 on 2026-11-02. Implemented by US-56.2 through US-56.6
+Status: accepted for US-56.1 on 2026-11-02; implemented by US-56.2 through US-56.6
 ([EPIC-56](../epics/EPIC-56-INLINE-USER-FILES-IN-MARKDOWN-OUTPUT.md)).
 
 ## Context
@@ -250,6 +250,22 @@ with the generation-tools epic, starting with PDF and slide rendering.
 
 The prompt layer explains the syntax only when the run has scoped or produced
 files (US-56.6). The guidance grants nothing; resolution is the only authority.
+
+US-56.6 implementation: `build_runtime_prompt` appends
+`FILE_REFERENCE_GUIDANCE` to the recorded runtime context when the run's tool
+scope has files, so resume replays the same text. Runs without scoped files get
+no guidance; a produced file's tool result carries its own ready embed. Attached
+files reach the model labelled with their token (`### Attached file: name
+(reference: asterism-file:<id>)`, and an `Attached image:` line before image
+parts), so the model has an ID to cite. `search_knowledge` results already carry
+file IDs. The message copy action uses `copyableText`, which replaces each exact
+reference with its label, or the resolved file name, or "file".
+
+Accessibility: images are buttons named "Open image <label>" with the label as
+alt text; chips are "Open file <label>"; cards are groups named
+"<type>: <name>" with Open and Download controls; the dialog returns focus to its
+trigger; the text preview is a focusable labelled region. `e2e/inline-files.spec.ts`
+checks keyboard operation and runs axe on the page and the open dialog.
 
 ## Consequences
 

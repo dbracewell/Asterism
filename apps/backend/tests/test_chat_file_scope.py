@@ -304,7 +304,9 @@ async def test_reopen_and_runtime_assembly_recheck_persisted_branch_and_deleted_
     orchestrator = ChatOrchestrator(agent)
 
     assembled = await orchestrator._build_agent_messages()
-    assert "### Attached file: right.txt\nright.txt" in text_content(assembled[-1])
+    assert f"### Attached file: right.txt (reference: asterism-file:{right['id']})\nright.txt" in text_content(
+        assembled[-1]
+    )
     assert "left.txt" not in text_content(assembled[-1])
     await client.patch(
         f"/chat/{chat_id}/message/{root_id}",
@@ -318,7 +320,9 @@ async def test_reopen_and_runtime_assembly_recheck_persisted_branch_and_deleted_
         orchestrator.chat = await get_one(chat_id, "a", session)
         agent.session = orchestrator.chat
     current_assembly = await orchestrator._build_agent_messages()
-    assert "### Attached file: left.txt\nleft.txt" in text_content(current_assembly[-1])
+    assert f"### Attached file: left.txt (reference: asterism-file:{left['id']})\nleft.txt" in text_content(
+        current_assembly[-1]
+    )
     await client.delete(f"/files/{left['filename']}", headers=auth())
     replacement = await upload(client, "left.txt")
     assert replacement["id"] != left["id"]

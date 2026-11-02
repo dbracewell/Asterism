@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "./support/test";
+import { expect, test, type Page } from "./support/test";
 import {
   DOCX_ID,
   FOREIGN_ID,
@@ -19,17 +19,7 @@ const SVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.
   <rect width="40" height="40" fill="teal" onload="window.top.__svgRan = true"/>
 </svg>`;
 
-test("inline files load only through the scoped route and active content stays inert", async ({
-  page,
-}) => {
-  const requests: string[] = [];
-  page.on("request", (request) => {
-    const url = new URL(request.url());
-    if (url.pathname.startsWith("/api/py/") || /untrusted/.test(url.href))
-      requests.push(`${url.pathname}${url.search}`);
-  });
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+async function mockFileRoutes(page: Page) {
   await page.route("**/api/auth/token", (route) =>
     route.fulfill({ json: { token: "fixture-only" } }),
   );
@@ -58,6 +48,20 @@ test("inline files load only through the scoped route and active content stays i
       return route.fulfill({ body: SVG, contentType: "image/svg+xml" });
     return route.fulfill({ status: 404, json: { detail: "File not found" } });
   });
+}
+
+test("inline files load only through the scoped route and active content stays inert", async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/py/") || /untrusted/.test(url.href))
+      requests.push(`${url.pathname}${url.search}`);
+  });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await mockFileRoutes(page);
 
   await page.goto("/e2e/inline-files");
   const reply = page.getByRole("region", {
@@ -145,4 +149,72 @@ test("inline files load only through the scoped route and active content stays i
     ),
   ).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+test("inline files are reachable and operable by keyboard with accessible names", async ({
+  page,
+}) => {
+  await mockFileRoutes(page);
+  await page.goto("/e2e/inline-files");
+  const reply = page.getByRole("region", {
+    name: "Resolved reply",
+    exact: true,
+  });
+  const image = reply.getByRole("button", {
+    name: "Open image Quarterly chart",
+  });
+  await expect(
+    image.getByRole("img", { name: "Quarterly chart" }),
+  ).toBeVisible();
+
+  // Image: Tab reaches it, Enter opens the lightbox, Escape returns focus.
+  await image.focus();
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog", { name: "Quarterly chart" });
+  await expect(dialog).toBeVisible();
+  expect(
+    (await new AxeBuilder({ page }).include('[role="dialog"]').analyze())
+      .violations,
+  ).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(image).toBeFocused();
+
+  // Tab order continues to the next inline file control.
+  await page.keyboard.press("Tab");
+  await expect(
+    reply.getByRole("button", { name: "Open image Script drawing" }),
+  ).toBeFocused();
+
+  // Mention chip: Space opens the preview dialog.
+  const chip = reply.getByRole("button", { name: "Open file the chart" });
+  await chip.focus();
+  await page.keyboard.press(" ");
+  await expect(page.getByRole("dialog", { name: "the chart" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(chip).toBeFocused();
+
+  // Document card: Open by keyboard; the text preview region is focusable.
+  const card = reply.getByRole("group", {
+    name: "Word document: report.docx",
+  });
+  await card.getByRole("button", { name: "Open report.docx" }).focus();
+  await page.keyboard.press("Enter");
+  const preview = page.getByRole("region", { name: "Text preview" });
+  await expect(preview).toBeVisible();
+  await preview.focus();
+  await expect(preview).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(
+    card.getByRole("button", { name: "Open report.docx" }),
+  ).toBeFocused();
+  await expect(card.getByRole("link", { name: "Download" })).toBeVisible();
+
+  // Inert labels are plain text, not controls.
+  await expect(
+    reply.getByRole("button", { name: /Foreign image|Deleted image/ }),
+  ).toHaveCount(0);
+  expect(
+    (await new AxeBuilder({ page }).include("main").analyze()).violations,
+  ).toEqual([]);
 });
