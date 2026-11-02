@@ -1,6 +1,6 @@
 # EPIC-62: Complete model setup during onboarding
 
-Status: in progress (US-62.1 complete; US-62.2 implemented, awaiting confirmation). Source: user feedback after EPIC-48.
+Status: complete (US-62.1 and US-62.2 confirmed 2026-11-01). Source: user feedback after EPIC-48.
 
 ## Objective
 

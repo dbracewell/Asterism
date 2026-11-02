@@ -82,3 +82,19 @@ through ADR-0037.
 - [x] US-53.6: Summaries and study guides
   - [x] Implement depth-controlled summaries and study-guide generation.
   - [x] Build the save action; test citation scope and plan generation.
+
+The user confirmed US-62.2 completion and authorized a local merge on
+2026-11-01. EPIC-62 (US-62.1 and US-62.2) is complete; each story was
+confirmed and merged with `--no-ff` before the next began. Unknown
+capabilities left unchecked during setup stay unknown.
+
+### [EPIC-62: Complete model setup during onboarding](../epics/EPIC-62-COMPLETE-MODEL-SETUP-DURING-ONBOARDING.md)
+
+- [x] US-62.1: Choose the draft model during setup
+  - [x] Add the draft-model select and its defaulting rules to the enable-models step.
+  - [x] Save `draft_model_id` through the provider settings update without changing the saved providers.
+  - [x] Add unit and isolated browser tests (default follows, fallback, failure and retry, skip).
+- [x] US-62.2: Confirm vision and tool support for enabled models
+  - [x] Add per-model Vision and Tools checkboxes with unknown marking and the explanatory note.
+  - [x] Save changed capabilities as manual values and keep untouched ones with their sources.
+  - [x] Add unit and isolated browser tests (discovered, unknown, changed, re-enabled, failure, accessibility).
