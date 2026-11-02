@@ -20,7 +20,11 @@ On a new instance, the first-run setup card (`/setup`, step 2) connects one
 provider, runs discovery, enables the chosen models and saves the administrator's
 default model and the draft model (which follows the default until changed, and
 is saved last because it must reference an active model), then shows step 3 ("You're ready to start your exploration.")
-before opening the new-chat page. It uses the same provider schema and APIs as Admin Settings, is
+before opening the new-chat page. Each enabled model shows Vision and Tools boxes,
+checked where discovery reported support and marked "(Unknown)" where it
+reported nothing. A changed box is saved as a `manual` value; an untouched box
+keeps its discovered value and source, so an unknown capability left unchecked
+stays unknown. It uses the same provider schema and APIs as Admin Settings, is
 shown only to an administrator while no model is active, and can be skipped.
 Everything else follows the workflow below.
 
