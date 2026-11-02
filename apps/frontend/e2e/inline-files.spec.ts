@@ -1,5 +1,7 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "./support/test";
 import {
+  DOCX_ID,
   FOREIGN_ID,
   GONE_ID,
   INLINE_CHAT,
@@ -36,6 +38,22 @@ test("inline files load only through the scoped route and active content stays i
     const pathname = new URL(route.request().url()).pathname;
     if (pathname === `/api/py/chat/${INLINE_CHAT}/files/${PNG_ID}`)
       return route.fulfill({ body: PNG, contentType: "image/png" });
+    if (pathname === `/api/py/chat/${INLINE_CHAT}/files/${DOCX_ID}/preview`)
+      return route.fulfill({
+        json: {
+          file_id: DOCX_ID,
+          kind: "document",
+          mime_type:
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          status: "ready",
+          excerpt:
+            'Quarterly findings <img src="/untrusted-preview/x"> **not bold**',
+          truncated: true,
+          page_count: 3,
+          slide_count: null,
+          sheet_count: null,
+        },
+      });
     if (pathname === `/api/py/chat/${INLINE_CHAT}/files/${SVG_ID}`)
       return route.fulfill({ body: SVG, contentType: "image/svg+xml" });
     return route.fulfill({ status: 404, json: { detail: "File not found" } });
@@ -89,12 +107,31 @@ test("inline files load only through the scoped route and active content stays i
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
 
+  const card = reply.getByRole("group", {
+    name: "Word document: report.docx",
+  });
+  await expect(card).toContainText("Word document · 2.0 KB · 3 pages");
+  await expect(card).toContainText("Quarterly findings <img");
+  await card.getByRole("button", { name: "Open report.docx" }).click();
+  const preview = page.getByRole("dialog").getByRole("region", {
+    name: "Text preview",
+  });
+  await expect(preview).toContainText("**not bold**");
+  await expect(page.getByRole("dialog")).toContainText(
+    "Showing the start of the file.",
+  );
+  await page.keyboard.press("Escape");
+  expect(
+    (await new AxeBuilder({ page }).include("main").analyze()).violations,
+  ).toEqual([]);
+
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => "__svgRan" in window)).toBe(false);
   expect([...new Set(requests)].sort()).toEqual(
     [
       `/api/py/chat/${INLINE_CHAT}/files/${PNG_ID}`,
       `/api/py/chat/${INLINE_CHAT}/files/${SVG_ID}`,
+      `/api/py/chat/${INLINE_CHAT}/files/${DOCX_ID}/preview`,
     ].sort(),
   );
   expect(requests.join(" ")).not.toContain(FOREIGN_ID);
@@ -103,7 +140,8 @@ test("inline files load only through the scoped route and active content stays i
     await reply.evaluate((root) =>
       [...root.querySelectorAll("[href],[src]")]
         .map((el) => el.getAttribute("href") ?? el.getAttribute("src") ?? "")
-        .filter((value) => !value.startsWith("blob:")),
+        // Download controls use href="#" with a scoped fetch on click.
+        .filter((value) => !value.startsWith("blob:") && value !== "#"),
     ),
   ).toEqual([]);
   expect(errors).toEqual([]);

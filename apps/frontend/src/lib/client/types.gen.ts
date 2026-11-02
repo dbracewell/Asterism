@@ -1641,6 +1641,59 @@ export type FileKnowledgeArtifact = {
 export type FileOrigin = "upload" | "agent";
 
 /**
+ * FilePreview
+ *
+ * Plain-text preview of one source, for document cards (US-56.5).
+ *
+ * The excerpt is the leading part of the cached MarkItDown conversion. Clients
+ * render it as literal text, never as Markdown or HTML. Counts are read from
+ * the source's structure and are ``None`` when unknown.
+ *
+ * Attributes:
+ * file_id: File identifier.
+ * kind: Classification driving conversion and display.
+ * mime_type: Detected MIME type.
+ * status: State of the converted-content cache.
+ * excerpt: Leading converted text, or ``None`` when there is none.
+ * truncated: Whether the converted text continues past the excerpt.
+ * page_count: Pages of a PDF, or of a Word document when it records them.
+ * slide_count: Slides of a PowerPoint presentation.
+ * sheet_count: Worksheets of an Excel workbook.
+ */
+export type FilePreview = {
+  /**
+   * File Id
+   */
+  file_id: string;
+  kind: FileKind;
+  /**
+   * Mime Type
+   */
+  mime_type: string;
+  status: FileContentStatus;
+  /**
+   * Excerpt
+   */
+  excerpt: string | null;
+  /**
+   * Truncated
+   */
+  truncated: boolean;
+  /**
+   * Page Count
+   */
+  page_count?: number | null;
+  /**
+   * Slide Count
+   */
+  slide_count?: number | null;
+  /**
+   * Sheet Count
+   */
+  sheet_count?: number | null;
+};
+
+/**
  * FileProjectSummary
  *
  * A project that references a file, as shown next to that file.
@@ -7079,6 +7132,46 @@ export type ChatFileGetInfoResponses = {
 
 export type ChatFileGetInfoResponse =
   ChatFileGetInfoResponses[keyof ChatFileGetInfoResponses];
+
+export type ChatFileGetPreviewData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * File Id
+     */
+    file_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/files/{file_id}/preview";
+};
+
+export type ChatFileGetPreviewErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatFileGetPreviewError =
+  ChatFileGetPreviewErrors[keyof ChatFileGetPreviewErrors];
+
+export type ChatFileGetPreviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: FilePreview;
+};
+
+export type ChatFileGetPreviewResponse =
+  ChatFileGetPreviewResponses[keyof ChatFileGetPreviewResponses];
 
 export type ChatFileRemoveData = {
   body?: never;

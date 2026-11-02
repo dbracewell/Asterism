@@ -108,6 +108,9 @@ import type {
   ChatFileGetInfoData,
   ChatFileGetInfoError,
   ChatFileGetInfoResponse,
+  ChatFileGetPreviewData,
+  ChatFileGetPreviewError,
+  ChatFileGetPreviewResponse,
   ChatFileGetScopeData,
   ChatFileGetScopeError,
   ChatFileGetScopeResponse,
@@ -1495,6 +1498,36 @@ export const chatFileGetInfoOptions = (options: Options<ChatFileGetInfoData>) =>
       return data;
     },
     queryKey: chatFileGetInfoQueryKey(options),
+  });
+
+export const chatFileGetPreviewQueryKey = (
+  options: Options<ChatFileGetPreviewData>,
+) => createQueryKey("chatFileGetPreview", options);
+
+/**
+ * Get Chat File Preview
+ *
+ * Text excerpt and structure counts of a scoped file, for document cards (US-56.5).
+ */
+export const chatFileGetPreviewOptions = (
+  options: Options<ChatFileGetPreviewData>,
+) =>
+  queryOptions<
+    ChatFileGetPreviewResponse,
+    ChatFileGetPreviewError,
+    ChatFileGetPreviewResponse,
+    ReturnType<typeof chatFileGetPreviewQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatFileGetPreview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatFileGetPreviewQueryKey(options),
   });
 
 /**

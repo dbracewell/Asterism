@@ -107,3 +107,33 @@ class SimilarFileList(BaseModel):
     """
 
     files: list[SimilarFile]
+
+
+class FilePreview(BaseModel):
+    """Plain-text preview of one source, for document cards (US-56.5).
+
+    The excerpt is the leading part of the cached MarkItDown conversion. Clients
+    render it as literal text, never as Markdown or HTML. Counts are read from
+    the source's structure and are ``None`` when unknown.
+
+    Attributes:
+        file_id: File identifier.
+        kind: Classification driving conversion and display.
+        mime_type: Detected MIME type.
+        status: State of the converted-content cache.
+        excerpt: Leading converted text, or ``None`` when there is none.
+        truncated: Whether the converted text continues past the excerpt.
+        page_count: Pages of a PDF, or of a Word document when it records them.
+        slide_count: Slides of a PowerPoint presentation.
+        sheet_count: Worksheets of an Excel workbook.
+    """
+
+    file_id: uuid.UUID
+    kind: FileKind
+    mime_type: str
+    status: FileContentStatus
+    excerpt: str | None
+    truncated: bool
+    page_count: int | None = None
+    slide_count: int | None = None
+    sheet_count: int | None = None

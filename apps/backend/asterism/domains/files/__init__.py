@@ -15,6 +15,8 @@ Layering (each module owns exactly one responsibility):
 - ``service``          – Use-case orchestration (upload, list, delete, …).
 - ``router``           – FastAPI transport layer.
 - ``runtime_access``   – Model-facing reads, gated by live execution scope.
+- ``preview``          – Text excerpts and page/slide/sheet counts for document
+                         cards (ADR-0039 §8).
 - ``produced``         – Internal registration of tool-produced files with
                          provenance and per-run limits (ADR-0039).
 
