@@ -2,6 +2,7 @@
 
 import Constellation from "@/components/logo";
 import MarkdownViewer from "@/components/markdown-viewer";
+import { InlineFilesScope } from "@/components/markdown-viewer/inline-files";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -138,10 +139,12 @@ export const DelegationSummary = ({
               </header>
               <AgentTimeline className="mt-1" steps={delegationSteps(record)} />
               {record.output && (
-                <MarkdownViewer
-                  content={record.output}
-                  className="mt-2 text-sm"
-                />
+                <InlineFilesScope files={record.inline_files ?? []}>
+                  <MarkdownViewer
+                    content={record.output}
+                    className="mt-2 text-sm"
+                  />
+                </InlineFilesScope>
               )}
               {record.error && (
                 <p className="text-destructive mt-2 whitespace-pre-wrap">

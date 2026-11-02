@@ -1,6 +1,7 @@
 "use client";
 
 import MarkdownViewer from "@/components/markdown-viewer";
+import { InlineFilesScope } from "@/components/markdown-viewer/inline-files";
 import { AgentTimeline } from "@/features/chat/components/agent-timeline";
 import {
   COLUMN_WIDTH,
@@ -187,7 +188,9 @@ const AgentDetails = ({
       </p>
       <AgentTimeline steps={activitySteps(activity)} />
       {activity.content && (
-        <MarkdownViewer content={activity.content} className="text-sm" />
+        <InlineFilesScope files={activity.inlineFiles ?? null}>
+          <MarkdownViewer content={activity.content} className="text-sm" />
+        </InlineFilesScope>
       )}
       {activity.error && (
         <p className="text-destructive whitespace-pre-wrap">{activity.error}</p>
