@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-EPIC-54 (US-54.1 through US-54.6) is confirmed complete and archived in the [2026-11-02 checklist](docs/archive/todo-completed-2026-11-02.md); EPIC-56 is next. EPIC-62 (US-62.1 and US-62.2) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-49 (ChatGPT plan connection) and EPIC-50
+EPIC-56 (US-56.1 through US-56.6) and EPIC-54 (US-54.1 through US-54.6) are confirmed complete and archived in the [2026-11-02 checklist](docs/archive/todo-completed-2026-11-02.md); EPIC-55 is next. EPIC-62 (US-62.1 and US-62.2) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -26,7 +26,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61, EPIC-53 and EPIC-54 are complete and archived; EPIC-56 is next.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54 and EPIC-56 are complete and archived; EPIC-55 is next.
 
 ### [EPIC-55: Grounded answers and claim verification](docs/epics/EPIC-55-GROUNDED-ANSWERS-AND-CLAIM-VERIFICATION.md)
 
@@ -42,28 +42,6 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [ ] US-55.4: Spot-the-error exercise
   - [ ] Add the exercise mode with a recorded error and reveal flow.
   - [ ] Ensure exercise labelling in history and exports; add tests.
-
-### [EPIC-56: Inline user files in Markdown output](docs/epics/EPIC-56-INLINE-USER-FILES-IN-MARKDOWN-OUTPUT.md)
-
-- [x] US-56.1: Reference contract and ADR
-  - [x] Write the ADR and update the Markdown trust documentation.
-- [x] US-56.2: Produced-file registration
-  - [x] Add the `origin` and provenance columns and the registration service in the files domain.
-  - [x] Enforce limits and content detection; return reference tokens in tool results.
-  - [x] Test limits, type detection, provenance, sub-agent ownership and scope membership.
-- [x] US-56.3: Reference resolution at save time
-  - [x] Implement parsing and resolution in the chat domain; expose resolved references.
-  - [x] Test foreign, missing, out-of-scope and deleted files, and identical 404 behavior.
-- [x] US-56.4: Inline images
-  - [x] Build `InlineFile` image rendering and the lightbox; implement SVG handling.
-  - [x] Add adversarial browser tests (foreign IDs, URL-shaped tokens, script-bearing SVG).
-- [x] US-56.5: Document cards and previews
-  - [x] Build the document card and preview using cached conversions.
-  - [x] Decide and document the thumbnail approach; test cards for each supported type.
-- [ ] US-56.6: Model instructions and accessibility (in progress; awaiting confirmation)
-  - [x] Add the conditional prompt guidance and copy-text behavior.
-  - [x] Add accessibility and keyboard tests.
-  - [x] Fix the pre-existing browser failures (fork button accessible name, help-center focus).
 
 ### [EPIC-57: Writing feedback and AI-use transparency](docs/epics/EPIC-57-WRITING-FEEDBACK-AND-AI-USE-TRANSPARENCY.md)
 
