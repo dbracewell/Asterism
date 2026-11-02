@@ -447,6 +447,74 @@ export const zCreateUserRequest = z.object({
   system_key: z.string().nullish(),
 });
 
+/**
+ * DisagreementPosition
+ */
+export const zDisagreementPosition = z.object({
+  source: z.string().regex(/^S\d{1,2}$/),
+  claim: z.string().max(400),
+});
+
+/**
+ * Disagreement
+ *
+ * A point the sources cannot all be right about; positions come from distinct sources.
+ */
+export const zDisagreement = z.object({
+  topic: z.string().max(200),
+  positions: z.array(zDisagreementPosition).min(2).max(6),
+});
+
+/**
+ * DisagreementRequest
+ */
+export const zDisagreementRequest = z.object({
+  model_id: z.uuid(),
+});
+
+/**
+ * DisagreementSource
+ *
+ * One compared answer: a comparison column's final reply or one agent's output.
+ *
+ * ``message_id`` is the reply a column contributed, so a summary can be shown
+ * as out of date once the column's answer changes.
+ */
+export const zDisagreementSource = z.object({
+  key: z.string().regex(/^S\d{1,2}$/),
+  kind: z.enum(["column", "agent"]),
+  label: z.string().max(120),
+  column_index: z.int().nullish(),
+  message_id: z.uuid().nullish(),
+  delegation_execution_id: z.uuid().nullish(),
+  truncated: z.boolean().optional().default(false),
+});
+
+/**
+ * DisagreementUsage
+ */
+export const zDisagreementUsage = z.object({
+  truncated: z.boolean().optional().default(false),
+  limit: z.int().gte(1),
+  input_tokens: z.int().gte(0),
+  output_tokens: z.int().gte(0),
+  duration_ms: z.int().gte(0),
+});
+
+/**
+ * DisagreementSummary
+ *
+ * The latest disagreement pass, with its provenance. It never changes the answers.
+ */
+export const zDisagreementSummary = z.object({
+  model_id: z.uuid(),
+  model_name: z.string(),
+  created_at: z.int().gte(0),
+  sources: z.array(zDisagreementSource).min(2),
+  disagreements: z.array(zDisagreement),
+  usage: zDisagreementUsage,
+});
+
 export const zDownloadStatus = z.enum([
   "idle",
   "downloading",
@@ -3115,6 +3183,7 @@ export const zMessage = z.object({
   inline_files: z.array(zInlineFileReference).optional(),
   citations: z.array(zSpanCitation).optional(),
   verification: zMessageVerification.nullish(),
+  disagreements: zDisagreementSummary.nullish(),
   active_child_id: z.uuid().nullish(),
   has_siblings: z.boolean().optional().default(false),
   sibling_count: z.int().optional().default(0),
@@ -3657,6 +3726,30 @@ export const zChatRunGetPath = z.object({
  * Successful Response
  */
 export const zChatRunGetResponse = zRecordedRun;
+
+export const zChatComparisonDisagreementsFindBody = zDisagreementRequest;
+
+export const zChatComparisonDisagreementsFindPath = z.object({
+  chat_id: z.uuid(),
+  comparison_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatComparisonDisagreementsFindResponse = zDisagreementSummary;
+
+export const zChatDelegationDisagreementsFindBody = zDisagreementRequest;
+
+export const zChatDelegationDisagreementsFindPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDelegationDisagreementsFindResponse = zDisagreementSummary;
 
 export const zChatMessageVerifyBody = zVerifyRequest;
 

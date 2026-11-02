@@ -33,6 +33,7 @@ from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateProvenance
 
+from .disagreement_schemas import DisagreementSummary
 from .execution_models import ChatExecutionModel
 from .schemas import (
     ChatModelChoice,
@@ -257,6 +258,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         jsonb_type(TypeAdapter(list[InlineFileReference])),
         nullable=False,
         default=list,
+    )
+    # The latest disagreement pass anchored on this message (US-55.3, ADR-0042).
+    disagreements: Mapped[DisagreementSummary | None] = mapped_column(
+        jsonb_type(TypeAdapter(DisagreementSummary)),
+        nullable=True,
     )
     # The latest verify pass of this answer (US-55.2, ADR-0041).
     verification: Mapped[MessageVerification | None] = mapped_column(

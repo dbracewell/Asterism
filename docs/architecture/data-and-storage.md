@@ -210,6 +210,12 @@ chunks the saving run retrieved, and reads recheck `available` against live chat
 one label per claim with evidence snapshots, and usage. It never changes the
 answer; reads recheck evidence availability against live chat scope.
 
+`messages.disagreements` holds the latest disagreement pass (US-55.3,
+[ADR-0042](../adr/0042-disagreement-display.md)), anchored on a comparison's
+first column turn or on the step whose sub-agents were compared: model, time,
+the compared sources (with the reply or delegation each one was) and the
+conflicting points.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are

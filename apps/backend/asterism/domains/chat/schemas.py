@@ -20,6 +20,7 @@ from asterism.domains.prompt_templates.provenance import TemplateLabel, Template
 from asterism.domains.settings.pricing import ModelPricing
 from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
+from .disagreement_schemas import DisagreementSummary
 from .verification_schemas import MessageVerification
 
 
@@ -259,6 +260,9 @@ class Message(LLMMessage):
     citations: list[SpanCitation] = Field(default_factory=list)
     # The latest verify pass of this answer (US-55.2); labels, not edits.
     verification: MessageVerification | None = None
+    # The latest disagreement pass anchored here (US-55.3): on a comparison's
+    # first column turn, or on a step whose sub-agents were compared.
+    disagreements: DisagreementSummary | None = None
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0

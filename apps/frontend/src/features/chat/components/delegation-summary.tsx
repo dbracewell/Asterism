@@ -23,10 +23,25 @@ import {
   delegationSummary,
   recordDurationMs,
 } from "@/features/chat/lib/delegations";
-import type { DelegationRecord } from "@/lib/client";
+import type {
+  DelegationRecord,
+  DisagreementSource,
+  DisagreementSummary,
+} from "@/lib/client";
+import {
+  DisagreementsPanel,
+  FindDisagreements,
+  focusElement,
+} from "./disagreements/disagreements";
 import { cn } from "@/lib/utils";
 import { ChevronRightIcon, GitBranchIcon } from "lucide-react";
 import React from "react";
+
+/** Agents compared per pass; mirrors the server limit (MAX_DELEGATION_SOURCES). */
+const MAX_COMPARED_AGENTS = 6;
+
+const delegationElementId = (executionId: string) =>
+  `delegation-entry-${executionId}`;
 
 const statusLabel: Record<DelegationRecord["status"], string> = {
   running: "Cancelled",
@@ -46,19 +61,40 @@ export const DelegationSummary = ({
   records,
   mainModel,
   onFork,
+  disagreements,
 }: {
   records: DelegationRecord[];
   mainModel?: string | null;
   onFork?: (record: DelegationRecord) => void;
+  /** Where these agents' results conflict (US-55.3); needs the step's identity. */
+  disagreements?: {
+    chatId: string;
+    messageId: string;
+    summary?: DisagreementSummary | null;
+    preferredModelId?: string | null;
+  };
 }) => {
+  const [open, setOpen] = React.useState(false);
   const activities = React.useMemo(
     () => activitiesFromRecords(records),
     [records],
   );
   if (records.length === 0) return null;
+  const finished = records.filter(
+    (record) => record.status === "completed" && !!record.output?.trim(),
+  ).length;
+  const showSource = (source: DisagreementSource) => {
+    if (!source.delegation_execution_id) return;
+    const id = delegationElementId(source.delegation_execution_id);
+    setOpen(true);
+    // The entry renders once the section is open.
+    requestAnimationFrame(() => focusElement(id));
+  };
 
   return (
     <Collapsible
+      open={open}
+      onOpenChange={setOpen}
       data-slot="delegation-summary"
       className="group/delegation text-muted-foreground text-sm"
     >
@@ -82,6 +118,28 @@ export const DelegationSummary = ({
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2 flex min-w-0 flex-col gap-3">
         <AgentConstellation activities={activities} mainModel={mainModel} />
+        {disagreements && (finished >= 2 || disagreements.summary) && (
+          <div className="flex min-w-0 flex-col gap-2">
+            {disagreements.summary && (
+              <DisagreementsPanel
+                summary={disagreements.summary}
+                onShowSource={showSource}
+              />
+            )}
+            {finished >= 2 && (
+              <FindDisagreements
+                target={{
+                  kind: "delegations",
+                  chatId: disagreements.chatId,
+                  messageId: disagreements.messageId,
+                }}
+                sources={Math.min(finished, MAX_COMPARED_AGENTS)}
+                preferredModelId={disagreements.preferredModelId}
+                again={!!disagreements.summary}
+              />
+            )}
+          </div>
+        )}
         <ol
           aria-label="Delegated agents"
           className="flex min-w-0 flex-col gap-2"
@@ -89,9 +147,11 @@ export const DelegationSummary = ({
           {records.map((record) => (
             <li
               key={record.execution_id}
+              id={delegationElementId(record.execution_id)}
+              tabIndex={-1}
               data-testid={`delegation-${record.execution_id}`}
               className={cn(
-                "bg-muted/60 border-border rounded-surface text-foreground min-w-0 border px-3 py-2 [overflow-wrap:anywhere]",
+                "bg-muted/60 border-border rounded-surface text-foreground focus-visible:ring-ring min-w-0 scroll-mt-4 border px-3 py-2 [overflow-wrap:anywhere] outline-none focus-visible:ring-2",
                 record.status === "error" && "border-destructive/60",
               )}
             >

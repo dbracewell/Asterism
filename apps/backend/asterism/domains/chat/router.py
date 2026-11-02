@@ -22,6 +22,7 @@ from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.files.schemas import FilePreview, UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
 
+from .disagreement_schemas import DisagreementRequest, DisagreementSummary
 from .learning_modes import change_chat_learning_mode
 from .model_selection import change_chat_model, list_chat_models
 from .personas import change_chat_persona
@@ -583,6 +584,38 @@ async def get_run(chat_id: uuid.UUID, message_id: uuid.UUID, user: AuthedUserDep
     from .runs import read_run
 
     return await read_run(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
+
+
+@chat_router.post(
+    "/{chat_id}/comparisons/{comparison_id}/disagreements",
+    response_model=DisagreementSummary,
+    operation_id="chatComparisonDisagreementsFind",
+)
+async def find_comparison_disagreements(
+    chat_id: uuid.UUID, comparison_id: uuid.UUID, payload: DisagreementRequest, user: AuthedUserDep, db: DBSessionDep
+) -> DisagreementSummary:
+    """List where a comparison's answered columns disagree; owner only (US-55.3)."""
+    from .disagreements import compare_columns
+
+    return await compare_columns(
+        user_id=user.id, chat_id=chat_id, comparison_id=comparison_id, request=payload, session=db
+    )
+
+
+@chat_router.post(
+    "/{chat_id}/messages/{message_id}/disagreements",
+    response_model=DisagreementSummary,
+    operation_id="chatDelegationDisagreementsFind",
+)
+async def find_delegation_disagreements(
+    chat_id: uuid.UUID, message_id: uuid.UUID, payload: DisagreementRequest, user: AuthedUserDep, db: DBSessionDep
+) -> DisagreementSummary:
+    """List where a step's sub-agent results disagree; owner only (US-55.3)."""
+    from .disagreements import compare_delegations
+
+    return await compare_delegations(
+        user_id=user.id, chat_id=chat_id, message_id=message_id, request=payload, session=db
+    )
 
 
 @chat_router.post(

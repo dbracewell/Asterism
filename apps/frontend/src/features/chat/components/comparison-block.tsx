@@ -12,6 +12,11 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
 import { type QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  DisagreementsPanel,
+  FindDisagreements,
+  focusElement,
+} from "./disagreements/disagreements";
 import { CornerDownRightIcon, NetworkIcon } from "lucide-react";
 import { useMemo } from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -118,6 +123,11 @@ export function ComparisonBlock(props: ComparisonBlockProps) {
           />
         ))}
       </div>
+      <ComparisonDisagreements
+        chatId={chatId}
+        comparisonId={comparisonId}
+        columns={columns}
+      />
       <RunDiffDialog
         chatId={chatId}
         className="text-muted-foreground text-meta w-fit"
@@ -131,6 +141,56 @@ export function ComparisonBlock(props: ComparisonBlockProps) {
           }))}
       />
     </section>
+  );
+}
+
+const columnElementId = (comparisonId: string, index: number) =>
+  `comparison-${comparisonId}-column-${index}`;
+
+/** "Find disagreements" across answered columns and the stored summary (US-55.3). */
+function ComparisonDisagreements({
+  chatId,
+  comparisonId,
+  columns,
+}: {
+  chatId: string;
+  comparisonId: string;
+  columns: ComparisonColumn[];
+}) {
+  const answered = columns.filter(
+    (column) =>
+      column.status === "completed" && !!column.replies?.at(-1)?.content.trim(),
+  );
+  // Stored on column 0's turn (ADR-0042).
+  const summary = columns[0].request.disagreements;
+  if (answered.length < 2 && !summary) return null;
+  const stale = !!summary?.sources.some(
+    (source) =>
+      columns
+        .find((column) => column.index === source.column_index)
+        ?.replies?.at(-1)?.id !== source.message_id,
+  );
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      {summary && (
+        <DisagreementsPanel
+          summary={summary}
+          stale={stale}
+          onShowSource={(source) =>
+            source.column_index != null &&
+            focusElement(columnElementId(comparisonId, source.column_index))
+          }
+        />
+      )}
+      {answered.length >= 2 && (
+        <FindDisagreements
+          target={{ kind: "comparison", chatId, comparisonId }}
+          sources={answered.length}
+          preferredModelId={columns[0].request.target_model_id}
+          again={!!summary}
+        />
+      )}
+    </div>
   );
 }
 
@@ -172,10 +232,12 @@ function Column({
         : null;
   return (
     <article
+      id={columnElementId(comparisonId, column.index)}
+      tabIndex={-1}
       aria-labelledby={headingId}
       data-active={active || undefined}
       className={cn(
-        "rounded-surface bg-background flex min-w-0 flex-col gap-2 border p-3",
+        "rounded-surface bg-background focus-visible:ring-ring flex min-w-0 scroll-mt-4 flex-col gap-2 border p-3 outline-none focus-visible:ring-2",
         active && "border-primary/60",
       )}
     >
