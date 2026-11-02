@@ -51,10 +51,10 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Add the `origin` and provenance columns and the registration service in the files domain.
   - [x] Enforce limits and content detection; return reference tokens in tool results.
   - [x] Test limits, type detection, provenance, sub-agent ownership and scope membership.
-- [ ] US-56.3: Reference resolution at save time (in progress; awaiting confirmation)
+- [x] US-56.3: Reference resolution at save time
   - [x] Implement parsing and resolution in the chat domain; expose resolved references.
   - [x] Test foreign, missing, out-of-scope and deleted files, and identical 404 behavior.
-- [ ] US-56.4: Inline images
+- [ ] US-56.4: Inline images (in progress)
   - [ ] Build `InlineFile` image rendering and the lightbox; implement SVG handling.
   - [ ] Add adversarial browser tests (foreign IDs, URL-shaped tokens, script-bearing SVG).
 - [ ] US-56.5: Document cards and previews
