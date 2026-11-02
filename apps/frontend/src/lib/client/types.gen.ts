@@ -1386,6 +1386,140 @@ export type DelegationRecord = {
 };
 
 /**
+ * Disagreement
+ *
+ * A point the sources cannot all be right about; positions come from distinct sources.
+ */
+export type Disagreement = {
+  /**
+   * Topic
+   */
+  topic: string;
+  /**
+   * Positions
+   */
+  positions: Array<DisagreementPosition>;
+};
+
+/**
+ * DisagreementPosition
+ */
+export type DisagreementPosition = {
+  /**
+   * Source
+   */
+  source: string;
+  /**
+   * Claim
+   */
+  claim: string;
+};
+
+/**
+ * DisagreementRequest
+ */
+export type DisagreementRequest = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+};
+
+/**
+ * DisagreementSource
+ *
+ * One compared answer: a comparison column's final reply or one agent's output.
+ *
+ * ``message_id`` is the reply a column contributed, so a summary can be shown
+ * as out of date once the column's answer changes.
+ */
+export type DisagreementSource = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Kind
+   */
+  kind: "column" | "agent";
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Column Index
+   */
+  column_index?: number | null;
+  /**
+   * Message Id
+   */
+  message_id?: string | null;
+  /**
+   * Delegation Execution Id
+   */
+  delegation_execution_id?: string | null;
+  /**
+   * Truncated
+   */
+  truncated?: boolean;
+};
+
+/**
+ * DisagreementSummary
+ *
+ * The latest disagreement pass, with its provenance. It never changes the answers.
+ */
+export type DisagreementSummary = {
+  /**
+   * Model Id
+   */
+  model_id: string;
+  /**
+   * Model Name
+   */
+  model_name: string;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Sources
+   */
+  sources: Array<DisagreementSource>;
+  /**
+   * Disagreements
+   */
+  disagreements: Array<Disagreement>;
+  usage: DisagreementUsage;
+};
+
+/**
+ * DisagreementUsage
+ */
+export type DisagreementUsage = {
+  /**
+   * Truncated
+   */
+  truncated?: boolean;
+  /**
+   * Limit
+   */
+  limit: number;
+  /**
+   * Input Tokens
+   */
+  input_tokens: number;
+  /**
+   * Output Tokens
+   */
+  output_tokens: number;
+  /**
+   * Duration Ms
+   */
+  duration_ms: number;
+};
+
+/**
  * DownloadProgress
  */
 export type DownloadProgress = {
@@ -2449,6 +2583,7 @@ export type Message = {
    */
   citations?: Array<SpanCitation>;
   verification?: MessageVerification | null;
+  disagreements?: DisagreementSummary | null;
   /**
    * Active Child Id
    */
@@ -7927,6 +8062,86 @@ export type ChatRunGetResponses = {
 };
 
 export type ChatRunGetResponse = ChatRunGetResponses[keyof ChatRunGetResponses];
+
+export type ChatComparisonDisagreementsFindData = {
+  body: DisagreementRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Comparison Id
+     */
+    comparison_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/comparisons/{comparison_id}/disagreements";
+};
+
+export type ChatComparisonDisagreementsFindErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatComparisonDisagreementsFindError =
+  ChatComparisonDisagreementsFindErrors[keyof ChatComparisonDisagreementsFindErrors];
+
+export type ChatComparisonDisagreementsFindResponses = {
+  /**
+   * Successful Response
+   */
+  200: DisagreementSummary;
+};
+
+export type ChatComparisonDisagreementsFindResponse =
+  ChatComparisonDisagreementsFindResponses[keyof ChatComparisonDisagreementsFindResponses];
+
+export type ChatDelegationDisagreementsFindData = {
+  body: DisagreementRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/disagreements";
+};
+
+export type ChatDelegationDisagreementsFindErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatDelegationDisagreementsFindError =
+  ChatDelegationDisagreementsFindErrors[keyof ChatDelegationDisagreementsFindErrors];
+
+export type ChatDelegationDisagreementsFindResponses = {
+  /**
+   * Successful Response
+   */
+  200: DisagreementSummary;
+};
+
+export type ChatDelegationDisagreementsFindResponse =
+  ChatDelegationDisagreementsFindResponses[keyof ChatDelegationDisagreementsFindResponses];
 
 export type ChatMessageVerifyData = {
   body: VerifyRequest;

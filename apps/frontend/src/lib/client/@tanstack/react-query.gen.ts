@@ -75,12 +75,18 @@ import type {
   ChatComparisonActivateData,
   ChatComparisonActivateError,
   ChatComparisonActivateResponse,
+  ChatComparisonDisagreementsFindData,
+  ChatComparisonDisagreementsFindError,
+  ChatComparisonDisagreementsFindResponse,
   ChatComparisonGetOneData,
   ChatComparisonGetOneError,
   ChatComparisonGetOneResponse,
   ChatContextLayersGetData,
   ChatContextLayersGetError,
   ChatContextLayersGetResponse,
+  ChatDelegationDisagreementsFindData,
+  ChatDelegationDisagreementsFindError,
+  ChatDelegationDisagreementsFindResponse,
   ChatDraftAddFilesData,
   ChatDraftAddFilesError,
   ChatDraftAddFilesResponse,
@@ -1916,6 +1922,68 @@ export const chatRunGetOptions = (options: Options<ChatRunGetData>) =>
     },
     queryKey: chatRunGetQueryKey(options),
   });
+
+/**
+ * Find Comparison Disagreements
+ *
+ * List where a comparison's answered columns disagree; owner only (US-55.3).
+ */
+export const chatComparisonDisagreementsFindMutation = (
+  options?: Partial<Options<ChatComparisonDisagreementsFindData>>,
+): UseMutationOptions<
+  ChatComparisonDisagreementsFindResponse,
+  ChatComparisonDisagreementsFindError,
+  Options<ChatComparisonDisagreementsFindData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatComparisonDisagreementsFindResponse,
+    ChatComparisonDisagreementsFindError,
+    Options<ChatComparisonDisagreementsFindData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatComparisonDisagreementsFind({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Find Delegation Disagreements
+ *
+ * List where a step's sub-agent results disagree; owner only (US-55.3).
+ */
+export const chatDelegationDisagreementsFindMutation = (
+  options?: Partial<Options<ChatDelegationDisagreementsFindData>>,
+): UseMutationOptions<
+  ChatDelegationDisagreementsFindResponse,
+  ChatDelegationDisagreementsFindError,
+  Options<ChatDelegationDisagreementsFindData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatDelegationDisagreementsFindResponse,
+    ChatDelegationDisagreementsFindError,
+    Options<ChatDelegationDisagreementsFindData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatDelegationDisagreementsFind({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 /**
  * Verify Message

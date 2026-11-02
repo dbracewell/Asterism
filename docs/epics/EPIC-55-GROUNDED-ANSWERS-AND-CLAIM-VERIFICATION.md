@@ -1,6 +1,6 @@
 # EPIC-55: Grounded answers and claim verification
 
-Status: in progress (US-55.1 and US-55.2 complete). Source: product direction discussion (2026-10-31), core value proposition and learner track.
+Status: in progress (US-55.1 and US-55.2 complete; US-55.3 implemented). Source: product direction discussion (2026-10-31), core value proposition and learner track.
 
 ## Objective
 
@@ -71,7 +71,12 @@ Acceptance: in a comparison, or when sub-agents return conflicting results, a
 "Disagreements" summary lists the conflicting claims with links to each source
 column or agent.
 
-- [ ] Implement a bounded claim-comparison pass; build the summary; add tests.
+- [x] Implement a bounded claim-comparison pass; build the summary; add tests.
+
+Implementation: [ADR-0042](../adr/0042-disagreement-display.md). One bounded model
+call compares a comparison's answered columns or a step's finished sub-agent
+outputs; `messages.disagreements` stores the points with links to each column
+or agent, and flags summaries whose column answers changed.
 
 ## US-55.4: Spot-the-error exercise
 

@@ -75,12 +75,18 @@ import type {
   ChatComparisonActivateData,
   ChatComparisonActivateErrors,
   ChatComparisonActivateResponses,
+  ChatComparisonDisagreementsFindData,
+  ChatComparisonDisagreementsFindErrors,
+  ChatComparisonDisagreementsFindResponses,
   ChatComparisonGetOneData,
   ChatComparisonGetOneErrors,
   ChatComparisonGetOneResponses,
   ChatContextLayersGetData,
   ChatContextLayersGetErrors,
   ChatContextLayersGetResponses,
+  ChatDelegationDisagreementsFindData,
+  ChatDelegationDisagreementsFindErrors,
+  ChatDelegationDisagreementsFindResponses,
   ChatDraftAddFilesData,
   ChatDraftAddFilesErrors,
   ChatDraftAddFilesResponses,
@@ -1539,6 +1545,60 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/messages/{message_id}/run",
       ...options,
+    });
+  }
+
+  /**
+   * Find Comparison Disagreements
+   *
+   * List where a comparison's answered columns disagree; owner only (US-55.3).
+   */
+  public chatComparisonDisagreementsFind<ThrowOnError extends boolean = false>(
+    options: Options<ChatComparisonDisagreementsFindData, ThrowOnError>,
+  ): RequestResult<
+    ChatComparisonDisagreementsFindResponses,
+    ChatComparisonDisagreementsFindErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatComparisonDisagreementsFindResponses,
+      ChatComparisonDisagreementsFindErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/comparisons/{comparison_id}/disagreements",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Find Delegation Disagreements
+   *
+   * List where a step's sub-agent results disagree; owner only (US-55.3).
+   */
+  public chatDelegationDisagreementsFind<ThrowOnError extends boolean = false>(
+    options: Options<ChatDelegationDisagreementsFindData, ThrowOnError>,
+  ): RequestResult<
+    ChatDelegationDisagreementsFindResponses,
+    ChatDelegationDisagreementsFindErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatDelegationDisagreementsFindResponses,
+      ChatDelegationDisagreementsFindErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/disagreements",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

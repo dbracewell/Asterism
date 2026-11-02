@@ -115,6 +115,16 @@ export const MessageItem = React.memo(
               <DelegationSummary
                 records={message.delegations}
                 mainModel={message.execution?.model.name}
+                disagreements={
+                  message.status === "pending"
+                    ? undefined
+                    : {
+                        chatId,
+                        messageId: message.id,
+                        summary: message.disagreements,
+                        preferredModelId: message.execution?.model.id,
+                      }
+                }
                 onFork={onFork}
               />
             )}

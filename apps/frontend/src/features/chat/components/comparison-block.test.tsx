@@ -219,3 +219,65 @@ it("keeps block content out of paragraphs while a column waits its turn", async 
   ).toBe(false);
   errors.mockRestore();
 });
+
+it("shows stored disagreements, jumps to a column and flags changed answers", async () => {
+  const user = userEvent.setup();
+  const base = comparison();
+  base.columns[0].request = message("q0", "user", {
+    disagreements: {
+      model_id: "m",
+      model_name: "Checker",
+      created_at: 1,
+      sources: [
+        {
+          key: "S1",
+          kind: "column",
+          label: "Alpha",
+          column_index: 0,
+          message_id: "r0",
+        },
+        {
+          key: "S2",
+          kind: "column",
+          label: "Beta",
+          column_index: 1,
+          message_id: "old",
+        },
+      ],
+      disagreements: [
+        {
+          topic: "Cause",
+          positions: [
+            { source: "S1", claim: "The Moon." },
+            { source: "S2", claim: "The wind." },
+          ],
+        },
+      ],
+      usage: { limit: 8, input_tokens: 1, output_tokens: 1, duration_ms: 1 },
+    },
+  });
+  data.current = base;
+  setup();
+  const panel = await screen.findByRole("region", { name: "Disagreements" });
+  // Beta's answer is no longer the one that was compared.
+  expect(within(panel).getByRole("note")).toHaveTextContent(
+    "An answer changed after this summary was made.",
+  );
+  await user.click(within(panel).getByRole("button", { name: "Show Beta" }));
+  expect(screen.getByRole("article", { name: "Beta" })).toHaveFocus();
+  // Two answered columns: the pass can run again.
+  expect(
+    screen.getByRole("button", { name: "Find disagreements again" }),
+  ).toBeVisible();
+});
+
+it("offers no disagreement pass with fewer than two answered columns", async () => {
+  const base = comparison();
+  base.columns[1] = { ...base.columns[1], status: "pending", replies: [] };
+  data.current = base;
+  setup();
+  await screen.findByRole("region", { name: "Comparison of 3 answers" });
+  expect(
+    screen.queryByRole("button", { name: /Find disagreements/ }),
+  ).toBeNull();
+});
