@@ -33,9 +33,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-57.1: Rubric-based draft feedback (confirmed and merged 2026-11-03)
   - [x] Add the rubric template kind and bundled rubrics.
   - [x] Add the feedback mode and structured output rendering; add tests and evaluation fixtures.
-- [ ] US-57.2: Inline comments
-  - [ ] Implement span anchoring with fallback; build the comment view.
-  - [ ] Test anchoring accuracy and resolution state.
+- [ ] US-57.2: Inline comments (implemented on `feature/us-57.2-inline-comments`; awaiting confirmation)
+  - [x] Implement span anchoring with fallback; build the comment view.
+  - [x] Test anchoring accuracy and resolution state.
 - [ ] US-57.3: Research assistant mode
   - [ ] Write the mode instructions and an outline output format; add evaluation fixtures.
 - [ ] US-57.4: AI-use log export

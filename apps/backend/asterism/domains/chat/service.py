@@ -76,12 +76,18 @@ async def add_message(
                         session=session,
                     )
                     message = message.model_copy(update={"content": content})
+        draft_comments = None
+        if message.role == "assistant" and not message.tool_calls:
+            from .draft_comments import build_comments
+
+            draft_comments = build_comments(message.content, message.execution)
         new_message = MessageModel(
             **message.model_dump(exclude={"active_child_id", "files", "execution"}),
             files=files,
             user_id=user_id,
             chat_id=chat_id,
             exercise_record=exercise,
+            draft_comments=draft_comments,
         )
         if message.role == "user":
             from asterism.domains.skills.activation import validate_snapshots

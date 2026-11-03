@@ -18,6 +18,8 @@ from asterism.domains.agent.learning_inputs import (
 )
 from asterism.domains.prompt_templates.rubrics import OVERALL_HEADING
 
+from .rubric_replies import NEXT_STEP_LABEL
+
 
 @dataclass(frozen=True)
 class FeedbackSection:
@@ -249,18 +251,24 @@ assessed against a rubric. Your job is feedback, not writing for them.
 
   > <a short passage copied word for word from the draft>
 
-  What works and what holds the draft back on this criterion, tied to the
-  quoted passages and the level descriptors. End with one concrete next step
-  the learner can take.
+  One or two sentences about that passage for this criterion: what works or
+  what holds it back, tied to the level descriptors.
+
+  (Repeat the quoted passage and its note for each passage you discuss.)
+
+  {NEXT_STEP_LABEL}: one concrete thing the learner can do to improve on
+  this criterion.
 
   ### {RUBRIC_FEEDBACK.overall_heading}
   Two or three sentences: the draft's main strength and the single most
   important revision to make first.
 
-- Quote one to three short passages per criterion, each on its own line
-  starting with ">", copied exactly from the draft so the learner can find
-  them. When the problem is something missing, say what is missing instead
-  of quoting.
+- Quote one to three short passages per criterion. Put each on its own line
+  starting with ">", copied exactly from the draft (same words and
+  punctuation) so the learner can find it, and put its note directly below
+  it. Quote a sentence or part of one, not a whole paragraph. When the
+  problem is something missing, say what is missing in a sentence before the
+  next step instead of quoting.
 - The level is an estimate. Choose the level whose descriptor fits best, and
   say so briefly when the draft gives too little evidence to judge.
 - Do not rewrite the draft or any part of it, and do not write new sentences
@@ -317,7 +325,7 @@ _DEFINITIONS = (
         id=LearningModeId.DRAFT_FEEDBACK,
         name="Draft feedback",
         description="Assesses your draft against a rubric without rewriting it.",
-        version=1,
+        version=2,
         instructions=_DRAFT_FEEDBACK,
         rubric_feedback=RUBRIC_FEEDBACK,
     ),

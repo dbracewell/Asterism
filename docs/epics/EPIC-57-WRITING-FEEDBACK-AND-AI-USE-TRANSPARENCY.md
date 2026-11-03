@@ -1,6 +1,6 @@
 # EPIC-57: Writing feedback and AI-use transparency
 
-Status: in progress (US-57.1 complete; design in [ADR-0044](../adr/0044-rubric-draft-feedback.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-57.1 complete, US-57.2 implemented; designs in [ADR-0044](../adr/0044-rubric-draft-feedback.md) and [ADR-0045](../adr/0045-inline-draft-comments.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -43,8 +43,8 @@ spans, like margin comments. Selecting a comment highlights its span. Comments
 that can't be anchored are listed separately. The student can mark comments
 resolved.
 
-- [ ] Implement span anchoring with fallback; build the comment view.
-- [ ] Test anchoring accuracy and resolution state.
+- [x] Implement span anchoring with fallback; build the comment view.
+- [x] Test anchoring accuracy and resolution state.
 
 ## US-57.3: Research assistant mode
 

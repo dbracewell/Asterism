@@ -1574,6 +1574,129 @@ export type DownloadStatus =
   | "failed";
 
 /**
+ * DraftAnchor
+ *
+ * Where a quote sits in a draft document, as UTF-16 offsets for the browser.
+ */
+export type DraftAnchor = {
+  /**
+   * Document Id
+   */
+  document_id: string;
+  /**
+   * Start
+   */
+  start: number;
+  /**
+   * End
+   */
+  end: number;
+};
+
+/**
+ * DraftCommentSummary
+ *
+ * Counts shown with the reply; the draft view loads the comments themselves.
+ */
+export type DraftCommentSummary = {
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Resolved
+   */
+  resolved: number;
+};
+
+/**
+ * DraftCommentUpdate
+ */
+export type DraftCommentUpdate = {
+  /**
+   * Resolved
+   */
+  resolved: boolean;
+};
+
+/**
+ * DraftCommentView
+ */
+export type DraftCommentView = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Criterion
+   */
+  criterion: string;
+  /**
+   * Level
+   */
+  level: string | null;
+  /**
+   * Quote
+   */
+  quote: string;
+  /**
+   * Note
+   */
+  note: string;
+  /**
+   * Resolved
+   */
+  resolved: boolean;
+  anchor: DraftAnchor | null;
+};
+
+/**
+ * DraftDocument
+ *
+ * A part of the draft the feedback turn sent: the message text or an attached file.
+ */
+export type DraftDocument = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Kind
+   */
+  kind: "message" | "file";
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Available
+   */
+  available: boolean;
+  /**
+   * Text
+   */
+  text?: string | null;
+  /**
+   * Reason
+   */
+  reason?: string | null;
+};
+
+/**
+ * DraftReview
+ */
+export type DraftReview = {
+  /**
+   * Documents
+   */
+  documents: Array<DraftDocument>;
+  /**
+   * Comments
+   */
+  comments: Array<DraftCommentView>;
+};
+
+/**
  * EligibleSkillsPage
  */
 export type EligibleSkillsPage = {
@@ -2678,6 +2801,7 @@ export type Message = {
   verification?: MessageVerification | null;
   disagreements?: DisagreementSummary | null;
   exercise?: ExerciseView | null;
+  draft_comment_summary?: DraftCommentSummary | null;
   /**
    * Active Child Id
    */
@@ -8486,6 +8610,90 @@ export type ChatExerciseRevealResponses = {
 
 export type ChatExerciseRevealResponse =
   ChatExerciseRevealResponses[keyof ChatExerciseRevealResponses];
+
+export type ChatDraftReviewGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/draft-review";
+};
+
+export type ChatDraftReviewGetOneErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatDraftReviewGetOneError =
+  ChatDraftReviewGetOneErrors[keyof ChatDraftReviewGetOneErrors];
+
+export type ChatDraftReviewGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: DraftReview;
+};
+
+export type ChatDraftReviewGetOneResponse =
+  ChatDraftReviewGetOneResponses[keyof ChatDraftReviewGetOneResponses];
+
+export type ChatDraftReviewCommentUpdateData = {
+  body: DraftCommentUpdate;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+    /**
+     * Comment Id
+     */
+    comment_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/draft-review/comments/{comment_id}";
+};
+
+export type ChatDraftReviewCommentUpdateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatDraftReviewCommentUpdateError =
+  ChatDraftReviewCommentUpdateErrors[keyof ChatDraftReviewCommentUpdateErrors];
+
+export type ChatDraftReviewCommentUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: DraftCommentSummary;
+};
+
+export type ChatDraftReviewCommentUpdateResponse =
+  ChatDraftReviewCommentUpdateResponses[keyof ChatDraftReviewCommentUpdateResponses];
 
 export type ChatComparisonDisagreementsFindData = {
   body: DisagreementRequest;

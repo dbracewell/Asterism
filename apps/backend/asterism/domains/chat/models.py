@@ -36,6 +36,7 @@ from asterism.domains.prompt_templates.rubric_provenance import RubricLabel, Rub
 
 from .citation_schemas import SpanCitation
 from .disagreement_schemas import DisagreementSummary
+from .draft_comment_schemas import DraftComments, DraftCommentSummary, comment_summary
 from .execution_models import ChatExecutionModel
 from .exercise_schemas import ExerciseRecord, ExerciseView, exercise_view
 from .schemas import (
@@ -272,6 +273,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         jsonb_type(TypeAdapter(ExerciseRecord)),
         nullable=True,
     )
+    # Inline comments parsed from a Draft feedback reply (US-57.2, ADR-0045);
+    # only their resolved state changes after the reply is saved.
+    draft_comments: Mapped[DraftComments | None] = mapped_column(
+        jsonb_type(TypeAdapter(DraftComments)),
+        nullable=True,
+    )
     # The latest disagreement pass anchored on this message (US-55.3, ADR-0042).
     disagreements: Mapped[DisagreementSummary | None] = mapped_column(
         jsonb_type(TypeAdapter(DisagreementSummary)),
@@ -383,6 +390,10 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     def exercise(self) -> ExerciseView | None:
         """The learner's view; the recorded error stays hidden until revealed."""
         return exercise_view(self.exercise_record)
+
+    @property
+    def draft_comment_summary(self) -> DraftCommentSummary | None:
+        return comment_summary(self.draft_comments)
 
     @property
     def template(self) -> TemplateLabel | None:

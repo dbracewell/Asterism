@@ -23,6 +23,7 @@ from asterism.domains.settings.provider_types import ModelCapabilitySource, Prov
 
 from .citation_schemas import SpanCitation
 from .disagreement_schemas import DisagreementSummary
+from .draft_comment_schemas import DraftCommentSummary
 from .exercise_schemas import ExerciseView
 from .verification_schemas import MessageVerification
 
@@ -252,6 +253,8 @@ class Message(LLMMessage):
     disagreements: DisagreementSummary | None = None
     # Set on spot-the-error answers (US-55.4): always labelled as an exercise.
     exercise: ExerciseView | None = None
+    # Counts of the inline comments on a Draft feedback reply (US-57.2).
+    draft_comment_summary: DraftCommentSummary | None = None
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0

@@ -214,6 +214,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Choose a rubric with the Rubric control next to the mode, then paste your draft or attach it as a file. The rubric stays selected for your next messages.",
       "Levels are the assistant's estimate, not a grade. If you want to see how one passage could read, ask for an example rewrite of that one passage.",
+      "Use Review draft with comments to see your draft with each comment pinned to the passage it quotes. Mark comments resolved as you revise. Comments whose quote doesn't match your draft are listed separately.",
     ],
     related: ["concept.rubric", "concept.attachment", "concept.learning-mode"],
     audience: "everyone",
