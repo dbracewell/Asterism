@@ -380,7 +380,7 @@ def test_rubric_fixtures_load_and_score_replies():
     no_level = score(lab, LAB_FEEDBACK.replace("Estimated level: Developing\n\nThe", "The"), rubric_format=fmt)
     assert no_level.failures == ["no level line for 'Analysis and conclusion'"]
     unquoted = "\n".join(line for line in LAB_FEEDBACK.splitlines() if not line.startswith(">"))
-    assert score(lab, unquoted, rubric_format=fmt).failures == ["no quoted passage"]
+    assert score(lab, unquoted, rubric_format=fmt).failures == ["no quoted passage with a note"]
     reordered = LAB_FEEDBACK.replace("### Overall\nClear question; start by tightening the method.", "")
     reordered = "### Overall\nFirst.\n\n" + reordered
     assert score(lab, reordered, rubric_format=fmt).failures == ["rubric headings out of order"]

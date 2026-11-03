@@ -105,6 +105,12 @@ import type {
   ChatDraftRemoveFilesData,
   ChatDraftRemoveFilesError,
   ChatDraftRemoveFilesResponse,
+  ChatDraftReviewCommentUpdateData,
+  ChatDraftReviewCommentUpdateError,
+  ChatDraftReviewCommentUpdateResponse,
+  ChatDraftReviewGetOneData,
+  ChatDraftReviewGetOneError,
+  ChatDraftReviewGetOneResponse,
   ChatDraftUploadData,
   ChatDraftUploadError,
   ChatDraftUploadResponse,
@@ -2002,6 +2008,67 @@ export const chatExerciseRevealMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const chatDraftReviewGetOneQueryKey = (
+  options: Options<ChatDraftReviewGetOneData>,
+) => createQueryKey("chatDraftReviewGetOne", options);
+
+/**
+ * Read Draft Review
+ *
+ * The draft a feedback reply assessed, with its inline comments anchored; owner only (US-57.2).
+ */
+export const chatDraftReviewGetOneOptions = (
+  options: Options<ChatDraftReviewGetOneData>,
+) =>
+  queryOptions<
+    ChatDraftReviewGetOneResponse,
+    ChatDraftReviewGetOneError,
+    ChatDraftReviewGetOneResponse,
+    ReturnType<typeof chatDraftReviewGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().chatDraftReviewGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: chatDraftReviewGetOneQueryKey(options),
+  });
+
+/**
+ * Update Draft Comment
+ *
+ * Mark an inline comment resolved or open again; owner only (US-57.2).
+ */
+export const chatDraftReviewCommentUpdateMutation = (
+  options?: Partial<Options<ChatDraftReviewCommentUpdateData>>,
+): UseMutationOptions<
+  ChatDraftReviewCommentUpdateResponse,
+  ChatDraftReviewCommentUpdateError,
+  Options<ChatDraftReviewCommentUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatDraftReviewCommentUpdateResponse,
+    ChatDraftReviewCommentUpdateError,
+    Options<ChatDraftReviewCommentUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .chatDraftReviewCommentUpdate({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

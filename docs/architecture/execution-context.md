@@ -218,3 +218,11 @@ A rubric adds no prompt layer and grants nothing. `MessageExecution.rubric`
 records its identity and level and criterion names; the UI parses the reply into
 one section per criterion (with an `Estimated level:` line) and a closing
 `Overall` section. See [ADR-0044](../adr/0044-rubric-draft-feedback.md).
+
+Since version 2 of the mode, each quoted passage is followed by a note about it,
+and a section may end with a `Next step:` line. Saving a reply stores each
+quote and note as an inline comment. `GET /chat/{id}/messages/{mid}/draft-review`
+returns the documents the request turn sent (the message text and its attached
+text files, rechecked against live chat scope) and each comment anchored by
+quote when read; `PUT …/draft-review/comments/{cid}` marks a comment resolved.
+See [ADR-0045](../adr/0045-inline-draft-comments.md).

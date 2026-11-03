@@ -22,6 +22,7 @@ import { MessageMeta } from "./message-meta";
 import { TurnInspection } from "./turn-inspection";
 import { VerificationPanel } from "@/features/chat/components/verification/verification-panel";
 import { ExerciseBar } from "@/features/chat/components/exercise/exercise-bar";
+import { DraftReviewButton } from "@/features/chat/components/draft-review/draft-review";
 import { StreamingIndicator } from "./streaming-indicator";
 
 const NO_REQUESTS: PermissionRequest[] = [];
@@ -149,6 +150,13 @@ export const MessageItem = React.memo(
               messageId={message.id}
               exercise={message.exercise}
               answerRef={answerRef}
+            />
+          )}
+          {!fromUser && message.draft_comment_summary && (
+            <DraftReviewButton
+              chatId={chatId}
+              messageId={message.id}
+              summary={message.draft_comment_summary}
             />
           )}
           {!fromUser && message.verification && (

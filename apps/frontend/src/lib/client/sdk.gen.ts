@@ -105,6 +105,12 @@ import type {
   ChatDraftRemoveFilesData,
   ChatDraftRemoveFilesErrors,
   ChatDraftRemoveFilesResponses,
+  ChatDraftReviewCommentUpdateData,
+  ChatDraftReviewCommentUpdateErrors,
+  ChatDraftReviewCommentUpdateResponses,
+  ChatDraftReviewGetOneData,
+  ChatDraftReviewGetOneErrors,
+  ChatDraftReviewGetOneResponses,
   ChatDraftUploadData,
   ChatDraftUploadErrors,
   ChatDraftUploadResponses,
@@ -1622,6 +1628,56 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/messages/{message_id}/exercise/reveal",
       ...options,
+    });
+  }
+
+  /**
+   * Read Draft Review
+   *
+   * The draft a feedback reply assessed, with its inline comments anchored; owner only (US-57.2).
+   */
+  public chatDraftReviewGetOne<ThrowOnError extends boolean = false>(
+    options: Options<ChatDraftReviewGetOneData, ThrowOnError>,
+  ): RequestResult<
+    ChatDraftReviewGetOneResponses,
+    ChatDraftReviewGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ChatDraftReviewGetOneResponses,
+      ChatDraftReviewGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/draft-review",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Draft Comment
+   *
+   * Mark an inline comment resolved or open again; owner only (US-57.2).
+   */
+  public chatDraftReviewCommentUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ChatDraftReviewCommentUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ChatDraftReviewCommentUpdateResponses,
+    ChatDraftReviewCommentUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ChatDraftReviewCommentUpdateResponses,
+      ChatDraftReviewCommentUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/draft-review/comments/{comment_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

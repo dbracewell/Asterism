@@ -2,7 +2,7 @@ import asyncio
 import uuid
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, File, Query, UploadFile, WebSocket
+from fastapi import APIRouter, File, Path, Query, UploadFile, WebSocket
 from fastapi.responses import FileResponse
 
 import asterism.domains.agent.service as agent_service
@@ -23,6 +23,7 @@ from asterism.domains.files.schemas import FilePreview, UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .disagreement_schemas import DisagreementRequest, DisagreementSummary
+from .draft_comment_schemas import DraftCommentSummary, DraftCommentUpdate, DraftReview
 from .exercise_schemas import ExerciseAttemptRequest, ExerciseView
 from .learning_modes import change_chat_learning_mode
 from .model_selection import change_chat_model, list_chat_models
@@ -613,6 +614,46 @@ async def reveal_exercise(
     from .exercises import reveal
 
     return await reveal(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
+
+
+@chat_router.get(
+    "/{chat_id}/messages/{message_id}/draft-review",
+    response_model=DraftReview,
+    operation_id="chatDraftReviewGetOne",
+)
+async def read_draft_review(
+    chat_id: uuid.UUID, message_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> DraftReview:
+    """The draft a feedback reply assessed, with its inline comments anchored; owner only (US-57.2)."""
+    from .draft_comments import read_draft_review
+
+    return await read_draft_review(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
+
+
+@chat_router.put(
+    "/{chat_id}/messages/{message_id}/draft-review/comments/{comment_id}",
+    response_model=DraftCommentSummary,
+    operation_id="chatDraftReviewCommentUpdate",
+)
+async def update_draft_comment(
+    chat_id: uuid.UUID,
+    message_id: uuid.UUID,
+    payload: DraftCommentUpdate,
+    user: AuthedUserDep,
+    db: DBSessionDep,
+    comment_id: str = Path(pattern=r"^c[0-9]{1,3}$"),
+) -> DraftCommentSummary:
+    """Mark an inline comment resolved or open again; owner only (US-57.2)."""
+    from .draft_comments import set_resolved
+
+    return await set_resolved(
+        user_id=user.id,
+        chat_id=chat_id,
+        message_id=message_id,
+        comment_id=comment_id,
+        resolved=payload.resolved,
+        session=db,
+    )
 
 
 @chat_router.post(

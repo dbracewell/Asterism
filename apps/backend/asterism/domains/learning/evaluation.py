@@ -20,6 +20,7 @@ from asterism.domains.prompt_templates.rubric_catalog import RUBRICS
 from asterism.domains.prompt_templates.rubrics import RubricDocument, render_rubric
 
 from .catalog import RubricFeedbackFormat, require_mode
+from .rubric_replies import heading_pattern, level_pattern, quoted_notes
 
 FIXTURE_DIR = Path(__file__).parent / "evals"
 
@@ -129,13 +130,8 @@ def load_suites() -> list[EvalSuite]:
     return [EvalSuite.model_validate_json(path.read_text()) for path in sorted(FIXTURE_DIR.glob("*.json"))]
 
 
-def _heading_pattern(heading: str) -> re.Pattern[str]:
-    """A Markdown heading line (any level, optionally bold) with this text."""
-    return re.compile(rf"(?im)^\s*#{{1,6}}\s*(?:\*\*)?{re.escape(heading)}(?:\*\*)?\s*:?\s*$")
-
-
 def _feedback_failures(feedback: str, headings: tuple[str, ...], reply: str) -> list[str]:
-    matches = [_heading_pattern(heading).search(reply) for heading in headings]
+    matches = [heading_pattern(heading).search(reply) for heading in headings]
     if feedback == "free_form":
         return [f"used feedback heading {heading!r}" for heading, match in zip(headings, matches) if match]
     missing = [heading for heading, match in zip(headings, matches) if not match]
@@ -149,22 +145,17 @@ def _feedback_failures(feedback: str, headings: tuple[str, ...], reply: str) -> 
     return [] if 1 <= questions <= 2 else [f"expected one or two follow-up questions, found {questions}"]
 
 
-def _level_pattern(label: str) -> re.Pattern[str]:
-    """A ``<label>: <level>`` line, optionally bold; captures the level."""
-    return re.compile(rf"(?im)^\s*(?:\*\*)?{re.escape(label)}(?::\*\*|\*\*:|:)\s*(?:\*\*)?(.+?)(?:\*\*)?\s*$")
-
-
 def _rubric_failures(
     feedback: str, rubric: RubricDocument | None, rubric_format: RubricFeedbackFormat, reply: str
 ) -> list[str]:
-    level_line = _level_pattern(rubric_format.level_label)
-    overall = _heading_pattern(rubric_format.overall_heading).search(reply)
+    level_line = level_pattern(rubric_format.level_label)
+    overall = heading_pattern(rubric_format.overall_heading).search(reply)
     if feedback == "free_form":
         failures = ["used the overall heading"] if overall else []
         return failures + (["used a level line"] if level_line.search(reply) else [])
     assert rubric is not None
     headings = [criterion.label for criterion in rubric.criteria]
-    matches = [_heading_pattern(heading).search(reply) for heading in headings]
+    matches = [heading_pattern(heading).search(reply) for heading in headings]
     failures = [f"missing criterion heading {heading!r}" for heading, match in zip(headings, matches) if not match]
     if overall is None:
         failures.append(f"missing heading {rubric_format.overall_heading!r}")
@@ -180,8 +171,8 @@ def _rubric_failures(
             failures.append(f"no level line for {heading!r}")
         elif " ".join(found.group(1).strip(" *.").split()).casefold() not in levels:
             failures.append(f"unknown level {found.group(1)!r} for {heading!r}")
-    if not re.search(r"(?m)^\s*>\s*\S", reply):
-        failures.append("no quoted passage")
+    if not any(pair.note for pair in quoted_notes(reply)):
+        failures.append("no quoted passage with a note")
     return failures
 
 

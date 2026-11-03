@@ -233,3 +233,153 @@ test("sends the chosen rubric and renders feedback by criterion", async ({
   await expect(picker).toHaveText("Argumentative essay");
   expect(errors).toEqual([]);
 });
+
+test("opens the draft with comments pinned to passages and resolves one", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const R = "bbbbbbbb-bbbb-4bbb-8bbb-000000000002";
+  const draft =
+    "Uniforms should be required. Also, a study said bullying drops.";
+  const chat: Chat = {
+    info: {
+      id: C,
+      user_id: "test",
+      title: "Essay feedback",
+      created_at: 0,
+      updated_at: 0,
+      selected_model_id: A,
+      selected_model: model,
+      model_revision: 1,
+      project_id: null,
+      learning_mode: "draft_feedback",
+      learning_mode_revision: 1,
+    },
+    messages: [
+      {
+        id: U,
+        role: "user",
+        created_at: 0,
+        status: "completed",
+        content: draft,
+        learning_mode: mode,
+        rubric: { ...provenance, document: essay, available: true },
+      },
+      {
+        id: R,
+        role: "assistant",
+        created_at: 1,
+        status: "completed",
+        content: feedback,
+        parent_message_id: U,
+        learning_mode: mode,
+        execution: execution(U),
+        draft_comment_summary: { total: 2, resolved: 0 },
+      },
+    ],
+  };
+  await page.route("**/api/py/chat/models", (route) =>
+    route.fulfill({ json: [model] }),
+  );
+  await page.route(/\/api\/py\/rubrics\/.*/, (route) =>
+    route.fulfill({
+      json: route.request().url().includes("bundled")
+        ? { version: 1, items: [] }
+        : { items: [], total: 0, page: 1, page_size: 100 },
+    }),
+  );
+  await page.route(`**/api/py/chat/${C}/files/context`, (route) =>
+    route.fulfill({
+      json: {
+        chat_id: C,
+        project_id: null,
+        allowed_file_ids: [],
+        local_file_ids: [],
+        project_file_ids: [],
+        unavailable_file_ids: [],
+        files: [],
+      },
+    }),
+  );
+  await page.route(`**/api/py/chat/${C}`, (route) =>
+    route.fulfill({ json: chat }),
+  );
+  let resolved = false;
+  await page.route(`**/api/py/chat/${C}/messages/${R}/draft-review`, (route) =>
+    route.fulfill({
+      json: {
+        documents: [
+          {
+            id: "message",
+            kind: "message",
+            name: "Your message",
+            available: true,
+            text: draft,
+          },
+        ],
+        comments: [
+          {
+            id: "c1",
+            criterion: "Thesis",
+            level: "Developing",
+            quote: "Uniforms should be required.",
+            note: "Clear but broad.",
+            resolved,
+            anchor: { document_id: "message", start: 0, end: 28 },
+          },
+          {
+            id: "c2",
+            criterion: "Evidence",
+            level: "Beginning",
+            quote: "Uniforms cure everything.",
+            note: "Not in the draft.",
+            resolved: false,
+            anchor: null,
+          },
+        ],
+      },
+    }),
+  );
+  const updates: unknown[] = [];
+  await page.route(
+    `**/api/py/chat/${C}/messages/${R}/draft-review/comments/c1`,
+    (route) => {
+      updates.push(route.request().postDataJSON());
+      resolved = true;
+      return route.fulfill({ json: { total: 2, resolved: 1 } });
+    },
+  );
+  await page.routeWebSocket(`**/api/py/chat/stream/${C}?**`, (socket) => {
+    socket.send(JSON.stringify({ type: "status", is_processing: false }));
+    socket.onMessage((raw) => {
+      if (JSON.parse(String(raw)).type === "ping")
+        socket.send(JSON.stringify({ type: "pong" }));
+    });
+  });
+
+  await page.goto("/e2e/chat-model-session");
+  const button = page.getByRole("button", {
+    name: /Review draft with comments/,
+  });
+  await expect(button).toBeVisible({ timeout: 15_000 });
+  await expect(button).toContainText("2 comments");
+  await button.click();
+  const dialog = page.getByRole("dialog", { name: "Your draft with comments" });
+  const passage = dialog.locator("mark");
+  await expect(passage).toHaveText("Uniforms should be required.");
+  await dialog.getByRole("button", { name: /^Thesis/ }).click();
+  await expect(passage).toHaveAttribute("data-selected", "true");
+  await expect(
+    dialog.getByRole("region", { name: "Not found in your draft" }),
+  ).toContainText("Uniforms cure everything.");
+  await dialog
+    .getByRole("listitem")
+    .filter({ hasText: "Clear but broad." })
+    .getByRole("checkbox", { name: "Resolved" })
+    .click();
+  // Resolved passages keep a dotted underline, even while selected.
+  await expect(passage).toHaveClass(/decoration-dotted/);
+  expect(updates).toEqual([{ resolved: true }]);
+  expect(errors).toEqual([]);
+});

@@ -230,6 +230,13 @@ themselves are rows of `prompt_templates` with `kind = "rubric"`; prompt
 templates have `kind = "prompt"`, and each kind has its own owner-scoped selects
 and API.
 
+`messages.draft_comments` holds the inline comments parsed from a Draft
+feedback reply when it is saved (US-57.2, [ADR-0045](../adr/0045-inline-draft-comments.md)):
+an ID, the criterion and level, the quoted passage, the note and when it was
+resolved. Only the resolved state changes later. Anchors are not stored; the
+draft review computes them when read. The API returns `draft_comment_summary`
+(total and resolved counts) on the message.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are

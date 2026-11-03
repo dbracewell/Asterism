@@ -535,6 +535,69 @@ export const zDownloadProgress = z.object({
 });
 
 /**
+ * DraftAnchor
+ *
+ * Where a quote sits in a draft document, as UTF-16 offsets for the browser.
+ */
+export const zDraftAnchor = z.object({
+  document_id: z.string(),
+  start: z.int().gte(0),
+  end: z.int().gte(0),
+});
+
+/**
+ * DraftCommentSummary
+ *
+ * Counts shown with the reply; the draft view loads the comments themselves.
+ */
+export const zDraftCommentSummary = z.object({
+  total: z.int(),
+  resolved: z.int(),
+});
+
+/**
+ * DraftCommentUpdate
+ */
+export const zDraftCommentUpdate = z.object({
+  resolved: z.boolean(),
+});
+
+/**
+ * DraftCommentView
+ */
+export const zDraftCommentView = z.object({
+  id: z.string(),
+  criterion: z.string(),
+  level: z.string().nullable(),
+  quote: z.string(),
+  note: z.string(),
+  resolved: z.boolean(),
+  anchor: zDraftAnchor.nullable(),
+});
+
+/**
+ * DraftDocument
+ *
+ * A part of the draft the feedback turn sent: the message text or an attached file.
+ */
+export const zDraftDocument = z.object({
+  id: z.string(),
+  kind: z.enum(["message", "file"]),
+  name: z.string(),
+  available: z.boolean(),
+  text: z.string().nullish(),
+  reason: z.string().nullish(),
+});
+
+/**
+ * DraftReview
+ */
+export const zDraftReview = z.object({
+  documents: z.array(zDraftDocument),
+  comments: z.array(zDraftCommentView),
+});
+
+/**
  * EmbeddingPayload
  *
  * The embedding state of one source file.
@@ -3362,6 +3425,7 @@ export const zMessage = z.object({
   verification: zMessageVerification.nullish(),
   disagreements: zDisagreementSummary.nullish(),
   exercise: zExerciseView.nullish(),
+  draft_comment_summary: zDraftCommentSummary.nullish(),
   active_child_id: z.uuid().nullish(),
   has_siblings: z.boolean().optional().default(false),
   sibling_count: z.int().optional().default(0),
@@ -3926,6 +3990,29 @@ export const zChatExerciseRevealPath = z.object({
  * Successful Response
  */
 export const zChatExerciseRevealResponse = zExerciseView;
+
+export const zChatDraftReviewGetOnePath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftReviewGetOneResponse = zDraftReview;
+
+export const zChatDraftReviewCommentUpdateBody = zDraftCommentUpdate;
+
+export const zChatDraftReviewCommentUpdatePath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+  comment_id: z.string().regex(/^c[0-9]{1,3}$/),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatDraftReviewCommentUpdateResponse = zDraftCommentSummary;
 
 export const zChatComparisonDisagreementsFindBody = zDisagreementRequest;
 
