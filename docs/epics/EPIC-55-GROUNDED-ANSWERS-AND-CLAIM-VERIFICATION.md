@@ -1,6 +1,6 @@
 # EPIC-55: Grounded answers and claim verification
 
-Status: in progress (US-55.1 through US-55.3 complete; US-55.4 implemented). Source: product direction discussion (2026-10-31), core value proposition and learner track.
+Status: complete (2026-11-03; designs in ADR-0040 through ADR-0043). Source: product direction discussion (2026-10-31), core value proposition and learner track.
 
 ## Objective
 
