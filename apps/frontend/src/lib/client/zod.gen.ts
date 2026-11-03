@@ -572,6 +572,22 @@ export const zExamplesField = z.object({
 });
 
 /**
+ * ExerciseAttempt
+ */
+export const zExerciseAttempt = z.object({
+  selection: z.string().max(1000),
+  result: z.enum(["found", "too_broad", "not_it"]),
+  at: z.int().gte(0),
+});
+
+/**
+ * ExerciseAttemptRequest
+ */
+export const zExerciseAttemptRequest = z.object({
+  selection: z.string().min(1).max(1000),
+});
+
+/**
  * FeedbackSectionId
  *
  * Sections of a structured Explain-back feedback reply, in reply order.
@@ -973,6 +989,7 @@ export const zLearningModeId = z.enum([
   "tutor",
   "explain_back",
   "review",
+  "spot_the_error",
 ]);
 
 /**
@@ -1905,6 +1922,21 @@ export const zSpanCitation = z.object({
   match_kind: z.string().nullish(),
   name: z.string().nullish(),
   excerpt: z.string().nullish(),
+});
+
+/**
+ * ExerciseView
+ *
+ * What the learner may see: the error only after they reveal it.
+ */
+export const zExerciseView = z.object({
+  valid: z.boolean(),
+  attempts: z.array(zExerciseAttempt),
+  found: z.boolean(),
+  revealed: z.boolean(),
+  quote: z.string().nullish(),
+  correction: z.string().nullish(),
+  source: zSpanCitation.nullish(),
 });
 
 /**
@@ -3184,6 +3216,7 @@ export const zMessage = z.object({
   citations: z.array(zSpanCitation).optional(),
   verification: zMessageVerification.nullish(),
   disagreements: zDisagreementSummary.nullish(),
+  exercise: zExerciseView.nullish(),
   active_child_id: z.uuid().nullish(),
   has_siblings: z.boolean().optional().default(false),
   sibling_count: z.int().optional().default(0),
@@ -3726,6 +3759,28 @@ export const zChatRunGetPath = z.object({
  * Successful Response
  */
 export const zChatRunGetResponse = zRecordedRun;
+
+export const zChatExerciseAttemptBody = zExerciseAttemptRequest;
+
+export const zChatExerciseAttemptPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatExerciseAttemptResponse = zExerciseView;
+
+export const zChatExerciseRevealPath = z.object({
+  chat_id: z.uuid(),
+  message_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zChatExerciseRevealResponse = zExerciseView;
 
 export const zChatComparisonDisagreementsFindBody = zDisagreementRequest;
 

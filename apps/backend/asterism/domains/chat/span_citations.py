@@ -22,10 +22,11 @@ from asterism.domains.llm.schemas import ToolResult
 from asterism.domains.retrieval.citations import CITATION_KEY_LENGTH, MAX_KEYS_PER_CITATION, citation_key
 from asterism.domains.retrieval.service import RetrievalHit
 
+from .citation_schemas import SpanCitation
 from .inline_files import read_live_file_ids
 from .models import MessageModel
 from .queries import select_owned_messages
-from .schemas import DelegationRecord, Message, MessageExecution, SpanCitation
+from .schemas import DelegationRecord, Message, MessageExecution
 
 MAX_SPAN_CITATIONS = 64
 """Distinct keys resolved per saved text; later keys are stored as unavailable."""
@@ -165,22 +166,43 @@ async def resolve_step_citations(
 
     own: list[SpanCitation] = []
     if parse_citation_keys(content):
-        run_results: list[ToolResult] = [*(tool_results or ())]
-        run_records: list[DelegationRecord] = [*(records or ())]
-        if execution is not None:
-            earlier_results, earlier_records = await _earlier_run_results(
-                user_id=user_id, chat_id=chat_id, execution_id=execution.id, session=session
-            )
-            run_results += earlier_results
-            run_records += earlier_records
-        run_results += [result for record in run_records for result in record.tool_results]
-        own = await resolve(content, retrieved_hits(run_results))
+        hits = await run_hits(
+            user_id=user_id,
+            chat_id=chat_id,
+            tool_results=tool_results,
+            delegations=records,
+            execution=execution,
+            session=session,
+        )
+        own = await resolve(content, hits)
     if records is None:
         return own, None
     return own, [
         record.model_copy(update={"citations": await resolve(record.output, retrieved_hits(record.tool_results))})
         for record in records
     ]
+
+
+async def run_hits(
+    *,
+    user_id: str,
+    chat_id: uuid.UUID,
+    tool_results: Sequence[ToolResult] | None,
+    delegations: Sequence[DelegationRecord] | None,
+    execution: MessageExecution | None,
+    session: AsyncSession,
+) -> list[RetrievalHit]:
+    """Everything the run retrieved so far: earlier steps, this step and every delegation."""
+    run_results: list[ToolResult] = [*(tool_results or ())]
+    run_records: list[DelegationRecord] = [*(delegations or ())]
+    if execution is not None:
+        earlier_results, earlier_records = await _earlier_run_results(
+            user_id=user_id, chat_id=chat_id, execution_id=execution.id, session=session
+        )
+        run_results += earlier_results
+        run_records += earlier_records
+    run_results += [result for record in run_records for result in record.tool_results]
+    return list(retrieved_hits(run_results))
 
 
 def with_live_citations(

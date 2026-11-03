@@ -1688,6 +1688,67 @@ export type ExamplesField = {
 };
 
 /**
+ * ExerciseAttempt
+ */
+export type ExerciseAttempt = {
+  /**
+   * Selection
+   */
+  selection: string;
+  /**
+   * Result
+   */
+  result: "found" | "too_broad" | "not_it";
+  /**
+   * At
+   */
+  at: number;
+};
+
+/**
+ * ExerciseAttemptRequest
+ */
+export type ExerciseAttemptRequest = {
+  /**
+   * Selection
+   */
+  selection: string;
+};
+
+/**
+ * ExerciseView
+ *
+ * What the learner may see: the error only after they reveal it.
+ */
+export type ExerciseView = {
+  /**
+   * Valid
+   */
+  valid: boolean;
+  /**
+   * Attempts
+   */
+  attempts: Array<ExerciseAttempt>;
+  /**
+   * Found
+   */
+  found: boolean;
+  /**
+   * Revealed
+   */
+  revealed: boolean;
+  /**
+   * Quote
+   */
+  quote?: string | null;
+  /**
+   * Correction
+   */
+  correction?: string | null;
+  source?: SpanCitation | null;
+};
+
+/**
  * FeedbackSection
  */
 export type FeedbackSection = {
@@ -2312,7 +2373,12 @@ export type LearningModeCatalog = {
 /**
  * LearningModeId
  */
-export type LearningModeId = "standard" | "tutor" | "explain_back" | "review";
+export type LearningModeId =
+  | "standard"
+  | "tutor"
+  | "explain_back"
+  | "review"
+  | "spot_the_error";
 
 /**
  * LearningModeProvenance
@@ -2584,6 +2650,7 @@ export type Message = {
   citations?: Array<SpanCitation>;
   verification?: MessageVerification | null;
   disagreements?: DisagreementSummary | null;
+  exercise?: ExerciseView | null;
   /**
    * Active Child Id
    */
@@ -8062,6 +8129,86 @@ export type ChatRunGetResponses = {
 };
 
 export type ChatRunGetResponse = ChatRunGetResponses[keyof ChatRunGetResponses];
+
+export type ChatExerciseAttemptData = {
+  body: ExerciseAttemptRequest;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/exercise/attempts";
+};
+
+export type ChatExerciseAttemptErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatExerciseAttemptError =
+  ChatExerciseAttemptErrors[keyof ChatExerciseAttemptErrors];
+
+export type ChatExerciseAttemptResponses = {
+  /**
+   * Successful Response
+   */
+  200: ExerciseView;
+};
+
+export type ChatExerciseAttemptResponse =
+  ChatExerciseAttemptResponses[keyof ChatExerciseAttemptResponses];
+
+export type ChatExerciseRevealData = {
+  body?: never;
+  path: {
+    /**
+     * Chat Id
+     */
+    chat_id: string;
+    /**
+     * Message Id
+     */
+    message_id: string;
+  };
+  query?: never;
+  url: "/chat/{chat_id}/messages/{message_id}/exercise/reveal";
+};
+
+export type ChatExerciseRevealErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatExerciseRevealError =
+  ChatExerciseRevealErrors[keyof ChatExerciseRevealErrors];
+
+export type ChatExerciseRevealResponses = {
+  /**
+   * Successful Response
+   */
+  200: ExerciseView;
+};
+
+export type ChatExerciseRevealResponse =
+  ChatExerciseRevealResponses[keyof ChatExerciseRevealResponses];
 
 export type ChatComparisonDisagreementsFindData = {
   body: DisagreementRequest;

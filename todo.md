@@ -39,9 +39,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Test scope narrowing, limits and label rendering; add evaluation fixtures.
 - [x] US-55.3: Disagreement display (confirmed and merged 2026-11-02)
   - [x] Implement a bounded claim-comparison pass; build the summary; add tests.
-- [ ] US-55.4: Spot-the-error exercise
-  - [ ] Add the exercise mode with a recorded error and reveal flow.
-  - [ ] Ensure exercise labelling in history and exports; add tests.
+- [ ] US-55.4: Spot-the-error exercise (implemented on `feature/us-55.4-spot-the-error`; awaiting confirmation)
+  - [x] Add the exercise mode with a recorded error and reveal flow.
+  - [x] Ensure exercise labelling in history and exports; add tests.
 
 ### [EPIC-57: Writing feedback and AI-use transparency](docs/epics/EPIC-57-WRITING-FEEDBACK-AND-AI-USE-TRANSPARENCY.md)
 

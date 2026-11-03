@@ -14,6 +14,7 @@ class LearningModeId(StrEnum):
     TUTOR = "tutor"
     EXPLAIN_BACK = "explain_back"
     REVIEW = "review"
+    SPOT_THE_ERROR = "spot_the_error"
 
 
 class HintLevel(StrEnum):

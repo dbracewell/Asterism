@@ -108,6 +108,12 @@ import type {
   ChatDraftUploadData,
   ChatDraftUploadErrors,
   ChatDraftUploadResponses,
+  ChatExerciseAttemptData,
+  ChatExerciseAttemptErrors,
+  ChatExerciseAttemptResponses,
+  ChatExerciseRevealData,
+  ChatExerciseRevealErrors,
+  ChatExerciseRevealResponses,
   ChatFileDownloadData,
   ChatFileDownloadErrors,
   ChatFileDownloadResponses,
@@ -1544,6 +1550,56 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/{chat_id}/messages/{message_id}/run",
+      ...options,
+    });
+  }
+
+  /**
+   * Attempt Exercise
+   *
+   * Check whether a selection is the exercise's deliberate error; owner only (US-55.4).
+   */
+  public chatExerciseAttempt<ThrowOnError extends boolean = false>(
+    options: Options<ChatExerciseAttemptData, ThrowOnError>,
+  ): RequestResult<
+    ChatExerciseAttemptResponses,
+    ChatExerciseAttemptErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatExerciseAttemptResponses,
+      ChatExerciseAttemptErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/exercise/attempts",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Reveal Exercise
+   *
+   * Show the exercise's error, its correction and the source; owner only (US-55.4).
+   */
+  public chatExerciseReveal<ThrowOnError extends boolean = false>(
+    options: Options<ChatExerciseRevealData, ThrowOnError>,
+  ): RequestResult<
+    ChatExerciseRevealResponses,
+    ChatExerciseRevealErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatExerciseRevealResponses,
+      ChatExerciseRevealErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/{chat_id}/messages/{message_id}/exercise/reveal",
       ...options,
     });
   }

@@ -17,6 +17,7 @@ from asterism.domains.agent.context_manifest import ContextFile, ContextManifest
 from asterism.domains.agent.schemas import AgentEvent, AgentEventType
 from asterism.domains.chat.context_manifest import file_context, step_context, turn_context
 from asterism.domains.chat.delegations import DelegationCollector
+from asterism.domains.chat.exercises import HISTORY_NOTE, is_exercise_run, streamed_text
 from asterism.domains.chat.forks import replayed_step, write_fork_step
 from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.prompts import create_title_generation_prompt
@@ -429,7 +430,10 @@ class ChatOrchestrator:
 
         messages: list[LLMMessage] = []
         for message in self.chat.messages:
-            if message.role != "user" or not message.files:
+            if message.role == "assistant" and message.exercise is not None:
+                # Later turns, in any mode, must not rely on an exercise answer.
+                messages.append(LLMMessage(**{**message.model_dump(), "content": message.content + HISTORY_NOTE}))
+            elif message.role != "user" or not message.files:
                 messages.append(LLMMessage(**message.model_dump()))
             else:
                 parts: list[TextContentPart | ImageUrlContentPart] = [TextContentPart(text=message.content)]
@@ -637,6 +641,9 @@ class ChatOrchestrator:
                     case AgentEvent(type=AgentEventType.DELTA):
                         self._streaming_content = event.content
                         self._streaming_thinking = event.thinking
+                        if is_exercise_run(self._execution):
+                            # The exercise record is never streamed (ADR-0043).
+                            event = event.model_copy(update={"content": streamed_text(event.content)})
                         await self._emit(event.model_dump())
 
                     case _:

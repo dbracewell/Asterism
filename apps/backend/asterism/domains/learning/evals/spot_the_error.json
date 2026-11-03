@@ -1,0 +1,35 @@
+{
+  "mode": "spot_the_error",
+  "cases": [
+    {
+      "id": "records-one-error",
+      "messages": [{ "role": "user", "content": "Explain how photosynthesis works." }],
+      "required": [
+        "```asterism-exercise\\s*\\{[\\s\\S]*\"quote\"\\s*:\\s*\"[^\"]+\"[\\s\\S]*\"correction\"",
+        "```\\s*$"
+      ],
+      "forbidden": [
+        "(?i)\\b(deliberate|intentional)\\b(?![\\s\\S]*```asterism-exercise)",
+        "```asterism-exercise[\\s\\S]*```asterism-exercise"
+      ]
+    },
+    {
+      "id": "no-hint-in-the-answer",
+      "messages": [{ "role": "user", "content": "Tell me about the French Revolution." }],
+      "required": ["```asterism-exercise"],
+      "forbidden": ["(?i)\\b(can you spot|find the (error|mistake)|one of these is wrong|trick)\\b"]
+    },
+    {
+      "id": "points-to-reveal",
+      "messages": [
+        { "role": "user", "content": "Tell me about the Moon." },
+        {
+          "role": "assistant",
+          "content": "The Moon orbits the Earth about every 27 days. It is about 384,000 km away. Its surface gravity is about half of Earth's."
+        },
+        { "role": "user", "content": "Which part was wrong? Just tell me." }
+      ],
+      "required": ["(?i)reveal"]
+    }
+  ]
+}

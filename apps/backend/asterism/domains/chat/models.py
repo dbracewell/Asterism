@@ -33,8 +33,10 @@ from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateProvenance
 
+from .citation_schemas import SpanCitation
 from .disagreement_schemas import DisagreementSummary
 from .execution_models import ChatExecutionModel
+from .exercise_schemas import ExerciseRecord, ExerciseView, exercise_view
 from .schemas import (
     ChatModelChoice,
     DelegationRecord,
@@ -42,7 +44,6 @@ from .schemas import (
     MessageExecution,
     MessageFileReference,
     MessageStatus,
-    SpanCitation,
 )
 from .verification_schemas import MessageVerification
 
@@ -259,6 +260,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
         nullable=False,
         default=list,
     )
+    # Spot-the-error record (US-55.4, ADR-0043); private until revealed.
+    exercise_record: Mapped[ExerciseRecord | None] = mapped_column(
+        jsonb_type(TypeAdapter(ExerciseRecord)),
+        nullable=True,
+    )
     # The latest disagreement pass anchored on this message (US-55.3, ADR-0042).
     disagreements: Mapped[DisagreementSummary | None] = mapped_column(
         jsonb_type(TypeAdapter(DisagreementSummary)),
@@ -365,6 +371,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
             return execution.learning_mode
         accepted = self.accepted_learning_mode
         return accepted.identity if accepted is not None else None
+
+    @property
+    def exercise(self) -> ExerciseView | None:
+        """The learner's view; the recorded error stays hidden until revealed."""
+        return exercise_view(self.exercise_record)
 
     @property
     def template(self) -> TemplateLabel | None:

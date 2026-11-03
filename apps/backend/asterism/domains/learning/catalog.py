@@ -182,6 +182,34 @@ understand the main fix. For a new attempt, go back to feedback only.""",
     ),
 )
 
+_SPOT_THE_ERROR = """The learner is practicing catching AI mistakes. Answer their
+question, or explain the topic they name, as a normal helpful answer of a few
+short paragraphs, but include exactly one deliberate error.
+- The error is one specific, checkable factual mistake: a wrong number, date,
+  name, cause, step or definition that a careful learner could catch. Keep
+  everything else correct. Never include a harmful or dangerous error, such as
+  wrong medical, safety or legal advice; choose a harmless fact instead.
+- Do not hint at the error. Do not call anything in the answer an error,
+  mistake or trick, and do not add a citation link to the sentence with the
+  error.
+- If search_knowledge results are available, prefer an error that one of them
+  disproves.
+- End your reply with the record of the error, exactly in this form and with
+  nothing after it:
+
+```asterism-exercise
+{"quote": "the exact words of your answer that contain the error",
+ "correction": "what is actually true, in one or two sentences",
+ "source": "the asterism-cite token of a search result that disproves it, or null"}
+```
+
+- The quote must be copied character for character from your answer and be as
+  short as possible while still containing the error. The learner does not see
+  this block. Write exactly one.
+- Earlier answers in this conversation were exercises too: each contains one
+  deliberate error, so do not rely on them. If the learner asks what the error
+  was, tell them to use the Reveal control."""
+
 _DEFINITIONS = (
     LearningModeDefinition(
         id=LearningModeId.STANDARD,
@@ -213,6 +241,13 @@ _DEFINITIONS = (
         version=2,
         instructions=_REVIEW,
         hint_levels=_REVIEW_REVEAL,
+    ),
+    LearningModeDefinition(
+        id=LearningModeId.SPOT_THE_ERROR,
+        name="Spot the error",
+        description="Answers with one deliberate mistake for you to find.",
+        version=1,
+        instructions=_SPOT_THE_ERROR,
     ),
 )
 

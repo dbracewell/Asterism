@@ -1,6 +1,6 @@
 # EPIC-55: Grounded answers and claim verification
 
-Status: in progress (US-55.1 through US-55.3 complete). Source: product direction discussion (2026-10-31), core value proposition and learner track.
+Status: in progress (US-55.1 through US-55.3 complete; US-55.4 implemented). Source: product direction discussion (2026-10-31), core value proposition and learner track.
 
 ## Objective
 
@@ -90,5 +90,12 @@ gets feedback. Revealing the answer shows the error and the source that
 disproves it. Exercise answers are clearly labelled as exercises everywhere,
 including in exports.
 
-- [ ] Add the exercise mode with a recorded error and reveal flow.
-- [ ] Ensure exercise labelling in history and exports; add tests.
+- [x] Add the exercise mode with a recorded error and reveal flow.
+- [x] Ensure exercise labelling in history and exports; add tests.
+
+Implementation: [ADR-0043](../adr/0043-spot-the-error-exercise.md). The Spot the
+error mode records its error in a block that is cut from the stream and the
+saved answer. Selections are graded by overlap without a model call; reveal
+shows the error, correction and source. Exercise answers are labelled in the
+transcript, when copied and in later model history; no chat export exists yet,
+and `Message.exercise` is the flag future exports must label.

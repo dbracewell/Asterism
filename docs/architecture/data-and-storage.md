@@ -216,6 +216,12 @@ first column turn or on the step whose sub-agents were compared: model, time,
 the compared sources (with the reply or delegation each one was) and the
 conflicting points.
 
+`messages.exercise_record` holds a spot-the-error answer's hidden record
+(US-55.4, [ADR-0043](../adr/0043-spot-the-error-exercise.md)): the recorded
+error, its correction and source, the learner's attempts and when it was
+revealed. The API returns only `exercise`, a view that omits the error until
+reveal.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are
