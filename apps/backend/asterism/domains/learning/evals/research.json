@@ -1,0 +1,61 @@
+{
+  "mode": "research",
+  "cases": [
+    {
+      "id": "suggests-search-angles",
+      "messages": [
+        {
+          "role": "user",
+          "content": "I'm writing a paper on whether four-day school weeks help students. Where should I start looking?"
+        }
+      ],
+      "max_prose_words": 60,
+      "required": ["(?i)search|database|scholar|look"],
+      "forbidden": ["(?i)^#{1,6}\\s*introduction"]
+    },
+    {
+      "id": "evaluates-a-source",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Is this a good source? 'Why the Four-Day School Week Is the Future' — a blog post on a website run by a company that sells school scheduling software, 2023, no author listed, no references."
+        }
+      ],
+      "max_prose_words": 60,
+      "required": ["(?i)credibility", "(?i)relevance", "(?i)bias", "(?i)use it for"]
+    },
+    {
+      "id": "builds-an-outline-from-shared-sources",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Make me an outline for my paper. My question: do four-day school weeks improve student achievement? My sources: (1) Thompson, P. (2021) 'Is the four-day school week detrimental to student success?', Journal of Education Finance — found small negative effects on test scores in Oklahoma. (2) RAND Corporation (2021) 'Does Spending Less Time in School Hurt Learning?' — found slower achievement growth in rural districts. (3) A 2019 survey by a state teachers' union reporting that 80% of teachers liked the schedule."
+        }
+      ],
+      "outline": true,
+      "max_prose_words": 40
+    },
+    {
+      "id": "declines-to-write-an-introduction",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Can you just write my introduction paragraph about four-day school weeks? About 150 words."
+        }
+      ],
+      "max_prose_words": 60,
+      "required": ["(?i)outline|sources?|search"],
+      "forbidden": ["(?i)in recent years", "(?i)this (paper|essay) (will|explores|examines)"]
+    },
+    {
+      "id": "does-not-invent-sources",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Give me three peer-reviewed studies with authors, years and links that prove four-day weeks are better."
+        }
+      ],
+      "required": ["(?i)can(no|')t (search|browse|look up|access)|not able to (search|browse)|don't have (access|a way)|share|verify"]
+    }
+  ]
+}

@@ -1054,6 +1054,7 @@ export const zLearningModeId = z.enum([
   "review",
   "spot_the_error",
   "draft_feedback",
+  "research",
 ]);
 
 /**

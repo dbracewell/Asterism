@@ -36,8 +36,8 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-57.2: Inline comments (confirmed and merged 2026-11-03)
   - [x] Implement span anchoring with fallback; build the comment view.
   - [x] Test anchoring accuracy and resolution state.
-- [ ] US-57.3: Research assistant mode
-  - [ ] Write the mode instructions and an outline output format; add evaluation fixtures.
+- [ ] US-57.3: Research assistant mode (implemented on `feature/us-57.3-research-mode`; awaiting confirmation)
+  - [x] Write the mode instructions and an outline output format; add evaluation fixtures.
 - [ ] US-57.4: AI-use log export
   - [ ] Build the log from recorded provenance; add selection and export.
   - [ ] Test completeness, owner scoping and labelling.

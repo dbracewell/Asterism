@@ -22,6 +22,7 @@ export type HelpId =
   | "concept.mode-explain-back"
   | "concept.mode-review"
   | "concept.mode-draft-feedback"
+  | "concept.mode-research"
   | "concept.rubric"
   | "concept.hint-levels"
   | "concept.answer-reveal"
@@ -154,6 +155,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.mode-explain-back",
       "concept.mode-review",
       "concept.mode-draft-feedback",
+      "concept.mode-research",
       "concept.mode-lock",
     ],
     audience: "everyone",
@@ -217,6 +219,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "Use Review draft with comments to see your draft with each comment pinned to the passage it quotes. Mark comments resolved as you revise. Comments whose quote doesn't match your draft are listed separately.",
     ],
     related: ["concept.rubric", "concept.attachment", "concept.learning-mode"],
+    audience: "everyone",
+  },
+  "concept.mode-research": {
+    title: "Research assistant mode",
+    summary:
+      "Get help finding and judging sources and planning your structure. The assistant suggests search angles, evaluates sources and builds outlines, but writes no paragraphs for you.",
+    details: [
+      "Ask where to look, paste a source to check its credibility, relevance and bias, or share your sources and ask for an outline that labels which source supports each point.",
+      "The assistant only searches if your agent has a search tool that's turned on. Otherwise it suggests searches you can run and works with the sources you share. Always check a source yourself before you rely on it.",
+    ],
+    related: ["concept.learning-mode", "concept.citation"],
     audience: "everyone",
   },
   "concept.rubric": {

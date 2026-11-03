@@ -70,6 +70,7 @@ async def test_catalog_lists_the_modes_without_instruction_text(project_api):
         "review",
         "spot_the_error",
         "draft_feedback",
+        "research",
     ]
     assert [mode["name"] for mode in modes] == [
         "Standard",
@@ -78,13 +79,14 @@ async def test_catalog_lists_the_modes_without_instruction_text(project_api):
         "Review my work",
         "Spot the error",
         "Draft feedback",
+        "Research assistant",
     ]
     assert all(
         set(mode) == {"id", "name", "description", "version", "hint_levels", "feedback_sections", "rubric_feedback"}
         for mode in modes
     )
-    assert modes[-1]["rubric_feedback"] == {"level_label": "Estimated level", "overall_heading": "Overall"}
-    assert all(mode["rubric_feedback"] is None for mode in modes[:-1])
+    assert modes[-2]["rubric_feedback"] == {"level_label": "Estimated level", "overall_heading": "Overall"}
+    assert [mode["id"] for mode in modes if mode["rubric_feedback"]] == ["draft_feedback"]
     assert "guiding questions" not in response.text
     assert "asterism-exercise" not in response.text
 

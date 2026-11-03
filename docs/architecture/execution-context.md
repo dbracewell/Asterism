@@ -226,3 +226,16 @@ returns the documents the request turn sent (the message text and its attached
 text files, rechecked against live chat scope) and each comment anchored by
 quote when read; `PUT …/draft-review/comments/{cid}` marks a comment resolved.
 See [ADR-0045](../adr/0045-inline-draft-comments.md).
+
+### Research assistant mode
+
+`research` (US-57.3) is a prompt-only mode: it suggests search angles,
+evaluates sources (`### Source:` headings with Credibility, Relevance, Bias and
+"Use it for" bullets) and builds outlines in a fixed format (`### Outline: …`, a
+numbered list of short phrases with `[S<n>]` labels or `[needs source]`, then
+`### Sources` defining each label). It declines to write prose (introductions,
+paragraphs, conclusions) and explains why. It must not invent sources and only
+uses search results from the run, sources the learner shares or attached files;
+search capability comes from the agent's normal tool rules, never the mode. The
+evaluation adds `outline` (format and label checks) and `max_prose_words`
+(no paragraph of running text over the limit) to the fixture checks.

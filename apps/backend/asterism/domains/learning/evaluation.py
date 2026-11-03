@@ -49,6 +49,11 @@ class EvalCase(BaseModel):
     feedback: Literal["structured", "free_form", "rubric"] | None = None
     # A bundled rubric attached to the last user turn, rendered as the model reads it.
     rubric: str | None = None
+    # The reply contains an outline in the Research format: an Outline heading,
+    # a numbered list, [S<n>] labels and a Sources list defining every label.
+    outline: bool = False
+    # No paragraph outside headings, lists and quotes may exceed this many words.
+    max_prose_words: int | None = Field(default=None, ge=1)
 
     @model_validator(mode="after")
     def _valid_patterns(self) -> "EvalCase":
@@ -176,6 +181,39 @@ def _rubric_failures(
     return failures
 
 
+_LIST_OR_MARKUP = re.compile(r"^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\|)")
+_LABEL = re.compile(r"\[S(\d+)\]")
+
+
+def _prose_failures(reply: str, limit: int) -> list[str]:
+    """Paragraphs of running text (not headings, list items or quotes) over the limit."""
+    failures = []
+    for block in re.split(r"\n\s*\n", reply):
+        prose = " ".join(line for line in block.splitlines() if not _LIST_OR_MARKUP.match(line))
+        words = len(prose.split())
+        if words > limit:
+            failures.append(f"prose paragraph of {words} words")
+    return failures
+
+
+def _outline_failures(reply: str) -> list[str]:
+    from .catalog import OUTLINE_HEADING, SOURCES_HEADING
+
+    outline = re.search(rf"(?im)^\s*#{{1,6}}\s*(?:\*\*)?{OUTLINE_HEADING}\b", reply)
+    sources = heading_pattern(SOURCES_HEADING).search(reply)
+    if outline is None or sources is None or sources.start() < outline.start():
+        return ["missing outline or sources heading"]
+    body, listing = reply[outline.end() : sources.start()], reply[sources.end() :]
+    failures = [] if re.search(r"(?m)^\s*1[.)]\s", body) else ["outline is not a numbered list"]
+    used = set(_LABEL.findall(body))
+    defined = set(re.findall(r"(?m)^\s*[-*]\s*\[S(\d+)\]", listing))
+    if not used:
+        failures.append("no source labels in the outline")
+    if missing := sorted(used - defined, key=int):
+        failures.append(f"labels without a source: {', '.join(f'S{n}' for n in missing)}")
+    return failures
+
+
 def score(
     case: EvalCase,
     reply: str,
@@ -188,6 +226,10 @@ def score(
         failures += _rubric_failures(case.feedback, case.rubric_document, rubric_format, reply)
     elif case.feedback:
         failures += _feedback_failures(case.feedback, feedback_headings, reply)
+    if case.outline:
+        failures += _outline_failures(reply)
+    if case.max_prose_words is not None:
+        failures += _prose_failures(reply, case.max_prose_words)
     if case.ask_question and "?" not in reply:
         failures.append("expected a guiding question")
     failures += [f"matched forbidden {pattern!r}" for pattern in case.forbidden if re.search(pattern, reply)]

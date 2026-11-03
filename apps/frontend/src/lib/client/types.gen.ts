@@ -2527,7 +2527,8 @@ export type LearningModeId =
   | "explain_back"
   | "review"
   | "spot_the_error"
-  | "draft_feedback";
+  | "draft_feedback"
+  | "research";
 
 /**
  * LearningModeProvenance
