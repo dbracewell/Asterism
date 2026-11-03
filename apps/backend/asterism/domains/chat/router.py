@@ -23,6 +23,7 @@ from asterism.domains.files.schemas import FilePreview, UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from .disagreement_schemas import DisagreementRequest, DisagreementSummary
+from .exercise_schemas import ExerciseAttemptRequest, ExerciseView
 from .learning_modes import change_chat_learning_mode
 from .model_selection import change_chat_model, list_chat_models
 from .personas import change_chat_persona
@@ -584,6 +585,34 @@ async def get_run(chat_id: uuid.UUID, message_id: uuid.UUID, user: AuthedUserDep
     from .runs import read_run
 
     return await read_run(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
+
+
+@chat_router.post(
+    "/{chat_id}/messages/{message_id}/exercise/attempts",
+    response_model=ExerciseView,
+    operation_id="chatExerciseAttempt",
+)
+async def attempt_exercise(
+    chat_id: uuid.UUID, message_id: uuid.UUID, payload: ExerciseAttemptRequest, user: AuthedUserDep, db: DBSessionDep
+) -> ExerciseView:
+    """Check whether a selection is the exercise's deliberate error; owner only (US-55.4)."""
+    from .exercises import record_attempt
+
+    return await record_attempt(user_id=user.id, chat_id=chat_id, message_id=message_id, request=payload, session=db)
+
+
+@chat_router.post(
+    "/{chat_id}/messages/{message_id}/exercise/reveal",
+    response_model=ExerciseView,
+    operation_id="chatExerciseReveal",
+)
+async def reveal_exercise(
+    chat_id: uuid.UUID, message_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep
+) -> ExerciseView:
+    """Show the exercise's error, its correction and the source; owner only (US-55.4)."""
+    from .exercises import reveal
+
+    return await reveal(user_id=user.id, chat_id=chat_id, message_id=message_id, session=db)
 
 
 @chat_router.post(

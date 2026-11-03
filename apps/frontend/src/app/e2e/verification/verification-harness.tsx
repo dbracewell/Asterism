@@ -1,5 +1,6 @@
 "use client";
 import MarkdownViewer from "@/components/markdown-viewer";
+import { ExerciseBar } from "@/features/chat/components/exercise/exercise-bar";
 import { VerificationPanel } from "@/features/chat/components/verification/verification-panel";
 import type { MessageVerification } from "@/lib/client";
 import { useRef } from "react";
@@ -55,6 +56,45 @@ const verification: MessageVerification = {
   },
 };
 
+export const EXERCISE_CHAT = "e2e-exercise-chat";
+
+function Exercise({ id, revealed }: { id: string; revealed: boolean }) {
+  const answerRef = useRef<HTMLDivElement>(null);
+  return (
+    <section aria-label={revealed ? "Revealed exercise" : "Open exercise"}>
+      <div ref={answerRef}>
+        <MarkdownViewer content="Water is made of hydrogen and oxygen. It boils at **50 C** at sea level." />
+      </div>
+      <ExerciseBar
+        chatId={EXERCISE_CHAT}
+        messageId={id}
+        answerRef={answerRef}
+        exercise={
+          revealed
+            ? {
+                valid: true,
+                attempts: [{ selection: "50 C", result: "found", at: 1 }],
+                found: true,
+                revealed: true,
+                quote: "It boils at 50 C at sea level.",
+                correction: "Water boils at 100 C at sea level.",
+                source: {
+                  key: "0123456789ab",
+                  available: true,
+                  file_id: VERIFY_FILE,
+                  chunk_id: "c9",
+                  artifact_generation: 1,
+                  name: "notes.md",
+                  excerpt: "Water boils at 100 C at sea level.",
+                },
+              }
+            : { valid: true, attempts: [], found: false, revealed: false }
+        }
+      />
+    </section>
+  );
+}
+
 export function VerificationHarness() {
   const answerRef = useRef<HTMLDivElement>(null);
   return (
@@ -69,6 +109,8 @@ export function VerificationHarness() {
         verification={verification}
         answerRef={answerRef}
       />
+      <Exercise id="open-exercise" revealed={false} />
+      <Exercise id="revealed-exercise" revealed />
     </main>
   );
 }

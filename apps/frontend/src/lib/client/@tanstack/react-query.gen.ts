@@ -108,6 +108,12 @@ import type {
   ChatDraftUploadData,
   ChatDraftUploadError,
   ChatDraftUploadResponse,
+  ChatExerciseAttemptData,
+  ChatExerciseAttemptError,
+  ChatExerciseAttemptResponse,
+  ChatExerciseRevealData,
+  ChatExerciseRevealError,
+  ChatExerciseRevealResponse,
   ChatFileDownloadData,
   ChatFileDownloadError,
   ChatFileDownloadResponse,
@@ -1922,6 +1928,64 @@ export const chatRunGetOptions = (options: Options<ChatRunGetData>) =>
     },
     queryKey: chatRunGetQueryKey(options),
   });
+
+/**
+ * Attempt Exercise
+ *
+ * Check whether a selection is the exercise's deliberate error; owner only (US-55.4).
+ */
+export const chatExerciseAttemptMutation = (
+  options?: Partial<Options<ChatExerciseAttemptData>>,
+): UseMutationOptions<
+  ChatExerciseAttemptResponse,
+  ChatExerciseAttemptError,
+  Options<ChatExerciseAttemptData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatExerciseAttemptResponse,
+    ChatExerciseAttemptError,
+    Options<ChatExerciseAttemptData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatExerciseAttempt({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Reveal Exercise
+ *
+ * Show the exercise's error, its correction and the source; owner only (US-55.4).
+ */
+export const chatExerciseRevealMutation = (
+  options?: Partial<Options<ChatExerciseRevealData>>,
+): UseMutationOptions<
+  ChatExerciseRevealResponse,
+  ChatExerciseRevealError,
+  Options<ChatExerciseRevealData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatExerciseRevealResponse,
+    ChatExerciseRevealError,
+    Options<ChatExerciseRevealData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatExerciseReveal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 /**
  * Find Comparison Disagreements

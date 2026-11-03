@@ -57,18 +57,25 @@ async def pending_prompt(sessions, message_id):
 
 
 @pytest.mark.asyncio
-async def test_catalog_lists_the_four_modes_without_instruction_text(project_api):
+async def test_catalog_lists_the_modes_without_instruction_text(project_api):
     client, _, _ = project_api
     assert (await client.get("/learning-modes")).status_code == 401
     response = await client.get("/learning-modes", headers=auth())
     assert response.status_code == 200, response.text
     modes = response.json()["modes"]
-    assert [mode["id"] for mode in modes] == ["standard", "tutor", "explain_back", "review"]
-    assert [mode["name"] for mode in modes] == ["Standard", "Tutor", "Explain-back", "Review my work"]
+    assert [mode["id"] for mode in modes] == ["standard", "tutor", "explain_back", "review", "spot_the_error"]
+    assert [mode["name"] for mode in modes] == [
+        "Standard",
+        "Tutor",
+        "Explain-back",
+        "Review my work",
+        "Spot the error",
+    ]
     assert all(
         set(mode) == {"id", "name", "description", "version", "hint_levels", "feedback_sections"} for mode in modes
     )
     assert "guiding questions" not in response.text
+    assert "asterism-exercise" not in response.text
 
 
 @pytest.mark.asyncio

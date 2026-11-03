@@ -20,7 +20,9 @@ from asterism.domains.prompt_templates.provenance import TemplateLabel, Template
 from asterism.domains.settings.pricing import ModelPricing
 from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 
+from .citation_schemas import SpanCitation
 from .disagreement_schemas import DisagreementSummary
+from .exercise_schemas import ExerciseView
 from .verification_schemas import MessageVerification
 
 
@@ -59,26 +61,6 @@ class InlineFileReference(BaseModel):
     mime_type: str | None = None
     kind: FileKind | None = None
     size: int | None = Field(default=None, ge=0)
-
-
-class SpanCitation(BaseModel):
-    """One ``asterism-cite:`` key in saved Markdown, resolved at save time (ADR-0040).
-
-    A key resolves only to a chunk the saving run retrieved from a file still in
-    its scope. Unavailable citations carry only ``key``: no file, chunk, name or
-    excerpt is ever recorded or returned for them. ``available`` is rechecked
-    against live chat scope on read; ``excerpt`` is untrusted retrieved text.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-    key: str = Field(pattern=r"^[0-9a-f]{12}$")
-    available: bool
-    file_id: uuid.UUID | None = None
-    chunk_id: str | None = None
-    artifact_generation: int | None = Field(default=None, ge=1)
-    match_kind: str | None = None
-    name: str | None = None
-    excerpt: str | None = None
 
 
 class DelegationRecord(BaseModel):
@@ -263,6 +245,8 @@ class Message(LLMMessage):
     # The latest disagreement pass anchored here (US-55.3): on a comparison's
     # first column turn, or on a step whose sub-agents were compared.
     disagreements: DisagreementSummary | None = None
+    # Set on spot-the-error answers (US-55.4): always labelled as an exercise.
+    exercise: ExerciseView | None = None
     active_child_id: uuid.UUID | None = None
     has_siblings: bool = False
     sibling_count: int = 0

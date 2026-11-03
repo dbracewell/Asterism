@@ -21,6 +21,7 @@ import { MessageMarker } from "./message-marker";
 import { MessageMeta } from "./message-meta";
 import { TurnInspection } from "./turn-inspection";
 import { VerificationPanel } from "@/features/chat/components/verification/verification-panel";
+import { ExerciseBar } from "@/features/chat/components/exercise/exercise-bar";
 import { StreamingIndicator } from "./streaming-indicator";
 
 const NO_REQUESTS: PermissionRequest[] = [];
@@ -142,6 +143,14 @@ export const MessageItem = React.memo(
               <MessageBody message={message} />
             </div>
           </InlineFilesProvider>
+          {!fromUser && message.exercise && (
+            <ExerciseBar
+              chatId={chatId}
+              messageId={message.id}
+              exercise={message.exercise}
+              answerRef={answerRef}
+            />
+          )}
           {!fromUser && message.verification && (
             <VerificationPanel
               chatId={chatId}

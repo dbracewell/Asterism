@@ -257,7 +257,7 @@ function ClaimItem({
 const chip =
   "border-border rounded-chip inline-flex h-7 max-w-full items-center gap-1.5 border px-2 text-xs";
 
-function EvidenceChip({
+export function EvidenceChip({
   chatId,
   evidence,
 }: {

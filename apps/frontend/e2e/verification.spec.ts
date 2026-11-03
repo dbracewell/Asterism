@@ -31,9 +31,9 @@ test("the verification panel highlights claims while open and is accessible", as
   await expect
     .poll(() => highlighted(page, "claim-supported"))
     .toEqual(["The sky is blue."]);
-  expect(await highlighted(page, "claim-contradicted")).toEqual([
+  expect(await highlighted(page, "claim-contradicted")).toContain(
     "Water boils at 50 C.",
-  ]);
+  );
   // The styles are live, not dropped by the CSS pipeline.
   expect(
     await page.evaluate(() =>
@@ -61,4 +61,57 @@ test("the verification panel highlights claims while open and is accessible", as
     .click();
   await expect.poll(() => highlighted(page, "claim-supported")).toEqual([]);
   expect(requests).toEqual([]);
+});
+
+test("an exercise checks the learner's selection and highlights the revealed error", async ({
+  page,
+}) => {
+  const bodies: unknown[] = [];
+  await page.route("**/api/auth/token", (route) =>
+    route.fulfill({ json: { token: "fixture-only" } }),
+  );
+  await page.route("**/api/py/**", (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith("/messages/open-exercise/exercise/attempts")) {
+      bodies.push(route.request().postDataJSON());
+      return route.fulfill({
+        json: {
+          valid: true,
+          attempts: [{ selection: "50 C", result: "found", at: 1 }],
+          found: true,
+          revealed: false,
+        },
+      });
+    }
+    return route.fulfill({ status: 404, json: { detail: "Not found" } });
+  });
+  await page.goto("/e2e/verification");
+
+  const open = page.getByRole("region", { name: "Open exercise" });
+  await expect(open.getByText("Exercise", { exact: true })).toBeVisible();
+  // Select "50 C" in the rendered answer, then check it.
+  await open.locator("strong").evaluate((strong) => {
+    const range = document.createRange();
+    range.selectNodeContents(strong);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  await open.getByRole("button", { name: "Check selection" }).click();
+  await expect.poll(() => bodies).toEqual([{ selection: "50 C" }]);
+
+  const revealed = page.getByRole("region", { name: "Revealed exercise" });
+  await expect(revealed).toContainText("What is true: Water boils at 100 C");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        [...(CSS.highlights.get("claim-contradicted") ?? [])].map((range) =>
+          (range as Range).toString(),
+        ),
+      ),
+    )
+    .toContain("It boils at 50 C at sea level.");
+  expect(
+    (await new AxeBuilder({ page }).include("main").analyze()).violations,
+  ).toEqual([]);
 });

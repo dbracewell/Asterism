@@ -1,9 +1,9 @@
 "use client";
 import { CopyButton } from "@/components/copy-button";
-import { copyableText } from "@/components/markdown-viewer/copy-text";
 import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/ui/hint";
 import { VerifyAction } from "@/features/chat/components/verification/verify-dialog";
+import { messageCopyText } from "@/features/chat/lib/message-copy";
 import { StreamingMessage } from "@/features/chat/types";
 import { client } from "@/lib/api";
 import { messageUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
@@ -103,7 +103,7 @@ export const MessageActions = ({
         />
       )}
       <CopyButton
-        text={copyableText(message.content, message.inline_files)}
+        text={messageCopyText(message)}
         size="icon-sm"
         className="rounded-control"
       />

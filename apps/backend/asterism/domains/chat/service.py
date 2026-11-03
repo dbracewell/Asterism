@@ -56,11 +56,31 @@ async def add_message(
             raise BadDataException("Only user messages can attach files")
         files = await resolve_file_references(user_id=user_id, file_ids=message.files, session=session)
         await bind_message_files(user_id=user_id, chat_id=chat_id, files=files, session=session)
+        exercise = None
+        if message.role == "assistant":
+            from .exercises import build_record, is_exercise_run, split_record
+
+            if is_exercise_run(message.execution):
+                # The record never reaches the saved answer (ADR-0043).
+                if message.tool_calls:
+                    message = message.model_copy(update={"content": split_record(message.content)[0]})
+                else:
+                    content, exercise = await build_record(
+                        user_id=user_id,
+                        chat_id=chat_id,
+                        content=message.content,
+                        tool_results=message.tool_call_results,
+                        delegations=message.delegations,
+                        execution=message.execution,
+                        session=session,
+                    )
+                    message = message.model_copy(update={"content": content})
         new_message = MessageModel(
             **message.model_dump(exclude={"active_child_id", "files", "execution"}),
             files=files,
             user_id=user_id,
             chat_id=chat_id,
+            exercise_record=exercise,
         )
         if message.role == "user":
             from asterism.domains.skills.activation import validate_snapshots
