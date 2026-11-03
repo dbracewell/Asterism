@@ -1,6 +1,6 @@
 # EPIC-57: Writing feedback and AI-use transparency
 
-Status: in progress (US-57.1 and US-57.2 complete; designs in [ADR-0044](../adr/0044-rubric-draft-feedback.md) and [ADR-0045](../adr/0045-inline-draft-comments.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-57.1 and US-57.2 complete, US-57.3 implemented; designs in [ADR-0044](../adr/0044-rubric-draft-feedback.md) and [ADR-0045](../adr/0045-inline-draft-comments.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -57,7 +57,7 @@ Acceptance: in Research mode the agent suggests search angles, evaluates sources
 to draft prose paragraphs and explains why. Web access follows the agent's
 normal capability rules.
 
-- [ ] Write the mode instructions and an outline output format; add evaluation fixtures.
+- [x] Write the mode instructions and an outline output format; add evaluation fixtures.
 
 ## US-57.4: AI-use log export
 
