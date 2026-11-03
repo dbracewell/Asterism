@@ -137,6 +137,29 @@ export type BulkUpdateSettingRequest = {
 };
 
 /**
+ * BundledRubricView
+ */
+export type BundledRubricView = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  document: RubricDocument;
+};
+
+/**
  * CapabilityApproval
  */
 export type CapabilityApproval = "automatic" | "ask";
@@ -802,6 +825,7 @@ export type ChatSendRequest = {
   compare?: Array<ComparisonTarget> | null;
   skills?: SkillSelection | null;
   template?: TemplateUse | null;
+  rubric?: RubricUse | null;
   hint?: HintRequest | null;
   /**
    * Expected Model Revision
@@ -2358,6 +2382,7 @@ export type LearningMode = {
    * Feedback Sections
    */
   feedback_sections?: Array<FeedbackSection>;
+  rubric_feedback?: RubricFeedbackFormat | null;
 };
 
 /**
@@ -2378,7 +2403,8 @@ export type LearningModeId =
   | "tutor"
   | "explain_back"
   | "review"
-  | "spot_the_error";
+  | "spot_the_error"
+  | "draft_feedback";
 
 /**
  * LearningModeProvenance
@@ -2597,6 +2623,7 @@ export type Message = {
   skills?: Array<SkillIdentity>;
   learning_mode?: LearningModeProvenance | null;
   template?: TemplateLabel | null;
+  rubric?: RubricLabel | null;
   execution?: MessageExecution | null;
   /**
    * Id
@@ -2727,6 +2754,7 @@ export type MessageExecution = {
   skills?: Array<SkillIdentity>;
   persona: PersonaProvenance;
   learning_mode: LearningModeProvenance;
+  rubric?: RubricProvenance | null;
   context?: ContextProvenance | null;
   capabilities?: CapabilityManifest | null;
   prompt?: PromptProvenance;
@@ -2888,6 +2916,7 @@ export type NewChatRequest = {
   compare?: Array<ComparisonTarget> | null;
   skills?: SkillSelection | null;
   template?: TemplateUse | null;
+  rubric?: RubricUse | null;
   /**
    * Persona Id
    */
@@ -3747,6 +3776,254 @@ export type RecordedRun = {
    * Steps
    */
   steps: Array<Message>;
+};
+
+/**
+ * Rubric
+ */
+export type Rubric = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+  document: RubricDocument;
+};
+
+/**
+ * RubricCatalog
+ */
+export type RubricCatalog = {
+  /**
+   * Version
+   */
+  version: number;
+  /**
+   * Items
+   */
+  items: Array<BundledRubricView>;
+};
+
+/**
+ * RubricCreate
+ */
+export type RubricCreate = {
+  document: RubricDocument;
+};
+
+/**
+ * RubricCriterion
+ *
+ * One assessed aspect; ``descriptors[i]`` describes performance at ``levels[i]``.
+ */
+export type RubricCriterion = {
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Description
+   */
+  description?: string;
+  /**
+   * Descriptors
+   */
+  descriptors: Array<string>;
+};
+
+/**
+ * RubricDocument
+ *
+ * Canonical rubric; levels are ordered from the highest to the lowest.
+ */
+export type RubricDocument = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Levels
+   */
+  levels: Array<string>;
+  /**
+   * Criteria
+   */
+  criteria: Array<RubricCriterion>;
+};
+
+/**
+ * RubricFeedbackFormat
+ *
+ * Fixed parts of a rubric feedback reply: the level line label and the closing heading.
+ */
+export type RubricFeedbackFormat = {
+  /**
+   * Level Label
+   */
+  level_label: string;
+  /**
+   * Overall Heading
+   */
+  overall_heading: string;
+};
+
+/**
+ * RubricLabel
+ *
+ * The pinned rubric plus live availability, computed when history is read.
+ */
+export type RubricLabel = {
+  /**
+   * Source
+   */
+  source: "bundled" | "owned";
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  document: RubricDocument;
+  /**
+   * Available
+   */
+  available?: boolean;
+};
+
+/**
+ * RubricPage
+ */
+export type RubricPage = {
+  /**
+   * Items
+   */
+  items: Array<RubricSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * RubricProvenance
+ *
+ * Public identity of a turn's rubric, with the labels a reply is parsed against.
+ */
+export type RubricProvenance = {
+  /**
+   * Source
+   */
+  source: "bundled" | "owned";
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Levels
+   */
+  levels: Array<string>;
+  /**
+   * Criteria
+   */
+  criteria: Array<string>;
+};
+
+/**
+ * RubricSummary
+ */
+export type RubricSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * RubricUpdate
+ */
+export type RubricUpdate = {
+  document: RubricDocument;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
+};
+
+/**
+ * RubricUse
+ *
+ * Client claim attached to a send: which rubric to assess the draft against.
+ */
+export type RubricUse = {
+  /**
+   * Source
+   */
+  source: "bundled" | "owned";
+  /**
+   * Id
+   */
+  id: string;
 };
 
 /**
@@ -11692,6 +11969,336 @@ export type PromptTemplateUpdateResponses = {
 
 export type PromptTemplateUpdateResponse =
   PromptTemplateUpdateResponses[keyof PromptTemplateUpdateResponses];
+
+export type RubricBundledGetManyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/rubrics/bundled";
+};
+
+export type RubricBundledGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type RubricBundledGetManyError =
+  RubricBundledGetManyErrors[keyof RubricBundledGetManyErrors];
+
+export type RubricBundledGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: RubricCatalog;
+};
+
+export type RubricBundledGetManyResponse =
+  RubricBundledGetManyResponses[keyof RubricBundledGetManyResponses];
+
+export type RubricBundledGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Rubric Id
+     */
+    rubric_id: string;
+  };
+  query?: never;
+  url: "/rubrics/bundled/{rubric_id}";
+};
+
+export type RubricBundledGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type RubricBundledGetOneError =
+  RubricBundledGetOneErrors[keyof RubricBundledGetOneErrors];
+
+export type RubricBundledGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: BundledRubricView;
+};
+
+export type RubricBundledGetOneResponse =
+  RubricBundledGetOneResponses[keyof RubricBundledGetOneResponses];
+
+export type RubricGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Query
+     */
+    query?: string;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/rubrics/";
+};
+
+export type RubricGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type RubricGetManyError = RubricGetManyErrors[keyof RubricGetManyErrors];
+
+export type RubricGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: RubricPage;
+};
+
+export type RubricGetManyResponse =
+  RubricGetManyResponses[keyof RubricGetManyResponses];
+
+export type RubricCreateData = {
+  body: RubricCreate;
+  path?: never;
+  query?: never;
+  url: "/rubrics/";
+};
+
+export type RubricCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type RubricCreateError = RubricCreateErrors[keyof RubricCreateErrors];
+
+export type RubricCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: Rubric;
+};
+
+export type RubricCreateResponse =
+  RubricCreateResponses[keyof RubricCreateResponses];
+
+export type RubricDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Rubric Id
+     */
+    rubric_id: string;
+  };
+  query: {
+    /**
+     * Expected Revision
+     */
+    expected_revision: number;
+  };
+  url: "/rubrics/{rubric_id}";
+};
+
+export type RubricDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type RubricDeleteError = RubricDeleteErrors[keyof RubricDeleteErrors];
+
+export type RubricDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type RubricDeleteResponse =
+  RubricDeleteResponses[keyof RubricDeleteResponses];
+
+export type RubricGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Rubric Id
+     */
+    rubric_id: string;
+  };
+  query?: never;
+  url: "/rubrics/{rubric_id}";
+};
+
+export type RubricGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type RubricGetOneError = RubricGetOneErrors[keyof RubricGetOneErrors];
+
+export type RubricGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: Rubric;
+};
+
+export type RubricGetOneResponse =
+  RubricGetOneResponses[keyof RubricGetOneResponses];
+
+export type RubricUpdateData = {
+  body: RubricUpdate;
+  path: {
+    /**
+     * Rubric Id
+     */
+    rubric_id: string;
+  };
+  query?: never;
+  url: "/rubrics/{rubric_id}";
+};
+
+export type RubricUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type RubricUpdateError = RubricUpdateErrors[keyof RubricUpdateErrors];
+
+export type RubricUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Rubric;
+};
+
+export type RubricUpdateResponse =
+  RubricUpdateResponses[keyof RubricUpdateResponses];
 
 export type ChatgptPolicyGetData = {
   body?: never;

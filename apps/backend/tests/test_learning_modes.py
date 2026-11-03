@@ -63,17 +63,28 @@ async def test_catalog_lists_the_modes_without_instruction_text(project_api):
     response = await client.get("/learning-modes", headers=auth())
     assert response.status_code == 200, response.text
     modes = response.json()["modes"]
-    assert [mode["id"] for mode in modes] == ["standard", "tutor", "explain_back", "review", "spot_the_error"]
+    assert [mode["id"] for mode in modes] == [
+        "standard",
+        "tutor",
+        "explain_back",
+        "review",
+        "spot_the_error",
+        "draft_feedback",
+    ]
     assert [mode["name"] for mode in modes] == [
         "Standard",
         "Tutor",
         "Explain-back",
         "Review my work",
         "Spot the error",
+        "Draft feedback",
     ]
     assert all(
-        set(mode) == {"id", "name", "description", "version", "hint_levels", "feedback_sections"} for mode in modes
+        set(mode) == {"id", "name", "description", "version", "hint_levels", "feedback_sections", "rubric_feedback"}
+        for mode in modes
     )
+    assert modes[-1]["rubric_feedback"] == {"level_label": "Estimated level", "overall_heading": "Overall"}
+    assert all(mode["rubric_feedback"] is None for mode in modes[:-1])
     assert "guiding questions" not in response.text
     assert "asterism-exercise" not in response.text
 

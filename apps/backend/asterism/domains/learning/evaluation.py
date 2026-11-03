@@ -16,8 +16,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId
 from asterism.domains.agent.prompts import PromptComposer
+from asterism.domains.prompt_templates.rubric_catalog import RUBRICS
+from asterism.domains.prompt_templates.rubrics import RubricDocument, render_rubric
 
-from .catalog import require_mode
+from .catalog import RubricFeedbackFormat, require_mode
 
 FIXTURE_DIR = Path(__file__).parent / "evals"
 
@@ -41,7 +43,11 @@ class EvalCase(BaseModel):
     required: list[str] = Field(default_factory=list)
     # ``structured``: the reply uses the mode's feedback headings, in order,
     # with one or two follow-up questions. ``free_form``: it uses none of them.
-    feedback: Literal["structured", "free_form"] | None = None
+    # ``rubric``: one section per criterion of ``rubric`` with a valid level
+    # line, then the overall section, with at least one quoted passage.
+    feedback: Literal["structured", "free_form", "rubric"] | None = None
+    # A bundled rubric attached to the last user turn, rendered as the model reads it.
+    rubric: str | None = None
 
     @model_validator(mode="after")
     def _valid_patterns(self) -> "EvalCase":
@@ -49,7 +55,22 @@ class EvalCase(BaseModel):
             raise ValueError("A case must end with a user message")
         for pattern in (*self.forbidden, *self.required):
             re.compile(pattern)
+        if self.rubric is not None and self.rubric not in RUBRICS:
+            raise ValueError(f"Unknown bundled rubric {self.rubric!r}")
+        if self.feedback == "rubric" and self.rubric is None:
+            raise ValueError("Rubric feedback checks need a rubric")
         return self
+
+    @property
+    def rubric_document(self) -> RubricDocument | None:
+        return RUBRICS[self.rubric].document if self.rubric else None
+
+    def api_messages(self) -> list[dict[str, str]]:
+        """The conversation as sent to the model; a rubric follows the last user text."""
+        items = [message.model_dump() for message in self.messages]
+        if self.rubric_document is not None:
+            items[-1]["content"] += "\n\n" + render_rubric(self.rubric_document)
+        return items
 
 
 class EvalSuite(BaseModel):
@@ -66,13 +87,20 @@ class EvalSuite(BaseModel):
 
     @model_validator(mode="after")
     def _feedback_needs_sections(self) -> "EvalSuite":
-        if any(case.feedback for case in self.cases) and not self.feedback_headings:
+        if self.rubric_format is not None:
+            if any(case.feedback == "structured" for case in self.cases):
+                raise ValueError("Rubric feedback modes use rubric checks, not structured ones")
+        elif any(case.feedback for case in self.cases) and not self.feedback_headings:
             raise ValueError("Feedback checks need a mode with feedback sections")
         return self
 
     @property
     def feedback_headings(self) -> tuple[str, ...]:
         return tuple(section.heading for section in require_mode(self.mode).feedback_sections)
+
+    @property
+    def rubric_format(self) -> RubricFeedbackFormat | None:
+        return require_mode(self.mode).rubric_feedback
 
     @cached_property
     def system_prompts(self) -> dict[HintLevel, str]:
@@ -121,9 +149,53 @@ def _feedback_failures(feedback: str, headings: tuple[str, ...], reply: str) -> 
     return [] if 1 <= questions <= 2 else [f"expected one or two follow-up questions, found {questions}"]
 
 
-def score(case: EvalCase, reply: str, *, feedback_headings: tuple[str, ...] = ()) -> CaseResult:
+def _level_pattern(label: str) -> re.Pattern[str]:
+    """A ``<label>: <level>`` line, optionally bold; captures the level."""
+    return re.compile(rf"(?im)^\s*(?:\*\*)?{re.escape(label)}(?::\*\*|\*\*:|:)\s*(?:\*\*)?(.+?)(?:\*\*)?\s*$")
+
+
+def _rubric_failures(
+    feedback: str, rubric: RubricDocument | None, rubric_format: RubricFeedbackFormat, reply: str
+) -> list[str]:
+    level_line = _level_pattern(rubric_format.level_label)
+    overall = _heading_pattern(rubric_format.overall_heading).search(reply)
+    if feedback == "free_form":
+        failures = ["used the overall heading"] if overall else []
+        return failures + (["used a level line"] if level_line.search(reply) else [])
+    assert rubric is not None
+    headings = [criterion.label for criterion in rubric.criteria]
+    matches = [_heading_pattern(heading).search(reply) for heading in headings]
+    failures = [f"missing criterion heading {heading!r}" for heading, match in zip(headings, matches) if not match]
+    if overall is None:
+        failures.append(f"missing heading {rubric_format.overall_heading!r}")
+    if failures:
+        return failures
+    starts = [match.start() for match in matches if match] + [overall.start()]
+    if starts != sorted(starts):
+        return ["rubric headings out of order"]
+    levels = {" ".join(level.split()).casefold() for level in rubric.levels}
+    for heading, start, end in zip(headings, starts, starts[1:]):
+        found = level_line.search(reply, start, end)
+        if found is None:
+            failures.append(f"no level line for {heading!r}")
+        elif " ".join(found.group(1).strip(" *.").split()).casefold() not in levels:
+            failures.append(f"unknown level {found.group(1)!r} for {heading!r}")
+    if not re.search(r"(?m)^\s*>\s*\S", reply):
+        failures.append("no quoted passage")
+    return failures
+
+
+def score(
+    case: EvalCase,
+    reply: str,
+    *,
+    feedback_headings: tuple[str, ...] = (),
+    rubric_format: RubricFeedbackFormat | None = None,
+) -> CaseResult:
     failures = []
-    if case.feedback:
+    if case.feedback and rubric_format is not None:
+        failures += _rubric_failures(case.feedback, case.rubric_document, rubric_format, reply)
+    elif case.feedback:
         failures += _feedback_failures(case.feedback, feedback_headings, reply)
     if case.ask_question and "?" not in reply:
         failures.append("expected a guiding question")

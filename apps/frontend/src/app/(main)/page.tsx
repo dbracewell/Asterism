@@ -13,6 +13,10 @@ import {
 } from "@/features/chat/components/compare-targets";
 import { LearningModePicker } from "@/features/chat/components/chat-learning-mode-picker";
 import {
+  ChatRubricPicker,
+  useModeTakesRubric,
+} from "@/features/chat/components/chat-rubric-picker";
+import {
   ChatPersonaPicker,
   personaAvailable,
 } from "@/features/chat/components/chat-persona-picker";
@@ -26,7 +30,7 @@ import { heroSuggestions } from "@/features/chat/lib/hero-suggestions";
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { eligibleSkillOptions } from "@/features/skills/queries";
 import { client } from "@/lib/api";
-import type { LearningModeId } from "@/lib/client";
+import type { LearningModeId, RubricUse } from "@/lib/client";
 import {
   chatModelsListOptions,
   projectGetOneOptions,
@@ -54,6 +58,9 @@ export default function AppPage() {
   const [personaId, setPersonaId] = useState<string | null>(null);
   const [learningMode, setLearningMode] = useState<LearningModeId>("standard");
   const [compareModels, setCompareModels] = useState<string[]>([]);
+  const [rubric, setRubric] = useState<RubricUse | null>(null);
+  const takesRubric = useModeTakesRubric(learningMode);
+  const sentRubric = takesRubric ? rubric : null;
   const personas = useQuery(personaQueryOptions(user.id));
   const hasPersona =
     !personas.error && personaAvailable(personas.data, personaId);
@@ -128,7 +135,7 @@ export default function AppPage() {
             promptCoach={
               user.settings.prompt_coach_enabled ? { modelId } : undefined
             }
-            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}`}
+            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}`}
             modelSelector={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />
@@ -142,6 +149,13 @@ export default function AppPage() {
                   value={learningMode}
                   onChange={setLearningMode}
                 />
+                {takesRubric && (
+                  <ChatRubricPicker
+                    owner={user.id}
+                    value={rubric}
+                    onChange={setRubric}
+                  />
+                )}
               </>
             }
             onSubmit={({
@@ -168,6 +182,7 @@ export default function AppPage() {
                   files,
                   ...(skills ? { skills } : {}),
                   ...(template ? { template } : {}),
+                  ...(sentRubric ? { rubric: sentRubric } : {}),
                   ...(draftId ? { draft_id: draftId } : {}),
                   ...(compare ? { compare } : comparePayload(compareModels)),
                 },

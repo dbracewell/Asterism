@@ -232,7 +232,7 @@ function OwnedTemplatesSettings({ owner }: { owner: string }) {
   );
 }
 
-function TemplateRows({
+export function TemplateRows({
   label,
   children,
 }: {
@@ -246,7 +246,7 @@ function TemplateRows({
   );
 }
 
-function TemplateRow({
+export function TemplateRow({
   name,
   description,
   meta,

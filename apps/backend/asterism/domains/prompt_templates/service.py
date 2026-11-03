@@ -12,7 +12,7 @@ from asterism.db.queries import paginate_select
 
 from .catalog import CATALOG_VERSION, FRAMEWORKS, BundledFramework
 from .documents import TemplateDocument, parse_document, parse_document_json, serialize_document
-from .models import PromptTemplateModel
+from .models import PromptTemplateModel, TemplateKind
 from .queries import search_owned_templates, select_owned_templates
 from .schemas import (
     PromptFramework,
@@ -73,7 +73,7 @@ async def list_templates(
 
 async def create_template(user_id: str, payload: PromptTemplateCreate, session: AsyncSession) -> PromptTemplate:
     document = parse_document(payload.document)
-    row = PromptTemplateModel(user_id=user_id, **_columns(document))
+    row = PromptTemplateModel(user_id=user_id, kind=TemplateKind.PROMPT, **_columns(document))
     session.add(row)
     await session.commit()
     await session.refresh(row)

@@ -321,6 +321,27 @@ import type {
   PromptTemplateUpdateData,
   PromptTemplateUpdateError,
   PromptTemplateUpdateResponse,
+  RubricBundledGetManyData,
+  RubricBundledGetManyError,
+  RubricBundledGetManyResponse,
+  RubricBundledGetOneData,
+  RubricBundledGetOneError,
+  RubricBundledGetOneResponse,
+  RubricCreateData,
+  RubricCreateError,
+  RubricCreateResponse,
+  RubricDeleteData,
+  RubricDeleteError,
+  RubricDeleteResponse,
+  RubricGetManyData,
+  RubricGetManyError,
+  RubricGetManyResponse,
+  RubricGetOneData,
+  RubricGetOneError,
+  RubricGetOneResponse,
+  RubricUpdateData,
+  RubricUpdateError,
+  RubricUpdateResponse,
   SkillCreateData,
   SkillCreateError,
   SkillCreateResponse,
@@ -4758,6 +4779,243 @@ export const promptTemplateUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().promptTemplateUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const rubricBundledGetManyQueryKey = (
+  options?: Options<RubricBundledGetManyData>,
+) => createQueryKey("rubricBundledGetMany", options);
+
+/**
+ * List Bundled
+ */
+export const rubricBundledGetManyOptions = (
+  options?: Options<RubricBundledGetManyData>,
+) =>
+  queryOptions<
+    RubricBundledGetManyResponse,
+    RubricBundledGetManyError,
+    RubricBundledGetManyResponse,
+    ReturnType<typeof rubricBundledGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().rubricBundledGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: rubricBundledGetManyQueryKey(options),
+  });
+
+export const rubricBundledGetOneQueryKey = (
+  options: Options<RubricBundledGetOneData>,
+) => createQueryKey("rubricBundledGetOne", options);
+
+/**
+ * Get Bundled
+ */
+export const rubricBundledGetOneOptions = (
+  options: Options<RubricBundledGetOneData>,
+) =>
+  queryOptions<
+    RubricBundledGetOneResponse,
+    RubricBundledGetOneError,
+    RubricBundledGetOneResponse,
+    ReturnType<typeof rubricBundledGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().rubricBundledGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: rubricBundledGetOneQueryKey(options),
+  });
+
+export const rubricGetManyQueryKey = (options?: Options<RubricGetManyData>) =>
+  createQueryKey("rubricGetMany", options);
+
+/**
+ * List Rubrics
+ */
+export const rubricGetManyOptions = (options?: Options<RubricGetManyData>) =>
+  queryOptions<
+    RubricGetManyResponse,
+    RubricGetManyError,
+    RubricGetManyResponse,
+    ReturnType<typeof rubricGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().rubricGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: rubricGetManyQueryKey(options),
+  });
+
+export const rubricGetManyInfiniteQueryKey = (
+  options?: Options<RubricGetManyData>,
+): QueryKey<Options<RubricGetManyData>> =>
+  createQueryKey("rubricGetMany", options, true);
+
+/**
+ * List Rubrics
+ */
+export const rubricGetManyInfiniteOptions = (
+  options?: Options<RubricGetManyData>,
+) =>
+  infiniteQueryOptions<
+    RubricGetManyResponse,
+    RubricGetManyError,
+    InfiniteData<RubricGetManyResponse>,
+    QueryKey<Options<RubricGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<RubricGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<RubricGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().rubricGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: rubricGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create
+ */
+export const rubricCreateMutation = (
+  options?: Partial<Options<RubricCreateData>>,
+): UseMutationOptions<
+  RubricCreateResponse,
+  RubricCreateError,
+  Options<RubricCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RubricCreateResponse,
+    RubricCreateError,
+    Options<RubricCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().rubricCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete
+ */
+export const rubricDeleteMutation = (
+  options?: Partial<Options<RubricDeleteData>>,
+): UseMutationOptions<
+  RubricDeleteResponse,
+  RubricDeleteError,
+  Options<RubricDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RubricDeleteResponse,
+    RubricDeleteError,
+    Options<RubricDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().rubricDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const rubricGetOneQueryKey = (options: Options<RubricGetOneData>) =>
+  createQueryKey("rubricGetOne", options);
+
+/**
+ * Get One
+ */
+export const rubricGetOneOptions = (options: Options<RubricGetOneData>) =>
+  queryOptions<
+    RubricGetOneResponse,
+    RubricGetOneError,
+    RubricGetOneResponse,
+    ReturnType<typeof rubricGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().rubricGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: rubricGetOneQueryKey(options),
+  });
+
+/**
+ * Update
+ */
+export const rubricUpdateMutation = (
+  options?: Partial<Options<RubricUpdateData>>,
+): UseMutationOptions<
+  RubricUpdateResponse,
+  RubricUpdateError,
+  Options<RubricUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RubricUpdateResponse,
+    RubricUpdateError,
+    Options<RubricUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().rubricUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

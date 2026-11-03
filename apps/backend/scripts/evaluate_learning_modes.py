@@ -20,7 +20,7 @@ async def reply(client: httpx.AsyncClient, *, model: str, system: str, case: Eva
         "/chat/completions",
         json={
             "model": model,
-            "messages": [{"role": "system", "content": system}, *[item.model_dump() for item in case.messages]],
+            "messages": [{"role": "system", "content": system}, *case.api_messages()],
         },
     )
     response.raise_for_status()
@@ -32,7 +32,9 @@ async def run_suite(client: httpx.AsyncClient, *, model: str, suite: EvalSuite) 
     for case in suite.cases:
         try:
             text = await reply(client, model=model, system=suite.system_prompts[case.hint_level], case=case)
-            results.append(score(case, text, feedback_headings=suite.feedback_headings))
+            results.append(
+                score(case, text, feedback_headings=suite.feedback_headings, rubric_format=suite.rubric_format)
+            )
         except httpx.HTTPError as error:
             results.append(CaseResult(id=case.id, passed=False, failures=[f"request failed: {error}"]))
     return results

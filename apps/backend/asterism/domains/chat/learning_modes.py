@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import BadDataException, ConflictException, NotFoundException
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId, LearningModeSnapshot
 from asterism.domains.learning.catalog import recheck_pinned, require_mode
+from asterism.domains.prompt_templates.rubric_provenance import RubricSnapshot, RubricUse, resolve_rubric_use
 
 from .jobs import chat_jobs
 from .model_selection import selection_info
@@ -19,6 +20,17 @@ from .schemas import ChatInfo, ChatLearningModeUpdate, HintRequest, MessageStatu
 def current_mode_snapshot(chat: ChatModel, hint_level: HintLevel = HintLevel.NONE) -> LearningModeSnapshot:
     """The live definition of the chat's current selection, for acceptance and regeneration."""
     return require_mode(chat.learning_mode).snapshot(hint_level)
+
+
+async def accept_rubric(
+    *, user_id: str, chat: ChatModel, use: RubricUse | None, session: AsyncSession
+) -> RubricSnapshot | None:
+    """Pin a send's rubric; only modes that give rubric feedback take one (US-57.1)."""
+    if use is None:
+        return None
+    if require_mode(chat.learning_mode).rubric_feedback is None:
+        raise BadDataException("A rubric can only be attached in Draft feedback mode")
+    return await resolve_rubric_use(user_id=user_id, use=use, session=session)
 
 
 def turn_hint_level(turn: MessageModel | None) -> HintLevel:

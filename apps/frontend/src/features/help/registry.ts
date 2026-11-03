@@ -21,6 +21,8 @@ export type HelpId =
   | "concept.mode-tutor"
   | "concept.mode-explain-back"
   | "concept.mode-review"
+  | "concept.mode-draft-feedback"
+  | "concept.rubric"
   | "concept.hint-levels"
   | "concept.answer-reveal"
   | "concept.mode-lock"
@@ -151,6 +153,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.mode-tutor",
       "concept.mode-explain-back",
       "concept.mode-review",
+      "concept.mode-draft-feedback",
       "concept.mode-lock",
     ],
     audience: "everyone",
@@ -202,6 +205,28 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "concept.attachment",
       "concept.learning-mode",
     ],
+    audience: "everyone",
+  },
+  "concept.mode-draft-feedback": {
+    title: "Draft feedback mode",
+    summary:
+      "Get feedback on your own writing against a rubric: an estimated level for each criterion, with quotes from your draft. Your draft is not rewritten.",
+    details: [
+      "Choose a rubric with the Rubric control next to the mode, then paste your draft or attach it as a file. The rubric stays selected for your next messages.",
+      "Levels are the assistant's estimate, not a grade. If you want to see how one passage could read, ask for an example rewrite of that one passage.",
+    ],
+    related: ["concept.rubric", "concept.attachment", "concept.learning-mode"],
+    audience: "everyone",
+  },
+  "concept.rubric": {
+    title: "Rubric",
+    summary:
+      "A rubric lists the criteria your work is assessed on and what each performance level looks like.",
+    details: [
+      "Asterism includes a few general rubrics. To use your assignment's own rubric, duplicate one or create a rubric in User Settings → Rubrics.",
+      "Each message records a copy of the rubric it was sent with, so later edits don't change earlier feedback. Rubric text only describes the assessment; it grants no tools or file access.",
+    ],
+    related: ["concept.mode-draft-feedback", "concept.template"],
     audience: "everyone",
   },
   "concept.hint-levels": {

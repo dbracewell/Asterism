@@ -321,6 +321,27 @@ import type {
   PromptTemplateUpdateData,
   PromptTemplateUpdateErrors,
   PromptTemplateUpdateResponses,
+  RubricBundledGetManyData,
+  RubricBundledGetManyErrors,
+  RubricBundledGetManyResponses,
+  RubricBundledGetOneData,
+  RubricBundledGetOneErrors,
+  RubricBundledGetOneResponses,
+  RubricCreateData,
+  RubricCreateErrors,
+  RubricCreateResponses,
+  RubricDeleteData,
+  RubricDeleteErrors,
+  RubricDeleteResponses,
+  RubricGetManyData,
+  RubricGetManyErrors,
+  RubricGetManyResponses,
+  RubricGetOneData,
+  RubricGetOneErrors,
+  RubricGetOneResponses,
+  RubricUpdateData,
+  RubricUpdateErrors,
+  RubricUpdateResponses,
   SkillCreateData,
   SkillCreateErrors,
   SkillCreateResponses,
@@ -3370,6 +3391,141 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/prompt-templates/{template_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Bundled
+   */
+  public rubricBundledGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<RubricBundledGetManyData, ThrowOnError>,
+  ): RequestResult<
+    RubricBundledGetManyResponses,
+    RubricBundledGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      RubricBundledGetManyResponses,
+      RubricBundledGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/rubrics/bundled",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Bundled
+   */
+  public rubricBundledGetOne<ThrowOnError extends boolean = false>(
+    options: Options<RubricBundledGetOneData, ThrowOnError>,
+  ): RequestResult<
+    RubricBundledGetOneResponses,
+    RubricBundledGetOneErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      RubricBundledGetOneResponses,
+      RubricBundledGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/rubrics/bundled/{rubric_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * List Rubrics
+   */
+  public rubricGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<RubricGetManyData, ThrowOnError>,
+  ): RequestResult<RubricGetManyResponses, RubricGetManyErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      RubricGetManyResponses,
+      RubricGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/rubrics/",
+      ...options,
+    });
+  }
+
+  /**
+   * Create
+   */
+  public rubricCreate<ThrowOnError extends boolean = false>(
+    options: Options<RubricCreateData, ThrowOnError>,
+  ): RequestResult<RubricCreateResponses, RubricCreateErrors, ThrowOnError> {
+    return (options.client ?? this.client).post<
+      RubricCreateResponses,
+      RubricCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/rubrics/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete
+   */
+  public rubricDelete<ThrowOnError extends boolean = false>(
+    options: Options<RubricDeleteData, ThrowOnError>,
+  ): RequestResult<RubricDeleteResponses, RubricDeleteErrors, ThrowOnError> {
+    return (options.client ?? this.client).delete<
+      RubricDeleteResponses,
+      RubricDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/rubrics/{rubric_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get One
+   */
+  public rubricGetOne<ThrowOnError extends boolean = false>(
+    options: Options<RubricGetOneData, ThrowOnError>,
+  ): RequestResult<RubricGetOneResponses, RubricGetOneErrors, ThrowOnError> {
+    return (options.client ?? this.client).get<
+      RubricGetOneResponses,
+      RubricGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/rubrics/{rubric_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update
+   */
+  public rubricUpdate<ThrowOnError extends boolean = false>(
+    options: Options<RubricUpdateData, ThrowOnError>,
+  ): RequestResult<RubricUpdateResponses, RubricUpdateErrors, ThrowOnError> {
+    return (options.client ?? this.client).put<
+      RubricUpdateResponses,
+      RubricUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/rubrics/{rubric_id}",
       ...options,
       headers: {
         "Content-Type": "application/json",

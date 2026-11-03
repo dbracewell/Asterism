@@ -215,3 +215,30 @@ to the column whose prompt it built (the original). The columns run one after
 another on the same model, are headed **Before** and **After** with the model name
 beside them, and the conversation continues from **Before** until the user picks
 **After**. Sending clears the composer and the review like any send.
+
+## Rubrics (US-57.1)
+
+Rubrics are the `rubric` kind of this domain: rows of `prompt_templates` with
+`kind = "rubric"` and their own document format, owner-scoped selects and API
+(prompt templates are `kind = "prompt"`). The format, bounds, catalog and the
+Draft feedback mode that uses them are decided in
+[ADR-0044](../adr/0044-rubric-draft-feedback.md).
+
+| Route                                      | Contract                                                         |
+| ------------------------------------------ | ---------------------------------------------------------------- |
+| `GET /rubrics/bundled`                     | `{version, items}`: every bundled rubric with its document       |
+| `GET /rubrics/bundled/{id}`                | One bundled rubric, 404 if unknown                               |
+| `GET /rubrics/`                            | Owner-scoped metadata page; `query`, `page`, `page_size` (1–100) |
+| `POST /rubrics/`                           | Create from `{document}`, 201 with the full rubric               |
+| `GET /rubrics/{id}`                        | Full rubric including `document`                                 |
+| `PUT /rubrics/{id}`                        | Replace `{document, expected_revision}`                          |
+| `DELETE /rubrics/{id}?expected_revision=N` | Revision-checked deletion, 204                                   |
+
+**User Settings → Rubrics** (`?t=user&setting=rubrics`) lists the bundled
+rubrics (duplicate only) and a searchable, paged list of the user's rubrics.
+The editor edits the name, description, ordered levels (highest first, 2–6;
+adding, moving or removing a level reshapes every criterion's descriptors) and
+criteria (name, optional description and one descriptor per level).
+`lib/rubric-draft.ts` mirrors the server rules; the server stays authoritative.
+A save or delete with a stale revision shows the 409 message and offers
+**Reload current rubric**.

@@ -23,7 +23,7 @@ from .comparisons import assert_no_pending_columns, column_models, make_active, 
 from .draft_models import ChatSendReceiptModel
 from .drafts import consume_draft, read_draft_file_ids
 from .jobs import chat_jobs
-from .learning_modes import accept_hint_level, current_mode_snapshot, turn_hint_level
+from .learning_modes import accept_hint_level, accept_rubric, current_mode_snapshot, turn_hint_level
 from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
 from .personas import resolve_persona_snapshot
@@ -107,12 +107,14 @@ async def persist_user_send(
         if payload.template is not None
         else None
     )
+    rubric = await accept_rubric(user_id=user_id, chat=chat, use=payload.rubric, session=session)
     await bind_message_files(user_id=user_id, chat_id=chat.id, files=files, session=session)
     inputs = {
         "user_id": user_id,
         "chat_id": chat.id,
         "accepted_skills": skills,
         "accepted_template": template,
+        "accepted_rubric": rubric,
         "accepted_learning_mode": current_mode_snapshot(chat, hint_level),
         "hint_level": hint_level,
         "accepted_persona": await resolve_persona_snapshot(

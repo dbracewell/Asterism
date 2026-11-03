@@ -6,6 +6,15 @@ import { MessageBody } from "./message-body";
 vi.mock("@/components/markdown-viewer", () => ({
   default: ({ content }: { content: string }) => <div>{content}</div>,
 }));
+vi.mock("./rubric-feedback-reply", () => ({
+  RubricFeedbackReply: ({
+    content,
+    rubric,
+  }: {
+    content: string;
+    rubric: { id: string };
+  }) => <div data-rubric-reply={rubric.id}>{content}</div>,
+}));
 vi.mock("./feedback-reply", () => ({
   FeedbackReply: ({ content, mode }: { content: string; mode: string }) => (
     <div data-feedback-mode={mode}>{content}</div>
@@ -165,4 +174,64 @@ it("hands assistant replies in a learning mode to the feedback renderer", () => 
     />,
   );
   expect(screen.getByText("Do it.")).not.toHaveAttribute("data-feedback-mode");
+});
+
+const essay = {
+  name: "Argumentative essay",
+  description: "Essays.",
+  levels: ["High", "Low"],
+  criteria: [{ label: "Thesis", description: "", descriptors: ["a", "b"] }],
+};
+
+it("labels Draft feedback turns with their pinned rubric", () => {
+  render(
+    <MessageBody
+      message={message({
+        rubric: {
+          source: "owned",
+          id: "r1",
+          revision: 2,
+          document: essay,
+          available: false,
+        },
+      })}
+    />,
+  );
+  const shown = screen.getByText("Rubric: Argumentative essay").closest("p");
+  expect(shown).toHaveAttribute("data-rubric-label", "unavailable");
+  expect(shown).toHaveTextContent("· unavailable");
+  expect(shown?.getAttribute("title")).toBe(
+    "Argumentative essay (revision 2): Thesis. This rubric is no longer available.",
+  );
+});
+
+it("renders replies to a rubric turn as rubric feedback", () => {
+  const mode = {
+    id: "draft_feedback" as const,
+    name: "Draft feedback",
+    version: 1,
+  };
+  render(
+    <MessageBody
+      message={message({
+        role: "assistant",
+        content: "### Thesis",
+        learning_mode: mode,
+        execution: {
+          rubric: {
+            source: "bundled",
+            id: "argumentative-essay",
+            revision: 1,
+            name: "Argumentative essay",
+            levels: ["High", "Low"],
+            criteria: ["Thesis"],
+          },
+        } as StreamingMessage["execution"],
+      })}
+    />,
+  );
+  expect(screen.getByText("### Thesis")).toHaveAttribute(
+    "data-rubric-reply",
+    "argumentative-essay",
+  );
 });

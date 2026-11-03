@@ -32,6 +32,7 @@ from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
 from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateProvenance
+from asterism.domains.prompt_templates.rubric_provenance import RubricLabel, RubricSnapshot
 
 from .citation_schemas import SpanCitation
 from .disagreement_schemas import DisagreementSummary
@@ -190,6 +191,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     # Label-only record of the template that built this prompt; never inherited.
     accepted_template: Mapped[TemplateProvenance | None] = mapped_column(
         jsonb_type(TypeAdapter(TemplateProvenance)),
+        nullable=True,
+    )
+    # The rubric a Draft feedback turn is assessed against (US-57.1); pinned at
+    # acceptance, immutable, and reused by resume and regeneration.
+    accepted_rubric: Mapped[RubricSnapshot | None] = mapped_column(
+        jsonb_type(TypeAdapter(RubricSnapshot)),
         nullable=True,
     )
     # US-54.4: a user turn that is one column of a side-by-side comparison.
@@ -381,6 +388,11 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     def template(self) -> TemplateLabel | None:
         accepted = self.accepted_template
         return TemplateLabel(**accepted.model_dump()) if accepted is not None else None
+
+    @property
+    def rubric(self) -> RubricLabel | None:
+        accepted = self.accepted_rubric
+        return RubricLabel(**accepted.model_dump()) if accepted is not None else None
 
     @property
     def execution(self) -> MessageExecution | None:

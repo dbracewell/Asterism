@@ -99,6 +99,16 @@ event.listen(
     Base.metadata,
     "after_create",
     DDL("""
+CREATE TRIGGER IF NOT EXISTS accepted_rubric_immutable
+BEFORE UPDATE OF accepted_rubric ON messages
+WHEN NEW.accepted_rubric IS NOT OLD.accepted_rubric
+BEGIN SELECT RAISE(ABORT, 'Accepted rubric input is immutable'); END
+""").execute_if(dialect="sqlite"),
+)
+event.listen(
+    Base.metadata,
+    "after_create",
+    DDL("""
 CREATE TRIGGER IF NOT EXISTS accepted_skills_immutable
 BEFORE UPDATE OF accepted_skills ON messages
 WHEN NEW.accepted_skills IS NOT OLD.accepted_skills

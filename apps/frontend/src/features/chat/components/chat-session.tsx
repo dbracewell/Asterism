@@ -51,6 +51,7 @@ import { groupTranscript } from "../lib/comparison";
 import { turnStepsEndingAt } from "../lib/run-usage";
 import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
 import { ChatHintControls } from "./chat-hint-controls";
+import { ChatRubricPicker, useModeTakesRubric } from "./chat-rubric-picker";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
@@ -121,6 +122,21 @@ export const ChatSession = ({
   const [comparisonStream, setComparisonStream] =
     React.useState<StreamingMessage | null>(null);
   const [compareModels, setCompareModels] = React.useState<string[]>([]);
+  // `undefined` follows the latest turn's rubric; the learner's choice sticks.
+  const [rubricChoice, setRubricChoice] = React.useState<
+    import("@/lib/client").RubricUse | null | undefined
+  >(undefined);
+  const takesRubric = useModeTakesRubric(session?.info.learning_mode);
+  const latestRubric = session?.messages.findLast(
+    (message) => message.role === "user" && message.rubric,
+  )?.rubric;
+  const rubric =
+    rubricChoice !== undefined
+      ? rubricChoice
+      : latestRubric
+        ? { source: latestRubric.source, id: latestRubric.id }
+        : null;
+  const sentRubric = takesRubric ? rubric : null;
   const [compareSource, setCompareSource] = React.useState<{
     messageId: string;
     modelId?: string;
@@ -303,6 +319,7 @@ export const ChatSession = ({
         user_prompt: prompt,
         ...(skills ? { skills } : {}),
         ...(template ? { template } : {}),
+        ...(sentRubric ? { rubric: sentRubric } : {}),
         ...(hint
           ? { hint }
           : resetHints
@@ -708,7 +725,7 @@ export const ChatSession = ({
             }
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
-            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}`}
+            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}`}
             scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${session.info.learning_mode_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
             scopeLocked={isProcessing || sendMessage.isPending}
             onSubmit={addUserMessage}
@@ -760,6 +777,14 @@ export const ChatSession = ({
                     )
                   }
                 />
+                {takesRubric && (
+                  <ChatRubricPicker
+                    owner={user.id}
+                    value={rubric}
+                    onChange={setRubricChoice}
+                    disabled={interactionBusy}
+                  />
+                )}
               </>
             }
             status={

@@ -12,11 +12,11 @@ export type ParsedFeedback = {
   sections: ParsedFeedbackSection[];
 };
 
-const escapeRegExp = (text: string) =>
+export const escapeRegExp = (text: string) =>
   text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** A Markdown heading line (any level, optionally bold) with this text. */
-const headingPattern = (heading: string) =>
+export const headingPattern = (heading: string) =>
   new RegExp(
     `^[ \\t]*#{1,6}[ \\t]*(?:\\*\\*)?${escapeRegExp(heading)}(?:\\*\\*)?[ \\t]*:?[ \\t]*$`,
     "im",

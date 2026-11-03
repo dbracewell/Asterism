@@ -206,3 +206,15 @@ instruction text), so the UI renders each section from the catalog rather than a
 copy. Replies that do not start with the first heading render as plain Markdown.
 The streaming `start` event's execution carries the mode, so sections render
 while the reply streams. See [ADR-0030](../adr/0030-structured-feedback-sections.md).
+
+### Rubric feedback
+
+Draft feedback mode (`draft_feedback`) assesses a draft against a rubric. A send
+in a mode with `rubric_feedback` may name a bundled or owned rubric; acceptance
+pins a copy of its current document on the user turn (`accepted_rubric`,
+immutable). The model reads it as a text part after the learner's message, so
+resume, regeneration and later turns use that copy even after the rubric changes.
+A rubric adds no prompt layer and grants nothing. `MessageExecution.rubric`
+records its identity and level and criterion names; the UI parses the reply into
+one section per criterion (with an `Estimated level:` line) and a closing
+`Overall` section. See [ADR-0044](../adr/0044-rubric-draft-feedback.md).

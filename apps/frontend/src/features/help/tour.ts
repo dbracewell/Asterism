@@ -49,7 +49,7 @@ export const firstChatTourSteps: readonly TourStep[] = [
     id: "learning-mode",
     target: "learning-mode",
     title: "Learning mode",
-    body: "Standard gives direct answers. Tutor, Explain-back and Review my work help you work things out yourself.",
+    body: "Standard gives direct answers. The other modes, such as Tutor, Explain-back and Draft feedback, help you work things out yourself.",
   },
   {
     id: "model",
