@@ -127,6 +127,8 @@ async def prepare_execution(
                     skills=[item.identity for item in skills],
                     persona=persona.identity,
                     learning_mode=learning_mode.identity,
+                    # The rubric is part of the turn's request, so regeneration keeps it.
+                    rubric=message.accepted_rubric.provenance if message.accepted_rubric else None,
                     prompt=prompt.provenance,
                     request_message_id=message_id,
                     model=choice,

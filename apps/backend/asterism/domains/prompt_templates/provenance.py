@@ -8,7 +8,6 @@ import uuid
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, NotFoundException
@@ -85,9 +84,9 @@ async def label_availability(*, user_id: str, labels: list[TemplateLabel], sessi
     existing: set[str] = set()
     if owned:
         rows = await session.scalars(
-            select(PromptTemplateModel.id).where(
-                PromptTemplateModel.user_id == user_id, PromptTemplateModel.id.in_(owned)
-            )
+            select_owned_templates(user_id)
+            .where(PromptTemplateModel.id.in_(owned))
+            .with_only_columns(PromptTemplateModel.id)
         )
         existing = {str(row) for row in rows}
     for label in labels:

@@ -11,6 +11,7 @@ from asterism.db.database import get_async_db_session
 from asterism.db.queries import paginate_select
 from asterism.domains.files.models import FileContentStatus
 from asterism.domains.prompt_templates.provenance import label_availability
+from asterism.domains.prompt_templates.rubric_provenance import rubric_availability
 
 from .attachments import bind_message_files, resolve_file_references
 from .branches import active_branch
@@ -436,6 +437,11 @@ async def get_one(
         await label_availability(
             user_id=user_id,
             labels=[message.template for message in messages if message.template is not None],
+            session=session,
+        )
+        await rubric_availability(
+            user_id=user_id,
+            labels=[message.rubric for message in messages if message.rubric is not None],
             session=session,
         )
         return Chat(info=chat_info, messages=messages)

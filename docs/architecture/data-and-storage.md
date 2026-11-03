@@ -222,6 +222,14 @@ error, its correction and source, the learner's attempts and when it was
 revealed. The API returns only `exercise`, a view that omits the error until
 reveal.
 
+`messages.accepted_rubric` pins the rubric a Draft feedback user turn is
+assessed against (US-57.1, [ADR-0044](../adr/0044-rubric-draft-feedback.md)):
+source, ID, revision and a copy of the rubric document. It is immutable (SQLite
+trigger), and the API returns it as `rubric` with live `available`. Rubrics
+themselves are rows of `prompt_templates` with `kind = "rubric"`; prompt
+templates have `kind = "prompt"`, and each kind has its own owner-scoped selects
+and API.
+
 On first attachment, `MarkItDownFileProcessor` reads text directly where possible
 or converts supported documents in a worker thread. Processing is bounded by input
 size, timeout, and converted-character limits; its status and safe error message are

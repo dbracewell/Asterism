@@ -35,6 +35,16 @@ export const learningModes: LearningModeCatalog = {
       version: 2,
       hint_levels: ["answer"],
     },
+    {
+      id: "draft_feedback",
+      name: "Draft feedback",
+      description: "Assesses your draft against a rubric without rewriting it.",
+      version: 1,
+      rubric_feedback: {
+        level_label: "Estimated level",
+        overall_heading: "Overall",
+      },
+    },
   ],
 };
 

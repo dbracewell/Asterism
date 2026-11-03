@@ -1,6 +1,6 @@
 # EPIC-57: Writing feedback and AI-use transparency
 
-Status: proposed. Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-57.1 implemented; design in [ADR-0044](../adr/0044-rubric-draft-feedback.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -29,8 +29,8 @@ is organized by criterion, gives an estimated level, and quotes the passages it
 refers to. The draft is not rewritten unless the student explicitly asks for an
 example rewrite of one passage.
 
-- [ ] Add the rubric template kind and bundled rubrics.
-- [ ] Add the feedback mode and structured output rendering; add tests and evaluation fixtures.
+- [x] Add the rubric template kind and bundled rubrics.
+- [x] Add the feedback mode and structured output rendering; add tests and evaluation fixtures.
 
 ## US-57.2: Inline comments
 

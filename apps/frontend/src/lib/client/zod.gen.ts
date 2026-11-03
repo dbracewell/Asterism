@@ -990,6 +990,7 @@ export const zLearningModeId = z.enum([
   "explain_back",
   "review",
   "spot_the_error",
+  "draft_feedback",
 ]);
 
 /**
@@ -1006,25 +1007,6 @@ export const zChatLearningModeUpdate = z.object({
   expected_learning_mode_revision: z.int().gte(1),
   locked: z.boolean().nullish(),
   override_lock: z.boolean().optional().default(false),
-});
-
-/**
- * LearningMode
- */
-export const zLearningMode = z.object({
-  id: zLearningModeId,
-  name: z.string(),
-  description: z.string(),
-  version: z.int().gte(1),
-  hint_levels: z.array(zHintLevel).optional(),
-  feedback_sections: z.array(zFeedbackSection).optional(),
-});
-
-/**
- * LearningModeCatalog
- */
-export const zLearningModeCatalog = z.object({
-  modes: z.array(zLearningMode),
 });
 
 /**
@@ -1643,6 +1625,165 @@ export const zProviderSettings = z.object({
 });
 
 /**
+ * RubricCriterion
+ *
+ * One assessed aspect; ``descriptors[i]`` describes performance at ``levels[i]``.
+ */
+export const zRubricCriterion = z.object({
+  label: z.string().min(1).max(80),
+  description: z.string().max(500).optional().default(""),
+  descriptors: z.array(z.string().min(1).max(1000)).min(2).max(6),
+});
+
+/**
+ * RubricDocument
+ *
+ * Canonical rubric; levels are ordered from the highest to the lowest.
+ */
+export const zRubricDocument = z.object({
+  name: z.string().min(1).max(80),
+  description: z.string().min(1).max(500),
+  levels: z.array(z.string().min(1).max(40)).min(2).max(6),
+  criteria: z.array(zRubricCriterion).min(1).max(12),
+});
+
+/**
+ * BundledRubricView
+ */
+export const zBundledRubricView = z.object({
+  id: z.string(),
+  revision: z.int(),
+  name: z.string(),
+  description: z.string(),
+  document: zRubricDocument,
+});
+
+/**
+ * Rubric
+ */
+export const zRubric = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+  document: zRubricDocument,
+});
+
+/**
+ * RubricCatalog
+ */
+export const zRubricCatalog = z.object({
+  version: z.int(),
+  items: z.array(zBundledRubricView),
+});
+
+/**
+ * RubricCreate
+ */
+export const zRubricCreate = z.object({
+  document: zRubricDocument,
+});
+
+/**
+ * RubricFeedbackFormat
+ *
+ * Fixed parts of a rubric feedback reply: the level line label and the closing heading.
+ */
+export const zRubricFeedbackFormat = z.object({
+  level_label: z.string(),
+  overall_heading: z.string(),
+});
+
+/**
+ * LearningMode
+ */
+export const zLearningMode = z.object({
+  id: zLearningModeId,
+  name: z.string(),
+  description: z.string(),
+  version: z.int().gte(1),
+  hint_levels: z.array(zHintLevel).optional(),
+  feedback_sections: z.array(zFeedbackSection).optional(),
+  rubric_feedback: zRubricFeedbackFormat.nullish(),
+});
+
+/**
+ * LearningModeCatalog
+ */
+export const zLearningModeCatalog = z.object({
+  modes: z.array(zLearningMode),
+});
+
+/**
+ * RubricLabel
+ *
+ * The pinned rubric plus live availability, computed when history is read.
+ */
+export const zRubricLabel = z.object({
+  source: z.enum(["bundled", "owned"]),
+  id: z.string(),
+  revision: z.int().gte(1),
+  document: zRubricDocument,
+  available: z.boolean().optional().default(true),
+});
+
+/**
+ * RubricProvenance
+ *
+ * Public identity of a turn's rubric, with the labels a reply is parsed against.
+ */
+export const zRubricProvenance = z.object({
+  source: z.enum(["bundled", "owned"]),
+  id: z.string(),
+  revision: z.int().gte(1),
+  name: z.string(),
+  levels: z.array(z.string()),
+  criteria: z.array(z.string()),
+});
+
+/**
+ * RubricSummary
+ */
+export const zRubricSummary = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * RubricPage
+ */
+export const zRubricPage = z.object({
+  items: z.array(zRubricSummary),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
+ * RubricUpdate
+ */
+export const zRubricUpdate = z.object({
+  document: zRubricDocument,
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * RubricUse
+ *
+ * Client claim attached to a send: which rubric to assess the draft against.
+ */
+export const zRubricUse = z.object({
+  source: z.enum(["bundled", "owned"]),
+  id: z.string().min(1).max(64),
+});
+
+/**
  * ScopedChatFile
  */
 export const zScopedChatFile = z.object({
@@ -1793,6 +1934,7 @@ export const zMessageExecution = z.object({
   skills: z.array(zSkillIdentity).optional(),
   persona: zPersonaProvenance,
   learning_mode: zLearningModeProvenance,
+  rubric: zRubricProvenance.nullish(),
   context: zContextProvenance.nullish(),
   capabilities: zCapabilityManifest.nullish(),
   prompt: zPromptProvenance.optional(),
@@ -2800,6 +2942,7 @@ export const zChatSendRequest = z.object({
   compare: z.array(zComparisonTarget).min(2).max(3).nullish(),
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
+  rubric: zRubricUse.nullish(),
   hint: zHintRequest.nullish(),
   expected_model_revision: z.int().gte(1),
   request_id: z.uuid(),
@@ -2816,6 +2959,7 @@ export const zNewChatRequest = z.object({
   compare: z.array(zComparisonTarget).min(2).max(3).nullish(),
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
+  rubric: zRubricUse.nullish(),
   persona_id: z.uuid().nullish(),
   learning_mode: zLearningModeId.optional().default("standard"),
   hint: zHintRequest.nullish(),
@@ -3199,6 +3343,7 @@ export const zMessage = z.object({
   skills: z.array(zSkillIdentity).optional(),
   learning_mode: zLearningModeProvenance.nullish(),
   template: zTemplateLabel.nullish(),
+  rubric: zRubricLabel.nullish(),
   execution: zMessageExecution.nullish(),
   id: z.uuid(),
   status: zMessageStatus,
@@ -4569,6 +4714,71 @@ export const zPromptTemplateUpdatePath = z.object({
  * Successful Response
  */
 export const zPromptTemplateUpdateResponse = zPromptTemplate;
+
+/**
+ * Successful Response
+ */
+export const zRubricBundledGetManyResponse = zRubricCatalog;
+
+export const zRubricBundledGetOnePath = z.object({
+  rubric_id: z.string().max(64),
+});
+
+/**
+ * Successful Response
+ */
+export const zRubricBundledGetOneResponse = zBundledRubricView;
+
+export const zRubricGetManyQuery = z.object({
+  query: z.string().max(200).optional().default(""),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(10),
+});
+
+/**
+ * Successful Response
+ */
+export const zRubricGetManyResponse = zRubricPage;
+
+export const zRubricCreateBody = zRubricCreate;
+
+/**
+ * Successful Response
+ */
+export const zRubricCreateResponse = zRubric;
+
+export const zRubricDeletePath = z.object({
+  rubric_id: z.uuid(),
+});
+
+export const zRubricDeleteQuery = z.object({
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Successful Response
+ */
+export const zRubricDeleteResponse = z.void();
+
+export const zRubricGetOnePath = z.object({
+  rubric_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zRubricGetOneResponse = zRubric;
+
+export const zRubricUpdateBody = zRubricUpdate;
+
+export const zRubricUpdatePath = z.object({
+  rubric_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zRubricUpdateResponse = zRubric;
 
 /**
  * Successful Response

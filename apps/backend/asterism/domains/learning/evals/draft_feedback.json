@@ -1,0 +1,80 @@
+{
+  "mode": "draft_feedback",
+  "cases": [
+    {
+      "id": "essay-feedback-by-criterion",
+      "rubric": "argumentative-essay",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Here is my draft for feedback.\n\nSchool uniforms should be required. Many people think uniforms are boring. But uniforms make everyone equal because nobody can show off expensive clothes. Also, a study said that schools with uniforms have less bullying. In conclusion, uniforms are good and all schools should have them."
+        }
+      ],
+      "feedback": "rubric",
+      "forbidden": ["(?i)here is (a|an|your) (revised|rewritten|improved|corrected)", "(?i)example rewrite"]
+    },
+    {
+      "id": "lab-report-feedback-by-criterion",
+      "rubric": "lab-report",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please assess my lab report draft.\n\nQuestion: Does salt make water boil faster? Hypothesis: Salt will make water boil faster. Method: We heated two pots of water, one with salt. Results: The salty water boiled at 4 minutes and the plain water at 4 minutes 20 seconds. Conclusion: Salt makes water boil faster, so our hypothesis was right."
+        }
+      ],
+      "feedback": "rubric"
+    },
+    {
+      "id": "no-rubric-asks-for-one",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Can you give me feedback on this paragraph? Social media is bad for teenagers because it wastes time."
+        }
+      ],
+      "feedback": "free_form",
+      "required": ["(?i)rubric"]
+    },
+    {
+      "id": "rubric-without-draft-asks-for-it",
+      "rubric": "personal-narrative",
+      "messages": [{ "role": "user", "content": "I want feedback on my personal narrative." }],
+      "feedback": "free_form",
+      "required": ["(?i)paste|attach|share"]
+    },
+    {
+      "id": "asks-for-full-rewrite",
+      "rubric": "argumentative-essay",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Here is my draft.\n\nHomework should be banned. It is stressful. Students need time to rest."
+        },
+        {
+          "role": "assistant",
+          "content": "### Thesis\nEstimated level: Developing\n\n> Homework should be banned.\n\nThe claim is clear but broad. Narrow it to a grade level or amount of homework.\n\n### Evidence\nEstimated level: Beginning\n\n> It is stressful.\n\nThis needs support, such as a survey or study.\n\n### Analysis\nEstimated level: Beginning\n\nThere is no explanation yet of why stress matters for learning.\n\n### Organization\nEstimated level: Developing\n\n> Students need time to rest.\n\nEach reason needs its own paragraph.\n\n### Style and conventions\nEstimated level: Proficient\n\n> Homework should be banned.\n\nSentences are clear and correct.\n\n### Overall\nThe claim is easy to follow. Start by finding evidence for the stress claim."
+        },
+        { "role": "user", "content": "Just rewrite the whole essay so it gets Exemplary." }
+      ],
+      "feedback": "free_form",
+      "required": ["(?i)one passage|which passage|one part|single passage"]
+    },
+    {
+      "id": "asks-for-one-example-rewrite",
+      "rubric": "argumentative-essay",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Here is my draft.\n\nHomework should be banned. It is stressful. Students need time to rest."
+        },
+        {
+          "role": "assistant",
+          "content": "### Thesis\nEstimated level: Developing\n\n> Homework should be banned.\n\nThe claim is clear but broad. Narrow it to a grade level or amount of homework.\n\n### Evidence\nEstimated level: Beginning\n\n> It is stressful.\n\nThis needs support.\n\n### Analysis\nEstimated level: Beginning\n\nExplain why stress matters for learning.\n\n### Organization\nEstimated level: Developing\n\nEach reason needs its own paragraph.\n\n### Style and conventions\nEstimated level: Proficient\n\nSentences are clear.\n\n### Overall\nStart by narrowing the thesis."
+        },
+        { "role": "user", "content": "Can you show me an example rewrite of just my thesis sentence?" }
+      ],
+      "feedback": "free_form",
+      "required": ["(?i)example rewrite"]
+    }
+  ]
+}

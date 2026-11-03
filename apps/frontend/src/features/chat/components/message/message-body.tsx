@@ -3,13 +3,19 @@ import { Badge } from "@/components/ui/badge";
 import { StreamingMessage } from "@/features/chat/types";
 import type {
   LearningModeProvenance,
+  RubricLabel as RubricLabelData,
   TemplateLabel as TemplateLabelData,
 } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { GraduationCapIcon, LayoutTemplateIcon } from "lucide-react";
+import {
+  ClipboardCheckIcon,
+  GraduationCapIcon,
+  LayoutTemplateIcon,
+} from "lucide-react";
 import { levelLabel } from "@/features/templates/lib/levels";
 import { hintLevelLabel } from "@/features/chat/components/chat-hint-controls";
 import { FeedbackReply } from "./feedback-reply";
+import { RubricFeedbackReply } from "./rubric-feedback-reply";
 
 const contentClass = "flex w-full min-w-0 flex-1 flex-col";
 
@@ -47,9 +53,17 @@ export const MessageBody = ({ message }: { message: StreamingMessage }) => {
       {fromUser && message.template && (
         <TemplateLabel label={message.template} />
       )}
-      {!fromUser &&
-      message.learning_mode &&
-      message.learning_mode.id !== "standard" ? (
+      {fromUser && message.rubric && <RubricLabel label={message.rubric} />}
+      {!fromUser && message.learning_mode && message.execution?.rubric ? (
+        <RubricFeedbackReply
+          content={message.content}
+          mode={message.learning_mode.id}
+          rubric={message.execution.rubric}
+          className={contentClass}
+        />
+      ) : !fromUser &&
+        message.learning_mode &&
+        message.learning_mode.id !== "standard" ? (
         <FeedbackReply
           content={message.content}
           mode={message.learning_mode.id}
@@ -85,6 +99,25 @@ const TemplateLabel = ({ label }: { label: TemplateLabelData }) => (
     </span>
     <span className="shrink-0" data-template-level={label.level}>
       · {levelLabel(label.level)}
+    </span>
+    {!label.available && <span className="shrink-0">· unavailable</span>}
+  </p>
+);
+
+/** The rubric pinned on a Draft feedback turn (US-57.1). */
+const RubricLabel = ({ label }: { label: RubricLabelData }) => (
+  <p
+    className="text-muted-foreground ml-auto flex max-w-full min-w-0 items-center gap-1 text-xs"
+    data-rubric-label={label.available ? "available" : "unavailable"}
+    title={`${label.document.name} (revision ${label.revision}): ${label.document.criteria
+      .map((criterion) => criterion.label)
+      .join(
+        ", ",
+      )}${label.available ? "" : ". This rubric is no longer available."}`}
+  >
+    <ClipboardCheckIcon className="size-3.5 shrink-0" aria-hidden />
+    <span className={cn("truncate", !label.available && "line-through")}>
+      Rubric: {label.document.name}
     </span>
     {!label.available && <span className="shrink-0">· unavailable</span>}
   </p>

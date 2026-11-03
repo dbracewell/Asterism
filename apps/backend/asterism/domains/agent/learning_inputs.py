@@ -15,6 +15,7 @@ class LearningModeId(StrEnum):
     EXPLAIN_BACK = "explain_back"
     REVIEW = "review"
     SPOT_THE_ERROR = "spot_the_error"
+    DRAFT_FEEDBACK = "draft_feedback"
 
 
 class HintLevel(StrEnum):

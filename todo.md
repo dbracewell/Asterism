@@ -30,9 +30,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ### [EPIC-57: Writing feedback and AI-use transparency](docs/epics/EPIC-57-WRITING-FEEDBACK-AND-AI-USE-TRANSPARENCY.md)
 
-- [ ] US-57.1: Rubric-based draft feedback
-  - [ ] Add the rubric template kind and bundled rubrics.
-  - [ ] Add the feedback mode and structured output rendering; add tests and evaluation fixtures.
+- [ ] US-57.1: Rubric-based draft feedback (implemented on `feature/us-57.1-rubric-feedback`; awaiting confirmation)
+  - [x] Add the rubric template kind and bundled rubrics.
+  - [x] Add the feedback mode and structured output rendering; add tests and evaluation fixtures.
 - [ ] US-57.2: Inline comments
   - [ ] Implement span anchoring with fallback; build the comment view.
   - [ ] Test anchoring accuracy and resolution state.

@@ -4,6 +4,7 @@ import { GeneralSettings } from "@/features/settings/ui/user-settings/general-se
 import { ChatGptConnectionSettings } from "@/features/chatgpt/components/chatgpt-connection-settings";
 import { SkillsSettings } from "@/features/skills/components/skills-settings";
 import { TemplatesSettings } from "@/features/templates/components/templates-settings";
+import { RubricsSettings } from "@/features/templates/components/rubrics-settings";
 import { PersonaSettings } from "./persona-settings";
 import {
   BotIcon,
@@ -12,6 +13,7 @@ import {
   BookOpenIcon,
   MessageCircleIcon,
   LayoutTemplateIcon,
+  ClipboardCheckIcon,
 } from "lucide-react";
 
 export const UserSettings: Types = [
@@ -43,6 +45,13 @@ export const UserSettings: Types = [
     value: "templates",
     icon: <LayoutTemplateIcon />,
     settingsPane: <TemplatesSettings />,
+  },
+  {
+    type: "section",
+    label: "Rubrics",
+    value: "rubrics",
+    icon: <ClipboardCheckIcon />,
+    settingsPane: <RubricsSettings />,
   },
   {
     type: "section",
