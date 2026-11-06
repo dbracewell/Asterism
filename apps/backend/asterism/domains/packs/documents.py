@@ -84,7 +84,7 @@ _CREDENTIAL_VALUE = re.compile(
 )
 
 
-def _one_line(value: str) -> str:
+def one_line(value: str) -> str:
     if not value.strip():
         raise ValueError("must not be blank")
     if "\n" in value or "\r" in value:
@@ -105,7 +105,7 @@ class PackIdentity(_PackModel):
     description: str = Field(default="", max_length=MAX_PACK_DESCRIPTION_LENGTH)
     author: str = Field(default="", max_length=MAX_AUTHOR_LENGTH)
 
-    _name_line = field_validator("name")(_one_line)
+    _name_line = field_validator("name")(one_line)
 
 
 class ModelRequirements(_PackModel):
@@ -128,7 +128,7 @@ class PackSubAgent(_PackModel):
     requested_tools: tuple[ToolName, ...] = Field(default=(), max_length=MAX_REQUESTED_TOOLS)
     model_requirements: ModelRequirements = Field(default_factory=ModelRequirements)
 
-    _name_line = field_validator("name")(_one_line)
+    _name_line = field_validator("name")(one_line)
 
 
 class PackSkill(_PackModel):
@@ -253,7 +253,7 @@ def _screen(root: object) -> None:
                 stack.append((value, f"{path}.{key}", depth + 1))
 
 
-def _folded(text: str) -> str:
+def folded_name(text: str) -> str:
     return " ".join(text.split()).casefold()
 
 
@@ -271,7 +271,7 @@ def _check_sub_agent(agent: PackSubAgent) -> None:
         raise BadDataException(f"Sub-agent '{agent.key}' requests tools, so its model requirements must include tools")
 
 
-def _check_item[T, R](key: str, document: T, parser: Callable[[T], R]) -> R:
+def check_item[T, R](key: str, document: T, parser: Callable[[T], R]) -> R:
     try:
         return parser(document)
     except BadDataException as exc:
@@ -285,17 +285,17 @@ def _check_semantics(manifest: PackManifest) -> None:
     _require_unique((skill.key for skill in manifest.skills), "skill keys")
     _require_unique((template.key for template in manifest.templates), "template keys")
     _require_unique((rubric.key for rubric in manifest.rubrics), "rubric keys")
-    _require_unique((_folded(agent.name) for agent in manifest.sub_agents), "sub-agent names")
+    _require_unique((folded_name(agent.name) for agent in manifest.sub_agents), "sub-agent names")
     for agent in manifest.sub_agents:
         _check_sub_agent(agent)
-    skills = [_check_item(skill.key, skill.content, parse_skill) for skill in manifest.skills]
+    skills = [check_item(skill.key, skill.content, parse_skill) for skill in manifest.skills]
     _require_unique((skill.name for skill in skills), "skill names")
     for template in manifest.templates:
-        _check_item(template.key, template.document, parse_document)
-    _require_unique((_folded(item.document.name) for item in manifest.templates), "template names")
+        check_item(template.key, template.document, parse_document)
+    _require_unique((folded_name(item.document.name) for item in manifest.templates), "template names")
     for rubric in manifest.rubrics:
-        _check_item(rubric.key, rubric.document, parse_rubric)
-    _require_unique((_folded(item.document.name) for item in manifest.rubrics), "rubric names")
+        check_item(rubric.key, rubric.document, parse_rubric)
+    _require_unique((folded_name(item.document.name) for item in manifest.rubrics), "rubric names")
     if manifest.project is not None:
         _require_unique(manifest.project.sub_agents, "project sub-agents")
         if set(manifest.project.sub_agents) - {agent.key for agent in manifest.sub_agents}:

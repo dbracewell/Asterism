@@ -34,9 +34,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Write the ADR and schema; implement the validator with tests.
 - [x] US-59.2: Export
   - [x] Implement export selection and serialization; test the round trip and that no secrets are included.
-- [ ] US-59.3: Import with explicit review
-  - [ ] Implement the import review API and transactional creation.
-  - [ ] Build the review screen; test conflicts, model selection, policy limits and rollback.
+- [x] US-59.3: Import with explicit review
+  - [x] Implement the import review API and transactional creation.
+  - [x] Build the review screen; test conflicts, model selection, policy limits and rollback.
 - [ ] US-59.4: Starter packs
   - [ ] Author and validate the bundled packs; add install tests.
 

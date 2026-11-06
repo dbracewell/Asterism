@@ -43,7 +43,14 @@ export function ProjectList() {
       <PageHeader
         title="Projects"
         description="Keep related work, instructions, and chats together."
-        actions={<CreateProjectDialog />}
+        actions={
+          <>
+            <Button asChild variant="outline">
+              <Link href="/projects/import">Import team pack</Link>
+            </Button>
+            <CreateProjectDialog />
+          </>
+        }
       />
       <Input
         aria-label="Search projects"

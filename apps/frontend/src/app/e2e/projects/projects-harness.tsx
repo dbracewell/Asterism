@@ -10,6 +10,7 @@ import {
   SidebarProvider,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import { ImportPack } from "@/features/projects/components/import-pack";
 import { ProjectList } from "@/features/projects/components/project-list";
 import { ProjectWorkspace } from "@/features/projects/components/project-workspace";
 import { NavWorkspaces } from "@/features/projects/components/nav-workspaces";
@@ -90,6 +91,8 @@ export function ProjectsHarness({
               <WorkspaceChats projectId={null} />
             ) : view === "chat" ? (
               <ChatView />
+            ) : view === "import" ? (
+              <ImportPack />
             ) : (
               <ProjectList />
             )}

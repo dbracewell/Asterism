@@ -21,6 +21,7 @@ DB_COMPOSITION_ROOTS = {
         "asterism.domains.chatgpt.models",
         "asterism.domains.files.models",
         "asterism.domains.knowledge.models",
+        "asterism.domains.packs.models",
         "asterism.domains.projects.models",
         "asterism.domains.prompt_templates.models",
         "asterism.domains.reflections.models",

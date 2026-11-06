@@ -43,6 +43,11 @@ def _columns(document: TemplateDocument) -> dict[str, str]:
     return {"document": serialize_document(document), "name": document.name, "description": document.description}
 
 
+def new_template(user_id: str, document: TemplateDocument) -> PromptTemplateModel:
+    """An unsaved row, so a larger transaction can add it."""
+    return PromptTemplateModel(user_id=user_id, kind=TemplateKind.PROMPT, **_columns(document))
+
+
 async def require_template(user_id: str, template_id: uuid.UUID, session: AsyncSession) -> PromptTemplateModel:
     row = await session.scalar(select_owned_templates(user_id).where(PromptTemplateModel.id == template_id))
     if row is None:
@@ -73,7 +78,7 @@ async def list_templates(
 
 async def create_template(user_id: str, payload: PromptTemplateCreate, session: AsyncSession) -> PromptTemplate:
     document = parse_document(payload.document)
-    row = PromptTemplateModel(user_id=user_id, kind=TemplateKind.PROMPT, **_columns(document))
+    row = new_template(user_id, document)
     session.add(row)
     await session.commit()
     await session.refresh(row)

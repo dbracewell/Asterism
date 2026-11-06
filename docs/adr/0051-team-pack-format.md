@@ -1,8 +1,8 @@
 # ADR-0051 — Team pack format and validation
 
 Status: accepted and implemented for US-59.1 on 2026-11-06
-([EPIC-59](../epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)). Amended for export by US-59.2
-(see the addendum).
+([EPIC-59](../epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)). Amended for export by US-59.2 and
+import by US-59.3 (see the addenda).
 
 ## Context
 
@@ -118,8 +118,8 @@ on a crafted 1 MiB string; a test holds this.
 
 ## Consequences
 
-- No routes or tables yet, so OpenAPI and the database are unchanged. Export and
-  import add them in US-59.2 and US-59.3.
+- US-59.1 adds no routes or tables. Export and import add them, as the addenda
+  record.
 - Any new field on a pack model is a format change: regenerate the schema, and bump
   `format_version` when older readers would reject or misread the file. Older
   versions need no reader while the project has no production users.
@@ -150,3 +150,39 @@ writes the file. Nothing is stored or changed, and nothing is included by defaul
   is a slug of the pack name, so a new version under the same name keeps its
   identity. `author` stays empty, so a pack does not reveal who exported it.
 - `request_main_agent_assignment` records whether the skill is assigned today.
+
+## Addendum: import (US-59.3)
+
+`POST /team-packs/review` takes the file's text and returns what it asks for.
+`POST /team-packs/import` takes the same text plus the user's decisions. Neither
+keeps server state between calls, so import parses the pack again and trusts
+nothing it was told at review.
+
+- **Every item is decided.** The request must hold exactly one decision per item,
+  including skips, so a stale client cannot drop an item unnoticed.
+- **Nothing is implied.** No model is chosen for the user, `approved_tools` must be
+  a subset of `requested_tools`, and a skill is assigned only when the pack requests
+  it and the user approves it. Tools and skill assignment are rechecked against
+  admin policy at import, because either can change after review.
+- **Requirements.** A model with approved tools must state `supports_tools=True`;
+  that is a hard stop. Unmet `vision`, `min_context_window`, or a `tools` requirement
+  whose tools were all declined are warnings the user accepts by choosing the model,
+  because export's `vision` can overstate the need. Unknown capability counts as
+  unmet.
+- **Conflicts.** Names compare after case and whitespace folding, per owner, for
+  every item type, even where the database has no unique constraint. The user
+  renames or skips; nothing is replaced and no suffix is added. A skill rename
+  rewrites its frontmatter and keeps its instructions verbatim.
+- **One transaction.** Domains expose non-committing builders (`new_skill`,
+  `new_template`, `new_rubric`, `new_sub_agent`) that their own create paths also
+  use, so imported records meet the same rules. All checks run before the first
+  write, and a failure after it rolls everything back. A constraint failure from a
+  concurrent change is a 409.
+- **Project.** The pack's project becomes a new project. Its selection holds only
+  the sub-agents the user imported, so skipping one narrows it.
+- **Provenance.** `pack_imports` records the pack's identity, version and name per
+  import, and `pack_import_items` the records created. These rows are history: they
+  grant nothing and survive deletion of the records they name.
+- **Untrusted text.** The review shows pack text as plain text, never Markdown.
+  Imported instructions become the user's own and are not flagged at runtime; the
+  safeguard is that the user reads them first and they grant no capability.

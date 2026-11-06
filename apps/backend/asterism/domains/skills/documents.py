@@ -83,3 +83,16 @@ def parse_document(content: str) -> SkillMetadata:
     if not description.strip() or len(description) > MAX_DESCRIPTION_LENGTH:
         raise BadDataException("Skill description must be nonempty and at most 1024 characters")
     return SkillMetadata(name=name, description=description)
+
+
+def rename_document(content: str, name: str) -> str:
+    """Rewrite the frontmatter with a new name, keeping the instructions verbatim."""
+    metadata = parse_document(content)
+    lines = content.splitlines(keepends=True)
+    end = next(i for i in range(1, len(lines)) if lines[i].rstrip("\r\n") == "---")
+    frontmatter = yaml.safe_dump(
+        {"name": name, "description": metadata.description}, sort_keys=False, allow_unicode=True, width=2**16
+    )
+    renamed = f"---\n{frontmatter}---\n{''.join(lines[end + 1 :])}"
+    parse_document(renamed)
+    return renamed

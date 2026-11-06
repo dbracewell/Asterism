@@ -510,6 +510,12 @@ import type {
   SubAgentUpdateData,
   SubAgentUpdateErrors,
   SubAgentUpdateResponses,
+  TeamPackImportData,
+  TeamPackImportErrors,
+  TeamPackImportResponses,
+  TeamPackReviewData,
+  TeamPackReviewErrors,
+  TeamPackReviewResponses,
   ToolsGetActiveData,
   ToolsGetActiveErrors,
   ToolsGetActiveResponses,
@@ -2199,6 +2205,60 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/pack-export",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Create Pack Review
+   *
+   * Describe what a pack asks for. Nothing is stored or changed.
+   */
+  public teamPackReview<ThrowOnError extends boolean = false>(
+    options: Options<TeamPackReviewData, ThrowOnError>,
+  ): RequestResult<
+    TeamPackReviewResponses,
+    TeamPackReviewErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      TeamPackReviewResponses,
+      TeamPackReviewErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/team-packs/review",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Create Pack Import
+   *
+   * Create the items the user decided on, or nothing if any check fails.
+   */
+  public teamPackImport<ThrowOnError extends boolean = false>(
+    options: Options<TeamPackImportData, ThrowOnError>,
+  ): RequestResult<
+    TeamPackImportResponses,
+    TeamPackImportErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      TeamPackImportResponses,
+      TeamPackImportErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/team-packs/import",
       ...options,
       headers: {
         "Content-Type": "application/json",
