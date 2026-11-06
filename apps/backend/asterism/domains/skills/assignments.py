@@ -1,5 +1,7 @@
 """Explicit main-agent eligibility; assignment never grants other capabilities."""
 
+import uuid
+
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -76,6 +78,13 @@ async def replace_assignments(user_id: str, payload: SkillAssignmentUpdate, sess
         raise
     logger.info(f"Replaced {len(skill_ids)} assigned skills for user {user_id}")
     return await read_assignments(user_id, session)
+
+
+async def add_assignments(user_id: str, skill_ids: list[uuid.UUID], session: AsyncSession) -> None:
+    """Assign new skills inside the caller's transaction; the caller commits."""
+    agent = await _main_agent(user_id, session)
+    agent.config_revision = AgentProfileModel.config_revision + 1
+    session.add_all([AgentSkillModel(agent_id=agent.id, user_id=user_id, skill_id=skill_id) for skill_id in skill_ids])
 
 
 async def list_eligible_skills(

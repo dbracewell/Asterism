@@ -209,6 +209,20 @@ async def list_sub_agents(
     return SubAgentList(items=items, total=result.total, page=page, page_size=page_size)
 
 
+def _apply_definition(row: AgentProfileModel, payload: SubAgentCreate) -> None:
+    for key, value in payload.model_dump().items():
+        setattr(row, key, value)
+    row.chat_parameters = cast(ChatCompletionParams, payload.chat_parameters.model_dump(exclude_none=True))
+
+
+async def new_sub_agent(user_id: str, payload: SubAgentCreate, session: AsyncSession) -> AgentProfileModel:
+    """A validated, unsaved row, so a larger transaction can add it."""
+    await _validate_configuration(user_id, payload, session)
+    row = AgentProfileModel(user_id=user_id, sub_agent=True)
+    _apply_definition(row, payload)
+    return row
+
+
 async def save_sub_agent(
     user_id: str,
     payload: SubAgentCreate,
@@ -228,9 +242,7 @@ async def save_sub_agent(
             assert row is not None
         if agent_id is not None:
             row.config_revision = AgentProfileModel.config_revision + 1
-        for key, value in payload.model_dump().items():
-            setattr(row, key, value)
-        row.chat_parameters = cast(ChatCompletionParams, payload.chat_parameters.model_dump(exclude_none=True))
+        _apply_definition(row, payload)
         await session.commit()
         await session.refresh(row)
         return await _sub_definition(user_id, await get_agent_profile(user_id, row.id, session), session)

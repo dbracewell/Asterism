@@ -42,9 +42,14 @@ async def list_skills(user_id: str, session: AsyncSession, *, query: str, page: 
     )
 
 
+def new_skill(user_id: str, content: str) -> SkillModel:
+    """An unsaved row, so a larger transaction can add it."""
+    metadata = parse_document(content)
+    return SkillModel(user_id=user_id, content=content, name=metadata.name, description=metadata.description)
+
+
 async def create_skill(user_id: str, payload: SkillCreate, session: AsyncSession) -> Skill:
-    metadata = parse_document(payload.content)
-    row = SkillModel(user_id=user_id, content=payload.content, name=metadata.name, description=metadata.description)
+    row = new_skill(user_id, payload.content)
     session.add(row)
     try:
         await session.commit()

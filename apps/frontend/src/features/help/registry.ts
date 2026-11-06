@@ -85,7 +85,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Use a project for a course, an assignment or any topic you'll come back to.",
       "In a project's settings you can choose which of your sub-agents its chats may use. New projects start with none selected.",
-      "Export team pack in a project's settings saves the sub-agents, skills, templates, rubrics and settings you choose to one file you can share. Models are saved as requirements, and files and keys are never included.",
+      "Export team pack in a project's settings saves the sub-agents, skills, templates, rubrics and settings you choose to one file you can share. Models are saved as requirements, and files and keys are never included. Import team pack on the Projects page shows everything a pack asks for first: you choose a model for each sub-agent, approve each tool, and nothing is created until you confirm.",
       "You can also set a learning goal and a target date. The goal shows on the project page, and a chat only sees it when you turn on Goal in the message box for a message.",
     ],
     related: [

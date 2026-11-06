@@ -510,6 +510,12 @@ import type {
   SubAgentUpdateData,
   SubAgentUpdateError,
   SubAgentUpdateResponse,
+  TeamPackImportData,
+  TeamPackImportError,
+  TeamPackImportResponse,
+  TeamPackReviewData,
+  TeamPackReviewError,
+  TeamPackReviewResponse,
   ToolsGetActiveData,
   ToolsGetActiveError,
   ToolsGetActiveResponse,
@@ -2899,6 +2905,64 @@ export const projectPackExportMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().projectPackExport({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create Pack Review
+ *
+ * Describe what a pack asks for. Nothing is stored or changed.
+ */
+export const teamPackReviewMutation = (
+  options?: Partial<Options<TeamPackReviewData>>,
+): UseMutationOptions<
+  TeamPackReviewResponse,
+  TeamPackReviewError,
+  Options<TeamPackReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    TeamPackReviewResponse,
+    TeamPackReviewError,
+    Options<TeamPackReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().teamPackReview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create Pack Import
+ *
+ * Create the items the user decided on, or nothing if any check fails.
+ */
+export const teamPackImportMutation = (
+  options?: Partial<Options<TeamPackImportData>>,
+): UseMutationOptions<
+  TeamPackImportResponse,
+  TeamPackImportError,
+  Options<TeamPackImportData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    TeamPackImportResponse,
+    TeamPackImportError,
+    Options<TeamPackImportData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().teamPackImport({
         ...options,
         ...fnOptions,
         throwOnError: true,

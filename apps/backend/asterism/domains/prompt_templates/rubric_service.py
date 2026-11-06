@@ -43,6 +43,11 @@ def _columns(document: RubricDocument) -> dict[str, str]:
     return {"document": serialize_rubric(document), "name": document.name, "description": document.description}
 
 
+def new_rubric(user_id: str, document: RubricDocument) -> PromptTemplateModel:
+    """An unsaved row, so a larger transaction can add it."""
+    return PromptTemplateModel(user_id=user_id, kind=TemplateKind.RUBRIC, **_columns(document))
+
+
 async def require_rubric(user_id: str, rubric_id: uuid.UUID, session: AsyncSession) -> PromptTemplateModel:
     row = await session.scalar(select_owned_rubrics(user_id).where(PromptTemplateModel.id == rubric_id))
     if row is None:
@@ -71,7 +76,7 @@ async def list_rubrics(user_id: str, session: AsyncSession, *, query: str, page:
 
 async def create_rubric(user_id: str, payload: RubricCreate, session: AsyncSession) -> Rubric:
     document = parse_rubric(payload.document)
-    row = PromptTemplateModel(user_id=user_id, kind=TemplateKind.RUBRIC, **_columns(document))
+    row = new_rubric(user_id, document)
     session.add(row)
     await session.commit()
     await session.refresh(row)

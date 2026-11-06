@@ -57,8 +57,8 @@ each capability assignment. Nothing is created until the user confirms. Name
 conflicts are resolved explicitly. Pack instructions are treated as untrusted
 text.
 
-- [ ] Implement the import review API and transactional creation.
-- [ ] Build the review screen; test conflicts, model selection, policy limits and rollback.
+- [x] Implement the import review API and transactional creation.
+- [x] Build the review screen; test conflicts, model selection, policy limits and rollback.
 
 ## US-59.4: Starter packs
 

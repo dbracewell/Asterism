@@ -1425,6 +1425,41 @@ export const zPackIdentity = z.object({
 });
 
 /**
+ * PackImportResult
+ */
+export const zPackImportResult = z.object({
+  import_id: z.uuid(),
+  sub_agent_ids: z.array(z.uuid()),
+  skill_ids: z.array(z.uuid()),
+  template_ids: z.array(z.uuid()),
+  rubric_ids: z.array(z.uuid()),
+  project_id: z.uuid().nullable(),
+});
+
+/**
+ * PackItemDecision
+ *
+ * The user's choice for one item. ``name`` replaces the pack's name.
+ */
+export const zPackItemDecision = z.object({
+  key: z.string(),
+  include: z.boolean(),
+  name: z.string().min(1).max(200).nullish(),
+});
+
+/**
+ * PackModelOption
+ *
+ * A model the user may bind, with the stated requirements it does not meet.
+ */
+export const zPackModelOption = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  provider_name: z.string(),
+  unmet_requirements: z.array(z.enum(["tools", "vision", "context_window"])),
+});
+
+/**
  * PackProject
  *
  * Project settings; ``sub_agents`` are keys of this pack's sub-agents.
@@ -1445,6 +1480,33 @@ export const zPackProject = z.object({
 });
 
 /**
+ * PackProjectDecision
+ */
+export const zPackProjectDecision = z.object({
+  include: z.boolean(),
+  name: z.string().min(1).max(255).nullish(),
+});
+
+/**
+ * PackProjectReview
+ */
+export const zPackProjectReview = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().max(10000).optional().default(""),
+  system_prompt: z.string().max(100000).optional().default(""),
+  accent: z
+    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
+    .nullish(),
+  goal: z.string().max(1000).optional().default(""),
+  sub_agents: z
+    .array(z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/))
+    .max(16)
+    .optional()
+    .default([]),
+  name_conflict: z.boolean(),
+});
+
+/**
  * PackSkill
  *
  * A SKILL.md document; name and description derive from its frontmatter.
@@ -1453,6 +1515,38 @@ export const zPackSkill = z.object({
   key: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/),
   content: z.string().min(1).max(65536),
   request_main_agent_assignment: z.boolean().optional().default(false),
+});
+
+/**
+ * PackSkillDecision
+ */
+export const zPackSkillDecision = z.object({
+  key: z.string(),
+  include: z.boolean(),
+  name: z.string().min(1).max(200).nullish(),
+  assign_to_main_agent: z.boolean().optional().default(false),
+});
+
+/**
+ * PackSkillReview
+ */
+export const zPackSkillReview = z.object({
+  key: z.string(),
+  name: z.string(),
+  description: z.string(),
+  content: z.string(),
+  assignment_requested: z.boolean(),
+  assignment_allowed: z.boolean(),
+  name_conflict: z.boolean(),
+});
+
+/**
+ * PackSource
+ *
+ * The pack file's text. Review and import both parse it from scratch.
+ */
+export const zPackSource = z.object({
+  source: z.string().min(1).max(1048576),
 });
 
 /**
@@ -1473,6 +1567,57 @@ export const zPackSubAgent = z.object({
     .optional()
     .default([]),
   model_requirements: zModelRequirements.optional(),
+});
+
+/**
+ * PackSubAgentDecision
+ */
+export const zPackSubAgentDecision = z.object({
+  key: z.string(),
+  include: z.boolean(),
+  name: z.string().min(1).max(200).nullish(),
+  model_id: z.uuid().nullish(),
+  approved_tools: z.array(z.string()).max(32).optional(),
+});
+
+/**
+ * PackImportRequest
+ *
+ * A decision for every item in the pack. Nothing is implied by omission.
+ */
+export const zPackImportRequest = z.object({
+  source: z.string().min(1).max(1048576),
+  sub_agents: z.array(zPackSubAgentDecision).max(16).optional(),
+  skills: z.array(zPackSkillDecision).max(32).optional(),
+  templates: z.array(zPackItemDecision).max(32).optional(),
+  rubrics: z.array(zPackItemDecision).max(16).optional(),
+  project: zPackProjectDecision.nullish(),
+});
+
+/**
+ * PackToolRequest
+ *
+ * A requested tool; ``available`` is false when admin policy here rules it out.
+ */
+export const zPackToolRequest = z.object({
+  name: z.string(),
+  available: z.boolean(),
+});
+
+/**
+ * PackSubAgentReview
+ */
+export const zPackSubAgentReview = z.object({
+  key: z.string(),
+  name: z.string(),
+  description: z.string(),
+  instructions: z.string(),
+  max_steps: z.int(),
+  generation: zGenerationDefaults,
+  requested_tools: z.array(zPackToolRequest),
+  model_requirements: zModelRequirements,
+  model_options: z.array(zPackModelOption),
+  name_conflict: z.boolean(),
 });
 
 /**
@@ -2004,6 +2149,16 @@ export const zBundledRubricView = z.object({
 export const zPackRubric = z.object({
   key: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/),
   document: zRubricDocument,
+});
+
+/**
+ * PackRubricReview
+ */
+export const zPackRubricReview = z.object({
+  key: z.string(),
+  name: z.string(),
+  document: zRubricDocument,
+  name_conflict: z.boolean(),
 });
 
 /**
@@ -3274,6 +3429,30 @@ export const zPackManifest = z.object({
   templates: z.array(zPackTemplate).max(32).optional().default([]),
   rubrics: z.array(zPackRubric).max(16).optional().default([]),
   project: zPackProject.nullish(),
+});
+
+/**
+ * PackTemplateReview
+ */
+export const zPackTemplateReview = z.object({
+  key: z.string(),
+  name: z.string(),
+  document: zTemplateDocument,
+  name_conflict: z.boolean(),
+});
+
+/**
+ * PackReview
+ *
+ * Everything the pack asks for. Producing this changes nothing.
+ */
+export const zPackReview = z.object({
+  pack: zPackIdentity,
+  sub_agents: z.array(zPackSubAgentReview),
+  skills: z.array(zPackSkillReview),
+  templates: z.array(zPackTemplateReview),
+  rubrics: z.array(zPackRubricReview),
+  project: zPackProjectReview.nullable(),
 });
 
 /**
@@ -4623,6 +4802,20 @@ export const zProjectPackExportPath = z.object({
  * Successful Response
  */
 export const zProjectPackExportResponse = zPackManifest;
+
+export const zTeamPackReviewBody = zPackSource;
+
+/**
+ * Successful Response
+ */
+export const zTeamPackReviewResponse = zPackReview;
+
+export const zTeamPackImportBody = zPackImportRequest;
+
+/**
+ * Successful Response
+ */
+export const zTeamPackImportResponse = zPackImportResult;
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),

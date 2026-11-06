@@ -3400,6 +3400,85 @@ export type PackIdentity = {
 };
 
 /**
+ * PackImportRequest
+ *
+ * A decision for every item in the pack. Nothing is implied by omission.
+ */
+export type PackImportRequest = {
+  /**
+   * Source
+   */
+  source: string;
+  /**
+   * Sub Agents
+   */
+  sub_agents?: Array<PackSubAgentDecision>;
+  /**
+   * Skills
+   */
+  skills?: Array<PackSkillDecision>;
+  /**
+   * Templates
+   */
+  templates?: Array<PackItemDecision>;
+  /**
+   * Rubrics
+   */
+  rubrics?: Array<PackItemDecision>;
+  project?: PackProjectDecision | null;
+};
+
+/**
+ * PackImportResult
+ */
+export type PackImportResult = {
+  /**
+   * Import Id
+   */
+  import_id: string;
+  /**
+   * Sub Agent Ids
+   */
+  sub_agent_ids: Array<string>;
+  /**
+   * Skill Ids
+   */
+  skill_ids: Array<string>;
+  /**
+   * Template Ids
+   */
+  template_ids: Array<string>;
+  /**
+   * Rubric Ids
+   */
+  rubric_ids: Array<string>;
+  /**
+   * Project Id
+   */
+  project_id: string | null;
+};
+
+/**
+ * PackItemDecision
+ *
+ * The user's choice for one item. ``name`` replaces the pack's name.
+ */
+export type PackItemDecision = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Include
+   */
+  include: boolean;
+  /**
+   * Name
+   */
+  name?: string | null;
+};
+
+/**
  * PackManifest
  *
  * Version 1 of the team-pack file. Unknown sections and fields are rejected.
@@ -3431,6 +3510,30 @@ export type PackManifest = {
    */
   rubrics?: Array<PackRubric>;
   project?: PackProject | null;
+};
+
+/**
+ * PackModelOption
+ *
+ * A model the user may bind, with the stated requirements it does not meet.
+ */
+export type PackModelOption = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Provider Name
+   */
+  provider_name: string;
+  /**
+   * Unmet Requirements
+   */
+  unmet_requirements: Array<"tools" | "vision" | "context_window">;
 };
 
 /**
@@ -3475,6 +3578,89 @@ export type PackProject = {
 };
 
 /**
+ * PackProjectDecision
+ */
+export type PackProjectDecision = {
+  /**
+   * Include
+   */
+  include: boolean;
+  /**
+   * Name
+   */
+  name?: string | null;
+};
+
+/**
+ * PackProjectReview
+ */
+export type PackProjectReview = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description?: string;
+  /**
+   * System Prompt
+   */
+  system_prompt?: string;
+  /**
+   * Accent
+   */
+  accent?:
+    | "red"
+    | "orange"
+    | "amber"
+    | "green"
+    | "teal"
+    | "sky"
+    | "violet"
+    | "pink"
+    | null;
+  /**
+   * Goal
+   */
+  goal?: string;
+  /**
+   * Sub Agents
+   */
+  sub_agents?: Array<string>;
+  /**
+   * Name Conflict
+   */
+  name_conflict: boolean;
+};
+
+/**
+ * PackReview
+ *
+ * Everything the pack asks for. Producing this changes nothing.
+ */
+export type PackReview = {
+  pack: PackIdentity;
+  /**
+   * Sub Agents
+   */
+  sub_agents: Array<PackSubAgentReview>;
+  /**
+   * Skills
+   */
+  skills: Array<PackSkillReview>;
+  /**
+   * Templates
+   */
+  templates: Array<PackTemplateReview>;
+  /**
+   * Rubrics
+   */
+  rubrics: Array<PackRubricReview>;
+  project: PackProjectReview | null;
+};
+
+/**
  * PackRubric
  */
 export type PackRubric = {
@@ -3483,6 +3669,25 @@ export type PackRubric = {
    */
   key: string;
   document: RubricDocument;
+};
+
+/**
+ * PackRubricReview
+ */
+export type PackRubricReview = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Name
+   */
+  name: string;
+  document: RubricDocument;
+  /**
+   * Name Conflict
+   */
+  name_conflict: boolean;
 };
 
 /**
@@ -3503,6 +3708,74 @@ export type PackSkill = {
    * Request Main Agent Assignment
    */
   request_main_agent_assignment?: boolean;
+};
+
+/**
+ * PackSkillDecision
+ */
+export type PackSkillDecision = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Include
+   */
+  include: boolean;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Assign To Main Agent
+   */
+  assign_to_main_agent?: boolean;
+};
+
+/**
+ * PackSkillReview
+ */
+export type PackSkillReview = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Content
+   */
+  content: string;
+  /**
+   * Assignment Requested
+   */
+  assignment_requested: boolean;
+  /**
+   * Assignment Allowed
+   */
+  assignment_allowed: boolean;
+  /**
+   * Name Conflict
+   */
+  name_conflict: boolean;
+};
+
+/**
+ * PackSource
+ *
+ * The pack file's text. Review and import both parse it from scratch.
+ */
+export type PackSource = {
+  /**
+   * Source
+   */
+  source: string;
 };
 
 /**
@@ -3540,6 +3813,72 @@ export type PackSubAgent = {
 };
 
 /**
+ * PackSubAgentDecision
+ */
+export type PackSubAgentDecision = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Include
+   */
+  include: boolean;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Model Id
+   */
+  model_id?: string | null;
+  /**
+   * Approved Tools
+   */
+  approved_tools?: Array<string>;
+};
+
+/**
+ * PackSubAgentReview
+ */
+export type PackSubAgentReview = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Instructions
+   */
+  instructions: string;
+  /**
+   * Max Steps
+   */
+  max_steps: number;
+  generation: GenerationDefaults;
+  /**
+   * Requested Tools
+   */
+  requested_tools: Array<PackToolRequest>;
+  model_requirements: ModelRequirements;
+  /**
+   * Model Options
+   */
+  model_options: Array<PackModelOption>;
+  /**
+   * Name Conflict
+   */
+  name_conflict: boolean;
+};
+
+/**
  * PackTemplate
  */
 export type PackTemplate = {
@@ -3548,6 +3887,41 @@ export type PackTemplate = {
    */
   key: string;
   document: TemplateDocument;
+};
+
+/**
+ * PackTemplateReview
+ */
+export type PackTemplateReview = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Name
+   */
+  name: string;
+  document: TemplateDocument;
+  /**
+   * Name Conflict
+   */
+  name_conflict: boolean;
+};
+
+/**
+ * PackToolRequest
+ *
+ * A requested tool; ``available`` is false when admin policy here rules it out.
+ */
+export type PackToolRequest = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Available
+   */
+  available: boolean;
 };
 
 /**
@@ -10343,6 +10717,84 @@ export type ProjectPackExportResponses = {
 
 export type ProjectPackExportResponse =
   ProjectPackExportResponses[keyof ProjectPackExportResponses];
+
+export type TeamPackReviewData = {
+  body: PackSource;
+  path?: never;
+  query?: never;
+  url: "/team-packs/review";
+};
+
+export type TeamPackReviewErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type TeamPackReviewError =
+  TeamPackReviewErrors[keyof TeamPackReviewErrors];
+
+export type TeamPackReviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: PackReview;
+};
+
+export type TeamPackReviewResponse =
+  TeamPackReviewResponses[keyof TeamPackReviewResponses];
+
+export type TeamPackImportData = {
+  body: PackImportRequest;
+  path?: never;
+  query?: never;
+  url: "/team-packs/import";
+};
+
+export type TeamPackImportErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type TeamPackImportError =
+  TeamPackImportErrors[keyof TeamPackImportErrors];
+
+export type TeamPackImportResponses = {
+  /**
+   * Successful Response
+   */
+  200: PackImportResult;
+};
+
+export type TeamPackImportResponse =
+  TeamPackImportResponses[keyof TeamPackImportResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;
