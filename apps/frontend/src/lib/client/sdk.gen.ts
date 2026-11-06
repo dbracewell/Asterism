@@ -477,6 +477,12 @@ import type {
   StudySummaryGenerateData,
   StudySummaryGenerateErrors,
   StudySummaryGenerateResponses,
+  StudyTopicMasteryGetManyData,
+  StudyTopicMasteryGetManyErrors,
+  StudyTopicMasteryGetManyResponses,
+  StudyTopicPracticeData,
+  StudyTopicPracticeErrors,
+  StudyTopicPracticeResponses,
   StudyWeakSpotGetManyData,
   StudyWeakSpotGetManyErrors,
   StudyWeakSpotGetManyResponses,
@@ -2722,6 +2728,56 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/study/weak-spots/practice",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Topic Mastery
+   *
+   * Mastery per deck and quiz tag, derived from review ratings and quiz results.
+   */
+  public studyTopicMasteryGetMany<ThrowOnError extends boolean = false>(
+    options: Options<StudyTopicMasteryGetManyData, ThrowOnError>,
+  ): RequestResult<
+    StudyTopicMasteryGetManyResponses,
+    StudyTopicMasteryGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      StudyTopicMasteryGetManyResponses,
+      StudyTopicMasteryGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/topics",
+      ...options,
+    });
+  }
+
+  /**
+   * Practice Topic
+   *
+   * Save a quiz of one topic's weakest items; 404 for an unknown topic.
+   */
+  public studyTopicPractice<ThrowOnError extends boolean = false>(
+    options: Options<StudyTopicPracticeData, ThrowOnError>,
+  ): RequestResult<
+    StudyTopicPracticeResponses,
+    StudyTopicPracticeErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyTopicPracticeResponses,
+      StudyTopicPracticeErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/topics/practice",
       ...options,
       headers: {
         "Content-Type": "application/json",

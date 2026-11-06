@@ -21,6 +21,8 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { studyErrorDetail } from "../lib/error-detail";
+import { formatTags, parseTags, tagProblem } from "../lib/tags";
+import { TagsField } from "./tags";
 
 export const DECK_NAME_MAX = 120;
 export const DECK_DESCRIPTION_MAX = 2000;
@@ -71,6 +73,9 @@ function DeckForm({
 }) {
   const [name, setName] = useState(deck?.name ?? "");
   const [description, setDescription] = useState(deck?.description ?? "");
+  const [tags, setTags] = useState(formatTags(deck?.tags ?? []));
+  const parsedTags = parseTags(tags);
+  const invalidTags = !!tagProblem(parsedTags);
   const create = useMutation({
     ...studyDeckCreateMutation({ client }),
     onSuccess: onDone,
@@ -86,8 +91,8 @@ function DeckForm({
       className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
-        const body = { name: name.trim(), description };
-        if (!body.name) return;
+        const body = { name: name.trim(), description, tags: parsedTags };
+        if (!body.name || invalidTags) return;
         if (deck)
           update.mutate({
             path: { project_id: projectId, deck_id: deck.id },
@@ -125,6 +130,12 @@ function DeckForm({
             onChange={(event) => setDescription(event.target.value)}
           />
         </Field>
+        <TagsField
+          id="deck-tags"
+          value={tags}
+          onChange={setTags}
+          disabled={pending}
+        />
       </FieldGroup>
       {error && (
         <p role="alert" className="text-destructive text-sm">
@@ -140,7 +151,7 @@ function DeckForm({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={pending || !name.trim()}>
+        <Button type="submit" disabled={pending || !name.trim() || invalidTags}>
           {pending ? "Saving…" : deck ? "Save deck" : "Create deck"}
         </Button>
       </DialogFooter>

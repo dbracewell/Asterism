@@ -256,3 +256,99 @@ def select_cards_with_deck_name(*, user_id: str, card_ids: list[uuid.UUID]):
 def select_owned_notes(*, user_id: str, project_id: uuid.UUID):
     """Notes of one project owned by the caller; unordered so callers can add filters."""
     return select(StudyNoteModel).where(StudyNoteModel.user_id == user_id, StudyNoteModel.project_id == project_id)
+
+
+# --- Topic mastery (US-58.3) -------------------------------------------------
+
+VERDICT_SCORES = {"correct": 1.0, "partial": 0.5, "incorrect": 0.0}
+RATING_SCORES = {1: 0.0, 2: 0.6, 3: 0.9, 4: 1.0}
+
+
+def _scored_answer_events(*, user_id: str, project_id: uuid.UUID):
+    """Graded answers in the project with a 0–1 score, keyed by the item they practice."""
+    answer, attempt, question, quiz = (
+        StudyQuizAnswerModel,
+        StudyQuizAttemptModel,
+        StudyQuizQuestionModel,
+        StudyQuizModel,
+    )
+    return (
+        select(
+            case(
+                (question.source_card_id.is_not(None), literal("card", String)), else_=literal("question", String)
+            ).label("root_kind"),
+            func.coalesce(question.source_card_id, question.source_question_id, question.id).label("root_id"),
+            attempt.submitted_at.label("at"),
+            case(*((answer.verdict == verdict, score) for verdict, score in VERDICT_SCORES.items()), else_=0.0).label(
+                "score"
+            ),
+        )
+        .select_from(answer)
+        .join(attempt, and_(attempt.id == answer.attempt_id, attempt.user_id == answer.user_id))
+        .join(question, and_(question.id == answer.question_id, question.user_id == answer.user_id))
+        .join(quiz, and_(quiz.id == question.quiz_id, quiz.user_id == question.user_id))
+        .where(answer.user_id == user_id, quiz.project_id == project_id, answer.verdict != "ungraded")
+    )
+
+
+def _scored_review_events(*, user_id: str, project_id: uuid.UUID):
+    """Card ratings in the project with a 0–1 score."""
+    log, card, deck = StudyReviewLogModel, StudyCardModel, StudyDeckModel
+    return (
+        select(
+            literal("card", String).label("root_kind"),
+            card.id.label("root_id"),
+            log.reviewed_at.label("at"),
+            case(*((log.rating == rating, score) for rating, score in RATING_SCORES.items()), else_=0.0).label("score"),
+        )
+        .select_from(log)
+        .join(card, and_(card.id == log.card_id, card.user_id == log.user_id))
+        .join(deck, and_(deck.id == card.deck_id, deck.user_id == card.user_id))
+        .where(log.user_id == user_id, deck.project_id == project_id)
+    )
+
+
+def select_scored_events(*, user_id: str, project_id: uuid.UUID):
+    """Rows ``root_kind, root_id, at, score`` for every graded practice event, oldest first."""
+    events = union_all(
+        _scored_answer_events(user_id=user_id, project_id=project_id),
+        _scored_review_events(user_id=user_id, project_id=project_id),
+    ).subquery()
+    return select(events.c.root_kind, events.c.root_id, events.c.at, events.c.score).order_by(events.c.at)
+
+
+def select_tagged_cards(*, user_id: str, project_id: uuid.UUID):
+    """``(card id, deck tags)`` for cards of the project's decks."""
+    return (
+        select(StudyCardModel.id, StudyDeckModel.tags)
+        .join(StudyDeckModel, and_(StudyDeckModel.id == StudyCardModel.deck_id, StudyDeckModel.user_id == user_id))
+        .where(StudyCardModel.user_id == user_id, StudyDeckModel.project_id == project_id)
+        .order_by(StudyCardModel.created_at, StudyCardModel.id)
+    )
+
+
+def select_tagged_questions(*, user_id: str, project_id: uuid.UUID):
+    """``(question id, quiz tags)`` for original questions; practice copies count towards their originals."""
+    return (
+        select(StudyQuizQuestionModel.id, StudyQuizModel.tags)
+        .join(
+            StudyQuizModel, and_(StudyQuizModel.id == StudyQuizQuestionModel.quiz_id, StudyQuizModel.user_id == user_id)
+        )
+        .where(
+            StudyQuizQuestionModel.user_id == user_id,
+            StudyQuizModel.project_id == project_id,
+            StudyQuizQuestionModel.source_question_id.is_(None),
+            StudyQuizQuestionModel.source_card_id.is_(None),
+        )
+        .order_by(StudyQuizModel.created_at, StudyQuizQuestionModel.position, StudyQuizQuestionModel.id)
+    )
+
+
+def select_cards_by_id(*, user_id: str, card_ids: list[uuid.UUID]):
+    return select(StudyCardModel).where(StudyCardModel.user_id == user_id, StudyCardModel.id.in_(card_ids))
+
+
+def select_questions_by_id(*, user_id: str, question_ids: list[uuid.UUID]):
+    return select(StudyQuizQuestionModel).where(
+        StudyQuizQuestionModel.user_id == user_id, StudyQuizQuestionModel.id.in_(question_ids)
+    )

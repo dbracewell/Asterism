@@ -8,7 +8,7 @@ import datetime
 import uuid
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationInfo, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, ValidationInfo, field_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from .models import (
@@ -24,6 +24,30 @@ from .models import (
 MAX_CARD_CITATIONS = 8
 MAX_CHUNK_ID_CHARS = 200
 MAX_EXCERPT_CHARS = 1_000
+
+MAX_TAGS = 8
+MAX_TAG_CHARS = 40
+
+
+def normalize_tags(tags: list[str]) -> list[str]:
+    """Trim and collapse whitespace; drop case-insensitive repeats, keeping the first spelling."""
+    result: list[str] = []
+    seen: set[str] = set()
+    for tag in tags:
+        if "\n" in tag or "\r" in tag or "\x00" in tag:
+            raise ValueError("Tags must be single lines")
+        clean = " ".join(tag.split())
+        if not clean:
+            raise ValueError("Tags must not be blank")
+        if len(clean) > MAX_TAG_CHARS:
+            raise ValueError(f"Tags must be at most {MAX_TAG_CHARS} characters")
+        if clean.casefold() not in seen:
+            seen.add(clean.casefold())
+            result.append(clean)
+    return result
+
+
+StudyTags = Annotated[list[str], Field(max_length=MAX_TAGS), AfterValidator(normalize_tags)]
 
 DeckName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_DECK_NAME_CHARS)]
 CardSide = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_CARD_SIDE_CHARS)]
@@ -64,6 +88,7 @@ class StudyDeckCreate(BaseModel):
 
     name: DeckName
     description: str = Field(default="", max_length=MAX_DECK_DESCRIPTION_CHARS)
+    tags: StudyTags = Field(default_factory=list)
 
 
 class StudyDeckUpdate(BaseModel):
@@ -72,8 +97,9 @@ class StudyDeckUpdate(BaseModel):
     # None means omitted; explicit null is rejected on the wire.
     name: DeckName | SkipJsonSchema[None] = None
     description: str | SkipJsonSchema[None] = Field(default=None, max_length=MAX_DECK_DESCRIPTION_CHARS)
+    tags: StudyTags | SkipJsonSchema[None] = None
 
-    @field_validator("name", "description", mode="before")
+    @field_validator("name", "description", "tags", mode="before")
     @classmethod
     def reject_explicit_null(cls, value: object) -> object:
         return _reject_null(value)
@@ -84,6 +110,7 @@ class StudyDeck(BaseModel):
     project_id: uuid.UUID
     name: str
     description: str
+    tags: list[str]
     card_count: int = Field(ge=0)
     due_count: int = Field(ge=0)
     created_at: int
@@ -242,7 +269,7 @@ QuizTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1
 StudyQuestionKind = Literal["multiple_choice", "short_answer"]
 StudyVerdict = Literal["correct", "partial", "incorrect", "ungraded"]
 StudyGrader = Literal["exact", "model", "none"]
-StudyQuizOrigin = Literal["generated", "weak_spots"]
+StudyQuizOrigin = Literal["generated", "weak_spots", "topic"]
 
 
 class StudyQuizGenerateRequest(BaseModel):
@@ -259,6 +286,7 @@ class StudyQuizGenerateRequest(BaseModel):
     kinds: list[StudyQuestionKind] = Field(min_length=1, max_length=2)
     file_ids: list[uuid.UUID] | None = Field(default=None, min_length=1, max_length=MAX_DRAFT_FILES)
     title: QuizTitle | None = None
+    tags: StudyTags = Field(default_factory=list)
 
     @field_validator("file_ids")
     @classmethod
@@ -276,15 +304,24 @@ class StudyQuizGenerateRequest(BaseModel):
 
 
 class StudyQuizUpdate(BaseModel):
+    """Rename and retag; omitted fields are unchanged."""
+
     model_config = ConfigDict(extra="forbid")
 
-    title: QuizTitle
+    title: QuizTitle | SkipJsonSchema[None] = None
+    tags: StudyTags | SkipJsonSchema[None] = None
+
+    @field_validator("title", "tags", mode="before")
+    @classmethod
+    def reject_explicit_null(cls, value: object) -> object:
+        return _reject_null(value)
 
 
 class StudyQuizSummary(BaseModel):
     id: uuid.UUID
     project_id: uuid.UUID
     title: str
+    tags: list[str]
     question_count: int = Field(ge=0)
     multiple_choice_count: int = Field(ge=0)
     short_answer_count: int = Field(ge=0)
@@ -621,3 +658,41 @@ class StudyGuideDraft(BaseModel):
     body: str
     model_id: uuid.UUID
     model_name: str
+
+
+# --- Topic mastery (US-58.3) -------------------------------------------------
+
+MasteryLevel = Literal["not_started", "needs_work", "developing", "mastered"]
+
+
+class StudyTrendPoint(BaseModel):
+    """Mastery as of ``at`` (end of a week); null when nothing had been practiced."""
+
+    at: int
+    score: float | None
+
+
+class StudyTopicMastery(BaseModel):
+    # Case-folded tag that identifies the topic; ``label`` is its first spelling.
+    key: str
+    label: str
+    level: MasteryLevel
+    # Mean of each practiced item's latest score (0–1); null when none was practiced.
+    score: float | None
+    practiced: int = Field(ge=0)
+    total: int = Field(ge=0)
+    deck_count: int = Field(ge=0)
+    quiz_count: int = Field(ge=0)
+    # Weekly points, oldest first, ending now.
+    trend: list[StudyTrendPoint]
+
+
+class StudyTopicMasteryList(BaseModel):
+    items: list[StudyTopicMastery]
+    computed_at: int
+
+
+class StudyTopicPracticeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    topic: str = Field(min_length=1, max_length=MAX_TAG_CHARS)
+    question_count: int = Field(default=10, ge=1, le=MAX_QUIZ_QUESTIONS)

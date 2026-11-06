@@ -18,6 +18,7 @@ import {
   studyDeckDeleteMutation,
   studyDeckGetOneOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
+import { TagList } from "./tags";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -114,6 +115,7 @@ export function StudyDeckPage({
               </>
             }
           />
+          <TagList tags={deck.data.tags} />
           {remove.error && (
             <p role="alert" className="text-destructive text-sm">
               {studyErrorDetail(remove.error, "Could not delete the deck.")}

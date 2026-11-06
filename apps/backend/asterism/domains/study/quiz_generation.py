@@ -243,6 +243,7 @@ async def generate_quiz(
             model_name=model.name,
             questions=questions,
             session=session,
+            tags=request.tags,
         )
         quiz = await to_quiz(user_id=user_id, quiz=row, session=session)
     results = [

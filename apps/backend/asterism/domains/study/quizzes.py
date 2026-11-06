@@ -100,6 +100,7 @@ async def _to_summaries(*, user_id: str, rows: list[StudyQuizModel], session: As
                 id=row.id,
                 project_id=row.project_id,
                 title=row.title,
+                tags=row.tags,
                 question_count=sum(counts.values()),
                 multiple_choice_count=counts.get("multiple_choice", 0),
                 short_answer_count=counts.get("short_answer", 0),
@@ -167,7 +168,8 @@ async def update_quiz(
     *, user_id: str, project_id: uuid.UUID, quiz_id: uuid.UUID, payload: StudyQuizUpdate, session: AsyncSession
 ) -> StudyQuiz:
     quiz = await require_quiz(user_id=user_id, project_id=project_id, quiz_id=quiz_id, session=session)
-    quiz.title = payload.title
+    for field, value in payload.model_dump(exclude_none=True).items():
+        setattr(quiz, field, value)
     await session.commit()
     return await to_quiz(user_id=user_id, quiz=quiz, session=session)
 
@@ -196,6 +198,7 @@ async def save_quiz(
     model_name: str | None,
     questions: list[QuestionDraft],
     session: AsyncSession,
+    tags: list[str] | None = None,
 ) -> StudyQuizModel:
     """Store a quiz and its questions in one transaction.
 
@@ -209,6 +212,7 @@ async def save_quiz(
         origin=origin,
         model_id=model_id,
         model_name=model_name,
+        tags=tags or [],
     )
     session.add(quiz)
     await session.flush()

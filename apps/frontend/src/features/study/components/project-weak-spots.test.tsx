@@ -149,6 +149,7 @@ it("describes quizzes built from weak spots", () => {
     id: "w1",
     project_id: "p",
     title: "Weak spots practice",
+    tags: [],
     question_count: 2,
     multiple_choice_count: 1,
     short_answer_count: 1,

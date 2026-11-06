@@ -31,6 +31,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatTags, parseTags, tagProblem } from "../lib/tags";
+import { TagList, TagsField } from "./tags";
 import { studyErrorDetail } from "../lib/error-detail";
 import {
   QUIZ_TITLE_MAX,
@@ -112,7 +114,7 @@ export function QuizPage({
                   </Link>
                 </Button>
                 <Button variant="outline" onClick={() => setRenaming(true)}>
-                  Rename
+                  Edit details
                 </Button>
                 <Button
                   variant="outline"
@@ -131,6 +133,7 @@ export function QuizPage({
               {studyErrorDetail(remove.error, "Could not delete the quiz.")}
             </p>
           )}
+          <TagList tags={quiz.data.tags} />
           {quiz.data.attempt_count > 0 &&
             quiz.data.best_score != null &&
             quiz.data.last_score != null && (
@@ -278,6 +281,9 @@ function RenameForm({
   onDone: () => void;
 }) {
   const [title, setTitle] = useState(quiz.title);
+  const [tags, setTags] = useState(formatTags(quiz.tags));
+  const parsedTags = parseTags(tags);
+  const invalidTags = !!tagProblem(parsedTags);
   const update = useMutation({
     ...studyQuizUpdateMutation({ client }),
     onSuccess: onDone,
@@ -287,17 +293,17 @@ function RenameForm({
       className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!title.trim()) return;
+        if (!title.trim() || invalidTags) return;
         update.mutate({
           path: { project_id: projectId, quiz_id: quiz.id },
-          body: { title: title.trim() },
+          body: { title: title.trim(), tags: parsedTags },
         });
       }}
     >
       <DialogHeader>
-        <DialogTitle>Rename quiz</DialogTitle>
+        <DialogTitle>Edit quiz</DialogTitle>
         <DialogDescription>
-          Questions stay the same; only the title changes.
+          Questions stay the same; you can change the title and topics.
         </DialogDescription>
       </DialogHeader>
       <Field>
@@ -312,9 +318,15 @@ function RenameForm({
           onChange={(event) => setTitle(event.target.value)}
         />
       </Field>
+      <TagsField
+        id="quiz-tags"
+        value={tags}
+        onChange={setTags}
+        disabled={update.isPending}
+      />
       {update.error && (
         <p role="alert" className="text-destructive text-sm">
-          {studyErrorDetail(update.error, "Could not rename the quiz.")}
+          {studyErrorDetail(update.error, "Could not save the quiz.")}
         </p>
       )}
       <DialogFooter>
@@ -326,8 +338,11 @@ function RenameForm({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={update.isPending || !title.trim()}>
-          {update.isPending ? "Saving…" : "Save title"}
+        <Button
+          type="submit"
+          disabled={update.isPending || !title.trim() || invalidTags}
+        >
+          {update.isPending ? "Saving…" : "Save quiz"}
         </Button>
       </DialogFooter>
     </form>

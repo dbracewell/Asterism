@@ -165,3 +165,40 @@ editable title, which opens the note at `…/study/notes/{noteId}`. The note pag
 renders the body through `MarkdownViewer`, lists its sources, and offers edit
 (title and Markdown body) and delete. Generating again with an unsaved draft
 asks for confirmation.
+
+## Topics and mastery (US-58.3)
+
+Decisions are recorded in [ADR-0049](../adr/0049-topic-mastery.md).
+
+Decks and quizzes have `tags` (up to 8, each 1–40 characters, single line).
+Tags are trimmed, inner whitespace is collapsed, and case-insensitive repeats
+are dropped, keeping the first spelling. Deck create and update, quiz
+generation and quiz update (`{title?, tags?}`; explicit null is a 422) accept
+them.
+
+| Route                                           | Behavior                                                         |
+| ----------------------------------------------- | ---------------------------------------------------------------- |
+| `GET /projects/{project_id}/study/topics`       | Mastery per topic, by label; `no-store`; nothing stored          |
+| `POST /projects/{project_id}/study/topics/practice` | `{topic, question_count}` (1–20, default 10); saves a quiz (201) |
+
+A topic is a case-folded tag. Its items are the cards of decks with the tag and
+the original questions of quizzes with it; weak-spot and topic practice copies
+count towards the item they re-ask, never as items of their own. Each item's
+latest graded outcome is scored 0–1: quiz answers correct 1, partial 0.5,
+incorrect 0 (ungraded ignored); card ratings Again 0, Hard 0.6, Good 0.9,
+Easy 1. `score` is the mean over practiced items; `practiced`/`total` give
+coverage. `level` is `not_started` (nothing practiced), `needs_work` (< 50%),
+`mastered` (≥ 80% with ≥ 80% coverage) or `developing`. `trend` has 8 weekly
+points ending now, each computed from events up to that time.
+
+Practice orders the topic's items weakest first (latest score below 1, lowest
+then oldest), then unpracticed items, then the rest by oldest practice, and
+copies them into a quiz with `origin: "topic"`, the topic as its tag and no
+model, exactly like weak-spot practice. An unknown topic is 404 and a topic
+without items is 400.
+
+The project page shows **Topic mastery** once any deck or quiz has a topic:
+each topic's level, score, coverage, a weekly sparkline with a text summary,
+and **Practice**, which opens the new quiz for taking. Deck forms and the quiz
+**Edit details** dialog edit topics as comma-separated text.
+

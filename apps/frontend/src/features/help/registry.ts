@@ -26,6 +26,7 @@ export type HelpId =
   | "concept.rubric"
   | "concept.ai-use-log"
   | "concept.reflection"
+  | "concept.topic-mastery"
   | "concept.hint-levels"
   | "concept.answer-reveal"
   | "concept.mode-lock"
@@ -233,6 +234,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "The assistant only searches if your agent has a search tool that's turned on. Otherwise it suggests searches you can run and works with the sources you share. Always check a source yourself before you rely on it.",
     ],
     related: ["concept.learning-mode", "concept.citation"],
+    audience: "everyone",
+  },
+  "concept.topic-mastery": {
+    title: "Topic mastery",
+    summary:
+      "How well you know each topic, from your latest review rating or quiz answer on each card and question tagged with it.",
+    details: [
+      "Add topics to a deck or quiz when you create or edit it. The project page then shows each topic's level (Not started, Needs work, Developing or Mastered), how many items you've practiced, and how it changed over the last 8 weeks.",
+      "Mastered needs at least 80% and at least 80% of the topic's items practiced. Practice builds a quiz from the topic's weakest and unpracticed items. Mastery comes only from your study results, never from chats.",
+    ],
+    related: ["concept.project"],
     audience: "everyone",
   },
   "concept.reflection": {
