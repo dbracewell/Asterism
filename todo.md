@@ -30,8 +30,8 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ### [EPIC-59: Shareable team packs](docs/epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)
 
-- [ ] US-59.1: Pack format and ADR
-  - [ ] Write the ADR and schema; implement the validator with tests.
+- [x] US-59.1: Pack format and ADR
+  - [x] Write the ADR and schema; implement the validator with tests.
 - [ ] US-59.2: Export
   - [ ] Implement export selection and serialization; test the round trip and that no secrets are included.
 - [ ] US-59.3: Import with explicit review
