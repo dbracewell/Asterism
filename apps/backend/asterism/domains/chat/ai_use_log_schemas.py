@@ -90,5 +90,7 @@ class LoggedChat(BaseModel):
 
 
 class AiUseLog(BaseModel):
+    """Every timestamp in the log is in Unix seconds."""
+
     generated_at: int
     chats: list[LoggedChat]

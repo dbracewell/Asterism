@@ -23,6 +23,7 @@ DB_COMPOSITION_ROOTS = {
         "asterism.domains.knowledge.models",
         "asterism.domains.projects.models",
         "asterism.domains.prompt_templates.models",
+        "asterism.domains.reflections.models",
         "asterism.domains.settings.models",
         "asterism.domains.skills.models",
         "asterism.domains.study.models",

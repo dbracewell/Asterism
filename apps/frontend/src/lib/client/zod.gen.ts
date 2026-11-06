@@ -1797,6 +1797,68 @@ export const zProviderSettings = z.object({
 });
 
 /**
+ * Reflection
+ */
+export const zReflection = z.object({
+  id: z.uuid(),
+  persona_id: z.uuid(),
+  project_id: z.uuid().nullable(),
+  chat_id: z.uuid().nullable(),
+  learned: z.string(),
+  unclear: z.string(),
+  revision: z.int(),
+  created_at: z.int(),
+  updated_at: z.int(),
+});
+
+/**
+ * ReflectionCreate
+ *
+ * A reflection on one owned chat; its project and persona come from the chat.
+ */
+export const zReflectionCreate = z.object({
+  learned: z.string().max(2000).optional().default(""),
+  unclear: z.string().max(2000).optional().default(""),
+  chat_id: z.uuid(),
+});
+
+/**
+ * ReflectionDraft
+ *
+ * A suggested reflection from the chat; never stored, always edited by the learner.
+ */
+export const zReflectionDraft = z.object({
+  learned: z.string().max(2000),
+  unclear: z.string().max(2000),
+});
+
+/**
+ * ReflectionDraftRequest
+ */
+export const zReflectionDraftRequest = z.object({
+  chat_id: z.uuid(),
+});
+
+/**
+ * ReflectionPage
+ */
+export const zReflectionPage = z.object({
+  items: z.array(zReflection),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
+ * ReflectionUpdate
+ */
+export const zReflectionUpdate = z.object({
+  learned: z.string().max(2000).optional().default(""),
+  unclear: z.string().max(2000).optional().default(""),
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
  * RubricCriterion
  *
  * One assessed aspect; ``descriptors[i]`` describes performance at ``levels[i]``.
@@ -4985,6 +5047,56 @@ export const zRubricUpdatePath = z.object({
  * Successful Response
  */
 export const zRubricUpdateResponse = zRubric;
+
+export const zReflectionDraftCreateBody = zReflectionDraftRequest;
+
+/**
+ * Successful Response
+ */
+export const zReflectionDraftCreateResponse = zReflectionDraft;
+
+export const zReflectionGetManyQuery = z.object({
+  project_id: z.uuid().nullish(),
+  persona_id: z.uuid().nullish(),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(10),
+});
+
+/**
+ * Successful Response
+ */
+export const zReflectionGetManyResponse = zReflectionPage;
+
+export const zReflectionCreateBody = zReflectionCreate;
+
+/**
+ * Successful Response
+ */
+export const zReflectionCreateResponse = zReflection;
+
+export const zReflectionDeletePath = z.object({
+  reflection_id: z.uuid(),
+});
+
+export const zReflectionDeleteQuery = z.object({
+  expected_revision: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Successful Response
+ */
+export const zReflectionDeleteResponse = z.void();
+
+export const zReflectionUpdateBody = zReflectionUpdate;
+
+export const zReflectionUpdatePath = z.object({
+  reflection_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zReflectionUpdateResponse = zReflection;
 
 /**
  * Successful Response

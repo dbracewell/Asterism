@@ -1,10 +1,10 @@
 import type { AiUseLog, LoggedReply, LoggedTurn } from "@/lib/client";
 
-/** How the log states times; tests pass a fixed formatter. */
-export type TimeFormatter = (ms: number) => string;
+/** How the log states times (Unix seconds); tests pass a fixed formatter. */
+export type TimeFormatter = (seconds: number) => string;
 
-export const defaultTimeFormat: TimeFormatter = (ms) =>
-  new Date(ms).toLocaleString(undefined, {
+export const defaultTimeFormat: TimeFormatter = (seconds) =>
+  new Date(seconds * 1000).toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   });

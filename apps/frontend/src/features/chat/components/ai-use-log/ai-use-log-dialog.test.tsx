@@ -26,7 +26,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
 
 const turn = (id: string, prompt: string, exercise = false) => ({
   message_id: id,
-  at: 1_700_000_000_000,
+  at: 1_700_000_000,
   prompt,
   learning_mode: null,
   persona: null,
@@ -37,7 +37,7 @@ const turn = (id: string, prompt: string, exercise = false) => ({
   compared: false,
   reply: {
     message_id: `r-${id}`,
-    at: 1_700_000_000_000,
+    at: 1_700_000_000,
     status: "completed",
     model: "Alpha",
     tools: [],
@@ -49,7 +49,7 @@ const turn = (id: string, prompt: string, exercise = false) => ({
 });
 
 const log: AiUseLog = {
-  generated_at: 1_700_000_000_000,
+  generated_at: 1_700_000_000,
   chats: [
     {
       chat_id: "c1",
@@ -103,9 +103,12 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 it("chooses chats, then prompts, and downloads the selected Markdown", async () => {
+  const downloads: string[] = [];
   const click = vi
     .spyOn(HTMLAnchorElement.prototype, "click")
-    .mockImplementation(() => {});
+    .mockImplementation(function (this: HTMLAnchorElement) {
+      downloads.push(this.download);
+    });
   const invalidate = vi.spyOn(cache, "invalidateQueries");
   const user = userEvent.setup();
   render(
@@ -148,6 +151,8 @@ it("chooses chats, then prompts, and downloads the selected Markdown", async () 
     within(turns).getByRole("button", { name: "Download Markdown" }),
   );
   expect(click).toHaveBeenCalled();
+  // Log times are Unix seconds: 1,700,000,000 is 14 November 2023.
+  expect(downloads).toEqual(["ai-use-log-2023-11-14.md"]);
   const markdown = await blobs[0].text();
   expect(markdown).toContain("# AI-use log");
   expect(markdown).toContain("Second prompt");

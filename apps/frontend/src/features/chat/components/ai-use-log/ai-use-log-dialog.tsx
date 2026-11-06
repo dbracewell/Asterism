@@ -227,7 +227,7 @@ function ChooseTurns({
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = `ai-use-log-${new Date(log.generated_at).toISOString().slice(0, 10)}.md`;
+    link.download = `ai-use-log-${new Date(log.generated_at * 1000).toISOString().slice(0, 10)}.md`;
     link.click();
     URL.revokeObjectURL(url);
   };

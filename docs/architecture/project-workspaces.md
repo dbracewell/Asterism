@@ -305,3 +305,31 @@ after the goal is edited. The message shows "Goal included" and the AI-use log
 lists it. The toggle follows the latest turn until the learner changes it. The
 goal is the learner's own text: it adds no prompt layer and grants nothing.
 See [ADR-0047](../adr/0047-project-learning-goals.md).
+
+## Session reflections (US-58.2)
+
+`reflections` rows hold a learner's answers to "What did I learn?" and "What's
+still unclear?" (each up to 2,000 characters; at least one non-blank). Each row
+is partitioned by `user_id`, `persona_id` (the chat's current persona; deleting
+the persona deletes its reflections) and `project_id` (null for General; a
+deleted project's reflections move to General, like its chats), and links its
+source `chat_id` (set null if the chat is deleted). The server derives the
+project and persona from the owned chat; clients never send them.
+
+| Route                                         | Contract                                                              |
+| --------------------------------------------- | --------------------------------------------------------------------- |
+| `GET /reflections/`                           | Page of one project's (`project_id`) or General's reflections, newest first; optional `persona_id` |
+| `POST /reflections/`                          | `{chat_id, learned, unclear}`, 201                                     |
+| `PUT /reflections/{id}`                       | `{learned, unclear, expected_revision}`; 409 when stale               |
+| `DELETE /reflections/{id}?expected_revision=N`| 204; 409 when stale                                                   |
+| `POST /reflections/draft`                     | `{chat_id}` → `{learned, unclear}` suggestion; never stored           |
+
+The draft runs on the chat-title model (the admin draft model, else the
+caller's own plan); with neither it returns 503. It reads the chat's active
+branch as untrusted text (newest 12,000 characters), leaves out spot-the-error
+answers and tool steps, and asks for first-person suggestions grounded in the
+learner's own messages. **Reflect on this session** in the chat menu opens the
+dialog; the project and General pages list reflections with a persona filter,
+editing and deletion. Agents never read reflections automatically. See
+[ADR-0048](../adr/0048-session-reflections.md).
+

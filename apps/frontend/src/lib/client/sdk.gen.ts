@@ -330,6 +330,21 @@ import type {
   PromptTemplateUpdateData,
   PromptTemplateUpdateErrors,
   PromptTemplateUpdateResponses,
+  ReflectionCreateData,
+  ReflectionCreateErrors,
+  ReflectionCreateResponses,
+  ReflectionDeleteData,
+  ReflectionDeleteErrors,
+  ReflectionDeleteResponses,
+  ReflectionDraftCreateData,
+  ReflectionDraftCreateErrors,
+  ReflectionDraftCreateResponses,
+  ReflectionGetManyData,
+  ReflectionGetManyErrors,
+  ReflectionGetManyResponses,
+  ReflectionUpdateData,
+  ReflectionUpdateErrors,
+  ReflectionUpdateResponses,
   RubricBundledGetManyData,
   RubricBundledGetManyErrors,
   RubricBundledGetManyResponses,
@@ -3612,6 +3627,127 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/rubrics/{rubric_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Draft
+   *
+   * Suggest a reflection from one owned chat; nothing is stored.
+   */
+  public reflectionDraftCreate<ThrowOnError extends boolean = false>(
+    options: Options<ReflectionDraftCreateData, ThrowOnError>,
+  ): RequestResult<
+    ReflectionDraftCreateResponses,
+    ReflectionDraftCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ReflectionDraftCreateResponses,
+      ReflectionDraftCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/reflections/draft",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Reflections
+   *
+   * One project's reflections (General without ``project_id``), optionally one persona's.
+   */
+  public reflectionGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<ReflectionGetManyData, ThrowOnError>,
+  ): RequestResult<
+    ReflectionGetManyResponses,
+    ReflectionGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ReflectionGetManyResponses,
+      ReflectionGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/reflections/",
+      ...options,
+    });
+  }
+
+  /**
+   * Create
+   */
+  public reflectionCreate<ThrowOnError extends boolean = false>(
+    options: Options<ReflectionCreateData, ThrowOnError>,
+  ): RequestResult<
+    ReflectionCreateResponses,
+    ReflectionCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ReflectionCreateResponses,
+      ReflectionCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/reflections/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete
+   */
+  public reflectionDelete<ThrowOnError extends boolean = false>(
+    options: Options<ReflectionDeleteData, ThrowOnError>,
+  ): RequestResult<
+    ReflectionDeleteResponses,
+    ReflectionDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      ReflectionDeleteResponses,
+      ReflectionDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/reflections/{reflection_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update
+   */
+  public reflectionUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ReflectionUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ReflectionUpdateResponses,
+    ReflectionUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ReflectionUpdateResponses,
+      ReflectionUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/reflections/{reflection_id}",
       ...options,
       headers: {
         "Content-Type": "application/json",

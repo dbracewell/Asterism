@@ -1,6 +1,6 @@
 # EPIC-58: Learning goals, reflection and progress
 
-Status: in progress (US-58.1 complete; design in [ADR-0047](../adr/0047-project-learning-goals.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-58.1 complete, US-58.2 implemented; designs in [ADR-0047](../adr/0047-project-learning-goals.md) and [ADR-0048](../adr/0048-session-reflections.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -43,8 +43,8 @@ unclear?". It can suggest a draft based on the chat, which the learner edits
 before saving. Reflections are listed per project, and the learner can edit or
 delete them.
 
-- [ ] Implement the reflection records and the optional draft suggestion.
-- [ ] Build the reflect flow and list; test owner and profile partitioning.
+- [x] Implement the reflection records and the optional draft suggestion.
+- [x] Build the reflect flow and list; test owner and profile partitioning.
 
 ## US-58.3: Topic mastery
 
