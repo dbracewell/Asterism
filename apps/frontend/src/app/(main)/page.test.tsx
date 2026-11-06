@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { defaultPersonas } from "@/test/personas";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -14,6 +15,8 @@ const mocks = vi.hoisted(() => ({
     id: "project",
     name: "Research",
     description: "",
+    goal: "",
+    goal_target_date: null,
   })),
   skills: [] as { id: string; name: string; description: string }[],
   search: "project_id=project",
@@ -143,7 +146,9 @@ afterEach(() => {
 function renderPage() {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <AppPage />
+      <TooltipProvider>
+        <AppPage />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
@@ -177,6 +182,34 @@ it("sends the chosen learning mode with a new chat", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Start chat" }));
   expect(mocks.createChatSession).toHaveBeenCalledWith({
     body: expect.objectContaining({ learning_mode: "tutor" }),
+  });
+});
+it("includes the project's learning goal only when the learner turns it on", async () => {
+  mocks.createChatSession.mockClear();
+  mocks.getProject.mockResolvedValueOnce({
+    id: "project",
+    name: "Research",
+    description: "",
+    goal: "Publish a reef survey",
+    goal_target_date: null,
+  });
+  renderPage();
+  const toggle = await screen.findByRole("button", {
+    name: "Include learning goal",
+  });
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Start chat" })).toBeEnabled(),
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Start chat" }));
+  expect(mocks.createChatSession.mock.calls[0][0].body).not.toHaveProperty(
+    "include_goal",
+  );
+  await userEvent.click(toggle);
+  expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await userEvent.click(screen.getByRole("button", { name: "Start chat" }));
+  expect(mocks.createChatSession.mock.calls[1][0].body).toMatchObject({
+    include_goal: true,
   });
 });
 it("retains an unavailable default without choosing a first-available replacement", async () => {
@@ -237,6 +270,8 @@ it("suggests prompts from the project description and assigned skills and fills 
     id: "project",
     name: "Research",
     description: "Survey reef health. Publish quarterly.",
+    goal: "",
+    goal_target_date: null,
   });
   mocks.skills = [
     { id: "s1", name: "summarize", description: "Condense long sources" },

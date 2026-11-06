@@ -16,6 +16,7 @@ from asterism.domains.agent.schemas import MainAgentConfiguration
 from asterism.domains.agent.skill_inputs import SkillIdentity
 from asterism.domains.files.models import FileContentStatus, FileKind
 from asterism.domains.llm.schemas import LLMMessage, ToolCall, ToolResult
+from asterism.domains.projects.goals import GoalSnapshot
 from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateUse
 from asterism.domains.prompt_templates.rubric_provenance import RubricLabel, RubricProvenance, RubricUse
 from asterism.domains.settings.pricing import ModelPricing
@@ -225,6 +226,8 @@ class Message(LLMMessage):
     template: TemplateLabel | None = None
     # Set on Draft feedback user turns: the pinned rubric (US-57.1).
     rubric: RubricLabel | None = None
+    # Set when the learner included the project's learning goal (US-58.1).
+    goal: GoalSnapshot | None = None
     execution: MessageExecution | None = None
     model_config = ConfigDict(from_attributes=True)
     # Persisted chat content remains plain text; multimodal parts are runtime-only.
@@ -462,6 +465,8 @@ class NewChatRequest(BaseModel):
     skills: SkillSelection | None = None
     template: TemplateUse | None = None
     rubric: RubricUse | None = None
+    # Include the project's learning goal in this turn (US-58.1).
+    include_goal: bool = False
     persona_id: uuid.UUID | None = None
     learning_mode: LearningModeId = LearningModeId.STANDARD
     hint: HintRequest | None = None
@@ -525,6 +530,8 @@ class ChatSendRequest(BaseModel):
     skills: SkillSelection | None = None
     template: TemplateUse | None = None
     rubric: RubricUse | None = None
+    # Include the project's learning goal in this turn (US-58.1).
+    include_goal: bool = False
     hint: HintRequest | None = None
     expected_model_revision: int = Field(ge=1)
     model_config = ConfigDict(extra="forbid")

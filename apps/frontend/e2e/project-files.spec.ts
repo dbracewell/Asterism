@@ -7,6 +7,8 @@ const project = {
   description: "Shared references",
   system_prompt: "",
   context_revision: 3,
+  goal: "",
+  goal_target_date: null,
   created_at: 1,
   updated_at: 1,
 };

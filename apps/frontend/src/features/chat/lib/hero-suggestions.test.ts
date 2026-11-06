@@ -8,6 +8,8 @@ const project = (description: string): Project => ({
   description,
   system_prompt: "",
   accent: null,
+  goal: "",
+  goal_target_date: null,
   context_revision: 1,
   created_at: 0,
   updated_at: 0,

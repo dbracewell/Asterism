@@ -347,6 +347,7 @@ async def compare_existing(
                 hint_level=source.hint_level,
                 accepted_template=source.accepted_template,
                 accepted_rubric=source.accepted_rubric,
+                accepted_goal=source.accepted_goal,
             )
             session.add_all(columns)
             session.add(

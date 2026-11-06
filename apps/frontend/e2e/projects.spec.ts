@@ -8,6 +8,8 @@ const base = {
   description: "Study ocean currents",
   system_prompt: "Cite evidence",
   context_revision: 3,
+  goal: "",
+  goal_target_date: null,
   created_at: 1,
   updated_at: 1,
 };
@@ -172,6 +174,8 @@ test("edits project instructions with a revision guard and explains deletion", a
     "Cite evidence",
   );
   await page.getByLabel("Project instructions").fill("Use concise citations");
+  await page.getByLabel("Learning goal").fill("Publish a currents report");
+  await page.getByLabel("Target date (optional)").fill("2026-12-01");
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(
     page.getByRole("status").filter({ hasText: "Project settings saved" }),
@@ -181,6 +185,8 @@ test("edits project instructions with a revision guard and explains deletion", a
       name: "Research",
       description: "Study ocean currents",
       system_prompt: "Use concise citations",
+      goal: "Publish a currents report",
+      goal_target_date: "2026-12-01",
       expected_context_revision: 3,
     },
   ]);

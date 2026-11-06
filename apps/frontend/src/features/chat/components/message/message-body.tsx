@@ -11,6 +11,7 @@ import {
   ClipboardCheckIcon,
   GraduationCapIcon,
   LayoutTemplateIcon,
+  TargetIcon,
 } from "lucide-react";
 import { levelLabel } from "@/features/templates/lib/levels";
 import { hintLevelLabel } from "@/features/chat/components/chat-hint-controls";
@@ -54,6 +55,16 @@ export const MessageBody = ({ message }: { message: StreamingMessage }) => {
         <TemplateLabel label={message.template} />
       )}
       {fromUser && message.rubric && <RubricLabel label={message.rubric} />}
+      {fromUser && message.goal && (
+        <p
+          className="text-muted-foreground ml-auto flex max-w-full min-w-0 items-center gap-1 text-xs"
+          data-goal-label
+          title={`Learning goal included: ${message.goal.text}${message.goal.target_date ? ` (target ${message.goal.target_date})` : ""}`}
+        >
+          <TargetIcon className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">Goal included: {message.goal.text}</span>
+        </p>
+      )}
       {!fromUser && message.learning_mode && message.execution?.rubric ? (
         <RubricFeedbackReply
           content={message.content}

@@ -5,6 +5,7 @@ built from ORM rows via ``from_attributes``. Batches carry the client's last
 seen ``context_revision`` so services can compare-and-set membership changes.
 """
 
+import datetime
 import uuid
 from typing import Annotated, Literal
 
@@ -15,6 +16,8 @@ from asterism.domains.agent.schemas import SubAgentDefinition
 
 # Trimmed, non-empty project name; mirrors the DB check constraint.
 ProjectName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+
+MAX_GOAL_CHARS = 1_000
 
 # Mirrors models.PROJECT_ACCENTS (a test keeps them in sync).
 ProjectAccent = Literal["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"]
@@ -29,6 +32,8 @@ class ProjectCreate(BaseModel):
     description: str = Field(default="", max_length=10_000)
     system_prompt: str = Field(default="", max_length=100_000)
     accent: ProjectAccent | None = None
+    goal: str = Field(default="", max_length=MAX_GOAL_CHARS)
+    goal_target_date: datetime.date | None = None
 
 
 class ProjectUpdate(BaseModel):
@@ -36,7 +41,8 @@ class ProjectUpdate(BaseModel):
 
     Only fields present in the payload are written; omitted fields are untouched.
     An empty string clears text, but explicit JSON null is rejected for text
-    fields. ``accent`` is the exception: explicit null removes the color.
+    fields. ``accent`` and ``goal_target_date`` are the exceptions: explicit null
+    removes the color or the date.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -47,8 +53,10 @@ class ProjectUpdate(BaseModel):
     description: str | SkipJsonSchema[None] = Field(default=None, max_length=10_000)
     system_prompt: str | SkipJsonSchema[None] = Field(default=None, max_length=100_000)
     accent: ProjectAccent | None = None
+    goal: str | SkipJsonSchema[None] = Field(default=None, max_length=MAX_GOAL_CHARS)
+    goal_target_date: datetime.date | None = None
 
-    @field_validator("name", "description", "system_prompt", mode="before")
+    @field_validator("name", "description", "system_prompt", "goal", mode="before")
     @classmethod
     def reject_explicit_null(cls, value: object) -> object:
         """Reject explicit nulls so omission (no key) is the only skip signal."""
@@ -67,6 +75,9 @@ class Project(BaseModel):
     description: str
     system_prompt: str
     accent: ProjectAccent | None
+    # Learning goal (US-58.1); included in a chat only on explicit request.
+    goal: str
+    goal_target_date: datetime.date | None
     context_revision: int = Field(ge=1)
     created_at: int
     updated_at: int

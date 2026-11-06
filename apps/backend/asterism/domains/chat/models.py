@@ -31,6 +31,7 @@ from asterism.domains.agent.learning_inputs import (
 from asterism.domains.agent.prompts import PersonaSnapshot, PromptSnapshot
 from asterism.domains.agent.skill_inputs import AcceptedSkills, SkillIdentity
 from asterism.domains.llm.schemas import ToolCall, ToolResult
+from asterism.domains.projects.goals import GoalSnapshot
 from asterism.domains.prompt_templates.provenance import TemplateLabel, TemplateProvenance
 from asterism.domains.prompt_templates.rubric_provenance import RubricLabel, RubricSnapshot
 
@@ -198,6 +199,12 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     # acceptance, immutable, and reused by resume and regeneration.
     accepted_rubric: Mapped[RubricSnapshot | None] = mapped_column(
         jsonb_type(TypeAdapter(RubricSnapshot)),
+        nullable=True,
+    )
+    # The project learning goal the learner included in this turn (US-58.1);
+    # pinned at acceptance and immutable.
+    accepted_goal: Mapped[GoalSnapshot | None] = mapped_column(
+        jsonb_type(TypeAdapter(GoalSnapshot)),
         nullable=True,
     )
     # US-54.4: a user turn that is one column of a side-by-side comparison.
@@ -399,6 +406,10 @@ class MessageModel(Base, TimestampMixin, UuidPrimaryKeyMixin):
     def template(self) -> TemplateLabel | None:
         accepted = self.accepted_template
         return TemplateLabel(**accepted.model_dump()) if accepted is not None else None
+
+    @property
+    def goal(self) -> GoalSnapshot | None:
+        return self.accepted_goal
 
     @property
     def rubric(self) -> RubricLabel | None:

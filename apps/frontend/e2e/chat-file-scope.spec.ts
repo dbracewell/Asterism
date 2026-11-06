@@ -84,7 +84,13 @@ test("keeps General isolated and shows two project chats with different local at
       });
     }
     return route.fulfill({
-      json: { id: P, name: "Research", context_revision: 3 },
+      json: {
+        id: P,
+        name: "Research",
+        context_revision: 3,
+        goal: "",
+        goal_target_date: null,
+      },
     });
   });
   await page.route(/\/api\/py\/chat\//, (route) => {

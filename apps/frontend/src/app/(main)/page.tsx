@@ -12,6 +12,7 @@ import {
   comparePayload,
 } from "@/features/chat/components/compare-targets";
 import { LearningModePicker } from "@/features/chat/components/chat-learning-mode-picker";
+import { ChatGoalToggle } from "@/features/chat/components/chat-goal-toggle";
 import {
   ChatRubricPicker,
   useModeTakesRubric,
@@ -61,6 +62,9 @@ export default function AppPage() {
   const [rubric, setRubric] = useState<RubricUse | null>(null);
   const takesRubric = useModeTakesRubric(learningMode);
   const sentRubric = takesRubric ? rubric : null;
+  const [goalChoice, setGoalChoice] = useState(false);
+  const projectGoal = projectId ? project.data?.goal.trim() || null : null;
+  const includeGoal = !!projectGoal && goalChoice;
   const personas = useQuery(personaQueryOptions(user.id));
   const hasPersona =
     !personas.error && personaAvailable(personas.data, personaId);
@@ -135,7 +139,7 @@ export default function AppPage() {
             promptCoach={
               user.settings.prompt_coach_enabled ? { modelId } : undefined
             }
-            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}`}
+            requestScope={`${main.id}:${modelId || "none"}:${personaId ?? "default"}:${learningMode}:${searchParams.get("project_id") ?? "general"}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
             modelSelector={
               <>
                 <ChatModelPicker value={modelId} onChange={setChosenModelId} />
@@ -149,6 +153,13 @@ export default function AppPage() {
                   value={learningMode}
                   onChange={setLearningMode}
                 />
+                {projectGoal && (
+                  <ChatGoalToggle
+                    goal={projectGoal}
+                    value={includeGoal}
+                    onChange={setGoalChoice}
+                  />
+                )}
                 {takesRubric && (
                   <ChatRubricPicker
                     owner={user.id}
@@ -183,6 +194,7 @@ export default function AppPage() {
                   ...(skills ? { skills } : {}),
                   ...(template ? { template } : {}),
                   ...(sentRubric ? { rubric: sentRubric } : {}),
+                  ...(includeGoal ? { include_goal: true } : {}),
                   ...(draftId ? { draft_id: draftId } : {}),
                   ...(compare ? { compare } : comparePayload(compareModels)),
                 },

@@ -67,6 +67,8 @@ test.beforeEach(async ({ context, page }) => {
               "A project with enough content to require vertical scrolling.",
             system_prompt: "",
             context_revision: 0,
+            goal: "",
+            goal_target_date: null,
             created_at: 1,
             updated_at: 1,
           }),

@@ -84,6 +84,7 @@ function turnSection(turn: LoggedTurn, index: number, time: TimeFormatter) {
       `- Template: ${unavailable(turn.template.name, turn.template.available)}, ${turn.template.level} level`,
     );
   if (turn.rubric) lines.push(`- Rubric: ${turn.rubric}`);
+  if (turn.goal) lines.push(`- Learning goal included: ${turn.goal}`);
   if (turn.skills.length) lines.push(`- Skills: ${turn.skills.join(", ")}`);
   if (turn.files.length)
     lines.push(

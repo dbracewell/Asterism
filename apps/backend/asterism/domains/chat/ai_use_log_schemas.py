@@ -72,6 +72,8 @@ class LoggedTurn(BaseModel):
     persona: str | None
     template: LoggedTemplate | None
     rubric: str | None
+    # The project learning goal the learner included in this turn.
+    goal: str | None = None
     skills: list[str]
     files: list[LoggedFile]
     # Set when the turn was one column of a side-by-side comparison.

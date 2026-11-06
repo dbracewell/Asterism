@@ -42,6 +42,7 @@ from asterism.domains.llm.schemas import (
     ToolResult,
 )
 from asterism.domains.llm.token_counting import estimate_text_tokens
+from asterism.domains.projects.goals import render_goal
 from asterism.domains.prompt_templates.provenance import TemplateProvenance
 from asterism.domains.prompt_templates.rubrics import render_rubric
 from asterism.domains.settings import service as settings_service
@@ -434,10 +435,13 @@ class ChatOrchestrator:
             if message.role == "assistant" and message.exercise is not None:
                 # Later turns, in any mode, must not rely on an exercise answer.
                 messages.append(LLMMessage(**{**message.model_dump(), "content": message.content + HISTORY_NOTE}))
-            elif message.role != "user" or not (message.files or message.rubric):
+            elif message.role != "user" or not (message.files or message.rubric or message.goal):
                 messages.append(LLMMessage(**message.model_dump()))
             else:
                 parts: list[TextContentPart | ImageUrlContentPart] = [TextContentPart(text=message.content)]
+                if message.goal is not None:
+                    # The goal the learner included in this turn (US-58.1).
+                    parts.append(TextContentPart(text=render_goal(message.goal)))
                 if message.rubric is not None:
                     # The turn's pinned rubric (US-57.1), even if it was deleted since.
                     parts.append(TextContentPart(text=render_rubric(message.rubric.document)))

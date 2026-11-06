@@ -1,6 +1,6 @@
 # EPIC-58: Learning goals, reflection and progress
 
-Status: proposed. Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-58.1 implemented; design in [ADR-0047](../adr/0047-project-learning-goals.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -28,8 +28,8 @@ Acceptance: a project can have a goal statement and an optional target date,
 shown on the project page. The learner can include the goal in a chat's context
 explicitly. The goal is recorded in provenance when used.
 
-- [ ] Add goal fields to projects and the explicit context inclusion; regenerate the client.
-- [ ] Build goal editing and display; test inclusion and provenance.
+- [x] Add goal fields to projects and the explicit context inclusion; regenerate the client.
+- [x] Build goal editing and display; test inclusion and provenance.
 
 ## US-58.2: Session reflections
 

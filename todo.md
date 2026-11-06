@@ -30,9 +30,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ### [EPIC-58: Learning goals, reflection and progress](docs/epics/EPIC-58-LEARNING-GOALS-REFLECTION-AND-PROGRESS.md)
 
-- [ ] US-58.1: Project learning goals
-  - [ ] Add goal fields to projects and the explicit context inclusion; regenerate the client.
-  - [ ] Build goal editing and display; test inclusion and provenance.
+- [ ] US-58.1: Project learning goals (implemented on `feature/us-58.1-learning-goals`; awaiting confirmation)
+  - [x] Add goal fields to projects and the explicit context inclusion; regenerate the client.
+  - [x] Build goal editing and display; test inclusion and provenance.
 - [ ] US-58.2: Session reflections
   - [ ] Implement the reflection records and the optional draft suggestion.
   - [ ] Build the reflect flow and list; test owner and profile partitioning.

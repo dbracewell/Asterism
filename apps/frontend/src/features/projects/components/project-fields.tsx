@@ -86,6 +86,38 @@ export function ProjectFields({
         </Select>
       </Field>
       <Field>
+        <FieldLabel htmlFor="project-goal">Learning goal</FieldLabel>
+        <Textarea
+          id="project-goal"
+          rows={2}
+          maxLength={1000}
+          value={value.goal ?? ""}
+          disabled={disabled}
+          aria-describedby="project-goal-help"
+          onChange={(event) => onChange({ ...value, goal: event.target.value })}
+        />
+        <FieldDescription id="project-goal-help">
+          What you&apos;re working toward, such as &ldquo;Write a 1,500-word
+          essay on the Silk Road&rdquo;. It is shared with a chat only when you
+          include it in a message.
+        </FieldDescription>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="project-goal-date">
+          Target date (optional)
+        </FieldLabel>
+        <Input
+          id="project-goal-date"
+          type="date"
+          className="w-full sm:w-48"
+          value={value.goal_target_date ?? ""}
+          disabled={disabled}
+          onChange={(event) =>
+            onChange({ ...value, goal_target_date: event.target.value || null })
+          }
+        />
+      </Field>
+      <Field>
         <FieldLabel htmlFor="project-instructions">
           Project instructions
         </FieldLabel>

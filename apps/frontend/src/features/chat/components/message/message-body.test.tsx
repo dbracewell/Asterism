@@ -235,3 +235,24 @@ it("renders replies to a rubric turn as rubric feedback", () => {
     "argumentative-essay",
   );
 });
+
+it("labels turns that included the project's learning goal", () => {
+  render(
+    <MessageBody
+      message={message({
+        goal: {
+          project_id: "p1",
+          text: "Publish a reef survey",
+          target_date: "2026-12-01",
+        },
+      })}
+    />,
+  );
+  const shown = screen
+    .getByText("Goal included: Publish a reef survey")
+    .closest("p");
+  expect(shown).toHaveAttribute(
+    "title",
+    "Learning goal included: Publish a reef survey (target 2026-12-01)",
+  );
+});

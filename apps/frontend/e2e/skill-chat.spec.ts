@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "./support/test";
+import { mockDefaultPersonas } from "./support/personas";
 test.use({ hasTouch: true });
 const skills = [
   {
@@ -150,7 +151,6 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
   test(`real chat component keeps accepted skills across followups and removes them in ${project ? "project" : "General"}`, async ({
     page,
   }) => {
-    const { mockDefaultPersonas } = await import("./support/personas");
     await mockDefaultPersonas(page);
     await mock(page);
     const C = "77777777-7777-4777-8777-777777777777";
@@ -302,7 +302,6 @@ for (const project of [null, "00000000-0000-4000-8000-000000000099"]) {
 test("new project chat forwards ordered skill IDs and stripped prompt through the generated API", async ({
   page,
 }) => {
-  const { mockDefaultPersonas } = await import("./support/personas");
   await mockDefaultPersonas(page);
   await mock(page);
   const project = "00000000-0000-4000-8000-000000000099";
@@ -328,6 +327,8 @@ test("new project chat forwards ordered skill IDs and stripped prompt through th
         description: "",
         system_prompt: "",
         context_revision: 1,
+        goal: "",
+        goal_target_date: null,
       },
     }),
   );

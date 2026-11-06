@@ -850,6 +850,10 @@ export type ChatSendRequest = {
   skills?: SkillSelection | null;
   template?: TemplateUse | null;
   rubric?: RubricUse | null;
+  /**
+   * Include Goal
+   */
+  include_goal?: boolean;
   hint?: HintRequest | null;
   /**
    * Expected Model Revision
@@ -2249,6 +2253,26 @@ export type GenerationDefaults = {
 };
 
 /**
+ * GoalSnapshot
+ *
+ * The project's goal when the turn was accepted; immutable provenance.
+ */
+export type GoalSnapshot = {
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Text
+   */
+  text: string;
+  /**
+   * Target Date
+   */
+  target_date?: string | null;
+};
+
+/**
  * HintLevel
  *
  * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
@@ -2778,6 +2802,10 @@ export type LoggedTurn = {
    */
   rubric: string | null;
   /**
+   * Goal
+   */
+  goal?: string | null;
+  /**
    * Skills
    */
   skills: Array<string>;
@@ -2939,6 +2967,7 @@ export type Message = {
   learning_mode?: LearningModeProvenance | null;
   template?: TemplateLabel | null;
   rubric?: RubricLabel | null;
+  goal?: GoalSnapshot | null;
   execution?: MessageExecution | null;
   /**
    * Id
@@ -3234,6 +3263,10 @@ export type NewChatRequest = {
   template?: TemplateUse | null;
   rubric?: RubricUse | null;
   /**
+   * Include Goal
+   */
+  include_goal?: boolean;
+  /**
    * Persona Id
    */
   persona_id?: string | null;
@@ -3428,6 +3461,14 @@ export type Project = {
     | "pink"
     | null;
   /**
+   * Goal
+   */
+  goal: string;
+  /**
+   * Goal Target Date
+   */
+  goal_target_date: string | null;
+  /**
    * Context Revision
    */
   context_revision: number;
@@ -3472,6 +3513,14 @@ export type ProjectCreate = {
     | "violet"
     | "pink"
     | null;
+  /**
+   * Goal
+   */
+  goal?: string;
+  /**
+   * Goal Target Date
+   */
+  goal_target_date?: string | null;
 };
 
 /**
@@ -3611,7 +3660,8 @@ export type ProjectSubAgentList = {
  *
  * Only fields present in the payload are written; omitted fields are untouched.
  * An empty string clears text, but explicit JSON null is rejected for text
- * fields. ``accent`` is the exception: explicit null removes the color.
+ * fields. ``accent`` and ``goal_target_date`` are the exceptions: explicit null
+ * removes the color or the date.
  */
 export type ProjectUpdate = {
   /**
@@ -3643,6 +3693,14 @@ export type ProjectUpdate = {
     | "violet"
     | "pink"
     | null;
+  /**
+   * Goal
+   */
+  goal?: string;
+  /**
+   * Goal Target Date
+   */
+  goal_target_date?: string | null;
 };
 
 /**
