@@ -483,6 +483,9 @@ import type {
   StudyTopicPracticeData,
   StudyTopicPracticeError,
   StudyTopicPracticeResponse,
+  StudyUnclearCardCreateData,
+  StudyUnclearCardCreateError,
+  StudyUnclearCardCreateResponse,
   StudyWeakSpotGetManyData,
   StudyWeakSpotGetManyError,
   StudyWeakSpotGetManyResponse,
@@ -3802,6 +3805,35 @@ export const studyTopicPracticeMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().studyTopicPractice({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create Unclear Card
+ *
+ * Create one card the learner confirmed from a reflection's unclear items.
+ */
+export const studyUnclearCardCreateMutation = (
+  options?: Partial<Options<StudyUnclearCardCreateData>>,
+): UseMutationOptions<
+  StudyUnclearCardCreateResponse,
+  StudyUnclearCardCreateError,
+  Options<StudyUnclearCardCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyUnclearCardCreateResponse,
+    StudyUnclearCardCreateError,
+    Options<StudyUnclearCardCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyUnclearCardCreate({
         ...options,
         ...fnOptions,
         throwOnError: true,

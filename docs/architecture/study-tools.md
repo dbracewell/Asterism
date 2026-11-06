@@ -202,3 +202,18 @@ each topic's level, score, coverage, a weekly sparkline with a text summary,
 and **Practice**, which opens the new quiz for taking. Deck forms and the quiz
 **Edit details** dialog edit topics as comma-separated text.
 
+## Unclear items (US-58.4)
+
+Decisions are recorded in [ADR-0050](../adr/0050-unclear-items-feed-review.md).
+
+| Route                                              | Behavior                                                                     |
+| -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `POST /projects/{project_id}/study/unclear-cards`  | `{reflection_id, deck_id?, front, back, weak_spot}`; one card (201), 409 if repeated |
+
+**Practice unclear items** on a project reflection lists each "still unclear"
+line. The learner edits the question, writes the answer and adds each card
+separately, into a chosen deck or the "Unclear items" deck. With **Also add to
+weak spots** (on by default) the card appears under weak spots as "Flagged as
+unclear" until it is recalled. The flag is not a review, so it changes neither
+scheduling nor mastery.
+

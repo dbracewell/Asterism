@@ -38,8 +38,8 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Build the reflect flow and list; test owner and profile partitioning.
 - [x] US-58.3: Topic mastery (confirmed and merged 2026-11-06)
   - [x] Implement mastery computation over study data; build the progress view; add tests.
-- [ ] US-58.4: Unclear items feed review
-  - [ ] Add the conversion action and confirmation; test it end to end.
+- [ ] US-58.4: Unclear items feed review (implemented on `feature/us-58.4-unclear-items`; awaiting confirmation)
+  - [x] Add the conversion action and confirmation; test it end to end.
 
 ### [EPIC-59: Shareable team packs](docs/epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)
 

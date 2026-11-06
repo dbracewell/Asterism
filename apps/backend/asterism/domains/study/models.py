@@ -65,6 +65,11 @@ class StudyCardModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     last_reviewed_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
     reps: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     lapses: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    # Set when the card came from a reflection's "still unclear" item (US-58.4).
+    # A plain id, not a foreign key: deleting the reflection keeps the card.
+    source_reflection_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    # When the learner asked for it in weak-spot practice; a miss-like event, not a review.
+    flagged_unclear_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     __table_args__ = (
         # Lets review logs reference (id, user_id) as a composite foreign key.

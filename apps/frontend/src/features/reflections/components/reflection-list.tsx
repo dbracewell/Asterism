@@ -35,6 +35,7 @@ import {
   MAX_REFLECTION_CHARS,
   UNCLEAR_PROMPT,
 } from "./reflect-dialog";
+import { UnclearPracticeDialog } from "./unclear-practice-dialog";
 
 const ALL = "all";
 
@@ -157,6 +158,7 @@ function ReflectionItem({
 }) {
   const id = useId();
   const [editing, setEditing] = useState(false);
+  const [practicing, setPracticing] = useState(false);
   const [learned, setLearned] = useState(reflection.learned);
   const [unclear, setUnclear] = useState(reflection.unclear);
   const update = useMutation({
@@ -185,6 +187,14 @@ function ReflectionItem({
       className="border-border rounded-surface flex min-w-0 flex-col gap-2 border p-3"
     >
       {deletion.dialog}
+      {reflection.project_id && (
+        <UnclearPracticeDialog
+          reflection={reflection}
+          projectId={reflection.project_id}
+          open={practicing}
+          onOpenChange={setPracticing}
+        />
+      )}
       <p className="text-muted-foreground text-xs">
         {when}
         {persona && ` · ${persona}`}
@@ -282,6 +292,16 @@ function ReflectionItem({
       )}
       {!editing && (
         <div className="flex flex-wrap justify-end gap-2">
+          {reflection.project_id && reflection.unclear && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pending}
+              onClick={() => setPracticing(true)}
+            >
+              Practice unclear items
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
