@@ -1,6 +1,6 @@
 # EPIC-57: Writing feedback and AI-use transparency
 
-Status: in progress (US-57.1 through US-57.3 complete, US-57.4 implemented; designs in [ADR-0044](../adr/0044-rubric-draft-feedback.md), [ADR-0045](../adr/0045-inline-draft-comments.md) and [ADR-0046](../adr/0046-ai-use-log.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: complete (2026-11-06; designs in [ADR-0044](../adr/0044-rubric-draft-feedback.md), [ADR-0045](../adr/0045-inline-draft-comments.md) and [ADR-0046](../adr/0046-ai-use-log.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
