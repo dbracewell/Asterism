@@ -52,7 +52,7 @@ async def test_log_lists_each_turn_with_its_recorded_provenance(produced):
     verification = MessageVerification(
         model_id=execution.model.id,
         model_name="Checker",
-        created_at=5,
+        created_at=5_000,
         file_ids=[],
         claims=[
             VerifiedClaim(claim="a", label="supported"),
@@ -68,7 +68,8 @@ async def test_log_lists_each_turn_with_its_recorded_provenance(produced):
     response = await p.client.post(LOG, headers=auth(), json={"chat_ids": [str(chat_id)]})
     assert response.status_code == 200, response.text
     log = response.json()
-    assert log["generated_at"] > 0
+    # Unix seconds, like every other time in the log.
+    assert 1_700_000_000 < log["generated_at"] < 10_000_000_000
     [chat] = log["chats"]
     assert chat["chat_id"] == str(chat_id) and chat["project"] is None
     [turn] = chat["turns"]

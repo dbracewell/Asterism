@@ -4153,6 +4153,134 @@ export type RecordedRun = {
 };
 
 /**
+ * Reflection
+ */
+export type Reflection = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Persona Id
+   */
+  persona_id: string;
+  /**
+   * Project Id
+   */
+  project_id: string | null;
+  /**
+   * Chat Id
+   */
+  chat_id: string | null;
+  /**
+   * Learned
+   */
+  learned: string;
+  /**
+   * Unclear
+   */
+  unclear: string;
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Updated At
+   */
+  updated_at: number;
+};
+
+/**
+ * ReflectionCreate
+ *
+ * A reflection on one owned chat; its project and persona come from the chat.
+ */
+export type ReflectionCreate = {
+  /**
+   * Learned
+   */
+  learned?: string;
+  /**
+   * Unclear
+   */
+  unclear?: string;
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+};
+
+/**
+ * ReflectionDraft
+ *
+ * A suggested reflection from the chat; never stored, always edited by the learner.
+ */
+export type ReflectionDraft = {
+  /**
+   * Learned
+   */
+  learned: string;
+  /**
+   * Unclear
+   */
+  unclear: string;
+};
+
+/**
+ * ReflectionDraftRequest
+ */
+export type ReflectionDraftRequest = {
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+};
+
+/**
+ * ReflectionPage
+ */
+export type ReflectionPage = {
+  /**
+   * Items
+   */
+  items: Array<Reflection>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * ReflectionUpdate
+ */
+export type ReflectionUpdate = {
+  /**
+   * Learned
+   */
+  learned?: string;
+  /**
+   * Unclear
+   */
+  unclear?: string;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
+};
+
+/**
  * Rubric
  */
 export type Rubric = {
@@ -12788,6 +12916,261 @@ export type RubricUpdateResponses = {
 
 export type RubricUpdateResponse =
   RubricUpdateResponses[keyof RubricUpdateResponses];
+
+export type ReflectionDraftCreateData = {
+  body: ReflectionDraftRequest;
+  path?: never;
+  query?: never;
+  url: "/reflections/draft";
+};
+
+export type ReflectionDraftCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+  /**
+   * Bad Gateway
+   */
+  502: ErrorDetail;
+  /**
+   * Service Unavailable
+   */
+  503: ErrorDetail;
+};
+
+export type ReflectionDraftCreateError =
+  ReflectionDraftCreateErrors[keyof ReflectionDraftCreateErrors];
+
+export type ReflectionDraftCreateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ReflectionDraft;
+};
+
+export type ReflectionDraftCreateResponse =
+  ReflectionDraftCreateResponses[keyof ReflectionDraftCreateResponses];
+
+export type ReflectionGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Project Id
+     */
+    project_id?: string | null;
+    /**
+     * Persona Id
+     */
+    persona_id?: string | null;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/reflections/";
+};
+
+export type ReflectionGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ReflectionGetManyError =
+  ReflectionGetManyErrors[keyof ReflectionGetManyErrors];
+
+export type ReflectionGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: ReflectionPage;
+};
+
+export type ReflectionGetManyResponse =
+  ReflectionGetManyResponses[keyof ReflectionGetManyResponses];
+
+export type ReflectionCreateData = {
+  body: ReflectionCreate;
+  path?: never;
+  query?: never;
+  url: "/reflections/";
+};
+
+export type ReflectionCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ReflectionCreateError =
+  ReflectionCreateErrors[keyof ReflectionCreateErrors];
+
+export type ReflectionCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: Reflection;
+};
+
+export type ReflectionCreateResponse =
+  ReflectionCreateResponses[keyof ReflectionCreateResponses];
+
+export type ReflectionDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Reflection Id
+     */
+    reflection_id: string;
+  };
+  query: {
+    /**
+     * Expected Revision
+     */
+    expected_revision: number;
+  };
+  url: "/reflections/{reflection_id}";
+};
+
+export type ReflectionDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ReflectionDeleteError =
+  ReflectionDeleteErrors[keyof ReflectionDeleteErrors];
+
+export type ReflectionDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ReflectionDeleteResponse =
+  ReflectionDeleteResponses[keyof ReflectionDeleteResponses];
+
+export type ReflectionUpdateData = {
+  body: ReflectionUpdate;
+  path: {
+    /**
+     * Reflection Id
+     */
+    reflection_id: string;
+  };
+  query?: never;
+  url: "/reflections/{reflection_id}";
+};
+
+export type ReflectionUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ReflectionUpdateError =
+  ReflectionUpdateErrors[keyof ReflectionUpdateErrors];
+
+export type ReflectionUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Reflection;
+};
+
+export type ReflectionUpdateResponse =
+  ReflectionUpdateResponses[keyof ReflectionUpdateResponses];
 
 export type ChatgptPolicyGetData = {
   body?: never;

@@ -21,6 +21,7 @@ import { ProjectFiles } from "./project-files";
 import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
 import { ProjectGoal } from "./project-goal";
+import { ReflectionList } from "@/features/reflections/components/reflection-list";
 import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
 import { ProjectStudyDecks } from "@/features/study/components/project-study-decks";
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
@@ -119,6 +120,10 @@ export function ProjectWorkspace({
                 targetDate={project.data.goal_target_date}
               />
               <WorkspaceChats key={projectId} projectId={projectId} />
+              <ReflectionList
+                key={`reflections-${projectId}`}
+                projectId={projectId}
+              />
               <ProjectStudyDecks
                 key={`study-${projectId}`}
                 projectId={projectId}

@@ -25,6 +25,7 @@ export type HelpId =
   | "concept.mode-research"
   | "concept.rubric"
   | "concept.ai-use-log"
+  | "concept.reflection"
   | "concept.hint-levels"
   | "concept.answer-reveal"
   | "concept.mode-lock"
@@ -232,6 +233,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "The assistant only searches if your agent has a search tool that's turned on. Otherwise it suggests searches you can run and works with the sources you share. Always check a source yourself before you rely on it.",
     ],
     related: ["concept.learning-mode", "concept.citation"],
+    audience: "everyone",
+  },
+  "concept.reflection": {
+    title: "Reflection",
+    summary:
+      "A short note at the end of a session about what you learned and what's still unclear. Reflections are listed on the project page, or the General page for General chats.",
+    details: [
+      "Choose Reflect on this session in a chat's menu. Suggest a draft fills both answers from the chat; edit it so it says what you think before saving.",
+      "Reflections are yours only. Each is filed under the chat's project and persona, and the assistant doesn't read them automatically.",
+    ],
+    related: ["concept.project", "concept.persona"],
     audience: "everyone",
   },
   "concept.ai-use-log": {

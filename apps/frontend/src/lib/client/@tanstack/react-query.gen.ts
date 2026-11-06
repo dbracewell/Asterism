@@ -330,6 +330,21 @@ import type {
   PromptTemplateUpdateData,
   PromptTemplateUpdateError,
   PromptTemplateUpdateResponse,
+  ReflectionCreateData,
+  ReflectionCreateError,
+  ReflectionCreateResponse,
+  ReflectionDeleteData,
+  ReflectionDeleteError,
+  ReflectionDeleteResponse,
+  ReflectionDraftCreateData,
+  ReflectionDraftCreateError,
+  ReflectionDraftCreateResponse,
+  ReflectionGetManyData,
+  ReflectionGetManyError,
+  ReflectionGetManyResponse,
+  ReflectionUpdateData,
+  ReflectionUpdateError,
+  ReflectionUpdateResponse,
   RubricBundledGetManyData,
   RubricBundledGetManyError,
   RubricBundledGetManyResponse,
@@ -5115,6 +5130,198 @@ export const rubricUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().rubricUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Draft
+ *
+ * Suggest a reflection from one owned chat; nothing is stored.
+ */
+export const reflectionDraftCreateMutation = (
+  options?: Partial<Options<ReflectionDraftCreateData>>,
+): UseMutationOptions<
+  ReflectionDraftCreateResponse,
+  ReflectionDraftCreateError,
+  Options<ReflectionDraftCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReflectionDraftCreateResponse,
+    ReflectionDraftCreateError,
+    Options<ReflectionDraftCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().reflectionDraftCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const reflectionGetManyQueryKey = (
+  options?: Options<ReflectionGetManyData>,
+) => createQueryKey("reflectionGetMany", options);
+
+/**
+ * List Reflections
+ *
+ * One project's reflections (General without ``project_id``), optionally one persona's.
+ */
+export const reflectionGetManyOptions = (
+  options?: Options<ReflectionGetManyData>,
+) =>
+  queryOptions<
+    ReflectionGetManyResponse,
+    ReflectionGetManyError,
+    ReflectionGetManyResponse,
+    ReturnType<typeof reflectionGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().reflectionGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: reflectionGetManyQueryKey(options),
+  });
+
+export const reflectionGetManyInfiniteQueryKey = (
+  options?: Options<ReflectionGetManyData>,
+): QueryKey<Options<ReflectionGetManyData>> =>
+  createQueryKey("reflectionGetMany", options, true);
+
+/**
+ * List Reflections
+ *
+ * One project's reflections (General without ``project_id``), optionally one persona's.
+ */
+export const reflectionGetManyInfiniteOptions = (
+  options?: Options<ReflectionGetManyData>,
+) =>
+  infiniteQueryOptions<
+    ReflectionGetManyResponse,
+    ReflectionGetManyError,
+    InfiniteData<ReflectionGetManyResponse>,
+    QueryKey<Options<ReflectionGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ReflectionGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ReflectionGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().reflectionGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: reflectionGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create
+ */
+export const reflectionCreateMutation = (
+  options?: Partial<Options<ReflectionCreateData>>,
+): UseMutationOptions<
+  ReflectionCreateResponse,
+  ReflectionCreateError,
+  Options<ReflectionCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReflectionCreateResponse,
+    ReflectionCreateError,
+    Options<ReflectionCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().reflectionCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete
+ */
+export const reflectionDeleteMutation = (
+  options?: Partial<Options<ReflectionDeleteData>>,
+): UseMutationOptions<
+  ReflectionDeleteResponse,
+  ReflectionDeleteError,
+  Options<ReflectionDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReflectionDeleteResponse,
+    ReflectionDeleteError,
+    Options<ReflectionDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().reflectionDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update
+ */
+export const reflectionUpdateMutation = (
+  options?: Partial<Options<ReflectionUpdateData>>,
+): UseMutationOptions<
+  ReflectionUpdateResponse,
+  ReflectionUpdateError,
+  Options<ReflectionUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReflectionUpdateResponse,
+    ReflectionUpdateError,
+    Options<ReflectionUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().reflectionUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

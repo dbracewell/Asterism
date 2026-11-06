@@ -73,26 +73,29 @@ export function ProjectsHarness({
   const [cache] = useState(createTestCache);
   return (
     <QueryClientProvider client={cache}>
-      <SidebarProvider defaultOpen>
-        <Sidebar>
-          <SidebarContent>
-            <NavWorkspaces />
-          </SidebarContent>
-        </Sidebar>
-        <SidebarInset>
-          {view === "settings" ? (
-            <ProjectWorkspace projectId={projectId} settings />
-          ) : view === "overview" ? (
-            <ProjectWorkspace projectId={PROJECT_ID} />
-          ) : view === "general" ? (
-            <WorkspaceChats projectId={null} />
-          ) : view === "chat" ? (
-            <ChatView />
-          ) : (
-            <ProjectList />
-          )}
-        </SidebarInset>
-      </SidebarProvider>
+      {/* Project pages list the owner's private reflections (US-58.2). */}
+      <UserProvider user={TEST_USER}>
+        <SidebarProvider defaultOpen>
+          <Sidebar>
+            <SidebarContent>
+              <NavWorkspaces />
+            </SidebarContent>
+          </Sidebar>
+          <SidebarInset>
+            {view === "settings" ? (
+              <ProjectWorkspace projectId={projectId} settings />
+            ) : view === "overview" ? (
+              <ProjectWorkspace projectId={PROJECT_ID} />
+            ) : view === "general" ? (
+              <WorkspaceChats projectId={null} />
+            ) : view === "chat" ? (
+              <ChatView />
+            ) : (
+              <ProjectList />
+            )}
+          </SidebarInset>
+        </SidebarProvider>
+      </UserProvider>
     </QueryClientProvider>
   );
 }

@@ -36,7 +36,8 @@ def _verification(record: MessageVerification | None) -> LoggedVerification | No
     labels = [claim.label for claim in record.claims]
     return LoggedVerification(
         model=record.model_name,
-        at=record.created_at,
+        # Verify passes record milliseconds; the log uses Unix seconds throughout.
+        at=record.created_at // 1000,
         supported=labels.count("supported"),
         unsupported=labels.count("unsupported"),
         contradicted=labels.count("contradicted"),
@@ -134,4 +135,4 @@ async def build_log(*, user_id: str, request: AiUseLogRequest, session: AsyncSes
                 turns=turns(chat.messages),
             )
         )
-    return AiUseLog(generated_at=int(time.time() * 1000), chats=chats)
+    return AiUseLog(generated_at=int(time.time()), chats=chats)
