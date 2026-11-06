@@ -43,7 +43,7 @@ Acceptance: from project settings, the user picks which sub-agents, skills,
 templates and settings to include and downloads a pack. Models are exported as
 requirements, not IDs.
 
-- [ ] Implement export selection and serialization; test the round trip and that no secrets are included.
+- [x] Implement export selection and serialization; test the round trip and that no secrets are included.
 
 ## US-59.3: Import with explicit review
 

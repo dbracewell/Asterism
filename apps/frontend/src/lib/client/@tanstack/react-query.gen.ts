@@ -288,6 +288,9 @@ import type {
   ProjectGetOneData,
   ProjectGetOneError,
   ProjectGetOneResponse,
+  ProjectPackExportData,
+  ProjectPackExportError,
+  ProjectPackExportResponse,
   ProjectSubAgentCandidatesData,
   ProjectSubAgentCandidatesError,
   ProjectSubAgentCandidatesResponse,
@@ -2876,6 +2879,35 @@ export const projectSubAgentCandidatesInfiniteOptions = (
       queryKey: projectSubAgentCandidatesInfiniteQueryKey(options),
     },
   );
+
+/**
+ * Create Pack Export
+ *
+ * Build a pack file from the chosen items. Nothing is stored or changed.
+ */
+export const projectPackExportMutation = (
+  options?: Partial<Options<ProjectPackExportData>>,
+): UseMutationOptions<
+  ProjectPackExportResponse,
+  ProjectPackExportError,
+  Options<ProjectPackExportData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ProjectPackExportResponse,
+    ProjectPackExportError,
+    Options<ProjectPackExportData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().projectPackExport({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const studyDeckGetManyQueryKey = (
   options: Options<StudyDeckGetManyData>,

@@ -3254,6 +3254,26 @@ export type ModelProvenance = {
 };
 
 /**
+ * ModelRequirements
+ *
+ * What a sub-agent's model must support; the importer picks the model.
+ */
+export type ModelRequirements = {
+  /**
+   * Tools
+   */
+  tools?: boolean;
+  /**
+   * Vision
+   */
+  vision?: boolean;
+  /**
+   * Min Context Window
+   */
+  min_context_window?: number | null;
+};
+
+/**
  * NewChatRequest
  */
 export type NewChatRequest = {
@@ -3310,6 +3330,225 @@ export type OmissionKind =
   | "retrieval"
   | "retrieved_excerpt"
   | "forwarded_context";
+
+/**
+ * PackExportRequest
+ *
+ * What to include. Nothing is exported unless it is named here.
+ */
+export type PackExportRequest = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description?: string;
+  /**
+   * Version
+   */
+  version?: string;
+  /**
+   * Sub Agent Ids
+   */
+  sub_agent_ids?: Array<string>;
+  /**
+   * Skill Ids
+   */
+  skill_ids?: Array<string>;
+  /**
+   * Template Ids
+   */
+  template_ids?: Array<string>;
+  /**
+   * Rubric Ids
+   */
+  rubric_ids?: Array<string>;
+  /**
+   * Include Project Settings
+   */
+  include_project_settings?: boolean;
+};
+
+/**
+ * PackIdentity
+ *
+ * Stable identity and version, recorded as provenance on imported items.
+ */
+export type PackIdentity = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Version
+   */
+  version: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description?: string;
+  /**
+   * Author
+   */
+  author?: string;
+};
+
+/**
+ * PackManifest
+ *
+ * Version 1 of the team-pack file. Unknown sections and fields are rejected.
+ */
+export type PackManifest = {
+  /**
+   * Format
+   */
+  format: "asterism.team-pack";
+  /**
+   * Format Version
+   */
+  format_version: 1;
+  pack: PackIdentity;
+  /**
+   * Sub Agents
+   */
+  sub_agents?: Array<PackSubAgent>;
+  /**
+   * Skills
+   */
+  skills?: Array<PackSkill>;
+  /**
+   * Templates
+   */
+  templates?: Array<PackTemplate>;
+  /**
+   * Rubrics
+   */
+  rubrics?: Array<PackRubric>;
+  project?: PackProject | null;
+};
+
+/**
+ * PackProject
+ *
+ * Project settings; ``sub_agents`` are keys of this pack's sub-agents.
+ */
+export type PackProject = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description?: string;
+  /**
+   * System Prompt
+   */
+  system_prompt?: string;
+  /**
+   * Accent
+   */
+  accent?:
+    | "red"
+    | "orange"
+    | "amber"
+    | "green"
+    | "teal"
+    | "sky"
+    | "violet"
+    | "pink"
+    | null;
+  /**
+   * Goal
+   */
+  goal?: string;
+  /**
+   * Sub Agents
+   */
+  sub_agents?: Array<string>;
+};
+
+/**
+ * PackRubric
+ */
+export type PackRubric = {
+  /**
+   * Key
+   */
+  key: string;
+  document: RubricDocument;
+};
+
+/**
+ * PackSkill
+ *
+ * A SKILL.md document; name and description derive from its frontmatter.
+ */
+export type PackSkill = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Content
+   */
+  content: string;
+  /**
+   * Request Main Agent Assignment
+   */
+  request_main_agent_assignment?: boolean;
+};
+
+/**
+ * PackSubAgent
+ *
+ * A sub-agent definition without a model binding or any granted tools.
+ */
+export type PackSubAgent = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description?: string;
+  /**
+   * Instructions
+   */
+  instructions?: string;
+  /**
+   * Max Steps
+   */
+  max_steps?: number;
+  generation?: GenerationDefaults;
+  /**
+   * Requested Tools
+   */
+  requested_tools?: Array<string>;
+  model_requirements?: ModelRequirements;
+};
+
+/**
+ * PackTemplate
+ */
+export type PackTemplate = {
+  /**
+   * Key
+   */
+  key: string;
+  document: TemplateDocument;
+};
 
 /**
  * PersonaCollection
@@ -10060,6 +10299,50 @@ export type ProjectSubAgentCandidatesResponses = {
 
 export type ProjectSubAgentCandidatesResponse =
   ProjectSubAgentCandidatesResponses[keyof ProjectSubAgentCandidatesResponses];
+
+export type ProjectPackExportData = {
+  body: PackExportRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/pack-export";
+};
+
+export type ProjectPackExportErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ProjectPackExportError =
+  ProjectPackExportErrors[keyof ProjectPackExportErrors];
+
+export type ProjectPackExportResponses = {
+  /**
+   * Successful Response
+   */
+  200: PackManifest;
+};
+
+export type ProjectPackExportResponse =
+  ProjectPackExportResponses[keyof ProjectPackExportResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;
