@@ -24,6 +24,7 @@ export type HelpId =
   | "concept.mode-draft-feedback"
   | "concept.mode-research"
   | "concept.rubric"
+  | "concept.ai-use-log"
   | "concept.hint-levels"
   | "concept.answer-reveal"
   | "concept.mode-lock"
@@ -230,6 +231,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "The assistant only searches if your agent has a search tool that's turned on. Otherwise it suggests searches you can run and works with the sources you share. Always check a source yourself before you rely on it.",
     ],
     related: ["concept.learning-mode", "concept.citation"],
+    audience: "everyone",
+  },
+  "concept.ai-use-log": {
+    title: "AI-use log",
+    summary:
+      "A record you can share with a teacher of how you used AI: your prompts, modes, models, templates, files and verification results, with times.",
+    details: [
+      "Open it from a chat's actions menu or with Export AI-use log on a project. Choose the chats, untick any prompts you want to leave out, then download Markdown or save a PDF.",
+      "The log only documents what Asterism recorded. It can't detect AI use, and it doesn't include the assistant's answers. Spot-the-error answers are labelled as exercises.",
+    ],
+    related: ["concept.learning-mode", "concept.template"],
     audience: "everyone",
   },
   "concept.rubric": {

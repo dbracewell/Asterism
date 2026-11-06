@@ -22,6 +22,7 @@ from asterism.domains.chat.orchestrator import ChatOrchestrator
 from asterism.domains.files.schemas import FilePreview, UserFile, UserFileList
 from asterism.domains.user.dependencies import AuthedUserDep
 
+from .ai_use_log_schemas import AiUseLog, AiUseLogRequest
 from .disagreement_schemas import DisagreementRequest, DisagreementSummary
 from .draft_comment_schemas import DraftCommentSummary, DraftCommentUpdate, DraftReview
 from .exercise_schemas import ExerciseAttemptRequest, ExerciseView
@@ -232,6 +233,18 @@ async def list_sessions(
         page_size=page_size,
         session=db,
     )
+
+
+@chat_router.post(
+    "/ai-use-log",
+    operation_id="chatAiUseLogCreate",
+    response_model=AiUseLog,
+)
+async def ai_use_log(payload: AiUseLogRequest, user: AuthedUserDep, db: DBSessionDep) -> AiUseLog:
+    """Recorded provenance of the selected chats for an AI-use log; owner only (US-57.4)."""
+    from .ai_use_log import build_log
+
+    return await build_log(user_id=user.id, request=payload, session=db)
 
 
 @chat_router.delete(

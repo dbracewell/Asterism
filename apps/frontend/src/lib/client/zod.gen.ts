@@ -23,6 +23,13 @@ export const zActiveSkillState = z.object({
 });
 
 /**
+ * AiUseLogRequest
+ */
+export const zAiUseLogRequest = z.object({
+  chat_ids: z.array(z.uuid()).min(1).max(50),
+});
+
+/**
  * Body_chatDraftUpload
  */
 export const zBodyChatDraftUpload = z.object({
@@ -1083,6 +1090,88 @@ export const zLearningModeProvenance = z.object({
   name: z.string(),
   version: z.int().gte(1),
   hint_level: zHintLevel.nullish(),
+});
+
+/**
+ * LoggedFile
+ */
+export const zLoggedFile = z.object({
+  name: z.string(),
+  available: z.boolean(),
+});
+
+/**
+ * LoggedTemplate
+ */
+export const zLoggedTemplate = z.object({
+  name: z.string(),
+  level: z.string(),
+  available: z.boolean(),
+});
+
+/**
+ * LoggedVerification
+ *
+ * Counts of the latest verify pass's claim labels.
+ */
+export const zLoggedVerification = z.object({
+  model: z.string(),
+  at: z.int(),
+  supported: z.int(),
+  unsupported: z.int(),
+  contradicted: z.int(),
+  unchecked: z.int(),
+});
+
+/**
+ * LoggedReply
+ */
+export const zLoggedReply = z.object({
+  message_id: z.uuid(),
+  at: z.int(),
+  status: z.string(),
+  model: z.string().nullable(),
+  tools: z.array(z.string()),
+  cited_files: z.array(z.string()),
+  exercise: z.boolean(),
+  verification: zLoggedVerification.nullable(),
+  draft_comments: zDraftCommentSummary.nullable(),
+});
+
+/**
+ * LoggedTurn
+ */
+export const zLoggedTurn = z.object({
+  message_id: z.uuid(),
+  at: z.int(),
+  prompt: z.string(),
+  learning_mode: zLearningModeProvenance.nullable(),
+  persona: z.string().nullable(),
+  template: zLoggedTemplate.nullable(),
+  rubric: z.string().nullable(),
+  skills: z.array(z.string()),
+  files: z.array(zLoggedFile),
+  compared: z.boolean(),
+  reply: zLoggedReply.nullable(),
+});
+
+/**
+ * LoggedChat
+ */
+export const zLoggedChat = z.object({
+  chat_id: z.uuid(),
+  title: z.string().nullable(),
+  project: z.string().nullable(),
+  created_at: z.int(),
+  turns: z.array(zLoggedTurn),
+});
+
+/**
+ * AiUseLog
+ */
+export const zAiUseLog = z.object({
+  generated_at: z.int(),
+  chats: z.array(zLoggedChat),
 });
 
 /**
@@ -3737,6 +3826,13 @@ export const zChatSessionCreateBody = zNewChatRequest;
  * Successful Response
  */
 export const zChatSessionCreateResponse = zChat;
+
+export const zChatAiUseLogCreateBody = zAiUseLogRequest;
+
+/**
+ * Successful Response
+ */
+export const zChatAiUseLogCreateResponse = zAiUseLog;
 
 export const zChatSessionBulkDeleteBody = zBulkDeleteChatRequest;
 

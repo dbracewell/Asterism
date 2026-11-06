@@ -72,6 +72,9 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateError,
   AppToolSettingsUpdateResponse,
+  ChatAiUseLogCreateData,
+  ChatAiUseLogCreateError,
+  ChatAiUseLogCreateResponse,
   ChatComparisonActivateData,
   ChatComparisonActivateError,
   ChatComparisonActivateResponse,
@@ -1269,6 +1272,35 @@ export const chatSessionCreateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().chatSessionCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Ai Use Log
+ *
+ * Recorded provenance of the selected chats for an AI-use log; owner only (US-57.4).
+ */
+export const chatAiUseLogCreateMutation = (
+  options?: Partial<Options<ChatAiUseLogCreateData>>,
+): UseMutationOptions<
+  ChatAiUseLogCreateResponse,
+  ChatAiUseLogCreateError,
+  Options<ChatAiUseLogCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ChatAiUseLogCreateResponse,
+    ChatAiUseLogCreateError,
+    Options<ChatAiUseLogCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().chatAiUseLogCreate({
         ...options,
         ...fnOptions,
         throwOnError: true,

@@ -38,9 +38,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Test anchoring accuracy and resolution state.
 - [x] US-57.3: Research assistant mode (confirmed and merged 2026-11-03)
   - [x] Write the mode instructions and an outline output format; add evaluation fixtures.
-- [ ] US-57.4: AI-use log export
-  - [ ] Build the log from recorded provenance; add selection and export.
-  - [ ] Test completeness, owner scoping and labelling.
+- [ ] US-57.4: AI-use log export (implemented on `feature/us-57.4-ai-use-log`; awaiting confirmation)
+  - [x] Build the log from recorded provenance; add selection and export.
+  - [x] Test completeness, owner scoping and labelling.
 
 ### [EPIC-58: Learning goals, reflection and progress](docs/epics/EPIC-58-LEARNING-GOALS-REFLECTION-AND-PROGRESS.md)
 

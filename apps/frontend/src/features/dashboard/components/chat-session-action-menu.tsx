@@ -21,6 +21,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidebarMenuAction } from "@/components/ui/sidebar";
+import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
 import { useChatSessionCrud } from "@/features/chat/hooks/use-chat-session-crud";
 import { MoveChatDialog } from "@/features/projects/components/move-chat-dialog";
 import { client } from "@/lib/api";
@@ -32,6 +33,7 @@ import {
   EllipsisIcon,
   FolderInputIcon,
   PencilIcon,
+  ScrollTextIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useState } from "react";
@@ -45,7 +47,7 @@ export const ChatSessionActionMenu = ({
   variant?: "sidebar" | "header";
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dialog, setDialog] = useState<"rename" | "move" | null>(null);
+  const [dialog, setDialog] = useState<"rename" | "move" | "log" | null>(null);
   const { deleteChatSession, isDeleting } = useChatSessionCrud();
   const { confirm, dialog: confirmDialog } = useConfirmationDialog({
     title: "Delete chat?",
@@ -89,6 +91,9 @@ export const ChatSessionActionMenu = ({
             <DropdownMenuItem onSelect={() => setDialog("move")}>
               <FolderInputIcon /> Move
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setDialog("log")}>
+              <ScrollTextIcon /> Export AI-use log
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
@@ -119,6 +124,12 @@ export const ChatSessionActionMenu = ({
       <MoveChatDialog
         info={chat}
         open={dialog === "move"}
+        onOpenChange={closeDialog}
+      />
+      <AiUseLogDialog
+        projectId={chat.project_id ?? null}
+        initialChatIds={[chat.id]}
+        open={dialog === "log"}
         onOpenChange={closeDialog}
       />
     </>

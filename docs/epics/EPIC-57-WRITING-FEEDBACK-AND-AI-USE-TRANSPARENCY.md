@@ -1,6 +1,6 @@
 # EPIC-57: Writing feedback and AI-use transparency
 
-Status: in progress (US-57.1 through US-57.3 complete; designs in [ADR-0044](../adr/0044-rubric-draft-feedback.md) and [ADR-0045](../adr/0045-inline-draft-comments.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-57.1 through US-57.3 complete, US-57.4 implemented; designs in [ADR-0044](../adr/0044-rubric-draft-feedback.md), [ADR-0045](../adr/0045-inline-draft-comments.md) and [ADR-0046](../adr/0046-ai-use-log.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -70,5 +70,5 @@ PDF) listing their prompts, modes, models, templates, files used and
 verification results, with timestamps. The student chooses which chats and
 messages to include. Exercise content (US-55.4) is labelled.
 
-- [ ] Build the log from recorded provenance; add selection and export.
-- [ ] Test completeness, owner scoping and labelling.
+- [x] Build the log from recorded provenance; add selection and export.
+- [x] Test completeness, owner scoping and labelling.
