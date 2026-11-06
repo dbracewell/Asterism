@@ -10,7 +10,7 @@ EPIC-39 and EPIC-40 are confirmed complete and archived in the
 [2026-10-25 checklist](docs/archive/todo-completed-2026-10-25.md).
 The 320px short-height composer clipping is fixed in US-40.4.
 
-EPIC-57 (US-57.1 through US-57.4) is confirmed complete and archived in the [2026-11-06 checklist](docs/archive/todo-completed-2026-11-06.md); EPIC-58 is next. EPIC-55 (US-55.1 through US-55.4) is confirmed complete and archived in the [2026-11-03 checklist](docs/archive/todo-completed-2026-11-03.md). EPIC-56 (US-56.1 through US-56.6) and EPIC-54 (US-54.1 through US-54.6) are confirmed complete and archived in the [2026-11-02 checklist](docs/archive/todo-completed-2026-11-02.md). EPIC-62 (US-62.1 and US-62.2) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-49 (ChatGPT plan connection) and EPIC-50
+EPIC-57 (US-57.1 through US-57.4) is confirmed complete and archived in the [2026-11-06 checklist](docs/archive/todo-completed-2026-11-06.md); EPIC-58 is in progress. EPIC-55 (US-55.1 through US-55.4) is confirmed complete and archived in the [2026-11-03 checklist](docs/archive/todo-completed-2026-11-03.md). EPIC-56 (US-56.1 through US-56.6) and EPIC-54 (US-54.1 through US-54.6) are confirmed complete and archived in the [2026-11-02 checklist](docs/archive/todo-completed-2026-11-02.md). EPIC-62 (US-62.1 and US-62.2) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-53 (US-53.1 through US-53.6) is confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-61 (US-61.1 through US-61.5) and EPIC-52 (US-52.1 through US-52.5) are confirmed complete and archived in the [2026-11-01 checklist](docs/archive/todo-completed-2026-11-01.md). EPIC-51 (US-51.1 through US-51.7) is confirmed complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-49 (ChatGPT plan connection) and EPIC-50
 (ChatGPT plan chat titles) are confirmed
 complete and archived in the [2026-10-31 checklist](docs/archive/todo-completed-2026-10-31.md). EPIC-47 (quality baseline cleanup) and EPIC-48
 (first-run provider setup) are confirmed complete and archived in the [2026-10-30 checklist](docs/archive/todo-completed-2026-10-30.md). Earlier verification
@@ -30,7 +30,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ### [EPIC-58: Learning goals, reflection and progress](docs/epics/EPIC-58-LEARNING-GOALS-REFLECTION-AND-PROGRESS.md)
 
-- [ ] US-58.1: Project learning goals (implemented on `feature/us-58.1-learning-goals`; awaiting confirmation)
+- [x] US-58.1: Project learning goals (confirmed and merged 2026-11-06)
   - [x] Add goal fields to projects and the explicit context inclusion; regenerate the client.
   - [x] Build goal editing and display; test inclusion and provenance.
 - [ ] US-58.2: Session reflections
