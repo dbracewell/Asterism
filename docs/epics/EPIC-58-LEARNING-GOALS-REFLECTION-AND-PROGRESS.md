@@ -1,6 +1,6 @@
 # EPIC-58: Learning goals, reflection and progress
 
-Status: in progress (US-58.1 through US-58.3 complete, US-58.4 implemented; designs in [ADR-0047](../adr/0047-project-learning-goals.md), [ADR-0048](../adr/0048-session-reflections.md), [ADR-0049](../adr/0049-topic-mastery.md) and [ADR-0050](../adr/0050-unclear-items-feed-review.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: complete (2026-11-06; designs in [ADR-0047](../adr/0047-project-learning-goals.md), [ADR-0048](../adr/0048-session-reflections.md), [ADR-0049](../adr/0049-topic-mastery.md) and [ADR-0050](../adr/0050-unclear-items-feed-review.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
