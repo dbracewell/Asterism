@@ -72,6 +72,9 @@ import type {
   AppToolSettingsUpdateData,
   AppToolSettingsUpdateErrors,
   AppToolSettingsUpdateResponses,
+  ChatAiUseLogCreateData,
+  ChatAiUseLogCreateErrors,
+  ChatAiUseLogCreateResponses,
   ChatComparisonActivateData,
   ChatComparisonActivateErrors,
   ChatComparisonActivateResponses,
@@ -1053,6 +1056,33 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/chat/",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Ai Use Log
+   *
+   * Recorded provenance of the selected chats for an AI-use log; owner only (US-57.4).
+   */
+  public chatAiUseLogCreate<ThrowOnError extends boolean = false>(
+    options: Options<ChatAiUseLogCreateData, ThrowOnError>,
+  ): RequestResult<
+    ChatAiUseLogCreateResponses,
+    ChatAiUseLogCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ChatAiUseLogCreateResponses,
+      ChatAiUseLogCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/chat/ai-use-log",
       ...options,
       headers: {
         "Content-Type": "application/json",

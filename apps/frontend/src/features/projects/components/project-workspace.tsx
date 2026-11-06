@@ -20,6 +20,7 @@ import { ProjectSubAgents } from "./project-sub-agents";
 import { ProjectFiles } from "./project-files";
 import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
+import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
 import { ProjectStudyDecks } from "@/features/study/components/project-study-decks";
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
 import { ProjectStudyNotes } from "@/features/study/components/project-study-notes";
@@ -32,6 +33,7 @@ export function ProjectWorkspace({
   projectId: string;
   settings?: boolean;
 }) {
+  const [logOpen, setLogOpen] = useState(false);
   const project = useQuery({
     ...projectGetOneOptions({ client, path: { project_id: projectId } }),
     retry: false,
@@ -59,6 +61,12 @@ export function ProjectWorkspace({
       )}
       {project.data && (
         <>
+          <AiUseLogDialog
+            projectId={projectId}
+            initialChatIds={[]}
+            open={logOpen}
+            onOpenChange={setLogOpen}
+          />
           <PageHeader
             title={project.data.name}
             description={
@@ -67,17 +75,24 @@ export function ProjectWorkspace({
                 : project.data.description || "Project workspace"
             }
             actions={
-              <Button variant="outline" asChild>
-                <Link
-                  href={
-                    settings
-                      ? `/projects/${projectId}`
-                      : `/projects/${projectId}/settings`
-                  }
-                >
-                  {settings ? "Overview" : "Project settings"}
-                </Link>
-              </Button>
+              <>
+                {!settings && (
+                  <Button variant="outline" onClick={() => setLogOpen(true)}>
+                    Export AI-use log
+                  </Button>
+                )}
+                <Button variant="outline" asChild>
+                  <Link
+                    href={
+                      settings
+                        ? `/projects/${projectId}`
+                        : `/projects/${projectId}/settings`
+                    }
+                  >
+                    {settings ? "Overview" : "Project settings"}
+                  </Link>
+                </Button>
+              </>
             }
           />
           {settings ? (

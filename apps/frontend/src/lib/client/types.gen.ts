@@ -49,6 +49,30 @@ export type ActiveSkillState = {
 };
 
 /**
+ * AiUseLog
+ */
+export type AiUseLog = {
+  /**
+   * Generated At
+   */
+  generated_at: number;
+  /**
+   * Chats
+   */
+  chats: Array<LoggedChat>;
+};
+
+/**
+ * AiUseLogRequest
+ */
+export type AiUseLogRequest = {
+  /**
+   * Chat Ids
+   */
+  chat_ids: Array<string>;
+};
+
+/**
  * ApplicationSettings
  *
  * Aggregate of global application settings (admin view).
@@ -2631,6 +2655,173 @@ export type LlmDisplayInfo = {
   context_window_source?: ModelCapabilitySource;
   vision_source?: ModelCapabilitySource;
   pricing?: ModelPricing | null;
+};
+
+/**
+ * LoggedChat
+ */
+export type LoggedChat = {
+  /**
+   * Chat Id
+   */
+  chat_id: string;
+  /**
+   * Title
+   */
+  title: string | null;
+  /**
+   * Project
+   */
+  project: string | null;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Turns
+   */
+  turns: Array<LoggedTurn>;
+};
+
+/**
+ * LoggedFile
+ */
+export type LoggedFile = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Available
+   */
+  available: boolean;
+};
+
+/**
+ * LoggedReply
+ */
+export type LoggedReply = {
+  /**
+   * Message Id
+   */
+  message_id: string;
+  /**
+   * At
+   */
+  at: number;
+  /**
+   * Status
+   */
+  status: string;
+  /**
+   * Model
+   */
+  model: string | null;
+  /**
+   * Tools
+   */
+  tools: Array<string>;
+  /**
+   * Cited Files
+   */
+  cited_files: Array<string>;
+  /**
+   * Exercise
+   */
+  exercise: boolean;
+  verification: LoggedVerification | null;
+  draft_comments: DraftCommentSummary | null;
+};
+
+/**
+ * LoggedTemplate
+ */
+export type LoggedTemplate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Level
+   */
+  level: string;
+  /**
+   * Available
+   */
+  available: boolean;
+};
+
+/**
+ * LoggedTurn
+ */
+export type LoggedTurn = {
+  /**
+   * Message Id
+   */
+  message_id: string;
+  /**
+   * At
+   */
+  at: number;
+  /**
+   * Prompt
+   */
+  prompt: string;
+  learning_mode: LearningModeProvenance | null;
+  /**
+   * Persona
+   */
+  persona: string | null;
+  template: LoggedTemplate | null;
+  /**
+   * Rubric
+   */
+  rubric: string | null;
+  /**
+   * Skills
+   */
+  skills: Array<string>;
+  /**
+   * Files
+   */
+  files: Array<LoggedFile>;
+  /**
+   * Compared
+   */
+  compared: boolean;
+  reply: LoggedReply | null;
+};
+
+/**
+ * LoggedVerification
+ *
+ * Counts of the latest verify pass's claim labels.
+ */
+export type LoggedVerification = {
+  /**
+   * Model
+   */
+  model: string;
+  /**
+   * At
+   */
+  at: number;
+  /**
+   * Supported
+   */
+  supported: number;
+  /**
+   * Unsupported
+   */
+  unsupported: number;
+  /**
+   * Contradicted
+   */
+  contradicted: number;
+  /**
+   * Unchecked
+   */
+  unchecked: number;
 };
 
 /**
@@ -7646,6 +7837,37 @@ export type ChatSessionCreateResponses = {
 
 export type ChatSessionCreateResponse =
   ChatSessionCreateResponses[keyof ChatSessionCreateResponses];
+
+export type ChatAiUseLogCreateData = {
+  body: AiUseLogRequest;
+  path?: never;
+  query?: never;
+  url: "/chat/ai-use-log";
+};
+
+export type ChatAiUseLogCreateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ChatAiUseLogCreateError =
+  ChatAiUseLogCreateErrors[keyof ChatAiUseLogCreateErrors];
+
+export type ChatAiUseLogCreateResponses = {
+  /**
+   * Successful Response
+   */
+  200: AiUseLog;
+};
+
+export type ChatAiUseLogCreateResponse =
+  ChatAiUseLogCreateResponses[keyof ChatAiUseLogCreateResponses];
 
 export type ChatSessionBulkDeleteData = {
   body: BulkDeleteChatRequest;

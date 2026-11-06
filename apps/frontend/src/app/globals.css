@@ -378,3 +378,13 @@ body {
     mask-image: none !important;
   }
 }
+
+/* US-57.4: "Save as PDF" prints only the AI-use log, not the app around it. */
+@media print {
+  body.print-ai-use-log > *:not([data-print-root]) {
+    display: none !important;
+  }
+  body.print-ai-use-log [data-print-root] {
+    display: block !important;
+  }
+}
