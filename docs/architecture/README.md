@@ -30,6 +30,8 @@ Additional guides:
 
 - [Markdown and file-content trust](markdown-content.md): raw HTML disabled,
   explicit link/resource policy, constrained math, files and citations.
+- [ADR-0051: Team pack format](../adr/0051-team-pack-format.md): versioned manifest,
+  bounds, credential screening, and requests that grant nothing.
 - [ADR-0039: Inline file references](../adr/0039-inline-file-references-in-markdown.md):
   `asterism-file:` tokens, save-time resolution, produced files and active content.
 - [Theme storage and lifecycle](theme-storage.md): read-only defaults, persistent

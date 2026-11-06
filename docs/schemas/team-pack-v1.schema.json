@@ -1,0 +1,866 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asterism.local/schemas/team-pack-v1.schema.json",
+  "$defs": {
+    "ExamplesField": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_]{0,31}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Help",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "example": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Example"
+        },
+        "kind": {
+          "const": "examples",
+          "title": "Kind",
+          "type": "string"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "kind"
+      ],
+      "title": "ExamplesField",
+      "type": "object"
+    },
+    "GenerationDefaults": {
+      "additionalProperties": false,
+      "properties": {
+        "temperature": {
+          "anyOf": [
+            {
+              "maximum": 2,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature"
+        },
+        "top_p": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top P"
+        },
+        "presence_penalty": {
+          "anyOf": [
+            {
+              "maximum": 2,
+              "minimum": -2,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Presence Penalty"
+        },
+        "frequency_penalty": {
+          "anyOf": [
+            {
+              "maximum": 2,
+              "minimum": -2,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frequency Penalty"
+        },
+        "max_tokens": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Tokens"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seed"
+        }
+      },
+      "title": "GenerationDefaults",
+      "type": "object"
+    },
+    "LongTextField": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_]{0,31}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Help",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "example": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Example"
+        },
+        "kind": {
+          "const": "long_text",
+          "title": "Kind",
+          "type": "string"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "maxLength": 8000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "kind"
+      ],
+      "title": "LongTextField",
+      "type": "object"
+    },
+    "ModelRequirements": {
+      "additionalProperties": false,
+      "description": "What a sub-agent's model must support; the importer picks the model.",
+      "properties": {
+        "tools": {
+          "default": false,
+          "title": "Tools",
+          "type": "boolean"
+        },
+        "vision": {
+          "default": false,
+          "title": "Vision",
+          "type": "boolean"
+        },
+        "min_context_window": {
+          "anyOf": [
+            {
+              "maximum": 100000000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Context Window"
+        }
+      },
+      "title": "ModelRequirements",
+      "type": "object"
+    },
+    "PackIdentity": {
+      "additionalProperties": false,
+      "description": "Stable identity and version, recorded as provenance on imported items.",
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^(?:0|[1-9][0-9]{0,8})\\.(?:0|[1-9][0-9]{0,8})\\.(?:0|[1-9][0-9]{0,8})$",
+          "title": "Version",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Description",
+          "type": "string"
+        },
+        "author": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Author",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "name"
+      ],
+      "title": "PackIdentity",
+      "type": "object"
+    },
+    "PackProject": {
+      "additionalProperties": false,
+      "description": "Project settings; ``sub_agents`` are keys of this pack's sub-agents.",
+      "properties": {
+        "name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 10000,
+          "title": "Description",
+          "type": "string"
+        },
+        "system_prompt": {
+          "default": "",
+          "maxLength": 100000,
+          "title": "System Prompt",
+          "type": "string"
+        },
+        "accent": {
+          "anyOf": [
+            {
+              "enum": [
+                "red",
+                "orange",
+                "amber",
+                "green",
+                "teal",
+                "sky",
+                "violet",
+                "pink"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accent"
+        },
+        "goal": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Goal",
+          "type": "string"
+        },
+        "sub_agents": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Sub Agents",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "PackProject",
+      "type": "object"
+    },
+    "PackRubric": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "document": {
+          "$ref": "#/$defs/RubricDocument"
+        }
+      },
+      "required": [
+        "key",
+        "document"
+      ],
+      "title": "PackRubric",
+      "type": "object"
+    },
+    "PackSkill": {
+      "additionalProperties": false,
+      "description": "A SKILL.md document; name and description derive from its frontmatter.",
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "content": {
+          "maxLength": 65536,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        },
+        "request_main_agent_assignment": {
+          "default": false,
+          "title": "Request Main Agent Assignment",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "key",
+        "content"
+      ],
+      "title": "PackSkill",
+      "type": "object"
+    },
+    "PackSubAgent": {
+      "additionalProperties": false,
+      "description": "A sub-agent definition without a model binding or any granted tools.",
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 10000,
+          "title": "Description",
+          "type": "string"
+        },
+        "instructions": {
+          "default": "",
+          "maxLength": 100000,
+          "title": "Instructions",
+          "type": "string"
+        },
+        "max_steps": {
+          "default": 5,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Steps",
+          "type": "integer"
+        },
+        "generation": {
+          "$ref": "#/$defs/GenerationDefaults"
+        },
+        "requested_tools": {
+          "default": [],
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Requested Tools",
+          "type": "array"
+        },
+        "model_requirements": {
+          "$ref": "#/$defs/ModelRequirements"
+        }
+      },
+      "required": [
+        "key",
+        "name"
+      ],
+      "title": "PackSubAgent",
+      "type": "object"
+    },
+    "PackTemplate": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "document": {
+          "$ref": "#/$defs/TemplateDocument"
+        }
+      },
+      "required": [
+        "key",
+        "document"
+      ],
+      "title": "PackTemplate",
+      "type": "object"
+    },
+    "RubricCriterion": {
+      "additionalProperties": false,
+      "description": "One assessed aspect; ``descriptors[i]`` describes performance at ``levels[i]``.",
+      "properties": {
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Description",
+          "type": "string"
+        },
+        "descriptors": {
+          "items": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 2,
+          "title": "Descriptors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "label",
+        "descriptors"
+      ],
+      "title": "RubricCriterion",
+      "type": "object"
+    },
+    "RubricDocument": {
+      "additionalProperties": false,
+      "description": "Canonical rubric; levels are ordered from the highest to the lowest.",
+      "properties": {
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "levels": {
+          "items": {
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 2,
+          "title": "Levels",
+          "type": "array"
+        },
+        "criteria": {
+          "items": {
+            "$ref": "#/$defs/RubricCriterion"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Criteria",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "levels",
+        "criteria"
+      ],
+      "title": "RubricDocument",
+      "type": "object"
+    },
+    "SelectField": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_]{0,31}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Help",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "example": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Example"
+        },
+        "kind": {
+          "const": "select",
+          "title": "Kind",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Options",
+          "type": "array"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "kind",
+        "options"
+      ],
+      "title": "SelectField",
+      "type": "object"
+    },
+    "ShortTextField": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "pattern": "^[a-z][a-z0-9_]{0,31}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "help": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Help",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "example": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Example"
+        },
+        "kind": {
+          "const": "short_text",
+          "title": "Kind",
+          "type": "string"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "kind"
+      ],
+      "title": "ShortTextField",
+      "type": "object"
+    },
+    "TemplateDocument": {
+      "additionalProperties": false,
+      "description": "Canonical template document; clients write it whole, metadata is derived.",
+      "properties": {
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "fields": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "examples": "#/$defs/ExamplesField",
+                "long_text": "#/$defs/LongTextField",
+                "select": "#/$defs/SelectField",
+                "short_text": "#/$defs/ShortTextField"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ShortTextField"
+              },
+              {
+                "$ref": "#/$defs/LongTextField"
+              },
+              {
+                "$ref": "#/$defs/SelectField"
+              },
+              {
+                "$ref": "#/$defs/ExamplesField"
+              }
+            ]
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "title": "Fields",
+          "type": "array"
+        },
+        "body": {
+          "maxLength": 16000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        },
+        "checklist": {
+          "default": [],
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Checklist",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "fields",
+        "body"
+      ],
+      "title": "TemplateDocument",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Version 1 of the team-pack file. Unknown sections and fields are rejected.",
+  "properties": {
+    "format": {
+      "const": "asterism.team-pack",
+      "title": "Format",
+      "type": "string"
+    },
+    "format_version": {
+      "const": 1,
+      "title": "Format Version",
+      "type": "integer"
+    },
+    "pack": {
+      "$ref": "#/$defs/PackIdentity"
+    },
+    "sub_agents": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PackSubAgent"
+      },
+      "maxItems": 16,
+      "title": "Sub Agents",
+      "type": "array"
+    },
+    "skills": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PackSkill"
+      },
+      "maxItems": 32,
+      "title": "Skills",
+      "type": "array"
+    },
+    "templates": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PackTemplate"
+      },
+      "maxItems": 32,
+      "title": "Templates",
+      "type": "array"
+    },
+    "rubrics": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PackRubric"
+      },
+      "maxItems": 16,
+      "title": "Rubrics",
+      "type": "array"
+    },
+    "project": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PackProject"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "format",
+    "format_version",
+    "pack"
+  ],
+  "title": "PackManifest",
+  "type": "object"
+}

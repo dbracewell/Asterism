@@ -1,6 +1,6 @@
 # EPIC-59: Shareable team packs
 
-Status: proposed. Source: product direction discussion (2026-10-31), core value proposition.
+Status: in progress. Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 
@@ -31,7 +31,7 @@ Acceptance: an ADR and JSON schema define the manifest, the included item types,
 size limits and validation. The bounded parser rejects unknown types,
 credential-shaped fields and oversized packs.
 
-- [ ] Write the ADR and schema; implement the validator with tests.
+- [x] Write the ADR and schema; implement the validator with tests.
 
 ## US-59.2: Export
 
