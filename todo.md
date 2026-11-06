@@ -33,7 +33,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-58.1: Project learning goals (confirmed and merged 2026-11-06)
   - [x] Add goal fields to projects and the explicit context inclusion; regenerate the client.
   - [x] Build goal editing and display; test inclusion and provenance.
-- [ ] US-58.2: Session reflections (implemented on `feature/us-58.2-session-reflections`; awaiting confirmation)
+- [x] US-58.2: Session reflections (confirmed and merged 2026-11-06)
   - [x] Implement the reflection records and the optional draft suggestion.
   - [x] Build the reflect flow and list; test owner and profile partitioning.
 - [ ] US-58.3: Topic mastery
