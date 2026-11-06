@@ -23,6 +23,7 @@ import { WorkspaceChats } from "./workspace-chats";
 import { ProjectGoal } from "./project-goal";
 import { ReflectionList } from "@/features/reflections/components/reflection-list";
 import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
+import { ExportPackDialog } from "./export-pack-dialog";
 import { ProjectStudyDecks } from "@/features/study/components/project-study-decks";
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
 import { ProjectStudyNotes } from "@/features/study/components/project-study-notes";
@@ -37,6 +38,7 @@ export function ProjectWorkspace({
   settings?: boolean;
 }) {
   const [logOpen, setLogOpen] = useState(false);
+  const [packOpen, setPackOpen] = useState(false);
   const project = useQuery({
     ...projectGetOneOptions({ client, path: { project_id: projectId } }),
     retry: false,
@@ -70,6 +72,12 @@ export function ProjectWorkspace({
             open={logOpen}
             onOpenChange={setLogOpen}
           />
+          <ExportPackDialog
+            projectId={projectId}
+            projectName={project.data.name}
+            open={packOpen}
+            onOpenChange={setPackOpen}
+          />
           <PageHeader
             title={project.data.name}
             description={
@@ -82,6 +90,11 @@ export function ProjectWorkspace({
                 {!settings && (
                   <Button variant="outline" onClick={() => setLogOpen(true)}>
                     Export AI-use log
+                  </Button>
+                )}
+                {settings && (
+                  <Button variant="outline" onClick={() => setPackOpen(true)}>
+                    Export team pack
                   </Button>
                 )}
                 <Button variant="outline" asChild>

@@ -1,7 +1,8 @@
 # ADR-0051 — Team pack format and validation
 
 Status: accepted and implemented for US-59.1 on 2026-11-06
-([EPIC-59](../epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)).
+([EPIC-59](../epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)). Amended for export by US-59.2
+(see the addendum).
 
 ## Context
 
@@ -124,3 +125,28 @@ on a crafted 1 MiB string; a test holds this.
   versions need no reader while the project has no production users.
 - The JSON Schema cannot express the semantic rules or credential screening, so
   only `parse_pack` decides whether a pack is valid.
+
+## Addendum: export (US-59.2)
+
+`POST /projects/{id}/pack-export` takes a name, description, version, the IDs to
+include and `include_project_settings`, and returns the manifest. The browser
+writes the file. Nothing is stored or changed, and nothing is included by default.
+
+- **Fields are allowlisted.** Each item is built from named fields. Generation
+  settings are limited to `GenerationDefaults`, so `extra_body` and similar values
+  in `chat_parameters` never reach the file. Internal tools are dropped.
+- **The parser is the last step.** Export ends in `parse_pack`, so a file has met
+  the same bounds and credential screen as an import. A credential in instructions
+  stops the export with a 400 that names the location; the user removes it.
+- **Requirements.** `tools` is true when the sub-agent requests tools. `vision`
+  follows the bound model, since configuration cannot show whether a sub-agent
+  relies on images. `min_context_window` stays null: the bound model's window says
+  what it has, not what the sub-agent needs.
+- **Scope.** The project and every item must be owned (404). Sub-agents must be
+  selected on the project, because a pack exports that project's setup, so
+  `project.sub_agents` is every exported sub-agent. Skills, templates and rubrics
+  are user-owned and may come from outside the project.
+- **Keys and identity.** Keys are positional (`sub-agent-1`) in name order. `pack.id`
+  is a slug of the pack name, so a new version under the same name keeps its
+  identity. `author` stays empty, so a pack does not reveal who exported it.
+- `request_main_agent_assignment` records whether the skill is assigned today.

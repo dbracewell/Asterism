@@ -288,6 +288,9 @@ import type {
   ProjectGetOneData,
   ProjectGetOneErrors,
   ProjectGetOneResponses,
+  ProjectPackExportData,
+  ProjectPackExportErrors,
+  ProjectPackExportResponses,
   ProjectSubAgentCandidatesData,
   ProjectSubAgentCandidatesErrors,
   ProjectSubAgentCandidatesResponses,
@@ -2174,6 +2177,33 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/sub-agent-candidates",
       ...options,
+    });
+  }
+
+  /**
+   * Create Pack Export
+   *
+   * Build a pack file from the chosen items. Nothing is stored or changed.
+   */
+  public projectPackExport<ThrowOnError extends boolean = false>(
+    options: Options<ProjectPackExportData, ThrowOnError>,
+  ): RequestResult<
+    ProjectPackExportResponses,
+    ProjectPackExportErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ProjectPackExportResponses,
+      ProjectPackExportErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/pack-export",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

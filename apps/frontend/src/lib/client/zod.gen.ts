@@ -1351,6 +1351,17 @@ export const zContextProvenance = z.object({
 });
 
 /**
+ * ModelRequirements
+ *
+ * What a sub-agent's model must support; the importer picks the model.
+ */
+export const zModelRequirements = z.object({
+  tools: z.boolean().optional().default(false),
+  vision: z.boolean().optional().default(false),
+  min_context_window: z.int().gte(1).lte(100000000).nullish(),
+});
+
+/**
  * OmissionKind
  *
  * Omitted attached files carry their reason on ``ContextFile`` instead.
@@ -1369,6 +1380,99 @@ export const zContextOmission = z.object({
   kind: zOmissionKind,
   subject: z.string().nullish(),
   reason: z.string().max(500),
+});
+
+/**
+ * PackExportRequest
+ *
+ * What to include. Nothing is exported unless it is named here.
+ */
+export const zPackExportRequest = z.object({
+  name: z.string().min(1).max(120),
+  description: z.string().max(2000).optional().default(""),
+  version: z
+    .string()
+    .regex(
+      /^(?:0|[1-9][0-9]{0,8})\.(?:0|[1-9][0-9]{0,8})\.(?:0|[1-9][0-9]{0,8})$/,
+    )
+    .optional()
+    .default("1.0.0"),
+  sub_agent_ids: z.array(z.uuid()).max(16).optional(),
+  skill_ids: z.array(z.uuid()).max(32).optional(),
+  template_ids: z.array(z.uuid()).max(32).optional(),
+  rubric_ids: z.array(z.uuid()).max(16).optional(),
+  include_project_settings: z.boolean().optional().default(false),
+});
+
+/**
+ * PackIdentity
+ *
+ * Stable identity and version, recorded as provenance on imported items.
+ */
+export const zPackIdentity = z.object({
+  id: z
+    .string()
+    .max(100)
+    .regex(/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/),
+  version: z
+    .string()
+    .regex(
+      /^(?:0|[1-9][0-9]{0,8})\.(?:0|[1-9][0-9]{0,8})\.(?:0|[1-9][0-9]{0,8})$/,
+    ),
+  name: z.string().min(1).max(120),
+  description: z.string().max(2000).optional().default(""),
+  author: z.string().max(200).optional().default(""),
+});
+
+/**
+ * PackProject
+ *
+ * Project settings; ``sub_agents`` are keys of this pack's sub-agents.
+ */
+export const zPackProject = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().max(10000).optional().default(""),
+  system_prompt: z.string().max(100000).optional().default(""),
+  accent: z
+    .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
+    .nullish(),
+  goal: z.string().max(1000).optional().default(""),
+  sub_agents: z
+    .array(z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/))
+    .max(16)
+    .optional()
+    .default([]),
+});
+
+/**
+ * PackSkill
+ *
+ * A SKILL.md document; name and description derive from its frontmatter.
+ */
+export const zPackSkill = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/),
+  content: z.string().min(1).max(65536),
+  request_main_agent_assignment: z.boolean().optional().default(false),
+});
+
+/**
+ * PackSubAgent
+ *
+ * A sub-agent definition without a model binding or any granted tools.
+ */
+export const zPackSubAgent = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/),
+  name: z.string().min(1).max(200),
+  description: z.string().max(10000).optional().default(""),
+  instructions: z.string().max(100000).optional().default(""),
+  max_steps: z.int().gte(1).lte(100).optional().default(5),
+  generation: zGenerationDefaults.optional(),
+  requested_tools: z
+    .array(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/))
+    .max(32)
+    .optional()
+    .default([]),
+  model_requirements: zModelRequirements.optional(),
 });
 
 /**
@@ -1891,6 +1995,14 @@ export const zBundledRubricView = z.object({
   revision: z.int(),
   name: z.string(),
   description: z.string(),
+  document: zRubricDocument,
+});
+
+/**
+ * PackRubric
+ */
+export const zPackRubric = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/),
   document: zRubricDocument,
 });
 
@@ -3138,6 +3250,30 @@ export const zTemplateDocument = z.object({
     .max(32),
   body: z.string().min(1).max(16000),
   checklist: z.array(z.string().min(1).max(200)).max(12).optional().default([]),
+});
+
+/**
+ * PackTemplate
+ */
+export const zPackTemplate = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/),
+  document: zTemplateDocument,
+});
+
+/**
+ * PackManifest
+ *
+ * Version 1 of the team-pack file. Unknown sections and fields are rejected.
+ */
+export const zPackManifest = z.object({
+  format: z.literal("asterism.team-pack"),
+  format_version: z.literal(1),
+  pack: zPackIdentity,
+  sub_agents: z.array(zPackSubAgent).max(16).optional().default([]),
+  skills: z.array(zPackSkill).max(32).optional().default([]),
+  templates: z.array(zPackTemplate).max(32).optional().default([]),
+  rubrics: z.array(zPackRubric).max(16).optional().default([]),
+  project: zPackProject.nullish(),
 });
 
 /**
@@ -4476,6 +4612,17 @@ export const zProjectSubAgentCandidatesQuery = z.object({
  * Successful Response
  */
 export const zProjectSubAgentCandidatesResponse = zProjectSubAgentList;
+
+export const zProjectPackExportBody = zPackExportRequest;
+
+export const zProjectPackExportPath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zProjectPackExportResponse = zPackManifest;
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),
