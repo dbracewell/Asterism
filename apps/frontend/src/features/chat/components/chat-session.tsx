@@ -60,7 +60,7 @@ import {
 
 // Far enough from the bottom to offer "jump to latest" even when idle.
 const SCROLL_BOTTOM_THRESHOLD = 200;
-// Any scroll further up than this stops following a streaming reply.
+// Scrolling up past this stops following the conversation.
 const AUTO_SCROLL_LOCK_THRESHOLD = 16;
 
 export const ChatSession = ({
@@ -156,6 +156,7 @@ export const ChatSession = ({
     SubAgentActivity[]
   >([]);
   const preventAutoScrollRef = React.useRef(false);
+  const lastScrollTopRef = React.useRef(0);
   const [isScrollable, setIsScrollable] = React.useState(false);
   const [isScrolledAway, setIsScrolledAway] = React.useState(false);
   const [socketError, setSocketError] = React.useState<{
@@ -197,10 +198,17 @@ export const ChatSession = ({
     },
   });
 
-  React.useEffect(() => {
-    if (preventAutoScrollRef.current || !incomingMessage) return;
+  // Before paint, so a scroll event never measures growth not yet followed.
+  React.useLayoutEffect(() => {
+    if (preventAutoScrollRef.current) return;
     messageListRef.current?.scrollIntoView({ behavior: "instant" });
-  }, [incomingMessage]);
+  }, [
+    session?.messages,
+    incomingMessage,
+    comparisonStream,
+    subAgentActivities,
+    isProcessing,
+  ]);
 
   const { sendJsonMessage, readyState, toolTimings } = useChatWebSocket({
     chatId,
@@ -312,6 +320,8 @@ export const ChatSession = ({
   }) => {
     if (!session) throw new Error("Chat is not loaded. Please retry.");
     setSocketError(null);
+    // Sending returns to the conversation's end, wherever the user had read to.
+    preventAutoScrollRef.current = false;
     if (pendingSend.current?.requestId !== requestId) {
       pendingSend.current = {
         requestId,
@@ -484,11 +494,18 @@ export const ChatSession = ({
         )}
         style={{ overflowAnchor: "auto" }}
         onScroll={(e) => {
+          const { scrollTop } = e.currentTarget;
           const scrollPosition =
             e.currentTarget.scrollHeight -
-            (e.currentTarget.scrollTop + e.currentTarget.clientHeight);
+            (scrollTop + e.currentTarget.clientHeight);
 
-          const isLocked = scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD;
+          // Only scrolling up locks: content growing below is not a choice to
+          // stop following, even when this event lands after it.
+          const scrolledUp = scrollTop < lastScrollTopRef.current;
+          lastScrollTopRef.current = scrollTop;
+          const isLocked =
+            scrollPosition > AUTO_SCROLL_LOCK_THRESHOLD &&
+            (scrolledUp || preventAutoScrollRef.current);
           preventAutoScrollRef.current = isLocked;
           if (isLocked !== isScrolledAway) setIsScrolledAway(isLocked);
 
