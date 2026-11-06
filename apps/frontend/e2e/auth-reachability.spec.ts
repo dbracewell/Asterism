@@ -7,11 +7,13 @@ import {
   expectReachable,
 } from "./support/auth-reachability";
 
-const accountEmail = `${randomUUID()}@example.test`;
+let accountEmail: string;
 const accountPassword = "Reachability-321!";
 test.use({ hasTouch: true });
 test.beforeAll(async () => {
   if (process.env.ASTERISM_ISOLATED_E2E !== "true") return;
+  // A worker can run this hook more than once, so each run needs a new account.
+  accountEmail = `${randomUUID()}@example.test`;
   // A separate API context creates a user after fresh-install tests, leaving each
   // browser anonymous so /sign-in selects the real login view.
   const account = await request.newContext({

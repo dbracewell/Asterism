@@ -6,7 +6,7 @@ import {
 } from "../src/features/dashboard/constants";
 import { randomUUID } from "node:crypto";
 
-const email = `${randomUUID()}@example.test`;
+let email: string;
 const password = "Mobile-shell-321!";
 const pageErrors = new WeakMap<Page, string[]>();
 test.use({ hasTouch: true });
@@ -16,6 +16,8 @@ test.afterEach(async ({ page }, info) => {
 });
 test.beforeAll(async () => {
   if (process.env.ASTERISM_ISOLATED_E2E !== "true") return;
+  // A worker can run this hook more than once, so each run needs a new account.
+  email = `${randomUUID()}@example.test`;
   const account = await request.newContext({
     baseURL: "http://localhost:3100",
   });
@@ -173,9 +175,9 @@ for (const width of [320, 390]) {
     const pane = page.locator('[data-slot="tabs-content"]').last();
     await pane.hover({ position: { x: 12, y: 12 } });
     await page.mouse.wheel(0, 10000);
-    // Prompt Coach (US-51.6) is the last General control.
+    // Restarting the tour (US-61.4) is the last General control.
     await expect(
-      page.getByRole("checkbox", { name: "Prompt Coach", exact: true }),
+      page.getByRole("link", { name: "Restart the chat tour", exact: true }),
     ).toBeInViewport({ ratio: 1 });
     await model.scrollIntoViewIfNeeded();
     await expect(model).toBeInViewport({ ratio: 1 });
