@@ -32,6 +32,11 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   reflectionUpdateMutation: () => ({ mutationFn: mocks.update }),
   reflectionDeleteMutation: () => ({ mutationFn: mocks.remove }),
+  studyDeckGetManyOptions: () => ({
+    queryKey: [{ _id: "studyDeckGetMany" }],
+    queryFn: async () => ({ items: [], total: 0, page: 1, page_size: 100 }),
+  }),
+  studyUnclearCardCreateMutation: () => ({ mutationFn: vi.fn() }),
 }));
 
 const reflection = {
@@ -140,4 +145,37 @@ it("edits and deletes with the loaded revision", async () => {
       query: { expected_revision: 2 },
     }),
   );
+});
+
+it("offers unclear-item practice only for project reflections with unclear text", async () => {
+  const user = userEvent.setup();
+  render(<ReflectionList projectId="proj" />, { wrapper: Wrapper });
+  const item = await screen.findByRole("listitem", {
+    name: /Reflection from/,
+  });
+  await user.click(
+    within(item).getByRole("button", { name: "Practice unclear items" }),
+  );
+  expect(
+    await screen.findByRole("dialog", { name: "Practice what's unclear" }),
+  ).toBeInTheDocument();
+});
+
+it.each([
+  ["General", { project_id: null }],
+  ["nothing unclear", { unclear: "" }],
+])("hides unclear-item practice for %s", async (_name, overrides) => {
+  mocks.list.mockResolvedValue({
+    items: [{ ...reflection, ...overrides }],
+    total: 1,
+    page: 1,
+    page_size: 10,
+  });
+  render(<ReflectionList projectId="proj" />, { wrapper: Wrapper });
+  const item = await screen.findByRole("listitem", {
+    name: /Reflection from/,
+  });
+  expect(
+    within(item).queryByRole("button", { name: "Practice unclear items" }),
+  ).toBeNull();
 });

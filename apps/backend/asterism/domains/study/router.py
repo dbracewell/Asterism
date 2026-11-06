@@ -22,6 +22,7 @@ from . import (
     service,
     study_guides,
     summaries,
+    unclear,
     weak_spots,
 )
 from .schemas import (
@@ -59,6 +60,7 @@ from .schemas import (
     StudySummaryRequest,
     StudyTopicMasteryList,
     StudyTopicPracticeRequest,
+    StudyUnclearCardCreate,
     StudyWeakSpotPracticeRequest,
     StudyWeakSpots,
 )
@@ -348,6 +350,17 @@ async def practice_topic(
 ) -> StudyQuiz:
     """Save a quiz of one topic's weakest items; 404 for an unknown topic."""
     return await mastery.practice_topic(user_id=user.id, project_id=project_id, request=payload, session=db)
+
+
+# --- Unclear items (US-58.4, ADR-0050) -----------------------------------------
+
+
+@study_router.post("/unclear-cards", operation_id="studyUnclearCardCreate", status_code=201)
+async def create_unclear_card(
+    project_id: uuid.UUID, payload: StudyUnclearCardCreate, user: AuthedUserDep, db: DBSessionDep
+) -> StudyCard:
+    """Create one card the learner confirmed from a reflection's unclear items."""
+    return await unclear.create_unclear_card(user_id=user.id, project_id=project_id, payload=payload, session=db)
 
 
 # --- Notes, summaries and study guides (US-53.6, ADR-0037) ---------------------

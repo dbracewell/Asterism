@@ -2956,6 +2956,22 @@ export const zStudyTopicMasteryList = z.object({
 });
 
 /**
+ * StudyUnclearCardCreate
+ *
+ * One confirmed "still unclear" item; the learner reviewed both sides.
+ *
+ * ``deck_id`` null files it in the project's "Unclear items" deck. ``weak_spot``
+ * also lists the card under weak spots until it is recalled.
+ */
+export const zStudyUnclearCardCreate = z.object({
+  reflection_id: z.uuid(),
+  deck_id: z.uuid().nullish(),
+  front: z.string().min(1).max(4000),
+  back: z.string().min(1).max(4000),
+  weak_spot: z.boolean().optional().default(true),
+});
+
+/**
  * StudyWeakSpot
  *
  * A question or card whose latest outcome was a miss. Text is untrusted.
@@ -2971,7 +2987,7 @@ export const zStudyWeakSpot = z.object({
   source_id: z.uuid(),
   kind: z.enum(["multiple_choice", "short_answer", "card"]),
   prompt: z.string(),
-  outcome: z.enum(["incorrect", "partial", "again"]),
+  outcome: z.enum(["incorrect", "partial", "again", "unclear"]),
   missed_at: z.int(),
   container_id: z.uuid(),
   container_title: z.string(),
@@ -4766,6 +4782,17 @@ export const zStudyTopicPracticePath = z.object({
  * Successful Response
  */
 export const zStudyTopicPracticeResponse = zStudyQuiz;
+
+export const zStudyUnclearCardCreateBody = zStudyUnclearCardCreate;
+
+export const zStudyUnclearCardCreatePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyUnclearCardCreateResponse = zStudyCard;
 
 export const zStudyNoteGetManyPath = z.object({
   project_id: z.uuid(),

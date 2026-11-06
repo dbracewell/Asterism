@@ -6409,6 +6409,37 @@ export type StudyTrendPoint = {
 };
 
 /**
+ * StudyUnclearCardCreate
+ *
+ * One confirmed "still unclear" item; the learner reviewed both sides.
+ *
+ * ``deck_id`` null files it in the project's "Unclear items" deck. ``weak_spot``
+ * also lists the card under weak spots until it is recalled.
+ */
+export type StudyUnclearCardCreate = {
+  /**
+   * Reflection Id
+   */
+  reflection_id: string;
+  /**
+   * Deck Id
+   */
+  deck_id?: string | null;
+  /**
+   * Front
+   */
+  front: string;
+  /**
+   * Back
+   */
+  back: string;
+  /**
+   * Weak Spot
+   */
+  weak_spot?: boolean;
+};
+
+/**
  * StudyWeakSpot
  *
  * A question or card whose latest outcome was a miss. Text is untrusted.
@@ -6445,7 +6476,7 @@ export type StudyWeakSpot = {
   /**
    * Outcome
    */
-  outcome: "incorrect" | "partial" | "again";
+  outcome: "incorrect" | "partial" | "again" | "unclear";
   /**
    * Missed At
    */
@@ -11323,6 +11354,50 @@ export type StudyTopicPracticeResponses = {
 
 export type StudyTopicPracticeResponse =
   StudyTopicPracticeResponses[keyof StudyTopicPracticeResponses];
+
+export type StudyUnclearCardCreateData = {
+  body: StudyUnclearCardCreate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/unclear-cards";
+};
+
+export type StudyUnclearCardCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyUnclearCardCreateError =
+  StudyUnclearCardCreateErrors[keyof StudyUnclearCardCreateErrors];
+
+export type StudyUnclearCardCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyCard;
+};
+
+export type StudyUnclearCardCreateResponse =
+  StudyUnclearCardCreateResponses[keyof StudyUnclearCardCreateResponses];
 
 export type StudyNoteGetManyData = {
   body?: never;

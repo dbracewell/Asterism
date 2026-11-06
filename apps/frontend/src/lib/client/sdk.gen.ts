@@ -483,6 +483,9 @@ import type {
   StudyTopicPracticeData,
   StudyTopicPracticeErrors,
   StudyTopicPracticeResponses,
+  StudyUnclearCardCreateData,
+  StudyUnclearCardCreateErrors,
+  StudyUnclearCardCreateResponses,
   StudyWeakSpotGetManyData,
   StudyWeakSpotGetManyErrors,
   StudyWeakSpotGetManyResponses,
@@ -2778,6 +2781,33 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/projects/{project_id}/study/topics/practice",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Create Unclear Card
+   *
+   * Create one card the learner confirmed from a reflection's unclear items.
+   */
+  public studyUnclearCardCreate<ThrowOnError extends boolean = false>(
+    options: Options<StudyUnclearCardCreateData, ThrowOnError>,
+  ): RequestResult<
+    StudyUnclearCardCreateResponses,
+    StudyUnclearCardCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      StudyUnclearCardCreateResponses,
+      StudyUnclearCardCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/projects/{project_id}/study/unclear-cards",
       ...options,
       headers: {
         "Content-Type": "application/json",

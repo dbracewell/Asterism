@@ -162,6 +162,7 @@ def _answer_events(*, user_id: str, project_id: uuid.UUID):
             literal("question", String).label("source_kind"),
             question.id.label("source_id"),
             question.position.label("position"),
+            literal(1).label("priority"),
         )
         .select_from(answer)
         .join(attempt, and_(attempt.id == answer.attempt_id, attempt.user_id == answer.user_id))
@@ -186,11 +187,34 @@ def _review_events(*, user_id: str, project_id: uuid.UUID):
             literal("card", String).label("source_kind"),
             card.id.label("source_id"),
             literal(0).label("position"),
+            literal(1).label("priority"),
         )
         .select_from(log)
         .join(card, and_(card.id == log.card_id, card.user_id == log.user_id))
         .join(deck, and_(deck.id == card.deck_id, deck.user_id == card.user_id))
         .where(log.user_id == user_id, deck.project_id == project_id)
+    )
+
+
+def _unclear_events(*, user_id: str, project_id: uuid.UUID):
+    """Cards the learner flagged from a reflection (US-58.4); any outcome in the same second wins."""
+    card, deck = StudyCardModel, StudyDeckModel
+    return (
+        select(
+            literal("card", String).label("root_kind"),
+            card.id.label("root_id"),
+            card.flagged_unclear_at.label("at"),
+            card.id.label("event_id"),
+            literal(1).label("missed"),
+            literal("unclear", String).label("outcome"),
+            literal("card", String).label("source_kind"),
+            card.id.label("source_id"),
+            literal(0).label("position"),
+            literal(0).label("priority"),
+        )
+        .select_from(card)
+        .join(deck, and_(deck.id == card.deck_id, deck.user_id == card.user_id))
+        .where(card.user_id == user_id, deck.project_id == project_id, card.flagged_unclear_at.is_not(None))
     )
 
 
@@ -205,13 +229,14 @@ def select_weak_spots(*, user_id: str, project_id: uuid.UUID):
     events = union_all(
         _answer_events(user_id=user_id, project_id=project_id),
         _review_events(user_id=user_id, project_id=project_id),
+        _unclear_events(user_id=user_id, project_id=project_id),
     ).subquery()
     ranked = select(
         events,
         func.row_number()
         .over(
             partition_by=(events.c.root_kind, events.c.root_id),
-            order_by=(events.c.at.desc(), events.c.event_id.desc()),
+            order_by=(events.c.at.desc(), events.c.priority.desc(), events.c.event_id.desc()),
         )
         .label("recency"),
     ).subquery()
@@ -351,4 +376,20 @@ def select_cards_by_id(*, user_id: str, card_ids: list[uuid.UUID]):
 def select_questions_by_id(*, user_id: str, question_ids: list[uuid.UUID]):
     return select(StudyQuizQuestionModel).where(
         StudyQuizQuestionModel.user_id == user_id, StudyQuizQuestionModel.id.in_(question_ids)
+    )
+
+
+# --- Unclear items (US-58.4) ---------------------------------------------------
+
+
+def select_deck_by_name(*, user_id: str, project_id: uuid.UUID, name: str):
+    return select_owned_decks(user_id=user_id, project_id=project_id).where(StudyDeckModel.name == name)
+
+
+def select_reflection_card(*, user_id: str, reflection_id: uuid.UUID, front: str):
+    """A card already made from this reflection with this front, in any deck."""
+    return select(StudyCardModel.id).where(
+        StudyCardModel.user_id == user_id,
+        StudyCardModel.source_reflection_id == reflection_id,
+        StudyCardModel.front == front,
     )

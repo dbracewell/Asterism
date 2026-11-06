@@ -254,6 +254,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Choose Reflect on this session in a chat's menu. Suggest a draft fills both answers from the chat; edit it so it says what you think before saving.",
       "Reflections are yours only. Each is filed under the chat's project and persona, and the assistant doesn't read them automatically.",
+      "In a project, Practice unclear items turns what's still unclear into flashcards, one at a time. You write each answer and confirm each card, and it can also appear in your weak spots until you recall it.",
     ],
     related: ["concept.project", "concept.persona"],
     audience: "everyone",

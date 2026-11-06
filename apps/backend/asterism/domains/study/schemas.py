@@ -471,7 +471,8 @@ class StudyWeakSpot(BaseModel):
     source_id: uuid.UUID
     kind: Literal["multiple_choice", "short_answer", "card"]
     prompt: str
-    outcome: Literal["incorrect", "partial", "again"]
+    # ``unclear``: flagged from a reflection (US-58.4), not yet recalled.
+    outcome: Literal["incorrect", "partial", "again", "unclear"]
     missed_at: int
     container_id: uuid.UUID
     container_title: str
@@ -696,3 +697,22 @@ class StudyTopicPracticeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     topic: str = Field(min_length=1, max_length=MAX_TAG_CHARS)
     question_count: int = Field(default=10, ge=1, le=MAX_QUIZ_QUESTIONS)
+
+
+# --- Unclear items (US-58.4) ---------------------------------------------------
+
+
+class StudyUnclearCardCreate(BaseModel):
+    """One confirmed "still unclear" item; the learner reviewed both sides.
+
+    ``deck_id`` null files it in the project's "Unclear items" deck. ``weak_spot``
+    also lists the card under weak spots until it is recalled.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    reflection_id: uuid.UUID
+    deck_id: uuid.UUID | None = None
+    front: CardSide
+    back: CardSide
+    weak_spot: bool = True

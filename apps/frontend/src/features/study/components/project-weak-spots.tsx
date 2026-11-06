@@ -23,6 +23,7 @@ const OUTCOME_LABELS: Record<StudyWeakSpot["outcome"], string> = {
   incorrect: "Missed",
   partial: "Partly correct",
   again: "Rated Again",
+  unclear: "Flagged as unclear",
 };
 
 export function weakSpotHref(projectId: string, spot: StudyWeakSpot) {
