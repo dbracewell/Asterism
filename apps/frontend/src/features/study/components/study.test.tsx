@@ -60,6 +60,7 @@ const deck = {
   project_id: "p",
   name: "Biology",
   description: "",
+  tags: [] as string[],
   card_count: 1,
   due_count: 0,
   created_at: 0,
@@ -143,12 +144,28 @@ it("creates the first deck from the empty state and opens it", async () => {
   const submit = within(dialog).getByRole("button", { name: "Create deck" });
   expect(submit).toBeDisabled();
   await userEvent.type(within(dialog).getByLabelText("Name"), "  Biology  ");
+  const topics = within(dialog).getByLabelText("Topics");
+  await userEvent.type(
+    topics,
+    Array(9)
+      .fill("t")
+      .map((t, i) => `${t}${i}`)
+      .join(","),
+  );
+  expect(within(dialog).getByText("Use at most 8 topics.")).toBeVisible();
+  expect(submit).toBeDisabled();
+  await userEvent.clear(topics);
+  await userEvent.type(topics, " Cell  biology, energy , cell biology");
   await userEvent.click(submit);
   await waitFor(() =>
     expect(mocks.createDeck).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { project_id: "p" },
-        body: { name: "Biology", description: "" },
+        body: {
+          name: "Biology",
+          description: "",
+          tags: ["Cell biology", "energy"],
+        },
       }),
       expect.anything(),
     ),

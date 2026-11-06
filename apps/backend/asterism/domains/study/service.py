@@ -84,6 +84,7 @@ async def _to_decks(*, user_id: str, rows: list[StudyDeckModel], session: AsyncS
             project_id=row.project_id,
             name=row.name,
             description=row.description,
+            tags=row.tags,
             card_count=counts.get(row.id, 0),
             due_count=due.get(row.id, 0),
             created_at=row.created_at,

@@ -27,6 +27,7 @@ import { ProjectStudyDecks } from "@/features/study/components/project-study-dec
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
 import { ProjectStudyNotes } from "@/features/study/components/project-study-notes";
 import { ProjectWeakSpots } from "@/features/study/components/project-weak-spots";
+import { ProjectTopicMastery } from "@/features/study/components/project-topic-mastery";
 
 export function ProjectWorkspace({
   projectId,
@@ -126,6 +127,10 @@ export function ProjectWorkspace({
               />
               <ProjectStudyDecks
                 key={`study-${projectId}`}
+                projectId={projectId}
+              />
+              <ProjectTopicMastery
+                key={`mastery-${projectId}`}
                 projectId={projectId}
               />
               <ProjectWeakSpots

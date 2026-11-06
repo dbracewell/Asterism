@@ -477,6 +477,12 @@ import type {
   StudySummaryGenerateData,
   StudySummaryGenerateError,
   StudySummaryGenerateResponse,
+  StudyTopicMasteryGetManyData,
+  StudyTopicMasteryGetManyError,
+  StudyTopicMasteryGetManyResponse,
+  StudyTopicPracticeData,
+  StudyTopicPracticeError,
+  StudyTopicPracticeResponse,
   StudyWeakSpotGetManyData,
   StudyWeakSpotGetManyError,
   StudyWeakSpotGetManyResponse,
@@ -3735,6 +3741,67 @@ export const studyWeakSpotPracticeMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().studyWeakSpotPractice({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const studyTopicMasteryGetManyQueryKey = (
+  options: Options<StudyTopicMasteryGetManyData>,
+) => createQueryKey("studyTopicMasteryGetMany", options);
+
+/**
+ * List Topic Mastery
+ *
+ * Mastery per deck and quiz tag, derived from review ratings and quiz results.
+ */
+export const studyTopicMasteryGetManyOptions = (
+  options: Options<StudyTopicMasteryGetManyData>,
+) =>
+  queryOptions<
+    StudyTopicMasteryGetManyResponse,
+    StudyTopicMasteryGetManyError,
+    StudyTopicMasteryGetManyResponse,
+    ReturnType<typeof studyTopicMasteryGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .studyTopicMasteryGetMany({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: studyTopicMasteryGetManyQueryKey(options),
+  });
+
+/**
+ * Practice Topic
+ *
+ * Save a quiz of one topic's weakest items; 404 for an unknown topic.
+ */
+export const studyTopicPracticeMutation = (
+  options?: Partial<Options<StudyTopicPracticeData>>,
+): UseMutationOptions<
+  StudyTopicPracticeResponse,
+  StudyTopicPracticeError,
+  Options<StudyTopicPracticeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StudyTopicPracticeResponse,
+    StudyTopicPracticeError,
+    Options<StudyTopicPracticeData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().studyTopicPractice({
         ...options,
         ...fnOptions,
         throwOnError: true,

@@ -112,9 +112,10 @@ async def list_weak_spots(*, user_id: str, project_id: uuid.UUID, limit: int, se
 # --- Practice ----------------------------------------------------------------
 
 
-def _copy_question(
-    row: _Row, question: StudyQuizQuestionModel, members: set[uuid.UUID], rng: random.Random
+def copy_question(
+    question: StudyQuizQuestionModel, root_kind: str, root_id: uuid.UUID, members: set[uuid.UUID], rng: random.Random
 ) -> QuestionDraft:
+    """Re-ask a question; the copy counts towards ``root`` (the original question or card)."""
     options, correct = question_options(question), question.correct_option
     if question.kind == "multiple_choice" and correct is not None:
         answer = options[correct]
@@ -128,12 +129,13 @@ def _copy_question(
         rubric=question.rubric,
         explanation=question.explanation,
         citations=[c for c in parse_citations(question.citations) if c.file_id in members],
-        source_question_id=row.root_id if row.root_kind == "question" else None,
-        source_card_id=row.root_id if row.root_kind == "card" else None,
+        source_question_id=root_id if root_kind == "question" else None,
+        source_card_id=root_id if root_kind == "card" else None,
     )
 
 
-def _copy_card(card: StudyCardModel, members: set[uuid.UUID]) -> QuestionDraft:
+def copy_card(card: StudyCardModel, members: set[uuid.UUID]) -> QuestionDraft:
+    """Ask a card as a short-answer question graded against its back."""
     return QuestionDraft(
         kind="short_answer",
         prompt=card.front,
@@ -170,9 +172,9 @@ async def practice_weak_spots(
     members = set(await project_member_files(user_id=user_id, project_id=project_id, file_ids=cited, session=session))
     rng = rng or random.Random()
     questions = [
-        _copy_question(row, sources.questions[row.source_id][0], members, rng)
+        copy_question(sources.questions[row.source_id][0], row.root_kind, row.root_id, members, rng)
         if row.source_kind == "question"
-        else _copy_card(sources.cards[row.source_id][0], members)
+        else copy_card(sources.cards[row.source_id][0], members)
         for row in rows
     ]
     quiz = await save_quiz(

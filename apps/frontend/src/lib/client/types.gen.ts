@@ -50,6 +50,8 @@ export type ActiveSkillState = {
 
 /**
  * AiUseLog
+ *
+ * Every timestamp in the log is in Unix seconds.
  */
 export type AiUseLog = {
   /**
@@ -5207,6 +5209,10 @@ export type StudyDeck = {
    */
   description: string;
   /**
+   * Tags
+   */
+  tags: Array<string>;
+  /**
    * Card Count
    */
   card_count: number;
@@ -5236,6 +5242,10 @@ export type StudyDeckCreate = {
    * Description
    */
   description?: string;
+  /**
+   * Tags
+   */
+  tags?: Array<string>;
 };
 
 /**
@@ -5272,6 +5282,10 @@ export type StudyDeckUpdate = {
    * Description
    */
   description?: string;
+  /**
+   * Tags
+   */
+  tags?: Array<string>;
 };
 
 /**
@@ -5604,6 +5618,10 @@ export type StudyQuiz = {
    */
   title: string;
   /**
+   * Tags
+   */
+  tags: Array<string>;
+  /**
    * Question Count
    */
   question_count: number;
@@ -5630,7 +5648,7 @@ export type StudyQuiz = {
   /**
    * Origin
    */
-  origin: "generated" | "weak_spots";
+  origin: "generated" | "weak_spots" | "topic";
   /**
    * Model Id
    */
@@ -5859,6 +5877,10 @@ export type StudyQuizGenerateRequest = {
    * Title
    */
   title?: string | null;
+  /**
+   * Tags
+   */
+  tags?: Array<string>;
 };
 
 /**
@@ -6005,6 +6027,10 @@ export type StudyQuizSummary = {
    */
   title: string;
   /**
+   * Tags
+   */
+  tags: Array<string>;
+  /**
    * Question Count
    */
   question_count: number;
@@ -6031,7 +6057,7 @@ export type StudyQuizSummary = {
   /**
    * Origin
    */
-  origin: "generated" | "weak_spots";
+  origin: "generated" | "weak_spots" | "topic";
   /**
    * Model Id
    */
@@ -6052,12 +6078,18 @@ export type StudyQuizSummary = {
 
 /**
  * StudyQuizUpdate
+ *
+ * Rename and retag; omitted fields are unchanged.
  */
 export type StudyQuizUpdate = {
   /**
    * Title
    */
-  title: string;
+  title?: string;
+  /**
+   * Tags
+   */
+  tags?: Array<string>;
 };
 
 /**
@@ -6288,6 +6320,92 @@ export type StudySummarySection = {
    * Citations
    */
   citations: Array<StudyCitation>;
+};
+
+/**
+ * StudyTopicMastery
+ */
+export type StudyTopicMastery = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Level
+   */
+  level: "not_started" | "needs_work" | "developing" | "mastered";
+  /**
+   * Score
+   */
+  score: number | null;
+  /**
+   * Practiced
+   */
+  practiced: number;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Deck Count
+   */
+  deck_count: number;
+  /**
+   * Quiz Count
+   */
+  quiz_count: number;
+  /**
+   * Trend
+   */
+  trend: Array<StudyTrendPoint>;
+};
+
+/**
+ * StudyTopicMasteryList
+ */
+export type StudyTopicMasteryList = {
+  /**
+   * Items
+   */
+  items: Array<StudyTopicMastery>;
+  /**
+   * Computed At
+   */
+  computed_at: number;
+};
+
+/**
+ * StudyTopicPracticeRequest
+ */
+export type StudyTopicPracticeRequest = {
+  /**
+   * Topic
+   */
+  topic: string;
+  /**
+   * Question Count
+   */
+  question_count?: number;
+};
+
+/**
+ * StudyTrendPoint
+ *
+ * Mastery as of ``at`` (end of a week); null when nothing had been practiced.
+ */
+export type StudyTrendPoint = {
+  /**
+   * At
+   */
+  at: number;
+  /**
+   * Score
+   */
+  score: number | null;
 };
 
 /**
@@ -11117,6 +11235,94 @@ export type StudyWeakSpotPracticeResponses = {
 
 export type StudyWeakSpotPracticeResponse =
   StudyWeakSpotPracticeResponses[keyof StudyWeakSpotPracticeResponses];
+
+export type StudyTopicMasteryGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/topics";
+};
+
+export type StudyTopicMasteryGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyTopicMasteryGetManyError =
+  StudyTopicMasteryGetManyErrors[keyof StudyTopicMasteryGetManyErrors];
+
+export type StudyTopicMasteryGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StudyTopicMasteryList;
+};
+
+export type StudyTopicMasteryGetManyResponse =
+  StudyTopicMasteryGetManyResponses[keyof StudyTopicMasteryGetManyResponses];
+
+export type StudyTopicPracticeData = {
+  body: StudyTopicPracticeRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/projects/{project_id}/study/topics/practice";
+};
+
+export type StudyTopicPracticeErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type StudyTopicPracticeError =
+  StudyTopicPracticeErrors[keyof StudyTopicPracticeErrors];
+
+export type StudyTopicPracticeResponses = {
+  /**
+   * Successful Response
+   */
+  201: StudyQuiz;
+};
+
+export type StudyTopicPracticeResponse =
+  StudyTopicPracticeResponses[keyof StudyTopicPracticeResponses];
 
 export type StudyNoteGetManyData = {
   body?: never;

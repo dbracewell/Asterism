@@ -1,6 +1,6 @@
 # EPIC-58: Learning goals, reflection and progress
 
-Status: in progress (US-58.1 and US-58.2 complete; designs in [ADR-0047](../adr/0047-project-learning-goals.md) and [ADR-0048](../adr/0048-session-reflections.md)). Source: product direction discussion (2026-10-31), learner track.
+Status: in progress (US-58.1 and US-58.2 complete, US-58.3 implemented; designs in [ADR-0047](../adr/0047-project-learning-goals.md), [ADR-0048](../adr/0048-session-reflections.md) and [ADR-0049](../adr/0049-topic-mastery.md)). Source: product direction discussion (2026-10-31), learner track.
 
 ## Objective
 
@@ -56,7 +56,7 @@ Acceptance: topics come from deck and quiz tags. The project page shows a
 mastery level per topic based on review ratings and quiz results, with trends
 over time. Selecting a topic starts practice on it.
 
-- [ ] Implement mastery computation over study data; build the progress view; add tests.
+- [x] Implement mastery computation over study data; build the progress view; add tests.
 
 ## US-58.4: Unclear items feed review
 

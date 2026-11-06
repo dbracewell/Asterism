@@ -7,10 +7,12 @@ deck to its owner's project and a card to its owner's deck. Deleting a project
 
 import uuid
 
+from pydantic import TypeAdapter
 from sqlalchemy import CheckConstraint, Float, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
+from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin, get_unix_timestamp
 
 MAX_DECK_NAME_CHARS = 120
@@ -25,6 +27,8 @@ class StudyDeckModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     name: Mapped[str] = mapped_column(String(MAX_DECK_NAME_CHARS), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    # Topic tags (US-58.3), normalized by the schema; mastery groups cards by them.
+    tags: Mapped[list[str]] = mapped_column(jsonb_type(TypeAdapter(list[str])), nullable=False, default=list)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -136,11 +140,14 @@ class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     user_id: Mapped[str] = mapped_column(String, nullable=False)
     project_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     title: Mapped[str] = mapped_column(String(MAX_QUIZ_TITLE_CHARS), nullable=False)
-    # generated (from files by a model) or weak_spots (copied from missed items, no model).
+    # generated (from files by a model), weak_spots (copied from missed items, no
+    # model) or topic (copied from one topic's items, no model; US-58.3).
     origin: Mapped[str] = mapped_column(String(16), nullable=False, default="generated", server_default="generated")
     # Provenance of the generating model; not a foreign key, so model deletion keeps the quiz.
     model_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     model_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Topic tags (US-58.3); mastery groups original questions by them.
+    tags: Mapped[list[str]] = mapped_column(jsonb_type(TypeAdapter(list[str])), nullable=False, default=list)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -154,7 +161,7 @@ class StudyQuizModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
             f"length(trim(title)) > 0 AND length(title) <= {MAX_QUIZ_TITLE_CHARS}", name="ck_study_quizzes_title"
         ),
         CheckConstraint(
-            "(origin = 'generated' AND model_name IS NOT NULL) OR origin = 'weak_spots'",
+            "(origin = 'generated' AND model_name IS NOT NULL) OR origin IN ('weak_spots', 'topic')",
             name="ck_study_quizzes_origin",
         ),
         Index("idx_study_quizzes_project", "user_id", "project_id", "created_at", "id"),

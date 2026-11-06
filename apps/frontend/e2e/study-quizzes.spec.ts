@@ -12,6 +12,7 @@ const summary = {
   project_id: P,
   title: "Cell biology quiz",
   question_count: 3,
+  tags: [],
   multiple_choice_count: 2,
   short_answer_count: 1,
   attempt_count: 0,

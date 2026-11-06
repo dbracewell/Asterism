@@ -1180,6 +1180,8 @@ export const zLoggedChat = z.object({
 
 /**
  * AiUseLog
+ *
+ * Every timestamp in the log is in Unix seconds.
  */
 export const zAiUseLog = z.object({
   generated_at: z.int(),
@@ -2417,6 +2419,7 @@ export const zStudyDeck = z.object({
   project_id: z.uuid(),
   name: z.string(),
   description: z.string(),
+  tags: z.array(z.string()),
   card_count: z.int().gte(0),
   due_count: z.int().gte(0),
   created_at: z.int(),
@@ -2429,6 +2432,7 @@ export const zStudyDeck = z.object({
 export const zStudyDeckCreate = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(2000).optional().default(""),
+  tags: z.array(z.string()).max(8).optional(),
 });
 
 /**
@@ -2447,6 +2451,7 @@ export const zStudyDeckPage = z.object({
 export const zStudyDeckUpdate = z.object({
   name: z.string().min(1).max(120).optional(),
   description: z.string().max(2000).optional(),
+  tags: z.array(z.string()).max(8).optional(),
 });
 
 /**
@@ -2678,6 +2683,7 @@ export const zStudyQuizGenerateRequest = z.object({
     .max(2),
   file_ids: z.array(z.uuid()).min(1).max(10).nullish(),
   title: z.string().min(1).max(120).nullish(),
+  tags: z.array(z.string()).max(8).optional(),
 });
 
 /**
@@ -2700,13 +2706,14 @@ export const zStudyQuiz = z.object({
   id: z.uuid(),
   project_id: z.uuid(),
   title: z.string(),
+  tags: z.array(z.string()),
   question_count: z.int().gte(0),
   multiple_choice_count: z.int().gte(0),
   short_answer_count: z.int().gte(0),
   attempt_count: z.int().gte(0),
   last_score: z.number().nullable(),
   best_score: z.number().nullable(),
-  origin: z.enum(["generated", "weak_spots"]),
+  origin: z.enum(["generated", "weak_spots", "topic"]),
   model_id: z.uuid().nullable(),
   model_name: z.string().nullable(),
   created_at: z.int(),
@@ -2769,13 +2776,14 @@ export const zStudyQuizSummary = z.object({
   id: z.uuid(),
   project_id: z.uuid(),
   title: z.string(),
+  tags: z.array(z.string()),
   question_count: z.int().gte(0),
   multiple_choice_count: z.int().gte(0),
   short_answer_count: z.int().gte(0),
   attempt_count: z.int().gte(0),
   last_score: z.number().nullable(),
   best_score: z.number().nullable(),
-  origin: z.enum(["generated", "weak_spots"]),
+  origin: z.enum(["generated", "weak_spots", "topic"]),
   model_id: z.uuid().nullable(),
   model_name: z.string().nullable(),
   created_at: z.int(),
@@ -2794,9 +2802,12 @@ export const zStudyQuizPage = z.object({
 
 /**
  * StudyQuizUpdate
+ *
+ * Rename and retag; omitted fields are unchanged.
  */
 export const zStudyQuizUpdate = z.object({
-  title: z.string().min(1).max(120),
+  title: z.string().min(1).max(120).optional(),
+  tags: z.array(z.string()).max(8).optional(),
 });
 
 /**
@@ -2901,6 +2912,47 @@ export const zStudySummaryDraft = z.object({
   files: z.array(zStudySourceFileResult),
   model_id: z.uuid(),
   model_name: z.string(),
+});
+
+/**
+ * StudyTopicPracticeRequest
+ */
+export const zStudyTopicPracticeRequest = z.object({
+  topic: z.string().min(1).max(40),
+  question_count: z.int().gte(1).lte(20).optional().default(10),
+});
+
+/**
+ * StudyTrendPoint
+ *
+ * Mastery as of ``at`` (end of a week); null when nothing had been practiced.
+ */
+export const zStudyTrendPoint = z.object({
+  at: z.int(),
+  score: z.number().nullable(),
+});
+
+/**
+ * StudyTopicMastery
+ */
+export const zStudyTopicMastery = z.object({
+  key: z.string(),
+  label: z.string(),
+  level: z.enum(["not_started", "needs_work", "developing", "mastered"]),
+  score: z.number().nullable(),
+  practiced: z.int().gte(0),
+  total: z.int().gte(0),
+  deck_count: z.int().gte(0),
+  quiz_count: z.int().gte(0),
+  trend: z.array(zStudyTrendPoint),
+});
+
+/**
+ * StudyTopicMasteryList
+ */
+export const zStudyTopicMasteryList = z.object({
+  items: z.array(zStudyTopicMastery),
+  computed_at: z.int(),
 });
 
 /**
@@ -4694,6 +4746,26 @@ export const zStudyWeakSpotPracticePath = z.object({
  * Successful Response
  */
 export const zStudyWeakSpotPracticeResponse = zStudyQuiz;
+
+export const zStudyTopicMasteryGetManyPath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyTopicMasteryGetManyResponse = zStudyTopicMasteryList;
+
+export const zStudyTopicPracticeBody = zStudyTopicPracticeRequest;
+
+export const zStudyTopicPracticePath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zStudyTopicPracticeResponse = zStudyQuiz;
 
 export const zStudyNoteGetManyPath = z.object({
   project_id: z.uuid(),

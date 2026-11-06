@@ -49,6 +49,7 @@ test("reviews due cards with the keyboard alone and passes an accessibility scan
         project_id: P,
         name: "Cell biology",
         description: "",
+        tags: [],
         card_count: 2,
         due_count: 2,
         created_at: 1,

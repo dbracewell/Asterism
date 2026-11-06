@@ -14,6 +14,7 @@ from asterism.domains.user.dependencies import AuthedUserDep
 from . import (
     attempts,
     generation,
+    mastery,
     notes,
     quiz_generation,
     quizzes,
@@ -56,6 +57,8 @@ from .schemas import (
     StudyReviewRequest,
     StudySummaryDraft,
     StudySummaryRequest,
+    StudyTopicMasteryList,
+    StudyTopicPracticeRequest,
     StudyWeakSpotPracticeRequest,
     StudyWeakSpots,
 )
@@ -325,6 +328,26 @@ async def practice_weak_spots(
 ) -> StudyQuiz:
     """Save a quiz that re-asks the most recent weak spots; 400 when there are none."""
     return await weak_spots.practice_weak_spots(user_id=user.id, project_id=project_id, request=payload, session=db)
+
+
+# --- Topic mastery (US-58.3, ADR-0049) ----------------------------------------
+
+
+@study_router.get("/topics", operation_id="studyTopicMasteryGetMany")
+async def list_topic_mastery(
+    project_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep, response: Response
+) -> StudyTopicMasteryList:
+    """Mastery per deck and quiz tag, derived from review ratings and quiz results."""
+    response.headers["Cache-Control"] = "no-store"
+    return await mastery.topic_mastery(user_id=user.id, project_id=project_id, session=db)
+
+
+@study_router.post("/topics/practice", operation_id="studyTopicPractice", status_code=201)
+async def practice_topic(
+    project_id: uuid.UUID, payload: StudyTopicPracticeRequest, user: AuthedUserDep, db: DBSessionDep
+) -> StudyQuiz:
+    """Save a quiz of one topic's weakest items; 404 for an unknown topic."""
+    return await mastery.practice_topic(user_id=user.id, project_id=project_id, request=payload, session=db)
 
 
 # --- Notes, summaries and study guides (US-53.6, ADR-0037) ---------------------
