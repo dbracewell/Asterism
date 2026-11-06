@@ -83,6 +83,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     details: [
       "Use a project for a course, an assignment or any topic you'll come back to.",
       "In a project's settings you can choose which of your sub-agents its chats may use. New projects start with none selected.",
+      "You can also set a learning goal and a target date. The goal shows on the project page, and a chat only sees it when you turn on Goal in the message box for a message.",
     ],
     related: [
       "concept.file-scope",

@@ -500,6 +500,7 @@ export type {
   ForkProvenance,
   Function,
   GenerationDefaults,
+  GoalSnapshot,
   HintLevel,
   HintRequest,
   InlineFileReference,

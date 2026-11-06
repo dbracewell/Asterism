@@ -819,6 +819,17 @@ export const zGenerationDefaults = z.object({
 });
 
 /**
+ * GoalSnapshot
+ *
+ * The project's goal when the turn was accepted; immutable provenance.
+ */
+export const zGoalSnapshot = z.object({
+  project_id: z.uuid(),
+  text: z.string(),
+  target_date: z.iso.date().nullish(),
+});
+
+/**
  * HintLevel
  *
  * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
@@ -1149,6 +1160,7 @@ export const zLoggedTurn = z.object({
   persona: z.string().nullable(),
   template: zLoggedTemplate.nullable(),
   rubric: z.string().nullable(),
+  goal: z.string().nullish(),
   skills: z.array(z.string()),
   files: z.array(zLoggedFile),
   compared: z.boolean(),
@@ -1426,6 +1438,8 @@ export const zProject = z.object({
   accent: z
     .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
     .nullable(),
+  goal: z.string(),
+  goal_target_date: z.iso.date().nullable(),
   context_revision: z.int().gte(1),
   created_at: z.int(),
   updated_at: z.int(),
@@ -1443,6 +1457,8 @@ export const zProjectCreate = z.object({
   accent: z
     .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
     .nullish(),
+  goal: z.string().max(1000).optional().default(""),
+  goal_target_date: z.iso.date().nullish(),
 });
 
 /**
@@ -1509,7 +1525,8 @@ export const zProjectSubAgentBatchResult = z.object({
  *
  * Only fields present in the payload are written; omitted fields are untouched.
  * An empty string clears text, but explicit JSON null is rejected for text
- * fields. ``accent`` is the exception: explicit null removes the color.
+ * fields. ``accent`` and ``goal_target_date`` are the exceptions: explicit null
+ * removes the color or the date.
  */
 export const zProjectUpdate = z.object({
   expected_context_revision: z.int().gte(1),
@@ -1519,6 +1536,8 @@ export const zProjectUpdate = z.object({
   accent: z
     .enum(["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"])
     .nullish(),
+  goal: z.string().max(1000).optional(),
+  goal_target_date: z.iso.date().nullish(),
 });
 
 /**
@@ -3096,6 +3115,7 @@ export const zChatSendRequest = z.object({
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
   rubric: zRubricUse.nullish(),
+  include_goal: z.boolean().optional().default(false),
   hint: zHintRequest.nullish(),
   expected_model_revision: z.int().gte(1),
   request_id: z.uuid(),
@@ -3113,6 +3133,7 @@ export const zNewChatRequest = z.object({
   skills: zSkillSelection.nullish(),
   template: zTemplateUse.nullish(),
   rubric: zRubricUse.nullish(),
+  include_goal: z.boolean().optional().default(false),
   persona_id: z.uuid().nullish(),
   learning_mode: zLearningModeId.optional().default("standard"),
   hint: zHintRequest.nullish(),
@@ -3497,6 +3518,7 @@ export const zMessage = z.object({
   learning_mode: zLearningModeProvenance.nullish(),
   template: zTemplateLabel.nullish(),
   rubric: zRubricLabel.nullish(),
+  goal: zGoalSnapshot.nullish(),
   execution: zMessageExecution.nullish(),
   id: z.uuid(),
   status: zMessageStatus,

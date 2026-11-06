@@ -20,6 +20,7 @@ import { ProjectSubAgents } from "./project-sub-agents";
 import { ProjectFiles } from "./project-files";
 import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
+import { ProjectGoal } from "./project-goal";
 import { AiUseLogDialog } from "@/features/chat/components/ai-use-log/ai-use-log-dialog";
 import { ProjectStudyDecks } from "@/features/study/components/project-study-decks";
 import { ProjectStudyQuizzes } from "@/features/study/components/project-study-quizzes";
@@ -113,6 +114,10 @@ export function ProjectWorkspace({
             </ProjectSettings>
           ) : (
             <>
+              <ProjectGoal
+                goal={project.data.goal}
+                targetDate={project.data.goal_target_date}
+              />
               <WorkspaceChats key={projectId} projectId={projectId} />
               <ProjectStudyDecks
                 key={`study-${projectId}`}
@@ -178,6 +183,8 @@ function ProjectSettings({
     description: draft.description,
     system_prompt: draft.system_prompt,
     accent: draft.accent,
+    goal: draft.goal,
+    goal_target_date: draft.goal_target_date,
   };
   return (
     <>

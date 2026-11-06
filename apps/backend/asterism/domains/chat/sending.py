@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
 from asterism.db.database import get_async_db_session
+from asterism.domains.projects.goals import resolve_goal
 from asterism.domains.projects.scope import require_owned_project
 from asterism.domains.prompt_templates.provenance import resolve_template_use
 from asterism.domains.user.models import UserModel
@@ -108,6 +109,11 @@ async def persist_user_send(
         else None
     )
     rubric = await accept_rubric(user_id=user_id, chat=chat, use=payload.rubric, session=session)
+    goal = (
+        await resolve_goal(user_id=user_id, project_id=chat.project_id, session=session)
+        if payload.include_goal
+        else None
+    )
     await bind_message_files(user_id=user_id, chat_id=chat.id, files=files, session=session)
     inputs = {
         "user_id": user_id,
@@ -115,6 +121,7 @@ async def persist_user_send(
         "accepted_skills": skills,
         "accepted_template": template,
         "accepted_rubric": rubric,
+        "accepted_goal": goal,
         "accepted_learning_mode": current_mode_snapshot(chat, hint_level),
         "hint_level": hint_level,
         "accepted_persona": await resolve_persona_snapshot(

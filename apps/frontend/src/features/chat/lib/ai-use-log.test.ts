@@ -25,6 +25,7 @@ const log: AiUseLog = {
           persona: "Student",
           template: { name: "RTF", level: "standard", available: false },
           rubric: "Argumentative essay",
+          goal: "Publish a reef survey",
           skills: ["citations"],
           files: [
             { name: "essay.txt", available: true },
@@ -112,6 +113,7 @@ it("lists every recorded detail of the included turns", () => {
     "- Persona: Student",
     "- Template: RTF (no longer available), standard level",
     "- Rubric: Argumentative essay",
+    "- Learning goal included: Publish a reef survey",
     "- Skills: citations",
     "- Files attached: essay.txt, old.pdf (no longer available)",
     "- Sent to several models side by side; this is the column kept",

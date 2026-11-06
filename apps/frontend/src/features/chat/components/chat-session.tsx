@@ -52,6 +52,7 @@ import { turnStepsEndingAt } from "../lib/run-usage";
 import { ExistingChatLearningModePicker } from "./chat-learning-mode-picker";
 import { ChatHintControls } from "./chat-hint-controls";
 import { ChatRubricPicker, useModeTakesRubric } from "./chat-rubric-picker";
+import { ChatGoalToggle, useProjectGoal } from "./chat-goal-toggle";
 import {
   ExistingChatPersonaPicker,
   personaAvailable,
@@ -137,6 +138,13 @@ export const ChatSession = ({
         ? { source: latestRubric.source, id: latestRubric.id }
         : null;
   const sentRubric = takesRubric ? rubric : null;
+  // Like the rubric, the goal choice follows the latest turn until changed.
+  const [goalChoice, setGoalChoice] = React.useState<boolean | undefined>();
+  const projectGoal = useProjectGoal(session?.info.project_id);
+  const latestTurn = session?.messages.findLast(
+    (message) => message.role === "user",
+  );
+  const includeGoal = !!projectGoal && (goalChoice ?? latestTurn?.goal != null);
   const [compareSource, setCompareSource] = React.useState<{
     messageId: string;
     modelId?: string;
@@ -320,6 +328,7 @@ export const ChatSession = ({
         ...(skills ? { skills } : {}),
         ...(template ? { template } : {}),
         ...(sentRubric ? { rubric: sentRubric } : {}),
+        ...(includeGoal ? { include_goal: true } : {}),
         ...(hint
           ? { hint }
           : resetHints
@@ -725,7 +734,7 @@ export const ChatSession = ({
             }
             isProcessing={isProcessing}
             onStop={() => sendJsonMessage({ type: "cancel" })}
-            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}`}
+            requestScope={`${session.info.id}:${session.info.model_revision ?? 1}:${session.info.persona_revision ?? 1}:${session.info.learning_mode_revision ?? 1}:${compareModels.join(",")}:${sentRubric ? `${sentRubric.source}:${sentRubric.id}` : "none"}:${includeGoal ? "goal" : ""}`}
             scopeKey={`${session.info.model_revision}:${session.info.persona_revision}:${session.info.learning_mode_revision}:${promptPersona?.id}:${promptPersona?.revision}:${session.info.project_id}:${session.messages.map((message) => message.id).join()}`}
             scopeLocked={isProcessing || sendMessage.isPending}
             onSubmit={addUserMessage}
@@ -777,6 +786,14 @@ export const ChatSession = ({
                     )
                   }
                 />
+                {projectGoal && (
+                  <ChatGoalToggle
+                    goal={projectGoal}
+                    value={includeGoal}
+                    onChange={setGoalChoice}
+                    disabled={interactionBusy}
+                  />
+                )}
                 {takesRubric && (
                   <ChatRubricPicker
                     owner={user.id}

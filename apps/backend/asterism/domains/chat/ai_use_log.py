@@ -86,6 +86,7 @@ def _turn(request: Message, steps: Sequence[Message]) -> LoggedTurn:
             else None
         ),
         rubric=request.rubric.document.name if request.rubric else None,
+        goal=request.goal.text if request.goal else None,
         skills=[skill.name for skill in request.skills],
         files=[LoggedFile(name=file.name, available=file.available) for file in request.files],
         compared=request.comparison_id is not None,

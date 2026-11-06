@@ -286,3 +286,22 @@ verify real ownership, runtime General non-delegation, capability revocation,
 selection atomicity, execution snapshots, and candidate filtering before pagination.
 The browser harness does not invoke real provider services or authenticated user
 sessions against the real backend.
+
+## Learning goals (US-58.1)
+
+A project has an optional `goal` (up to 1,000 characters) and
+`goal_target_date` (ISO date; explicit `null` clears it on `PATCH`). Both are
+metadata: editing them never advances `context_revision`, because the goal is
+not project context. The project overview shows the goal with its target date
+and how many days remain.
+
+A goal reaches a chat only when the learner turns on **Goal** in the composer
+of a project chat. The send carries `include_goal: true`; acceptance pins
+`messages.accepted_goal` (project ID, trimmed text, target date), immutable by
+SQLite trigger and copied to comparison columns. A General chat or a project
+without a goal rejects the request with 400. The model reads the pinned goal as
+a text part after the learner's message, so resume and regeneration use it even
+after the goal is edited. The message shows "Goal included" and the AI-use log
+lists it. The toggle follows the latest turn until the learner changes it. The
+goal is the learner's own text: it adds no prompt layer and grants nothing.
+See [ADR-0047](../adr/0047-project-learning-goals.md).

@@ -99,6 +99,16 @@ event.listen(
     Base.metadata,
     "after_create",
     DDL("""
+CREATE TRIGGER IF NOT EXISTS accepted_goal_immutable
+BEFORE UPDATE OF accepted_goal ON messages
+WHEN NEW.accepted_goal IS NOT OLD.accepted_goal
+BEGIN SELECT RAISE(ABORT, 'Accepted learning goal is immutable'); END
+""").execute_if(dialect="sqlite"),
+)
+event.listen(
+    Base.metadata,
+    "after_create",
+    DDL("""
 CREATE TRIGGER IF NOT EXISTS accepted_rubric_immutable
 BEFORE UPDATE OF accepted_rubric ON messages
 WHEN NEW.accepted_rubric IS NOT OLD.accepted_rubric

@@ -1,8 +1,19 @@
 """Project metadata and owner-consistent references to independently stored files."""
 
+import datetime
 import uuid
 
-from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
@@ -31,9 +42,14 @@ class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     # Optional sidebar color from the fixed PROJECT_ACCENTS palette; metadata only.
     accent: Mapped[str | None] = mapped_column(String(16), nullable=True)
     context_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    # Learning goal (US-58.1): metadata only. It reaches a chat only when the
+    # learner includes it in a turn, so editing it never advances the revision.
+    goal: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    goal_target_date: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="uq_projects_user_name"),
+        CheckConstraint("length(goal) <= 1000", name="ck_projects_goal_length"),
         # Redundant with the primary key on its own, but required so child tables
         # can reference (id, user_id) as a composite foreign key on any backend.
         UniqueConstraint("id", "user_id", name="uq_projects_id_user"),
