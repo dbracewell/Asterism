@@ -1,6 +1,6 @@
 # EPIC-63: Admin settings export and import
 
-Status: in progress. Source: user request (2026-11-06), before a database reset.
+Status: complete (2026-11-06; design in [ADR-0052](../adr/0052-settings-export-format.md)). Source: user request (2026-11-06), before a database reset.
 
 ## Objective
 

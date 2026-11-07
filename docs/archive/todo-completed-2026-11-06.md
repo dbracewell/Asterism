@@ -58,3 +58,20 @@ carry a learning mode, so Study Buddy's Tutor uses its own instructions.
   - [x] Build the review screen; test conflicts, model selection, policy limits and rollback.
 - [x] US-59.4: Starter packs (confirmed and merged 2026-11-06)
   - [x] Author and validate the bundled packs; add install tests.
+
+The user confirmed US-63.3 completion and authorized a local merge on
+2026-11-06. EPIC-63 (US-63.1 through US-63.3) is complete; each story was
+confirmed and merged with `--no-ff` before the next began. See ADR-0052 (settings
+export format, with addenda for import and setup). The file carries provider keys
+under a passphrase, and import merges, so nothing is removed.
+
+### [EPIC-63: Admin settings export and import](../epics/EPIC-63-ADMIN-SETTINGS-EXPORT-AND-IMPORT.md)
+
+- [x] US-63.1: Export settings (confirmed and merged 2026-11-06)
+  - [x] Write the ADR; implement the format and export with tests.
+  - [x] Build the Export pane; test it.
+- [x] US-63.2: Import settings in Admin settings (confirmed and merged 2026-11-06)
+  - [x] Implement preview and transactional merge; test merge, references, rollback and failures.
+  - [x] Build the import flow; test it.
+- [x] US-63.3: Import during setup (confirmed and merged 2026-11-06)
+  - [x] Add import to the setup step; test the alternative path.
