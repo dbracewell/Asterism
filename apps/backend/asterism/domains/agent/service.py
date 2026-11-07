@@ -223,6 +223,20 @@ async def new_sub_agent(user_id: str, payload: SubAgentCreate, session: AsyncSes
     return row
 
 
+async def replace_sub_agent(
+    user_id: str, row: AgentProfileModel, payload: SubAgentCreate, session: AsyncSession
+) -> None:
+    """Validate and apply a whole definition to an owned row; no commit.
+
+    For a larger transaction that updates a definition in place (US-60.3).
+    """
+    if row.user_id != user_id or not row.sub_agent:
+        raise NotFoundException("Sub-agent not found")
+    await _validate_configuration(user_id, payload, session)
+    _apply_definition(row, payload)
+    row.config_revision = AgentProfileModel.config_revision + 1
+
+
 async def save_sub_agent(
     user_id: str,
     payload: SubAgentCreate,

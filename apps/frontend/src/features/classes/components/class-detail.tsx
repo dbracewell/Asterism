@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { CoursePublisher } from "@/features/classes/components/course-publisher";
 import { StudentInvites } from "@/features/classes/components/student-invites";
 import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
@@ -247,6 +248,7 @@ export function ClassDetail({ classId }: { classId: string }) {
       <Invite item={item.data} />
       <StudentInvites classId={classId} />
       <Roster classId={classId} />
+      <CoursePublisher classId={classId} />
       <DeleteClass item={item.data} />
     </PageLayout>
   );

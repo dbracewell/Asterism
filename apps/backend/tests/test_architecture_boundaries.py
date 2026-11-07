@@ -20,6 +20,7 @@ DB_COMPOSITION_ROOTS = {
         "asterism.domains.chat.draft_models",
         "asterism.domains.chatgpt.models",
         "asterism.domains.classes.models",
+        "asterism.domains.courses.models",
         "asterism.domains.files.models",
         "asterism.domains.knowledge.models",
         "asterism.domains.packs.models",

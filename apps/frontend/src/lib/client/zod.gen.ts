@@ -515,6 +515,106 @@ export const zContextLayerTexts = z.object({
 });
 
 /**
+ * CourseApplied
+ */
+export const zCourseApplied = z.object({
+  project_id: z.uuid(),
+  version_number: z.int(),
+});
+
+/**
+ * CourseApply
+ *
+ * The version the student reviewed; a newer one must be reviewed first.
+ */
+export const zCourseApply = z.object({
+  version_number: z.int().gte(1),
+});
+
+/**
+ * CourseChange
+ */
+export const zCourseChange = z.object({
+  kind: z.enum(["added", "removed", "changed"]),
+  item: z.enum(["settings", "sub_agent", "file"]),
+  name: z.string(),
+});
+
+/**
+ * CourseCopy
+ */
+export const zCourseCopy = z.object({
+  version_number: z.int(),
+  project_id: z.uuid().nullable(),
+});
+
+/**
+ * CourseFile
+ */
+export const zCourseFile = z.object({
+  name: z.string(),
+  size: z.int(),
+});
+
+/**
+ * CoursePublish
+ *
+ * Publish one of the educator's projects as the class's next course version.
+ */
+export const zCoursePublish = z.object({
+  project_id: z.uuid(),
+  note: z.string().max(2000).optional().default(""),
+});
+
+/**
+ * CourseSubAgent
+ */
+export const zCourseSubAgent = z.object({
+  name: z.string(),
+  description: z.string(),
+  model_name: z.string().nullable(),
+  tools: z.array(z.string()),
+});
+
+/**
+ * CourseOffer
+ *
+ * What adding or updating the course gives the student, before they agree.
+ */
+export const zCourseOffer = z.object({
+  version_number: z.int(),
+  note: z.string(),
+  published_at: z.int(),
+  instructions: z.string(),
+  sub_agents: z.array(zCourseSubAgent),
+  files: z.array(zCourseFile),
+  current: zCourseCopy.nullable(),
+  changes: z.array(zCourseChange),
+});
+
+/**
+ * CourseVersion
+ */
+export const zCourseVersion = z.object({
+  id: z.uuid(),
+  number: z.int(),
+  note: z.string(),
+  created_at: z.int(),
+  sub_agent_names: z.array(z.string()),
+  file_names: z.array(z.string()),
+});
+
+/**
+ * CourseVersionPage
+ */
+export const zCourseVersionPage = z.object({
+  items: z.array(zCourseVersion),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
  * CreateUserRequest
  *
  * Request model for creating a new user.
@@ -5329,6 +5429,53 @@ export const zClassInviteRedeemBody = zInviteRedeemRequest;
  * Successful Response
  */
 export const zClassInviteRedeemResponse = zInvitePreview;
+
+export const zClassCourseGetPath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Response Classcourseget
+ *
+ * Successful Response
+ */
+export const zClassCourseGetResponse = zCourseOffer.nullable();
+
+export const zClassCourseApplyBody = zCourseApply;
+
+export const zClassCourseApplyPath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassCourseApplyResponse = zCourseApplied;
+
+export const zClassCoursePublishBody = zCoursePublish;
+
+export const zClassCoursePublishPath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassCoursePublishResponse = zCourseVersion;
+
+export const zClassCourseVersionGetManyPath = z.object({
+  class_id: z.uuid(),
+});
+
+export const zClassCourseVersionGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(20),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassCourseVersionGetManyResponse = zCourseVersionPage;
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),

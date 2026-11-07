@@ -38,8 +38,8 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Implement invites and atomic redemption in the backend; test single use, expiry, revocation, setup gating and role isolation.
   - [x] Extend the signup check in auth with the invite path and rate limiting; build the invite management UI and the invite signup page.
   - [x] Add a real-backend E2E: educator creates an invite, a new student signs up with it and lands in the class, and the invite can't be reused.
-- [ ] US-60.3: Course packs
-  - [ ] Implement publishing and student provisioning; test versioning and access.
+- [x] US-60.3: Course packs
+  - [x] Implement publishing and student provisioning; test versioning and access.
 - [ ] US-60.4: Class mode policy
   - [ ] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
 - [ ] US-60.5: Aggregate misconception insights

@@ -225,6 +225,18 @@ import type {
   ChatSessionUpdateData,
   ChatSessionUpdateError,
   ChatSessionUpdateResponse,
+  ClassCourseApplyData,
+  ClassCourseApplyError,
+  ClassCourseApplyResponse,
+  ClassCourseGetData,
+  ClassCourseGetError,
+  ClassCourseGetResponse,
+  ClassCoursePublishData,
+  ClassCoursePublishError,
+  ClassCoursePublishResponse,
+  ClassCourseVersionGetManyData,
+  ClassCourseVersionGetManyError,
+  ClassCourseVersionGetManyResponse,
   ClassCreateData,
   ClassCreateError,
   ClassCreateResponse,
@@ -4028,6 +4040,173 @@ export const classInviteRedeemMutation = (
   };
   return mutationOptions;
 };
+
+export const classCourseGetQueryKey = (options: Options<ClassCourseGetData>) =>
+  createQueryKey("classCourseGet", options);
+
+/**
+ * Get Course
+ *
+ * The latest course for a class you're in, what it would give you, and what changed. None if unpublished.
+ */
+export const classCourseGetOptions = (options: Options<ClassCourseGetData>) =>
+  queryOptions<
+    ClassCourseGetResponse,
+    ClassCourseGetError,
+    ClassCourseGetResponse,
+    ReturnType<typeof classCourseGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().classCourseGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classCourseGetQueryKey(options),
+  });
+
+/**
+ * Apply Course
+ *
+ * Add the course to your projects, or update your copy to the version you reviewed.
+ */
+export const classCourseApplyMutation = (
+  options?: Partial<Options<ClassCourseApplyData>>,
+): UseMutationOptions<
+  ClassCourseApplyResponse,
+  ClassCourseApplyError,
+  Options<ClassCourseApplyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassCourseApplyResponse,
+    ClassCourseApplyError,
+    Options<ClassCourseApplyData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classCourseApply({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Publish Course
+ *
+ * Publish one of your projects as the next course version.
+ */
+export const classCoursePublishMutation = (
+  options?: Partial<Options<ClassCoursePublishData>>,
+): UseMutationOptions<
+  ClassCoursePublishResponse,
+  ClassCoursePublishError,
+  Options<ClassCoursePublishData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassCoursePublishResponse,
+    ClassCoursePublishError,
+    Options<ClassCoursePublishData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classCoursePublish({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classCourseVersionGetManyQueryKey = (
+  options: Options<ClassCourseVersionGetManyData>,
+) => createQueryKey("classCourseVersionGetMany", options);
+
+/**
+ * List Versions
+ */
+export const classCourseVersionGetManyOptions = (
+  options: Options<ClassCourseVersionGetManyData>,
+) =>
+  queryOptions<
+    ClassCourseVersionGetManyResponse,
+    ClassCourseVersionGetManyError,
+    ClassCourseVersionGetManyResponse,
+    ReturnType<typeof classCourseVersionGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .classCourseVersionGetMany({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey: classCourseVersionGetManyQueryKey(options),
+  });
+
+export const classCourseVersionGetManyInfiniteQueryKey = (
+  options: Options<ClassCourseVersionGetManyData>,
+): QueryKey<Options<ClassCourseVersionGetManyData>> =>
+  createQueryKey("classCourseVersionGetMany", options, true);
+
+/**
+ * List Versions
+ */
+export const classCourseVersionGetManyInfiniteOptions = (
+  options: Options<ClassCourseVersionGetManyData>,
+) =>
+  infiniteQueryOptions<
+    ClassCourseVersionGetManyResponse,
+    ClassCourseVersionGetManyError,
+    InfiniteData<ClassCourseVersionGetManyResponse>,
+    QueryKey<Options<ClassCourseVersionGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ClassCourseVersionGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ClassCourseVersionGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry
+          .get()
+          .classCourseVersionGetMany({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true,
+          });
+        return data;
+      },
+      queryKey: classCourseVersionGetManyInfiniteQueryKey(options),
+    },
+  );
 
 export const studyDeckGetManyQueryKey = (
   options: Options<StudyDeckGetManyData>,

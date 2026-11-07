@@ -30,6 +30,11 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   classLeaveMutation: () => ({ mutationFn: mocks.leave }),
   classCreateMutation: () => ({ mutationFn: mocks.create }),
   educatorAccessRequestMutation: () => ({ mutationFn: mocks.request }),
+  classCourseGetOptions: () => ({
+    queryKey: ["course"],
+    queryFn: async () => null,
+  }),
+  classCourseApplyMutation: () => ({ mutationFn: vi.fn() }),
 }));
 
 const page = (items: object[]) => ({
