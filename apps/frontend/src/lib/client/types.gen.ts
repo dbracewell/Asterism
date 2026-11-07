@@ -5281,6 +5281,40 @@ export type Setting = {
 };
 
 /**
+ * SettingsEnvelope
+ *
+ * The file itself. It holds nothing readable beyond the format marker.
+ */
+export type SettingsEnvelope = {
+  /**
+   * Format
+   */
+  format?: "asterism.settings-export";
+  /**
+   * Format Version
+   */
+  format_version?: 1;
+  /**
+   * Salt
+   */
+  salt: string;
+  /**
+   * Ciphertext
+   */
+  ciphertext: string;
+};
+
+/**
+ * SettingsExportRequest
+ */
+export type SettingsExportRequest = {
+  /**
+   * Passphrase
+   */
+  passphrase: string;
+};
+
+/**
  * ShortTextField
  */
 export type ShortTextField = {
@@ -10868,6 +10902,37 @@ export type TeamPackImportResponses = {
 
 export type TeamPackImportResponse =
   TeamPackImportResponses[keyof TeamPackImportResponses];
+
+export type AppSettingsExportData = {
+  body: SettingsExportRequest;
+  path?: never;
+  query?: never;
+  url: "/settings/app/transfer/export";
+};
+
+export type AppSettingsExportErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type AppSettingsExportError =
+  AppSettingsExportErrors[keyof AppSettingsExportErrors];
+
+export type AppSettingsExportResponses = {
+  /**
+   * Successful Response
+   */
+  200: SettingsEnvelope;
+};
+
+export type AppSettingsExportResponse =
+  AppSettingsExportResponses[keyof AppSettingsExportResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;

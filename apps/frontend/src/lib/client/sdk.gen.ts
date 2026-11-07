@@ -60,6 +60,9 @@ import type {
   AppSettingsBulkUpdateData,
   AppSettingsBulkUpdateErrors,
   AppSettingsBulkUpdateResponses,
+  AppSettingsExportData,
+  AppSettingsExportErrors,
+  AppSettingsExportResponses,
   AppSettingsGetData,
   AppSettingsGetErrors,
   AppSettingsGetResponses,
@@ -2285,6 +2288,33 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/team-packs/import",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Create Settings Export
+   *
+   * Build an encrypted file of every application setting. Nothing is stored.
+   */
+  public appSettingsExport<ThrowOnError extends boolean = false>(
+    options: Options<AppSettingsExportData, ThrowOnError>,
+  ): RequestResult<
+    AppSettingsExportResponses,
+    AppSettingsExportErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      AppSettingsExportResponses,
+      AppSettingsExportErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/transfer/export",
       ...options,
       headers: {
         "Content-Type": "application/json",

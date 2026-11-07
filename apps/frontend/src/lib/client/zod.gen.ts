@@ -2372,6 +2372,28 @@ export const zSetting = z.object({
 });
 
 /**
+ * SettingsEnvelope
+ *
+ * The file itself. It holds nothing readable beyond the format marker.
+ */
+export const zSettingsEnvelope = z.object({
+  format: z
+    .literal("asterism.settings-export")
+    .optional()
+    .default("asterism.settings-export"),
+  format_version: z.literal(1).optional().default(1),
+  salt: z.string(),
+  ciphertext: z.string(),
+});
+
+/**
+ * SettingsExportRequest
+ */
+export const zSettingsExportRequest = z.object({
+  passphrase: z.string().min(12).max(1024),
+});
+
+/**
  * ShortTextField
  */
 export const zShortTextField = z.object({
@@ -4841,6 +4863,13 @@ export const zTeamPackImportBody = zPackImportRequest;
  * Successful Response
  */
 export const zTeamPackImportResponse = zPackImportResult;
+
+export const zAppSettingsExportBody = zSettingsExportRequest;
+
+/**
+ * Successful Response
+ */
+export const zAppSettingsExportResponse = zSettingsEnvelope;
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),

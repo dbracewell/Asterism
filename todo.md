@@ -28,6 +28,17 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57, EPIC-58 and EPIC-59 are complete and archived.
 
+### [EPIC-63: Admin settings export and import](docs/epics/EPIC-63-ADMIN-SETTINGS-EXPORT-AND-IMPORT.md)
+
+- [x] US-63.1: Export settings
+  - [x] Write the ADR; implement the format and export with tests.
+  - [x] Build the Export pane; test it.
+- [ ] US-63.2: Import settings in Admin settings
+  - [ ] Implement preview and transactional merge; test merge, references, rollback and failures.
+  - [ ] Build the import flow; test it.
+- [ ] US-63.3: Import during setup
+  - [ ] Add import to the setup step; test the alternative path.
+
 ### [EPIC-60: Educator and class policy](docs/epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)
 
 - [ ] US-60.1: Classes and the educator role

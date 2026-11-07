@@ -4,7 +4,6 @@ import { GroupSettings } from "./groups-settings";
 import { UserPermissionsSettings } from "./user-permissions-settings";
 import { ImageGenSettings } from "./image-gen-settings";
 import { CodeExecutionSettings } from "./code-execution-settings";
-import { ExportSettings } from "./export-settings";
 
 describe("planned administration panes", () => {
   it.each([
@@ -12,7 +11,6 @@ describe("planned administration panes", () => {
     ["Users", UserPermissionsSettings, "user management screens"],
     ["Image generation", ImageGenSettings, "Image generation providers"],
     ["Code execution", CodeExecutionSettings, "Sandboxed code execution"],
-    ["Export", ExportSettings, "Data and conversation export"],
   ])(
     "%s explains its future scope without offering configuration controls",
     (title, Pane, scope) => {
