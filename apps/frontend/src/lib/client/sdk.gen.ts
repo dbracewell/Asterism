@@ -630,9 +630,9 @@ import type {
   UserDeleteData,
   UserDeleteErrors,
   UserDeleteResponses,
-  UserListUsersData,
-  UserListUsersErrors,
-  UserListUsersResponses,
+  UserGetManyData,
+  UserGetManyErrors,
+  UserGetManyResponses,
   UserPersonaCreateData,
   UserPersonaCreateErrors,
   UserPersonaCreateResponses,
@@ -5456,25 +5456,18 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
-   * List all user ids (admin only)
+   * List accounts (admin only)
    *
-   * Return the sorted ids of all existing users.
+   * List accounts with their name, email, educator status and first-seen date.
    *
-   * A richer admin user list (name, email, search) is US-64.3.
-   *
-   * Args:
-   * user: The authenticated admin caller.
-   * session: The database session for performing database operations.
-   *
-   * Returns:
-   * The sorted list of user ids.
+   * Read-only: deactivating and deleting accounts are not part of this list.
    */
-  public userListUsers<ThrowOnError extends boolean = false>(
-    options?: Options<UserListUsersData, ThrowOnError>,
-  ): RequestResult<UserListUsersResponses, UserListUsersErrors, ThrowOnError> {
+  public userGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<UserGetManyData, ThrowOnError>,
+  ): RequestResult<UserGetManyResponses, UserGetManyErrors, ThrowOnError> {
     return (options?.client ?? this.client).get<
-      UserListUsersResponses,
-      UserListUsersErrors,
+      UserGetManyResponses,
+      UserGetManyErrors,
       ThrowOnError
     >({
       security: [{ scheme: "bearer", type: "http" }],

@@ -1,7 +1,7 @@
 """HTTP endpoints for user lifecycle management (``/users``).
 
 Persona lifecycle routes are defined separately in ``persona_router``.
-This router handles three operations: listing users, provisioning a new one, and deleting
+This router handles three operations: the admin user list, provisioning a new one, and deleting
 one. Creation is the only endpoint that can be reached without a JWT — it
 additionally accepts the shared ``SYSTEM_KEY`` secret so external tooling
 (e.g. the frontend's BetterAuth flow) can provision users out of band.
@@ -13,7 +13,7 @@ still-valid JWT is rejected on their next request.
 
 import hmac
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 import asterism.domains.user.service as user_service
 from asterism.core import config
@@ -21,8 +21,9 @@ from asterism.core.exceptions import ForbiddenException, UnauthorizedException
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 
+from . import admin
 from .dependencies import AdminUserDep, OptionalAuthedUser
-from .schemas import CreateUserRequest
+from .schemas import CreateUserRequest, UserSummaryPage
 
 user_router = APIRouter(
     prefix="/users",
@@ -33,26 +34,22 @@ user_router = APIRouter(
 
 @user_router.get(
     "/",
-    response_model=list[str],
-    operation_id="userListUsers",
-    summary="List all user ids (admin only)",
+    response_model=UserSummaryPage,
+    operation_id="userGetMany",
+    summary="List accounts (admin only)",
 )
 async def list_users(
     user: AdminUserDep,
     session: DBSessionDep,
-) -> list[str]:
-    """Return the sorted ids of all existing users.
+    search: str | None = Query(default=None, max_length=320, description="Matches name, email or id"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+) -> UserSummaryPage:
+    """List accounts with their name, email, educator status and first-seen date.
 
-    A richer admin user list (name, email, search) is US-64.3.
-
-    Args:
-        user: The authenticated admin caller.
-        session: The database session for performing database operations.
-
-    Returns:
-        The sorted list of user ids.
+    Read-only: deactivating and deleting accounts are not part of this list.
     """
-    return await user_service.list_users(session=session)
+    return await admin.list_users(session, search=search, page=page, page_size=page_size)
 
 
 @user_router.post(

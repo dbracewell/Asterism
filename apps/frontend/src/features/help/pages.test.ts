@@ -48,6 +48,7 @@ describe("page guide routes", () => {
     ["skills", "admin.skills"],
     ["chatgpt", "admin.chatgpt"],
     ["image-captioning", "admin.image-captioning"],
+    ["user-permissions", "admin.users"],
     ["group-settings", "admin.overview"],
   ] as const)("admin settings %s → %s", (setting, guide) => {
     expect(pageGuideFor("/settings", { t: "admin", setting }, true)).toBe(

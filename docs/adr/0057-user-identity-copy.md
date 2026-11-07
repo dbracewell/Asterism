@@ -59,8 +59,11 @@ Display rules are:
 - The snapshot columns `educators.display_name`, `educators.email`,
   `classes.educator_name` and `class_members.display_name` are gone (US-64.2);
   educator requests, "Run by", invite previews, rosters, used invites and the
-  course-policy "Set by" read live names. An admin user list becomes possible
-  (US-64.3).
+  course-policy "Set by" read live names.
+- `GET /users/` is the administrator's user list (US-64.3): read-only, paged and
+  searchable by name, email or id, with educator status and the date the backend
+  first saw each account (`users.created_at`). Roles are not copied, so admin
+  roles are not shown there.
 - The copy can lag Better Auth by up to one token lifetime, or stay unset for a
   user who never makes an authenticated request. Nothing security-relevant reads it.
 - No migration: change the schema and reset development data.

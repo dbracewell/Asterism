@@ -23,7 +23,6 @@ from asterism.domains.user.service import (
     create_user,
     delete_user,
     ensure_user,
-    list_users,
     sync_identity,
     user_exists,
 )
@@ -124,15 +123,6 @@ async def test_delete_missing_user_is_not_found(user_service_env):
     async with sessions() as session:
         with pytest.raises(NotFoundException):
             await delete_user("ghost", session)
-
-
-@pytest.mark.asyncio
-async def test_list_users_is_sorted(user_service_env):
-    sessions, _, _ = user_service_env
-    async with sessions() as session:
-        await create_user("zeta", session)
-        await create_user("alpha", session)
-        assert await list_users(session) == ["alpha", "zeta"]
 
 
 @pytest_asyncio.fixture
@@ -241,22 +231,6 @@ async def test_deleted_users_are_rejected_on_their_next_request(user_api):
     response = await client.get("/users/", headers=auth("a"))
     assert response.status_code == 401
     assert "deleted" in response.json()["detail"]
-
-
-@pytest.mark.asyncio
-async def test_list_users_is_admin_only_and_sorted(user_api):
-    client, _, _ = user_api
-    # Unauthenticated and non-admin callers are rejected.
-    assert (await client.get("/users/")).status_code == 401
-    assert (await client.get("/users/", headers=auth("a"))).status_code == 401
-
-    for user_id in ("zeta", "alpha"):
-        assert (await client.post("/users/", json={"user_id": user_id}, headers=auth("admin"))).status_code == 200
-    response = await client.get("/users/", headers=auth("admin"))
-    assert response.status_code == 200
-    # "a" and "admin" are present because their first authenticated calls
-    # (the 401 probes above) auto-provisioned them.
-    assert response.json() == ["a", "admin", "alpha", "zeta"]
 
 
 # --- US-64.1: stored name and email -------------------------------------------------

@@ -375,19 +375,3 @@ async def delete_user(
         await vector_store.delete_user(user_id=user_id)
     except Exception:  # noqa: BLE001 - storage cleanup must not block deletion
         logger.exception("Failed to remove knowledge vectors for deleted user %s", user_id)
-
-
-async def list_users(
-    session: AsyncSession | None = None,
-) -> list[str]:
-    """List the ids of all existing users, sorted for stable output.
-
-    Args:
-        session: An existing session to reuse; when None a new one is opened.
-
-    Returns:
-        The sorted list of user ids (empty when no users exist).
-    """
-    async with get_async_db_session(session) as session:
-        result = await session.scalars(select(UserModel.id).order_by(UserModel.id))
-        return list(result.all())

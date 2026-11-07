@@ -43,10 +43,10 @@ const GroupSettings = dynamic(
     ),
   { loading: AdminPaneLoading },
 );
-const UserPermissionsSettings = dynamic(
+const UsersSettings = dynamic(
   () =>
-    import("@/features/settings/ui/admin-settings/user-permissions-settings").then(
-      (module) => module.UserPermissionsSettings,
+    import("@/features/settings/ui/admin-settings/users-settings").then(
+      (module) => module.UsersSettings,
     ),
   { loading: AdminPaneLoading },
 );
@@ -144,8 +144,7 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Users",
     value: "user-permissions",
     icon: <ShieldUserIcon />,
-    badge: "Planned",
-    settingsPane: pane("Users", <UserPermissionsSettings />),
+    settingsPane: pane("Users", <UsersSettings />),
   },
   { type: "separator" },
   {

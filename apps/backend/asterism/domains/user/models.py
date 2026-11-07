@@ -25,7 +25,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
-from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
+from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin, get_unix_timestamp
 
 
 class UserModel(Base):
@@ -33,7 +33,8 @@ class UserModel(Base):
 
     The id is shared by owned domains. ``name`` and ``email`` copy the verified
     Better Auth claims for display; they are null only until first known and are
-    never blanked. The default pointer identifies one owned
+    never blanked. ``created_at`` is when the backend first provisioned the
+    user. The default pointer identifies one owned
     persona. Its initial row is created by a transaction-local trigger. The
     user and main-agent configuration are committed atomically by
     :func:`asterism.domains.user.service.create_user`.
@@ -65,6 +66,9 @@ class UserModel(Base):
     )
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    created_at: Mapped[int] = mapped_column(
+        Integer, default=get_unix_timestamp, server_default=text("(unixepoch())"), nullable=False
+    )
 
 
 class DeletedUserModel(Base):

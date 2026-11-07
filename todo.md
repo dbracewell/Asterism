@@ -40,9 +40,9 @@ Order: EPIC-64 → EPIC-65 → EPIC-66, then a multi-user deployment readiness e
 - [x] US-64.2: Live names in classes and educator access
   - [x] Replace snapshot columns with joins; update schemas and the client.
   - [x] Test renames across every reader; keep privacy tests green.
-- [ ] US-64.3: Admin user list
-  - [ ] Implement the owner-neutral admin query and route; test search and authorization.
-  - [ ] Add the list to Admin settings with help; test it.
+- [ ] US-64.3: Admin user list (implemented on `feat/us-64.3-admin-user-list`; awaiting confirmation)
+  - [x] Implement the owner-neutral admin query and route; test search and authorization.
+  - [x] Add the list to Admin settings with help; test it.
 
 ### [EPIC-65: Project workspace redesign](docs/epics/EPIC-65-PROJECT-WORKSPACE-REDESIGN.md)
 
