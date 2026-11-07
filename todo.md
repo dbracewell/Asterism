@@ -27,3 +27,42 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 ## Product direction epics (proposed)
 
 Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. The multi-user web direction was decided on 2026-11-06. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57, EPIC-58, EPIC-59, EPIC-63 and EPIC-60 are complete and archived; EPIC-60 is in the [2026-11-07 checklist](docs/archive/todo-completed-2026-11-07.md). No epic is in progress.
+
+## Next epics (proposed 2026-11-07)
+
+Order: EPIC-64 → EPIC-65 → EPIC-66, then a multi-user deployment readiness epic.
+
+### [EPIC-64: User identity sync](docs/epics/EPIC-64-USER-IDENTITY-SYNC.md)
+
+- [ ] US-64.1: Store and sync name and email
+  - [ ] Write the ADR (source of truth, sync points, what is shown to whom).
+  - [ ] Add the columns, provisioning and claim-driven sync; test write avoidance and edge cases.
+- [ ] US-64.2: Live names in classes and educator access
+  - [ ] Replace snapshot columns with joins; update schemas and the client.
+  - [ ] Test renames across every reader; keep privacy tests green.
+- [ ] US-64.3: Admin user list
+  - [ ] Implement the owner-neutral admin query and route; test search and authorization.
+  - [ ] Add the list to Admin settings with help; test it.
+
+### [EPIC-65: Project workspace redesign](docs/epics/EPIC-65-PROJECT-WORKSPACE-REDESIGN.md)
+
+- [ ] US-65.1: Tabbed project workspace
+  - [ ] Restructure the workspace into tabs with URL state; move settings into a tab.
+  - [ ] Update unit and E2E tests and page guides; check narrow widths and keyboard use.
+- [ ] US-65.2: Per-project feature areas
+  - [ ] Add the field, API and Settings switches; hide tabs and Overview parts.
+  - [ ] Test data retention and capability neutrality; carry areas through packs and courses.
+- [ ] US-65.3: New-project wizard
+  - [ ] Build the wizard steps and starting points; create the project atomically.
+  - [ ] Add help for each step; unit-test steps and a real-backend E2E for one path.
+
+### [EPIC-66: Help coverage](docs/epics/EPIC-66-HELP-COVERAGE.md)
+
+- [ ] US-66.1: Page guides for every page
+  - [ ] Write the missing guides and mappings.
+  - [ ] Add the coverage test over routes and settings sections.
+- [ ] US-66.2: Glossary and inline help for newer features
+  - [ ] Add glossary entries and inline triggers; review wording for accuracy.
+  - [ ] Extend help tests and the help E2E for the new surfaces.
+- [ ] US-66.3: Help consistency pass
+  - [ ] Review and fix all help text; update the contribution notes.
