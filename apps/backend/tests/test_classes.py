@@ -31,14 +31,9 @@ async def api(project_api, monkeypatch):
 
     monkeypatch.setattr("asterism.core.security.verify_jwks_token", verify_token)
     async with sessions() as session:
-        session.add_all([UserModel(id=user) for user in ROLES])
+        session.add_all([UserModel(id=user, name=NAMES.get(user)) for user in ROLES])
         await session.flush()
-        session.add_all(
-            [
-                EducatorModel(user_id=user, status=EducatorStatus.APPROVED, display_name=user, email="e@example.test")
-                for user in ("teach", "other")
-            ]
-        )
+        session.add_all([EducatorModel(user_id=user, status=EducatorStatus.APPROVED) for user in ("teach", "other")])
         await session.commit()
     return client, sessions
 
@@ -281,15 +276,15 @@ async def test_database_refuses_duplicate_and_orphan_members(api):
     class_id = uuid.UUID(item["id"])
     await join(client, item["join_code"])
     async with sessions() as session:
-        session.add(ClassMemberModel(class_id=class_id, user_id="s1", display_name="Again"))
+        session.add(ClassMemberModel(class_id=class_id, user_id="s1"))
         with pytest.raises(IntegrityError):
             await session.flush()
         await session.rollback()
-        session.add(ClassMemberModel(class_id=uuid.uuid4(), user_id="s2", display_name="Orphan"))
+        session.add(ClassMemberModel(class_id=uuid.uuid4(), user_id="s2"))
         with pytest.raises(IntegrityError):
             await session.flush()
         await session.rollback()
-        session.add(ClassMemberModel(class_id=class_id, user_id="ghost", display_name="Ghost"))
+        session.add(ClassMemberModel(class_id=class_id, user_id="ghost"))
         with pytest.raises(IntegrityError):
             await session.flush()
 
@@ -298,7 +293,7 @@ async def test_database_refuses_a_second_class_with_the_same_code(api):
     client, sessions = api
     item = await make_class(client)
     async with sessions() as session:
-        session.add(ClassModel(educator_id="other", educator_name="O", name="Clash", join_code=item["join_code"]))
+        session.add(ClassModel(educator_id="other", name="Clash", join_code=item["join_code"]))
         with pytest.raises(IntegrityError):
             await session.flush()
 

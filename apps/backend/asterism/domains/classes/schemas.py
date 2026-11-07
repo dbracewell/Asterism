@@ -17,12 +17,12 @@ class EducatorAccess(BaseModel):
 
 
 class EducatorRequest(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    """The administrator's view, with the requester's live name and email."""
 
     user_id: str
     status: Literal["pending", "approved"]
     display_name: str
-    email: str
+    email: str | None
     created_at: int
 
 
@@ -72,7 +72,7 @@ class TaughtClassPage(BaseModel):
 
 
 class ClassMember(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    """A student on the educator's own roster, with their live name."""
 
     user_id: str
     display_name: str
@@ -94,9 +94,7 @@ class ClassJoinRequest(BaseModel):
 
 
 class JoinedClass(BaseModel):
-    """The student's view: who runs the class, and nothing about classmates."""
-
-    model_config = ConfigDict(from_attributes=True)
+    """The student's view: who runs the class (live name), and nothing about classmates."""
 
     id: uuid.UUID
     name: str
@@ -153,7 +151,9 @@ class ClassInvite(BaseModel):
     expires_at: int
     created_at: int
     redeemed_at: int | None
-    redeemed_name: str | None
+    redeemed_name: str | None = Field(
+        description="The live name of who used it, or their signup name if the account is gone"
+    )
 
 
 class ClassInvitePage(BaseModel):

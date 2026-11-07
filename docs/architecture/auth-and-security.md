@@ -47,7 +47,10 @@ display copy of each user's `name` and `email`, written at provisioning and
 refreshed from verified JWT claims on authenticated requests when they differ; an
 in-memory cache keeps unchanged claims from writing, and missing or blank claims
 never blank a stored value. The copy is never used to authenticate or authorize,
-and roles are not copied. See [ADR-0057](../adr/0057-user-identity-copy.md).
+and roles are not copied. Classes and educator access read names from it live
+rather than copying them, with the same visibility as before: students see only who
+runs their class, educators their own rosters, and only administrators see email.
+See [ADR-0057](../adr/0057-user-identity-copy.md).
 
 ### User and administrator boundaries
 

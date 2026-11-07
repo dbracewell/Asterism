@@ -345,6 +345,8 @@ export const zClassJoinRequest = z.object({
 
 /**
  * ClassMember
+ *
+ * A student on the educator's own roster, with their live name.
  */
 export const zClassMember = z.object({
   user_id: z.string(),
@@ -813,12 +815,14 @@ export const zEducatorAccess = z.object({
 
 /**
  * EducatorRequest
+ *
+ * The administrator's view, with the requester's live name and email.
  */
 export const zEducatorRequest = z.object({
   user_id: z.string(),
   status: z.enum(["pending", "approved"]),
   display_name: z.string(),
-  email: z.string(),
+  email: z.string().nullable(),
   created_at: z.int(),
 });
 
@@ -1196,7 +1200,7 @@ export const zInviteRedeemRequest = z.object({
 /**
  * JoinedClass
  *
- * The student's view: who runs the class, and nothing about classmates.
+ * The student's view: who runs the class (live name), and nothing about classmates.
  */
 export const zJoinedClass = z.object({
   id: z.uuid(),

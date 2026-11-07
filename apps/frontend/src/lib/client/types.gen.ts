@@ -1000,6 +1000,8 @@ export type ClassInvite = {
   redeemed_at: number | null;
   /**
    * Redeemed Name
+   *
+   * The live name of who used it, or their signup name if the account is gone
    */
   redeemed_name: string | null;
 };
@@ -1050,6 +1052,8 @@ export type ClassJoinRequest = {
 
 /**
  * ClassMember
+ *
+ * A student on the educator's own roster, with their live name.
  */
 export type ClassMember = {
   /**
@@ -2219,6 +2223,8 @@ export type EducatorAccess = {
 
 /**
  * EducatorRequest
+ *
+ * The administrator's view, with the requester's live name and email.
  */
 export type EducatorRequest = {
   /**
@@ -2236,7 +2242,7 @@ export type EducatorRequest = {
   /**
    * Email
    */
-  email: string;
+  email: string | null;
   /**
    * Created At
    */
@@ -3008,7 +3014,7 @@ export type InviteRedeemRequest = {
 /**
  * JoinedClass
  *
- * The student's view: who runs the class, and nothing about classmates.
+ * The student's view: who runs the class (live name), and nothing about classmates.
  */
 export type JoinedClass = {
   /**

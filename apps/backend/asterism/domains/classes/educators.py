@@ -8,8 +8,10 @@ from asterism.common.log import get_logger
 from asterism.core.exceptions import ForbiddenException, NotFoundException
 from asterism.core.schemas import AuthedUser
 from asterism.db.queries import paginate_select
+from asterism.domains.user.service import read_identities
 
 from .models import EducatorModel, EducatorStatus
+from .names import USER_FALLBACK
 from .schemas import EducatorAccess, EducatorRequest, EducatorRequestPage
 
 logger = get_logger("Educators")
@@ -29,16 +31,30 @@ async def require_educator(user_id: str, session: AsyncSession) -> None:
 async def request_access(user: AuthedUser, session: AsyncSession) -> EducatorAccess:
     """Idempotent: asking again never changes a decision already made."""
     if await session.get(EducatorModel, user.id) is None:
-        session.add(
-            EducatorModel(
-                user_id=user.id, status=EducatorStatus.PENDING, display_name=user.name or "", email=user.email or ""
-            )
-        )
+        session.add(EducatorModel(user_id=user.id, status=EducatorStatus.PENDING))
         try:
             await session.commit()
         except IntegrityError:
             await session.rollback()
     return await read_access(user.id, session)
+
+
+async def _views(rows: list[EducatorModel], session: AsyncSession) -> list[EducatorRequest]:
+    """Add each requester's live name and email; only administrators see these."""
+    identities = await read_identities((row.user_id for row in rows), session)
+    views = []
+    for row in rows:
+        identity = identities.get(row.user_id)
+        views.append(
+            EducatorRequest(
+                user_id=row.user_id,
+                status=row.status.value,  # type: ignore[arg-type]
+                display_name=(identity and identity.name) or USER_FALLBACK,
+                email=identity.email if identity else None,
+                created_at=row.created_at,
+            )
+        )
+    return views
 
 
 async def list_requests(session: AsyncSession, *, page: int, page_size: int) -> EducatorRequestPage:
@@ -51,7 +67,7 @@ async def list_requests(session: AsyncSession, *, page: int, page_size: int) -> 
         page_size=page_size,
     )
     return EducatorRequestPage(
-        items=[EducatorRequest.model_validate(row) for row in result.records],
+        items=await _views(result.records, session),
         total=result.total,
         page=page,
         page_size=page_size,
@@ -71,7 +87,7 @@ async def approve(*, user_id: str, admin_id: str, session: AsyncSession) -> Educ
     row.decided_by = admin_id
     await session.commit()
     logger.info(f"Admin {admin_id} approved educator access for {user_id}")
-    return EducatorRequest.model_validate(row)
+    return (await _views([row], session))[0]
 
 
 async def remove(*, user_id: str, admin_id: str, session: AsyncSession) -> None:

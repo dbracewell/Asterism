@@ -19,9 +19,11 @@ from asterism.core.schemas import AuthedUser
 from asterism.db.mixins import get_unix_timestamp
 from asterism.db.queries import paginate_select
 from asterism.domains.courses.storage import course_storage_keys, remove_course_bytes
+from asterism.domains.user.models import UserModel
 
 from .educators import require_educator
 from .models import ClassMemberModel, ClassModel
+from .names import STUDENT_FALLBACK, educator_name, live_names
 from .queries import select_joined_classes, select_taught_classes
 from .schemas import (
     ClassCreate,
@@ -111,7 +113,6 @@ async def create_class(user: AuthedUser, payload: ClassCreate, session: AsyncSes
     await require_educator(user.id, session)
     row = ClassModel(
         educator_id=user.id,
-        educator_name=user.name or "",
         name=payload.name,
         description=payload.description,
         join_code=new_join_code(),
@@ -185,14 +186,24 @@ async def list_members(
     await owned_class(user_id, class_id, session)
     result = await paginate_select(
         statement=select(ClassMemberModel)
+        .join(UserModel, UserModel.id == ClassMemberModel.user_id)
         .where(ClassMemberModel.class_id == class_id)
-        .order_by(ClassMemberModel.removed_at.is_not(None), ClassMemberModel.display_name, ClassMemberModel.user_id),
+        .order_by(ClassMemberModel.removed_at.is_not(None), UserModel.name, ClassMemberModel.user_id),
         session=session,
         page=page,
         page_size=page_size,
     )
+    names = await live_names((row.user_id for row in result.records), session)
     return ClassMemberPage(
-        items=[ClassMember.model_validate(row) for row in result.records],
+        items=[
+            ClassMember(
+                user_id=row.user_id,
+                display_name=names.get(row.user_id, STUDENT_FALLBACK),
+                removed_at=row.removed_at,
+                created_at=row.created_at,
+            )
+            for row in result.records
+        ],
         total=result.total,
         page=page,
         page_size=page_size,
@@ -236,7 +247,7 @@ async def join_class(user: AuthedUser, code: str, session: AsyncSession) -> Join
     if member is not None and member.removed_at is not None:
         raise _refuse_code(user.id)
     if member is None:
-        session.add(ClassMemberModel(class_id=row.id, user_id=user.id, display_name=user.name or "Student"))
+        session.add(ClassMemberModel(class_id=row.id, user_id=user.id))
         try:
             await session.commit()
         except IntegrityError:
@@ -247,10 +258,14 @@ async def join_class(user: AuthedUser, code: str, session: AsyncSession) -> Join
 
 
 async def _joined(row: ClassModel, user_id: str, session: AsyncSession) -> JoinedClass:
-    view = JoinedClass.model_validate(row)
     member = await session.get(ClassMemberModel, (row.id, user_id))
-    view.insights_consent = bool(member and member.insights_consent)
-    return view
+    return JoinedClass(
+        id=row.id,
+        name=row.name,
+        description=row.description,
+        educator_name=await educator_name(row.educator_id, session),
+        insights_consent=bool(member and member.insights_consent),
+    )
 
 
 async def list_joined(user_id: str, session: AsyncSession, *, page: int, page_size: int) -> JoinedClassPage:

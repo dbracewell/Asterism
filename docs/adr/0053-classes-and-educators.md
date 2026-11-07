@@ -1,7 +1,9 @@
 # ADR-0053 — Classes and the educator role
 
 Status: accepted and implemented for US-60.1 on 2026-11-06
-([EPIC-60](../epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)).
+([EPIC-60](../epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)). Amended by US-64.2
+([ADR-0057](0057-user-identity-copy.md)): names and emails are no longer copied
+into class rows but read live from `users`; who may see them is unchanged.
 
 ## Context
 
@@ -88,7 +90,8 @@ roster or the code. Nothing in this domain reads chats, projects or files.
 
 ## Consequences
 
-- Names are snapshots from the token, so a later rename does not reach old rows.
+- Names were snapshots from the token; since ADR-0057 (US-64.2) they are read
+  live from `users`, so a rename reaches every class view.
 - Rate limits are in memory, so they reset on restart and aren't shared between
   processes. That is enough for one container; several replicas would need a
   shared store.

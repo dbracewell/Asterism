@@ -1,6 +1,6 @@
 # EPIC-64: User identity sync
 
-Status: in progress (US-64.1 complete). Source: user request (2026-11-07).
+Status: in progress (US-64.1 and US-64.2 complete). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -57,8 +57,8 @@ Acceptance: educator requests, "Run by", rosters, invite "used by" and insights
 read live names; the snapshot columns are gone. A rename shows up in each place
 without the person doing anything. Existing isolation tests still pass.
 
-- [ ] Replace snapshot columns with joins; update schemas and the client.
-- [ ] Test renames across every reader; keep privacy tests green.
+- [x] Replace snapshot columns with joins; update schemas and the client.
+- [x] Test renames across every reader; keep privacy tests green.
 
 ## US-64.3: Admin user list
 

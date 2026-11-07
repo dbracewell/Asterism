@@ -24,9 +24,11 @@ function Row({ request }: { request: EducatorRequest }) {
     <li className="flex flex-wrap items-center justify-between gap-3 border-b py-2 text-sm">
       <span className="grid min-w-0 gap-0.5">
         <span className="wrap-anywhere">{request.display_name}</span>
-        <span className="text-muted-foreground wrap-anywhere">
-          {request.email}
-        </span>
+        {request.email && (
+          <span className="text-muted-foreground wrap-anywhere">
+            {request.email}
+          </span>
+        )}
       </span>
       <span className="flex flex-wrap items-center gap-2">
         <Badge variant={pending ? "secondary" : "default"}>
