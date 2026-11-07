@@ -40,6 +40,15 @@ connection. Uvicorn transport diagnostics redact `token` and `access_token` quer
 values before formatting, including WebSocket acceptance logs. Chat read/delete
 queries are owner-filtered and return the same 404 for foreign and missing identities.
 
+### Stored name and email
+
+Better Auth is the source of truth for identity. The backend `users` row keeps a
+display copy of each user's `name` and `email`, written at provisioning and
+refreshed from verified JWT claims on authenticated requests when they differ; an
+in-memory cache keeps unchanged claims from writing, and missing or blank claims
+never blank a stored value. The copy is never used to authenticate or authorize,
+and roles are not copied. See [ADR-0057](../adr/0057-user-identity-copy.md).
+
 ### User and administrator boundaries
 
 Backend services pass the authenticated user ID into queries for user-owned chats,

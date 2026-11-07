@@ -1,6 +1,6 @@
 # EPIC-64: User identity sync
 
-Status: proposed. Source: user request (2026-11-07).
+Status: in progress (US-64.1 complete). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -43,8 +43,8 @@ claims differ updates the row; unchanged claims cause no write. A test renames a
 user in the token and sees the backend copy follow. Tokens without the claims
 never blank an existing value.
 
-- [ ] Write the ADR (source of truth, sync points, what is shown to whom).
-- [ ] Add the columns, provisioning and claim-driven sync; test write avoidance and edge cases.
+- [x] Write the ADR (source of truth, sync points, what is shown to whom).
+- [x] Add the columns, provisioning and claim-driven sync; test write avoidance and edge cases.
 
 ## US-64.2: Live names in classes and educator access
 

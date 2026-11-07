@@ -36,6 +36,9 @@ This project is in active development and has no production users.
 - There is a platform-level **Admin** role.
 - There are standard **Users**.
 - Authentication and authorization use **BetterAuth + JWT**.
+- Better Auth is the source of truth for identity. The backend `users` table keeps
+  a display copy of each user's name and email, synced from verified token claims
+  ([ADR-0057](docs/adr/0057-user-identity-copy.md)); it never authenticates with it.
 
 ## 2.2 Profiles
 

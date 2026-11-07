@@ -621,14 +621,17 @@ export const zCourseVersionPage = z.object({
  *
  * Attributes:
  * user_id: The stable identifier to provision. Must match the id claim
- * of the BetterAuth token this user will present; Asterism stores no
- * other identity data.
+ * of the BetterAuth token this user will present.
+ * name: The account's current display name, copied for display.
+ * email: The account's current email, copied for administrators.
  * system_key: Optional shared secret (``SYSTEM_KEY``) that lets an
  * unauthenticated caller create users. When omitted, the caller must
  * be an authenticated admin.
  */
 export const zCreateUserRequest = z.object({
   user_id: z.string(),
+  name: z.string().min(1).max(255).nullish(),
+  email: z.string().min(1).max(320).nullish(),
   system_key: z.string().nullish(),
 });
 
@@ -1186,6 +1189,7 @@ export const zInviteRedeemRequest = z.object({
   token: z.string().min(1).max(128),
   user_id: z.string().min(1).max(255),
   display_name: z.string().min(1).max(255),
+  email: z.string().min(1).max(320),
   system_key: z.string(),
 });
 

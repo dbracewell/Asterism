@@ -24,12 +24,19 @@ Design notes:
   one lookup per process per TTL. All are per-process, single-event-loop
   structures and only an optimization, never the source of truth — every
   cached path degrades gracefully to a DB check or a self-healing re-provision.
+
+- The users row keeps a display copy of the Better Auth name and email
+  (ADR-0057). Provisioning stores them, and :func:`sync_identity` refreshes
+  them from verified claims. A fourth TTL cache, ``_identity_cache``, holds
+  the last values confirmed in the row so unchanged claims cost a dict lookup
+  and never a write. Missing or blank values never overwrite a stored one.
 """
 
+from dataclasses import dataclass
 from enum import StrEnum
 
 from cachetools import TTLCache
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,6 +75,38 @@ _user_initialized_cache = TTLCache[str, bool](maxsize=1000, ttl=3600)
 _deleted_cache = TTLCache[str, bool](maxsize=1000, ttl=3600)
 
 
+@dataclass(frozen=True)
+class UserIdentity:
+    """A display copy of Better Auth's name and email; ``None`` means unknown.
+
+    Build it with :meth:`of`, which trims values and drops blank ones so an
+    absent claim can never blank a stored value.
+    """
+
+    name: str | None = None
+    email: str | None = None
+
+    @classmethod
+    def of(cls, *, name: object = None, email: object = None) -> "UserIdentity":
+        return cls(name=_clean(name, 255), email=_clean(email, 320))
+
+    def values(self) -> dict[str, str]:
+        """The known fields, keyed by column name."""
+        return {key: value for key, value in (("name", self.name), ("email", self.email)) if value is not None}
+
+
+def _clean(value: object, limit: int) -> str | None:
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value[:limit] or None
+
+
+# Identity memo: user_id -> the (name, email) last confirmed in the row. A
+# miss costs one read, plus an UPDATE only when a value differs.
+_identity_cache = TTLCache[str, UserIdentity](maxsize=1000, ttl=3600)
+
+
 async def _is_user_deleted(
     user_id: str,
     session: AsyncSession | None = None,
@@ -85,6 +124,7 @@ async def _is_user_deleted(
 async def create_user(
     user_id: str,
     session: AsyncSession | None = None,
+    identity: UserIdentity | None = None,
 ) -> UserCreateOutcome:
     """Create a user, its default persona and main-agent configuration atomically.
 
@@ -96,6 +136,8 @@ async def create_user(
         user_id: The stable identifier to provision.
         session: An existing session to reuse; when None a new one is opened
             (and owned) by this function.
+        identity: The user's current name and email, stored on creation and
+            synced onto an existing row (unknown fields are left untouched).
 
     Returns:
         UserCreateOutcome.CREATED if the row was newly created, or
@@ -107,16 +149,18 @@ async def create_user(
         IntegrityError: If the insert failed for a reason other than the row
             already existing (e.g. a constraint violation on another table).
     """
+    identity = identity or UserIdentity()
     async with get_async_db_session(session) as session:
         if await _is_user_deleted(user_id, session):
             raise ConflictException("User has been deleted and cannot be re-created")
         try:
-            stmt = insert(UserModel).values(id=user_id)
+            stmt = insert(UserModel).values(id=user_id, **identity.values())
             await session.execute(stmt)
             await provision_main_agent(user_id, session)
             await session.commit()
             _user_cache[user_id] = True
             _user_initialized_cache[user_id] = True
+            _identity_cache[user_id] = identity
             return UserCreateOutcome.CREATED
         except IntegrityError:
             # Lost an insert race (or the row pre-existed): roll back and
@@ -126,6 +170,7 @@ async def create_user(
                 # Not a duplicate — some other integrity problem; surface it.
                 raise
             await initialize_user_settings(user_id, session)
+            await sync_identity(user_id, identity, session)
             _user_cache[user_id] = True
             _user_initialized_cache[user_id] = True
             return UserCreateOutcome.ALREADY_EXISTS
@@ -156,6 +201,7 @@ async def user_exists(
 async def ensure_user(
     user_id: str,
     session: AsyncSession | None = None,
+    identity: UserIdentity | None = None,
 ) -> None:
     """Guarantee the user row and its main-agent configuration exist.
 
@@ -170,6 +216,8 @@ async def ensure_user(
         session: An existing session to reuse; when None a new one is opened.
             Note that create_user commits internally, so the reused session
             may be left in a committed state on the creation path.
+        identity: Name and email to store if the user is created here. Keeping
+            an existing row current is :func:`sync_identity`'s job.
 
     Raises:
         UnauthorizedException: If the id belongs to a deleted user.
@@ -187,7 +235,44 @@ async def ensure_user(
             return
         if await _is_user_deleted(user_id, session):
             raise UnauthorizedException("User account has been deleted")
-        await create_user(user_id, session)
+        await create_user(user_id, session, identity)
+
+
+async def sync_identity(
+    user_id: str,
+    identity: UserIdentity,
+    session: AsyncSession | None = None,
+) -> bool:
+    """Bring the row's name and email in line with verified claims.
+
+    Writes only when a known value differs from the stored one: a cache hit
+    skips the database entirely, and otherwise the row is read first so that
+    unchanged claims take no SQLite write lock. Unknown (missing or blank) values are
+    left as stored, so a token without the claims never blanks the copy.
+
+    Args:
+        user_id: The user whose copy to refresh; the row should already exist.
+        identity: The values from the verified token.
+        session: An existing session to reuse; when None a new one is opened.
+
+    Returns:
+        True if the row was updated.
+    """
+    values = identity.values()
+    if not values or _identity_cache.get(user_id) == identity:
+        return False
+    async with get_async_db_session(session) as session:
+        stored = (await session.execute(select(UserModel.name, UserModel.email).where(UserModel.id == user_id))).first()
+        if stored is None:
+            # No row yet: write nothing and cache nothing.
+            return False
+        changes = {key: value for key, value in values.items() if getattr(stored, key) != value}
+        if changes:
+            await session.execute(update(UserModel).where(UserModel.id == user_id).values(**changes))
+            await session.commit()
+            logger.info(f"Updated stored name/email for user {user_id}")
+    _identity_cache[user_id] = identity
+    return bool(changes)
 
 
 def clear_user_cache() -> None:
@@ -199,6 +284,7 @@ def clear_user_cache() -> None:
     _user_cache.clear()
     _user_initialized_cache.clear()
     _deleted_cache.clear()
+    _identity_cache.clear()
 
 
 async def initialize_user_settings(
@@ -259,6 +345,7 @@ async def delete_user(
 
     _user_cache.pop(user_id, None)
     _user_initialized_cache.pop(user_id, None)
+    _identity_cache.pop(user_id, None)
     _deleted_cache[user_id] = True
 
     # Non-relational cleanup is best-effort: a failure here orphans storage

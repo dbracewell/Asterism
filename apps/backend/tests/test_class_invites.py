@@ -44,7 +44,13 @@ async def check(client, token, key=KEY):
 async def redeem(client, token, user_id="new-1", name="Priya P", key=KEY):
     return await client.post(
         "/class-invites/redeem",
-        json={"token": token, "user_id": user_id, "display_name": name, "system_key": key},
+        json={
+            "token": token,
+            "user_id": user_id,
+            "display_name": name,
+            "email": f"{user_id}@example.test",
+            "system_key": key,
+        },
     )
 
 
@@ -59,7 +65,8 @@ async def test_an_invite_creates_the_user_and_joins_the_class_once(api):
 
     assert (await redeem(client, invite["token"])).status_code == 200
     async with sessions() as session:
-        assert await session.get(UserModel, "new-1") is not None
+        user = await session.get(UserModel, "new-1")
+        assert user is not None and (user.name, user.email) == ("Priya P", "new-1@example.test")
         member = await session.get(ClassMemberModel, (uuid.UUID(klass["id"]), "new-1"))
         assert member is not None and member.display_name == "Priya P"
         stored = await session.scalar(select(ClassInviteModel))
@@ -140,7 +147,7 @@ async def test_server_routes_require_the_system_key(api):
     response = await client.post(
         "/class-invites/redeem",
         headers=auth("admin"),
-        json={"token": invite["token"], "user_id": "x", "display_name": "x", "system_key": ""},
+        json={"token": invite["token"], "user_id": "x", "display_name": "x", "email": "x@x", "system_key": ""},
     )
     assert response.status_code == 401
 

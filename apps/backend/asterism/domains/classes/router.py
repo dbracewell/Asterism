@@ -211,5 +211,9 @@ async def check_invite(payload: InviteCheckRequest, db: DBSessionDep) -> InviteP
 async def redeem_invite(payload: InviteRedeemRequest, db: DBSessionDep) -> InvitePreview:
     invites.require_system_key(payload.system_key)
     return await invites.redeem_invite(
-        payload.token, user_id=payload.user_id, display_name=payload.display_name, session=db
+        payload.token,
+        user_id=payload.user_id,
+        display_name=payload.display_name,
+        email=payload.email,
+        session=db,
     )

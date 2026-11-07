@@ -113,6 +113,25 @@ describe("installApp", () => {
     expect(signUpEmailMock).not.toHaveBeenCalled();
   });
 
+  it("provisions the backend user with their name and email", async () => {
+    countMock.mockResolvedValueOnce(0);
+    signUpEmailMock.mockResolvedValueOnce({
+      token: "jwt-token",
+      user: { id: "user-123", name: "Admin", email: "admin@example.test" },
+    });
+    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await installApp(validPayload);
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1].body)).toEqual({
+      user_id: "user-123",
+      name: "Admin",
+      email: "admin@example.test",
+      system_key: "test-system-key",
+    });
+    expect(deleteUserMock).not.toHaveBeenCalled();
+  });
+
   it("rolls back the BetterAuth user when backend provisioning fails", async () => {
     countMock.mockResolvedValueOnce(0);
     signUpEmailMock.mockResolvedValueOnce({
@@ -203,7 +222,13 @@ describe("signUpWithInvite", () => {
       .mockResolvedValueOnce(ok(preview))
       .mockResolvedValueOnce(ok(preview));
     vi.stubGlobal("fetch", fetchMock);
-    signUpEmailMock.mockResolvedValueOnce({ user: { id: "new-user" } });
+    signUpEmailMock.mockResolvedValueOnce({
+      user: {
+        id: "new-user",
+        name: "Student",
+        email: "student@example.test",
+      },
+    });
 
     await expect(signUpWithInvite(payload)).resolves.toEqual({
       ok: true,
@@ -218,6 +243,7 @@ describe("signUpWithInvite", () => {
       token: "invite-token",
       user_id: "new-user",
       display_name: "Student",
+      email: "student@example.test",
       system_key: "test-system-key",
     });
     expect(deleteUserMock).not.toHaveBeenCalled();
@@ -247,7 +273,9 @@ describe("signUpWithInvite", () => {
       "fetch",
       vi.fn().mockResolvedValueOnce(ok(preview)).mockResolvedValueOnce(refused),
     );
-    signUpEmailMock.mockResolvedValueOnce({ user: { id: "loser" } });
+    signUpEmailMock.mockResolvedValueOnce({
+      user: { id: "loser", name: "Student", email: "student@example.test" },
+    });
     await expect(signUpWithInvite(payload)).resolves.toEqual({
       ok: false,
       error: INVALID_INVITE,

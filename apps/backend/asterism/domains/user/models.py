@@ -1,6 +1,8 @@
 """SQLAlchemy models for the user domain.
 
-Identity details (email, name, role) remain in Better Auth. Users additionally
+Better Auth remains the source of truth for identity and sign-in. The users
+row keeps a display copy of the current name and email (never used to
+authenticate; see ADR-0057) and the role stays in the token. Users additionally
 own persona documents and a non-null default pointer, distinct from agent
 configuration. Deferred owner-consistent foreign keys and fresh-schema triggers
 enforce persona invariants even for direct SQL.
@@ -29,7 +31,9 @@ from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 class UserModel(Base):
     """A user known to Asterism's database.
 
-    The id is shared by owned domains; the default pointer identifies one owned
+    The id is shared by owned domains. ``name`` and ``email`` copy the verified
+    Better Auth claims for display; they are null only until first known and are
+    never blanked. The default pointer identifies one owned
     persona. Its initial row is created by a transaction-local trigger. The
     user and main-agent configuration are committed atomically by
     :func:`asterism.domains.user.service.create_user`.
@@ -44,6 +48,8 @@ class UserModel(Base):
     persona_revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
     __table_args__ = (
         CheckConstraint("persona_revision >= 1", name="user_persona_revision_positive"),
+        CheckConstraint("name IS NULL OR length(trim(name)) BETWEEN 1 AND 255", name="user_name_bounds"),
+        CheckConstraint("email IS NULL OR length(trim(email)) BETWEEN 1 AND 320", name="user_email_bounds"),
         ForeignKeyConstraint(
             ["default_persona_id", "id"],
             ["user_personas.id", "user_personas.user_id"],
@@ -57,6 +63,8 @@ class UserModel(Base):
         String,
         primary_key=True,
     )
+    name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(320), nullable=True)
 
 
 class DeletedUserModel(Base):
