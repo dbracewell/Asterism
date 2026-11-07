@@ -16,6 +16,7 @@ import hashlib
 import mimetypes
 import re
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
@@ -31,6 +32,7 @@ from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException
 from asterism.db.database import get_async_db_session
 from asterism.domains.knowledge.artifacts import (
+    ArtifactSummary,
     cancel_processing,
     delete_file_vectors,
     ensure_artifact,
@@ -305,6 +307,61 @@ async def _deduplicated_filename(
         candidate = f"{stem}({counter}){extension}"
         counter += 1
     return candidate
+
+
+@dataclass(frozen=True)
+class NewLibraryFile:
+    model: UserFileModel
+    storage_key: str
+    artifact: ArtifactSummary
+
+
+async def new_library_file(
+    *,
+    user_id: str,
+    original_name: str,
+    content: bytes,
+    session: AsyncSession,
+) -> NewLibraryFile:
+    """Add bytes to a user's library inside the caller's transaction; no commit.
+
+    Used when another domain copies a file in (US-60.3 course files). The caller
+    deletes ``storage_key`` if its transaction fails, and calls
+    :func:`start_file_ingestion` after it commits.
+    """
+    original_name = sanitize_filename(original_name)
+    if len(content) > config.max_upload_file_size_bytes:
+        raise BadDataException(
+            f'File "{original_name}" exceeds the {config.max_upload_file_size_bytes} byte upload limit',
+        )
+    filename = await _deduplicated_filename(session, user_id, original_name)
+    mime_type = detect_mime_type(filename, content)
+    file_kind = classify_file(filename, mime_type)
+    thumbnail = await asyncio.to_thread(generate_thumbnail, content) if file_kind is FileKind.IMAGE else None
+    file_id = uuid.uuid4()
+    storage_key = get_file_store().save(user_id, file_id, Path(original_name).suffix, content)
+    model = UserFileModel(
+        id=file_id,
+        storage_key=storage_key,
+        user_id=user_id,
+        filename=filename,
+        original_name=original_name,
+        size=len(content),
+        mime_type=mime_type,
+        kind=file_kind,
+        sha256=hashlib.sha256(content).hexdigest(),
+        content_status=FileContentStatus.PENDING,
+        thumbnail=thumbnail,
+    )
+    session.add(model)
+    await session.flush()
+    artifact = await ensure_artifact(file_id=file_id, user_id=user_id, session=session)
+    return NewLibraryFile(model=model, storage_key=storage_key, artifact=artifact)
+
+
+def start_file_ingestion(file: NewLibraryFile) -> None:
+    """Queue knowledge processing for a file from :func:`new_library_file`, after commit."""
+    start_ingestion(user_id=file.model.user_id, file_id=file.model.id, artifact=file.artifact)
 
 
 async def upload_files(

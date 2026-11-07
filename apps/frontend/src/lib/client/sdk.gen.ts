@@ -225,6 +225,18 @@ import type {
   ChatSessionUpdateData,
   ChatSessionUpdateErrors,
   ChatSessionUpdateResponses,
+  ClassCourseApplyData,
+  ClassCourseApplyErrors,
+  ClassCourseApplyResponses,
+  ClassCourseGetData,
+  ClassCourseGetErrors,
+  ClassCourseGetResponses,
+  ClassCoursePublishData,
+  ClassCoursePublishErrors,
+  ClassCoursePublishResponses,
+  ClassCourseVersionGetManyData,
+  ClassCourseVersionGetManyErrors,
+  ClassCourseVersionGetManyResponses,
   ClassCreateData,
   ClassCreateErrors,
   ClassCreateResponses,
@@ -2914,6 +2926,104 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Get Course
+   *
+   * The latest course for a class you're in, what it would give you, and what changed. None if unpublished.
+   */
+  public classCourseGet<ThrowOnError extends boolean = false>(
+    options: Options<ClassCourseGetData, ThrowOnError>,
+  ): RequestResult<
+    ClassCourseGetResponses,
+    ClassCourseGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ClassCourseGetResponses,
+      ClassCourseGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/joined/{class_id}/course",
+      ...options,
+    });
+  }
+
+  /**
+   * Apply Course
+   *
+   * Add the course to your projects, or update your copy to the version you reviewed.
+   */
+  public classCourseApply<ThrowOnError extends boolean = false>(
+    options: Options<ClassCourseApplyData, ThrowOnError>,
+  ): RequestResult<
+    ClassCourseApplyResponses,
+    ClassCourseApplyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ClassCourseApplyResponses,
+      ClassCourseApplyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/joined/{class_id}/course",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Publish Course
+   *
+   * Publish one of your projects as the next course version.
+   */
+  public classCoursePublish<ThrowOnError extends boolean = false>(
+    options: Options<ClassCoursePublishData, ThrowOnError>,
+  ): RequestResult<
+    ClassCoursePublishResponses,
+    ClassCoursePublishErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ClassCoursePublishResponses,
+      ClassCoursePublishErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/course",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Versions
+   */
+  public classCourseVersionGetMany<ThrowOnError extends boolean = false>(
+    options: Options<ClassCourseVersionGetManyData, ThrowOnError>,
+  ): RequestResult<
+    ClassCourseVersionGetManyResponses,
+    ClassCourseVersionGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ClassCourseVersionGetManyResponses,
+      ClassCourseVersionGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/course/versions",
+      ...options,
     });
   }
 

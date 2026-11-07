@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ClassCourse } from "@/features/classes/components/class-course";
 import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import {
@@ -134,6 +135,9 @@ function JoinedClasses() {
             >
               Leave
             </Button>
+            <div className="w-full">
+              <ClassCourse classId={item.id} courseName={item.name} />
+            </div>
           </CardContent>
         </Card>
       ))}

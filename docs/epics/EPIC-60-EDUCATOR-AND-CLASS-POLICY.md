@@ -67,7 +67,12 @@ Acceptance: an educator publishes a team pack plus course files to a class.
 Students see it as a ready-to-use project. Updates are versioned, and students
 see what changed.
 
-- [ ] Implement publishing and student provisioning; test versioning and access.
+Decided on 2026-11-07: each student gets their own copy, applies updates
+when they choose, and adds a course in one click after a summary. Design in
+[ADR-0054](../adr/0054-course-packs.md). A course holds the project's settings,
+selected sub-agents and files; skills, templates and rubrics are not included yet.
+
+- [x] Implement publishing and student provisioning; test versioning and access.
 
 ## US-60.4: Class mode policy
 

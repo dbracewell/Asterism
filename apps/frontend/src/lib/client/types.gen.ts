@@ -1468,6 +1468,216 @@ export type ContextProvenance = {
 };
 
 /**
+ * CourseApplied
+ */
+export type CourseApplied = {
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Version Number
+   */
+  version_number: number;
+};
+
+/**
+ * CourseApply
+ *
+ * The version the student reviewed; a newer one must be reviewed first.
+ */
+export type CourseApply = {
+  /**
+   * Version Number
+   */
+  version_number: number;
+};
+
+/**
+ * CourseChange
+ */
+export type CourseChange = {
+  /**
+   * Kind
+   */
+  kind: "added" | "removed" | "changed";
+  /**
+   * Item
+   */
+  item: "settings" | "sub_agent" | "file";
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * CourseCopy
+ */
+export type CourseCopy = {
+  /**
+   * Version Number
+   */
+  version_number: number;
+  /**
+   * Project Id
+   *
+   * None if you deleted the course project
+   */
+  project_id: string | null;
+};
+
+/**
+ * CourseFile
+ */
+export type CourseFile = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Size
+   */
+  size: number;
+};
+
+/**
+ * CourseOffer
+ *
+ * What adding or updating the course gives the student, before they agree.
+ */
+export type CourseOffer = {
+  /**
+   * Version Number
+   */
+  version_number: number;
+  /**
+   * Note
+   */
+  note: string;
+  /**
+   * Published At
+   */
+  published_at: number;
+  /**
+   * Instructions
+   */
+  instructions: string;
+  /**
+   * Sub Agents
+   */
+  sub_agents: Array<CourseSubAgent>;
+  /**
+   * Files
+   */
+  files: Array<CourseFile>;
+  /**
+   * Your copy, or None if you haven't added the course
+   */
+  current: CourseCopy | null;
+  /**
+   * Changes
+   *
+   * Since the version you have; empty when up to date
+   */
+  changes: Array<CourseChange>;
+};
+
+/**
+ * CoursePublish
+ *
+ * Publish one of the educator's projects as the class's next course version.
+ */
+export type CoursePublish = {
+  /**
+   * Project Id
+   */
+  project_id: string;
+  /**
+   * Note
+   */
+  note?: string;
+};
+
+/**
+ * CourseSubAgent
+ */
+export type CourseSubAgent = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Model Name
+   *
+   * None when the model isn't available to you
+   */
+  model_name: string | null;
+  /**
+   * Tools
+   *
+   * Tools it will be able to use, after admin policy
+   */
+  tools: Array<string>;
+};
+
+/**
+ * CourseVersion
+ */
+export type CourseVersion = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Number
+   */
+  number: number;
+  /**
+   * Note
+   */
+  note: string;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Sub Agent Names
+   */
+  sub_agent_names: Array<string>;
+  /**
+   * File Names
+   */
+  file_names: Array<string>;
+};
+
+/**
+ * CourseVersionPage
+ */
+export type CourseVersionPage = {
+  /**
+   * Items
+   */
+  items: Array<CourseVersion>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
  * CreateUserRequest
  *
  * Request model for creating a new user.
@@ -12638,6 +12848,225 @@ export type ClassInviteRedeemResponses = {
 
 export type ClassInviteRedeemResponse =
   ClassInviteRedeemResponses[keyof ClassInviteRedeemResponses];
+
+export type ClassCourseGetData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/joined/{class_id}/course";
+};
+
+export type ClassCourseGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassCourseGetError =
+  ClassCourseGetErrors[keyof ClassCourseGetErrors];
+
+export type ClassCourseGetResponses = {
+  /**
+   * Response Classcourseget
+   *
+   * Successful Response
+   */
+  200: CourseOffer | null;
+};
+
+export type ClassCourseGetResponse =
+  ClassCourseGetResponses[keyof ClassCourseGetResponses];
+
+export type ClassCourseApplyData = {
+  body: CourseApply;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/joined/{class_id}/course";
+};
+
+export type ClassCourseApplyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassCourseApplyError =
+  ClassCourseApplyErrors[keyof ClassCourseApplyErrors];
+
+export type ClassCourseApplyResponses = {
+  /**
+   * Successful Response
+   */
+  200: CourseApplied;
+};
+
+export type ClassCourseApplyResponse =
+  ClassCourseApplyResponses[keyof ClassCourseApplyResponses];
+
+export type ClassCoursePublishData = {
+  body: CoursePublish;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/course";
+};
+
+export type ClassCoursePublishErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassCoursePublishError =
+  ClassCoursePublishErrors[keyof ClassCoursePublishErrors];
+
+export type ClassCoursePublishResponses = {
+  /**
+   * Successful Response
+   */
+  201: CourseVersion;
+};
+
+export type ClassCoursePublishResponse =
+  ClassCoursePublishResponses[keyof ClassCoursePublishResponses];
+
+export type ClassCourseVersionGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/classes/{class_id}/course/versions";
+};
+
+export type ClassCourseVersionGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassCourseVersionGetManyError =
+  ClassCourseVersionGetManyErrors[keyof ClassCourseVersionGetManyErrors];
+
+export type ClassCourseVersionGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: CourseVersionPage;
+};
+
+export type ClassCourseVersionGetManyResponse =
+  ClassCourseVersionGetManyResponses[keyof ClassCourseVersionGetManyResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;

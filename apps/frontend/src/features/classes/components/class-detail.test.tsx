@@ -33,6 +33,15 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   classInviteCreateMutation: () => ({ mutationFn: vi.fn() }),
   classInviteRevokeMutation: () => ({ mutationFn: vi.fn() }),
+  projectGetManyOptions: () => ({
+    queryKey: ["projects"],
+    queryFn: async () => ({ projects: [], total: 0, page: 1, page_size: 100 }),
+  }),
+  classCourseVersionGetManyOptions: () => ({
+    queryKey: ["versions"],
+    queryFn: async () => ({ items: [], total: 0, page: 1, page_size: 20 }),
+  }),
+  classCoursePublishMutation: () => ({ mutationFn: vi.fn() }),
 }));
 
 function setup() {

@@ -18,6 +18,7 @@ from asterism.core.exceptions import BadDataException, ConflictException, NotFou
 from asterism.core.schemas import AuthedUser
 from asterism.db.mixins import get_unix_timestamp
 from asterism.db.queries import paginate_select
+from asterism.domains.courses.storage import course_storage_keys, remove_course_bytes
 
 from .educators import require_educator
 from .models import ClassMemberModel, ClassModel
@@ -157,8 +158,11 @@ async def rotate_join_code(user_id: str, class_id: uuid.UUID, session: AsyncSess
 
 
 async def delete_class(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> None:
-    await session.delete(await owned_class(user_id, class_id, session))
+    row = await owned_class(user_id, class_id, session)
+    keys = await course_storage_keys(class_id, session)
+    await session.delete(row)
     await session.commit()
+    remove_course_bytes(user_id, keys)
     logger.info(f"Educator {user_id} deleted class {class_id}")
 
 
