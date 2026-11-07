@@ -23,3 +23,19 @@ policy) and ADR-0056 (class insights).
   - [x] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
 - [x] US-60.5: Aggregate misconception insights (confirmed and merged 2026-11-07)
   - [x] Implement thresholded aggregation and consent; build the dashboard; test privacy limits.
+
+The user confirmed US-64.3 completion on 2026-11-07. EPIC-64 (US-64.1 through
+US-64.3) is complete; each story was confirmed and merged with `--no-ff` before
+the next began. See ADR-0057 (user identity copy).
+
+### [EPIC-64: User identity sync](../epics/EPIC-64-USER-IDENTITY-SYNC.md)
+
+- [x] US-64.1: Store and sync name and email (confirmed and merged 2026-11-07)
+  - [x] Write the ADR (source of truth, sync points, what is shown to whom).
+  - [x] Add the columns, provisioning and claim-driven sync; test write avoidance and edge cases.
+- [x] US-64.2: Live names in classes and educator access (confirmed and merged 2026-11-07)
+  - [x] Replace snapshot columns with joins; update schemas and the client.
+  - [x] Test renames across every reader; keep privacy tests green.
+- [x] US-64.3: Admin user list (confirmed and merged 2026-11-07)
+  - [x] Implement the owner-neutral admin query and route; test search and authorization.
+  - [x] Add the list to Admin settings with help; test it.
