@@ -492,6 +492,30 @@ test("authenticated project and General chats preserve scope, provenance, and ow
         exact: true,
       }),
     ).toBeEnabled();
+
+    // A starter pack installs through the real page, sidebar and backend.
+    await page.goto("/projects");
+    await page.getByRole("link", { name: "Import team pack" }).click();
+    await expect(page).toHaveURL(/\/team-packs$/);
+    await page.getByRole("button", { name: "Review Study Buddy" }).click();
+    const importPack = page.getByRole("button", { name: "Import 7 items" });
+    await expect(importPack).toBeDisabled();
+    await expect(page.getByText("Before you can import:")).toBeVisible();
+    for (const name of ["Tutor", "Flashcard Maker", "Feedback Coach"]) {
+      await page.getByRole("combobox", { name: `Model for ${name}` }).click();
+      await page.getByRole("option", { name: /Integrated A/ }).click();
+    }
+    await expect(page.getByText("Project unavailable")).toHaveCount(0);
+    await importPack.click();
+    await expect(page).toHaveURL(/\/projects\/[\w-]{36}$/);
+    await expect(
+      page.getByRole("heading", { name: "Study Buddy", exact: true }),
+    ).toBeVisible();
+    const studyProject = page.url().split("/").pop()!;
+    const selected = await api("GET", `/projects/${studyProject}/sub-agents`);
+    expect(
+      selected.agents.map((agent: { name: string }) => agent.name).sort(),
+    ).toEqual(["Feedback Coach", "Flashcard Maker", "Tutor"]);
     expect(failures).toEqual([]);
   } finally {
     await second?.close();

@@ -513,6 +513,7 @@ export function pageGuideFor(
     case "/general":
       return "general";
     case "/projects":
+    case "/team-packs":
       return "projects";
     case "/files":
       return "files";
