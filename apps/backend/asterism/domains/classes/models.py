@@ -16,6 +16,7 @@ from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
 
 MAX_CLASS_NAME_LENGTH = 120
 MAX_CLASS_DESCRIPTION_LENGTH = 2_000
+MAX_INVITE_LABEL_LENGTH = 80
 
 
 class EducatorStatus(StrEnum):
@@ -82,3 +83,31 @@ class ClassMemberModel(Base, TimestampMixin):
     removed_at: Mapped[int | None] = mapped_column(nullable=True)
 
     __table_args__ = (Index("idx_class_members_user", "user_id", "class_id"),)
+
+
+class ClassInviteModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
+    """A single-use invite that creates an account and joins one class.
+
+    Only a hash of the token is stored; the educator sees the link once. A claim
+    is a conditional update, so exactly one signup can use an invite.
+    """
+
+    __tablename__ = "class_invites"
+
+    class_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    # Who the educator made it for; not proof of who used it.
+    label: Mapped[str] = mapped_column(String(MAX_INVITE_LABEL_LENGTH), nullable=False)
+    expires_at: Mapped[int] = mapped_column(nullable=False)
+    revoked_at: Mapped[int | None] = mapped_column(nullable=True)
+    redeemed_at: Mapped[int | None] = mapped_column(nullable=True)
+    # Kept when the account is later deleted, so the invite stays used.
+    redeemed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    redeemed_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("token_hash", name="uq_class_invites_token_hash"),
+        CheckConstraint("length(trim(label)) > 0", name="ck_class_invites_label"),
+        CheckConstraint("(redeemed_at IS NULL) = (redeemed_name IS NULL)", name="ck_class_invites_redeemed_together"),
+        Index("idx_class_invites_class", "class_id", "created_at"),
+    )

@@ -27,6 +27,12 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   classMemberRemoveMutation: () => ({ mutationFn: mocks.remove }),
   classMemberAllowBackMutation: () => ({ mutationFn: mocks.allow }),
   classDeleteMutation: () => ({ mutationFn: mocks.deleteClass }),
+  classInviteGetManyOptions: () => ({
+    queryKey: ["invites"],
+    queryFn: async () => ({ items: [], total: 0, page: 1, page_size: 100 }),
+  }),
+  classInviteCreateMutation: () => ({ mutationFn: vi.fn() }),
+  classInviteRevokeMutation: () => ({ mutationFn: vi.fn() }),
 }));
 
 function setup() {

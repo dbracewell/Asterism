@@ -6,6 +6,7 @@ gives one error, so it cannot be used to probe classes.
 """
 
 import secrets
+import time
 import uuid
 
 from sqlalchemy import delete, func, select
@@ -39,6 +40,30 @@ JOIN_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 JOIN_CODE_LENGTH = 10
 INVALID_CODE = "That class code isn't valid. Check it with your educator."
 NAME_TAKEN = "You already have a class with this name"
+TOO_MANY_ATTEMPTS = "Too many wrong codes. Try again in a few minutes."
+JOIN_FAILURE_LIMIT = 10
+JOIN_FAILURE_WINDOW_SECONDS = 15 * 60
+
+# Per-process, per-user; enough to stop guessing, without new storage.
+_join_failures: dict[str, list[float]] = {}
+
+
+def _recent_failures(user_id: str, now: float) -> list[float]:
+    recent = [at for at in _join_failures.get(user_id, []) if now - at < JOIN_FAILURE_WINDOW_SECONDS]
+    if recent:
+        _join_failures[user_id] = recent
+    else:
+        _join_failures.pop(user_id, None)
+    return recent
+
+
+def _refuse_code(user_id: str) -> BadDataException:
+    _join_failures.setdefault(user_id, []).append(time.monotonic())
+    return BadDataException(INVALID_CODE)
+
+
+def clear_join_failures() -> None:
+    _join_failures.clear()
 
 
 def new_join_code() -> str:
@@ -64,7 +89,7 @@ async def _taught(row: ClassModel, session: AsyncSession) -> TaughtClass:
     return view
 
 
-async def _owned_class(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> ClassModel:
+async def owned_class(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> ClassModel:
     await require_educator(user_id, session)
     row = await session.scalar(select_taught_classes(user_id).where(ClassModel.id == class_id))
     if row is None:
@@ -112,11 +137,11 @@ async def list_taught(user_id: str, session: AsyncSession, *, page: int, page_si
 
 
 async def read_taught(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> TaughtClass:
-    return await _taught(await _owned_class(user_id, class_id, session), session)
+    return await _taught(await owned_class(user_id, class_id, session), session)
 
 
 async def update_class(user_id: str, class_id: uuid.UUID, payload: ClassUpdate, session: AsyncSession) -> TaughtClass:
-    row = await _owned_class(user_id, class_id, session)
+    row = await owned_class(user_id, class_id, session)
     for field, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
         setattr(row, field, value)
     await _commit_named(session)
@@ -124,7 +149,7 @@ async def update_class(user_id: str, class_id: uuid.UUID, payload: ClassUpdate, 
 
 
 async def rotate_join_code(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> TaughtClass:
-    row = await _owned_class(user_id, class_id, session)
+    row = await owned_class(user_id, class_id, session)
     row.join_code = new_join_code()
     await session.commit()
     logger.info(f"Educator {user_id} rotated the join code of class {class_id}")
@@ -132,7 +157,7 @@ async def rotate_join_code(user_id: str, class_id: uuid.UUID, session: AsyncSess
 
 
 async def delete_class(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> None:
-    await session.delete(await _owned_class(user_id, class_id, session))
+    await session.delete(await owned_class(user_id, class_id, session))
     await session.commit()
     logger.info(f"Educator {user_id} deleted class {class_id}")
 
@@ -140,7 +165,7 @@ async def delete_class(user_id: str, class_id: uuid.UUID, session: AsyncSession)
 async def list_members(
     user_id: str, class_id: uuid.UUID, session: AsyncSession, *, page: int, page_size: int
 ) -> ClassMemberPage:
-    await _owned_class(user_id, class_id, session)
+    await owned_class(user_id, class_id, session)
     result = await paginate_select(
         statement=select(ClassMemberModel)
         .where(ClassMemberModel.class_id == class_id)
@@ -165,7 +190,7 @@ async def _member(class_id: uuid.UUID, student_id: str, session: AsyncSession) -
 
 
 async def remove_member(user_id: str, class_id: uuid.UUID, student_id: str, session: AsyncSession) -> None:
-    await _owned_class(user_id, class_id, session)
+    await owned_class(user_id, class_id, session)
     row = await _member(class_id, student_id, session)
     row.removed_at = row.removed_at or get_unix_timestamp()
     await session.commit()
@@ -174,7 +199,7 @@ async def remove_member(user_id: str, class_id: uuid.UUID, student_id: str, sess
 
 async def allow_back(user_id: str, class_id: uuid.UUID, student_id: str, session: AsyncSession) -> None:
     """Clear a removal so the student can rejoin with the code. It does not re-add them."""
-    await _owned_class(user_id, class_id, session)
+    await owned_class(user_id, class_id, session)
     row = await _member(class_id, student_id, session)
     if row.removed_at is None:
         raise BadDataException("This student has not been removed")
@@ -183,14 +208,16 @@ async def allow_back(user_id: str, class_id: uuid.UUID, student_id: str, session
 
 
 async def join_class(user: AuthedUser, code: str, session: AsyncSession) -> JoinedClass:
+    if len(_recent_failures(user.id, time.monotonic())) >= JOIN_FAILURE_LIMIT:
+        raise BadDataException(TOO_MANY_ATTEMPTS)
     row = await session.scalar(select(ClassModel).where(ClassModel.join_code == normalize_join_code(code)))
     if row is None or not row.join_enabled:
-        raise BadDataException(INVALID_CODE)
+        raise _refuse_code(user.id)
     if row.educator_id == user.id:
         raise BadDataException("You run this class, so you can't join it as a student")
     member = await session.get(ClassMemberModel, (row.id, user.id))
     if member is not None and member.removed_at is not None:
-        raise BadDataException(INVALID_CODE)
+        raise _refuse_code(user.id)
     if member is None:
         session.add(ClassMemberModel(class_id=row.id, user_id=user.id, display_name=user.name or "Student"))
         try:

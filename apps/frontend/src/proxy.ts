@@ -40,6 +40,11 @@ if (process.env.ASTERISM_CONFIG_PROFILE === "test") {
   );
 }
 
+// Student invite links are opened before the student has an account.
+function isPublicPath(pathname: string) {
+  return publicRoutes.includes(pathname) || /^\/invite\/[^/]+$/.test(pathname);
+}
+
 export async function proxy(request: NextRequest) {
   const session = await getAuth().api.getSession({
     headers: await headers(),
@@ -50,7 +55,7 @@ export async function proxy(request: NextRequest) {
   const externalOrigin = getFrontendServerConfig().publicUrl;
   const pathname = request.nextUrl.pathname.trim();
 
-  if (!session && !publicRoutes.includes(pathname)) {
+  if (!session && !isPublicPath(pathname)) {
     // Not logged in and trying to navigate to somewhere that isn't public
     const redirectUrl = new URL(
       `/sign-in?redirect=${encodeURIComponent(pathname)}`,

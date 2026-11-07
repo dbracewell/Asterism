@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { StudentInvites } from "@/features/classes/components/student-invites";
 import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import type { ClassMember, TaughtClass } from "@/lib/client";
@@ -44,10 +45,10 @@ function Invite({ item }: { item: TaughtClass }) {
     setCopied(true);
   };
   return (
-    <section aria-label="Invite students" className="grid gap-3">
-      <h2 className="text-lg font-medium">Invite students</h2>
+    <section aria-label="Join with a code" className="grid gap-3">
+      <h2 className="text-lg font-medium">Class code</h2>
       <p className="text-sm">
-        Students need an Asterism account, then they join with this code.
+        Students who already have an Asterism account join with this code.
       </p>
       <p
         aria-label="Class code"
@@ -244,6 +245,7 @@ export function ClassDetail({ classId }: { classId: string }) {
         description={item.data.description || undefined}
       />
       <Invite item={item.data} />
+      <StudentInvites classId={classId} />
       <Roster classId={classId} />
       <DeleteClass item={item.data} />
     </PageLayout>

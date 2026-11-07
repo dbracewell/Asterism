@@ -8,15 +8,21 @@ from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
-from . import educators, service
+from . import educators, invites, service
 from .schemas import (
     ClassCreate,
+    ClassInviteCreate,
+    ClassInvitePage,
     ClassJoinRequest,
     ClassMemberPage,
     ClassUpdate,
+    CreatedClassInviteList,
     EducatorAccess,
     EducatorRequest,
     EducatorRequestPage,
+    InviteCheckRequest,
+    InvitePreview,
+    InviteRedeemRequest,
     JoinedClass,
     JoinedClassPage,
     TaughtClass,
@@ -35,6 +41,8 @@ PageSize = Query(default=50, ge=1, le=100)
 
 educator_access_router = APIRouter(prefix="/educator-access", tags=["classes"], responses=ERRORS)
 classes_router = APIRouter(prefix="/classes", tags=["classes"], responses=ERRORS)
+# Server-to-server: called by the signup flow with the system key, not a JWT.
+class_invites_router = APIRouter(prefix="/class-invites", tags=["classes"], responses=ERRORS)
 
 
 @educator_access_router.get("", response_model=EducatorAccess, operation_id="educatorAccessGet")
@@ -144,3 +152,44 @@ async def remove_member(class_id: uuid.UUID, student_id: str, user: AuthedUserDe
 async def allow_back(class_id: uuid.UUID, student_id: str, user: AuthedUserDep, db: DBSessionDep) -> None:
     """Let a removed student rejoin with the class code."""
     await service.allow_back(user.id, class_id, student_id, db)
+
+
+@classes_router.post(
+    "/{class_id}/invites",
+    response_model=CreatedClassInviteList,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="classInviteCreate",
+)
+async def create_invites(
+    class_id: uuid.UUID, payload: ClassInviteCreate, user: AuthedUserDep, db: DBSessionDep
+) -> CreatedClassInviteList:
+    """Create one single-use invite per label. Each link is shown only in this response."""
+    return await invites.create_invites(user.id, class_id, payload.labels, db)
+
+
+@classes_router.get("/{class_id}/invites", response_model=ClassInvitePage, operation_id="classInviteGetMany")
+async def list_invites(
+    class_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep, page: int = PageNumber, page_size: int = PageSize
+) -> ClassInvitePage:
+    return await invites.list_invites(user.id, class_id, db, page=page, page_size=page_size)
+
+
+@classes_router.delete(
+    "/{class_id}/invites/{invite_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="classInviteRevoke"
+)
+async def revoke_invite(class_id: uuid.UUID, invite_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> None:
+    await invites.revoke_invite(user.id, class_id, invite_id, db)
+
+
+@class_invites_router.post("/check", response_model=InvitePreview, operation_id="classInviteCheck")
+async def check_invite(payload: InviteCheckRequest, db: DBSessionDep) -> InvitePreview:
+    invites.require_system_key(payload.system_key)
+    return await invites.check_invite(payload.token, db)
+
+
+@class_invites_router.post("/redeem", response_model=InvitePreview, operation_id="classInviteRedeem")
+async def redeem_invite(payload: InviteRedeemRequest, db: DBSessionDep) -> InvitePreview:
+    invites.require_system_key(payload.system_key)
+    return await invites.redeem_invite(
+        payload.token, user_id=payload.user_id, display_name=payload.display_name, session=db
+    )

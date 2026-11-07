@@ -15,6 +15,15 @@ export async function countUsers(): Promise<number> {
   });
 }
 
+/** Setup has created its administrator; ordinary signups wait for this. */
+export async function countAdmins(): Promise<number> {
+  const context = await getAuth().$context;
+  return await context.adapter.count({
+    model: "user",
+    where: [{ field: "role", value: "admin" }],
+  });
+}
+
 export const getCurrentUser = cache(async (): Promise<User> => {
   const headersList = await headers();
   const session = await getAuth().api.getSession({
