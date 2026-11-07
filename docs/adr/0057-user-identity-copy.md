@@ -44,17 +44,23 @@ first authenticated request.
 
 ### Who sees what
 
-This story only stores the copy. Display rules for its readers (EPIC-64) are:
+Readers join `users` when they show a name (US-64.2); nothing copies it again.
+Display rules are:
 
 - Students see only the name of whoever runs their class, never classmates.
 - Educators see names on their own rosters only.
 - Email is shown only to administrators (educator requests, the user list).
+- A missing name shows a neutral fallback ("Your educator", "Student",
+  "Unnamed user"), never an id. A used invite shows the live name of the account
+  that used it, falling back to the signup name only once that account is deleted.
 
 ## Consequences
 
-- Snapshot columns (`educators.display_name`, `educators.email`,
-  `classes.educator_name`, `class_members.display_name`) can be replaced by joins
-  to `users` (US-64.2), and an admin user list becomes possible (US-64.3).
+- The snapshot columns `educators.display_name`, `educators.email`,
+  `classes.educator_name` and `class_members.display_name` are gone (US-64.2);
+  educator requests, "Run by", invite previews, rosters, used invites and the
+  course-policy "Set by" read live names. An admin user list becomes possible
+  (US-64.3).
 - The copy can lag Better Auth by up to one token lifetime, or stay unset for a
   user who never makes an authenticated request. Nothing security-relevant reads it.
 - No migration: change the schema and reset development data.

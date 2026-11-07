@@ -68,7 +68,7 @@ async def test_an_invite_creates_the_user_and_joins_the_class_once(api):
         user = await session.get(UserModel, "new-1")
         assert user is not None and (user.name, user.email) == ("Priya P", "new-1@example.test")
         member = await session.get(ClassMemberModel, (uuid.UUID(klass["id"]), "new-1"))
-        assert member is not None and member.display_name == "Priya P"
+        assert member is not None
         stored = await session.scalar(select(ClassInviteModel))
         assert stored.token_hash == hash_invite_token(invite["token"]) and invite["token"] not in stored.token_hash
 

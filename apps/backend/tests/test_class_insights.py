@@ -42,9 +42,7 @@ async def add_student(klass, user_id, ratings, consent=True, own_file_rating=Non
         await session.flush()
         project = ProjectModel(user_id=user_id, name="Course")
         session.add(project)
-        session.add(
-            ClassMemberModel(class_id=klass["id"], user_id=user_id, display_name=user_id, insights_consent=consent)
-        )
+        session.add(ClassMemberModel(class_id=klass["id"], user_id=user_id, insights_consent=consent))
         await session.flush()
         session.add(
             CourseCopyModel(class_id=klass["id"], user_id=user_id, version_id=klass["version"], project_id=project.id)

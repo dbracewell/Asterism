@@ -59,6 +59,18 @@ it("approves or denies a waiting request", async () => {
   await waitFor(() => expect(mocks.remove).toHaveBeenCalled());
 });
 
+it("leaves out the email line when no email is stored", async () => {
+  mocks.list.mockResolvedValue({
+    items: [{ ...row("Ann", "pending"), email: null }],
+    total: 1,
+    page: 1,
+    page_size: 100,
+  });
+  setup();
+  const name = await screen.findByText("Ann");
+  expect(name.parentElement?.children).toHaveLength(1);
+});
+
 it("revokes an educator, who cannot be approved twice", async () => {
   const user = setup();
   await user.click(await screen.findByRole("button", { name: "Revoke Bo" }));

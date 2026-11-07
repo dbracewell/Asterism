@@ -38,16 +38,12 @@ async def course(project_api, monkeypatch):
     other = (await client.post("/projects/", headers=auth(), json={"name": "Mine"})).json()["id"]
     class_id = uuid.uuid4()
     async with sessions() as session:
-        session.add(UserModel(id="teach"))
+        session.add(UserModel(id="teach", name="Dr Teach"))
         await session.flush()
-        session.add(EducatorModel(user_id="teach", status=EducatorStatus.APPROVED, display_name="T", email="t@x"))
-        session.add(
-            ClassModel(
-                id=class_id, educator_id="teach", educator_name="Dr Teach", name="Biology 101", join_code="ABCDEFGH23"
-            )
-        )
+        session.add(EducatorModel(user_id="teach", status=EducatorStatus.APPROVED))
+        session.add(ClassModel(id=class_id, educator_id="teach", name="Biology 101", join_code="ABCDEFGH23"))
         await session.flush()
-        session.add(ClassMemberModel(class_id=class_id, user_id="a", display_name="a"))
+        session.add(ClassMemberModel(class_id=class_id, user_id="a"))
         version = CourseVersionModel(class_id=class_id, number=1, manifest="{}", models="{}")
         session.add(version)
         await session.flush()
@@ -85,6 +81,11 @@ async def test_students_see_the_policy_and_who_set_it(course):
     }
     # The student's other projects are not limited.
     assert await policy_view(course, course["other"]) is None
+    # US-64.2: "Set by" reads the educator's current name.
+    async with course["sessions"]() as session:
+        await session.execute(update(UserModel).where(UserModel.id == "teach").values(name="Prof Teach"))
+        await session.commit()
+    assert (await policy_view(course))["educator_name"] == "Prof Teach"
 
 
 async def test_only_the_owning_educator_sets_policy_and_it_cannot_be_empty(course):

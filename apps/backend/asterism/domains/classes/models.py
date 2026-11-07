@@ -27,8 +27,7 @@ class EducatorStatus(StrEnum):
 class EducatorModel(Base, TimestampMixin):
     """A request for, or grant of, educator access.
 
-    Better Auth owns identity and this database cannot list users, so the name and
-    email come from the requester's own token, for the administrator to recognize.
+    The requester's name and email are read live from ``users`` (ADR-0057).
     Denying or revoking deletes the row.
     """
 
@@ -39,21 +38,17 @@ class EducatorModel(Base, TimestampMixin):
         Enum(EducatorStatus, values_callable=enum_values, native_enum=False, create_constraint=True),
         nullable=False,
     )
-    display_name: Mapped[str] = mapped_column(Text, nullable=False)
-    email: Mapped[str] = mapped_column(Text, nullable=False)
     decided_by: Mapped[str | None] = mapped_column(String, nullable=True)
 
     __table_args__ = (Index("idx_educators_status_created", "status", "created_at"),)
 
 
 class ClassModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
-    """A class. Its creator is its only educator."""
+    """A class. Its creator is its only educator, whose live name students see."""
 
     __tablename__ = "classes"
 
     educator_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    # Snapshot, because the backend has no names; students see who runs the class.
-    educator_name: Mapped[str] = mapped_column(Text, nullable=False)
     name: Mapped[str] = mapped_column(String(MAX_CLASS_NAME_LENGTH), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     join_code: Mapped[str] = mapped_column(String(16), nullable=False)
@@ -75,15 +70,14 @@ class ClassMemberModel(Base, TimestampMixin):
     """A student's place in a class.
 
     ``removed_at`` keeps a removed student from rejoining with the same code until
-    the educator allows it. Leaving a class deletes the row instead.
+    the educator allows it. Leaving a class deletes the row instead. Joining
+    shares the student's live name with the educator, and with no one else.
     """
 
     __tablename__ = "class_members"
 
     class_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("classes.id", ondelete="CASCADE"), primary_key=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    # The only student detail stored; shared knowingly by joining.
-    display_name: Mapped[str] = mapped_column(Text, nullable=False)
     removed_at: Mapped[int | None] = mapped_column(nullable=True)
     # US-60.5: off until the student opts in; they can withdraw at any time.
     insights_consent: Mapped[bool] = mapped_column(nullable=False, default=False, server_default="0")
@@ -109,6 +103,7 @@ class ClassInviteModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     redeemed_at: Mapped[int | None] = mapped_column(nullable=True)
     # Kept when the account is later deleted, so the invite stays used.
     redeemed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # The signup name; shown only once the account is gone (``redeemed_by`` NULL).
     redeemed_name: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (

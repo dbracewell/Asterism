@@ -32,6 +32,7 @@ Design notes:
   and never a write. Missing or blank values never overwrite a stored one.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -273,6 +274,19 @@ async def sync_identity(
             logger.info(f"Updated stored name/email for user {user_id}")
     _identity_cache[user_id] = identity
     return bool(changes)
+
+
+async def read_identities(user_ids: Iterable[str], session: AsyncSession) -> dict[str, UserIdentity]:
+    """The stored names and emails of these users, read live in one query.
+
+    Callers decide what each viewer may see and what to show when a value is
+    missing; users without a row are absent from the result.
+    """
+    wanted = set(user_ids)
+    if not wanted:
+        return {}
+    rows = await session.execute(select(UserModel.id, UserModel.name, UserModel.email).where(UserModel.id.in_(wanted)))
+    return {row.id: UserIdentity(name=row.name, email=row.email) for row in rows}
 
 
 def clear_user_cache() -> None:

@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.core.exceptions import ConflictException
 from asterism.domains.agent.learning_inputs import HintLevel, LearningModeId
 from asterism.domains.classes.models import ClassMemberModel, ClassModel
+from asterism.domains.classes.names import educator_name
 from asterism.domains.learning.catalog import LEARNING_MODES
 
 from .models import CourseCopyModel
@@ -94,7 +95,7 @@ async def course_mode_policy(
         allowed = frozenset(LearningModeId(mode) for mode in row.allowed_modes if mode in LearningModeId)
     return ActivePolicy(
         class_name=row.name,
-        educator_name=row.educator_name,
+        educator_name=await educator_name(row.educator_id, session),
         allowed_modes=allowed,
         answer_reveal=row.answer_reveal,
     )

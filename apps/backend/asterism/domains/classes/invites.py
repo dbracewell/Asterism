@@ -21,6 +21,7 @@ from asterism.db.mixins import get_unix_timestamp
 from asterism.db.queries import paginate_select
 
 from .models import ClassInviteModel, ClassMemberModel, ClassModel, EducatorModel, EducatorStatus
+from .names import educator_name, live_names
 from .schemas import (
     ClassInvite,
     ClassInvitePage,
@@ -56,7 +57,8 @@ def invite_status(row: ClassInviteModel, now: int) -> str:
     return "unused"
 
 
-def _view(row: ClassInviteModel, now: int) -> ClassInvite:
+def _view(row: ClassInviteModel, now: int, names: dict[str, str]) -> ClassInvite:
+    live = names.get(row.redeemed_by) if row.redeemed_by else None
     return ClassInvite(
         id=row.id,
         label=row.label,
@@ -64,7 +66,7 @@ def _view(row: ClassInviteModel, now: int) -> ClassInvite:
         expires_at=row.expires_at,
         created_at=row.created_at,
         redeemed_at=row.redeemed_at,
-        redeemed_name=row.redeemed_name,
+        redeemed_name=live or row.redeemed_name,
     )
 
 
@@ -104,8 +106,9 @@ async def list_invites(
         page_size=page_size,
     )
     now = get_unix_timestamp()
+    names = await live_names((row.redeemed_by for row in result.records if row.redeemed_by), session)
     return ClassInvitePage(
-        items=[_view(row, now) for row in result.records], total=result.total, page=page, page_size=page_size
+        items=[_view(row, now, names) for row in result.records], total=result.total, page=page, page_size=page_size
     )
 
 
@@ -144,7 +147,7 @@ async def check_invite(token: str, session: AsyncSession) -> InvitePreview:
     if found is None:
         raise BadDataException(INVALID_INVITE)
     _, row = found
-    return InvitePreview(class_name=row.name, educator_name=row.educator_name)
+    return InvitePreview(class_name=row.name, educator_name=await educator_name(row.educator_id, session))
 
 
 async def redeem_invite(
@@ -184,7 +187,7 @@ async def redeem_invite(
         # Lost a race with another creation of this id; create_user rolled the claim back.
         raise BadDataException(INVALID_INVITE)
     await session.execute(update(ClassInviteModel).where(ClassInviteModel.id == invite.id).values(redeemed_by=user_id))
-    session.add(ClassMemberModel(class_id=class_row.id, user_id=user_id, display_name=display_name))
+    session.add(ClassMemberModel(class_id=class_row.id, user_id=user_id))
     await session.commit()
     logger.info(f"User {user_id} signed up with invite {invite.id} and joined class {class_row.id}")
-    return InvitePreview(class_name=class_row.name, educator_name=class_row.educator_name)
+    return InvitePreview(class_name=class_row.name, educator_name=await educator_name(class_row.educator_id, session))
