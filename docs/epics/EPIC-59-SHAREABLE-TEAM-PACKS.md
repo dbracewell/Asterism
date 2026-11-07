@@ -1,6 +1,6 @@
 # EPIC-59: Shareable team packs
 
-Status: in progress. Source: product direction discussion (2026-10-31), core value proposition.
+Status: complete (2026-11-06; design in [ADR-0051](../adr/0051-team-pack-format.md)). Source: product direction discussion (2026-10-31), core value proposition.
 
 ## Objective
 

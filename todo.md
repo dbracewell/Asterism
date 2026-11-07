@@ -26,19 +26,7 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57 and EPIC-58 are complete and archived; EPIC-59 is next.
-
-### [EPIC-59: Shareable team packs](docs/epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)
-
-- [x] US-59.1: Pack format and ADR
-  - [x] Write the ADR and schema; implement the validator with tests.
-- [x] US-59.2: Export
-  - [x] Implement export selection and serialization; test the round trip and that no secrets are included.
-- [x] US-59.3: Import with explicit review
-  - [x] Implement the import review API and transactional creation.
-  - [x] Build the review screen; test conflicts, model selection, policy limits and rollback.
-- [ ] US-59.4: Starter packs (implemented on `feat/us-59.4-starter-packs`; awaiting user confirmation)
-  - [x] Author and validate the bundled packs; add install tests.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57, EPIC-58 and EPIC-59 are complete and archived.
 
 ### [EPIC-60: Educator and class policy](docs/epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)
 
