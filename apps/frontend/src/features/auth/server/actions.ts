@@ -45,6 +45,8 @@ export const installApp = async (data: InstallUserSchemaType) => {
       },
       body: JSON.stringify({
         user_id: user.user.id,
+        name: user.user.name,
+        email: user.user.email,
         system_key: getFrontendServerConfig().systemKey,
       }),
     });
@@ -133,7 +135,7 @@ export const signUpWithInvite = async (
 
   let redeemed;
   try {
-    redeemed = await redeemInvite(token, user.user.id, name);
+    redeemed = await redeemInvite(user.user, token);
   } catch {
     redeemed = {
       ok: false as const,

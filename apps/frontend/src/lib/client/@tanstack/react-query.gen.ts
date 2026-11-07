@@ -7747,8 +7747,7 @@ export const userListUsersQueryKey = (options?: Options<UserListUsersData>) =>
  *
  * Return the sorted ids of all existing users.
  *
- * The users table stores ids only (identity details live in BetterAuth), so
- * this is the full extent of what an admin can enumerate.
+ * A richer admin user list (name, email, search) is US-64.3.
  *
  * Args:
  * user: The authenticated admin caller.
@@ -7786,7 +7785,8 @@ export const userListUsersOptions = (options?: Options<UserListUsersData>) =>
  * server's configured secret. A request may present both; only one is
  * required. The body returns ``true`` when the row was newly created and
  * ``false`` when the user already existed (their settings are still
- * re-provisioned idempotently).
+ * re-provisioned idempotently). A supplied name and email are stored, or
+ * synced onto an existing row.
  *
  * Args:
  * payload: The requested user id and optional system key.

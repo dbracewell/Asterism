@@ -147,7 +147,9 @@ async def check_invite(token: str, session: AsyncSession) -> InvitePreview:
     return InvitePreview(class_name=row.name, educator_name=row.educator_name)
 
 
-async def redeem_invite(token: str, *, user_id: str, display_name: str, session: AsyncSession) -> InvitePreview:
+async def redeem_invite(
+    token: str, *, user_id: str, display_name: str, email: str, session: AsyncSession
+) -> InvitePreview:
     """Claim the invite, create the user and join the class in one transaction.
 
     The claim is a conditional update, so of two signups racing for one invite
@@ -173,7 +175,11 @@ async def redeem_invite(token: str, *, user_id: str, display_name: str, session:
         await session.rollback()
         raise BadDataException(INVALID_INVITE)
     # Commits the claim together with the new user row and main-agent config.
-    outcome = await user_service.create_user(user_id=user_id, session=session)
+    outcome = await user_service.create_user(
+        user_id=user_id,
+        session=session,
+        identity=user_service.UserIdentity.of(name=display_name, email=email),
+    )
     if outcome is not user_service.UserCreateOutcome.CREATED:
         # Lost a race with another creation of this id; create_user rolled the claim back.
         raise BadDataException(INVALID_INVITE)

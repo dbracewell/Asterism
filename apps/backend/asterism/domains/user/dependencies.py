@@ -27,6 +27,8 @@ async def get_current_user(
     after the first successful call per process (TTL-cached), so steady-state
     requests pay only a dict lookup. A valid JWT for an unknown id therefore
     auto-provisions the user row and main-agent configuration on first sight.
+    The verified name and email claims are then synced onto the row; that too
+    is a dict lookup unless the claims changed (see ``sync_identity``).
 
     Args:
         authed_user: The authenticated user obtained from the JWT token.
@@ -35,10 +37,13 @@ async def get_current_user(
     Returns:
         The authenticated user, guaranteed to have a row in ``users``.
     """
+    identity = user_service.UserIdentity.of(name=authed_user.name, email=authed_user.email)
     await user_service.ensure_user(
         user_id=authed_user.id,
         session=session,
+        identity=identity,
     )
+    await user_service.sync_identity(authed_user.id, identity, session)
     return authed_user
 
 

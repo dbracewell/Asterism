@@ -185,6 +185,7 @@ class InviteRedeemRequest(BaseModel):
     token: InviteToken
     user_id: Annotated[str, StringConstraints(min_length=1, max_length=255)]
     display_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+    email: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=320)]
     system_key: str
 
 

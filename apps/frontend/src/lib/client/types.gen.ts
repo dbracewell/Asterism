@@ -1756,8 +1756,9 @@ export type CourseVersionPage = {
  *
  * Attributes:
  * user_id: The stable identifier to provision. Must match the id claim
- * of the BetterAuth token this user will present; Asterism stores no
- * other identity data.
+ * of the BetterAuth token this user will present.
+ * name: The account's current display name, copied for display.
+ * email: The account's current email, copied for administrators.
  * system_key: Optional shared secret (``SYSTEM_KEY``) that lets an
  * unauthenticated caller create users. When omitted, the caller must
  * be an authenticated admin.
@@ -1767,6 +1768,14 @@ export type CreateUserRequest = {
    * User Id
    */
   user_id: string;
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Email
+   */
+  email?: string | null;
   /**
    * System Key
    *
@@ -2986,6 +2995,10 @@ export type InviteRedeemRequest = {
    * Display Name
    */
   display_name: string;
+  /**
+   * Email
+   */
+  email: string;
   /**
    * System Key
    */

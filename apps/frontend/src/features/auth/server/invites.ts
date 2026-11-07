@@ -48,14 +48,15 @@ export function checkInvite(token: string) {
   return postInvite("check", { token });
 }
 
+/** Claim an invite for a just-created account, storing its name and email. */
 export function redeemInvite(
+  user: { id: string; name: string; email: string },
   token: string,
-  userId: string,
-  displayName: string,
 ) {
   return postInvite("redeem", {
     token,
-    user_id: userId,
-    display_name: displayName,
+    user_id: user.id,
+    display_name: user.name,
+    email: user.email,
   });
 }

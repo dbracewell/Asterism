@@ -18,14 +18,18 @@ from asterism.domains.files.store import LocalFileStore
 from asterism.domains.user.models import DeletedUserModel, UserModel
 from asterism.domains.user.service import (
     UserCreateOutcome,
+    UserIdentity,
+    clear_user_cache,
     create_user,
     delete_user,
     ensure_user,
     list_users,
+    sync_identity,
     user_exists,
 )
 from asterism.main import app
-from sqlalchemy import event, select
+from sqlalchemy import event, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
@@ -253,3 +257,154 @@ async def test_list_users_is_admin_only_and_sorted(user_api):
     # "a" and "admin" are present because their first authenticated calls
     # (the 401 probes above) auto-provisioned them.
     assert response.json() == ["a", "admin", "alpha", "zeta"]
+
+
+# --- US-64.1: stored name and email -------------------------------------------------
+
+
+@pytest_asyncio.fixture
+async def user_api_db(user_api, tmp_path):
+    """A second session factory on the database file behind ``user_api``."""
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'users.db'}")
+    yield async_sessionmaker(engine, expire_on_commit=False)
+    await engine.dispose()
+
+
+def count_user_updates(sessions) -> list[str]:
+    """Record every UPDATE statement against ``users`` on this engine."""
+    statements: list[str] = []
+
+    def record(conn, cursor, statement, parameters, context, executemany):
+        if statement.lstrip().upper().startswith("UPDATE USERS"):
+            statements.append(statement)
+
+    event.listen(sessions.kw["bind"].sync_engine, "before_cursor_execute", record)
+    return statements
+
+
+async def stored_identity(sessions, user_id):
+    async with sessions() as session:
+        user = await session.get(UserModel, user_id)
+        assert user is not None
+        return user.name, user.email
+
+
+@pytest.mark.asyncio
+async def test_provisioning_stores_name_and_email(user_service_env):
+    sessions, _, _ = user_service_env
+    async with sessions() as session:
+        await create_user("a", session, UserIdentity.of(name="  Ada  ", email="ada@example.test"))
+        # No identity known yet is allowed (an id-only admin create).
+        await create_user("b", session)
+        await ensure_user("c", session, UserIdentity.of(name="Cy", email="cy@example.test"))
+    assert await stored_identity(sessions, "a") == ("Ada", "ada@example.test")
+    assert await stored_identity(sessions, "b") == (None, None)
+    assert await stored_identity(sessions, "c") == ("Cy", "cy@example.test")
+
+    # Provisioning an existing row syncs it rather than ignoring the values.
+    async with sessions() as session:
+        outcome = await create_user("b", session, UserIdentity.of(name="Bea", email="bea@example.test"))
+    assert outcome is UserCreateOutcome.ALREADY_EXISTS
+    assert await stored_identity(sessions, "b") == ("Bea", "bea@example.test")
+
+
+@pytest.mark.asyncio
+async def test_sync_writes_only_when_claims_change(user_service_env):
+    sessions, _, _ = user_service_env
+    ada = UserIdentity.of(name="Ada", email="ada@example.test")
+    async with sessions() as session:
+        await create_user("a", session, ada)
+    updates = count_user_updates(sessions)
+
+    # Same claims: the cache answers, with no statement at all.
+    assert await sync_identity("a", ada) is False
+    assert updates == []
+    # A cold cache reads the row and still writes nothing.
+    clear_user_cache()
+    assert await sync_identity("a", ada) is False
+    assert await sync_identity("a", ada) is False
+    assert updates == []
+
+    # A rename is written once, then cached.
+    renamed = UserIdentity.of(name="Ada L", email="ada@example.test")
+    assert await sync_identity("a", renamed) is True
+    assert await sync_identity("a", renamed) is False
+    assert len(updates) == 1
+    assert await stored_identity(sessions, "a") == ("Ada L", "ada@example.test")
+
+
+@pytest.mark.asyncio
+async def test_missing_or_blank_claims_never_blank_stored_values(user_service_env):
+    sessions, _, _ = user_service_env
+    async with sessions() as session:
+        await create_user("a", session, UserIdentity.of(name="Ada", email="ada@example.test"))
+
+    assert await sync_identity("a", UserIdentity.of()) is False
+    assert await sync_identity("a", UserIdentity.of(name="   ", email=None)) is False
+    assert await sync_identity("a", UserIdentity.of(name=42, email="")) is False
+    assert await stored_identity(sessions, "a") == ("Ada", "ada@example.test")
+
+    # One known claim updates only its own column.
+    assert await sync_identity("a", UserIdentity.of(email="new@example.test")) is True
+    assert await stored_identity(sessions, "a") == ("Ada", "new@example.test")
+
+
+@pytest.mark.asyncio
+async def test_sync_for_a_missing_user_writes_nothing_and_caches_nothing(user_service_env):
+    sessions, _, _ = user_service_env
+    ghost = UserIdentity.of(name="Ghost", email="ghost@example.test")
+    assert await sync_identity("ghost", ghost) is False
+    async with sessions() as session:
+        await create_user("ghost", session)
+    # The earlier miss was not cached as "already in sync".
+    assert await sync_identity("ghost", ghost) is True
+    assert await stored_identity(sessions, "ghost") == ("Ghost", "ghost@example.test")
+
+
+@pytest.mark.asyncio
+async def test_identity_columns_reject_blank_values(user_service_env):
+    sessions, _, _ = user_service_env
+    async with sessions() as session:
+        await create_user("a", session)
+        with pytest.raises(IntegrityError):
+            await session.execute(update(UserModel).where(UserModel.id == "a").values(name="  "))
+        await session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_a_renamed_token_updates_the_backend_copy(user_api, user_api_db, monkeypatch):
+    client, _, _ = user_api
+    claims = {"name": "Ada", "email": "ada@example.test"}
+
+    def verify_token(token):
+        if token != "ada":
+            raise UnauthorizedException()
+        return AuthedUser(id="ada", role="user", **claims)
+
+    monkeypatch.setattr("asterism.core.security.verify_jwks_token", verify_token)
+    # Any authenticated route provisions and syncs; this one is admin-only.
+    assert (await client.get("/users/", headers=auth("ada"))).status_code == 401
+    sessions = user_api_db
+    assert await stored_identity(sessions, "ada") == ("Ada", "ada@example.test")
+
+    claims.update(name="Ada Lovelace", email="lovelace@example.test")
+    await client.get("/users/", headers=auth("ada"))
+    assert await stored_identity(sessions, "ada") == ("Ada Lovelace", "lovelace@example.test")
+
+
+@pytest.mark.asyncio
+async def test_admin_and_system_key_creates_store_identity(user_api, user_api_db, monkeypatch):
+    client, _, _ = user_api
+    monkeypatch.setattr(config, "system_key", "s3cret-key")
+    sessions = user_api_db
+    body = {"user_id": "inst", "name": "Installer", "email": "inst@example.test", "system_key": "s3cret-key"}
+    assert (await client.post("/users/", json=body)).json() is True
+    assert await stored_identity(sessions, "inst") == ("Installer", "inst@example.test")
+
+    body = {"user_id": "made", "name": "Made By Admin", "email": "made@example.test"}
+    assert (await client.post("/users/", json=body, headers=auth("admin"))).json() is True
+    assert await stored_identity(sessions, "made") == ("Made By Admin", "made@example.test")
+
+    # Blank values are refused rather than stored.
+    blank = {"user_id": "blank", "name": " ", "system_key": "s3cret-key"}
+    assert (await client.post("/users/", json=blank)).status_code == 422
