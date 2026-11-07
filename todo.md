@@ -34,7 +34,7 @@ Order: EPIC-64 → EPIC-65 → EPIC-66, then a multi-user deployment readiness e
 
 ### [EPIC-64: User identity sync](docs/epics/EPIC-64-USER-IDENTITY-SYNC.md)
 
-- [ ] US-64.1: Store and sync name and email (implemented on `feat/us-64.1-identity-sync`; awaiting confirmation)
+- [x] US-64.1: Store and sync name and email
   - [x] Write the ADR (source of truth, sync points, what is shown to whom).
   - [x] Add the columns, provisioning and claim-driven sync; test write avoidance and edge cases.
 - [ ] US-64.2: Live names in classes and educator access
