@@ -1,6 +1,6 @@
 # EPIC-60: Educator and class policy
 
-Status: in progress. Source: product direction discussion (2026-10-31), learner track.
+Status: complete (US-60.1 through US-60.5 confirmed 2026-11-07). Source: product direction discussion (2026-10-31), learner track.
 
 The deployment direction was decided on 2026-11-06: Asterism stays a multi-user
 web app. Design in [ADR-0053](../adr/0053-classes-and-educators.md).
