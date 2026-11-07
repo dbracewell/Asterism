@@ -8,7 +8,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useWorkspaceScope } from "@/features/projects/hooks/use-workspace-scope";
-import { FilesIcon, SearchIcon, MessageSquarePlusIcon } from "lucide-react";
+import {
+  FilesIcon,
+  GraduationCapIcon,
+  SearchIcon,
+  MessageSquarePlusIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -48,6 +53,18 @@ export const NavActions = () => {
             >
               <Link href="/files">
                 <FilesIcon /> <span>Files</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              size="lgText"
+              tooltip="Classes"
+              isActive={pathname.startsWith("/classes")}
+            >
+              <Link href="/classes">
+                <GraduationCapIcon /> <span>Classes</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

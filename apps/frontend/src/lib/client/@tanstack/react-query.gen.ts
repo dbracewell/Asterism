@@ -225,9 +225,60 @@ import type {
   ChatSessionUpdateData,
   ChatSessionUpdateError,
   ChatSessionUpdateResponse,
+  ClassCreateData,
+  ClassCreateError,
+  ClassCreateResponse,
+  ClassDeleteData,
+  ClassDeleteError,
+  ClassDeleteResponse,
+  ClassGetManyData,
+  ClassGetManyError,
+  ClassGetManyResponse,
+  ClassGetOneData,
+  ClassGetOneError,
+  ClassGetOneResponse,
+  ClassJoinCodeRotateData,
+  ClassJoinCodeRotateError,
+  ClassJoinCodeRotateResponse,
+  ClassJoinData,
+  ClassJoinedGetManyData,
+  ClassJoinedGetManyError,
+  ClassJoinedGetManyResponse,
+  ClassJoinError,
+  ClassJoinResponse,
+  ClassLeaveData,
+  ClassLeaveError,
+  ClassLeaveResponse,
+  ClassMemberAllowBackData,
+  ClassMemberAllowBackError,
+  ClassMemberAllowBackResponse,
+  ClassMemberGetManyData,
+  ClassMemberGetManyError,
+  ClassMemberGetManyResponse,
+  ClassMemberRemoveData,
+  ClassMemberRemoveError,
+  ClassMemberRemoveResponse,
+  ClassUpdateData,
+  ClassUpdateError,
+  ClassUpdateResponse,
   ComponentsByTypeData,
   ComponentsByTypeError,
   ComponentsByTypeResponse,
+  EducatorAccessGetData,
+  EducatorAccessGetError,
+  EducatorAccessGetResponse,
+  EducatorAccessRequestData,
+  EducatorAccessRequestError,
+  EducatorAccessRequestResponse,
+  EducatorRequestApproveData,
+  EducatorRequestApproveError,
+  EducatorRequestApproveResponse,
+  EducatorRequestDeleteData,
+  EducatorRequestDeleteError,
+  EducatorRequestDeleteResponse,
+  EducatorRequestGetManyData,
+  EducatorRequestGetManyError,
+  EducatorRequestGetManyResponse,
   FileDeleteData,
   FileDeleteError,
   FileDeleteManyData,
@@ -3094,6 +3145,677 @@ export const appSettingsImportMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().appSettingsImport({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const educatorAccessGetQueryKey = (
+  options?: Options<EducatorAccessGetData>,
+) => createQueryKey("educatorAccessGet", options);
+
+/**
+ * Get Access
+ */
+export const educatorAccessGetOptions = (
+  options?: Options<EducatorAccessGetData>,
+) =>
+  queryOptions<
+    EducatorAccessGetResponse,
+    EducatorAccessGetError,
+    EducatorAccessGetResponse,
+    ReturnType<typeof educatorAccessGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().educatorAccessGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: educatorAccessGetQueryKey(options),
+  });
+
+/**
+ * Request Access
+ *
+ * Ask an administrator for educator access. Sends your name and email.
+ */
+export const educatorAccessRequestMutation = (
+  options?: Partial<Options<EducatorAccessRequestData>>,
+): UseMutationOptions<
+  EducatorAccessRequestResponse,
+  EducatorAccessRequestError,
+  Options<EducatorAccessRequestData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    EducatorAccessRequestResponse,
+    EducatorAccessRequestError,
+    Options<EducatorAccessRequestData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().educatorAccessRequest({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const educatorRequestGetManyQueryKey = (
+  options?: Options<EducatorRequestGetManyData>,
+) => createQueryKey("educatorRequestGetMany", options);
+
+/**
+ * List Requests
+ */
+export const educatorRequestGetManyOptions = (
+  options?: Options<EducatorRequestGetManyData>,
+) =>
+  queryOptions<
+    EducatorRequestGetManyResponse,
+    EducatorRequestGetManyError,
+    EducatorRequestGetManyResponse,
+    ReturnType<typeof educatorRequestGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().educatorRequestGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: educatorRequestGetManyQueryKey(options),
+  });
+
+export const educatorRequestGetManyInfiniteQueryKey = (
+  options?: Options<EducatorRequestGetManyData>,
+): QueryKey<Options<EducatorRequestGetManyData>> =>
+  createQueryKey("educatorRequestGetMany", options, true);
+
+/**
+ * List Requests
+ */
+export const educatorRequestGetManyInfiniteOptions = (
+  options?: Options<EducatorRequestGetManyData>,
+) =>
+  infiniteQueryOptions<
+    EducatorRequestGetManyResponse,
+    EducatorRequestGetManyError,
+    InfiniteData<EducatorRequestGetManyResponse>,
+    QueryKey<Options<EducatorRequestGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<EducatorRequestGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<EducatorRequestGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry
+          .get()
+          .educatorRequestGetMany({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true,
+          });
+        return data;
+      },
+      queryKey: educatorRequestGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Approve Request
+ */
+export const educatorRequestApproveMutation = (
+  options?: Partial<Options<EducatorRequestApproveData>>,
+): UseMutationOptions<
+  EducatorRequestApproveResponse,
+  EducatorRequestApproveError,
+  Options<EducatorRequestApproveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    EducatorRequestApproveResponse,
+    EducatorRequestApproveError,
+    Options<EducatorRequestApproveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().educatorRequestApprove({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Request
+ *
+ * Deny a request or revoke access.
+ */
+export const educatorRequestDeleteMutation = (
+  options?: Partial<Options<EducatorRequestDeleteData>>,
+): UseMutationOptions<
+  EducatorRequestDeleteResponse,
+  EducatorRequestDeleteError,
+  Options<EducatorRequestDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    EducatorRequestDeleteResponse,
+    EducatorRequestDeleteError,
+    Options<EducatorRequestDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().educatorRequestDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Join Class
+ *
+ * Join with a code. Your display name is shared with the educator.
+ */
+export const classJoinMutation = (
+  options?: Partial<Options<ClassJoinData>>,
+): UseMutationOptions<
+  ClassJoinResponse,
+  ClassJoinError,
+  Options<ClassJoinData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassJoinResponse,
+    ClassJoinError,
+    Options<ClassJoinData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classJoin({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classJoinedGetManyQueryKey = (
+  options?: Options<ClassJoinedGetManyData>,
+) => createQueryKey("classJoinedGetMany", options);
+
+/**
+ * List Joined
+ */
+export const classJoinedGetManyOptions = (
+  options?: Options<ClassJoinedGetManyData>,
+) =>
+  queryOptions<
+    ClassJoinedGetManyResponse,
+    ClassJoinedGetManyError,
+    ClassJoinedGetManyResponse,
+    ReturnType<typeof classJoinedGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().classJoinedGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classJoinedGetManyQueryKey(options),
+  });
+
+export const classJoinedGetManyInfiniteQueryKey = (
+  options?: Options<ClassJoinedGetManyData>,
+): QueryKey<Options<ClassJoinedGetManyData>> =>
+  createQueryKey("classJoinedGetMany", options, true);
+
+/**
+ * List Joined
+ */
+export const classJoinedGetManyInfiniteOptions = (
+  options?: Options<ClassJoinedGetManyData>,
+) =>
+  infiniteQueryOptions<
+    ClassJoinedGetManyResponse,
+    ClassJoinedGetManyError,
+    InfiniteData<ClassJoinedGetManyResponse>,
+    QueryKey<Options<ClassJoinedGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ClassJoinedGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ClassJoinedGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().classJoinedGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: classJoinedGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Leave Class
+ */
+export const classLeaveMutation = (
+  options?: Partial<Options<ClassLeaveData>>,
+): UseMutationOptions<
+  ClassLeaveResponse,
+  ClassLeaveError,
+  Options<ClassLeaveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassLeaveResponse,
+    ClassLeaveError,
+    Options<ClassLeaveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classLeave({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classGetManyQueryKey = (options?: Options<ClassGetManyData>) =>
+  createQueryKey("classGetMany", options);
+
+/**
+ * List Taught
+ */
+export const classGetManyOptions = (options?: Options<ClassGetManyData>) =>
+  queryOptions<
+    ClassGetManyResponse,
+    ClassGetManyError,
+    ClassGetManyResponse,
+    ReturnType<typeof classGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().classGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classGetManyQueryKey(options),
+  });
+
+export const classGetManyInfiniteQueryKey = (
+  options?: Options<ClassGetManyData>,
+): QueryKey<Options<ClassGetManyData>> =>
+  createQueryKey("classGetMany", options, true);
+
+/**
+ * List Taught
+ */
+export const classGetManyInfiniteOptions = (
+  options?: Options<ClassGetManyData>,
+) =>
+  infiniteQueryOptions<
+    ClassGetManyResponse,
+    ClassGetManyError,
+    InfiniteData<ClassGetManyResponse>,
+    QueryKey<Options<ClassGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ClassGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ClassGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().classGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: classGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Class
+ */
+export const classCreateMutation = (
+  options?: Partial<Options<ClassCreateData>>,
+): UseMutationOptions<
+  ClassCreateResponse,
+  ClassCreateError,
+  Options<ClassCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassCreateResponse,
+    ClassCreateError,
+    Options<ClassCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Class
+ */
+export const classDeleteMutation = (
+  options?: Partial<Options<ClassDeleteData>>,
+): UseMutationOptions<
+  ClassDeleteResponse,
+  ClassDeleteError,
+  Options<ClassDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassDeleteResponse,
+    ClassDeleteError,
+    Options<ClassDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classGetOneQueryKey = (options: Options<ClassGetOneData>) =>
+  createQueryKey("classGetOne", options);
+
+/**
+ * Get Class
+ */
+export const classGetOneOptions = (options: Options<ClassGetOneData>) =>
+  queryOptions<
+    ClassGetOneResponse,
+    ClassGetOneError,
+    ClassGetOneResponse,
+    ReturnType<typeof classGetOneQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().classGetOne({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classGetOneQueryKey(options),
+  });
+
+/**
+ * Update Class
+ */
+export const classUpdateMutation = (
+  options?: Partial<Options<ClassUpdateData>>,
+): UseMutationOptions<
+  ClassUpdateResponse,
+  ClassUpdateError,
+  Options<ClassUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassUpdateResponse,
+    ClassUpdateError,
+    Options<ClassUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Rotate Join Code
+ *
+ * Replace the code. The old one stops working; members stay.
+ */
+export const classJoinCodeRotateMutation = (
+  options?: Partial<Options<ClassJoinCodeRotateData>>,
+): UseMutationOptions<
+  ClassJoinCodeRotateResponse,
+  ClassJoinCodeRotateError,
+  Options<ClassJoinCodeRotateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassJoinCodeRotateResponse,
+    ClassJoinCodeRotateError,
+    Options<ClassJoinCodeRotateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classJoinCodeRotate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classMemberGetManyQueryKey = (
+  options: Options<ClassMemberGetManyData>,
+) => createQueryKey("classMemberGetMany", options);
+
+/**
+ * List Members
+ */
+export const classMemberGetManyOptions = (
+  options: Options<ClassMemberGetManyData>,
+) =>
+  queryOptions<
+    ClassMemberGetManyResponse,
+    ClassMemberGetManyError,
+    ClassMemberGetManyResponse,
+    ReturnType<typeof classMemberGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().classMemberGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classMemberGetManyQueryKey(options),
+  });
+
+export const classMemberGetManyInfiniteQueryKey = (
+  options: Options<ClassMemberGetManyData>,
+): QueryKey<Options<ClassMemberGetManyData>> =>
+  createQueryKey("classMemberGetMany", options, true);
+
+/**
+ * List Members
+ */
+export const classMemberGetManyInfiniteOptions = (
+  options: Options<ClassMemberGetManyData>,
+) =>
+  infiniteQueryOptions<
+    ClassMemberGetManyResponse,
+    ClassMemberGetManyError,
+    InfiniteData<ClassMemberGetManyResponse>,
+    QueryKey<Options<ClassMemberGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ClassMemberGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ClassMemberGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().classMemberGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: classMemberGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Remove Member
+ */
+export const classMemberRemoveMutation = (
+  options?: Partial<Options<ClassMemberRemoveData>>,
+): UseMutationOptions<
+  ClassMemberRemoveResponse,
+  ClassMemberRemoveError,
+  Options<ClassMemberRemoveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassMemberRemoveResponse,
+    ClassMemberRemoveError,
+    Options<ClassMemberRemoveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classMemberRemove({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Allow Back
+ *
+ * Let a removed student rejoin with the class code.
+ */
+export const classMemberAllowBackMutation = (
+  options?: Partial<Options<ClassMemberAllowBackData>>,
+): UseMutationOptions<
+  ClassMemberAllowBackResponse,
+  ClassMemberAllowBackError,
+  Options<ClassMemberAllowBackData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassMemberAllowBackResponse,
+    ClassMemberAllowBackError,
+    Options<ClassMemberAllowBackData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classMemberAllowBack({
         ...options,
         ...fnOptions,
         throwOnError: true,

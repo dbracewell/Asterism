@@ -35,6 +35,7 @@ for (const viewport of [
       "Theme Editor",
       "Tools",
       "Image Captioning",
+      "Educators",
       "Export",
     ]) {
       const tab = tabs.getByRole("tab", { name: label, exact: true });
@@ -147,6 +148,10 @@ for (const viewport of [
     await page.keyboard.press("End");
     await expect(
       tabs.getByRole("tab", { name: "Export", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp"); // available Educators
+    await expect(
+      tabs.getByRole("tab", { name: "Educators", exact: true }),
     ).toBeFocused();
     await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp");
     await verify("Code Execution", "Code execution");

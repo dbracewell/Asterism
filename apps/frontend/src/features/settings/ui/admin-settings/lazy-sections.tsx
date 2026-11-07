@@ -12,6 +12,7 @@ import {
   ToolboxIcon,
   CloudCogIcon,
   DatabaseBackupIcon,
+  GraduationCapIcon,
   ImagePlusIcon,
   ImageIcon,
   UsersRoundIcon,
@@ -91,6 +92,14 @@ const CodeExecutionSettings = dynamic(
     ),
   { loading: AdminPaneLoading },
 );
+const EducatorSettings = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/educator-settings").then(
+      (module) => module.EducatorSettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+
 const ExportSettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/export-settings").then(
@@ -184,6 +193,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     settingsPane: pane("Code Execution", <CodeExecutionSettings />),
   },
   { type: "separator" },
+  {
+    type: "section",
+    label: "Educators",
+    value: "educators",
+    icon: <GraduationCapIcon />,
+    settingsPane: pane("Educators", <EducatorSettings />),
+  },
   {
     type: "section",
     label: "Export",

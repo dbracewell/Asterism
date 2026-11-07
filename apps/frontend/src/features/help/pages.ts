@@ -515,6 +515,8 @@ export function pageGuideFor(
     case "/projects":
     case "/team-packs":
       return "projects";
+    case "/classes":
+      return "projects";
     case "/files":
       return "files";
     case "/search":

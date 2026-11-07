@@ -929,6 +929,92 @@ export type ClaimEvidence = {
 };
 
 /**
+ * ClassCreate
+ */
+export type ClassCreate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description?: string;
+};
+
+/**
+ * ClassJoinRequest
+ */
+export type ClassJoinRequest = {
+  /**
+   * Code
+   */
+  code: string;
+};
+
+/**
+ * ClassMember
+ */
+export type ClassMember = {
+  /**
+   * User Id
+   */
+  user_id: string;
+  /**
+   * Display Name
+   */
+  display_name: string;
+  /**
+   * Removed At
+   */
+  removed_at: number | null;
+  /**
+   * Created At
+   */
+  created_at: number;
+};
+
+/**
+ * ClassMemberPage
+ */
+export type ClassMemberPage = {
+  /**
+   * Items
+   */
+  items: Array<ClassMember>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
+ * ClassUpdate
+ */
+export type ClassUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Join Enabled
+   */
+  join_enabled?: boolean | null;
+};
+
+/**
  * CoachCriterion
  *
  * The rubric a draft is reviewed against, in display order.
@@ -1727,6 +1813,64 @@ export type DraftReview = {
 };
 
 /**
+ * EducatorAccess
+ */
+export type EducatorAccess = {
+  /**
+   * Status
+   */
+  status: "none" | "pending" | "approved";
+};
+
+/**
+ * EducatorRequest
+ */
+export type EducatorRequest = {
+  /**
+   * User Id
+   */
+  user_id: string;
+  /**
+   * Status
+   */
+  status: "pending" | "approved";
+  /**
+   * Display Name
+   */
+  display_name: string;
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * Created At
+   */
+  created_at: number;
+};
+
+/**
+ * EducatorRequestPage
+ */
+export type EducatorRequestPage = {
+  /**
+   * Items
+   */
+  items: Array<EducatorRequest>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
  * EligibleSkillsPage
  */
 export type EligibleSkillsPage = {
@@ -2366,6 +2510,52 @@ export type InstructionOverrideProvenance = {
    * Digest
    */
   digest: string;
+};
+
+/**
+ * JoinedClass
+ *
+ * The student's view: who runs the class, and nothing about classmates.
+ */
+export type JoinedClass = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Educator Name
+   */
+  educator_name: string;
+};
+
+/**
+ * JoinedClassPage
+ */
+export type JoinedClassPage = {
+  /**
+   * Items
+   */
+  items: Array<JoinedClass>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
 };
 
 export type JsonValue = unknown;
@@ -7447,6 +7637,64 @@ export type SubAgentTrace = {
 };
 
 /**
+ * TaughtClass
+ *
+ * The educator's view.
+ */
+export type TaughtClass = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Join Code
+   */
+  join_code: string;
+  /**
+   * Join Enabled
+   */
+  join_enabled: boolean;
+  /**
+   * Member Count
+   */
+  member_count?: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+};
+
+/**
+ * TaughtClassPage
+ */
+export type TaughtClassPage = {
+  /**
+   * Items
+   */
+  items: Array<TaughtClass>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
  * TemplateDocument
  *
  * Canonical template document; clients write it whole, metadata is derived.
@@ -11093,6 +11341,882 @@ export type AppSettingsImportResponses = {
 
 export type AppSettingsImportResponse =
   AppSettingsImportResponses[keyof AppSettingsImportResponses];
+
+export type EducatorAccessGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/educator-access";
+};
+
+export type EducatorAccessGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type EducatorAccessGetError =
+  EducatorAccessGetErrors[keyof EducatorAccessGetErrors];
+
+export type EducatorAccessGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: EducatorAccess;
+};
+
+export type EducatorAccessGetResponse =
+  EducatorAccessGetResponses[keyof EducatorAccessGetResponses];
+
+export type EducatorAccessRequestData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/educator-access";
+};
+
+export type EducatorAccessRequestErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type EducatorAccessRequestError =
+  EducatorAccessRequestErrors[keyof EducatorAccessRequestErrors];
+
+export type EducatorAccessRequestResponses = {
+  /**
+   * Successful Response
+   */
+  200: EducatorAccess;
+};
+
+export type EducatorAccessRequestResponse =
+  EducatorAccessRequestResponses[keyof EducatorAccessRequestResponses];
+
+export type EducatorRequestGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/educator-access/requests";
+};
+
+export type EducatorRequestGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type EducatorRequestGetManyError =
+  EducatorRequestGetManyErrors[keyof EducatorRequestGetManyErrors];
+
+export type EducatorRequestGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: EducatorRequestPage;
+};
+
+export type EducatorRequestGetManyResponse =
+  EducatorRequestGetManyResponses[keyof EducatorRequestGetManyResponses];
+
+export type EducatorRequestApproveData = {
+  body?: never;
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string;
+  };
+  query?: never;
+  url: "/educator-access/requests/{user_id}/approve";
+};
+
+export type EducatorRequestApproveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type EducatorRequestApproveError =
+  EducatorRequestApproveErrors[keyof EducatorRequestApproveErrors];
+
+export type EducatorRequestApproveResponses = {
+  /**
+   * Successful Response
+   */
+  200: EducatorRequest;
+};
+
+export type EducatorRequestApproveResponse =
+  EducatorRequestApproveResponses[keyof EducatorRequestApproveResponses];
+
+export type EducatorRequestDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string;
+  };
+  query?: never;
+  url: "/educator-access/requests/{user_id}";
+};
+
+export type EducatorRequestDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type EducatorRequestDeleteError =
+  EducatorRequestDeleteErrors[keyof EducatorRequestDeleteErrors];
+
+export type EducatorRequestDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type EducatorRequestDeleteResponse =
+  EducatorRequestDeleteResponses[keyof EducatorRequestDeleteResponses];
+
+export type ClassJoinData = {
+  body: ClassJoinRequest;
+  path?: never;
+  query?: never;
+  url: "/classes/join";
+};
+
+export type ClassJoinErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassJoinError = ClassJoinErrors[keyof ClassJoinErrors];
+
+export type ClassJoinResponses = {
+  /**
+   * Successful Response
+   */
+  200: JoinedClass;
+};
+
+export type ClassJoinResponse = ClassJoinResponses[keyof ClassJoinResponses];
+
+export type ClassJoinedGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/classes/joined";
+};
+
+export type ClassJoinedGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassJoinedGetManyError =
+  ClassJoinedGetManyErrors[keyof ClassJoinedGetManyErrors];
+
+export type ClassJoinedGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: JoinedClassPage;
+};
+
+export type ClassJoinedGetManyResponse =
+  ClassJoinedGetManyResponses[keyof ClassJoinedGetManyResponses];
+
+export type ClassLeaveData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/joined/{class_id}";
+};
+
+export type ClassLeaveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassLeaveError = ClassLeaveErrors[keyof ClassLeaveErrors];
+
+export type ClassLeaveResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ClassLeaveResponse = ClassLeaveResponses[keyof ClassLeaveResponses];
+
+export type ClassGetManyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/classes";
+};
+
+export type ClassGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassGetManyError = ClassGetManyErrors[keyof ClassGetManyErrors];
+
+export type ClassGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaughtClassPage;
+};
+
+export type ClassGetManyResponse =
+  ClassGetManyResponses[keyof ClassGetManyResponses];
+
+export type ClassCreateData = {
+  body: ClassCreate;
+  path?: never;
+  query?: never;
+  url: "/classes";
+};
+
+export type ClassCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassCreateError = ClassCreateErrors[keyof ClassCreateErrors];
+
+export type ClassCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: TaughtClass;
+};
+
+export type ClassCreateResponse =
+  ClassCreateResponses[keyof ClassCreateResponses];
+
+export type ClassDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}";
+};
+
+export type ClassDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassDeleteError = ClassDeleteErrors[keyof ClassDeleteErrors];
+
+export type ClassDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ClassDeleteResponse =
+  ClassDeleteResponses[keyof ClassDeleteResponses];
+
+export type ClassGetOneData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}";
+};
+
+export type ClassGetOneErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassGetOneError = ClassGetOneErrors[keyof ClassGetOneErrors];
+
+export type ClassGetOneResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaughtClass;
+};
+
+export type ClassGetOneResponse =
+  ClassGetOneResponses[keyof ClassGetOneResponses];
+
+export type ClassUpdateData = {
+  body: ClassUpdate;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}";
+};
+
+export type ClassUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassUpdateError = ClassUpdateErrors[keyof ClassUpdateErrors];
+
+export type ClassUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaughtClass;
+};
+
+export type ClassUpdateResponse =
+  ClassUpdateResponses[keyof ClassUpdateResponses];
+
+export type ClassJoinCodeRotateData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/join-code";
+};
+
+export type ClassJoinCodeRotateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassJoinCodeRotateError =
+  ClassJoinCodeRotateErrors[keyof ClassJoinCodeRotateErrors];
+
+export type ClassJoinCodeRotateResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaughtClass;
+};
+
+export type ClassJoinCodeRotateResponse =
+  ClassJoinCodeRotateResponses[keyof ClassJoinCodeRotateResponses];
+
+export type ClassMemberGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/classes/{class_id}/members";
+};
+
+export type ClassMemberGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassMemberGetManyError =
+  ClassMemberGetManyErrors[keyof ClassMemberGetManyErrors];
+
+export type ClassMemberGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassMemberPage;
+};
+
+export type ClassMemberGetManyResponse =
+  ClassMemberGetManyResponses[keyof ClassMemberGetManyResponses];
+
+export type ClassMemberRemoveData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+    /**
+     * Student Id
+     */
+    student_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/members/{student_id}";
+};
+
+export type ClassMemberRemoveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassMemberRemoveError =
+  ClassMemberRemoveErrors[keyof ClassMemberRemoveErrors];
+
+export type ClassMemberRemoveResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ClassMemberRemoveResponse =
+  ClassMemberRemoveResponses[keyof ClassMemberRemoveResponses];
+
+export type ClassMemberAllowBackData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+    /**
+     * Student Id
+     */
+    student_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/members/{student_id}/removal";
+};
+
+export type ClassMemberAllowBackErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassMemberAllowBackError =
+  ClassMemberAllowBackErrors[keyof ClassMemberAllowBackErrors];
+
+export type ClassMemberAllowBackResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ClassMemberAllowBackResponse =
+  ClassMemberAllowBackResponses[keyof ClassMemberAllowBackResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;
