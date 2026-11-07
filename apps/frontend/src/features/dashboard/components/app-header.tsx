@@ -38,6 +38,7 @@ export type HeaderRoute =
 const PAGE_TITLES: Record<string, string> = {
   "/general": "General",
   "/projects": "Projects",
+  "/team-packs": "Import team pack",
   "/search": "Search",
   "/files": "Files",
   "/settings": "Settings",

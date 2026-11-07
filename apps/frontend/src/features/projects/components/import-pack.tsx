@@ -296,36 +296,42 @@ function PackReviewForm({
     onSuccess: onImported,
   });
 
-  const unresolved = (
-    items: { key: string; name_conflict: boolean }[],
-    choices: Choices<ItemChoice>,
-  ) =>
-    items.some(
-      (item) =>
-        item.name_conflict &&
-        choices[item.key].include &&
-        !choices[item.key].name.trim(),
-    );
   const count =
     [agents, skills, templates, rubrics]
       .flatMap((choices) => Object.values(choices))
       .filter((choice) => choice.include).length +
     (review.project && project.include ? 1 : 0);
-  const blocked =
-    count === 0 ||
-    unresolved(review.sub_agents, agents) ||
-    unresolved(review.skills, skills) ||
-    unresolved(review.templates, templates) ||
-    unresolved(review.rubrics, rubrics) ||
-    (review.project?.name_conflict === true &&
-      project.include &&
-      !project.name.trim()) ||
-    review.sub_agents.some((agent) => {
+  const needsName = (
+    items: { key: string; name: string; name_conflict: boolean }[],
+    choices: Choices<ItemChoice>,
+  ) =>
+    items
+      .filter(
+        (item) =>
+          item.name_conflict &&
+          choices[item.key].include &&
+          !choices[item.key].name.trim(),
+      )
+      .map((item) => `Rename or skip ${item.name}`);
+  // Said next to the button, which can be far from the field that needs work.
+  const remaining = [
+    ...review.sub_agents.flatMap((agent) => {
       const choice = agents[agent.key];
-      return (
-        choice.include && (!choice.modelId || needsToolModel(agent, choice))
-      );
-    });
+      if (!choice.include) return [];
+      if (!choice.modelId) return [`Choose a model for ${agent.name}`];
+      return needsToolModel(agent, choice)
+        ? [`Choose a tool-capable model for ${agent.name}`]
+        : [];
+    }),
+    ...needsName(review.sub_agents, agents),
+    ...needsName(review.skills, skills),
+    ...needsName(review.templates, templates),
+    ...needsName(review.rubrics, rubrics),
+    ...(review.project?.name_conflict && project.include && !project.name.trim()
+      ? [`Rename or skip ${review.project.name}`]
+      : []),
+    ...(count === 0 ? ["Choose at least one item"] : []),
+  ];
 
   const decision = (key: string, choice: ItemChoice) => ({
     key,
@@ -540,9 +546,19 @@ function PackReviewForm({
           )}
         </p>
       )}
+      {remaining.length > 0 && (
+        <div role="status" className="grid gap-1 text-sm">
+          <p className="font-medium">Before you can import:</p>
+          <ul className="list-disc pl-5 wrap-anywhere">
+            {remaining.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="flex justify-end">
         <Button
-          disabled={blocked || importPack.isPending}
+          disabled={remaining.length > 0 || importPack.isPending}
           onClick={submit}
           type="button"
         >

@@ -46,7 +46,7 @@ export function ProjectList() {
         actions={
           <>
             <Button asChild variant="outline">
-              <Link href="/projects/import">Import team pack</Link>
+              <Link href="/team-packs">Import team pack</Link>
             </Button>
             <CreateProjectDialog />
           </>

@@ -338,3 +338,25 @@ it("still accepts a file when starter packs fail to load", async () => {
     await screen.findByText("Could not load starter packs."),
   ).toBeInTheDocument();
 });
+
+it("says what is left to do next to the disabled button", async () => {
+  const user = await open(
+    review({
+      sub_agents: [agent(), agent({ key: "critic", name: "Critic" })],
+      templates: [
+        { key: "summary", name: "Summary", document: {}, name_conflict: true },
+      ],
+    }),
+  );
+  const status = await screen.findByRole("status");
+  expect(status).toHaveTextContent("Choose a model for Researcher");
+  expect(status).toHaveTextContent("Choose a model for Critic");
+  expect(status).toHaveTextContent("Rename or skip Summary");
+  await user.click(screen.getByRole("checkbox", { name: "Import Critic" }));
+  expect(status).not.toHaveTextContent("Critic");
+  await chooseModel(user, "Tool model (P)");
+  expect(status).not.toHaveTextContent("Researcher");
+  await user.type(screen.getByLabelText("New name for Summary"), "Brief");
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Import 2 items" })).toBeEnabled();
+});
