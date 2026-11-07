@@ -189,7 +189,6 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Export",
     value: "export",
     icon: <DatabaseBackupIcon />,
-    badge: "Planned",
     settingsPane: pane("Export", <ExportSettings />),
   },
 ];

@@ -4,7 +4,7 @@ for (const viewport of [
   { width: 1280, height: 720 },
   { width: 320, height: 300 },
 ]) {
-  test(`five planned panes retain badges, keyboard access and honest scope at ${viewport.width}px`, async ({
+  test(`four planned panes retain badges, keyboard access and honest scope at ${viewport.width}px`, async ({
     page,
   }, info) => {
     await page.setViewportSize(viewport);
@@ -29,12 +29,13 @@ for (const viewport of [
       "aria-orientation",
       horizontal ? "horizontal" : "vertical",
     );
-    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(5);
+    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(4);
     for (const label of [
       "Providers",
       "Theme Editor",
       "Tools",
       "Image Captioning",
+      "Export",
     ]) {
       const tab = tabs.getByRole("tab", { name: label, exact: true });
       await expect(tab).toBeEnabled();
@@ -144,7 +145,9 @@ for (const viewport of [
     ).toBeVisible();
     expect(requests).toEqual([]);
     await page.keyboard.press("End");
-    await verify("Export", "Export");
+    await expect(
+      tabs.getByRole("tab", { name: "Export", exact: true }),
+    ).toBeFocused();
     await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp");
     await verify("Code Execution", "Code execution");
     await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp"); // available Captioning

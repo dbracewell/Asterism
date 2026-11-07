@@ -60,6 +60,9 @@ import type {
   AppSettingsBulkUpdateData,
   AppSettingsBulkUpdateError,
   AppSettingsBulkUpdateResponse,
+  AppSettingsExportData,
+  AppSettingsExportError,
+  AppSettingsExportResponse,
   AppSettingsGetData,
   AppSettingsGetError,
   AppSettingsGetResponse,
@@ -2996,6 +2999,35 @@ export const teamPackImportMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().teamPackImport({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create Settings Export
+ *
+ * Build an encrypted file of every application setting. Nothing is stored.
+ */
+export const appSettingsExportMutation = (
+  options?: Partial<Options<AppSettingsExportData>>,
+): UseMutationOptions<
+  AppSettingsExportResponse,
+  AppSettingsExportError,
+  Options<AppSettingsExportData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppSettingsExportResponse,
+    AppSettingsExportError,
+    Options<AppSettingsExportData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().appSettingsExport({
         ...options,
         ...fnOptions,
         throwOnError: true,
