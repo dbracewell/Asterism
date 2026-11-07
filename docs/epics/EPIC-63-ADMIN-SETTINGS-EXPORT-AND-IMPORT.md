@@ -57,4 +57,4 @@ Estimate: 0.5 day. Dependencies: US-63.2.
 Acceptance: the first-run provider step offers import as an alternative. After a
 successful import, setup finishes and the app opens with the imported models.
 
-- [ ] Add import to the setup step; test the alternative path.
+- [x] Add import to the setup step; test the alternative path.

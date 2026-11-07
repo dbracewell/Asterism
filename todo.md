@@ -36,8 +36,8 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-63.2: Import settings in Admin settings
   - [x] Implement preview and transactional merge; test merge, references, rollback and failures.
   - [x] Build the import flow; test it.
-- [ ] US-63.3: Import during setup
-  - [ ] Add import to the setup step; test the alternative path.
+- [x] US-63.3: Import during setup
+  - [x] Add import to the setup step; test the alternative path.
 
 ### [EPIC-60: Educator and class policy](docs/epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)
 
