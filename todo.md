@@ -30,19 +30,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ## Next epics (proposed 2026-11-07)
 
-Order: EPIC-64 → EPIC-65 → EPIC-66, then a multi-user deployment readiness epic.
-
-### [EPIC-64: User identity sync](docs/epics/EPIC-64-USER-IDENTITY-SYNC.md)
-
-- [x] US-64.1: Store and sync name and email
-  - [x] Write the ADR (source of truth, sync points, what is shown to whom).
-  - [x] Add the columns, provisioning and claim-driven sync; test write avoidance and edge cases.
-- [x] US-64.2: Live names in classes and educator access
-  - [x] Replace snapshot columns with joins; update schemas and the client.
-  - [x] Test renames across every reader; keep privacy tests green.
-- [ ] US-64.3: Admin user list
-  - [ ] Implement the owner-neutral admin query and route; test search and authorization.
-  - [ ] Add the list to Admin settings with help; test it.
+Order: EPIC-65 → EPIC-66 (EPIC-64 is complete and archived), then a multi-user deployment readiness epic.
 
 ### [EPIC-65: Project workspace redesign](docs/epics/EPIC-65-PROJECT-WORKSPACE-REDESIGN.md)
 

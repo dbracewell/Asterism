@@ -1,5 +1,7 @@
 """Educator access: a user asks, an administrator decides."""
 
+from collections.abc import Iterable
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +22,17 @@ logger = get_logger("Educators")
 async def read_access(user_id: str, session: AsyncSession) -> EducatorAccess:
     row = await session.get(EducatorModel, user_id, populate_existing=True)
     return EducatorAccess(status=row.status.value if row else "none")
+
+
+async def read_statuses(user_ids: Iterable[str], session: AsyncSession) -> dict[str, EducatorStatus]:
+    """Educator status by user id; users who never asked are absent."""
+    wanted = set(user_ids)
+    if not wanted:
+        return {}
+    rows = await session.execute(
+        select(EducatorModel.user_id, EducatorModel.status).where(EducatorModel.user_id.in_(wanted))
+    )
+    return {row.user_id: row.status for row in rows}
 
 
 async def require_educator(user_id: str, session: AsyncSession) -> None:

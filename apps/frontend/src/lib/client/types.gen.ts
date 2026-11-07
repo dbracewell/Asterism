@@ -8691,6 +8691,64 @@ export type UserSettings = {
 };
 
 /**
+ * UserSummary
+ *
+ * One account in the administrator's user list.
+ */
+export type UserSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   *
+   * The current name from sign-in, or null if not yet known
+   */
+  name: string | null;
+  /**
+   * Email
+   *
+   * The current email from sign-in, or null if not yet known
+   */
+  email: string | null;
+  /**
+   * Educator
+   *
+   * Educator status, if they have asked. Admin roles live in sign-in and are not shown
+   */
+  educator: "pending" | "approved" | null;
+  /**
+   * Created At
+   *
+   * When the account was first seen, in Unix seconds
+   */
+  created_at: number;
+};
+
+/**
+ * UserSummaryPage
+ */
+export type UserSummaryPage = {
+  /**
+   * Items
+   */
+  items: Array<UserSummary>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
  * VerificationUsage
  *
  * What the pass spent and where it stopped.
@@ -17736,33 +17794,50 @@ export type AppSettingUpdateResponses = {
 export type AppSettingUpdateResponse =
   AppSettingUpdateResponses[keyof AppSettingUpdateResponses];
 
-export type UserListUsersData = {
+export type UserGetManyData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * Search
+     *
+     * Matches name, email or id
+     */
+    search?: string | null;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
   url: "/users/";
 };
 
-export type UserListUsersErrors = {
+export type UserGetManyErrors = {
   /**
    * Not found
    */
   404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
 };
 
-export type UserListUsersError = UserListUsersErrors[keyof UserListUsersErrors];
+export type UserGetManyError = UserGetManyErrors[keyof UserGetManyErrors];
 
-export type UserListUsersResponses = {
+export type UserGetManyResponses = {
   /**
-   * Response Userlistusers
-   *
    * Successful Response
    */
-  200: Array<string>;
+  200: UserSummaryPage;
 };
 
-export type UserListUsersResponse =
-  UserListUsersResponses[keyof UserListUsersResponses];
+export type UserGetManyResponse =
+  UserGetManyResponses[keyof UserGetManyResponses];
 
 export type UserCreateUserData = {
   body: CreateUserRequest;

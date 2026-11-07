@@ -4,7 +4,7 @@ for (const viewport of [
   { width: 1280, height: 720 },
   { width: 320, height: 300 },
 ]) {
-  test(`four planned panes retain badges, keyboard access and honest scope at ${viewport.width}px`, async ({
+  test(`three planned panes retain badges, keyboard access and honest scope at ${viewport.width}px`, async ({
     page,
   }, info) => {
     await page.setViewportSize(viewport);
@@ -29,10 +29,11 @@ for (const viewport of [
       "aria-orientation",
       horizontal ? "horizontal" : "vertical",
     );
-    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(4);
+    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(3);
     for (const label of [
       "Providers",
       "Theme Editor",
+      "Users",
       "Tools",
       "Image Captioning",
       "Educators",
@@ -139,12 +140,10 @@ for (const viewport of [
     await group.focus();
     await verify("Groups", "Groups");
     expect(requests).toEqual([]);
-    await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown");
-    await verify("Users", "Users");
+    await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown"); // available Users
     await expect(
-      page.getByText(/Admin and user access checks are already enforced/),
-    ).toBeVisible();
-    expect(requests).toEqual([]);
+      tabs.getByRole("tab", { name: "Users", exact: true }),
+    ).toBeFocused();
     await page.keyboard.press("End");
     await expect(
       tabs.getByRole("tab", { name: "Export", exact: true }),

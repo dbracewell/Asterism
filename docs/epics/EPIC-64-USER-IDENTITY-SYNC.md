@@ -1,6 +1,6 @@
 # EPIC-64: User identity sync
 
-Status: in progress (US-64.1 and US-64.2 complete). Source: user request (2026-11-07).
+Status: complete (US-64.1, US-64.2 and US-64.3). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -71,5 +71,5 @@ where known, created date), replacing the bare ID list. Non-admins are refused.
 It is read-only; account deactivation and deletion stay with the deployment
 readiness work.
 
-- [ ] Implement the owner-neutral admin query and route; test search and authorization.
-- [ ] Add the list to Admin settings with help; test it.
+- [x] Implement the owner-neutral admin query and route; test search and authorization.
+- [x] Add the list to Admin settings with help; test it.

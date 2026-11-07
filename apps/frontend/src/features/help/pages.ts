@@ -27,7 +27,8 @@ export type PageGuideId =
   | "admin.tools"
   | "admin.skills"
   | "admin.chatgpt"
-  | "admin.image-captioning";
+  | "admin.image-captioning"
+  | "admin.users";
 
 export interface PageGuide {
   title: string;
@@ -378,7 +379,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Sections",
         description:
-          "Providers, themes, tools, skills, ChatGPT plans and image captioning.",
+          "Providers, themes, users, tools, skills, ChatGPT plans, image captioning and educators.",
       },
     ],
     tasks: [],
@@ -472,6 +473,27 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["concept.file-scope"],
     audience: "admin",
   },
+  "admin.users": {
+    title: "Users",
+    purpose:
+      "See who has an account. The list is read-only; accounts are not changed here.",
+    areas: [
+      {
+        name: "User list",
+        description:
+          "Each account's name, email, educator status and the date it was first seen. Names and emails come from sign-in and update the next time the person uses Asterism.",
+      },
+      {
+        name: "Search",
+        description: "Find people by part of their name, email or user ID.",
+      },
+    ],
+    tasks: [
+      "Approve educators from the Educators section; their status shows here.",
+    ],
+    terms: [],
+    audience: "admin",
+  },
 };
 
 const userSettingsGuides: Record<string, PageGuideId> = {
@@ -490,6 +512,7 @@ const adminSettingsGuides: Record<string, PageGuideId> = {
   skills: "admin.skills",
   chatgpt: "admin.chatgpt",
   "image-captioning": "admin.image-captioning",
+  "user-permissions": "admin.users",
 };
 
 /**

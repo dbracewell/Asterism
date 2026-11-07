@@ -4341,6 +4341,29 @@ export const zUserSettings = z.object({
 });
 
 /**
+ * UserSummary
+ *
+ * One account in the administrator's user list.
+ */
+export const zUserSummary = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  email: z.string().nullable(),
+  educator: z.enum(["pending", "approved"]).nullable(),
+  created_at: z.int(),
+});
+
+/**
+ * UserSummaryPage
+ */
+export const zUserSummaryPage = z.object({
+  items: z.array(zUserSummary),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
  * VerificationUsage
  *
  * What the pass spent and where it stopped.
@@ -6486,12 +6509,16 @@ export const zAppSettingUpdatePath = z.object({
  */
 export const zAppSettingUpdateResponse = zSetting;
 
+export const zUserGetManyQuery = z.object({
+  search: z.string().max(320).nullish(),
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
 /**
- * Response Userlistusers
- *
  * Successful Response
  */
-export const zUserListUsersResponse = z.array(z.string());
+export const zUserGetManyResponse = zUserSummaryPage;
 
 export const zUserCreateUserBody = zCreateUserRequest;
 

@@ -630,9 +630,9 @@ import type {
   UserDeleteData,
   UserDeleteError,
   UserDeleteResponse,
-  UserListUsersData,
-  UserListUsersError,
-  UserListUsersResponse,
+  UserGetManyData,
+  UserGetManyError,
+  UserGetManyResponse,
   UserPersonaCreateData,
   UserPersonaCreateError,
   UserPersonaCreateResponse,
@@ -7739,32 +7739,25 @@ export const appSettingUpdateMutation = (
   return mutationOptions;
 };
 
-export const userListUsersQueryKey = (options?: Options<UserListUsersData>) =>
-  createQueryKey("userListUsers", options);
+export const userGetManyQueryKey = (options?: Options<UserGetManyData>) =>
+  createQueryKey("userGetMany", options);
 
 /**
- * List all user ids (admin only)
+ * List accounts (admin only)
  *
- * Return the sorted ids of all existing users.
+ * List accounts with their name, email, educator status and first-seen date.
  *
- * A richer admin user list (name, email, search) is US-64.3.
- *
- * Args:
- * user: The authenticated admin caller.
- * session: The database session for performing database operations.
- *
- * Returns:
- * The sorted list of user ids.
+ * Read-only: deactivating and deleting accounts are not part of this list.
  */
-export const userListUsersOptions = (options?: Options<UserListUsersData>) =>
+export const userGetManyOptions = (options?: Options<UserGetManyData>) =>
   queryOptions<
-    UserListUsersResponse,
-    UserListUsersError,
-    UserListUsersResponse,
-    ReturnType<typeof userListUsersQueryKey>
+    UserGetManyResponse,
+    UserGetManyError,
+    UserGetManyResponse,
+    ReturnType<typeof userGetManyQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await ApiClient.__registry.get().userListUsers({
+      const { data } = await ApiClient.__registry.get().userGetMany({
         ...options,
         ...queryKey[0],
         signal,
@@ -7772,8 +7765,62 @@ export const userListUsersOptions = (options?: Options<UserListUsersData>) =>
       });
       return data;
     },
-    queryKey: userListUsersQueryKey(options),
+    queryKey: userGetManyQueryKey(options),
   });
+
+export const userGetManyInfiniteQueryKey = (
+  options?: Options<UserGetManyData>,
+): QueryKey<Options<UserGetManyData>> =>
+  createQueryKey("userGetMany", options, true);
+
+/**
+ * List accounts (admin only)
+ *
+ * List accounts with their name, email, educator status and first-seen date.
+ *
+ * Read-only: deactivating and deleting accounts are not part of this list.
+ */
+export const userGetManyInfiniteOptions = (
+  options?: Options<UserGetManyData>,
+) =>
+  infiniteQueryOptions<
+    UserGetManyResponse,
+    UserGetManyError,
+    InfiniteData<UserGetManyResponse>,
+    QueryKey<Options<UserGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<UserGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<UserGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().userGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: userGetManyInfiniteQueryKey(options),
+    },
+  );
 
 /**
  * Create a new user with a given user ID

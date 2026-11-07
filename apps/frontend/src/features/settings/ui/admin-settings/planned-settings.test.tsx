@@ -1,14 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { GroupSettings } from "./groups-settings";
-import { UserPermissionsSettings } from "./user-permissions-settings";
 import { ImageGenSettings } from "./image-gen-settings";
 import { CodeExecutionSettings } from "./code-execution-settings";
 
 describe("planned administration panes", () => {
   it.each([
     ["Groups", GroupSettings, "User group management"],
-    ["Users", UserPermissionsSettings, "user management screens"],
     ["Image generation", ImageGenSettings, "Image generation providers"],
     ["Code execution", CodeExecutionSettings, "Sandboxed code execution"],
   ])(
@@ -24,14 +22,4 @@ describe("planned administration panes", () => {
       ).toBeNull();
     },
   );
-
-  it("distinguishes existing access checks from future Users administration", () => {
-    render(<UserPermissionsSettings />);
-    expect(
-      screen.getByText(/Admin and user access checks are already enforced/),
-    ).toBeVisible();
-    expect(
-      screen.queryByText(/Role-based access control.*planned/),
-    ).not.toBeInTheDocument();
-  });
 });

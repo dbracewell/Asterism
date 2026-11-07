@@ -89,7 +89,7 @@ describe("SettingsPageView", () => {
 
     expect(mocks.adminSettingsGet).toHaveBeenCalledOnce();
   });
-  it("hides administration for a standard user following a planned-pane deep link", () => {
+  it("hides administration for a standard user following an admin-pane deep link", () => {
     mocks.role = "user";
     mocks.search = "t=admin&setting=user-permissions";
     renderPage();
