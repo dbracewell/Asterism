@@ -12,7 +12,15 @@ from .documents import PackManifest
 from .export import export_pack
 from .importer import import_pack
 from .review import review_pack
-from .schemas import PackExportRequest, PackImportRequest, PackImportResult, PackReview, PackSource
+from .schemas import (
+    PackExportRequest,
+    PackImportRequest,
+    PackImportResult,
+    PackReview,
+    PackSource,
+    StarterPackCatalog,
+)
+from .starters import STARTER_PACKS
 
 packs_router = APIRouter(
     prefix="/projects/{project_id}/pack-export",
@@ -34,6 +42,12 @@ team_packs_router = APIRouter(
     tags=["packs"],
     responses={400: {"model": ErrorDetail}, 401: {"model": ErrorDetail}, 409: {"model": ErrorDetail}},
 )
+
+
+@team_packs_router.get("/starters", response_model=StarterPackCatalog, operation_id="teamPackStarterGetMany")
+async def list_starter_packs(user: AuthedUserDep) -> StarterPackCatalog:
+    """The bundled packs. Installing one uses the same review and import."""
+    return STARTER_PACKS
 
 
 @team_packs_router.post("/review", response_model=PackReview, operation_id="teamPackReview")

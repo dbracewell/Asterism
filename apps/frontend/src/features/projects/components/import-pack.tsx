@@ -1,6 +1,8 @@
 "use client";
 
+import { ListSkeleton } from "@/components/loading-skeletons";
 import { PageHeader, PageLayout } from "@/components/page-layout";
+import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,8 +28,9 @@ import type {
 import {
   teamPackImportMutation,
   teamPackReviewMutation,
+  teamPackStarterGetManyOptions,
 } from "@/lib/client/@tanstack/react-query.gen";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type ReactNode, useId, useState } from "react";
@@ -580,7 +583,59 @@ function SkillAssignment({
   );
 }
 
-/** Imports a team pack (US-59.3): read the file, review it, then confirm. */
+function StarterPacks({
+  onReview,
+  disabled,
+}: {
+  onReview: (source: string) => void;
+  disabled: boolean;
+}) {
+  const starters = useQuery({
+    ...teamPackStarterGetManyOptions({ client }),
+    retry: false,
+  });
+  return (
+    <Section title="Starter packs">
+      {starters.isPending && (
+        <ListSkeleton label="Loading starter packs" rows={3} detail />
+      )}
+      {starters.error && (
+        <QueryError
+          error={starters.error}
+          message="Could not load starter packs."
+          retry={starters.refetch}
+          isRetrying={starters.isFetching}
+        />
+      )}
+      {starters.data?.items.map((starter) => (
+        <Card key={starter.id}>
+          <CardHeader>
+            <CardTitle className="text-base">{starter.name}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-muted-foreground text-sm">
+              {starter.description}
+            </p>
+            <Button
+              aria-label={`Review ${starter.name}`}
+              disabled={disabled}
+              onClick={() => onReview(starter.source)}
+              type="button"
+              variant="outline"
+            >
+              Review
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+    </Section>
+  );
+}
+
+/**
+ * Imports a team pack (US-59.3): read a file or pick a starter (US-59.4), review
+ * it, then confirm. Starters take the same path, so they earn no extra trust.
+ */
 export function ImportPack() {
   const router = useRouter();
   const inputId = useId();
@@ -592,20 +647,27 @@ export function ImportPack() {
     meta: { skipGlobalInvalidation: true },
   });
 
-  const chooseFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const clear = () => {
     reviewPack.reset();
     setImported(null);
     setFileError("");
     setSource("");
+  };
+  const review = (text: string) => {
+    clear();
+    setSource(text);
+    reviewPack.mutate({ body: { source: text } });
+  };
+
+  const chooseFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    clear();
     if (!file) return;
     if (file.size > MAX_PACK_BYTES) {
       setFileError("This file is larger than the 1 MiB pack limit.");
       return;
     }
-    const text = await file.text();
-    setSource(text);
-    reviewPack.mutate({ body: { source: text } });
+    review(await file.text());
   };
 
   const finish = (result: PackImportResult) => {
@@ -619,6 +681,7 @@ export function ImportPack() {
         title="Import team pack"
         description="See exactly what a pack asks for before anything is added."
       />
+      <StarterPacks onReview={review} disabled={reviewPack.isPending} />
       <Field>
         <FieldLabel htmlFor={inputId}>Team pack file</FieldLabel>
         <Input

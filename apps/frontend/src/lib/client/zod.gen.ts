@@ -2585,6 +2585,26 @@ export const zExerciseView = z.object({
 });
 
 /**
+ * StarterPack
+ *
+ * A bundled pack. ``source`` goes through the normal review and import.
+ */
+export const zStarterPack = z.object({
+  id: z.string(),
+  version: z.string(),
+  name: z.string(),
+  description: z.string(),
+  source: z.string(),
+});
+
+/**
+ * StarterPackCatalog
+ */
+export const zStarterPackCatalog = z.object({
+  items: z.array(zStarterPack),
+});
+
+/**
  * StudyCardDraftRequest
  *
  * Draft up to ``count`` cards from chosen files, or the whole project when ``file_ids`` is null.
@@ -4802,6 +4822,11 @@ export const zProjectPackExportPath = z.object({
  * Successful Response
  */
 export const zProjectPackExportResponse = zPackManifest;
+
+/**
+ * Successful Response
+ */
+export const zTeamPackStarterGetManyResponse = zStarterPackCatalog;
 
 export const zTeamPackReviewBody = zPackSource;
 

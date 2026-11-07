@@ -165,3 +165,17 @@ class PackImportResult(BaseModel):
     template_ids: list[uuid.UUID]
     rubric_ids: list[uuid.UUID]
     project_id: uuid.UUID | None
+
+
+class StarterPack(BaseModel):
+    """A bundled pack. ``source`` goes through the normal review and import."""
+
+    id: str
+    version: str
+    name: str
+    description: str
+    source: str
+
+
+class StarterPackCatalog(BaseModel):
+    items: list[StarterPack]

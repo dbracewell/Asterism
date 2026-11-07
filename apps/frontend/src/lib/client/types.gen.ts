@@ -5583,6 +5583,44 @@ export type SpanCitation = {
 };
 
 /**
+ * StarterPack
+ *
+ * A bundled pack. ``source`` goes through the normal review and import.
+ */
+export type StarterPack = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Version
+   */
+  version: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Source
+   */
+  source: string;
+};
+
+/**
+ * StarterPackCatalog
+ */
+export type StarterPackCatalog = {
+  /**
+   * Items
+   */
+  items: Array<StarterPack>;
+};
+
+/**
  * StudyCard
  */
 export type StudyCard = {
@@ -10717,6 +10755,41 @@ export type ProjectPackExportResponses = {
 
 export type ProjectPackExportResponse =
   ProjectPackExportResponses[keyof ProjectPackExportResponses];
+
+export type TeamPackStarterGetManyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/team-packs/starters";
+};
+
+export type TeamPackStarterGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type TeamPackStarterGetManyError =
+  TeamPackStarterGetManyErrors[keyof TeamPackStarterGetManyErrors];
+
+export type TeamPackStarterGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: StarterPackCatalog;
+};
+
+export type TeamPackStarterGetManyResponse =
+  TeamPackStarterGetManyResponses[keyof TeamPackStarterGetManyResponses];
 
 export type TeamPackReviewData = {
   body: PackSource;

@@ -1,8 +1,8 @@
 # ADR-0051 — Team pack format and validation
 
 Status: accepted and implemented for US-59.1 on 2026-11-06
-([EPIC-59](../epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)). Amended for export by US-59.2 and
-import by US-59.3 (see the addenda).
+([EPIC-59](../epics/EPIC-59-SHAREABLE-TEAM-PACKS.md)). Amended for export by US-59.2, import
+by US-59.3 and starter packs by US-59.4 (see the addenda).
 
 ## Context
 
@@ -186,3 +186,21 @@ nothing it was told at review.
 - **Untrusted text.** The review shows pack text as plain text, never Markdown.
   Imported instructions become the user's own and are not flagged at runtime; the
   safeguard is that the user reads them first and they grant no capability.
+
+## Addendum: starter packs (US-59.4)
+
+Starter packs are ordinary pack files in `asterism/domains/packs/bundled`, listed
+in `STARTER_PACK_IDS`. They are read and passed through `parse_pack` at import, so
+a malformed one fails startup. `GET /team-packs/starters` returns each pack's text,
+and the client sends that through the same review and import as an uploaded file.
+
+- **No extra trust.** There is no install route. A starter's tools start
+  unapproved and its sub-agents still need a model, so a bundled pack is no more
+  privileged than a downloaded one.
+- **Ordering comes from the project.** Packs have no workflow field. Each project's
+  instructions tell the main agent the order to delegate in, so that order is
+  guidance followed by the model, not an enforced pipeline.
+- **Learning modes are not in the format.** They are server-owned and chosen per
+  chat, so Study Buddy's Tutor carries tutoring behaviour in its own instructions.
+  Choosing Tutor mode for a chat remains a separate step.
+- **Installing twice** is a normal name conflict, resolved by renaming or skipping.

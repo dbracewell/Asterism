@@ -70,4 +70,4 @@ Acceptance: Asterism ships bundled packs: Research → Critique → Synthesis,
 Write → Review → Fact-check, and Study Buddy (tutor mode, flashcards, rubric
 feedback). They install through the same review flow.
 
-- [ ] Author and validate the bundled packs; add install tests.
+- [x] Author and validate the bundled packs; add install tests.

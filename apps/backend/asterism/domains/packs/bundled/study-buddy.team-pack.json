@@ -1,0 +1,154 @@
+{
+  "format": "asterism.team-pack",
+  "format_version": 1,
+  "pack": {
+    "id": "study-buddy",
+    "version": "1.0.0",
+    "name": "Study Buddy",
+    "description": "A tutor, a flashcard maker and a feedback coach for learning a subject.",
+    "author": "Asterism"
+  },
+  "sub_agents": [
+    {
+      "key": "tutor",
+      "name": "Tutor",
+      "description": "Teaches through questions and hints rather than answers.",
+      "instructions": "You are a patient tutor. Your aim is for the learner to understand, not just to have the answer.\n\nFind out what they already know. Ask one question at a time, and give the smallest hint that helps. When they make a mistake, help them see why. Give a full explanation only if they ask for it or are still stuck after several hints. Finish by asking them to explain the idea in their own words.",
+      "max_steps": 8,
+      "generation": {
+        "temperature": 0.5
+      },
+      "requested_tools": [],
+      "model_requirements": {
+        "tools": false
+      }
+    },
+    {
+      "key": "flashcard-maker",
+      "name": "Flashcard Maker",
+      "description": "Turns material into clear question and answer flashcards.",
+      "instructions": "You turn the material you are given into flashcards.\n\nWrite each card as Q: and A: lines. Test one idea per card. Keep answers short, and write questions that need recall rather than recognition. Use only what is in the material, and cover its most important ideas first. Aim for 10 cards unless asked for another number.",
+      "max_steps": 8,
+      "generation": {
+        "temperature": 0.3
+      },
+      "requested_tools": [],
+      "model_requirements": {
+        "tools": false
+      }
+    },
+    {
+      "key": "feedback-coach",
+      "name": "Feedback Coach",
+      "description": "Gives rubric-based feedback on a learner's work.",
+      "instructions": "You give feedback on the learner's work, using the rubric you are given or the Written answer rubric.\n\nFor each criterion, name the level, quote the evidence and give one specific next step. Start with what is working. Do not rewrite the work for them: the improvements should be theirs.",
+      "max_steps": 8,
+      "generation": {
+        "temperature": 0.3
+      },
+      "requested_tools": [],
+      "model_requirements": {
+        "tools": false
+      }
+    }
+  ],
+  "skills": [
+    {
+      "key": "socratic-tutoring",
+      "content": "---\nname: socratic-tutoring\ndescription: Guide a learner to an answer with questions and hints instead of giving it away.\n---\n# Socratic tutoring\n\nUse this when someone is trying to learn, not just to get an answer.\n\n1. Ask what they already know, and start from there.\n2. Ask one question at a time.\n3. When they are stuck, give the smallest hint that moves them forward.\n4. When they make a mistake, help them find it before correcting it.\n5. Once they reach the answer, ask them to explain it in their own words.\n",
+      "request_main_agent_assignment": true
+    }
+  ],
+  "templates": [
+    {
+      "key": "study-session",
+      "document": {
+        "name": "Study session",
+        "description": "Plan a focused study session on one topic.",
+        "fields": [
+          {
+            "kind": "short_text",
+            "key": "topic",
+            "label": "Topic",
+            "required": true,
+            "help": "What are you studying?"
+          },
+          {
+            "kind": "select",
+            "key": "activity",
+            "label": "Activity",
+            "required": true,
+            "options": [
+              "Teach me with questions",
+              "Make flashcards",
+              "Give feedback on my work"
+            ],
+            "default": "Teach me with questions"
+          },
+          {
+            "kind": "long_text",
+            "key": "material",
+            "label": "Notes or work",
+            "required": false,
+            "help": "Paste notes to study from, or the work you want feedback on."
+          }
+        ],
+        "body": "Topic: {{topic}}\n\nToday I want you to: {{activity}}{{#material}}\n\nMaterial:\n{{material}}{{/material}}"
+      }
+    }
+  ],
+  "rubrics": [
+    {
+      "key": "written-answer",
+      "document": {
+        "name": "Written answer",
+        "description": "Judges a written answer on understanding, evidence and explanation.",
+        "levels": [
+          "Secure",
+          "Developing",
+          "Beginning"
+        ],
+        "criteria": [
+          {
+            "label": "Understanding",
+            "description": "Does the answer show the key ideas are understood?",
+            "descriptors": [
+              "Key ideas are correct and connected.",
+              "Most key ideas are correct, but some links are missing.",
+              "Key ideas are missing or confused."
+            ]
+          },
+          {
+            "label": "Evidence",
+            "description": "Is the answer backed by examples or facts?",
+            "descriptors": [
+              "Relevant evidence supports each main point.",
+              "Some evidence, but it is thin or not always relevant.",
+              "Little or no evidence."
+            ]
+          },
+          {
+            "label": "Explanation",
+            "description": "Is the reasoning easy to follow?",
+            "descriptors": [
+              "Reasoning is clear from start to finish.",
+              "Reasoning is mostly clear, with some gaps.",
+              "Reasoning is hard to follow."
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "project": {
+    "name": "Study Buddy",
+    "description": "Learn a subject with a tutor, flashcards and feedback.",
+    "system_prompt": "Help the learner study. Match the help to what they ask for.\n\n- To learn or practise a topic, delegate to Tutor.\n- To make flashcards from material, delegate to Flashcard Maker.\n- For feedback on their work, delegate to Feedback Coach.\n\nDo not do the learner's work for them.",
+    "accent": "green",
+    "sub_agents": [
+      "tutor",
+      "flashcard-maker",
+      "feedback-coach"
+    ]
+  }
+}
