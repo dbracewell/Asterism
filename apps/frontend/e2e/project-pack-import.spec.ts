@@ -29,6 +29,9 @@ test("reviews a pack file and imports it after explicit choices", async ({
   page,
 }) => {
   let body: Record<string, unknown> | undefined;
+  await page.route("**/api/py/team-packs/starters", (route) =>
+    route.fulfill({ json: { items: [] } }),
+  );
   await page.route("**/api/py/team-packs/review", (route) =>
     route.fulfill({ json: review }),
   );
@@ -72,4 +75,34 @@ test("reviews a pack file and imports it after explicit choices", async ({
       },
     ],
   });
+});
+
+test("reviews a starter pack before installing it", async ({ page }) => {
+  let reviewed: unknown;
+  await page.route("**/api/py/team-packs/starters", (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          {
+            id: "study-buddy",
+            version: "1.0.0",
+            name: "Study Buddy",
+            description: "A tutor and flashcards.",
+            source: "starter-source",
+          },
+        ],
+      },
+    }),
+  );
+  await page.route("**/api/py/team-packs/review", (route) => {
+    reviewed = route.request().postDataJSON();
+    return route.fulfill({ json: review });
+  });
+  await page.goto("/e2e/projects?view=import");
+  await page.getByRole("button", { name: "Review Study Buddy" }).click();
+  await expect(page.getByText("Find <b>sources</b>.")).toBeVisible();
+  expect(reviewed).toEqual({ source: "starter-source" });
+  await expect(
+    page.getByRole("button", { name: "Import 1 item" }),
+  ).toBeDisabled();
 });

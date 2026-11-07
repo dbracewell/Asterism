@@ -37,8 +37,8 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-59.3: Import with explicit review
   - [x] Implement the import review API and transactional creation.
   - [x] Build the review screen; test conflicts, model selection, policy limits and rollback.
-- [ ] US-59.4: Starter packs
-  - [ ] Author and validate the bundled packs; add install tests.
+- [ ] US-59.4: Starter packs (implemented on `feat/us-59.4-starter-packs`; awaiting user confirmation)
+  - [x] Author and validate the bundled packs; add install tests.
 
 ### [EPIC-60: Educator and class policy](docs/epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)
 

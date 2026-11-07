@@ -516,6 +516,9 @@ import type {
   TeamPackReviewData,
   TeamPackReviewErrors,
   TeamPackReviewResponses,
+  TeamPackStarterGetManyData,
+  TeamPackStarterGetManyErrors,
+  TeamPackStarterGetManyResponses,
   ToolsGetActiveData,
   ToolsGetActiveErrors,
   ToolsGetActiveResponses,
@@ -2210,6 +2213,29 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * List Starter Packs
+   *
+   * The bundled packs. Installing one uses the same review and import.
+   */
+  public teamPackStarterGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<TeamPackStarterGetManyData, ThrowOnError>,
+  ): RequestResult<
+    TeamPackStarterGetManyResponses,
+    TeamPackStarterGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      TeamPackStarterGetManyResponses,
+      TeamPackStarterGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/team-packs/starters",
+      ...options,
     });
   }
 

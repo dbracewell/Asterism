@@ -7,6 +7,7 @@ import { ImportPack } from "./import-pack";
 const mocks = vi.hoisted(() => ({
   review: vi.fn(),
   importPack: vi.fn(),
+  starters: vi.fn(),
   push: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ client: {} }));
@@ -16,6 +17,10 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   teamPackReviewMutation: () => ({ mutationFn: mocks.review }),
   teamPackImportMutation: () => ({ mutationFn: mocks.importPack }),
+  teamPackStarterGetManyOptions: () => ({
+    queryKey: ["starters"],
+    queryFn: mocks.starters,
+  }),
 }));
 
 const SOURCE = '{"format":"asterism.team-pack"}';
@@ -89,6 +94,7 @@ beforeEach(() => {
   Element.prototype.hasPointerCapture = () => false;
   Element.prototype.scrollIntoView = () => {};
   mocks.importPack.mockResolvedValue({ project_id: null });
+  mocks.starters.mockResolvedValue({ items: [] });
 });
 
 it("sends the file for review and creates nothing before confirmation", async () => {
@@ -286,4 +292,49 @@ it("confirms when an import creates no project", async () => {
   await chooseModel(user, "Tool model (P)");
   await user.click(screen.getByRole("button", { name: "Import 1 item" }));
   expect(await screen.findByRole("status")).toHaveTextContent("Pack imported.");
+});
+
+it("sends a starter pack through the same review, with nothing granted", async () => {
+  mocks.starters.mockResolvedValue({
+    items: [
+      {
+        id: "study-buddy",
+        version: "1.0.0",
+        name: "Study Buddy",
+        description: "A tutor and flashcards.",
+        source: SOURCE,
+      },
+    ],
+  });
+  mocks.review.mockResolvedValue(review());
+  const user = userEvent.setup();
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <ImportPack />
+    </QueryClientProvider>,
+  );
+  await user.click(
+    await screen.findByRole("button", { name: "Review Study Buddy" }),
+  );
+  await waitFor(() =>
+    expect(mocks.review.mock.calls[0][0]).toEqual({ body: { source: SOURCE } }),
+  );
+  expect(
+    await screen.findByRole("button", { name: "Import 1 item" }),
+  ).toBeDisabled();
+  expect(mocks.importPack).not.toHaveBeenCalled();
+  await chooseModel(user, "Tool model (P)");
+  await user.click(screen.getByRole("button", { name: "Import 1 item" }));
+  await waitFor(() => expect(mocks.importPack).toHaveBeenCalled());
+  expect(submitted().source).toBe(SOURCE);
+  expect(submitted().sub_agents[0].approved_tools).toEqual([]);
+});
+
+it("still accepts a file when starter packs fail to load", async () => {
+  mocks.starters.mockRejectedValue(new Error("offline"));
+  await open(review());
+  expect(await screen.findByText("Researcher")).toBeInTheDocument();
+  expect(
+    await screen.findByText("Could not load starter packs."),
+  ).toBeInTheDocument();
 });

@@ -1,0 +1,123 @@
+{
+  "format": "asterism.team-pack",
+  "format_version": 1,
+  "pack": {
+    "id": "write-review-fact-check",
+    "version": "1.0.0",
+    "name": "Write, Review, Fact-check",
+    "description": "Three sub-agents that draft a piece, review it against a rubric, then check its facts.",
+    "author": "Asterism"
+  },
+  "sub_agents": [
+    {
+      "key": "writer",
+      "name": "Writer",
+      "description": "Drafts and revises a piece to a brief.",
+      "instructions": "You write to the brief you are given. Match its audience, purpose, tone and length.\n\nOpen with the point, use concrete detail, and cut anything that does not serve the reader. When you are given review notes, revise only what they raise and list what you changed. Mark any fact you are unsure of with [check] instead of guessing.",
+      "max_steps": 8,
+      "generation": {
+        "temperature": 0.7
+      },
+      "requested_tools": [],
+      "model_requirements": {
+        "tools": false
+      }
+    },
+    {
+      "key": "reviewer",
+      "name": "Reviewer",
+      "description": "Reviews a draft for clarity, structure and fit to the brief.",
+      "instructions": "You review the draft you are given against its brief. You do not rewrite it.\n\nAssess whether it serves the audience, whether the structure works, and whether each section earns its place. Give specific notes that quote the passage and say what to change, most important first. Say what is working too, so it survives revision.",
+      "max_steps": 8,
+      "generation": {
+        "temperature": 0.3
+      },
+      "requested_tools": [],
+      "model_requirements": {
+        "tools": false
+      }
+    },
+    {
+      "key": "fact-checker",
+      "name": "Fact Checker",
+      "description": "Verifies the factual claims in a draft.",
+      "instructions": "You check the factual claims in the draft you are given, including anything marked [check].\n\nList each claim with a verdict: confirmed, wrong, or could not verify. Give the source for each verdict and a correction where one is needed. Check names, dates, numbers and quotations first. Do not comment on style. If you have no search tools, say which claims you could not verify.",
+      "max_steps": 12,
+      "generation": {
+        "temperature": 0.1
+      },
+      "requested_tools": [
+        "web_search",
+        "web_fetch"
+      ],
+      "model_requirements": {
+        "tools": true
+      }
+    }
+  ],
+  "skills": [],
+  "templates": [],
+  "rubrics": [
+    {
+      "key": "writing-quality",
+      "document": {
+        "name": "Writing quality",
+        "description": "Judges a draft on purpose, structure, clarity and accuracy.",
+        "levels": [
+          "Strong",
+          "Developing",
+          "Weak"
+        ],
+        "criteria": [
+          {
+            "label": "Purpose",
+            "description": "Does it do what the brief asked?",
+            "descriptors": [
+              "Meets the brief and suits its audience throughout.",
+              "Mostly meets the brief, with some drift in focus or tone.",
+              "Misses the brief or the audience."
+            ]
+          },
+          {
+            "label": "Structure",
+            "description": "Does it flow in a useful order?",
+            "descriptors": [
+              "Each part leads naturally to the next.",
+              "The order mostly works, with some weak transitions.",
+              "Hard to follow, or the order works against the point."
+            ]
+          },
+          {
+            "label": "Clarity",
+            "description": "Is it easy to read?",
+            "descriptors": [
+              "Plain, precise and free of padding.",
+              "Generally clear, with some wordy or vague passages.",
+              "Often unclear or padded."
+            ]
+          },
+          {
+            "label": "Accuracy",
+            "description": "Are the claims supported?",
+            "descriptors": [
+              "Claims are correct and supported.",
+              "Mostly correct, with some unsupported claims.",
+              "Contains errors or relies on unsupported claims."
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "project": {
+    "name": "Write, Review, Fact-check",
+    "description": "Take a piece from brief to checked draft.",
+    "system_prompt": "For writing work, move each piece through three stages.\n\n1. Delegate the brief to Writer.\n2. Give Reviewer the brief and the draft, then send the notes back to Writer for one revision.\n3. Give Fact Checker the revised draft, and have Writer apply any corrections.\n\nShow the final piece, then list any claims that could not be verified.",
+    "accent": "violet",
+    "sub_agents": [
+      "writer",
+      "reviewer",
+      "fact-checker"
+    ]
+  }
+}

@@ -516,6 +516,9 @@ import type {
   TeamPackReviewData,
   TeamPackReviewError,
   TeamPackReviewResponse,
+  TeamPackStarterGetManyData,
+  TeamPackStarterGetManyError,
+  TeamPackStarterGetManyResponse,
   ToolsGetActiveData,
   ToolsGetActiveError,
   ToolsGetActiveResponse,
@@ -2914,6 +2917,36 @@ export const projectPackExportMutation = (
   };
   return mutationOptions;
 };
+
+export const teamPackStarterGetManyQueryKey = (
+  options?: Options<TeamPackStarterGetManyData>,
+) => createQueryKey("teamPackStarterGetMany", options);
+
+/**
+ * List Starter Packs
+ *
+ * The bundled packs. Installing one uses the same review and import.
+ */
+export const teamPackStarterGetManyOptions = (
+  options?: Options<TeamPackStarterGetManyData>,
+) =>
+  queryOptions<
+    TeamPackStarterGetManyResponse,
+    TeamPackStarterGetManyError,
+    TeamPackStarterGetManyResponse,
+    ReturnType<typeof teamPackStarterGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().teamPackStarterGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: teamPackStarterGetManyQueryKey(options),
+  });
 
 /**
  * Create Pack Review
