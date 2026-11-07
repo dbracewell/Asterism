@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { ClassesPage } from "./classes-page";
 
 const mocks = vi.hoisted(() => ({
+  consent: vi.fn(),
   access: vi.fn(),
   taught: vi.fn(),
   joined: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryFn: async () => null,
   }),
   classCourseApplyMutation: () => ({ mutationFn: vi.fn() }),
+  classInsightsConsentUpdateMutation: () => ({ mutationFn: mocks.consent }),
 }));
 
 const page = (items: object[]) => ({

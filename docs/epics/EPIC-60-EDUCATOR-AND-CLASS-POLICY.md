@@ -99,4 +99,7 @@ Acceptance: an opt-in dashboard shows weak topics aggregated from quiz and
 review data across consenting students, hidden below a minimum group size. It
 never shows transcripts or individual results.
 
-- [ ] Implement thresholded aggregation and consent; build the dashboard; test privacy limits.
+Design in [ADR-0056](../adr/0056-class-insights.md): topics are course files,
+students opt in, and nothing is shown below five students.
+
+- [x] Implement thresholded aggregation and consent; build the dashboard; test privacy limits.

@@ -157,7 +157,13 @@ async def test_students_cannot_manage_or_see_rosters_and_codes(api):
     assert (await client.post(f"{url}/join-code", headers=student)).status_code == 403
     joined = await client.get("/classes/joined", headers=student)
     assert joined.json()["items"] == [
-        {"id": item["id"], "name": "Biology 101", "description": "Cells", "educator_name": "Dr Teach"}
+        {
+            "id": item["id"],
+            "name": "Biology 101",
+            "description": "Cells",
+            "educator_name": "Dr Teach",
+            "insights_consent": False,
+        }
     ]
     assert item["join_code"] not in joined.text and "Student Two" not in joined.text
 

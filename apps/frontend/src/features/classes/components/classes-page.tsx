@@ -10,6 +10,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ClassCourse } from "@/features/classes/components/class-course";
+import { InsightsConsent } from "@/features/classes/components/insights-consent";
 import { errorDetail } from "@/features/classes/error-detail";
 import { client } from "@/lib/api";
 import {
@@ -135,8 +136,9 @@ function JoinedClasses() {
             >
               Leave
             </Button>
-            <div className="w-full">
+            <div className="grid w-full gap-3">
               <ClassCourse classId={item.id} courseName={item.name} />
+              <InsightsConsent item={item} />
             </div>
           </CardContent>
         </Card>

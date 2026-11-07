@@ -393,3 +393,28 @@ def select_reflection_card(*, user_id: str, reflection_id: uuid.UUID, front: str
         StudyCardModel.source_reflection_id == reflection_id,
         StudyCardModel.front == front,
     )
+
+
+def select_cited_cards(*, user_id: str, project_id: uuid.UUID):
+    """``(card id, citations JSON)`` for cards of the project's decks."""
+    return (
+        select(StudyCardModel.id, StudyCardModel.citations)
+        .join(StudyDeckModel, and_(StudyDeckModel.id == StudyCardModel.deck_id, StudyDeckModel.user_id == user_id))
+        .where(StudyCardModel.user_id == user_id, StudyDeckModel.project_id == project_id)
+    )
+
+
+def select_cited_questions(*, user_id: str, project_id: uuid.UUID):
+    """``(question id, citations JSON)`` for original questions; copies count towards their originals."""
+    return (
+        select(StudyQuizQuestionModel.id, StudyQuizQuestionModel.citations)
+        .join(
+            StudyQuizModel, and_(StudyQuizModel.id == StudyQuizQuestionModel.quiz_id, StudyQuizModel.user_id == user_id)
+        )
+        .where(
+            StudyQuizQuestionModel.user_id == user_id,
+            StudyQuizModel.project_id == project_id,
+            StudyQuizQuestionModel.source_question_id.is_(None),
+            StudyQuizQuestionModel.source_card_id.is_(None),
+        )
+    )

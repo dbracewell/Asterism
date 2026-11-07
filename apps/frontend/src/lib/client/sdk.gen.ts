@@ -249,6 +249,12 @@ import type {
   ClassGetOneData,
   ClassGetOneErrors,
   ClassGetOneResponses,
+  ClassInsightsConsentUpdateData,
+  ClassInsightsConsentUpdateErrors,
+  ClassInsightsConsentUpdateResponses,
+  ClassInsightsGetData,
+  ClassInsightsGetErrors,
+  ClassInsightsGetResponses,
   ClassInviteCheckData,
   ClassInviteCheckErrors,
   ClassInviteCheckResponses,
@@ -2621,6 +2627,33 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Set Insights Consent
+   *
+   * Share, or stop sharing, your practice results in class-wide totals.
+   */
+  public classInsightsConsentUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ClassInsightsConsentUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ClassInsightsConsentUpdateResponses,
+    ClassInsightsConsentUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ClassInsightsConsentUpdateResponses,
+      ClassInsightsConsentUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/joined/{class_id}/insights-consent",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
    * Leave Class
    */
   public classLeave<ThrowOnError extends boolean = false>(
@@ -3056,6 +3089,29 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/classes/{class_id}/course/versions",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Insights
+   *
+   * Where consenting students struggle, by course file. Thresholded totals only.
+   */
+  public classInsightsGet<ThrowOnError extends boolean = false>(
+    options: Options<ClassInsightsGetData, ThrowOnError>,
+  ): RequestResult<
+    ClassInsightsGetResponses,
+    ClassInsightsGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ClassInsightsGetResponses,
+      ClassInsightsGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/insights",
       ...options,
     });
   }

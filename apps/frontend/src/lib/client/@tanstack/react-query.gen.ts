@@ -249,6 +249,12 @@ import type {
   ClassGetOneData,
   ClassGetOneError,
   ClassGetOneResponse,
+  ClassInsightsConsentUpdateData,
+  ClassInsightsConsentUpdateError,
+  ClassInsightsConsentUpdateResponse,
+  ClassInsightsGetData,
+  ClassInsightsGetError,
+  ClassInsightsGetResponse,
   ClassInviteCheckData,
   ClassInviteCheckError,
   ClassInviteCheckResponse,
@@ -3489,6 +3495,37 @@ export const classJoinedGetManyInfiniteOptions = (
   );
 
 /**
+ * Set Insights Consent
+ *
+ * Share, or stop sharing, your practice results in class-wide totals.
+ */
+export const classInsightsConsentUpdateMutation = (
+  options?: Partial<Options<ClassInsightsConsentUpdateData>>,
+): UseMutationOptions<
+  ClassInsightsConsentUpdateResponse,
+  ClassInsightsConsentUpdateError,
+  Options<ClassInsightsConsentUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassInsightsConsentUpdateResponse,
+    ClassInsightsConsentUpdateError,
+    Options<ClassInsightsConsentUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .classInsightsConsentUpdate({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Leave Class
  */
 export const classLeaveMutation = (
@@ -4242,6 +4279,36 @@ export const classCourseVersionGetManyInfiniteOptions = (
       queryKey: classCourseVersionGetManyInfiniteQueryKey(options),
     },
   );
+
+export const classInsightsGetQueryKey = (
+  options: Options<ClassInsightsGetData>,
+) => createQueryKey("classInsightsGet", options);
+
+/**
+ * Get Insights
+ *
+ * Where consenting students struggle, by course file. Thresholded totals only.
+ */
+export const classInsightsGetOptions = (
+  options: Options<ClassInsightsGetData>,
+) =>
+  queryOptions<
+    ClassInsightsGetResponse,
+    ClassInsightsGetError,
+    ClassInsightsGetResponse,
+    ReturnType<typeof classInsightsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().classInsightsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classInsightsGetQueryKey(options),
+  });
 
 export const courseModePolicyGetQueryKey = (
   options: Options<CourseModePolicyGetData>,

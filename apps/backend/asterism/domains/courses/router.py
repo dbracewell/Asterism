@@ -9,6 +9,7 @@ from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from . import copies, publish
+from .insights import ClassInsights, class_insights
 from .policy import CourseModePolicy, course_mode_policy
 from .schemas import CourseApplied, CourseApply, CourseOffer, CoursePublish, CourseVersion, CourseVersionPage
 
@@ -71,3 +72,9 @@ async def list_versions(
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> CourseVersionPage:
     return await publish.list_versions(user.id, class_id, db, page=page, page_size=page_size)
+
+
+@courses_router.get("/{class_id}/insights", response_model=ClassInsights, operation_id="classInsightsGet")
+async def get_insights(class_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> ClassInsights:
+    """Where consenting students struggle, by course file. Thresholded totals only."""
+    return await class_insights(user.id, class_id, db)
