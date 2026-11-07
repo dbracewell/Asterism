@@ -1,6 +1,6 @@
 # EPIC-64: User identity sync
 
-Status: in progress (US-64.1 complete; US-64.2 awaiting confirmation). Source: user request (2026-11-07).
+Status: in progress (US-64.1 and US-64.2 complete). Source: user request (2026-11-07).
 
 ## Objective
 

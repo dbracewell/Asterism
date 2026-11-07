@@ -37,7 +37,7 @@ Order: EPIC-64 → EPIC-65 → EPIC-66, then a multi-user deployment readiness e
 - [x] US-64.1: Store and sync name and email
   - [x] Write the ADR (source of truth, sync points, what is shown to whom).
   - [x] Add the columns, provisioning and claim-driven sync; test write avoidance and edge cases.
-- [ ] US-64.2: Live names in classes and educator access (implemented on `feat/us-64.2-live-names`; awaiting confirmation)
+- [x] US-64.2: Live names in classes and educator access
   - [x] Replace snapshot columns with joins; update schemas and the client.
   - [x] Test renames across every reader; keep privacy tests green.
 - [ ] US-64.3: Admin user list
