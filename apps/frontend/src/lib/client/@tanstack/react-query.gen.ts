@@ -66,6 +66,12 @@ import type {
   AppSettingsGetData,
   AppSettingsGetError,
   AppSettingsGetResponse,
+  AppSettingsImportData,
+  AppSettingsImportError,
+  AppSettingsImportPreviewData,
+  AppSettingsImportPreviewError,
+  AppSettingsImportPreviewResponse,
+  AppSettingsImportResponse,
   AppSettingUpdateData,
   AppSettingUpdateError,
   AppSettingUpdateResponse,
@@ -3028,6 +3034,66 @@ export const appSettingsExportMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().appSettingsExport({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create Settings Preview
+ *
+ * Say what importing a file would change. Nothing is stored or changed.
+ */
+export const appSettingsImportPreviewMutation = (
+  options?: Partial<Options<AppSettingsImportPreviewData>>,
+): UseMutationOptions<
+  AppSettingsImportPreviewResponse,
+  AppSettingsImportPreviewError,
+  Options<AppSettingsImportPreviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppSettingsImportPreviewResponse,
+    AppSettingsImportPreviewError,
+    Options<AppSettingsImportPreviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry
+        .get()
+        .appSettingsImportPreview({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create Settings Import
+ *
+ * Merge a file into this instance, or change nothing if any part fails.
+ */
+export const appSettingsImportMutation = (
+  options?: Partial<Options<AppSettingsImportData>>,
+): UseMutationOptions<
+  AppSettingsImportResponse,
+  AppSettingsImportError,
+  Options<AppSettingsImportData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppSettingsImportResponse,
+    AppSettingsImportError,
+    Options<AppSettingsImportData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().appSettingsImport({
         ...options,
         ...fnOptions,
         throwOnError: true,

@@ -4596,6 +4596,28 @@ export type Provider = {
 };
 
 /**
+ * ProviderChange
+ */
+export type ProviderChange = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Action
+   */
+  action: "add" | "update";
+  /**
+   * Models Added
+   */
+  models_added: number;
+  /**
+   * Models Updated
+   */
+  models_updated: number;
+};
+
+/**
  * ProviderDiscoveryRequest
  *
  * Inputs for one discovery run.
@@ -5312,6 +5334,42 @@ export type SettingsExportRequest = {
    * Passphrase
    */
   passphrase: string;
+};
+
+/**
+ * SettingsImportRequest
+ *
+ * Preview and import both open the file from scratch; nothing is held between.
+ */
+export type SettingsImportRequest = {
+  /**
+   * Source
+   */
+  source: string;
+};
+
+/**
+ * SettingsImportSummary
+ *
+ * What an import changes. It holds no keys or parameter values.
+ */
+export type SettingsImportSummary = {
+  /**
+   * Exported At
+   */
+  exported_at: number;
+  /**
+   * Providers
+   */
+  providers: Array<ProviderChange>;
+  /**
+   * Kept Providers
+   */
+  kept_providers: Array<string>;
+  /**
+   * Changed Settings
+   */
+  changed_settings: Array<string>;
 };
 
 /**
@@ -8107,6 +8165,22 @@ export type ProviderSummaryWritable = {
    * Active Model Count
    */
   active_model_count?: number;
+};
+
+/**
+ * SettingsImportRequest
+ *
+ * Preview and import both open the file from scratch; nothing is held between.
+ */
+export type SettingsImportRequestWritable = {
+  /**
+   * Source
+   */
+  source: string;
+  /**
+   * Passphrase
+   */
+  passphrase: string;
 };
 
 export type FileDeleteManyData = {
@@ -10912,9 +10986,17 @@ export type AppSettingsExportData = {
 
 export type AppSettingsExportErrors = {
   /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
    * Unauthorized
    */
   401: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
   /**
    * Validation Error
    */
@@ -10933,6 +11015,84 @@ export type AppSettingsExportResponses = {
 
 export type AppSettingsExportResponse =
   AppSettingsExportResponses[keyof AppSettingsExportResponses];
+
+export type AppSettingsImportPreviewData = {
+  body: SettingsImportRequestWritable;
+  path?: never;
+  query?: never;
+  url: "/settings/app/transfer/preview";
+};
+
+export type AppSettingsImportPreviewErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type AppSettingsImportPreviewError =
+  AppSettingsImportPreviewErrors[keyof AppSettingsImportPreviewErrors];
+
+export type AppSettingsImportPreviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: SettingsImportSummary;
+};
+
+export type AppSettingsImportPreviewResponse =
+  AppSettingsImportPreviewResponses[keyof AppSettingsImportPreviewResponses];
+
+export type AppSettingsImportData = {
+  body: SettingsImportRequestWritable;
+  path?: never;
+  query?: never;
+  url: "/settings/app/transfer/import";
+};
+
+export type AppSettingsImportErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type AppSettingsImportError =
+  AppSettingsImportErrors[keyof AppSettingsImportErrors];
+
+export type AppSettingsImportResponses = {
+  /**
+   * Successful Response
+   */
+  200: SettingsImportSummary;
+};
+
+export type AppSettingsImportResponse =
+  AppSettingsImportResponses[keyof AppSettingsImportResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;

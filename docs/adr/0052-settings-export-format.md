@@ -1,7 +1,8 @@
 # ADR-0052 — Settings export format
 
 Status: accepted and implemented for US-63.1 on 2026-11-06
-([EPIC-63](../epics/EPIC-63-ADMIN-SETTINGS-EXPORT-AND-IMPORT.md)).
+([EPIC-63](../epics/EPIC-63-ADMIN-SETTINGS-EXPORT-AND-IMPORT.md)). Amended for import by
+US-63.2 (see the addendum).
 
 ## Context
 
@@ -71,3 +72,26 @@ on `ApplicationSettings` has no counterpart here.
 - A new application setting needs a new bundle field, and a bump to `format_version`
   when older readers would reject it. Older versions need no reader while the
   project has no production users.
+
+## Addendum: import (US-63.2)
+
+`POST /settings/app/transfer/preview` and `/import` each take the file's text and
+the passphrase. Nothing is held between them, so import opens the file again. Both
+are admin-only, and the preview returns no keys or parameter values.
+
+- **Merge, never remove.** Providers are matched by name and models by name within
+  them, so existing model IDs and the sub-agents bound to them survive. Providers and
+  models the file lacks stay. A matching provider takes the file's URL and key.
+- **The file wins where it has a value.** Tools, policies and captioning always
+  apply. A file with no draft model or search provider leaves the current one alone,
+  because absence there means the source had none, not that this instance should
+  lose its own.
+- **One transaction.** Everything is staged on one session. Captioning goes last:
+  `update_captioning_configuration` commits that session, so its commit carries the
+  whole import, and any earlier failure rolls it all back. Going through that path
+  also schedules file reprocessing when captioning changes, as an admin edit would.
+- **A passphrase is not validation.** Opening a file proves who wrote it, not that
+  its contents are sound, so names, URLs, provider types and model references are
+  checked before anything is written. A redacted key and a ChatGPT provider are refused.
+- **Draft model.** If the merge deactivates the selected draft model and the file
+  names no replacement, the selection is cleared.

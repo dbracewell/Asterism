@@ -1884,6 +1884,16 @@ export const zPromptTemplatePage = z.object({
 });
 
 /**
+ * ProviderChange
+ */
+export const zProviderChange = z.object({
+  name: z.string(),
+  action: z.enum(["add", "update"]),
+  models_added: z.int(),
+  models_updated: z.int(),
+});
+
+/**
  * ProviderDiscoveryResponse
  *
  * Merged model list plus non-fatal warnings and, for OpenAI, the catalog version.
@@ -2391,6 +2401,27 @@ export const zSettingsEnvelope = z.object({
  */
 export const zSettingsExportRequest = z.object({
   passphrase: z.string().min(12).max(1024),
+});
+
+/**
+ * SettingsImportRequest
+ *
+ * Preview and import both open the file from scratch; nothing is held between.
+ */
+export const zSettingsImportRequest = z.object({
+  source: z.string().min(1).max(8388608),
+});
+
+/**
+ * SettingsImportSummary
+ *
+ * What an import changes. It holds no keys or parameter values.
+ */
+export const zSettingsImportSummary = z.object({
+  exported_at: z.int(),
+  providers: z.array(zProviderChange),
+  kept_providers: z.array(z.string()),
+  changed_settings: z.array(z.string()),
 });
 
 /**
@@ -4172,6 +4203,16 @@ export const zProviderSettingsWritable = z.object({
 });
 
 /**
+ * SettingsImportRequest
+ *
+ * Preview and import both open the file from scratch; nothing is held between.
+ */
+export const zSettingsImportRequestWritable = z.object({
+  source: z.string().min(1).max(8388608),
+  passphrase: z.string().min(1).max(1024),
+});
+
+/**
  * Filenames
  */
 export const zFileDeleteManyBody = z.array(z.string());
@@ -4870,6 +4911,20 @@ export const zAppSettingsExportBody = zSettingsExportRequest;
  * Successful Response
  */
 export const zAppSettingsExportResponse = zSettingsEnvelope;
+
+export const zAppSettingsImportPreviewBody = zSettingsImportRequestWritable;
+
+/**
+ * Successful Response
+ */
+export const zAppSettingsImportPreviewResponse = zSettingsImportSummary;
+
+export const zAppSettingsImportBody = zSettingsImportRequestWritable;
+
+/**
+ * Successful Response
+ */
+export const zAppSettingsImportResponse = zSettingsImportSummary;
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),

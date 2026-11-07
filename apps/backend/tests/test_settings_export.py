@@ -14,7 +14,7 @@ from asterism.domains.knowledge.policy import (
 )
 from asterism.domains.knowledge.processing_schemas import KnowledgeProcessingCaptioningConfiguration
 from asterism.domains.settings.models import ApplicationSettingsModel, LLMModel, ProviderModel
-from asterism.domains.settings.provider_types import ProviderType
+from asterism.domains.settings.provider_types import ModelCapabilitySource, ProviderType
 from asterism.domains.settings.schemas import ApplicationSettings
 from asterism.domains.settings.secrets import encrypt_component_provider_dict
 from asterism.domains.settings_transfer.documents import SettingsBundle, SettingsEnvelope, seal, unseal
@@ -48,7 +48,13 @@ async def api(project_api, monkeypatch):
         draft = LLMModel(
             provider_id=provider.id, name="draft", is_active=True, supports_tools=True, context_window=8000
         )
-        vision = LLMModel(provider_id=provider.id, name="vision", is_active=False, supports_vision=True)
+        vision = LLMModel(
+            provider_id=provider.id,
+            name="vision",
+            is_active=True,
+            supports_vision=True,
+            vision_source=ModelCapabilitySource.MANUAL,
+        )
         session.add_all([draft, vision])
         await session.flush()
         processing = default_processing_configuration().model_copy(
