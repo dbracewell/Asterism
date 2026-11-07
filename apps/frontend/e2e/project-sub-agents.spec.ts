@@ -99,7 +99,7 @@ test("selects workers separately for two projects, retains unavailable bindings,
       },
     });
   });
-  await page.goto(`/e2e/projects?view=settings&projectId=${P}`);
+  await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${P}`);
   const panel = page.getByRole("region", {
     name: "Project sub-agents",
     exact: true,
@@ -114,14 +114,14 @@ test("selects workers separately for two projects, retains unavailable bindings,
   await expect(
     panel.getByText("Fixed model: Fixed model (Provider)").first(),
   ).toBeVisible();
-  await page.goto(`/e2e/projects?view=settings&projectId=${Q}`);
+  await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${Q}`);
   await expect(
     panel.getByRole("button", { name: "Deselect Reviewer" }),
   ).toBeVisible();
   await expect(
     panel.getByRole("button", { name: "Select Research", exact: true }),
   ).toBeVisible();
-  await page.goto(`/e2e/projects?view=settings&projectId=${P}`);
+  await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${P}`);
   conflict = true;
   await panel.getByRole("button", { name: "Deselect Research" }).click();
   await expect(panel.getByRole("alert")).toContainText(
@@ -148,11 +148,12 @@ test("selects workers separately for two projects, retains unavailable bindings,
     animations: "disabled",
   });
   await page.setViewportSize({ width: 390, height: 844 });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
+  // The sidebar collapses a frame after the resize; measure once it settles.
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    )
+    .toBe(true);
   await page.screenshot({
     path: "test-results/project-agents-mobile.png",
     fullPage: true,
@@ -167,7 +168,7 @@ test("selects workers separately for two projects, retains unavailable bindings,
   workers = workers.filter((worker) => worker.id !== S);
   state[Q].ids = [];
   state[Q].revision++;
-  await page.goto(`/e2e/projects?view=settings&projectId=${Q}`);
+  await page.goto(`/e2e/projects?view=project&tab=sub-agents&projectId=${Q}`);
   await expect(panel.getByText("No selected sub-agents")).toBeVisible();
   await expect(panel.getByRole("button", { name: /Reviewer/ })).toHaveCount(0);
   expect(changes.every((change) => change.projectId === P)).toBe(true);

@@ -70,7 +70,7 @@ export function SummaryGenerate({ projectId }: { projectId: string }) {
   return (
     <PageLayout>
       <Link
-        href={`/projects/${projectId}`}
+        href={`/projects/${projectId}?tab=study`}
         className="text-muted-foreground text-sm hover:underline"
       >
         Back to project

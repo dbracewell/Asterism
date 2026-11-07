@@ -18,8 +18,13 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
   chats: vi.fn(),
   push: vi.fn(),
+  search: "",
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mocks.push }),
+  usePathname: () => "/projects/p",
+  useSearchParams: () => new URLSearchParams(mocks.search),
+}));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   projectGetManyOptions: ({ query }: { query: object }) => ({
@@ -70,6 +75,8 @@ const project = {
   description: "Work together",
   system_prompt: "Original",
   accent: "teal" as const,
+  goal: "",
+  goal_target_date: null,
   context_revision: 3,
   created_at: 0,
   updated_at: 0,
@@ -100,6 +107,8 @@ beforeEach(() => {
   });
   mocks.get.mockResolvedValue(project);
   mocks.chats.mockResolvedValue({ chats: [], total: 0 });
+  mocks.search = "";
+  vi.spyOn(window.history, "pushState").mockImplementation(() => {});
 });
 it("shows loading, retry, empty, and searchable paginated project results", async () => {
   mocks.list.mockRejectedValueOnce({ detail: "Offline" });
@@ -196,9 +205,92 @@ it("scopes General and project chats in the backend query and new-chat link", as
     "/?project_id=p",
   );
 });
+it("opens the tab named in the URL and pushes tab changes into the history", async () => {
+  mocks.search = "tab=chats&keep=1";
+  setup(<ProjectWorkspace projectId="p" />);
+  const chats = await screen.findByRole("tab", { name: "Chats" });
+  expect(chats).toHaveAttribute("aria-selected", "true");
+  expect(
+    screen.getByRole("tablist", { name: "Project sections" }),
+  ).toBeVisible();
+  expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+    "Overview",
+    "Chats",
+    "Files",
+    "Study",
+    "Reflections",
+    "Sub-agents",
+    "Settings",
+  ]);
+  await userEvent.click(screen.getByRole("tab", { name: "Settings" }));
+  expect(window.history.pushState).toHaveBeenLastCalledWith(
+    null,
+    "",
+    "/projects/p?tab=settings&keep=1",
+  );
+  await userEvent.click(screen.getByRole("tab", { name: "Overview" }));
+  expect(window.history.pushState).toHaveBeenLastCalledWith(
+    null,
+    "",
+    "/projects/p?keep=1",
+  );
+});
+it("falls back to Overview, which shows the latest chats and links to all", async () => {
+  mocks.search = "tab=unknown";
+  mocks.chats.mockResolvedValue({
+    chats: [{ id: "c1", title: "Latest" }],
+    total: 9,
+  });
+  setup(<ProjectWorkspace projectId="p" />);
+  expect(await screen.findByRole("tab", { name: "Overview" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  expect(
+    await screen.findByRole("heading", { name: "Recent chats" }),
+  ).toBeVisible();
+  expect(screen.getByRole("link", { name: "Latest" })).toHaveAttribute(
+    "href",
+    "/c/c1",
+  );
+  expect(mocks.chats).toHaveBeenCalledWith(
+    expect.objectContaining({ project_id: "p", page: 1, page_size: 5 }),
+  );
+  expect(
+    screen.queryByRole("button", { name: "Next chats" }),
+  ).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "All 9 chats" }));
+  expect(window.history.pushState).toHaveBeenLastCalledWith(
+    null,
+    "",
+    "/projects/p?tab=chats",
+  );
+});
+it("keeps unsaved settings when switching away and back", async () => {
+  mocks.search = "tab=settings";
+  const view = setup(<ProjectWorkspace projectId="p" />);
+  const instructions = await screen.findByLabelText("Project instructions");
+  await userEvent.clear(instructions);
+  await userEvent.type(instructions, "Unsaved");
+  mocks.search = "tab=overview";
+  view.rerender(
+    <QueryClientProvider client={view.queryClient}>
+      <ProjectWorkspace projectId="p" />
+    </QueryClientProvider>,
+  );
+  await waitFor(() => expect(instructions).not.toBeVisible());
+  mocks.search = "tab=settings";
+  view.rerender(
+    <QueryClientProvider client={view.queryClient}>
+      <ProjectWorkspace projectId="p" />
+    </QueryClientProvider>,
+  );
+  expect(screen.getByLabelText("Project instructions")).toHaveValue("Unsaved");
+});
 it("keeps the editing revision across refresh, then explicitly reloads after conflict", async () => {
+  mocks.search = "tab=settings";
   mocks.update.mockRejectedValueOnce({ detail: "Revision conflict" });
-  const { queryClient } = setup(<ProjectWorkspace projectId="p" settings />);
+  const { queryClient } = setup(<ProjectWorkspace projectId="p" />);
   const instructions = await screen.findByLabelText("Project instructions");
   await userEvent.clear(instructions);
   await userEvent.type(instructions, "My draft");
@@ -238,8 +330,9 @@ it("keeps the editing revision across refresh, then explicitly reloads after con
   expect(mocks.update.mock.calls[1][0].body.expected_context_revision).toBe(4);
 });
 it("clears a project's sidebar color with an explicit null", async () => {
+  mocks.search = "tab=settings";
   mocks.update.mockResolvedValue({ ...project, accent: null });
-  setup(<ProjectWorkspace projectId="p" settings />);
+  setup(<ProjectWorkspace projectId="p" />);
   const color = await screen.findByRole("combobox", { name: "Sidebar color" });
   expect(color).toHaveTextContent("Teal");
   await userEvent.click(color);
@@ -254,8 +347,9 @@ it("clears a project's sidebar color with an explicit null", async () => {
   );
 });
 it("explains detachment, supports cancel, and deletes only after confirmation", async () => {
+  mocks.search = "tab=settings";
   mocks.remove.mockResolvedValue(project);
-  setup(<ProjectWorkspace projectId="p" settings />);
+  setup(<ProjectWorkspace projectId="p" />);
   await screen.findByLabelText("Name");
   await userEvent.click(screen.getByRole("button", { name: "Delete project" }));
   expect(screen.getByRole("alertdialog")).toHaveTextContent(

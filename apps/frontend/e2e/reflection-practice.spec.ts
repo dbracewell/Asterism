@@ -104,7 +104,7 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
     return route.fulfill({ status: 201, json: { id: spot.root_id } });
   });
 
-  await page.goto("/e2e/projects?view=overview");
+  await page.goto("/e2e/projects?view=project&tab=reflections");
   await page.getByRole("button", { name: "Practice unclear items" }).click();
   const dialog = page.getByRole("dialog", { name: "Practice what's unclear" });
   const first = dialog.getByRole("listitem", { name: "Item 1" });
@@ -129,6 +129,8 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
     },
   ]);
   await page.keyboard.press("Escape");
+  // The new weak spot shows in the Study tab.
+  await page.getByRole("tab", { name: "Study" }).click();
   const weak = page.getByRole("region", { name: "Weak spots" });
   await expect(weak).toContainText("Flagged as unclear");
   expect(errors).toEqual([]);

@@ -33,14 +33,24 @@ text, including “No chats yet.”, and removes those controls from keyboard ac
 
 ## Routes and actions
 
-| Route                            | Purpose                                                                                 |
-| -------------------------------- | --------------------------------------------------------------------------------------- |
-| `/projects`                      | Search project names/descriptions, page through results, and create projects            |
-| `/projects/[projectId]`          | Project description, paginated chats, shared file explorer, new chat, and settings link |
-| `/projects/[projectId]/settings` | Edit name, description, and task instructions; delete with confirmation                 |
+| Route                                 | Purpose                                                                       |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| `/projects`                           | Search project names/descriptions, page through results, and create projects  |
+| `/projects/[projectId]`               | The tabbed project workspace; Overview when no `tab` is given                 |
+| `/projects/[projectId]?tab=[tab]`     | One tab: `chats`, `files`, `study`, `reflections`, `sub-agents`, `settings`   |
 | `/general`                       | Paginated General chats and new General chat                                            |
 | `/?project_id=[projectId]`       | New chat composer with explicit project identity and model selection                    |
 | `/c/[chatId]`                    | Existing chat with linked workspace identity and move dialog                            |
+
+The workspace is organized into tabs (US-65.1): Overview (goal and the five
+latest chats, linking to all), Chats, Files, Study (decks, topic mastery, weak
+spots, quizzes and notes), Reflections, Sub-agents and Settings (details, team
+pack export and deletion). The active tab is the `tab` search parameter. Tab
+changes use native `history.pushState`, which Next.js syncs with
+`useSearchParams` without a server round trip, so Back returns to the previous
+tab and the page never remounts. Only the active tab's content is mounted,
+except Settings, which stays mounted (hidden) so an unsaved draft survives
+switching tabs. Study pages link back to the Study tab.
 
 Project search results link to their overview. Project new-chat links pass the
 project ID to the existing receipt-based create API. The composer verifies project
@@ -253,7 +263,7 @@ uses the chat's current server selection; the UI marks it busy immediately and
 never relabels earlier executions. General displays that it never delegates and
 exposes no sub-agent membership controls.
 
-Project settings compose an independent `ProjectSubAgents` section. Selected
+The Sub-agents tab composes an independent `ProjectSubAgents` section. Selected
 workers and candidates have separate bounded pages, fixed-model/provider labels,
 loading/failure/empty states, and explicit select/deselect actions. New projects
 have no selected workers. Membership changes use the generated atomic batch

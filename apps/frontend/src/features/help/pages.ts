@@ -12,7 +12,6 @@ export type PageGuideId =
   | "general"
   | "projects"
   | "project"
-  | "project-settings"
   | "files"
   | "search"
   | "settings.general"
@@ -170,40 +169,31 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
   project: {
     title: "Project",
     purpose:
-      "One project's workspace: its description, its chats and the files shared with every chat in it.",
+      "One project's workspace, organized in tabs. The open tab is in the address, so you can link to it and Back returns to it.",
     areas: [
+      {
+        name: "Overview",
+        description:
+          "The project's goal and its most recent chats, with a link to all of them.",
+      },
       {
         name: "Chats",
         description:
           "Every chat in this project. Start a new one here and it can use the project's files.",
       },
       {
-        name: "Project files",
+        name: "Files",
         description:
           "Files shared with every chat in the project. Add files from your library or upload new ones.",
       },
-    ],
-    tasks: [
-      "Add your course notes or readings as project files, then ask about them in any chat here.",
-      "Open the project settings to edit its instructions or choose sub-agents.",
-    ],
-    terms: [
-      "concept.project",
-      "concept.file-scope",
-      "concept.citation",
-      "concept.sub-agent",
-    ],
-    audience: "everyone",
-  },
-  "project-settings": {
-    title: "Project settings",
-    purpose:
-      "Change a project's name, description and instructions, choose which sub-agents its chats may use, or delete it.",
-    areas: [
       {
-        name: "Details",
+        name: "Study",
         description:
-          "Project instructions apply to later messages in every chat in the project. They shape answers but don't grant tools or files.",
+          "Flashcard decks, topic mastery, weak spots, quizzes and notes made from this project.",
+      },
+      {
+        name: "Reflections",
+        description: "Your private reflections on this project's work.",
       },
       {
         name: "Sub-agents",
@@ -211,15 +201,22 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
           "Choose which of your sub-agents this project's chats may use. New projects start with none.",
       },
       {
-        name: "Delete project",
+        name: "Settings",
         description:
-          "Moves its chats to General and removes its file memberships. Your library files are kept.",
+          "The name, description, instructions and goal; exporting a team pack; and deleting the project, which moves its chats to General and keeps your library files. Instructions shape answers but don't grant tools or files.",
       },
     ],
     tasks: [
-      "Write instructions such as the course level or the citation style you need.",
+      "Add your course notes or readings in Files, then ask about them in any chat here.",
+      "Write instructions in Settings, such as the course level or the citation style you need.",
     ],
-    terms: ["concept.project", "concept.sub-agent", "concept.main-agent"],
+    terms: [
+      "concept.project",
+      "concept.file-scope",
+      "concept.citation",
+      "concept.sub-agent",
+      "concept.main-agent",
+    ],
     audience: "everyone",
   },
   files: {
@@ -528,8 +525,6 @@ export function pageGuideFor(
   if (pathname === "/") return "new-chat";
   if (/^\/c\/[^/]+\/files\/[^/]+/.test(pathname)) return "file";
   if (/^\/c\/[^/]+\/?$/.test(pathname)) return "chat";
-  if (/^\/projects\/[^/]+\/settings\/?$/.test(pathname))
-    return "project-settings";
   if (/^\/projects\/[^/]+\/?$/.test(pathname)) return "project";
   if (/^\/files\/[^/]+/.test(pathname)) return "file";
   switch (pathname) {

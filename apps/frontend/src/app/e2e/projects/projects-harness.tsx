@@ -83,10 +83,8 @@ export function ProjectsHarness({
             </SidebarContent>
           </Sidebar>
           <SidebarInset>
-            {view === "settings" ? (
-              <ProjectWorkspace projectId={projectId} settings />
-            ) : view === "overview" ? (
-              <ProjectWorkspace projectId={PROJECT_ID} />
+            {view === "project" ? (
+              <ProjectWorkspace projectId={projectId} />
             ) : view === "general" ? (
               <WorkspaceChats projectId={null} />
             ) : view === "chat" ? (

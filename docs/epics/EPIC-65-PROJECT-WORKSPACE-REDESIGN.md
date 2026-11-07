@@ -1,6 +1,6 @@
 # EPIC-65: Project workspace redesign
 
-Status: proposed. Source: user request (2026-11-07).
+Status: in progress (US-65.1 awaiting confirmation). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -49,8 +49,8 @@ Settings tab. Every existing section is reachable in its tab with no loss of
 function. Keyboard and screen-reader navigation follow the Tabs pattern, and it
 works at 320px. Page help describes each tab.
 
-- [ ] Restructure the workspace into tabs with URL state; move settings into a tab.
-- [ ] Update unit and E2E tests and page guides; check narrow widths and keyboard use.
+- [x] Restructure the workspace into tabs with URL state; move settings into a tab.
+- [x] Update unit and E2E tests and page guides; check narrow widths and keyboard use.
 
 ## US-65.2: Per-project feature areas
 

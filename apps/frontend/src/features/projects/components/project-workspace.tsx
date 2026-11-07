@@ -5,6 +5,7 @@ import { useConfirmationDialog } from "@/components/confirmation-dialog";
 import { PageHeader, PageLayout } from "@/components/page-layout";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { client } from "@/lib/api";
 import type { Project, ProjectCreate } from "@/lib/client";
 import {
@@ -14,7 +15,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { ProjectSubAgents } from "./project-sub-agents";
 import { ProjectFiles } from "./project-files";
@@ -30,19 +31,61 @@ import { ProjectStudyNotes } from "@/features/study/components/project-study-not
 import { ProjectWeakSpots } from "@/features/study/components/project-weak-spots";
 import { ProjectTopicMastery } from "@/features/study/components/project-topic-mastery";
 
-export function ProjectWorkspace({
-  projectId,
-  settings = false,
-}: {
-  projectId: string;
-  settings?: boolean;
-}) {
+export const PROJECT_TABS = [
+  { value: "overview", label: "Overview" },
+  { value: "chats", label: "Chats" },
+  { value: "files", label: "Files" },
+  { value: "study", label: "Study" },
+  { value: "reflections", label: "Reflections" },
+  { value: "sub-agents", label: "Sub-agents" },
+  { value: "settings", label: "Settings" },
+] as const;
+
+export type ProjectTab = (typeof PROJECT_TABS)[number]["value"];
+
+export function projectTab(value: string | null): ProjectTab {
+  return PROJECT_TABS.find((tab) => tab.value === value)?.value ?? "overview";
+}
+
+/** A link to one tab of a project; Overview has no `tab` parameter. */
+export function projectHref(projectId: string, tab: ProjectTab = "overview") {
+  return tab === "overview"
+    ? `/projects/${projectId}`
+    : `/projects/${projectId}?tab=${tab}`;
+}
+
+/**
+ * The active tab lives in the URL, so links and the Back button work (US-65.1).
+ * Native pushState updates the URL and useSearchParams without a server
+ * round trip, so switching tabs never remounts the page or loses focus.
+ */
+function useProjectTab() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = projectTab(searchParams.get("tab"));
+  const select = (next: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    const search = params.toString();
+    window.history.pushState(
+      null,
+      "",
+      search ? `${pathname}?${search}` : pathname,
+    );
+  };
+  return [tab, select] as const;
+}
+
+export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const [logOpen, setLogOpen] = useState(false);
   const [packOpen, setPackOpen] = useState(false);
+  const [tab, selectTab] = useProjectTab();
   const project = useQuery({
     ...projectGetOneOptions({ client, path: { project_id: projectId } }),
     retry: false,
   });
+  const disabled = project.isFetching || !!project.error;
   return (
     <PageLayout>
       <Link
@@ -80,64 +123,52 @@ export function ProjectWorkspace({
           />
           <PageHeader
             title={project.data.name}
-            description={
-              settings
-                ? "Project settings"
-                : project.data.description || "Project workspace"
-            }
+            description={project.data.description || "Project workspace"}
             actions={
-              <>
-                {!settings && (
-                  <Button variant="outline" onClick={() => setLogOpen(true)}>
-                    Export AI-use log
-                  </Button>
-                )}
-                {settings && (
-                  <Button variant="outline" onClick={() => setPackOpen(true)}>
-                    Export team pack
-                  </Button>
-                )}
-                <Button variant="outline" asChild>
-                  <Link
-                    href={
-                      settings
-                        ? `/projects/${projectId}`
-                        : `/projects/${projectId}/settings`
-                    }
-                  >
-                    {settings ? "Overview" : "Project settings"}
-                  </Link>
-                </Button>
-              </>
+              <Button variant="outline" onClick={() => setLogOpen(true)}>
+                Export AI-use log
+              </Button>
             }
           />
-          {settings ? (
-            <ProjectSettings
-              key={projectId}
-              project={project.data}
-              reload={async () => {
-                const result = await project.refetch();
-                return result.isError ? undefined : result.data;
-              }}
-              disabled={project.isFetching || !!project.error}
+          <Tabs value={tab} onValueChange={selectTab} className="min-w-0">
+            <TabsList
+              aria-label="Project sections"
+              className="max-w-full justify-start overflow-x-auto"
             >
-              <ProjectSubAgents
-                key={`agents-${projectId}`}
-                projectId={projectId}
-                disabled={project.isFetching || !!project.error}
-              />
-            </ProjectSettings>
-          ) : (
-            <>
+              {PROJECT_TABS.map((item) => (
+                <TabsTrigger
+                  key={item.value}
+                  value={item.value}
+                  className="flex-none"
+                  onFocus={(event) =>
+                    event.currentTarget.scrollIntoView({
+                      block: "nearest",
+                      inline: "nearest",
+                    })
+                  }
+                >
+                  {item.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <TabsContent value="overview" className={PANEL}>
               <ProjectGoal
                 goal={project.data.goal}
                 targetDate={project.data.goal_target_date}
               />
-              <WorkspaceChats key={projectId} projectId={projectId} />
-              <ReflectionList
-                key={`reflections-${projectId}`}
+              <WorkspaceChats
+                key={projectId}
                 projectId={projectId}
+                recent={{ limit: 5, showAll: () => selectTab("chats") }}
               />
+            </TabsContent>
+            <TabsContent value="chats" className={PANEL}>
+              <WorkspaceChats key={projectId} projectId={projectId} />
+            </TabsContent>
+            <TabsContent value="files" className={PANEL}>
+              <ProjectFiles key={`files-${projectId}`} projectId={projectId} />
+            </TabsContent>
+            <TabsContent value="study" className={PANEL}>
               <ProjectStudyDecks
                 key={`study-${projectId}`}
                 projectId={projectId}
@@ -158,14 +189,58 @@ export function ProjectWorkspace({
                 key={`notes-${projectId}`}
                 projectId={projectId}
               />
-              <ProjectFiles key={`files-${projectId}`} projectId={projectId} />
-            </>
-          )}
+            </TabsContent>
+            <TabsContent value="reflections" className={PANEL}>
+              <ReflectionList
+                key={`reflections-${projectId}`}
+                projectId={projectId}
+              />
+            </TabsContent>
+            <TabsContent value="sub-agents" className={PANEL}>
+              <ProjectSubAgents
+                key={`agents-${projectId}`}
+                projectId={projectId}
+                disabled={disabled}
+              />
+            </TabsContent>
+            {/* Kept mounted so unsaved edits survive switching tabs. */}
+            <TabsContent
+              value="settings"
+              forceMount
+              hidden={tab !== "settings"}
+              className={PANEL}
+            >
+              <ProjectSettings
+                key={projectId}
+                project={project.data}
+                reload={async () => {
+                  const result = await project.refetch();
+                  return result.isError ? undefined : result.data;
+                }}
+                disabled={disabled}
+              >
+                <section
+                  className="flex flex-col items-start gap-3 border-t pt-6"
+                  aria-label="Team pack"
+                >
+                  <h2 className="font-medium">Team pack</h2>
+                  <p className="text-muted-foreground text-sm">
+                    Share this project&apos;s setup as a file others can import.
+                  </p>
+                  <Button variant="outline" onClick={() => setPackOpen(true)}>
+                    Export team pack
+                  </Button>
+                </section>
+              </ProjectSettings>
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </PageLayout>
   );
 }
+
+const PANEL = "flex min-w-0 flex-col gap-6 pt-4";
 
 function ProjectSettings({
   project,

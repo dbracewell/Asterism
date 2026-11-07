@@ -13,7 +13,6 @@ describe("page guide routes", () => {
     ["/general", "general"],
     ["/projects", "projects"],
     ["/projects/p1", "project"],
-    ["/projects/p1/settings", "project-settings"],
     ["/files", "files"],
     ["/files/notes.md", "file"],
     ["/search", "search"],
