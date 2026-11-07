@@ -39,6 +39,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/general": "General",
   "/projects": "Projects",
   "/team-packs": "Import team pack",
+  "/classes": "Classes",
   "/search": "Search",
   "/files": "Files",
   "/settings": "Settings",
@@ -64,6 +65,11 @@ export function headerRoute(
         { label: "Files", href: "/files" },
         { label: decodeURIComponent(file[1]) },
       ],
+    };
+  if (pathname.startsWith("/classes/"))
+    return {
+      kind: "page",
+      trail: [{ label: "Classes", href: "/classes" }, { label: "Class" }],
     };
   const title = PAGE_TITLES[pathname];
   return { kind: "page", trail: title ? [{ label: title }] : [] };

@@ -64,6 +64,7 @@ describe("getLazyAdminSettingsSections", () => {
       "Skills",
       "ChatGPT Plans",
       "Image Captioning",
+      "Educators",
       "Export",
     ]);
     expect(sections.every((section) => !section.disabled)).toBe(true);

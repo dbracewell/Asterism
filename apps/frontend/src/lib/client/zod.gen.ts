@@ -295,6 +295,50 @@ export const zClaimEvidence = z.object({
 });
 
 /**
+ * ClassCreate
+ */
+export const zClassCreate = z.object({
+  name: z.string().min(1).max(120),
+  description: z.string().max(2000).optional().default(""),
+});
+
+/**
+ * ClassJoinRequest
+ */
+export const zClassJoinRequest = z.object({
+  code: z.string().min(1).max(32),
+});
+
+/**
+ * ClassMember
+ */
+export const zClassMember = z.object({
+  user_id: z.string(),
+  display_name: z.string(),
+  removed_at: z.int().nullable(),
+  created_at: z.int(),
+});
+
+/**
+ * ClassMemberPage
+ */
+export const zClassMemberPage = z.object({
+  items: z.array(zClassMember),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
+ * ClassUpdate
+ */
+export const zClassUpdate = z.object({
+  name: z.string().min(1).max(120).nullish(),
+  description: z.string().max(2000).nullish(),
+  join_enabled: z.boolean().nullish(),
+});
+
+/**
  * CoachCriterion
  *
  * The rubric a draft is reviewed against, in display order.
@@ -605,6 +649,34 @@ export const zDraftReview = z.object({
 });
 
 /**
+ * EducatorAccess
+ */
+export const zEducatorAccess = z.object({
+  status: z.enum(["none", "pending", "approved"]),
+});
+
+/**
+ * EducatorRequest
+ */
+export const zEducatorRequest = z.object({
+  user_id: z.string(),
+  status: z.enum(["pending", "approved"]),
+  display_name: z.string(),
+  email: z.string(),
+  created_at: z.int(),
+});
+
+/**
+ * EducatorRequestPage
+ */
+export const zEducatorRequestPage = z.object({
+  items: z.array(zEducatorRequest),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
  * EmbeddingPayload
  *
  * The embedding state of one source file.
@@ -905,6 +977,28 @@ export const zForkProvenance = z.object({
   sub_agent_id: z.uuid(),
   step_index: z.int().gte(0),
   overrides: z.array(zInstructionOverrideProvenance).optional(),
+});
+
+/**
+ * JoinedClass
+ *
+ * The student's view: who runs the class, and nothing about classmates.
+ */
+export const zJoinedClass = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  educator_name: z.string(),
+});
+
+/**
+ * JoinedClassPage
+ */
+export const zJoinedClassPage = z.object({
+  items: z.array(zJoinedClass),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
 });
 
 export const zJsonValue = z.unknown();
@@ -3442,6 +3536,31 @@ export const zSubAgentTrace = z.object({
 });
 
 /**
+ * TaughtClass
+ *
+ * The educator's view.
+ */
+export const zTaughtClass = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  join_code: z.string(),
+  join_enabled: z.boolean(),
+  member_count: z.int().optional().default(0),
+  created_at: z.int(),
+});
+
+/**
+ * TaughtClassPage
+ */
+export const zTaughtClassPage = z.object({
+  items: z.array(zTaughtClass),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
  * TemplateDocument
  *
  * Canonical template document; clients write it whole, metadata is derived.
@@ -4925,6 +5044,159 @@ export const zAppSettingsImportBody = zSettingsImportRequestWritable;
  * Successful Response
  */
 export const zAppSettingsImportResponse = zSettingsImportSummary;
+
+/**
+ * Successful Response
+ */
+export const zEducatorAccessGetResponse = zEducatorAccess;
+
+/**
+ * Successful Response
+ */
+export const zEducatorAccessRequestResponse = zEducatorAccess;
+
+export const zEducatorRequestGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zEducatorRequestGetManyResponse = zEducatorRequestPage;
+
+export const zEducatorRequestApprovePath = z.object({
+  user_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zEducatorRequestApproveResponse = zEducatorRequest;
+
+export const zEducatorRequestDeletePath = z.object({
+  user_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zEducatorRequestDeleteResponse = z.void();
+
+export const zClassJoinBody = zClassJoinRequest;
+
+/**
+ * Successful Response
+ */
+export const zClassJoinResponse = zJoinedClass;
+
+export const zClassJoinedGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassJoinedGetManyResponse = zJoinedClassPage;
+
+export const zClassLeavePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassLeaveResponse = z.void();
+
+export const zClassGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassGetManyResponse = zTaughtClassPage;
+
+export const zClassCreateBody = zClassCreate;
+
+/**
+ * Successful Response
+ */
+export const zClassCreateResponse = zTaughtClass;
+
+export const zClassDeletePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassDeleteResponse = z.void();
+
+export const zClassGetOnePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassGetOneResponse = zTaughtClass;
+
+export const zClassUpdateBody = zClassUpdate;
+
+export const zClassUpdatePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassUpdateResponse = zTaughtClass;
+
+export const zClassJoinCodeRotatePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassJoinCodeRotateResponse = zTaughtClass;
+
+export const zClassMemberGetManyPath = z.object({
+  class_id: z.uuid(),
+});
+
+export const zClassMemberGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassMemberGetManyResponse = zClassMemberPage;
+
+export const zClassMemberRemovePath = z.object({
+  class_id: z.uuid(),
+  student_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassMemberRemoveResponse = z.void();
+
+export const zClassMemberAllowBackPath = z.object({
+  class_id: z.uuid(),
+  student_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassMemberAllowBackResponse = z.void();
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),

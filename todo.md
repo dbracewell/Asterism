@@ -26,13 +26,13 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. EPIC-60 is deferred until the multi-user web vs. single-user desktop decision. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57, EPIC-58, EPIC-59 and EPIC-63 are complete and archived.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. The multi-user web direction was decided on 2026-11-06, so EPIC-60 is in progress. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57, EPIC-58, EPIC-59 and EPIC-63 are complete and archived.
 
 ### [EPIC-60: Educator and class policy](docs/epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)
 
-- [ ] US-60.1: Classes and the educator role
-  - [ ] Write an ADR for classes, the educator role and the authorization model.
-  - [ ] Implement the domain and membership; test isolation between classes and roles.
+- [ ] US-60.1: Classes and the educator role (implemented on `feat/us-60.1-classes`; awaiting user confirmation)
+  - [x] Write an ADR for classes, the educator role and the authorization model.
+  - [x] Implement the domain and membership; test isolation between classes and roles.
 - [ ] US-60.2: Course packs
   - [ ] Implement publishing and student provisioning; test versioning and access.
 - [ ] US-60.3: Class mode policy

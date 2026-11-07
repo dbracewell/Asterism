@@ -1,10 +1,9 @@
 # EPIC-60: Educator and class policy
 
-Status: proposed, deferred. Source: product direction discussion (2026-10-31), learner track.
+Status: in progress. Source: product direction discussion (2026-10-31), learner track.
 
-This epic only makes sense if Asterism stays a multi-user web app. It is
-deferred until the deployment direction (multi-user web or single-user desktop)
-is decided.
+The deployment direction was decided on 2026-11-06: Asterism stays a multi-user
+web app. Design in [ADR-0053](../adr/0053-classes-and-educators.md).
 
 ## Objective
 
@@ -27,13 +26,13 @@ also get privacy-respecting insight into common misconceptions.
 
 As an educator, I want to create a class and invite students.
 
-Estimate: 3 days. Dependencies: deployment decision.
+Estimate: 3 days. Dependencies: none.
 
 Acceptance: an educator can create a class, invite students and remove them.
 Membership is enforced at the service and database layers.
 
-- [ ] Write an ADR for classes, the educator role and the authorization model.
-- [ ] Implement the domain and membership; test isolation between classes and roles.
+- [x] Write an ADR for classes, the educator role and the authorization model.
+- [x] Implement the domain and membership; test isolation between classes and roles.
 
 ## US-60.2: Course packs
 

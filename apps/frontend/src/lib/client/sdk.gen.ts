@@ -225,9 +225,60 @@ import type {
   ChatSessionUpdateData,
   ChatSessionUpdateErrors,
   ChatSessionUpdateResponses,
+  ClassCreateData,
+  ClassCreateErrors,
+  ClassCreateResponses,
+  ClassDeleteData,
+  ClassDeleteErrors,
+  ClassDeleteResponses,
+  ClassGetManyData,
+  ClassGetManyErrors,
+  ClassGetManyResponses,
+  ClassGetOneData,
+  ClassGetOneErrors,
+  ClassGetOneResponses,
+  ClassJoinCodeRotateData,
+  ClassJoinCodeRotateErrors,
+  ClassJoinCodeRotateResponses,
+  ClassJoinData,
+  ClassJoinedGetManyData,
+  ClassJoinedGetManyErrors,
+  ClassJoinedGetManyResponses,
+  ClassJoinErrors,
+  ClassJoinResponses,
+  ClassLeaveData,
+  ClassLeaveErrors,
+  ClassLeaveResponses,
+  ClassMemberAllowBackData,
+  ClassMemberAllowBackErrors,
+  ClassMemberAllowBackResponses,
+  ClassMemberGetManyData,
+  ClassMemberGetManyErrors,
+  ClassMemberGetManyResponses,
+  ClassMemberRemoveData,
+  ClassMemberRemoveErrors,
+  ClassMemberRemoveResponses,
+  ClassUpdateData,
+  ClassUpdateErrors,
+  ClassUpdateResponses,
   ComponentsByTypeData,
   ComponentsByTypeErrors,
   ComponentsByTypeResponses,
+  EducatorAccessGetData,
+  EducatorAccessGetErrors,
+  EducatorAccessGetResponses,
+  EducatorAccessRequestData,
+  EducatorAccessRequestErrors,
+  EducatorAccessRequestResponses,
+  EducatorRequestApproveData,
+  EducatorRequestApproveErrors,
+  EducatorRequestApproveResponses,
+  EducatorRequestDeleteData,
+  EducatorRequestDeleteErrors,
+  EducatorRequestDeleteResponses,
+  EducatorRequestGetManyData,
+  EducatorRequestGetManyErrors,
+  EducatorRequestGetManyResponses,
   FileDeleteData,
   FileDeleteErrors,
   FileDeleteManyData,
@@ -2380,6 +2431,357 @@ export class ApiClient extends HeyApiClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+
+  /**
+   * Get Access
+   */
+  public educatorAccessGet<ThrowOnError extends boolean = false>(
+    options?: Options<EducatorAccessGetData, ThrowOnError>,
+  ): RequestResult<
+    EducatorAccessGetResponses,
+    EducatorAccessGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      EducatorAccessGetResponses,
+      EducatorAccessGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/educator-access",
+      ...options,
+    });
+  }
+
+  /**
+   * Request Access
+   *
+   * Ask an administrator for educator access. Sends your name and email.
+   */
+  public educatorAccessRequest<ThrowOnError extends boolean = false>(
+    options?: Options<EducatorAccessRequestData, ThrowOnError>,
+  ): RequestResult<
+    EducatorAccessRequestResponses,
+    EducatorAccessRequestErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).post<
+      EducatorAccessRequestResponses,
+      EducatorAccessRequestErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/educator-access",
+      ...options,
+    });
+  }
+
+  /**
+   * List Requests
+   */
+  public educatorRequestGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<EducatorRequestGetManyData, ThrowOnError>,
+  ): RequestResult<
+    EducatorRequestGetManyResponses,
+    EducatorRequestGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      EducatorRequestGetManyResponses,
+      EducatorRequestGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/educator-access/requests",
+      ...options,
+    });
+  }
+
+  /**
+   * Approve Request
+   */
+  public educatorRequestApprove<ThrowOnError extends boolean = false>(
+    options: Options<EducatorRequestApproveData, ThrowOnError>,
+  ): RequestResult<
+    EducatorRequestApproveResponses,
+    EducatorRequestApproveErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      EducatorRequestApproveResponses,
+      EducatorRequestApproveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/educator-access/requests/{user_id}/approve",
+      ...options,
+    });
+  }
+
+  /**
+   * Delete Request
+   *
+   * Deny a request or revoke access.
+   */
+  public educatorRequestDelete<ThrowOnError extends boolean = false>(
+    options: Options<EducatorRequestDeleteData, ThrowOnError>,
+  ): RequestResult<
+    EducatorRequestDeleteResponses,
+    EducatorRequestDeleteErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      EducatorRequestDeleteResponses,
+      EducatorRequestDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/educator-access/requests/{user_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Join Class
+   *
+   * Join with a code. Your display name is shared with the educator.
+   */
+  public classJoin<ThrowOnError extends boolean = false>(
+    options: Options<ClassJoinData, ThrowOnError>,
+  ): RequestResult<ClassJoinResponses, ClassJoinErrors, ThrowOnError> {
+    return (options.client ?? this.client).post<
+      ClassJoinResponses,
+      ClassJoinErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/join",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * List Joined
+   */
+  public classJoinedGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<ClassJoinedGetManyData, ThrowOnError>,
+  ): RequestResult<
+    ClassJoinedGetManyResponses,
+    ClassJoinedGetManyErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      ClassJoinedGetManyResponses,
+      ClassJoinedGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/joined",
+      ...options,
+    });
+  }
+
+  /**
+   * Leave Class
+   */
+  public classLeave<ThrowOnError extends boolean = false>(
+    options: Options<ClassLeaveData, ThrowOnError>,
+  ): RequestResult<ClassLeaveResponses, ClassLeaveErrors, ThrowOnError> {
+    return (options.client ?? this.client).delete<
+      ClassLeaveResponses,
+      ClassLeaveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/joined/{class_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * List Taught
+   */
+  public classGetMany<ThrowOnError extends boolean = false>(
+    options?: Options<ClassGetManyData, ThrowOnError>,
+  ): RequestResult<ClassGetManyResponses, ClassGetManyErrors, ThrowOnError> {
+    return (options?.client ?? this.client).get<
+      ClassGetManyResponses,
+      ClassGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Class
+   */
+  public classCreate<ThrowOnError extends boolean = false>(
+    options: Options<ClassCreateData, ThrowOnError>,
+  ): RequestResult<ClassCreateResponses, ClassCreateErrors, ThrowOnError> {
+    return (options.client ?? this.client).post<
+      ClassCreateResponses,
+      ClassCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Delete Class
+   */
+  public classDelete<ThrowOnError extends boolean = false>(
+    options: Options<ClassDeleteData, ThrowOnError>,
+  ): RequestResult<ClassDeleteResponses, ClassDeleteErrors, ThrowOnError> {
+    return (options.client ?? this.client).delete<
+      ClassDeleteResponses,
+      ClassDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Class
+   */
+  public classGetOne<ThrowOnError extends boolean = false>(
+    options: Options<ClassGetOneData, ThrowOnError>,
+  ): RequestResult<ClassGetOneResponses, ClassGetOneErrors, ThrowOnError> {
+    return (options.client ?? this.client).get<
+      ClassGetOneResponses,
+      ClassGetOneErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Class
+   */
+  public classUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ClassUpdateData, ThrowOnError>,
+  ): RequestResult<ClassUpdateResponses, ClassUpdateErrors, ThrowOnError> {
+    return (options.client ?? this.client).patch<
+      ClassUpdateResponses,
+      ClassUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Rotate Join Code
+   *
+   * Replace the code. The old one stops working; members stay.
+   */
+  public classJoinCodeRotate<ThrowOnError extends boolean = false>(
+    options: Options<ClassJoinCodeRotateData, ThrowOnError>,
+  ): RequestResult<
+    ClassJoinCodeRotateResponses,
+    ClassJoinCodeRotateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ClassJoinCodeRotateResponses,
+      ClassJoinCodeRotateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/join-code",
+      ...options,
+    });
+  }
+
+  /**
+   * List Members
+   */
+  public classMemberGetMany<ThrowOnError extends boolean = false>(
+    options: Options<ClassMemberGetManyData, ThrowOnError>,
+  ): RequestResult<
+    ClassMemberGetManyResponses,
+    ClassMemberGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ClassMemberGetManyResponses,
+      ClassMemberGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/members",
+      ...options,
+    });
+  }
+
+  /**
+   * Remove Member
+   */
+  public classMemberRemove<ThrowOnError extends boolean = false>(
+    options: Options<ClassMemberRemoveData, ThrowOnError>,
+  ): RequestResult<
+    ClassMemberRemoveResponses,
+    ClassMemberRemoveErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      ClassMemberRemoveResponses,
+      ClassMemberRemoveErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/members/{student_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Allow Back
+   *
+   * Let a removed student rejoin with the class code.
+   */
+  public classMemberAllowBack<ThrowOnError extends boolean = false>(
+    options: Options<ClassMemberAllowBackData, ThrowOnError>,
+  ): RequestResult<
+    ClassMemberAllowBackResponses,
+    ClassMemberAllowBackErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      ClassMemberAllowBackResponses,
+      ClassMemberAllowBackErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/members/{student_id}/removal",
+      ...options,
     });
   }
 
