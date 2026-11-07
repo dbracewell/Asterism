@@ -47,6 +47,15 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryFn: async () => ({ modes: [] }),
   }),
   classModePolicyUpdateMutation: () => ({ mutationFn: vi.fn() }),
+  classInsightsGetOptions: () => ({
+    queryKey: ["insights"],
+    queryFn: async () => ({
+      min_group_size: 5,
+      consenting_students: 0,
+      topics: [],
+      hidden_topics: 0,
+    }),
+  }),
 }));
 
 function setup() {

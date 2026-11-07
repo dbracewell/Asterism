@@ -21,6 +21,7 @@ from .schemas import (
     EducatorAccess,
     EducatorRequest,
     EducatorRequestPage,
+    InsightsConsent,
     InviteCheckRequest,
     InvitePreview,
     InviteRedeemRequest,
@@ -91,6 +92,16 @@ async def list_joined(
     user: AuthedUserDep, db: DBSessionDep, page: int = PageNumber, page_size: int = PageSize
 ) -> JoinedClassPage:
     return await service.list_joined(user.id, db, page=page, page_size=page_size)
+
+
+@classes_router.put(
+    "/joined/{class_id}/insights-consent", response_model=JoinedClass, operation_id="classInsightsConsentUpdate"
+)
+async def set_insights_consent(
+    class_id: uuid.UUID, payload: InsightsConsent, user: AuthedUserDep, db: DBSessionDep
+) -> JoinedClass:
+    """Share, or stop sharing, your practice results in class-wide totals."""
+    return await service.set_insights_consent(user.id, class_id, payload.consent, db)
 
 
 @classes_router.delete("/joined/{class_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="classLeave")

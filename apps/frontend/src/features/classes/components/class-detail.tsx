@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { ClassInsights } from "@/features/classes/components/class-insights";
 import { ClassModePolicy } from "@/features/classes/components/class-mode-policy";
 import { CoursePublisher } from "@/features/classes/components/course-publisher";
 import { StudentInvites } from "@/features/classes/components/student-invites";
@@ -251,6 +252,7 @@ export function ClassDetail({ classId }: { classId: string }) {
       <Roster classId={classId} />
       <CoursePublisher classId={classId} />
       <ClassModePolicy key={item.data.id} item={item.data} />
+      <ClassInsights classId={classId} />
       <DeleteClass item={item.data} />
     </PageLayout>
   );

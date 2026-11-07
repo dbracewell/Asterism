@@ -943,6 +943,32 @@ export type ClassCreate = {
 };
 
 /**
+ * ClassInsights
+ */
+export type ClassInsights = {
+  /**
+   * Min Group Size
+   */
+  min_group_size: number;
+  /**
+   * Consenting Students
+   */
+  consenting_students: number;
+  /**
+   * Topics
+   *
+   * Weakest first; only topics with enough students
+   */
+  topics: Array<InsightTopic>;
+  /**
+   * Hidden Topics
+   *
+   * Topics with too few students to show
+   */
+  hidden_topics: number;
+};
+
+/**
  * ClassInvite
  *
  * The educator's view of an invite, without its token.
@@ -2853,6 +2879,46 @@ export type InlineFileReference = {
 };
 
 /**
+ * InsightTopic
+ */
+export type InsightTopic = {
+  /**
+   * Name
+   *
+   * The course file the practice cited
+   */
+  name: string;
+  /**
+   * Students
+   *
+   * Consenting students who practiced it
+   */
+  students: number;
+  /**
+   * Average Score
+   *
+   * Mean of students' scores, rounded to the nearest 0.1
+   */
+  average_score: number;
+  /**
+   * Needs Work Share
+   *
+   * Share of those students below 0.5, rounded to the nearest 0.1
+   */
+  needs_work_share: number;
+};
+
+/**
+ * InsightsConsent
+ */
+export type InsightsConsent = {
+  /**
+   * Consent
+   */
+  consent: boolean;
+};
+
+/**
  * InstructionOverrideProvenance
  *
  * Public record of an override: which definition, at which revision, which text.
@@ -2948,6 +3014,12 @@ export type JoinedClass = {
    * Educator Name
    */
   educator_name: string;
+  /**
+   * Insights Consent
+   *
+   * Whether you share results in class-wide totals
+   */
+  insights_consent?: boolean;
 };
 
 /**
@@ -12111,6 +12183,58 @@ export type ClassJoinedGetManyResponses = {
 export type ClassJoinedGetManyResponse =
   ClassJoinedGetManyResponses[keyof ClassJoinedGetManyResponses];
 
+export type ClassInsightsConsentUpdateData = {
+  body: InsightsConsent;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/joined/{class_id}/insights-consent";
+};
+
+export type ClassInsightsConsentUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassInsightsConsentUpdateError =
+  ClassInsightsConsentUpdateErrors[keyof ClassInsightsConsentUpdateErrors];
+
+export type ClassInsightsConsentUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: JoinedClass;
+};
+
+export type ClassInsightsConsentUpdateResponse =
+  ClassInsightsConsentUpdateResponses[keyof ClassInsightsConsentUpdateResponses];
+
 export type ClassLeaveData = {
   body?: never;
   path: {
@@ -13173,6 +13297,58 @@ export type ClassCourseVersionGetManyResponses = {
 
 export type ClassCourseVersionGetManyResponse =
   ClassCourseVersionGetManyResponses[keyof ClassCourseVersionGetManyResponses];
+
+export type ClassInsightsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/insights";
+};
+
+export type ClassInsightsGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassInsightsGetError =
+  ClassInsightsGetErrors[keyof ClassInsightsGetErrors];
+
+export type ClassInsightsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassInsights;
+};
+
+export type ClassInsightsGetResponse =
+  ClassInsightsGetResponses[keyof ClassInsightsGetResponses];
 
 export type CourseModePolicyGetData = {
   body?: never;

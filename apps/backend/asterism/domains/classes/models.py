@@ -85,6 +85,8 @@ class ClassMemberModel(Base, TimestampMixin):
     # The only student detail stored; shared knowingly by joining.
     display_name: Mapped[str] = mapped_column(Text, nullable=False)
     removed_at: Mapped[int | None] = mapped_column(nullable=True)
+    # US-60.5: off until the student opts in; they can withdraw at any time.
+    insights_consent: Mapped[bool] = mapped_column(nullable=False, default=False, server_default="0")
 
     __table_args__ = (Index("idx_class_members_user", "user_id", "class_id"),)
 

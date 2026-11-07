@@ -1105,6 +1105,33 @@ export const zInlineFileReference = z.object({
 });
 
 /**
+ * InsightTopic
+ */
+export const zInsightTopic = z.object({
+  name: z.string(),
+  students: z.int(),
+  average_score: z.number(),
+  needs_work_share: z.number(),
+});
+
+/**
+ * ClassInsights
+ */
+export const zClassInsights = z.object({
+  min_group_size: z.int(),
+  consenting_students: z.int(),
+  topics: z.array(zInsightTopic),
+  hidden_topics: z.int(),
+});
+
+/**
+ * InsightsConsent
+ */
+export const zInsightsConsent = z.object({
+  consent: z.boolean(),
+});
+
+/**
  * InstructionOverrideProvenance
  *
  * Public record of an override: which definition, at which revision, which text.
@@ -1172,6 +1199,7 @@ export const zJoinedClass = z.object({
   name: z.string(),
   description: z.string(),
   educator_name: z.string(),
+  insights_consent: z.boolean().optional().default(false),
 });
 
 /**
@@ -5307,6 +5335,17 @@ export const zClassJoinedGetManyQuery = z.object({
  */
 export const zClassJoinedGetManyResponse = zJoinedClassPage;
 
+export const zClassInsightsConsentUpdateBody = zInsightsConsent;
+
+export const zClassInsightsConsentUpdatePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassInsightsConsentUpdateResponse = zJoinedClass;
+
 export const zClassLeavePath = z.object({
   class_id: z.uuid(),
 });
@@ -5511,6 +5550,15 @@ export const zClassCourseVersionGetManyQuery = z.object({
  * Successful Response
  */
 export const zClassCourseVersionGetManyResponse = zCourseVersionPage;
+
+export const zClassInsightsGetPath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassInsightsGetResponse = zClassInsights;
 
 export const zCourseModePolicyGetPath = z.object({
   project_id: z.uuid(),

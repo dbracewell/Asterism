@@ -102,6 +102,13 @@ class JoinedClass(BaseModel):
     name: str
     description: str
     educator_name: str
+    insights_consent: bool = Field(default=False, description="Whether you share results in class-wide totals")
+
+
+class InsightsConsent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    consent: StrictBool
 
 
 class JoinedClassPage(BaseModel):

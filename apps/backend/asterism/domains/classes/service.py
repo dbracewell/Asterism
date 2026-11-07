@@ -243,7 +243,14 @@ async def join_class(user: AuthedUser, code: str, session: AsyncSession) -> Join
             # Joined twice at once; the other request already added them.
             await session.rollback()
         logger.info(f"User {user.id} joined class {row.id}")
-    return JoinedClass.model_validate(row)
+    return await _joined(row, user.id, session)
+
+
+async def _joined(row: ClassModel, user_id: str, session: AsyncSession) -> JoinedClass:
+    view = JoinedClass.model_validate(row)
+    member = await session.get(ClassMemberModel, (row.id, user_id))
+    view.insights_consent = bool(member and member.insights_consent)
+    return view
 
 
 async def list_joined(user_id: str, session: AsyncSession, *, page: int, page_size: int) -> JoinedClassPage:
@@ -254,11 +261,23 @@ async def list_joined(user_id: str, session: AsyncSession, *, page: int, page_si
         page_size=page_size,
     )
     return JoinedClassPage(
-        items=[JoinedClass.model_validate(row) for row in result.records],
+        items=[await _joined(row, user_id, session) for row in result.records],
         total=result.total,
         page=page,
         page_size=page_size,
     )
+
+
+async def set_insights_consent(user_id: str, class_id: uuid.UUID, consent: bool, session: AsyncSession) -> JoinedClass:
+    """Opt in to, or out of, class-wide totals. Withdrawing applies at once."""
+    row = await session.scalar(select_joined_classes(user_id).where(ClassModel.id == class_id))
+    member = await session.get(ClassMemberModel, (class_id, user_id))
+    if row is None or member is None:
+        raise NotFoundException("Class not found")
+    member.insights_consent = consent
+    await session.commit()
+    logger.info(f"User {user_id} set insights consent for class {class_id} to {consent}")
+    return await _joined(row, user_id, session)
 
 
 async def leave_class(user_id: str, class_id: uuid.UUID, session: AsyncSession) -> None:

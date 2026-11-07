@@ -42,5 +42,5 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Implement publishing and student provisioning; test versioning and access.
 - [x] US-60.4: Class mode policy
   - [x] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
-- [ ] US-60.5: Aggregate misconception insights
-  - [ ] Implement thresholded aggregation and consent; build the dashboard; test privacy limits.
+- [ ] US-60.5: Aggregate misconception insights (implemented on `feat/us-60.5-misconception-insights`; awaiting user confirmation)
+  - [x] Implement thresholded aggregation and consent; build the dashboard; test privacy limits.
