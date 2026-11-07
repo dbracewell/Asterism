@@ -44,8 +44,8 @@ Acceptance: from Admin settings → Export, the administrator picks a file and e
 the passphrase, sees what will change, and confirms. Import merges in one
 transaction. A wrong passphrase or altered file changes nothing and reveals nothing.
 
-- [ ] Implement preview and transactional merge; test merge, references, rollback and failures.
-- [ ] Build the import flow; test it.
+- [x] Implement preview and transactional merge; test merge, references, rollback and failures.
+- [x] Build the import flow; test it.
 
 ## US-63.3: Import during setup
 

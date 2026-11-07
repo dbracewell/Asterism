@@ -66,6 +66,12 @@ import type {
   AppSettingsGetData,
   AppSettingsGetErrors,
   AppSettingsGetResponses,
+  AppSettingsImportData,
+  AppSettingsImportErrors,
+  AppSettingsImportPreviewData,
+  AppSettingsImportPreviewErrors,
+  AppSettingsImportPreviewResponses,
+  AppSettingsImportResponses,
   AppSettingUpdateData,
   AppSettingUpdateErrors,
   AppSettingUpdateResponses,
@@ -2315,6 +2321,60 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/transfer/export",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Create Settings Preview
+   *
+   * Say what importing a file would change. Nothing is stored or changed.
+   */
+  public appSettingsImportPreview<ThrowOnError extends boolean = false>(
+    options: Options<AppSettingsImportPreviewData, ThrowOnError>,
+  ): RequestResult<
+    AppSettingsImportPreviewResponses,
+    AppSettingsImportPreviewErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      AppSettingsImportPreviewResponses,
+      AppSettingsImportPreviewErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/transfer/preview",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Create Settings Import
+   *
+   * Merge a file into this instance, or change nothing if any part fails.
+   */
+  public appSettingsImport<ThrowOnError extends boolean = false>(
+    options: Options<AppSettingsImportData, ThrowOnError>,
+  ): RequestResult<
+    AppSettingsImportResponses,
+    AppSettingsImportErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      AppSettingsImportResponses,
+      AppSettingsImportErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/transfer/import",
       ...options,
       headers: {
         "Content-Type": "application/json",

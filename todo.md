@@ -33,9 +33,9 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 - [x] US-63.1: Export settings
   - [x] Write the ADR; implement the format and export with tests.
   - [x] Build the Export pane; test it.
-- [ ] US-63.2: Import settings in Admin settings
-  - [ ] Implement preview and transactional merge; test merge, references, rollback and failures.
-  - [ ] Build the import flow; test it.
+- [x] US-63.2: Import settings in Admin settings
+  - [x] Implement preview and transactional merge; test merge, references, rollback and failures.
+  - [x] Build the import flow; test it.
 - [ ] US-63.3: Import during setup
   - [ ] Add import to the setup step; test the alternative path.
 

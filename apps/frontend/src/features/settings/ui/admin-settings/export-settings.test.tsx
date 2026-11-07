@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ExportSettings } from "./export-settings";
 
 const mocks = vi.hoisted(() => ({ exportSettings: vi.fn() }));
+vi.mock("./import-settings", () => ({ ImportSettings: () => null }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   appSettingsExportMutation: () => ({ mutationFn: mocks.exportSettings }),
@@ -26,7 +27,7 @@ function setup() {
   );
   return {
     user: userEvent.setup(),
-    first: screen.getByLabelText("Passphrase"),
+    first: screen.getByLabelText("Passphrase", { exact: true }),
     second: screen.getByLabelText("Confirm passphrase"),
     submit: screen.getByRole("button", { name: "Export settings" }),
   };

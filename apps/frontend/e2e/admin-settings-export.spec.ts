@@ -40,3 +40,46 @@ test("exports application settings to a downloaded file", async ({ page }) => {
   expect(body).toEqual({ passphrase: "correct horse" });
   await expect(page.getByRole("status")).toContainText("Settings exported");
 });
+
+test("previews a settings file and imports it after confirmation", async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  const summary = {
+    exported_at: 1_700_000_000,
+    providers: [
+      { name: "Local", action: "add", models_added: 2, models_updated: 0 },
+    ],
+    kept_providers: [],
+    changed_settings: ["Active tools"],
+  };
+  await page.route("**/api/py/**", (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.includes("/settings/app/transfer/")) {
+      calls.push(path.split("/").pop() ?? "");
+      return route.fulfill({ json: summary });
+    }
+    return route.fulfill({
+      status: 503,
+      json: { detail: "Fixture unavailable" },
+    });
+  });
+  await page.goto("/e2e/planned-settings?setting=group-settings");
+  await page
+    .getByRole("tablist")
+    .last()
+    .getByRole("tab", { name: "Export", exact: true })
+    .click();
+  await page.getByLabel("Settings file").setInputFiles({
+    name: "settings.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(FILE)),
+  });
+  await page.getByLabel("File passphrase").fill("correct horse");
+  await page.getByRole("button", { name: "Preview import" }).click();
+  await expect(page.getByText(/Add Local/)).toBeVisible();
+  expect(calls).toEqual(["preview"]);
+  await page.getByRole("button", { name: "Import settings" }).click();
+  await expect(page.getByRole("status")).toContainText("Settings imported");
+  expect(calls).toEqual(["preview", "import"]);
+});

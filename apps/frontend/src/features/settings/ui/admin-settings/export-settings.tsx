@@ -8,6 +8,7 @@ import type { SettingsEnvelope } from "@/lib/client";
 import { appSettingsExportMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
 import { type FormEvent, useId, useState } from "react";
+import { ImportSettings } from "./import-settings";
 
 // Mirrors the server's passphrase limit (ADR-0052).
 const MIN_PASSPHRASE_LENGTH = 12;
@@ -23,8 +24,7 @@ function downloadSettings(file: SettingsEnvelope) {
   URL.revokeObjectURL(url);
 }
 
-/** Exports every application setting to a passphrase-encrypted file (US-63.1). */
-export const ExportSettings = () => {
+const ExportForm = () => {
   const prefix = useId();
   const [passphrase, setPassphrase] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -118,3 +118,21 @@ export const ExportSettings = () => {
     </form>
   );
 };
+
+/** Moves every application setting through a passphrase-encrypted file (EPIC-63). */
+export const ExportSettings = () => (
+  <div className="grid gap-8">
+    <section aria-label="Export settings" className="grid gap-3">
+      <h3 className="font-medium">Export settings</h3>
+      <ExportForm />
+    </section>
+    <section aria-label="Import settings" className="grid gap-3">
+      <h3 className="font-medium">Import settings</h3>
+      <p className="max-w-xl text-sm">
+        Providers in the file are added, or updated when the name matches.
+        Settings in the file replace current values. Nothing is removed.
+      </p>
+      <ImportSettings />
+    </section>
+  </div>
+);

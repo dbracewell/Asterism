@@ -125,3 +125,10 @@ def unseal(envelope: SettingsEnvelope, passphrase: str) -> SettingsBundle:
         return SettingsBundle.model_validate_json(source)
     except (InvalidToken, InvalidKey, ValidationError, ValueError) as exc:
         raise BadDataException(_OPEN_FAILED) from exc
+
+
+def read_envelope(source: str) -> SettingsEnvelope:
+    try:
+        return SettingsEnvelope.model_validate_json(source)
+    except ValidationError as exc:
+        raise BadDataException("This is not an Asterism settings file, or it needs a newer version") from exc
