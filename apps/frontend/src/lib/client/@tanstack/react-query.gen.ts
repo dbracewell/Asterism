@@ -285,12 +285,18 @@ import type {
   ClassMemberRemoveData,
   ClassMemberRemoveError,
   ClassMemberRemoveResponse,
+  ClassModePolicyUpdateData,
+  ClassModePolicyUpdateError,
+  ClassModePolicyUpdateResponse,
   ClassUpdateData,
   ClassUpdateError,
   ClassUpdateResponse,
   ComponentsByTypeData,
   ComponentsByTypeError,
   ComponentsByTypeResponse,
+  CourseModePolicyGetData,
+  CourseModePolicyGetError,
+  CourseModePolicyGetResponse,
   EducatorAccessGetData,
   EducatorAccessGetError,
   EducatorAccessGetResponse,
@@ -3691,6 +3697,35 @@ export const classUpdateMutation = (
 };
 
 /**
+ * Set Mode Policy
+ *
+ * Limit learning modes and answer reveal in students' course projects.
+ */
+export const classModePolicyUpdateMutation = (
+  options?: Partial<Options<ClassModePolicyUpdateData>>,
+): UseMutationOptions<
+  ClassModePolicyUpdateResponse,
+  ClassModePolicyUpdateError,
+  Options<ClassModePolicyUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassModePolicyUpdateResponse,
+    ClassModePolicyUpdateError,
+    Options<ClassModePolicyUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classModePolicyUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Rotate Join Code
  *
  * Replace the code. The old one stops working; members stay.
@@ -4207,6 +4242,36 @@ export const classCourseVersionGetManyInfiniteOptions = (
       queryKey: classCourseVersionGetManyInfiniteQueryKey(options),
     },
   );
+
+export const courseModePolicyGetQueryKey = (
+  options: Options<CourseModePolicyGetData>,
+) => createQueryKey("courseModePolicyGet", options);
+
+/**
+ * Get Course Policy
+ *
+ * The class policy limiting one of your projects, and who set it. None when nothing is limited.
+ */
+export const courseModePolicyGetOptions = (
+  options: Options<CourseModePolicyGetData>,
+) =>
+  queryOptions<
+    CourseModePolicyGetResponse,
+    CourseModePolicyGetError,
+    CourseModePolicyGetResponse,
+    ReturnType<typeof courseModePolicyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().courseModePolicyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: courseModePolicyGetQueryKey(options),
+  });
 
 export const studyDeckGetManyQueryKey = (
   options: Options<StudyDeckGetManyData>,

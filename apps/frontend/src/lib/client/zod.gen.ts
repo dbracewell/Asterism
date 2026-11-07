@@ -1369,6 +1369,28 @@ export const zChatLearningModeUpdate = z.object({
 });
 
 /**
+ * ClassModePolicy
+ *
+ * Narrows learning modes in students' course projects; it never adds anything.
+ */
+export const zClassModePolicy = z.object({
+  allowed_modes: z.array(zLearningModeId).nullable(),
+  answer_reveal: z.boolean(),
+});
+
+/**
+ * CourseModePolicy
+ *
+ * What a student sees: the limits in force and who set them.
+ */
+export const zCourseModePolicy = z.object({
+  class_name: z.string(),
+  educator_name: z.string(),
+  allowed_modes: z.array(zLearningModeId).nullable(),
+  answer_reveal: z.boolean(),
+});
+
+/**
  * LearningModeProvenance
  *
  * Public identity of the mode a turn ran under; never carries instruction text.
@@ -3729,6 +3751,8 @@ export const zTaughtClass = z.object({
   description: z.string(),
   join_code: z.string(),
   join_enabled: z.boolean(),
+  allowed_modes: z.array(zLearningModeId).nullable(),
+  answer_reveal: z.boolean(),
   member_count: z.int().optional().default(0),
   created_at: z.int(),
 });
@@ -5338,6 +5362,17 @@ export const zClassUpdatePath = z.object({
  */
 export const zClassUpdateResponse = zTaughtClass;
 
+export const zClassModePolicyUpdateBody = zClassModePolicy;
+
+export const zClassModePolicyUpdatePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassModePolicyUpdateResponse = zTaughtClass;
+
 export const zClassJoinCodeRotatePath = z.object({
   class_id: z.uuid(),
 });
@@ -5476,6 +5511,17 @@ export const zClassCourseVersionGetManyQuery = z.object({
  * Successful Response
  */
 export const zClassCourseVersionGetManyResponse = zCourseVersionPage;
+
+export const zCourseModePolicyGetPath = z.object({
+  project_id: z.uuid(),
+});
+
+/**
+ * Response Coursemodepolicyget
+ *
+ * Successful Response
+ */
+export const zCourseModePolicyGetResponse = zCourseModePolicy.nullable();
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),

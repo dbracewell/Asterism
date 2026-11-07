@@ -42,6 +42,11 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
     queryFn: async () => ({ items: [], total: 0, page: 1, page_size: 20 }),
   }),
   classCoursePublishMutation: () => ({ mutationFn: vi.fn() }),
+  learningModeGetManyOptions: () => ({
+    queryKey: ["modes"],
+    queryFn: async () => ({ modes: [] }),
+  }),
+  classModePolicyUpdateMutation: () => ({ mutationFn: vi.fn() }),
 }));
 
 function setup() {

@@ -285,12 +285,18 @@ import type {
   ClassMemberRemoveData,
   ClassMemberRemoveErrors,
   ClassMemberRemoveResponses,
+  ClassModePolicyUpdateData,
+  ClassModePolicyUpdateErrors,
+  ClassModePolicyUpdateResponses,
   ClassUpdateData,
   ClassUpdateErrors,
   ClassUpdateResponses,
   ComponentsByTypeData,
   ComponentsByTypeErrors,
   ComponentsByTypeResponses,
+  CourseModePolicyGetData,
+  CourseModePolicyGetErrors,
+  CourseModePolicyGetResponses,
   EducatorAccessGetData,
   EducatorAccessGetErrors,
   EducatorAccessGetResponses,
@@ -2725,6 +2731,33 @@ export class ApiClient extends HeyApiClient {
   }
 
   /**
+   * Set Mode Policy
+   *
+   * Limit learning modes and answer reveal in students' course projects.
+   */
+  public classModePolicyUpdate<ThrowOnError extends boolean = false>(
+    options: Options<ClassModePolicyUpdateData, ThrowOnError>,
+  ): RequestResult<
+    ClassModePolicyUpdateResponses,
+    ClassModePolicyUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      ClassModePolicyUpdateResponses,
+      ClassModePolicyUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/mode-policy",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
    * Rotate Join Code
    *
    * Replace the code. The old one stops working; members stay.
@@ -3023,6 +3056,29 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/classes/{class_id}/course/versions",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Course Policy
+   *
+   * The class policy limiting one of your projects, and who set it. None when nothing is limited.
+   */
+  public courseModePolicyGet<ThrowOnError extends boolean = false>(
+    options: Options<CourseModePolicyGetData, ThrowOnError>,
+  ): RequestResult<
+    CourseModePolicyGetResponses,
+    CourseModePolicyGetErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      CourseModePolicyGetResponses,
+      CourseModePolicyGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/course-policy/projects/{project_id}",
       ...options,
     });
   }

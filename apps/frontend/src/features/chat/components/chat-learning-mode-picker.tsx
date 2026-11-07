@@ -28,6 +28,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { GraduationCapIcon } from "lucide-react";
 import React from "react";
+import { CoursePolicyNotice, useCourseModePolicy } from "./course-mode-policy";
 import {
   DelayedConfirmAction,
   LOCK_OVERRIDE_DELAY_SECONDS,
@@ -48,10 +49,13 @@ export function LearningModePicker({
   value,
   onChange,
   disabled = false,
+  allowedModes = null,
 }: {
   value: LearningModeId;
   onChange: (value: LearningModeId) => void;
   disabled?: boolean;
+  /** A class policy's allowed modes; others are shown but can't be chosen. */
+  allowedModes?: LearningModeId[] | null;
 }) {
   const query = useQuery(learningModeQueryOptions());
   const modes = query.data?.modes;
@@ -82,7 +86,12 @@ export function LearningModePicker({
               <SelectItem
                 key={mode.id}
                 value={mode.id}
-                description={mode.description}
+                disabled={!!allowedModes && !allowedModes.includes(mode.id)}
+                description={
+                  allowedModes && !allowedModes.includes(mode.id)
+                    ? "Not allowed in this course"
+                    : mode.description
+                }
               >
                 {mode.name}
               </SelectItem>
@@ -135,6 +144,7 @@ export function ExistingChatLearningModePicker({
   });
   // Leaving a locked mode for Standard waits for a delayed confirmation.
   const [confirmStandard, setConfirmStandard] = React.useState(false);
+  const policy = useCourseModePolicy(info.project_id);
   const mode = info.learning_mode ?? "standard";
   const modeName = useLearningModeName(mode) ?? "this learning mode";
   const select = (learningMode: LearningModeId, overrideLock = false) =>
@@ -150,6 +160,7 @@ export function ExistingChatLearningModePicker({
     <>
       <LearningModePicker
         value={mode}
+        allowedModes={policy?.allowed_modes}
         disabled={disabled || mutation.isPending || !!mutation.error}
         onChange={(learningMode) => {
           if (learningMode === "standard" && info.learning_mode_locked)
@@ -157,6 +168,7 @@ export function ExistingChatLearningModePicker({
           else select(learningMode);
         }}
       />
+      <CoursePolicyNotice policy={policy} />
       <AlertDialog open={confirmStandard} onOpenChange={setConfirmStandard}>
         <AlertDialogContent>
           <AlertDialogHeader>

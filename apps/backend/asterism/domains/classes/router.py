@@ -15,6 +15,7 @@ from .schemas import (
     ClassInvitePage,
     ClassJoinRequest,
     ClassMemberPage,
+    ClassModePolicy,
     ClassUpdate,
     CreatedClassInviteList,
     EducatorAccess,
@@ -122,6 +123,14 @@ async def update_class(class_id: uuid.UUID, payload: ClassUpdate, user: AuthedUs
 @classes_router.delete("/{class_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="classDelete")
 async def delete_class(class_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> None:
     await service.delete_class(user.id, class_id, db)
+
+
+@classes_router.put("/{class_id}/mode-policy", response_model=TaughtClass, operation_id="classModePolicyUpdate")
+async def set_mode_policy(
+    class_id: uuid.UUID, payload: ClassModePolicy, user: AuthedUserDep, db: DBSessionDep
+) -> TaughtClass:
+    """Limit learning modes and answer reveal in students' course projects."""
+    return await service.set_mode_policy(user.id, class_id, payload, db)
 
 
 @classes_router.post("/{class_id}/join-code", response_model=TaughtClass, operation_id="classJoinCodeRotate")

@@ -9,6 +9,7 @@ from asterism.db.dependencies import DBSessionDep
 from asterism.domains.user.dependencies import AuthedUserDep
 
 from . import copies, publish
+from .policy import CourseModePolicy, course_mode_policy
 from .schemas import CourseApplied, CourseApply, CourseOffer, CoursePublish, CourseVersion, CourseVersionPage
 
 ERRORS = {
@@ -20,6 +21,16 @@ ERRORS = {
 }
 
 courses_router = APIRouter(prefix="/classes", tags=["classes"], responses=ERRORS)
+course_policy_router = APIRouter(prefix="/course-policy", tags=["classes"], responses=ERRORS)
+
+
+@course_policy_router.get(
+    "/projects/{project_id}", response_model=CourseModePolicy | None, operation_id="courseModePolicyGet"
+)
+async def get_course_policy(project_id: uuid.UUID, user: AuthedUserDep, db: DBSessionDep) -> CourseModePolicy | None:
+    """The class policy limiting one of your projects, and who set it. None when nothing is limited."""
+    policy = await course_mode_policy(user_id=user.id, project_id=project_id, session=db)
+    return policy.view() if policy else None
 
 
 @courses_router.get("/joined/{class_id}/course", response_model=CourseOffer | None, operation_id="classCourseGet")

@@ -1067,6 +1067,26 @@ export type ClassMemberPage = {
 };
 
 /**
+ * ClassModePolicy
+ *
+ * Narrows learning modes in students' course projects; it never adds anything.
+ */
+export type ClassModePolicy = {
+  /**
+   * Allowed Modes
+   *
+   * Modes students may use in the course project; null allows all
+   */
+  allowed_modes: Array<LearningModeId> | null;
+  /**
+   * Answer Reveal
+   *
+   * Whether students may reveal answers and solutions
+   */
+  answer_reveal: boolean;
+};
+
+/**
  * ClassUpdate
  */
 export type ClassUpdate = {
@@ -1539,6 +1559,32 @@ export type CourseFile = {
    * Size
    */
   size: number;
+};
+
+/**
+ * CourseModePolicy
+ *
+ * What a student sees: the limits in force and who set them.
+ */
+export type CourseModePolicy = {
+  /**
+   * Class Name
+   */
+  class_name: string;
+  /**
+   * Educator Name
+   */
+  educator_name: string;
+  /**
+   * Allowed Modes
+   *
+   * null allows every mode
+   */
+  allowed_modes: Array<LearningModeId> | null;
+  /**
+   * Answer Reveal
+   */
+  answer_reveal: boolean;
 };
 
 /**
@@ -8031,6 +8077,14 @@ export type TaughtClass = {
    */
   join_enabled: boolean;
   /**
+   * Allowed Modes
+   */
+  allowed_modes: Array<LearningModeId> | null;
+  /**
+   * Answer Reveal
+   */
+  answer_reveal: boolean;
+  /**
    * Member Count
    */
   member_count?: number;
@@ -12361,6 +12415,58 @@ export type ClassUpdateResponses = {
 export type ClassUpdateResponse =
   ClassUpdateResponses[keyof ClassUpdateResponses];
 
+export type ClassModePolicyUpdateData = {
+  body: ClassModePolicy;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/mode-policy";
+};
+
+export type ClassModePolicyUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassModePolicyUpdateError =
+  ClassModePolicyUpdateErrors[keyof ClassModePolicyUpdateErrors];
+
+export type ClassModePolicyUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaughtClass;
+};
+
+export type ClassModePolicyUpdateResponse =
+  ClassModePolicyUpdateResponses[keyof ClassModePolicyUpdateResponses];
+
 export type ClassJoinCodeRotateData = {
   body?: never;
   path: {
@@ -13067,6 +13173,60 @@ export type ClassCourseVersionGetManyResponses = {
 
 export type ClassCourseVersionGetManyResponse =
   ClassCourseVersionGetManyResponses[keyof ClassCourseVersionGetManyResponses];
+
+export type CourseModePolicyGetData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/course-policy/projects/{project_id}";
+};
+
+export type CourseModePolicyGetErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type CourseModePolicyGetError =
+  CourseModePolicyGetErrors[keyof CourseModePolicyGetErrors];
+
+export type CourseModePolicyGetResponses = {
+  /**
+   * Response Coursemodepolicyget
+   *
+   * Successful Response
+   */
+  200: CourseModePolicy | null;
+};
+
+export type CourseModePolicyGetResponse =
+  CourseModePolicyGetResponses[keyof CourseModePolicyGetResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;

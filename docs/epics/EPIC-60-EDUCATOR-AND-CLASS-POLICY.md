@@ -84,7 +84,10 @@ Acceptance: class policy can require or forbid modes and disable answer reveal
 in course projects. Students see the active policy and who set it. Policy is
 checked live on every execution.
 
-- [ ] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
+Design in [ADR-0055](../adr/0055-class-mode-policy.md). The policy covers a
+student's course project while they are a member of the class.
+
+- [x] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
 
 ## US-60.5: Aggregate misconception insights
 

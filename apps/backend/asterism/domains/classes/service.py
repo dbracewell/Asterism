@@ -27,6 +27,7 @@ from .schemas import (
     ClassCreate,
     ClassMember,
     ClassMemberPage,
+    ClassModePolicy,
     ClassUpdate,
     JoinedClass,
     JoinedClassPage,
@@ -146,6 +147,18 @@ async def update_class(user_id: str, class_id: uuid.UUID, payload: ClassUpdate, 
     for field, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
         setattr(row, field, value)
     await _commit_named(session)
+    return await _taught(row, session)
+
+
+async def set_mode_policy(
+    user_id: str, class_id: uuid.UUID, payload: ClassModePolicy, session: AsyncSession
+) -> TaughtClass:
+    """Replace the class mode policy. Checked live, so it applies to the next send or run."""
+    row = await owned_class(user_id, class_id, session)
+    row.allowed_modes = [mode.value for mode in payload.allowed_modes] if payload.allowed_modes is not None else None
+    row.answer_reveal = payload.answer_reveal
+    await session.commit()
+    logger.info(f"Educator {user_id} changed the mode policy of class {class_id}")
     return await _taught(row, session)
 
 

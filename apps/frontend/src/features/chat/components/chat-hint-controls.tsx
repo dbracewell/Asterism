@@ -1,5 +1,6 @@
 "use client";
 
+import { useCourseModePolicy } from "./course-mode-policy";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import {
   AlertDialog,
@@ -118,6 +119,9 @@ export function ChatHintControls({
   onResetChange: (reset: boolean) => void;
 }) {
   const catalog = useQuery(learningModeQueryOptions());
+  // A class policy can turn reveals off in a course project (US-60.4).
+  const revealAllowed =
+    useCourseModePolicy(info.project_id)?.answer_reveal ?? true;
   const mode = catalog.data?.modes.find(
     (item) => item.id === info.learning_mode,
   );
@@ -174,7 +178,7 @@ export function ChatHintControls({
           {hintLevelLabel(info.learning_mode, level)}
         </Button>
       ))}
-      {offered.includes("answer") && (
+      {offered.includes("answer") && revealAllowed && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
