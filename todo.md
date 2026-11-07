@@ -30,12 +30,17 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
 
 ### [EPIC-60: Educator and class policy](docs/epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)
 
-- [ ] US-60.1: Classes and the educator role (implemented on `feat/us-60.1-classes`; awaiting user confirmation)
+- [x] US-60.1: Classes and the educator role
   - [x] Write an ADR for classes, the educator role and the authorization model.
   - [x] Implement the domain and membership; test isolation between classes and roles.
-- [ ] US-60.2: Course packs
+- [ ] US-60.2: Student invites
+  - [ ] Extend the ADR with the invite model, the signup path and its limits (no email binding).
+  - [ ] Implement invites and atomic redemption in the backend; test single use, expiry, revocation, setup gating and role isolation.
+  - [ ] Extend the signup check in auth with the invite path and rate limiting; build the invite management UI and the invite signup page.
+  - [ ] Add a real-backend E2E: educator creates an invite, a new student signs up with it and lands in the class, and the invite can't be reused.
+- [ ] US-60.3: Course packs
   - [ ] Implement publishing and student provisioning; test versioning and access.
-- [ ] US-60.3: Class mode policy
+- [ ] US-60.4: Class mode policy
   - [ ] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
-- [ ] US-60.4: Aggregate misconception insights
+- [ ] US-60.5: Aggregate misconception insights
   - [ ] Implement thresholded aggregation and consent; build the dashboard; test privacy limits.
