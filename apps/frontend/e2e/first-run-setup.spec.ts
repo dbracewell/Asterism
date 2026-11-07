@@ -1,6 +1,12 @@
 import { expect, test } from "./support/test";
 import { createServer, type Server } from "node:http";
-import { randomUUID } from "node:crypto";
+import {
+  createCipheriv,
+  createHmac,
+  randomBytes,
+  randomUUID,
+  scryptSync,
+} from "node:crypto";
 
 // Runs in the first-run project: after the fresh-install checks and before any
 // account-creating Chromium spec, so this administrator is the first account
@@ -11,6 +17,49 @@ test.skip(
   process.env.ASTERISM_ISOLATED_E2E !== "true",
   "Use scripts/run-isolated-e2e.mjs for real authentication",
 );
+
+const FILE_PASSPHRASE = "first-run file passphrase";
+
+/**
+ * A settings file with no providers, sealed independently of the server's code.
+ * It keeps the instance's tools, as a real export would: import always applies
+ * them, and later specs on this instance depend on them.
+ */
+function settingsFileWithoutProviders(activeTools: string[]) {
+  const salt = randomBytes(16);
+  const key = scryptSync(FILE_PASSPHRASE, salt, 32, {
+    N: 2 ** 17,
+    r: 8,
+    p: 1,
+    maxmem: 256 * 1024 * 1024,
+  });
+  const iv = randomBytes(16);
+  const cipher = createCipheriv("aes-128-cbc", key.subarray(16), iv);
+  const plain = JSON.stringify({
+    exported_at: 1_700_000_000,
+    active_tools: activeTools,
+  });
+  const time = Buffer.alloc(8);
+  time.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 1000)));
+  const body = Buffer.concat([
+    Buffer.from([0x80]),
+    time,
+    iv,
+    cipher.update(plain),
+    cipher.final(),
+  ]);
+  const mac = createHmac("sha256", key.subarray(0, 16)).update(body).digest();
+  return JSON.stringify({
+    format: "asterism.settings-export",
+    format_version: 1,
+    salt: salt.toString("base64"),
+    // Fernet tokens keep their padding, which Node's base64url would strip.
+    ciphertext: Buffer.concat([body, mac])
+      .toString("base64")
+      .replaceAll("+", "-")
+      .replaceAll("/", "_"),
+  });
+}
 
 let provider: Server;
 let providerUrl = "";
@@ -58,6 +107,32 @@ test("the administrator connects a provider right after creating the account", a
     "Add a model provider",
   );
   const connect = page.getByRole("form", { name: "Add a model provider" });
+  await expect(connect).toBeVisible();
+
+  // A settings file can stand in for this step. This one holds no models, so
+  // setup explains that and leads back here, leaving the instance unconfigured.
+  const session = await (await page.request.get("/api/auth/token")).json();
+  const tools = await page.request.get("/api/py/settings/app/tools", {
+    headers: { Authorization: `Bearer ${session.token}` },
+  });
+  const activeTools = (await tools.json()).active_tools;
+  expect(activeTools.length).toBeGreaterThan(0);
+  await page
+    .getByRole("button", { name: "Import a settings file instead" })
+    .click();
+  await page.getByLabel("Settings file").setInputFiles({
+    name: "settings.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(settingsFileWithoutProviders(activeTools)),
+  });
+  await page.getByLabel("File passphrase").fill("not the passphrase");
+  await page.getByRole("button", { name: "Preview import" }).click();
+  await expect(page.getByText("Could not open this file")).toBeVisible();
+  await page.getByLabel("File passphrase").fill(FILE_PASSPHRASE);
+  await page.getByRole("button", { name: "Preview import" }).click();
+  await page.getByRole("button", { name: "Import settings" }).click();
+  await expect(page.getByText(/no active models/)).toBeVisible();
+  await page.getByRole("button", { name: "Set up a provider" }).click();
   await expect(connect).toBeVisible();
 
   // Reloading returns to the step; skipping reaches the new-chat page.
@@ -152,12 +227,57 @@ test("the administrator connects a provider right after creating the account", a
     tools_source: "unknown",
   });
 
-  // Leave later specs the instance they expect: no providers.
-  const cleared = await page.request.put("/api/py/settings/app/providers", {
-    headers: { Authorization: `Bearer ${token.token}` },
-    data: { llm_providers: [], draft_model_id: null },
+  const headers = { Authorization: `Bearer ${token.token}` };
+  const clearProviders = async () => {
+    const cleared = await page.request.put("/api/py/settings/app/providers", {
+      headers,
+      data: { llm_providers: [], draft_model_id: null },
+    });
+    expect(cleared.ok()).toBeTruthy();
+  };
+
+  // Export, lose the providers, and rebuild from the file during setup.
+  const exported = await page.request.post(
+    "/api/py/settings/app/transfer/export",
+    { headers, data: { passphrase: FILE_PASSPHRASE } },
+  );
+  expect(exported.ok()).toBeTruthy();
+  const settingsFile = await exported.text();
+  expect(settingsFile).not.toContain("First-run provider");
+  await clearProviders();
+
+  await page.goto("/setup");
+  await page
+    .getByRole("button", { name: "Import a settings file instead" })
+    .click();
+  await page.getByLabel("Settings file").setInputFiles({
+    name: "settings.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(settingsFile),
   });
-  expect(cleared.ok()).toBeTruthy();
+  await page.getByLabel("File passphrase").fill(FILE_PASSPHRASE);
+  await page.getByRole("button", { name: "Preview import" }).click();
+  await expect(page.getByText(/Add First-run provider/)).toBeVisible();
+  await page.getByRole("button", { name: "Import settings" }).click();
+  const continueSetup = page.getByRole("button", { name: "Continue" });
+  await expect(continueSetup).toBeDisabled();
+  await page.getByRole("combobox", { name: "Default model" }).click();
+  await page.getByRole("option", { name: /First-run alpha/ }).click();
+  await continueSetup.click();
+  await page.getByRole("button", { name: "Start chatting" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("heading", { name: "What should we work on?" }),
+  ).toBeVisible();
+  const restored = await page.request.get("/api/py/settings/app/providers", {
+    headers,
+  });
+  const { llm_providers: providers } = await restored.json();
+  expect(providers).toHaveLength(1);
+  expect(providers[0]).toMatchObject({ name: "First-run provider" });
+
+  // Leave later specs the instance they expect: no providers.
+  await clearProviders();
 });
 
 test("a standard user never sees the provider step", async ({ page }) => {

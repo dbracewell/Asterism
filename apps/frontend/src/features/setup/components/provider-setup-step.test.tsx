@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
   listModels: vi.fn(),
   updateModel: vi.fn(),
   updateSetting: vi.fn(),
+  preview: vi.fn(),
+  importSettings: vi.fn(),
+  chatModels: vi.fn(),
 }));
 
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
@@ -44,6 +47,12 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   }),
   appProviderModelUpdateMutation: () => ({ mutationFn: mocks.updateModel }),
   userSettingUpdateMutation: () => ({ mutationFn: mocks.updateSetting }),
+  appSettingsImportPreviewMutation: () => ({ mutationFn: mocks.preview }),
+  appSettingsImportMutation: () => ({ mutationFn: mocks.importSettings }),
+  chatModelsListOptions: () => ({
+    queryKey: ["chatModels"],
+    queryFn: () => mocks.chatModels(),
+  }),
 }));
 
 const model = (index: number, changes: Partial<Llm> = {}): Llm => ({
@@ -571,5 +580,148 @@ describe("capability updates", () => {
     expect(
       vision({ supports_vision: false, vision_source: "catalog" }, true),
     ).toEqual({ value: true, source: "manual" });
+  });
+});
+
+describe("import in place of provider setup", () => {
+  const summary = {
+    exported_at: 1_700_000_000,
+    providers: [
+      { name: "Local", action: "add", models_added: 2, models_updated: 0 },
+    ],
+    kept_providers: [],
+    changed_settings: [],
+  };
+  const chatModel = (name: string, available = true) => ({
+    id: `40000000-0000-4000-8000-${name.padStart(12, "0")}`,
+    name,
+    provider_name: "Local",
+    available,
+  });
+
+  beforeEach(() => {
+    Element.prototype.hasPointerCapture = () => false;
+    Element.prototype.scrollIntoView = () => {};
+    mocks.settings.mockResolvedValue({ llm_providers: [] });
+    mocks.preview.mockReset().mockResolvedValue(summary);
+    mocks.importSettings.mockReset().mockResolvedValue(summary);
+    mocks.updateSetting.mockReset().mockResolvedValue({});
+    mocks.chatModels
+      .mockReset()
+      .mockResolvedValue([chatModel("1"), chatModel("2", false)]);
+  });
+
+  async function importFile() {
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Import a settings file instead",
+      }),
+    );
+    await user.upload(
+      screen.getByLabelText("Settings file"),
+      new File(["{}"], "settings.json", { type: "application/json" }),
+    );
+    await user.type(screen.getByLabelText("File passphrase"), "the passphrase");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Preview import" }),
+      ).toBeEnabled(),
+    );
+    await user.click(screen.getByRole("button", { name: "Preview import" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Import settings" }),
+    );
+    return user;
+  }
+
+  it("offers import and returns to the provider form", async () => {
+    renderStep();
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Import a settings file instead",
+      }),
+    );
+    expect(screen.getByLabelText("Settings file")).toBeInTheDocument();
+    expect(mocks.saveProviders).not.toHaveBeenCalled();
+    await user.click(
+      screen.getByRole("button", { name: "Set up a provider instead" }),
+    );
+    expect(
+      await screen.findByRole("form", { name: "Add a model provider" }),
+    ).toBeVisible();
+  });
+
+  it("asks for a default model, then finishes setup", async () => {
+    const onStart = renderStep();
+    const user = await importFile();
+    const continueButton = await screen.findByRole("button", {
+      name: "Continue",
+    });
+    expect(continueButton).toBeDisabled();
+    await user.click(screen.getByRole("combobox", { name: "Default model" }));
+    expect(screen.queryByRole("option", { name: /^2 / })).toBeNull();
+    await user.click(await screen.findByRole("option", { name: "1 (Local)" }));
+    await user.click(continueButton);
+    await user.click(await readyButton());
+    expect(mocks.updateSetting.mock.calls[0][0]).toEqual({
+      path: { key: "default_model_id" },
+      body: { value: chatModel("1").id },
+    });
+    expect(onStart).toHaveBeenCalled();
+    expect(mocks.saveProviders).not.toHaveBeenCalled();
+  });
+
+  it("keeps the choice and offers a retry when saving fails", async () => {
+    mocks.updateSetting.mockReset().mockRejectedValue(new Error("offline"));
+    renderStep();
+    const user = await importFile();
+    await user.click(
+      await screen.findByRole("combobox", { name: "Default model" }),
+    );
+    await user.click(await screen.findByRole("option", { name: "1 (Local)" }));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Retry");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("leads back to provider setup when the file has no active models", async () => {
+    mocks.chatModels.mockReset().mockResolvedValue([chatModel("2", false)]);
+    renderStep();
+    const user = await importFile();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "no active models",
+    );
+    await user.click(screen.getByRole("button", { name: "Set up a provider" }));
+    expect(
+      await screen.findByRole("form", { name: "Add a model provider" }),
+    ).toBeVisible();
+  });
+
+  it("stays on import when the file cannot be opened", async () => {
+    mocks.preview.mockReset().mockRejectedValue({ detail: "Could not open" });
+    renderStep();
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Import a settings file instead",
+      }),
+    );
+    await user.upload(
+      screen.getByLabelText("Settings file"),
+      new File(["{}"], "settings.json", { type: "application/json" }),
+    );
+    await user.type(screen.getByLabelText("File passphrase"), "wrong");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Preview import" }),
+      ).toBeEnabled(),
+    );
+    await user.click(screen.getByRole("button", { name: "Preview import" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not open",
+    );
+    expect(mocks.chatModels).not.toHaveBeenCalled();
   });
 });

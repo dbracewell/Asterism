@@ -34,6 +34,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
 } from "@/components/ui/select";
 import {
   AuthHeading,
@@ -45,6 +46,7 @@ import {
   type ProviderFormValues,
   providerSchema,
 } from "@/features/settings/provider-schema";
+import { ImportSettings } from "@/features/settings/ui/admin-settings/import-settings";
 import { client } from "@/lib/api";
 import type {
   Llm,
@@ -58,6 +60,7 @@ import {
   appProviderModelUpdateMutation,
   appProviderSettingsGetOptions,
   appProviderSettingsUpdateMutation,
+  chatModelsListOptions,
   userSettingUpdateMutation,
 } from "@/lib/client/@tanstack/react-query.gen";
 import { cn } from "@/lib/utils";
@@ -221,6 +224,9 @@ export function ProviderSetupStep({
 }) {
   const settings = useQuery(appProviderSettingsGetOptions({ client }));
   const [done, setDone] = useState(false);
+  const [path, setPath] = useState<"provider" | "import" | "default-model">(
+    "provider",
+  );
 
   return (
     <div className={cn(authCardClassName, "max-w-lg", className)}>
@@ -229,6 +235,16 @@ export function ProviderSetupStep({
         <SetupSteps current={done ? 2 : 1} />
         {done ? (
           <ReadyStep onStart={onStart} />
+        ) : path === "import" ? (
+          <ImportStep
+            onBack={() => setPath("provider")}
+            onImported={() => setPath("default-model")}
+          />
+        ) : path === "default-model" ? (
+          <DefaultModelStep
+            onBack={() => setPath("provider")}
+            onDone={() => setDone(true)}
+          />
         ) : settings.isLoading ? (
           <FormSkeleton label="Loading provider settings…" fields={4} />
         ) : settings.isError || !settings.data ? (
@@ -242,9 +258,123 @@ export function ProviderSetupStep({
           <ProviderSetupFlow
             settings={settings.data}
             onDone={() => setDone(true)}
+            onImport={() => setPath("import")}
           />
         )}
       </FieldGroup>
+    </div>
+  );
+}
+
+/** Replaces provider setup with a file from Admin settings → Export (US-63.3). */
+function ImportStep({
+  onBack,
+  onImported,
+}: {
+  onBack: () => void;
+  onImported: () => void;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <p className="text-sm">
+        Use a settings file exported from Admin settings to bring in your
+        providers, models and policies.
+      </p>
+      <ImportSettings onImported={onImported} />
+      <Button
+        type="button"
+        variant="ghost"
+        className={actionClassName}
+        onClick={onBack}
+      >
+        Set up a provider instead
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * The default model is a per-user setting, so a settings file cannot carry it,
+ * and a new chat cannot send without one. The administrator picks it here.
+ */
+function DefaultModelStep({
+  onBack,
+  onDone,
+}: {
+  onBack: () => void;
+  onDone: () => void;
+}) {
+  const models = useQuery(chatModelsListOptions({ client }));
+  const [modelId, setModelId] = useState("");
+  const saveDefault = useMutation({
+    ...userSettingUpdateMutation({ client }),
+    onSuccess: onDone,
+  });
+  const available = models.data?.filter((model) => model.available) ?? [];
+
+  if (models.isLoading) {
+    return <FormSkeleton label="Loading imported models…" fields={1} />;
+  }
+  if (models.isError) {
+    return (
+      <QueryError
+        error={models.error}
+        message="Imported models could not be loaded."
+        retry={() => models.refetch()}
+        isRetrying={models.isRefetching}
+      />
+    );
+  }
+  if (available.length === 0) {
+    return (
+      <div className="flex min-w-0 flex-col gap-4">
+        <p role="alert" className="text-sm">
+          Settings imported, but the file has no active models. Set up a
+          provider to continue.
+        </p>
+        <Button type="button" className={actionClassName} onClick={onBack}>
+          Set up a provider
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <p role="status" className="text-sm">
+        Settings imported. Choose the model new chats start with.
+      </p>
+      <Select value={modelId} onValueChange={setModelId}>
+        <SelectTrigger aria-label="Default model">
+          <SelectValue placeholder="Choose a model" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {available.map((model) => (
+              <SelectItem key={model.id} value={model.id}>
+                {model.display_name ?? model.name} ({model.provider_name})
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      {saveDefault.isError && (
+        <p role="alert" className="text-destructive text-sm">
+          The default model could not be saved. Retry Continue.
+        </p>
+      )}
+      <Button
+        type="button"
+        className={actionClassName}
+        disabled={!modelId || saveDefault.isPending}
+        onClick={() =>
+          saveDefault.mutate({
+            path: { key: "default_model_id" },
+            body: { value: modelId },
+          })
+        }
+      >
+        Continue
+      </Button>
     </div>
   );
 }
@@ -266,9 +396,11 @@ function ReadyStep({ onStart }: { onStart: () => void }) {
 function ProviderSetupFlow({
   settings,
   onDone,
+  onImport,
 }: {
   settings: ProviderSettings;
   onDone: () => void;
+  onImport: () => void;
 }) {
   // Resume a provider saved before a reload rather than adding a second one.
   const saved = settings.llm_providers?.[0];
@@ -289,7 +421,12 @@ function ProviderSetupFlow({
       onDone={onDone}
     />
   ) : (
-    <ConnectStep form={form} settings={settings} onConnected={setConnected} />
+    <ConnectStep
+      form={form}
+      settings={settings}
+      onConnected={setConnected}
+      onImport={onImport}
+    />
   );
 }
 
@@ -297,10 +434,12 @@ function ConnectStep({
   form,
   settings,
   onConnected,
+  onImport,
 }: {
   form: UseFormReturn<ProviderFormValues>;
   settings: ProviderSettings;
   onConnected: (providerId: string) => void;
+  onImport: () => void;
 }) {
   const { control, formState, getValues, handleSubmit, setValue } = form;
   const { errorRef, error, showError, clearError } = useErrorSummary();
@@ -447,6 +586,14 @@ function ConnectStep({
               : failed
                 ? "Retry"
                 : "Connect and discover models"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className={actionClassName}
+            onClick={onImport}
+          >
+            Import a settings file instead
           </Button>
           <SkipLink />
         </Field>

@@ -305,6 +305,7 @@ for (const scenario of authViewports) {
       form.getByLabel("Base URL"),
       form.getByLabel("API key"),
       form.getByRole("button", { name: "Connect and discover models" }),
+      form.getByRole("button", { name: "Import a settings file instead" }),
       form.getByRole("link", { name: "Skip for now" }),
     ];
     for (const control of connectControls) {

@@ -2,7 +2,7 @@
 
 Status: accepted and implemented for US-63.1 on 2026-11-06
 ([EPIC-63](../epics/EPIC-63-ADMIN-SETTINGS-EXPORT-AND-IMPORT.md)). Amended for import by
-US-63.2 (see the addendum).
+US-63.2 and setup by US-63.3 (see the addenda).
 
 ## Context
 
@@ -95,3 +95,11 @@ are admin-only, and the preview returns no keys or parameter values.
   checked before anything is written. A redacted key and a ChatGPT provider are refused.
 - **Draft model.** If the merge deactivates the selected draft model and the file
   names no replacement, the selection is cleared.
+
+## Addendum: setup (US-63.3)
+
+The first-run provider step offers a settings file as an alternative, using the same
+form and routes as Admin settings. `default_model_id` is a per-user setting, so the
+file cannot carry it, and a new chat cannot send without a model. After importing,
+the administrator picks a default from the imported models; none is chosen for them.
+A file with no active models leads back to provider setup.
