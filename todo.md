@@ -40,7 +40,7 @@ Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 
   - [x] Add a real-backend E2E: educator creates an invite, a new student signs up with it and lands in the class, and the invite can't be reused.
 - [x] US-60.3: Course packs
   - [x] Implement publishing and student provisioning; test versioning and access.
-- [ ] US-60.4: Class mode policy
-  - [ ] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
+- [x] US-60.4: Class mode policy
+  - [x] Implement policy composition and live checks; build the policy display; test narrowing-only behavior.
 - [ ] US-60.5: Aggregate misconception insights
   - [ ] Implement thresholded aggregation and consent; build the dashboard; test privacy limits.

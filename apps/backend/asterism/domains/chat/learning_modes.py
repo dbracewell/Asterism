@@ -63,6 +63,39 @@ def accept_hint_level(*, chat: ChatModel, previous: HintLevel, request: HintRequ
     return request.level
 
 
+async def apply_class_policy(
+    *, user_id: str, chat: ChatModel, hint_level: HintLevel, request: HintRequest | None, session: AsyncSession
+) -> HintLevel:
+    """Narrow a send to the class policy of its course project (US-60.4).
+
+    A refused mode or an explicit reveal is a 409. A branch already at the
+    answer keeps going one level below it, so earlier reveals don't block it.
+    """
+    from asterism.domains.courses.policy import course_mode_policy
+
+    policy = await course_mode_policy(user_id=user_id, project_id=chat.project_id, session=session)
+    if policy is None:
+        return hint_level
+    policy.require_mode(chat.learning_mode)
+    if hint_level == HintLevel.ANSWER and not policy.answer_reveal:
+        if request is not None and request.level == HintLevel.ANSWER:
+            policy.require_level(HintLevel.ANSWER)
+        return HintLevel.WORKED_EXAMPLE
+    return hint_level
+
+
+async def require_class_policy(
+    *, user_id: str, chat: ChatModel, mode: LearningModeId, hint_level: HintLevel | None, session: AsyncSession
+) -> None:
+    """The live check before every run, including resume and regeneration."""
+    from asterism.domains.courses.policy import course_mode_policy
+
+    policy = await course_mode_policy(user_id=user_id, project_id=chat.project_id, session=session)
+    if policy is not None:
+        policy.require_mode(mode)
+        policy.require_level(hint_level)
+
+
 def accepted_mode_snapshot(message: MessageModel) -> LearningModeSnapshot:
     """A turn's pinned mode for first execution; the mode must still be offered."""
     snapshot = message.accepted_learning_mode
@@ -130,6 +163,9 @@ async def change_chat_learning_mode(
             if chat.learning_mode_revision != payload.expected_learning_mode_revision:
                 raise ConflictException("Chat learning mode changed; reload and retry")
             require_mode(payload.learning_mode)
+            await require_class_policy(
+                user_id=user_id, chat=chat, mode=payload.learning_mode, hint_level=None, session=session
+            )
             locked = next_lock_state(chat, payload)
             if chat.learning_mode != payload.learning_mode or chat.learning_mode_locked != locked:
                 chat.learning_mode = payload.learning_mode

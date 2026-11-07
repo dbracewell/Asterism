@@ -7,7 +7,7 @@ only the classes that educator created. Nothing here links to a student's chats.
 import uuid
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey, Index, String, Text, UniqueConstraint
+from sqlalchemy import JSON, CheckConstraint, Enum, ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.common.enums import enum_values
@@ -58,6 +58,10 @@ class ClassModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     description: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     join_code: Mapped[str] = mapped_column(String(16), nullable=False)
     join_enabled: Mapped[bool] = mapped_column(nullable=False, default=True, server_default="1")
+    # Class mode policy (US-60.4): it can only narrow what students may do in
+    # their course project. None allows every mode.
+    allowed_modes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    answer_reveal: Mapped[bool] = mapped_column(nullable=False, default=True, server_default="1")
 
     __table_args__ = (
         UniqueConstraint("educator_id", "name", name="uq_classes_educator_name"),

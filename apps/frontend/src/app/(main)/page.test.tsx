@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
     { id: "other", available: true },
   ],
   createChatSession: vi.fn(),
+  coursePolicy: vi.fn(async (): Promise<object | null> => null),
   getProject: vi.fn(async () => ({
     id: "project",
     name: "Research",
@@ -37,6 +38,10 @@ vi.mock("@/features/chat/hooks/use-chat-session-crud", () => ({
   useChatSessionCrud: () => ({ createChatSession: mocks.createChatSession }),
 }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
+  courseModePolicyGetOptions: () => ({
+    queryKey: ["course-policy"],
+    queryFn: mocks.coursePolicy,
+  }),
   projectGetOneOptions: () => ({
     queryKey: ["project"],
     queryFn: mocks.getProject,
@@ -179,6 +184,28 @@ it("sends the chosen learning mode with a new chat", async () => {
   await waitFor(() => expect(picker).toBeEnabled());
   await userEvent.click(picker);
   await userEvent.click(await screen.findByRole("option", { name: "Tutor" }));
+  await userEvent.click(screen.getByRole("button", { name: "Start chat" }));
+  expect(mocks.createChatSession).toHaveBeenCalledWith({
+    body: expect.objectContaining({ learning_mode: "tutor" }),
+  });
+});
+it("starts a course project chat in a mode its class policy allows", async () => {
+  mocks.createChatSession.mockClear();
+  mocks.coursePolicy.mockResolvedValueOnce({
+    class_name: "Biology 101",
+    educator_name: "Dr Teach",
+    allowed_modes: ["tutor"],
+    answer_reveal: false,
+  });
+  renderPage();
+  expect(
+    await screen.findByText(
+      "Biology 101: Tutor mode only, answers can't be revealed. Set by Dr Teach.",
+    ),
+  ).toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Start chat" })).toBeEnabled(),
+  );
   await userEvent.click(screen.getByRole("button", { name: "Start chat" }));
   expect(mocks.createChatSession).toHaveBeenCalledWith({
     body: expect.objectContaining({ learning_mode: "tutor" }),

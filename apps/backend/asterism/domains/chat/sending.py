@@ -24,7 +24,13 @@ from .comparisons import assert_no_pending_columns, column_models, make_active, 
 from .draft_models import ChatSendReceiptModel
 from .drafts import consume_draft, read_draft_file_ids
 from .jobs import chat_jobs
-from .learning_modes import accept_hint_level, accept_rubric, current_mode_snapshot, turn_hint_level
+from .learning_modes import (
+    accept_hint_level,
+    accept_rubric,
+    apply_class_policy,
+    current_mode_snapshot,
+    turn_hint_level,
+)
 from .model_selection import require_chat_model, selection_info
 from .models import ChatModel, MessageModel
 from .personas import resolve_persona_snapshot
@@ -98,10 +104,16 @@ async def persist_user_send(
 
     skills = await accept_skills(user_id=user_id, chat=chat, selection=payload.skills, session=session)
     # The parent is the active branch tip, so its latest user turn holds the branch level.
-    hint_level = accept_hint_level(
+    hint_level = await apply_class_policy(
+        user_id=user_id,
         chat=chat,
-        previous=turn_hint_level(await latest_branch_user_turn(user_id, chat.id, session)),
+        hint_level=accept_hint_level(
+            chat=chat,
+            previous=turn_hint_level(await latest_branch_user_turn(user_id, chat.id, session)),
+            request=payload.hint,
+        ),
         request=payload.hint,
+        session=session,
     )
     template = (
         await resolve_template_use(user_id=user_id, use=payload.template, session=session)

@@ -12,6 +12,10 @@ import {
   comparePayload,
 } from "@/features/chat/components/compare-targets";
 import { LearningModePicker } from "@/features/chat/components/chat-learning-mode-picker";
+import {
+  CoursePolicyNotice,
+  useCourseModePolicy,
+} from "@/features/chat/components/course-mode-policy";
 import { ChatGoalToggle } from "@/features/chat/components/chat-goal-toggle";
 import {
   ChatRubricPicker,
@@ -57,9 +61,15 @@ export default function AppPage() {
     user.settings.default_model_id ?? "",
   );
   const [personaId, setPersonaId] = useState<string | null>(null);
-  const [learningMode, setLearningMode] = useState<LearningModeId>("standard");
+  const [chosenMode, setLearningMode] = useState<LearningModeId>("standard");
   const [compareModels, setCompareModels] = useState<string[]>([]);
   const [rubric, setRubric] = useState<RubricUse | null>(null);
+  // A course project's class policy may not allow the default mode.
+  const policy = useCourseModePolicy(projectId);
+  const learningMode =
+    policy?.allowed_modes && !policy.allowed_modes.includes(chosenMode)
+      ? policy.allowed_modes[0]
+      : chosenMode;
   const takesRubric = useModeTakesRubric(learningMode);
   const sentRubric = takesRubric ? rubric : null;
   const [goalChoice, setGoalChoice] = useState(false);
@@ -152,7 +162,9 @@ export default function AppPage() {
                 <LearningModePicker
                   value={learningMode}
                   onChange={setLearningMode}
+                  allowedModes={policy?.allowed_modes}
                 />
+                <CoursePolicyNotice policy={policy} />
                 {projectGoal && (
                   <ChatGoalToggle
                     goal={projectGoal}

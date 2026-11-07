@@ -12,7 +12,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ChatHintControls } from "./chat-hint-controls";
 
 const { api, raised } = vi.hoisted(() => ({
-  api: { learningModeGetMany: vi.fn() },
+  api: { learningModeGetMany: vi.fn(), courseModePolicyGet: vi.fn() },
   raised: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({
@@ -266,4 +266,35 @@ it("restarts the wait each time the locked reveal opens", async () => {
   expect(confirm).toBeDisabled();
   expect(confirm).toHaveTextContent("(5)");
   expect(raised).not.toHaveBeenCalled();
+});
+
+it("hides the reveal when the class policy turns it off", async () => {
+  api.courseModePolicyGet.mockResolvedValue({
+    data: {
+      class_name: "Biology 101",
+      educator_name: "Dr Teach",
+      allowed_modes: null,
+      answer_reveal: false,
+    },
+  });
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <ChatHintControls
+        info={{ ...info("tutor", "none"), project_id: "course" } as ChatInfo}
+        disabled={false}
+        resetPending={false}
+        onResetChange={() => {}}
+        onRaise={raised}
+      />
+    </QueryClientProvider>,
+  );
+  expect(
+    await screen.findByRole("button", { name: "Worked example" }),
+  ).toBeInTheDocument();
+  await vi.waitFor(() => expect(api.courseModePolicyGet).toHaveBeenCalled());
+  await vi.waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Show answer" }),
+    ).not.toBeInTheDocument(),
+  );
 });

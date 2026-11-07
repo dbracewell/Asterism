@@ -18,7 +18,7 @@ from asterism.domains.user.personas import require_owned_persona
 
 from .execution_context import build_execution_provenance
 from .execution_models import ChatExecutionModel
-from .learning_modes import accepted_mode_snapshot, current_mode_snapshot, turn_hint_level
+from .learning_modes import accepted_mode_snapshot, current_mode_snapshot, require_class_policy, turn_hint_level
 from .model_selection import require_chat_model
 from .models import ChatModel, MessageModel
 from .personas import read_chat_persona_snapshot
@@ -68,6 +68,13 @@ async def prepare_execution(
                     or recorded.request_message_id != message_id
                 ):
                     raise CodedException(409, "Recorded source context is unavailable or changed; regenerate")
+                await require_class_policy(
+                    user_id=user_id,
+                    chat=chat,
+                    mode=recorded.learning_mode.id,
+                    hint_level=recorded.learning_mode.hint_level,
+                    session=session,
+                )
                 execution = recorded
             else:
                 # A comparison column always runs on its own fixed target model.
@@ -106,6 +113,13 @@ async def prepare_execution(
                     current_mode_snapshot(chat, turn_hint_level(message))
                     if restart
                     else accepted_mode_snapshot(message)
+                )
+                await require_class_policy(
+                    user_id=user_id,
+                    chat=chat,
+                    mode=learning_mode.id,
+                    hint_level=learning_mode.hint_level,
+                    session=session,
                 )
                 skills = message.accepted_skills.snapshots
                 await validate_snapshots(user_id, skills, session)

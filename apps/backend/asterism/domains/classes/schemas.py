@@ -3,7 +3,9 @@
 import uuid
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, field_validator
+
+from asterism.domains.agent.learning_inputs import LearningModeId
 
 from .models import MAX_CLASS_DESCRIPTION_LENGTH, MAX_CLASS_NAME_LENGTH, MAX_INVITE_LABEL_LENGTH
 
@@ -56,6 +58,8 @@ class TaughtClass(BaseModel):
     description: str
     join_code: str
     join_enabled: bool
+    allowed_modes: list[LearningModeId] | None
+    answer_reveal: bool
     member_count: int = 0
     created_at: int
 
@@ -175,3 +179,24 @@ class InviteRedeemRequest(BaseModel):
     user_id: Annotated[str, StringConstraints(min_length=1, max_length=255)]
     display_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
     system_key: str
+
+
+class ClassModePolicy(BaseModel):
+    """Narrows learning modes in students' course projects; it never adds anything."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    allowed_modes: list[LearningModeId] | None = Field(
+        description="Modes students may use in the course project; null allows all"
+    )
+    answer_reveal: StrictBool = Field(description="Whether students may reveal answers and solutions")
+
+    @field_validator("allowed_modes")
+    @classmethod
+    def _at_least_one(cls, value: list[LearningModeId] | None) -> list[LearningModeId] | None:
+        if value is not None:
+            if not value:
+                raise ValueError("Allow at least one mode")
+            if len(set(value)) != len(value):
+                raise ValueError("List each mode once")
+        return value
