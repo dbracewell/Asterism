@@ -34,3 +34,9 @@ export const UserAccountSchema = BaseUserSchema.extend({
 });
 
 export type UserAccountSchemaType = z.infer<typeof UserAccountSchema>;
+
+export const InviteSignupSchema = BaseUserSchema.extend({
+  token: z.string().trim().min(1).max(128),
+});
+
+export type InviteSignupSchemaType = z.infer<typeof InviteSignupSchema>;

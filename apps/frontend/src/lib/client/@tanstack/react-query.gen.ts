@@ -237,6 +237,21 @@ import type {
   ClassGetOneData,
   ClassGetOneError,
   ClassGetOneResponse,
+  ClassInviteCheckData,
+  ClassInviteCheckError,
+  ClassInviteCheckResponse,
+  ClassInviteCreateData,
+  ClassInviteCreateError,
+  ClassInviteCreateResponse,
+  ClassInviteGetManyData,
+  ClassInviteGetManyError,
+  ClassInviteGetManyResponse,
+  ClassInviteRedeemData,
+  ClassInviteRedeemError,
+  ClassInviteRedeemResponse,
+  ClassInviteRevokeData,
+  ClassInviteRevokeError,
+  ClassInviteRevokeResponse,
   ClassJoinCodeRotateData,
   ClassJoinCodeRotateError,
   ClassJoinCodeRotateResponse,
@@ -3816,6 +3831,194 @@ export const classMemberAllowBackMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().classMemberAllowBack({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classInviteGetManyQueryKey = (
+  options: Options<ClassInviteGetManyData>,
+) => createQueryKey("classInviteGetMany", options);
+
+/**
+ * List Invites
+ */
+export const classInviteGetManyOptions = (
+  options: Options<ClassInviteGetManyData>,
+) =>
+  queryOptions<
+    ClassInviteGetManyResponse,
+    ClassInviteGetManyError,
+    ClassInviteGetManyResponse,
+    ReturnType<typeof classInviteGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().classInviteGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classInviteGetManyQueryKey(options),
+  });
+
+export const classInviteGetManyInfiniteQueryKey = (
+  options: Options<ClassInviteGetManyData>,
+): QueryKey<Options<ClassInviteGetManyData>> =>
+  createQueryKey("classInviteGetMany", options, true);
+
+/**
+ * List Invites
+ */
+export const classInviteGetManyInfiniteOptions = (
+  options: Options<ClassInviteGetManyData>,
+) =>
+  infiniteQueryOptions<
+    ClassInviteGetManyResponse,
+    ClassInviteGetManyError,
+    InfiniteData<ClassInviteGetManyResponse>,
+    QueryKey<Options<ClassInviteGetManyData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ClassInviteGetManyData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ClassInviteGetManyData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await ApiClient.__registry.get().classInviteGetMany({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: classInviteGetManyInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Invites
+ *
+ * Create one single-use invite per label. Each link is shown only in this response.
+ */
+export const classInviteCreateMutation = (
+  options?: Partial<Options<ClassInviteCreateData>>,
+): UseMutationOptions<
+  ClassInviteCreateResponse,
+  ClassInviteCreateError,
+  Options<ClassInviteCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassInviteCreateResponse,
+    ClassInviteCreateError,
+    Options<ClassInviteCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classInviteCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Revoke Invite
+ */
+export const classInviteRevokeMutation = (
+  options?: Partial<Options<ClassInviteRevokeData>>,
+): UseMutationOptions<
+  ClassInviteRevokeResponse,
+  ClassInviteRevokeError,
+  Options<ClassInviteRevokeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassInviteRevokeResponse,
+    ClassInviteRevokeError,
+    Options<ClassInviteRevokeData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classInviteRevoke({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Check Invite
+ */
+export const classInviteCheckMutation = (
+  options?: Partial<Options<ClassInviteCheckData>>,
+): UseMutationOptions<
+  ClassInviteCheckResponse,
+  ClassInviteCheckError,
+  Options<ClassInviteCheckData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassInviteCheckResponse,
+    ClassInviteCheckError,
+    Options<ClassInviteCheckData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classInviteCheck({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Redeem Invite
+ */
+export const classInviteRedeemMutation = (
+  options?: Partial<Options<ClassInviteRedeemData>>,
+): UseMutationOptions<
+  ClassInviteRedeemResponse,
+  ClassInviteRedeemError,
+  Options<ClassInviteRedeemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassInviteRedeemResponse,
+    ClassInviteRedeemError,
+    Options<ClassInviteRedeemData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().classInviteRedeem({
         ...options,
         ...fnOptions,
         throwOnError: true,

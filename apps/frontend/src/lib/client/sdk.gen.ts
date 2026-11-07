@@ -237,6 +237,21 @@ import type {
   ClassGetOneData,
   ClassGetOneErrors,
   ClassGetOneResponses,
+  ClassInviteCheckData,
+  ClassInviteCheckErrors,
+  ClassInviteCheckResponses,
+  ClassInviteCreateData,
+  ClassInviteCreateErrors,
+  ClassInviteCreateResponses,
+  ClassInviteGetManyData,
+  ClassInviteGetManyErrors,
+  ClassInviteGetManyResponses,
+  ClassInviteRedeemData,
+  ClassInviteRedeemErrors,
+  ClassInviteRedeemResponses,
+  ClassInviteRevokeData,
+  ClassInviteRevokeErrors,
+  ClassInviteRevokeResponses,
   ClassJoinCodeRotateData,
   ClassJoinCodeRotateErrors,
   ClassJoinCodeRotateResponses,
@@ -2782,6 +2797,123 @@ export class ApiClient extends HeyApiClient {
       security: [{ scheme: "bearer", type: "http" }],
       url: "/classes/{class_id}/members/{student_id}/removal",
       ...options,
+    });
+  }
+
+  /**
+   * List Invites
+   */
+  public classInviteGetMany<ThrowOnError extends boolean = false>(
+    options: Options<ClassInviteGetManyData, ThrowOnError>,
+  ): RequestResult<
+    ClassInviteGetManyResponses,
+    ClassInviteGetManyErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).get<
+      ClassInviteGetManyResponses,
+      ClassInviteGetManyErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/invites",
+      ...options,
+    });
+  }
+
+  /**
+   * Create Invites
+   *
+   * Create one single-use invite per label. Each link is shown only in this response.
+   */
+  public classInviteCreate<ThrowOnError extends boolean = false>(
+    options: Options<ClassInviteCreateData, ThrowOnError>,
+  ): RequestResult<
+    ClassInviteCreateResponses,
+    ClassInviteCreateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ClassInviteCreateResponses,
+      ClassInviteCreateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/invites",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Revoke Invite
+   */
+  public classInviteRevoke<ThrowOnError extends boolean = false>(
+    options: Options<ClassInviteRevokeData, ThrowOnError>,
+  ): RequestResult<
+    ClassInviteRevokeResponses,
+    ClassInviteRevokeErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).delete<
+      ClassInviteRevokeResponses,
+      ClassInviteRevokeErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/classes/{class_id}/invites/{invite_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Check Invite
+   */
+  public classInviteCheck<ThrowOnError extends boolean = false>(
+    options: Options<ClassInviteCheckData, ThrowOnError>,
+  ): RequestResult<
+    ClassInviteCheckResponses,
+    ClassInviteCheckErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ClassInviteCheckResponses,
+      ClassInviteCheckErrors,
+      ThrowOnError
+    >({
+      url: "/class-invites/check",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Redeem Invite
+   */
+  public classInviteRedeem<ThrowOnError extends boolean = false>(
+    options: Options<ClassInviteRedeemData, ThrowOnError>,
+  ): RequestResult<
+    ClassInviteRedeemResponses,
+    ClassInviteRedeemErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).post<
+      ClassInviteRedeemResponses,
+      ClassInviteRedeemErrors,
+      ThrowOnError
+    >({
+      url: "/class-invites/redeem",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   }
 

@@ -943,6 +943,76 @@ export type ClassCreate = {
 };
 
 /**
+ * ClassInvite
+ *
+ * The educator's view of an invite, without its token.
+ */
+export type ClassInvite = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Status
+   */
+  status: "unused" | "used" | "expired" | "revoked";
+  /**
+   * Expires At
+   */
+  expires_at: number;
+  /**
+   * Created At
+   */
+  created_at: number;
+  /**
+   * Redeemed At
+   */
+  redeemed_at: number | null;
+  /**
+   * Redeemed Name
+   */
+  redeemed_name: string | null;
+};
+
+/**
+ * ClassInviteCreate
+ *
+ * One invite per label, usually one per student.
+ */
+export type ClassInviteCreate = {
+  /**
+   * Labels
+   */
+  labels: Array<string>;
+};
+
+/**
+ * ClassInvitePage
+ */
+export type ClassInvitePage = {
+  /**
+   * Items
+   */
+  items: Array<ClassInvite>;
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Page
+   */
+  page: number;
+  /**
+   * Page Size
+   */
+  page_size: number;
+};
+
+/**
  * ClassJoinRequest
  */
 export type ClassJoinRequest = {
@@ -1421,6 +1491,40 @@ export type CreateUserRequest = {
    * Optional system key for user creation.
    */
   system_key?: string | null;
+};
+
+/**
+ * CreatedClassInvite
+ *
+ * Returned once, at creation. The token is not stored and can't be shown again.
+ */
+export type CreatedClassInvite = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Token
+   */
+  token: string;
+  /**
+   * Expires At
+   */
+  expires_at: number;
+};
+
+/**
+ * CreatedClassInviteList
+ */
+export type CreatedClassInviteList = {
+  /**
+   * Items
+   */
+  items: Array<CreatedClassInvite>;
 };
 
 /**
@@ -2510,6 +2614,60 @@ export type InstructionOverrideProvenance = {
    * Digest
    */
   digest: string;
+};
+
+/**
+ * InviteCheckRequest
+ *
+ * Server-to-server: the signup page asks whether an invite can be used.
+ */
+export type InviteCheckRequest = {
+  /**
+   * Token
+   */
+  token: string;
+  /**
+   * System Key
+   */
+  system_key: string;
+};
+
+/**
+ * InvitePreview
+ */
+export type InvitePreview = {
+  /**
+   * Class Name
+   */
+  class_name: string;
+  /**
+   * Educator Name
+   */
+  educator_name: string;
+};
+
+/**
+ * InviteRedeemRequest
+ *
+ * Server-to-server: provision a just-created account through an invite.
+ */
+export type InviteRedeemRequest = {
+  /**
+   * Token
+   */
+  token: string;
+  /**
+   * User Id
+   */
+  user_id: string;
+  /**
+   * Display Name
+   */
+  display_name: string;
+  /**
+   * System Key
+   */
+  system_key: string;
 };
 
 /**
@@ -12217,6 +12375,269 @@ export type ClassMemberAllowBackResponses = {
 
 export type ClassMemberAllowBackResponse =
   ClassMemberAllowBackResponses[keyof ClassMemberAllowBackResponses];
+
+export type ClassInviteGetManyData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Page Size
+     */
+    page_size?: number;
+  };
+  url: "/classes/{class_id}/invites";
+};
+
+export type ClassInviteGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassInviteGetManyError =
+  ClassInviteGetManyErrors[keyof ClassInviteGetManyErrors];
+
+export type ClassInviteGetManyResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassInvitePage;
+};
+
+export type ClassInviteGetManyResponse =
+  ClassInviteGetManyResponses[keyof ClassInviteGetManyResponses];
+
+export type ClassInviteCreateData = {
+  body: ClassInviteCreate;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/invites";
+};
+
+export type ClassInviteCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassInviteCreateError =
+  ClassInviteCreateErrors[keyof ClassInviteCreateErrors];
+
+export type ClassInviteCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: CreatedClassInviteList;
+};
+
+export type ClassInviteCreateResponse =
+  ClassInviteCreateResponses[keyof ClassInviteCreateResponses];
+
+export type ClassInviteRevokeData = {
+  body?: never;
+  path: {
+    /**
+     * Class Id
+     */
+    class_id: string;
+    /**
+     * Invite Id
+     */
+    invite_id: string;
+  };
+  query?: never;
+  url: "/classes/{class_id}/invites/{invite_id}";
+};
+
+export type ClassInviteRevokeErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassInviteRevokeError =
+  ClassInviteRevokeErrors[keyof ClassInviteRevokeErrors];
+
+export type ClassInviteRevokeResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ClassInviteRevokeResponse =
+  ClassInviteRevokeResponses[keyof ClassInviteRevokeResponses];
+
+export type ClassInviteCheckData = {
+  body: InviteCheckRequest;
+  path?: never;
+  query?: never;
+  url: "/class-invites/check";
+};
+
+export type ClassInviteCheckErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassInviteCheckError =
+  ClassInviteCheckErrors[keyof ClassInviteCheckErrors];
+
+export type ClassInviteCheckResponses = {
+  /**
+   * Successful Response
+   */
+  200: InvitePreview;
+};
+
+export type ClassInviteCheckResponse =
+  ClassInviteCheckResponses[keyof ClassInviteCheckResponses];
+
+export type ClassInviteRedeemData = {
+  body: InviteRedeemRequest;
+  path?: never;
+  query?: never;
+  url: "/class-invites/redeem";
+};
+
+export type ClassInviteRedeemErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Forbidden
+   */
+  403: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type ClassInviteRedeemError =
+  ClassInviteRedeemErrors[keyof ClassInviteRedeemErrors];
+
+export type ClassInviteRedeemResponses = {
+  /**
+   * Successful Response
+   */
+  200: InvitePreview;
+};
+
+export type ClassInviteRedeemResponse =
+  ClassInviteRedeemResponses[keyof ClassInviteRedeemResponses];
 
 export type StudyDeckGetManyData = {
   body?: never;

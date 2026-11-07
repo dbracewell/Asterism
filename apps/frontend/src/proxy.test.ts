@@ -46,3 +46,16 @@ it("ignores spoofed x-forwarded-host headers when building sign-in redirects", a
     "http://localhost:3000/sign-in?redirect=%2Fsettings",
   );
 });
+
+it("lets signed-out visitors open an invite link, and nothing below it", async () => {
+  const open = await proxy(
+    new NextRequest("http://localhost:3000/invite/abc_DEF-123"),
+  );
+  expect(open.headers.get("location")).toBeNull();
+  for (const path of ["/invite", "/invite/abc/extra"]) {
+    const guarded = await proxy(
+      new NextRequest(`http://localhost:3000${path}`),
+    );
+    expect(guarded.headers.get("location")).toContain("/sign-in");
+  }
+});

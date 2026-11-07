@@ -19,7 +19,7 @@ from asterism.core.schemas import ErrorDetail
 from asterism.domains.agent.router import agents_router
 from asterism.domains.chat.router import chat_router
 from asterism.domains.chatgpt.router import chatgpt_router
-from asterism.domains.classes.router import classes_router, educator_access_router
+from asterism.domains.classes.router import class_invites_router, classes_router, educator_access_router
 from asterism.domains.components.router import components_router
 from asterism.domains.files.router import file_router
 from asterism.domains.knowledge.router import knowledge_router
@@ -146,6 +146,7 @@ app.include_router(team_packs_router)
 app.include_router(settings_transfer_router)
 app.include_router(educator_access_router)
 app.include_router(classes_router)
+app.include_router(class_invites_router)
 app.include_router(study_router)
 # The knowledge router is registered before the settings router: both serve
 # /settings/app/... paths, and the knowledge ones are more specific than the

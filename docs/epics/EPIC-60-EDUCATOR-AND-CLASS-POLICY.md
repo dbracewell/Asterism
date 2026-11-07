@@ -52,10 +52,10 @@ or educator role. Signup is rate-limited. The educator sees which invites are
 unused, used (and by whom), expired or revoked. The class join code is
 unchanged and remains the way for existing accounts to join.
 
-- [ ] Extend the ADR with the invite model, the signup path and its limits (no email binding).
-- [ ] Implement invites and atomic redemption in the backend; test single use, expiry, revocation, setup gating and role isolation.
-- [ ] Extend the signup check in auth with the invite path and rate limiting; build the invite management UI and the invite signup page.
-- [ ] Add a real-backend E2E: educator creates an invite, a new student signs up with it and lands in the class, and the invite can't be reused.
+- [x] Extend the ADR with the invite model, the signup path and its limits (no email binding).
+- [x] Implement invites and atomic redemption in the backend; test single use, expiry, revocation, setup gating and role isolation.
+- [x] Extend the signup check in auth with the invite path and rate limiting; build the invite management UI and the invite signup page.
+- [x] Add a real-backend E2E: educator creates an invite, a new student signs up with it and lands in the class, and the invite can't be reused.
 
 ## US-60.3: Course packs
 

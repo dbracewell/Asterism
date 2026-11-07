@@ -20,6 +20,44 @@ export function matchesAdminPassphrase(
   return timingSafeEqual(candidateDigest, configuredDigest);
 }
 
+/**
+ * Who may create an account, and with what role. Throws when nobody may.
+ *
+ * - An invite signup comes only from the server action that then claims the
+ *   invite (it holds the system key) and always makes an ordinary user.
+ * - Otherwise the admin key or a signed-in admin is required.
+ */
+export function decideSignupRole({
+  query,
+  sessionRole,
+  requestedRole,
+  adminPassphrase,
+  systemKey,
+}: {
+  query: Record<string, unknown>;
+  sessionRole: string | undefined;
+  requestedRole: unknown;
+  adminPassphrase: string;
+  systemKey: string;
+}): "admin" | "user" {
+  if (
+    typeof query.inviteToken === "string" &&
+    matchesAdminPassphrase(query.systemKey, systemKey)
+  ) {
+    return "user";
+  }
+  const hasValidAdminKey = matchesAdminPassphrase(
+    query.adminKey,
+    adminPassphrase,
+  );
+  if (!hasValidAdminKey && sessionRole !== "admin") {
+    throw new Error("Invalid admin key");
+  }
+  if (query.role === "user") return "user";
+  if (hasValidAdminKey) return "admin";
+  return requestedRole === "admin" ? "admin" : "user";
+}
+
 function createAuth() {
   const config = getFrontendServerConfig();
   mkdirSync(dirname(config.authDbPath), { recursive: true });
@@ -69,39 +107,18 @@ function createAuth() {
       user: {
         create: {
           before: async (user, ctx) => {
-            const adminKey = ctx?.query?.adminKey;
-            const requestedRole = ctx?.query?.role;
-            const hasValidAdminKey = matchesAdminPassphrase(
-              adminKey,
-              config.adminPassphrase,
-            );
-            const sessionRole = (
-              ctx?.context as
-                | { session?: { user?: { role?: string } } }
-                | undefined
-            )?.session?.user?.role;
-            const isAuthorizedAdmin =
-              hasValidAdminKey || sessionRole === "admin";
-
-            if (!isAuthorizedAdmin) {
-              throw new Error("Invalid admin key");
-            }
-
-            const role =
-              requestedRole === "user"
-                ? "user"
-                : hasValidAdminKey
-                  ? "admin"
-                  : user.role === "admin"
-                    ? "admin"
-                    : "user";
-
-            return {
-              data: {
-                ...user,
-                role,
-              },
-            };
+            const role = decideSignupRole({
+              query: (ctx?.query ?? {}) as Record<string, unknown>,
+              sessionRole: (
+                ctx?.context as
+                  | { session?: { user?: { role?: string } } }
+                  | undefined
+              )?.session?.user?.role,
+              requestedRole: user.role,
+              adminPassphrase: config.adminPassphrase,
+              systemKey: config.systemKey,
+            });
+            return { data: { ...user, role } };
           },
         },
       },

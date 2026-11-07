@@ -303,6 +303,40 @@ export const zClassCreate = z.object({
 });
 
 /**
+ * ClassInvite
+ *
+ * The educator's view of an invite, without its token.
+ */
+export const zClassInvite = z.object({
+  id: z.uuid(),
+  label: z.string(),
+  status: z.enum(["unused", "used", "expired", "revoked"]),
+  expires_at: z.int(),
+  created_at: z.int(),
+  redeemed_at: z.int().nullable(),
+  redeemed_name: z.string().nullable(),
+});
+
+/**
+ * ClassInviteCreate
+ *
+ * One invite per label, usually one per student.
+ */
+export const zClassInviteCreate = z.object({
+  labels: z.array(z.string().min(1).max(80)).min(1).max(50),
+});
+
+/**
+ * ClassInvitePage
+ */
+export const zClassInvitePage = z.object({
+  items: z.array(zClassInvite),
+  total: z.int(),
+  page: z.int(),
+  page_size: z.int(),
+});
+
+/**
  * ClassJoinRequest
  */
 export const zClassJoinRequest = z.object({
@@ -496,6 +530,25 @@ export const zContextLayerTexts = z.object({
 export const zCreateUserRequest = z.object({
   user_id: z.string(),
   system_key: z.string().nullish(),
+});
+
+/**
+ * CreatedClassInvite
+ *
+ * Returned once, at creation. The token is not stored and can't be shown again.
+ */
+export const zCreatedClassInvite = z.object({
+  id: z.uuid(),
+  label: z.string(),
+  token: z.string(),
+  expires_at: z.int(),
+});
+
+/**
+ * CreatedClassInviteList
+ */
+export const zCreatedClassInviteList = z.object({
+  items: z.array(zCreatedClassInvite),
 });
 
 /**
@@ -977,6 +1030,36 @@ export const zForkProvenance = z.object({
   sub_agent_id: z.uuid(),
   step_index: z.int().gte(0),
   overrides: z.array(zInstructionOverrideProvenance).optional(),
+});
+
+/**
+ * InviteCheckRequest
+ *
+ * Server-to-server: the signup page asks whether an invite can be used.
+ */
+export const zInviteCheckRequest = z.object({
+  token: z.string().min(1).max(128),
+  system_key: z.string(),
+});
+
+/**
+ * InvitePreview
+ */
+export const zInvitePreview = z.object({
+  class_name: z.string(),
+  educator_name: z.string(),
+});
+
+/**
+ * InviteRedeemRequest
+ *
+ * Server-to-server: provision a just-created account through an invite.
+ */
+export const zInviteRedeemRequest = z.object({
+  token: z.string().min(1).max(128),
+  user_id: z.string().min(1).max(255),
+  display_name: z.string().min(1).max(255),
+  system_key: z.string(),
 });
 
 /**
@@ -5197,6 +5280,55 @@ export const zClassMemberAllowBackPath = z.object({
  * Successful Response
  */
 export const zClassMemberAllowBackResponse = z.void();
+
+export const zClassInviteGetManyPath = z.object({
+  class_id: z.uuid(),
+});
+
+export const zClassInviteGetManyQuery = z.object({
+  page: z.int().gte(1).optional().default(1),
+  page_size: z.int().gte(1).lte(100).optional().default(50),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassInviteGetManyResponse = zClassInvitePage;
+
+export const zClassInviteCreateBody = zClassInviteCreate;
+
+export const zClassInviteCreatePath = z.object({
+  class_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassInviteCreateResponse = zCreatedClassInviteList;
+
+export const zClassInviteRevokePath = z.object({
+  class_id: z.uuid(),
+  invite_id: z.uuid(),
+});
+
+/**
+ * Successful Response
+ */
+export const zClassInviteRevokeResponse = z.void();
+
+export const zClassInviteCheckBody = zInviteCheckRequest;
+
+/**
+ * Successful Response
+ */
+export const zClassInviteCheckResponse = zInvitePreview;
+
+export const zClassInviteRedeemBody = zInviteRedeemRequest;
+
+/**
+ * Successful Response
+ */
+export const zClassInviteRedeemResponse = zInvitePreview;
 
 export const zStudyDeckGetManyPath = z.object({
   project_id: z.uuid(),
