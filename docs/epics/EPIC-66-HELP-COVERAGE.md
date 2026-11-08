@@ -1,6 +1,6 @@
 # EPIC-66: Help coverage
 
-Status: in progress (US-66.1 and US-66.2 complete; US-66.3 awaiting confirmation). Source: user request (2026-11-07).
+Status: complete (US-66.1, US-66.2 and US-66.3). Source: user request (2026-11-07).
 
 ## Objective
 
