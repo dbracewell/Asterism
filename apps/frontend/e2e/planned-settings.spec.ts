@@ -4,7 +4,7 @@ for (const viewport of [
   { width: 1280, height: 720 },
   { width: 320, height: 300 },
 ]) {
-  test(`three planned panes retain badges, keyboard access and honest scope at ${viewport.width}px`, async ({
+  test(`two planned panes retain badges, keyboard access and honest scope at ${viewport.width}px`, async ({
     page,
   }, info) => {
     await page.setViewportSize(viewport);
@@ -21,7 +21,7 @@ for (const viewport of [
       });
     });
     await page.goto(
-      "/e2e/planned-settings?keep=one&keep=two&setting=group-settings",
+      "/e2e/planned-settings?keep=one&keep=two&setting=image-generation",
     );
     const tabs = page.getByRole("tablist").last();
     const horizontal = viewport.width < 640;
@@ -29,10 +29,11 @@ for (const viewport of [
       "aria-orientation",
       horizontal ? "horizontal" : "vertical",
     );
-    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(3);
+    await expect(tabs.getByText("Planned", { exact: true })).toHaveCount(2);
     for (const label of [
       "Providers",
       "Theme Editor",
+      "Groups",
       "Users",
       "Tools",
       "Image Captioning",
@@ -133,17 +134,19 @@ for (const viewport of [
         [],
       );
     };
-    const group = tabs.getByRole("tab", {
-      name: "Groups Planned",
+    const generation = tabs.getByRole("tab", {
+      name: "Image Generation Planned",
       exact: true,
     });
-    await group.focus();
-    await verify("Groups", "Groups");
+    await generation.focus();
+    await verify("Image Generation", "Image generation");
     expect(requests).toEqual([]);
-    await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown"); // available Users
+    await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown"); // available Captioning
     await expect(
-      tabs.getByRole("tab", { name: "Users", exact: true }),
+      tabs.getByRole("tab", { name: "Image Captioning", exact: true }),
     ).toBeFocused();
+    await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown");
+    await verify("Code Execution", "Code execution");
     await page.keyboard.press("End");
     await expect(
       tabs.getByRole("tab", { name: "Export", exact: true }),
@@ -152,14 +155,6 @@ for (const viewport of [
     await expect(
       tabs.getByRole("tab", { name: "Educators", exact: true }),
     ).toBeFocused();
-    await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp");
-    await verify("Code Execution", "Code execution");
-    await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp"); // available Captioning
-    await expect(
-      tabs.getByRole("tab", { name: "Image Captioning", exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press(horizontal ? "ArrowLeft" : "ArrowUp");
-    await verify("Image Generation", "Image generation");
     await page.screenshot({
       path: info.outputPath("planned-settings.png"),
       fullPage: true,

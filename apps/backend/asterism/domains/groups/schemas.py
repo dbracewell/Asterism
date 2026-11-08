@@ -53,3 +53,25 @@ class GroupRef(BaseModel):
 
     id: str
     name: str
+
+
+class GroupModelOption(BaseModel):
+    """A shared model a group's list can name."""
+
+    id: uuid.UUID
+    name: str
+    provider_name: str
+    enabled: bool = Field(description="Disabled models are unavailable to everyone, whatever the group allows")
+
+
+class GroupToolOption(BaseModel):
+    name: str
+    description: str
+    enabled: bool = Field(description="Disabled tools are unavailable to everyone, whatever the group allows")
+
+
+class GroupAccessOptions(BaseModel):
+    """What a group's model and tool lists can name."""
+
+    models: list[GroupModelOption]
+    tools: list[GroupToolOption]

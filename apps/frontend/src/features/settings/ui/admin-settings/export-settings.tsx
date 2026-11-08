@@ -54,7 +54,8 @@ const ExportForm = () => {
       <div className="grid gap-2 text-sm">
         <p>
           Save every application setting to one file, including providers,
-          models, tools and policies. Users, chats and files are not included.
+          models, tools, policies and each group&apos;s model and tool access.
+          Users, group membership, chats and files are not included.
         </p>
         <p role="note" className="bg-muted rounded-surface p-3">
           The file contains your provider and search API keys, encrypted with

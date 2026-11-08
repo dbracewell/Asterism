@@ -24,6 +24,7 @@ from pydantic import (
 )
 
 from asterism.domains.agent.schemas import MainAgentConfiguration, SubAgentDefinition
+from asterism.domains.groups.schemas import GroupRef
 
 from .pricing import ModelPricing
 from .provider_types import (
@@ -210,6 +211,8 @@ class UserSettings(BaseModel):
     # US-51.6: the composer's "Review prompt" action is opt-in.
     prompt_coach_enabled: bool = Field(default=False)
     first_chat_tour: FirstChatTourState | None = Field(default=None)
+    # The user's group (ADR-0058); read-only here, set by administrators.
+    group: GroupRef | None = Field(default=None)
 
 
 class ApplicationSettings(BaseModel):

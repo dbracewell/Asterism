@@ -1,7 +1,8 @@
 """Merge an encrypted settings file into this instance (US-63.2).
 
 Merging never removes anything. Providers in the file are added or updated by
-name, and models by name within them. Values the file holds overwrite current
+name, and models by name within them. Groups are matched by built-in key or by
+name; their access lists are replaced, and membership is never touched. Values the file holds overwrite current
 ones; a value it lacks, such as no draft model, leaves the current one alone.
 Providers it does not mention stay, so sub-agents bound to their models keep
 working.
@@ -23,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asterism.common.log import get_logger
 from asterism.core.events import EventType, NoArgEvent, event_bus
 from asterism.core.exceptions import BadDataException, ConflictException
+from asterism.domains.groups.models import GroupModel
 from asterism.domains.knowledge.processing import update_captioning_configuration
 from asterism.domains.knowledge.processing_schemas import KnowledgeCaptionConfigurationUpdate
 from asterism.domains.settings.captioning_guard import get_captioning_selection_guard
@@ -31,6 +33,7 @@ from asterism.domains.settings.provider_types import ProviderType, normalize_pro
 from asterism.domains.settings.queries import is_global_provider
 from asterism.domains.settings.secrets import REDACTED_SECRET, encrypt_component_provider_dict
 from asterism.domains.settings.service import get_all_providers
+from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES
 
 from .documents import (
     ExportedComponent,
@@ -49,9 +52,19 @@ logger = get_logger("SettingsImport")
 
 def _check_references(bundle: SettingsBundle) -> None:
     known = {(provider.name, model.name) for provider in bundle.providers for model in provider.models}
-    for reference in (bundle.draft_model, bundle.captioning.model):
+    group_models = (reference for group in bundle.groups for reference in group.models or ())
+    for reference in (bundle.draft_model, bundle.captioning.model, *group_models):
         if reference is not None and (reference.provider, reference.model) not in known:
             raise BadDataException("Settings file refers to a model it does not contain")
+
+
+def _check_groups(bundle: SettingsBundle) -> None:
+    names = [group.name.strip().casefold() for group in bundle.groups]
+    keys = [group.built_in for group in bundle.groups if group.built_in]
+    if len(set(names)) != len(names) or len(set(keys)) != len(keys) or not all(names):
+        raise BadDataException("Settings file has blank or duplicate group names")
+    if any(set(group.tools or ()) & INTERNAL_TOOL_NAMES for group in bundle.groups):
+        raise BadDataException("Settings file lists internal tools in a group")
 
 
 def _check_bundle(bundle: SettingsBundle) -> None:
@@ -72,6 +85,7 @@ def _check_bundle(bundle: SettingsBundle) -> None:
         except PydanticCustomError as exc:
             raise BadDataException("Settings file has an invalid provider URL") from exc
     _check_references(bundle)
+    _check_groups(bundle)
 
 
 async def _open(source: str, passphrase: str) -> SettingsBundle:
@@ -103,6 +117,7 @@ def _changed_settings(bundle: SettingsBundle, current: SettingsBundle) -> list[s
         "Image search provider": bundle.image_search_provider is not None
         and bundle.image_search_provider != current.image_search_provider,
         "Image captioning": bundle.captioning != current.captioning,
+        "Groups": bundle.groups != current.groups,
     }
     return [label for label, changed in changes.items() if changed]
 
@@ -195,6 +210,27 @@ async def _apply_draft(reference: ModelReference | None, session: AsyncSession) 
         await session.execute(delete(ApplicationSettingsModel).where(ApplicationSettingsModel.key == "draft_model_id"))
 
 
+async def _apply_groups(bundle: SettingsBundle, session: AsyncSession) -> None:
+    """Add missing custom groups and set every listed group's access. Groups not in the file stay."""
+    rows = list(await session.scalars(select(GroupModel)))
+    built_in = {row.id: row for row in rows if row.built_in}
+    by_name = {row.name.casefold(): row for row in rows}
+    for group in bundle.groups:
+        name = group.name.strip()
+        row = built_in.get(group.built_in) if group.built_in else by_name.get(name.casefold())
+        if row is None:
+            row = GroupModel(name=name)
+            session.add(row)
+        elif row.built_in and not group.built_in:
+            raise BadDataException(f"Settings file has a custom group named like the built-in group {row.name}")
+        if group.models is None:
+            row.model_access = None
+        else:
+            found = [await _find_model(reference, session) for reference in group.models]
+            row.model_access = sorted({str(model.id) for model in found if model is not None})
+        row.tool_access = None if group.tools is None else sorted(set(group.tools))
+
+
 async def _apply_captioning(bundle: SettingsBundle, session: AsyncSession) -> None:
     captioning = bundle.captioning
     model = await _find_model(captioning.model, session)
@@ -227,6 +263,7 @@ async def import_settings(
         await _put_component("web_search_provider", bundle.web_search_provider, session)
         await _put_component("image_search_provider", bundle.image_search_provider, session)
         await _apply_draft(bundle.draft_model, session)
+        await _apply_groups(bundle, session)
         await _apply_captioning(bundle, session)
         await session.commit()
     except IntegrityError as exc:

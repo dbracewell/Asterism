@@ -4,24 +4,43 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { UsersSettings } from "./users-settings";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), move: vi.fn() }));
 vi.mock("@/lib/api", () => ({ client: {} }));
 vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
   userGetManyOptions: (options: { query: Record<string, unknown> }) => ({
     queryKey: ["users", options.query],
     queryFn: () => mocks.list(options.query),
   }),
+  groupGetManyOptions: () => ({
+    queryKey: ["groups"],
+    queryFn: async () =>
+      [
+        ["admin", "Admin"],
+        ["educator", "Educator"],
+        ["student", "Student"],
+        ["night", "Night school"],
+      ].map(([id, name]) => ({ id, name })),
+  }),
+  groupMemberMoveMutation: () => ({ mutationFn: mocks.move }),
 }));
+
+const GROUPS = {
+  admin: { id: "admin", name: "Admin" },
+  educator: { id: "educator", name: "Educator" },
+  student: { id: "student", name: "Student" },
+};
 
 const user = (
   id: string,
   name: string | null,
   educator: "pending" | "approved" | null = null,
+  group: keyof typeof GROUPS = educator === "approved" ? "educator" : "student",
 ) => ({
   id,
   name,
   email: name ? `${id}@example.test` : null,
   educator,
+  group: GROUPS[group],
   created_at: 1_700_000_000,
 });
 
@@ -45,26 +64,50 @@ beforeEach(() => {
       user("ann", "Ann", "approved"),
       user("bo", "Bo", "pending"),
       user("u-3", null),
+      user("root", "Root", null, "admin"),
     ]),
   );
 });
 
-it("lists names, emails, educator status and the first-seen date", async () => {
+it("lists names, emails, groups, educator requests and the first-seen date", async () => {
   setup();
   expect(await screen.findByText("Ann")).toBeInTheDocument();
   expect(screen.getByText("ann@example.test")).toBeInTheDocument();
-  expect(screen.getByText("Educator")).toBeInTheDocument();
+  expect(
+    await screen.findByRole("combobox", { name: "Group for Ann" }),
+  ).toHaveTextContent("Educator");
+  expect(
+    screen.getByRole("combobox", { name: "Group for Bo" }),
+  ).toHaveTextContent("Student");
   expect(screen.getByText("Educator request")).toBeInTheDocument();
   // No name or email yet: the id stands in.
   expect(screen.getByText("Unnamed user")).toBeInTheDocument();
   expect(screen.getByText("u-3")).toBeInTheDocument();
-  expect(screen.getAllByText(/^First seen /)).toHaveLength(3);
-  expect(screen.getByText("Page 1 · 3 users")).toBeInTheDocument();
-  // Read-only: the only buttons page through the list.
-  expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-    "Previous users",
-    "Next users",
-  ]);
+  // Administrators follow the sign-in role, so their group can't be chosen.
+  expect(
+    screen.queryByRole("combobox", { name: "Group for Root" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText("Admin")).toBeInTheDocument();
+  expect(screen.getAllByText(/^First seen /)).toHaveLength(4);
+  expect(screen.getByText("Page 1 · 4 users")).toBeInTheDocument();
+});
+
+it("moves a user to another group, never into Admin", async () => {
+  mocks.move.mockResolvedValue({ id: "night", name: "Night school" });
+  const actor = setup();
+  await actor.click(
+    await screen.findByRole("combobox", { name: "Group for Bo" }),
+  );
+  expect(
+    screen.queryByRole("option", { name: "Admin" }),
+  ).not.toBeInTheDocument();
+  await actor.click(screen.getByRole("option", { name: "Night school" }));
+  await waitFor(() =>
+    expect(mocks.move.mock.calls[0][0]).toEqual({
+      path: { user_id: "bo" },
+      body: { group_id: "night" },
+    }),
+  );
 });
 
 it("searches from the first page and says when nothing matches", async () => {

@@ -5,6 +5,7 @@ import { ThemeGallery } from "@/components/settings/theme-gallery";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HelpTopic } from "@/features/help/components/help-topic";
 import { firstChatTourHref } from "@/features/help/tour";
 import Link from "next/link";
 import { useUser } from "@/features/auth/components/user-context";
@@ -30,6 +31,20 @@ export const GeneralSettings = () => {
       description="Appearance and defaults for your account."
       className="@container/general"
     >
+      {user.settings.group && (
+        <SettingsSection title="Account">
+          <div className="flex items-center gap-1 text-sm">
+            <span>
+              Group: <strong>{user.settings.group.name}</strong>
+            </span>
+            <HelpTopic id="concept.group" />
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Your group decides which models and tools you may use. Only an
+            administrator can change it.
+          </p>
+        </SettingsSection>
+      )}
       <SettingsSection title="Appearance">
         <div className="flex min-w-0 flex-col gap-2">
           <Label id={themeLabelId} asChild>

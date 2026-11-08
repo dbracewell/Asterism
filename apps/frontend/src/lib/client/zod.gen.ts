@@ -1104,6 +1104,18 @@ export const zGroupMembershipUpdate = z.object({
 });
 
 /**
+ * GroupModelOption
+ *
+ * A shared model a group's list can name.
+ */
+export const zGroupModelOption = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  provider_name: z.string(),
+  enabled: z.boolean(),
+});
+
+/**
  * GroupRef
  *
  * The group a user is in, as shown next to them.
@@ -1111,6 +1123,25 @@ export const zGroupMembershipUpdate = z.object({
 export const zGroupRef = z.object({
   id: z.string(),
   name: z.string(),
+});
+
+/**
+ * GroupToolOption
+ */
+export const zGroupToolOption = z.object({
+  name: z.string(),
+  description: z.string(),
+  enabled: z.boolean(),
+});
+
+/**
+ * GroupAccessOptions
+ *
+ * What a group's model and tool lists can name.
+ */
+export const zGroupAccessOptions = z.object({
+  models: z.array(zGroupModelOption),
+  tools: z.array(zGroupToolOption),
 });
 
 /**
@@ -4437,6 +4468,7 @@ export const zUserSettings = z.object({
   show_thinking: z.boolean().optional().default(true),
   prompt_coach_enabled: z.boolean().optional().default(false),
   first_chat_tour: z.enum(["completed", "dismissed"]).nullish(),
+  group: zGroupRef.nullish(),
 });
 
 /**
@@ -6653,6 +6685,11 @@ export const zGroupCreateBody = zGroupCreate;
  * Successful Response
  */
 export const zGroupCreateResponse = zGroup;
+
+/**
+ * Successful Response
+ */
+export const zGroupAccessOptionsResponse = zGroupAccessOptions;
 
 export const zGroupDeletePath = z.object({
   group_id: z.string(),

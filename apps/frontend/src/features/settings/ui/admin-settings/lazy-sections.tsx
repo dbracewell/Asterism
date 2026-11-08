@@ -136,7 +136,6 @@ export const getLazyAdminSettingsSections = (): Types => [
     label: "Groups",
     value: "group-settings",
     icon: <UsersRoundIcon />,
-    badge: "Planned",
     settingsPane: pane("Groups", <GroupSettings />),
   },
   {

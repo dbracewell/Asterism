@@ -2865,6 +2865,22 @@ export type Group = {
 };
 
 /**
+ * GroupAccessOptions
+ *
+ * What a group's model and tool lists can name.
+ */
+export type GroupAccessOptions = {
+  /**
+   * Models
+   */
+  models: Array<GroupModelOption>;
+  /**
+   * Tools
+   */
+  tools: Array<GroupToolOption>;
+};
+
+/**
  * GroupAccessUpdate
  *
  * Replace a group's model and tool access. Null means every enabled one.
@@ -2901,6 +2917,32 @@ export type GroupMembershipUpdate = {
 };
 
 /**
+ * GroupModelOption
+ *
+ * A shared model a group's list can name.
+ */
+export type GroupModelOption = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Provider Name
+   */
+  provider_name: string;
+  /**
+   * Enabled
+   *
+   * Disabled models are unavailable to everyone, whatever the group allows
+   */
+  enabled: boolean;
+};
+
+/**
  * GroupRef
  *
  * The group a user is in, as shown next to them.
@@ -2914,6 +2956,26 @@ export type GroupRef = {
    * Name
    */
   name: string;
+};
+
+/**
+ * GroupToolOption
+ */
+export type GroupToolOption = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Enabled
+   *
+   * Disabled tools are unavailable to everyone, whatever the group allows
+   */
+  enabled: boolean;
 };
 
 /**
@@ -8847,6 +8909,7 @@ export type UserSettings = {
    * First Chat Tour
    */
   first_chat_tour?: "completed" | "dismissed" | null;
+  group?: GroupRef | null;
 };
 
 /**
@@ -18152,6 +18215,45 @@ export type GroupCreateResponses = {
 
 export type GroupCreateResponse =
   GroupCreateResponses[keyof GroupCreateResponses];
+
+export type GroupAccessOptionsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/groups/access-options";
+};
+
+export type GroupAccessOptionsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type GroupAccessOptionsError =
+  GroupAccessOptionsErrors[keyof GroupAccessOptionsErrors];
+
+export type GroupAccessOptionsResponses = {
+  /**
+   * Successful Response
+   */
+  200: GroupAccessOptions;
+};
+
+export type GroupAccessOptionsResponse =
+  GroupAccessOptionsResponses[keyof GroupAccessOptionsResponses];
 
 export type GroupDeleteData = {
   body?: never;

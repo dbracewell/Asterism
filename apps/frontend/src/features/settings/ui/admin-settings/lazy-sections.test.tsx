@@ -44,7 +44,7 @@ describe("getLazyAdminSettingsSections", () => {
     expect(mocks.rendered).toHaveBeenCalledWith(0);
   });
 
-  it("marks exactly the three unfinished panes as Planned and keeps available panes discoverable", () => {
+  it("marks exactly the two unfinished panes as Planned and keeps available panes discoverable", () => {
     const sections = getLazyAdminSettingsSections().filter(
       (section) => section.type === "section",
     );
@@ -52,7 +52,7 @@ describe("getLazyAdminSettingsSections", () => {
       sections
         .filter((section) => section.badge === "Planned")
         .map((section) => section.label),
-    ).toEqual(["Groups", "Image Generation", "Code Execution"]);
+    ).toEqual(["Image Generation", "Code Execution"]);
     expect(
       sections
         .filter((section) => !section.badge)
@@ -60,6 +60,7 @@ describe("getLazyAdminSettingsSections", () => {
     ).toEqual([
       "Providers",
       "Theme Editor",
+      "Groups",
       "Users",
       "Tools",
       "Skills",

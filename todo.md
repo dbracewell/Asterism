@@ -65,9 +65,9 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 - [x] US-70.2: Group model and tool access, enforced (confirmed and merged)
   - [x] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
   - [x] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
-- [ ] US-70.3: Admin Settings → Groups
-  - [ ] Build the page and user-list group control; regenerate the client.
-  - [ ] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.
+- [x] US-70.3: Admin Settings → Groups (awaiting confirmation)
+  - [x] Build the page and user-list group control; regenerate the client.
+  - [x] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.
 
 ### [EPIC-71: Model-written skills](docs/epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
 

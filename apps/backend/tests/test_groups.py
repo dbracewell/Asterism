@@ -174,3 +174,12 @@ async def test_revoked_educators_invites_stop_working(api):
     assert (await client.post("/class-invites/check", json=body)).status_code == 200
     await client.delete("/educator-access/requests/teach", headers=auth("admin"))
     assert (await client.post("/class-invites/check", json=body)).status_code == 400
+
+
+async def test_users_see_their_own_group_in_their_settings(api):
+    client, _ = api
+    assert (await client.get("/settings/user", headers=auth("s1"))).json()["group"] == {
+        "id": "student",
+        "name": "Student",
+    }
+    assert (await client.get("/settings/user", headers=auth("teach"))).json()["group"]["id"] == "educator"

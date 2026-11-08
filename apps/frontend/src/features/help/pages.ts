@@ -41,6 +41,7 @@ export type PageGuideId =
   | "admin.skills"
   | "admin.chatgpt"
   | "admin.image-captioning"
+  | "admin.groups"
   | "admin.users"
   | "admin.educators"
   | "admin.export";
@@ -672,6 +673,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Your appearance and chat defaults: theme, text size, the model new chats start with, and the chat tour.",
     areas: [
       {
+        name: "Account",
+        description:
+          "The group you're in, which decides the models and tools you may use. Only an administrator can change it.",
+      },
+      {
         name: "Appearance",
         description:
           "Choose a theme and text size, and whether to show the model's thinking.",
@@ -690,7 +696,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [
       "Turn on Prompt Coach to get feedback on your prompts before you send them.",
     ],
-    terms: ["concept.model", "concept.prompt-coach"],
+    terms: ["concept.model", "concept.prompt-coach", "concept.group"],
     audience: "everyone",
   },
   "settings.personas": {
@@ -898,15 +904,43 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["concept.file-scope"],
     audience: "admin",
   },
+  "admin.groups": {
+    title: "Groups",
+    purpose:
+      "Limit which models and tools each group of users may use. Everyone is in exactly one group.",
+    areas: [
+      {
+        name: "Groups",
+        description:
+          "Admin, Educator and Student are built in and can't be renamed or deleted. Create other groups for people who need different access; a group can be deleted once it's empty.",
+      },
+      {
+        name: "Access",
+        description:
+          "Each group allows every enabled model and tool, or only the ones you check. It can only narrow what Providers and Tools turn on, and members' own ChatGPT plan models aren't limited.",
+      },
+    ],
+    tasks: [
+      "Limit students to some models: edit access for Student and check the models they may use.",
+      "Move people between groups from the Users section.",
+    ],
+    terms: ["concept.group", "concept.model"],
+    audience: "admin",
+  },
   "admin.users": {
     title: "Users",
     purpose:
-      "See who has an account. The list is read-only; accounts are not changed here.",
+      "See who has an account and move people between groups. Accounts are not otherwise changed here.",
     areas: [
       {
         name: "User list",
         description:
-          "Each account's name, email, educator status and the date it was first seen. Names and emails come from sign-in and update the next time the person uses Asterism.",
+          "Each account's name, email, group, educator status and the date it was first seen. Names and emails come from sign-in and update the next time the person uses Asterism.",
+      },
+      {
+        name: "Group",
+        description:
+          "Choose another group to change what someone may use. Moving someone into Educator approves educator access; moving them out revokes it. Administrators are always in Admin.",
       },
       {
         name: "Search",
@@ -916,7 +950,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [
       "Approve educators from the Educators section; their status shows here.",
     ],
-    terms: [],
+    terms: ["concept.group"],
     audience: "admin",
   },
   "admin.educators": {
@@ -926,11 +960,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Requests and educators",
         description:
-          "Users ask from the Classes page. Approve or deny a request, or revoke an educator. Revoking stops them managing their classes; students stay in them.",
+          "Users ask from the Classes page. Approving moves them into the Educator group, and revoking moves them back to Student. Revoking stops them managing their classes; students stay in them.",
       },
     ],
     tasks: [],
-    terms: ["concept.educator", "concept.class"],
+    terms: ["concept.educator", "concept.class", "concept.group"],
     audience: "admin",
   },
   "admin.export": {
@@ -941,7 +975,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       {
         name: "Export settings",
         description:
-          "Saves providers, models, tools and policies. API keys in the file are encrypted with a passphrase you choose; without it the file can't be opened.",
+          "Saves providers, models, tools, policies and each group's model and tool access. Group membership isn't included. API keys in the file are encrypted with a passphrase you choose; without it the file can't be opened.",
       },
       {
         name: "Import settings",
@@ -976,7 +1010,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   "user-permissions": "admin.users",
   educators: "admin.educators",
   export: "admin.export",
-  "group-settings": null,
+  "group-settings": "admin.groups",
   "image-generation": null,
   "code-execution": null,
 };

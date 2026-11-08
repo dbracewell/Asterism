@@ -348,6 +348,9 @@ import type {
   FileUploadData,
   FileUploadError,
   FileUploadResponse,
+  GroupAccessOptionsData,
+  GroupAccessOptionsError,
+  GroupAccessOptionsResponse,
   GroupAccessUpdateData,
   GroupAccessUpdateError,
   GroupAccessUpdateResponse,
@@ -7987,6 +7990,36 @@ export const groupCreateMutation = (
   };
   return mutationOptions;
 };
+
+export const groupAccessOptionsQueryKey = (
+  options?: Options<GroupAccessOptionsData>,
+) => createQueryKey("groupAccessOptions", options);
+
+/**
+ * Access Options
+ *
+ * Every shared model and configurable tool a group's lists can name.
+ */
+export const groupAccessOptionsOptions = (
+  options?: Options<GroupAccessOptionsData>,
+) =>
+  queryOptions<
+    GroupAccessOptionsResponse,
+    GroupAccessOptionsError,
+    GroupAccessOptionsResponse,
+    ReturnType<typeof groupAccessOptionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().groupAccessOptions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: groupAccessOptionsQueryKey(options),
+  });
 
 /**
  * Delete Group
