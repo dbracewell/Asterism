@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { percentLabel, questionCountLabel } from "../lib/quiz";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 const PAGE_SIZE = 20;
 
@@ -31,7 +32,9 @@ export function ProjectStudyQuizzes({ projectId }: { projectId: string }) {
   return (
     <section className="flex flex-col gap-4" aria-label="Practice quizzes">
       <div className="flex items-center justify-between">
-        <h2 className="text-heading">Practice quizzes</h2>
+        <HelpHeading help="concept.quiz" className="text-heading">
+          Practice quizzes
+        </HelpHeading>
         {quizzes.data && quizzes.data.total > 0 && newQuiz}
       </div>
       {quizzes.isPending && <ListSkeleton label="Loading quizzes" rows={2} />}

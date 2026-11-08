@@ -141,3 +141,16 @@ it("lets an approved educator create a class and opens it", async () => {
   await user.click(screen.getByRole("button", { name: "Create class" }));
   await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/classes/c1"));
 });
+
+// US-66.2: each section has a "what is this?" button beside its heading.
+it("offers help on joining, classes and teaching", async () => {
+  setup();
+  expect(
+    await screen.findByRole("heading", { name: "Join a class" }),
+  ).toBeInTheDocument();
+  for (const help of ["Class code", "Class", "Educator"]) {
+    expect(
+      screen.getByRole("button", { name: `Help: ${help}` }),
+    ).toBeInTheDocument();
+  }
+});

@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeckFormDialog } from "./deck-form-dialog";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 const PAGE_SIZE = 20;
 
@@ -53,7 +54,9 @@ export function ProjectStudyDecks({ projectId }: { projectId: string }) {
     <section className="flex flex-col gap-4" aria-label="Study decks">
       <div className="flex items-center justify-between">
         <div className="flex flex-wrap items-baseline gap-x-3">
-          <h2 className="text-heading">Study decks</h2>
+          <HelpHeading help="concept.flashcard" className="text-heading">
+            Study decks
+          </HelpHeading>
           {summary.data && summary.data.card_count > 0 && (
             <span className="text-muted-foreground text-sm">
               {summary.data.due_count > 0

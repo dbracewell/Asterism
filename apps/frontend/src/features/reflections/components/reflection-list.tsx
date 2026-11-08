@@ -36,6 +36,7 @@ import {
   UNCLEAR_PROMPT,
 } from "./reflect-dialog";
 import { UnclearPracticeDialog } from "./unclear-practice-dialog";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 const ALL = "all";
 
@@ -70,7 +71,9 @@ function OwnedReflectionList({
   return (
     <section aria-label="Reflections" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-heading">Reflections</h2>
+        <HelpHeading help="concept.reflection" className="text-heading">
+          Reflections
+        </HelpHeading>
         {(personas.data?.profiles.length ?? 0) > 1 && (
           <Select
             value={personaId ?? ALL}

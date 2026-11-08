@@ -415,6 +415,9 @@ it("lists notes and offers both generators", async () => {
     await screen.findByRole("link", { name: "Exam plan" }),
   ).toHaveAttribute("href", "/projects/p/study/notes/n1");
   expect(screen.getByText(/^Study guide · updated/)).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Help: Study notes" }),
+  ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Summarize files" })).toHaveAttribute(
     "href",
     "/projects/p/study/summaries/new",

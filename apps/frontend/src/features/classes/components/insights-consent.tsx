@@ -7,6 +7,7 @@ import type { JoinedClass } from "@/lib/client";
 import { classInsightsConsentUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
+import { HelpTopic } from "@/features/help/components/help-topic";
 
 /** A student's opt-in to class-wide totals (US-60.5). Off by default. */
 export function InsightsConsent({ item }: { item: JoinedClass }) {
@@ -27,6 +28,7 @@ export function InsightsConsent({ item }: { item: JoinedClass }) {
           }
         />
         <label htmlFor={id}>Share my practice results in class totals</label>
+        <HelpTopic id="concept.class-insights" />
       </div>
       <p className="text-muted-foreground">
         {item.educator_name} sees only totals by course file, and only when at

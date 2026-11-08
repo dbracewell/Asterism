@@ -54,6 +54,9 @@ it("saves the learner's answers to the two prompts", async () => {
   const user = userEvent.setup();
   const dialog = open();
   const save = within(dialog).getByRole("button", { name: "Save reflection" });
+  expect(
+    within(dialog).getByRole("button", { name: "Help: Reflection" }),
+  ).toBeInTheDocument();
   expect(save).toBeDisabled();
   await user.type(
     within(dialog).getByLabelText("What's still unclear?"),

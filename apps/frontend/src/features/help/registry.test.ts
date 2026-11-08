@@ -29,9 +29,59 @@ const requiredGlossary: HelpId[] = [
   "concept.citation",
 ];
 
+// US-66.2: entries for study tools, reflections, classes and packs.
+const newerGlossary: HelpId[] = [
+  "concept.class",
+  "concept.educator",
+  "concept.course",
+  "concept.class-code",
+  "concept.class-invite",
+  "concept.class-mode-policy",
+  "concept.class-insights",
+  "concept.flashcard",
+  "concept.quiz",
+  "concept.weak-spot",
+  "concept.topic-mastery",
+  "concept.reflection",
+  "concept.study-note",
+  "concept.team-pack",
+  "admin.settings-file",
+];
+
+const text = (id: HelpId) => {
+  const entry = helpEntries[id];
+  return [entry.title, entry.summary, ...entry.details].join(" ");
+};
+
 describe("help registry", () => {
   it("covers every required glossary concept", () => {
-    for (const id of requiredGlossary) expect(ids).toContain(id);
+    for (const id of [...requiredGlossary, ...newerGlossary]) {
+      expect(ids).toContain(id);
+    }
+  });
+
+  it("states the limits learners rely on (US-66.2)", () => {
+    // Insights are thresholded totals, and sharing starts off.
+    expect(text("concept.class-insights")).toMatch(/at least five students/);
+    expect(text("concept.class-insights")).toMatch(/off until/);
+    expect(text("concept.class-insights")).toMatch(
+      /never see chats, answers or any one student's results/,
+    );
+    // The class policy only narrows what students can do.
+    expect(text("concept.class-mode-policy")).toMatch(/can only limit/);
+    // Packs never carry secrets or grant tools on their own.
+    expect(text("concept.team-pack")).toMatch(/never holds files, keys/);
+    expect(text("concept.team-pack")).toMatch(/can't grant tools/);
+    // Educators are not administrators.
+    expect(text("concept.educator")).toMatch(/not administrators/);
+  });
+
+  it("keeps the settings file admin-only", () => {
+    expect(helpEntries["admin.settings-file"].audience).toBe("admin");
+    for (const id of newerGlossary) {
+      if (id === "admin.settings-file") continue;
+      expect(helpEntries[id].audience, id).toBe("everyone");
+    }
   });
 
   it.each(ids)("%s has readable, non-empty content", (id) => {

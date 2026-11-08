@@ -104,7 +104,9 @@ export async function createClass(educator: Page, name: string) {
   await educator.getByLabel("Class name").fill(name);
   await educator.getByRole("button", { name: "Create class" }).click();
   await expect(educator.getByRole("heading", { name })).toBeVisible();
-  return (await educator.getByLabel("Class code").textContent())!;
+  return (await educator
+    .getByLabel("Class code", { exact: true })
+    .textContent())!;
 }
 
 /** Publish a project as the next course version from the class page. */

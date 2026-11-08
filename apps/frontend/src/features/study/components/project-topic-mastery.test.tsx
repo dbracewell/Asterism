@@ -80,6 +80,9 @@ it("shows each topic's level, score, coverage and trend", async () => {
   expect(energy).toHaveTextContent("0 of 2 practiced");
   expect(energy).not.toHaveTextContent("%");
   expect(energy).toHaveTextContent("Not practiced yet.");
+  expect(
+    screen.getByRole("button", { name: "Help: Topic mastery" }),
+  ).toBeInTheDocument();
 });
 
 it("starts practice on a topic and opens the quiz", async () => {

@@ -204,7 +204,12 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Create a project for each course or assignment.",
       "Open a project to start a chat that can use its files.",
     ],
-    terms: ["concept.project", "concept.file-scope", "concept.general-chat"],
+    terms: [
+      "concept.project",
+      "concept.file-scope",
+      "concept.general-chat",
+      "concept.team-pack",
+    ],
     audience: "everyone",
   },
   project: {
@@ -261,7 +266,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "concept.file-scope",
       "concept.citation",
       "concept.sub-agent",
-      "concept.main-agent",
+      "concept.flashcard",
+      "concept.quiz",
+      "concept.weak-spot",
+      "concept.reflection",
+      "concept.team-pack",
     ],
     audience: "everyone",
   },
@@ -343,7 +352,13 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Add your class's course to get its instructions, sub-agents and files as your own project.",
       "Turn on sharing to let your educator see class totals. They never see your chats or your own results.",
     ],
-    terms: ["concept.project", "concept.sub-agent"],
+    terms: [
+      "concept.class",
+      "concept.class-code",
+      "concept.course",
+      "concept.class-insights",
+      "concept.educator",
+    ],
     audience: "everyone",
   },
   class: {
@@ -391,9 +406,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Publish a new version with a short note so students know what changed.",
     ],
     terms: [
-      "concept.project",
-      "concept.learning-mode",
-      "concept.answer-reveal",
+      "concept.class-code",
+      "concept.class-invite",
+      "concept.course",
+      "concept.class-mode-policy",
+      "concept.class-insights",
     ],
     audience: "everyone",
   },
@@ -418,6 +435,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Export your own project's setup from its Settings tab to share it.",
     ],
     terms: [
+      "concept.team-pack",
       "concept.sub-agent",
       "concept.skill",
       "concept.template",
@@ -444,7 +462,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [
       "Tag the deck with topics to see your progress under Topic mastery.",
     ],
-    terms: ["concept.topic-mastery", "concept.citation"],
+    terms: ["concept.flashcard", "concept.topic-mastery", "concept.citation"],
     audience: "everyone",
   },
   "study.drafts": {
@@ -468,7 +486,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: ["Edit a draft before accepting it if the wording is off."],
-    terms: ["concept.model", "concept.citation"],
+    terms: ["concept.flashcard", "concept.model", "concept.citation"],
     audience: "everyone",
   },
   "study.review": {
@@ -490,7 +508,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [
       "Rate honestly: Again brings the card back soon and marks it as a weak spot.",
     ],
-    terms: ["concept.topic-mastery"],
+    terms: ["concept.flashcard", "concept.weak-spot", "concept.topic-mastery"],
     audience: "everyone",
   },
   "study.quiz-new": {
@@ -510,7 +528,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [],
-    terms: ["concept.model", "concept.citation"],
+    terms: ["concept.quiz", "concept.model", "concept.citation"],
     audience: "everyone",
   },
   "study.quiz": {
@@ -531,7 +549,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     tasks: [
       "Tag the quiz with topics to see your progress under Topic mastery.",
     ],
-    terms: ["concept.topic-mastery"],
+    terms: ["concept.quiz", "concept.weak-spot", "concept.topic-mastery"],
     audience: "everyone",
   },
   "study.quiz-take": {
@@ -550,7 +568,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [],
-    terms: ["concept.model"],
+    terms: ["concept.quiz", "concept.model"],
     audience: "everyone",
   },
   "study.quiz-attempt": {
@@ -569,7 +587,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: ["Retake the quiz, or practice weak spots from the Study tab."],
-    terms: ["concept.citation"],
+    terms: ["concept.quiz", "concept.weak-spot", "concept.citation"],
     audience: "everyone",
   },
   "study.summary-new": {
@@ -589,7 +607,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [],
-    terms: ["concept.model", "concept.citation"],
+    terms: ["concept.study-note", "concept.model", "concept.citation"],
     audience: "everyone",
   },
   "study.guide-new": {
@@ -609,7 +627,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [],
-    terms: ["concept.model"],
+    terms: ["concept.study-note", "concept.model"],
     audience: "everyone",
   },
   "study.note": {
@@ -626,7 +644,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [],
-    terms: ["concept.citation"],
+    terms: ["concept.study-note", "concept.citation"],
     audience: "everyone",
   },
   "settings.general": {
@@ -887,7 +905,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [],
-    terms: [],
+    terms: ["concept.educator", "concept.class"],
     audience: "admin",
   },
   "admin.export": {
@@ -907,7 +925,7 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       },
     ],
     tasks: [],
-    terms: ["admin.providers"],
+    terms: ["admin.settings-file", "admin.providers"],
     audience: "admin",
   },
 };

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { HelpAudienceProvider } from "@/features/help/components/help-audience";
 import { ExportSettings } from "./export-settings";
 
 const mocks = vi.hoisted(() => ({ exportSettings: vi.fn() }));
@@ -19,11 +20,13 @@ const FILE = {
   ciphertext: "token",
 };
 
-function setup() {
+function setup(isAdmin = true) {
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      <ExportSettings />
-    </QueryClientProvider>,
+    <HelpAudienceProvider isAdmin={isAdmin}>
+      <QueryClientProvider client={new QueryClient()}>
+        <ExportSettings />
+      </QueryClientProvider>
+    </HelpAudienceProvider>,
   );
   return {
     user: userEvent.setup(),
@@ -97,4 +100,19 @@ it("reports a failure and keeps what was typed", async () => {
   );
   expect(first).toHaveValue(PASSPHRASE);
   expect(URL.createObjectURL).not.toHaveBeenCalled();
+});
+
+// US-66.2: the settings file is explained beside both sections, to admins only.
+it("explains the settings file to admins only", () => {
+  setup();
+  expect(
+    screen.getAllByRole("button", { name: "Help: Settings file" }),
+  ).toHaveLength(2);
+});
+
+it("hides the admin-only settings file help from other viewers", () => {
+  setup(false);
+  expect(
+    screen.queryByRole("button", { name: "Help: Settings file" }),
+  ).not.toBeInTheDocument();
 });

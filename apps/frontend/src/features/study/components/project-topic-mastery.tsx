@@ -13,6 +13,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { studyErrorDetail } from "../lib/error-detail";
 import { LEVEL_LABELS, percent, trendSummary } from "../lib/mastery";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 export const TOPIC_PRACTICE_QUESTIONS = 10;
 
@@ -48,7 +49,9 @@ export function ProjectTopicMastery({ projectId }: { projectId: string }) {
   return (
     <section aria-label="Topic mastery" className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-heading">Topic mastery</h2>
+        <HelpHeading help="concept.topic-mastery" className="text-heading">
+          Topic mastery
+        </HelpHeading>
         <p className="text-muted-foreground text-sm">
           From your latest review rating or quiz answer on each card and
           question tagged with the topic.

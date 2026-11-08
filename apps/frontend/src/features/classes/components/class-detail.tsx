@@ -35,6 +35,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 function Invite({ item }: { item: TaughtClass }) {
   const switchId = useId();
@@ -49,7 +50,9 @@ function Invite({ item }: { item: TaughtClass }) {
   };
   return (
     <section aria-label="Join with a code" className="grid gap-3">
-      <h2 className="text-lg font-medium">Class code</h2>
+      <HelpHeading help="concept.class-code" className="text-lg font-medium">
+        Class code
+      </HelpHeading>
       <p className="text-sm">
         Students who already have an Asterism account join with this code.
       </p>
@@ -150,7 +153,9 @@ function Roster({ classId }: { classId: string }) {
   });
   return (
     <section aria-label="Students" className="grid gap-3">
-      <h2 className="text-lg font-medium">Students</h2>
+      <HelpHeading help="concept.class" className="text-lg font-medium">
+        Students
+      </HelpHeading>
       <p className="text-muted-foreground text-sm">
         You see names only, never students&apos; chats.
       </p>

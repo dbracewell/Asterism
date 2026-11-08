@@ -167,6 +167,9 @@ it("lists quizzes with their last score", async () => {
   const link = await screen.findByRole("link", { name: "Cells quiz" });
   expect(link).toHaveAttribute("href", "/projects/p/study/quizzes/q1");
   expect(screen.getByText("3 questions · last 50%")).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Help: Practice quizzes and attempts" }),
+  ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Take Cells quiz" })).toHaveAttribute(
     "href",
     "/projects/p/study/quizzes/q1/take",

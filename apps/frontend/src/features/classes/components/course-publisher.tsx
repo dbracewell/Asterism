@@ -20,6 +20,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 function count(n: number, word: string) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -60,7 +61,9 @@ export function CoursePublisher({ classId }: { classId: string }) {
 
   return (
     <section aria-label="Course" className="grid gap-3">
-      <h2 className="text-lg font-medium">Course</h2>
+      <HelpHeading help="concept.course" className="text-lg font-medium">
+        Course
+      </HelpHeading>
       <p className="text-sm">
         Publish one of your projects as this class&apos;s course. Students get
         their own copy of its instructions, selected sub-agents and files, and

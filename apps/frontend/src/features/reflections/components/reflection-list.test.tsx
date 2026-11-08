@@ -90,6 +90,9 @@ it("lists the project's reflections and filters by persona", async () => {
     name: /Reflection from/,
   });
   expect(item).toHaveTextContent("Exam prep");
+  expect(
+    screen.getByRole("button", { name: "Help: Reflection" }),
+  ).toBeInTheDocument();
   expect(item).toHaveTextContent("What did I learn?Osmosis moves water.");
   expect(within(item).getByRole("link", { name: "Open chat" })).toHaveAttribute(
     "href",

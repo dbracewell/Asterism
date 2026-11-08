@@ -26,6 +26,7 @@ import {
 } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { HelpTopic } from "@/features/help/components/help-topic";
 
 const PAGE = { page: 1, page_size: 100 };
 // Mirrors the pack format limits (ADR-0051).
@@ -140,7 +141,10 @@ function ExportPackForm({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Export team pack</DialogTitle>
+        <div className="flex items-center gap-1">
+          <DialogTitle>Export team pack</DialogTitle>
+          <HelpTopic id="concept.team-pack" />
+        </div>
         <DialogDescription>
           Choose what to share. Models are saved as requirements, and the pack
           holds no files, keys or provider details. Instructions are included as

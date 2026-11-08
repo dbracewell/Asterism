@@ -83,6 +83,15 @@ it("lets a student opt in", async () => {
       }
     />,
   );
+  // Sharing starts off, with help beside the switch (US-66.2).
+  expect(
+    screen.getByRole("switch", {
+      name: "Share my practice results in class totals",
+    }),
+  ).not.toBeChecked();
+  expect(
+    screen.getByRole("button", { name: "Help: Class insights" }),
+  ).toBeInTheDocument();
   await userEvent.click(
     screen.getByRole("switch", {
       name: "Share my practice results in class totals",

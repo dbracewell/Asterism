@@ -10,6 +10,7 @@ import type { LearningModeId, TaughtClass } from "@/lib/client";
 import { classModePolicyUpdateMutation } from "@/lib/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
+import { HelpHeading } from "@/features/help/components/help-heading";
 
 /** The educator's limits on learning modes in students' course projects (US-60.4). */
 export function ClassModePolicy({ item }: { item: TaughtClass }) {
@@ -31,7 +32,12 @@ export function ClassModePolicy({ item }: { item: TaughtClass }) {
   const allChosen = modes.every((mode) => chosen.includes(mode.id));
   return (
     <section aria-label="Learning mode policy" className="grid gap-3">
-      <h2 className="text-lg font-medium">Learning mode policy</h2>
+      <HelpHeading
+        help="concept.class-mode-policy"
+        className="text-lg font-medium"
+      >
+        Learning mode policy
+      </HelpHeading>
       <p className="text-sm">
         Applies in your students&apos; course projects. It can only limit what
         they do there; their other chats are unaffected. Students see these
