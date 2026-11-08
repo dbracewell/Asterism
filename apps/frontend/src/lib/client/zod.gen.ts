@@ -3865,6 +3865,7 @@ export const zSubAgentDefinition = z.object({
 export const zGeneralSubAgents = z.object({
   revision: z.int().gte(1),
   agents: z.array(zSubAgentDefinition),
+  delegation_allowed: z.boolean(),
 });
 
 /**

@@ -17,6 +17,7 @@ import {
 import { MessageItem } from "@/features/chat/components/message/message-item";
 import { StreamingIndicator } from "@/features/chat/components/message/streaming-indicator";
 import { SubAgentActivityPanel } from "@/features/chat/components/sub-agent-activity";
+import { GeneralDelegationStatus } from "@/features/chat/components/general-delegation-status";
 import { useChatWebSocket } from "@/features/chat/hooks/use-chat-websocket";
 import {
   connectionStatusMap,
@@ -823,6 +824,11 @@ export const ChatSession = ({
             }
             status={
               <>
+                {!session.info.project_id && (
+                  <GeneralDelegationStatus
+                    modelId={session.info.selected_model_id}
+                  />
+                )}
                 <ContextUsageProgress
                   usage={isFetching ? null : session.context_usage}
                   contextWindow={contextWindow}

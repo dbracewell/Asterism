@@ -42,9 +42,9 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
   - [x] Write the ADR (amends the "General chats never delegate" rule) and update AGENTS.md and architecture docs.
   - [x] Add the General set to the main-agent configuration and resolve it in `resolve_delegation_scope`.
   - [x] Tests: no set → no `sub_agent` tool; set → delegation works; removing a target mid-turn is refused; child file scope is limited to the chat's attachments; owner isolation.
-- [ ] US-68.2: Choose General chat sub-agents
-  - [ ] Build the picker with generated client hooks; show availability.
-  - [ ] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.
+- [ ] US-68.2: Choose General chat sub-agents (implemented; awaiting confirmation)
+  - [x] Build the picker with generated client hooks; show availability.
+  - [x] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.
 
 ### [EPIC-69: Automatic context compaction](docs/epics/EPIC-69-AUTO-COMPACTION.md)
 

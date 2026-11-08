@@ -17,6 +17,7 @@ from asterism.domains.chat.delegation import (
 )
 from asterism.domains.chat.models import ChatModel
 from asterism.domains.chat.schemas import Chat
+from asterism.domains.settings.models import ApplicationSettingsModel
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from test_context_tools import add_file, context_runtime, resolve
@@ -52,7 +53,11 @@ async def general_chat(r, files=()):
 async def test_the_set_is_ordered_owned_and_revision_guarded(runtime):
     r = runtime
     client = r.client
-    assert (await client.get(URL, headers=auth())).json() == {"revision": 1, "agents": []}
+    assert (await client.get(URL, headers=auth())).json() == {
+        "revision": 1,
+        "agents": [],
+        "delegation_allowed": True,
+    }
     c = await worker(client, "Third")
     foreign = await worker(client, "Theirs", user="b")
     main = (await client.get("/settings/user/main-agent", headers=auth())).json()
@@ -71,12 +76,27 @@ async def test_the_set_is_ordered_owned_and_revision_guarded(runtime):
     # Saving the same list again changes nothing.
     assert (await put(client, [c["id"], r.a["id"]], revision=2)).json()["revision"] == 2
     # Another user sees only their own (empty) set.
-    assert (await client.get(URL, headers=auth("b"))).json() == {"revision": 1, "agents": []}
+    assert (await client.get(URL, headers=auth("b"))).json()["agents"] == []
 
     # Deleting a definition takes it out of the set and bumps the revision.
     assert (await client.delete(f"/agents/sub-agents/{c['id']}", headers=auth())).status_code == 200
     after = (await client.get(URL, headers=auth())).json()
     assert after["revision"] == 3 and [agent["id"] for agent in after["agents"]] == [r.a["id"]]
+
+
+async def test_the_set_reports_whether_admin_policy_allows_delegation(runtime):
+    r = runtime
+    assert (await put(r.client, [r.a["id"]])).json()["delegation_allowed"] is True
+    async with r.sessions() as db:
+        await db.execute(
+            update(ApplicationSettingsModel)
+            .where(ApplicationSettingsModel.key == "active_tools")
+            .values(value=["web_search"])
+        )
+        await db.commit()
+    listed = (await r.client.get(URL, headers=auth())).json()
+    # The set is kept; only the display flag follows policy.
+    assert listed["delegation_allowed"] is False and [agent["id"] for agent in listed["agents"]] == [r.a["id"]]
 
 
 async def test_the_database_admits_only_the_owners_sub_agents(runtime):

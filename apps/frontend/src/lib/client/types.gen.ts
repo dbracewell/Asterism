@@ -2791,6 +2791,12 @@ export type GeneralSubAgents = {
    * Agents
    */
   agents: Array<SubAgentDefinition>;
+  /**
+   * Delegation Allowed
+   *
+   * Admin policy currently enables the internal sub_agent tool. Display only; it grants nothing.
+   */
+  delegation_allowed: boolean;
 };
 
 /**

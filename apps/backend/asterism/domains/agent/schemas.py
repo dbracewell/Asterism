@@ -150,6 +150,9 @@ class GeneralSubAgents(BaseModel):
 
     revision: int = Field(ge=1)
     agents: list[SubAgentDefinition]
+    delegation_allowed: bool = Field(
+        description="Admin policy currently enables the internal sub_agent tool. Display only; it grants nothing."
+    )
 
 
 class GeneralSubAgentsUpdate(BaseModel):
