@@ -187,6 +187,15 @@ class LLMTool[T: BaseModel]:
     policy: ToolPolicy = ToolPolicy.USER_CONFIGURABLE
 
 
+async def _group_allows_tool(user_id: str, name: str) -> bool:
+    """Group access is read live at every call, so a change applies mid-run (ADR-0058)."""
+    from asterism.db.database import get_async_db_session
+    from asterism.domains.groups.service import read_access
+
+    async with get_async_db_session() as session:
+        return (await read_access(user_id, session)).allows_tool(name)
+
+
 class ToolRegistry:
     """Holds registered tools and mediates their invocation.
 
@@ -347,6 +356,8 @@ class ToolRegistry:
         # internal-tool authorization round-trips entirely.
         if llm_tool.name not in app_settings.active_tools:
             return ToolRegistry._exception_to_tool_result(ValueError("Tool disabled by administrator"), tool_call)
+        if llm_tool.policy == ToolPolicy.USER_CONFIGURABLE and not await _group_allows_tool(user.id, llm_tool.name):
+            return ToolRegistry._exception_to_tool_result(ValueError("Tool not available to your group"), tool_call)
 
         raw_arguments = _parse_tool_call_arguments(tool_call.function.arguments)
         if raw_arguments is None:

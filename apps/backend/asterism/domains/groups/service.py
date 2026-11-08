@@ -4,6 +4,8 @@ Membership is read live. The admin group mirrors the verified token role and is
 never set through the membership API.
 """
 
+import uuid
+from dataclasses import dataclass
 from typing import Literal
 
 from cachetools import TTLCache
@@ -12,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
-from asterism.core.exceptions import ConflictException, NotFoundException
+from asterism.core.exceptions import BadDataException, ConflictException, NotFoundException
 from asterism.domains.user.models import UserModel
 
 from .models import ADMIN_GROUP, EDUCATOR_GROUP, STUDENT_GROUP, GroupModel
@@ -73,7 +75,87 @@ async def list_groups(session: AsyncSession) -> list[Group]:
 
 
 def _view(group: GroupModel, member_count: int) -> Group:
-    return Group(id=group.id, name=group.name, built_in=group.built_in, member_count=member_count)
+    return Group(
+        id=group.id,
+        name=group.name,
+        built_in=group.built_in,
+        member_count=member_count,
+        models=None if group.model_access is None else [uuid.UUID(value) for value in group.model_access],
+        tools=group.tool_access,
+    )
+
+
+@dataclass(frozen=True)
+class GroupAccess:
+    """What a user's group allows (US-70.2). None allows everything the administrator enabled.
+
+    Group access only narrows admin policy; it never enables anything.
+    """
+
+    models: frozenset[uuid.UUID] | None = None
+    tools: frozenset[str] | None = None
+
+    def allows_model(self, model_id: uuid.UUID) -> bool:
+        return self.models is None or model_id in self.models
+
+    def allows_tool(self, name: str) -> bool:
+        return self.tools is None or name in self.tools
+
+
+async def read_access(user_id: str, session: AsyncSession) -> GroupAccess:
+    """The user's group access, read live on every check."""
+    row = (
+        await session.execute(
+            select(GroupModel.model_access, GroupModel.tool_access)
+            .join(UserModel, UserModel.group_id == GroupModel.id)
+            .where(UserModel.id == user_id)
+        )
+    ).first()
+    if row is None:
+        return GroupAccess()
+    models, tools = row
+    return GroupAccess(
+        models=None if models is None else frozenset(uuid.UUID(value) for value in models),
+        tools=None if tools is None else frozenset(tools),
+    )
+
+
+async def set_access(
+    *,
+    group_id: str,
+    models: list[uuid.UUID] | None,
+    tools: list[str] | None,
+    configurable_tools: set[str],
+    admin_id: str,
+    session: AsyncSession,
+) -> Group:
+    """Replace a group's model and tool lists; only shared models and configurable tools can be listed."""
+    from asterism.domains.settings.models import LLMModel, ProviderModel
+
+    group = await _require_group(group_id, session)
+    if models is not None:
+        wanted = set(models)
+        known = set(
+            await session.scalars(
+                select(LLMModel.id)
+                .join(ProviderModel, ProviderModel.id == LLMModel.provider_id)
+                .where(LLMModel.id.in_(wanted), ProviderModel.owner_user_id.is_(None))
+            )
+        )
+        if unknown := wanted - known:
+            raise BadDataException(f"Unknown shared models: {', '.join(sorted(map(str, unknown)))}")
+        group.model_access = sorted(str(model_id) for model_id in wanted)
+    else:
+        group.model_access = None
+    if tools is not None:
+        if unknown_tools := set(tools) - configurable_tools:
+            raise BadDataException(f"Unknown tools: {', '.join(sorted(unknown_tools))}")
+        group.tool_access = sorted(set(tools))
+    else:
+        group.tool_access = None
+    await session.commit()
+    logger.info(f"Admin {admin_id} changed model and tool access for group {group_id}")
+    return _view(group, await _count(group_id, session))
 
 
 async def _count(group_id: str, session: AsyncSession) -> int:

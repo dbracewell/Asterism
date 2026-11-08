@@ -114,14 +114,12 @@ async def get_main_agent(user_id: str, session: AsyncSession | None = None) -> M
 
 
 async def _validate_configuration(user_id: str, payload: MainAgentUpdate, session: AsyncSession) -> None:
-    from asterism.domains.settings.tool_settings import get_tool_settings
-
-    settings = await get_tool_settings(session=session)
+    from asterism.domains.settings.tool_settings import user_active_tools
     from asterism.domains.tools.registry import tool_registry
 
     if set(payload.tools) & INTERNAL_TOOL_NAMES:
         raise BadDataException("Internal tools are managed by context and cannot be configured")
-    invalid = set(payload.tools) - (set(settings.active_tools) & set(tool_registry.registry))
+    invalid = set(payload.tools) - (await user_active_tools(user_id, session) & set(tool_registry.registry))
     if invalid:
         raise BadDataException(f"Unavailable tools: {', '.join(sorted(invalid))}")
     if len(payload.tools) != len(set(payload.tools)):

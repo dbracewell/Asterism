@@ -1075,6 +1075,18 @@ export const zGroup = z.object({
   name: z.string(),
   built_in: z.boolean(),
   member_count: z.int().gte(0),
+  models: z.array(z.uuid()).nullable(),
+  tools: z.array(z.string()).nullable(),
+});
+
+/**
+ * GroupAccessUpdate
+ *
+ * Replace a group's model and tool access. Null means every enabled one.
+ */
+export const zGroupAccessUpdate = z.object({
+  models: z.array(z.uuid()).max(1000).nullable(),
+  tools: z.array(z.string()).max(200).nullable(),
 });
 
 /**
@@ -6661,6 +6673,17 @@ export const zGroupRenamePath = z.object({
  * Successful Response
  */
 export const zGroupRenameResponse = zGroup;
+
+export const zGroupAccessUpdateBody = zGroupAccessUpdate;
+
+export const zGroupAccessUpdatePath = z.object({
+  group_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zGroupAccessUpdateResponse = zGroup;
 
 export const zGroupMemberMoveBody = zGroupMembershipUpdate;
 

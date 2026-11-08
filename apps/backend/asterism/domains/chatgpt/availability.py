@@ -1,4 +1,4 @@
-"""Whether a model can serve one user now, including ChatGPT plan state.
+"""Whether a model can serve one user now, including ChatGPT plan state and group access.
 
 A ChatGPT plan model is usable only by its owner, only while it is active
 (still listed by the account), the admin policy is enabled and the owner's
@@ -14,6 +14,7 @@ from enum import StrEnum
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from asterism.domains.groups.service import GroupAccess, read_access
 from asterism.domains.settings.models import LLMModel
 from asterism.domains.settings.provider_types import ProviderType
 from asterism.domains.settings.queries import select_visible_models
@@ -67,16 +68,27 @@ async def plan_status(user_id: str, session: AsyncSession) -> PlanUnavailableRea
     return None
 
 
+GROUP_UNAVAILABLE = "Not available to your group"
+
+
 @dataclass(frozen=True)
 class ModelAvailability:
-    """Availability of models for one user, with the plan state read once."""
+    """Availability of models for one user, with the plan state and group access read once."""
 
     user_id: str
     plan: PlanUnavailableReason | None
+    group: GroupAccess = GroupAccess()
 
     @classmethod
     async def load(cls, user_id: str, session: AsyncSession) -> ModelAvailability:
-        return cls(user_id=user_id, plan=await plan_status(user_id, session))
+        return cls(user_id=user_id, plan=await plan_status(user_id, session), group=await read_access(user_id, session))
+
+    def offered(self, model: LLMModel) -> bool:
+        """Whether pickers list the model: the user's group allows it (ADR-0058).
+
+        A user's own plan models are governed by the ChatGPT plan policy, not groups.
+        """
+        return model.provider.owner_user_id is not None or self.group.allows_model(model.id)
 
     def code(self, model: LLMModel) -> str | None:
         """Stable ``chatgpt_plan_<reason>`` code for an unavailable plan model."""
@@ -95,7 +107,9 @@ class ModelAvailability:
             if not model.is_active:
                 return "Model is no longer in your ChatGPT plan; choose another model"
             return PLAN_UNAVAILABLE_MESSAGES[self.plan] if self.plan else None
-        return None if model.is_active else "Model disabled; choose another model"
+        if not model.is_active:
+            return "Model disabled; choose another model"
+        return None if self.group.allows_model(model.id) else GROUP_UNAVAILABLE
 
 
 async def available_user_model(user_id: str, model_id: uuid.UUID, session: AsyncSession) -> LLMModel | None:

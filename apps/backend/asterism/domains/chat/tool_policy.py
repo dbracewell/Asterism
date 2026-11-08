@@ -10,7 +10,7 @@ from asterism.domains.agent.execution_scope import ChatScopeSnapshot, ProjectSco
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.service import get_agent_profile
 from asterism.domains.chatgpt.availability import available_user_model
-from asterism.domains.settings.tool_settings import get_tool_settings
+from asterism.domains.settings.tool_settings import get_tool_settings, user_active_tools
 from asterism.domains.tools.catalog import INTERNAL_TOOL_NAMES, configurable_tools
 from asterism.domains.tools.context import ContextToolScope
 
@@ -38,8 +38,7 @@ async def resolve_effective_tools(
         current = await get_agent_profile(user_id, profile.id, db)
         if current.sub_agent and current.model_id != model_id:
             raise BadDataException("Sub-agent model binding changed")
-        settings = await get_tool_settings(db)
-        active = set(settings.active_tools)
+        active = await user_active_tools(user_id, db)
         names = (
             (set(configurable_tools(profile.tools or [])) & set(current.tools or []) & active)
             if model.supports_tools is True

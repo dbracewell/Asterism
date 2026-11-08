@@ -1,6 +1,6 @@
 # EPIC-70: User groups and model/tool access
 
-Status: in progress (US-70.1 complete). Source: user request (2026-11-08).
+Status: in progress (US-70.1 and US-70.2 complete). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -63,8 +63,8 @@ allows. Execution, delegation, compare, study generation and course adds refuse
 models and tools outside the group, live. Existing bindings to a now-forbidden
 model show as unavailable with the reason "not available to your group".
 
-- [ ] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
-- [ ] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
+- [x] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
+- [x] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
 
 ## US-70.3: Admin Settings → Groups
 

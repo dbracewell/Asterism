@@ -9,7 +9,9 @@ policy, so admins can see what they may toggle.
 from fastapi import APIRouter
 
 from asterism.core.schemas import ErrorDetail
+from asterism.db.dependencies import DBSessionDep
 from asterism.domains.settings.service import get_app_settings
+from asterism.domains.settings.tool_settings import user_active_tools
 from asterism.domains.tools.registry import tool_registry
 from asterism.domains.tools.schemas import ToolInfoList
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
@@ -27,9 +29,11 @@ tools_router = APIRouter(
     operation_id="toolsGetActive",
     summary="Get all active tools",
 )
-async def get_active_tools(_: AuthedUserDep) -> ToolInfoList:
-    """Return the user-configurable tools currently enabled by admin policy."""
-    return tool_registry.active_tools(await get_app_settings())
+async def get_active_tools(user: AuthedUserDep, db: DBSessionDep) -> ToolInfoList:
+    """Return the user-configurable tools enabled by admin policy that the caller's group allows."""
+    listed = tool_registry.active_tools(await get_app_settings(db))
+    allowed = await user_active_tools(user.id, db)
+    return ToolInfoList(items=[item for item in listed.items if item.name in allowed])
 
 
 @tools_router.get(

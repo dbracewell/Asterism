@@ -115,7 +115,14 @@ async def test_custom_groups_can_be_created_renamed_and_deleted_when_empty(api):
     created = await client.post("/groups", headers=auth("admin"), json={"name": "  Night school  "})
     assert created.status_code == 201, created.text
     group = created.json()
-    assert group | {"id": ""} == {"id": "", "name": "Night school", "built_in": False, "member_count": 0}
+    assert group | {"id": ""} == {
+        "id": "",
+        "name": "Night school",
+        "built_in": False,
+        "member_count": 0,
+        "models": None,
+        "tools": None,
+    }
     duplicate = await client.post("/groups", headers=auth("admin"), json={"name": "night SCHOOL"})
     assert duplicate.status_code == 409
     assert (await client.post("/groups", headers=auth("admin"), json={"name": "   "})).status_code == 422
