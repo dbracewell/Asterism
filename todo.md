@@ -34,7 +34,7 @@ Order: EPIC-66 (EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07
 
 ### [EPIC-66: Help coverage](docs/epics/EPIC-66-HELP-COVERAGE.md)
 
-- [ ] US-66.1: Page guides for every page (implemented on `feat/us-66.1-page-guides`; awaiting confirmation)
+- [x] US-66.1: Page guides for every page
   - [x] Write the missing guides and mappings.
   - [x] Add the coverage test over routes and settings sections.
 - [ ] US-66.2: Glossary and inline help for newer features
