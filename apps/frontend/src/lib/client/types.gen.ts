@@ -4822,7 +4822,10 @@ export type ProjectAreas = {
 /**
  * ProjectCreate
  *
- * Payload for creating a project; description/prompt default to empty text.
+ * Payload for creating a project, optionally with library files (US-65.3).
+ *
+ * The project and its file memberships are written in one transaction, so a
+ * foreign or missing file id creates nothing.
  */
 export type ProjectCreate = {
   /**
@@ -4859,6 +4862,10 @@ export type ProjectCreate = {
    */
   goal_target_date?: string | null;
   areas?: ProjectAreas;
+  /**
+   * File Ids
+   */
+  file_ids?: Array<string>;
 };
 
 /**

@@ -39,3 +39,19 @@ the next began. See ADR-0057 (user identity copy).
 - [x] US-64.3: Admin user list (confirmed and merged 2026-11-07)
   - [x] Implement the owner-neutral admin query and route; test search and authorization.
   - [x] Add the list to Admin settings with help; test it.
+
+The user confirmed US-65.3 completion on 2026-11-07. EPIC-65 (US-65.1 through
+US-65.3) is complete; each story was confirmed and merged with `--no-ff` before
+the next began. See the project workspaces architecture note.
+
+### [EPIC-65: Project workspace redesign](../epics/EPIC-65-PROJECT-WORKSPACE-REDESIGN.md)
+
+- [x] US-65.1: Tabbed project workspace (confirmed and merged 2026-11-07)
+  - [x] Restructure the workspace into tabs with URL state; move settings into a tab.
+  - [x] Update unit and E2E tests and page guides; check narrow widths and keyboard use.
+- [x] US-65.2: Per-project feature areas (confirmed and merged 2026-11-07)
+  - [x] Add the field, API and Settings switches; hide tabs and Overview parts.
+  - [x] Test data retention and capability neutrality; carry areas through packs and courses.
+- [x] US-65.3: New-project wizard (confirmed and merged 2026-11-07)
+  - [x] Build the wizard steps and starting points; create the project atomically.
+  - [x] Add help for each step; unit-test steps and a real-backend E2E for one path.

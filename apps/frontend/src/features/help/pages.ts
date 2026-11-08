@@ -158,6 +158,31 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
         description:
           "Search projects by name or description, and open one to see its chats and files.",
       },
+      {
+        name: "New project: starting point",
+        description:
+          "Study a course, Ask my documents, Agent workspace or Blank. A starting point only fills in instructions and chooses which areas show; you can change everything before and after creating.",
+      },
+      {
+        name: "New project: name and description",
+        description:
+          "Name the project (required), describe it and pick a sidebar color.",
+      },
+      {
+        name: "New project: files and instructions",
+        description:
+          "Optionally choose files from your library and edit the instructions. To upload new files, create the project and use its Files tab.",
+      },
+      {
+        name: "New project: goal",
+        description:
+          "Optionally write a learning goal and target date. This step appears only while the Goal area is on.",
+      },
+      {
+        name: "New project: review",
+        description:
+          "Lists exactly what will be created, with a switch for each area. Nothing is created until you select Create project, and Cancel leaves nothing behind. Sub-agents are chosen afterwards in the Sub-agents tab and need a model that supports tools.",
+      },
     ],
     tasks: [
       "Create a project for each course or assignment.",

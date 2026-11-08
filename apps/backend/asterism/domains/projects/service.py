@@ -36,14 +36,29 @@ async def _owned_project(*, user_id: str, project_id: uuid.UUID, session: AsyncS
 
 
 async def create_project(*, user_id: str, payload: ProjectCreate, session: AsyncSession) -> Project:
-    """Create a project; the unique (user, name) constraint maps to a 409."""
-    project = ProjectModel(user_id=user_id, **payload.model_dump())
+    """Create a project and its file memberships in one transaction.
+
+    The unique (user, name) constraint maps to a 409; a foreign or missing file
+    id is a 404. Either way nothing is created.
+    """
+    from asterism.domains.files.service import validate_owned_file_ids
+
+    file_ids = sorted(set(payload.file_ids), key=str)
+    project = ProjectModel(user_id=user_id, **payload.model_dump(exclude={"file_ids"}))
     session.add(project)
     try:
+        await validate_owned_file_ids(user_id=user_id, file_ids=file_ids, session=session)
+        await session.flush()
+        session.add_all(
+            ProjectFileModel(project_id=project.id, file_id=file_id, user_id=user_id) for file_id in file_ids
+        )
         await session.commit()
     except IntegrityError as error:
         await session.rollback()
         raise CodedException(409, "A project with this name already exists") from error
+    except Exception:
+        await session.rollback()
+        raise
     return Project.model_validate(project)
 
 

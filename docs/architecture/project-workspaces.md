@@ -64,7 +64,21 @@ is kept. In particular, hiding Sub-agents leaves the selections in place and
 chats can still delegate to them; Settings states how many are selected. Tests
 compare delegation scope, effective tools and file scope before and after
 turning every area off. Team-pack export/import and course copies carry
-`areas`; a change to them is listed as a course settings change.
+`areas`; a change to them is listed as a course settings change. A course
+project always shows Study, whatever the educator's project hides.
+
+"New project" opens a wizard (US-65.3) in a dialog: starting point (Study a
+course, Ask my documents, Agent workspace, Blank), name and description, files
+and instructions, goal (only while the Goal area is on) and review. A starting
+point only pre-fills instructions and areas; changing it replaces pre-filled
+instructions but never text the user wrote. Files are chosen from the library,
+so nothing is uploaded before Finish; uploads happen later in the Files tab.
+The review lists exactly what will be sent, with a switch per area. Finish
+sends one `POST /projects/` whose optional `file_ids` are validated and linked
+in the same transaction as the project, so a foreign or missing file (404) or a
+taken name (409) creates nothing. Cancel and closing the dialog discard the
+draft; Back keeps it. Pack import and course copies build projects from
+`ProjectSettings`, the field-only base of `ProjectCreate`.
 
 Project search results link to their overview. Project new-chat links pass the
 project ID to the existing receipt-based create API. The composer verifies project

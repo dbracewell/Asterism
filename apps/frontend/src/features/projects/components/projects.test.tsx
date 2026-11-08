@@ -157,36 +157,6 @@ it("retains cached project results when refresh fails", async () => {
   );
   expect(screen.getByRole("link", { name: "Research" })).toBeInTheDocument();
 });
-it("creates a project with separate instructions and navigates to its overview", async () => {
-  mocks.create.mockResolvedValue(project);
-  setup(<ProjectList />);
-  await userEvent.click(screen.getByRole("button", { name: "New project" }));
-  await userEvent.type(screen.getByLabelText("Name"), "  Research  ");
-  await userEvent.type(screen.getByLabelText("Description"), "Work together");
-  await userEvent.type(
-    screen.getByLabelText("Project instructions"),
-    "Keep citations",
-  );
-  await userEvent.click(
-    screen.getByRole("combobox", { name: "Sidebar color" }),
-  );
-  await userEvent.click(await screen.findByRole("option", { name: "Violet" }));
-  await userEvent.click(screen.getByRole("button", { name: "Create project" }));
-  await waitFor(() =>
-    expect(mocks.create).toHaveBeenCalledWith(
-      {
-        body: {
-          name: "Research",
-          description: "Work together",
-          system_prompt: "Keep citations",
-          accent: "violet",
-        },
-      },
-      expect.anything(),
-    ),
-  );
-  expect(mocks.push).toHaveBeenCalledWith("/projects/p");
-});
 it("scopes General and project chats in the backend query and new-chat link", async () => {
   const view = setup(<WorkspaceChats projectId={null} />);
   await screen.findByText("No chats yet");

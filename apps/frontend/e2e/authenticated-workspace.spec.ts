@@ -211,25 +211,6 @@ test("authenticated project and General chats preserve scope, provenance, and ow
       tools: [],
       max_steps: 4,
     });
-    await page.goto("/projects");
-    await page
-      .getByRole("button", { name: "New project", exact: true })
-      .click();
-    const dialog = page.getByRole("dialog");
-    await dialog
-      .getByLabel("Name", { exact: true })
-      .fill("Authenticated project");
-    await dialog
-      .getByLabel("Project instructions")
-      .fill("PROJECT_INSTRUCTIONS_283");
-    await dialog.getByRole("button", { name: "Create project" }).click();
-    await expect(page).toHaveURL(/\/projects\/[\w-]+$/);
-    const projectId = page.url().split("/").pop()!;
-    let project = await api("GET", `/projects/${projectId}`);
-    await api("POST", `/projects/${projectId}/sub-agents`, {
-      agent_ids: [worker.id],
-      expected_context_revision: project.context_revision,
-    });
     const upload = await context.request.post("/api/py/files/", {
       headers,
       multipart: {
@@ -242,9 +223,53 @@ test("authenticated project and General chats preserve scope, provenance, and ow
     });
     expect(upload.ok()).toBeTruthy();
     const file = (await upload.json()).files[0];
-    project = await api("GET", `/projects/${projectId}`);
-    await api("POST", `/projects/${projectId}/files`, {
-      file_ids: [file.id],
+
+    // The new-project wizard creates the project and its file in one request.
+    await page.goto("/projects");
+    await page
+      .getByRole("button", { name: "New project", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", { name: "New project" });
+    await dialog.getByRole("radio", { name: "Agent workspace" }).click();
+    await dialog.getByRole("button", { name: "Next" }).click();
+    await dialog
+      .getByLabel("Name", { exact: true })
+      .fill("Authenticated project");
+    await dialog.getByRole("button", { name: "Next" }).click();
+    await dialog.getByRole("button", { name: "Choose library files" }).click();
+    const picker = page.getByRole("dialog", { name: "Choose library files" });
+    await picker.getByRole("button", { name: /project-evidence\.txt/ }).click();
+    await picker.getByRole("button", { name: "Choose selected (1)" }).click();
+    await expect(picker).toBeHidden();
+    await expect(
+      dialog.getByRole("list", { name: "Chosen files" }),
+    ).toContainText("project-evidence.txt");
+    await dialog
+      .getByLabel("Project instructions")
+      .fill("PROJECT_INSTRUCTIONS_283");
+    await dialog.getByRole("button", { name: "Next" }).click();
+    await expect(dialog).toContainText("Step 4 of 4: Review");
+    await expect(dialog).toContainText("PROJECT_INSTRUCTIONS_283");
+    await expect(
+      dialog.getByRole("switch", { name: "Sub-agents" }),
+    ).toBeChecked();
+    await dialog.getByRole("button", { name: "Create project" }).click();
+    await expect(page).toHaveURL(/\/projects\/[\w-]+$/);
+    await expect(page.getByRole("tab", { name: "Overview" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(page.getByRole("tab", { name: "Study" })).toHaveCount(0);
+    const projectId = page.url().split("/").pop()!;
+    let project = await api("GET", `/projects/${projectId}`);
+    expect(project.areas).toEqual({
+      study: false,
+      reflections: false,
+      goal: false,
+      sub_agents: true,
+    });
+    await api("POST", `/projects/${projectId}/sub-agents`, {
+      agent_ids: [worker.id],
       expected_context_revision: project.context_revision,
     });
     await page.goto(`/projects/${projectId}?tab=files`);

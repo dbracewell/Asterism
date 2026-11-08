@@ -2059,7 +2059,10 @@ export const zProject = z.object({
 /**
  * ProjectCreate
  *
- * Payload for creating a project; description/prompt default to empty text.
+ * Payload for creating a project, optionally with library files (US-65.3).
+ *
+ * The project and its file memberships are written in one transaction, so a
+ * foreign or missing file id creates nothing.
  */
 export const zProjectCreate = z.object({
   name: z.string().min(1).max(255),
@@ -2076,6 +2079,7 @@ export const zProjectCreate = z.object({
     goal: true,
     sub_agents: true,
   }),
+  file_ids: z.array(z.uuid()).max(1000).optional(),
 });
 
 /**

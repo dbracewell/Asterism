@@ -1,6 +1,6 @@
 # EPIC-65: Project workspace redesign
 
-Status: in progress (US-65.1 and US-65.2 complete). Source: user request (2026-11-07).
+Status: complete (US-65.1, US-65.2 and US-65.3). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -82,5 +82,5 @@ nothing; Back keeps entries. Finish creates the project in one request and
 opens its Overview. Agent workspace explains that sub-agents are chosen in the
 Sub-agents tab and need a model that supports tools.
 
-- [ ] Build the wizard steps and starting points; create the project atomically.
-- [ ] Add help for each step; unit-test steps and a real-backend E2E for one path.
+- [x] Build the wizard steps and starting points; create the project atomically.
+- [x] Add help for each step; unit-test steps and a real-backend E2E for one path.

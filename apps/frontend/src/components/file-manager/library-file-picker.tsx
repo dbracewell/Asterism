@@ -22,24 +22,35 @@ type LibraryFilePickerProps = {
   onPick: (files: UserFile[]) => Promise<void>;
 };
 
+/** Wording for pickers that are not attaching files to a chat. */
+type PickerText = {
+  title?: string;
+  description?: string;
+  action?: string;
+  unavailableReason?: string;
+};
+
 export function LibraryFilePickerDialog({
   excludedIds,
   projectId,
   onPick,
   open,
   onOpenChange,
-}: Omit<LibraryFilePickerProps, "disabled"> & {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
+  title = "Attach library files",
+  description = "Selected files are attached to this chat only.",
+  action = "Attach",
+  unavailableReason = "Already attached or available in this chat",
+}: Omit<LibraryFilePickerProps, "disabled"> &
+  PickerText & {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[80dvh] flex-col sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Attach library files</DialogTitle>
-          <DialogDescription>
-            Selected files are attached to this chat only.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {open && (
           <div className="min-h-80 flex-1">
@@ -50,10 +61,11 @@ export function LibraryFilePickerDialog({
                 !excludedIds.includes(file.id) &&
                 !file.projects?.some((project) => project.id === projectId)
               }
-              unavailableReason="Already attached or available in this chat"
+              unavailableReason={unavailableReason}
             >
               <FileManager.Ribbon>
                 <PickSelection
+                  action={action}
                   onPick={async (files) => {
                     await onPick(files);
                     onOpenChange(false);
@@ -90,15 +102,17 @@ export function LibraryFilePicker({
   );
 }
 function PickSelection({
+  action,
   onPick,
 }: {
+  action: string;
   onPick: (files: UserFile[]) => Promise<void>;
 }) {
   const { files, selectedFiles } = useFileManager();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
   return (
-    <FileManager.RibbonSection title="Attach">
+    <FileManager.RibbonSection title={action}>
       <Button
         type="button"
         disabled={pending || !selectedFiles.length}
@@ -118,7 +132,7 @@ function PickSelection({
           }
         }}
       >
-        Attach selected ({selectedFiles.length})
+        {action} selected ({selectedFiles.length})
       </Button>
       {error && <p role="alert">{error}</p>}
     </FileManager.RibbonSection>

@@ -25,8 +25,11 @@ MAX_GOAL_CHARS = 1_000
 ProjectAccent = Literal["red", "orange", "amber", "green", "teal", "sky", "violet", "pink"]
 
 
-class ProjectCreate(BaseModel):
-    """Payload for creating a project; description/prompt default to empty text."""
+class ProjectSettings(BaseModel):
+    """A project's own fields; description/prompt default to empty text.
+
+    Pack import and course copies build projects from these alone.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -37,6 +40,16 @@ class ProjectCreate(BaseModel):
     goal: str = Field(default="", max_length=MAX_GOAL_CHARS)
     goal_target_date: datetime.date | None = None
     areas: ProjectAreas = ALL_AREAS
+
+
+class ProjectCreate(ProjectSettings):
+    """Payload for creating a project, optionally with library files (US-65.3).
+
+    The project and its file memberships are written in one transaction, so a
+    foreign or missing file id creates nothing.
+    """
+
+    file_ids: list[uuid.UUID] = Field(default_factory=list, max_length=1000)
 
 
 class ProjectUpdate(BaseModel):
