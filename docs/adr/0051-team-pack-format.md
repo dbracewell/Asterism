@@ -55,8 +55,9 @@ in `asterism/domains/packs/documents.py`. The schema is generated from the model
   unsigned.
 - **Nested documents** reuse their own validators: `parse_document` for skills
   (ADR-0022) and templates (ADR-0026), `parse_rubric` for rubrics (ADR-0044).
-- **Project** carries name, description, instructions, accent, goal and selected
-  sub-agent keys. `goal_target_date` is left out as a personal deadline.
+- **Project** carries name, description, instructions, accent, goal, feature
+  areas (US-65.2; all on when absent) and selected sub-agent keys.
+  `goal_target_date` is left out as a personal deadline.
 
 ### Requests, not grants
 

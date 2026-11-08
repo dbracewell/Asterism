@@ -38,6 +38,12 @@ test("turns one confirmed unclear item into a card and a weak spot", async ({
           context_revision: 1,
           goal: "",
           goal_target_date: null,
+          areas: {
+            study: true,
+            reflections: true,
+            goal: true,
+            sub_agents: true,
+          },
           created_at: 1,
           updated_at: 1,
         },

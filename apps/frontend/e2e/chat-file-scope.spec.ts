@@ -90,6 +90,7 @@ test("keeps General isolated and shows two project chats with different local at
         context_revision: 3,
         goal: "",
         goal_target_date: null,
+        areas: { study: true, reflections: true, goal: true, sub_agents: true },
       },
     });
   });

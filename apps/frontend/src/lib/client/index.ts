@@ -798,6 +798,7 @@ export type {
   PersonaProvenance,
   PersonaUpdate,
   Project,
+  ProjectAreas,
   ProjectCreate,
   ProjectCreateData,
   ProjectCreateError,

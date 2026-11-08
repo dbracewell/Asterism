@@ -14,6 +14,8 @@ from pydantic.json_schema import SkipJsonSchema
 
 from asterism.domains.agent.schemas import SubAgentDefinition
 
+from .areas import ALL_AREAS, ProjectAreas
+
 # Trimmed, non-empty project name; mirrors the DB check constraint.
 ProjectName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
 
@@ -34,6 +36,7 @@ class ProjectCreate(BaseModel):
     accent: ProjectAccent | None = None
     goal: str = Field(default="", max_length=MAX_GOAL_CHARS)
     goal_target_date: datetime.date | None = None
+    areas: ProjectAreas = ALL_AREAS
 
 
 class ProjectUpdate(BaseModel):
@@ -55,8 +58,10 @@ class ProjectUpdate(BaseModel):
     accent: ProjectAccent | None = None
     goal: str | SkipJsonSchema[None] = Field(default=None, max_length=MAX_GOAL_CHARS)
     goal_target_date: datetime.date | None = None
+    # Replaces all four switches at once; display only, so the revision stays put.
+    areas: ProjectAreas | SkipJsonSchema[None] = None
 
-    @field_validator("name", "description", "system_prompt", "goal", mode="before")
+    @field_validator("name", "description", "system_prompt", "goal", "areas", mode="before")
     @classmethod
     def reject_explicit_null(cls, value: object) -> object:
         """Reject explicit nulls so omission (no key) is the only skip signal."""
@@ -78,6 +83,8 @@ class Project(BaseModel):
     # Learning goal (US-58.1); included in a chat only on explicit request.
     goal: str
     goal_target_date: datetime.date | None
+    # Which optional areas the workspace shows (US-65.2); grants nothing.
+    areas: ProjectAreas
     context_revision: int = Field(ge=1)
     created_at: int
     updated_at: int

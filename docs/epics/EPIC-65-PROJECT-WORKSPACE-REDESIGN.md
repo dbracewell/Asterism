@@ -1,6 +1,6 @@
 # EPIC-65: Project workspace redesign
 
-Status: in progress (US-65.1 complete). Source: user request (2026-11-07).
+Status: in progress (US-65.1 complete; US-65.2 awaiting confirmation). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -65,8 +65,8 @@ Tests prove that hiding an area changes no capability: selections, file scope,
 retrieval and delegation behave the same. Team-pack export and course packs
 carry the areas.
 
-- [ ] Add the field, API and Settings switches; hide tabs and Overview parts.
-- [ ] Test data retention and capability neutrality; carry areas through packs and courses.
+- [x] Add the field, API and Settings switches; hide tabs and Overview parts.
+- [x] Test data retention and capability neutrality; carry areas through packs and courses.
 
 ## US-65.3: New-project wizard
 

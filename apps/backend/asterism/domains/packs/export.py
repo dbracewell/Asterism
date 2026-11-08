@@ -142,6 +142,7 @@ def _project_item(project: Project, sub_agents: list[dict]) -> dict:
         "system_prompt": project.system_prompt,
         "accent": project.accent,
         "goal": project.goal,
+        "areas": project.areas.model_dump(),
         "sub_agents": [agent["key"] for agent in sub_agents],
     }
 

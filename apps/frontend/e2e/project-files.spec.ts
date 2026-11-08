@@ -9,6 +9,7 @@ const project = {
   context_revision: 3,
   goal: "",
   goal_target_date: null,
+  areas: { study: true, reflections: true, goal: true, sub_agents: true },
   created_at: 1,
   updated_at: 1,
 };

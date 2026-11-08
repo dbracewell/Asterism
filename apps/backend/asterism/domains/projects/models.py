@@ -17,7 +17,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from asterism.db.base_model import Base
+from asterism.db.columns import jsonb_type
 from asterism.db.mixins import TimestampMixin, UuidPrimaryKeyMixin
+
+from .areas import ALL_AREAS, ProjectAreas
 
 # Named colors a project may show in the sidebar; the frontend maps each to a swatch.
 PROJECT_ACCENTS = ("red", "orange", "amber", "green", "teal", "sky", "violet", "pink")
@@ -46,6 +49,8 @@ class ProjectModel(Base, UuidPrimaryKeyMixin, TimestampMixin):
     # learner includes it in a turn, so editing it never advances the revision.
     goal: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     goal_target_date: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
+    # Shown feature areas (US-65.2): display only, so editing never advances the revision.
+    areas: Mapped[ProjectAreas] = mapped_column(jsonb_type(ProjectAreas), nullable=False, default=ALL_AREAS)
 
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="uq_projects_user_name"),

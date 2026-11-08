@@ -63,6 +63,7 @@ test("chooses items and downloads a team pack from project settings", async ({
         context_revision: 1,
         goal: "",
         goal_target_date: null,
+        areas: { study: true, reflections: true, goal: true, sub_agents: true },
         created_at: 0,
         updated_at: 0,
       },

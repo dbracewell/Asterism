@@ -351,6 +351,15 @@
           "title": "Goal",
           "type": "string"
         },
+        "areas": {
+          "$ref": "#/$defs/ProjectAreas",
+          "default": {
+            "study": true,
+            "reflections": true,
+            "goal": true,
+            "sub_agents": true
+          }
+        },
         "sub_agents": {
           "default": [],
           "items": {
@@ -490,6 +499,36 @@
         "document"
       ],
       "title": "PackTemplate",
+      "type": "object"
+    },
+    "ProjectAreas": {
+      "additionalProperties": false,
+      "description": "On/off switch for each optional area. Overview, Chats, Files and Settings are always shown.",
+      "properties": {
+        "study": {
+          "title": "Study",
+          "type": "boolean"
+        },
+        "reflections": {
+          "title": "Reflections",
+          "type": "boolean"
+        },
+        "goal": {
+          "title": "Goal",
+          "type": "boolean"
+        },
+        "sub_agents": {
+          "title": "Sub Agents",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "study",
+        "reflections",
+        "goal",
+        "sub_agents"
+      ],
+      "title": "ProjectAreas",
       "type": "object"
     },
     "RubricCriterion": {
