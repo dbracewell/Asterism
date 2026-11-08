@@ -37,7 +37,7 @@ Order: EPIC-66 (EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07
 - [x] US-66.1: Page guides for every page
   - [x] Write the missing guides and mappings.
   - [x] Add the coverage test over routes and settings sections.
-- [ ] US-66.2: Glossary and inline help for newer features (implemented on `feat/us-66.2-glossary-inline-help`; awaiting confirmation)
+- [x] US-66.2: Glossary and inline help for newer features
   - [x] Add glossary entries and inline triggers; review wording for accuracy.
   - [x] Extend help tests and the help E2E for the new surfaces.
 - [ ] US-66.3: Help consistency pass
