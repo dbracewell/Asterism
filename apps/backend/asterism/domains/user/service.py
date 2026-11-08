@@ -295,9 +295,12 @@ def clear_user_cache() -> None:
     Intended for tests (and process teardown); production code relies on the
     TTL and the targeted updates in :func:`delete_user` instead.
     """
+    from asterism.domains.groups.service import clear_group_cache
+
     _user_cache.clear()
     _user_initialized_cache.clear()
     _deleted_cache.clear()
+    clear_group_cache()
     _identity_cache.clear()
 
 

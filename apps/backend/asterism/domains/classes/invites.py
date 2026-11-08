@@ -19,8 +19,10 @@ from asterism.core import config
 from asterism.core.exceptions import BadDataException, NotFoundException, UnauthorizedException
 from asterism.db.mixins import get_unix_timestamp
 from asterism.db.queries import paginate_select
+from asterism.domains.user.models import UserModel
 
-from .models import ClassInviteModel, ClassMemberModel, ClassModel, EducatorModel, EducatorStatus
+from .educators import TEACHING_GROUPS
+from .models import ClassInviteModel, ClassMemberModel, ClassModel
 from .names import educator_name, live_names
 from .schemas import (
     ClassInvite,
@@ -131,13 +133,13 @@ def _usable_invite(token: str, now: int):
     return (
         select(ClassInviteModel, ClassModel)
         .join(ClassModel, ClassModel.id == ClassInviteModel.class_id)
-        .join(EducatorModel, EducatorModel.user_id == ClassModel.educator_id)
+        .join(UserModel, UserModel.id == ClassModel.educator_id)
         .where(
             ClassInviteModel.token_hash == hash_invite_token(token),
             ClassInviteModel.redeemed_at.is_(None),
             ClassInviteModel.revoked_at.is_(None),
             ClassInviteModel.expires_at > now,
-            EducatorModel.status == EducatorStatus.APPROVED,
+            UserModel.group_id.in_(TEACHING_GROUPS),
         )
     )
 

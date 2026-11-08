@@ -14,6 +14,7 @@ from asterism.core.exceptions import UnauthorizedException
 from asterism.core.schemas import AuthedUser
 from asterism.core.security import DependsJwtToken, optional_auth
 from asterism.db.dependencies import DBSessionDep
+from asterism.domains.groups.service import mirror_admin_role
 from asterism.domains.user import service as user_service
 
 
@@ -27,8 +28,9 @@ async def get_current_user(
     after the first successful call per process (TTL-cached), so steady-state
     requests pay only a dict lookup. A valid JWT for an unknown id therefore
     auto-provisions the user row and main-agent configuration on first sight.
-    The verified name and email claims are then synced onto the row; that too
-    is a dict lookup unless the claims changed (see ``sync_identity``).
+    The verified name and email claims are then synced onto the row, and the
+    admin group is mirrored from the role claim (ADR-0058); both are dict
+    lookups unless something changed.
 
     Args:
         authed_user: The authenticated user obtained from the JWT token.
@@ -44,6 +46,7 @@ async def get_current_user(
         identity=identity,
     )
     await user_service.sync_identity(authed_user.id, identity, session)
+    await mirror_admin_role(authed_user.id, authed_user.role, session)
     return authed_user
 
 

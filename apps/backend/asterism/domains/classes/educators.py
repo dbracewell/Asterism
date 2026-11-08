@@ -1,110 +1,145 @@
-"""Educator access: a user asks, an administrator decides."""
+"""Educator access: a user asks, an administrator decides (ADR-0053, ADR-0058).
+
+Access is membership of the educator group. Members of the admin group may also
+run classes. A request row exists only while the request is pending.
+"""
 
 from collections.abc import Iterable
+from typing import Literal
 
-from sqlalchemy import select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.common.log import get_logger
 from asterism.core.exceptions import ForbiddenException, NotFoundException
 from asterism.core.schemas import AuthedUser
-from asterism.db.queries import paginate_select
-from asterism.domains.user.service import read_identities
+from asterism.domains.groups import service as groups
+from asterism.domains.groups.models import ADMIN_GROUP, EDUCATOR_GROUP, STUDENT_GROUP
+from asterism.domains.user.models import UserModel
 
-from .models import EducatorModel, EducatorStatus
+from .models import EducatorRequestModel
 from .names import USER_FALLBACK
 from .schemas import EducatorAccess, EducatorRequest, EducatorRequestPage
 
 logger = get_logger("Educators")
 
+# Groups whose members may run classes.
+TEACHING_GROUPS = (EDUCATOR_GROUP, ADMIN_GROUP)
+
 
 async def read_access(user_id: str, session: AsyncSession) -> EducatorAccess:
-    row = await session.get(EducatorModel, user_id, populate_existing=True)
-    return EducatorAccess(status=row.status.value if row else "none")
+    if await groups.read_group_id(user_id, session) in TEACHING_GROUPS:
+        return EducatorAccess(status="approved")
+    pending = await session.get(EducatorRequestModel, user_id, populate_existing=True)
+    return EducatorAccess(status="pending" if pending else "none")
 
 
-async def read_statuses(user_ids: Iterable[str], session: AsyncSession) -> dict[str, EducatorStatus]:
-    """Educator status by user id; users who never asked are absent."""
+async def read_statuses(user_ids: Iterable[str], session: AsyncSession) -> dict[str, Literal["pending", "approved"]]:
+    """Educator status by user id: approved for the educator group, pending for a request; others absent."""
     wanted = set(user_ids)
     if not wanted:
         return {}
     rows = await session.execute(
-        select(EducatorModel.user_id, EducatorModel.status).where(EducatorModel.user_id.in_(wanted))
+        select(UserModel.id, UserModel.group_id, EducatorRequestModel.user_id)
+        .outerjoin(EducatorRequestModel, EducatorRequestModel.user_id == UserModel.id)
+        .where(UserModel.id.in_(wanted))
     )
-    return {row.user_id: row.status for row in rows}
+    statuses: dict[str, Literal["pending", "approved"]] = {}
+    for user_id, group_id, requested in rows:
+        if group_id == EDUCATOR_GROUP:
+            statuses[user_id] = "approved"
+        elif requested is not None:
+            statuses[user_id] = "pending"
+    return statuses
 
 
 async def require_educator(user_id: str, session: AsyncSession) -> None:
-    """Checked live on every request, so a revoked grant stops working at once."""
+    """Checked live on every request, so moving someone out of the group stops it at once."""
     if (await read_access(user_id, session)).status != "approved":
         raise ForbiddenException("Educator access is required")
 
 
 async def request_access(user: AuthedUser, session: AsyncSession) -> EducatorAccess:
     """Idempotent: asking again never changes a decision already made."""
-    if await session.get(EducatorModel, user.id) is None:
-        session.add(EducatorModel(user_id=user.id, status=EducatorStatus.PENDING))
+    access = await read_access(user.id, session)
+    if access.status == "none":
+        session.add(EducatorRequestModel(user_id=user.id))
         try:
             await session.commit()
         except IntegrityError:
             await session.rollback()
-    return await read_access(user.id, session)
+        access = await read_access(user.id, session)
+    return access
 
 
-async def _views(rows: list[EducatorModel], session: AsyncSession) -> list[EducatorRequest]:
-    """Add each requester's live name and email; only administrators see these."""
-    identities = await read_identities((row.user_id for row in rows), session)
-    views = []
-    for row in rows:
-        identity = identities.get(row.user_id)
-        views.append(
-            EducatorRequest(
-                user_id=row.user_id,
-                status=row.status.value,  # type: ignore[arg-type]
-                display_name=(identity and identity.name) or USER_FALLBACK,
-                email=identity.email if identity else None,
-                created_at=row.created_at,
-            )
+def _select_requests():
+    """Pending requests first, then the educator group, each oldest first."""
+    approved = UserModel.group_id == EDUCATOR_GROUP
+    return (
+        select(UserModel, EducatorRequestModel.created_at)
+        .outerjoin(EducatorRequestModel, EducatorRequestModel.user_id == UserModel.id)
+        .where(or_(approved, EducatorRequestModel.user_id.is_not(None)))
+        .order_by(
+            case((approved, 1), else_=0),
+            func.coalesce(EducatorRequestModel.created_at, UserModel.created_at),
+            UserModel.id,
         )
-    return views
+    )
+
+
+def _view(user: UserModel, requested_at: int | None) -> EducatorRequest:
+    """Only administrators see the requester's live name and email."""
+    return EducatorRequest(
+        user_id=user.id,
+        status="approved" if user.group_id == EDUCATOR_GROUP else "pending",
+        display_name=user.name or USER_FALLBACK,
+        email=user.email,
+        created_at=requested_at or user.created_at,
+    )
 
 
 async def list_requests(session: AsyncSession, *, page: int, page_size: int) -> EducatorRequestPage:
-    result = await paginate_select(
-        statement=select(EducatorModel).order_by(
-            EducatorModel.status.desc(), EducatorModel.created_at, EducatorModel.user_id
-        ),
-        session=session,
-        page=page,
-        page_size=page_size,
-    )
+    statement = _select_requests()
+    total = await session.scalar(select(func.count()).select_from(statement.order_by(None).subquery())) or 0
+    rows = await session.execute(statement.offset((page - 1) * page_size).limit(page_size))
     return EducatorRequestPage(
-        items=await _views(result.records, session),
-        total=result.total,
+        items=[_view(user, requested_at) for user, requested_at in rows],
+        total=total,
         page=page,
         page_size=page_size,
     )
 
 
-async def _require_row(user_id: str, session: AsyncSession) -> EducatorModel:
-    row = await session.get(EducatorModel, user_id)
+async def _read_one(user_id: str, session: AsyncSession) -> EducatorRequest:
+    row = (await session.execute(_select_requests().where(UserModel.id == user_id))).first()
     if row is None:
         raise NotFoundException("Educator request not found")
-    return row
+    user, requested_at = row
+    await session.refresh(user)
+    return _view(user, requested_at)
 
 
 async def approve(*, user_id: str, admin_id: str, session: AsyncSession) -> EducatorRequest:
-    row = await _require_row(user_id, session)
-    row.status = EducatorStatus.APPROVED
-    row.decided_by = admin_id
-    await session.commit()
+    """Move the requester into the educator group; approving again is a no-op."""
+    await _read_one(user_id, session)
+    await groups.move_user(user_id=user_id, group_id=EDUCATOR_GROUP, admin_id=admin_id, session=session)
     logger.info(f"Admin {admin_id} approved educator access for {user_id}")
-    return (await _views([row], session))[0]
+    return await _read_one(user_id, session)
 
 
 async def remove(*, user_id: str, admin_id: str, session: AsyncSession) -> None:
-    """Deny a request or revoke a grant. Existing classes stay, unmanaged."""
-    await session.delete(await _require_row(user_id, session))
-    await session.commit()
-    logger.info(f"Admin {admin_id} removed educator access for {user_id}")
+    """Deny a pending request, or revoke access by moving the user to Student.
+
+    Existing classes stay, unmanaged.
+    """
+    request = await session.get(EducatorRequestModel, user_id)
+    if request is not None:
+        await session.delete(request)
+        await session.commit()
+        logger.info(f"Admin {admin_id} denied educator access for {user_id}")
+    elif await groups.read_group_id(user_id, session) == EDUCATOR_GROUP:
+        await groups.move_user(user_id=user_id, group_id=STUDENT_GROUP, admin_id=admin_id, session=session)
+        logger.info(f"Admin {admin_id} revoked educator access for {user_id}")
+    else:
+        raise NotFoundException("Educator request not found")

@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 from asterism.core.exceptions import ConflictException, UnauthorizedException
 from asterism.core.schemas import AuthedUser
-from asterism.domains.classes.models import ClassMemberModel, ClassModel, EducatorModel, EducatorStatus
+from asterism.domains.classes.models import ClassMemberModel, ClassModel
 from asterism.domains.courses.models import CourseCopyModel, CourseVersionModel
 from asterism.domains.user.models import UserModel
 from sqlalchemy import delete, update
@@ -38,9 +38,8 @@ async def course(project_api, monkeypatch):
     other = (await client.post("/projects/", headers=auth(), json={"name": "Mine"})).json()["id"]
     class_id = uuid.uuid4()
     async with sessions() as session:
-        session.add(UserModel(id="teach", name="Dr Teach"))
+        session.add(UserModel(id="teach", name="Dr Teach", group_id="educator"))
         await session.flush()
-        session.add(EducatorModel(user_id="teach", status=EducatorStatus.APPROVED))
         session.add(ClassModel(id=class_id, educator_id="teach", name="Biology 101", join_code="ABCDEFGH23"))
         await session.flush()
         session.add(ClassMemberModel(class_id=class_id, user_id="a"))

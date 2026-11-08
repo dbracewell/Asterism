@@ -22,6 +22,7 @@ DB_COMPOSITION_ROOTS = {
         "asterism.domains.classes.models",
         "asterism.domains.courses.models",
         "asterism.domains.files.models",
+        "asterism.domains.groups.models",
         "asterism.domains.knowledge.models",
         "asterism.domains.packs.models",
         "asterism.domains.projects.models",

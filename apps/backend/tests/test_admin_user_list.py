@@ -1,7 +1,7 @@
 """US-64.3: the administrator's user list is read-only, searchable and paged."""
 
 import pytest
-from asterism.domains.classes.models import EducatorModel, EducatorStatus
+from asterism.domains.classes.models import EducatorRequestModel
 from asterism.domains.user.models import UserModel
 from sqlalchemy import update
 from test_user_lifecycle import auth, user_api_db
@@ -23,8 +23,8 @@ async def seed(client, db):
         assert (await client.post("/users/", json=body, headers=auth("admin"))).status_code == 200
     assert (await client.post("/users/", json={"user_id": "nobody"}, headers=auth("admin"))).status_code == 200
     async with db() as session:
-        session.add(EducatorModel(user_id="u-amy", status=EducatorStatus.APPROVED))
-        session.add(EducatorModel(user_id="u-zed", status=EducatorStatus.PENDING))
+        await session.execute(update(UserModel).where(UserModel.id == "u-amy").values(group_id="educator"))
+        session.add(EducatorRequestModel(user_id="u-zed"))
         await session.execute(update(UserModel).where(UserModel.id == "u-zed").values(created_at=1_700_000_000))
         await session.commit()
 
@@ -54,6 +54,7 @@ async def test_lists_names_emails_educator_status_and_created_date(user_api, ses
         "name": "amy Pond",
         "email": "amy@school.test",
         "educator": "approved",
+        "group": {"id": "educator", "name": "Educator"},
         "created_at": 0,
     }
     assert by_id["u-zed"]["educator"] == "pending" and by_id["u-zed"]["created_at"] == 1_700_000_000

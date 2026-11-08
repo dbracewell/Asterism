@@ -4,6 +4,9 @@ Status: accepted and implemented for US-60.1 on 2026-11-06
 ([EPIC-60](../epics/EPIC-60-EDUCATOR-AND-CLASS-POLICY.md)). Amended by US-64.2
 ([ADR-0057](0057-user-identity-copy.md)): names and emails are no longer copied
 into class rows but read live from `users`; who may see them is unchanged.
+Amended by US-70.1 ([ADR-0058](0058-user-groups.md)): the `educators` grant
+table is replaced by the educator group, with pending requests in
+`educator_requests`, and members of the admin group may also run classes.
 
 ## Context
 

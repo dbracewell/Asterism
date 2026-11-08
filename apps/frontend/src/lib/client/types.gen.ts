@@ -2827,6 +2827,78 @@ export type GoalSnapshot = {
 };
 
 /**
+ * Group
+ *
+ * A group and how many users are in it.
+ */
+export type Group = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Built In
+   *
+   * Admin, Educator and Student can't be renamed or deleted
+   */
+  built_in: boolean;
+  /**
+   * Member Count
+   */
+  member_count: number;
+};
+
+/**
+ * GroupCreate
+ */
+export type GroupCreate = {
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * GroupMembershipUpdate
+ */
+export type GroupMembershipUpdate = {
+  /**
+   * Group Id
+   */
+  group_id: string;
+};
+
+/**
+ * GroupRef
+ *
+ * The group a user is in, as shown next to them.
+ */
+export type GroupRef = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * GroupUpdate
+ */
+export type GroupUpdate = {
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
  * HintLevel
  *
  * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
@@ -8774,9 +8846,13 @@ export type UserSummary = {
   /**
    * Educator
    *
-   * Educator status, if they have asked. Admin roles live in sign-in and are not shown
+   * Pending if they asked for educator access, approved if they are in the Educator group
    */
   educator: "pending" | "approved" | null;
+  /**
+   * The one group the user is in
+   */
+  group: GroupRef;
   /**
    * Created At
    *
@@ -17966,6 +18042,230 @@ export type UserDeleteResponses = {
 };
 
 export type UserDeleteResponse = UserDeleteResponses[keyof UserDeleteResponses];
+
+export type GroupGetManyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/groups";
+};
+
+export type GroupGetManyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type GroupGetManyError = GroupGetManyErrors[keyof GroupGetManyErrors];
+
+export type GroupGetManyResponses = {
+  /**
+   * Response Groupgetmany
+   *
+   * Successful Response
+   */
+  200: Array<Group>;
+};
+
+export type GroupGetManyResponse =
+  GroupGetManyResponses[keyof GroupGetManyResponses];
+
+export type GroupCreateData = {
+  body: GroupCreate;
+  path?: never;
+  query?: never;
+  url: "/groups";
+};
+
+export type GroupCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type GroupCreateError = GroupCreateErrors[keyof GroupCreateErrors];
+
+export type GroupCreateResponses = {
+  /**
+   * Successful Response
+   */
+  201: Group;
+};
+
+export type GroupCreateResponse =
+  GroupCreateResponses[keyof GroupCreateResponses];
+
+export type GroupDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string;
+  };
+  query?: never;
+  url: "/groups/{group_id}";
+};
+
+export type GroupDeleteErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type GroupDeleteError = GroupDeleteErrors[keyof GroupDeleteErrors];
+
+export type GroupDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type GroupDeleteResponse =
+  GroupDeleteResponses[keyof GroupDeleteResponses];
+
+export type GroupRenameData = {
+  body: GroupUpdate;
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string;
+  };
+  query?: never;
+  url: "/groups/{group_id}";
+};
+
+export type GroupRenameErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type GroupRenameError = GroupRenameErrors[keyof GroupRenameErrors];
+
+export type GroupRenameResponses = {
+  /**
+   * Successful Response
+   */
+  200: Group;
+};
+
+export type GroupRenameResponse =
+  GroupRenameResponses[keyof GroupRenameResponses];
+
+export type GroupMemberMoveData = {
+  body: GroupMembershipUpdate;
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string;
+  };
+  query?: never;
+  url: "/groups/members/{user_id}";
+};
+
+export type GroupMemberMoveErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Unauthorized
+   */
+  401: ErrorDetail;
+  /**
+   * Not Found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type GroupMemberMoveError =
+  GroupMemberMoveErrors[keyof GroupMemberMoveErrors];
+
+export type GroupMemberMoveResponses = {
+  /**
+   * Successful Response
+   */
+  200: GroupRef;
+};
+
+export type GroupMemberMoveResponse =
+  GroupMemberMoveResponses[keyof GroupMemberMoveResponses];
 
 export type UserPersonaListData = {
   body?: never;

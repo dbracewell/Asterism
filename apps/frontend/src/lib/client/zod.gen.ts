@@ -1066,6 +1066,49 @@ export const zGoalSnapshot = z.object({
 });
 
 /**
+ * Group
+ *
+ * A group and how many users are in it.
+ */
+export const zGroup = z.object({
+  id: z.string(),
+  name: z.string(),
+  built_in: z.boolean(),
+  member_count: z.int().gte(0),
+});
+
+/**
+ * GroupCreate
+ */
+export const zGroupCreate = z.object({
+  name: z.string().min(1).max(80),
+});
+
+/**
+ * GroupMembershipUpdate
+ */
+export const zGroupMembershipUpdate = z.object({
+  group_id: z.string(),
+});
+
+/**
+ * GroupRef
+ *
+ * The group a user is in, as shown next to them.
+ */
+export const zGroupRef = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+/**
+ * GroupUpdate
+ */
+export const zGroupUpdate = z.object({
+  name: z.string().min(1).max(80),
+});
+
+/**
  * HintLevel
  *
  * Branch-local hint state, weakest first; ``answer`` is the explicit reveal.
@@ -4394,6 +4437,7 @@ export const zUserSummary = z.object({
   name: z.string().nullable(),
   email: z.string().nullable(),
   educator: z.enum(["pending", "approved"]).nullable(),
+  group: zGroupRef,
   created_at: z.int(),
 });
 
@@ -6583,6 +6627,51 @@ export const zUserDeletePath = z.object({
  * Successful Response
  */
 export const zUserDeleteResponse = z.boolean();
+
+/**
+ * Response Groupgetmany
+ *
+ * Successful Response
+ */
+export const zGroupGetManyResponse = z.array(zGroup);
+
+export const zGroupCreateBody = zGroupCreate;
+
+/**
+ * Successful Response
+ */
+export const zGroupCreateResponse = zGroup;
+
+export const zGroupDeletePath = z.object({
+  group_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zGroupDeleteResponse = z.void();
+
+export const zGroupRenameBody = zGroupUpdate;
+
+export const zGroupRenamePath = z.object({
+  group_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zGroupRenameResponse = zGroup;
+
+export const zGroupMemberMoveBody = zGroupMembershipUpdate;
+
+export const zGroupMemberMovePath = z.object({
+  user_id: z.string(),
+});
+
+/**
+ * Successful Response
+ */
+export const zGroupMemberMoveResponse = zGroupRef;
 
 /**
  * Successful Response

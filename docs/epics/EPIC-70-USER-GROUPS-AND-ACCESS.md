@@ -1,6 +1,6 @@
 # EPIC-70: User groups and model/tool access
 
-Status: proposed. Source: user request (2026-11-08).
+Status: in progress (US-70.1 complete). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -47,9 +47,9 @@ class/educator checks read the group live. Admins can create, rename and delete
 custom groups (deleting a group with members is refused or moves them to student;
 decide in the ADR).
 
-- [ ] Write the ADR (replaces the educator grant in ADR-0053; admin-role mirroring).
-- [ ] Implement groups, seeding, membership and the educator flow change; update AGENTS.md §2.1.
-- [ ] Tests: defaults, educator approve/revoke, admin mirroring, owner isolation, built-ins protected.
+- [x] Write the ADR (replaces the educator grant in ADR-0053; admin-role mirroring).
+- [x] Implement groups, seeding, membership and the educator flow change; update AGENTS.md §2.1.
+- [x] Tests: defaults, educator approve/revoke, admin mirroring, owner isolation, built-ins protected.
 
 ## US-70.2: Group model and tool access, enforced
 

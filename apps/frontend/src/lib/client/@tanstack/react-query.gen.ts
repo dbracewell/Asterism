@@ -348,6 +348,21 @@ import type {
   FileUploadData,
   FileUploadError,
   FileUploadResponse,
+  GroupCreateData,
+  GroupCreateError,
+  GroupCreateResponse,
+  GroupDeleteData,
+  GroupDeleteError,
+  GroupDeleteResponse,
+  GroupGetManyData,
+  GroupGetManyError,
+  GroupGetManyResponse,
+  GroupMemberMoveData,
+  GroupMemberMoveError,
+  GroupMemberMoveResponse,
+  GroupRenameData,
+  GroupRenameError,
+  GroupRenameResponse,
   LearningModeGetManyData,
   LearningModeGetManyError,
   LearningModeGetManyResponse,
@@ -7906,6 +7921,147 @@ export const userDeleteMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().userDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const groupGetManyQueryKey = (options?: Options<GroupGetManyData>) =>
+  createQueryKey("groupGetMany", options);
+
+/**
+ * List Groups
+ *
+ * Every group with its member count; built-in groups first.
+ */
+export const groupGetManyOptions = (options?: Options<GroupGetManyData>) =>
+  queryOptions<
+    GroupGetManyResponse,
+    GroupGetManyError,
+    GroupGetManyResponse,
+    ReturnType<typeof groupGetManyQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().groupGetMany({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: groupGetManyQueryKey(options),
+  });
+
+/**
+ * Create Group
+ */
+export const groupCreateMutation = (
+  options?: Partial<Options<GroupCreateData>>,
+): UseMutationOptions<
+  GroupCreateResponse,
+  GroupCreateError,
+  Options<GroupCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GroupCreateResponse,
+    GroupCreateError,
+    Options<GroupCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().groupCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Group
+ *
+ * Delete an empty custom group.
+ */
+export const groupDeleteMutation = (
+  options?: Partial<Options<GroupDeleteData>>,
+): UseMutationOptions<
+  GroupDeleteResponse,
+  GroupDeleteError,
+  Options<GroupDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GroupDeleteResponse,
+    GroupDeleteError,
+    Options<GroupDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().groupDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Rename Group
+ *
+ * Rename a custom group; built-in groups keep their names.
+ */
+export const groupRenameMutation = (
+  options?: Partial<Options<GroupRenameData>>,
+): UseMutationOptions<
+  GroupRenameResponse,
+  GroupRenameError,
+  Options<GroupRenameData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GroupRenameResponse,
+    GroupRenameError,
+    Options<GroupRenameData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().groupRename({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Move Member
+ *
+ * Move a user into another group. The admin group follows the sign-in role and can't be set here.
+ */
+export const groupMemberMoveMutation = (
+  options?: Partial<Options<GroupMemberMoveData>>,
+): UseMutationOptions<
+  GroupMemberMoveResponse,
+  GroupMemberMoveError,
+  Options<GroupMemberMoveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    GroupMemberMoveResponse,
+    GroupMemberMoveError,
+    Options<GroupMemberMoveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().groupMemberMove({
         ...options,
         ...fnOptions,
         throwOnError: true,
