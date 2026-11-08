@@ -89,3 +89,30 @@ Catalogue values from [the Hipparcos survey](https://example.test/hipparcos), wi
 
 ` +
   "```python\ndef brightest(stars):\n    return sorted(stars, key=lambda star: star.magnitude)[:3]  # lower magnitude is brighter, so sort ascending and keep the first three entries\n```";
+
+// US-74.1: a news-summary reply with headings, a loose list (blank lines
+// between items), a tight list and a nested list.
+export const compactSample = `## Today's headlines
+
+A quick summary of the top stories.
+
+- **Markets** rallied after the rate decision.
+
+- **Weather** turns colder across the north.
+
+- **Sport** saw an upset in the cup final.
+
+### Technology
+
+New launches this week:
+
+- Phones
+- Laptops
+  - Ultralight models
+  - Gaming models
+- Watches
+
+### Science
+
+Researchers reported a new comet.
+`;

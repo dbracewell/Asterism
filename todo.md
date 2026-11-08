@@ -26,8 +26,86 @@ Source: approved visual design audit (2026-10-26). Suggested order: EPIC-41 → 
 
 ## Product direction epics (proposed)
 
-Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. The multi-user web direction was decided on 2026-11-06. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57, EPIC-58, EPIC-59, EPIC-63 and EPIC-60 are complete and archived; EPIC-60 is in the [2026-11-07 checklist](docs/archive/todo-completed-2026-11-07.md). No epic is in progress.
+Source: product direction discussion (2026-10-31). Suggested order: EPIC-51 → 52 → 61 → 53 → 54 → 56 → 55 → 57 → 58 → 59. The multi-user web direction was decided on 2026-11-06. EPIC-51, EPIC-52, EPIC-61, EPIC-53, EPIC-54, EPIC-56, EPIC-55, EPIC-57, EPIC-58, EPIC-59, EPIC-63 and EPIC-60 are complete and archived; EPIC-60 is in the [2026-11-07 checklist](docs/archive/todo-completed-2026-11-07.md).
 
 ## Next epics (proposed 2026-11-07)
 
 EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs/archive/todo-completed-2026-11-07.md); EPIC-66 is complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). Next: a multi-user deployment readiness epic (not yet written).
+
+## User-requested epics (proposed 2026-11-08)
+
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74 is complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). No epic is in progress.
+
+### [EPIC-67: Read-only course projects](docs/epics/EPIC-67-READ-ONLY-COURSE-PROJECTS.md)
+
+- [ ] US-67.1: Lock course-managed records in the backend
+  - [ ] Amend ADR-0054 with the lock rule, the list of guarded write paths and the leave/delete behavior.
+  - [ ] Add a single `require_not_course_managed` check in the courses domain and call it from each guarded service.
+  - [ ] Tests: every guarded path refuses for course records, allows for the student's own records, and the update path still works.
+- [ ] US-67.2: Show course projects as read-only
+  - [ ] Expose a `course_managed` flag (and class name) on project, sub-agent and file responses; regenerate the client.
+  - [ ] Disable and explain the locked controls; add the leave-course action.
+  - [ ] Update help; add unit tests and an E2E: student adds a course, can chat, cannot edit it.
+
+### [EPIC-68: Sub-agents in General chat](docs/epics/EPIC-68-SUB-AGENTS-IN-GENERAL-CHAT.md)
+
+- [ ] US-68.1: General delegation scope in the backend
+  - [ ] Write the ADR (amends the "General chats never delegate" rule) and update AGENTS.md and architecture docs.
+  - [ ] Add the General set to the main-agent configuration and resolve it in `resolve_delegation_scope`.
+  - [ ] Tests: no set → no `sub_agent` tool; set → delegation works; removing a target mid-turn is refused; child file scope is limited to the chat's attachments; owner isolation.
+- [ ] US-68.2: Choose General chat sub-agents
+  - [ ] Build the picker with generated client hooks; show availability.
+  - [ ] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.
+
+### [EPIC-69: Automatic context compaction](docs/epics/EPIC-69-AUTO-COMPACTION.md)
+
+- [ ] US-69.1: Compaction records and prompt assembly
+  - [ ] Write the ADR (record shape, branch/fork rules, trust rules, thresholds).
+  - [ ] Implement the record, the summarizer prompt and assembly changes.
+  - [ ] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
+- [ ] US-69.2: Compaction in the chat UI and settings
+  - [ ] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
+  - [ ] Help and glossary; unit tests and an E2E with a small fake context window.
+
+### [EPIC-70: User groups and model/tool access](docs/epics/EPIC-70-USER-GROUPS-AND-ACCESS.md)
+
+- [ ] US-70.1: Groups and membership
+  - [ ] Write the ADR (replaces the educator grant in ADR-0053; admin-role mirroring).
+  - [ ] Implement groups, seeding, membership and the educator flow change; update AGENTS.md §2.1.
+  - [ ] Tests: defaults, educator approve/revoke, admin mirroring, owner isolation, built-ins protected.
+- [ ] US-70.2: Group model and tool access, enforced
+  - [ ] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
+  - [ ] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
+- [ ] US-70.3: Admin Settings → Groups
+  - [ ] Build the page and user-list group control; regenerate the client.
+  - [ ] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.
+
+### [EPIC-71: Model-written skills](docs/epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
+
+- [ ] US-71.1: Skill drafting run
+  - [ ] Decide in an ADR whether drafting reuses a hidden chat or a new run type; prefer reuse.
+  - [ ] Implement the writing prompt, output schema and validation; tests for validation, revisions, delegation scope and policy gating.
+- [ ] US-71.2: "Describe it" in the skill editor
+  - [ ] Build the flow with generated client hooks; reuse the skill editor and preview.
+  - [ ] Help; unit tests and an E2E with a fake provider from description to saved skill.
+
+### [EPIC-72: Canvas](docs/epics/EPIC-72-CANVAS.md)
+
+- [ ] US-72.1: Canvas domain and agent tools
+  - [ ] Write the ADR (data model, tool contracts, branch rules, sandboxing, exports).
+  - [ ] Implement storage, tools and settings; regenerate the client.
+  - [ ] Tests: gating, owner isolation, versions, branch visibility, deletion.
+- [ ] US-72.2: Canvas panel
+  - [ ] Build the panel, editors, history and "ask about selection".
+  - [ ] Unit tests, keyboard/contrast checks and an E2E with a fake provider.
+- [ ] US-72.3: Downloads and settings
+  - [ ] Implement exports (server-side) and save-to-library.
+  - [ ] Settings toggles, help and glossary; tests for each export type.
+
+### [EPIC-73: Composer cleanup](docs/epics/EPIC-73-COMPOSER-CLEANUP.md)
+
+- [ ] US-73.1: Layout proposal
+  - [ ] Inventory every composer control and when it shows; produce the mockup; get approval.
+- [ ] US-73.2: Rebuild the composer
+  - [ ] Implement the layout; update help.
+  - [ ] Update unit tests and the composer-related E2E specs.

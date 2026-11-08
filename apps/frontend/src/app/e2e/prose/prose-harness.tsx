@@ -1,6 +1,9 @@
 "use client";
 import MarkdownViewer from "@/components/markdown-viewer";
-import { proseSample } from "@/components/markdown-viewer/test-content";
+import {
+  compactSample,
+  proseSample,
+} from "@/components/markdown-viewer/test-content";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Prose on the two surfaces chat renders it on: the page (assistant replies)
@@ -17,6 +20,9 @@ export function ProseHarness() {
           className="bg-card text-card-foreground border-border rounded-surface min-w-0 border p-4"
         >
           <MarkdownViewer content={proseSample} />
+        </section>
+        <section aria-label="Compact prose" className="min-w-0">
+          <MarkdownViewer content={compactSample} />
         </section>
       </main>
     </TooltipProvider>

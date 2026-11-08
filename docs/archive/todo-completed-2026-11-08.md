@@ -14,3 +14,12 @@ the next began. See ADR-0032 (in-app help content).
   - [x] Extend help tests and the help E2E for the new surfaces.
 - [x] US-66.3: Help consistency pass (confirmed and merged 2026-11-08)
   - [x] Review and fix all help text; update the contribution notes.
+
+The user confirmed US-74.1 completion on 2026-11-08. EPIC-74 (US-74.1) is
+complete and merged with `--no-ff`.
+
+### [EPIC-74: Compact Markdown spacing in chat](../epics/EPIC-74-COMPACT-MARKDOWN-SPACING.md)
+
+- [x] US-74.1: Tighten Markdown rhythm (confirmed and merged 2026-11-08)
+  - [x] Rework the `prose` margin rules (heading top/bottom, `li > p`, list after heading).
+  - [x] Add a visual/E2E check with a fixture like the screenshot.
