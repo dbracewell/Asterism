@@ -854,10 +854,14 @@ export const zEmbeddingPayload = z.object({
  * ErrorDetail
  *
  * Standard error response body: a message plus its HTTP status code.
+ *
+ * ``reason`` is a stable machine-readable cause for errors a client must tell
+ * apart (for example ``course_managed``); most errors omit it.
  */
 export const zErrorDetail = z.object({
   detail: z.string(),
   code: z.int(),
+  reason: z.string().nullish(),
 });
 
 /**

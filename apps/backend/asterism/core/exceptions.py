@@ -15,7 +15,10 @@ class CodedException(AsterismException):
     Args:
         code: The HTTP status code to associate with this error (e.g., 404).
         message: Human-readable error detail.
+        reason: Optional stable machine-readable cause, sent as ``reason``.
     """
+
+    reason: str | None = None
 
     def __init__(self, code: int, message: str):
         super().__init__(message)
@@ -55,3 +58,9 @@ class ConflictException(CodedException):
 
     def __init__(self, message: str = "Conflict"):
         super().__init__(409, message)
+
+
+class CourseManagedException(ConflictException):
+    """HTTP 409: the record belongs to a course copy and only a course update may change it."""
+
+    reason = "course_managed"

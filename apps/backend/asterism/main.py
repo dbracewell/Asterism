@@ -112,10 +112,10 @@ async def global_coded_exception_handler(
     _: Request,
     exc: CodedException,
 ):
-    error_data = ErrorDetail(code=exc.code, detail=str(exc))
+    error_data = ErrorDetail(code=exc.code, detail=str(exc), reason=exc.reason)
     return JSONResponse(
         status_code=exc.code,
-        content=error_data.model_dump(),
+        content=error_data.model_dump(exclude_none=True),
     )
 
 

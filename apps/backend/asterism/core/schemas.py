@@ -29,10 +29,15 @@ class AuthedUser:
 
 
 class ErrorDetail(BaseModel):
-    """Standard error response body: a message plus its HTTP status code."""
+    """Standard error response body: a message plus its HTTP status code.
+
+    ``reason`` is a stable machine-readable cause for errors a client must tell
+    apart (for example ``course_managed``); most errors omit it.
+    """
 
     detail: str
     code: int
+    reason: str | None = None
 
 
 class NoArgs(BaseModel):

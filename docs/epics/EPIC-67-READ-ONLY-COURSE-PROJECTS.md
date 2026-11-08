@@ -1,6 +1,6 @@
 # EPIC-67: Read-only course projects
 
-Status: proposed. Source: user request (2026-11-08).
+Status: in progress (US-67.1 complete). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -42,9 +42,9 @@ deleted or edited from Settings → Sub-agents either. Locks are read live, so a
 copy whose class was deleted or that the student left stops being locked (decide
 and record in the ADR whether leaving a class unlocks or deletes the copy).
 
-- [ ] Amend ADR-0054 with the lock rule, the list of guarded write paths and the leave/delete behavior.
-- [ ] Add a single `require_not_course_managed` check in the courses domain and call it from each guarded service.
-- [ ] Tests: every guarded path refuses for course records, allows for the student's own records, and the update path still works.
+- [x] Amend ADR-0054 with the lock rule, the list of guarded write paths and the leave/delete behavior.
+- [x] Add a single `require_not_course_managed` check in the courses domain and call it from each guarded service.
+- [x] Tests: every guarded path refuses for course records, allows for the student's own records, and the update path still works.
 
 ## US-67.2: Show course projects as read-only
 

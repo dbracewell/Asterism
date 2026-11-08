@@ -12,6 +12,7 @@ from asterism.domains.agent.models import AgentProfileModel
 from asterism.domains.agent.queries import select_owned_agent_profiles
 from asterism.domains.agent.schemas import AgentProfile
 from asterism.domains.agent.service import _sub_definition
+from asterism.domains.courses.locks import require_not_course_managed
 
 from .models import ProjectSubAgentModel
 from .queries import selected_agent_ids
@@ -105,6 +106,7 @@ async def change_project_sub_agents(
     flips bump the project's context revision. All-or-nothing on failure.
     """
     ids = sorted(set(payload.agent_ids), key=str)
+    await require_not_course_managed(user_id=user_id, record_ids=[project_id], session=session)
     try:
         project = await _write_project(
             user_id=user_id,

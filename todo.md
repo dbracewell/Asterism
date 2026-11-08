@@ -34,14 +34,14 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74 is complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). No epic is in progress.
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74 is complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). EPIC-67 is in progress.
 
 ### [EPIC-67: Read-only course projects](docs/epics/EPIC-67-READ-ONLY-COURSE-PROJECTS.md)
 
-- [ ] US-67.1: Lock course-managed records in the backend
-  - [ ] Amend ADR-0054 with the lock rule, the list of guarded write paths and the leave/delete behavior.
-  - [ ] Add a single `require_not_course_managed` check in the courses domain and call it from each guarded service.
-  - [ ] Tests: every guarded path refuses for course records, allows for the student's own records, and the update path still works.
+- [x] US-67.1: Lock course-managed records in the backend (confirmed and merged)
+  - [x] Amend ADR-0054 with the lock rule, the list of guarded write paths and the leave/delete behavior.
+  - [x] Add a single `require_not_course_managed` check in the courses domain and call it from each guarded service.
+  - [x] Tests: every guarded path refuses for course records, allows for the student's own records, and the update path still works.
 - [ ] US-67.2: Show course projects as read-only
   - [ ] Expose a `course_managed` flag (and class name) on project, sub-agent and file responses; regenerate the client.
   - [ ] Disable and explain the locked controls; add the leave-course action.

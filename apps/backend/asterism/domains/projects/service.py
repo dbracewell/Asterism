@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
+from asterism.domains.courses.locks import require_not_course_managed
 from asterism.domains.files.schemas import UserFileList
 
 from .models import ProjectFileModel, ProjectModel
@@ -191,6 +192,7 @@ async def update_project(
     description edits never do). A stale revision or a name collision yields 409.
     """
     current = await _owned_project(user_id=user_id, project_id=project_id, session=session)
+    await require_not_course_managed(user_id=user_id, record_ids=[project_id], session=session)
     # Read attributes rather than dumping, so nested models (areas) compare as models.
     changes = {key: getattr(payload, key) for key in payload.model_fields_set - {"expected_context_revision"}}
     # Drop no-op fields so the UPDATE (and updated_at) only reflect real edits.
@@ -284,6 +286,7 @@ async def change_project_files(
 
     # Dedupe and order deterministically (UUID string order) for stable results.
     ids = sorted(set(payload.file_ids), key=str)
+    await require_not_course_managed(user_id=user_id, record_ids=[project_id], session=session)
     try:
         # Acquire the project write lock and compare the revision before reading
         # memberships. This also rejects stale no-op requests without bumping it.
