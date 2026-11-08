@@ -34,17 +34,7 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70 and EPIC-68 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
-
-### [EPIC-69: Automatic context compaction](docs/epics/EPIC-69-AUTO-COMPACTION.md)
-
-- [x] US-69.1: Compaction records and prompt assembly (merged 2026-11-08)
-  - [x] Write the ADR (record shape, branch/fork rules, trust rules, thresholds). ([ADR-0060](docs/adr/0060-context-compaction.md))
-  - [x] Implement the record, the summarizer prompt and assembly changes.
-  - [x] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
-- [ ] US-69.2: Compaction in the chat UI and settings (in progress, `feat/us-69.2-compaction-ui`)
-  - [x] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
-  - [x] Help and glossary; unit tests and an E2E with a small fake context window.
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67, EPIC-70, EPIC-68 and EPIC-69 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
 
 ### [EPIC-71: Model-written skills](docs/epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
 

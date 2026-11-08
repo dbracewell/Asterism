@@ -1,6 +1,6 @@
 # EPIC-69: Automatic context compaction
 
-Status: in progress; US-69.1 complete (2026-11-08), US-69.2 next. Source: user request (2026-11-08). Decision: [ADR-0060](../adr/0060-context-compaction.md).
+Status: complete (US-69.1 and US-69.2 confirmed and merged 2026-11-08). Source: user request (2026-11-08). Decision: [ADR-0060](../adr/0060-context-compaction.md).
 
 ## Objective
 

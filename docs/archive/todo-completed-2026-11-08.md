@@ -69,3 +69,17 @@ the next began. See ADR-0059 (sub-agents in General chats).
 - [x] US-68.2: Choose General chat sub-agents (confirmed and merged 2026-11-08)
   - [x] Build the picker with generated client hooks; show availability.
   - [x] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.
+
+The user confirmed US-69.2 completion on 2026-11-08. EPIC-69 (US-69.1 and
+US-69.2) is complete; each story was confirmed and merged with `--no-ff` before
+the next began. See ADR-0060 (automatic context compaction).
+
+### [EPIC-69: Automatic context compaction](docs/epics/EPIC-69-AUTO-COMPACTION.md)
+
+- [x] US-69.1: Compaction records and prompt assembly (confirmed and merged 2026-11-08)
+  - [x] Write the ADR (record shape, branch/fork rules, trust rules, thresholds). ([ADR-0060](docs/adr/0060-context-compaction.md))
+  - [x] Implement the record, the summarizer prompt and assembly changes.
+  - [x] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
+- [x] US-69.2: Compaction in the chat UI and settings (confirmed and merged 2026-11-08)
+  - [x] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
+  - [x] Help and glossary; unit tests and an E2E with a small fake context window.
