@@ -37,7 +37,7 @@ Order: EPIC-65 → EPIC-66 (EPIC-64 is complete and archived), then a multi-user
 - [x] US-65.1: Tabbed project workspace
   - [x] Restructure the workspace into tabs with URL state; move settings into a tab.
   - [x] Update unit and E2E tests and page guides; check narrow widths and keyboard use.
-- [ ] US-65.2: Per-project feature areas (implemented on `feat/us-65.2-feature-areas`; awaiting confirmation)
+- [x] US-65.2: Per-project feature areas
   - [x] Add the field, API and Settings switches; hide tabs and Overview parts.
   - [x] Test data retention and capability neutrality; carry areas through packs and courses.
 - [ ] US-65.3: New-project wizard
