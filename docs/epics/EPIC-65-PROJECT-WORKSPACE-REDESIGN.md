@@ -1,6 +1,6 @@
 # EPIC-65: Project workspace redesign
 
-Status: in progress (US-65.1 and US-65.2 complete; US-65.3 awaiting confirmation). Source: user request (2026-11-07).
+Status: complete (US-65.1, US-65.2 and US-65.3). Source: user request (2026-11-07).
 
 ## Objective
 
