@@ -183,3 +183,34 @@ describe("page guides", () => {
     expect(text).not.toMatch(/long-term memory/);
   });
 });
+
+// US-66.3: help matches the tabbed project workspace (EPIC-65).
+describe("help after the project workspace redesign", () => {
+  const allText = [
+    ...Object.values(helpEntries).flatMap((entry) => [
+      entry.summary,
+      ...entry.details,
+    ]),
+    ...ids.flatMap((id) => {
+      const guide = pageGuides[id];
+      return [
+        guide.purpose,
+        ...guide.areas.map((area) => area.description),
+        ...guide.tasks,
+      ];
+    }),
+  ];
+
+  it("never places sub-agent selection in project settings", () => {
+    for (const text of allText) {
+      expect(text).not.toMatch(/project'?s? settings[^.]*sub-agent/i);
+    }
+  });
+
+  it("names the project tab instead of a generic project page", () => {
+    for (const text of allText) {
+      expect(text).not.toMatch(/(listed|shows?) on the project page/i);
+      expect(text).not.toMatch(/the project page then/i);
+    }
+  });
+});

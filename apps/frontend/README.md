@@ -115,7 +115,11 @@ Page guides live in `src/features/help/pages.ts`. `pageGuideFor` maps the
 dashboard route (and the Settings `t`/`setting` parameters) to a guide, and
 `PageHelp` in the app header opens it in a side sheet. `?` opens the sheet
 when focus is not in a text field, combobox, menu or another dialog. Empty
-states can pass a `help` element, usually a `HelpTopic`, shown beside the title.
+states and `PageHeader` take a `help` element, usually a `HelpTopic`, shown
+beside the title; section headings use `HelpHeading`. Both keep the button
+outside the heading. `pages.test.ts` reads the `app/(main)` route folders and
+the settings section lists, so a new page or settings section fails the test
+until it has a guide written for it.
 
 The first-chat tour (`src/features/help/tour.ts` and
 `components/first-chat-tour.tsx`) highlights composer controls by their
@@ -133,11 +137,15 @@ links with `helpCenterHref` or `pageGuideHref` rather than by hand; the
 popover and the page sheet use them for "Open in help center", and
 `e2e/help-center.spec.ts` checks every link lands on its entry.
 
-**Convention:** a change that adds a user-facing concept or control adds its
-help entry (and updates the page guide when it adds a page or section) in the
-same change. Help describes only implemented behavior: no
-planned features, no long-term memory, and no suggestion that persona, skill,
-mode or template text grants tools or files. See
+**Convention: new features ship with help.** A change that adds a user-facing
+concept, control, page or settings section adds its help in the same change:
+a glossary entry with a `HelpTopic` beside the main control, and a page guide
+for a new page or section. A change to existing behavior updates the entries
+and guides that describe it, including where things are (a tab, menu or
+section name). Help describes only implemented behavior: no planned features,
+no long-term memory, and no suggestion that persona, skill, mode or template
+text grants tools or files. Admin-only content uses the `admin.*` namespace and
+the admin audience. See
 [ADR-0032](../../docs/adr/0032-in-app-help-content.md).
 
 ## Chat content and composer layout

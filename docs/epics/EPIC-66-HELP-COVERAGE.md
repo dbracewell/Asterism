@@ -1,6 +1,6 @@
 # EPIC-66: Help coverage
 
-Status: in progress (US-66.1 and US-66.2 complete). Source: user request (2026-11-07).
+Status: complete (US-66.1, US-66.2 and US-66.3). Source: user request (2026-11-07).
 
 ## Objective
 
@@ -69,4 +69,4 @@ EPIC-65; stale text (for example the separate project settings page) is fixed;
 the help center lists every entry. The contribution notes repeat that new
 features ship with help.
 
-- [ ] Review and fix all help text; update the contribution notes.
+- [x] Review and fix all help text; update the contribution notes.

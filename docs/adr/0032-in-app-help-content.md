@@ -103,7 +103,11 @@ Playwright check follows every such link. Admin-only entries and guides are
 left out of the page for other users, as in the popover.
 
 **Convention.** A story that adds a user-facing concept or control adds its
-help entry in the same change. The frontend README records this.
+help entry in the same change, and a story that adds a page or settings
+section adds its guide. A story that changes behavior or moves a control
+updates the help that describes it. US-66.3 reviewed every entry and guide
+against the app after the EPIC-65 workspace redesign. The frontend README
+records the convention.
 
 ## Consequences
 
