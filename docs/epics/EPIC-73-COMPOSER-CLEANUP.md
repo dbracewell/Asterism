@@ -1,6 +1,6 @@
 # EPIC-73: Composer cleanup
 
-Status: proposed. Source: user request (2026-11-08).
+Status: in progress (US-73.1). Source: user request (2026-11-08).
 
 ## Objective
 
@@ -14,7 +14,8 @@ to the skill chips.
 ## Ownership and delivery
 
 - Frontend only; no API changes expected.
-- Proposed layout (confirm in US-73.1 before building):
+- Layout approved in US-73.1: see [the proposal](../plans/us-73.1-composer-layout.md).
+  It merges attach and options into one "+" menu. Original sketch:
   - **Top row** (with the skill chips): compact chips for the active model,
     persona and learning mode; goal and rubric chips when they apply. Each chip
     opens its existing picker. Empty states stay hidden.
@@ -35,7 +36,7 @@ Estimate: 0.5 day. Dependencies: none.
 Acceptance: a mockup of the desktop and mobile composer, with every current control
 placed, approved by the user.
 
-- [ ] Inventory every composer control and when it shows; produce the mockup; get approval.
+- [x] Inventory every composer control and when it shows; produce the mockup; get approval.
 
 ## US-73.2: Rebuild the composer
 
