@@ -1,6 +1,6 @@
 # EPIC-68: Sub-agents in General chat
 
-Status: in progress (US-68.1 confirmed and merged; US-68.2 implemented, awaiting confirmation). Source: user request (2026-11-08).
+Status: complete (US-68.1 and US-68.2 confirmed and merged 2026-11-08). Source: user request (2026-11-08).
 
 ## Objective
 

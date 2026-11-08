@@ -55,3 +55,17 @@ the next began. See ADR-0058 (user groups).
 - [x] US-70.3: Admin Settings → Groups (confirmed and merged 2026-11-08)
   - [x] Build the page and user-list group control; regenerate the client.
   - [x] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.
+
+The user confirmed US-68.2 completion on 2026-11-08. EPIC-68 (US-68.1 and
+US-68.2) is complete; each story was confirmed and merged with `--no-ff` before
+the next began. See ADR-0059 (sub-agents in General chats).
+
+### [EPIC-68: Sub-agents in General chat](../epics/EPIC-68-SUB-AGENTS-IN-GENERAL-CHAT.md)
+
+- [x] US-68.1: General delegation scope in the backend (confirmed and merged 2026-11-08)
+  - [x] Write the ADR (amends the "General chats never delegate" rule) and update AGENTS.md and architecture docs.
+  - [x] Add the General set to the main-agent configuration and resolve it in `resolve_delegation_scope`.
+  - [x] Tests: no set → no `sub_agent` tool; set → delegation works; removing a target mid-turn is refused; child file scope is limited to the chat's attachments; owner isolation.
+- [x] US-68.2: Choose General chat sub-agents (confirmed and merged 2026-11-08)
+  - [x] Build the picker with generated client hooks; show availability.
+  - [x] Update help and glossary; unit tests and an E2E delegating from a General chat with a fake provider.
