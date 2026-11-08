@@ -19,8 +19,18 @@ from pydantic import JsonValue
 import asterism.domains.settings.service as settings_service
 from asterism.core.schemas import ErrorDetail
 from asterism.db.dependencies import DBSessionDep
-from asterism.domains.agent.schemas import MainAgentConfiguration, MainAgentUpdate
-from asterism.domains.agent.service import get_main_agent, update_main_agent
+from asterism.domains.agent.schemas import (
+    GeneralSubAgents,
+    GeneralSubAgentsUpdate,
+    MainAgentConfiguration,
+    MainAgentUpdate,
+)
+from asterism.domains.agent.service import (
+    get_general_sub_agents,
+    get_main_agent,
+    set_general_sub_agents,
+    update_main_agent,
+)
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
 from .discovery import (
@@ -76,6 +86,32 @@ async def write_main_agent(
 ) -> MainAgentConfiguration:
     """Replace the caller's main-agent configuration and return the stored result."""
     return await update_main_agent(user.id, payload, session)
+
+
+@settings_router.get(
+    "/user/main-agent/general-sub-agents",
+    response_model=GeneralSubAgents,
+    operation_id="mainAgentGeneralSubAgentsGet",
+    responses={409: {"model": ErrorDetail}},
+)
+async def read_general_sub_agents(user: AuthedUserDep, session: DBSessionDep) -> GeneralSubAgents:
+    """The sub-agents the main agent may delegate to in General chats, in order."""
+    return await get_general_sub_agents(user.id, session)
+
+
+@settings_router.put(
+    "/user/main-agent/general-sub-agents",
+    response_model=GeneralSubAgents,
+    operation_id="mainAgentGeneralSubAgentsUpdate",
+    responses={400: {"model": ErrorDetail}, 409: {"model": ErrorDetail}},
+)
+async def write_general_sub_agents(
+    payload: GeneralSubAgentsUpdate, user: AuthedUserDep, session: DBSessionDep
+) -> GeneralSubAgents:
+    """Replace the General chat sub-agent set (ADR-0059). Project chats ignore it."""
+    return await set_general_sub_agents(
+        user_id=user.id, agent_ids=payload.agent_ids, expected_revision=payload.expected_revision, session=session
+    )
 
 
 @settings_router.get(

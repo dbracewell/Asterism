@@ -224,6 +224,7 @@ export type CapabilityGrant =
   | "admin_policy"
   | "model_support"
   | "project_selection"
+  | "general_selection"
   | "chat_attachment"
   | "chat_selection"
   | "file_scope";
@@ -2774,6 +2775,38 @@ export type Function = {
    * Arguments
    */
   arguments: string;
+};
+
+/**
+ * GeneralSubAgents
+ *
+ * The ordered sub-agents the main agent may delegate to in General chats (ADR-0059).
+ */
+export type GeneralSubAgents = {
+  /**
+   * Revision
+   */
+  revision: number;
+  /**
+   * Agents
+   */
+  agents: Array<SubAgentDefinition>;
+};
+
+/**
+ * GeneralSubAgentsUpdate
+ *
+ * Replace the whole ordered set; ``expected_revision`` guards concurrent edits.
+ */
+export type GeneralSubAgentsUpdate = {
+  /**
+   * Agent Ids
+   */
+  agent_ids: Array<string>;
+  /**
+   * Expected Revision
+   */
+  expected_revision: number;
 };
 
 /**
@@ -8351,6 +8384,10 @@ export type SubAgentTrace = {
    * Elapsed Ms
    */
   elapsed_ms?: number;
+  /**
+   * Delegation Scope
+   */
+  delegation_scope?: "general" | "project" | null;
   /**
    * Depth
    */
@@ -17443,6 +17480,76 @@ export type MainAgentUpdateResponses = {
 
 export type MainAgentUpdateResponse =
   MainAgentUpdateResponses[keyof MainAgentUpdateResponses];
+
+export type MainAgentGeneralSubAgentsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/user/main-agent/general-sub-agents";
+};
+
+export type MainAgentGeneralSubAgentsGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+};
+
+export type MainAgentGeneralSubAgentsGetError =
+  MainAgentGeneralSubAgentsGetErrors[keyof MainAgentGeneralSubAgentsGetErrors];
+
+export type MainAgentGeneralSubAgentsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: GeneralSubAgents;
+};
+
+export type MainAgentGeneralSubAgentsGetResponse =
+  MainAgentGeneralSubAgentsGetResponses[keyof MainAgentGeneralSubAgentsGetResponses];
+
+export type MainAgentGeneralSubAgentsUpdateData = {
+  body: GeneralSubAgentsUpdate;
+  path?: never;
+  query?: never;
+  url: "/settings/user/main-agent/general-sub-agents";
+};
+
+export type MainAgentGeneralSubAgentsUpdateErrors = {
+  /**
+   * Bad Request
+   */
+  400: ErrorDetail;
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Conflict
+   */
+  409: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type MainAgentGeneralSubAgentsUpdateError =
+  MainAgentGeneralSubAgentsUpdateErrors[keyof MainAgentGeneralSubAgentsUpdateErrors];
+
+export type MainAgentGeneralSubAgentsUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: GeneralSubAgents;
+};
+
+export type MainAgentGeneralSubAgentsUpdateResponse =
+  MainAgentGeneralSubAgentsUpdateResponses[keyof MainAgentGeneralSubAgentsUpdateResponses];
 
 export type UserSettingsGetData = {
   body?: never;

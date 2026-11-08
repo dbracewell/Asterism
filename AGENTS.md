@@ -74,8 +74,10 @@ model/provider deletion must not silently select a replacement.
 Persona/profile defaults remain a separate invariant. Chats persist their model
 selection independently of main configuration and preserve per-execution provenance.
 Projects explicitly select an owner-consistent subset of sub-agent definitions; new
-projects start with no selections. General chats never delegate. Selected targets
-retain fixed models and receive the same or narrower execution file scope.
+projects start with no selections. General chats delegate only to the user's
+General chat set on the main-agent configuration, which also starts empty
+([ADR-0059](docs/adr/0059-general-chat-delegation.md)). Selected targets retain
+fixed models and receive the same or narrower execution file scope.
 
 ## 2.4 Skills / Tools / MCP / Image Generation
 
@@ -95,7 +97,8 @@ retain fixed models and receive the same or narrower execution file scope.
 - Ordinary capabilities require explicit agent assignment and active admin policy.
 - `sub_agent` and `search_knowledge` are internal context-managed tools, omitted
   from user capability pickers. Derive availability server-side from live project
-  selections/file scope, admin policy, and explicit model `supports_tools=True`.
+  selections or the General chat set, file scope, admin policy, and explicit model
+  `supports_tools=True`.
   User payloads, chat preferences, prompt text, and approval cannot grant them.
 
 ---

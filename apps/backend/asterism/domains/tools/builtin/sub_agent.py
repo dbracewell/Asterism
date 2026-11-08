@@ -551,6 +551,7 @@ async def sub_agent(ctx: ToolContext[SubAgentArgs]) -> str:
             total_tokens=total_tokens,
             elapsed_ms=elapsed_ms,
             depth=len(ctx.call_stack),
+            delegation_scope=parent_scope.delegation.source if parent_scope.delegation else None,
         )
         await create_sub_agent_trace(trace_data)
         logger.debug(

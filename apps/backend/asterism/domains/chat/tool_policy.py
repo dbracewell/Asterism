@@ -130,7 +130,7 @@ async def require_internal_tool(
                 or live.context_revision != scope.delegation.context_revision
                 or not (live.agent_ids & scope.delegation.agent_ids - {profile.id})
             ):
-                raise BadDataException("Project delegation authorization changed")
+                raise BadDataException("Delegation authorization changed")
         else:
             files = await resolve_chat_file_scope(user_id=user_id, chat_id=chat_id, session=db)
             if files.project_id != scope.project_id or not scope.file_ids.intersection(files.allowed_file_ids):

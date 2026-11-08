@@ -11,6 +11,7 @@ The imports are side-effect only; the ``noqa: F401`` markers are intentional.
 
 from asterism.domains.agent.models import (  # noqa: F401
     AgentProfileModel,
+    GeneralSubAgentModel,
     SubAgentTraceModel,
 )
 from asterism.domains.chat.draft_models import ChatDraftFileModel, ChatDraftModel, ChatSendReceiptModel  # noqa: F401

@@ -372,6 +372,12 @@ import type {
   LearningModeGetManyData,
   LearningModeGetManyErrors,
   LearningModeGetManyResponses,
+  MainAgentGeneralSubAgentsGetData,
+  MainAgentGeneralSubAgentsGetErrors,
+  MainAgentGeneralSubAgentsGetResponses,
+  MainAgentGeneralSubAgentsUpdateData,
+  MainAgentGeneralSubAgentsUpdateErrors,
+  MainAgentGeneralSubAgentsUpdateResponses,
   MainAgentGetData,
   MainAgentGetErrors,
   MainAgentGetResponses,
@@ -5045,6 +5051,56 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/user/main-agent",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Read General Sub Agents
+   *
+   * The sub-agents the main agent may delegate to in General chats, in order.
+   */
+  public mainAgentGeneralSubAgentsGet<ThrowOnError extends boolean = false>(
+    options?: Options<MainAgentGeneralSubAgentsGetData, ThrowOnError>,
+  ): RequestResult<
+    MainAgentGeneralSubAgentsGetResponses,
+    MainAgentGeneralSubAgentsGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      MainAgentGeneralSubAgentsGetResponses,
+      MainAgentGeneralSubAgentsGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/user/main-agent/general-sub-agents",
+      ...options,
+    });
+  }
+
+  /**
+   * Write General Sub Agents
+   *
+   * Replace the General chat sub-agent set (ADR-0059). Project chats ignore it.
+   */
+  public mainAgentGeneralSubAgentsUpdate<ThrowOnError extends boolean = false>(
+    options: Options<MainAgentGeneralSubAgentsUpdateData, ThrowOnError>,
+  ): RequestResult<
+    MainAgentGeneralSubAgentsUpdateResponses,
+    MainAgentGeneralSubAgentsUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      MainAgentGeneralSubAgentsUpdateResponses,
+      MainAgentGeneralSubAgentsUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/user/main-agent/general-sub-agents",
       ...options,
       headers: {
         "Content-Type": "application/json",

@@ -288,8 +288,8 @@ while the mutation is pending. Active generation and durable send acceptance als
 block switching. A rejected model mutation retains the current identity and
 requires an explicit generated chat refetch before another selection. Regeneration
 uses the chat's current server selection; the UI marks it busy immediately and
-never relabels earlier executions. General displays that it never delegates and
-exposes no sub-agent membership controls.
+never relabels earlier executions. General has no project sub-agent controls;
+its chats delegate to the main agent's General chat set instead (ADR-0059).
 
 The Sub-agents tab composes an independent `ProjectSubAgents` section. Selected
 workers and candidates have separate bounded pages, fixed-model/provider labels,
