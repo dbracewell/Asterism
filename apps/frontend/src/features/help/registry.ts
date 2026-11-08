@@ -485,7 +485,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "A group of students run by an educator. Students join with a class code or an invite link, and can add the class's course as a project.",
     details: [
       "Your educator sees your name and whether you've joined. They never see your chats, files or answers.",
-      "You can leave a class from the Classes page. Leaving doesn't delete your course project or your chats.",
+      "You can leave a class from the Classes page. Leaving doesn't delete your course project or your chats; the project becomes yours to change.",
     ],
     related: [
       "concept.class-code",
@@ -512,6 +512,8 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "A project an educator publishes to a class. Each student who adds it gets their own copy of its instructions, selected sub-agents and files.",
     details: [
       "Educators publish numbered versions with a short note. Students see what changed and choose when to update. Updating replaces the course's instructions, sub-agents and files with the new version, and keeps the student's chats.",
+      "Your course project shows \"Managed by\" and its class. While you're in the class, you can't change its settings, instructions, sub-agents or files, or the course's sub-agents and files elsewhere; only course updates change them. Your chats in it are yours.",
+      "To leave a course, delete its project. Your chats move to General, and you can add the course again from the Classes page.",
       "The educator's own chats and goal date are never published, and the educator can't see students' course chats.",
       "If a course needs a model you can't use, adding it is blocked until your educator or an administrator fixes it.",
     ],

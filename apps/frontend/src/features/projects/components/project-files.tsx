@@ -23,11 +23,20 @@ import type { UserFile } from "@/lib/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CourseManagedNote } from "./course-managed";
 
 const projectActions = { upload: true, delete: false, regenerate: true };
 const pickerActions = { upload: false, delete: false, regenerate: false };
+// A course project's files change only with course updates (US-67.2).
+const courseActions = { upload: false, delete: false, regenerate: true };
 
-export function ProjectFiles({ projectId }: { projectId: string }) {
+export function ProjectFiles({
+  projectId,
+  managedBy,
+}: {
+  projectId: string;
+  managedBy?: string;
+}) {
   const project = useQuery(
     projectGetOneOptions({ client, path: { project_id: projectId } }),
   );
@@ -65,17 +74,18 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
         Files here are shared with chats in this project. Removing a file keeps
         it in your library and other projects.
       </p>
+      {managedBy && <CourseManagedNote managedBy={managedBy} />}
       <div className="rounded-surface relative flex min-h-96 flex-col overflow-hidden border">
         <FileManager.Provider
           key={projectId}
           source={{ kind: "project", projectId }}
-          actions={projectActions}
+          actions={managedBy ? courseActions : projectActions}
           onUploaded={onUploaded}
         >
           <FileManager.UploadFileDropZone>
             <FileManager.Ribbon>
               <FileManager.UploadFilesSection />
-              <ProjectMembershipActions projectId={projectId} />
+              {!managedBy && <ProjectMembershipActions projectId={projectId} />}
             </FileManager.Ribbon>
             <FileManager.FileList />
           </FileManager.UploadFileDropZone>

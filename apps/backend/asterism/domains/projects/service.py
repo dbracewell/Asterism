@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from asterism.core.exceptions import BadDataException, CodedException, NotFoundException
-from asterism.domains.courses.locks import require_not_course_managed
+from asterism.domains.courses.locks import managed_records, require_not_course_managed
 from asterism.domains.files.schemas import UserFileList
 
 from .models import ProjectFileModel, ProjectModel
@@ -65,7 +65,20 @@ async def create_project(*, user_id: str, payload: ProjectCreate, session: Async
 
 async def get_project(*, user_id: str, project_id: uuid.UUID, session: AsyncSession) -> Project:
     """Read one owned project as the wire model (404 if missing/foreign)."""
-    return Project.model_validate(await _owned_project(user_id=user_id, project_id=project_id, session=session))
+    return (
+        await _with_locks(
+            user_id, [await _owned_project(user_id=user_id, project_id=project_id, session=session)], session
+        )
+    )[0]
+
+
+async def _with_locks(user_id: str, records: list[ProjectModel], session: AsyncSession) -> list[Project]:
+    """Wire models for the records, marked with the class that manages each course project."""
+    managed = await managed_records(user_id, [record.id for record in records], session)
+    return [
+        Project.model_validate(record).model_copy(update={"managed_by_class": managed.get(record.id)})
+        for record in records
+    ]
 
 
 async def list_projects(
@@ -105,7 +118,7 @@ async def list_projects(
         statement.order_by(*orders[sort_by]).offset((page - 1) * page_size).limit(page_size),
     )
     return ProjectList(
-        projects=[Project.model_validate(record) for record in records],
+        projects=await _with_locks(user_id, list(records), session),
         total=total or 0,
         page=page,
         page_size=page_size,

@@ -4800,6 +4800,10 @@ export type Project = {
    * Updated At
    */
   updated_at: number;
+  /**
+   * Managed By Class
+   */
+  managed_by_class?: string | null;
 };
 
 /**
@@ -8083,6 +8087,10 @@ export type SubAgentDefinition = {
    * Config Revision
    */
   config_revision?: number;
+  /**
+   * Managed By Class
+   */
+  managed_by_class?: string | null;
 };
 
 /**
@@ -8612,6 +8620,7 @@ export type UsageStep = {
  * origin: Whether the user uploaded the file or an agent tool produced it.
  * projects: Projects that currently attach this file.
  * knowledge: Latest knowledge artifact for this file, if one exists.
+ * managed_by_class: Class whose course manages this file, if any.
  */
 export type UserFile = {
   /**
@@ -8658,6 +8667,10 @@ export type UserFile = {
    */
   projects?: Array<FileProjectSummary>;
   knowledge?: FileKnowledgeArtifact | null;
+  /**
+   * Managed By Class
+   */
+  managed_by_class?: string | null;
 };
 
 /**

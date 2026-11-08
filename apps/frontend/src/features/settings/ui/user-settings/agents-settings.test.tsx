@@ -31,8 +31,16 @@ vi.mock("@/lib/client/@tanstack/react-query.gen", () => ({
           model_id: "fixed",
           model_available: false,
         },
+        {
+          id: "tutor",
+          name: "Tutor",
+          description: "Hints",
+          model_id: "fixed",
+          model_available: true,
+          managed_by_class: "Biology 101",
+        },
       ],
-      total: 1,
+      total: 2,
       page: 1,
       page_size: 10,
     }),
@@ -58,7 +66,21 @@ it("shows one main editor and unavailable fixed-model workers without default/de
   expect(screen.getByRole("region", { name: "Sub-agents" })).toHaveTextContent(
     "Research",
   );
-  expect(await screen.findByRole("status")).toHaveTextContent(
+  expect((await screen.findAllByRole("status"))[0]).toHaveTextContent(
     "Fixed model unavailable",
   );
+});
+it("marks course sub-agents and offers no edit or delete for them", async () => {
+  render(<AgentsSettings />, { wrapper: Wrapper });
+  expect(await screen.findByText("Managed by Biology 101")).toBeInTheDocument();
+  expect(
+    screen.getByText("Part of a course, so only course updates can change it."),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Edit Research" })).toBeEnabled();
+  expect(
+    screen.queryByRole("button", { name: "Edit Tutor" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Delete Tutor" }),
+  ).not.toBeInTheDocument();
 });

@@ -1,6 +1,7 @@
 "use client";
 import { HelpTopic } from "@/features/help/components/help-topic";
 import { EmptyState } from "@/components/empty-state";
+import { CourseManagedBadge } from "@/components/course-managed-badge";
 import { APIDownload } from "@/components/api-download";
 import { APIImage } from "@/components/api-image";
 import { useFileManager } from "@/components/file-manager/context";
@@ -164,6 +165,11 @@ export const FileList = () => {
                         </>
                       )}
                     </span>
+                    {file.managed_by_class && (
+                      <span className="normal-case">
+                        <CourseManagedBadge managedBy={file.managed_by_class} />
+                      </span>
+                    )}
                     {mode === "normal" && (
                       <div className="flex items-center gap-1">
                         <Link

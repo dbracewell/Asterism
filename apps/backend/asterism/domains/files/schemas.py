@@ -50,6 +50,7 @@ class UserFile(BaseModel):
         origin: Whether the user uploaded the file or an agent tool produced it.
         projects: Projects that currently attach this file.
         knowledge: Latest knowledge artifact for this file, if one exists.
+        managed_by_class: Class whose course manages this file, if any.
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -68,6 +69,8 @@ class UserFile(BaseModel):
     origin: FileOrigin
     projects: list[FileProjectSummary] = Field(default_factory=list)
     knowledge: FileKnowledgeArtifact | None = None
+    # Class whose course manages this record, so the student cannot change it (US-67.2).
+    managed_by_class: str | None = None
 
 
 class UserFileList(BaseModel):

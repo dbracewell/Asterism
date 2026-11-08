@@ -220,11 +220,16 @@ export const DeleteSelectedFilesSection = () => {
   const {
     actions,
     dispatch,
+    files,
     selectedFiles,
     setSelectedFiles,
     isMutating,
     setIsMutating,
   } = useFileManager();
+  // The backend refuses the whole batch if a course file is in it (US-67.1).
+  const courseSelected = files.some(
+    (file) => file.managed_by_class && selectedFiles.includes(file.filename),
+  );
 
   const { confirm: confirmDelete, dialog: deleteConfirmationDialog } =
     useConfirmationDialog({
@@ -270,12 +275,20 @@ export const DeleteSelectedFilesSection = () => {
   return (
     <RibbonSection title="Delete">
       {deleteConfirmationDialog}
-      <Hint hint="Delete selected files" side="top" asChild>
+      <Hint
+        hint={
+          courseSelected
+            ? "Course files can't be deleted. Deselect them, or delete the course project to leave the course."
+            : "Delete selected files"
+        }
+        side="top"
+        asChild
+      >
         <Button
           aria-label="Delete selected files"
           variant="destructive"
           size="icon-lg"
-          disabled={selectedFiles.length === 0 || isMutating}
+          disabled={selectedFiles.length === 0 || isMutating || courseSelected}
           onClick={() => deleteSelectedFiles()}
         >
           <Trash2Icon />

@@ -18,13 +18,17 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
+import { CourseManagedBadge, CourseManagedNote } from "./course-managed";
 
 export function ProjectSubAgents({
   projectId,
   disabled = false,
+  managedBy,
 }: {
   projectId: string;
   disabled?: boolean;
+  /** The class whose course manages this project; its selection is fixed. */
+  managedBy?: string;
 }) {
   const [selectedPage, setSelectedPage] = useState(1);
   const [candidatePage, setCandidatePage] = useState(1);
@@ -46,6 +50,7 @@ export function ProjectSubAgents({
     }),
     staleTime: 0,
     retry: false,
+    enabled: !managedBy,
   });
   const models = useQuery({
     ...chatModelsListOptions({ client }),
@@ -102,6 +107,7 @@ export function ProjectSubAgents({
           Manage sub-agent definitions
         </Link>
       </Button>
+      {managedBy && <CourseManagedNote managedBy={managedBy} />}
       {models.isError && (
         <QueryError
           error={models.error}
@@ -156,7 +162,7 @@ export function ProjectSubAgents({
             key={agent.id}
             agent={agent}
             modelLabel={label(agent)}
-            action="Deselect"
+            action={managedBy ? undefined : "Deselect"}
             disabled={blocked}
             onClick={() => {
               setNotice("");
@@ -178,66 +184,69 @@ export function ProjectSubAgents({
           onPage={setSelectedPage}
         />
       </section>
-      <section
-        aria-label="Available sub-agents"
-        className="flex flex-col gap-3"
-      >
-        <h3 className="font-medium">Available sub-agents</h3>
-        {candidates.isPending && (
-          <ListSkeleton label="Loading available sub-agents…" rows={3} />
-        )}
-        {candidates.error && (
-          <QueryError
-            error={candidates.error}
-            message={
-              candidates.data
-                ? "Could not refresh available sub-agents. Changes are disabled."
-                : "Could not load available sub-agents."
-            }
-            retry={candidates.refetch}
-            isRetrying={candidates.isFetching}
+      {!managedBy && (
+        <section
+          aria-label="Available sub-agents"
+          className="flex flex-col gap-3"
+        >
+          <h3 className="font-medium">Available sub-agents</h3>
+          {candidates.isPending && (
+            <ListSkeleton label="Loading available sub-agents…" rows={3} />
+          )}
+          {candidates.error && (
+            <QueryError
+              error={candidates.error}
+              message={
+                candidates.data
+                  ? "Could not refresh available sub-agents. Changes are disabled."
+                  : "Could not load available sub-agents."
+              }
+              retry={candidates.refetch}
+              isRetrying={candidates.isFetching}
+            />
+          )}
+          {candidates.data?.total === 0 && (
+            <EmptyState
+              title="No more sub-agents to select"
+              description="Create another sub-agent in agent settings, or deselect one above."
+              action={
+                <Button variant="outline" asChild>
+                  <Link href="/settings?t=user&setting=agents">
+                    Create a sub-agent
+                  </Link>
+                </Button>
+              }
+            />
+          )}
+          {candidates.data?.agents.map((agent) => (
+            <AgentRow
+              key={agent.id}
+              agent={agent}
+              modelLabel={label(agent)}
+              action="Select"
+              disabled={blocked || !agent.model_available}
+              onClick={() => {
+                setNotice("");
+                add.mutate({
+                  path: { project_id: projectId },
+                  body: {
+                    agent_ids: [agent.id],
+                    expected_context_revision:
+                      candidates.data!.context_revision,
+                  },
+                });
+              }}
+            />
+          ))}
+          <AgentPages
+            label="Available sub-agents"
+            page={candidatePage}
+            data={candidates.data}
+            busy={busy}
+            onPage={setCandidatePage}
           />
-        )}
-        {candidates.data?.total === 0 && (
-          <EmptyState
-            title="No more sub-agents to select"
-            description="Create another sub-agent in agent settings, or deselect one above."
-            action={
-              <Button variant="outline" asChild>
-                <Link href="/settings?t=user&setting=agents">
-                  Create a sub-agent
-                </Link>
-              </Button>
-            }
-          />
-        )}
-        {candidates.data?.agents.map((agent) => (
-          <AgentRow
-            key={agent.id}
-            agent={agent}
-            modelLabel={label(agent)}
-            action="Select"
-            disabled={blocked || !agent.model_available}
-            onClick={() => {
-              setNotice("");
-              add.mutate({
-                path: { project_id: projectId },
-                body: {
-                  agent_ids: [agent.id],
-                  expected_context_revision: candidates.data!.context_revision,
-                },
-              });
-            }}
-          />
-        ))}
-        <AgentPages
-          label="Available sub-agents"
-          page={candidatePage}
-          data={candidates.data}
-          busy={busy}
-          onPage={setCandidatePage}
-        />
-      </section>
+        </section>
+      )}
       <p className="text-muted-foreground text-sm">
         Deleted definitions disappear from selections. An unavailable fixed
         model keeps its binding and cannot run; edit the definition or restore
@@ -256,7 +265,8 @@ function AgentRow({
 }: {
   agent: SubAgentDefinition;
   modelLabel: string;
-  action: string;
+  /** No action when the selection can't change. */
+  action?: string;
   disabled: boolean;
   onClick: () => void;
 }) {
@@ -268,6 +278,9 @@ function AgentRow({
           {agent.description}
         </p>
         <p className="text-sm break-words">Fixed model: {modelLabel}</p>
+        {agent.managed_by_class && (
+          <CourseManagedBadge managedBy={agent.managed_by_class} />
+        )}
         {!agent.model_available && (
           <>
             <Badge variant="secondary">Model unavailable</Badge>
@@ -279,9 +292,11 @@ function AgentRow({
           </>
         )}
       </div>
-      <Button variant="outline" disabled={disabled} onClick={onClick}>
-        {action} {agent.name}
-      </Button>
+      {action && (
+        <Button variant="outline" disabled={disabled} onClick={onClick}>
+          {action} {agent.name}
+        </Button>
+      )}
     </div>
   );
 }

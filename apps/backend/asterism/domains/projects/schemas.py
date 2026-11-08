@@ -101,6 +101,8 @@ class Project(BaseModel):
     context_revision: int = Field(ge=1)
     created_at: int
     updated_at: int
+    # Class whose course manages this record, so the student cannot change it (US-67.2).
+    managed_by_class: str | None = None
 
 
 class ProjectList(BaseModel):

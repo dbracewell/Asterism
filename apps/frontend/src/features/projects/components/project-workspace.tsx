@@ -19,6 +19,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { ProjectSubAgents } from "./project-sub-agents";
 import { ProjectFiles } from "./project-files";
+import { CourseManagedBadge, CourseManagedNote } from "./course-managed";
 import { ProjectFields } from "./project-fields";
 import { WorkspaceChats } from "./workspace-chats";
 import { ProjectGoal } from "./project-goal";
@@ -97,6 +98,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
     retry: false,
   });
   const disabled = project.isFetching || !!project.error;
+  const managedBy = project.data?.managed_by_class ?? undefined;
   const tabs = project.data ? visibleTabs(project.data.areas) : PROJECT_TABS;
   // A link to a hidden area's tab opens Overview instead.
   const active = tabs.some((item) => item.value === tab) ? tab : "overview";
@@ -141,9 +143,12 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
             title={project.data.name}
             description={project.data.description || "Project workspace"}
             actions={
-              <Button variant="outline" onClick={() => setLogOpen(true)}>
-                Export AI-use log
-              </Button>
+              <>
+                {managedBy && <CourseManagedBadge managedBy={managedBy} />}
+                <Button variant="outline" onClick={() => setLogOpen(true)}>
+                  Export AI-use log
+                </Button>
+              </>
             }
           />
           <Tabs value={active} onValueChange={selectTab} className="min-w-0">
@@ -186,7 +191,11 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
               <WorkspaceChats key={projectId} projectId={projectId} />
             </TabsContent>
             <TabsContent value="files" className={PANEL}>
-              <ProjectFiles key={`files-${projectId}`} projectId={projectId} />
+              <ProjectFiles
+                key={`files-${projectId}`}
+                projectId={projectId}
+                managedBy={managedBy}
+              />
             </TabsContent>
             {shown("study") && (
               <TabsContent value="study" className={PANEL}>
@@ -226,6 +235,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
                   key={`agents-${projectId}`}
                   projectId={projectId}
                   disabled={disabled}
+                  managedBy={managedBy}
                 />
               </TabsContent>
             )}
@@ -239,6 +249,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
               <ProjectSettings
                 key={projectId}
                 project={project.data}
+                managedBy={managedBy}
                 reload={async () => {
                   const result = await project.refetch();
                   return result.isError ? undefined : result.data;
@@ -270,11 +281,13 @@ const PANEL = "flex min-w-0 flex-col gap-6 pt-4";
 
 function ProjectSettings({
   project,
+  managedBy,
   disabled,
   reload,
   children,
 }: {
   project: Project;
+  managedBy?: string;
   disabled: boolean;
   reload: () => Promise<Project | undefined>;
   children?: ReactNode;
@@ -295,21 +308,35 @@ function ProjectSettings({
     ...projectDeleteMutation({ client }),
     onSuccess: () => router.push("/general"),
   });
-  const { confirm, dialog } = useConfirmationDialog({
-    title: `Delete ${project.name}?`,
-    description:
-      "Chats will move to General with their history and local attachments. Project file memberships and instructions will be removed; library files will remain. Active runs will be canceled. Historical answers may still contain project information.",
-    confirmVariant: "destructive",
-  });
+  const { confirm, dialog } = useConfirmationDialog(
+    managedBy
+      ? {
+          title: `Leave the ${managedBy} course?`,
+          description:
+            "This deletes the course project. Chats will move to General with their history and local attachments. The course's sub-agents and files stay in your library and become yours to change. Active runs will be canceled. You can add the course again from Classes.",
+          confirmText: "Leave course",
+          confirmVariant: "destructive",
+        }
+      : {
+          title: `Delete ${project.name}?`,
+          description:
+            "Chats will move to General with their history and local attachments. Project file memberships and instructions will be removed; library files will remain. Active runs will be canceled. Historical answers may still contain project information.",
+          confirmVariant: "destructive",
+        },
+  );
   const pending = disabled || update.isPending || remove.isPending;
+  // A course project's settings belong to the course (US-67.2).
+  const locked = pending || !!managedBy;
+  // Nothing to draft in a course project, so show it as it is now.
+  const shown = managedBy ? project : draft;
   const value: ProjectCreate = {
-    name: draft.name,
-    description: draft.description,
-    system_prompt: draft.system_prompt,
-    accent: draft.accent,
-    goal: draft.goal,
-    goal_target_date: draft.goal_target_date,
-    areas: draft.areas,
+    name: shown.name,
+    description: shown.description,
+    system_prompt: shown.system_prompt,
+    accent: shown.accent,
+    goal: shown.goal,
+    goal_target_date: shown.goal_target_date,
+    areas: shown.areas,
   };
   return (
     <>
@@ -328,9 +355,10 @@ function ProjectSettings({
             });
         }}
       >
+        {managedBy && <CourseManagedNote managedBy={managedBy} />}
         <ProjectFields
           value={value}
-          disabled={pending}
+          disabled={locked}
           onChange={(next) => {
             setSaved(false);
             setDraft({ ...draft, ...next });
@@ -338,8 +366,8 @@ function ProjectSettings({
         />
         <ProjectAreaSwitches
           projectId={project.id}
-          value={draft.areas}
-          disabled={pending}
+          value={shown.areas}
+          disabled={locked}
           onChange={(areas) => {
             setSaved(false);
             setDraft({ ...draft, areas });
@@ -357,7 +385,7 @@ function ProjectSettings({
           </p>
         )}
         <div className="flex gap-2">
-          <Button disabled={pending || !draft.name.trim()} type="submit">
+          <Button disabled={locked || !draft.name.trim()} type="submit">
             {update.isPending ? "Saving…" : "Save settings"}
           </Button>
           <Button
@@ -380,12 +408,15 @@ function ProjectSettings({
       {children}
       <section
         className="flex flex-col items-start gap-3 border-t pt-6"
-        aria-label="Delete project"
+        aria-label={managedBy ? "Leave course" : "Delete project"}
       >
-        <h2 className="font-medium">Delete project</h2>
+        <h2 className="font-medium">
+          {managedBy ? "Leave course" : "Delete project"}
+        </h2>
         <p className="text-muted-foreground text-sm">
-          Chats will be detached into General. Their history and local
-          attachments will remain.
+          {managedBy
+            ? "Delete this course project to leave the course. Chats will move to General, and you can add the course again from Classes."
+            : "Chats will be detached into General. Their history and local attachments will remain."}
         </p>
         {remove.error && (
           <p role="alert">
@@ -404,7 +435,11 @@ function ProjectSettings({
               });
           }}
         >
-          {remove.isPending ? "Deleting…" : "Delete project"}
+          {remove.isPending
+            ? "Deleting…"
+            : managedBy
+              ? "Leave course"
+              : "Delete project"}
         </Button>
       </section>
       {dialog}
