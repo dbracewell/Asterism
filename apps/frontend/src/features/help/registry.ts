@@ -33,6 +33,7 @@ export type HelpId =
   | "concept.template"
   | "concept.prompt-coach"
   | "concept.model"
+  | "concept.context-compaction"
   | "concept.attachment"
   | "concept.file-scope"
   | "concept.comparison"
@@ -56,6 +57,7 @@ export type HelpId =
   | "admin.providers"
   | "admin.tools"
   | "admin.skills-policy"
+  | "admin.context-compaction"
   | "admin.settings-file";
 
 export interface HelpEntry {
@@ -380,6 +382,19 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     related: ["concept.comparison", "concept.sub-agent", "concept.main-agent"],
     audience: "everyone",
   },
+  "concept.context-compaction": {
+    title: "Context compaction",
+    summary:
+      "When a chat nears the model's context limit, earlier turns are summarized so the chat keeps working. Your messages are never deleted.",
+    details: [
+      "A divider marks where the summary starts. Open it to read the summary. From then on the model reads the summary instead of the messages above the divider, plus your most recent turns in full.",
+      "The context meter beside the message box shows how full the next request is. Open it and choose Compact now to summarize earlier turns yourself.",
+      "The summary is written by a model and can miss details. It never changes your persona, skills or instructions, and it grants no tools or files.",
+      "Each branch keeps its own history: a reply regenerated from before the divider uses the full conversation as it was.",
+    ],
+    related: ["concept.chat", "concept.model"],
+    audience: "everyone",
+  },
   "concept.attachment": {
     title: "Attachments",
     summary:
@@ -676,6 +691,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       "When skills are on, users can still only use skills they've assigned to their main agent. Skills add instructions only and never grant tools or files.",
     ],
     related: ["concept.skill"],
+    audience: "admin",
+  },
+  "admin.context-compaction": {
+    title: "Context compaction settings",
+    summary:
+      "Choose when chats are compacted, how many recent turns stay in full, the window assumed for models with an unknown context window, and which model writes summaries.",
+    details: [
+      "Compaction runs before a turn whose estimated request is over the threshold of the model's context window. If compaction fails, the turn shows an error and nothing is sent.",
+      "By default each chat's own model writes its summaries. A dedicated model must be usable by the chat's owner, or compaction fails rather than switching models.",
+    ],
+    related: ["concept.context-compaction", "admin.providers"],
     audience: "admin",
   },
   "admin.settings-file": {

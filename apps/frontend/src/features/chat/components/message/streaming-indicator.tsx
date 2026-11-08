@@ -9,12 +9,15 @@ const STAR_CLASS =
  * sequence. Under reduced motion the stars stay fully lit and still.
  *
  * `turn` stands in for an assistant reply that has not started yet and sits in
- * the marker column; `inline` trails a reply that is still streaming.
+ * the marker column; `inline` trails a reply that is still streaming. A
+ * `label` names the work in visible text, e.g. "Compacting conversation…".
  */
 export const StreamingIndicator = ({
   variant = "inline",
+  label,
 }: {
   variant?: "turn" | "inline";
+  label?: string;
 }) => (
   <div
     role="status"
@@ -25,7 +28,7 @@ export const StreamingIndicator = ({
       variant === "turn" ? "mb-5 gap-3" : "mt-2",
     )}
   >
-    <span className="sr-only">Assistant is working…</span>
+    {!label && <span className="sr-only">Assistant is working…</span>}
     <span
       aria-hidden="true"
       className={cn(
@@ -40,5 +43,6 @@ export const StreamingIndicator = ({
         nodeClassName={STAR_CLASS}
       />
     </span>
+    {label && <span className="text-muted-foreground text-sm">{label}</span>}
   </div>
 );

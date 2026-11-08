@@ -6,7 +6,6 @@ import {
 import { EmptyState } from "@/components/empty-state";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { TranscriptSkeleton } from "@/components/loading-skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/features/auth/components/user-context";
@@ -28,7 +27,12 @@ import {
 import { personaQueryOptions } from "@/features/settings/persona-queries";
 import { useSubscribeEvent } from "@/features/sse/hooks/use-subscribe-event";
 import { client } from "@/lib/api";
-import { Chat, DelegationRecord, Message } from "@/lib/client";
+import {
+  Chat,
+  ChatCompactionView,
+  DelegationRecord,
+  Message,
+} from "@/lib/client";
 import {
   chatFileGetScopeOptions,
   chatMessageSendMutation,
@@ -41,6 +45,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownIcon, XIcon } from "lucide-react";
 import React from "react";
 import { ExistingChatModelPicker } from "./chat-model-picker";
+import { CompactionDivider } from "./compaction-divider";
+import { ContextUsageProgress } from "./context-usage";
 import { ComparisonBlock, invalidateComparisons } from "./comparison-block";
 import { ForkStepDialog, type ForkSource } from "./fork-step-dialog";
 import {
@@ -160,6 +166,8 @@ export const ChatSession = ({
   const lastScrollTopRef = React.useRef(0);
   const [isScrollable, setIsScrollable] = React.useState(false);
   const [isScrolledAway, setIsScrolledAway] = React.useState(false);
+  // ADR-0060: a compaction (automatic or requested) is running.
+  const [isCompacting, setIsCompacting] = React.useState(false);
   const [socketError, setSocketError] = React.useState<{
     message: string;
     code?: string | null;
@@ -216,9 +224,11 @@ export const ChatSession = ({
     jwtToken,
     onStatusChange: (isProcessing) => {
       setIsProcessing(isProcessing);
+      if (!isProcessing) setIsCompacting(false);
     },
     onStreamStart: (pendingMessage) => {
       preventAutoScrollRef.current = false;
+      setIsCompacting(false);
       if (pendingMessage.comparison) {
         setIncomingMessage(null);
         setComparisonStream(pendingMessage);
@@ -240,6 +250,7 @@ export const ChatSession = ({
     },
     onStreamError: (error, code, comparison) => {
       setIsProcessing(false);
+      setIsCompacting(false);
       setIncomingMessage(null);
       setComparisonStream(null);
       if (comparison) void invalidateComparisons(queryClient);
@@ -261,6 +272,36 @@ export const ChatSession = ({
       setSubAgentActivities((activities) =>
         updateSubAgentActivities(activities, packet),
       );
+    },
+    onCompaction: (packet) => {
+      if (packet.status === "started") {
+        setIsCompacting(true);
+        return;
+      }
+      setIsCompacting(false);
+      if (packet.status === "failed") {
+        setSocketError({
+          message: packet.content ?? "The conversation could not be compacted.",
+        });
+        return;
+      }
+      const compaction = packet.compaction;
+      if (!compaction) return;
+      queryClient.setQueryData(queryKey, (prev?: Chat) =>
+        prev
+          ? {
+              ...prev,
+              compactions: [
+                ...(prev.compactions ?? []).filter(
+                  (item) => item.id !== compaction.id,
+                ),
+                compaction,
+              ],
+            }
+          : prev,
+      );
+      // The context meter now counts the summary instead.
+      queryClient.invalidateQueries({ queryKey });
     },
     onStreamComplete: (updatedMessages, comparison) => {
       if (comparison) {
@@ -401,6 +442,7 @@ export const ChatSession = ({
     );
   const interactionBusy =
     isProcessing ||
+    isCompacting ||
     sendMessage.isPending ||
     isChangingModel ||
     isChangingPersona ||
@@ -427,6 +469,12 @@ export const ChatSession = ({
       return;
     setIsProcessing(true);
     sendJsonMessage({ type: "regenerate", parent_message_id: parentId });
+  }
+  function requestCompaction() {
+    if (interactionBusy || connectionStatus !== "Connected") return;
+    setSocketError(null);
+    setIsCompacting(true);
+    sendJsonMessage({ type: "compact" });
   }
   /** Comparing is offered on a turn's first answer, once that turn is settled. */
   const compareAction = (index: number) => {
@@ -474,6 +522,15 @@ export const ChatSession = ({
     !session.info.resume_error &&
     (isProcessing ||
       (lastMessage?.role === "user" && lastMessage.status === "pending"));
+  // Dividers sit after the last message each summary replaced.
+  const compactionsByAnchor = new Map<string, ChatCompactionView[]>();
+  for (const compaction of session.compactions ?? []) {
+    const list = compactionsByAnchor.get(compaction.through_message_id) ?? [];
+    compactionsByAnchor.set(compaction.through_message_id, [
+      ...list,
+      compaction,
+    ]);
+  }
   const contextWindow =
     session.info.context_model?.context_window ??
     user.settings.models?.find(
@@ -584,35 +641,48 @@ export const ChatSession = ({
                 sendJsonMessage={sendJsonMessage}
               />
             ) : (
-              <MessageItem
-                chatId={chatId}
-                key={item.message.id}
-                message={item.message}
-                startsTurn={
-                  session.messages[item.index - 1]?.role !== "assistant"
-                }
-                isProcessing={interactionBusy}
-                canRegenerate={
-                  selectedModelAvailable && connectionStatus === "Connected"
-                }
-                onRegenerate={requestRegeneration}
-                onCompare={compareAction(item.index)}
-                onFork={forkAction(item.index)}
-                toolTimings={toolTimings}
-                turnSteps={turnSteps[item.index]}
-                turnRequest={
-                  turnSteps[item.index]
-                    ? session.messages[
-                        item.index - (turnSteps[item.index]?.length ?? 0)
-                      ]
-                    : null
-                }
-                sendJsonMessage={sendJsonMessage}
-              />
+              <React.Fragment key={item.message.id}>
+                <MessageItem
+                  chatId={chatId}
+                  message={item.message}
+                  startsTurn={
+                    session.messages[item.index - 1]?.role !== "assistant"
+                  }
+                  isProcessing={interactionBusy}
+                  canRegenerate={
+                    selectedModelAvailable && connectionStatus === "Connected"
+                  }
+                  onRegenerate={requestRegeneration}
+                  onCompare={compareAction(item.index)}
+                  onFork={forkAction(item.index)}
+                  toolTimings={toolTimings}
+                  turnSteps={turnSteps[item.index]}
+                  turnRequest={
+                    turnSteps[item.index]
+                      ? session.messages[
+                          item.index - (turnSteps[item.index]?.length ?? 0)
+                        ]
+                      : null
+                  }
+                  sendJsonMessage={sendJsonMessage}
+                />
+                {compactionsByAnchor.get(item.message.id)?.map((compaction) => (
+                  <CompactionDivider
+                    key={compaction.id}
+                    compaction={compaction}
+                  />
+                ))}
+              </React.Fragment>
             ),
           )}
 
-          {awaitingReply &&
+          {isCompacting ? (
+            <StreamingIndicator
+              variant="turn"
+              label="Compacting conversation…"
+            />
+          ) : (
+            awaitingReply &&
             (lastMessage?.role === "assistant" ? (
               // Between agent steps: trail the turn under its existing marker.
               <div className="mb-5 pl-10">
@@ -620,7 +690,8 @@ export const ChatSession = ({
               </div>
             ) : (
               <StreamingIndicator variant="turn" />
-            ))}
+            ))
+          )}
           <SubAgentActivityPanel
             activities={subAgentActivities}
             mainModel={session.info.selected_model?.name}
@@ -832,6 +903,14 @@ export const ChatSession = ({
                 <ContextUsageProgress
                   usage={isFetching ? null : session.context_usage}
                   contextWindow={contextWindow}
+                  onCompact={requestCompaction}
+                  canCompact={
+                    !interactionBusy &&
+                    connectionStatus === "Connected" &&
+                    selectedModelAvailable &&
+                    !session.info.resume_error
+                  }
+                  compacting={isCompacting}
                 />
                 <ConnectionIndicator status={connectionStatus} />
               </>
@@ -883,38 +962,6 @@ export const ChatSession = ({
           }}
         />
       </div>
-    </div>
-  );
-};
-
-export const ContextUsageProgress = ({
-  usage,
-  contextWindow,
-}: {
-  usage: Chat["context_usage"];
-  contextWindow: number | null;
-}) => {
-  if (!usage || !contextWindow) return null;
-
-  const percent = Math.min(
-    100,
-    Math.round((usage.total_tokens / contextWindow) * 100),
-  );
-
-  return (
-    <div
-      className="flex items-center gap-1.5"
-      aria-label="Estimated saved conversation context"
-      title={`Saved context: ${percent}%`}
-    >
-      <Progress
-        value={percent}
-        max={100}
-        className="bg-background h-2.5 w-10"
-      />
-      <span className="text-muted-foreground text-xs tabular-nums select-none">
-        {percent}%
-      </span>
     </div>
   );
 };

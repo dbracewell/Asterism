@@ -23,6 +23,7 @@ from asterism.domains.chat.compaction import (
     compact_branch,
     read_compaction_settings,
 )
+from asterism.domains.chat.compaction_models import CompactionTrigger
 from asterism.domains.chat.context_manifest import file_context, step_context, turn_context
 from asterism.domains.chat.delegations import DelegationCollector
 from asterism.domains.chat.exercises import HISTORY_NOTE, is_exercise_run, streamed_text
@@ -31,6 +32,7 @@ from asterism.domains.chat.message_queue import MessageQueue, get_message_queue
 from asterism.domains.chat.prompts import create_title_generation_prompt
 from asterism.domains.chat.schemas import (
     Chat,
+    ChatCompactionView,
     ChatContextUsage,
     ChatUpdateRequest,
     Message,
@@ -55,6 +57,7 @@ from asterism.domains.projects.goals import render_goal
 from asterism.domains.prompt_templates.provenance import TemplateProvenance
 from asterism.domains.prompt_templates.rubrics import render_rubric
 from asterism.domains.settings import service as settings_service
+from asterism.domains.settings.schemas import CompactionSettings
 from asterism.domains.tools.registry import tool_registry
 
 if TYPE_CHECKING:
@@ -567,6 +570,36 @@ class ChatOrchestrator:
             )
         return model, info.context_window or window
 
+    async def _compact_once(
+        self,
+        *,
+        tail: int,
+        settings: CompactionSettings,
+        window: int,
+        estimated: int,
+        trigger: CompactionTrigger = CompactionTrigger.AUTOMATIC,
+    ) -> ChatCompactionView | None:
+        """Summarize the branch up to the last ``tail`` user turns; None if nothing new to cover."""
+        current = self._compaction
+        anchor = choose_anchor(self.chat.messages, tail_turns=tail, after_index=current.anchor_index if current else -1)
+        if anchor is None:
+            return None
+        await self._emit({"type": "compaction", "status": "started", "trigger": trigger.value})
+        model, model_window = await self._summarizer(settings.model_id, window)
+        view = await compact_branch(
+            user_id=self.user_id,
+            chat_id=self.chat_id,
+            branch=self.chat.messages,
+            current=current,
+            anchor_index=anchor,
+            model=model,
+            window=model_window,
+            estimated_tokens_before=estimated,
+            trigger=trigger,
+        )
+        await self._emit({"type": "compaction", "status": "completed", "compaction": view.model_dump(mode="json")})
+        return view
+
     async def _fit_context(
         self, messages: list[LLMMessage], files: list[ContextFile]
     ) -> tuple[list[LLMMessage], list[ContextFile]]:
@@ -581,25 +614,9 @@ class ChatOrchestrator:
         estimated = (await self._estimate_request(messages)).total_tokens
         if estimated <= limit:
             return messages, files
-        summarizer: tuple[SelectedModel, int] | None = None
         for tail in dict.fromkeys((settings.tail_turns, 1)):
-            current = self._compaction
-            anchor = choose_anchor(
-                self.chat.messages, tail_turns=tail, after_index=current.anchor_index if current else -1
-            )
-            if anchor is None:
+            if await self._compact_once(tail=tail, settings=settings, window=window, estimated=estimated) is None:
                 continue
-            summarizer = summarizer or await self._summarizer(settings.model_id, window)
-            await compact_branch(
-                user_id=self.user_id,
-                chat_id=self.chat_id,
-                branch=self.chat.messages,
-                current=current,
-                anchor_index=anchor,
-                model=summarizer[0],
-                window=summarizer[1],
-                estimated_tokens_before=estimated,
-            )
             messages, files = await self._assemble_agent_messages()
             estimated = (await self._estimate_request(messages)).total_tokens
             if estimated <= limit:
@@ -607,6 +624,45 @@ class ChatOrchestrator:
         if estimated > window:
             raise ContextTooLarge(estimated, window)
         return messages, files
+
+    async def compact_now(self) -> None:
+        """The user's "Compact now": summarize all but the verbatim tail, whatever the usage.
+
+        Runs in the chat's work slot like a turn. Outcomes are ``compaction``
+        packets, never a model stream, so the client shows no answer for it.
+        """
+        try:
+            self.is_processing_messages = True
+            await self.reload_chat()
+            settings = await read_compaction_settings()
+            window = self._context_window() or settings.fallback_context_window
+            messages, _ = await self._assemble_agent_messages()
+            estimated = (await self._estimate_request(messages)).total_tokens
+            view = await self._compact_once(
+                tail=settings.tail_turns,
+                settings=settings,
+                window=window,
+                estimated=estimated,
+                trigger=CompactionTrigger.MANUAL,
+            )
+            if view is None:
+                turns = settings.tail_turns
+                await self._emit(
+                    {
+                        "type": "compaction",
+                        "status": "failed",
+                        "content": f"Nothing to compact yet: the latest {turns} "
+                        f"{'turn is' if turns == 1 else 'turns are'} always kept in full.",
+                    }
+                )
+        except asyncio.CancelledError:
+            await self._emit({"type": "compaction", "status": "failed", "content": "Compaction was cancelled."})
+            raise
+        except Exception as error:
+            self.logger.warning("Manual compaction failed: %s", error)
+            await self._emit({"type": "compaction", "status": "failed", "content": str(error)})
+        finally:
+            self.is_processing_messages = False
 
     async def run_agent(self) -> None:
         try:

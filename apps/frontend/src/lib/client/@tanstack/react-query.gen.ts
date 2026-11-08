@@ -31,6 +31,12 @@ import type {
   AppCaptionModelStatusData,
   AppCaptionModelStatusError,
   AppCaptionModelStatusResponse,
+  AppCompactionGetData,
+  AppCompactionGetError,
+  AppCompactionGetResponse,
+  AppCompactionUpdateData,
+  AppCompactionUpdateError,
+  AppCompactionUpdateResponse,
   AppKnowledgeEmbeddingStatusData,
   AppKnowledgeEmbeddingStatusError,
   AppKnowledgeEmbeddingStatusResponse,
@@ -7705,6 +7711,65 @@ export const appToolSettingsUpdateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await ApiClient.__registry.get().appToolSettingsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const appCompactionGetQueryKey = (
+  options?: Options<AppCompactionGetData>,
+) => createQueryKey("appCompactionGet", options);
+
+/**
+ * Get the context compaction policy
+ *
+ * The compaction policy (ADR-0060) and the models eligible as summarizer.
+ */
+export const appCompactionGetOptions = (
+  options?: Options<AppCompactionGetData>,
+) =>
+  queryOptions<
+    AppCompactionGetResponse,
+    AppCompactionGetError,
+    AppCompactionGetResponse,
+    ReturnType<typeof appCompactionGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ApiClient.__registry.get().appCompactionGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: appCompactionGetQueryKey(options),
+  });
+
+/**
+ * Replace the context compaction policy
+ *
+ * Validate and save the compaction policy.
+ */
+export const appCompactionUpdateMutation = (
+  options?: Partial<Options<AppCompactionUpdateData>>,
+): UseMutationOptions<
+  AppCompactionUpdateResponse,
+  AppCompactionUpdateError,
+  Options<AppCompactionUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AppCompactionUpdateResponse,
+    AppCompactionUpdateError,
+    Options<AppCompactionUpdateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ApiClient.__registry.get().appCompactionUpdate({
         ...options,
         ...fnOptions,
         throwOnError: true,

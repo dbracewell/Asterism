@@ -1,4 +1,8 @@
-import { AgentEventSchema, AgentSubAgentEvent } from "@/features/chat/schemas";
+import {
+  AgentEventSchema,
+  AgentSubAgentEvent,
+  CompactionPacket,
+} from "@/features/chat/schemas";
 import { ToolTimings } from "@/features/chat/lib/agent-timeline";
 import { StreamingMessage } from "@/features/chat/types";
 import { authClient } from "@/lib/auth-client";
@@ -23,6 +27,8 @@ type UseChatWebSocketProps = {
   onRegenerate?: (parentId: string) => void;
   onStatusChange?: (isProcessing: boolean) => void;
   onSubAgentEvent?: (event: AgentSubAgentEvent) => void;
+  /** Context compaction progress, automatic or requested (ADR-0060). */
+  onCompaction?: (packet: CompactionPacket) => void;
 };
 
 const createPendingAssistantMessage = (
@@ -57,6 +63,7 @@ export const useChatWebSocket = ({
   onRegenerate,
   onStatusChange,
   onSubAgentEvent,
+  onCompaction,
 }: UseChatWebSocketProps) => {
   const [activeToken, setActiveToken] = React.useState(jwtToken);
   const [toolTimings, setToolTimings] = React.useState<ToolTimings>({});
@@ -70,6 +77,7 @@ export const useChatWebSocket = ({
   const onRegenerateRef = React.useRef(onRegenerate);
   const onStatusChangeRef = React.useRef(onStatusChange);
   const onSubAgentEventRef = React.useRef(onSubAgentEvent);
+  const onCompactionRef = React.useRef(onCompaction);
   const statusRef = React.useRef(false);
 
   React.useEffect(() => {
@@ -84,6 +92,7 @@ export const useChatWebSocket = ({
     onRegenerateRef.current = onRegenerate;
     onStatusChangeRef.current = onStatusChange;
     onSubAgentEventRef.current = onSubAgentEvent;
+    onCompactionRef.current = onCompaction;
   }, [
     onStreamStart,
     onStreamUpdate,
@@ -92,6 +101,7 @@ export const useChatWebSocket = ({
     onRegenerate,
     onStatusChange,
     onSubAgentEvent,
+    onCompaction,
   ]);
 
   React.useEffect(() => {
@@ -210,6 +220,11 @@ export const useChatWebSocket = ({
 
       if (msgContent.type === "sub_agent") {
         onSubAgentEventRef.current?.(msgContent);
+        return;
+      }
+
+      if (msgContent.type === "compaction") {
+        onCompactionRef.current?.(msgContent);
         return;
       }
 

@@ -450,7 +450,10 @@ async def get_one(
             labels=[message.rubric for message in messages if message.rubric is not None],
             session=session,
         )
-        return Chat(info=chat_info, messages=messages)
+        from .compaction import branch_compactions
+
+        compactions = await branch_compactions(user_id=user_id, chat_id=chat_id, branch=messages, session=session)
+        return Chat(info=chat_info, messages=messages, compactions=compactions)
 
 
 async def _lock_owned_chat(*, user_id: str, chat_id: uuid.UUID, session: AsyncSession) -> ChatModel:

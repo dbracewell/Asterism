@@ -57,5 +57,5 @@ Streaming shows a "Compacting conversation…" state. Admin Settings exposes the
 threshold, the verbatim tail size, the fallback window and the optional
 compaction model. Help explains compaction.
 
-- [ ] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
-- [ ] Help and glossary; unit tests and an E2E with a small fake context window.
+- [x] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
+- [x] Help and glossary; unit tests and an E2E with a small fake context window.

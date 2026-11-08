@@ -30,6 +30,12 @@ import type {
   AppCaptionModelStatusData,
   AppCaptionModelStatusErrors,
   AppCaptionModelStatusResponses,
+  AppCompactionGetData,
+  AppCompactionGetErrors,
+  AppCompactionGetResponses,
+  AppCompactionUpdateData,
+  AppCompactionUpdateErrors,
+  AppCompactionUpdateResponses,
   AppKnowledgeEmbeddingStatusData,
   AppKnowledgeEmbeddingStatusErrors,
   AppKnowledgeEmbeddingStatusResponses,
@@ -5424,6 +5430,56 @@ export class ApiClient extends HeyApiClient {
     >({
       security: [{ scheme: "bearer", type: "http" }],
       url: "/settings/app/tools",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get the context compaction policy
+   *
+   * The compaction policy (ADR-0060) and the models eligible as summarizer.
+   */
+  public appCompactionGet<ThrowOnError extends boolean = false>(
+    options?: Options<AppCompactionGetData, ThrowOnError>,
+  ): RequestResult<
+    AppCompactionGetResponses,
+    AppCompactionGetErrors,
+    ThrowOnError
+  > {
+    return (options?.client ?? this.client).get<
+      AppCompactionGetResponses,
+      AppCompactionGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/compaction",
+      ...options,
+    });
+  }
+
+  /**
+   * Replace the context compaction policy
+   *
+   * Validate and save the compaction policy.
+   */
+  public appCompactionUpdate<ThrowOnError extends boolean = false>(
+    options: Options<AppCompactionUpdateData, ThrowOnError>,
+  ): RequestResult<
+    AppCompactionUpdateResponses,
+    AppCompactionUpdateErrors,
+    ThrowOnError
+  > {
+    return (options.client ?? this.client).put<
+      AppCompactionUpdateResponses,
+      AppCompactionUpdateErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/settings/app/compaction",
       ...options,
       headers: {
         "Content-Type": "application/json",

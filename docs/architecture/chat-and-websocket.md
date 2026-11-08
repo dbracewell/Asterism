@@ -138,6 +138,13 @@ Client commands:
 ```
 
 ```json
+{ "type": "compact" }
+```
+
+`compact` is "Compact now" (ADR-0060). It runs in the chat's work slot, like a
+turn, and is refused while one is active.
+
+```json
 { "type": "ping" }
 ```
 
@@ -148,6 +155,14 @@ execution UUID, target identity/name, depth, and a nested child event. Child pro
 renders separately from the final parent answer. Completion supplies updated
 serialized messages; persisted assistant turns carry actual model/provider and
 execution provenance rather than the chat's current picker value.
+
+`compaction` packets report context compaction and are never part of an answer
+stream: `{"status": "started", "trigger": "automatic" | "manual"}`, then
+`{"status": "completed", "compaction": ChatCompactionView}` or
+`{"status": "failed", "content": "<reason>"}`. An automatic compaction runs before
+the turn's `start`; if it fails, the turn ends with an ordinary `error`. `GET
+/chat/{id}` returns the active branch's `compactions`, oldest first, so the
+transcript can draw a divider after each anchor message.
 
 Resume reuses the pending model/configuration/prompt/file/target snapshot and
 rechecks live authorization. Explicit regeneration validates current selection and
@@ -179,4 +194,3 @@ template, rubric, skills and files, and its reply's model, tools, cited files,
 exercise flag, verification counts and draft-comment summary. It never returns
 answer text. The client chooses turns and renders Markdown, or prints it as a
 PDF through the browser. See [ADR-0046](../adr/0046-ai-use-log.md).
-
