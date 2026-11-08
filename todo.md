@@ -34,7 +34,7 @@ Order: EPIC-65 → EPIC-66 (EPIC-64 is complete and archived), then a multi-user
 
 ### [EPIC-65: Project workspace redesign](docs/epics/EPIC-65-PROJECT-WORKSPACE-REDESIGN.md)
 
-- [ ] US-65.1: Tabbed project workspace (implemented on `feat/us-65.1-tabbed-workspace`; awaiting confirmation)
+- [x] US-65.1: Tabbed project workspace
   - [x] Restructure the workspace into tabs with URL state; move settings into a tab.
   - [x] Update unit and E2E tests and page guides; check narrow widths and keyboard use.
 - [ ] US-65.2: Per-project feature areas
