@@ -18,6 +18,7 @@ import {
   UsersRoundIcon,
   ShieldUserIcon,
   MessageCircleIcon,
+  ShrinkIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -68,6 +69,13 @@ const ChatGptPolicySettings = dynamic(
   () =>
     import("@/features/settings/ui/admin-settings/chatgpt-policy-settings").then(
       (module) => module.ChatGptPolicySettings,
+    ),
+  { loading: AdminPaneLoading },
+);
+const CompactionSettingsPane = dynamic(
+  () =>
+    import("@/features/settings/ui/admin-settings/compaction-settings").then(
+      (module) => module.CompactionSettingsPane,
     ),
   { loading: AdminPaneLoading },
 );
@@ -166,6 +174,13 @@ export const getLazyAdminSettingsSections = (): Types => [
     value: "chatgpt",
     icon: <MessageCircleIcon />,
     settingsPane: pane("ChatGPT Plans", <ChatGptPolicySettings />),
+  },
+  {
+    type: "section",
+    label: "Context Compaction",
+    value: "context-compaction",
+    icon: <ShrinkIcon />,
+    settingsPane: pane("Context Compaction", <CompactionSettingsPane />),
   },
   {
     type: "section",

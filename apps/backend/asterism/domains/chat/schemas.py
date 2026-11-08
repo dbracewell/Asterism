@@ -405,10 +405,28 @@ class SearchResultList(BaseModel):
     page_size: int = Field(ge=1)
 
 
+class ChatCompactionView(BaseModel):
+    """A stored summary that replaced the branch through ``through_message_id`` (ADR-0060).
+
+    ``summary`` is untrusted model output; render it as plain text.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    through_message_id: uuid.UUID
+    replaced_messages: int
+    summary: str
+    model_name: str
+    trigger: Literal["automatic", "manual"]
+    created_at: int
+
+
 class Chat(BaseModel):
     info: ChatInfo
     messages: list[Message]
     context_usage: ChatContextUsage | None = None
+    # Compactions on the active branch, oldest first; the newest applies to prompts.
+    compactions: list[ChatCompactionView] = Field(default_factory=list)
 
 
 class BulkDeleteChatRequest(BaseModel):

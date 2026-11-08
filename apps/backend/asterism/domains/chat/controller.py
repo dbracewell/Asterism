@@ -111,6 +111,18 @@ class ChatController:
                         current_job = self.job.start(self.orchestrator.resume_pending_turn())
                     case "regenerate":
                         current_job = self.job.start(self._regenerate(cmd.get("parent_message_id", "")))
+                    case "compact":
+                        # Shares the work slot, so it never overlaps a turn (ADR-0060).
+                        if self.job.is_active:
+                            await self.connection.send_json(
+                                {
+                                    "type": "compaction",
+                                    "status": "failed",
+                                    "content": "Wait for the current reply to finish, then compact.",
+                                }
+                            )
+                            continue
+                        current_job = self.job.start(self.orchestrator.compact_now())
                     case "ping":
                         continue
                     case _:

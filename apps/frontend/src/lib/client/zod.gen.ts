@@ -120,6 +120,23 @@ export const zCaptioningPayload = z.object({
 });
 
 /**
+ * ChatCompactionView
+ *
+ * A stored summary that replaced the branch through ``through_message_id`` (ADR-0060).
+ *
+ * ``summary`` is untrusted model output; render it as plain text.
+ */
+export const zChatCompactionView = z.object({
+  id: z.uuid(),
+  through_message_id: z.uuid(),
+  replaced_messages: z.int(),
+  summary: z.string(),
+  model_name: z.string(),
+  trigger: z.enum(["automatic", "manual"]),
+  created_at: z.int(),
+});
+
+/**
  * ChatContextUsage
  */
 export const zChatContextUsage = z.object({
@@ -2504,6 +2521,16 @@ export const zLlmDisplayInfo = z.object({
 });
 
 /**
+ * CompactionPolicy
+ *
+ * The policy and the models an admin may choose as the summarizer.
+ */
+export const zCompactionPolicy = z.object({
+  settings: zCompactionSettings,
+  models: z.array(zLlmDisplayInfo).optional(),
+});
+
+/**
  * Provider
  *
  * Full provider configuration including its models.
@@ -4661,6 +4688,7 @@ export const zChat = z.object({
   info: zChatInfo,
   messages: z.array(zMessage),
   context_usage: zChatContextUsage.nullish(),
+  compactions: z.array(zChatCompactionView).optional(),
 });
 
 /**
@@ -6694,6 +6722,18 @@ export const zAppToolSettingsUpdateBody = zToolSettings;
  * Successful Response
  */
 export const zAppToolSettingsUpdateResponse = zToolSettings;
+
+/**
+ * Successful Response
+ */
+export const zAppCompactionGetResponse = zCompactionPolicy;
+
+export const zAppCompactionUpdateBody = zCompactionSettings;
+
+/**
+ * Successful Response
+ */
+export const zAppCompactionUpdateResponse = zCompactionPolicy;
 
 /**
  * Successful Response

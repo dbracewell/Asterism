@@ -314,6 +314,13 @@ unknown, it compacts first (`chat/compaction.py`). See
 - If compaction fails, or the request still exceeds the full window, the run
   emits an error and sends no model request; the turn stays pending.
 - Sub-agent runs are not compacted.
+- "Compact now" (US-69.2) is the `compact` socket command. It summarizes all but
+  the verbatim tail regardless of usage, inside the chat's work slot. Progress is
+  reported as `compaction` packets; the transcript draws a divider after each
+  anchor from the chat's `compactions`.
+- Admins edit the policy in Admin Settings → Context Compaction
+  (`GET/PUT /settings/app/compaction`); a dedicated summarizer must be an active
+  model of an admin-managed provider.
 
 ### Fork from a step (US-54.5)
 

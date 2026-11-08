@@ -383,3 +383,189 @@ async def test_records_are_owner_scoped_and_cascade_with_the_chat(project_api, m
     assert (await rig.client.delete(f"/chat/{rig.chat_id}", headers=auth())).status_code in {200, 204}
     async with rig.sessions() as session:
         assert await session.scalar(select(func.count()).select_from(ChatCompactionModel)) == 0
+
+
+# ---------------------------------------------------------------------------
+# US-69.2: streaming, transcript payload and "Compact now"
+# ---------------------------------------------------------------------------
+
+
+async def drain(orchestrator: ChatOrchestrator) -> list[dict]:
+    packets = []
+    while not orchestrator.queue.empty():
+        packets.append(orchestrator.queue.get_nowait())
+    return packets
+
+
+@pytest.mark.asyncio
+async def test_automatic_compaction_streams_its_progress_before_the_answer(project_api, monkeypatch):
+    rig = await harness(project_api, monkeypatch)
+    for turn in range(12):
+        packets = await rig.run()
+        if await rig.records():
+            break
+        await rig.send(f"Question {turn + 2}")
+    [record] = await rig.records()
+    kinds = [(packet["type"], packet.get("status")) for packet in packets]
+    started = kinds.index(("compaction", "started"))
+    completed = kinds.index(("compaction", "completed"))
+    assert started < completed < kinds.index(("start", None))
+    assert packets[started]["trigger"] == "automatic"
+    assert packets[completed]["compaction"]["id"] == str(record.id)
+    assert packets[completed]["compaction"]["summary"] == record.summary
+
+
+@pytest.mark.asyncio
+async def test_chat_lists_the_compactions_on_its_active_branch(project_api, monkeypatch):
+    rig = await harness(project_api, monkeypatch)
+    await rig.run_until_compacted()
+    [record] = await rig.records()
+    chat = (await rig.client.get(f"/chat/{rig.chat_id}", headers=auth())).json()
+    [view] = chat["compactions"]
+    assert view == {
+        "id": str(record.id),
+        "through_message_id": str(record.through_message_id),
+        "replaced_messages": record.replaced_messages,
+        "summary": record.summary,
+        "model_name": record.model_name,
+        "trigger": "automatic",
+        "created_at": record.created_at,
+    }
+    assert view["through_message_id"] in {message["id"] for message in chat["messages"]}
+
+    # A branch from before the point has no divider.
+    await (await rig.orchestrator()).handle_regenerate_message(0)
+    chat = (await rig.client.get(f"/chat/{rig.chat_id}", headers=auth())).json()
+    assert chat["compactions"] == []
+
+
+@pytest.mark.asyncio
+async def test_compact_now_summarizes_regardless_of_usage(project_api, monkeypatch):
+    client, sessions, _ = project_api
+    rig = Harness(client, sessions, monkeypatch)
+    await rig.configure(window=None, fallback=10_000_000, tail=1)
+    rig.chat_id = uuid.UUID((await new_chat(client))["info"]["id"])
+    await rig.run()
+
+    # One turn: the kept tail covers everything.
+    orchestrator = await rig.orchestrator()
+    await orchestrator.compact_now()
+    [failed] = await drain(orchestrator)
+    assert failed["type"] == "compaction" and failed["status"] == "failed"
+    assert "Nothing to compact yet" in failed["content"] and not await rig.records()
+
+    await rig.send("Second")
+    await rig.run()
+    orchestrator = await rig.orchestrator()
+    await orchestrator.compact_now()
+    started, completed = await drain(orchestrator)
+    assert (started["status"], started["trigger"]) == ("started", "manual")
+    [record] = await rig.records()
+    assert record.trigger == "manual" and completed["compaction"]["trigger"] == "manual"
+    # Everything before the latest turn was replaced; no answer was streamed.
+    branch = await rig.branch()
+    assert record.through_message_id == branch[1].id and len(rig.seen) == 2
+    assert not orchestrator.is_processing_messages
+
+    # The next turn uses the summary.
+    await rig.send("Third")
+    await rig.run()
+    assert rig.seen[-1][0].content.startswith(SUMMARY_HEADER)
+
+
+@pytest.mark.asyncio
+async def test_compact_now_reports_a_failure_without_writing(project_api, monkeypatch):
+    client, sessions, _ = project_api
+    rig = Harness(client, sessions, monkeypatch)
+    await rig.configure(window=None, fallback=10_000_000, tail=1)
+    rig.chat_id = uuid.UUID((await new_chat(client))["info"]["id"])
+    await rig.run()
+    await rig.send("Second")
+    await rig.run()
+    rig.summarizer = FakeClient(fail=True)
+    orchestrator = await rig.orchestrator()
+    await orchestrator.compact_now()
+    started, failed = await drain(orchestrator)
+    assert started["status"] == "started" and failed["status"] == "failed"
+    assert "could not be compacted" in failed["content"]
+    assert not await rig.records()
+
+
+@pytest.mark.asyncio
+async def test_admins_read_and_save_the_compaction_policy(project_api, monkeypatch):
+    client, sessions, _ = project_api
+
+    def verify_token(token):
+        return AuthedUser(id=token, email=f"{token}@example.test", name=token, role="admin" if token == "a" else "user")
+
+    monkeypatch.setattr("asterism.core.security.verify_jwks_token", verify_token)
+    url = "/settings/app/compaction"
+    policy = (await client.get(url, headers=auth())).json()
+    assert policy["settings"] == {
+        "threshold": 0.8,
+        "tail_turns": 3,
+        "fallback_context_window": 32_768,
+        "model_id": None,
+    }
+    assert {model["id"] for model in policy["models"]} == {A, str(uuid.UUID(int=2))}
+
+    body = {"threshold": 0.6, "tail_turns": 5, "fallback_context_window": 16_384, "model_id": A}
+    saved = await client.put(url, headers=auth(), json=body)
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["settings"] == body
+    async with sessions() as session:
+        assert (await session.get(ApplicationSettingsModel, "compaction")).value == body
+
+    # Out-of-range values, unknown or inactive models, and non-admins are refused.
+    assert (await client.put(url, headers=auth(), json={**body, "threshold": 0.99})).status_code == 422
+    unknown = await client.put(url, headers=auth(), json={**body, "model_id": str(uuid.uuid4())})
+    assert unknown.status_code == 400
+    async with sessions() as session:
+        await session.execute(update(LLMModel).where(LLMModel.id == uuid.UUID(A)).values(is_active=False))
+        await session.commit()
+    assert (await client.put(url, headers=auth(), json=body)).status_code == 400
+    assert (await client.get(url, headers=auth("b"))).status_code == 401
+    assert (await client.put(url, headers=auth("b"), json=body)).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_compact_command_runs_in_the_work_slot_and_never_overlaps_a_turn():
+    import asyncio
+
+    from asterism.domains.chat.capacity import ChatCapacityLimits
+    from asterism.domains.chat.controller import ChatController
+    from asterism.domains.chat.jobs import ChatJobManager
+
+    jobs = ChatJobManager(ChatCapacityLimits(2, 1, 3, 2))
+    compact = AsyncMock()
+    runtime = SimpleNamespace(
+        pending_approvals={},
+        cancel_active_generation=AsyncMock(),
+        generate_chat_title=AsyncMock(),
+        compact_now=compact,
+    )
+    candidate = jobs.get_or_create(uuid.uuid4(), runtime, user_id="a")  # type: ignore[arg-type]
+    token = jobs.admit_controller("a")
+    jobs.attach(candidate.chat_id, candidate, token)
+    connection = SimpleNamespace(send_json=AsyncMock())
+    controller = ChatController(candidate.chat_id, connection, candidate, token)  # type: ignore[arg-type]
+    controller._is_running = True
+    processing = asyncio.create_task(controller._process_commands_loop())
+
+    # Refused while a turn holds the slot.
+    gate = asyncio.Event()
+    running = candidate.start(gate.wait())
+    await controller.inbound_commands.put({"type": "compact"})
+    await controller.inbound_commands.join()
+    refused = connection.send_json.call_args.args[0]
+    assert (refused["type"], refused["status"]) == ("compaction", "failed")
+    compact.assert_not_awaited()
+
+    gate.set()
+    await running
+    await controller.inbound_commands.put({"type": "compact"})
+    await controller.inbound_commands.join()
+    compact.assert_awaited_once()
+    processing.cancel()
+    await asyncio.gather(processing, return_exceptions=True)
+    await jobs.shutdown()

@@ -40,6 +40,7 @@ export type PageGuideId =
   | "admin.tools"
   | "admin.skills"
   | "admin.chatgpt"
+  | "admin.context-compaction"
   | "admin.image-captioning"
   | "admin.groups"
   | "admin.users"
@@ -123,9 +124,11 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
       "Regenerate a reply to get another version, then use the arrows to switch between versions.",
       "Use Compare with other models under a reply to see how different models answer.",
       "Lock the learning mode from the header to stop yourself skipping ahead.",
+      "Open the context meter beside the message box and choose Compact now to summarize earlier turns of a long chat.",
     ],
     terms: [
       "concept.chat",
+      "concept.context-compaction",
       "composer.controls",
       "concept.hint-levels",
       "concept.mode-lock",
@@ -894,6 +897,28 @@ export const pageGuides: Record<PageGuideId, PageGuide> = {
     terms: ["concept.model"],
     audience: "admin",
   },
+  "admin.context-compaction": {
+    title: "Context compaction",
+    purpose:
+      "Control how long chats are summarized so they keep working near the model's context limit.",
+    areas: [
+      {
+        name: "When to compact",
+        description:
+          "The threshold, the recent turns always sent in full, and the window assumed for models whose context window is unknown.",
+      },
+      {
+        name: "Summarizer",
+        description:
+          "Each chat's own model, or one dedicated model for every summary.",
+      },
+    ],
+    tasks: [
+      "Set each model's real context window in Providers so compaction starts at the right time.",
+    ],
+    terms: ["admin.context-compaction", "concept.context-compaction"],
+    audience: "admin",
+  },
   "admin.image-captioning": {
     title: "Image captioning",
     purpose:
@@ -1011,6 +1036,7 @@ const adminSettingsGuides: Record<string, PageGuideId | null> = {
   tools: "admin.tools",
   skills: "admin.skills",
   chatgpt: "admin.chatgpt",
+  "context-compaction": "admin.context-compaction",
   "image-captioning": "admin.image-captioning",
   "user-permissions": "admin.users",
   educators: "admin.educators",

@@ -1,8 +1,8 @@
 # ADR-0060 — Automatic context compaction
 
-Status: accepted for US-69.1 on 2026-11-08
-([EPIC-69](../epics/EPIC-69-AUTO-COMPACTION.md)). The chat UI, streaming events
-and admin controls follow in US-69.2.
+Status: accepted; records and assembly implemented in US-69.1, streaming
+events, "Compact now", the transcript divider and admin controls in US-69.2,
+both on 2026-11-08 ([EPIC-69](../epics/EPIC-69-AUTO-COMPACTION.md)).
 
 ## Context
 
@@ -123,6 +123,16 @@ The step's context manifest gains `compaction` (record id, anchor, replaced
 message count, summary size). Owner-only run inspection
 (`GET …/messages/{id}/context/layers`) also returns the summary text of that
 compaction.
+
+### Manual compaction and display (US-69.2)
+
+"Compact now" is the `compact` socket command. It runs in the chat's single
+work slot, so it never overlaps a turn, and summarizes everything before the
+verbatim tail regardless of usage. If the tail already covers the branch it
+reports "Nothing to compact yet". Progress uses `compaction` packets
+(`started`, `completed`, `failed`), never answer events. The chat payload lists
+the active branch's compactions; the transcript draws a collapsible divider
+after each anchor and renders the summary as plain text.
 
 ### Out of scope
 

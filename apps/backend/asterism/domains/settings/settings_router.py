@@ -33,6 +33,7 @@ from asterism.domains.agent.service import (
 )
 from asterism.domains.user.dependencies import AdminUserDep, AuthedUserDep
 
+from .compaction_policy import CompactionPolicy, read_compaction_policy, write_compaction_settings
 from .discovery import (
     OpenAIProviderDiscovery,
     ProviderDiscoveryError,
@@ -42,6 +43,7 @@ from .discovery import (
 from .schemas import (
     ApplicationSettings,
     BulkUpdateSettingRequest,
+    CompactionSettings,
     Llm,
     LlmDisplayInfo,
     ProviderModelsPage,
@@ -374,6 +376,30 @@ async def update_tool_settings(
         settings=settings,
         session=session,
     )
+
+
+@settings_router.get(
+    "/app/compaction",
+    response_model=CompactionPolicy,
+    operation_id="appCompactionGet",
+    summary="Get the context compaction policy",
+)
+async def get_compaction_policy(user: AdminUserDep, session: DBSessionDep) -> CompactionPolicy:
+    """The compaction policy (ADR-0060) and the models eligible as summarizer."""
+    return await read_compaction_policy(session)
+
+
+@settings_router.put(
+    "/app/compaction",
+    response_model=CompactionPolicy,
+    operation_id="appCompactionUpdate",
+    summary="Replace the context compaction policy",
+)
+async def update_compaction_policy(
+    payload: CompactionSettings, user: AdminUserDep, session: DBSessionDep
+) -> CompactionPolicy:
+    """Validate and save the compaction policy."""
+    return await write_compaction_settings(payload, session)
 
 
 @settings_router.get(

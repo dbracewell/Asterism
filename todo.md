@@ -42,9 +42,9 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
   - [x] Write the ADR (record shape, branch/fork rules, trust rules, thresholds). ([ADR-0060](docs/adr/0060-context-compaction.md))
   - [x] Implement the record, the summarizer prompt and assembly changes.
   - [x] Tests: threshold trigger, branch isolation, fork before/after the point, replay, unknown context window, failure path.
-- [ ] US-69.2: Compaction in the chat UI and settings
-  - [ ] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
-  - [ ] Help and glossary; unit tests and an E2E with a small fake context window.
+- [ ] US-69.2: Compaction in the chat UI and settings (in progress, `feat/us-69.2-compaction-ui`)
+  - [x] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
+  - [x] Help and glossary; unit tests and an E2E with a small fake context window.
 
 ### [EPIC-71: Model-written skills](docs/epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
 

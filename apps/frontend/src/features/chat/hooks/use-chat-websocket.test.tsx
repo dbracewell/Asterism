@@ -382,3 +382,45 @@ it("lets tagged packets claim a run that began with an untagged start", () => {
     vi.useRealTimers();
   }
 });
+
+it("forwards compaction packets without starting an answer stream", () => {
+  const onCompaction = vi.fn();
+  const onStreamStart = vi.fn();
+  const onStreamError = vi.fn();
+  renderHook(() =>
+    useChatWebSocket({
+      chatId: "chat-1",
+      jwtToken: "test-token",
+      onCompaction,
+      onStreamStart,
+      onStreamError,
+    }),
+  );
+  const options = socket.mock.calls.at(-1)?.[1] as {
+    onMessage: (event: { data: string }) => void;
+  };
+  const compaction = {
+    id: "00000000-0000-4000-8000-000000000001",
+    through_message_id: "00000000-0000-4000-8000-000000000002",
+    replaced_messages: 4,
+    summary: "The user asked about tides.",
+    model_name: "Chat A",
+    trigger: "automatic",
+    created_at: 1,
+  };
+  for (const packet of [
+    { type: "compaction", status: "started", trigger: "automatic" },
+    { type: "compaction", status: "completed", compaction },
+    { type: "compaction", status: "failed", content: "Nothing to compact" },
+  ])
+    options.onMessage({ data: JSON.stringify(packet) });
+
+  expect(onCompaction.mock.calls.map(([packet]) => packet.status)).toEqual([
+    "started",
+    "completed",
+    "failed",
+  ]);
+  expect(onCompaction.mock.calls[1][0].compaction).toEqual(compaction);
+  expect(onStreamStart).not.toHaveBeenCalled();
+  expect(onStreamError).not.toHaveBeenCalled();
+});

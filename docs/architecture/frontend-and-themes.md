@@ -213,7 +213,9 @@ border/input/ring, chart-1…5 and sidebar roles. Shared shadcn components consu
 image/download failures, required indicators, chat errors and connection/delegation
 statuses now consume semantic roles. Errors use `destructive`; connected/completed
 indicators use `primary` with explicit status text. Context usage adds Normal,
-Elevated and Near limit text rather than relying on yellow/red alone. Cautions
+Elevated and Near limit text rather than relying on yellow/red alone. The meter
+opens a popover with the estimate and "Compact now" (ADR-0060); compacted
+transcripts show a collapsible divider whose summary renders as plain text. Cautions
 (sub-agent tools, external captioning) use a `primary` tint with a warning icon;
 modal backdrops use the theme-independent `bg-scrim` token. Since US-41.6,
 `src/app/color-tokens.test.ts` fails on Tailwind palette colors (`text-amber-500`,

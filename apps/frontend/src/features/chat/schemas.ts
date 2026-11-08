@@ -1,5 +1,9 @@
 import { zMessageExecution } from "@/lib/client/zod.gen";
-import { zMessage, zToolResult } from "@/lib/client/zod.gen";
+import {
+  zChatCompactionView,
+  zMessage,
+  zToolResult,
+} from "@/lib/client/zod.gen";
 import z from "zod";
 
 export const FunctionSchema = z.object({
@@ -51,6 +55,16 @@ const AgentRegenerateEvent = z.object({
   type: z.literal("regenerate"),
   parent_id: z.uuidv4(),
 });
+
+/** Context compaction progress (ADR-0060); never part of an answer stream. */
+const CompactionEvent = z.object({
+  type: z.literal("compaction"),
+  status: z.enum(["started", "completed", "failed"]),
+  trigger: z.enum(["automatic", "manual"]).nullish(),
+  compaction: zChatCompactionView.nullish(),
+  content: z.string().nullish(),
+});
+export type CompactionPacket = z.infer<typeof CompactionEvent>;
 
 const AgentErrorEvent = z.object({
   type: z.literal("error"),
@@ -129,4 +143,5 @@ export const AgentEventSchema = z.discriminatedUnion("type", [
   AgentToolUpdate,
   AgentToolPermissionRequest,
   AgentSubAgentEventSchema,
+  CompactionEvent,
 ]);

@@ -328,6 +328,48 @@ export type Chat = {
    */
   messages: Array<Message>;
   context_usage?: ChatContextUsage | null;
+  /**
+   * Compactions
+   */
+  compactions?: Array<ChatCompactionView>;
+};
+
+/**
+ * ChatCompactionView
+ *
+ * A stored summary that replaced the branch through ``through_message_id`` (ADR-0060).
+ *
+ * ``summary`` is untrusted model output; render it as plain text.
+ */
+export type ChatCompactionView = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Through Message Id
+   */
+  through_message_id: string;
+  /**
+   * Replaced Messages
+   */
+  replaced_messages: number;
+  /**
+   * Summary
+   */
+  summary: string;
+  /**
+   * Model Name
+   */
+  model_name: string;
+  /**
+   * Trigger
+   */
+  trigger: "automatic" | "manual";
+  /**
+   * Created At
+   */
+  created_at: number;
 };
 
 /**
@@ -1148,6 +1190,19 @@ export type CoachCriterion =
   | "constraints"
   | "output_format"
   | "examples";
+
+/**
+ * CompactionPolicy
+ *
+ * The policy and the models an admin may choose as the summarizer.
+ */
+export type CompactionPolicy = {
+  settings: CompactionSettings;
+  /**
+   * Models
+   */
+  models?: Array<LlmDisplayInfo>;
+};
 
 /**
  * CompactionSettings
@@ -18079,6 +18134,64 @@ export type AppToolSettingsUpdateResponses = {
 
 export type AppToolSettingsUpdateResponse =
   AppToolSettingsUpdateResponses[keyof AppToolSettingsUpdateResponses];
+
+export type AppCompactionGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/settings/app/compaction";
+};
+
+export type AppCompactionGetErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+};
+
+export type AppCompactionGetError =
+  AppCompactionGetErrors[keyof AppCompactionGetErrors];
+
+export type AppCompactionGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CompactionPolicy;
+};
+
+export type AppCompactionGetResponse =
+  AppCompactionGetResponses[keyof AppCompactionGetResponses];
+
+export type AppCompactionUpdateData = {
+  body: CompactionSettings;
+  path?: never;
+  query?: never;
+  url: "/settings/app/compaction";
+};
+
+export type AppCompactionUpdateErrors = {
+  /**
+   * Not found
+   */
+  404: ErrorDetail;
+  /**
+   * Validation Error
+   */
+  422: ErrorDetail;
+};
+
+export type AppCompactionUpdateError =
+  AppCompactionUpdateErrors[keyof AppCompactionUpdateErrors];
+
+export type AppCompactionUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: CompactionPolicy;
+};
+
+export type AppCompactionUpdateResponse =
+  AppCompactionUpdateResponses[keyof AppCompactionUpdateResponses];
 
 export type AppSettingsGetData = {
   body?: never;
