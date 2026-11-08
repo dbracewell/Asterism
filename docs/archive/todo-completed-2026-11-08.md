@@ -38,3 +38,20 @@ the next began. See ADR-0054 (course packs, course-managed records).
   - [x] Expose a `course_managed` flag (and class name) on project, sub-agent and file responses; regenerate the client.
   - [x] Disable and explain the locked controls; add the leave-course action.
   - [x] Update help; add unit tests and an E2E: student adds a course, can chat, cannot edit it.
+
+The user confirmed US-70.3 completion on 2026-11-08. EPIC-70 (US-70.1 through
+US-70.3) is complete; each story was confirmed and merged with `--no-ff` before
+the next began. See ADR-0058 (user groups).
+
+### [EPIC-70: User groups and model/tool access](../epics/EPIC-70-USER-GROUPS-AND-ACCESS.md)
+
+- [x] US-70.1: Groups and membership (confirmed and merged 2026-11-08)
+  - [x] Write the ADR (replaces the educator grant in ADR-0053; admin-role mirroring).
+  - [x] Implement groups, seeding, membership and the educator flow change; update AGENTS.md §2.1.
+  - [x] Tests: defaults, educator approve/revoke, admin mirroring, owner isolation, built-ins protected.
+- [x] US-70.2: Group model and tool access, enforced (confirmed and merged 2026-11-08)
+  - [x] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
+  - [x] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
+- [x] US-70.3: Admin Settings → Groups (confirmed and merged 2026-11-08)
+  - [x] Build the page and user-list group control; regenerate the client.
+  - [x] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.

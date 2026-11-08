@@ -34,7 +34,7 @@ EPIC-64 and EPIC-65 are complete and archived in the [2026-11-07 checklist](docs
 
 ## User-requested epics (proposed 2026-11-08)
 
-Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74 and EPIC-67 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md). EPIC-70 is in progress.
+Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68 → 69 → 73 → 71 → 72. EPIC-71 depends on EPIC-68. EPIC-73 should leave a place for canvas (EPIC-72). EPIC-74, EPIC-67 and EPIC-70 are complete and archived in the [2026-11-08 checklist](docs/archive/todo-completed-2026-11-08.md).
 
 ### [EPIC-68: Sub-agents in General chat](docs/epics/EPIC-68-SUB-AGENTS-IN-GENERAL-CHAT.md)
 
@@ -55,19 +55,6 @@ Source: user request (2026-11-08). Suggested order: EPIC-74 → 67 → 70 → 68
 - [ ] US-69.2: Compaction in the chat UI and settings
   - [ ] Stream compaction events; add the divider, meter action and admin settings; regenerate the client.
   - [ ] Help and glossary; unit tests and an E2E with a small fake context window.
-
-### [EPIC-70: User groups and model/tool access](docs/epics/EPIC-70-USER-GROUPS-AND-ACCESS.md)
-
-- [x] US-70.1: Groups and membership (confirmed and merged)
-  - [x] Write the ADR (replaces the educator grant in ADR-0053; admin-role mirroring).
-  - [x] Implement groups, seeding, membership and the educator flow change; update AGENTS.md §2.1.
-  - [x] Tests: defaults, educator approve/revoke, admin mirroring, owner isolation, built-ins protected.
-- [x] US-70.2: Group model and tool access, enforced (confirmed and merged)
-  - [x] Extend `ModelAvailability` and tool policy with group access; add the unavailable reason.
-  - [x] Tests across every entry point (chat, compare, delegation, sub-agent save, course add, study tools, title model exemption).
-- [x] US-70.3: Admin Settings → Groups (awaiting confirmation)
-  - [x] Build the page and user-list group control; regenerate the client.
-  - [x] Extend settings export/import; help, glossary, unit tests and an E2E restricting a student's models.
 
 ### [EPIC-71: Model-written skills](docs/epics/EPIC-71-MODEL-WRITTEN-SKILLS.md)
 

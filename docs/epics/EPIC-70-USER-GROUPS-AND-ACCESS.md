@@ -1,6 +1,6 @@
 # EPIC-70: User groups and model/tool access
 
-Status: in progress (US-70.1 and US-70.2 complete, US-70.3 implemented, awaiting confirmation). Source: user request (2026-11-08).
+Status: complete (US-70.1 through US-70.3 confirmed and merged 2026-11-08). Source: user request (2026-11-08).
 
 ## Objective
 
